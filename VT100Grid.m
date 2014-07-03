@@ -412,11 +412,45 @@
 }
 
 - (void)moveCursorLeft:(int)n {
-    int x = cursor_.x - n;
-    const int leftMargin = [self leftMargin];
+    if ([self haveColumnScrollRegion]) {
+        // Don't allow cursor to wrap around the left margin when there is a
+        // column scroll region.
+        int x = cursor_.x - n;
+        const int leftMargin = [self leftMargin];
 
-    x = MAX(leftMargin, x);
-    self.cursorX = x;
+        x = MAX(leftMargin, x);
+        self.cursorX = x;
+        return;
+    }
+
+    while (n > 0) {
+        if (self.cursorX == 0 && self.cursorY == 0) {
+            // Can't move any farther left.
+            return;
+        } else if (self.cursorX == 0) {
+            // Wrap around?
+            switch ([self continuationMarkForLineNumber:self.cursorY - 1]) {
+                case EOL_SOFT:
+                case EOL_DWC:
+                    // Wrap around to the end of the previous line, even if this leaves the cursor
+                    // on a DWC_RIGHT.
+                    n--;
+                    self.cursorX = [self rightMargin];
+                    self.cursorY = self.cursorY - 1;
+                    break;
+
+                case EOL_HARD:
+                    // Can't wrap across EOL_HARD.
+                    return;
+            }
+        } else {
+            // Move as far as the left margin
+            int x = MAX(0, cursor_.x - n);
+            int moved = self.cursorX - x;
+            n -= moved;
+            self.cursorX = x;
+        }
+    }
 }
 
 - (void)moveCursorRight:(int)n {
@@ -733,6 +767,15 @@
         int lineNumber = cursor_.y;
         aLine = [self screenCharsAtLineNumber:cursor_.y];
 
+        BOOL mayStompSplitDwc = NO;
+        if (newx == size_.width) {
+            // The cursor is ending at the right margin. See if there's a DWC_SKIP/EOL_DWC pair
+            // there which may be affected.
+            mayStompSplitDwc = (!useScrollRegionCols_ &&
+                                aLine[size_.width].code == EOL_DWC &&
+                                aLine[size_.width - 1].code == DWC_SKIP);
+        }
+
         if (insert) {
             if (cursor_.x + charsToInsert < rightMargin) {
 #ifdef VERBOSE_STRING
@@ -814,6 +857,15 @@
         if (cursor_.x < size_.width - 1 && aLine[cursor_.x].code == DWC_RIGHT) {
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
+        }
+
+        if (mayStompSplitDwc &&
+            aLine[size_.width - 1].code != DWC_SKIP &&
+            aLine[size_.width].code == EOL_DWC) {
+            // The line no longer ends in a DWC_SKIP, but the continuation mark is still EOL_DWC.
+            // Change the continuation mark to EOL_SOFT since there's presumably still a DWC at the
+            // start of the next line.
+            aLine[size_.width].code = EOL_SOFT;
         }
 
         // The next char in the buffer shouldn't be DWC_RIGHT because we

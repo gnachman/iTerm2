@@ -46,6 +46,7 @@
 #define KEY_INITIAL_TEXT                @"Initial Text"
 #define KEY_CUSTOM_DIRECTORY            @"Custom Directory"  // values are Yes, No, Recycle
 #define KEY_WORKING_DIRECTORY           @"Working Directory"
+#define KEY_BADGE_FORMAT                @"Badge Text"
 #define KEY_TERMINAL_PROFILE            @"Terminal Profile"
 #define KEY_KEYBOARD_PROFILE            @"Keyboard Profile"
 #define KEY_DISPLAY_PROFILE             @"Display Profile"
@@ -74,26 +75,27 @@
 #define KEY_FOREGROUND_COLOR       @"Foreground Color"
 #define KEY_BACKGROUND_COLOR       @"Background Color"
 #define KEY_BOLD_COLOR             @"Bold Color"
+#define KEY_LINK_COLOR             @"Link Color"
 #define KEY_SELECTION_COLOR        @"Selection Color"
 #define KEY_SELECTED_TEXT_COLOR    @"Selected Text Color"
 #define KEY_CURSOR_COLOR           @"Cursor Color"
 #define KEY_CURSOR_TEXT_COLOR      @"Cursor Text Color"
-#define KEY_ANSI_0_COLOR           @"Ansi 0 Color"
-#define KEY_ANSI_1_COLOR           @"Ansi 1 Color"
-#define KEY_ANSI_2_COLOR           @"Ansi 2 Color"
-#define KEY_ANSI_3_COLOR           @"Ansi 3 Color"
-#define KEY_ANSI_4_COLOR           @"Ansi 4 Color"
-#define KEY_ANSI_5_COLOR           @"Ansi 5 Color"
-#define KEY_ANSI_6_COLOR           @"Ansi 6 Color"
-#define KEY_ANSI_7_COLOR           @"Ansi 7 Color"
-#define KEY_ANSI_8_COLOR           @"Ansi 8 Color"
-#define KEY_ANSI_9_COLOR           @"Ansi 9 Color"
-#define KEY_ANSI_10_COLOR          @"Ansi 10 Color"
-#define KEY_ANSI_11_COLOR          @"Ansi 11 Color"
-#define KEY_ANSI_12_COLOR          @"Ansi 12 Color"
-#define KEY_ANSI_13_COLOR          @"Ansi 13 Color"
-#define KEY_ANSI_14_COLOR          @"Ansi 14 Color"
-#define KEY_ANSI_15_COLOR          @"Ansi 15 Color"
+#define KEY_ANSI_0_COLOR           @"Ansi 0 Color"   // Black
+#define KEY_ANSI_1_COLOR           @"Ansi 1 Color"   // Red
+#define KEY_ANSI_2_COLOR           @"Ansi 2 Color"   // Green
+#define KEY_ANSI_3_COLOR           @"Ansi 3 Color"   // Yellow
+#define KEY_ANSI_4_COLOR           @"Ansi 4 Color"   // Blue
+#define KEY_ANSI_5_COLOR           @"Ansi 5 Color"   // Magenta
+#define KEY_ANSI_6_COLOR           @"Ansi 6 Color"   // Cyan
+#define KEY_ANSI_7_COLOR           @"Ansi 7 Color"   // White
+#define KEY_ANSI_8_COLOR           @"Ansi 8 Color"   // Bright black
+#define KEY_ANSI_9_COLOR           @"Ansi 9 Color"   // Bright red
+#define KEY_ANSI_10_COLOR          @"Ansi 10 Color"  // Bright green
+#define KEY_ANSI_11_COLOR          @"Ansi 11 Color"  // Bright yellow
+#define KEY_ANSI_12_COLOR          @"Ansi 12 Color"  // Bright blue
+#define KEY_ANSI_13_COLOR          @"Ansi 13 Color"  // Bright magenta
+#define KEY_ANSI_14_COLOR          @"Ansi 14 Color"  // Bright cyan
+#define KEY_ANSI_15_COLOR          @"Ansi 15 Color"  // Bright white
 #define KEYTEMPLATE_ANSI_X_COLOR   @"Ansi %d Color"
 #define KEY_SMART_CURSOR_COLOR     @"Smart Cursor Color"
 #define KEY_MINIMUM_CONTRAST       @"Minimum Contrast"
@@ -102,6 +104,7 @@
 #define KEY_CURSOR_BOOST           @"Cursor Boost"
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
+#define KEY_BADGE_COLOR            @"Badge Color"
 
 // Display
 #define KEY_ROWS                   @"Rows"
@@ -161,6 +164,7 @@
 
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"
+#define KEY_UNDO_TIMEOUT                      @"Session Close Undo Timeout"
 #define KEY_LOGDIR                            @"Log Directory"
 #define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
 #define KEY_IDLE_CODE                         @"Idle Code"

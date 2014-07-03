@@ -17,7 +17,6 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 @property(nonatomic, copy) NSString *path;
 @property(nonatomic, assign) int useCount;
 @property(nonatomic, copy) NSDate *lastUse;
-@property(nonatomic, copy) NSString *description;
 @property(nonatomic, assign) BOOL starred;
 @property(nonatomic, copy) NSString *shortcut;
 

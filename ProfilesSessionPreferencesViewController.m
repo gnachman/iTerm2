@@ -26,7 +26,9 @@
 
     IBOutlet NSImageView *_logDirWarning;
     IBOutlet NSButton *_changeLogDir;
-    
+
+    IBOutlet NSTextField *_undoTimeout;
+
     BOOL _awoken;
 }
 
@@ -48,6 +50,10 @@
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self promptBeforeClosingDidChange]; }
                  update:^BOOL { [self updatePromptBeforeClosing]; return YES; }];
+
+    [self defineControl:_undoTimeout
+                    key:KEY_UNDO_TIMEOUT
+                   type:kPreferenceInfoTypeIntegerTextField];
 
     PreferenceInfo *info;
     info = [self defineControl:_autoLog

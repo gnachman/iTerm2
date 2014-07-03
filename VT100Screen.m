@@ -2861,7 +2861,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         dir = [delegate_ screenCurrentWorkingDirectory];
     }
     if (dir.length) {
+        BOOL willChange = [dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
         [self setWorkingDirectory:dir onLine:cursorLine];
+        if (willChange) {
+            [delegate_ screenCurrentDirectoryDidChangeTo:dir];
+        }
     }
 }
 
@@ -3080,6 +3084,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalRequestAttention:(BOOL)request {
     [delegate_ screenRequestAttention:request isCritical:YES];
+}
+
+- (void)terminalSetBackgroundImageFile:(NSString *)filename {
+    [delegate_ screenSetBackgroundImageFile:filename];
+}
+
+- (void)terminalSetBadgeFormat:(NSString *)badge {
+    [delegate_ screenSetBadgeFormat:badge];
+}
+
+- (void)terminalSetUserVar:(NSString *)kvp {
+    [delegate_ screenSetUserVar:kvp];
 }
 
 - (void)terminalSetForegroundColor:(NSColor *)color {

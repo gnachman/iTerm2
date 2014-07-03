@@ -8,6 +8,7 @@
 
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermProfilePreferences.h"
 #import "NSColor+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
@@ -36,11 +37,13 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     IBOutlet NSColorWell *_foregroundColor;
     IBOutlet NSColorWell *_backgroundColor;
     IBOutlet NSColorWell *_boldColor;
+    IBOutlet NSColorWell *_linkColor;
     IBOutlet NSColorWell *_selectionColor;
     IBOutlet NSColorWell *_selectedTextColor;
     IBOutlet NSColorWell *_cursorColor;
     IBOutlet NSColorWell *_cursorTextColor;
     IBOutlet NSColorWell *_tabColor;
+    IBOutlet NSColorWell *_badgeColor;
 
     IBOutlet NSTextField *_cursorColorLabel;
     IBOutlet NSTextField *_cursorTextColorLabel;
@@ -70,14 +73,14 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
 
     // Add presets to preset color selection.
     [self rebuildColorPresetsMenu];
-    
+
     NSDictionary *colorWellDictionary = [self colorWellDictionary];
     for (NSString *key in colorWellDictionary) {
         [self defineControl:colorWellDictionary[key] key:key type:kPreferenceInfoTypeColorWell];
     }
-    
+
     PreferenceInfo *info;
-    
+
     info = [self defineControl:_useTabColor
                            key:KEY_USE_TAB_COLOR
                           type:kPreferenceInfoTypeCheckbox];
@@ -131,12 +134,14 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
               KEY_FOREGROUND_COLOR: _foregroundColor,
               KEY_BACKGROUND_COLOR: _backgroundColor,
               KEY_BOLD_COLOR: _boldColor,
+              KEY_LINK_COLOR: _linkColor,
               KEY_SELECTION_COLOR: _selectionColor,
               KEY_SELECTED_TEXT_COLOR: _selectedTextColor,
               KEY_CURSOR_COLOR: _cursorColor,
               KEY_CURSOR_TEXT_COLOR: _cursorTextColor,
               KEY_TAB_COLOR: _tabColor,
-              KEY_CURSOR_GUIDE_COLOR: _guideColor };
+              KEY_CURSOR_GUIDE_COLOR: _guideColor,
+              KEY_BADGE_COLOR: _badgeColor };
 }
 
 #pragma mark - Color Presets
@@ -145,20 +150,20 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     while ([_presetsMenu numberOfItems] > 1) {
         [_presetsMenu removeItemAtIndex:1];
     }
-    
+
     NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
                                                                             ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     [self addColorPresetsInDict:presetsDict toMenu:_presetsMenu];
-    
+
     NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
     if (customPresets && [customPresets count] > 0) {
         [_presetsMenu addItem:[NSMenuItem separatorItem]];
         [self addColorPresetsInDict:customPresets toMenu:_presetsMenu];
     }
-    
+
     [_presetsMenu addItem:[NSMenuItem separatorItem]];
-    
+
     [self addPresetItemWithTitle:@"Import..." action:@selector(importColorPreset:)];
     [self addPresetItemWithTitle:@"Export..." action:@selector(exportColorPreset:)];
     [self addPresetItemWithTitle:@"Delete Preset..." action:@selector(deleteColorPreset:)];
@@ -199,7 +204,7 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     }
     [customPresets setObject:theDict forKey:temp];
     [[NSUserDefaults standardUserDefaults] setObject:customPresets forKey:kCustomColorPresetsKey];
-    
+
     [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
                                                         object:nil];
 }
@@ -223,13 +228,13 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
 - (void)importColorPreset:(id)sender {
     // Create the File Open Dialog class.
     NSOpenPanel *openPanel = [NSOpenPanel openPanel];
-    
+
     // Set options.
     [openPanel setCanChooseFiles:YES];
     [openPanel setCanChooseDirectories:NO];
     [openPanel setAllowsMultipleSelection:YES];
     [openPanel setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
-    
+
     // Display the dialog.  If the OK button was pressed,
     // process the files.
     if ([openPanel legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
@@ -244,10 +249,10 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
 - (void)exportColorPreset:(id)sender {
     // Create the File Open Dialog class.
     NSSavePanel *savePanel = [NSSavePanel savePanel];
-    
+
     // Set options.
     [savePanel setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
-    
+
     if ([savePanel legacyRunModalForDirectory:nil file:nil] == NSOKButton) {
         [self exportColorPresetToFile:[savePanel legacyFilename]];
     }
@@ -264,13 +269,13 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
                         nil);
         return;
     }
-    
+
     NSAlert *alert = [NSAlert alertWithMessageText:@"Select a preset to delete:"
                                      defaultButton:@"OK"
                                    alternateButton:@"Cancel"
                                        otherButton:nil
                          informativeTextWithFormat:@""];
-    
+
     NSPopUpButton* pub = [[[NSPopUpButton alloc] init] autorelease];
     for (NSString* key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [pub addItemWithTitle:key];
@@ -308,7 +313,7 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
     NSString *guid = profile[KEY_GUID];
     assert(guid);
-    
+
     NSString *plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"ColorPresets"
                                                                            ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
@@ -319,17 +324,20 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
 
-    for (id colorName in settings) {
-        NSDictionary* preset = [settings objectForKey:colorName];
-        NSColor* color = [ITAddressBookMgr decodeColor:preset];
-        NSAssert([newDict objectForKey:colorName], @"Missing color in existing dict");
-        [newDict setObject:[ITAddressBookMgr encodeColor:color] forKey:colorName];
+    for (id colorName in [self colorWellDictionary]) {
+        // If the preset is missing an entry, the default color will be used for that entry.
+        NSDictionary *colorDict = [iTermProfilePreferences objectForKey:colorName inProfile:settings];
+        if (colorDict) {
+            newDict[colorName] = colorDict;
+        } else {
+            [newDict removeObjectForKey:colorName];  // Can happen for tab color, which is optional
+        }
     }
-    
+
     ProfileModel *model = [self.delegate profilePreferencesCurrentModel];
     [model setBookmark:newDict withGuid:guid];
     [model flush];
-    
+
     [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
 }
 

@@ -20,6 +20,9 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, readonly) BOOL hasMuteCoprocess;
 @property(atomic, assign) id<PTYTaskDelegate> delegate;
 
+// No reading or writing allowed for now.
+@property(atomic, assign) BOOL paused;
+
 - (id)init;
 - (void)dealloc;
 - (BOOL)hasBrokenPipe;

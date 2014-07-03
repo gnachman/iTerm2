@@ -39,11 +39,11 @@ static const float kAlphaValue = 0.9;
 
 - (void)mouseEntered:(NSEvent *)theEvent {
     [[NSCursor arrowCursor] set];
-    self.window.animator.alphaValue = 1;
+    [self.window.animator setAlphaValue:1];
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {
-    self.window.animator.alphaValue = kAlphaValue;
+    [self.window.animator setAlphaValue:kAlphaValue];
 }
 
 @end

@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ArrangementPreviewView.h"
 
-@interface WindowArrangements : NSObject  {
+@interface WindowArrangements : NSViewController  {
     IBOutlet NSTableColumn *defaultColumn_;
     IBOutlet NSTableColumn *titleColumn_;
     IBOutlet NSTableView *tableView_;

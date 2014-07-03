@@ -99,7 +99,7 @@ typedef enum {
 @property(nonatomic, assign) BOOL resumable;
 
 // Was the append property used on the last selection?
-@property(nonatomic, readonly) BOOL appending;
+@property(nonatomic, assign) BOOL appending;
 
 // Returns the debugging name for a selection mode.
 + (NSString *)nameForMode:(iTermSelectionMode)mode;

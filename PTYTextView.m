@@ -50,7 +50,7 @@
 #include <math.h>
 #include <sys/time.h>
 
-static const int kMaxSelectedTextLengthForCustomActions = 8192;
+static const int kMaxSelectedTextLengthForCustomActions = 400;
 static const int kMaxTrouterPrefixOrSuffix = 2000;
 
 // This defines the fraction of a character's width on its right side that is used to
@@ -86,13 +86,17 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 // recognized as a drag.
 static const int kDragThreshold = 3;
 static const int kBroadcastMargin = 4;
+static const int kMaximizedMargin = 4;
 static const int kCoprocessMargin = 4;
 static const int kAlertMargin = 4;
+static const int kBadgeMargin = 4;
+static const int kBadgeRightMargin = 10;
 
 static NSImage* bellImage;
 static NSImage* wrapToTopImage;
 static NSImage* wrapToBottomImage;
 static NSImage* broadcastInputImage;
+static NSImage* maximizedImage;
 static NSImage* coprocessImage;
 static NSImage* alertImage;
 
@@ -104,6 +108,9 @@ static NSImage* alertImage;
 @property(nonatomic, retain) NSColor *cachedBackgroundColor;
 @property(nonatomic, retain) NSColor *unfocusedSelectionColor;
 @property(nonatomic, retain) Trouter *trouter;
+@property(nonatomic, retain) NSImage *badgeImage;
+@property(nonatomic, retain) NSColor *badgeColor;
+@property(nonatomic, copy) NSString *bagdgeLabel;
 
 - (NSRect)cursorRect;
 - (URLAction *)urlActionForClickAtX:(int)x
@@ -326,9 +333,12 @@ static NSImage* alertImage;
     VT100GridCoord validationClickPoint_;
 
     iTermSelection *_oldSelection;
-    
+
     // The most recent mouse-down was a "first mouse" (activated the window).
     BOOL _mouseDownWasFirstMouse;
+
+    // Size of the documentVisibleRect when the badge was set.
+    NSSize _badgeDocumentVisibleRectSize;
 }
 
 
@@ -358,6 +368,9 @@ static NSImage* alertImage;
                                                     ofType:@"png"];
     broadcastInputImage = [[NSImage alloc] initWithContentsOfFile:broadcastInputFile];
     [broadcastInputImage setFlipped:YES];
+
+    maximizedImage = [[NSImage imageNamed:@"Maximized"] retain];
+    [maximizedImage setFlipped:YES];
 
     NSString* coprocessFile = [bundle pathForResource:@"Coprocess"
                                                     ofType:@"png"];
@@ -512,6 +525,9 @@ static NSImage* alertImage;
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
     [_currentUnderlineHostname release];
+    [_badgeImage release];
+    [_badgeColor release];
+    [_bagdgeLabel release];
 
     [super dealloc];
 }
@@ -540,7 +556,7 @@ static NSImage* alertImage;
     NSDictionary *theAttributes =
         @{ NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapBackground],
            NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapForeground],
-           NSFontAttributeName: [self nonAsciiFont] ?: [NSFont systemFontOfSize:12],
+           NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
 
     [self setMarkedTextAttributes:theAttributes];
@@ -631,12 +647,18 @@ static NSImage* alertImage;
 
     if ([self window]) {
         trackingOptions = NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag;
-        if (trackingArea) {
-            [self removeTrackingArea:trackingArea];
-        }
         if ([[_dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION ||
             ([NSEvent modifierFlags] & NSCommandKeyMask)) {
             trackingOptions |= NSTrackingMouseMoved;
+        }
+        if (trackingArea &&
+            NSEqualRects(trackingArea.rect, self.visibleRect) &&
+            trackingArea.options == trackingOptions) {
+            // Nothing would change.
+            return;
+        }
+        if (trackingArea) {
+            [self removeTrackingArea:trackingArea];
         }
         trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
                                                      options:trackingOptions
@@ -838,6 +860,10 @@ static NSImage* alertImage;
     return _useNonAsciiFont ? secondaryFont.font : primaryFont.font;
 }
 
+- (NSFont *)nonAsciiFontEvenIfNotUsed {
+    return secondaryFont.font;
+}
+
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
 {
     FontSizeEstimator* fse = [FontSizeEstimator fontSizeEstimatorForFont:aFont];
@@ -989,7 +1015,7 @@ NSMutableArray* screens=0;
 
     frameSize.height += VMARGIN;  // This causes a margin to be left at the top
     [[self superview] setFrameSize:frameSize];
-
+    self.badgeLabel = _badgeLabel;
     [_delegate textViewSizeDidChange];
 }
 
@@ -1761,13 +1787,27 @@ NSMutableArray* screens=0;
         DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
         [self drawOneRect:rectArray[i]];
     }
+
     if (drawRectDuration_) {
         [drawRectDuration_ addValue:[drawRectDuration_ timeSinceTimerStarted]];
         NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
               self, drawRectDuration_.value, drawRectInterval_.value);
     }
     const NSRect frame = [self visibleRect];
-    double x = frame.origin.x + frame.size.width;
+    CGFloat badgeWidth = 0;
+    if (_badgeImage) {
+        badgeWidth = _badgeImage.size.width + kBadgeMargin + kBadgeRightMargin;
+    }
+    double x = frame.origin.x + frame.size.width - badgeWidth;
+    if ([_delegate textViewIsMaximized]) {
+        NSSize size = [maximizedImage size];
+        x -= size.width + kMaximizedMargin;
+        [maximizedImage drawAtPoint:NSMakePoint(x,
+                                                frame.origin.y + kMaximizedMargin)
+                           fromRect:NSMakeRect(0, 0, size.width, size.height)
+                          operation:NSCompositeSourceOver
+                           fraction:0.5];
+    }
     if ([_delegate textViewSessionIsBroadcastingInput]) {
         NSSize size = [broadcastInputImage size];
         x -= size.width + kBroadcastMargin;
@@ -2304,21 +2344,14 @@ NSMutableArray* screens=0;
         isFirstInteraction = NO;
     }
 
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown BEGIN %@", event);
-    }
-    DebugLog(@"PTYTextView keyDown");
+    DLog(@"PTYTextView keyDown BEGIN %@", event);
     id delegate = [self delegate];
     if ([delegate isPasting]) {
         [delegate queueKeyDown:event];
         return;
     }
     if ([_delegate textViewDelegateHandlesAllKeystrokes]) {
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
-        }
+        DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
         // Delegate has special handling for this case.
         [delegate keyDown:event];
         return;
@@ -2326,22 +2359,21 @@ NSMutableArray* screens=0;
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
     BOOL prev = [self hasMarkedText];
+    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
     keyIsARepeat = [event isARepeat];
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-        NSLog(@"prev=%d", (int)prev);
-        NSLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-        NSLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
-        NSLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
-        NSLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
-        NSLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
-        NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
-        NSLog(@"event is repeated=%d", keyIsARepeat);
-    }
+    DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+    DLog(@"prev=%d", (int)prev);
+    DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
+    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+    DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
+    DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
+    DLog(@"leftAltPressed && optionKey != NORMAL = %d", (int)(leftAltPressed && [delegate optionKey] != OPT_NORMAL));
+    DLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
+    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+    DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
+    DLog(@"event is repeated=%d", keyIsARepeat);
 
     // discard repeated key events if auto repeat mode (DECARM) is disabled
     if (keyIsARepeat && ![[_dataSource terminal] autorepeatMode]) {
@@ -2362,27 +2394,21 @@ NSMutableArray* screens=0;
         ([delegate hasActionableKeyMappingForEvent:event] ||       // delegate will do something useful
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
          ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
-          (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||
-           (modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||  // Synergy sends an Alt key that's neither left nor right!
-           ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL))) ||
+          ((leftAltPressed && [delegate optionKey] != OPT_NORMAL) ||
+           (rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL))) ||
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: process in delegate");
-        }
-        [delegate keyDown:event];
-        return;
+             DLog(@"PTYTextView keyDown: process in delegate");
+             [delegate keyDown:event];
+             return;
     }
 
-    if (debugKeyDown) {
-        NSLog(@"Test for command key");
-    }
+    DLog(@"Test for command key");
+
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown You pressed cmd+something");
-        }
+        DLog(@"PTYTextView keyDown You pressed cmd+something");
         return;
     }
 
@@ -2391,9 +2417,8 @@ NSMutableArray* screens=0;
     BOOL workAroundControlBug = NO;
     if (!prev &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
-        if (debugKeyDown) {
-            NSLog(@"Special ctrl+key handler running");
-        }
+        DLog(@"Special ctrl+key handler running");
+
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
         if ([unmodkeystr length] != 0) {
             unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
@@ -2415,9 +2440,7 @@ NSMutableArray* screens=0;
             }
             if (cc != 0xffff) {
                 [self insertText:[NSString stringWithCharacters:&cc length:1]];
-                if (debugKeyDown) {
-                    NSLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
-                }
+                DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
                 workAroundControlBug = YES;
             }
         }
@@ -2426,9 +2449,7 @@ NSMutableArray* screens=0;
     if (!workAroundControlBug) {
         // Let the IME process key events
         _inputMethodIsInserting = NO;
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown send to IME");
-        }
+        DLog(@"PTYTextView keyDown send to IME");
 
         // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
         // wrong instnace of PTYTextView. We work around the issue by using a global variable to
@@ -2442,15 +2463,11 @@ NSMutableArray* screens=0;
         if (!prev &&
             !_inputMethodIsInserting &&
             ![self hasMarkedText]) {
-            if (debugKeyDown) {
-                NSLog(@"PTYTextView keyDown IME no, send to delegate");
-            }
+            DLog(@"PTYTextView keyDown IME no, send to delegate");
             [delegate keyDown:event];
         }
     }
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown END");
-    }
+    DLog(@"PTYTextView keyDown END");
 }
 
 - (BOOL)keyIsARepeat
@@ -2837,9 +2854,9 @@ NSMutableArray* screens=0;
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
-    _mouseDownWasFirstMouse = ([event eventNumber] == firstMouseEventNumber_);
+    _mouseDownWasFirstMouse = ([event eventNumber] == firstMouseEventNumber_) || ![NSApp keyWindow];
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-    const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
+    BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
     const BOOL ctrlPressed = ([event modifierFlags] & NSControlKeyMask) != 0;
     if (gDebugLogging && altPressed && cmdPressed && shiftPressed && ctrlPressed) {
@@ -2848,7 +2865,7 @@ NSMutableArray* screens=0;
         [[iTermController sharedInstance] dumpViewHierarchy];
         return NO;
     }
-    if (_mouseDownWasFirstMouse && altPressed) {
+    if (_mouseDownWasFirstMouse && !cmdPressed) {
         return NO;
     }
     [pointer_ notifyLeftMouseDown];
@@ -2879,13 +2896,23 @@ NSMutableArray* screens=0;
 
     dragOk_ = YES;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if (!cmdPressed &&
-        frontTextView &&
-        ![_delegate textViewInSameTabAsTextView:frontTextView]) {
-        // Mouse clicks in inactive tab are always handled by superclass because we don't want clicks
-        // to select a split pane to be xterm-mouse-reported. We do allow cmd-clicks to go through
-        // incase you're clicking on a URL.
-        return YES;
+    if (frontTextView != self) {
+        if (cmdPressed && [NSApp keyWindow] == [self window]) {
+            // A cmd-click in an inactive pane in the active window behaves like a click that
+            // doesn't make the pane active.
+            mouseDown = YES;
+            cmdPressed = NO;
+            _mouseDownWasFirstMouse = YES;
+        } else {
+            // A cmd-click in in inactive window or a plain click in any window (active or not)
+            // makes the pane active.
+            _mouseDownWasFirstMouse = YES;
+            [[self window] makeFirstResponder:self];
+            return NO;
+        }
+    } else if (cmdPressed && [NSApp keyWindow] != [self window]) {
+        // A cmd-click in an active session in a non-key window acts like a click without cmd.
+        cmdPressed = NO;
     }
 
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
@@ -2909,6 +2936,8 @@ NSMutableArray* screens=0;
         }
     }
 
+    mouseDown = YES;
+
     if ([self reportMouseEvent:event]) {
         return NO;
     }
@@ -2919,14 +2948,9 @@ NSMutableArray* screens=0;
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
     }
 
-    if (mouseDownEvent != nil) {
-        [mouseDownEvent release];
-        mouseDownEvent = nil;
-    }
-    [event retain];
-    mouseDownEvent = event;
+    [mouseDownEvent autorelease];
+    mouseDownEvent = [event retain];
     mouseDragged = NO;
-    mouseDown = YES;
     mouseDownOnSelection = NO;
     mouseDownOnImage = NO;
 
@@ -2948,11 +2972,13 @@ NSMutableArray* screens=0;
 
         if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
             mouseDownOnImage = YES;
+            _selection.appending = NO;
         } else if ([_selection containsCoord:VT100GridCoordMake(x, y)]) {
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up (if a cmd-drag follows)
             DLog(@"mouse down on selection");
             mouseDownOnSelection = YES;
+            _selection.appending = NO;
             return YES;
         } else {
             // start a new selection
@@ -3020,16 +3046,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [pointer_ mouseUp:event withTouches:numTouches_];
         return;
     }
-    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
-    if (!cmdPressed &&
-        frontTextView &&
-        ![_delegate textViewInSameTabAsTextView:frontTextView]) {
-        // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
-        [[self window] makeFirstResponder: self];
-        [super mouseUp:event];
+    const BOOL cmdActuallyPressed = (([event modifierFlags] & NSCommandKeyMask) != 0);
+    const BOOL cmdPressed = cmdActuallyPressed && !_mouseDownWasFirstMouse;
+    if (mouseDown == NO) {
         return;
     }
+    mouseDown = NO;
 
     selectionScrollDirection = 0;
 
@@ -3062,14 +3084,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
     }
 
-    if (mouseDown == NO) {
-        DLog(@"Mouse up. Selection=%@", _selection);
-        return;
+    if (!(cmdActuallyPressed && _mouseDownWasFirstMouse)) {
+        // Make ourselves the first responder except in the case where you cmd-clicked in an
+        // inactive pane in a key window. We use cmdActuallyPressed instead of cmdPressed because
+        // on first-mouse cmdPressed gets unset so this function generally behaves like it got a
+        // plain click (this is the exception).
+        [[self window] makeFirstResponder:self];
     }
-    mouseDown = NO;
-
-    // make sure we have key focus
-    [[self window] makeFirstResponder:self];
 
     [_selection endLiveSelection];
     if (isUnshiftedSingleClick) {
@@ -3404,12 +3425,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-
     NSMenu *markMenu = nil;
     VT100ScreenMark *mark = [_dataSource markOnLine:y];
+    DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
     if (mark && mark.command.length) {
         markMenu = [self menuForMark:mark directory:[_dataSource workingDirectoryOnLine:y]];
-        if (x < MARGIN) {
+        NSPoint locationInWindow = [event locationInWindow];
+        if (locationInWindow.x < MARGIN) {
             return markMenu;
         }
     }
@@ -3548,12 +3570,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event verticalOk:(BOOL)verticalOk
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
-    }
-    DebugLog(@"PTYTextView placeCursorOnCurrentLineWithEvent");
+    DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
 
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
@@ -3617,14 +3634,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             i--;
         }
     }
-    if (debugKeyDown) {
-        NSLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
-              cursorX, cursorY, x, y, width);
-    }
+    DLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
+          cursorX, cursorY, x, y, width);
 
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
-    }
+    DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
 }
 
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
@@ -4018,10 +4031,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        isComplex:c.complexChar
                                       renderBold:&isBold
                                     renderItalic:&isItalic];
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
 
     return @{ NSForegroundColorAttributeName: fgColor,
               NSBackgroundColorAttributeName: bgColor,
               NSFontAttributeName: fontInfo.font,
+              NSParagraphStyleAttributeName: paragraphStyle,
               NSUnderlineStyleAttributeName: @(underlineStyle) };
 }
 
@@ -4525,7 +4541,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    
+
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
@@ -4960,10 +4976,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
-        BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-        if (debugKeyDown) {
-            NSLog(@"insertText: clear marked text");
-        }
+        DLog(@"insertText: clear marked text");
         _inputMethodMarkedRange = NSMakeRange(0, 0);
         [markedText release];
         markedText=nil;
@@ -5003,10 +5016,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // TODO: Respect replacementRange
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange replacementRange:(NSRange)replacementRange
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-    if (debugKeyDown) {
-        NSLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
-    }
+    DLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
     [markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
         markedText = [[NSAttributedString alloc] initWithString:[aString string]
@@ -5048,10 +5058,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)unmarkText
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-    if (debugKeyDown) {
-        NSLog(@"clear marked text");
-    }
+    DLog(@"clear marked text");
     // As far as I can tell this is never called.
     _inputMethodMarkedRange = NSMakeRange(0, 0);
     imeOffset = 0;
@@ -5144,6 +5151,82 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setTrouterPrefs:(NSDictionary *)prefs
 {
     self.trouter.prefs = prefs;
+}
+
+- (void)setBadgeLabel:(NSString *)badgeLabel {
+    NSColor *fillColor = [_delegate textViewBadgeColor];
+    // We compare pointer equality below to catch equal nil pointers, which isEqual: cannot.
+    if (NSEqualSizes(_badgeDocumentVisibleRectSize, self.enclosingScrollView.documentVisibleRect.size) &&
+        (fillColor == _badgeColor || [fillColor isEqual:_badgeColor]) &&
+        (badgeLabel == _badgeLabel || [badgeLabel isEqualToString:_badgeLabel])) {
+        return;
+    }
+    int oldLength = [_badgeLabel length];
+    DLog(@"Recompute badge self=%p, label=new:%@ vs old:%@, color=new:%@ vs old:%@, size=new:%@ vs old:%@",
+          self,
+         badgeLabel, _badgeLabel,
+         fillColor, _badgeColor,
+         NSStringFromSize(self.enclosingScrollView.documentVisibleRect.size),
+         NSStringFromSize(_badgeDocumentVisibleRectSize));
+    _badgeDocumentVisibleRectSize = self.enclosingScrollView.documentVisibleRect.size;
+    [_badgeLabel autorelease];
+    _badgeLabel = [badgeLabel copy];
+    self.badgeColor = fillColor;
+
+    if ([_badgeLabel length]) {
+        NSSize maxSize = self.enclosingScrollView.documentVisibleRect.size;
+        maxSize.width *= 0.5;  // Max size of image
+        maxSize.height *= 0.2;
+        NSFont *font = nil;
+        CGFloat min = 4, max = 100;
+        int points = (min + max / 2);
+        int prevPoints = -1;
+        NSSize sizeWithFont;
+        NSDictionary *attributes;
+        NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+        NSFontManager *fontManager = [NSFontManager sharedFontManager];
+        NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+        paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
+        paragraphStyle.alignment = NSRightTextAlignment;
+        while (points != prevPoints) {
+            font = [fontManager convertFont:[NSFont fontWithName:@"Helvetica" size:points]
+                                toHaveTrait:NSBoldFontMask];
+            attributes = @{ NSFontAttributeName: font,
+                            NSForegroundColorAttributeName: fillColor,
+                            NSParagraphStyleAttributeName: paragraphStyle };
+            NSRect bounds = [badgeLabel boundingRectWithSize:maxSize options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes];
+            sizeWithFont = bounds.size;
+            if (sizeWithFont.width > maxSize.width || sizeWithFont.height > maxSize.height) {
+                max = points;
+            } else if (sizeWithFont.width < maxSize.width && sizeWithFont.height < maxSize.height) {
+                min = points;
+            }
+            prevPoints = points;
+            points = (min + max) / 2;
+        }
+        if (sizeWithFont.width > 0 && sizeWithFont.height > 0) {
+            NSImage *image = [[NSImage alloc] initWithSize:sizeWithFont];
+            [image lockFocus];
+            NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
+            temp[NSStrokeWidthAttributeName] = @-2;
+            temp[NSStrokeColorAttributeName] = backgroundColor;
+            [badgeLabel drawWithRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
+                             options:NSStringDrawingUsesLineFragmentOrigin
+                          attributes:temp];
+            [image unlockFocus];
+
+            self.badgeImage = image;
+        } else {
+            self.badgeImage = nil;
+        }
+    } else {
+        self.badgeImage = nil;
+        if (oldLength == 0) {
+            // Optimization - don't call setNeedsDisplay if nothing changed.
+            return;
+        }
+    }
+    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)growSelectionLeft
@@ -5588,7 +5671,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     blue.alphaValue = 0;
     [self addSubview:blue];
     [[NSAnimationContext currentContext] setDuration:0.5];
-    blue.animator.alphaValue = 0.75;
+    [blue.animator setAlphaValue:0.75];
     [blue performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:0.75];
 }
 
@@ -6086,7 +6169,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 thisCharString = @"I";
             }
             if (inUnderlinedRange && !self.currentUnderlineHostname) {
-                attrs.color = [NSColor colorWithCalibratedRed:0.023 green:0.270 blue:0.678 alpha:1];
+                attrs.color = [_colorMap colorForKey:kColorMapLink];
             }
             if (!currentRun) {
                 firstRun = currentRun = malloc(sizeof(CRun));
@@ -6522,6 +6605,37 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [NSGraphicsContext restoreGraphicsState];
 }
 
+- (NSSize)drawBadgeInRect:(NSRect)rect {
+    NSImage *image = self.badgeImage;
+    if (!image) {
+        return NSZeroSize;
+    }
+    NSSize textViewSize = self.bounds.size;
+    NSSize visibleSize = [[self enclosingScrollView] documentVisibleRect].size;
+    NSSize imageSize = image.size;
+    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - kBadgeRightMargin,
+                                    textViewSize.height - visibleSize.height,
+                                    imageSize.width,
+                                    imageSize.height);
+    NSRect intersection = NSIntersectionRect(rect, destination);
+    if (intersection.size.width == 0 || intersection.size.height == 1) {
+        return NSZeroSize;
+    }
+    NSRect source = intersection;
+    source.origin.x -= destination.origin.x;
+    source.origin.y -= destination.origin.y;
+    source.origin.y = imageSize.height - (source.origin.y + source.size.height);
+
+    [image drawInRect:intersection
+             fromRect:source
+            operation:NSCompositeSourceOver
+             fraction:1
+       respectFlipped:YES
+                hints:nil];
+    imageSize.width += kBadgeMargin + kBadgeRightMargin;
+    return imageSize;
+}
+
 // Draw a run of background color/image and foreground text.
 - (void)drawRunStartingAtIndex:(const int)firstIndex  // Index into line of first char
                            row:(int)row               // Row number of line
@@ -6605,6 +6719,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
     }
     *defaultBgColorPtr = aColor;
+    [self drawBadgeInRect:bgRect];
 
     // Draw red stripes in the background if sending input to all sessions
     if (stripes) {
@@ -7733,6 +7848,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (URLAction *)urlActionForClickAtX:(int)x y:(int)y respectingHardNewlines:(BOOL)respectHardNewlines
 {
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
+    if ([self imageInfoAtCoord:coord]) {
+        // TODO(georgen): I guess we could do something if you cmd-click on an image?
+        return nil;
+    }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     if ([extractor characterAt:coord].code == 0) {
         return nil;
@@ -7853,7 +7972,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return action;
         }
     }
-    
+
     // No luck. Look for something vaguely URL-like.
     int prefixChars;
     NSString *joined = [prefix stringByAppendingString:suffix];
@@ -8494,6 +8613,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self updateScrollerForBackgroundColor];
         self.cachedBackgroundColor = nil;
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
+        self.badgeLabel = _badgeLabel;
+    } else if (theKey == kColorMapForeground) {
+        self.badgeLabel = _badgeLabel;
     } else if (theKey == kColorMapSelection) {
         self.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                     towardsGrayLevel:0.5];
@@ -8514,12 +8636,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - Mouse reporting
 
+- (NSRect)liveRect {
+    int numLines = [_dataSource numberOfLines];
+    NSRect rect;
+    int height = [_dataSource height];
+    rect.origin.y = numLines - height;
+    rect.origin.y *= lineHeight;
+    rect.origin.x = MARGIN;
+    rect.size.width = charWidth * [_dataSource width];
+    rect.size.height = lineHeight * [_dataSource height];
+    return rect;
+}
+
 - (BOOL)shouldReportMouseEvent:(NSEvent *)event at:(NSPoint)point {
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (point.y < visibleRect.origin.y) {
+    NSRect liveRect = [self liveRect];
+    if (!NSPointInRect(point, liveRect)) {
         return NO;
     }
-    if (event.type == NSLeftMouseDown && _mouseDownWasFirstMouse) {
+    if ((event.type == NSLeftMouseDown || event.type == NSLeftMouseUp) && _mouseDownWasFirstMouse) {
         return NO;
     }
     if (event.type == NSScrollWheel) {
@@ -8544,13 +8678,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return MOUSE_BUTTON_SCROLLUP;
         }
     }
-    
+
     MouseButtonNumber buttonNumber = (MouseButtonNumber) [event buttonNumber];
     if (buttonNumber == 2) {
         // convert NSEvent's "middle button" to X11's middle button number
         buttonNumber = MOUSE_BUTTON_MIDDLE;
     }
-    
+
     return buttonNumber;
 }
 
@@ -8561,13 +8695,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (![self shouldReportMouseEvent:event at:point]) {
         return NO;
     }
-    
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    VT100GridCoord coord = VT100GridCoordMake((point.x - MARGIN - visibleRect.origin.x) / charWidth,
-                                              (point.y - visibleRect.origin.y) / lineHeight);
+
+    NSRect liveRect = [self liveRect];
+    VT100GridCoord coord = VT100GridCoordMake((point.x - liveRect.origin.x) / charWidth,
+                                              (point.y - liveRect.origin.y) / lineHeight);
     coord.x = MAX(0, coord.x);
     coord.y = MAX(0, coord.y);
-    
+
     return [_delegate textViewReportMouseEvent:event.type
                                      modifiers:event.modifierFlags
                                         button:[self mouseReportingButtonNumberForEvent:event]

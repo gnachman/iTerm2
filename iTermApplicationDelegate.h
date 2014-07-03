@@ -114,6 +114,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification;
 - (void)applicationDidResignActive:(NSNotification *)aNotification;
 
+- (IBAction)undo:(id)sender;
 - (IBAction)toggleToolbelt:(id)sender;
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem;
 - (IBAction)toggleFullScreenTabBar:(id)sender;

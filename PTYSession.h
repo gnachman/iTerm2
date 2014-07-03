@@ -248,6 +248,22 @@ typedef enum {
 @property(nonatomic, retain) NSColor *foregroundColor;
 @property(nonatomic, retain) NSColor *selectedTextColor;
 @property(nonatomic, retain) NSColor *selectionColor;
+@property(nonatomic, retain) NSColor *ansiBlackColor;
+@property(nonatomic, retain) NSColor *ansiRedColor;
+@property(nonatomic, retain) NSColor *ansiGreenColor;
+@property(nonatomic, retain) NSColor *ansiYellowColor;
+@property(nonatomic, retain) NSColor *ansiBlueColor;
+@property(nonatomic, retain) NSColor *ansiMagentaColor;
+@property(nonatomic, retain) NSColor *ansiCyanColor;
+@property(nonatomic, retain) NSColor *ansiWhiteColor;
+@property(nonatomic, retain) NSColor *ansiBrightBlackColor;
+@property(nonatomic, retain) NSColor *ansiBrightRedColor;
+@property(nonatomic, retain) NSColor *ansiBrightGreenColor;
+@property(nonatomic, retain) NSColor *ansiBrightYellowColor;
+@property(nonatomic, retain) NSColor *ansiBrightBlueColor;
+@property(nonatomic, retain) NSColor *ansiBrightMagentaColor;
+@property(nonatomic, retain) NSColor *ansiBrightCyanColor;
+@property(nonatomic, retain) NSColor *ansiBrightWhiteColor;
 
 // Session is not in foreground and notifications are enabled on the screen.
 @property(nonatomic, readonly) BOOL shouldPostGrowlNotification;
@@ -291,6 +307,8 @@ typedef enum {
                         forObjectType:(iTermObjectType)objectType;
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark;
++ (NSString *)uniqueIdInArrangement:(NSDictionary *)arrangement;
+
 - (void)textViewFontDidChange;
 
 // Set rows, columns from arrangement.
@@ -307,6 +325,9 @@ typedef enum {
 - (void)softTerminate;
 - (void)terminate;
 
+// Tries to revive a terminated session. Returns YES on success. It should be re-added to a tab if
+// after reviving.
+- (BOOL)revive;
 
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;

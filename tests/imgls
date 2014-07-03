@@ -16,8 +16,8 @@ do
     printf '\a'
     printf '\033[A'
     echo -n "$dims "
-    ls -l $fn
+    ls -l "$fn"
   else
-    ls -l $fn
+    ls -l "$fn"
   fi
 done

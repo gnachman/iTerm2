@@ -482,6 +482,16 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 - (void)setTabLocation:(int)value
 {
     _tabLocation = value;
+    switch (value) {
+        case PSMTab_TopTab:
+        case PSMTab_BottomTab:
+            [self setOrientation:PSMTabBarHorizontalOrientation];
+            break;
+
+        case PSMTab_LeftTab:
+            [self setOrientation:PSMTabBarVerticalOrientation];
+            break;
+    }
 }
 
 - (BOOL)allowsBackgroundTabClosing
@@ -864,7 +874,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
         [cell setIsLast:NO];
     }
     [[[self cells] lastObject] setIsLast:YES];
-    [style drawTabBar:self inRect:rect];
+    [style drawTabBar:self inRect:rect horizontal:(_orientation == PSMTabBarHorizontalOrientation)];
 }
 
 - (void)moveTabAtIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destIndex

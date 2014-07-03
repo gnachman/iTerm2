@@ -231,8 +231,12 @@ typedef enum {
 }
 
 - (IBAction)editBookmarks:(id)sender {
-    [[PreferencePanel sharedInstance] run];
-    [[PreferencePanel sharedInstance] selectProfilesTab];
+    if ([tableView_ selectedGuid]) {
+        [self editSelectedBookmark:nil];
+    } else {
+        [[PreferencePanel sharedInstance] run];
+        [[PreferencePanel sharedInstance] selectProfilesTab];
+    }
 }
 
 - (void)editSelectedBookmark:(id)sender

@@ -91,6 +91,7 @@ typedef enum {
 - (void)refreshAndStartTimerIfNeeded;
 - (BOOL)textViewIsActiveSession;
 - (BOOL)textViewSessionIsBroadcastingInput;
+- (BOOL)textViewIsMaximized;
 - (BOOL)textViewTabHasMaximizedPanel;
 - (void)textViewWillNeedUpdateForBlink;
 - (BOOL)textViewDelegateHandlesAllKeystrokes;
@@ -137,6 +138,7 @@ typedef enum {
 - (BOOL)textViewCanSelectOutputOfLastCommand;
 - (NSColor *)textViewCursorGuideColor;
 - (BOOL)textViewUseHFSPlusMapping;
+- (NSColor *)textViewBadgeColor;
 
 @end
 
@@ -221,6 +223,9 @@ typedef enum {
 @property(nonatomic, readonly) NSFont *font;
 @property(nonatomic, readonly) NSFont *nonAsciiFont;
 
+// Returns the non-ascii font, even if it's not being used.
+@property(nonatomic, readonly) NSFont *nonAsciiFontEvenIfNotUsed;
+
 // Size of a character.
 @property(nonatomic, readonly) double lineHeight;
 @property(nonatomic, readonly) double charWidth;
@@ -248,6 +253,9 @@ typedef enum {
 
 // Semantic history. TODO: Move this into PTYSession.
 @property(nonatomic, readonly) Trouter *trouter;
+
+// A text badge shown in the top right of the window
+@property(nonatomic, copy) NSString *badgeLabel;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

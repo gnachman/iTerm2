@@ -131,7 +131,7 @@ typedef struct screen_char_t
     //   The lower 9 bits have the same semantics for foreground and background
     //   color:
     //     Low three bits give color. 0-7 are black, red, green, yellow, blue,
-    //       purple, cyan, and white.
+    //       magenta, cyan, and white.
     //     Values between 8 and 15 are bright versions of 0-7.
     //     Values between 16 and 255 are used for 256 color mode:
     //       16-232: rgb value given by 16 + r*36 + g*6 + b, with each color in

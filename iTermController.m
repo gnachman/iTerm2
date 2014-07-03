@@ -1,5 +1,3 @@
-// -*- mode:objc -*-
-// $Id: iTermController.m,v 1.78 2008-10-17 04:02:45 yfabian Exp $
 /*
  **  iTermController.m
  **
@@ -51,6 +49,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
+#import "iTermRestorableSession.h"
 #import "iTermWarning.h"
 #include <objc/runtime.h>
 
@@ -107,14 +106,17 @@ BOOL IsMavericksOrLater(void) {
 }
 
 
-@implementation iTermController
+@implementation iTermController {
+    NSMutableArray *_restorableSessions;
+    NSMutableArray *_currentRestorableSessionsStack;
+}
 
 static iTermController* shared = nil;
 static BOOL initDone = NO;
 
 + (iTermController*)sharedInstance
 {
-    if(!shared && !initDone) {
+    if (!shared && !initDone) {
         shared = [[iTermController alloc] init];
         initDone = YES;
     }
@@ -129,8 +131,7 @@ static BOOL initDone = NO;
 }
 
 // init
-- (id)init
-{
+- (id)init {
     self = [super init];
 
     if (self) {
@@ -157,7 +158,8 @@ static BOOL initDone = NO;
 
         terminalWindows = [[NSMutableArray alloc] init];
         keyWindowIndexMemo_ = -1;
-
+        _restorableSessions = [[NSMutableArray alloc] init];
+        _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
         // Activate Growl
         /*
          * Need to add routine in iTerm prefs for Growl support and
@@ -186,7 +188,8 @@ static BOOL initDone = NO;
         [gd release];
     }
     [previouslyActiveAppPID_ release];
-
+    [_restorableSessions release];
+    [_currentRestorableSessionsStack release];
     [super dealloc];
 }
 
@@ -964,7 +967,7 @@ static BOOL initDone = NO;
             // Give the space-switching animation time to get started; otherwise a window opened
             // subsequent to this will appear in the previous space. This is short enough of a
             // delay that it's not annoying when you're already there.
-            [NSThread sleepForTimeInterval:0.1];
+            [NSThread sleepForTimeInterval:0.3];
         }
     }
 }
@@ -1159,7 +1162,7 @@ static BOOL initDone = NO;
         [term delayedEnterFullscreen];
     }
     if (makeKey && ![[term window] isKeyWindow]) {
-        // When this function is activated from the dock icon's context menu so make sure
+        // When this function is activated from the dock icon's context menu make sure
         // that the new window is on top of all other apps' windows. For some reason,
         // makeKeyAndOrderFront does nothing.
         [NSApp activateIgnoringOtherApps:YES];
@@ -1237,6 +1240,15 @@ static BOOL initDone = NO;
     return nil;
 }
 
+- (PseudoTerminal *)terminalWithGuid:(NSString *)guid {
+    for (PseudoTerminal *term in [self terminals]) {
+        if ([[term terminalGuid] isEqualToString:guid]) {
+            return term;
+        }
+    }
+    return nil;
+}
+
 // http://cocoadev.com/DeterminingOSVersion
 + (BOOL)getSystemVersionMajor:(unsigned int *)major
                         minor:(unsigned int *)minor
@@ -1282,6 +1294,55 @@ static BOOL initDone = NO;
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
     [[NSUserDefaults standardUserDefaults] setObject:appCast forKey:@"SUFeedURL"];
+}
+
+- (void)addRestorableSession:(iTermRestorableSession *)session {
+    if (!self.currentRestorableSession) {
+        [_restorableSessions addObject:session];
+    }
+}
+
+- (void)pushCurrentRestorableSession:(iTermRestorableSession *)session {
+    [_currentRestorableSessionsStack insertObject:session
+                                          atIndex:0];
+}
+
+- (void)commitAndPopCurrentRestorableSession {
+    [_restorableSessions addObject:self.currentRestorableSession];
+    [_currentRestorableSessionsStack removeObjectAtIndex:0];
+}
+
+- (iTermRestorableSession *)currentRestorableSession {
+    return _currentRestorableSessionsStack.count ? _currentRestorableSessionsStack[0] : nil;
+}
+
+- (void)removeSessionFromRestorableSessions:(PTYSession *)session {
+    NSInteger index =
+        [_restorableSessions indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+            iTermRestorableSession *restorableSession = obj;
+            if ([restorableSession.sessions containsObject:session]) {
+                *stop = YES;
+                return YES;
+            } else {
+                return NO;
+            }
+        }];
+    if (index != NSNotFound) {
+        [_restorableSessions removeObjectAtIndex:index];
+    }
+}
+
+- (iTermRestorableSession *)popRestorableSession {
+    if (!_restorableSessions.count) {
+        return nil;
+    }
+    iTermRestorableSession *restorableSession = [[[_restorableSessions lastObject] retain] autorelease];
+    [_restorableSessions removeLastObject];
+    return restorableSession;
+}
+
+- (BOOL)hasRestorableSession {
+    return _restorableSessions.count > 0;
 }
 
 #pragma mark - Scripting support

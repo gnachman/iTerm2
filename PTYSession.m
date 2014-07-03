@@ -19,6 +19,8 @@
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermRestorableSession.h"
+#import "iTermRule.h"
 #import "iTermSelection.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
@@ -90,10 +92,19 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name";  // manually set name
 static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
 static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
+static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 static int gNextSessionID = 1;
+
+// Keys into _badgeVars.
+static NSString *const kBadgeKeySessionName = @"session.name";
+static NSString *const kBadgeKeySessionColumns = @"session.columns";
+static NSString *const kBadgeKeySessionRows = @"session.rows";
+static NSString *const kBadgeKeySessionHostname = @"session.hostname";
+static NSString *const kBadgeKeySessionUsername = @"session.username";
+static NSString *const kBadgeKeySessionPath = @"session.path";
 
 // Rate limit for checking instant (partial-line) triggers, in seconds.
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
@@ -114,6 +125,9 @@ typedef enum {
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
+@property(nonatomic, copy) NSString *uniqueID;
+@property(nonatomic, copy) NSString *badgeFormat;
+@property(nonatomic, retain) NSMutableDictionary *badgeVars;
 @end
 
 @implementation PTYSession {
@@ -250,9 +264,13 @@ typedef enum {
     // The last time at which a partial-line trigger check occurred. This keeps us from wasting CPU
     // checking long lines over and over.
     NSTimeInterval _lastPartialLineTriggerCheck;
-    
+
     // Maps announcement identifiers to view controllers.
     NSMutableDictionary *_announcements;
+
+    // Tokens get queued when a shell enters the paused state. If it gets unpaused, then these are
+    // executed before any others.
+    NSMutableArray *_queuedTokens;
 }
 
 - (id)init {
@@ -288,6 +306,8 @@ typedef enum {
         _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
+        _queuedTokens = [[NSMutableArray alloc] init];
+        _badgeVars = [[NSMutableDictionary alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -308,12 +328,12 @@ typedef enum {
                                                  selector:@selector(terminalFileShouldStop:)
                                                      name:kTerminalFileShouldStopNotification
                                                    object:nil];
+        [self updateBadgeVars];
     }
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
@@ -357,6 +377,10 @@ typedef enum {
     [_lastMark release];
     [_patternedImage release];
     [_announcements release];
+    [_queuedTokens release];
+    [_uniqueID release];
+    [_badgeFormat release];
+    [_badgeVars release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -434,6 +458,35 @@ typedef enum {
     }
     [self setDvrFrame];
     return [_dvrDecoder timestamp];
+}
+
+- (void)updateBadgeVars {
+    if (_name) {
+        _badgeVars[kBadgeKeySessionName] = [_name copy];
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionName];
+    }
+
+    _badgeVars[kBadgeKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
+    _badgeVars[kBadgeKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
+    VT100RemoteHost *remoteHost = [self currentHost];
+    if (remoteHost.hostname) {
+        _badgeVars[kBadgeKeySessionHostname] = remoteHost.hostname;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionHostname];
+    }
+    if (remoteHost.username) {
+        _badgeVars[kBadgeKeySessionUsername] = remoteHost.username;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionUsername];
+    }
+    NSString *path = [_screen workingDirectoryOnLine:_screen.numberOfScrollbackLines + _screen.cursorY - 1];
+    if (path) {
+        _badgeVars[kBadgeKeySessionPath] = path;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionPath];
+    }
+    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 - (void)coprocessChanged
@@ -950,7 +1003,18 @@ typedef enum {
                                    actions:@[ @"OK" ]
                                 identifier:theKey
                                silenceable:kiTermWarningTypePermanentlySilenceable];
- }
+    }
+}
+
+- (iTermRestorableSession *)restorableSession {
+    iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
+    restorableSession.sessions = @[ self ];
+    restorableSession.terminalGuid = self.tab.realParentWindow.terminalGuid;
+    restorableSession.tabUniqueId = self.tab.uniqueId;
+    restorableSession.arrangement = self.tab.arrangement;
+    restorableSession.group = kiTermRestorableSessionGroupSession;
+
+    return restorableSession;
 }
 
 // Terminate a replay session but not the live session
@@ -999,6 +1063,7 @@ typedef enum {
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
+    BOOL undoable = ![self isTmuxClient];
     _terminal.parser.tmuxParser = nil;
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -1016,19 +1081,20 @@ typedef enum {
     }
 
     _exited = YES;
-    [_shell stop];
-    [self retain];  // We must live until -taskWasDeregistered is called.
+    [_view retain];  // hardstop and revive will release this.
+    if (undoable) {
+        // TODO: executeTokens:bytesHandled: should queue up tokens to avoid a race condition.
+        [self makeTerminationUndoable];
+    } else {
+        [self hardStop];
+    }
 
     // final update of display
     [self updateDisplay];
 
     [_tab removeSession:self];
 
-    [_textview setDataSource:nil];
-    [_textview setDelegate:nil];
-    [_textview removeFromSuperview];
     _colorMap.delegate = nil;
-    _textview = nil;
 
     _screen.delegate = nil;
     [_screen setTerminal:nil];
@@ -1048,30 +1114,58 @@ typedef enum {
     _tab = nil;
 }
 
+- (void)makeTerminationUndoable {
+    _shell.paused = YES;
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+    [self performSelector:@selector(hardStop)
+               withObject:nil
+               afterDelay:[iTermProfilePreferences intForKey:KEY_UNDO_TIMEOUT
+                                                   inProfile:_profile]];
+    [[iTermController sharedInstance] addRestorableSession:[self restorableSession]];
+}
+
+- (void)hardStop {
+    [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
+    [_view release];
+    [_shell stop];
+    [_textview setDataSource:nil];
+    [_textview setDelegate:nil];
+    [_textview removeFromSuperview];
+    _textview = nil;
+    [self retain];
+}
+
+- (BOOL)revive {
+    if (_shell.paused) {
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                                 selector:@selector(hardStop)
+                                                   object:nil];
+        if (!_shell.hasBrokenPipe) {
+            _exited = NO;
+        }
+        _textview.dataSource = _screen;
+        _textview.delegate = self;
+        _colorMap.delegate = _textview;
+        _screen.delegate = self;
+        _screen.terminal = _terminal;
+        _terminal.delegate = _screen;
+        _shell.paused = NO;
+        [_view autorelease];
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
 - (void)writeTaskImpl:(NSData *)data
 {
-    static BOOL checkedDebug;
-    static BOOL debugKeyDown;
-    if (!checkedDebug) {
-        debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-        checkedDebug = YES;
-    }
-    if (debugKeyDown || gDebugLogging) {
+    if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
-        if (debugKeyDown) {
-            NSLog(@"writeTaskImpl %p: called from %@", self, stack);
-        }
-        if (gDebugLogging) {
-            DebugLog([NSString stringWithFormat:@"writeTaskImpl %p: called from %@", self, stack]);
-        }
+        DLog(@"writeTaskImpl %p: called from %@", self, stack);
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            if (debugKeyDown) {
-                NSLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
-            }
-            if (gDebugLogging) {
-                DebugLog([NSString stringWithFormat:@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]]);
-            }
+            DLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
         }
     }
 
@@ -1197,11 +1291,34 @@ typedef enum {
     });
 }
 
+- (BOOL)shouldExecuteToken {
+    return !_exited && _terminal && (self.tmuxMode == TMUX_GATEWAY || ![_shell hasMuteCoprocess]);
+}
+
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
     STOPWATCH_START(executing);
     int n = CVectorCount(vector);
+
+    if (_shell.paused) {
+        // Session was closed. The close may be undone, so queue up tokens.
+        for (int i = 0; i < n; i++) {
+            [_queuedTokens addObject:CVectorGetObject(vector, i)];
+        }
+        CVectorDestroy(vector);
+        return;
+    } else if (_queuedTokens.count) {
+        // A closed session was just un-closed. Execute queued up tokens.
+        for (VT100Token *token in _queuedTokens) {
+            if (![self shouldExecuteToken]) {
+                break;
+            }
+            [_terminal executeToken:token];
+        }
+        [_queuedTokens removeAllObjects];
+    }
+
     for (int i = 0; i < n; i++) {
-        if (_exited || !_terminal || (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess])) {
+        if (![self shouldExecuteToken]) {
             break;
         }
 
@@ -1860,6 +1977,8 @@ typedef enum {
     DLog(@"After session profile change overridden keys are: %@", _overriddenFields);
     [self setPreferencesFromAddressBookEntry:updatedProfile];
     [self setProfile:updatedProfile];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                        object:_profile[KEY_GUID]];
 }
 
 - (BOOL)reloadProfile
@@ -1883,6 +2002,8 @@ typedef enum {
             didChange = YES;
         }
     }
+
+    _textview.badgeLabel = [self badgeLabel];
     return didChange;
 }
 
@@ -1903,11 +2024,13 @@ typedef enum {
                               @(kColorMapSelection): KEY_SELECTION_COLOR,
                               @(kColorMapSelectedText): KEY_SELECTED_TEXT_COLOR,
                               @(kColorMapBold): KEY_BOLD_COLOR,
+                              @(kColorMapLink): KEY_LINK_COLOR,
                               @(kColorMapCursor): KEY_CURSOR_COLOR,
                               @(kColorMapCursorText): KEY_CURSOR_TEXT_COLOR };
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
-        NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
+        NSColor *theColor = [[iTermProfilePreferences objectForKey:profileKey
+                                                         inProfile:aDict] colorValue];
         [_colorMap setColor:theColor forKey:[colorKey intValue]];
     }
 
@@ -2029,7 +2152,8 @@ typedef enum {
     [_screen setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     _screen.appendToScrollbackWithStatusBar = [[aDict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
-
+    self.badgeFormat = aDict[KEY_BADGE_FORMAT];
+    _textview.badgeLabel = [self badgeLabel];
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
         nonAsciiFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
@@ -2038,9 +2162,16 @@ typedef enum {
     [[_tab realParentWindow] invalidateRestorableState];
 }
 
-- (NSString *)uniqueID
-{
-    return [self tty];
+- (NSString *)badgeLabel {
+    return [_badgeFormat stringByReplacingVariableReferencesWithVariables:_badgeVars];
+}
+
+- (NSString *)uniqueID {
+    if (!_uniqueID) {
+        static int gNextUniqueId;
+        self.uniqueID = [NSString stringWithFormat:@"%d", ++gNextUniqueId];
+    }
+    return _uniqueID;
 }
 
 - (NSString*)formattedName:(NSString*)base
@@ -2163,6 +2294,8 @@ typedef enum {
                                                             object:[[self tab] parentWindow]
                                                           userInfo:nil];
     }
+    _badgeVars[kBadgeKeySessionName] = [self name];
+    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 - (NSString*)windowTitle
@@ -2506,9 +2639,9 @@ typedef enum {
 - (NSDictionary*)arrangement
 {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
-    [result setObject:[NSNumber numberWithInt:[_screen width]] forKey:SESSION_ARRANGEMENT_COLUMNS];
-    [result setObject:[NSNumber numberWithInt:[_screen height]] forKey:SESSION_ARRANGEMENT_ROWS];
-    [result setObject:_profile forKey:SESSION_ARRANGEMENT_BOOKMARK];
+    result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
+    result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
+    result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
     if (_name) {
         result[SESSION_ARRANGEMENT_NAME] = _name;
@@ -2520,7 +2653,10 @@ typedef enum {
         result[SESSION_ARRANGEMENT_WINDOW_TITLE] = _windowTitle;
     }
     NSString* pwd = [_shell getWorkingDirectory];
-    [result setObject:pwd ? pwd : @"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+    result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
+    if (self.uniqueID) {
+        result[SESSION_UNIQUE_ID] = self.uniqueID;  // TODO: This isn't really unique, it's just the tty number
+    }
     return result;
 }
 
@@ -2548,6 +2684,10 @@ typedef enum {
     }
 
     return result;
+}
+
++ (NSString *)uniqueIdInArrangement:(NSDictionary *)arrangement {
+    return arrangement[SESSION_UNIQUE_ID];
 }
 
 - (void)updateScroll
@@ -2732,10 +2872,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSWindow *window = [[[self tab] realParentWindow] window];
     DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
-    if ([[_textview font] isEqualTo:font] &&
-        [[_textview nonAsciiFont] isEqualTo:nonAsciiFont] &&
+    if ([_textview.font isEqualTo:font] &&
+        [_textview.nonAsciiFontEvenIfNotUsed isEqualTo:nonAsciiFont] &&
         [_textview horizontalSpacing] == horizontalSpacing &&
         [_textview verticalSpacing] == verticalSpacing) {
+        // There's an unfortunate problem that this is a band-aid over.
+        // If you change some attribute of a profile that causes sessions to reload their profiles
+        // with the kReloadAllProfiles notification, then each profile will call this in turn,
+        // and it may be a no-op for all of them. If each calls -[PseudoTerminal fitWindowToTab:[self tab]]
+        // and different tabs come up with slightly different ideal sizes (e.g., because they
+        // have different split pane layouts) then the window may shrink by a few pixels for each
+        // session.
         return;
     }
     DLog(@"Line height was %f", (float)[_textview lineHeight]);
@@ -2790,16 +2937,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (!fontChangeNotificationInProgress) {
         fontChangeNotificationInProgress = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxFontChanged
-                                                            object:[NSArray arrayWithObjects:[_textview font],
-                                                                    [_textview nonAsciiFont],
-                                                                    [NSNumber numberWithDouble:[_textview horizontalSpacing]],
-                                                                    [NSNumber numberWithDouble:[_textview verticalSpacing]],
-                                                                    nil]];
+                                                            object:@[ _textview.font,
+                                                                      _textview.nonAsciiFontEvenIfNotUsed,
+                                                                      @(_textview.horizontalSpacing),
+                                                                      @(_textview.verticalSpacing) ]];
         fontChangeNotificationInProgress = NO;
-        [PTYTab setTmuxFont:[_textview font]
-               nonAsciiFont:[_textview nonAsciiFont]
-                   hSpacing:[_textview horizontalSpacing]
-                   vSpacing:[_textview verticalSpacing]];
+        [PTYTab setTmuxFont:_textview.font
+               nonAsciiFont:_textview.nonAsciiFontEvenIfNotUsed
+                   hSpacing:_textview.horizontalSpacing
+                   vSpacing:_textview.verticalSpacing];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
                                                             object:nil];
     }
@@ -2814,8 +2960,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (dir) {
         // Grow or shrink
         DLog(@"grow/shrink");
-        font = [self fontWithRelativeSize:dir from:[_textview font]];
-        nonAsciiFont = [self fontWithRelativeSize:dir from:[_textview nonAsciiFont]];
+        font = [self fontWithRelativeSize:dir from:_textview.font];
+        nonAsciiFont = [self fontWithRelativeSize:dir from:_textview.nonAsciiFontEvenIfNotUsed];
         hs = [_textview horizontalSpacing];
         vs = [_textview verticalSpacing];
     } else {
@@ -2849,6 +2995,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
 {
+    if (!_isDivorced) {
+        [self divorceAddressBookEntryFromPreferences];
+    }
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
     for (NSString *key in newValues) {
         NSObject *value = newValues[key];
@@ -2858,9 +3007,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // This was a no-op, so there's no need to get a divorce. Happens most
         // commonly when setting tab color after a split.
         return;
-    }
-    if (!_isDivorced) {
-        [self divorceAddressBookEntryFromPreferences];
     }
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
 
@@ -3602,7 +3748,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
 {
-  BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
   unsigned char *send_str = NULL;
   unsigned char *dataPtr = NULL;
   int dataLength = 0;
@@ -3624,15 +3769,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   }
   unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
   unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-  if (debugKeyDown) {
-    NSLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
-  }
+  DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
   gettimeofday(&_lastInput, NULL);
 
   if ([[[self tab] realParentWindow] inInstantReplay]) {
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown in IR");
-    }
+    DLog(@"PTYSession keyDown in IR");
+
     // Special key handling in IR mode, and keys never get sent to the live
     // session, even though it might be displayed.
     if (unicode == 27) {
@@ -3664,10 +3806,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   }
 
   unsigned short keycode = [event keyCode];
-  if (debugKeyDown) {
-    NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
-  }
-  DebugLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
+  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
 
   // Check if we have a custom key mapping for this event
   keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
@@ -3676,10 +3815,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                               keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
 
   if (keyBindingAction >= 0) {
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown action=%d", keyBindingAction);
-    }
-    DebugLog([NSString stringWithFormat:@"keyBindingAction=%d", keyBindingAction]);
+    DLog(@"PTYSession keyDown action=%d", keyBindingAction);
     // A special action was bound to this key combination.
     NSString* temp;
     int profileAction = [iTermKeyBindingMgr localActionForKeyCode:unmodunicode
@@ -3868,7 +4004,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       case KEY_ACTION_SET_PROFILE: {
           Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
           if (newProfile) {
-              [self setProfilePreservingName:newProfile];
+              [self setProfile:newProfile preservingName:YES];
           }
           break;
       }
@@ -3888,20 +4024,18 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       [self handleKeypressInTmuxGateway:unicode];
       return;
     }
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown no keybinding action");
-    }
-    DebugLog(@"No keybinding action");
+    DLog(@"PTYSession keyDown no keybinding action");
     if (_exited) {
       DebugLog(@"Terminal already dead");
       return;
     }
+
+    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
+
     // No special binding for this key combination.
     if (modflag & NSFunctionKeyMask) {
-      if (debugKeyDown) {
-        NSLog(@"PTYSession keyDown is a function key");
-      }
-      DebugLog(@"Is a function key");
+      DLog(@"PTYSession keyDown is a function key");
       // Handle all "special" keys (arrows, etc.)
       NSData *data = nil;
 
@@ -3956,23 +4090,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         send_str = (unsigned char *)[keydat bytes];
         send_strlen = [keydat length];
       }
-    } else if (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask &&
-                ([self optionKey] != OPT_NORMAL)) ||
-               (modflag == NSAlternateKeyMask &&
-                ([self optionKey] != OPT_NORMAL)) ||  /// synergy
-               ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask &&
-                ([self rightOptionKey] != OPT_NORMAL))) {
-                 if (debugKeyDown) {
-                   NSLog(@"PTYSession keyDown opt + key -> modkey");
-                 }
-                 DebugLog(@"Option + key -> modified key");
+    } else if ((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
+               (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) {
+                 DLog(@"PTYSession keyDown opt + key -> modkey");
                  // A key was pressed while holding down option and the option key
                  // is not behaving normally. Apply the modified behavior.
                  int mode;  // The modified behavior based on which modifier is pressed.
-                 if ((modflag == NSAlternateKeyMask) ||  // synergy
-                     (modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
+                 if (leftAltPressed) {
                    mode = [self optionKey];
                  } else {
+                   assert(rightAltPressed);
                    mode = [self rightOptionKey];
                  }
 
@@ -3992,43 +4119,28 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                    }
                  }
                } else {
-                 if (debugKeyDown) {
-                   NSLog(@"PTYSession keyDown regular path");
-                 }
-                 DebugLog(@"Regular path for keypress");
+                 DLog(@"PTYSession keyDown regular path");
                  // Regular path for inserting a character from a keypress.
                  int max = [keystr length];
                  NSData *data=nil;
 
                  if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown non-ascii");
-                   }
-                   DebugLog(@"Non-ascii input");
+                   DLog(@"PTYSession keyDown non-ascii");
                    data = [keystr dataUsingEncoding:[_terminal encoding]];
                  } else {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown ascii");
-                   }
-                   DebugLog(@"ASCII input");
+                   DLog(@"PTYSession keyDown ascii");
                    data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
                  }
 
                  // Enter key is on numeric keypad, but not marked as such
                  if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
                    modflag |= NSNumericPadKeyMask;
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown enter key");
-                   }
-                   DebugLog(@"Enter key");
+                   DLog(@"PTYSession keyDown enter key");
                    keystr = @"\015";  // Enter key -> 0x0d
                  }
                  // Check if we are in keypad mode
                  if (modflag & NSNumericPadKeyMask) {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown numeric keyoad");
-                   }
-                   DebugLog(@"Numeric keypad mask");
+                   DLog(@"PTYSession keyDown numeric keyoad");
                    data = [_terminal.output keypadData:unicode keystr:keystr];
                  }
 
@@ -4041,29 +4153,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                        // fat-fingered switching of tabs/windows.
                        // Do not send anything for cmd+[shift]+enter if it wasn't
                        // caught by the menu.
-                       DebugLog(@"Cmd + 0-9 or cmd + enter");
-                       if (debugKeyDown) {
-                         NSLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
-                       }
+                       DLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
                        data = nil;
                      }
                  if (data != nil) {
                    send_str = (unsigned char *)[data bytes];
                    send_strlen = [data length];
-                   DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                             modflag, send_strlen, send_str[0], send_str[0]]);
-                   if (debugKeyDown) {
-                     DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                               modflag, send_strlen, send_str[0], send_str[0]]);
-                   }
+                   DLog(@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
+                        modflag, send_strlen, send_str[0], send_str[0]);
                  }
 
                  if ((modflag & NSControlKeyMask) &&
                      send_strlen == 1 &&
                      send_str[0] == '|') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-|");
-                   }
+                   DLog(@"PTYSession keyDown c-|");
                    // Control-| is sent as Control-backslash
                    send_str = (unsigned char*)"\034";
                    send_strlen = 1;
@@ -4071,27 +4174,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                             (modflag & NSShiftKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '/') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-?");
-                   }
+                   DLog(@"PTYSession keyDown c-?");
                    // Control-shift-/ is sent as Control-?
                    send_str = (unsigned char*)"\177";
                    send_strlen = 1;
                  } else if ((modflag & NSControlKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '/') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-/");
-                   }
+                   DLog(@"PTYSession keyDown c-/");
                    // Control-/ is sent as Control-/, but needs some help to do so.
                    send_str = (unsigned char*)"\037"; // control-/
                    send_strlen = 1;
                  } else if ((modflag & NSShiftKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '\031') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown shift-tab -> esc[Z");
-                   }
+                   DLog(@"PTYSession keyDown shift-tab -> esc[Z");
                    // Shift-tab is sent as Esc-[Z (or "backtab")
                    send_str = (unsigned char*)"\033[Z";
                    send_strlen = 3;
@@ -4294,35 +4391,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // No image, so just draw background color.
         [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:alpha] set];
         NSRectFill(rect);
-    }
-
-    [self drawMaximizedPaneDottedOutlineIndicatorInView:view];
-}
-
-- (void)drawMaximizedPaneDottedOutlineIndicatorInView:(NSView *)view {
-    if ([self textViewTabHasMaximizedPanel]) {
-        NSColor *color = [_colorMap colorForKey:kColorMapBackground];
-        double grayLevel = [color isDark] ? 1 : 0;
-        color = [color colorDimmedBy:0.2 towardsGrayLevel:grayLevel];
-        NSRect frame = [_view convertRect:[_view contentRect] toView:view];
-
-        NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
-        CGFloat left = frame.origin.x + 0.5;
-        CGFloat right = frame.origin.x + frame.size.width - 0.5;
-        CGFloat top = frame.origin.y + 0.5;
-        CGFloat bottom = frame.origin.y + frame.size.height - 0.5;
-
-        [path moveToPoint:NSMakePoint(left, top + VMARGIN)];
-        [path lineToPoint:NSMakePoint(left, top)];
-        [path lineToPoint:NSMakePoint(right, top)];
-        [path lineToPoint:NSMakePoint(right, bottom)];
-        [path lineToPoint:NSMakePoint(left, bottom)];
-        [path lineToPoint:NSMakePoint(left, top + VMARGIN)];
-
-        CGFloat dashPattern[2] = { 5, 5 };
-        [path setLineDash:dashPattern count:2 phase:0];
-        [color set];
-        [path stroke];
     }
 }
 
@@ -4531,6 +4599,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [[[self tab] realParentWindow] broadcastInputToSession:self];
 }
 
+- (BOOL)textViewIsMaximized {
+    return [[self tab] hasMaximizedPane];
+}
+
 - (BOOL)textViewTabHasMaximizedPanel
 {
     return [[self tab] hasMaximizedPane];
@@ -4698,6 +4770,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (NSColor *)textViewCursorGuideColor {
     return _cursorGuideColor;
+}
+
+- (NSColor *)textViewBadgeColor {
+    return [[iTermProfilePreferences objectForKey:KEY_BADGE_COLOR inProfile:_profile] colorValue];
 }
 
 - (void)sendEscapeSequence:(NSString *)text
@@ -4967,6 +5043,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)screenSizeDidChange {
     [self updateScroll];
     [_textview updateNoteViewFrames];
+    _badgeVars[kBadgeKeySessionColumns] = [NSString stringWithFormat:@"%d", _screen.width];
+    _badgeVars[kBadgeKeySessionRows] = [NSString stringWithFormat:@"%d", _screen.height];
+    [_textview setBadgeLabel:[self badgeLabel]];
 }
 
 - (void)screenTriggerableChangeDidOccur {
@@ -5309,19 +5388,29 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         newProfile = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (newProfile) {
-        [self setProfilePreservingName:newProfile];
+        [self setProfile:newProfile preservingName:YES];
     }
 }
 
-- (void)setProfilePreservingName:(NSDictionary *)newProfile {
+- (void)setProfile:(NSDictionary *)newProfile preservingName:(BOOL)preserveName {
+    BOOL defaultNameMatchesProfileName = [_defaultName isEqualToString:_profile[KEY_NAME]];
+    BOOL nameMatchesProfileName = [_name isEqualToString:_profile[KEY_NAME]];
     NSString *theName = [[self profile] objectForKey:KEY_NAME];
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
-    [dict setObject:theName forKey:KEY_NAME];
+    if (preserveName) {
+        [dict setObject:theName forKey:KEY_NAME];
+    }
     [self setProfile:dict];
     [self setPreferencesFromAddressBookEntry:dict];
     [_originalProfile autorelease];
     _originalProfile = [newProfile copy];
     [self remarry];
+    if (!preserveName && defaultNameMatchesProfileName) {
+        [self setDefaultName:newProfile[KEY_NAME]];
+    }
+    if (!preserveName && nameMatchesProfileName) {
+        [self setName:newProfile[KEY_NAME]];
+    }
 }
 
 - (void)screenSetPasteboard:(NSString *)value {
@@ -5412,6 +5501,86 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)screenSetBackgroundImageFile:(NSString *)filename {
+    filename = [filename stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    if (!filename || ![[NSFileManager defaultManager] fileExistsAtPath:filename]) {
+        return;
+    }
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    static NSString *kIdentifier = @"SetBackgroundImageFile";
+    static NSString *kAllowedFilesKey = @"AlwaysAllowBackgroundImage";
+    static NSString *kDeniedFilesKey = @"AlwaysDenyBackgroundImage";
+    NSArray *allowedFiles = [userDefaults objectForKey:kAllowedFilesKey];
+    NSArray *deniedFiles = [userDefaults objectForKey:kDeniedFilesKey];
+    if ([deniedFiles containsObject:filename]) {
+        return;
+    }
+    if ([allowedFiles containsObject:filename]) {
+        [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
+        return;
+    }
+
+
+    NSString *title = [NSString stringWithFormat:@"Set background image to “%@”?", filename];
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcemenWithTitle:title
+                                                        style:kiTermAnnouncementViewStyleQuestion
+                                                  withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                   completion:^(int selection) {
+            switch (selection) {
+                case -2:  // Dismiss programmatically
+                    break;
+
+                case -1: // No
+                    break;
+
+                case 0: // Yes
+                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
+                    break;
+
+                case 1: { // Always
+                    NSArray *allowed = [userDefaults objectForKey:kAllowedFilesKey];
+                    if (!allowed) {
+                        allowed = @[];
+                    }
+                    allowed = [allowed arrayByAddingObject:filename];
+                    [userDefaults setObject:allowed forKey:kAllowedFilesKey];
+                    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_IMAGE_LOCATION: filename }];
+                    break;
+                }
+                case 2: {  // Never
+                    NSArray *denied = [userDefaults objectForKey:kDeniedFilesKey];
+                    if (!denied) {
+                        denied = @[];
+                    }
+                    denied = [denied arrayByAddingObject:filename];
+                    [userDefaults setObject:denied forKey:kDeniedFilesKey];
+                    break;
+                }
+            }
+        }];
+    [self queueAnnouncement:announcement identifier:kIdentifier];
+}
+
+- (void)screenSetBadgeFormat:(NSString *)theFormat {
+    theFormat = [theFormat stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
+    _textview.badgeLabel = [self badgeLabel];
+}
+
+- (void)screenSetUserVar:(NSString *)kvpString {
+    NSArray *kvp = [kvpString keyValuePair];
+    if (kvp) {
+        NSString *key = [NSString stringWithFormat:@"user.%@", kvp[0]];
+        if (![kvp[1] length]) {
+            [_badgeVars removeObjectForKey:key];
+        } else {
+            _badgeVars[key] = [kvp[1] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        }
+    }
+    [_textview setBadgeLabel:[self badgeLabel]];
+}
+
 - (iTermColorMap *)screenColorMap {
     return _colorMap;
 }
@@ -5475,9 +5644,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+    if (host.hostname) {
+        _badgeVars[kBadgeKeySessionHostname] = host.hostname;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionHostname];
+    }
+    if (host.username) {
+        _badgeVars[kBadgeKeySessionUsername] = host.username;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionUsername];
+    }
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
+    int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
+    NSString *path = [_screen workingDirectoryOnLine:line];
+    [self tryAutoProfileSwitchWithHostname:host.hostname username:host.username path:path];
+}
+
+- (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
+                                username:(NSString *)username
+                                    path:(NSString *)path {
     // Construct a map from host binding to profile. This could be expensive with a lot of profiles
     // but it should be fairly rare for this code to run.
     NSMutableDictionary *stringToProfile = [NSMutableDictionary dictionary];
@@ -5488,18 +5675,39 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         }
     }
 
-    Profile *profile = nil;
-    // First try user@host, then host, then user@.
-    NSArray *stringsToTry = @[ [host usernameAndHostname],
-                               host.hostname,
-                               [NSString stringWithFormat:@"%@@", host.username] ];
-    for (NSString *string in stringsToTry) {
-        profile = stringToProfile[string];
-        if (profile) {
-            [self setProfilePreservingName:profile];
-            return;
+    // First, try to match any rule with the hostname
+    int bestScore = 0;
+    Profile *bestProfile = nil;
+
+    for (NSString *ruleString in stringToProfile) {
+        iTermRule *rule = [iTermRule ruleWithString:ruleString];
+        int score = [rule scoreForHostname:hostname username:username path:path];
+        if (score > bestScore) {
+            bestScore = score;
+            bestProfile = stringToProfile[ruleString];
         }
     }
+    if (bestProfile) {
+        [self setProfile:bestProfile preservingName:NO];
+    }
+
+    // screenCurrentDirectoryDidChangeTo depends on us calling setBadgeLabel.
+    // If you remove it here, add one there.
+    [_textview setBadgeLabel:[self badgeLabel]];
+}
+
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
+    if (newPath) {
+        _badgeVars[kBadgeKeySessionPath] = newPath;
+    } else {
+        [_badgeVars removeObjectForKey:kBadgeKeySessionPath];
+    }
+
+    int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
+    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
+    [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
+                                  username:remoteHost.username
+                                      path:newPath];
 }
 
 - (BOOL)screenShouldSendReport {
@@ -5561,9 +5769,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             [[[self tab] realParentWindow] showAutoCommandHistoryForSession:self];
         }
         NSString *command = haveCommand ? [self commandInRange:_commandRange] : @"";
-        DLog(@"Update command to %@", command);
-        [[[self tab] realParentWindow] updateAutoCommandHistoryForPrefix:command
-                                                               inSession:self];
+        DLog(@"Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
+        if (haveCommand) {
+            [[[self tab] realParentWindow] updateAutoCommandHistoryForPrefix:command
+                                                                   inSession:self];
+        }
     }
 }
 
@@ -5633,7 +5843,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             case kiTermWarningSelection0:
                 [_textview installShellIntegration:nil];
                 break;
-              
+
             default:
                 break;
         }
@@ -5663,7 +5873,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                                case 0: // Yes
                                                                    [self tryToRunShellIntegrationInstaller];
                                                                    break;
-                                                                   
+
                                                                case 1: // Never for this account
                                                                    [userDefaults setBool:YES forKey:theKey];
                                                                    break;
@@ -5684,7 +5894,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self dismissAnnouncementWithIdentifier:identifier];
 
     _announcements[identifier] = announcement;
-    
+
     void (^originalCompletion)(int) = [announcement.completion copy];
     NSString *identifierCopy = [identifier copy];
     announcement.completion = ^(int selection) {
@@ -5720,7 +5930,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         if (c == 27) {
             [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
             return YES;
-        } else if (c == '\r') {
+        } else if (c == '\r' && value) {
             if ([value isEqualToString:[self currentCommand]]) {
                 // Send the enter key on.
                 [_textview keyDown:event];
@@ -5728,13 +5938,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             } else {
                 return NO;  // select the row
             }
-        } else {
+        } else if (value) {
             [_textview keyDown:event];
             return YES;
         }
-    } else {
-        return NO;
     }
+    return NO;
 }
 
 #pragma mark - Scripting Support
@@ -5852,7 +6061,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setBackgroundColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapBackground];
+    [self setSessionSpecificProfileValues:@{ KEY_BACKGROUND_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)boldColor {
@@ -5860,7 +6069,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setBoldColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapBold];
+    [self setSessionSpecificProfileValues:@{ KEY_BOLD_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)cursorColor {
@@ -5868,7 +6077,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setCursorColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapCursor];
+    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)cursorTextColor {
@@ -5876,7 +6085,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setCursorTextColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapCursorText];
+    [self setSessionSpecificProfileValues:@{ KEY_CURSOR_TEXT_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)foregroundColor {
@@ -5884,7 +6093,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setForegroundColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapForeground];
+    [self setSessionSpecificProfileValues:@{ KEY_FOREGROUND_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)selectedTextColor {
@@ -5892,7 +6101,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setSelectedTextColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapSelectedText];
+    [self setSessionSpecificProfileValues:@{ KEY_SELECTED_TEXT_COLOR: [color dictionaryValue] }];
 }
 
 - (NSColor *)selectionColor {
@@ -5900,7 +6109,139 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setSelectionColor:(NSColor *)color {
-    [_colorMap setColor:color forKey:kColorMapSelection];
+    [self setSessionSpecificProfileValues:@{ KEY_SELECTION_COLOR: [color dictionaryValue] }];
+}
+
+#pragma mark ANSI Colors
+
+- (NSColor *)ansiBlackColor {
+    return [_colorMap colorForKey:kColorMapAnsiBlack];
+}
+
+- (void)setAnsiBlackColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_0_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiRedColor {
+    return [_colorMap colorForKey:kColorMapAnsiRed];
+}
+
+- (void)setAnsiRedColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_1_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiGreenColor {
+    return [_colorMap colorForKey:kColorMapAnsiGreen];
+}
+
+- (void)setAnsiGreenColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_2_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiYellowColor {
+    return [_colorMap colorForKey:kColorMapAnsiYellow];
+}
+
+- (void)setAnsiYellowColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_3_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBlueColor {
+    return [_colorMap colorForKey:kColorMapAnsiBlue];
+}
+
+- (void)setAnsiBlueColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_4_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiMagentaColor {
+    return [_colorMap colorForKey:kColorMapAnsiMagenta];
+}
+
+- (void)setAnsiMagentaColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_5_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiCyanColor {
+    return [_colorMap colorForKey:kColorMapAnsiCyan];
+}
+
+- (void)setAnsiCyanColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_6_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiWhiteColor {
+    return [_colorMap colorForKey:kColorMapAnsiWhite];
+}
+
+- (void)setAnsiWhiteColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_7_COLOR: [color dictionaryValue] }];
+}
+
+#pragma mark Ansi Bright Colors
+
+- (NSColor *)ansiBrightBlackColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiBlack];
+}
+
+- (void)setAnsiBrightBlackColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_8_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightRedColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiRed];
+}
+
+- (void)setAnsiBrightRedColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_9_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightGreenColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiGreen];
+}
+
+- (void)setAnsiBrightGreenColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_10_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightYellowColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiYellow];
+}
+
+- (void)setAnsiBrightYellowColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_11_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightBlueColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiBlue];
+}
+
+- (void)setAnsiBrightBlueColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_12_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightMagentaColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiMagenta];
+}
+
+- (void)setAnsiBrightMagentaColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_13_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightCyanColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiCyan];
+}
+
+- (void)setAnsiBrightCyanColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_14_COLOR: [color dictionaryValue] }];
+}
+
+- (NSColor *)ansiBrightWhiteColor {
+    return [_colorMap colorForKey:kColorMapAnsiBrightModifier + kColorMapAnsiWhite];
+}
+
+- (void)setAnsiBrightWhiteColor:(NSColor*)color {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSI_15_COLOR: [color dictionaryValue] }];
 }
 
 #pragma mark - iTermPasteHelperDelegate

@@ -204,9 +204,11 @@
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost *)host;
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath;
 
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)path;
 
 // FinalTerm stuff
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range;
@@ -217,5 +219,9 @@
 - (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory;
 
 - (void)screenSuggestShellIntegrationUpgrade;
+
+- (void)screenSetBackgroundImageFile:(NSString *)filename;
+- (void)screenSetBadgeFormat:(NSString *)theFormat;
+- (void)screenSetUserVar:(NSString *)kvp;
 
 @end

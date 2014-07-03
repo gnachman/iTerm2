@@ -10,6 +10,7 @@
 #import "PseudoTerminalRestorer.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
+#import "iTermPreferences.h"
 
 static NSMutableArray *queuedBlocks;
 typedef void (^VoidBlock)(void);
@@ -41,7 +42,8 @@ typedef void (^VoidBlock)(void);
                               state:(NSCoder *)state
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler
 {
-    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OpenArrangementAtStartup"] boolValue]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
+        [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
         completionHandler(nil, nil);
         return;
     }

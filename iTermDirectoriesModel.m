@@ -15,7 +15,6 @@
 static NSString *const kDirectoryEntryPath = @"path";
 static NSString *const kDirectoryEntryUseCount = @"use count";
 static NSString *const kDirectoryEntryLastUse = @"last use";
-static NSString *const kDirectoryEntryDescription = @"description";
 static NSString *const kDirectoryEntryIsStarred = @"starred";
 static NSString *const kDirectoryEntryShortcut = @"shortcut";
 
@@ -190,7 +189,6 @@ static const int kMaxDirectoriesToSavePerHost = 200;
     entry.useCount = [dictionary[kDirectoryEntryUseCount] intValue];
     entry.lastUse =
     [NSDate dateWithTimeIntervalSinceReferenceDate:[dictionary[kDirectoryEntryLastUse] doubleValue]];
-    entry.description = dictionary[kDirectoryEntryDescription];
     entry.starred = [dictionary[kDirectoryEntryIsStarred] boolValue];
     entry.shortcut = dictionary[kDirectoryEntryShortcut];
     return entry;
@@ -200,7 +198,6 @@ static const int kMaxDirectoriesToSavePerHost = 200;
     return @{ kDirectoryEntryPath: _path ?: @"",
               kDirectoryEntryUseCount: @(_useCount),
               kDirectoryEntryLastUse: @([_lastUse timeIntervalSinceReferenceDate]),
-              kDirectoryEntryDescription: _description ?: @"",
               kDirectoryEntryIsStarred: @(_starred),
               kDirectoryEntryShortcut: _shortcut ?: @"" };
 }
@@ -214,12 +211,6 @@ static const int kMaxDirectoriesToSavePerHost = 200;
     if (_starred && !other.starred) {
         return NSOrderedAscending;
     } else if (!_starred && other.starred) {
-        return NSOrderedDescending;
-    }
-
-    if (_description.length && !other.description.length) {
-        return NSOrderedAscending;
-    } else if (!_description.length && other.description.length) {
         return NSOrderedDescending;
     }
 

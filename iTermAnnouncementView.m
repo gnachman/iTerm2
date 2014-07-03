@@ -92,7 +92,7 @@ static const CGFloat kMargin = 8;
 
         [self setWantsLayer:YES];
         [self setShadow:dropShadow];
-        
+
         NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
         NSSize closeSize = closeImage.size;
         _buttonWidth = ceil(closeSize.width + kMargin);
@@ -164,6 +164,9 @@ static const CGFloat kMargin = 8;
         case kiTermAnnouncementViewStyleWarning:
             iconString = @"⚠";  // Warning sign
             break;
+        case kiTermAnnouncementViewStyleQuestion:
+            return [NSImage imageNamed:@"QuestionMarkSign"];
+            break;
     }
 
     NSFont *emojiFont = [NSFont fontWithName:@"Apple Color Emoji" size:18];
@@ -176,7 +179,7 @@ static const CGFloat kMargin = 8;
     [iconImage lockFocus];
     [iconString drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
     [iconImage unlockFocus];
-    
+
     return iconImage;
 }
 
@@ -201,7 +204,7 @@ static const CGFloat kMargin = 8;
     [textView setEditable:NO];
     textView.autoresizingMask = NSViewWidthSizable | NSViewMaxXMargin;
     textView.drawsBackground = NO;
-    
+
     NSFont *font = [NSFont systemFontOfSize:12];
     [textView setFont:font];
     [textView setSelectable:NO];
@@ -235,7 +238,7 @@ static const CGFloat kMargin = 8;
                                     floor((_internalView.frame.size.height - closeSize.height) / 2),
                                     closeSize.width,
                                     closeSize.height);
-    
+
     for (NSButton *button in _actionButtons) {
         NSRect buttonFrame = button.frame;
         button.frame = NSMakeRect(buttonFrame.origin.x,
@@ -243,7 +246,7 @@ static const CGFloat kMargin = 8;
                                   buttonFrame.size.width,
                                   buttonFrame.size.height);
     }
-    
+
     CGRect iconFrame = _icon.frame;
     CGFloat y = floor((_internalView.frame.size.height - iconFrame.size.height) / 2);
     _icon.frame = NSMakeRect(kMargin,

@@ -29,12 +29,14 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ITAddressBookMgr.h"
+#import "iTermRestorableSession.h"
 
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
 @class GTMCarbonHotKey;
 @class ItermGrowlDelegate;
 @protocol iTermWindowController;
+@class iTermRestorableSession;
 @class PasteboardHistory;
 @class PseudoTerminal;
 @class PTYSession;
@@ -54,6 +56,8 @@
     NSNumber *previouslyActiveAppPID_;
     id runningApplicationClass_;
 }
+
+@property(nonatomic, readonly) iTermRestorableSession *currentRestorableSession;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
@@ -86,6 +90,7 @@
 - (void)setKeyWindowIndexMemo:(int)i;
 
 - (PseudoTerminal*)terminalWithNumber:(int)n;
+- (PseudoTerminal *)terminalWithGuid:(NSString *)guid;
 - (int)allocateWindowNumber;
 
 - (void)saveWindowArrangement:(BOOL)allWindows;
@@ -133,6 +138,13 @@
 // Set Software Update (Sparkle) user defaults keys to reflect settings in
 // iTerm2's user defaults.
 - (void)refreshSoftwareUpdateUserDefaults;
+
+- (void)addRestorableSession:(iTermRestorableSession *)session;
+- (void)removeSessionFromRestorableSessions:(PTYSession *)session;
+- (iTermRestorableSession *)popRestorableSession;
+- (void)commitAndPopCurrentRestorableSession;
+- (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
+- (BOOL)hasRestorableSession;
 
 #pragma mark - Key-Value Coding
 

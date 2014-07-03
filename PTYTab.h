@@ -92,6 +92,9 @@
 
 @property(nonatomic, assign, getter=isBroadcasting) BOOL broadcasting;
 
+// uniqueId lazily auto-assigns a unique id unless you assign it a value first. It is never 0.
+@property(nonatomic, assign) int uniqueId;
+
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session;
 - (id)initWithRoot:(NSSplitView*)root;
@@ -190,9 +193,22 @@
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
+
+// A viewMap maps a session's unique ID to a SessionView. Views in the
+// arrangement with matching session unique IDs will be assigned those
+// SessionView's.
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
-                        inTerminal:(id<WindowControllerInterface>)term
-                   hasFlexibleView:(BOOL)hasFlexible;
+                        inTerminal:(NSWindowController<iTermWindowController> *)term
+                   hasFlexibleView:(BOOL)hasFlexible
+                           viewMap:(NSDictionary *)viewMap;
+
++ (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
+                    inTerminal:(NSWindowController<iTermWindowController> *)term
+               hasFlexibleView:(BOOL)hasFlexible
+                       viewMap:(NSDictionary *)viewMap;
+
++ (NSDictionary *)viewMapWithArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions;
+
 - (void)updateFlexibleViewColors;
 - (NSDictionary*)arrangement;
 
@@ -239,6 +255,11 @@
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2;
+
+- (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
+      withArrangement:(NSDictionary *)arrangement;
+
+- (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
