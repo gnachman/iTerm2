@@ -6078,7 +6078,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                colorMode:theLine[i].foregroundColorMode
                                                     bold:theLine[i].bold
                                             isBackground:NO];
-                    DLog(@"case 5: color=%@", theColor);
+                    DLog(@"case 5: result of lookup is color=%@", theColor);
                     CRunAttrsSetColor(&attrs,
                                       storage,
                                       theColor);

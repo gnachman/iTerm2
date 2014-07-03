@@ -150,13 +150,15 @@ const int kColorMapAnsiBrightModifier = 8;
                 int blue = (n & 0xff);
                 int green = (n >> 8) & 0xff;
                 int red = (n >> 16) & 0xff;
-                return [NSColor colorWith8BitRed:red
+                NSColor *result = [NSColor colorWith8BitRed:red
                                            green:green
                                             blue:blue
                                           muting:_mutingAmount
                                    backgroundRed:_backgroundRed
                                  backgroundGreen:_backgroundGreen
                                   backgroundBlue:_backgroundBlue];
+                DLog(@"The muted version of 24-bit color [%d,%d,%d] is %@", red, green, blue, result);
+                return result;
             } else {
                 NSColor *result = nil;
                 if (!result) {
