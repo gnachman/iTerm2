@@ -2264,13 +2264,12 @@ NSMutableArray* screens=0;
     return joinedLines;
 }
 
-- (NSDictionary *)smartSelectAtX:(int)x
-                               y:(int)y
-                              to:(VT100GridWindowedRange *)rangePtr
-                ignoringNewlines:(BOOL)ignoringNewlines
-                  actionRequired:(BOOL)actionRequred
-                 respectDividers:(BOOL)respectDividers
-{
+- (SmartMatch *)smartSelectAtX:(int)x
+                             y:(int)y
+                            to:(VT100GridWindowedRange *)rangePtr
+              ignoringNewlines:(BOOL)ignoringNewlines
+                actionRequired:(BOOL)actionRequred
+               respectDividers:(BOOL)respectDividers {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoord coord = VT100GridCoordMake(x, y);
     if (respectDividers) {
@@ -2286,19 +2285,19 @@ NSMutableArray* screens=0;
 - (BOOL)smartSelectAtX:(int)x y:(int)y ignoringNewlines:(BOOL)ignoringNewlines
 {
     VT100GridWindowedRange range;
-    NSDictionary *rule = [self smartSelectAtX:x
-                                            y:y
-                                           to:&range
-                             ignoringNewlines:ignoringNewlines
-                               actionRequired:NO
-                              respectDividers:YES];
+    SmartMatch *smartMatch = [self smartSelectAtX:x
+                                                y:y
+                                               to:&range
+                                 ignoringNewlines:ignoringNewlines
+                                   actionRequired:NO
+                                  respectDividers:YES];
 
     [_selection beginSelectionAt:VT100GridCoordMake(x, y)
                             mode:kiTermSelectionModeSmart
                           resume:NO
                           append:NO];
     [_selection endLiveSelection];
-    return rule != nil;
+    return smartMatch != nil;
 }
 
 // Control-pgup and control-pgdown are handled at this level by NSWindow if no
@@ -7840,14 +7839,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return nil;
     }
     [extractor restrictToLogicalWindowIncludingCoord:coord];
+    NSMutableIndexSet *continuationCharsCoords = [NSMutableIndexSet indexSet];
     NSString *prefix = [extractor wrappedStringAt:coord
                                           forward:NO
                               respectHardNewlines:respectHardNewlines
-                                         maxChars:kMaxTrouterPrefixOrSuffix];
+                                         maxChars:kMaxTrouterPrefixOrSuffix
+                                continuationChars:continuationCharsCoords];
     NSString *suffix = [extractor wrappedStringAt:coord
                                           forward:YES
                               respectHardNewlines:respectHardNewlines
-                                         maxChars:kMaxTrouterPrefixOrSuffix];
+                                         maxChars:kMaxTrouterPrefixOrSuffix
+                        continuationChars:continuationCharsCoords];
 
     NSString *possibleFilePart1 =
         [prefix substringIncludingOffset:[prefix length] - 1
@@ -7883,8 +7885,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
         VT100GridWindowedRange range;
 
-        range.coordRange.start = [extractor coord:coord plus:-fileCharsTaken];
-        range.coordRange.end = [extractor coord:range.coordRange.start plus:filename.length];
+        range.coordRange.start = [extractor coord:coord
+                                             plus:-fileCharsTaken
+                                   skippingCoords:continuationCharsCoords];
+        range.coordRange.end = [extractor coord:range.coordRange.start
+                                           plus:filename.length
+                                 skippingCoords:continuationCharsCoords];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 
@@ -7898,35 +7904,26 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"Brute force search failed, try smart selection.");
     // Next, see if smart selection matches anything with an action.
     VT100GridWindowedRange smartRange;
-    NSDictionary *rule = [self smartSelectAtX:x
-                                            y:y
-                                           to:&smartRange
-                             ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
-                               actionRequired:YES
-                              respectDividers:YES];
-    NSArray *actions = [SmartSelectionController actionsInRule:rule];
+    SmartMatch *smartMatch = [self smartSelectAtX:x
+                                                y:y
+                                               to:&smartRange
+                                 ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                   actionRequired:YES
+                                  respectDividers:YES];
+    NSArray *actions = [SmartSelectionController actionsInRule:smartMatch.rule];
     DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
-        NSString *content = [extractor contentInRange:smartRange
-                                           nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
-                                                  pad:NO
-                                   includeLastNewline:NO
-                               trimTrailingWhitespace:NO
-                                         cappedAtSize:-1];
+        NSString *content = smartMatch.components[0];
         if (!respectHardNewlines) {
             content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
         }
         DLog(@"  Actions match this content: %@", content);
-        URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:rule onString:content];
+        URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:smartMatch.rule
+                                                                   onString:content];
         action.range = smartRange;
-        NSError *regexError;
-        NSArray *components = [content captureComponentsMatchedByRegex:[SmartSelectionController regexInRule:rule]
-                                                               options:0
-                                                                 range:NSMakeRange(0, content.length)
-                                                                 error:&regexError];
         action.selector = [self selectorForSmartSelectionAction:actions[0]];
         action.representedObject = [ContextMenuActionPrefsController parameterForActionDict:actions[0]
-                                                                      withCaptureComponents:components
+                                                                      withCaptureComponents:smartMatch.components
                                                                            workingDirectory:workingDirectory
                                                                                  remoteHost:[_dataSource remoteHostOnLine:y]];
         return action;
@@ -7934,20 +7931,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if (_trouter.activatesOnAnyString) {
         // Just do smart selection and let Trouter take it.
-        [self smartSelectAtX:x
-                           y:y
-                          to:&smartRange
-            ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
-              actionRequired:NO
-             respectDividers:YES];
+        smartMatch = [self smartSelectAtX:x
+                                        y:y
+                                       to:&smartRange
+                         ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                           actionRequired:NO
+                          respectDividers:YES];
         if (!VT100GridCoordEquals(smartRange.coordRange.start,
                                   smartRange.coordRange.end)) {
-            NSString *name = [extractor contentInRange:smartRange
-                                            nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
-                                                   pad:NO
-                                    includeLastNewline:NO
-                                trimTrailingWhitespace:NO
-                                          cappedAtSize:-1];
+            NSString *name = smartMatch.components[0];
             URLAction *action = [URLAction urlActionToOpenExistingFile:name];
             action.range = smartRange;
             action.fullPath = name;
@@ -7988,8 +7980,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         VT100GridWindowedRange range;
         range.coordRange.start = [extractor coord:coord
-                                             plus:-(prefixChars - offset)];
-        range.coordRange.end = [extractor coord:range.coordRange.start plus:length];
+                                             plus:-(prefixChars - offset)
+                                   skippingCoords:continuationCharsCoords];
+        range.coordRange.end = [extractor coord:range.coordRange.start
+                                           plus:length
+                                 skippingCoords:continuationCharsCoords];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
         return action;

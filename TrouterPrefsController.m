@@ -215,47 +215,57 @@ enum {
 
 - (IBAction)actionChanged:(id)sender
 {
-    [text_ setHidden:YES];
-    [editors_ setHidden:YES];
+    BOOL hideText = YES;
+    BOOL hideEditors = YES;
+    BOOL hideCaveat = caveat_.isHidden;
     switch ([[action_ selectedItem] tag]) {
         case 1:
             [caveat_ setStringValue:@"When you activate Semantic History on a filename, the associated app loads the file."];
-            [caveat_ setHidden:NO];
+            hideCaveat = NO;
             break;
             
         case 2:
             [[text_ cell] setPlaceholderString:@"Enter URL."];
             [caveat_ setStringValue:@"When you activate Semantic History on a filename, the browser opens a URL.\nUse \\1 for the filename you clicked on and \\2 for the line number."];
-            [caveat_ setHidden:NO];
-            [text_ setHidden:NO];
+            hideCaveat = NO;
+            hideText = NO;
             break;
             
         case 3:
-            [editors_ setHidden:NO];
+            hideEditors = NO;
             [caveat_ setStringValue:@"When you activate Semantic History on a text file, the specified editor opens it.\nOther kinds of files will be opened with their default apps."];
-            [caveat_ setHidden:NO];
+            hideCaveat = NO;
             break;
 
         case 4:
             [[text_ cell] setPlaceholderString:@"Enter command"];
             [caveat_ setStringValue:@"Command runs when you activate Semantic History on any filename. Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
-            [caveat_ setHidden:NO];
-            [text_ setHidden:NO];
+            hideCaveat = NO;
+            hideText = NO;
             break;
 
         case 5:
             [[text_ cell] setPlaceholderString:@"Enter command"];
             [caveat_ setStringValue:@"Command runs when you activate Semantic History on any text (even if it's not a valid filename). Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
-            [caveat_ setHidden:NO];
-            [text_ setHidden:NO];
+            hideCaveat = NO;
+            hideText = NO;
             break;
 
         case 6:
             [[text_ cell] setPlaceholderString:@"Enter command"];
             [caveat_ setStringValue:@"Coprocess runs when you activate Semantic History on any filename. Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
-            [caveat_ setHidden:NO];
-            [text_ setHidden:NO];
+            hideCaveat = NO;
+            hideText = NO;
             break;
+    }
+    if (caveat_.isHidden != hideCaveat) {
+        [caveat_ setHidden:hideCaveat];
+    }
+    if (text_.isHidden != hideText) {
+        [text_ setHidden:hideText];
+    }
+    if (editors_.isHidden != hideEditors) {
+        [editors_ setHidden:hideEditors];
     }
     if (sender) {
         if (![text_ isHidden]) {

@@ -12,6 +12,7 @@
 
 - (void)dealloc {
     [_rule release];
+    [_components release];
     [super dealloc];
 }
 

@@ -22,6 +22,7 @@
 @class PTYTextView;
 @class SCPPath;
 @class SearchResult;
+@class SmartMatch;
 @class ThreeFingerTapGestureRecognizer;
 @protocol TrouterDelegate;
 @class VT100Screen;
@@ -278,14 +279,16 @@ typedef enum {
 // superview's mouseDown: should be called.
 - (BOOL)mouseDownImpl:(NSEvent*)event;
 
-// Returns the coordinates (in X1, Y1, X2, and Y2) of the range that would be selected if there were
-// a smart selection performed at (x, y).
-- (NSDictionary *)smartSelectAtX:(int)x
-                               y:(int)y
-                              to:(VT100GridWindowedRange *)range
-                ignoringNewlines:(BOOL)ignoringNewlines
-                  actionRequired:(BOOL)actionRequred
-                 respectDividers:(BOOL)respectDividers;
+// Locates (but does not select) a smart match at a given set of coordinates. The range of the match
+// is stored in |range|. If |ignoringNewlines| is set then selection can span a hard newline.
+// If |actionRequired| is set then only smart selection rules with an attached action are considered.
+// If |respectDividers| is set then software-drawn dividers are wrapped around.
+- (SmartMatch *)smartSelectAtX:(int)x
+                             y:(int)y
+                            to:(VT100GridWindowedRange *)range
+              ignoringNewlines:(BOOL)ignoringNewlines
+                actionRequired:(BOOL)actionRequred
+               respectDividers:(BOOL)respectDividers;
 
 // Returns range modified by removing nulls (and possibly spaces) from its ends.
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
