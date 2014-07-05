@@ -51,6 +51,8 @@
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem;
 
+- (void)setForeground24BitColor:(NSColor *)color;
+
 - (void)resetCharset;
 - (void)resetPreservingPrompt:(BOOL)preservePrompt;
 

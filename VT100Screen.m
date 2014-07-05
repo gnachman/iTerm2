@@ -2938,13 +2938,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                           kInlineFileBase64String: [NSMutableString string] } retain];
 }
 
-- (void)appendInlineFileCharsForName:(NSString *)name
-                               width:(int)width
-                               units:(VT100TerminalUnits)widthUnits
-                              height:(int)height
-                               units:(VT100TerminalUnits)heightUnits
-                 preserveAspectRatio:(BOOL)preserveAspectRatio
-                               image:(NSImage *)image {
+- (void)appendImageAtCursorWithName:(NSString *)name
+                              width:(int)width
+                              units:(VT100TerminalUnits)widthUnits
+                             height:(int)height
+                              units:(VT100TerminalUnits)heightUnits
+                preserveAspectRatio:(BOOL)preserveAspectRatio
+                              image:(NSImage *)image {
     if (!image) {
         image = [NSImage imageNamed:@"broken_image"];
     }
@@ -3038,19 +3038,19 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     
     SetDecodedImage(c.code, image);
     [inlineFileCodes_ addObject:@(c.code)];
+    [delegate_ screenNeedsRedraw];
 }
 
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
         NSImage *image = [self imageWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
-        [self appendInlineFileCharsForName:inlineFileInfo_[kInlineFileName]
-                                     width:[inlineFileInfo_[kInlineFileWidth] intValue]
-                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
-                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
-                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
-                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                     image:image];
-        [delegate_ screenNeedsRedraw];
+        [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
+                                    width:[inlineFileInfo_[kInlineFileWidth] intValue]
+                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
+                                   height:[inlineFileInfo_[kInlineFileHeight] intValue]
+                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
+                      preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
+                                    image:image];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
     } else {

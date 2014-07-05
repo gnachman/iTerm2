@@ -484,7 +484,6 @@
 		1DB67CF21485C578005849A1 /* TmuxHistoryParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CF01485C578005849A1 /* TmuxHistoryParser.m */; };
 		1DB67CF51486BD3D005849A1 /* TmuxStateParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */; };
 		1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */; };
-		1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1DB72CF51396059200EB1005 /* xterm-terminfo.txt */; };
 		1DB83952192E95EB0037E548 /* CaptureTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB83950192E95EB0037E548 /* CaptureTrigger.h */; };
 		1DB83953192E95EB0037E548 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
 		1DB83954192E95EB0037E548 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
@@ -815,6 +814,8 @@
 		A69B4577195F668500F5444D /* NSScreen+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B4575195F668500F5444D /* NSScreen+iTerm.h */; };
 		A69B4578195F668500F5444D /* NSScreen+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4576195F668500F5444D /* NSScreen+iTerm.m */; };
 		A69B4579195F668500F5444D /* NSScreen+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4576195F668500F5444D /* NSScreen+iTerm.m */; };
+		A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */; };
+		A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
 		A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
@@ -1258,7 +1259,6 @@
 		1DB67CF01485C578005849A1 /* TmuxHistoryParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxHistoryParser.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TmuxStateParser.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxStateParser.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
 		1DB83950192E95EB0037E548 /* CaptureTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CaptureTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DB83951192E95EB0037E548 /* CaptureTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureTrigger.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DB83955192E9A610037E548 /* ToolCapturedOutputView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCapturedOutputView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -1517,6 +1517,7 @@
 		A699BAE418C8394700D425A7 /* CVector.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CVector.h; sourceTree = "<group>"; tabWidth = 4; };
 		A69B4575195F668500F5444D /* NSScreen+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSScreen+iTerm.h"; sourceTree = "<group>"; };
 		A69B4576195F668500F5444D /* NSScreen+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSScreen+iTerm.m"; sourceTree = "<group>"; };
+		A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BrokenPipeDivider.png; path = images/BrokenPipeDivider.png; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -2122,7 +2123,6 @@
 				DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */,
 				DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */,
 				1D1158C913444D29009B366F /* iTerm2 Help */,
-				1DB72CF51396059200EB1005 /* xterm-terminfo.txt */,
 			);
 			name = "Other Assets";
 			sourceTree = "<group>";
@@ -2152,6 +2152,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */,
 				1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */,
 				1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */,
 				1DC2A1CA1949165D005769D5 /* Maximized.png */,
@@ -3195,6 +3196,7 @@
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				1DB8FBC519468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */,
 				1DFA7C971923EA8700DF1410 /* iTermPasswordManager.xib in Resources */,
+				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
 				A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				1DB8FBCF19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
 				1DB8FBCB19468A40006BAF5C /* AquaTabsDownNonKey_vertical.png in Resources */,
@@ -3255,6 +3257,7 @@
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
 				1D01609B1852AA6F0014D26A /* mark@2x.png in Resources */,
+				A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */,
 				A67F118218D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1D5FDD9B1208E91100C46BA3 /* Warning.png in Resources */,
 				1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */,
@@ -3290,7 +3293,6 @@
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
-				1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,

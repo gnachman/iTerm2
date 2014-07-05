@@ -128,6 +128,13 @@ typedef enum {
 @property(nonatomic, copy) NSString *uniqueID;
 @property(nonatomic, copy) NSString *badgeFormat;
 @property(nonatomic, retain) NSMutableDictionary *badgeVars;
+
+// Info about what happens when the program is run so it can be restarted after
+// a broken pipe if the user so chooses.
+@property(nonatomic, copy) NSString *program;
+@property(nonatomic, copy) NSArray *arguments;
+@property(nonatomic, copy) NSDictionary *environment;
+@property(nonatomic, assign) BOOL isUTF8;
 @end
 
 @implementation PTYSession {
@@ -381,6 +388,9 @@ typedef enum {
     [_uniqueID release];
     [_badgeFormat release];
     [_badgeVars release];
+    [_program release];
+    [_arguments release];
+    [_environment release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -841,32 +851,6 @@ typedef enum {
     return YES;
 }
 
-// This command installs the xterm-256color terminfo in the user's terminfo directory:
-// tic -e xterm-256color $FILENAME
-- (void)_maybeAskAboutInstallXtermTerminfo
-{
-    NSString* filename = [[NSBundle bundleForClass:[self class]] pathForResource:@"xterm-terminfo" ofType:@"txt"];
-    if (!filename) {
-        return;
-    }
-    NSString* cmd = [NSString stringWithFormat:@"tic -e xterm-256color %@", [filename stringWithEscapedShellCharacters]];
-    if (system("infocmp xterm-256color > /dev/null")) {
-        iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:@"The terminfo file for the terminal type you're using, \"xterm-256color\", is"
-                                               @"not installed on your system. Would you like to install it now?"
-                                       actions:@[ @"Install", @"Do not Install" ]
-                                    identifier:@"NeverWarnAboutXterm256ColorTerminfo"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable];
-        if (selection == kiTermWarningSelection0) {
-            if (system([cmd UTF8String])) {
-                NSRunAlertPanel(@"Error",
-                                @"Sorry, an error occurred while running: %@",
-                                @"OK", nil, nil, cmd);
-            }
-        }
-    }
-}
-
 - (NSString *)_autoLogFilenameForTermId:(NSString *)termid
 {
     // $(LOGDIR)/YYYYMMDD_HHMMSS.$(NAME).wNtNpN.$(PID).$(RANDOM).log
@@ -886,32 +870,31 @@ typedef enum {
 }
 
 - (void)startProgram:(NSString *)program
-           arguments:(NSArray *)prog_argv
-         environment:(NSDictionary *)prog_env
-              isUTF8:(BOOL)isUTF8
-{
-    NSString *path = program;
-    NSMutableArray *argv = [NSMutableArray arrayWithArray:prog_argv];
-    NSMutableDictionary *env = [NSMutableDictionary dictionaryWithDictionary:prog_env];
+           arguments:(NSArray *)arguments
+         environment:(NSDictionary *)environment
+              isUTF8:(BOOL)isUTF8 {
+    self.program = program;
+    self.arguments = arguments;
+    self.environment = environment;
+    self.isUTF8 = isUTF8;
 
+    NSMutableDictionary *env = [NSMutableDictionary dictionaryWithDictionary:environment];
 
-    if ([env objectForKey:TERM_ENVNAME] == nil)
-        [env setObject:_termVariable forKey:TERM_ENVNAME];
-    if ([[env objectForKey:TERM_ENVNAME] isEqualToString:@"xterm-256color"]) {
-        [self _maybeAskAboutInstallXtermTerminfo];
+    if (env[TERM_ENVNAME] == nil) {
+        env[TERM_ENVNAME] = _termVariable;
+    }
+    if (env[COLORFGBG_ENVNAME] == nil && _colorFgBgVariable != nil) {
+        env[COLORFGBG_ENVNAME] = _colorFgBgVariable;
     }
 
-    if ([env objectForKey:COLORFGBG_ENVNAME] == nil && _colorFgBgVariable != nil)
-        [env setObject:_colorFgBgVariable forKey:COLORFGBG_ENVNAME];
-
     DLog(@"Begin locale logic");
-    if (![_profile objectForKey:KEY_SET_LOCALE_VARS] ||
-        [[_profile objectForKey:KEY_SET_LOCALE_VARS] boolValue]) {
+    if (!_profile[KEY_SET_LOCALE_VARS] ||
+        [_profile[KEY_SET_LOCALE_VARS] boolValue]) {
         DLog(@"Setting locale vars...");
-        NSString* lang = [self _lang];
+        NSString *lang = [self _lang];
         if (lang) {
             DLog(@"set LANG=%@", lang);
-            [env setObject:lang forKey:@"LANG"];
+            env[@"LANG"] = lang;
         } else if ([self shouldSetCtype]){
             DLog(@"should set ctype...");
             // Try just the encoding by itself, which might work.
@@ -919,13 +902,14 @@ typedef enum {
             DLog(@"See if encoding %@ is supported...", encName);
             if (encName && [self _localeIsSupported:encName]) {
                 DLog(@"Set LC_CTYPE=%@", encName);
-                [env setObject:encName forKey:@"LC_CTYPE"];
+                env[@"LC_CTYPE"] = encName;
             }
         }
     }
 
-    if ([env objectForKey:PWD_ENVNAME] == nil) {
-        [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
+    if (env[PWD_ENVNAME] == nil) {
+        // Set "PWD"
+        env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
     }
 
     NSWindowController<iTermWindowController> *pty = [_tab realParentWindow];
@@ -933,20 +917,20 @@ typedef enum {
                          [pty number],
                          [_tab realObjectCount] - 1,
                          [_tab indexOfSessionView:[self view]]];
-    [env setObject:itermId forKey:@"ITERM_SESSION_ID"];
-    if ([_profile objectForKey:KEY_NAME]) {
-        [env setObject:[_profile objectForKey:KEY_NAME] forKey:@"ITERM_PROFILE"];
+    env[@"ITERM_SESSION_ID"] = itermId;
+    if (_profile[KEY_NAME]) {
+        env[@"ITERM_PROFILE"] = _profile[KEY_NAME];
     }
-    if ([[_profile objectForKey:KEY_AUTOLOG] boolValue]) {
+    if ([_profile[KEY_AUTOLOG] boolValue]) {
         [_shell loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
     }
-    [_shell launchWithPath:path
-                 arguments:argv
+    [_shell launchWithPath:_program
+                 arguments:_arguments
                environment:env
                      width:[_screen width]
                     height:[_screen height]
                     isUTF8:isUTF8];
-    NSString *initialText = [_profile objectForKey:KEY_INITIAL_TEXT];
+    NSString *initialText = _profile[KEY_INITIAL_TEXT];
     if ([initialText length]) {
         [_shell writeTask:[initialText dataUsingEncoding:[self encoding]]];
         [_shell writeTask:[@"\n" dataUsingEncoding:[self encoding]]];
@@ -1400,6 +1384,47 @@ typedef enum {
     }
 }
 
+- (void)appendBrokenPipeMessage {
+    if (_screen.cursorX != 1) {
+        [_screen crlf];
+    }
+    screen_char_t savedFgColor = [_terminal foregroundColorCode];
+    screen_char_t savedBgColor = [_terminal backgroundColorCode];
+    // This color matches the color used in BrokenPipeDivider.png.
+    [_terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:248.0/255.0
+                                                                 green:79.0/255.0
+                                                                  blue:27.0/255.0
+                                                                 alpha:1]];
+    [_terminal setBackgroundColor:ALTSEM_DEFAULT
+               alternateSemantics:YES];
+    NSString *message = @"Broken Pipe ";
+    int width = (_screen.width - message.length) / 2;
+    if (width > 0) {
+        [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
+                                       width:width
+                                       units:kVT100TerminalUnitsCells
+                                      height:1
+                                       units:kVT100TerminalUnitsCells
+                         preserveAspectRatio:NO
+                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]];
+    }
+    [_screen appendStringAtCursor:message];
+    if (width > 0) {
+        [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
+                                       width:(_screen.width - _screen.cursorX + 1)
+                                       units:kVT100TerminalUnitsCells
+                                      height:1
+                                       units:kVT100TerminalUnitsCells
+                         preserveAspectRatio:NO
+                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]];
+    }
+    [_screen crlf];
+    [_terminal setForegroundColor:savedFgColor.foregroundColor
+               alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
+    [_terminal setBackgroundColor:savedBgColor.backgroundColor
+               alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+}
+
 - (void)brokenPipe
 {
     if ([self shouldPostGrowlNotification]) {
@@ -1417,6 +1442,35 @@ typedef enum {
     if ([self autoClose]) {
         [[self tab] closeSession:self];
     } else {
+        // Offer to restart the session by rerunning its program.
+        [self appendBrokenPipeMessage];
+        iTermAnnouncementViewController *announcement =
+            [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                            style:kiTermAnnouncementViewStyleQuestion
+                                                      withActions:@[ @"Restart" ]
+                                                       completion:^(int selection) {
+                                                           switch (selection) {
+                                                               case -2:  // Dismiss programmatically
+                                                                   break;
+
+                                                               case -1: // No
+                                                                   break;
+
+                                                               case 0: // Yes
+                                                                   _exited = NO;
+                                                                   [_shell release];
+                                                                   _shell = [[PTYTask alloc] init];
+                                                                   [_shell setDelegate:self];
+                                                                   [_shell setWidth:_screen.width
+                                                                             height:_screen.height];
+                                                                   [self startProgram:_program
+                                                                            arguments:_arguments
+                                                                          environment:_environment
+                                                                               isUTF8:_isUTF8];
+                                                                   break;
+                                                           }
+                                                       }];
+        [self queueAnnouncement:announcement identifier:@"ReopenSessionAfterBrokenPipe"];
         [self updateDisplay];
     }
 }

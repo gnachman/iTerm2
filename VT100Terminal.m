@@ -234,6 +234,13 @@ static const int kMaxScreenRows = 4096;
     self.wraparoundMode = saveWraparoundMode_;
 }
 
+- (void)setForeground24BitColor:(NSColor *)color {
+    fgColorCode_ = color.redComponent * 255.0;
+    fgGreen_ = color.greenComponent * 255.0;
+    fgBlue_ = color.blueComponent * 255.0;
+    fgColorMode_ = ColorMode24bit;
+}
+
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
 {
     fgColorCode_ = fgColorCode;
