@@ -3957,6 +3957,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
 {
+    return;
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
 
     if (debugKeyDown) {
