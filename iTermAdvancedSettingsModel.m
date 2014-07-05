@@ -112,6 +112,6 @@ DEFINE_INT(quickPasteBytesPerCall, 1024, @"Pasteboard: Bytes to paste in each ch
 DEFINE_FLOAT(quickPasteDelayBetweenCalls, 0.01, @"Pasteboard: Delay in seconds between chunks when pasting normally")
 DEFINE_INT(slowPasteBytesPerCall, 16, @"Pasteboard: Bytes to paste in each chunk when pasting slowly")
 DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, @"Pasteboard: Delay in seconds between chunks when pasting slowly")
-DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard includes color and font style")
+DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard on selection includes color and font style")
 
 @end
