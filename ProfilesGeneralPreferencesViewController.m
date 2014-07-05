@@ -369,7 +369,11 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
 - (void)updateShortcutTitles {
     // Reset titles of all shortcuts.
     for (NSMenuItem *item in _profileShortcut.menu.itemArray) {
-        [item setTitle:[self shortcutKeyForTag:[item tag]]];
+        NSString *theKey = [self shortcutKeyForTag:[item tag]];
+        if (theKey.length) {
+            theKey = [@"⌘⌃" stringByAppendingString:theKey];
+        }
+        [item setTitle:theKey];
     }
     
     // Add bookmark names to shortcuts that are bound.
@@ -380,7 +384,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
         if (tag != -1) {
             const int theIndex = [_profileShortcut indexOfItemWithTag:tag];
             NSMenuItem *item = [_profileShortcut itemAtIndex:theIndex];
-            NSString* newTitle = [NSString stringWithFormat:@"%@ (%@)",
+            NSString* newTitle = [NSString stringWithFormat:@"⌃⌘%@ (%@)",
                                   existingShortcut, profile[KEY_NAME]];
             [item setTitle:newTitle];
         }
@@ -388,6 +392,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     
     NSString *theString = [self stringForKey:KEY_SHORTCUT];
     [_profileShortcut selectItemWithTag:[self shortcutTagForKey:theString]];
+    [_profileShortcut sizeToFit];
 }
 
 #pragma mark - Notifications
