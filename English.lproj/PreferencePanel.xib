@@ -1946,7 +1946,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="18" id="A9a-sA-67D" userLabel="Color Well - Bold">
+                <colorWell tag="18" id="A9a-sA-67D" userLabel="Color Well - Bold" customClass="iTermAlphaColorWell">
                     <rect key="frame" x="284" y="202" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>

@@ -25,19 +25,24 @@
     if ([self count] < 3) {
         return [NSColor colorWithCalibratedRed:0.0 green:0.0 blue:0.0 alpha:1.0];
     }
-    
+
+    CGFloat alpha = 1.0;
+    NSNumber *alphaNumber = self[kEncodedColorDictionaryAlphaComponent];
+    if (alphaNumber) {
+        alpha = alphaNumber.doubleValue;
+    }
     NSString *colorSpace = self[kEncodedColorDictionaryColorSpace];
     if ([colorSpace isEqualToString:kEncodedColorDictionarySRGBColorSpace]) {
         NSColor *srgb = [NSColor colorWithSRGBRed:[[self objectForKey:kEncodedColorDictionaryRedComponent] floatValue]
                                             green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]
                                              blue:[[self objectForKey:kEncodedColorDictionaryBlueComponent] floatValue]
-                                            alpha:1.0];
+                                            alpha:alpha];
         return [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     } else {
         return [NSColor colorWithCalibratedRed:[[self objectForKey:kEncodedColorDictionaryRedComponent] floatValue]
                                          green:[[self objectForKey:kEncodedColorDictionaryGreenComponent] floatValue]
                                           blue:[[self objectForKey:kEncodedColorDictionaryBlueComponent] floatValue]
-                                         alpha:1.0];
+                                         alpha:alpha];
     }
 }
 

@@ -5208,7 +5208,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [image lockFocus];
             NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
             temp[NSStrokeWidthAttributeName] = @-2;
-            temp[NSStrokeColorAttributeName] = backgroundColor;
+            temp[NSStrokeColorAttributeName] = [backgroundColor colorWithAlphaComponent:fillColor.alphaComponent];
             [badgeLabel drawWithRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
                              options:NSStringDrawingUsesLineFragmentOrigin
                           attributes:temp];

@@ -16,6 +16,7 @@ static const double kBlueComponentBrightness = 0.11;
 NSString *const kEncodedColorDictionaryRedComponent = @"Red Component";
 NSString *const kEncodedColorDictionaryGreenComponent = @"Green Component";
 NSString *const kEncodedColorDictionaryBlueComponent = @"Blue Component";
+NSString *const kEncodedColorDictionaryAlphaComponent = @"Alpha Component";
 NSString *const kEncodedColorDictionaryColorSpace = @"Color Space";
 NSString *const kEncodedColorDictionarySRGBColorSpace = @"sRGB";
 NSString *const kEncodedColorDictionaryCalibratedColorSpace = @"Calibrated";
@@ -244,7 +245,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return @{ kEncodedColorDictionaryColorSpace: kEncodedColorDictionaryCalibratedColorSpace,
               kEncodedColorDictionaryRedComponent: @(red),
               kEncodedColorDictionaryGreenComponent: @(green),
-              kEncodedColorDictionaryBlueComponent: @(blue) };
+              kEncodedColorDictionaryBlueComponent: @(blue),
+              kEncodedColorDictionaryAlphaComponent: @(alpha) };
 }
 
 - (NSColor *)colorMutedBy:(double)muting towards:(NSColor *)baseColor {
