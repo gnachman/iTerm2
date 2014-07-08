@@ -22,11 +22,14 @@
 }
 
 - (NSColor *)colorValue {
+    return [self colorValueWithDefaultAlpha:1.0];
+}
+
+- (NSColor *)colorValueWithDefaultAlpha:(CGFloat)alpha {
     if ([self count] < 3) {
         return [NSColor colorWithCalibratedRed:0.0 green:0.0 blue:0.0 alpha:1.0];
     }
 
-    CGFloat alpha = 1.0;
     NSNumber *alphaNumber = self[kEncodedColorDictionaryAlphaComponent];
     if (alphaNumber) {
         alpha = alphaNumber.doubleValue;

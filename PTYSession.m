@@ -2088,8 +2088,8 @@ typedef enum {
         [_colorMap setColor:theColor forKey:[colorKey intValue]];
     }
 
-    self.cursorGuideColor = [[[iTermProfilePreferences objectForKey:KEY_CURSOR_GUIDE_COLOR
-                                                          inProfile:aDict] colorValue] colorWithAlphaComponent:0.25];
+    self.cursorGuideColor = [[iTermProfilePreferences objectForKey:KEY_CURSOR_GUIDE_COLOR
+                                                         inProfile:aDict] colorValueWithDefaultAlpha:0.25];
     if (!_cursorGuideSettingHasChanged) {
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                                   inProfile:aDict];
