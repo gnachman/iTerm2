@@ -16,6 +16,7 @@
 
 typedef int iTermColorMapKey;
 
+// Logical colors
 extern const int kColorMapForeground;
 extern const int kColorMapBackground;
 extern const int kColorMapBold;
@@ -25,7 +26,9 @@ extern const int kColorMapSelectedText;
 extern const int kColorMapCursor;
 extern const int kColorMapCursorText;
 extern const int kColorMapInvalid;
-// This value plus 0...255 are accepted.
+
+// This value plus 0...255 are accepted. The ANSI colors below followed by their bright
+// variants make the first 16 entries of the 256-color space.
 extern const int kColorMap8bitBase;
 
 // The 8 basic ANSI colors, which are within the 8-bit color range. These are
@@ -82,5 +85,8 @@ extern const int kColorMap24bitBase;
 - (NSColor *)dimmedColorForColor:(NSColor *)theColor;
 - (void)invalidateCache;
 - (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor;
+
+// Returns non-nil profile key name for valid logical colors, ANSI colors, and bright ANSI colors.
+- (NSString *)profileKeyForColorMapKey:(int)theKey;
 
 @end

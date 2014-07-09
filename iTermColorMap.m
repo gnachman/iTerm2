@@ -7,6 +7,7 @@
 //
 
 #import "iTermColorMap.h"
+#import "ITAddressBookMgr.h"
 #import "NSColor+iTerm.h"
 
 const int kColorMapForeground = 0;
@@ -231,4 +232,62 @@ const int kColorMapAnsiBrightModifier = 8;
     }
     return memoizedContrastingColor_;
 }
+
+- (NSString *)profileKeyForColorMapKey:(int)theKey {
+    switch (theKey) {
+        case kColorMapForeground:
+            return KEY_FOREGROUND_COLOR;
+        case kColorMapBackground:
+            return KEY_BACKGROUND_COLOR;
+        case kColorMapBold:
+            return KEY_BOLD_COLOR;
+        case kColorMapLink:
+            return KEY_LINK_COLOR;
+        case kColorMapSelection:
+            return KEY_SELECTION_COLOR;
+        case kColorMapSelectedText:
+            return KEY_SELECTED_TEXT_COLOR;
+        case kColorMapCursor:
+            return KEY_CURSOR_COLOR;
+        case kColorMapCursorText:
+            return KEY_CURSOR_TEXT_COLOR;
+
+        case kColorMapAnsiBlack:
+            return KEY_ANSI_0_COLOR;
+        case kColorMapAnsiRed:
+            return KEY_ANSI_1_COLOR;
+        case kColorMapAnsiGreen:
+            return KEY_ANSI_2_COLOR;
+        case kColorMapAnsiYellow:
+            return KEY_ANSI_3_COLOR;
+        case kColorMapAnsiBlue:
+            return KEY_ANSI_4_COLOR;
+        case kColorMapAnsiMagenta:
+            return KEY_ANSI_5_COLOR;
+        case kColorMapAnsiCyan:
+            return KEY_ANSI_6_COLOR;
+        case kColorMapAnsiWhite:
+            return KEY_ANSI_7_COLOR;
+
+        case kColorMapAnsiBlack + kColorMapAnsiBrightModifier:
+            return KEY_ANSI_8_COLOR;
+        case kColorMapAnsiRed + kColorMapAnsiBrightModifier:
+            return KEY_ANSI_9_COLOR;
+        case kColorMapAnsiGreen + kColorMapAnsiBrightModifier:
+            return KEY_ANSI_10_COLOR;
+        case kColorMapAnsiYellow + kColorMapAnsiBrightModifier:
+            return KEY_ANSI_11_COLOR;
+        case kColorMapAnsiBlue + kColorMapAnsiBrightModifier:
+            return KEY_ANSI_12_COLOR;
+        case kColorMapAnsiMagenta + kColorMapAnsiBrightModifier:
+            return KEY_ANSI_13_COLOR;
+        case kColorMapAnsiCyan + kColorMapAnsiBrightModifier:
+            return KEY_ANSI_14_COLOR;
+        case kColorMapAnsiWhite + kColorMapAnsiBrightModifier:
+            return KEY_ANSI_15_COLOR;
+    }
+
+    return nil;
+}
+
 @end

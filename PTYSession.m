@@ -5634,6 +5634,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return _colorMap;
 }
 
+- (void)screenSetColor:(NSColor *)color forKey:(int)key {
+    NSString *profileKey = [_colorMap profileKeyForColorMapKey:key];
+    if (profileKey) {
+        [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
+    }
+}
+
 - (void)screenSetCurrentTabColor:(NSColor *)color {
     [self setTabColor:color];
     id<WindowControllerInterface> term = [_tab parentWindow];

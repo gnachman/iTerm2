@@ -3099,35 +3099,35 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetForegroundColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapForeground];
+    [delegate_ screenSetColor:color forKey:kColorMapForeground];
 }
 
 - (void)terminalSetBackgroundColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapBackground];
+    [delegate_ screenSetColor:color forKey:kColorMapBackground];
 }
 
 - (void)terminalSetBoldColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapBold];
+    [delegate_ screenSetColor:color forKey:kColorMapBold];
 }
 
 - (void)terminalSetSelectionColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapSelection];
+    [delegate_ screenSetColor:color forKey:kColorMapSelection];
 }
 
 - (void)terminalSetSelectedTextColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapSelectedText];
+    [delegate_ screenSetColor:color forKey:kColorMapSelectedText];
 }
 
 - (void)terminalSetCursorColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapCursor];
+    [delegate_ screenSetColor:color forKey:kColorMapCursor];
 }
 
 - (void)terminalSetCursorTextColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapCursorText];
+    [delegate_ screenSetColor:color forKey:kColorMapCursorText];
 }
 
 - (void)terminalSetColorTableEntryAtIndex:(int)n color:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMap8bitBase + n];
+    [delegate_ screenSetColor:color forKey:kColorMap8bitBase + n];
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {
