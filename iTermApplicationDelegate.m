@@ -276,8 +276,11 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
-{
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
+        [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
+        [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
+    }
     [iTermFontPanel makeDefault];
 
     finishedLaunching_ = YES;

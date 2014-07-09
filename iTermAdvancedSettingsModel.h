@@ -75,4 +75,6 @@
 + (BOOL)noSyncSuppressCaptureOutputRequiresShellIntegrationWarning;
 + (BOOL)noSyncSuppressCaptureOutputToolNotVisibleWarning;
 
++ (BOOL)disableAppNap;
+
 @end
