@@ -38,7 +38,6 @@
 + (int)pasteHistoryMaxOptions;
 + (BOOL)pinchToChangeFontSizeDisabled;
 + (BOOL)doNotSetCtype;
-+ (BOOL)debugKeyDown;
 
 // The cursor's background goes to the "most different" color from its neighbors if the difference
 // in brightness between the proposed background color and the neighbors' background color is less
@@ -75,5 +74,7 @@
 
 + (BOOL)noSyncSuppressCaptureOutputRequiresShellIntegrationWarning;
 + (BOOL)noSyncSuppressCaptureOutputToolNotVisibleWarning;
+
++ (BOOL)disableAppNap;
 
 @end

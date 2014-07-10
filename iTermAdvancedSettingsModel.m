@@ -82,13 +82,13 @@ DEFINE_BOOL(openFileInNewWindows, NO, @"General: Open files (like shell scripts 
 DEFINE_FLOAT(minRunningTime, 10, @"General: Automatic quit suspended for this manys seconds after startup (0 disables)")
 DEFINE_FLOAT(updateScreenParamsDelay, 1, @"General: Delay after changing number of screens/resolution until refresh (seconds)")
 DEFINE_INT(pasteHistoryMaxOptions, 20, @"General: Number of entires to show in Paste History (will not go below 2 or above 100)")
-DEFINE_BOOL(debugKeyDown, NO, @"General: Log verbose debug info about key presses")
 DEFINE_BOOL(logDrawingPerformance, NO, @"General: Log stats about text drawing performance to console")
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"General: Ignore hard newlines for the purposes of locating URLs for Cmd-click")
 // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
 DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'()|[]", @"General: Non-alphanumeric characters considered part of a URL for Cmd-click")
 DEFINE_BOOL(rememberWindowPositions, YES, @"General: Remember window locations even after they’re closed");
 DEFINE_BOOL(disableToolbar, NO, @"General: Completely disable toolbar");
+DEFINE_BOOL(disableAppNap, NO, @"General: Disable App Nap (change effective after retarting iTerm2)");
 
 #pragma mark Warnings
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Warnings: Suppress a warning when Option Key Acts as Meta is enabled");
@@ -113,6 +113,6 @@ DEFINE_INT(quickPasteBytesPerCall, 1024, @"Pasteboard: Bytes to paste in each ch
 DEFINE_FLOAT(quickPasteDelayBetweenCalls, 0.01, @"Pasteboard: Delay in seconds between chunks when pasting normally")
 DEFINE_INT(slowPasteBytesPerCall, 16, @"Pasteboard: Bytes to paste in each chunk when pasting slowly")
 DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, @"Pasteboard: Delay in seconds between chunks when pasting slowly")
-DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard includes color and font style")
+DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard on selection includes color and font style")
 
 @end

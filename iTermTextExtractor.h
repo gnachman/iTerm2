@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "PTYTextViewDataSource.h"
 #import "ScreenChar.h"
+#import "SmartMatch.h"
 
 typedef enum {
     // Any kind of white space.
@@ -56,12 +57,13 @@ typedef enum {
 
 // Uses the provided smart selection |rules| to perform a smart selection at |location|. If
 // |actionRequired| is set then rules without an action are ignored. If a rule is matched, it is
-// returned and |range| is set to the range of matching characters.
-- (NSDictionary *)smartSelectionAt:(VT100GridCoord)location
-                         withRules:(NSArray *)rules
-                    actionRequired:(BOOL)actionRequired
-                             range:(VT100GridWindowedRange *)range
-                  ignoringNewlines:(BOOL)ignoringNewlines;
+// returned and |range| is set to the range of matching characters. The returned match will be
+// populated and the matching text will be in smartMatch.components[0].
+- (SmartMatch *)smartSelectionAt:(VT100GridCoord)location
+                       withRules:(NSArray *)rules
+                  actionRequired:(BOOL)actionRequired
+                           range:(VT100GridWindowedRange *)range
+                ignoringNewlines:(BOOL)ignoringNewlines;
 
 // Returns the range of the whole wrapped line including |coord|.
 - (VT100GridWindowedRange)rangeForWrappedLineEncompassing:(VT100GridCoord)coord
@@ -78,7 +80,12 @@ typedef enum {
 // Returns next/previous coordinate. Returns first/last legal coord if none exists.
 - (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord;
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord;
-- (VT100GridCoord)coord:(VT100GridCoord)coord plus:(int)delta;
+
+// Advances coord by a positive or negative delta, staying within the column window, if any. Any
+// indices in |coordsToSkip| will not count against delta.
+- (VT100GridCoord)coord:(VT100GridCoord)coord
+                   plus:(int)delta
+         skippingCoords:(NSIndexSet *)coordsToSkip;
 
 // block should return YES to stop searching and use the coordinate it was passed as the result.
 - (VT100GridCoord)searchFrom:(VT100GridCoord)start
@@ -87,6 +94,19 @@ typedef enum {
 
 // Returns content in the specified range, ignoring hard newlines. If |forward| is set then content
 // is captured up to the first null; otherwise, content after the last null in the range is returned.
+// If |continuationChars| is non-nil and a character that should be ignored is found, its location
+// will be added to |continuationChars|. Currently the only skippable character is a \ in the
+// rightmost column when there is a software-drawn divider (see issue 3067).
+- (NSString *)contentInRange:(VT100GridWindowedRange)range
+                  nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
+                         pad:(BOOL)pad
+          includeLastNewline:(BOOL)includeLastNewline
+      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+                cappedAtSize:(int)maxBytes
+            continuationChars:(NSMutableIndexSet *)continuationChars;
+
+// Like the above but does not skip continuation chars (backslash on the right edge of a software-
+// drawn boundary)
 - (NSString *)contentInRange:(VT100GridWindowedRange)range
                   nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                          pad:(BOOL)pad
@@ -108,6 +128,15 @@ typedef enum {
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
                      maxChars:(int)maxChars;
+
+// Like the above, but continuation chars (a \ before the right edge when there is a software-drawn
+// boundary) are ignored. See comment at
+// -contentInRange:nullPolicy:pad:includeLastNewline:trimTrailingWhitespace:cappedAtSize:continuationChars:
+- (NSString *)wrappedStringAt:(VT100GridCoord)coord
+                      forward:(BOOL)forward
+          respectHardNewlines:(BOOL)respectHardNewlines
+                     maxChars:(int)maxChars
+            continuationChars:(NSMutableIndexSet *)continuationChars;
 
 - (NSAttributedString *)attributedContentInRange:(VT100GridWindowedRange)range
                                              pad:(BOOL)pad

@@ -156,11 +156,11 @@ static const int kNumCharsToSearchForDivider = 8;
     return [NSString stringWithCharacters:temp length:length];
 }
 
-- (NSDictionary *)smartSelectionAt:(VT100GridCoord)location
-                         withRules:(NSArray *)rules
-                    actionRequired:(BOOL)actionRequired
-                             range:(VT100GridWindowedRange *)range
-                  ignoringNewlines:(BOOL)ignoringNewlines {
+- (SmartMatch *)smartSelectionAt:(VT100GridCoord)location
+                       withRules:(NSArray *)rules
+                  actionRequired:(BOOL)actionRequired
+                           range:(VT100GridWindowedRange *)range
+                ignoringNewlines:(BOOL)ignoringNewlines {
     location = [self coordLockedToWindow:location];
     int targetOffset;
     const int numLines = 2;
@@ -217,6 +217,10 @@ static const int kNumCharsToSearchForDivider = 8;
                         match.endX = endCoord.x;
                         match.absEndY = endCoord.y + [_dataSource totalScrollbackOverflow];
                         match.rule = rule;
+                        match.components = [substring captureComponentsMatchedByRegex:regex
+                                                                              options:0
+                                                                                range:NSMakeRange(0, [substring length])
+                                                                                error:&regexError];
                         [matches setObject:match forKey:result];
                         
                         if (debug) {
@@ -247,7 +251,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                     bestMatch.endX,
                                     bestMatch.absEndY - [_dataSource totalScrollbackOverflow]);
         *range = [self windowedRangeWithRange:theRange];
-        return bestMatch.rule;
+        return bestMatch;
     } else {
         if (debug) {
             NSLog(@"No matches. Fall back on word selection.");
@@ -370,24 +374,71 @@ static const int kNumCharsToSearchForDivider = 8;
     return coord;
 }
 
-- (VT100GridCoord)coord:(VT100GridCoord)coord plus:(int)n {
+// Returns an integer that uniquely identifies a coordinate in a grid with the passed-in |width|.
+- (NSUInteger)indexForCoord:(VT100GridCoord)coord width:(int)width {
+    NSUInteger i = coord.y;
+    i *= width;
+    i += coord.x;
+    return i;
+}
+
+// Not inclusive of coord2
+- (int)numberOfCoordsInIndexSet:(NSIndexSet *)coords
+                        between:(VT100GridCoord)coord1
+                            and:(VT100GridCoord)coord2 {
+    NSUInteger coord1Index = [self indexForCoord:coord1 width:[_dataSource width]];
+    NSUInteger coord2Index = [self indexForCoord:coord2 width:[_dataSource width]];
+    NSUInteger minIndex = MIN(coord1Index, coord2Index);
+    NSUInteger maxIndex = MAX(coord1Index, coord2Index);
+
+    __block int n = 0;
+    [coords enumerateIndexesInRange:NSMakeRange(minIndex, maxIndex - minIndex)
+                            options:0
+                         usingBlock:^(NSUInteger idx, BOOL *stop) {
+                             n++;
+                         }];
+    return n;
+}
+
+- (VT100GridCoord)coord:(VT100GridCoord)coord
+                   plus:(int)n
+         skippingCoords:(NSIndexSet *)coordsToSkip {
     int left = _logicalWindow.length >= 0 ? _logicalWindow.location : 0;
     int right = [self xLimit];
     int span = right - left;
-    
+    VT100GridCoord prevCoord = coord;
+
     // Advance it by n.
-    coord.x += n;
-    
-    // If n was negative, move it right and up until it's legal.
-    while (coord.x < left) {
-        coord.y--;
-        coord.x += span;
-    }
-    
-    // If n was positive, move it left and down until it's legal.
-    while (coord.x >= right) {
-        coord.x -= span;
-        coord.y++;
+    while (n) {
+        prevCoord = coord;
+        coord.x += n;
+        n = 0;
+        if (coord.x >= left && coord.x < right) {
+            coord.x += [self numberOfCoordsInIndexSet:coordsToSkip
+                                              between:coord
+                                                  and:prevCoord];
+        }
+        // If n was negative, move it right and up until it's legal.
+        if (coord.x < left) {
+            while (coord.x < left) {
+                coord.y--;
+                coord.x += span;
+                n -= [self numberOfCoordsInIndexSet:coordsToSkip
+                                            between:coord
+                                                and:prevCoord];
+                prevCoord = coord;
+            }
+        } else {
+            // If n was positive, move it left and down until it's legal.
+            while (coord.x >= right) {
+                coord.x -= span;
+                coord.y++;
+                n += [self numberOfCoordsInIndexSet:coordsToSkip
+                                            between:coord
+                                                and:prevCoord];
+                prevCoord = coord;
+            }
+        }
     }
     
     // Make sure y value is legit.
@@ -441,6 +492,7 @@ static const int kNumCharsToSearchForDivider = 8;
             targetOffset:(int *)targetOffset
                   coords:(NSMutableArray *)coords
         ignoringNewlines:(BOOL)ignoringNewlines {
+    BOOL ignoreContinuations = (_logicalWindow.length > 0);
     int xLimit = [self xLimit];
     int trueWidth = [_dataSource width];
     VT100GridCoordRange theRange = VT100GridCoordRangeMake(0,
@@ -457,10 +509,19 @@ static const int kNumCharsToSearchForDivider = 8;
                                    if (!theChar.code) {
                                        return YES;
                                    }
-                                   NSString* string = CharToStr(theChar.code, theChar.complexChar);
-                                   [joinedLines insertString:string atIndex:0];
-                                   for (int i = 0; i < [string length]; i++) {
-                                     [coords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
+                                   if (ignoreContinuations &&
+                                       windowedRange.columnWindow.length > 0 &&
+                                       charCoord.x == windowedRange.columnWindow.location + windowedRange.columnWindow.length - 1 &&
+                                       theChar.code == '\\' &&
+                                       !theChar.complexChar) {
+                                       // Is a backslash at the right edge of a window.
+                                       // no-op
+                                   } else {
+                                       NSString* string = CharToStr(theChar.code, theChar.complexChar);
+                                       [joinedLines insertString:string atIndex:0];
+                                       for (int i = 0; i < [string length]; i++) {
+                                         [coords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
+                                       }
                                    }
                                    return NO;
                                }
@@ -485,10 +546,19 @@ static const int kNumCharsToSearchForDivider = 8;
                           if (!theChar.code) {
                               return YES;
                           }
-                          NSString* string = CharToStr(theChar.code, theChar.complexChar);
-                          [joinedLines appendString:string];
-                          for (int i = 0; i < [string length]; i++) {
-                              [coords addObject:[NSValue valueWithGridCoord:charCoord]];
+                          if (ignoreContinuations &&
+                              windowedRange.columnWindow.length > 0 &&
+                              charCoord.x == windowedRange.columnWindow.location + windowedRange.columnWindow.length - 1 &&
+                              theChar.code == '\\' &&
+                              !theChar.complexChar) {
+                              // Is a backslash at the right edge of a window.
+                              // no-op
+                          } else {
+                              NSString* string = CharToStr(theChar.code, theChar.complexChar);
+                              [joinedLines appendString:string];
+                              for (int i = 0; i < [string length]; i++) {
+                                  [coords addObject:[NSValue valueWithGridCoord:charCoord]];
+                              }
                           }
                           return NO;
                       }
@@ -528,8 +598,23 @@ static const int kNumCharsToSearchForDivider = 8;
                          pad:(BOOL)pad
           includeLastNewline:(BOOL)includeLastNewline
       trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+                cappedAtSize:(int)maxBytes {
+    return [self contentInRange:windowedRange
+                     nullPolicy:nullPolicy
+                            pad:pad
+             includeLastNewline:includeLastNewline
+         trimTrailingWhitespace:trimSelectionTrailingSpaces
+                   cappedAtSize:maxBytes
+              continuationChars:nil];
+}
+
+- (NSString *)contentInRange:(VT100GridWindowedRange)windowedRange
+                  nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
+                         pad:(BOOL)pad
+          includeLastNewline:(BOOL)includeLastNewline
+      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                 cappedAtSize:(int)maxBytes
-{
+            continuationChars:(NSMutableIndexSet *)continuationChars {
     DLog(@"Find selected text in range %@ pad=%d, includeLastNewline=%d, trim=%d",
          VT100GridWindowedRangeDescription(windowedRange), (int)pad, (int)includeLastNewline,
          (int)trimSelectionTrailingSpaces);
@@ -537,6 +622,7 @@ static const int kNumCharsToSearchForDivider = 8;
     if (maxBytes < 0) {
         maxBytes = INT_MAX;
     }
+    int width = [_dataSource width];
     [self enumerateCharsInRange:windowedRange
                       charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
                           if (theChar.code == TAB_FILLER) {
@@ -561,8 +647,19 @@ static const int kNumCharsToSearchForDivider = 8;
                               }
                           } else if (theChar.code != DWC_RIGHT &&
                                      theChar.code != DWC_SKIP) {
-                              // Normal character
-                              [result appendString:ScreenCharToStr(&theChar)];
+                              // Normal character. Add it unless it's a backslash at the right edge
+                              // of a window.
+                              if (continuationChars &&
+                                  windowedRange.columnWindow.length > 0 &&
+                                  coord.x == windowedRange.columnWindow.location + windowedRange.columnWindow.length - 1 &&
+                                  theChar.code == '\\' &&
+                                  !theChar.complexChar) {
+                                  // Is a backslash at the right edge of a window.
+                                  [continuationChars addIndex:[self indexForCoord:coord width:width]];
+                              } else {
+                                  // Normal character.
+                                  [result appendString:ScreenCharToStr(&theChar)];
+                              }
                           }
                           return [result length] >= maxBytes;
                       }
@@ -711,6 +808,18 @@ static const int kNumCharsToSearchForDivider = 8;
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
                      maxChars:(int)maxChars {
+    return [self wrappedStringAt:coord
+                         forward:forward
+             respectHardNewlines:respectHardNewlines
+                        maxChars:maxChars
+               continuationChars:nil];
+}
+
+- (NSString *)wrappedStringAt:(VT100GridCoord)coord
+                      forward:(BOOL)forward
+          respectHardNewlines:(BOOL)respectHardNewlines
+                     maxChars:(int)maxChars
+            continuationChars:(NSMutableIndexSet *)continuationChars {
     if ([self hasLogicalWindow]) {
         respectHardNewlines = NO;
     }
@@ -749,7 +858,8 @@ static const int kNumCharsToSearchForDivider = 8;
                              pad:NO
               includeLastNewline:NO
           trimTrailingWhitespace:NO
-                    cappedAtSize:maxChars];
+                    cappedAtSize:maxChars
+               continuationChars:continuationChars];
     if (!respectHardNewlines) {
         content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
     }

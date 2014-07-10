@@ -2938,13 +2938,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                           kInlineFileBase64String: [NSMutableString string] } retain];
 }
 
-- (void)appendInlineFileCharsForName:(NSString *)name
-                               width:(int)width
-                               units:(VT100TerminalUnits)widthUnits
-                              height:(int)height
-                               units:(VT100TerminalUnits)heightUnits
-                 preserveAspectRatio:(BOOL)preserveAspectRatio
-                               image:(NSImage *)image {
+- (void)appendImageAtCursorWithName:(NSString *)name
+                              width:(int)width
+                              units:(VT100TerminalUnits)widthUnits
+                             height:(int)height
+                              units:(VT100TerminalUnits)heightUnits
+                preserveAspectRatio:(BOOL)preserveAspectRatio
+                              image:(NSImage *)image {
     if (!image) {
         image = [NSImage imageNamed:@"broken_image"];
     }
@@ -3038,19 +3038,19 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     
     SetDecodedImage(c.code, image);
     [inlineFileCodes_ addObject:@(c.code)];
+    [delegate_ screenNeedsRedraw];
 }
 
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
         NSImage *image = [self imageWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
-        [self appendInlineFileCharsForName:inlineFileInfo_[kInlineFileName]
-                                     width:[inlineFileInfo_[kInlineFileWidth] intValue]
-                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
-                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
-                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
-                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                     image:image];
-        [delegate_ screenNeedsRedraw];
+        [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
+                                    width:[inlineFileInfo_[kInlineFileWidth] intValue]
+                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
+                                   height:[inlineFileInfo_[kInlineFileHeight] intValue]
+                                    units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
+                      preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
+                                    image:image];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
     } else {
@@ -3099,35 +3099,35 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetForegroundColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapForeground];
+    [delegate_ screenSetColor:color forKey:kColorMapForeground];
 }
 
 - (void)terminalSetBackgroundColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapBackground];
+    [delegate_ screenSetColor:color forKey:kColorMapBackground];
 }
 
 - (void)terminalSetBoldColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapBold];
+    [delegate_ screenSetColor:color forKey:kColorMapBold];
 }
 
 - (void)terminalSetSelectionColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapSelection];
+    [delegate_ screenSetColor:color forKey:kColorMapSelection];
 }
 
 - (void)terminalSetSelectedTextColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapSelectedText];
+    [delegate_ screenSetColor:color forKey:kColorMapSelectedText];
 }
 
 - (void)terminalSetCursorColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapCursor];
+    [delegate_ screenSetColor:color forKey:kColorMapCursor];
 }
 
 - (void)terminalSetCursorTextColor:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMapCursorText];
+    [delegate_ screenSetColor:color forKey:kColorMapCursorText];
 }
 
 - (void)terminalSetColorTableEntryAtIndex:(int)n color:(NSColor *)color {
-    [[delegate_ screenColorMap] setColor:color forKey:kColorMap8bitBase + n];
+    [delegate_ screenSetColor:color forKey:kColorMap8bitBase + n];
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {

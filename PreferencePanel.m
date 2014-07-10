@@ -386,11 +386,14 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     iTermSizeRememberingView *theView = (iTermSizeRememberingView *)tabViewItem.view;
     [theView resetToOriginalSize];
     NSRect rect = self.window.frame;
+    NSPoint topLeft = rect.origin;
+    topLeft.y += rect.size.height;
     NSSize size = [tabViewItem.view frame].size;
-    rect.origin.y += (rect.size.height - size.height);
     rect.size = size;
     rect.size.height += 87;
     rect.size.width += 26;
+    rect.origin = topLeft;
+    rect.origin.y -= rect.size.height;
     [[self window] setFrame:rect display:YES animate:YES];
 }
 

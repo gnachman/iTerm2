@@ -27,6 +27,7 @@
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
+#import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 #import "PasteboardHistory.h"
@@ -393,6 +394,14 @@ NSString *kSessionsKVCKey = @"sessions";
             DLog(@"Convert default screen to screen number: System chose screen %lu", (unsigned long)n);
             screenNumber = n;
         }
+    } else if (screenNumber == -2) {
+        // Select screen with cursor.
+        NSScreen *screenWithCursor = [NSScreen screenWithCursor];
+        NSUInteger preference = [[NSScreen screens] indexOfObject:screenWithCursor];
+        if (preference == NSNotFound) {
+            preference = 0;
+        }
+        screenNumber = preference;
     }
     if (windowType == WINDOW_TYPE_TOP ||
         windowType == WINDOW_TYPE_TOP_PARTIAL ||
@@ -423,13 +432,13 @@ NSString *kSessionsKVCKey = @"sessions";
     _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];
 
     NSScreen* screen;
-    if (screenNumber < 0 || screenNumber >= [[NSScreen screens] count])  {
+    if (screenNumber == -1 || screenNumber >= [[NSScreen screens] count])  {
         screen = [[self window] screen];
         DLog(@"Screen number %d is out of range [0,%d] so using 0",
              screenNumber, (int)[[NSScreen screens] count]);
         screenNumber_ = 0;
         haveScreenPreference_ = NO;
-    } else {
+    } else if (screenNumber >= 0) {
         DLog(@"Selecting screen number %d", screenNumber);
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
         screenNumber_ = screenNumber;
@@ -450,40 +459,40 @@ NSString *kSessionsKVCKey = @"sessions";
             initialFrame = [screen visibleFrame];
             break;
 
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+            oldFrame_ = [[self window] frame];
+            // The size is just whatever was in the .xib file's window, which is silly.
+            // By setting this flag, we'll use the window size necessary to hold the current
+            // session's rows/columns setting when exiting fullscreen.
+            oldFrameSizeIsBogus_ = YES;
+            initialFrame = [self traditionalFullScreenFrameForScreen:screen];
+            break;
+
         default:
             PtyLog(@"Unknown window type: %d", (int)windowType);
             NSLog(@"Unknown window type: %d", (int)windowType);
             // fall through
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            haveScreenPreference_ = NO;
-            // fall through
-        case WINDOW_TYPE_LION_FULL_SCREEN:
-        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
-            if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
-                oldFrame_ = [[self window] frame];
-                // The size is just whatever was in the .xib file's window, which is silly.
-                // By setting this flag, we'll use the window size necessary to hold the current
-                // session's rows/columns setting when exiting fullscreen.
-                oldFrameSizeIsBogus_ = YES;
-                initialFrame = [self traditionalFullScreenFrameForScreen:screen];
-            } else {
-                // Use the system-supplied frame which has a reasonable origin. It may
-                // be overridden by smart window placement or a saved window location.
-                initialFrame = [[self window] frame];
-            }
-            if (screenNumber_ != 0) {
-                DLog(@"Moving fullscreen window to screen %d", screenNumber_);
+            // Use the system-supplied frame which has a reasonable origin. It may
+            // be overridden by smart window placement or a saved window location.
+            initialFrame = [[self window] frame];
+            if (haveScreenPreference_) {
+                DLog(@"Moving window to screen %d", screenNumber_);
                 // Move the frame to the desired screen
                 NSScreen* baseScreen = [[self window] deepestScreen];
                 NSPoint basePoint = [baseScreen visibleFrame].origin;
                 double xoffset = initialFrame.origin.x - basePoint.x;
                 double yoffset = initialFrame.origin.y - basePoint.y;
                 NSPoint destPoint = [screen visibleFrame].origin;
+
+                DLog(@"Assigned screen has origin %@, destination screen has origin %@", NSStringFromPoint(baseScreen.visibleFrame.origin),
+                     NSStringFromPoint(destPoint));
                 destPoint.x += xoffset;
                 destPoint.y += yoffset;
                 initialFrame.origin = destPoint;
-
+                DLog(@"New initial frame is %@", NSStringFromRect(initialFrame));
                 // Make sure the top-right corner of the window is on the screen too
                 NSRect destScreenFrame = [screen visibleFrame];
                 double xover = destPoint.x + initialFrame.size.width - (destScreenFrame.origin.x + destScreenFrame.size.width);
@@ -494,6 +503,7 @@ NSString *kSessionsKVCKey = @"sessions";
                 if (yover > 0) {
                     destPoint.y -= yover;
                 }
+                DLog(@"after adjusting top right, initial origin is %@", NSStringFromPoint(destPoint));
                 [[self window] setFrameOrigin:destPoint];
             }
             break;
@@ -518,6 +528,11 @@ NSString *kSessionsKVCKey = @"sessions";
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
+    // For some reason, you don't always get the frame you requested. I saw
+    // this on OS 10.10 when creating normal windows on a 2-screen display. The
+    // frames were within the visible frame of screen #2.
+    [myWindow setFrame:initialFrame display:NO];
+    DLog(@"Create window %@", myWindow);
     if (windowType == WINDOW_TYPE_TOP ||
         windowType == WINDOW_TYPE_BOTTOM ||
         windowType == WINDOW_TYPE_LEFT ||
@@ -2299,8 +2314,17 @@ NSString *kSessionsKVCKey = @"sessions";
         PtyLog(@"No deepest screen");
         // Try to use the screen of the current session. Fall back to the main
         // screen if that's not an option.
-        int screenNumber = [abDict objectForKey:KEY_SCREEN] ? [[abDict objectForKey:KEY_SCREEN] intValue] : 0;
         NSArray* screens = [NSScreen screens];
+        int screenNumber = [abDict objectForKey:KEY_SCREEN] ? [[abDict objectForKey:KEY_SCREEN] intValue] : 0;
+        if (screenNumber == -1) { // No pref
+            screenNumber = 0;
+        } else if (screenNumber == -2) {  // Where cursor is; respect original preference
+            if ([screens count] > screenNumber_) {
+                screenNumber = screenNumber_;
+            } else {
+                screenNumber = 0;
+            }
+        }
         if ([screens count] == 0) {
             PtyLog(@"We are headless");
             // Nothing we can do if we're headless.
@@ -3420,9 +3444,11 @@ NSString *kSessionsKVCKey = @"sessions";
         [window setFrame:frame display:NO];
         return;
     }
-    if (([[[iTermController sharedInstance] terminals] count] == 1) ||
-        (![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement])) {
-        if ([iTermAdvancedSettingsModel rememberWindowPositions]) {
+    NSUInteger numberOfTerminalWindows = [[[iTermController sharedInstance] terminals] count];
+    if (numberOfTerminalWindows == 1 ||
+        ![iTermPreferences boolForKey:kPreferenceKeySmartWindowPlacement]) {
+        if (!haveScreenPreference_ &&
+            [iTermAdvancedSettingsModel rememberWindowPositions]) {
             PtyLog(@"No smart layout");
             NSRect frame = [window frame];
             [self assignUniqueNumberToWindow];
@@ -4867,6 +4893,30 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
+// Bump a frame so that it's within the screen's visible frame, if possible.
+- (NSRect)frame:(NSRect)frame byConstrainingToScreen:(NSScreen *)screen {
+    NSRect screenRect = screen.visibleFrame;
+    if (frame.size.width > screenRect.size.width ||
+        frame.size.height > screenRect.size.height) {
+        return frame; // Sorry, can't be done.
+    }
+
+    if (NSContainsRect(screenRect, frame)) {
+        // Nothing to do.
+        return frame;
+    }
+
+    CGFloat xOver = NSMaxX(frame) - NSMaxX(screenRect);
+    CGFloat yOver = NSMaxY(frame) - NSMaxY(screenRect);
+    CGFloat xUnder = NSMinX(screenRect) - NSMinX(frame);
+    CGFloat yUnder = NSMinY(screenRect) - NSMinY(frame);
+
+    frame.origin.x += MAX(0, xUnder) - MAX(0, xOver);
+    frame.origin.y += MAX(0, yUnder) - MAX(0, yOver);
+
+    return frame;
+}
+
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize
 {
     PtyLog(@"fitWindowToTabSize %@", [NSValue valueWithSize:tabSize]);
@@ -4979,6 +5029,9 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
+    DLog(@"Before frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
+    frame = [self frame:frame byConstrainingToScreen:[[self window] screen]];
+    DLog(@"After frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
     [[self window] setFrame:frame display:YES];
 
     // Restore TABVIEW's autoresizingMask and remove the stupid bugFixView.

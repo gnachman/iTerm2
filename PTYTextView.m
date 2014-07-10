@@ -2264,13 +2264,12 @@ NSMutableArray* screens=0;
     return joinedLines;
 }
 
-- (NSDictionary *)smartSelectAtX:(int)x
-                               y:(int)y
-                              to:(VT100GridWindowedRange *)rangePtr
-                ignoringNewlines:(BOOL)ignoringNewlines
-                  actionRequired:(BOOL)actionRequred
-                 respectDividers:(BOOL)respectDividers
-{
+- (SmartMatch *)smartSelectAtX:(int)x
+                             y:(int)y
+                            to:(VT100GridWindowedRange *)rangePtr
+              ignoringNewlines:(BOOL)ignoringNewlines
+                actionRequired:(BOOL)actionRequred
+               respectDividers:(BOOL)respectDividers {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoord coord = VT100GridCoordMake(x, y);
     if (respectDividers) {
@@ -2286,19 +2285,19 @@ NSMutableArray* screens=0;
 - (BOOL)smartSelectAtX:(int)x y:(int)y ignoringNewlines:(BOOL)ignoringNewlines
 {
     VT100GridWindowedRange range;
-    NSDictionary *rule = [self smartSelectAtX:x
-                                            y:y
-                                           to:&range
-                             ignoringNewlines:ignoringNewlines
-                               actionRequired:NO
-                              respectDividers:YES];
+    SmartMatch *smartMatch = [self smartSelectAtX:x
+                                                y:y
+                                               to:&range
+                                 ignoringNewlines:ignoringNewlines
+                                   actionRequired:NO
+                                  respectDividers:YES];
 
     [_selection beginSelectionAt:VT100GridCoordMake(x, y)
                             mode:kiTermSelectionModeSmart
                           resume:NO
                           append:NO];
     [_selection endLiveSelection];
-    return rule != nil;
+    return smartMatch != nil;
 }
 
 // Control-pgup and control-pgdown are handled at this level by NSWindow if no
@@ -2344,21 +2343,14 @@ NSMutableArray* screens=0;
         isFirstInteraction = NO;
     }
 
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown BEGIN %@", event);
-    }
-    DebugLog(@"PTYTextView keyDown");
+    DLog(@"PTYTextView keyDown BEGIN %@", event);
     id delegate = [self delegate];
     if ([delegate isPasting]) {
         [delegate queueKeyDown:event];
         return;
     }
     if ([_delegate textViewDelegateHandlesAllKeystrokes]) {
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
-        }
+        DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
         // Delegate has special handling for this case.
         [delegate keyDown:event];
         return;
@@ -2366,22 +2358,21 @@ NSMutableArray* screens=0;
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
     BOOL prev = [self hasMarkedText];
+    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
     keyIsARepeat = [event isARepeat];
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-        NSLog(@"prev=%d", (int)prev);
-        NSLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-        NSLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
-        NSLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
-        NSLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
-        NSLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
-        NSLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
-        NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
-        NSLog(@"event is repeated=%d", keyIsARepeat);
-    }
+    DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+    DLog(@"prev=%d", (int)prev);
+    DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
+    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+    DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
+    DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
+    DLog(@"leftAltPressed && optionKey != NORMAL = %d", (int)(leftAltPressed && [delegate optionKey] != OPT_NORMAL));
+    DLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
+    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+    DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
+    DLog(@"event is repeated=%d", keyIsARepeat);
 
     // discard repeated key events if auto repeat mode (DECARM) is disabled
     if (keyIsARepeat && ![[_dataSource terminal] autorepeatMode]) {
@@ -2402,27 +2393,21 @@ NSMutableArray* screens=0;
         ([delegate hasActionableKeyMappingForEvent:event] ||       // delegate will do something useful
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
          ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
-          (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||
-           (modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||  // Synergy sends an Alt key that's neither left nor right!
-           ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL))) ||
+          ((leftAltPressed && [delegate optionKey] != OPT_NORMAL) ||
+           (rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL))) ||
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown: process in delegate");
-        }
-        [delegate keyDown:event];
-        return;
+             DLog(@"PTYTextView keyDown: process in delegate");
+             [delegate keyDown:event];
+             return;
     }
 
-    if (debugKeyDown) {
-        NSLog(@"Test for command key");
-    }
+    DLog(@"Test for command key");
+
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown You pressed cmd+something");
-        }
+        DLog(@"PTYTextView keyDown You pressed cmd+something");
         return;
     }
 
@@ -2431,9 +2416,8 @@ NSMutableArray* screens=0;
     BOOL workAroundControlBug = NO;
     if (!prev &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
-        if (debugKeyDown) {
-            NSLog(@"Special ctrl+key handler running");
-        }
+        DLog(@"Special ctrl+key handler running");
+
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
         if ([unmodkeystr length] != 0) {
             unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
@@ -2455,9 +2439,7 @@ NSMutableArray* screens=0;
             }
             if (cc != 0xffff) {
                 [self insertText:[NSString stringWithCharacters:&cc length:1]];
-                if (debugKeyDown) {
-                    NSLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
-                }
+                DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
                 workAroundControlBug = YES;
             }
         }
@@ -2466,9 +2448,7 @@ NSMutableArray* screens=0;
     if (!workAroundControlBug) {
         // Let the IME process key events
         _inputMethodIsInserting = NO;
-        if (debugKeyDown) {
-            NSLog(@"PTYTextView keyDown send to IME");
-        }
+        DLog(@"PTYTextView keyDown send to IME");
 
         // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
         // wrong instnace of PTYTextView. We work around the issue by using a global variable to
@@ -2482,15 +2462,11 @@ NSMutableArray* screens=0;
         if (!prev &&
             !_inputMethodIsInserting &&
             ![self hasMarkedText]) {
-            if (debugKeyDown) {
-                NSLog(@"PTYTextView keyDown IME no, send to delegate");
-            }
+            DLog(@"PTYTextView keyDown IME no, send to delegate");
             [delegate keyDown:event];
         }
     }
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView keyDown END");
-    }
+    DLog(@"PTYTextView keyDown END");
 }
 
 - (BOOL)keyIsARepeat
@@ -3593,12 +3569,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event verticalOk:(BOOL)verticalOk
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
-    }
-    DebugLog(@"PTYTextView placeCursorOnCurrentLineWithEvent");
+    DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
 
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
@@ -3662,14 +3633,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             i--;
         }
     }
-    if (debugKeyDown) {
-        NSLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
-              cursorX, cursorY, x, y, width);
-    }
+    DLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
+          cursorX, cursorY, x, y, width);
 
-    if (debugKeyDown) {
-        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
-    }
+    DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
 }
 
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
@@ -5008,10 +4975,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
-        BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-        if (debugKeyDown) {
-            NSLog(@"insertText: clear marked text");
-        }
+        DLog(@"insertText: clear marked text");
         _inputMethodMarkedRange = NSMakeRange(0, 0);
         [markedText release];
         markedText=nil;
@@ -5051,10 +5015,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // TODO: Respect replacementRange
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange replacementRange:(NSRange)replacementRange
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-    if (debugKeyDown) {
-        NSLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
-    }
+    DLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
     [markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
         markedText = [[NSAttributedString alloc] initWithString:[aString string]
@@ -5096,10 +5057,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)unmarkText
 {
-    BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-    if (debugKeyDown) {
-        NSLog(@"clear marked text");
-    }
+    DLog(@"clear marked text");
     // As far as I can tell this is never called.
     _inputMethodMarkedRange = NSMakeRange(0, 0);
     imeOffset = 0;
@@ -5250,7 +5208,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [image lockFocus];
             NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
             temp[NSStrokeWidthAttributeName] = @-2;
-            temp[NSStrokeColorAttributeName] = backgroundColor;
+            temp[NSStrokeColorAttributeName] = [backgroundColor colorWithAlphaComponent:fillColor.alphaComponent];
             [badgeLabel drawWithRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
                              options:NSStringDrawingUsesLineFragmentOrigin
                           attributes:temp];
@@ -7881,14 +7839,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return nil;
     }
     [extractor restrictToLogicalWindowIncludingCoord:coord];
+    NSMutableIndexSet *continuationCharsCoords = [NSMutableIndexSet indexSet];
     NSString *prefix = [extractor wrappedStringAt:coord
                                           forward:NO
                               respectHardNewlines:respectHardNewlines
-                                         maxChars:kMaxTrouterPrefixOrSuffix];
+                                         maxChars:kMaxTrouterPrefixOrSuffix
+                                continuationChars:continuationCharsCoords];
     NSString *suffix = [extractor wrappedStringAt:coord
                                           forward:YES
                               respectHardNewlines:respectHardNewlines
-                                         maxChars:kMaxTrouterPrefixOrSuffix];
+                                         maxChars:kMaxTrouterPrefixOrSuffix
+                        continuationChars:continuationCharsCoords];
 
     NSString *possibleFilePart1 =
         [prefix substringIncludingOffset:[prefix length] - 1
@@ -7924,8 +7885,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
         VT100GridWindowedRange range;
 
-        range.coordRange.start = [extractor coord:coord plus:-fileCharsTaken];
-        range.coordRange.end = [extractor coord:range.coordRange.start plus:filename.length];
+        range.coordRange.start = [extractor coord:coord
+                                             plus:-fileCharsTaken
+                                   skippingCoords:continuationCharsCoords];
+        range.coordRange.end = [extractor coord:range.coordRange.start
+                                           plus:filename.length
+                                 skippingCoords:continuationCharsCoords];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 
@@ -7939,35 +7904,26 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"Brute force search failed, try smart selection.");
     // Next, see if smart selection matches anything with an action.
     VT100GridWindowedRange smartRange;
-    NSDictionary *rule = [self smartSelectAtX:x
-                                            y:y
-                                           to:&smartRange
-                             ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
-                               actionRequired:YES
-                              respectDividers:YES];
-    NSArray *actions = [SmartSelectionController actionsInRule:rule];
+    SmartMatch *smartMatch = [self smartSelectAtX:x
+                                                y:y
+                                               to:&smartRange
+                                 ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                                   actionRequired:YES
+                                  respectDividers:YES];
+    NSArray *actions = [SmartSelectionController actionsInRule:smartMatch.rule];
     DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
-        NSString *content = [extractor contentInRange:smartRange
-                                           nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
-                                                  pad:NO
-                                   includeLastNewline:NO
-                               trimTrailingWhitespace:NO
-                                         cappedAtSize:-1];
+        NSString *content = smartMatch.components[0];
         if (!respectHardNewlines) {
             content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
         }
         DLog(@"  Actions match this content: %@", content);
-        URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:rule onString:content];
+        URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:smartMatch.rule
+                                                                   onString:content];
         action.range = smartRange;
-        NSError *regexError;
-        NSArray *components = [content captureComponentsMatchedByRegex:[SmartSelectionController regexInRule:rule]
-                                                               options:0
-                                                                 range:NSMakeRange(0, content.length)
-                                                                 error:&regexError];
         action.selector = [self selectorForSmartSelectionAction:actions[0]];
         action.representedObject = [ContextMenuActionPrefsController parameterForActionDict:actions[0]
-                                                                      withCaptureComponents:components
+                                                                      withCaptureComponents:smartMatch.components
                                                                            workingDirectory:workingDirectory
                                                                                  remoteHost:[_dataSource remoteHostOnLine:y]];
         return action;
@@ -7975,20 +7931,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if (_trouter.activatesOnAnyString) {
         // Just do smart selection and let Trouter take it.
-        [self smartSelectAtX:x
-                           y:y
-                          to:&smartRange
-            ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
-              actionRequired:NO
-             respectDividers:YES];
+        smartMatch = [self smartSelectAtX:x
+                                        y:y
+                                       to:&smartRange
+                         ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                           actionRequired:NO
+                          respectDividers:YES];
         if (!VT100GridCoordEquals(smartRange.coordRange.start,
                                   smartRange.coordRange.end)) {
-            NSString *name = [extractor contentInRange:smartRange
-                                            nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
-                                                   pad:NO
-                                    includeLastNewline:NO
-                                trimTrailingWhitespace:NO
-                                          cappedAtSize:-1];
+            NSString *name = smartMatch.components[0];
             URLAction *action = [URLAction urlActionToOpenExistingFile:name];
             action.range = smartRange;
             action.fullPath = name;
@@ -8029,8 +7980,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         VT100GridWindowedRange range;
         range.coordRange.start = [extractor coord:coord
-                                             plus:-(prefixChars - offset)];
-        range.coordRange.end = [extractor coord:range.coordRange.start plus:length];
+                                             plus:-(prefixChars - offset)
+                                   skippingCoords:continuationCharsCoords];
+        range.coordRange.end = [extractor coord:range.coordRange.start
+                                           plus:length
+                                 skippingCoords:continuationCharsCoords];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
         return action;

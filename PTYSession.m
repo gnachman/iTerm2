@@ -128,6 +128,13 @@ typedef enum {
 @property(nonatomic, copy) NSString *uniqueID;
 @property(nonatomic, copy) NSString *badgeFormat;
 @property(nonatomic, retain) NSMutableDictionary *badgeVars;
+
+// Info about what happens when the program is run so it can be restarted after
+// a broken pipe if the user so chooses.
+@property(nonatomic, copy) NSString *program;
+@property(nonatomic, copy) NSArray *arguments;
+@property(nonatomic, copy) NSDictionary *environment;
+@property(nonatomic, assign) BOOL isUTF8;
 @end
 
 @implementation PTYSession {
@@ -381,6 +388,9 @@ typedef enum {
     [_uniqueID release];
     [_badgeFormat release];
     [_badgeVars release];
+    [_program release];
+    [_arguments release];
+    [_environment release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -841,32 +851,6 @@ typedef enum {
     return YES;
 }
 
-// This command installs the xterm-256color terminfo in the user's terminfo directory:
-// tic -e xterm-256color $FILENAME
-- (void)_maybeAskAboutInstallXtermTerminfo
-{
-    NSString* filename = [[NSBundle bundleForClass:[self class]] pathForResource:@"xterm-terminfo" ofType:@"txt"];
-    if (!filename) {
-        return;
-    }
-    NSString* cmd = [NSString stringWithFormat:@"tic -e xterm-256color %@", [filename stringWithEscapedShellCharacters]];
-    if (system("infocmp xterm-256color > /dev/null")) {
-        iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:@"The terminfo file for the terminal type you're using, \"xterm-256color\", is"
-                                               @"not installed on your system. Would you like to install it now?"
-                                       actions:@[ @"Install", @"Do not Install" ]
-                                    identifier:@"NeverWarnAboutXterm256ColorTerminfo"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable];
-        if (selection == kiTermWarningSelection0) {
-            if (system([cmd UTF8String])) {
-                NSRunAlertPanel(@"Error",
-                                @"Sorry, an error occurred while running: %@",
-                                @"OK", nil, nil, cmd);
-            }
-        }
-    }
-}
-
 - (NSString *)_autoLogFilenameForTermId:(NSString *)termid
 {
     // $(LOGDIR)/YYYYMMDD_HHMMSS.$(NAME).wNtNpN.$(PID).$(RANDOM).log
@@ -886,32 +870,31 @@ typedef enum {
 }
 
 - (void)startProgram:(NSString *)program
-           arguments:(NSArray *)prog_argv
-         environment:(NSDictionary *)prog_env
-              isUTF8:(BOOL)isUTF8
-{
-    NSString *path = program;
-    NSMutableArray *argv = [NSMutableArray arrayWithArray:prog_argv];
-    NSMutableDictionary *env = [NSMutableDictionary dictionaryWithDictionary:prog_env];
+           arguments:(NSArray *)arguments
+         environment:(NSDictionary *)environment
+              isUTF8:(BOOL)isUTF8 {
+    self.program = program;
+    self.arguments = arguments;
+    self.environment = environment;
+    self.isUTF8 = isUTF8;
 
+    NSMutableDictionary *env = [NSMutableDictionary dictionaryWithDictionary:environment];
 
-    if ([env objectForKey:TERM_ENVNAME] == nil)
-        [env setObject:_termVariable forKey:TERM_ENVNAME];
-    if ([[env objectForKey:TERM_ENVNAME] isEqualToString:@"xterm-256color"]) {
-        [self _maybeAskAboutInstallXtermTerminfo];
+    if (env[TERM_ENVNAME] == nil) {
+        env[TERM_ENVNAME] = _termVariable;
+    }
+    if (env[COLORFGBG_ENVNAME] == nil && _colorFgBgVariable != nil) {
+        env[COLORFGBG_ENVNAME] = _colorFgBgVariable;
     }
 
-    if ([env objectForKey:COLORFGBG_ENVNAME] == nil && _colorFgBgVariable != nil)
-        [env setObject:_colorFgBgVariable forKey:COLORFGBG_ENVNAME];
-
     DLog(@"Begin locale logic");
-    if (![_profile objectForKey:KEY_SET_LOCALE_VARS] ||
-        [[_profile objectForKey:KEY_SET_LOCALE_VARS] boolValue]) {
+    if (!_profile[KEY_SET_LOCALE_VARS] ||
+        [_profile[KEY_SET_LOCALE_VARS] boolValue]) {
         DLog(@"Setting locale vars...");
-        NSString* lang = [self _lang];
+        NSString *lang = [self _lang];
         if (lang) {
             DLog(@"set LANG=%@", lang);
-            [env setObject:lang forKey:@"LANG"];
+            env[@"LANG"] = lang;
         } else if ([self shouldSetCtype]){
             DLog(@"should set ctype...");
             // Try just the encoding by itself, which might work.
@@ -919,13 +902,14 @@ typedef enum {
             DLog(@"See if encoding %@ is supported...", encName);
             if (encName && [self _localeIsSupported:encName]) {
                 DLog(@"Set LC_CTYPE=%@", encName);
-                [env setObject:encName forKey:@"LC_CTYPE"];
+                env[@"LC_CTYPE"] = encName;
             }
         }
     }
 
-    if ([env objectForKey:PWD_ENVNAME] == nil) {
-        [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
+    if (env[PWD_ENVNAME] == nil) {
+        // Set "PWD"
+        env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
     }
 
     NSWindowController<iTermWindowController> *pty = [_tab realParentWindow];
@@ -933,20 +917,20 @@ typedef enum {
                          [pty number],
                          [_tab realObjectCount] - 1,
                          [_tab indexOfSessionView:[self view]]];
-    [env setObject:itermId forKey:@"ITERM_SESSION_ID"];
-    if ([_profile objectForKey:KEY_NAME]) {
-        [env setObject:[_profile objectForKey:KEY_NAME] forKey:@"ITERM_PROFILE"];
+    env[@"ITERM_SESSION_ID"] = itermId;
+    if (_profile[KEY_NAME]) {
+        env[@"ITERM_PROFILE"] = _profile[KEY_NAME];
     }
-    if ([[_profile objectForKey:KEY_AUTOLOG] boolValue]) {
+    if ([_profile[KEY_AUTOLOG] boolValue]) {
         [_shell loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
     }
-    [_shell launchWithPath:path
-                 arguments:argv
+    [_shell launchWithPath:_program
+                 arguments:_arguments
                environment:env
                      width:[_screen width]
                     height:[_screen height]
                     isUTF8:isUTF8];
-    NSString *initialText = [_profile objectForKey:KEY_INITIAL_TEXT];
+    NSString *initialText = _profile[KEY_INITIAL_TEXT];
     if ([initialText length]) {
         [_shell writeTask:[initialText dataUsingEncoding:[self encoding]]];
         [_shell writeTask:[@"\n" dataUsingEncoding:[self encoding]]];
@@ -1160,28 +1144,12 @@ typedef enum {
 
 - (void)writeTaskImpl:(NSData *)data
 {
-    static BOOL checkedDebug;
-    static BOOL debugKeyDown;
-    if (!checkedDebug) {
-        debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
-        checkedDebug = YES;
-    }
-    if (debugKeyDown || gDebugLogging) {
+    if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
-        if (debugKeyDown) {
-            NSLog(@"writeTaskImpl %p: called from %@", self, stack);
-        }
-        if (gDebugLogging) {
-            DebugLog([NSString stringWithFormat:@"writeTaskImpl %p: called from %@", self, stack]);
-        }
+        DLog(@"writeTaskImpl %p: called from %@", self, stack);
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            if (debugKeyDown) {
-                NSLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
-            }
-            if (gDebugLogging) {
-                DebugLog([NSString stringWithFormat:@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]]);
-            }
+            DLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
         }
     }
 
@@ -1416,6 +1384,47 @@ typedef enum {
     }
 }
 
+- (void)appendBrokenPipeMessage {
+    if (_screen.cursorX != 1) {
+        [_screen crlf];
+    }
+    screen_char_t savedFgColor = [_terminal foregroundColorCode];
+    screen_char_t savedBgColor = [_terminal backgroundColorCode];
+    // This color matches the color used in BrokenPipeDivider.png.
+    [_terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:248.0/255.0
+                                                                 green:79.0/255.0
+                                                                  blue:27.0/255.0
+                                                                 alpha:1]];
+    [_terminal setBackgroundColor:ALTSEM_DEFAULT
+               alternateSemantics:YES];
+    NSString *message = @"Broken Pipe ";
+    int width = (_screen.width - message.length) / 2;
+    if (width > 0) {
+        [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
+                                       width:width
+                                       units:kVT100TerminalUnitsCells
+                                      height:1
+                                       units:kVT100TerminalUnitsCells
+                         preserveAspectRatio:NO
+                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]];
+    }
+    [_screen appendStringAtCursor:message];
+    if (width > 0) {
+        [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
+                                       width:(_screen.width - _screen.cursorX + 1)
+                                       units:kVT100TerminalUnitsCells
+                                      height:1
+                                       units:kVT100TerminalUnitsCells
+                         preserveAspectRatio:NO
+                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]];
+    }
+    [_screen crlf];
+    [_terminal setForegroundColor:savedFgColor.foregroundColor
+               alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
+    [_terminal setBackgroundColor:savedBgColor.backgroundColor
+               alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+}
+
 - (void)brokenPipe
 {
     if ([self shouldPostGrowlNotification]) {
@@ -1433,6 +1442,35 @@ typedef enum {
     if ([self autoClose]) {
         [[self tab] closeSession:self];
     } else {
+        // Offer to restart the session by rerunning its program.
+        [self appendBrokenPipeMessage];
+        iTermAnnouncementViewController *announcement =
+            [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                            style:kiTermAnnouncementViewStyleQuestion
+                                                      withActions:@[ @"Restart" ]
+                                                       completion:^(int selection) {
+                                                           switch (selection) {
+                                                               case -2:  // Dismiss programmatically
+                                                                   break;
+
+                                                               case -1: // No
+                                                                   break;
+
+                                                               case 0: // Yes
+                                                                   _exited = NO;
+                                                                   [_shell release];
+                                                                   _shell = [[PTYTask alloc] init];
+                                                                   [_shell setDelegate:self];
+                                                                   [_shell setWidth:_screen.width
+                                                                             height:_screen.height];
+                                                                   [self startProgram:_program
+                                                                            arguments:_arguments
+                                                                          environment:_environment
+                                                                               isUTF8:_isUTF8];
+                                                                   break;
+                                                           }
+                                                       }];
+        [self queueAnnouncement:announcement identifier:@"ReopenSessionAfterBrokenPipe"];
         [self updateDisplay];
     }
 }
@@ -2050,8 +2088,8 @@ typedef enum {
         [_colorMap setColor:theColor forKey:[colorKey intValue]];
     }
 
-    self.cursorGuideColor = [[[iTermProfilePreferences objectForKey:KEY_CURSOR_GUIDE_COLOR
-                                                          inProfile:aDict] colorValue] colorWithAlphaComponent:0.25];
+    self.cursorGuideColor = [[iTermProfilePreferences objectForKey:KEY_CURSOR_GUIDE_COLOR
+                                                         inProfile:aDict] colorValueWithDefaultAlpha:0.25];
     if (!_cursorGuideSettingHasChanged) {
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:KEY_USE_CURSOR_GUIDE
                                                                   inProfile:aDict];
@@ -3759,7 +3797,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
 {
-  BOOL debugKeyDown = [iTermAdvancedSettingsModel debugKeyDown];
   unsigned char *send_str = NULL;
   unsigned char *dataPtr = NULL;
   int dataLength = 0;
@@ -3781,15 +3818,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   }
   unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
   unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-  if (debugKeyDown) {
-    NSLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
-  }
+  DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
   gettimeofday(&_lastInput, NULL);
 
   if ([[[self tab] realParentWindow] inInstantReplay]) {
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown in IR");
-    }
+    DLog(@"PTYSession keyDown in IR");
+
     // Special key handling in IR mode, and keys never get sent to the live
     // session, even though it might be displayed.
     if (unicode == 27) {
@@ -3821,10 +3855,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   }
 
   unsigned short keycode = [event keyCode];
-  if (debugKeyDown) {
-    NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
-  }
-  DebugLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
+  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
 
   // Check if we have a custom key mapping for this event
   keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
@@ -3833,10 +3864,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                               keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
 
   if (keyBindingAction >= 0) {
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown action=%d", keyBindingAction);
-    }
-    DebugLog([NSString stringWithFormat:@"keyBindingAction=%d", keyBindingAction]);
+    DLog(@"PTYSession keyDown action=%d", keyBindingAction);
     // A special action was bound to this key combination.
     NSString* temp;
     int profileAction = [iTermKeyBindingMgr localActionForKeyCode:unmodunicode
@@ -4045,20 +4073,18 @@ static long long timeInTenthsOfSeconds(struct timeval t)
       [self handleKeypressInTmuxGateway:unicode];
       return;
     }
-    if (debugKeyDown) {
-      NSLog(@"PTYSession keyDown no keybinding action");
-    }
-    DebugLog(@"No keybinding action");
+    DLog(@"PTYSession keyDown no keybinding action");
     if (_exited) {
       DebugLog(@"Terminal already dead");
       return;
     }
+
+    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
+
     // No special binding for this key combination.
     if (modflag & NSFunctionKeyMask) {
-      if (debugKeyDown) {
-        NSLog(@"PTYSession keyDown is a function key");
-      }
-      DebugLog(@"Is a function key");
+      DLog(@"PTYSession keyDown is a function key");
       // Handle all "special" keys (arrows, etc.)
       NSData *data = nil;
 
@@ -4113,23 +4139,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         send_str = (unsigned char *)[keydat bytes];
         send_strlen = [keydat length];
       }
-    } else if (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask &&
-                ([self optionKey] != OPT_NORMAL)) ||
-               (modflag == NSAlternateKeyMask &&
-                ([self optionKey] != OPT_NORMAL)) ||  /// synergy
-               ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask &&
-                ([self rightOptionKey] != OPT_NORMAL))) {
-                 if (debugKeyDown) {
-                   NSLog(@"PTYSession keyDown opt + key -> modkey");
-                 }
-                 DebugLog(@"Option + key -> modified key");
+    } else if ((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
+               (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) {
+                 DLog(@"PTYSession keyDown opt + key -> modkey");
                  // A key was pressed while holding down option and the option key
                  // is not behaving normally. Apply the modified behavior.
                  int mode;  // The modified behavior based on which modifier is pressed.
-                 if ((modflag == NSAlternateKeyMask) ||  // synergy
-                     (modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
+                 if (leftAltPressed) {
                    mode = [self optionKey];
                  } else {
+                   assert(rightAltPressed);
                    mode = [self rightOptionKey];
                  }
 
@@ -4149,43 +4168,28 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                    }
                  }
                } else {
-                 if (debugKeyDown) {
-                   NSLog(@"PTYSession keyDown regular path");
-                 }
-                 DebugLog(@"Regular path for keypress");
+                 DLog(@"PTYSession keyDown regular path");
                  // Regular path for inserting a character from a keypress.
                  int max = [keystr length];
                  NSData *data=nil;
 
                  if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown non-ascii");
-                   }
-                   DebugLog(@"Non-ascii input");
+                   DLog(@"PTYSession keyDown non-ascii");
                    data = [keystr dataUsingEncoding:[_terminal encoding]];
                  } else {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown ascii");
-                   }
-                   DebugLog(@"ASCII input");
+                   DLog(@"PTYSession keyDown ascii");
                    data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
                  }
 
                  // Enter key is on numeric keypad, but not marked as such
                  if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
                    modflag |= NSNumericPadKeyMask;
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown enter key");
-                   }
-                   DebugLog(@"Enter key");
+                   DLog(@"PTYSession keyDown enter key");
                    keystr = @"\015";  // Enter key -> 0x0d
                  }
                  // Check if we are in keypad mode
                  if (modflag & NSNumericPadKeyMask) {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown numeric keyoad");
-                   }
-                   DebugLog(@"Numeric keypad mask");
+                   DLog(@"PTYSession keyDown numeric keyoad");
                    data = [_terminal.output keypadData:unicode keystr:keystr];
                  }
 
@@ -4198,29 +4202,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                        // fat-fingered switching of tabs/windows.
                        // Do not send anything for cmd+[shift]+enter if it wasn't
                        // caught by the menu.
-                       DebugLog(@"Cmd + 0-9 or cmd + enter");
-                       if (debugKeyDown) {
-                         NSLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
-                       }
+                       DLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
                        data = nil;
                      }
                  if (data != nil) {
                    send_str = (unsigned char *)[data bytes];
                    send_strlen = [data length];
-                   DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                             modflag, send_strlen, send_str[0], send_str[0]]);
-                   if (debugKeyDown) {
-                     DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                               modflag, send_strlen, send_str[0], send_str[0]]);
-                   }
+                   DLog(@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
+                        modflag, send_strlen, send_str[0], send_str[0]);
                  }
 
                  if ((modflag & NSControlKeyMask) &&
                      send_strlen == 1 &&
                      send_str[0] == '|') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-|");
-                   }
+                   DLog(@"PTYSession keyDown c-|");
                    // Control-| is sent as Control-backslash
                    send_str = (unsigned char*)"\034";
                    send_strlen = 1;
@@ -4228,27 +4223,21 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                             (modflag & NSShiftKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '/') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-?");
-                   }
+                   DLog(@"PTYSession keyDown c-?");
                    // Control-shift-/ is sent as Control-?
                    send_str = (unsigned char*)"\177";
                    send_strlen = 1;
                  } else if ((modflag & NSControlKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '/') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown c-/");
-                   }
+                   DLog(@"PTYSession keyDown c-/");
                    // Control-/ is sent as Control-/, but needs some help to do so.
                    send_str = (unsigned char*)"\037"; // control-/
                    send_strlen = 1;
                  } else if ((modflag & NSShiftKeyMask) &&
                             send_strlen == 1 &&
                             send_str[0] == '\031') {
-                   if (debugKeyDown) {
-                     NSLog(@"PTYSession keyDown shift-tab -> esc[Z");
-                   }
+                   DLog(@"PTYSession keyDown shift-tab -> esc[Z");
                    // Shift-tab is sent as Esc-[Z (or "backtab")
                    send_str = (unsigned char*)"\033[Z";
                    send_strlen = 3;
@@ -5643,6 +5632,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (iTermColorMap *)screenColorMap {
     return _colorMap;
+}
+
+- (void)screenSetColor:(NSColor *)color forKey:(int)key {
+    NSString *profileKey = [_colorMap profileKeyForColorMapKey:key];
+    if (profileKey) {
+        [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
+    }
 }
 
 - (void)screenSetCurrentTabColor:(NSColor *)color {

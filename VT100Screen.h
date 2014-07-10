@@ -200,6 +200,15 @@ extern int kVT100ScreenMinRows;
 // (notifications, flashing lights, sounds) per user preference.
 - (void)activateBell;
 
+// Show an inline image.
+- (void)appendImageAtCursorWithName:(NSString *)name
+                              width:(int)width
+                              units:(VT100TerminalUnits)widthUnits
+                             height:(int)height
+                              units:(VT100TerminalUnits)heightUnits
+                preserveAspectRatio:(BOOL)preserveAspectRatio
+                              image:(NSImage *)image;
+
 #pragma mark - Marks and notes
 
 - (VT100ScreenMark *)lastMark;

@@ -8,10 +8,14 @@
 
 #import <Cocoa/Cocoa.h>
 
+// Keys of -dictionaryValue. Use -[NSDictionary colorVaue] to convert to color.
 extern NSString *const kEncodedColorDictionaryRedComponent;
 extern NSString *const kEncodedColorDictionaryGreenComponent;
 extern NSString *const kEncodedColorDictionaryBlueComponent;
-extern NSString *const kEncodedColorDictionaryColorSpace;
+extern NSString *const kEncodedColorDictionaryAlphaComponent;  // Optional, defaults to 1.0
+extern NSString *const kEncodedColorDictionaryColorSpace;  // Optional, defaults to calibrated
+
+// Values for kEncodedColorDictionaryColorSpace key
 extern NSString *const kEncodedColorDictionarySRGBColorSpace;
 extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 

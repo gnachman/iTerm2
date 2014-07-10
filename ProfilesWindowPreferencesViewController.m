@@ -207,6 +207,8 @@
     int i = 0;
     [_screen addItemWithTitle:@"No Preference"];
     [[_screen lastItem] setTag:-1];
+    [_screen addItemWithTitle:@"Screen with Cursor"];
+    [[_screen lastItem] setTag:-2];
     const int numScreens = [[NSScreen screens] count];
     for (i = 0; i < numScreens; i++) {
         if (i == 0) {
@@ -218,16 +220,10 @@
     }
     if (selectedTag >= 0 && selectedTag < i) {
         [_screen selectItemWithTag:selectedTag];
+    } else if (selectedTag == -1 || selectedTag == -2) {
+        [_screen selectItemWithTag:selectedTag];
     } else {
         [_screen selectItemWithTag:-1];
-    }
-    if ([_windowStyle selectedTag] == WINDOW_TYPE_NORMAL) {
-        [_screen setEnabled:NO];
-        [_screenLabel setEnabled:NO];
-        [_screen selectItemWithTag:-1];
-    } else if ([self.delegate profilePreferencesCurrentModel] == [ProfileModel sharedInstance]) {
-        [_screen setEnabled:YES];
-        [_screenLabel setEnabled:YES];
     }
 }
 
