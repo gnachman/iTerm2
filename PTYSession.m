@@ -5857,6 +5857,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
 }
 
+- (BOOL)screenShouldPlacePromptAtFirstColumn {
+    return [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
+                                     inProfile:_profile];
+}
+
 - (NSString *)screenProfileName {
     return _profile[KEY_NAME];
 }

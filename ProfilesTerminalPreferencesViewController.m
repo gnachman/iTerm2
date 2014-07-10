@@ -7,6 +7,7 @@
 //
 
 #import "ProfilesTerminalPreferencesViewController.h"
+#import "CommandHistory.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
 
@@ -27,6 +28,7 @@
     IBOutlet NSButton *_flashingBell;
     IBOutlet NSButton *_bellIconInTabs;
     IBOutlet NSButton *_setLocaleVars;
+    IBOutlet NSButton *_forceCommandPromptToFirstColumn;
 }
 
 - (void)awakeFromNib {
@@ -106,6 +108,10 @@
     [self defineControl:_setLocaleVars
                     key:KEY_SET_LOCALE_VARS
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_forceCommandPromptToFirstColumn
+                    key:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
+                   type:kPreferenceInfoTypeCheckbox];
 }
 
 #pragma mark - Character Encoding
@@ -139,5 +145,10 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 }
 
 
+#pragma mark - Action
+
+- (IBAction)help:(id)sender {
+    [CommandHistory showInformationalMessage];
+}
 
 @end
