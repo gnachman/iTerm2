@@ -11,6 +11,7 @@
 #import "iTermController.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
+#import "PTYTab.h"
 #import "VT100RemoteHost.h"
 
 // It's nice for each of these to be unique so in degenerate cases (e.g., empty query) the detail
@@ -22,6 +23,7 @@ static const double kDirectoryMultiplier = 0.9;
 static const double kHostnameMultiplier = 1.2;
 static const double kUsernameMultiplier = 0.5;
 static const double kProfileNameMultiplier = 1;
+static const double kUserDefinedVariableMultiplier = 1;
 
 @interface iTermOpenQuicklyTableRowView : NSTableRowView
 @end
@@ -323,6 +325,17 @@ static const double kProfileNameMultiplier = 1;
                         features:features
                            limit:maxScorePerFeature];
 
+    for (NSString *var in session.variables) {
+        if ([var hasPrefix:@"user."]) {
+            score += [self scoreForQuery:query
+                               documents:@[ session.variables[var] ]
+                              multiplier:kUserDefinedVariableMultiplier
+                                    name:[var substringFromIndex:[@"user." length]]
+                                features:features
+                                   limit:maxScorePerFeature];
+        }
+    }
+
     // TODO: add a bonus for:
     // Doing lots of typing in a session
     // Being newly created
@@ -340,13 +353,18 @@ static const double kProfileNameMultiplier = 1;
     return [sorted lastObject][0];
 }
 
-- (void)update {
+- (NSArray *)sessions {
     NSArray *terminals = [[iTermController sharedInstance] terminals];
     // sessions and scores are parallel.
     NSMutableArray *sessions = [NSMutableArray array];
     for (PseudoTerminal *term in terminals) {
         [sessions addObjectsFromArray:term.sessions];
     }
+    return sessions;
+}
+
+- (void)update {
+    NSArray *sessions = [self sessions];
 
     NSString *queryString = [_textField.stringValue lowercaseString];
     unichar *query = (unichar *)malloc(queryString.length * sizeof(unichar) + 1);
@@ -428,8 +446,8 @@ static const double kProfileNameMultiplier = 1;
     iTermOpenQuicklyItem *item = _items[row];
     item.view = result;
     result.imageView.image = [NSImage imageNamed:@"iTerm"];  // TODO: Color this appropriately
-    result.textField.stringValue = item.title;
-    result.detailTextField.stringValue = item.detail;
+    result.textField.stringValue = item.title ?: @"Untitled";
+    result.detailTextField.stringValue = item.detail ?: @"";
     NSColor *color;
     if (row == tableView.selectedRow) {
         color = [NSColor whiteColor];
@@ -481,7 +499,19 @@ static const double kProfileNameMultiplier = 1;
 }
 
 - (void)controlTextDidEndEditing:(NSNotification *)obj {
-    NSLog(@"DONE");
+    NSInteger row = [_table selectedRow];
+    if (row >= 0) {
+        iTermOpenQuicklyItem *item = _items[row];
+        NSString *sessionId = item.sessionId;
+        for (PTYSession *session in [self sessions]) {
+            if ([session.uniqueID isEqualTo:sessionId]) {
+                NSWindowController<iTermWindowController> *term = session.tab.realParentWindow;
+                [term makeSessionActive:session];
+                break;
+            }
+        }
+    }
+
     [self close:nil];
 }
 

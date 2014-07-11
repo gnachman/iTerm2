@@ -284,6 +284,10 @@ typedef enum {
 @property(nonatomic, readonly) NSMutableArray *directories;  // of NSString
 @property(nonatomic, readonly) NSMutableArray *hosts;  // of VT100RemoteHost
 
+// Session-defined and user-defined variables. Session-defined vars start with "session." and
+// user-defined variables start with "user.".
+@property(nonatomic, readonly) NSMutableDictionary *variables;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
