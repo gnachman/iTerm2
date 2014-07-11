@@ -25,6 +25,47 @@ static const double kUsernameMultiplier = 0.5;
 static const double kProfileNameMultiplier = 1;
 static const double kUserDefinedVariableMultiplier = 1;
 
+@interface iTermOpenQuicklyRoundedTopCornersView : NSView
+@end
+
+@implementation iTermOpenQuicklyRoundedTopCornersView
+
+- (void)drawRect:(NSRect)dirtyRect {
+    NSBezierPath* path = [[[NSBezierPath alloc] init] autorelease];
+    [path setLineWidth:1];
+    float radius = 8;
+    float x = 0.5;
+    float y = 0;
+    [path moveToPoint:NSMakePoint(x, y)];
+    y = self.bounds.size.height - 0.5;
+    [path lineToPoint:NSMakePoint(x, y - radius)];
+    [path curveToPoint:NSMakePoint(x + radius, y)
+         controlPoint1:NSMakePoint(x, y)
+         controlPoint2:NSMakePoint(x, y)];
+
+    x = self.bounds.size.width - 0.5;
+    [path lineToPoint:NSMakePoint(x - radius, y)];
+    [path curveToPoint:NSMakePoint(x, y - radius)
+         controlPoint1:NSMakePoint(x, y)
+         controlPoint2:NSMakePoint(x, y)];
+
+    y = 0;
+    [path lineToPoint:NSMakePoint(x, y)];
+
+    x = 0.5;
+    [path lineToPoint:NSMakePoint(x, y)];
+
+    [[NSColor clearColor] set];
+    NSRectFill(dirtyRect);
+
+    [[NSColor controlColor] set];
+    [path fill];
+
+    [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] set];
+    [path stroke];
+}
+
+@end
 @interface iTermOpenQuicklyTableRowView : NSTableRowView
 @end
 
