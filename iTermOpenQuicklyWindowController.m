@@ -13,13 +13,28 @@
 #import "PseudoTerminal.h"
 #import "VT100RemoteHost.h"
 
-static const double kSessionNameMultiplier = 1;
-static const double kSessionBadgeMultiplier = 1;
-static const double kCommandMultiplier = 1;
-static const double kDirectoryMultiplier = 1;
-static const double kHostnameMultiplier = 1;
-static const double kUsernameMultiplier = 1;
+// It's nice for each of these to be unique so in degenerate cases (e.g., empty query) the detail
+// is the same feature across the board.
+static const double kSessionNameMultiplier = 2;
+static const double kSessionBadgeMultiplier = 3;
+static const double kCommandMultiplier = 0.8;
+static const double kDirectoryMultiplier = 0.9;
+static const double kHostnameMultiplier = 1.2;
+static const double kUsernameMultiplier = 0.5;
 static const double kProfileNameMultiplier = 1;
+
+@interface iTermOpenQuicklyTableCellView : NSTableCellView
+@property (nonatomic, retain) IBOutlet NSTextField *detailTextField;
+@end
+
+@implementation iTermOpenQuicklyTableCellView
+
+- (void)dealloc {
+  [_detailTextField release];
+  [super dealloc];
+}
+
+@end
 
 @protocol iTermArrowKeyDelegate <NSObject>
 - (void)keyDown:(NSEvent *)event;
@@ -74,6 +89,7 @@ static const double kProfileNameMultiplier = 1;
 @interface iTermOpenQuicklyItem : NSObject <NSCopying>
 @property(nonatomic, copy) NSString *sessionId;
 @property(nonatomic, copy) NSString *title;
+@property(nonatomic, retain) NSString *detail;
 @property(nonatomic, assign) double score;
 @end
 
@@ -82,6 +98,7 @@ static const double kProfileNameMultiplier = 1;
 - (void)dealloc {
     [_sessionId release];
     [_title release];
+    [_detail release];
     [super dealloc];
 }
 
@@ -95,7 +112,11 @@ static const double kProfileNameMultiplier = 1;
 
 @end
 
-@interface iTermOpenQuicklyWindowController () <iTermArrowKeyDelegate, NSTableViewDataSource, NSWindowDelegate>
+@interface iTermOpenQuicklyWindowController () <
+    iTermArrowKeyDelegate,
+    NSTableViewDataSource,
+    NSTableViewDelegate,
+    NSWindowDelegate>
 
 @property(nonatomic, retain) NSMutableArray *items;
 
@@ -166,14 +187,20 @@ static const double kProfileNameMultiplier = 1;
 - (double)scoreForQuery:(unichar *)query
               documents:(NSArray *)documents
              multiplier:(double)multipler
+                   name:(NSString *)name
                features:(NSMutableArray *)features
                   limit:(double)limit {
+    if (multipler == 0) {
+        // Feature is disabled. In the future, we might let users tweak multipliers.
+        return 0;
+    }
     double score = 0;
     double highestValue = 0;
     NSString *bestFeature = nil;
     int n = documents.count;
     for (NSString *document in documents) {
-        double value = [self qualityOfMatchBetweenQuery:query andString:document];
+        double value = [self qualityOfMatchBetweenQuery:query
+                                              andString:[document lowercaseString]];
 
         // Discount older documents (which appear at the beginning of the list)
         value /= n;
@@ -189,8 +216,9 @@ static const double kProfileNameMultiplier = 1;
         }
     }
 
-    if (bestFeature) {
-        [features addObject:bestFeature];
+    if (bestFeature && features) {
+        [features addObject:@[ [NSString stringWithFormat:@"%@: %@", name, bestFeature],
+                               @(score) ]];
     }
 
     return MIN(limit, score);
@@ -223,7 +251,8 @@ static const double kProfileNameMultiplier = 1;
         score += [self scoreForQuery:query
                            documents:@[ session.name ]
                           multiplier:kSessionNameMultiplier
-                            features:features
+                                name:nil
+                            features:nil  // We don't want the session name in features
                                limit:maxScorePerFeature];
     }
 
@@ -231,6 +260,7 @@ static const double kProfileNameMultiplier = 1;
         score += [self scoreForQuery:query
                            documents:@[ session.badgeLabel ]
                           multiplier:kSessionBadgeMultiplier
+                                name:@"Badge"
                             features:features
                                limit:maxScorePerFeature];
     }
@@ -238,30 +268,35 @@ static const double kProfileNameMultiplier = 1;
     score += [self scoreForQuery:query
                        documents:session.commands
                       multiplier:kCommandMultiplier
+                            name:@"Command"
                         features:features
                            limit:maxScorePerFeature];
 
     score += [self scoreForQuery:query
                        documents:session.directories
                       multiplier:kDirectoryMultiplier
+                            name:@"Directory"
                         features:features
                            limit:maxScorePerFeature];
 
     score += [self scoreForQuery:query
                        documents:[self hostnamesInHosts:session.hosts]
                       multiplier:kHostnameMultiplier
+                            name:@"Host"
                         features:features
                            limit:maxScorePerFeature];
 
     score += [self scoreForQuery:query
                        documents:[self usernamesInHosts:session.hosts]
                       multiplier:kUsernameMultiplier
+                            name:@"User"
                         features:features
                            limit:maxScorePerFeature];
 
     score += [self scoreForQuery:query
                        documents:@[ session.profile[KEY_NAME] ?: @"" ]
                       multiplier:kProfileNameMultiplier
+                            name:@"Profile"
                         features:features
                            limit:maxScorePerFeature];
 
@@ -273,9 +308,13 @@ static const double kProfileNameMultiplier = 1;
     return score;
 }
 
-- (NSString *)titleForSession:(PTYSession *)session features:(NSArray *)features {
-    // TODO: Make this make some kind of sense
-    return [features componentsJoinedByString:@" "];
+- (NSString *)detailForSession:(PTYSession *)session features:(NSArray *)features {
+    NSArray *sorted = [features sortedArrayUsingComparator:^NSComparisonResult(NSArray *tuple1, NSArray *tuple2) {
+        NSNumber *score1 = tuple1[1];
+        NSNumber *score2 = tuple2[1];
+        return [score1 compare:score2];
+    }];
+    return [sorted lastObject][0];
 }
 
 - (void)update {
@@ -286,7 +325,7 @@ static const double kProfileNameMultiplier = 1;
         [sessions addObjectsFromArray:term.sessions];
     }
 
-    NSString *queryString = _textField.stringValue;
+    NSString *queryString = [_textField.stringValue lowercaseString];
     unichar *query = (unichar *)malloc(queryString.length * sizeof(unichar) + 1);
     [queryString getCharacters:query];
     query[queryString.length] = 0;
@@ -300,7 +339,8 @@ static const double kProfileNameMultiplier = 1;
                                     length:queryString.length
                                   features:features];
         if (item.score > 0) {
-            item.title = [self titleForSession:session features:features];
+            item.detail = [self detailForSession:session features:features];
+            item.title = session.name;
             item.sessionId = session.uniqueID;
             [items addObject:item];
         }
@@ -331,10 +371,16 @@ static const double kProfileNameMultiplier = 1;
     CGFloat maxHeight = screen.frame.size.height - kMarginAboveWindow * 2;
     CGFloat nonTableSpace = kMarginAboveField + _textField.frame.size.height + kMarginBelowField;
     int numberOfVisibleRowsDesired = MIN(_items.count,
-                                         (maxHeight - nonTableSpace) / _table.rowHeight);
-
+                                         (maxHeight - nonTableSpace) / (_table.rowHeight + _table.intercellSpacing.height));
     NSRect frame = self.window.frame;
-    frame.size.height = nonTableSpace + _table.rowHeight * numberOfVisibleRowsDesired;
+    NSSize contentSize = frame.size;
+    contentSize.height = nonTableSpace + (_table.rowHeight + _table.intercellSpacing.height) * numberOfVisibleRowsDesired;
+
+    frame.size.height = [NSScrollView frameSizeForContentSize:contentSize
+                                        hasHorizontalScroller:NO
+                                          hasVerticalScroller:YES
+                                                   borderType:NSBezelBorder].height;
+
     frame.origin.x = floor((screen.frame.size.width - frame.size.width) / 2);
     frame.origin.y = screen.frame.origin.y + screen.frame.size.height - kMarginAboveWindow - frame.size.height;
     return frame;
@@ -350,8 +396,13 @@ static const double kProfileNameMultiplier = 1;
     return _items.count;
 }
 
-- (id)tableView:(NSTableView *)tableView objectValueForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
-    return [_items[row] title];
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+    iTermOpenQuicklyTableCellView *result = [tableView makeViewWithIdentifier:tableColumn.identifier owner:self];
+    iTermOpenQuicklyItem *item = _items[row];
+    result.imageView.image = [NSImage imageNamed:@"iTerm"];  // TODO: Color this appropriately
+    result.textField.stringValue = item.title;
+    result.detailTextField.stringValue = item.detail;
+    return result;
 }
 
 #pragma mark - NSWindowDelegate
