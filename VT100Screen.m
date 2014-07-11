@@ -3170,6 +3170,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalPromptDidStart {
+    if (self.cursorX > 1 && [delegate_ screenShouldPlacePromptAtFirstColumn]) {
+        [self crlf];
+    }
     _shellIntegrationInstalled = YES;
 
     _lastCommandOutputRange.end = currentGrid_.cursor;

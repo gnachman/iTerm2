@@ -201,7 +201,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_IDLE_CODE: @0,
                   KEY_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_RIGHT_OPTION_KEY_SENDS: @(OPT_NORMAL),
-                  KEY_APPLICATION_KEYPAD_ALLOWED: @NO
+                  KEY_APPLICATION_KEYPAD_ALLOWED: @NO,
+                  KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,
                 };
         [dict retain];
     }
