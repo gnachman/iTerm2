@@ -118,7 +118,7 @@ typedef enum {
 // The value to which defaultName was last set, unadorned with additional formatting.
 @property(nonatomic, readonly) NSString *joblessDefaultName;
 
-// A temporary unique name (actually the tty) for this session.
+// A temporary unique name for this session.
 @property(nonatomic, readonly) NSString *uniqueID;
 
 // The window title that should be used when this session is current. Otherwise defaultName
@@ -274,6 +274,19 @@ typedef enum {
 
 // Used to help remember total ordering on views while one is maximzied
 @property(nonatomic, assign) NSPoint savedRootRelativeOrigin;
+
+// The computed label
+@property(nonatomic, readonly) NSString *badgeLabel;
+
+// Commands issued, directories entered, and hosts connected to during this session.
+// Requires shell integration.
+@property(nonatomic, readonly) NSMutableArray *commands;  // of NSString
+@property(nonatomic, readonly) NSMutableArray *directories;  // of NSString
+@property(nonatomic, readonly) NSMutableArray *hosts;  // of VT100RemoteHost
+
+// Session-defined and user-defined variables. Session-defined vars start with "session." and
+// user-defined variables start with "user.".
+@property(nonatomic, readonly) NSMutableDictionary *variables;
 
 #pragma mark - methods
 

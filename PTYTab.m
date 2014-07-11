@@ -35,6 +35,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 }
 
 @synthesize broadcasting = broadcasting_;
+@synthesize isMaximized = isMaximized_;
 
 // tab label attributes
 static NSColor *normalStateColor;

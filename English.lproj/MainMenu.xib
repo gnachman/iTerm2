@@ -675,6 +675,14 @@ DQ
                             <menuItem isSeparatorItem="YES" id="gzL-UV-S2y">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Open Quickly" keyEquivalent="O" id="Knm-gZ-dFc">
+                                <connections>
+                                    <action selector="openQuickly:" target="201" id="B7o-gt-d3A"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="VKC-UO-5Cj">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Maximize Active Pane" id="1233">
                                 <string key="keyEquivalent" base64-UTF8="YES">
 DQ
@@ -717,16 +725,10 @@ DQ
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="984"/>
-                            <menuItem title="Step Back in Time" keyEquivalent="b" id="976">
+                            <menuItem title="Start Instant Replay" keyEquivalent="b" id="976">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="irPrev:" target="-1" id="982"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Step Forward in Time" keyEquivalent="f" id="977">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="irNext:" target="-1" id="983"/>
                                 </connections>
                             </menuItem>
                         </items>
@@ -939,7 +941,8 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Password Manager" keyEquivalent="O" id="5">
+                            <menuItem title="Password Manager" keyEquivalent="f" id="5">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="openPasswordManager:" target="201" id="wbL-5o-kEN"/>
                                 </connections>
@@ -975,7 +978,6 @@ DQ
                 <outlet property="bookmarkMenu" destination="592" id="874"/>
                 <outlet property="closeTab" destination="635" id="795"/>
                 <outlet property="closeWindow" destination="598" id="796"/>
-                <outlet property="irNext" destination="977" id="981"/>
                 <outlet property="irPrev" destination="976" id="980"/>
                 <outlet property="logStart" destination="229" id="793"/>
                 <outlet property="logStop" destination="230" id="794"/>
