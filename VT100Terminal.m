@@ -1623,7 +1623,7 @@ static const int kMaxScreenRows = 4096;
                             ok = (intValue <= 255);
                         }
                         if (ok) {
-                            int limit = 1 << ((4 * [components[j] length]) - 1);
+                            int limit = (1 << (4 * [components[j] length])) - 1;
                             colors[j] = (CGFloat)intValue / (CGFloat)limit;
                         } else {
                             break;
