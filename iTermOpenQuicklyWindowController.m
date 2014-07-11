@@ -25,6 +25,17 @@ static const double kUsernameMultiplier = 0.5;
 static const double kProfileNameMultiplier = 1;
 static const double kUserDefinedVariableMultiplier = 1;
 
+@interface iTermOpenQuicklyTableView : NSTableView
+@end
+
+@implementation iTermOpenQuicklyTableView
+
+- (BOOL)acceptsFirstResponder {
+    return NO;
+}
+
+@end
+
 @interface iTermOpenQuicklyRoundedTopCornersView : NSView
 @end
 
@@ -208,6 +219,10 @@ static const double kUserDefinedVariableMultiplier = 1;
         // Placeholder in case there's something to do
     }
     return self;
+}
+
+- (void)awakeFromNib {
+    [_table setDoubleAction:@selector(doubleClick:)];
 }
 
 - (void)dealloc {
@@ -476,6 +491,24 @@ static const double kUserDefinedVariableMultiplier = 1;
     [self.window close];
 }
 
+- (void)openSelectedRow {
+    NSInteger row = [_table selectedRow];
+
+    if (row >= 0) {
+        iTermOpenQuicklyItem *item = _items[row];
+        NSString *sessionId = item.sessionId;
+        for (PTYSession *session in [self sessions]) {
+            if ([session.uniqueID isEqualTo:sessionId]) {
+                NSWindowController<iTermWindowController> *term = session.tab.realParentWindow;
+                [term makeSessionActive:session];
+                break;
+            }
+        }
+    }
+
+    [self close:nil];
+}
+
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
@@ -527,6 +560,10 @@ static const double kUserDefinedVariableMultiplier = 1;
     }
 }
 
+- (void)doubleClick:(id)sender {
+    [self openSelectedRow];
+}
+
 #pragma mark - NSWindowDelegate
 
 - (void)windowDidResignKey:(NSNotification *)notification {
@@ -539,27 +576,27 @@ static const double kUserDefinedVariableMultiplier = 1;
     [self update];
 }
 
-- (void)controlTextDidEndEditing:(NSNotification *)obj {
-    NSInteger row = [_table selectedRow];
-    if (row >= 0) {
-        iTermOpenQuicklyItem *item = _items[row];
-        NSString *sessionId = item.sessionId;
-        for (PTYSession *session in [self sessions]) {
-            if ([session.uniqueID isEqualTo:sessionId]) {
-                NSWindowController<iTermWindowController> *term = session.tab.realParentWindow;
-                [term makeSessionActive:session];
-                break;
-            }
-        }
-    }
+- (void)controlTextDidEndEditing:(NSNotification *)notification {
+    int move = [[[notification userInfo] objectForKey:@"NSTextMovement"] intValue];
 
-    [self close:nil];
+    switch (move) {
+        case NSReturnTextMovement:
+            [self openSelectedRow];
+            break;
+        default:
+            break;
+    }
 }
 
 #pragma mark - iTermArrowKeyDelegate
 
 - (void)keyDown:(NSEvent *)theEvent {
-    [_table keyDown:theEvent];
+    static BOOL running;
+    if (!running) {
+        running = YES;
+        [_table keyDown:theEvent];
+        running = NO;
+    }
 }
 
 @end
