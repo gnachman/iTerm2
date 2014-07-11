@@ -5638,6 +5638,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString *profileKey = [_colorMap profileKeyForColorMapKey:key];
     if (profileKey) {
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
+    } else {
+        [_colorMap setColor:color forKey:key];
     }
 }
 
