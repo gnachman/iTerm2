@@ -1,0 +1,8 @@
+]4;1;rgb:00/ff/00
+[31mAlthough this is the red index, it should draw in GREEN[m
+
+]4;105;rgb:ff/00/00
+[38;5;105mRed text at index 105
+
+]4;106;rgb:7f/00/00
+[38;5;106mDark red text at index 106
