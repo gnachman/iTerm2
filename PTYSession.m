@@ -315,6 +315,9 @@ typedef enum {
         _announcements = [[NSMutableDictionary alloc] init];
         _queuedTokens = [[NSMutableArray alloc] init];
         _badgeVars = [[NSMutableDictionary alloc] init];
+        _commands = [[NSMutableArray alloc] init];
+        _directories = [[NSMutableArray alloc] init];
+        _hosts = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -391,6 +394,9 @@ typedef enum {
     [_program release];
     [_arguments release];
     [_environment release];
+    [_commands release];
+    [_directories release];
+    [_hosts release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -5848,6 +5854,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                  onHost:[_screen remoteHostOnLine:range.end.y]
                                             inDirectory:[_screen workingDirectoryOnLine:range.end.y]
                                                withMark:mark];
+            [_commands addObject:trimmedCommand];
         }
     }
     _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
@@ -5862,6 +5869,18 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (NSString *)screenProfileName {
     return _profile[KEY_NAME];
+}
+
+- (void)setLastDirectory:(NSString *)lastDirectory {
+    [_directories addObject:lastDirectory];
+    [_lastDirectory autorelease];
+    _lastDirectory = [lastDirectory copy];
+}
+
+- (void)setLastRemoteHost:(VT100RemoteHost *)lastRemoteHost {
+    [_hosts addObject:lastRemoteHost];
+    [_lastRemoteHost autorelease];
+    _lastRemoteHost = [lastRemoteHost retain];
 }
 
 - (void)screenLogWorkingDirectoryAtLine:(int)line withDirectory:(NSString *)directory {

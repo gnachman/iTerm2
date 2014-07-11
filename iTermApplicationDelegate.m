@@ -36,6 +36,7 @@
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermOpenQuicklyWindowController.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermRestorableSession.h"
 #import "iTermURLSchemeController.h"
@@ -1166,9 +1167,12 @@ static BOOL hasBecomeActive = NO;
 }
 
 // Debug logging
-- (IBAction)debugLogging:(id)sender
-{
+- (IBAction)debugLogging:(id)sender {
   ToggleDebugLogging();
+}
+
+- (IBAction)openQuickly:(id)sender {
+    [[iTermOpenQuicklyWindowController sharedInstance] presentWindow];
 }
 
 // About window

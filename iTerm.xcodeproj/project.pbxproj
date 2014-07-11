@@ -819,6 +819,11 @@
 		A69B457F196B989D00F5444D /* iTermAlphaColorWell.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B457D196B989D00F5444D /* iTermAlphaColorWell.h */; };
 		A69B4580196B989D00F5444D /* iTermAlphaColorWell.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B457E196B989D00F5444D /* iTermAlphaColorWell.m */; };
 		A69B4581196B989D00F5444D /* iTermAlphaColorWell.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B457E196B989D00F5444D /* iTermAlphaColorWell.m */; };
+		A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */; };
+		A69B4586196F8EA100F5444D /* iTermOpenQuicklyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4583196F8EA100F5444D /* iTermOpenQuicklyWindowController.m */; };
+		A69B4587196F8EA100F5444D /* iTermOpenQuicklyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4583196F8EA100F5444D /* iTermOpenQuicklyWindowController.m */; };
+		A69B4588196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */; };
+		A69B4589196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
 		A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
@@ -1523,6 +1528,9 @@
 		A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BrokenPipeDivider.png; path = images/BrokenPipeDivider.png; sourceTree = "<group>"; };
 		A69B457D196B989D00F5444D /* iTermAlphaColorWell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAlphaColorWell.h; sourceTree = "<group>"; };
 		A69B457E196B989D00F5444D /* iTermAlphaColorWell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAlphaColorWell.m; sourceTree = "<group>"; };
+		A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyWindowController.h; sourceTree = "<group>"; };
+		A69B4583196F8EA100F5444D /* iTermOpenQuicklyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyWindowController.m; sourceTree = "<group>"; };
+		A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermOpenQuicklyWindowController.xib; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -2662,6 +2670,9 @@
 				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
+				A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */,
+				A69B4583196F8EA100F5444D /* iTermOpenQuicklyWindowController.m */,
+				A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -2908,6 +2919,7 @@
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
 				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
+				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
 				1DABA03319253FEA00A228D8 /* PasswordTrigger.h in Headers */,
 				A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */,
 				A6E74761188C679C005355CF /* iTermExposeView.h in Headers */,
@@ -3211,6 +3223,7 @@
 				1DFA9D6818F37160008ADC98 /* iTermEditKeyActionWindowController.xib in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1DB8FBC719468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */,
+				A69B4589196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */,
 				1D03D424191419080049EB8F /* DirectoriesPopup.xib in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
@@ -3309,6 +3322,7 @@
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
+				A69B4588196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */,
 				1DB8FBC819468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */,
 				1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */,
 				1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */,
@@ -3595,6 +3609,7 @@
 				1D9A554B180FA82E00B42CE9 /* TmuxHistoryParser.m in Sources */,
 				A6E74759188C66CF005355CF /* iTermExposeTabView.m in Sources */,
 				1D9A55AC180FA8B700B42CE9 /* PSMRolloverButton.m in Sources */,
+				A69B4587196F8EA100F5444D /* iTermOpenQuicklyWindowController.m in Sources */,
 				A6057C061878CD30004A60AF /* ProfileTagsView.m in Sources */,
 				A6A269991902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m in Sources */,
 				1D9A5590180FA87000B42CE9 /* PseudoTerminal.m in Sources */,
@@ -3746,6 +3761,7 @@
 				1D93D35412697529007F741B /* DVREncoder.m in Sources */,
 				1DF8007018F34CAB00722B35 /* NSPopUpButton+iTerm.m in Sources */,
 				1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */,
+				A69B4586196F8EA100F5444D /* iTermOpenQuicklyWindowController.m in Sources */,
 				A6E74762188C679C005355CF /* iTermExposeView.m in Sources */,
 				A63BA39618A9CB43002BE075 /* iTermSelection.m in Sources */,
 				1D93D3B112697D53007F741B /* DVRIndexEntry.m in Sources */,
