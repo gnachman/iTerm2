@@ -23,6 +23,27 @@ static const double kHostnameMultiplier = 1.2;
 static const double kUsernameMultiplier = 0.5;
 static const double kProfileNameMultiplier = 1;
 
+@interface iTermOpenQuicklyTableRowView : NSTableRowView
+@end
+
+@implementation iTermOpenQuicklyTableRowView
+
+- (void)drawSelectionInRect:(NSRect)dirtyRect {
+    NSColor *darkBlue = [NSColor colorWithCalibratedRed:89.0/255.0
+                                                  green:119.0/255.0
+                                                   blue:199.0/255.0
+                                                  alpha:1];
+    NSColor *lightBlue = [NSColor colorWithCalibratedRed:90.0/255.0
+                                                   green:124.0/255.0
+                                                    blue:214.0/255.0
+                                                   alpha:1];
+    NSGradient *gradient = [[NSGradient alloc] initWithColors:@[ darkBlue, lightBlue ]];
+    [gradient drawInRect:self.bounds angle:-90];
+}
+
+@end
+
+
 @interface iTermOpenQuicklyTableCellView : NSTableCellView
 @property (nonatomic, retain) IBOutlet NSTextField *detailTextField;
 @end
@@ -91,6 +112,7 @@ static const double kProfileNameMultiplier = 1;
 @property(nonatomic, copy) NSString *title;
 @property(nonatomic, retain) NSString *detail;
 @property(nonatomic, assign) double score;
+@property(nonatomic, retain) iTermOpenQuicklyTableCellView *view;
 @end
 
 @implementation iTermOpenQuicklyItem
@@ -99,6 +121,7 @@ static const double kProfileNameMultiplier = 1;
     [_sessionId release];
     [_title release];
     [_detail release];
+    [_view release];
     [super dealloc];
 }
 
@@ -358,6 +381,10 @@ static const double kProfileNameMultiplier = 1;
 
     free(query);
     [self.window setFrame:[self frame] display:YES animate:YES];
+    if (_items.count) {
+        [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+        [self tableViewSelectionDidChange:nil];
+    }
 }
 
 - (NSRect)frame {
@@ -399,10 +426,46 @@ static const double kProfileNameMultiplier = 1;
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
     iTermOpenQuicklyTableCellView *result = [tableView makeViewWithIdentifier:tableColumn.identifier owner:self];
     iTermOpenQuicklyItem *item = _items[row];
+    item.view = result;
     result.imageView.image = [NSImage imageNamed:@"iTerm"];  // TODO: Color this appropriately
     result.textField.stringValue = item.title;
     result.detailTextField.stringValue = item.detail;
+    NSColor *color;
+    if (row == tableView.selectedRow) {
+        color = [NSColor whiteColor];
+    } else {
+        color = [NSColor blackColor];
+    }
+    result.textField.textColor = color;
+    result.detailTextField.textColor = color;
     return result;
+}
+
+- (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
+    return [[iTermOpenQuicklyTableRowView alloc] init];
+}
+
+- (void)tableViewSelectionIsChanging:(NSNotification *)notification {
+    NSInteger row = [_table selectedRow];
+    if (row >= 0) {
+        iTermOpenQuicklyItem *item = _items[row];
+        item.view.textField.textColor = [NSColor blackColor];
+        item.view.detailTextField.textColor = [NSColor blackColor];
+    }
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    NSInteger row = [_table selectedRow];
+    for (int i = 0; i < _items.count; i++) {
+        iTermOpenQuicklyItem *item = _items[i];
+        if (i == row) {
+            item.view.textField.textColor = [NSColor whiteColor];
+            item.view.detailTextField.textColor = [NSColor whiteColor];
+        } else {
+            item.view.textField.textColor = [NSColor blackColor];
+            item.view.detailTextField.textColor = [NSColor blackColor];
+        }
+    }
 }
 
 #pragma mark - NSWindowDelegate
@@ -415,6 +478,11 @@ static const double kProfileNameMultiplier = 1;
 
 - (void)controlTextDidChange:(NSNotification *)notification {
     [self update];
+}
+
+- (void)controlTextDidEndEditing:(NSNotification *)obj {
+    NSLog(@"DONE");
+    [self close:nil];
 }
 
 #pragma mark - iTermArrowKeyDelegate
