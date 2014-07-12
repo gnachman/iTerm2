@@ -9,6 +9,7 @@
 #import "iTermOpenQuicklyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
+#import "iTermLogoGenerator.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -161,12 +162,16 @@ static const double kUserDefinedVariableMultiplier = 1;
 
 @end
 
-@interface iTermOpenQuicklyItem : NSObject <NSCopying>
+@interface iTermOpenQuicklyItem : NSObject
 @property(nonatomic, copy) NSString *sessionId;
 @property(nonatomic, copy) NSString *title;
 @property(nonatomic, retain) NSString *detail;
 @property(nonatomic, assign) double score;
 @property(nonatomic, retain) iTermOpenQuicklyTableCellView *view;
+@property(nonatomic, retain) NSColor *textColor;
+@property(nonatomic, retain) NSColor *cursorColor;
+@property(nonatomic, retain) NSColor *backgroundColor;
+@property(nonatomic, retain) NSColor *tabColor;
 @end
 
 @implementation iTermOpenQuicklyItem
@@ -176,15 +181,11 @@ static const double kUserDefinedVariableMultiplier = 1;
     [_title release];
     [_detail release];
     [_view release];
+    [_textColor release];
+    [_backgroundColor release];
+    [_tabColor release];
+    [_cursorColor release];
     [super dealloc];
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    iTermOpenQuicklyItem *theCopy = [[iTermOpenQuicklyItem alloc] init];
-    theCopy.sessionId = self.sessionId;
-    theCopy.title = self.title;
-    theCopy.score = self.score;
-    return theCopy;
 }
 
 @end
@@ -431,6 +432,11 @@ static const double kUserDefinedVariableMultiplier = 1;
     for (PTYSession *session in sessions) {
         NSMutableArray *features = [NSMutableArray array];
         iTermOpenQuicklyItem *item = [[[iTermOpenQuicklyItem alloc] init] autorelease];
+        item.textColor = session.foregroundColor;
+        item.backgroundColor = session.backgroundColor;
+        item.tabColor = session.tabColor;
+        item.cursorColor = session.cursorColor;
+
         item.score = [self scoreForSession:session
                                      query:query
                                     length:queryString.length
@@ -519,7 +525,12 @@ static const double kUserDefinedVariableMultiplier = 1;
     iTermOpenQuicklyTableCellView *result = [tableView makeViewWithIdentifier:tableColumn.identifier owner:self];
     iTermOpenQuicklyItem *item = _items[row];
     item.view = result;
-    result.imageView.image = [NSImage imageNamed:@"iTerm"];  // TODO: Color this appropriately
+    iTermLogoGenerator *logoGenerator = [[iTermLogoGenerator alloc] init];
+    logoGenerator.backgroundColor = item.backgroundColor;
+    logoGenerator.textColor = item.textColor;
+    logoGenerator.tabColor = item.tabColor;
+    logoGenerator.cursorColor = item.cursorColor;
+    result.imageView.image = [logoGenerator generatedImage];
     result.textField.stringValue = item.title ?: @"Untitled";
     result.detailTextField.stringValue = item.detail ?: @"";
     NSColor *color;

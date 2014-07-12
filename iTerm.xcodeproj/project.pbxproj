@@ -461,6 +461,17 @@
 		1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
 		1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
 		1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */; };
+		1DA3E2B01970AC5900001E6E /* Glare.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AC1970AC5900001E6E /* Glare.png */; };
+		1DA3E2B11970AC5900001E6E /* Glare.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AC1970AC5900001E6E /* Glare.png */; };
+		1DA3E2B21970AC5900001E6E /* Reflection.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AD1970AC5900001E6E /* Reflection.png */; };
+		1DA3E2B31970AC5900001E6E /* Reflection.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AD1970AC5900001E6E /* Reflection.png */; };
+		1DA3E2B41970AC5900001E6E /* Tabs.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AE1970AC5900001E6E /* Tabs.png */; };
+		1DA3E2B51970AC5900001E6E /* Tabs.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AE1970AC5900001E6E /* Tabs.png */; };
+		1DA3E2B61970AC5900001E6E /* TitleBar.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AF1970AC5900001E6E /* TitleBar.png */; };
+		1DA3E2B71970AC5900001E6E /* TitleBar.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AF1970AC5900001E6E /* TitleBar.png */; };
+		1DA3E2BA1970ACBE00001E6E /* iTermLogoGenerator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */; };
+		1DA3E2BB1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */; };
+		1DA3E2BC1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */; };
 		1DA7894814AC19F500C8FBD9 /* Growl in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DA7894714AC19F500C8FBD9 /* Growl */; };
 		1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */; };
 		1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */; };
@@ -1248,6 +1259,12 @@
 		1DA26ABF15007507004B5792 /* BackgroundThread.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = BackgroundThread.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursor@2x.png"; path = "images/IBarCursor@2x.png"; sourceTree = "<group>"; };
 		1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursorXMR@2x.png"; path = "images/IBarCursorXMR@2x.png"; sourceTree = "<group>"; };
+		1DA3E2AC1970AC5900001E6E /* Glare.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Glare.png; path = images/LogoParts/Glare.png; sourceTree = "<group>"; };
+		1DA3E2AD1970AC5900001E6E /* Reflection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Reflection.png; path = images/LogoParts/Reflection.png; sourceTree = "<group>"; };
+		1DA3E2AE1970AC5900001E6E /* Tabs.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Tabs.png; path = images/LogoParts/Tabs.png; sourceTree = "<group>"; };
+		1DA3E2AF1970AC5900001E6E /* TitleBar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TitleBar.png; path = images/LogoParts/TitleBar.png; sourceTree = "<group>"; };
+		1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLogoGenerator.h; sourceTree = "<group>"; };
+		1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermLogoGenerator.m; sourceTree = "<group>"; };
 		1DA7894714AC19F500C8FBD9 /* Growl */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Growl; path = Growl.framework/Growl; sourceTree = "<absolute>"; };
 		1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FontSizeEstimator.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = FontSizeEstimator.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2166,6 +2183,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				1DA3E2AB1970AC4000001E6E /* LogoParts */,
 				A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */,
 				1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */,
 				1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */,
@@ -2439,6 +2457,17 @@
 			name = Categories;
 			sourceTree = "<group>";
 		};
+		1DA3E2AB1970AC4000001E6E /* LogoParts */ = {
+			isa = PBXGroup;
+			children = (
+				1DA3E2AC1970AC5900001E6E /* Glare.png */,
+				1DA3E2AD1970AC5900001E6E /* Reflection.png */,
+				1DA3E2AE1970AC5900001E6E /* Tabs.png */,
+				1DA3E2AF1970AC5900001E6E /* TitleBar.png */,
+			);
+			name = LogoParts;
+			sourceTree = "<group>";
+		};
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -2626,6 +2655,8 @@
 				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
+				1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */,
+				1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -3018,6 +3049,7 @@
 				1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */,
 				A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */,
 				1D21EE3B147711300066E04A /* ContextMenuActionPrefsController.h in Headers */,
+				1DA3E2BA1970ACBE00001E6E /* iTermLogoGenerator.h in Headers */,
 				A63F40A4183F3B78003A6A6D /* LineBlock.h in Headers */,
 				1D3D21871482E0E500FAC8E7 /* TmuxGateway.h in Headers */,
 				1D3D21901482F18A00FAC8E7 /* TmuxController.h in Headers */,
@@ -3205,6 +3237,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1DA3E2B71970AC5900001E6E /* TitleBar.png in Resources */,
 				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
 				1DB8FBC919468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
@@ -3213,6 +3246,7 @@
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
+				1DA3E2B51970AC5900001E6E /* Tabs.png in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				1DB8FBC519468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */,
 				1DFA7C971923EA8700DF1410 /* iTermPasswordManager.xib in Resources */,
@@ -3221,6 +3255,7 @@
 				1DB8FBCF19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
 				1DB8FBCB19468A40006BAF5C /* AquaTabsDownNonKey_vertical.png in Resources */,
 				1DFA9D6818F37160008ADC98 /* iTermEditKeyActionWindowController.xib in Resources */,
+				1DA3E2B31970AC5900001E6E /* Reflection.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1DB8FBC719468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */,
 				A69B4589196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */,
@@ -3232,6 +3267,7 @@
 				1DC2AF5219521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
+				1DA3E2B11970AC5900001E6E /* Glare.png in Resources */,
 				A6E713B718FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
@@ -3270,6 +3306,7 @@
 				1D5FDD8F1208E91100C46BA3 /* AquaTabsDownNonKey.png in Resources */,
 				1D5FDD901208E91100C46BA3 /* AquaTabsSeparator.png in Resources */,
 				1D5FDD911208E91100C46BA3 /* AquaTabsSeparatorDown.png in Resources */,
+				1DA3E2B21970AC5900001E6E /* Reflection.png in Resources */,
 				1D5FDD921208E91100C46BA3 /* overflowImage.tiff in Resources */,
 				1D01609D1852AA6F0014D26A /* mark.png in Resources */,
 				1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */,
@@ -3288,6 +3325,7 @@
 				9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
 				1DB8FBCE19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
+				1DA3E2B01970AC5900001E6E /* Glare.png in Resources */,
 				1DB8FBC619468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
@@ -3340,6 +3378,7 @@
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
 				1D48B28E165F3669000046EE /* AquaTabClose_Front_Rollover.png in Resources */,
 				1D48B28F165F3669000046EE /* AquaTabClose_Front_Pressed.png in Resources */,
+				1DA3E2B61970AC5900001E6E /* TitleBar.png in Resources */,
 				1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */,
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
@@ -3352,6 +3391,7 @@
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
+				1DA3E2B41970AC5900001E6E /* Tabs.png in Resources */,
 				9DB3D6E5176CB4D80071CCF8 /* PrefsProfile@2x.png in Resources */,
 				9DB3D6E8176CBC0C0071CCF8 /* PrefsKeyboard.png in Resources */,
 				9DB3D6E9176CBC0C0071CCF8 /* PrefsKeyboard@2x.png in Resources */,
@@ -3637,6 +3677,7 @@
 				A6E713AA18F7C9F4008D94DD /* iTermProfilePreferences.m in Sources */,
 				A6E7137C18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
 				A6E7138618F263BC008D94DD /* PreferenceInfo.m in Sources */,
+				1DA3E2BC1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */,
 				1D9A5574180FA85D00B42CE9 /* AlertTrigger.m in Sources */,
 				1D9A55A9180FA8B700B42CE9 /* PSMMetalTabStyle.m in Sources */,
 				1DB83954192E95EB0037E548 /* CaptureTrigger.m in Sources */,
@@ -3816,6 +3857,7 @@
 				1DE8DC8E1415546000F83147 /* ToolProfiles.m in Sources */,
 				1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */,
 				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
+				1DA3E2BB1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */,
 				A68A3106186D2973007F550F /* TemporaryNumberAllocator.m in Sources */,
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
 				1D891E44190724DB0053C4BB /* MarkTrigger.m in Sources */,
