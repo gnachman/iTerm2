@@ -254,6 +254,7 @@ static const double kUserDefinedVariableMultiplier = 1;
     NSRect frame = [self frame];
     [self.window setFrame:frame display:YES];
     [self.window makeKeyAndOrderFront:nil];
+    [_textField selectText:nil];
 }
 
 - (double)qualityOfMatchBetweenQuery:(unichar *)query
