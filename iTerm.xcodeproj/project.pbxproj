@@ -835,6 +835,8 @@
 		A69B4587196F8EA100F5444D /* iTermOpenQuicklyWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B4583196F8EA100F5444D /* iTermOpenQuicklyWindowController.m */; };
 		A69B4588196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */; };
 		A69B4589196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */; };
+		A69B458B19710CC400F5444D /* SoftDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B458A19710CC400F5444D /* SoftDivider.png */; };
+		A69B458C19710CC400F5444D /* SoftDivider.png in Resources */ = {isa = PBXBuildFile; fileRef = A69B458A19710CC400F5444D /* SoftDivider.png */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
 		A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
@@ -1548,6 +1550,7 @@
 		A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyWindowController.h; sourceTree = "<group>"; };
 		A69B4583196F8EA100F5444D /* iTermOpenQuicklyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermOpenQuicklyWindowController.xib; sourceTree = "<group>"; };
+		A69B458A19710CC400F5444D /* SoftDivider.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SoftDivider.png; path = images/SoftDivider.png; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -2183,6 +2186,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A69B458A19710CC400F5444D /* SoftDivider.png */,
 				1DA3E2AB1970AC4000001E6E /* LogoParts */,
 				A69B457A1967B03B00F5444D /* BrokenPipeDivider.png */,
 				1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */,
@@ -3244,6 +3248,7 @@
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1DB8FBCD19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */,
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
+				A69B458C19710CC400F5444D /* SoftDivider.png in Resources */,
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				1DA3E2B51970AC5900001E6E /* Tabs.png in Resources */,
@@ -3347,6 +3352,7 @@
 				1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				A6E7139F18F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */,
+				A69B458B19710CC400F5444D /* SoftDivider.png in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,

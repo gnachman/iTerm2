@@ -231,6 +231,16 @@ static const double kUserDefinedVariableMultiplier = 1;
 - (void)awakeFromNib {
     [_table setDoubleAction:@selector(doubleClick:)];
     [self.window setOpaque:NO];
+
+    SolidColorView *contentView = [self.window contentView];
+    contentView.color = [NSColor controlColor];
+    _table.backgroundColor = [NSColor controlColor];
+    contentView.wantsLayer = YES;
+    contentView.layer.cornerRadius = 6;
+    contentView.layer.masksToBounds = YES;
+    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] CGColor];
+    contentView.layer.borderWidth = 1;
+    self.window.backgroundColor = [NSColor clearColor];
 }
 
 - (void)dealloc {
@@ -527,14 +537,7 @@ static const double kUserDefinedVariableMultiplier = 1;
     NSSize contentSize = frame.size;
     contentSize.height = nonTableSpace + (_table.rowHeight + _table.intercellSpacing.height) * numberOfVisibleRowsDesired;
 
-    if (numberOfVisibleRowsDesired) {
-        frame.size.height = [NSScrollView frameSizeForContentSize:contentSize
-                                            hasHorizontalScroller:NO
-                                              hasVerticalScroller:YES
-                                                       borderType:NSBezelBorder].height;
-    } else {
-        frame.size.height = contentSize.height;
-    }
+    frame.size.height = contentSize.height;
 
     frame.origin.x = floor((screen.frame.size.width - frame.size.width) / 2);
     frame.origin.y = screen.frame.origin.y + screen.frame.size.height - kMarginAboveWindow - frame.size.height;
@@ -590,7 +593,7 @@ static const double kUserDefinedVariableMultiplier = 1;
     if (row == tableView.selectedRow) {
         color = [NSColor whiteColor];
     } else {
-        color = [NSColor blackColor];
+        color = [NSColor colorWithCalibratedWhite:0.01 alpha:1];
     }
     result.textField.textColor = color;
     result.detailTextField.textColor = color;
@@ -605,8 +608,8 @@ static const double kUserDefinedVariableMultiplier = 1;
     NSInteger row = [_table selectedRow];
     if (row >= 0) {
         iTermOpenQuicklyItem *item = _items[row];
-        item.view.textField.textColor = [NSColor blackColor];
-        item.view.detailTextField.textColor = [NSColor blackColor];
+        item.view.textField.textColor = [NSColor colorWithCalibratedWhite:0.01 alpha:1];
+        item.view.detailTextField.textColor = [NSColor colorWithCalibratedWhite:0.01 alpha:1];
     }
 }
 
@@ -618,8 +621,8 @@ static const double kUserDefinedVariableMultiplier = 1;
             item.view.textField.textColor = [NSColor whiteColor];
             item.view.detailTextField.textColor = [NSColor whiteColor];
         } else {
-            item.view.textField.textColor = [NSColor blackColor];
-            item.view.detailTextField.textColor = [NSColor blackColor];
+            item.view.textField.textColor = [NSColor colorWithCalibratedWhite:0.01 alpha:1];
+            item.view.detailTextField.textColor = [NSColor colorWithCalibratedWhite:0.01 alpha:1];
         }
     }
 }

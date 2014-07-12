@@ -18,7 +18,7 @@
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="449" height="453"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="778"/>
-            <view key="contentView" id="se5-gp-TjO" customClass="iTermOpenQuicklyRoundedCornersView">
+            <view key="contentView" id="se5-gp-TjO" customClass="SolidColorView">
                 <rect key="frame" x="0.0" y="0.0" width="449" height="453"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
@@ -35,21 +35,21 @@
                             <outlet property="delegate" destination="-2" id="fs4-q0-45g"/>
                         </connections>
                     </textField>
-                    <scrollView autohidesScrollers="YES" horizontalLineScroll="49" horizontalPageScroll="10" verticalLineScroll="49" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="dC8-0m-hjk">
-                        <rect key="frame" x="0.0" y="-1" width="449" height="412"/>
+                    <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="49" horizontalPageScroll="10" verticalLineScroll="49" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="dC8-0m-hjk">
+                        <rect key="frame" x="0.0" y="-1" width="449" height="411.99999880906449"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Ung-Ej-hla">
-                            <rect key="frame" x="1" y="1" width="447" height="410"/>
+                            <rect key="frame" x="0.0" y="-1.1909355634998064e-06" width="449" height="412"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" rowHeight="47" rowSizeStyle="automatic" viewBased="YES" id="zk3-s6-bJy" customClass="iTermOpenQuicklyTableView">
-                                    <rect key="frame" x="0.0" y="0.0" width="447" height="410"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="449" height="412"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="0.0" height="2"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
-                                        <tableColumn width="447" minWidth="40" maxWidth="1000" id="b2X-R7-hTf">
+                                        <tableColumn width="449" minWidth="40" maxWidth="1000" id="b2X-R7-hTf">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -63,7 +63,7 @@
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                             <prototypeCellViews>
                                                 <tableCellView id="0QS-i7-vPb" userLabel="iTermOpenQuicklyTableCellView" customClass="iTermOpenQuicklyTableCellView">
-                                                    <rect key="frame" x="0.0" y="1" width="447" height="47"/>
+                                                    <rect key="frame" x="0.0" y="1" width="449" height="47"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
                                                         <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="Oib-KS-k2o">
@@ -72,10 +72,10 @@
                                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="iTerm" id="i5c-dK-g2L"/>
                                                         </imageView>
                                                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="k08-aT-fZl" userLabel="Text Field - Title">
-                                                            <rect key="frame" x="53" y="20" width="394" height="27"/>
+                                                            <rect key="frame" x="53" y="18" width="396" height="25"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                             <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="LTe-QL-Nlc">
-                                                                <font key="font" metaFont="system" size="22"/>
+                                                                <font key="font" metaFont="system" size="21"/>
                                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                             </textFieldCell>
@@ -130,6 +130,11 @@ Gw
                             <action selector="close:" target="-2" id="mVi-R5-hgI"/>
                         </connections>
                     </button>
+                    <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="aFe-eF-HcT">
+                        <rect key="frame" x="0.0" y="404" width="449" height="10"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="SoftDivider" id="WpI-1v-4lf"/>
+                    </imageView>
                 </subviews>
             </view>
             <connections>
@@ -139,6 +144,7 @@ Gw
         </window>
     </objects>
     <resources>
+        <image name="SoftDivider" width="449" height="4"/>
         <image name="closebutton" width="13" height="14"/>
         <image name="iTerm" width="512" height="512"/>
     </resources>
