@@ -224,6 +224,7 @@ static const double kUserDefinedVariableMultiplier = 1;
 
 - (void)awakeFromNib {
     [_table setDoubleAction:@selector(doubleClick:)];
+    [self.window setOpaque:NO];
 }
 
 - (void)dealloc {
