@@ -37,17 +37,17 @@ static const double kUserDefinedVariableMultiplier = 1;
 
 @end
 
-@interface iTermOpenQuicklyRoundedTopCornersView : NSView
+@interface iTermOpenQuicklyRoundedCornersView : NSView
 @end
 
-@implementation iTermOpenQuicklyRoundedTopCornersView
+@implementation iTermOpenQuicklyRoundedCornersView
 
 - (void)drawRect:(NSRect)dirtyRect {
     NSBezierPath* path = [[[NSBezierPath alloc] init] autorelease];
     [path setLineWidth:1];
     float radius = 8;
     float x = 0.5;
-    float y = 0;
+    float y = radius;
     [path moveToPoint:NSMakePoint(x, y)];
     y = self.bounds.size.height - 0.5;
     [path lineToPoint:NSMakePoint(x, y - radius)];
@@ -62,10 +62,16 @@ static const double kUserDefinedVariableMultiplier = 1;
          controlPoint2:NSMakePoint(x, y)];
 
     y = 0;
-    [path lineToPoint:NSMakePoint(x, y)];
+    [path lineToPoint:NSMakePoint(x, y + radius)];
+    [path curveToPoint:NSMakePoint(x - radius, y)
+         controlPoint1:NSMakePoint(x, y)
+         controlPoint2:NSMakePoint(x, y)];
 
     x = 0.5;
-    [path lineToPoint:NSMakePoint(x, y)];
+    [path lineToPoint:NSMakePoint(x + radius, y)];
+    [path curveToPoint:NSMakePoint(x, y + radius)
+         controlPoint1:NSMakePoint(x, y)
+         controlPoint2:NSMakePoint(x, y)];
 
     [[NSColor clearColor] set];
     NSRectFill(dirtyRect);
@@ -164,8 +170,8 @@ static const double kUserDefinedVariableMultiplier = 1;
 
 @interface iTermOpenQuicklyItem : NSObject
 @property(nonatomic, copy) NSString *sessionId;
-@property(nonatomic, copy) NSString *title;
-@property(nonatomic, retain) NSString *detail;
+@property(nonatomic, copy) NSAttributedString *title;
+@property(nonatomic, retain) NSAttributedString *detail;
 @property(nonatomic, assign) double score;
 @property(nonatomic, retain) iTermOpenQuicklyTableCellView *view;
 @property(nonatomic, retain) NSColor *textColor;
@@ -240,7 +246,9 @@ static const double kUserDefinedVariableMultiplier = 1;
     [self.window makeKeyAndOrderFront:nil];
 }
 
-- (double)qualityOfMatchBetweenQuery:(unichar *)query andString:(NSString *)documentString {
+- (double)qualityOfMatchBetweenQuery:(unichar *)query
+                           andString:(NSString *)documentString
+                            indexSet:(NSMutableIndexSet *)indexSet {
     // Returns 1 if query is a subsequence of document and 0 if not.
     // Returns 2 if query is a prefix of document.
     unichar *document = (unichar *)malloc(documentString.length * sizeof(unichar) + 1);
@@ -250,6 +258,7 @@ static const double kUserDefinedVariableMultiplier = 1;
     int d = 0;
     while (query[q] && document[d]) {
         if (document[d] == query[q]) {
+            [indexSet addIndex:d];
             ++q;
         }
         ++d;
@@ -280,10 +289,14 @@ static const double kUserDefinedVariableMultiplier = 1;
     double score = 0;
     double highestValue = 0;
     NSString *bestFeature = nil;
+    NSIndexSet *bestIndexSet = nil;
     int n = documents.count;
+    NSMutableIndexSet *indexSet = [NSMutableIndexSet indexSet];
     for (NSString *document in documents) {
+        [indexSet removeAllIndexes];
         double value = [self qualityOfMatchBetweenQuery:query
-                                              andString:[document lowercaseString]];
+                                              andString:[document lowercaseString]
+                                               indexSet:indexSet];
 
         // Discount older documents (which appear at the beginning of the list)
         value /= n;
@@ -292,6 +305,7 @@ static const double kUserDefinedVariableMultiplier = 1;
         if (value > highestValue) {
             highestValue = value;
             bestFeature = document;
+            bestIndexSet = [[indexSet copy] autorelease];
         }
         score += value * multipler;
         if (score > limit) {
@@ -300,11 +314,31 @@ static const double kUserDefinedVariableMultiplier = 1;
     }
 
     if (bestFeature && features) {
-        [features addObject:@[ [NSString stringWithFormat:@"%@: %@", name, bestFeature],
-                               @(score) ]];
+        NSString *prefix;
+        if (name) {
+            prefix = [NSString stringWithFormat:@"%@: ", name];
+        } else {
+            prefix = @"";
+        }
+        NSMutableAttributedString *theString =
+            [[[NSMutableAttributedString alloc] initWithString:prefix] autorelease];
+        [theString appendAttributedString:[self attributedStringFromString:bestFeature
+                                                     byHighlightingIndices:bestIndexSet]];
+        [features addObject:@[ theString, @(score) ]];
     }
 
     return MIN(limit, score);
+}
+
+- (NSAttributedString *)attributedStringFromString:(NSString *)source
+                             byHighlightingIndices:(NSIndexSet *)indexSet {
+    NSMutableAttributedString *attributedString =
+        [[[NSMutableAttributedString alloc] initWithString:source attributes:@{}] autorelease];
+    NSDictionary *highlight = @{ NSBackgroundColorAttributeName: [[NSColor yellowColor] colorWithAlphaComponent:0.4] };
+    [indexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [attributedString setAttributes:highlight range:NSMakeRange(idx, 1)];
+    }];
+    return attributedString;
 }
 
 - (NSArray *)hostnamesInHosts:(NSArray *)hosts {
@@ -326,17 +360,21 @@ static const double kUserDefinedVariableMultiplier = 1;
 - (double)scoreForSession:(PTYSession *)session
                     query:(unichar *)query
                    length:(int)length
-                 features:(NSMutableArray *)features {
+                 features:(NSMutableArray *)features
+           attributedName:(NSMutableAttributedString *)attributedName {
     double score = 0;
     double maxScorePerFeature = 2 + length / 4;
-
     if (session.name) {
+        NSMutableArray *nameFeature = [NSMutableArray array];
         score += [self scoreForQuery:query
                            documents:@[ session.name ]
                           multiplier:kSessionNameMultiplier
                                 name:nil
-                            features:nil  // We don't want the session name in features
+                            features:nameFeature
                                limit:maxScorePerFeature];
+        if (nameFeature.count) {
+            [attributedName appendAttributedString:nameFeature[0][0]];
+        }
     }
 
     if (session.badgeLabel) {
@@ -402,7 +440,7 @@ static const double kUserDefinedVariableMultiplier = 1;
     return score;
 }
 
-- (NSString *)detailForSession:(PTYSession *)session features:(NSArray *)features {
+- (NSAttributedString *)detailForSession:(PTYSession *)session features:(NSArray *)features {
     NSArray *sorted = [features sortedArrayUsingComparator:^NSComparisonResult(NSArray *tuple1, NSArray *tuple2) {
         NSNumber *score1 = tuple1[1];
         NSNumber *score2 = tuple2[1];
@@ -438,13 +476,18 @@ static const double kUserDefinedVariableMultiplier = 1;
         item.tabColor = session.tabColor;
         item.cursorColor = session.cursorColor;
 
+        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
         item.score = [self scoreForSession:session
                                      query:query
                                     length:queryString.length
-                                  features:features];
+                                  features:features
+                            attributedName:attributedName];
         if (item.score > 0) {
             item.detail = [self detailForSession:session features:features];
-            item.title = session.name;
+            item.title =
+                [attributedName length] ? attributedName
+                                        : [[[NSAttributedString alloc] initWithString:session.name
+                                                                           attributes:@{}] autorelease];
             item.sessionId = session.uniqueID;
             [items addObject:item];
         }
@@ -484,10 +527,14 @@ static const double kUserDefinedVariableMultiplier = 1;
     NSSize contentSize = frame.size;
     contentSize.height = nonTableSpace + (_table.rowHeight + _table.intercellSpacing.height) * numberOfVisibleRowsDesired;
 
-    frame.size.height = [NSScrollView frameSizeForContentSize:contentSize
-                                        hasHorizontalScroller:NO
-                                          hasVerticalScroller:YES
-                                                   borderType:NSBezelBorder].height;
+    if (numberOfVisibleRowsDesired) {
+        frame.size.height = [NSScrollView frameSizeForContentSize:contentSize
+                                            hasHorizontalScroller:NO
+                                              hasVerticalScroller:YES
+                                                       borderType:NSBezelBorder].height;
+    } else {
+        frame.size.height = contentSize.height;
+    }
 
     frame.origin.x = floor((screen.frame.size.width - frame.size.width) / 2);
     frame.origin.y = screen.frame.origin.y + screen.frame.size.height - kMarginAboveWindow - frame.size.height;
@@ -532,8 +579,13 @@ static const double kUserDefinedVariableMultiplier = 1;
     logoGenerator.tabColor = item.tabColor;
     logoGenerator.cursorColor = item.cursorColor;
     result.imageView.image = [logoGenerator generatedImage];
-    result.textField.stringValue = item.title ?: @"Untitled";
-    result.detailTextField.stringValue = item.detail ?: @"";
+    result.textField.attributedStringValue =
+        item.title ?: [[[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}] autorelease];
+    if (item.detail) {
+        result.detailTextField.attributedStringValue = item.detail;
+    } else {
+        result.detailTextField.stringValue = @"";
+    }
     NSColor *color;
     if (row == tableView.selectedRow) {
         color = [NSColor whiteColor];
