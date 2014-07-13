@@ -6,6 +6,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermOpenQuicklyWindowController">
             <connections>
+                <outlet property="_scrollView" destination="dC8-0m-hjk" id="oMz-Oc-FAB"/>
                 <outlet property="_table" destination="zk3-s6-bJy" id="IC8-8b-nvC"/>
                 <outlet property="_textField" destination="Gqq-RQ-cPg" id="lj4-oe-HXU"/>
                 <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
@@ -18,7 +19,7 @@
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="240" width="449" height="453"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="778"/>
-            <view key="contentView" id="se5-gp-TjO" customClass="SolidColorView">
+            <view key="contentView" autoresizesSubviews="NO" id="se5-gp-TjO" customClass="iTermOpenQuicklyView">
                 <rect key="frame" x="0.0" y="0.0" width="449" height="453"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
@@ -36,8 +37,8 @@
                         </connections>
                     </textField>
                     <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="49" horizontalPageScroll="10" verticalLineScroll="49" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="dC8-0m-hjk">
-                        <rect key="frame" x="0.0" y="-1.0000011909355253" width="449" height="412"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES"/>
+                        <rect key="frame" x="0.0" y="-1" width="449" height="412"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <clipView key="contentView" id="Ung-Ej-hla">
                             <rect key="frame" x="0.0" y="0.0" width="449" height="412"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

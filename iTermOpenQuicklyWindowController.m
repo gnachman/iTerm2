@@ -28,6 +28,8 @@
 
     // Table that shows search results
     IBOutlet NSTableView *_table;
+
+    IBOutlet NSScrollView *_scrollView;
 }
 
 + (instancetype)sharedInstance {
@@ -59,7 +61,7 @@
 
     // Initialize the window
     [self.window setOpaque:NO];
-    self.window.alphaValue = 0.9;
+    self.window.alphaValue = 0.95;
     self.window.backgroundColor = [NSColor clearColor];
 
     // Initialize the window's contentView
@@ -76,11 +78,14 @@
 
 - (void)presentWindow {
     [_model removeAllItems];
-    [self update];
-    NSRect frame = [self frame];
-    [self.window setFrame:frame display:YES];
-    [self.window makeKeyAndOrderFront:nil];
+    [_table reloadData];
+    // Set the window's frame to be table-less initially.
+    [self.window setFrame:[self frame] display:YES animate:NO];
     [_textField selectText:nil];
+    [self.window makeKeyAndOrderFront:nil];
+
+    // After the window is rendered, call update which will animate to the new frame.
+    [self performSelector:@selector(update) withObject:nil afterDelay:0];
 }
 
 // Recompute the model and update the window frame.
@@ -88,13 +93,28 @@
     [self.model updateWithQuery:_textField.stringValue];
     [_table reloadData];
 
-    [self.window setFrame:[self frame] display:YES animate:YES];
-
+    // We have to set the scrollview's size before animating the window or else
+    // it happens only after the animation finishes. I couldn't get
+    // autoresizing to do this automatically.
+    NSRect frame = [self frame];
+    NSRect contentViewFrame = [self.window frameRectForContentRect:frame];
+    _scrollView.frame = NSMakeRect(_scrollView.frame.origin.x,
+                                   _scrollView.frame.origin.y,
+                                   contentViewFrame.size.width,
+                                   contentViewFrame.size.height - 41);
     // Select the first item.
     if (self.model.items.count) {
         [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
         [self tableViewSelectionDidChange:nil];
     }
+
+    [self performSelector:@selector(resizeWindowAnimatedToFrame:)
+               withObject:[NSValue valueWithRect:frame]
+               afterDelay:0];
+}
+
+- (void)resizeWindowAnimatedToFrame:(NSValue *)frame {
+    [self.window setFrame:frame.rectValue display:YES animate:YES];
 }
 
 // Returns the window frame. It's a fixed 170px below the top of the screen and

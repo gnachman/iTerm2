@@ -857,6 +857,9 @@
 		A69B45AE19731D3200F5444D /* iTermOpenQuicklyModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45AC19731D3200F5444D /* iTermOpenQuicklyModel.h */; };
 		A69B45AF19731D3200F5444D /* iTermOpenQuicklyModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */; };
 		A69B45B019731D3200F5444D /* iTermOpenQuicklyModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */; };
+		A69B45B3197345C700F5444D /* iTermOpenQuicklyView.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45B1197345C700F5444D /* iTermOpenQuicklyView.h */; };
+		A69B45B4197345C700F5444D /* iTermOpenQuicklyView.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45B2197345C700F5444D /* iTermOpenQuicklyView.m */; };
+		A69B45B5197345C700F5444D /* iTermOpenQuicklyView.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45B2197345C700F5444D /* iTermOpenQuicklyView.m */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
 		A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
@@ -1584,6 +1587,8 @@
 		A69B45A819731B4900F5444D /* iTermOpenQuicklyItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyItem.m; sourceTree = "<group>"; };
 		A69B45AC19731D3200F5444D /* iTermOpenQuicklyModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyModel.h; sourceTree = "<group>"; };
 		A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyModel.m; sourceTree = "<group>"; };
+		A69B45B1197345C700F5444D /* iTermOpenQuicklyView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyView.h; sourceTree = "<group>"; };
+		A69B45B2197345C700F5444D /* iTermOpenQuicklyView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyView.m; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -2746,6 +2751,8 @@
 				A69B45A319731AC500F5444D /* iTermOpenQuicklyWindow.m */,
 				A69B45AC19731D3200F5444D /* iTermOpenQuicklyModel.h */,
 				A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */,
+				A69B45B1197345C700F5444D /* iTermOpenQuicklyView.h */,
+				A69B45B2197345C700F5444D /* iTermOpenQuicklyView.m */,
 			);
 			name = "Open Quickly";
 			sourceTree = "<group>";
@@ -2943,6 +2950,7 @@
 				1D5FDD5E1208E8F000C46BA3 /* PSMTabBarCell.h in Headers */,
 				A6A2698818FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h in Headers */,
 				A6AE1ED81926F89B00780C19 /* iTermAnnouncementViewController.h in Headers */,
+				A69B45B3197345C700F5444D /* iTermOpenQuicklyView.h in Headers */,
 				A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */,
 				1D4983501912FC0B002E942D /* ToolDirectoriesView.h in Headers */,
 				A68A3114186E2F14007F550F /* PopupWindow.h in Headers */,
@@ -3584,6 +3592,7 @@
 				1D9A553F180FA7F200B42CE9 /* PasteboardHistory.m in Sources */,
 				A67E0AD2186E4B71009B2B68 /* TaskNotifier.m in Sources */,
 				1D9A5570180FA85900B42CE9 /* ToolPasteHistory.m in Sources */,
+				A69B45B5197345C700F5444D /* iTermOpenQuicklyView.m in Sources */,
 				1D9A552B180FA69200B42CE9 /* DVR.m in Sources */,
 				A6E7474A188C6344005355CF /* CommandHistoryEntry.m in Sources */,
 				1D9A557F180FA87000B42CE9 /* FindViewController.m in Sources */,
@@ -3867,6 +3876,7 @@
 				A6DF401D1897607E00F05947 /* NSTextField+iTerm.m in Sources */,
 				A6E74749188C6344005355CF /* CommandHistoryEntry.m in Sources */,
 				A6E7139518F50762008D94DD /* ProfilePreferencesViewController.m in Sources */,
+				A69B45B4197345C700F5444D /* iTermOpenQuicklyView.m in Sources */,
 				A68A30C7186D0F37007F550F /* SmartMatch.m in Sources */,
 				1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */,
 				A63BA3A018B27B92002BE075 /* iTermTextExtractor.m in Sources */,
