@@ -128,6 +128,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)buildScriptMenu:(id)sender;
 
 - (IBAction)debugLogging:(id)sender;
+- (IBAction)openQuickly:(id)sender;
 
 - (void)updateMaximizePaneMenuItem;
 - (void)updateUseTransparencyMenuItem;

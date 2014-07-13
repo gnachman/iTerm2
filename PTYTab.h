@@ -94,6 +94,7 @@
 
 // uniqueId lazily auto-assigns a unique id unless you assign it a value first. It is never 0.
 @property(nonatomic, assign) int uniqueId;
+@property(nonatomic, readonly) BOOL isMaximized;
 
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session;

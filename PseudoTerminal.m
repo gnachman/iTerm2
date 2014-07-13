@@ -1362,6 +1362,23 @@ NSString *kSessionsKVCKey = @"sessions";
     return [[TABVIEW selectedTabViewItem] identifier];
 }
 
+- (void)makeSessionActive:(PTYSession *)session {
+    PTYTab *tab = session.tab;
+    if (tab.realParentWindow != self) {
+        return;
+    }
+    if ([self isHotKeyWindow]) {
+        [[HotkeyWindowController sharedInstance] showHotKeyWindow];
+    } else {
+        [self.window makeKeyAndOrderFront:nil];
+    }
+    [TABVIEW selectTabViewItem:session.tab.tabViewItem];
+    if (session.tab.isMaximized) {
+        [session.tab unmaximize];
+    }
+    [session.tab setActiveSession:session];
+}
+
 - (PTYSession *)currentSession
 {
     return [[[TABVIEW selectedTabViewItem] identifier] activeSession];

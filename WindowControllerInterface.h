@@ -241,6 +241,10 @@ typedef enum {
 // Do some cleanup after a session is removed.
 - (void)sessionWasRemoved;
 
+// Make the window fore (opening the hotkey window if needed), select the right tab, and activate the
+// session. Does nothing if the session does not belong to this window.
+- (void)makeSessionActive:(PTYSession *)session;
+
 #pragma mark - Instant replay
 
 // Begin instant replay on a session.
