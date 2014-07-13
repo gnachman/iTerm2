@@ -193,7 +193,7 @@
 	}
 #endif
 
-#ifdef SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE
+#if SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE
 	if ([[self class] isSynchronizationAvailable]) {
 		id value;
 
