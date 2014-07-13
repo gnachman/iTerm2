@@ -36,7 +36,7 @@
                         </connections>
                     </textField>
                     <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="49" horizontalPageScroll="10" verticalLineScroll="49" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="dC8-0m-hjk">
-                        <rect key="frame" x="0.0" y="-1" width="449" height="412"/>
+                        <rect key="frame" x="0.0" y="-1.0000011909355253" width="449" height="412"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="Ung-Ej-hla">
                             <rect key="frame" x="0.0" y="0.0" width="449" height="412"/>
@@ -67,12 +67,12 @@
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
                                                         <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" id="Oib-KS-k2o">
-                                                            <rect key="frame" x="3" y="3" width="44" height="44"/>
+                                                            <rect key="frame" x="9" y="3" width="44" height="44"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="iTerm" id="i5c-dK-g2L"/>
                                                         </imageView>
                                                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="k08-aT-fZl" userLabel="Text Field - Title">
-                                                            <rect key="frame" x="53" y="21" width="396" height="23"/>
+                                                            <rect key="frame" x="59" y="21" width="390" height="23"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                             <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="LTe-QL-Nlc">
                                                                 <font key="font" metaFont="system" size="19"/>
@@ -81,7 +81,7 @@
                                                             </textFieldCell>
                                                         </textField>
                                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="gxB-5G-phU" userLabel="Text Field - Detail">
-                                                            <rect key="frame" x="53" y="3" width="394" height="17"/>
+                                                            <rect key="frame" x="59" y="3" width="388" height="17"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Detail" id="NGu-Jc-J4f">
                                                                 <font key="font" metaFont="system"/>
