@@ -178,7 +178,7 @@ static const double kUserDefinedVariableMultiplier = 1;
     // Doing lots of typing in a session
     // Being newly created
     // Recency of use
-    
+
     return score;
 }
 
@@ -244,7 +244,6 @@ static const double kUserDefinedVariableMultiplier = 1;
         id displayString = [_delegate openQuicklyModelDisplayStringForFeatureNamed:name
                                                                              value:bestFeature
                                                                 highlightedIndexes:bestIndexSet];
-                            
         [features addObject:@[ displayString, @(score) ]];
     }
 
