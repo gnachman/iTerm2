@@ -1586,7 +1586,7 @@
 		A69B45A719731B4900F5444D /* iTermOpenQuicklyItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyItem.h; sourceTree = "<group>"; };
 		A69B45A819731B4900F5444D /* iTermOpenQuicklyItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyItem.m; sourceTree = "<group>"; };
 		A69B45AC19731D3200F5444D /* iTermOpenQuicklyModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyModel.h; sourceTree = "<group>"; };
-		A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyModel.m; sourceTree = "<group>"; };
+		A69B45AD19731D3200F5444D /* iTermOpenQuicklyModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyModel.m; sourceTree = "<group>"; tabWidth = 4; };
 		A69B45B1197345C700F5444D /* iTermOpenQuicklyView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyView.h; sourceTree = "<group>"; };
 		A69B45B2197345C700F5444D /* iTermOpenQuicklyView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyView.m; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };

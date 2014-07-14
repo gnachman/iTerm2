@@ -58,10 +58,11 @@ static const double kUserDefinedVariableMultiplier = 1;
                             attributedName:attributedName];
         if (item.score > 0) {
             item.detail = [self detailForSession:session features:features];
+
             item.title =
-            [attributedName length] ? attributedName
-                                    : [[[NSAttributedString alloc] initWithString:session.name
-                                                                       attributes:@{}] autorelease];
+              [attributedName length] ? attributedName
+                                      : [[[NSAttributedString alloc] initWithString:session.name
+                                                                         attributes:@{ }] autorelease];
             item.sessionId = session.uniqueID;
             [items addObject:item];
         }
@@ -244,7 +245,8 @@ static const double kUserDefinedVariableMultiplier = 1;
             prefix = @"";
         }
         NSMutableAttributedString *theString =
-        [[[NSMutableAttributedString alloc] initWithString:prefix] autorelease];
+            [[[NSMutableAttributedString alloc] initWithString:prefix
+                                                    attributes:[self attributes]] autorelease];
         [theString appendAttributedString:[self attributedStringFromString:bestFeature
                                                      byHighlightingIndices:bestIndexSet]];
         [features addObject:@[ theString, @(score) ]];
@@ -312,7 +314,7 @@ static const double kUserDefinedVariableMultiplier = 1;
 - (NSAttributedString *)attributedStringFromString:(NSString *)source
                              byHighlightingIndices:(NSIndexSet *)indexSet {
     NSMutableAttributedString *attributedString =
-    [[[NSMutableAttributedString alloc] initWithString:source attributes:@{}] autorelease];
+    [[[NSMutableAttributedString alloc] initWithString:source attributes:[self attributes]] autorelease];
     NSDictionary *highlight = @{ NSBackgroundColorAttributeName: [[NSColor yellowColor] colorWithAlphaComponent:0.4],
                                  NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
                                  NSUnderlineColorAttributeName: [NSColor yellowColor] };
@@ -320,6 +322,12 @@ static const double kUserDefinedVariableMultiplier = 1;
         [attributedString setAttributes:highlight range:NSMakeRange(idx, 1)];
     }];
     return attributedString;
+}
+
+- (NSDictionary *)attributes {
+    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    style.lineBreakMode = NSLineBreakByTruncatingTail;
+    return @{ NSParagraphStyleAttributeName: style };
 }
 
 - (PTYSession *)sessionAtIndex:(NSInteger)index {

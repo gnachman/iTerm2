@@ -185,8 +185,10 @@
 
     result.textField.attributedStringValue =
         item.title ?: [[[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}] autorelease];
+    [result.textField.cell setLineBreakMode:NSLineBreakByTruncatingTail];
     if (item.detail) {
         result.detailTextField.attributedStringValue = item.detail;
+        [result.detailTextField.cell setLineBreakMode:NSLineBreakByTruncatingTail];
     } else {
         result.detailTextField.stringValue = @"";
     }
