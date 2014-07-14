@@ -58,11 +58,14 @@ static const double kUserDefinedVariableMultiplier = 1;
                             attributedName:attributedName];
         if (item.score > 0) {
             item.detail = [self detailForSession:session features:features];
+            if (attributedName) {
+                item.title = attributedName;
+            } else {
+                item.title = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                               value:session.name
+                                                                  highlightedIndexes:nil];
+            }
 
-            item.title =
-              [attributedName length] ? attributedName
-                                      : [[[NSAttributedString alloc] initWithString:session.name
-                                                                         attributes:@{ }] autorelease];
             item.sessionId = session.uniqueID;
             [items addObject:item];
         }
@@ -238,18 +241,11 @@ static const double kUserDefinedVariableMultiplier = 1;
     }
 
     if (bestFeature && features) {
-        NSString *prefix;
-        if (name) {
-            prefix = [NSString stringWithFormat:@"%@: ", name];
-        } else {
-            prefix = @"";
-        }
-        NSMutableAttributedString *theString =
-            [[[NSMutableAttributedString alloc] initWithString:prefix
-                                                    attributes:[self attributes]] autorelease];
-        [theString appendAttributedString:[self attributedStringFromString:bestFeature
-                                                     byHighlightingIndices:bestIndexSet]];
-        [features addObject:@[ theString, @(score) ]];
+        id displayString = [_delegate openQuicklyModelDisplayStringForFeatureNamed:name
+                                                                             value:bestFeature
+                                                                highlightedIndexes:bestIndexSet];
+                            
+        [features addObject:@[ displayString, @(score) ]];
     }
 
     return MIN(limit, score);
@@ -306,28 +302,6 @@ static const double kUserDefinedVariableMultiplier = 1;
         [names addObject:host.username];
     }
     return names;
-}
-
-// Highlight and underline characters in |source| at indices in |indexSet|.
-// This isn't really appropriate for the model to do but it's much simpler and
-// more efficient this way.
-- (NSAttributedString *)attributedStringFromString:(NSString *)source
-                             byHighlightingIndices:(NSIndexSet *)indexSet {
-    NSMutableAttributedString *attributedString =
-    [[[NSMutableAttributedString alloc] initWithString:source attributes:[self attributes]] autorelease];
-    NSDictionary *highlight = @{ NSBackgroundColorAttributeName: [[NSColor yellowColor] colorWithAlphaComponent:0.4],
-                                 NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
-                                 NSUnderlineColorAttributeName: [NSColor yellowColor] };
-    [indexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
-        [attributedString setAttributes:highlight range:NSMakeRange(idx, 1)];
-    }];
-    return attributedString;
-}
-
-- (NSDictionary *)attributes {
-    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
-    style.lineBreakMode = NSLineBreakByTruncatingTail;
-    return @{ NSParagraphStyleAttributeName: style };
 }
 
 - (PTYSession *)sessionAtIndex:(NSInteger)index {
