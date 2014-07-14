@@ -5872,13 +5872,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)setLastDirectory:(NSString *)lastDirectory {
-    [_directories addObject:lastDirectory];
+    if (lastDirectory) {
+        [_directories addObject:lastDirectory];
+    }
     [_lastDirectory autorelease];
     _lastDirectory = [lastDirectory copy];
 }
 
 - (void)setLastRemoteHost:(VT100RemoteHost *)lastRemoteHost {
-    [_hosts addObject:lastRemoteHost];
+    if (lastRemoteHost) {
+        [_hosts addObject:lastRemoteHost];
+    }
     [_lastRemoteHost autorelease];
     _lastRemoteHost = [lastRemoteHost retain];
 }
