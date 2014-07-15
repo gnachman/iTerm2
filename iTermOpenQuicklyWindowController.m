@@ -14,6 +14,7 @@
 
 @interface iTermOpenQuicklyWindowController () <
     iTermOpenQuicklyTextFieldDelegate,
+    iTermOpenQuicklyModelDelegate,
     NSTableViewDataSource,
     NSTableViewDelegate,
     NSWindowDelegate>
@@ -45,6 +46,7 @@
     self = [super initWithWindowNibName:@"iTermOpenQuicklyWindowController"];
     if (self) {
         _model = [[iTermOpenQuicklyModel alloc] init];
+        _model.delegate = self;
     }
     return self;
 }
@@ -185,8 +187,10 @@
 
     result.textField.attributedStringValue =
         item.title ?: [[[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}] autorelease];
+    [result.textField.cell setLineBreakMode:NSLineBreakByTruncatingTail];
     if (item.detail) {
         result.detailTextField.attributedStringValue = item.detail;
+        [result.detailTextField.cell setLineBreakMode:NSLineBreakByTruncatingTail];
     } else {
         result.detailTextField.stringValue = @"";
     }
@@ -269,6 +273,50 @@
         [_table keyDown:theEvent];
         running = NO;
     }
+}
+
+#pragma mark - iTermOpenQuicklyModelDelegate
+
+- (id)openQuicklyModelDisplayStringForFeatureNamed:(NSString *)name
+                                             value:(NSString *)value
+                                highlightedIndexes:(NSIndexSet *)highlight {
+    NSString *prefix;
+    if (name) {
+        prefix = [NSString stringWithFormat:@"%@: ", name];
+    } else {
+        prefix = @"";
+    }
+    NSMutableAttributedString *theString =
+        [[[NSMutableAttributedString alloc] initWithString:prefix
+                                                attributes:[self attributes]] autorelease];
+    [theString appendAttributedString:[self attributedStringFromString:value
+                                                 byHighlightingIndices:highlight]];
+    return theString;
+}
+
+#pragma mark - String Formatting
+
+// Highlight and underline characters in |source| at indices in |indexSet|.
+// This isn't really appropriate for the model to do but it's much simpler and
+// more efficient this way.
+- (NSAttributedString *)attributedStringFromString:(NSString *)source
+                             byHighlightingIndices:(NSIndexSet *)indexSet {
+    NSMutableAttributedString *attributedString =
+        [[[NSMutableAttributedString alloc] initWithString:source attributes:[self attributes]] autorelease];
+    NSDictionary *highlight = @{ NSBackgroundColorAttributeName: [[NSColor yellowColor] colorWithAlphaComponent:0.4],
+                                 NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
+                                 NSUnderlineColorAttributeName: [NSColor yellowColor],
+                                 NSParagraphStyleAttributeName: [[self attributes] objectForKey:NSParagraphStyleAttributeName] };
+    [indexSet enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [attributedString setAttributes:highlight range:NSMakeRange(idx, 1)];
+    }];
+    return attributedString;
+}
+
+- (NSDictionary *)attributes {
+    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    style.lineBreakMode = NSLineBreakByTruncatingTail;
+    return @{ NSParagraphStyleAttributeName: style };
 }
 
 @end

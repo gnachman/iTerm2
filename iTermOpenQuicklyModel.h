@@ -2,9 +2,21 @@
 
 @class PTYSession;
 
+@protocol iTermOpenQuicklyModelDelegate <NSObject>
+
+// Returns an NSString or NSAttributedString for a feature with a given |name|
+// and |value|. If |name| is nil then it is the feature's title. |highlight|
+// gives indices that should be highlighted, and may be nil.
+- (id)openQuicklyModelDisplayStringForFeatureNamed:(NSString *)name
+                                             value:(NSString *)value
+                                highlightedIndexes:(NSIndexSet *)highlight;
+
+@end
+
 @interface iTermOpenQuicklyModel : NSObject
 
 @property(nonatomic, retain) NSMutableArray *items;
+@property(nonatomic, assign) id<iTermOpenQuicklyModelDelegate> delegate;
 
 - (void)removeAllItems;
 
