@@ -3204,6 +3204,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self reportMouseEvent:event]) {
         return;
     }
+    [self removeUnderline];
 
     BOOL pressingCmdOnly = ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask;
     if (!pressingCmdOnly || dragThresholdMet) {
