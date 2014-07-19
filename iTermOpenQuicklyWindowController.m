@@ -79,6 +79,7 @@
 }
 
 - (void)presentWindow {
+    NSLog(@"Present window");
     [_model removeAllItems];
     [_table reloadData];
     // Set the window's frame to be table-less initially.
@@ -117,6 +118,7 @@
 
 - (void)resizeWindowAnimatedToFrame:(NSValue *)frame {
     [self.window setFrame:frame.rectValue display:YES animate:YES];
+    [self performSelector:@selector(close:) withObject:nil afterDelay:0.25];
 }
 
 // Returns the window frame. It's a fixed 170px below the top of the screen and
@@ -147,7 +149,9 @@
 
 // Bound to the close button.
 - (IBAction)close:(id)sender {
+    NSLog(@"Close");
     [self.window close];
+    [self performSelector:@selector(presentWindow) withObject:nil afterDelay:0];
 }
 
 // Switch to the session associated with the currently selected row, closing
@@ -240,7 +244,7 @@
 #pragma mark - NSWindowDelegate
 
 - (void)windowDidResignKey:(NSNotification *)notification {
-    [self.window close];
+//    [self close:nil];
 }
 
 #pragma mark - NSControlDelegate
