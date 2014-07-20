@@ -1,5 +1,6 @@
 #import "iTermLogoGenerator.h"
 #import "NSColor+iTerm.h"
+#import "NSImage+iTerm.h"
 #import <QuartzCore/QuartzCore.h>
 
 // key->NSImage
@@ -32,37 +33,6 @@ static NSMutableDictionary *gLogoCache;
             [self keyForColor:self.backgroundColor],
             [self keyForColor:self.tabColor]];
 }
-
-- (NSImage *)blurImage:(NSImage *)sourceImage withRadius:(CGFloat)radius {
-  CIImage* inputImage = [CIImage imageWithData:[sourceImage TIFFRepresentation]];
-  CIFilter* filter = [CIFilter filterWithName:@"CIGaussianBlur"];
-  [filter setDefaults];
-  [filter setValue:inputImage forKey:@"inputImage"];
-  [filter setValue:@(radius) forKeyPath:@"inputRadius"];
-  CIImage* outputImage = [filter valueForKey:@"outputImage"];
-
-  NSRect outputImageRect = NSRectFromCGRect([outputImage extent]);
-  NSImage* blurredImage = [[NSImage alloc]
-                           initWithSize:outputImageRect.size];
-  [blurredImage lockFocus];
-  [outputImage drawAtPoint:NSZeroPoint fromRect:outputImageRect
-                 operation:NSCompositeCopy fraction:1.0];
-  [blurredImage unlockFocus];
-
-
-  NSImage *croppedImage = [[NSImage alloc] initWithSize:sourceImage.size];
-  [croppedImage lockFocus];
-  // This is a mgic number and I have no idea why it works :(
-  // It causes the blurred image to line up correctly with the original by insetting it more.
-  radius *= 4;
-  [blurredImage drawInRect:NSMakeRect(0, 0, croppedImage.size.width, croppedImage.size.height)
-                  fromRect:NSMakeRect(radius, radius, blurredImage.size.width - radius * 2, blurredImage.size.height - radius * 2)
-                 operation:NSCompositeCopy
-                  fraction:1];
-  [croppedImage unlockFocus];
-  return croppedImage;
-}
-
 
 - (NSImage *)generatedImage {
     NSString *key = [self cacheKey];
@@ -106,7 +76,7 @@ static NSMutableDictionary *gLogoCache;
     [textLayer unlockFocus];
 
     if ([self.textColor perceivedBrightness] > [self.backgroundColor perceivedBrightness]) {
-        NSImage *blurredText = [self blurImage:textLayer withRadius:3];
+        NSImage *blurredText = [textLayer blurredImageWithRadius:5];
         [blurredText drawInRect:NSMakeRect(0, 0, width, height)];
     }
     [textLayer drawInRect:NSMakeRect(0, 0, width, height)];
