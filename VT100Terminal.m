@@ -3,6 +3,7 @@
 #import "NSColor+iTerm.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
+#import "iTermGrowlDelegate.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
 #include <term.h>
 
@@ -1699,6 +1700,51 @@ static const int kMaxScreenRows = 4096;
         [delegate_ terminalSetHighlightCursorLine:value.length ? [value boolValue] : YES];
     } else if ([key isEqualToString:@"CopyToClipboard"]) {
         [delegate_ terminalSetPasteboard:value];
+    } else if ([key isEqualToString:@"Notification"]) {
+        // Takes semicolon-delimited arguments.
+        // Notification=<arg>;<arg>;...;<arg>
+        // <arg> is one of:
+        //   title=<base64-encoded title>               Default: Untitled
+        //   description=<base64-encoded description>   Default: No description
+        NSArray *parts = [value componentsSeparatedByString:@";"];
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+        dict[@"title"] = @"auto";
+        dict[@"description"] = @"auto";
+        for (NSString *part in parts) {
+            NSRange eq = [part rangeOfString:@"="];
+            if (eq.location != NSNotFound && eq.location > 0) {
+                NSString *left = [part substringToIndex:eq.location];
+                NSString *right = [part substringFromIndex:eq.location + 1];
+                dict[left] = right;
+            } else {
+                dict[part] = @"";
+            }
+        }
+        
+       
+        NSString *title = [dict[@"title"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
+
+        NSString *description = [dict[@"description"] stringByBase64DecodingStringWithEncoding:NSISOLatin1StringEncoding];
+
+        // TODO: this uses the same pattern as the File name= extension below, but seems to be wrong.
+        // I guess the test needs to be applied before the stringByBase64DecodingWithEncoding check, or something.
+        if (!title) {
+            title = @"Untitled";
+        }
+        
+        if (!description) {
+            description = @"No description";
+        }
+        
+        [[iTermGrowlDelegate sharedInstance] growlNotify:title
+                                         withDescription:description
+                                         andNotification:@"Idle" // TODO: if I don't use Idle, it doesn't show. I don't know what impact this has/how to fix it.
+                                            // TODO: can we get these?
+                                            // windowIndex:0
+                                            //    tabIndex:0
+                                            //   viewIndex:0
+         ];
+
     } else if ([key isEqualToString:@"File"]) {
         // Takes semicolon-delimited arguments.
         // File=<arg>;<arg>;...;<arg>
