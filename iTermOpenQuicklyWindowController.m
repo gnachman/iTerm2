@@ -183,7 +183,7 @@
     iTermOpenQuicklyTableCellView *result = [tableView makeViewWithIdentifier:tableColumn.identifier owner:self];
     iTermOpenQuicklyItem *item = _model.items[row];
     item.view = result;
-    result.imageView.image = [item.logoGenerator generatedImage];
+//    result.imageView.image = [item.logoGenerator generatedImage];
 
     result.textField.attributedStringValue =
         item.title ?: [[[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}] autorelease];
