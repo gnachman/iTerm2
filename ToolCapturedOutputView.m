@@ -213,7 +213,9 @@ static const CGFloat kMargin = 4;
 - (NSString *)labelForCapturedOutput:(CapturedOutput *)capturedOutput {
     NSString *label = capturedOutput.line;
     if (capturedOutput.state) {
-        label = [@"✓ " stringByAppendingString:label];
+        label = [@"✔ " stringByAppendingString:label];
+    } else {
+        label = [@"🔹 " stringByAppendingString:label];
     }
     return label;
 }
@@ -293,7 +295,7 @@ static const CGFloat kMargin = 4;
         CapturedOutput *capturedOutput = filteredEntries_[index];
         capturedOutput.state = !capturedOutput.state;
     }
-    [self updateCapturedOutput];
+    [tableView_ reloadData];
 }
 
 #pragma mark - NSMenuDelegate
