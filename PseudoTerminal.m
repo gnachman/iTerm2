@@ -91,6 +91,8 @@ static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
 static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
 static NSString* TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW = @"Is Hotkey Window";
 static NSString* TERMINAL_GUID = @"TerminalGuid";
+static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
+static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
 
 // In full screen, leave a bit of space at the top of the toolbar for aesthetics.
 static const CGFloat kToolbeltMargin = 8;
@@ -288,6 +290,10 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // If set, then hiding the toolbelt should shrink the window by the toolbelt's width.
     BOOL hidingToolbeltShouldResizeWindow_;
+
+    // If set, prevents hidingToolbeltShouldResizeWindow_ from getting its value inferred based on
+    // the window's frame.
+    BOOL hidingToolbeltShouldResizeWindowInitialized_;
 
     // Should the toolbelt be visible?
     BOOL shouldShowToolbelt_;
@@ -714,10 +720,16 @@ NSString *kSessionsKVCKey = @"sessions";
     // initially visible toolbelt should not resize the window, the theory being that the user
     // wanted the window to be near the right edge of the screen. This will probably sow confusion
     // but may cause more good than harm. We'll see how loud they yell.
-    BOOL rightEdgeOfWindowIsNearRightEdgeOfScreen;
-    CGFloat distanceFromRightEdgeOfWindowToRightEdgeOfScreen = fabs(NSMaxX(self.window.frame) - NSMaxX(self.window.screen.visibleFrame));
-    rightEdgeOfWindowIsNearRightEdgeOfScreen = (distanceFromRightEdgeOfWindowToRightEdgeOfScreen < 10);
-    hidingToolbeltShouldResizeWindow_ = !rightEdgeOfWindowIsNearRightEdgeOfScreen;
+    if (!hidingToolbeltShouldResizeWindowInitialized_) {
+        BOOL rightEdgeOfWindowIsNearRightEdgeOfScreen;
+        CGFloat distanceFromRightEdgeOfWindowToRightEdgeOfScreen = fabs(NSMaxX(self.window.frame) - NSMaxX(self.window.screen.visibleFrame));
+        rightEdgeOfWindowIsNearRightEdgeOfScreen = (distanceFromRightEdgeOfWindowToRightEdgeOfScreen < 10);
+        hidingToolbeltShouldResizeWindow_ = !rightEdgeOfWindowIsNearRightEdgeOfScreen;
+
+        // This isn't really necessary since this method isn't called a second time, but just to be
+        // safe we'll set it.
+        hidingToolbeltShouldResizeWindowInitialized_ = YES;
+    }
 }
 
 - (void)dealloc
@@ -1705,6 +1717,7 @@ NSString *kSessionsKVCKey = @"sessions";
     NSRectFill(rect);
     [[NSColor windowFrameColor] set];
     NSFrameRect(rect);
+    NSRect windowRect = rect;
 
     int N = [(NSDictionary *)[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] count];
     [[NSColor windowFrameColor] set];
@@ -1768,6 +1781,17 @@ NSString *kSessionsKVCKey = @"sessions";
     }
     [PTYTab drawArrangementPreview:tabArrangement
                              frame:contentRect];
+    if ([terminalArrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue]) {
+        NSRect toolbeltRect = windowRect;
+        int toolbeltWidth = toolbeltRect.size.width * 0.1;
+        toolbeltRect.origin.x += toolbeltRect.size.width - toolbeltWidth;
+        toolbeltRect.size.width = toolbeltWidth - 1;
+        [[NSColor whiteColor] set];
+        NSRectFill(toolbeltRect);
+
+        [[NSColor blackColor] set];
+        NSFrameRect(toolbeltRect);
+    }
 }
 
 + (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement
@@ -1993,6 +2017,10 @@ NSString *kSessionsKVCKey = @"sessions";
             return NO;
         }
     }
+    shouldShowToolbelt_ = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
+    hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
+    hidingToolbeltShouldResizeWindowInitialized_ = YES;
+
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     if (windowType == WINDOW_TYPE_NORMAL ||
         windowType == WINDOW_TYPE_NO_TITLE_BAR) {
@@ -2023,6 +2051,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     [self fitTabsToWindow];
+    [self updateToolbelt];
     return YES;
 }
 
@@ -2049,6 +2078,8 @@ NSString *kSessionsKVCKey = @"sessions";
                forKey:TERMINAL_ARRANGEMENT_WIDTH];
     [result setObject:[NSNumber numberWithDouble:rect.size.height]
                forKey:TERMINAL_ARRANGEMENT_HEIGHT];
+    result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(shouldShowToolbelt_);
+    result[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] = @(hidingToolbeltShouldResizeWindow_);
 
     if ([self anyFullScreen]) {
         // Save old window frame
