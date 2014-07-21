@@ -11,6 +11,8 @@
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
 #import "PTYSession.h"
+#import "PTYTab.h"
+#import "PseudoTerminal.h"  // TODO: Use delegacy? Or something?
 #import "ToolbeltView.h"
 #import "VT100ScreenMark.h"
 
@@ -49,18 +51,16 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
   return @"Coprocess to run on activation";
 }
 
-- (BOOL)capturedOutputToolVisible {
-    iTermApplicationDelegate *delegate = (iTermApplicationDelegate *)[NSApp delegate];
-    if (![delegate showToolbelt]) {
+- (BOOL)capturedOutputToolVisibleInSession:(PTYSession *)aSession {
+    if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
     return [ToolbeltView shouldShowTool:kCapturedOutputToolName];
 }
 
-- (void)showCaptureOutputTool {
-    iTermApplicationDelegate *delegate = (iTermApplicationDelegate *)[NSApp delegate];
-    if (![delegate showToolbelt]) {
-        [delegate toggleToolbelt:nil];
+- (void)showCaptureOutputToolInSession:(PTYSession *)aSession {
+    if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
+        [aSession.tab.realParentWindow toggleToolbeltVisibility:nil];
     }
     if (![ToolbeltView shouldShowTool:kCapturedOutputToolName]) {
         [ToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
@@ -72,7 +72,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
             [self showShellIntegrationRequiredAnnouncementInSession:aSession];
         }
-    } else if (![self capturedOutputToolVisible]) {
+    } else if (![self capturedOutputToolVisibleInSession:aSession]) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
             [self showCapturedOutputToolNotVisibleAnnouncementInSession:aSession];
         }
@@ -92,7 +92,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     void (^completion)(int selection) = ^(int selection) {
         switch (selection) {
             case 0:
-                [self showCaptureOutputTool];
+                [self showCaptureOutputToolInSession:aSession];
                 break;
                 
             case 1:

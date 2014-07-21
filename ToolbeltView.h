@@ -11,6 +11,9 @@
 extern NSString *kCommandHistoryToolName;
 extern NSString *kCapturedOutputToolName;
 
+// Notification posted when all windows should hide their toolbelts.
+extern NSString *const kToolbeltShouldHide;
+
 @interface ToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate> {
     ToolbeltSplitView *splitter_;
     NSMutableDictionary *tools_;

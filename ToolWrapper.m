@@ -101,11 +101,11 @@ static const CGFloat kButtonSize = 17;
 
 - (void)close:(id)sender
 {
-        if ([delegate_ haveOnlyOneTool]) {
-                [delegate_ hideToolbelt];
-        } else {
-                [delegate_ toggleShowToolWithName:self.name];
-        }
+    if ([delegate_ haveOnlyOneTool]) {
+        [delegate_ hideToolbelt];
+    } else {
+        [delegate_ toggleShowToolWithName:self.name];
+    }
 }
 
 - (void)setName:(NSString *)theName

@@ -100,6 +100,9 @@ typedef enum {
 // like a delegate.
 @protocol iTermWindowController <WindowControllerInterface>
 
+// Is the toolbelt visible for this window?
+@property(nonatomic, readonly) BOOL shouldShowToolbelt;
+
 #pragma mark - Basics
 
 // Get term number
@@ -164,6 +167,9 @@ typedef enum {
 
 // Call this when transparency changes.
 - (void)updateContentShadow;
+
+// Show or hide this window's toolbelt.
+- (IBAction)toggleToolbeltVisibility:(id)sender;
 
 #pragma mark - Tabs
 

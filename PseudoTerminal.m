@@ -288,7 +288,12 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // If set, then hiding the toolbelt should shrink the window by the toolbelt's width.
     BOOL hidingToolbeltShouldResizeWindow_;
+
+    // Should the toolbelt be visible?
+    BOOL shouldShowToolbelt_;
 }
+
+@synthesize shouldShowToolbelt = shouldShowToolbelt_;
 
 + (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType {
     switch (windowType) {
@@ -643,16 +648,16 @@ NSString *kSessionsKVCKey = @"sessions";
                                                  name:@"NSPreferredScrollerStyleDidChangeNotification"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(toolbeltVisibilityDidChange:)
-                                                 name:@"iTermToolbeltVisibilityChanged"
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(tmuxFontDidChange:)
                                                  name:@"kPTYSessionTmuxFontDidChange"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadBookmarks)
                                                  name:kReloadAllProfiles
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(hideToolbelt)
+                                                 name:kToolbeltShouldHide
                                                object:nil];
     PtyLog(@"set window inited");
     [self setWindowInited: YES];
@@ -809,9 +814,8 @@ NSString *kSessionsKVCKey = @"sessions";
         return kLeftTabsWidth;
     }
 
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     CGFloat width;
-    if ([itad showToolbelt] && !exitingLionFullscreen_) {
+    if ([self shouldShowToolbelt] && !exitingLionFullscreen_) {
         width = self.window.frame.size.width - floor(toolbeltWidth_);
     } else {
         width = self.window.frame.size.width;
@@ -840,10 +844,16 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (void)toolbeltVisibilityDidChange:(id)sender {
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+- (void)hideToolbelt {
+    if (shouldShowToolbelt_) {
+        [self toggleToolbeltVisibility:nil];
+    }
+}
+
+- (IBAction)toggleToolbeltVisibility:(id)sender {
+    shouldShowToolbelt_ = !shouldShowToolbelt_;
     BOOL didResizeWindow = NO;
-    if ([itad showToolbelt]) {
+    if ([self shouldShowToolbelt]) {
         [toolbelt_ setHidden:NO];
 
         if (![self anyFullScreen]) {
@@ -870,6 +880,8 @@ NSString *kSessionsKVCKey = @"sessions";
             }
             hidingToolbeltShouldResizeWindow_ = didResizeWindow;
         }
+
+        [self refreshTools];
     } else {
         [toolbelt_ setHidden:YES];
         if (![self anyFullScreen] && hidingToolbeltShouldResizeWindow_) {
@@ -883,7 +895,6 @@ NSString *kSessionsKVCKey = @"sessions";
     if (!didResizeWindow) {
         [self repositionWidgets];
         [self notifyTmuxOfWindowResize];
-
     }
 }
 
@@ -3197,9 +3208,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [self hideMenuBar];
     }
 
-    iTermApplicationDelegate *itad =
-        (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    [toolbelt_ setHidden:![itad showToolbelt]];
+    [toolbelt_ setHidden:![self shouldShowToolbelt]];
     // The toolbelt may try to become the first responder.
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 
@@ -3207,7 +3216,7 @@ NSString *kSessionsKVCKey = @"sessions";
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
         NSSize contentSize = [[[self window] contentView] frame].size;
-        if ([itad showToolbelt]) {
+        if ([self shouldShowToolbelt]) {
             contentSize.width -= toolbelt_.frame.size.width;
         }
         if ([self tabBarShouldBeVisible]) {
@@ -5017,8 +5026,7 @@ NSString *kSessionsKVCKey = @"sessions";
     winSize.height += decorationSize.height;
     NSRect frame = [[self window] frame];
 
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    if ([itad showToolbelt]) {
+    if ([self shouldShowToolbelt]) {
         winSize.width += floor(toolbeltWidth_);
     }
 
@@ -5830,8 +5838,7 @@ NSString *kSessionsKVCKey = @"sessions";
 {
     PtyLog(@"repositionWidgets");
 
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    BOOL showToolbeltInline = [itad showToolbelt];
+    BOOL showToolbeltInline = [self shouldShowToolbelt];
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSWindow *thisWindow = [self window];
     [thisWindow setShowsResizeIndicator:hasScrollbar];
@@ -6457,6 +6464,9 @@ NSString *kSessionsKVCKey = @"sessions";
         [item action] == @selector(newTmuxTab:) ||
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
+    } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
+        [item setState:toolbelt_.isHidden ? NSOffState : NSOnState];
+        return [[ToolbeltView configuredTools] count] > 0;
     } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
         result = ![iTermAdvancedSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
     } else if ([item action] == @selector(moveSessionToWindow:)) {
@@ -6879,10 +6889,8 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (void)updateToolbelt {
-    iTermApplicationDelegate *itad =
-        (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [toolbelt_ setFrame:[self toolbeltFrame]];
-    [toolbelt_ setHidden:![itad showToolbelt]];
+    [toolbelt_ setHidden:![self shouldShowToolbelt]];
     [self repositionWidgets];
     [toolbelt_ relayoutAllTools];
 }

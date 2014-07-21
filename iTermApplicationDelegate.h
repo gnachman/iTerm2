@@ -59,7 +59,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     IBOutlet NSMenu     *toolbeltMenu;
     NSMenuItem *downloadsMenu_;
     NSMenuItem *uploadsMenu_;
-    IBOutlet NSMenuItem *showToolbeltItem;
     IBOutlet NSMenuItem *selectTab;
     IBOutlet NSMenuItem *previousTerminal;
     IBOutlet NSMenuItem *nextTerminal;
@@ -115,7 +114,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (void)applicationDidResignActive:(NSNotification *)aNotification;
 
 - (IBAction)undo:(id)sender;
-- (IBAction)toggleToolbelt:(id)sender;
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem;
 - (IBAction)toggleFullScreenTabBar:(id)sender;
 - (IBAction)maximizePane:(id)sender;
@@ -181,8 +179,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (void)makeHotKeyWindowKeyIfOpen;
 
 - (void)updateBroadcastMenuState;
-
-- (BOOL)showToolbelt;
 
 // Call this when the user has any nontrivial interaction with a session, such as typing in it or closing a window.
 - (void)userDidInteractWithASession;

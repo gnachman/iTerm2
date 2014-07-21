@@ -81,8 +81,6 @@ static BOOL hasBecomeActive = NO;
 
 @property(nonatomic, readwrite) BOOL workspaceSessionActive;
 
-- (void)_updateToolbeltMenuItem;
-
 @end
 
 @implementation iTermAboutWindow
@@ -120,7 +118,6 @@ static BOOL hasBecomeActive = NO;
     [ITAddressBookMgr sharedInstance];
 
     [ToolbeltView populateMenu:toolbeltMenu];
-    [self _updateToolbeltMenuItem];
 
     // Set the Appcast URL and when it changes update it.
     [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
@@ -624,15 +621,6 @@ static BOOL hasBecomeActive = NO;
     [viewMenu addItem:item];
 }
 
-- (BOOL)showToolbelt
-{
-    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"Show Toolbelt"];
-    if (!n) {
-        n = [NSNumber numberWithBool:NO];
-    }
-    return [n boolValue] && [[ToolbeltView configuredTools] count] > 0;
-}
-
 - (IBAction)openPasswordManager:(id)sender {
     if (!_passwordManagerWindowController) {
         _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
@@ -644,20 +632,6 @@ static BOOL hasBecomeActive = NO;
 - (void)openPasswordManagerToAccountName:(NSString *)name {
     [self openPasswordManager:nil];
     [_passwordManagerWindowController selectAccountName:name];
-}
-
-- (IBAction)toggleToolbelt:(id)sender
-{
-    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:![self showToolbelt]]
-                                                                       forKey:@"Show Toolbelt"];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermToolbeltVisibilityChanged"
-                                                        object:nil];
-    [self _updateToolbeltMenuItem];
-}
-
-- (void)_updateToolbeltMenuItem
-{
-    [showToolbeltItem setState:[self showToolbelt] ? NSOnState : NSOffState];
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem
@@ -1473,9 +1447,6 @@ static BOOL hasBecomeActive = NO;
             menuItem.title = @"Undo Close Session";
             return [[iTermController sharedInstance] hasRestorableSession];
         }
-    } else if ([menuItem action] == @selector(toggleToolbelt:)) {
-        [menuItem setState:[[[NSUserDefaults standardUserDefaults] objectForKey:@"Show Toolbelt"] boolValue]];
-        return [[ToolbeltView configuredTools] count] > 0;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
         return ![self isDefaultTerminal];
     } else if (menuItem == maximizePane) {

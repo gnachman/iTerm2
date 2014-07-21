@@ -16,6 +16,8 @@
 NSString *kCapturedOutputToolName = @"Captured Output";
 NSString *kCommandHistoryToolName = @"Command History";
 
+NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
+
 @interface ToolbeltSplitView : NSSplitView {
     NSColor *dividerColor_;
 }
@@ -343,8 +345,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 #pragma mark - ToolWrapperDelegate
 
 - (void)hideToolbelt {
-    iTermApplicationDelegate *itad = [[iTermApplication sharedApplication] delegate];
-    [itad toggleToolbelt:self];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kToolbeltShouldHide object:nil userInfo:nil];
 }
 
 - (BOOL)haveOnlyOneTool

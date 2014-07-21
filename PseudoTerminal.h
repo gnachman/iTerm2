@@ -449,6 +449,7 @@ extern NSString *const kCurrentSessionDidChange;
 - (void)recreateTab:(PTYTab *)tab
     withArrangement:(NSDictionary *)arrangement
            sessions:(NSArray *)sessions;
+- (IBAction)toggleToolbeltVisibility:(id)sender;
 
 #pragma mark - Key Value Coding
 
