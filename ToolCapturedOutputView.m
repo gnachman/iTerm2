@@ -79,7 +79,9 @@ static const CGFloat kMargin = 4;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
-        [tableView_ setUsesAlternatingRowBackgroundColors:YES];
+        NSSize spacing = tableView_.intercellSpacing;
+        spacing.height += 5;
+        tableView_.intercellSpacing = spacing;
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
