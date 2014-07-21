@@ -31,6 +31,9 @@
 // Array of CapturedOutput objects.
 @property(nonatomic, readonly) NSArray *capturedOutput;
 
+// Should the mark be seen by the user? Returns YES by default.
+@property(nonatomic, readonly) BOOL isVisible;
+
 // Add an object to self.capturedOutput.
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
 

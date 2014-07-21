@@ -34,9 +34,9 @@
 }
 
 - (void)setCommand:(NSString *)command {
-  [_command autorelease];
-  _command = [command copy];
-  self.startDate = [NSDate date];
+    [_command autorelease];
+    _command = [command copy];
+    self.startDate = [NSDate date];
 }
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
@@ -46,10 +46,19 @@
     [_capturedOutput addObject:capturedOutput];
 }
 
+- (BOOL)isVisible {
+    return YES;
+}
+
 @end
 
 @implementation VT100ScreenMark
 @end
 
 @implementation iTermCapturedOutputMark
+
+- (BOOL)isVisible {
+    return NO;
+}
+
 @end

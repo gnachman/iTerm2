@@ -6783,7 +6783,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [aColor set];
     // Indicate marks in margin --
     VT100ScreenMark *mark = [_dataSource markOnLine:line];
-    if (mark) {
+    if (mark.isVisible) {
         NSImage *image = mark.code ? markErrImage_ : markImage_;
         CGFloat offset = (lineHeight - markImage_.size.height) / 2.0;
         [image drawAtPoint:NSMakePoint(leftMargin.origin.x,
