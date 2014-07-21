@@ -192,6 +192,7 @@ static const CGFloat kMargin = 4;
     column.minWidth = contentSize.width;
     column.maxWidth = contentSize.width;
     [tableView_ sizeToFit];
+    [tableView_ reloadData];
 }
 
 - (BOOL)isFlipped {
