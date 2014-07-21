@@ -9,7 +9,9 @@
 #import "ToolNotes.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermApplication.h"
+#import "iTermDragHandleView.h"
 #import "FutureMethods.h"
+#import "PseudoTerminal.h"  // TODO: Use delegacy
 
 NSString *kCapturedOutputToolName = @"Captured Output";
 NSString *kCommandHistoryToolName = @"Command History";
@@ -41,16 +43,12 @@ NSString *kCommandHistoryToolName = @"Command History";
 
 @end
 
-@interface ToolbeltView (Private)
-
-+ (NSDictionary *)toolsDictionary;
-- (void)addTool:(NSView<ToolbeltTool> *)theTool toWrapper:(ToolWrapper *)wrapper;
-- (void)addToolWithName:(NSString *)theName;
-- (void)setHaveOnlyOneTool:(BOOL)value;
-
+@interface ToolbeltView () <iTermDragHandleViewDelegate>
 @end
 
-@implementation ToolbeltView
+@implementation ToolbeltView {
+    iTermDragHandleView *dragHandle_;
+}
 
 static NSMutableDictionary *gRegisteredTools;
 static NSString *kToolbeltPrefKey = @"ToolbeltTools";
@@ -121,6 +119,11 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
                 [self addToolWithName:theName];
             }
         }
+        dragHandle_ = [[[iTermDragHandleView alloc] initWithFrame:NSMakeRect(0, 0, 3, frame.size.height)]
+                       autorelease];
+        dragHandle_.delegate = self;
+        dragHandle_.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
+        [self addSubview:dragHandle_];
     }
     return self;
 }
@@ -415,6 +418,12 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 - (ToolCapturedOutputView *)capturedOutputView {
     ToolWrapper *wrapper = [tools_ objectForKey:kCapturedOutputToolName];
     return (ToolCapturedOutputView *)wrapper.tool;
+}
+
+#pragma mark - iTermDragHandleViewDelegate
+
+- (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
+    return -[term_ growToolbeltBy:-delta];
 }
 
 @end

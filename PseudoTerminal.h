@@ -168,6 +168,10 @@ extern NSString *const kCurrentSessionDidChange;
 // Accessor for toolbelt view.
 - (ToolbeltView *)toolbelt;
 
+// Tries to grow (or shrink, for negative values) the toolbelt. Returns the amount it was actually
+// grown by, in case it hits a limit.
+- (CGFloat)growToolbeltBy:(CGFloat)diff;
+
 - (void)refreshTools;
 
 #pragma mark - NSWindowController Delegate Methods
