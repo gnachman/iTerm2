@@ -248,10 +248,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // In 10.7 style full screen mode
     BOOL lionFullScreen_;
 
-    // Drawer view, which only exists for window_type normal.
-    NSDrawer *drawer_;
-
-    // Toolbelt view which goes in the drawer, or perhaps other places in the future.
+    // Toolbelt view. Goes on the right side of the terminal window, if visible.
     ToolbeltView *toolbelt_;
 
     IBOutlet NSPanel *coprocesssPanel_;
@@ -639,7 +636,7 @@ NSString *kSessionsKVCKey = @"sessions";
                                                  name:@"NSPreferredScrollerStyleDidChangeNotification"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_updateDrawerVisibility:)
+                                             selector:@selector(toolbeltVisibilityDidChange:)
                                                  name:@"iTermToolbeltVisibilityChanged"
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -673,9 +670,10 @@ NSString *kSessionsKVCKey = @"sessions";
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
     }
 
-    toolbelt_ = [[[ToolbeltView alloc] initWithFrame:NSMakeRect(0, 0, 200, self.window.frame.size.height - kToolbeltMargin)
+    NSRect toolbeltFrame = NSMakeRect(0, 0, 200, self.window.frame.size.height - kToolbeltMargin);
+    toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
                                                 term:self] autorelease];
-    [toolbelt_ setUseDarkDividers:windowType_ == WINDOW_TYPE_LION_FULL_SCREEN];
+    [toolbelt_ setUseDarkDividers:YES];
     [self _updateToolbeltParentage];
 
     wellFormed_ = YES;
@@ -690,7 +688,6 @@ NSString *kSessionsKVCKey = @"sessions";
     doNotSetRestorableState_ = YES;
     wellFormed_ = NO;
     [toolbelt_ shutdown];
-    [drawer_ release];
 
     // Do not assume that [self window] is valid here. It may have been freed.
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -773,31 +770,26 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (CGFloat)tabviewWidth
-{
+- (CGFloat)tabviewWidth {
     if ([self tabBarShouldBeVisible] &&
         [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab)  {
         return kLeftTabsWidth;
     }
 
-    if ([self anyFullScreen] || [self isEdgeWindow]) {
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-        if ([itad showToolbelt] && !exitingLionFullscreen_) {
-            const CGFloat width = [self fullscreenToolbeltWidth];
-            return self.window.frame.size.width - width;
-        } else {
-            return self.window.frame.size.width;
-        }
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    CGFloat width;
+    if ([itad showToolbelt] && !exitingLionFullscreen_) {
+        width = self.window.frame.size.width - [self toolbeltWidth];
     } else {
-        CGFloat width = self.window.frame.size.width;
-        if ([self _haveLeftBorder]) {
-            --width;
-        }
-        if ([self _haveRightBorder]) {
-            --width;
-        }
-        return width;
+        width = self.window.frame.size.width;
     }
+    if ([self _haveLeftBorder]) {
+        --width;
+    }
+    if ([self _haveRightBorder]) {
+        --width;
+    }
+    return width;
 }
 
 - (void)toggleBroadcastingToCurrentSession:(id)sender
@@ -815,24 +807,15 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (void)_updateDrawerVisibility:(id)sender
-{
+- (void)toolbeltVisibilityDidChange:(id)sender {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    if (windowType_ != WINDOW_TYPE_NORMAL || [self anyFullScreen]) {
-        if ([itad showToolbelt]) {
-            [toolbelt_ setHidden:NO];
-        } else {
-            [toolbelt_ setHidden:YES];
-        }
-        [self repositionWidgets];
-        [self notifyTmuxOfWindowResize];
+    if ([itad showToolbelt]) {
+        [toolbelt_ setHidden:NO];
     } else {
-        if ([itad showToolbelt]) {
-            [drawer_ open];
-        } else {
-            [drawer_ close];
-        }
+        [toolbelt_ setHidden:YES];
     }
+    [self repositionWidgets];
+    [self notifyTmuxOfWindowResize];
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification
@@ -2064,8 +2047,7 @@ NSString *kSessionsKVCKey = @"sessions";
     return NO;
 }
 
-- (ToolbeltView *)toolbelt
-{
+- (ToolbeltView *)toolbelt {
     return toolbelt_;
 }
 
@@ -2312,13 +2294,16 @@ NSString *kSessionsKVCKey = @"sessions";
     return _isHotKeyWindow;
 }
 
-- (NSRect)fullscreenToolbeltFrame
-{
-    CGFloat width = [self fullscreenToolbeltWidth];
-    NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width,
-                                      0,
+- (NSRect)toolbeltFrame {
+    CGFloat width = [self toolbeltWidth];
+    NSView *contentView = self.window.contentView;
+    CGFloat top = [self _haveTopBorder] ? 1 : 0;
+    CGFloat bottom = [self _haveBottomBorder] ? 1 : 0;
+    CGFloat right = [self _haveRightBorder] ? 1 : 0;
+    NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width - right,
+                                      bottom,
                                       width,
-                                      self.window.frame.size.height);
+                                      contentView.bounds.size.height - top - bottom);
     return toolbeltFrame;
 }
 
@@ -2523,9 +2508,7 @@ NSString *kSessionsKVCKey = @"sessions";
             break;
     }
 
-    if ([self anyFullScreen] || [self isEdgeWindow]) {
-        [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
-    }
+    [toolbelt_ setFrame:[self toolbeltFrame]];
 }
 
 - (void)screenParametersDidChange
@@ -3126,16 +3109,21 @@ NSString *kSessionsKVCKey = @"sessions";
         PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
         [self fitTabsToWindow];
         [self hideMenuBar];
+    }
 
-        iTermApplicationDelegate *itad =
-            (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-        [toolbelt_ setHidden:![itad showToolbelt]];
-        // The toolbelt may try to become the first responder.
-        [[self window] makeFirstResponder:[[self currentSession] textview]];
-    } else {
+    iTermApplicationDelegate *itad =
+        (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    [toolbelt_ setHidden:![itad showToolbelt]];
+    // The toolbelt may try to become the first responder.
+    [[self window] makeFirstResponder:[[self currentSession] textview]];
+
+    if (!_fullScreen) {
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
         NSSize contentSize = [[[self window] contentView] frame].size;
+        if ([toolbelt_ isHidden]) {
+            contentSize.width -= toolbelt_.frame.size.width;
+        }
         if ([self tabBarShouldBeVisible]) {
             switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
                 case PSMTab_LeftTab:
@@ -3345,17 +3333,12 @@ NSString *kSessionsKVCKey = @"sessions";
     exitingLionFullscreen_ = YES;
     [tabBarControl updateFlashing];
     [self fitTabsToWindow];
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    if ([itad showToolbelt]) {
-        [toolbelt_ setHidden:YES];
-    }
     [self repositionWidgets];
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
 {
     DLog(@"Window did exit lion fullscreen");
-    [toolbelt_ setUseDarkDividers:NO];
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
@@ -4948,11 +4931,9 @@ NSString *kSessionsKVCKey = @"sessions";
     winSize.height += decorationSize.height;
     NSRect frame = [[self window] frame];
 
-    if ([self isEdgeWindow]) {
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-        if ([itad showToolbelt]) {
-            winSize.width += [self fullscreenToolbeltWidthForContentWidth:winSize.width] - 2.5;
-        }
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    if ([itad showToolbelt]) {
+        winSize.width += [self toolbeltWidthForContentWidth:winSize.width];
     }
 
     BOOL mustResizeTabs = NO;
@@ -5764,7 +5745,7 @@ NSString *kSessionsKVCKey = @"sessions";
     PtyLog(@"repositionWidgets");
 
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    BOOL showToolbeltInline = ([self isEdgeWindow] || (!exitingLionFullscreen_ && [self anyFullScreen])) && [itad showToolbelt];
+    BOOL showToolbeltInline = [itad showToolbelt];
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSWindow *thisWindow = [self window];
     [thisWindow setShowsResizeIndicator:hasScrollbar];
@@ -5872,7 +5853,7 @@ NSString *kSessionsKVCKey = @"sessions";
                                                  [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
                                                  NSHeight(tabBarFrame));
                 if (showToolbeltInline) {
-                    tabViewFrame.size.width -= [self fullscreenToolbeltFrame].size.width;
+                    tabViewFrame.size.width -= [self toolbeltFrame].size.width;
                 }
                 TABVIEW.frame = tabViewFrame;
                 [self updateDivisionView];
@@ -5881,7 +5862,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     if (showToolbeltInline) {
-        [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
+        [toolbelt_ setFrame:[self toolbeltFrame]];
     }
 
     // Update the tab style.
@@ -6263,25 +6244,12 @@ NSString *kSessionsKVCKey = @"sessions";
     [newTab numberOfSessionsDidChange];
 }
 
-- (CGFloat)fullscreenToolbeltWidth
-{
-    return MIN(250, self.window.frame.size.width / 5);
+- (CGFloat)toolbeltWidth {
+    return floor(MIN(250, self.window.frame.size.width / 5));
 }
 
-- (CGFloat)fullscreenToolbeltWidthForContentWidth:(CGFloat)contentWidth {
-    // Returns the toolbelt frame for a window whose frame has a content view of size frameWidth.
-    // windowWidth = contentWidth + toolbeltWidth
-    // toolbeltWidth = MIN(250, windowWidth / 5)
-    // windowWidth = contentWidth + MIN(250, windowWidth / 5)
-    // windowWidth - MIN(250, windowWidth / 5) = contentWidth
-    // two cases:
-    // 1. windowWidth - windowWidth / 5 = contentWidth
-    //    0.8 * windowWidth = contentWidth
-    //    windowWidth = contentWidth / 0.8
-    //    toolbeltWidth = contentWidth / 4
-    // 2. windowWidth - 250 = contentWidth
-    //    toolbeltWidth = 250
-    return MIN(250, contentWidth / 4);
+- (CGFloat)toolbeltWidthForContentWidth:(CGFloat)contentWidth {
+    return floor(MIN(250, contentWidth / 4));
 }
 
 - (NSString *)currentSessionName
@@ -6825,40 +6793,16 @@ NSString *kSessionsKVCKey = @"sessions";
                                                       userInfo:nil];
 }
 
-- (void)_updateToolbeltParentage
-{
+- (void)_updateToolbeltParentage {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    if ([self anyFullScreen] || [self isEdgeWindow]) {
-        [toolbelt_ retain];
-        [toolbelt_ removeFromSuperview];
-        [toolbelt_ setFrame:[self fullscreenToolbeltFrame]];
-        [toolbelt_ setHidden:![itad showToolbelt]];
-        toolbelt_.topMargin = kToolbeltMargin;
-        [[[self window] contentView] addSubview:toolbelt_
-                                     positioned:NSWindowBelow
-                                     relativeTo:TABVIEW];
-        [toolbelt_ release];
-        [self repositionWidgets];
-        [drawer_ close];
-    } else {
-        if (!drawer_) {
-            drawer_ = [[NSDrawer alloc] initWithContentSize:NSMakeSize(200, self.window.frame.size.height)
-                                              preferredEdge:CGRectMaxXEdge];
-            [drawer_ setParentWindow:self.window];
-        }
-        NSSize contentSize = [drawer_ contentSize];
-        NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);
-        toolbelt_.topMargin = 0;
-        [toolbelt_ retain];
-        [toolbelt_ removeFromSuperview];
-        [toolbelt_ setFrame:toolbeltFrame];
-        [drawer_ setContentView:toolbelt_];
-        [toolbelt_ release];
-        [toolbelt_ setHidden:NO];
-        if ([itad showToolbelt]) {
-            [drawer_ open];
-        }
-    }
+    [[toolbelt_ retain] autorelease];
+    [toolbelt_ removeFromSuperview];
+    [toolbelt_ setFrame:[self toolbeltFrame]];
+    [toolbelt_ setHidden:![itad showToolbelt]];
+    [[[self window] contentView] addSubview:toolbelt_
+                                 positioned:NSWindowBelow
+                                 relativeTo:TABVIEW];
+    [self repositionWidgets];
     [toolbelt_ relayoutAllTools];
 }
 

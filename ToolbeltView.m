@@ -1,11 +1,3 @@
-//
-//  ToolbeltView.m
-//  iTerm
-//
-//  Created by George Nachman on 9/5/11.
-//  Copyright 2011 Georgetech. All rights reserved.
-//
-
 #import "ToolbeltView.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
@@ -138,11 +130,6 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [splitter_ release];
     [tools_ release];
     [super dealloc];
-}
-
-- (void)setTopMargin:(CGFloat)topMargin {
-    _topMargin = topMargin;
-    [self relayoutAllTools];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -344,7 +331,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (void)relayoutAllTools
 {
-    splitter_.frame = NSMakeRect(0, _topMargin, self.frame.size.width, self.frame.size.height - _topMargin);
+    splitter_.frame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
     for (ToolWrapper *wrapper in [splitter_ subviews]) {
         [wrapper relayout];
     }

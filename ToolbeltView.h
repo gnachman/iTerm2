@@ -1,11 +1,3 @@
-//
-//  ToolbeltView.h
-//  iTerm
-//
-//  Created by George Nachman on 9/5/11.
-//  Copyright 2011 Georgetech. All rights reserved.
-//
-
 #import <Cocoa/Cocoa.h>
 #import "ToolWrapper.h"
 #import "FutureMethods.h"
@@ -24,8 +16,6 @@ extern NSString *kCapturedOutputToolName;
     NSMutableDictionary *tools_;
     PseudoTerminal *term_;   // weak
 }
-
-@property(nonatomic, assign) CGFloat topMargin;
 
 + (NSArray *)configuredTools;
 
