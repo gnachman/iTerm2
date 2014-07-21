@@ -122,7 +122,6 @@ static const CGFloat kMargin = 8;
     [_block release];
     [_textView release];
     [_icon release];
-    [_internalView release];
     [_closeButton release];
     [_actionButtons release];
     [super dealloc];
@@ -130,6 +129,11 @@ static const CGFloat kMargin = 8;
 
 - (void)close:(id)sender {
     _block(-1);
+}
+
+- (void)willDismiss {
+    [_block release];
+    _block = nil;
 }
 
 - (void)createButtonsFromActions:(NSArray *)actions block:(void (^)(int index))block {

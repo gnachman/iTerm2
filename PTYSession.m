@@ -5985,9 +5985,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString *identifierCopy = [identifier copy];
     announcement.completion = ^(int selection) {
         originalCompletion(selection);
-        [_announcements removeObjectForKey:identifierCopy];
-        [identifierCopy release];
-        [originalCompletion release];
+        if (selection == -2) {
+            [_announcements removeObjectForKey:identifierCopy];
+            [identifierCopy release];
+            [originalCompletion release];
+        }
     };
     [_view addAnnouncement:announcement];
 }
