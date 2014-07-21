@@ -183,10 +183,13 @@ static const CGFloat kMargin = 4;
                                      searchFieldFrame.size.height + kMargin,
                                      frame.size.width,
                                      frame.size.height - 2 * kMargin)];
-    
+
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
-    [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+    NSTableColumn *column = tableView_.tableColumns[0];
+    column.minWidth = contentSize.width;
+    column.maxWidth = contentSize.width;
+    [tableView_ sizeToFit];
 }
 
 - (BOOL)isFlipped {
