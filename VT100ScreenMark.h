@@ -10,8 +10,15 @@
 #import "IntervalTree.h"
 
 @class CapturedOutput;
+@protocol iTermMark;
+
+@protocol iTermMarkDelegate
+- (void)markDidBecomeCommandMark:(id<iTermMark>)mark;
+@end
 
 @protocol iTermMark <NSObject, IntervalTreeObject>
+
+@property(nonatomic, assign) id<iTermMarkDelegate> delegate;
 
 // Return code of command on the line for this mark.
 @property(nonatomic, assign) int code;
