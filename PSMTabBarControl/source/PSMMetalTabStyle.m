@@ -34,10 +34,6 @@
         _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetal"]];
         _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetalPressed"]];
         _addTabButtonRolloverImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetalRollover"]];
-
-        _objectCountStringAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:[NSFont fontWithName:@"Helvetica" size:11.0], NSFontAttributeName,
-                                                                                    [[NSColor blackColor] colorWithAlphaComponent:0.85], NSForegroundColorAttributeName,
-                                                                                    nil, nil];
     }
     return self;
 }
@@ -49,8 +45,6 @@
     [_addTabButtonImage release];
     [_addTabButtonPressedImage release];
     [_addTabButtonRolloverImage release];
-
-    [_objectCountStringAttributes release];
 
     [super dealloc];
 }
@@ -268,9 +262,25 @@
     } else {
         contents = @"";
     }
+    NSDictionary *attributes =
+        @{ NSFontAttributeName: [NSFont systemFontOfSize:11],
+           NSForegroundColorAttributeName: [self textColorForCell:cell] };
     return [[[NSMutableAttributedString alloc] initWithString:contents
-                                                   attributes:_objectCountStringAttributes]
+                                                   attributes:attributes]
                autorelease];
+}
+
+- (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
+    NSColor *textColor;
+    if (cell.labelColor) {
+        return cell.labelColor;
+    }
+    if (cell.state == NSOnState) {
+        textColor = [NSColor blackColor];
+    } else {
+        textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+    }
+    return textColor;
 }
 
 - (NSAttributedString *)attributedStringValueForTabCell:(PSMTabBarCell *)cell {
@@ -279,12 +289,8 @@
     attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
     NSRange range = NSMakeRange(0, [contents length]);
 
-    NSColor *textColor;
-    if (cell.state == NSOnState) {
-        textColor = [NSColor blackColor];
-    } else {
-        textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
-    }
+    NSColor *textColor = [self textColorForCell:cell];
+
     // Add font attribute
     [attrStr addAttribute:NSFontAttributeName
                     value:[NSFont systemFontOfSize:11.0]

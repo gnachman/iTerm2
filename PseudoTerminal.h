@@ -106,9 +106,6 @@ extern NSString *const kCurrentSessionDidChange;
 // accessor for commandField.
 - (id)commandField;
 
-// Set the tab bar's look & feel
-- (void)setTabBarStyle;
-
 // Fix the window frame for fullscreen, top, bottom windows.
 - (void)canonicalizeWindowFrame;
 

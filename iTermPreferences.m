@@ -18,11 +18,6 @@
 
 #define BLOCK(x) [^id() { return [self x]; } copy]
 
-NSString *const kTabStyleMetal = @"Metal";
-NSString *const kTabStyleAqua = @"Aqua";
-NSString *const kTabStyleUnified = @"Unified";
-NSString *const kTabStyleAdium = @"Adium";
-
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
 NSString *const kPreferenceKeyOpenNoWindowsAtStartup = @"OpenNoWindowsAtStartup";
@@ -48,7 +43,6 @@ NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
 
-NSString *const kPreferenceKeyWindowStyle = @"kPreferenceKeyWindowStyle";
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHighlightTabLabels = @"HighlightTabLabels";
@@ -153,7 +147,6 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyTmuxDashboardLimit: @10,
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
                   
-                  kPreferenceKeyWindowStyle: @(TAB_STYLE_METAL),
                   kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),
                   kPreferenceKeyHideTabBar: @YES,
                   kPreferenceKeyHighlightTabLabels: @YES,

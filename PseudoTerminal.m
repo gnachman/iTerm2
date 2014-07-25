@@ -635,9 +635,6 @@ NSString *kSessionsKVCKey = @"sessions";
     [tabBarControl setDelegate:self];
     [tabBarControl setHideForSingleTab:NO];
 
-    // set the style of tabs to match window style
-    [self setTabBarStyle];
-
     [[[self window] contentView] setAutoresizesSubviews: YES];
     [[self window] setDelegate: self];
 
@@ -1038,25 +1035,6 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)swipeWithEvent:(NSEvent *)event
 {
     [[[self currentSession] textview] swipeWithEvent:event];
-}
-
-- (void)setTabBarStyle
-{
-    switch ([iTermPreferences intForKey:kPreferenceKeyWindowStyle]) {
-        case TAB_STYLE_METAL:
-            [tabBarControl setStyleNamed:kTabStyleMetal];
-            break;
-        case TAB_STYLE_AQUA:
-            [tabBarControl setStyleNamed:kTabStyleAqua];
-            break;
-        case TAB_STYLE_UNIFIED:
-            [tabBarControl setStyleNamed:kTabStyleUnified];
-            break;
-        case TAB_STYLE_ADIUM:
-        default:
-            [tabBarControl setStyleNamed:kTabStyleAdium];
-            break;
-    }
 }
 
 - (id)commandField
@@ -5997,8 +5975,6 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 
     // Update the tab style.
-    [self setTabBarStyle];
-
     [tabBarControl setDisableTabClose:[iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]];
     if ([iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton] &&
         [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
