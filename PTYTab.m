@@ -29,22 +29,27 @@ static CGFloat AgainstGrainDim(BOOL isVertical, NSSize size);
 static void SetWithGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
+// States
+static const NSUInteger kPTYTabNormalState = 0;
+static const NSUInteger kPTYTabBellState = (1 << 0);
+static const NSUInteger kPTYTabIdleState = (1 << 1);
+static const NSUInteger kPTYTabNewOutputState = (1 << 2);
+static const NSUInteger kPTYTabDeadState = (1 << 3);
+
 @implementation PTYTab {
     int _activityCounter;
     int _uniqueId;
+    // See kPTYTab*State constants above.
+    NSUInteger _state;
 }
 
 @synthesize broadcasting = broadcasting_;
 @synthesize isMaximized = isMaximized_;
 
-// tab label attributes
-static NSColor *normalStateColor;
-static NSColor *chosenStateColor;
-static NSColor *idleStateColor;
-static NSColor *newOutputStateColor;
-static NSColor *deadStateColor;
-
-static NSImage *warningImage;
+// tab icons
+static NSImage *warningImage;  // bell
+static NSImage *gNewOutputImage;
+static NSImage *gDeadImage;
 
 // Constants for saved window arrangement keys.
 static NSString* TAB_ARRANGEMENT_ROOT = @"Root";
@@ -68,15 +73,10 @@ static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
-+ (void)initialize
-{
++ (void)initialize {
     warningImage = [[NSImage imageNamed:@"important"] retain];
-
-    normalStateColor = nil;
-    chosenStateColor = nil;
-    idleStateColor = [NSColor redColor];
-    newOutputStateColor = [NSColor purpleColor];
-    deadStateColor = [NSColor grayColor];
+    gNewOutputImage = [[NSImage imageNamed:@"NewOutput"] retain];
+    gDeadImage = [[NSImage imageNamed:@"dead"] retain];
 }
 
 - (BOOL)updatePaneTitles
@@ -249,7 +249,20 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 {
     PtyLog(@"setBell:%d", (int)flag);
     if (flag) {
+        _state |= kPTYTabBellState;
+    } else {
+        _state &= ~kPTYTabBellState;
+    }
+    [self updateIcon];
+}
+
+- (void)updateIcon {
+    if (_state & kPTYTabDeadState) {
+        [self setIcon:gDeadImage];
+    } else if (_state & kPTYTabBellState) {
         [self setIcon:warningImage];
+    } else if (_state & (kPTYTabIdleState | kPTYTabNewOutputState)) {
+        [self setIcon:gNewOutputImage];
     } else {
         [self setIcon:nil];
     }
@@ -440,11 +453,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (NSColor *)flexibleViewColor
 {
-        if ([realParentWindow_ anyFullScreen]) {
-                return [NSColor blackColor];
-        } else {
-                return [NSColor windowBackgroundColor];
-        }
+    if ([realParentWindow_ anyFullScreen]) {
+        return [NSColor blackColor];
+    } else {
+        return [NSColor windowBackgroundColor];
+    }
 }
 
 + (NSSize)cellSizeForBookmark:(Profile *)bookmark
@@ -4051,8 +4064,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 
 - (void)setLabelAttributesForDeadSession
 {
-    [parentWindow_ setLabelColor:deadStateColor
-                 forTabViewItem:tabViewItem_];
+    _state |= kPTYTabDeadState;
+    [self updateIcon];
+
     if ([self isProcessing]) {
         [self setIsProcessing:NO];
     }
@@ -4093,14 +4107,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                 session.havePostedNewOutputNotification = NO;
             }
             if (isBackgroundTab) {
-                [parentWindow_ setLabelColor:idleStateColor
-                              forTabViewItem:tabViewItem_];
+                _state |= kPTYTabIdleState;
+                _state &= ~kPTYTabNewOutputState;
             }
         } else {
             // normal state
             if (isBackgroundTab) {
-                [parentWindow_ setLabelColor:normalStateColor
-                              forTabViewItem:tabViewItem_];
+                _state = kPTYTabNormalState;
+                [self updateIcon];
             }
         }
     }
@@ -4141,8 +4155,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             [session setNewOutput:NO];
         }
     } else if (isBackgroundTab) {
-        [[self parentWindow] setLabelColor:newOutputStateColor
-                            forTabViewItem:tabViewItem_];
+        _state |= kPTYTabNewOutputState;
+        [self updateIcon];
     }
 }
 
@@ -4166,8 +4180,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
     if (shouldResetLabel && [self isForegroundTab]) {
         [self setIsProcessing:NO];
-        [[self parentWindow] setLabelColor:chosenStateColor
-                            forTabViewItem:[self tabViewItem]];
+        _state = kPTYTabNormalState;
+        [self updateIcon];
     }
 }
 

@@ -40,7 +40,6 @@
         _isCloseButtonSuppressed = NO;
         _count = 0;
         _isPlaceholder = NO;
-        _labelColor = nil;
         _tabColor = nil;
         _modifierString = [@"" copy];
     }
@@ -68,7 +67,6 @@
         _hasCloseButton = YES;
         _isCloseButtonSuppressed = NO;
         _count = 0;
-        _labelColor = nil;
         _tabColor = nil;
         _modifierString = [@"" copy];
         if (value) {
@@ -84,8 +82,6 @@
 {
     [_modifierString release];
     [_indicator release];
-    if (_labelColor)
-        [_labelColor release];
     if (_tabColor)
         [_tabColor release];
     [super dealloc];
@@ -163,15 +159,10 @@
     return _stringSize;
 }
 
-- (NSAttributedString *)attributedStringValue
-{
-    NSMutableAttributedString *aString = [[[NSMutableAttributedString alloc] initWithAttributedString:[(id <PSMTabStyle>)[(PSMTabBarControl *)_controlView style] attributedStringValueForTabCell:self]] autorelease];
-
-    if (_labelColor) {
-        [aString addAttribute:NSForegroundColorAttributeName value:_labelColor range:NSMakeRange(0, [aString length])];
-    }
-
-    return aString;
+- (NSAttributedString *)attributedStringValue {
+    PSMTabBarControl *control = _controlView;
+    id <PSMTabStyle> tabStyle = [control style];
+    return [tabStyle attributedStringValueForTabCell:self];
 }
 
 - (int)tabState
@@ -544,23 +535,7 @@
     return NSAccessibilityUnignoredAncestor(self);
 }
 
-#pragma mark -
-#pragma mark iTerm Add-on
-
-- (NSColor *)labelColor
-{
-    return _labelColor;
-}
-
-- (void)setLabelColor:(NSColor *)aColor
-{
-    if (_labelColor != aColor) {
-        if (_labelColor) {
-            [_labelColor release];
-        }
-        _labelColor = aColor ? [aColor retain] : nil;
-    }
-}
+#pragma mark - iTerm Add-on
 
 - (NSColor*)tabColor
 {

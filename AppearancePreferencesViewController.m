@@ -16,9 +16,6 @@
     // Hide tab bar when there is only one session
     IBOutlet NSButton *_hideTab;
 
-    // Highlight tab labels on activity
-    IBOutlet NSButton *_highlightTabLabels;
-
     // Remove tab number from tabs.
     IBOutlet NSButton *_hideTabNumber;
     
@@ -83,11 +80,6 @@
     
     info = [self defineControl:_hideTab
                            key:kPreferenceKeyHideTabBar
-                          type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [self postRefreshNotification]; };
-    
-    info = [self defineControl:_highlightTabLabels
-                           key:kPreferenceKeyHighlightTabLabels
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
     

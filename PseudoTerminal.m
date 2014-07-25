@@ -4224,15 +4224,6 @@ NSString *kSessionsKVCKey = @"sessions";
     [self addNewSession:prototype];
 }
 
-- (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem
-{
-    if ([iTermPreferences boolForKey:kPreferenceKeyHighlightTabLabels]) {
-        [tabBarControl setLabelColor:color forTabViewItem:tabViewItem];
-    } else {
-        [tabBarControl setLabelColor:[NSColor blackColor] forTabViewItem:tabViewItem];
-    }
-}
-
 - (void)updateTabColors
 {
     for (PTYTab *aTab in [self tabs]) {

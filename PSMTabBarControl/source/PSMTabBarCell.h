@@ -38,7 +38,6 @@
     int                 _count;
 
     //iTerm add-on
-    NSColor             *_labelColor;
     NSColor             *_tabColor;
     NSString            *_modifierString;
 
@@ -111,8 +110,6 @@
 - (id)initWithCoder:(NSCoder *)aDecoder;
 
 // iTerm add-on
-- (NSColor *)labelColor;
-- (void)setLabelColor:(NSColor *)aColor;
 - (NSColor *)tabColor;
 - (void)setTabColor:(NSColor *)aColor;
 

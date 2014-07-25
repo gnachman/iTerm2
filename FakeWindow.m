@@ -52,14 +52,6 @@
     return self;
 }
 
-- (void)dealloc
-{
-    if (pendingLabelColor) {
-        [pendingLabelColor release];
-    }
-    [super dealloc];
-}
-
 - (void)rejoin:(NSWindowController<iTermWindowController> *)aTerm
 {
     [session release];
@@ -84,9 +76,6 @@
     }
     if (hasPendingFitWindowToTab) {
         [aTerm fitWindowToTab:[session tab]];
-    }
-    if (pendingLabelColor) {
-        [aTerm setLabelColor:pendingLabelColor forTabViewItem:[[session tab] tabViewItem]];
     }
     if (hasPendingSetWindowTitle) {
         [aTerm setWindowTitle];
@@ -135,13 +124,6 @@
 
 - (void)previousTab:(id)sender
 {
-}
-
-- (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem
-{
-    [pendingLabelColor release];
-    pendingLabelColor = color;
-    [pendingLabelColor retain];
 }
 
 - (void)enableBlur:(double)radius

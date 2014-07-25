@@ -272,9 +272,6 @@
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     NSColor *textColor;
-    if (cell.labelColor) {
-        return cell.labelColor;
-    }
     if (cell.state == NSOnState) {
         textColor = [NSColor blackColor];
     } else {

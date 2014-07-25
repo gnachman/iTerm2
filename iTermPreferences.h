@@ -60,7 +60,6 @@ extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
 // Appearance
 extern NSString *const kPreferenceKeyTabPosition;
 extern NSString *const kPreferenceKeyHideTabBar;
-extern NSString *const kPreferenceKeyHighlightTabLabels;
 extern NSString *const kPreferenceKeyHideTabNumber;
 extern NSString *const kPreferenceKeyHideTabCloseButton;
 extern NSString *const kPreferenceKeyHideTabActivityIndicator;

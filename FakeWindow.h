@@ -36,13 +36,11 @@
     BOOL hasPendingSetWindowTitle;
     BOOL hasPendingResetTempTitle;
 
-    NSColor* pendingLabelColor;
     BOOL scrollbarShouldBeVisible;
 }
 
 - (id)initFromRealWindow:(NSWindowController<iTermWindowController> *)aTerm
                  session:(PTYSession*)aSession;
-- (void)dealloc;
 
 // PseudoTerminal should call this after adding the session to its tab view.
 - (void)rejoin:(NSWindowController<iTermWindowController> *)aTerm;

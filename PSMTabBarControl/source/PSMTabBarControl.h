@@ -103,7 +103,6 @@ extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifie
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView;
 
 // iTerm add-on
-- (void)setLabelColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
@@ -260,7 +259,6 @@ enum {
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
 
 // iTerm add-ons
-- (void)setLabelColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)setModifier:(int)mask;

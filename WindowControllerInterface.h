@@ -42,9 +42,6 @@ typedef enum {
 // Select the tab to the left of the foreground tab.
 - (void)previousTab:(id)sender;
 
-// Set the text color for a tab control's name.
-- (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
-
 // Set background color for tab chrome.
 - (void)updateTabColors;
 
