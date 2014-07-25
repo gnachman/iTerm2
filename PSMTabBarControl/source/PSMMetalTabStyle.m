@@ -58,15 +58,16 @@
 #pragma mark - Control Specific
 
 - (float)leftMarginForTabBarControl {
-    return 10.0f;
+    return 0.0f;
 }
 
 - (float)rightMarginForTabBarControl {
-    return 24.0f;
+    return 0.0f;
 }
 
+// For vertical orientation
 - (float)topMarginForTabBarControl {
-    return 10.0f;
+    return 0.0f;
 }
 
 #pragma mark - Add Tab Button
