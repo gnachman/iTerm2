@@ -1879,30 +1879,40 @@ static const int kMaxScreenRows = 4096;
             // estabilshed.
             //
             // ESC ] 6 ; 1 ; class ; color ; attribute ; value BEL
+            // ESC ] 6 ; 1 ; class ; color ; action BEL
+            //
+            // The "parts" array starts with "1".
             //
             // Adjusts a color modifier.
-            // class: determines which image class will have its color modifier altered:
-            //   legal values: bg (background), or a number 0-15 (color palette entries).
-            // color: The color component to modify.
-            //   legal values: red, green, or blue.
-            // attribute: how to modify it.
-            //   legal values: brightness
-            // value: the new value for this attribute.
-            //   legal values: decimal integers in 0-255.
+            // For the 5-argument version:
+            //     class: determines which image class will have its color modifier altered:
+            //       legal values: bg (background), * (all, unless a value is given),
+            //       or a number 0-15 (color palette entries).
+            //     color: The color component to modify.
+            //       legal values: red, green, or blue.
+            //     attribute: how to modify it.
+            //       legal values: brightness
+            //     value: the new value for this attribute.
+            //       legal values: decimal integers in 0-255.
+            // Only one code is accepted in the 4-argument version:
+            //     class="bg"
+            //     color="*"
+            //     action="default"
+            //     This resets the color to its default value.
             if ([parts count] == 4) {
-                NSString* class = [parts objectAtIndex:1];
-                NSString* color = [parts objectAtIndex:2];
-                NSString* attribute = [parts objectAtIndex:3];
+                NSString* class = parts[1];
+                NSString* color = parts[2];
+                NSString* attribute = parts[3];
                 if ([class isEqualToString:@"bg"] &&
                     [color isEqualToString:@"*"] &&
                     [attribute isEqualToString:@"default"]) {
                     [delegate_ terminalSetCurrentTabColor:nil];
                 }
             } else if ([parts count] == 5) {
-                NSString* class = [parts objectAtIndex:1];
-                NSString* color = [parts objectAtIndex:2];
-                NSString* attribute = [parts objectAtIndex:3];
-                NSString* value = [parts objectAtIndex:4];
+                NSString* class = parts[1];
+                NSString* color = parts[2];
+                NSString* attribute = parts[3];
+                NSString* value = parts[4];
                 if ([class isEqualToString:@"bg"] &&
                     [attribute isEqualToString:@"brightness"]) {
                     double numValue = MIN(1, ([value intValue] / 255.0));
