@@ -62,7 +62,8 @@
 }
 
 - (float)rightMarginForTabBarControl {
-    return 0.0f;
+    // Leaves space for overflow control.
+    return 24.0f;
 }
 
 // For vertical orientation
@@ -117,11 +118,7 @@
     NSRect result;
     result.size = [metalCloseButton size];
     result.origin.x = cellFrame.origin.x + MARGIN_X;
-    result.origin.y = cellFrame.origin.y + MARGIN_Y + 2.0;
-
-    if ([cell state] == NSOnState) {
-        result.origin.y -= 1;
-    }
+    result.origin.y = cellFrame.origin.y + MARGIN_Y + 1.0;
 
     return result;
 }
@@ -142,10 +139,6 @@
         result.origin.x += [metalCloseButton size].width + kPSMTabBarCellPadding;
     }
 
-    if ([cell state] == NSOnState) {
-        result.origin.y -= 1;
-    }
-
     return result;
 }
 
@@ -160,10 +153,6 @@
     result.size = NSMakeSize(kPSMTabBarIndicatorWidth, kPSMTabBarIndicatorWidth);
     result.origin.x = cellFrame.origin.x + cellFrame.size.width - MARGIN_X - kPSMTabBarIndicatorWidth;
     result.origin.y = cellFrame.origin.y + MARGIN_Y;
-
-    if([cell state] == NSOnState){
-        result.origin.y -= 1;
-    }
 
     return result;
 }
@@ -290,28 +279,19 @@
     attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
     NSRange range = NSMakeRange(0, [contents length]);
 
+    NSColor *textColor;
+    if (cell.state == NSOnState) {
+        textColor = [NSColor blackColor];
+    } else {
+        textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+    }
     // Add font attribute
     [attrStr addAttribute:NSFontAttributeName
-                    value:[NSFont boldSystemFontOfSize:11.0]
+                    value:[NSFont systemFontOfSize:11.0]
                     range:range];
     [attrStr addAttribute:NSForegroundColorAttributeName
-                    value:[[NSColor textColor]
-        colorWithAlphaComponent:0.75]
-                          range:range];
-
-    // Add shadow attribute
-    NSShadow *theShadow;
-    theShadow = [[[NSShadow alloc] init] autorelease];
-    float shadowAlpha;
-    if (([cell state] == NSOnState) || [cell isHighlighted]) {
-        shadowAlpha = 0.8;
-    } else {
-        shadowAlpha = 0.5;
-    }
-    [theShadow setShadowColor:[NSColor colorWithCalibratedWhite:1.0 alpha:shadowAlpha]];
-    [theShadow setShadowOffset:NSMakeSize(0, -1)];
-    [theShadow setShadowBlurRadius:1.0];
-    [attrStr addAttribute:NSShadowAttributeName value:theShadow range:range];
+                    value:textColor
+                    range:range];
 
     // Paragraph Style for Truncating Long Text
     static NSMutableParagraphStyle *truncatingTailParagraphStyle = nil;
@@ -330,195 +310,109 @@
 
 #pragma mark - Drawing
 
-- (NSGradient *)tabGradientForColor:(NSColor *)tabColor brightness:(double)brightness {
-    tabColor = [tabColor colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
-    float r = [tabColor redComponent];
-    float g = [tabColor greenComponent];
-    float b = [tabColor blueComponent];
-    NSColor *startColor = [NSColor colorWithDeviceRed:(1 + r)/2.0
-                                                green:(1 + g)/2.0
-                                                 blue:(1 + b)/2.0
-                                                alpha:brightness];
-    NSColor *midColor = [tabColor colorWithAlphaComponent:0.6 * brightness];
-    NSColor *endColor = [tabColor colorWithAlphaComponent:1 * brightness];
-    NSColor *shadowColor = [NSColor colorWithDeviceRed:r/1.3
-                                                 green:g/1.3
-                                                  blue:b/1.3
-                                                 alpha:brightness];
-    CGFloat locations[] = { 0, 0.4, 0.8, 1 };
-    return [[[NSGradient alloc] initWithColors:[NSArray arrayWithObjects:
-                                                startColor, midColor, endColor, shadowColor, nil]
-                                   atLocations:locations
-                                    colorSpace:[NSColorSpace deviceRGBColorSpace]] autorelease];
+- (NSColor *)topLineColorSelected:(BOOL)selected {
+    if (selected) {
+        return [NSColor colorWithSRGBRed:195/255.0 green:191/255.0 blue:195/255.0 alpha:1];
+    } else {
+        return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
+    }
+}
+
+- (NSColor *)verticalLineColor {
+    return [NSColor colorWithWhite:184/255.0 alpha:1];
+}
+
+- (NSColor *)bottomLineColorSelected:(BOOL)selected {
+    if (selected) {
+        return [NSColor colorWithSRGBRed:182/255.0 green:180/255.0 blue:182/255.0 alpha:1];
+    } else {
+        return [NSColor colorWithSRGBRed:170/255.0 green:167/255.0 blue:170/255.0 alpha:1];
+    }
+}
+
+- (NSGradient *)backgroundGradientSelected:(BOOL)selected {
+    if (selected) {
+        return [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithSRGBRed:222/255.0
+                                                                              green:219/255.0
+                                                                               blue:222/255.0
+                                                                              alpha:1]
+                                              endingColor:[NSColor colorWithSRGBRed:214/255.0
+                                                                              green:211/255.0
+                                                                               blue:214/255.0
+                                                                              alpha:1]]
+                   autorelease];
+    } else {
+        return [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithSRGBRed:206/255.0
+                                                                              green:204/255.0
+                                                                               blue:206/255.0
+                                                                              alpha:1]
+                                              endingColor:[NSColor colorWithSRGBRed:199/255.0
+                                                                              green:196/255.0
+                                                                               blue:199/255.0
+                                                                              alpha:1]]
+                   autorelease];
+    }
+}
+
+- (void)drawHorizontalLineInFrame:(NSRect)rect y:(CGFloat)y {
+    NSRectFill(NSMakeRect(NSMinX(rect), y, rect.size.width + 1, 1));
+}
+
+- (void)drawVerticalLineInFrame:(NSRect)rect x:(CGFloat)x {
+    NSRectFill(NSMakeRect(x, NSMinY(rect) + 1, 1, rect.size.height - 2));
+}
+
+- (void)drawCellBackgroundAndFrameHorizontallyOriented:(BOOL)horizontal
+                                                inRect:(NSRect)cellFrame
+                                              selected:(BOOL)selected
+                                          withTabColor:(NSColor *)tabColor {
+    CGFloat angle = horizontal ? 90 : 0;
+    [[self backgroundGradientSelected:selected] drawInRect:cellFrame angle:angle];
+    if (tabColor) {
+        [[tabColor colorWithAlphaComponent:0.5] set];
+        NSRectFill(cellFrame);
+    }
+
+    // Left line
+    if (horizontal) {
+        [[self verticalLineColor] set];
+    } else {
+        [[self topLineColorSelected:selected] set];
+    }
+    [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
+
+    // Right line
+    if (horizontal) {
+        [[self verticalLineColor] set];
+    } else {
+        [[self bottomLineColorSelected:selected] set];
+    }
+    [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame)];
+
+    // Top line
+    if (horizontal) {
+        [[self topLineColorSelected:selected] set];
+    } else {
+        [[self verticalLineColor] set];
+    }
+    [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
+
+    // Bottom line
+    if (horizontal) {
+        [[self bottomLineColorSelected:selected] set];
+    } else {
+        [[self verticalLineColor] set];
+    }
+    [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
+    
 }
 
 - (void)drawTabCell:(PSMTabBarCell *)cell {
-    NSRect cellFrame = [cell frame];
-    NSColor *lineColor = nil;
-    NSBezierPath *bezier = [NSBezierPath bezierPath];
-    lineColor = [NSColor darkGrayColor];
-
-    // Disable antialiasing of bezier paths
-    [NSGraphicsContext saveGraphicsState];
-    [[NSGraphicsContext currentContext] setShouldAntialias:NO];
-    NSColor* tabColor = [cell tabColor];
-    NSGradient *tabGradient = nil;
-    if ([cell state] == NSOnState) {
-        // selected tab
-        if (orientation == PSMTabBarHorizontalOrientation) {
-            NSRect aRect = NSMakeRect(cellFrame.origin.x,
-                                      cellFrame.origin.y,
-                                      cellFrame.size.width,
-                                      cellFrame.size.height - 2.5);
-            if (tabColor) {
-              aRect.size.height += 2.0;
-            }
-
-            // Background
-            aRect.origin.x += 1.0;
-            aRect.size.width--;
-            aRect.size.height -= 0.5;
-            NSDrawWindowBackground(aRect);
-            aRect.size.width++;
-            aRect.size.height += 0.5;
-
-            // Frame
-            aRect.origin.x -= 0.5;
-            [bezier setLineWidth:1.0];
-            [bezier moveToPoint:NSMakePoint(aRect.origin.x,
-                                            aRect.origin.y)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x,
-                                            aRect.origin.y+aRect.size.height-1.5)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x+1.5,
-                                            aRect.origin.y+aRect.size.height)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x+aRect.size.width-2.5,
-                                            aRect.origin.y+aRect.size.height)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x+aRect.size.width,
-                                            aRect.origin.y+aRect.size.height-1.5)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x+aRect.size.width,
-                                            aRect.origin.y)];
-            if ([[cell controlView] frame].size.height < 2) {
-                // Special case of hidden control; need line across top of cell
-                [bezier moveToPoint:NSMakePoint(aRect.origin.x,
-                                                aRect.origin.y+0.5)];
-                [bezier lineToPoint:NSMakePoint(aRect.origin.x+aRect.size.width,
-                                                aRect.origin.y+0.5)];
-            }
-        } else {
-            NSRect aRect = NSMakeRect(cellFrame.origin.x + 2,
-                                      cellFrame.origin.y,
-                                      cellFrame.size.width - 2,
-                                      cellFrame.size.height);
-
-            // Background
-            aRect.origin.x++;
-            aRect.size.height--;
-            NSDrawWindowBackground(aRect);
-            aRect.origin.x--;
-
-            // Frame
-            [bezier setLineWidth:1.0];
-            [bezier moveToPoint:NSMakePoint(aRect.origin.x + aRect.size.width,
-                                            aRect.origin.y)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x + 2,
-                                            aRect.origin.y)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x + 0.5,
-                                            aRect.origin.y + 2)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x + 0.5,
-                                            aRect.origin.y + aRect.size.height - 3)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x + 3,
-                                            aRect.origin.y + aRect.size.height)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x + aRect.size.width,
-                                            aRect.origin.y + aRect.size.height)];
-        }
-        if (tabColor) {
-            NSRect temp = NSMakeRect(cellFrame.origin.x,
-                                     cellFrame.origin.y,
-                                     cellFrame.size.width,
-                                     cellFrame.size.height);
-            temp.origin.y += 0.5;
-            temp.origin.x += 1.5;
-            temp.size.width -= 2;
-            temp.size.height -= 1;
-            tabGradient = [self tabGradientForColor:tabColor brightness:1];
-            [tabGradient drawInBezierPath:[NSBezierPath bezierPathWithRoundedRect:temp
-                                                                          xRadius:2
-                                                                          yRadius:2]
-                                    angle:90];
-        }
-        [lineColor set];
-        [bezier stroke];
-    } else {
-        // unselected tab
-        NSRect aRect = NSMakeRect(cellFrame.origin.x,
-                                  cellFrame.origin.y,
-                                  cellFrame.size.width,
-                                  cellFrame.size.height);
-        aRect.origin.y += 0.5;
-        aRect.origin.x += 1.5;
-        aRect.size.width -= 1;
-
-        // rollover
-        if ([cell isHighlighted]) {
-            [[NSColor colorWithCalibratedWhite:0.0 alpha:0.1] set];
-            NSRectFillUsingOperation(aRect,
-                                     NSCompositeSourceAtop);
-        }
-        NSRect bgRect = aRect;
-        if (orientation == PSMTabBarHorizontalOrientation) {
-            bgRect.size.height -= 2;
-        } else {
-            bgRect.size.width -= 2;
-        }
-        [[NSColor windowBackgroundColor] set];
-        NSRectFill(bgRect);
-
-        [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
-        NSRectFillUsingOperation(bgRect,
-                                 NSCompositeSourceAtop);
-
-        if (orientation == PSMTabBarHorizontalOrientation) {
-            aRect.origin.x -= 1;
-            aRect.size.width += 1;
-
-            // frame
-            [bezier moveToPoint:NSMakePoint(aRect.origin.x,
-                                            aRect.origin.y)];
-            [bezier lineToPoint:NSMakePoint(aRect.origin.x + aRect.size.width,
-                                            aRect.origin.y)];
-            if (!([cell tabState] & PSMTab_RightIsSelectedMask)) {
-                [bezier lineToPoint:NSMakePoint(aRect.origin.x + aRect.size.width,
-                                                aRect.origin.y + aRect.size.height)];
-            }
-        } else {
-            if (!([cell tabState] & PSMTab_LeftIsSelectedMask)) {
-                [bezier moveToPoint:NSMakePoint(aRect.origin.x,
-                                                aRect.origin.y)];
-                [bezier lineToPoint:NSMakePoint(aRect.origin.x + aRect.size.width,
-                                                aRect.origin.y)];
-            }
-
-            if (!([cell tabState] & PSMTab_RightIsSelectedMask)) {
-                [bezier moveToPoint:NSMakePoint(aRect.origin.x,
-                                                aRect.origin.y + aRect.size.height)];
-                [bezier lineToPoint:NSMakePoint(aRect.origin.x + aRect.size.width,
-                                                aRect.origin.y + aRect.size.height)];
-            }
-        }
-        if (tabColor) {
-          NSRect temp = aRect;
-          temp.size.height -= 3;
-          temp.origin.y += 2;
-          temp.origin.x += 1;
-          temp.size.width -= 2;
-          tabGradient = [self tabGradientForColor:tabColor brightness:0.5];
-          [tabGradient drawInRect:temp angle:270];
-        }
-        [lineColor set];
-        [bezier stroke];
-    }
-
-    [NSGraphicsContext restoreGraphicsState];
+    // TODO: Test hidden control, whose height is less than 2. Maybe it happens while dragging?
+    [self drawCellBackgroundAndFrameHorizontallyOriented:(orientation == PSMTabBarHorizontalOrientation)
+                                                  inRect:cell.frame
+                                                selected:([cell state] == NSOnState)
+                                            withTabColor:[cell tabColor]];
 
     [self drawInteriorWithTabCell:cell inView:[cell controlView]];
 }
@@ -580,9 +474,6 @@
     // object counter
     if ([cell count] > 0){
         NSRect myRect = [self objectCounterRectForTabCell:cell];
-        if ([cell state] == NSOnState) {
-            myRect.origin.y -= 1.0;
-        }
 
         // draw attributed string centered in area
         NSRect counterStringRect;
@@ -599,10 +490,6 @@
     labelRect.size.width = cellFrame.size.width - (labelRect.origin.x - cellFrame.origin.x) - kPSMTabBarCellPadding;
     labelRect.size.height = cellFrame.size.height;
     labelRect.origin.y = cellFrame.origin.y + MARGIN_Y + 1.0;
-
-    if ([cell state] == NSOnState){
-        labelRect.origin.y -= 1;
-    }
 
     if (![[cell indicator] isHidden]) {
         labelRect.size.width -= (kPSMTabBarIndicatorWidth + kPSMTabBarCellPadding);
@@ -696,9 +583,18 @@
     }
 
     // draw cells
-    for (PSMTabBarCell *cell in [bar cells]) {
-        if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], rect)) {
-            [cell drawWithFrame:[cell frame] inView:bar];
+    for (int i = 0; i < 2; i++) {
+        NSInteger stateToDraw = (i == 0 ? NSOnState : NSOffState);
+        for (PSMTabBarCell *cell in [bar cells]) {
+            if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], rect)) {
+                if (cell.state == stateToDraw) {
+                    [cell drawWithFrame:[cell frame] inView:bar];
+                    if (stateToDraw == NSOnState) {
+                        // Can quit early since only one can be selected
+                        break;
+                    }
+                }
+            }
         }
     }
 }

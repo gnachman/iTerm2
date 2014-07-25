@@ -22,7 +22,7 @@ extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifie
 #define kPSMTabBarControlHeight 22
 // internal cell border
 #define MARGIN_X        6
-#define MARGIN_Y        3
+#define MARGIN_Y        3.5
 // padding between objects
 #define kPSMTabBarCellPadding 4
 // fixed size objects
