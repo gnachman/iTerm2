@@ -124,14 +124,11 @@
         return NSZeroRect;
     }
 
+    NSRect objectCounterRect = [self objectCounterRectForTabCell:cell];
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
-    result.origin.x = cellFrame.origin.x + MARGIN_X;
+    result.origin.x = NSMinX(objectCounterRect) - kPSMTabBarCellPadding - kPSMTabBarIconWidth;
     result.origin.y = cellFrame.origin.y + MARGIN_Y;
-
-    if ([cell hasCloseButton] && ![cell isCloseButtonSuppressed]) {
-        result.origin.x += [metalCloseButton size].width + kPSMTabBarCellPadding;
-    }
 
     return result;
 }
@@ -453,8 +450,9 @@
     }
 
     // icon
+    NSRect iconRect = NSZeroRect;
     if ([cell hasIcon]) {
-        NSRect iconRect = [self iconRectForTabCell:cell];
+        iconRect = [self iconRectForTabCell:cell];
         NSImage *icon = [(id)[[cell representedObject] identifier] icon];
 
         if ([controlView isFlipped]) {
@@ -469,9 +467,6 @@
         }
 
         [icon compositeToPoint:iconRect.origin operation:NSCompositeSourceOver fraction:1.0];
-
-        // scoot label over
-        labelPosition += iconRect.size.width + kPSMTabBarCellPadding;
     }
 
     // object counter
@@ -491,6 +486,10 @@
     NSRect labelRect;
     labelRect.origin.x = labelPosition;
     labelRect.size.width = cellFrame.size.width - (labelRect.origin.x - cellFrame.origin.x) - kPSMTabBarCellPadding;
+    if ([cell hasIcon]) {
+        // Reduce size of label if there is an icon
+        labelRect.size.width -= iconRect.size.width + kPSMTabBarCellPadding;
+    }
     labelRect.size.height = cellFrame.size.height;
     labelRect.origin.y = cellFrame.origin.y + MARGIN_Y + 1.0;
 
