@@ -1,19 +1,19 @@
 //
-//  PSMMetalTabStyle.m
+//  PSMYosemiteTabStyle.m
 //  PSMTabBarControl
 //
 //  Created by John Pannell on 2/17/06.
 //  Copyright 2006 Positive Spin Media. All rights reserved.
 //
 
-#import "PSMMetalTabStyle.h"
+#import "PSMYosemiteTabStyle.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
 
-@implementation PSMMetalTabStyle
+@implementation PSMYosemiteTabStyle
 
 - (NSString *)name
 {

@@ -207,8 +207,6 @@ enum {
 - (void)setDisableTabClose:(BOOL)value;
 - (id<PSMTabStyle>)style;
 - (void)setStyle:(id <PSMTabStyle>)newStyle;
-- (NSString *)styleName;
-- (void)setStyleNamed:(NSString *)name;
 - (BOOL)hideForSingleTab;
 - (void)setHideForSingleTab:(BOOL)value;
 - (BOOL)showAddTabButton;

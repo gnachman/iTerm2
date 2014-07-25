@@ -1,5 +1,5 @@
 //
-//  PSMMetalTabStyle.h
+//  PSMYosemiteTabStyle.h
 //  PSMTabBarControl
 //
 //  Created by John Pannell on 2/17/06.
@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "PSMTabStyle.h"
 
-@interface PSMMetalTabStyle : NSObject <PSMTabStyle> {
+@interface PSMYosemiteTabStyle : NSObject <PSMTabStyle> {
     NSImage *metalCloseButton;
     NSImage *metalCloseButtonDown;
     NSImage *metalCloseButtonOver;

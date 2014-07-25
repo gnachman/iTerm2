@@ -11,10 +11,7 @@
 #import "PSMOverflowPopUpButton.h"
 #import "PSMRolloverButton.h"
 #import "PSMTabStyle.h"
-#import "PSMMetalTabStyle.h"
-#import "PSMAquaTabStyle.h"
-#import "PSMUnifiedTabStyle.h"
-#import "PSMAdiumTabStyle.h"
+#import "PSMYosemiteTabStyle.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYTask.h"
 
@@ -128,7 +125,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     _cellMaxWidth = 280;
     _cellOptimumWidth = 130;
     _tabLocation = PSMTab_TopTab;
-    style = [[PSMMetalTabStyle alloc] init];
+    style = [[PSMYosemiteTabStyle alloc] init];
 
     // the overflow button/menu
     NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [style rightMarginForTabBarControl] + 1, 0, [style rightMarginForTabBarControl] - 1, [self frame].size.height);
@@ -325,23 +322,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     }
 
     [self update:_automaticallyAnimates];
-}
-
-- (void)setStyleNamed:(NSString *)name
-{
-    id <PSMTabStyle> newStyle;
-    if ([name isEqualToString:@"Aqua"]) {
-        newStyle = [[PSMAquaTabStyle alloc] init];
-    } else if ([name isEqualToString:@"Unified"]) {
-        newStyle = [[PSMUnifiedTabStyle alloc] init];
-    } else if ([name isEqualToString:@"Adium"]) {
-        newStyle = [[PSMAdiumTabStyle alloc] init];
-    } else {
-        newStyle = [[PSMMetalTabStyle alloc] init];
-    }
-
-    [self setStyle:newStyle];
-    [newStyle release];
 }
 
 - (PSMTabBarOrientation)orientation
