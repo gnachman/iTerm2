@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 COMPACTDATE=$(date +"%Y%m%d_%H%M%S")
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")-adhoc
