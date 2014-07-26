@@ -25,6 +25,7 @@ extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifie
 #define MARGIN_Y        3.5
 // padding between objects
 #define kPSMTabBarCellPadding 4
+#define kPSMTabBarCellIconPadding 0
 // fixed size objects
 #define kPSMMinimumTitleWidth 30
 #define kPSMTabBarIndicatorWidth 16.0
@@ -145,7 +146,6 @@ enum {
 
     // drawing style
     id<PSMTabStyle>             style;
-    BOOL                        _canCloseOnlyTab;
     BOOL                        _disableTabClose;
     BOOL                        _hideForSingleTab;
     BOOL                        _showAddTabButton;
@@ -200,8 +200,6 @@ enum {
 // control configuration
 - (PSMTabBarOrientation)orientation;
 - (void)setOrientation:(PSMTabBarOrientation)value;
-- (BOOL)canCloseOnlyTab;
-- (void)setCanCloseOnlyTab:(BOOL)value;
 - (BOOL)disableTabClose;
 - (void)setDisableTabClose:(BOOL)value;
 - (id<PSMTabStyle>)style;

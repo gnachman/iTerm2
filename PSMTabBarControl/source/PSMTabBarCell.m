@@ -37,7 +37,6 @@
         [_indicator setAutoresizingMask:NSViewMinYMargin];
         [_indicator setControlSize:NSSmallControlSize];
         _hasCloseButton = YES;
-        _isCloseButtonSuppressed = NO;
         _count = 0;
         _isPlaceholder = NO;
         _tabColor = nil;
@@ -65,7 +64,6 @@
         _closeButtonPressed = NO;
         _indicator = nil;
         _hasCloseButton = YES;
-        _isCloseButtonSuppressed = NO;
         _count = 0;
         _tabColor = nil;
         _modifierString = [@"" copy];
@@ -218,16 +216,6 @@
 - (void)setHasCloseButton:(BOOL)set
 {
     _hasCloseButton = set;
-}
-
-- (void)setCloseButtonSuppressed:(BOOL)suppress
-{
-    _isCloseButtonSuppressed = suppress;
-}
-
-- (BOOL)isCloseButtonSuppressed
-{
-    return _isCloseButtonSuppressed;
 }
 
 - (BOOL)hasIcon
@@ -414,7 +402,6 @@
         [aCoder encodeObject:_indicator forKey:@"indicator"];
         [aCoder encodeBool:_isInOverflowMenu forKey:@"isInOverflowMenu"];
         [aCoder encodeBool:_hasCloseButton forKey:@"hasCloseButton"];
-        [aCoder encodeBool:_isCloseButtonSuppressed forKey:@"isCloseButtonSuppressed"];
         [aCoder encodeBool:_hasIcon forKey:@"hasIcon"];
         [aCoder encodeInt:_count forKey:@"count"];
     }
@@ -437,7 +424,6 @@
             _indicator = [[aDecoder decodeObjectForKey:@"indicator"] retain];
             _isInOverflowMenu = [aDecoder decodeBoolForKey:@"isInOverflowMenu"];
             _hasCloseButton = [aDecoder decodeBoolForKey:@"hasCloseButton"];
-            _isCloseButtonSuppressed = [aDecoder decodeBoolForKey:@"isCloseButtonSuppressed"];
             _hasIcon = [aDecoder decodeBoolForKey:@"hasIcon"];
             _count = [aDecoder decodeIntForKey:@"count"];
         }

@@ -127,7 +127,7 @@
     NSRect objectCounterRect = [self objectCounterRectForTabCell:cell];
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
-    result.origin.x = NSMinX(objectCounterRect) - kPSMTabBarCellPadding - kPSMTabBarIconWidth;
+    result.origin.x = NSMinX(objectCounterRect) - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
     result.origin.y = cellFrame.origin.y + MARGIN_Y;
 
     return result;
@@ -181,13 +181,13 @@
     resultWidth = MARGIN_X;
 
     // close button?
-    if ([cell hasCloseButton] && ![cell isCloseButtonSuppressed]) {
+    if ([cell hasCloseButton]) {
         resultWidth += [metalCloseButton size].width + kPSMTabBarCellPadding;
     }
 
     // icon?
     if ([cell hasIcon]) {
-        resultWidth += kPSMTabBarIconWidth + kPSMTabBarCellPadding;
+        resultWidth += kPSMTabBarIconWidth + kPSMTabBarCellIconPadding;
     }
 
     // the label
@@ -216,13 +216,13 @@
     resultWidth = MARGIN_X;
 
     // close button?
-    if ([cell hasCloseButton] && ![cell isCloseButtonSuppressed]) {
+    if ([cell hasCloseButton]) {
         resultWidth += [metalCloseButton size].width + kPSMTabBarCellPadding;
     }
 
     // icon?
     if ([cell hasIcon]) {
-        resultWidth += kPSMTabBarIconWidth + kPSMTabBarCellPadding;
+        resultWidth += kPSMTabBarIconWidth + kPSMTabBarCellIconPadding;
     }
 
     // the label
@@ -423,7 +423,7 @@
     float labelPosition = cellFrame.origin.x + MARGIN_X;
 
     // close button
-    if ([cell hasCloseButton] && ![cell isCloseButtonSuppressed]) {
+    if ([cell hasCloseButton]) {
         NSSize closeButtonSize = NSZeroSize;
         NSRect closeButtonRect = [cell closeButtonRectForFrame:cellFrame];
         NSImage *closeButton = nil;
@@ -488,7 +488,7 @@
     labelRect.size.width = cellFrame.size.width - (labelRect.origin.x - cellFrame.origin.x) - kPSMTabBarCellPadding;
     if ([cell hasIcon]) {
         // Reduce size of label if there is an icon
-        labelRect.size.width -= iconRect.size.width + kPSMTabBarCellPadding;
+        labelRect.size.width -= iconRect.size.width + kPSMTabBarCellIconPadding;
     }
     labelRect.size.height = cellFrame.size.height;
     labelRect.origin.y = cellFrame.origin.y + MARGIN_Y + 1.0;

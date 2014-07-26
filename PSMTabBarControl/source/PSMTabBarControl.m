@@ -108,7 +108,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     // default config
     _currentStep = kPSMIsNotBeingResized;
     _orientation = PSMTabBarHorizontalOrientation;
-    _canCloseOnlyTab = NO;
     _disableTabClose = NO;
     _showAddTabButton = NO;
     _hideForSingleTab = NO;
@@ -339,19 +338,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     }
 
     if (lastOrientation != _orientation) {
-        [self update];
-    }
-}
-
-- (BOOL)canCloseOnlyTab
-{
-    return _canCloseOnlyTab;
-}
-
-- (void)setCanCloseOnlyTab:(BOOL)value
-{
-    _canCloseOnlyTab = value;
-    if ([_cells count] == 1) {
         [self update];
     }
 }
@@ -923,13 +909,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     for (i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
         float width;
-
-        // supress close button?
-        if ( (cellCount == 1 && [self canCloseOnlyTab] == NO) || ([self disableTabClose] == YES) ) {
-            [cell setCloseButtonSuppressed:YES];
-        } else {
-            [cell setCloseButtonSuppressed:NO];
-        }
 
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
             // Determine cell width
@@ -1706,8 +1685,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     NSTabViewItem *item = [sender representedObject];
     [[sender retain] autorelease];
     [[item retain] autorelease];
-    if(([_cells count] == 1) && (![self canCloseOnlyTab]))
-        return;
 
     if(([self delegate]) && ([[self delegate] respondsToSelector:@selector(tabView:shouldCloseTabViewItem:)])){
         if(![[self delegate] tabView:tabView shouldCloseTabViewItem:item]){
@@ -2028,7 +2005,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
         [aCoder encodeObject:_addTabButton forKey:@"PSMaddTabButton"];
         [aCoder encodeObject:style forKey:@"PSMstyle"];
         [aCoder encodeInt:_orientation forKey:@"PSMorientation"];
-        [aCoder encodeBool:_canCloseOnlyTab forKey:@"PSMcanCloseOnlyTab"];
         [aCoder encodeBool:_disableTabClose forKey:@"PSMdisableTabClose"];
         [aCoder encodeBool:_hideForSingleTab forKey:@"PSMhideForSingleTab"];
         [aCoder encodeBool:_allowsBackgroundTabClosing forKey:@"PSMallowsBackgroundTabClosing"];
@@ -2064,7 +2040,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
             _addTabButton = [[aDecoder decodeObjectForKey:@"PSMaddTabButton"] retain];
             style = [[aDecoder decodeObjectForKey:@"PSMstyle"] retain];
             _orientation = [aDecoder decodeIntForKey:@"PSMorientation"];
-            _canCloseOnlyTab = [aDecoder decodeBoolForKey:@"PSMcanCloseOnlyTab"];
             _disableTabClose = [aDecoder decodeBoolForKey:@"PSMdisableTabClose"];
             _hideForSingleTab = [aDecoder decodeBoolForKey:@"PSMhideForSingleTab"];
             _allowsBackgroundTabClosing = [aDecoder decodeBoolForKey:@"PSMallowsBackgroundTabClosing"];

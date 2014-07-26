@@ -33,7 +33,6 @@
     PSMProgressIndicator *_indicator;
     BOOL                _isInOverflowMenu;
     BOOL                _hasCloseButton;
-    BOOL                _isCloseButtonSuppressed;
     BOOL                _hasIcon;
     int                 _count;
 
@@ -76,8 +75,6 @@
 - (void)setCloseButtonOver:(BOOL)value;
 - (BOOL)hasCloseButton;
 - (void)setHasCloseButton:(BOOL)set;
-- (void)setCloseButtonSuppressed:(BOOL)suppress;
-- (BOOL)isCloseButtonSuppressed;
 - (BOOL)hasIcon;
 - (void)setHasIcon:(BOOL)value;
 - (int)count;
