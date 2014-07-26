@@ -79,7 +79,9 @@ static const CGFloat kMargin = 4;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
-        [tableView_ setUsesAlternatingRowBackgroundColors:YES];
+        NSSize spacing = tableView_.intercellSpacing;
+        spacing.height += 5;
+        tableView_.intercellSpacing = spacing;
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
@@ -183,10 +185,14 @@ static const CGFloat kMargin = 4;
                                      searchFieldFrame.size.height + kMargin,
                                      frame.size.width,
                                      frame.size.height - 2 * kMargin)];
-    
+
     // Table view
     NSSize contentSize = [scrollView_ contentSize];
-    [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+    NSTableColumn *column = tableView_.tableColumns[0];
+    column.minWidth = contentSize.width;
+    column.maxWidth = contentSize.width;
+    [tableView_ sizeToFit];
+    [tableView_ reloadData];
 }
 
 - (BOOL)isFlipped {
@@ -207,7 +213,9 @@ static const CGFloat kMargin = 4;
 - (NSString *)labelForCapturedOutput:(CapturedOutput *)capturedOutput {
     NSString *label = capturedOutput.line;
     if (capturedOutput.state) {
-        label = [@"✓ " stringByAppendingString:label];
+        label = [@"✔ " stringByAppendingString:label];
+    } else {
+        label = [@"🔹 " stringByAppendingString:label];
     }
     return label;
 }
@@ -287,7 +295,7 @@ static const CGFloat kMargin = 4;
         CapturedOutput *capturedOutput = filteredEntries_[index];
         capturedOutput.state = !capturedOutput.state;
     }
-    [self updateCapturedOutput];
+    [tableView_ reloadData];
 }
 
 #pragma mark - NSMenuDelegate

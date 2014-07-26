@@ -19,6 +19,7 @@
 @synthesize startDate = _startDate;
 @synthesize endDate = _endDate;
 @synthesize capturedOutput = _capturedOutput;
+@synthesize delegate;
 
 - (void)dealloc {
     [_command release];
@@ -34,6 +35,9 @@
 }
 
 - (void)setCommand:(NSString *)command {
+    if (!_command) {
+        [self.delegate markDidBecomeCommandMark:self];
+    }
     [_command autorelease];
     _command = [command copy];
     self.startDate = [NSDate date];

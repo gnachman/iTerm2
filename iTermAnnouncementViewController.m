@@ -51,6 +51,7 @@
 - (void)dismiss {
     if (!_dismissing) {
         _dismissing = YES;
+        [(iTermAnnouncementView *)self.view willDismiss];
         self.completion(-2);
         [_delegate announcementWillDismiss:self];
     }

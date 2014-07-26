@@ -91,24 +91,27 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     [aSession retain];
     void (^completion)(int selection) = ^(int selection) {
         switch (selection) {
+            case -2:
+                [aSession release];
+                break;
+
             case 0:
                 [self showCaptureOutputToolInSession:aSession];
                 break;
-                
+
             case 1:
                 [[NSUserDefaults standardUserDefaults] setBool:YES
                                                         forKey:kSuppressCaptureOutputToolNotVisibleWarning];
                 break;
         }
-        [aSession release];
     };
     iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcemenWithTitle:theTitle
-                                                    style:kiTermAnnouncementViewStyleWarning
-                                              withActions:@[ @"Show It", @"Silence Warning" ]
-                                               completion:completion];
+        [iTermAnnouncementViewController announcemenWithTitle:theTitle
+                                                        style:kiTermAnnouncementViewStyleWarning
+                                                  withActions:@[ @"Show It", @"Silence Warning" ]
+                                                   completion:completion];
     [aSession queueAnnouncement:announcement
-                     identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
+                     identifier:kSuppressCaptureOutputToolNotVisibleWarning];
 }
 
 - (void)showShellIntegrationRequiredAnnouncementInSession:(PTYSession *)aSession {
@@ -116,16 +119,19 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     [aSession retain];
     void (^completion)(int selection) = ^(int selection) {
         switch (selection) {
+            case -2:
+                [aSession release];
+                break;
+
             case 0:
                 [aSession tryToRunShellIntegrationInstaller];
                 break;
-                
+
             case 1:
                 [[NSUserDefaults standardUserDefaults] setBool:YES
                                                         forKey:kSuppressCaptureOutputRequiresShellIntegrationWarning];
                 break;
         }
-        [aSession release];
     };
     iTermAnnouncementViewController *announcement =
         [iTermAnnouncementViewController announcemenWithTitle:theTitle

@@ -22,4 +22,8 @@ typedef enum {
 
 - (void)sizeToFit;
 
+// We have a block which causes a retain cycle; call this before releasing the
+// view controller to break the cycle.
+- (void)willDismiss;
+
 @end
