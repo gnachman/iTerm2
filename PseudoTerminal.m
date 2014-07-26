@@ -3356,8 +3356,8 @@ NSString *sessionsKey = @"sessions";
             [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
         } else {
-              [[self window] setBackgroundColor:nil];
-              [background_ setColor:normalBackgroundColor];
+            [[self window] setBackgroundColor:nil];
+            [background_ setColor:normalBackgroundColor];
         }
     }
 }

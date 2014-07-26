@@ -31,6 +31,7 @@
 #import "iTermController.h"
 #import "NSDateFormatterExtras.h"
 #import "PreferencePanel.h"
+#import "iTermApplicationDelegate.h"
 #define PBHKEY_ENTRIES @"Entries"
 #define PBHKEY_VALUE @"Value"
 #define PBHKEY_TIMESTAMP @"Timestamp"
@@ -149,7 +150,9 @@
 - (void)_writeHistoryToDisk
 {
     if ([[PreferencePanel sharedInstance] savePasteHistory]) {
+        DLog(@"writeHistoryToDisk: Begin writing to %@", path_);
         [NSKeyedArchiver archiveRootObject:[self _entriesToDict] toFile:path_];
+        DLog(@"writeHistoryToDisk: Done writing");
     }
 }
 
@@ -161,16 +164,21 @@
 
 - (void)save:(NSString*)value
 {
+    DLog(@"PasteboardHistory save: starting");
     value = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if (![value length]) {
+        DLog(@"PasteboardHistory save: returning because value is empty");
         return;
     }
 
     // Remove existing duplicate value.
+    DLog(@"PasteboardHistory save: searching for duplicate value");
     for (int i = 0; i < [entries_ count]; ++i) {
         PasteboardEntry* entry = [entries_ objectAtIndex:i];
         if ([[entry mainValue] isEqualToString:value]) {
+            DLog(@"PasteboardHistory save: removing a dup");
             [entries_ removeObjectAtIndex:i];
+            DLog(@"PasteboardHistory save: removed.");
             break;
         }
     }
@@ -179,25 +187,38 @@
     // pressing tab in the findbar from filling the history with various
     // versions of the same thing.
     PasteboardEntry* lastEntry;
+    DLog(@"PasteboardHistory save: checking for prefix");
     if ([entries_ count] > 0) {
+        DLog(@"PasteboardHistory save: there are entries. Getting last entry");
         lastEntry = [entries_ objectAtIndex:[entries_ count] - 1];
+        DLog(@"PasteboardHistory save: Got last entry");
         if ([value hasPrefix:[lastEntry mainValue]]) {
+            DLog(@"PasteboardHistory save: Found prefixed value, removing it");
             [entries_ removeObjectAtIndex:[entries_ count] - 1];
+            DLog(@"PasteboardHistory save: removed prefixed value");
         }
     }
 
     // Append this value.
+    DLog(@"PasteboardHistory save: creating a PasteboardEntry");
     PasteboardEntry* entry = [PasteboardEntry entryWithString:value score:[[NSDate date] timeIntervalSince1970]];
+    DLog(@"PasteboardHistory save: set timestamp");
     entry->timestamp = [[NSDate alloc] init];
+    DLog(@"PasteboardHistory save: add to array");
     [entries_ addObject:entry];
+    DLog(@"PasteboardHistory save: checking for too many entries beyond %d", maxEntries_);
     if ([entries_ count] > maxEntries_) {
+        DLog(@"PasteboardHistory save: remove first entry");
         [entries_ removeObjectAtIndex:0];
     }
 
+    DLog(@"PasteboardHistory save: writing to disk");
     [self _writeHistoryToDisk];
+    DLog(@"PasteboardHistory save: done writing; post notification");
 
     [[NSNotificationCenter defaultCenter] postNotificationName:kPasteboardHistoryDidChange
                                                         object:self];
+    DLog(@"PasteboardHistory save: notification posted");
 }
 
 @end
@@ -228,7 +249,9 @@
 
 - (void)pasteboardHistoryDidChange:(id)sender
 {
+    DLog(@"PasteboardHistory: call refresh");
     [self refresh];
+    DLog(@"PasteboardHistory: returned from refresh");
 }
 
 - (void)copyFromHistory
@@ -241,8 +264,11 @@
 
 - (void)refresh
 {
+    DLog(@"PasteboardHistory refresh: copyFromhistory");
     [self copyFromHistory];
+    DLog(@"PasteboardHistory refresh: reloadData");
     [self reloadData:YES];
+    DLog(@"PasteboardHistory refresh: returning");
 }
 
 - (void)onOpen

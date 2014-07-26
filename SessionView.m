@@ -37,7 +37,6 @@
 #import "iTermApplicationDelegate.h"  // For DLog
 #import "FutureMethods.h"
 
-static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
 static const double kTitleHeight = 22;
 

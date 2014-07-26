@@ -4239,18 +4239,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)copy:(id)sender
 {
+    DLog(@"copy: invoked");
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    DLog(@"copy: Got general pasteboard from NSPasteboard");
     NSString *copyString;
 
     DLog(@"-[PTYTextView copy:] called");
+    DLog(@"copy: about to ask for selected text");
     copyString = [self selectedText];
-    DLog(@"Have selected text of length %d. startX=%d, startY=%d, endX=%d, endY=%d", (int)[copyString length], startX, startY, endX, endY);
+    DLog(@"copy: Have selected text of length %d. startX=%d, startY=%d, endX=%d, endY=%d", (int)[copyString length], startX, startY, endX, endY);
     if (copyString) {
+        DLog(@"copy: calling declare types");
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
+        DLog(@"copy: calling setString");
         [pboard setString:copyString forType:NSStringPboardType];
     }
 
+    DLog(@"copy: saving in pasteboard history");
     [[PasteboardHistory sharedInstance] save:copyString];
+    DLog(@"copy: returning");
 }
 
 - (void)paste:(id)sender
@@ -7669,7 +7676,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return YES;
 }
 
-// Any sequence of words separated by spaces or tabs could be a filename. Search the neighborhood
+// Any sequence of words  separated by spaces or tabs could be a filename. Search the neighborhood
 // of words for a valid filename. For example, beforeString could be "blah blah ~/Library/Appli" and
 // afterString could be "cation Support/Screen Sharing foo bar baz". This searches outward from
 // the point between beforeString and afterString to find a valid path, and would return
