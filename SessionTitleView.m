@@ -137,7 +137,12 @@ static const CGFloat kButtonSize = 17;
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-    [[self dimmedBackgroundColor] set];
+    NSColor *tabColor = delegate_.tabColor;
+    if (tabColor) {
+        [[self dimmedColor:tabColor] set];
+    } else {
+        [[self dimmedBackgroundColor] set];
+    }
     NSRectFill(dirtyRect);
     [[NSColor blackColor] set];
 

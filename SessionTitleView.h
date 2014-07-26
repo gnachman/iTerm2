@@ -10,6 +10,7 @@
 
 @protocol SessionTitleViewDelegate
 
+- (NSColor *)tabColor;
 - (NSMenu *)menu;
 - (void)close;
 - (void)beginDrag;

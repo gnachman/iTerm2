@@ -368,10 +368,6 @@
                                           withTabColor:(NSColor *)tabColor {
     CGFloat angle = horizontal ? 90 : 0;
     [[self backgroundGradientSelected:selected] drawInRect:cellFrame angle:angle];
-    if (tabColor) {
-        [[tabColor colorWithAlphaComponent:0.5] set];
-        NSRectFill(cellFrame);
-    }
 
     // Left line
     if (horizontal) {
@@ -405,6 +401,10 @@
     }
     [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
     
+    if (tabColor) {
+        [[tabColor colorWithAlphaComponent:0.5] set];
+        NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
+    }
 }
 
 - (void)drawTabCell:(PSMTabBarCell *)cell {

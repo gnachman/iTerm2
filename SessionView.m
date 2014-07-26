@@ -665,6 +665,10 @@ static NSDate* lastResizeDate_;
 
 #pragma mark SessionTitleViewDelegate
 
+- (NSColor *)tabColor {
+    return session_.tabColor;
+}
+
 - (NSMenu *)menu
 {
     return [[session_ textview] menuForEvent:nil];
