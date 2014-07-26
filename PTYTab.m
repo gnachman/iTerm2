@@ -30,7 +30,6 @@ static void SetWithGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
 // States
-static const NSUInteger kPTYTabNormalState = 0;
 static const NSUInteger kPTYTabBellState = (1 << 0);
 static const NSUInteger kPTYTabIdleState = (1 << 1);
 static const NSUInteger kPTYTabNewOutputState = (1 << 2);
@@ -49,6 +48,7 @@ static const NSUInteger kPTYTabDeadState = (1 << 3);
 // tab icons
 static NSImage *warningImage;  // bell
 static NSImage *gNewOutputImage;
+static NSImage *gIdleImage;
 static NSImage *gDeadImage;
 
 // Constants for saved window arrangement keys.
@@ -76,6 +76,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 + (void)initialize {
     warningImage = [[NSImage imageNamed:@"important"] retain];
     gNewOutputImage = [[NSImage imageNamed:@"NewOutput"] retain];
+    gIdleImage = [[NSImage imageNamed:@"Idle"] retain];
     gDeadImage = [[NSImage imageNamed:@"dead"] retain];
 }
 
@@ -249,11 +250,19 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 {
     PtyLog(@"setBell:%d", (int)flag);
     if (flag) {
-        _state |= kPTYTabBellState;
+        [self setState:kPTYTabBellState reset:0];
     } else {
-        _state &= ~kPTYTabBellState;
+        [self setState:0 reset:kPTYTabBellState];
     }
-    [self updateIcon];
+}
+
+- (void)setState:(NSUInteger)flagsToSet reset:(NSUInteger)flagsToReset {
+    NSUInteger before = _state;
+    _state |= flagsToSet;
+    _state &= ~flagsToReset;
+    if (_state != before) {
+        [self updateIcon];
+    }
 }
 
 - (void)updateIcon {
@@ -261,8 +270,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [self setIcon:gDeadImage];
     } else if (_state & kPTYTabBellState) {
         [self setIcon:warningImage];
-    } else if (_state & (kPTYTabIdleState | kPTYTabNewOutputState)) {
+    } else if (_state & (kPTYTabNewOutputState)) {
         [self setIcon:gNewOutputImage];
+    } else if (_state & kPTYTabIdleState) {
+        [self setIcon:gIdleImage];
     } else {
         [self setIcon:nil];
     }
@@ -755,7 +766,7 @@ static NSString* FormatRect(NSRect r) {
         // Session has terminated.
         [self setLabelAttributesForDeadSession];
     } else {
-        if (now.tv_sec > [[self activeSession] lastOutput].tv_sec + 2) {
+        if (now.tv_sec > [[self activeSession] lastOutput].tv_sec + [iTermAdvancedSettingsModel idleTimeSeconds]) {
             // At least two seconds have passed since the last call.
             [self setLabelAttributesForIdleTabAtTime:now];
         } else {
@@ -4064,8 +4075,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 
 - (void)setLabelAttributesForDeadSession
 {
-    _state |= kPTYTabDeadState;
-    [self updateIcon];
+    [self setState:kPTYTabDeadState reset:0];
 
     if ([self isProcessing]) {
         [self setIsProcessing:NO];
@@ -4107,14 +4117,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                 session.havePostedNewOutputNotification = NO;
             }
             if (isBackgroundTab) {
-                _state |= kPTYTabIdleState;
-                _state &= ~kPTYTabNewOutputState;
+                [self setState:kPTYTabIdleState reset:kPTYTabNewOutputState];
             }
         } else {
             // normal state
             if (isBackgroundTab) {
-                _state = kPTYTabNormalState;
-                [self updateIcon];
+                [self setState:0 reset:(kPTYTabIdleState | kPTYTabNewOutputState)];
             }
         }
     }
@@ -4155,8 +4163,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             [session setNewOutput:NO];
         }
     } else if (isBackgroundTab) {
-        _state |= kPTYTabNewOutputState;
-        [self updateIcon];
+        [self setState:kPTYTabNewOutputState reset:kPTYTabIdleState];
     }
 }
 
@@ -4180,8 +4187,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
     if (shouldResetLabel && [self isForegroundTab]) {
         [self setIsProcessing:NO];
-        _state = kPTYTabNormalState;
-        [self updateIcon];
+        [self setState:0 reset:(kPTYTabBellState |
+                                kPTYTabIdleState |
+                                kPTYTabNewOutputState |
+                                kPTYTabDeadState)];
     }
 }
 

@@ -76,5 +76,6 @@
 + (BOOL)noSyncSuppressCaptureOutputToolNotVisibleWarning;
 
 + (BOOL)disableAppNap;
++ (double)idleTimeSeconds;
 
 @end
