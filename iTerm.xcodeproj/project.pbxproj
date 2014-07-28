@@ -917,6 +917,9 @@
 		A6B70FC819837A2B007A4284 /* Idle.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC519837A2B007A4284 /* Idle.png */; };
 		A6B70FC919837A2B007A4284 /* Idle@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC619837A2B007A4284 /* Idle@2x.png */; };
 		A6B70FCA19837A2B007A4284 /* Idle@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC619837A2B007A4284 /* Idle@2x.png */; };
+		A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */; };
+		A6B70FCE1986FB39007A4284 /* PTYSession+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */; };
+		A6B70FCF1986FB39007A4284 /* PTYSession+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */; };
 		A6C4E8E01846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
 		A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
@@ -1639,6 +1642,8 @@
 		A6B70FC019830F0D007A4284 /* NewOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutput@2x.png"; path = "images/NewOutput@2x.png"; sourceTree = "<group>"; };
 		A6B70FC519837A2B007A4284 /* Idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Idle.png; path = images/Idle.png; sourceTree = "<group>"; };
 		A6B70FC619837A2B007A4284 /* Idle@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Idle@2x.png"; path = "images/Idle@2x.png"; sourceTree = "<group>"; };
+		A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYSession+Scripting.h"; sourceTree = "<group>"; };
+		A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYSession+Scripting.m"; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
@@ -1990,9 +1995,11 @@
 				A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */,
 				A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */,
 				A68A30EC186D150A007F550F /* NSObject+iTerm.h */,
+				1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */,
 				A69B4575195F668500F5444D /* NSScreen+iTerm.h */,
 				1D407A2914BABE8700BD5035 /* NSStringITerm.h */,
 				A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */,
+				A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */,
 				1D81F0BE183C3C2D00910838 /* NSView+RecursiveDescription.h */,
 				1DABA03119253FEA00A228D8 /* PasswordTrigger.h */,
 				1D7C187F1275D22900461E55 /* PasteboardHistory.h */,
@@ -2033,6 +2040,7 @@
 				A63F4098183B3AA7003A6A6D /* PTYNoteView.h */,
 				A63F4093183B398C003A6A6D /* PTYNoteViewController.h */,
 				1D407A2C14BABE8700BD5035 /* PTYScrollView.h */,
+				A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */,
 				1D407A2D14BABE8700BD5035 /* PTYSession.h */,
 				1DD6707514934ADE008E4361 /* PTYSplitView.h */,
 				1D2E802C129DA45A00F3D71E /* PTYTab.h */,
@@ -2513,15 +2521,14 @@
 				A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */,
 				A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */,
 				A68A30CE186D1414007F550F /* NSObject+iTerm.m */,
-				1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */,
 				1DF8006E18F34CAB00722B35 /* NSPopUpButton+iTerm.m */,
 				A69B4576195F668500F5444D /* NSScreen+iTerm.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */,
-				A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */,
 				A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */,
 				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 				A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */,
+				A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -3081,6 +3088,7 @@
 				A63F409A183B3AA7003A6A6D /* PTYNoteView.h in Headers */,
 				1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */,
 				1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */,
+				A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */,
 				1D29732714082676004C5DBE /* MovePaneController.h in Headers */,
 				1D891E43190724DB0053C4BB /* MarkTrigger.h in Headers */,
 				1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */,
@@ -3539,6 +3547,7 @@
 				1D9A552D180FA69900B42CE9 /* SearchResult.m in Sources */,
 				1DF8FEF518F3217100722B35 /* KeysPreferencesViewController.m in Sources */,
 				A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
+				A6B70FCF1986FB39007A4284 /* PTYSession+Scripting.m in Sources */,
 				1D9A55AB180FA8B700B42CE9 /* PSMProgressIndicator.m in Sources */,
 				A6A2699E190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */,
@@ -3970,6 +3979,7 @@
 				A6E713A418F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m in Sources */,
 				1D67ABAC14285D6000D5DA4E /* NSFileManager+iTerm.m in Sources */,
 				1DFA9D7118F3A30F008ADC98 /* PointerPreferencesViewController.m in Sources */,
+				A6B70FCE1986FB39007A4284 /* PTYSession+Scripting.m in Sources */,
 				1D8B8A151806038F00C2DC25 /* VT100Grid.m in Sources */,
 				1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */,
 				1D9DCBFF142D7BA60016228A /* Trigger.m in Sources */,

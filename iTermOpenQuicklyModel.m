@@ -1,9 +1,10 @@
 #import "iTermOpenQuicklyModel.h"
-#import "PseudoTerminal.h"
-#import "VT100RemoteHost.h"
 #import "iTermController.h"
 #import "iTermLogoGenerator.h"
 #import "iTermOpenQuicklyItem.h"
+#import "PseudoTerminal.h"
+#import "PTYSession+Scripting.h"
+#import "VT100RemoteHost.h"
 
 // It's nice for each of these to be unique so in degenerate cases (e.g., empty query) the detail
 // uses the same feature for all items.

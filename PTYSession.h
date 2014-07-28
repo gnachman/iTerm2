@@ -55,6 +55,12 @@ typedef enum {
     kSplitSelectionModeCancel
 } SplitSelectionMode;
 
+typedef enum {
+    TMUX_NONE,
+    TMUX_GATEWAY,  // Receiving tmux protocol messages
+    TMUX_CLIENT  // Session mirrors a tmux virtual window
+} PTYSessionTmuxMode;
+
 @class PTYTab;
 @class SessionView;
 @interface PTYSession : NSResponder <
@@ -240,31 +246,6 @@ typedef enum {
 @property(nonatomic, readonly) NSArray *autocompleteSuggestionsForCurrentCommand;
 @property(nonatomic, readonly) NSString *currentCommand;
 
-// Key-value coding compliance for Applescript. It's generally better to go through the |colorMap|.
-@property(nonatomic, retain) NSColor *backgroundColor;
-@property(nonatomic, retain) NSColor *boldColor;
-@property(nonatomic, retain) NSColor *cursorColor;
-@property(nonatomic, retain) NSColor *cursorTextColor;
-@property(nonatomic, retain) NSColor *foregroundColor;
-@property(nonatomic, retain) NSColor *selectedTextColor;
-@property(nonatomic, retain) NSColor *selectionColor;
-@property(nonatomic, retain) NSColor *ansiBlackColor;
-@property(nonatomic, retain) NSColor *ansiRedColor;
-@property(nonatomic, retain) NSColor *ansiGreenColor;
-@property(nonatomic, retain) NSColor *ansiYellowColor;
-@property(nonatomic, retain) NSColor *ansiBlueColor;
-@property(nonatomic, retain) NSColor *ansiMagentaColor;
-@property(nonatomic, retain) NSColor *ansiCyanColor;
-@property(nonatomic, retain) NSColor *ansiWhiteColor;
-@property(nonatomic, retain) NSColor *ansiBrightBlackColor;
-@property(nonatomic, retain) NSColor *ansiBrightRedColor;
-@property(nonatomic, retain) NSColor *ansiBrightGreenColor;
-@property(nonatomic, retain) NSColor *ansiBrightYellowColor;
-@property(nonatomic, retain) NSColor *ansiBrightBlueColor;
-@property(nonatomic, retain) NSColor *ansiBrightMagentaColor;
-@property(nonatomic, retain) NSColor *ansiBrightCyanColor;
-@property(nonatomic, retain) NSColor *ansiBrightWhiteColor;
-
 // Session is not in foreground and notifications are enabled on the screen.
 @property(nonatomic, readonly) BOOL shouldPostGrowlNotification;
 
@@ -287,6 +268,8 @@ typedef enum {
 // Session-defined and user-defined variables. Session-defined vars start with "session." and
 // user-defined variables start with "user.".
 @property(nonatomic, readonly) NSMutableDictionary *variables;
+
+@property(atomic, readonly) PTYSessionTmuxMode tmuxMode;
 
 #pragma mark - methods
 
@@ -487,15 +470,9 @@ typedef enum {
 
 - (void)tryToRunShellIntegrationInstaller;
 
-#pragma mark - Scripting Support
+#pragma mark - Private for use by Scripting category
 
-// Object specifier
-- (NSScriptObjectSpecifier *)objectSpecifier;
-- (void)handleExecScriptCommand:(NSScriptCommand *)aCommand;
-- (void)handleTerminateScriptCommand:(NSScriptCommand *)command;
-- (void)handleSelectScriptCommand:(NSScriptCommand *)command;
-- (void)handleWriteScriptCommand:(NSScriptCommand *)command;
-- (void)handleClearScriptCommand:(NSScriptCommand *)command;
+- (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;
 
 @end
 
