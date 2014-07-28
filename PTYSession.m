@@ -6200,6 +6200,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self setSessionSpecificProfileValues:@{ KEY_SELECTION_COLOR: [color dictionaryValue] }];
 }
 
+- (NSString *)contents {
+    return [_textview content];
+}
+
 #pragma mark ANSI Colors
 
 - (NSColor *)ansiBlackColor {
