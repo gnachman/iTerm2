@@ -59,7 +59,7 @@ static const double kUserDefinedVariableMultiplier = 1;
                             attributedName:attributedName];
         if (item.score > 0) {
             item.detail = [self detailForSession:session features:features];
-            if (attributedName) {
+            if (attributedName.length) {
                 item.title = attributedName;
             } else {
                 item.title = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
