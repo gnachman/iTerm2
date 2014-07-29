@@ -32,6 +32,8 @@
     double hitMultiplier_;
 }
 
+@property(nonatomic, readonly) NSString *truncatedValue;
+
 + (PopupEntry*)entryWithString:(NSString*)s score:(double)score;
 - (void)setMainValue:(NSString*)s;
 - (void)setScore:(double)score;
