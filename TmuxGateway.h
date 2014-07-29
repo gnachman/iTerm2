@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "WindowControllerInterface.h"
 
 // Constant values for flags:
 // Command may fail with an error and selector is still run but with nil
@@ -40,6 +41,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (int)tmuxNumHistoryLinesInBookmark;
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging;
 - (void)tmuxPrintLine:(NSString *)line;
+- (NSWindowController<iTermWindowController> *)tmuxGatewayWindow;
 
 @end
 
@@ -68,6 +70,7 @@ typedef enum {
 
 // Should all protocol-level input be logged to the gateway's session?
 @property(nonatomic, assign) BOOL tmuxLogging;
+@property(nonatomic, readonly) NSWindowController<iTermWindowController> *window;
 
 - (id)initWithDelegate:(NSObject<TmuxGatewayDelegate> *)delegate;
 

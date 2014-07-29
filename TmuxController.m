@@ -227,7 +227,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     BOOL haveHidden = NO;
     NSNumber *newWindowAffinity = nil;
     BOOL newWindowsInTabs =
-        [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == OPEN_TMUX_WINDOWS_IN_TABS;
+        [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == kOpenTmuxWindowsAsNativeTabsInNewWindow;
     for (NSArray *record in doc.records) {
         int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {

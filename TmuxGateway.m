@@ -607,4 +607,8 @@ error:
     [delegate_ tmuxWriteData:[cmd dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
+- (NSWindowController<iTermWindowController> *)window {
+    return [delegate_ tmuxGatewayWindow];
+}
+
 @end

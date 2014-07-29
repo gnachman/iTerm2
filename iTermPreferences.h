@@ -11,8 +11,11 @@
 #import "PSMTabBarControl.h"
 
 // Values for kPreferenceKeyOpenTmuxWindowsIn (corresponds to tags in control).
-#define OPEN_TMUX_WINDOWS_IN_WINDOWS 0
-#define OPEN_TMUX_WINDOWS_IN_TABS 1
+typedef NS_ENUM(NSInteger, iTermOpenTmuxWindowsMode) {
+    kOpenTmuxWindowsAsNativeWindows = 0,
+    kOpenTmuxWindowsAsNativeTabsInNewWindow = 1,
+    kOpenTmuxWindowsAsNativeTabsInExistingWindow = 2
+};
 
 // Values for kPreferenceKeyTabPosition (corresponds to tags in control).
 #define TAB_POSITION_TOP PSMTab_TopTab

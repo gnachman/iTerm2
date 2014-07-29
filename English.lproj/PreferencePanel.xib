@@ -4302,25 +4302,17 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="5629"/>
                 </imageView>
-                <textField verticalHuggingPriority="750" id="6335">
-                    <rect key="frame" x="356" y="139" width="307" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="When attaching, open unrecognized windows in" id="6336">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <popUpButton verticalHuggingPriority="750" id="6337">
-                    <rect key="frame" x="664" y="133" width="89" height="26"/>
+                    <rect key="frame" x="356" y="130" width="361" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Tabs" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="6341" id="6338">
+                    <popUpButtonCell key="cell" type="push" title="Open tmux windows as native tabs in a new window" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="6341" id="6338">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="6339">
                             <items>
-                                <menuItem title="Windows" id="6340"/>
-                                <menuItem title="Tabs" state="on" tag="1" id="6341"/>
+                                <menuItem title="Open tmux windows as native windows" id="6340"/>
+                                <menuItem title="Open tmux windows as native tabs in a new window" state="on" tag="1" id="6341"/>
+                                <menuItem title="Open tmux windows as tabs in existing window" tag="2" id="rh8-sm-6ap"/>
                             </items>
                         </menu>
                     </popUpButtonCell>

@@ -3634,6 +3634,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [_screen crlf];
 }
 
+- (NSWindowController<iTermWindowController> *)tmuxGatewayWindow {
+    return self.tab.realParentWindow;
+}
+
 - (void)tmuxHostDisconnected
 {
     [_tmuxController detach];

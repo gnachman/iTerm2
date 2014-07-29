@@ -8,6 +8,7 @@
 #import "TmuxWindowOpener.h"
 #import "DebugLogging.h"
 #import "iTermController.h"
+#import "iTermPreferences.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "ScreenChar.h"
@@ -301,8 +302,16 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
             DLog(@"Using window of tabToUpdate: %@", term);
         }
         if (!term) {
-            term = [[iTermController sharedInstance] openWindow];
-            DLog(@"Opened a new window %@", term);
+            BOOL useOriginalWindow =
+                [iTermPreferences intForKey:kPreferenceKeyOpenTmuxWindowsIn] == kOpenTmuxWindowsAsNativeTabsInExistingWindow;
+            if (useOriginalWindow) {
+                term = [gateway_ window];
+                DLog(@"Use original window %@", term);
+            }
+            if (!term) {
+                term = [[iTermController sharedInstance] openWindow];
+                DLog(@"Opened a new window %@", term);
+            }
         }
         NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
         if (!parseTree) {
