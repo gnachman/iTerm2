@@ -20,7 +20,13 @@ void ParseControl(unsigned char *datap,
                   int *rmlen,
                   CVector *incidentals,
                   VT100Token *token,
-                  NSStringEncoding encoding) {
+                  NSStringEncoding encoding,
+                  int tmuxCodeWrapCount) {
+    if (tmuxCodeWrapCount && datalen >= 2 && datap[0] == ESC && datap[1] == '\\') {
+        token->type = DCS_END_TMUX_CODE_WRAP;
+        *rmlen = 2;
+        return;
+    }
     if (isCSI(datap, datalen)) {
         [VT100CSIParser decodeBytes:datap
                              length:datalen

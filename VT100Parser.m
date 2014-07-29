@@ -20,6 +20,7 @@
     int _totalStreamLength;
     int _streamOffset;
     BOOL _saveData;
+    int _tmuxCodeWrap;  // How many levels deep we are in DCS tmux; ESC <escape code> ST. Incremented by DCS tmux ESC and decremented by ST.
 }
 
 - (id)init {
@@ -79,7 +80,8 @@
                          &rmlen,
                          vector,
                          token,
-                         self.encoding);
+                         self.encoding,
+                         _tmuxCodeWrap);
             if (token->type == XTERMCC_SET_KVP) {
                 if ([token.kvpKey isEqualToString:@"CopyToClipboard"]) {
                     _saveData = YES;
@@ -88,6 +90,10 @@
                 }
             } else if (token->type == DCS_TMUX && !_tmuxParser) {
                 self.tmuxParser = [[[VT100TmuxParser alloc] init] autorelease];
+            } else if (token->type == DCS_BEGIN_TMUX_CODE_WRAP) {
+                ++_tmuxCodeWrap;
+            } else if (token->type == DCS_END_TMUX_CODE_WRAP) {
+                _tmuxCodeWrap = MAX(0, _tmuxCodeWrap - 1);
             }
             position = datap;
         } else {

@@ -21,6 +21,7 @@ void ParseControl(unsigned char *datap,
                   int *rmlen,
                   CVector *incidentals,
                   VT100Token *token,
-                  NSStringEncoding encoding);
+                  NSStringEncoding encoding,
+                  int tmuxCodeWrapCount);
 
 @end

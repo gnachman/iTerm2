@@ -1555,6 +1555,11 @@ static const int kMaxScreenRows = 4096;
             [self executeXtermSetRgb:token];
             break;
 
+        case DCS_BEGIN_TMUX_CODE_WRAP:
+        case DCS_END_TMUX_CODE_WRAP:
+            // These are no-ops for us. They are expected to occur in tmux integration.
+            break;
+
         case DCS_REQUEST_TERMCAP_TERMINFO: {
             static NSString *const kFormat = @"%@=%@";
             BOOL ok = NO;

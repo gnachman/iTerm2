@@ -163,6 +163,12 @@ typedef enum {
     // iTerm extension
     ITERM_GROWL,
     DCS_TMUX,  // Enter tmux mode
+
+    // Start wrapping an escape code for tmux. Enters a mode that ends with an ST that's not part
+    // of another code.
+    DCS_BEGIN_TMUX_CODE_WRAP,
+    DCS_END_TMUX_CODE_WRAP,  // End wrapping an escape code for tmux.
+
     TMUX_LINE,  // A line of input from tmux
     TMUX_EXIT,  // Exit tmux mode
 

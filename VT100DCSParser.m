@@ -59,6 +59,11 @@
         if (!strncmp((char *)datap, "1000p", 5)) {
             result->type = DCS_TMUX;
             *rmlen += 5;
+        } else if (datalen >= 6 &&
+                   !strncmp((char *)datap, "tmux;", 5) &&
+                   datap[5] == ESC) {
+            result->type = DCS_BEGIN_TMUX_CODE_WRAP;
+            *rmlen += 6;
         } else {
             result->type = VT100_NOTSUPPORT;
         }
