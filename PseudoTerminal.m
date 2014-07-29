@@ -169,7 +169,7 @@ NSString *sessionsKey = @"sessions";
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
-@interface PseudoTerminal ()
+@interface PseudoTerminal () <PasteboardHistoryWindowControllerDelegate>
 - (NSRect)traditionalFullScreenFrameForScreen:(NSScreen *)screen;
 - (void)_updateToolbeltParentage;
 - (CGFloat)fullscreenToolbeltWidth;
@@ -288,7 +288,6 @@ NSString *sessionsKey = @"sessions";
     [bottomBar retain];
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
-    pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
     autocompleteView = [[AutocompleteView alloc] init];
 
     NSScreen* screen;
@@ -3767,6 +3766,10 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)openPasteHistory:(id)sender
 {
+    if (!pbHistoryView) {
+        pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
+        pbHistoryView.delegate = self;
+    }
     [pbHistoryView popInSession:[self currentSession]];
 }
 
@@ -5807,6 +5810,14 @@ NSString *sessionsKey = @"sessions";
 - (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
 {
     return kValidModesForFontPanel;
+}
+
+#pragma mark - PasteboardHistoryWindowControllerDelegate
+
+- (void)pasteboarHistoryWindowDidClose {
+    [pbHistoryView shutdown];
+    [pbHistoryView autorelease];
+    pbHistoryView = nil;
 }
 
 @end

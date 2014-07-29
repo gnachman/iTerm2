@@ -349,6 +349,8 @@ DebugLog([NSString stringWithFormat:args]); \
     [unfilteredModel_ release];
     [substring_ release];
     [model_ release];
+    tableView_.delegate = nil;
+    tableView_.dataSource = nil;
     [tableView_ release];
     [session_ release];
     [super dealloc];
