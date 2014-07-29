@@ -425,7 +425,7 @@ DebugLog([NSString stringWithFormat:args]); \
     [model_ removeAllObjects];
     [unfilteredModel_ sortByScore];
     for (PopupEntry* s in unfilteredModel_) {
-        if ([self _word:[s mainValue] matchesFilter:substring_]) {
+        if ([self _word:[s truncatedValue] matchesFilter:substring_]) {
             [model_ addObject:s];
         }
     }
