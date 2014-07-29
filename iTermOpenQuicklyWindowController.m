@@ -209,16 +209,7 @@
     return [[iTermOpenQuicklyTableRowView alloc] init];
 }
 
-- (void)tableViewSelectionIsChanging:(NSNotification *)notification {
-    NSInteger row = [_table selectedRow];
-    if (row >= 0) {
-        iTermOpenQuicklyItem *item = _model.items[row];
-        item.view.textField.textColor = [self blackColor];
-        item.view.detailTextField.textColor = [self blackColor];
-    }
-}
-
-- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+- (void)updateTextColorForAllRows {
     NSInteger row = [_table selectedRow];
     // Fix up text color for all items
     for (int i = 0; i < _model.items.count; i++) {
@@ -231,6 +222,14 @@
             item.view.detailTextField.textColor = [self blackColor];
         }
     }
+}
+
+- (void)tableViewSelectionIsChanging:(NSNotification *)notification {
+    [self updateTextColorForAllRows];
+}
+
+- (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    [self updateTextColorForAllRows];
 }
 
 - (void)doubleClick:(id)sender {
