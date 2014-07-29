@@ -572,7 +572,7 @@ DebugLog([NSString stringWithFormat:args]); \
                                     nil];
 
     [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[entry prefix] attributes:lightAttributes] autorelease]];
-    NSString* value = [[entry mainValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    NSString* value = [[git truncatedValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
 
     NSString* temp = value;
     for (int i = 0; i < [substring_ length]; ++i) {
