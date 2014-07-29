@@ -65,7 +65,7 @@
 	<key>CFBundleHelpBookName</key>
 	<string>iTerm2 Help</string>
 	<key>CFBundleIconFile</key>
-	<string>iTerm.icns</string>
+	<string>iTerm2.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.googlecode.iterm2</string>
 	<key>CFBundleInfoDictionaryVersion</key>
