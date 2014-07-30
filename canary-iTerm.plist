@@ -17,7 +17,7 @@
 				<string>pl</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string>iTerm.icns</string>
+			<string>iTerm2.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>Terminal scripts</string>
 			<key>CFBundleTypeRole</key>
