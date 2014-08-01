@@ -223,105 +223,86 @@ static const int ambiguous_chars[] = {
                stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
 }
 
-- (void)breakDownCommandToPath:(NSString **)cmd cmdArgs:(NSArray **)path
-{
-    NSMutableArray *mutableCmdArgs;
-    char *cmdLine; // The temporary UTF-8 version of the command line
-    char *nextChar; // The character we will process next
-    char *argStart; // The start of the current argument we are processing
-    char *copyPos; // The position where we are currently writing characters
+- (NSArray *)componentsInShellCommand {
+    NSMutableArray *result = [NSMutableArray array];
+
     int inQuotes = 0; // Are we inside double quotes?
-    BOOL inWhitespace = NO;  // Last char was whitespace if true
+    BOOL escape = NO;  // Should this char be escaped?
+    NSMutableString *currentValue = [NSMutableString string];
+    BOOL valueStarted = NO;
+    BOOL firstCharacterNotQuotedOrEscaped = NO;
 
-    mutableCmdArgs = [[NSMutableArray alloc] init];
-
-    // The value returned by [self UTF8String] is automatically freed (when the
-    // autorelease context containing this is destroyed). We need to copy the
-    // string, as the tokenisation is easier when we can modify string we are
-    // working with.
-    cmdLine = strdup([self UTF8String]);
-    nextChar = cmdLine;
-    copyPos = cmdLine;
-    argStart = cmdLine;
-
-    if (!cmdLine) {
-        // We could not allocate enough memory for the cmdLine... bailing
-        *path = [[NSArray alloc] init];
-        [mutableCmdArgs release];
-        return;
-    }
-
-    char c;
-    while ((c = *nextChar++)) {
-        switch (c) {
-            case '\\':
-                inWhitespace = NO;
-                if (*nextChar == '\0') {
-                    // This is the last character, thus this is a malformed
-                    // command line, we will just leave the "\" character as a
-                    // literal.
-                }
-
-                // We need to copy the next character verbatim.
-                *copyPos++ = *nextChar++;
-                break;
-            case '\"':
-                inWhitespace = NO;
-                // Time to toggle the quotation mode
-                inQuotes = !inQuotes;
-                // Note: Since we don't copy to/increment copyPos, this
-                // character will be dropped from the output string.
-                break;
-            case ' ':
-            case '\t':
-            case '\n':
-                if (inQuotes) {
-                    // We need to copy the current character verbatim.
-                    *copyPos++ = c;
-                } else {
-                    if (!inWhitespace) {
-                        // Time to split the command
-                        *copyPos = '\0';
-                        [mutableCmdArgs addObject:[NSString stringWithUTF8String:argStart]];
-                        argStart = nextChar;
-                        copyPos = nextChar;
-                        inWhitespace = YES;
-                    } else {
-                        // Skip possible start of next arg when seeing Nth
-                        // consecutive whitespace for N > 1.
-                        ++argStart;
-                    }
-                }
-                break;
-            default:
-                // Just copy the current character.
-                // Note: This could be made more efficient for the 'normal
-                // case' where copyPos is not offset from the current place we
-                // are reading from. Since this function is called rarely, and
-                // it isn't that slow, we will just ignore the optimisation.
-                inWhitespace = NO;
-                *copyPos++ = c;
-                break;
+    for (NSInteger i = 0; i <= self.length; i++) {
+        unichar c;
+        if (i < self.length) {
+            c = [self characterAtIndex:i];
+            if (c == 0) {
+                // Pretty sure this can't happen, but better to be safe.
+                c = ' ';
+            }
+        } else {
+            // Signifies end-of-string.
+            c = 0;
         }
+
+        if (c == '\\' && !escape) {
+            escape = YES;
+            continue;
+        }
+
+        if (escape) {
+            valueStarted = YES;
+            escape = NO;
+            if (c == 'n') {
+                [currentValue appendString:@"\n"];
+            } else if (c == 'a') {
+                [currentValue appendFormat:@"%c", 7];
+            } else if (c == 't') {
+                [currentValue appendString:@"\t"];
+            } else if (c == 'r') {
+                [currentValue appendString:@"\r"];
+            } else {
+                [currentValue appendFormat:@"%C", c];
+            }
+            continue;
+        }
+
+        if (c == '"') {
+            inQuotes = !inQuotes;
+            valueStarted = YES;
+            continue;
+        }
+
+        if (c == 0) {
+            inQuotes = NO;
+        }
+
+        // Treat end-of-string like whitespace.
+        BOOL isWhitespace = (c == 0 || iswspace(c));
+
+        if (!inQuotes && isWhitespace) {
+            if (valueStarted) {
+                if (firstCharacterNotQuotedOrEscaped) {
+                    [result addObject:[currentValue stringByExpandingTildeInPath]];
+                } else {
+                    [result addObject:currentValue];
+                }
+                currentValue = [NSMutableString string];
+                firstCharacterNotQuotedOrEscaped = NO;
+                valueStarted = NO;
+            }
+            // If !valueStarted, this char is meaningless whitespace.
+            continue;
+        }
+
+        if (!valueStarted) {
+            firstCharacterNotQuotedOrEscaped = !inQuotes;
+        }
+        valueStarted = YES;
+        [currentValue appendFormat:@"%C", c];
     }
 
-    if (copyPos != argStart) {
-        // We have data that we have not copied into mutableCmdArgs.
-        *copyPos = '\0';
-        [mutableCmdArgs addObject:[NSString stringWithUTF8String: argStart]];
-    }
-
-    if ([mutableCmdArgs count] > 0) {
-        *cmd = [mutableCmdArgs objectAtIndex:0];
-        [mutableCmdArgs removeObjectAtIndex:0];
-    } else {
-        // This will only occur if the input string is empty.
-        // Note: The old code did nothing in this case, so neither will we.
-    }
-
-    free(cmdLine);
-    *path = [NSArray arrayWithArray:mutableCmdArgs];
-    [mutableCmdArgs release];
+    return result;
 }
 
 - (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s

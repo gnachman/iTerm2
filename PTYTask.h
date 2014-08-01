@@ -11,7 +11,9 @@ extern NSString *kCoprocessStatusChangeNotification;
 // Runs in a background thread. Should do as much work as possible in this
 // thread before kicking off a possibly async task in the main thread.
 - (void)threadedReadTask:(char *)buffer length:(int)length;
-- (void)brokenPipe;
+
+// Runs in the same background task as -threadedReadTask:length:.
+- (void)threadedTaskBrokenPipe;
 - (void)taskWasDeregistered;
 @end
 

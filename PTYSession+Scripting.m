@@ -49,7 +49,13 @@
     NSString *cmd;
     NSArray *arg;
 
-    [command breakDownCommandToPath:&cmd cmdArgs:&arg];
+    NSArray *components = [command componentsInShellCommand];
+    if (components.count > 0) {
+        cmd = components[0];
+        arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
+    } else {
+        arg = @[];
+    }
     [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8];
 
     return;

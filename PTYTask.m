@@ -448,9 +448,7 @@ static void HandleSigChld(int n)
 {
     brokenPipe_ = YES;
     [[TaskNotifier sharedInstance] deregisterTask:self];
-    [(NSObject *)self.delegate performSelectorOnMainThread:@selector(brokenPipe)
-                                                withObject:nil
-                                             waitUntilDone:YES];
+    [self.delegate threadedTaskBrokenPipe];
 }
 
 - (void)sendSignal:(int)signo

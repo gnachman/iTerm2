@@ -6864,7 +6864,13 @@ NSString *kSessionsKVCKey = @"sessions";
         // Get session parameters
         [self getSessionParameters:cmd withName:name];
 
-        [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
+        NSArray *components = [cmd componentsInShellCommand];
+        if (components.count > 0) {
+            cmd = components[0];
+            arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
+        } else {
+            arg = @[];
+        }
 
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
                                            forObjectType:objectType];
@@ -7146,8 +7152,8 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (id)addNewSession:(NSDictionary *)addressbookEntry
-           withURL:(NSString *)url
-     forObjectType:(iTermObjectType)objectType
+            withURL:(NSString *)url
+      forObjectType:(iTermObjectType)objectType
 {
     PtyLog(@"PseudoTerminal: -addNewSession");
     PTYSession *aSession;
@@ -7192,7 +7198,13 @@ NSString *kSessionsKVCKey = @"sessions";
         NSArray *arg;
         NSString *pwd;
         BOOL isUTF8;
-        [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
+        NSArray *components = [cmd componentsInShellCommand];
+        if (components.count > 0) {
+            cmd = components[0];
+            arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
+        } else {
+            arg = @[];
+        }
 
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry forObjectType:objectType];
         if ([pwd length] == 0) {
@@ -7243,7 +7255,13 @@ NSString *kSessionsKVCKey = @"sessions";
         // Get session parameters
         [self getSessionParameters:cmd withName:name];
 
-        [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
+        NSArray *components = [cmd componentsInShellCommand];
+        if (components.count > 0) {
+            cmd = components[0];
+            arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
+        } else {
+            arg = @[];
+        }
 
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
                                            forObjectType:objectType];

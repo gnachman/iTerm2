@@ -743,7 +743,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // Get session parameters
     [[[self tab] realParentWindow] getSessionParameters:cmd withName:theName];
 
-    [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
+    NSArray *components = [cmd componentsInShellCommand];
+    if (components.count > 0) {
+        cmd = components[0];
+        arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
+    } else {
+        arg = @[];
+    }
 
     pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
                                        forObjectType:objectType];
@@ -1425,8 +1431,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
 }
 
-- (void)brokenPipe
+- (void)threadedTaskBrokenPipe
 {
+    // Put the call to brokenPipe in the same queue as executeTokens:bytesHandled: to avoid a race.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self brokenPipe];
+    });
+}
+
+- (void)brokenPipe {
     if ([self shouldPostGrowlNotification]) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Session Ended"
                                          withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
