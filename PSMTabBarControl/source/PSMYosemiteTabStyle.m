@@ -269,10 +269,19 @@
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     NSColor *textColor;
-    if (cell.state == NSOnState) {
-        textColor = [NSColor blackColor];
+    if (!cell.tabColor || [cell.tabColor brightnessComponent] > 0.2) {
+        if (cell.state == NSOnState) {
+            textColor = [NSColor blackColor];
+        } else {
+            textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+        }
     } else {
-        textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+        // dark tab
+        if (cell.state == NSOnState) {
+            textColor = [NSColor whiteColor];
+        } else {
+            textColor = [NSColor colorWithSRGBRed:(255-101)/255.0 green:(255-100)/255.0 blue:(255-101)/255.0 alpha:1];
+        }
     }
     return textColor;
 }
