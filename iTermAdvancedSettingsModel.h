@@ -78,4 +78,5 @@
 + (BOOL)disableAppNap;
 + (double)idleTimeSeconds;
 
++ (double)findDelaySeconds;
 @end

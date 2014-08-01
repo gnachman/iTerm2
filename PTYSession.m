@@ -3146,9 +3146,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (void)toggleFind
+- (void)showFindPanel
 {
-    [[_view findViewController] toggleVisibility];
+    [[_view findViewController] makeVisible];
 }
 
 - (void)searchNext

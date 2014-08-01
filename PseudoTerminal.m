@@ -7386,7 +7386,7 @@ NSString *kSessionsKVCKey = @"sessions";
 #pragma mark - Find
 
 - (IBAction)showFindPanel:(id)sender {
-    [[self currentSession] toggleFind];
+    [[self currentSession] showFindPanel];
 }
 
 // findNext and findPrevious are reversed here because in the search UI next

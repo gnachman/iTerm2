@@ -425,8 +425,8 @@ typedef enum {
 // Search for the selected text.
 - (void)findWithSelection;
 
-// Show/hide the find view
-- (void)toggleFind;
+// Show the find view
+- (void)showFindPanel;
 
 // Find next/previous occurrence of find string.
 - (void)searchNext;

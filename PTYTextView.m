@@ -5540,6 +5540,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     foundResult_ = NO;
     [resultMap_ removeAllObjects];
     searchingForNextResult_ = NO;
+    [self setNeedsDisplay:YES];
 }
 
 - (void)setTransparency:(double)fVal
