@@ -83,7 +83,7 @@ DQ
                     <imageView id="357">
                         <rect key="frame" x="20" y="38" width="79" height="77"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="iTerm" id="375"/>
+                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="iTerm2" id="375"/>
                     </imageView>
                     <textField verticalHuggingPriority="750" id="353">
                         <rect key="frame" x="104" y="78" width="226" height="19"/>
@@ -185,6 +185,6 @@ Gw
         <customObject id="iSI-wC-oGO" customClass="iTermInstantReplayWindowController"/>
     </objects>
     <resources>
-        <image name="iTerm" width="512" height="512"/>
+        <image name="iTerm2" width="512" height="512"/>
     </resources>
 </document>

@@ -931,6 +931,8 @@
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
 		A6C537C41939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
 		A6C537C51939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
+		A6CEDA57198C0D5D00BB57EC /* icon_512x512@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA56198C0D5D00BB57EC /* icon_512x512@2x.png */; };
+		A6CEDA59198C0D6A00BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA58198C0D6A00BB57EC /* iTerm2.iconset */; };
 		A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
 		A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
 		A6CFDAD4185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
@@ -1654,6 +1656,8 @@
 		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6CEDA56198C0D5D00BB57EC /* icon_512x512@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon_512x512@2x.png"; sourceTree = "<group>"; };
+		A6CEDA58198C0D6A00BB57EC /* iTerm2.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; path = iTerm2.iconset; sourceTree = "<group>"; };
 		A6CFDAD0185D2587005DC94B /* URLAction.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = URLAction.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = AsyncHostLookupController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -1833,6 +1837,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6CEDA58198C0D6A00BB57EC /* iTerm2.iconset */,
+				A6CEDA56198C0D5D00BB57EC /* icon_512x512@2x.png */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1D03D42519144B8E0049EB8F /* ThirdParty */,
@@ -3409,6 +3415,7 @@
 				1D01609D1852AA6F0014D26A /* mark.png in Resources */,
 				1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */,
 				1D5FDD941208E91100C46BA3 /* pi.png in Resources */,
+				A6CEDA57198C0D5D00BB57EC /* icon_512x512@2x.png in Resources */,
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
@@ -3472,6 +3479,7 @@
 				1D48B282165F362B000046EE /* AquaTabClose_Front_Pressed@2x.png in Resources */,
 				1D48B283165F362B000046EE /* AquaTabClose_Front@2x.png in Resources */,
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
+				A6CEDA59198C0D6A00BB57EC /* iTerm2.iconset in Resources */,
 				1DB8FBCC19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */,
 				A6E713B618FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
