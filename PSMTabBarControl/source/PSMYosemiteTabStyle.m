@@ -331,24 +331,28 @@
 }
 
 - (NSGradient *)backgroundGradientSelected:(BOOL)selected {
+    // With adj=0, the colors are very close to those of Safari on Yosemite.
+    // That's not enough contrast, though. positive values of adj increase contrast.
+    CGFloat adj = 7;
     if (selected) {
-        return [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithSRGBRed:222/255.0
-                                                                              green:219/255.0
-                                                                               blue:222/255.0
+        return [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithSRGBRed:(adj+222)/255.0
+                                                                              green:(adj+219)/255.0
+                                                                               blue:(adj+222)/255.0
                                                                               alpha:1]
-                                              endingColor:[NSColor colorWithSRGBRed:214/255.0
-                                                                              green:211/255.0
-                                                                               blue:214/255.0
+                                              endingColor:[NSColor colorWithSRGBRed:(adj+214)/255.0
+                                                                              green:(adj+211)/255.0
+                                                                               blue:(adj+214)/255.0
                                                                               alpha:1]]
                    autorelease];
     } else {
-        return [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithSRGBRed:206/255.0
-                                                                              green:204/255.0
-                                                                               blue:206/255.0
+        adj *= -1;
+        return [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithSRGBRed:(adj+206)/255.0
+                                                                              green:(adj+204)/255.0
+                                                                               blue:(adj+206)/255.0
                                                                               alpha:1]
-                                              endingColor:[NSColor colorWithSRGBRed:199/255.0
-                                                                              green:196/255.0
-                                                                               blue:199/255.0
+                                              endingColor:[NSColor colorWithSRGBRed:(adj+199)/255.0
+                                                                              green:(adj+196)/255.0
+                                                                               blue:(adj+199)/255.0
                                                                               alpha:1]]
                    autorelease];
     }
@@ -369,37 +373,43 @@
     CGFloat angle = horizontal ? 90 : 0;
     [[self backgroundGradientSelected:selected] drawInRect:cellFrame angle:angle];
 
-    // Left line
     if (horizontal) {
+        // Left line
         [[self verticalLineColor] set];
-    } else {
+        [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
+        
+        // Right line
+        CGFloat adjustment = 0;
+        [[self verticalLineColor] set];
+        [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame) + adjustment];
+        
+        // Top line
         [[self topLineColorSelected:selected] set];
-    }
-    [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
-
-    // Right line
-    if (horizontal) {
-        [[self verticalLineColor] set];
-    } else {
+        [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
+        
+        // Bottom line
         [[self bottomLineColorSelected:selected] set];
-    }
-    [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame)];
-
-    // Top line
-    if (horizontal) {
+        [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
+    } else{
+        // Bottom line
+        [[self verticalLineColor] set];
+        cellFrame.origin.x += 1;
+        cellFrame.size.width -= 3;
+        [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
+        cellFrame.origin.x -= 1;
+        cellFrame.size.width += 3;
+        
+        cellFrame.size.width -= 1;
+        cellFrame.origin.y -= 1;
+        cellFrame.size.height += 2;
+        // Left line
         [[self topLineColorSelected:selected] set];
-    } else {
-        [[self verticalLineColor] set];
-    }
-    [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
-
-    // Bottom line
-    if (horizontal) {
+        [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
+        
+        // Right line
         [[self bottomLineColorSelected:selected] set];
-    } else {
-        [[self verticalLineColor] set];
+        [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame)];
     }
-    [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
     
     if (tabColor) {
         [[tabColor colorWithAlphaComponent:0.5] set];
@@ -518,22 +528,29 @@
     [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
     NSRectFillUsingOperation(rect, NSCompositeSourceAtop);
 
-    [[NSColor darkGrayColor] set];
+    [[self bottomLineColorSelected:NO] set];
     if (orientation == PSMTabBarHorizontalOrientation) {
-        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
-                                                      rect.origin.y + 0.5)
-                                  toPoint:NSMakePoint(rect.origin.x + rect.size.width,
-                                                      rect.origin.y + 0.5)];
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
                                                       rect.origin.y + rect.size.height - 0.5) 
                                   toPoint:NSMakePoint(rect.origin.x + rect.size.width,
                                                       rect.origin.y + rect.size.height - 0.5)];
+        
+        [[self topLineColorSelected:NO] set];
+        [[NSColor redColor] set];
+        // this looks ok with tabs on top but doesn't appear w/ tabs on bottom for some reason
+        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
+                                                      rect.origin.y - 0.5)
+                                  toPoint:NSMakePoint(rect.origin.x + rect.size.width,
+                                                      rect.origin.y - 0.5)];
     } else {
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
-             rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x,
+                                                      rect.origin.y + 0.5)
+                                  toPoint:NSMakePoint(rect.origin.x,
                                                       rect.origin.y + rect.size.height + 0.5)];
+        
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x + rect.size.width,
-             rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width,
+                                                      rect.origin.y + 0.5)
+                                  toPoint:NSMakePoint(rect.origin.x + rect.size.width,
                                                       rect.origin.y + rect.size.height + 0.5)];
     }
 
