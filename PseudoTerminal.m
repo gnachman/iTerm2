@@ -5879,6 +5879,11 @@ NSString *kSessionsKVCKey = @"sessions";
                     heightAdjustment += 1;
                 }
 
+                BOOL isNormalWindow = ![self anyFullScreen] || (self.window.styleMask & NSTitledWindowMask);
+                if (IsYosemiteOrLater() && isNormalWindow) {
+                    heightAdjustment -= 2;
+                }
+
                 NSRect tabViewFrame =
                     NSMakeRect([self _haveLeftBorder] ? 1 : 0,
                                yOrigin,
@@ -5886,7 +5891,6 @@ NSString *kSessionsKVCKey = @"sessions";
                                [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
                 PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
                 [TABVIEW setFrame:tabViewFrame];
-
 
                 heightAdjustment = tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
                 NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,

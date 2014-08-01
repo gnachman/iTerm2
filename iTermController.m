@@ -105,6 +105,26 @@ BOOL IsMavericksOrLater(void) {
     return result;
 }
 
+static BOOL UncachedIsYosemiteOrLater(void) {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 10) || (major > 10);
+    } else {
+        return NO;
+    }
+}
+
+BOOL IsYosemiteOrLater(void) {
+    static BOOL result;
+    static BOOL initialized;
+    if (!initialized) {
+        initialized = YES;
+        result = UncachedIsYosemiteOrLater();
+    }
+    return result;
+}
+
 
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
