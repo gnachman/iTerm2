@@ -912,10 +912,6 @@
 		A6B70FC219830F0D007A4284 /* NewOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FBF19830F0D007A4284 /* NewOutput.png */; };
 		A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
 		A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
-		A6B70FC719837A2B007A4284 /* Idle.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC519837A2B007A4284 /* Idle.png */; };
-		A6B70FC819837A2B007A4284 /* Idle.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC519837A2B007A4284 /* Idle.png */; };
-		A6B70FC919837A2B007A4284 /* Idle@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC619837A2B007A4284 /* Idle@2x.png */; };
-		A6B70FCA19837A2B007A4284 /* Idle@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC619837A2B007A4284 /* Idle@2x.png */; };
 		A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */; };
 		A6B70FCE1986FB39007A4284 /* PTYSession+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */; };
 		A6B70FCF1986FB39007A4284 /* PTYSession+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */; };
@@ -1641,8 +1637,6 @@
 		A6B70FBA19830C37007A4284 /* dead@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "dead@2x.png"; path = "images/dead@2x.png"; sourceTree = "<group>"; };
 		A6B70FBF19830F0D007A4284 /* NewOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NewOutput.png; path = images/NewOutput.png; sourceTree = "<group>"; };
 		A6B70FC019830F0D007A4284 /* NewOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutput@2x.png"; path = "images/NewOutput@2x.png"; sourceTree = "<group>"; };
-		A6B70FC519837A2B007A4284 /* Idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Idle.png; path = images/Idle.png; sourceTree = "<group>"; };
-		A6B70FC619837A2B007A4284 /* Idle@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Idle@2x.png"; path = "images/Idle@2x.png"; sourceTree = "<group>"; };
 		A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYSession+Scripting.h"; sourceTree = "<group>"; };
 		A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYSession+Scripting.m"; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2255,8 +2249,6 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				A6B70FC519837A2B007A4284 /* Idle.png */,
-				A6B70FC619837A2B007A4284 /* Idle@2x.png */,
 				A6B70FBF19830F0D007A4284 /* NewOutput.png */,
 				A6B70FC019830F0D007A4284 /* NewOutput@2x.png */,
 				A6B70FB919830C37007A4284 /* dead.png */,
@@ -3343,7 +3335,6 @@
 				1DB8FBC519468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */,
 				1DFA7C971923EA8700DF1410 /* iTermPasswordManager.xib in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
-				A6B70FC819837A2B007A4284 /* Idle.png in Resources */,
 				A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */,
 				1DB8FBCF19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
@@ -3364,7 +3355,6 @@
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				1DA3E2B11970AC5900001E6E /* Glare.png in Resources */,
-				A6B70FCA19837A2B007A4284 /* Idle@2x.png in Resources */,
 				A6E713B718FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
@@ -3451,13 +3441,11 @@
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
-				A6B70FC919837A2B007A4284 /* Idle@2x.png in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
-				A6B70FC719837A2B007A4284 /* Idle.png in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
