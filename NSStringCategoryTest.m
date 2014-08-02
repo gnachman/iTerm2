@@ -151,4 +151,17 @@
     [self assertString:@"\\~" parsesAsShellCommandTo:@[ @"~" ]];
 }
 
+- (void)testStringByTrimmingTrailingWhitespace {
+    assert([[@"abc" stringByTrimmingTrailingWhitespace] isEqualToString:@"abc"]);
+    assert([[@"abc " stringByTrimmingTrailingWhitespace] isEqualToString:@"abc"]);
+    assert([[@"abc  " stringByTrimmingTrailingWhitespace] isEqualToString:@"abc"]);
+    assert([[@" abc " stringByTrimmingTrailingWhitespace] isEqualToString:@" abc"]);
+    assert([[@" abc  " stringByTrimmingTrailingWhitespace] isEqualToString:@" abc"]);
+    // U+00A0 is a non-breaking space
+    assert([[@"abc \u00a0" stringByTrimmingTrailingWhitespace] isEqualToString:@"abc"]);
+
+    // There used to be a bug that surrogate pairs got truncated by sBTTW.
+    assert([[@"abc 🔥" stringByTrimmingTrailingWhitespace] isEqualToString:@"abc 🔥"]);
+}
+
 @end

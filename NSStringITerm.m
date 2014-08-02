@@ -641,8 +641,8 @@ int decode_utf8_char(const unsigned char *datap,
                                                                options:NSBackwardsSearch];
     if (rangeOfLastWantedCharacter.location == NSNotFound) {
         return self;
-    } else if (rangeOfLastWantedCharacter.location < self.length - 1) {
-        NSUInteger i = rangeOfLastWantedCharacter.location + 1;
+    } else if (rangeOfLastWantedCharacter.location + rangeOfLastWantedCharacter.length < self.length) {
+        NSUInteger i = rangeOfLastWantedCharacter.location + rangeOfLastWantedCharacter.length;
         return [self substringToIndex:i];
     }
     return self;
