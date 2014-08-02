@@ -5543,9 +5543,11 @@ NSString *sessionsKey = @"sessions";
 }
 
 // Called when the "Close tab" contextual menu item is clicked.
-- (void)closeTabContextualMenuAction: (id) sender
-{
-    [self closeTab:(id)[[sender representedObject] identifier]];
+- (void)closeTabContextualMenuAction:(id)sender {
+    PTYTab *tabToClose = (PTYTab *)[[sender representedObject] identifier];
+    if ([self tabView:TABVIEW shouldCloseTabViewItem:tabToClose.tabViewItem]) {
+        [self closeTab:tabToClose];
+    }
 }
 
 // Move a tab to a new window due to a context menu selection.
