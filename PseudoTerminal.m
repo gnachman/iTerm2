@@ -6648,9 +6648,11 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 // Called when the "Close tab" contextual menu item is clicked.
-- (void)closeTabContextualMenuAction:(id)sender
-{
-    [self closeTab:(id)[[sender representedObject] identifier]];
+- (void)closeTabContextualMenuAction:(id)sender {
+    PTYTab *tabToClose = (PTYTab *)[[sender representedObject] identifier];
+    if ([self tabView:TABVIEW shouldCloseTabViewItem:tabToClose.tabViewItem]) {
+        [self closeTab:tabToClose];
+    }
 }
 
 - (IBAction)duplicateTab:(id)sender
