@@ -117,4 +117,38 @@
     assert([expected isEqualToString:actual]);
 }
 
+- (void)assertString:(NSString *)string parsesAsShellCommandTo:(NSArray *)expected {
+    NSArray *actual = [string componentsInShellCommand];
+    assert([actual isEqualToArray:expected]);
+}
+
+- (void)testParseShellCommand {
+    [self assertString:@"foo" parsesAsShellCommandTo:@[ @"foo" ]];
+    [self assertString:@"foo bar" parsesAsShellCommandTo:@[ @"foo",
+                                                            @"bar" ]];
+    [self assertString:@"   foo    bar   " parsesAsShellCommandTo:@[ @"foo",
+                                                                     @"bar" ]];
+
+    // Escapes
+    [self assertString:@"foo\\ bar" parsesAsShellCommandTo:@[ @"foo bar"]];
+    [self assertString:@"foo\\n bar" parsesAsShellCommandTo:@[ @"foo\n", @"bar"]];
+    [self assertString:@"foo\\t bar" parsesAsShellCommandTo:@[ @"foo\t", @"bar"]];
+    [self assertString:@"foo\\\" bar" parsesAsShellCommandTo:@[ @"foo\"", @"bar"]];
+    [self assertString:@"foo\\ bar" parsesAsShellCommandTo:@[ @"foo bar"]];
+
+    // Quotes
+    [self assertString:@"\"foo bar\"" parsesAsShellCommandTo:@[ @"foo bar" ]];
+    [self assertString:@"   \"foo bar\"   " parsesAsShellCommandTo:@[ @"foo bar" ]];
+    [self assertString:@"   \"foo  bar\"   " parsesAsShellCommandTo:@[ @"foo  bar" ]];
+    [self assertString:@"   \"foo\\ bar\"   " parsesAsShellCommandTo:@[ @"foo bar" ]];
+    [self assertString:@"   \"foo bar" parsesAsShellCommandTo:@[ @"foo bar" ]];
+    [self assertString:@"\\\"foo bar\\\"" parsesAsShellCommandTo:@[ @"\"foo", @"bar\"" ]];
+
+    // Tildes
+    [self assertString:@"~" parsesAsShellCommandTo:@[ [@"~" stringByExpandingTildeInPath] ]];
+    [self assertString:@"a~" parsesAsShellCommandTo:@[ @"a~" ]];
+    [self assertString:@"\"~\"" parsesAsShellCommandTo:@[ @"~" ]];
+    [self assertString:@"\\~" parsesAsShellCommandTo:@[ @"~" ]];
+}
+
 @end
