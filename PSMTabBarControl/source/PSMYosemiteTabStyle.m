@@ -422,7 +422,11 @@
             NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
         } else {
             NSRect colorRect = cellFrame;
-            colorRect.size.height = 4;
+            if (horizontal) {
+                colorRect.size.height = 4;
+            } else {
+                colorRect.size.width = 6;
+            }
             [[tabColor colorWithAlphaComponent:0.8] set];
             NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
         }
