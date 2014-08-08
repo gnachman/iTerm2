@@ -269,19 +269,15 @@
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     NSColor *textColor;
-    if (!cell.tabColor || [cell.tabColor brightnessComponent] > 0.2) {
-        if (cell.state == NSOnState) {
+    if (cell.state == NSOnState) {
+        if (!cell.tabColor || [cell.tabColor brightnessComponent] > 0.2) {
             textColor = [NSColor blackColor];
         } else {
-            textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+            // dark tab
+            textColor = [NSColor whiteColor];
         }
     } else {
-        // dark tab
-        if (cell.state == NSOnState) {
-            textColor = [NSColor whiteColor];
-        } else {
-            textColor = [NSColor colorWithSRGBRed:(255-101)/255.0 green:(255-100)/255.0 blue:(255-101)/255.0 alpha:1];
-        }
+        textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
     }
     return textColor;
 }
@@ -421,8 +417,15 @@
     }
     
     if (tabColor) {
-        [[tabColor colorWithAlphaComponent:0.5] set];
-        NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
+        if (selected) {
+            [[tabColor colorWithAlphaComponent:0.8] set];
+            NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
+        } else {
+            NSRect colorRect = cellFrame;
+            colorRect.size.height = 4;
+            [[tabColor colorWithAlphaComponent:0.8] set];
+            NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
+        }
     }
 }
 
