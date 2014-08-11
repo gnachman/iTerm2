@@ -441,10 +441,6 @@ NSString *kSessionsKVCKey = @"sessions";
     [commandField setDelegate:self];
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
-    pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
-    autocompleteView = [[AutocompleteView alloc] init];
-    commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
-    _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];
 
     NSScreen* screen;
     if (screenNumber == -1 || screenNumber >= [[NSScreen screens] count])  {
@@ -904,6 +900,22 @@ NSString *kSessionsKVCKey = @"sessions";
     if (!didResizeWindow) {
         [self repositionWidgets];
         [self notifyTmuxOfWindowResize];
+    }
+}
+
+- (void)popupWillClose:(Popup *)popup {
+    if (popup == pbHistoryView) {
+        [pbHistoryView autorelease];
+        pbHistoryView = nil;
+    } else if (popup == commandHistoryPopup) {
+        [commandHistoryPopup autorelease];
+        commandHistoryPopup = nil;
+    } else if (popup == _directoriesPopupWindowController) {
+        [_directoriesPopupWindowController autorelease];
+        _directoriesPopupWindowController = nil;
+    } else if (popup == autocompleteView) {
+        [autocompleteView autorelease];
+        autocompleteView = nil;
     }
 }
 
@@ -4578,11 +4590,17 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)openPasteHistory:(id)sender
 {
+    if (!pbHistoryView) {
+        pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
+    }
     [pbHistoryView popWithDelegate:[self currentSession]];
 }
 
 - (IBAction)openCommandHistory:(id)sender
 {
+    if (!commandHistoryPopup) {
+        commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
+    }
     if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
         [commandHistoryPopup popWithDelegate:[self currentSession]];
         [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
@@ -4595,6 +4613,9 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 - (IBAction)openDirectories:(id)sender {
+    if (!_directoriesPopupWindowController) {
+        _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];
+    }
     if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
         [_directoriesPopupWindowController popWithDelegate:[self currentSession]];
         [_directoriesPopupWindowController loadDirectoriesForHost:[[self currentSession] currentHost]];
@@ -4654,6 +4675,9 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
     if ([self currentSession] == session && [[self window] isKeyWindow]) {
         _autoCommandHistorySessionId = [session sessionID];
+        if (!commandHistoryPopup) {
+            commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
+        }
         [commandHistoryPopup popWithDelegate:session];
         [self updateAutoCommandHistoryForPrefix:[session currentCommand] inSession:session];
     }
@@ -4665,6 +4689,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (IBAction)openAutocomplete:(id)sender
 {
+    if (!autocompleteView) {
+        autocompleteView = [[AutocompleteView alloc] init];
+    }
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView more];
     } else {

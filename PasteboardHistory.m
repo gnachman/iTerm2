@@ -262,6 +262,7 @@
         [minuteRefreshTimer_ invalidate];
         minuteRefreshTimer_ = nil;
     }
+    [self.delegate popupWillClose:self];
     [self setDelegate:nil];
 }
 

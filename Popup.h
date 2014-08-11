@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class Popup;
 @class PopupModel;
 @class PopupEntry;
 @class PTYTextView;
@@ -21,6 +22,7 @@
 - (void)popupInsertText:(NSString *)text;
 // Return YES if the delegate handles it, NO if Popup should handle it.
 - (BOOL)popupKeyDown:(NSEvent *)event currentValue:(NSString *)value;
+- (void)popupWillClose:(Popup *)popup;
 
 @end
 

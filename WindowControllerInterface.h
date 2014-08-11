@@ -3,6 +3,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
 
+@class Popup;
 @class PSMTabBarControl;
 @class PTYSession;
 @class PTYTabView;
@@ -167,6 +168,8 @@ typedef enum {
 
 // Show or hide this window's toolbelt.
 - (IBAction)toggleToolbeltVisibility:(id)sender;
+
+- (void)popupWillClose:(Popup *)popup;
 
 #pragma mark - Tabs
 

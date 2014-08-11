@@ -119,6 +119,7 @@
         timer_ = nil;
     }
     [substring_ setString:@""];
+    [_delegate popupWillClose:self];
     self.delegate = nil;
 }
 
@@ -131,7 +132,7 @@
     [model_ removeAllObjects];
     [unfilteredModel_ sortByScore];
     for (PopupEntry* s in unfilteredModel_) {
-        if ([self _word:[s mainValue] matchesFilter:substring_]) {
+        if ([self _word:[self truncatedMainValueForEntry:s] matchesFilter:substring_]) {
             [model_ addObject:s];
         }
     }

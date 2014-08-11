@@ -6007,6 +6007,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 #pragma mark - PopupDelegate
 
+- (void)popupWillClose:(Popup *)popup {
+    [[[self tab] realParentWindow] popupWillClose:popup];
+}
+
 - (NSWindowController *)popupWindowController {
     return [[self tab] realParentWindow];
 }
