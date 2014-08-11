@@ -4641,6 +4641,9 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session {
     if ([session sessionID] == _autoCommandHistorySessionId) {
+        if (!commandHistoryPopup) {
+            commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
+        }
         NSArray *commands = [commandHistoryPopup commandsForHost:[session currentHost]
                                                   partialCommand:prefix
                                                           expand:NO];
