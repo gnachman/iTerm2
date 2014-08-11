@@ -41,49 +41,33 @@ static NSMutableDictionary *gLogoCache;
         return cachedImage;
     }
 
-    const CGFloat width = 55;
+    const CGFloat width = 48;
     const CGFloat height = 48;
     NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
     [image lockFocus];
 
-    NSImage *titleBar = [NSImage imageNamed:@"TitleBar.png"];
-    [titleBar drawInRect:NSMakeRect(0, 0, width, height)];
+    NSImage *frame = [NSImage imageNamed:@"LogoFrame.png"];
+    NSImage *shadow = [NSImage imageNamed:@"LogoShadow.png"];
 
-    NSImage *tabs = [NSImage imageNamed:@"Tabs.png"];
-    [tabs drawInRect:NSMakeRect(0, 0, width, height)];
+    [_backgroundColor set];
+    NSBezierPath *path = [NSBezierPath bezierPath];
+    [path appendBezierPathWithRoundedRect:NSMakeRect(3, 6, 42, 36) xRadius:2 yRadius:2];
+    [path fill];
 
+    [frame drawInRect:NSMakeRect(0, 0, width, height)];
     if (self.tabColor) {
         [[self.tabColor colorWithAlphaComponent:0.5] set];
-        NSRectFillUsingOperation(NSMakeRect(0, 0, width, 4), NSCompositeSourceOver);
-        NSRectFillUsingOperation(NSMakeRect(0, height - 4, width, 4), NSCompositeSourceOver);
+        NSRectFillUsingOperation(NSMakeRect(0, 0, width, height), NSCompositeSourceIn);
     }
 
-    [self.backgroundColor set];
-    NSRectFill(NSMakeRect(0, 3, 55, 41));
-
-    NSImage *ambientGlare = [NSImage imageNamed:@"Glare.png"];
-    [ambientGlare drawInRect:NSMakeRect(0, 0, width, height)];
-
-    NSImage *textLayer = [[NSImage alloc] initWithSize:image.size];
-    [textLayer lockFocus];
+    [shadow drawInRect:NSMakeRect(0, 0, width, height)];
     NSString *prompt = @"$";
-    [prompt drawAtPoint:NSMakePoint(3, 23) withAttributes:@{ NSFontAttributeName: [NSFont fontWithName:@"Myriad Pro" size:16],
+    [prompt drawAtPoint:NSMakePoint(7, 25) withAttributes:@{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue" size:12],
                                                              NSForegroundColorAttributeName: self.textColor }];
 
     [self.cursorColor set];
-    NSRectFill(NSMakeRect(15, 26, 6, 14));
+    NSRectFill(NSMakeRect(15.5, 27, 5.5, 11));
 
-    [textLayer unlockFocus];
-
-    if ([self.textColor perceivedBrightness] > [self.backgroundColor perceivedBrightness]) {
-        NSImage *blurredText = [textLayer blurredImageWithRadius:5];
-        [blurredText drawInRect:NSMakeRect(0, 0, width, height)];
-    }
-    [textLayer drawInRect:NSMakeRect(0, 0, width, height)];
-
-    NSImage *reflection = [NSImage imageNamed:@"Reflection.png"];
-    [reflection drawInRect:NSMakeRect(0, 0, width, height)];
-    
     [image unlockFocus];
 
     if (!gLogoCache) {
