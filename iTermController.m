@@ -240,7 +240,7 @@ static BOOL initDone = NO;
 - (PTYSession *)anyTmuxSession
 {
     for (PseudoTerminal* terminal in terminalWindows) {
-        for (PTYSession *session in [terminal sessions]) {
+        for (PTYSession *session in [terminal allSessions]) {
             if ([session isTmuxClient] || [session isTmuxGateway]) {
                 return session;
             }
@@ -839,7 +839,7 @@ static BOOL initDone = NO;
 - (PseudoTerminal *)terminalWithSession:(PTYSession *)session
 {
     for (PseudoTerminal *term in [self terminals]) {
-        if ([[term sessions] containsObject:session]) {
+        if ([[term allSessions] containsObject:session]) {
             return term;
         }
     }

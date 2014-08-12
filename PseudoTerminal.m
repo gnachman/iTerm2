@@ -736,7 +736,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     // Cancel any SessionView timers.
-    for (PTYSession* aSession in [self sessions]) {
+    for (PTYSession* aSession in [self allSessions]) {
         [[aSession view] cancelTimers];
     }
 
@@ -2140,7 +2140,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (BOOL)promptOnClose
 {
-    for (PTYSession *aSession in [self sessions]) {
+    for (PTYSession *aSession in [self allSessions]) {
         if ([aSession promptOnClose]) {
             return YES;
         }
@@ -2161,7 +2161,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (int)numRunningSessions
 {
     int n = 0;
-    for (PTYSession *aSession in [self sessions]) {
+    for (PTYSession *aSession in [self allSessions]) {
         if (![aSession exited]) {
             ++n;
         }
@@ -2239,7 +2239,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowWillClose:(NSNotification *)aNotification
 {
-    if (_isHotKeyWindow && [[self sessions] count] == 0) {
+    if (_isHotKeyWindow && [[self allSessions] count] == 0) {
         // Remove hotkey window restorable state when the last session closes.
         [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
     }
@@ -2280,7 +2280,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
 
-    if ([[self sessions] count]) {
+    if ([[self allSessions] count]) {
         // First close any tmux tabs because their closure is not undoable.
         for (PTYTab *tab in [self tabs]) {
             for (PTYSession *session in [tab sessions]) {
@@ -2290,15 +2290,15 @@ NSString *kSessionsKVCKey = @"sessions";
             }
         }
     }
-    if ([[self sessions] count]) {
+    if ([[self allSessions] count]) {
         // Save restorable sessions in controllers and make sessions terminate or prepare to terminate.
         iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
-        restorableSession.sessions = [self sessions];
+        restorableSession.sessions = [self allSessions];
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.arrangement = [self arrangement];
         restorableSession.group = kiTermRestorableSessionGroupWindow;
         [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
-        for (PTYSession* session in [self sessions]) {
+        for (PTYSession* session in [self allSessions]) {
             [session terminate];
         }
         [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
@@ -2362,7 +2362,7 @@ NSString *kSessionsKVCKey = @"sessions";
     [self _loadFindStringFromSharedPasteboard];
 
     // Start the timers back up
-    for (PTYSession* aSession in [self sessions]) {
+    for (PTYSession* aSession in [self allSessions]) {
         [aSession updateDisplay];
         [[aSession view] setBackgroundDimmed:NO];
         [aSession setFocused:aSession == [self currentSession]];
@@ -2634,7 +2634,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
-    for (PTYSession *aSession in [self sessions]) {
+    for (PTYSession *aSession in [self allSessions]) {
         if ([[aSession textview] isFindingCursor]) {
             [[aSession textview] endFindCursor];
         }
@@ -2671,11 +2671,11 @@ NSString *kSessionsKVCKey = @"sessions";
     [[[self currentSession] textview] setNeedsDisplay:YES];
     if (![self lionFullScreen]) {
         // Don't dim Lion fullscreen because you can't see the window when it's not key.
-        for (PTYSession* aSession in [self sessions]) {
+        for (PTYSession* aSession in [self allSessions]) {
             [[aSession view] setBackgroundDimmed:YES];
         }
     }
-    for (PTYSession* aSession in [self sessions]) {
+    for (PTYSession* aSession in [self allSessions]) {
         [aSession setFocused:NO];
     }
 }
@@ -3007,7 +3007,7 @@ NSString *kSessionsKVCKey = @"sessions";
 // So turn the shadow off only when there's a transparent view.
 - (void)updateContentShadow {
     if (useTransparency_) {
-        for (PTYSession *aSession in [self sessions]) {
+        for (PTYSession *aSession in [self allSessions]) {
             if (aSession.textview.transparency > 0) {
                 [self.ptyWindow _setContentHasShadow:NO];
                 return;
@@ -3020,7 +3020,7 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)updateUseTransparency {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateUseTransparencyMenuItem];
-    for (PTYSession* aSession in [self sessions]) {
+    for (PTYSession* aSession in [self allSessions]) {
         [[aSession view] setNeedsDisplay:YES];
     }
     [self updateContentShadow];
@@ -3135,7 +3135,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)updateSessionScrollbars
 {
-    for (PTYSession *aSession in [self sessions]) {
+    for (PTYSession *aSession in [self allSessions]) {
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
         [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
         [[aSession scrollview] setScrollerStyle:[self scrollerStyle]];
@@ -3751,7 +3751,7 @@ NSString *kSessionsKVCKey = @"sessions";
                 [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
     }
 
-    for (PTYSession *session in [self sessions]) {
+    for (PTYSession *session in [self allSessions]) {
         if ([[session textview] isFindingCursor]) {
             [[session textview] endFindCursor];
         }
@@ -3775,7 +3775,7 @@ NSString *kSessionsKVCKey = @"sessions";
                                                         object:[[tabViewItem identifier] activeSession]];
 
     PTYSession *activeSession = [self currentSession];
-    for (PTYSession *s in [self sessions]) {
+    for (PTYSession *s in [self allSessions]) {
       [aSession setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
@@ -5485,7 +5485,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // Things would get really complicated if you could do this in IR, so just
     // close it.
     [self closeInstantReplay:nil];
-    for (PTYSession *aSession in [self sessions]) {
+    for (PTYSession *aSession in [self allSessions]) {
         if (mode) {
             [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel
                                        move:move];
@@ -5559,7 +5559,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (void)setDimmingForSessions
 {
-    for (PTYSession *aSession in [self sessions]) {
+    for (PTYSession *aSession in [self allSessions]) {
         [self setDimmingForSession:aSession];
     }
 }
@@ -6502,7 +6502,7 @@ NSString *kSessionsKVCKey = @"sessions";
     } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
         result = ![iTermAdvancedSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
     } else if ([item action] == @selector(moveSessionToWindow:)) {
-        result = ([[self sessions] count] > 1);
+        result = ([[self allSessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
         [item action] == @selector(openSplitVerticallySheet:)) {
         result = ![[self currentTab] isTmuxTab];
@@ -6667,7 +6667,7 @@ NSString *kSessionsKVCKey = @"sessions";
 // Show a dialog confirming close. Returns YES if the window should be closed.
 - (BOOL)showCloseWindow
 {
-    return ([self confirmCloseForSessions:[self sessions]
+    return ([self confirmCloseForSessions:[self allSessions]
                                identifier:@"This window"
                               genericName:[NSString stringWithFormat:@"Window #%d", number_+1]]);
 }
@@ -7119,22 +7119,22 @@ NSString *kSessionsKVCKey = @"sessions";
 
 // accessors for to-many relationships:
 // (See NSScriptKeyValueCoding.h)
-- (id)valueInSessionsAtIndex:(unsigned)anIndex
-{
-    // NSLog(@"PseudoTerminal: -valueInSessionsAtIndex: %d", anIndex);
-    return [[self sessions] objectAtIndex:anIndex];
+- (id)valueInSessionsAtIndex:(unsigned)anIndex {
+    PTYTab *tab = [[TABVIEW tabViewItemAtIndex:anIndex] identifier];
+    return [tab activeSession];
 }
 
-- (NSArray*)sessions
-{
+// This is kept around because it's used by applescript but it only returns the active session
+// in each tab. Use -allSessions if you want them all. This is for backward compatibility. For a
+// while it did return all sessions but that caused bug 3147.
+- (NSArray *)sessions {
     int n = [TABVIEW numberOfTabViewItems];
     NSMutableArray *sessions = [NSMutableArray arrayWithCapacity:n];
     int i;
 
     for (i = 0; i < n; ++i) {
-        for (PTYSession* aSession in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
-            [sessions addObject:aSession];
-        }
+        PTYTab *tab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        [sessions addObject:tab.activeSession];
     }
 
     return sessions;
@@ -7144,8 +7144,7 @@ NSString *kSessionsKVCKey = @"sessions";
 {
 }
 
-- (id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey
-{
+- (id)valueWithName:(NSString *)uniqueName inPropertyWithKey:(NSString *)propertyKey {
     id result = nil;
     int i;
 
@@ -7154,8 +7153,8 @@ NSString *kSessionsKVCKey = @"sessions";
 
         for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
             aSession = [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
-            if ([[aSession name] isEqualToString: uniqueName] == YES) {
-                return (aSession);
+            if ([[aSession name] isEqualToString:uniqueName] == YES) {
+                return aSession;
             }
         }
     }
@@ -7164,8 +7163,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 // The 'uniqueID' argument might be an NSString or an NSNumber.
-- (id)valueWithID:(NSString *)uniqueID inPropertyWithKey:(NSString*)propertyKey
-{
+- (id)valueWithID:(NSString *)uniqueID inPropertyWithKey:(NSString*)propertyKey {
     id result = nil;
     int i;
 
@@ -7185,8 +7183,7 @@ NSString *kSessionsKVCKey = @"sessions";
 
 - (id)addNewSession:(NSDictionary *)addressbookEntry
             withURL:(NSString *)url
-      forObjectType:(iTermObjectType)objectType
-{
+      forObjectType:(iTermObjectType)objectType {
     PtyLog(@"PseudoTerminal: -addNewSession");
     PTYSession *aSession;
 
@@ -7353,12 +7350,11 @@ NSString *kSessionsKVCKey = @"sessions";
     [self insertInSessions: object atIndex:[TABVIEW numberOfTabViewItems]];
 }
 
--(void)insertInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
+- (void)insertInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
 {
     PtyLog(@"PseudoTerminal: -insertInSessions: %p atIndex: %d", object, anIndex);
     BOOL toggle = NO;
     if (![self windowInited]) {
-        // call initWithSmartLayout:YES, etc, like this:
         Profile *aDict = [object profile];
         [self finishInitializationWithSmartLayout:YES
                                        windowType:[[iTermController sharedInstance] windowTypeForBookmark:aDict]
@@ -7454,7 +7450,7 @@ NSString *kSessionsKVCKey = @"sessions";
     NSString* selection = [[[self currentSession] textview] selectedText];
     if (selection) {
         for (PseudoTerminal* pty in [[iTermController sharedInstance] terminals]) {
-            for (PTYSession* session in [pty sessions]) {
+            for (PTYSession* session in [pty allSessions]) {
                 [session useStringForFind:selection];
             }
         }

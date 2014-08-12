@@ -527,7 +527,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     }
     int i = 0;
     for (PseudoTerminal* aTerminal in [[iTermController sharedInstance] terminals]) {
-        for (PTYSession* aSession in [aTerminal sessions]) {
+        for (PTYSession* aSession in [aTerminal allSessions]) {
             NSArray* tabs = [aTerminal tabs];
             int j;
             for (j = 0; j < [tabs count]; ++j) {

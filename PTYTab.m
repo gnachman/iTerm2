@@ -348,7 +348,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     // focused state of all sessions in that window.
     if ([[self realParentWindow] currentTab] == self &&
         [[[self realParentWindow] window] isKeyWindow]) {
-      for (PTYSession *aSession in [[self realParentWindow] sessions]) {
+      for (PTYSession *aSession in [[self realParentWindow] allSessions]) {
         [aSession setFocused:(aSession == session)];
       }
     }

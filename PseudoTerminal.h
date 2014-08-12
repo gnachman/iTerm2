@@ -459,46 +459,48 @@ extern NSString *const kCurrentSessionDidChange;
 // IMPORTANT: These accessors are here for backward compatibility with existing
 // applescript. These methods don't make sense since each tab may have a
 // different number of rows and columns.
--(int)columns;
--(void)setColumns: (int)columns;
--(int)rows;
--(void)setRows: (int)rows;
+- (int)columns;
+- (void)setColumns: (int)columns;
+- (int)rows;
+- (void)setRows:(int)rows;
 
 // (See NSScriptKeyValueCoding.h)
--(id)valueInSessionsAtIndex:(unsigned)index;
--(id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey;
--(id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey;
--(id)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
--(id)addNewSession:(NSDictionary *)addressbookEntry
-           withURL:(NSString *)url
-     forObjectType:(iTermObjectType)objectType;
--(id)addNewSession:(NSDictionary *) addressbookEntry
-       withCommand:(NSString *)command
-     forObjectType:(iTermObjectType)objectType;
--(void)appendSession:(PTYSession *)object;
--(void)removeFromSessionsAtIndex:(unsigned)index;
--(void)setSessions: (NSArray*)sessions;
--(void)replaceInSessions:(PTYSession *)object atIndex:(unsigned)index;
--(void)addInSessions:(PTYSession *)object;
--(void)insertInSessions:(PTYSession *)object;
--(void)insertInSessions:(PTYSession *)object atIndex:(unsigned)index;
+- (id)valueInSessionsAtIndex:(unsigned)index;
+- (id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey;
+- (id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey;
+- (id)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
+- (id)addNewSession:(NSDictionary *)addressbookEntry
+            withURL:(NSString *)url
+      forObjectType:(iTermObjectType)objectType;
+- (id)addNewSession:(NSDictionary *) addressbookEntry
+        withCommand:(NSString *)command
+      forObjectType:(iTermObjectType)objectType;
+- (void)appendSession:(PTYSession *)object;
+- (void)removeFromSessionsAtIndex:(unsigned)index;
+- (void)setSessions:(NSArray*)sessions;
+- (void)replaceInSessions:(PTYSession *)object atIndex:(unsigned)index;
+- (void)addInSessions:(PTYSession *)object;
+- (void)insertInSessions:(PTYSession *)object;
+- (void)insertInSessions:(PTYSession *)object atIndex:(unsigned)index;
 // Add a new session to this window with the given addressbook entry.
 - (id)addNewSession:(NSDictionary *)addressbookEntry;
 
+// This is deprecated because it's still used by applescript to get a list of
+// active sessions (one per tab) but we don't ever want to confuse it with
+// -allSessions, which returns all the sessions in a window.
+- (NSArray *)sessions __attribute__((deprecated));
 
 - (BOOL)windowInited;
-- (void) setWindowInited: (BOOL) flag;
+- (void)setWindowInited:(BOOL)flag;
 
 // a class method to provide the keys for KVC:
-+(NSArray*)kvcKeys;
++ (NSArray*)kvcKeys;
 
 #pragma mark - Scripting support
 
--(void)handleSelectScriptCommand: (NSScriptCommand *)command;
-
--(id)handleLaunchScriptCommand: (NSScriptCommand *)command;
-
--(void)handleSplitScriptCommand: (NSScriptCommand *)command;
+- (void)handleSelectScriptCommand:(NSScriptCommand *)command;
+- (id)handleLaunchScriptCommand:(NSScriptCommand *)command;
+- (void)handleSplitScriptCommand:(NSScriptCommand *)command;
 
 @end
 
