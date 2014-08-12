@@ -445,18 +445,16 @@ static NSRect FlipRect(NSRect rect, CGFloat height) {
 }
 
 - (NSSize)sizeThatFitsContentView {
-    // The +1's below are to account for the 0.5 inset on all edges that's applied to make the
-    // path's stroke look nice.
     switch (tipEdge_) {
         case kPTYNoteViewTipEdgeBottom:
         case kPTYNoteViewTipEdgeTop:
-            return NSMakeSize(contentView_.frame.size.width + kLeftMargin + kRightMargin + kInset + 1,
-                              contentView_.frame.size.height + kBottomMargin + kTopMargin + kPointerLength + kInset + 1);
+            return NSMakeSize(contentView_.frame.size.width + kLeftMargin + kRightMargin + kInset,
+                              contentView_.frame.size.height + kBottomMargin + kTopMargin + kPointerLength + kInset);
 
         case kPTYNoteViewTipEdgeLeft:
         case kPTYNoteViewTipEdgeRight:
-            return NSMakeSize(contentView_.frame.size.width + kLeftMargin + kRightMargin + kPointerLength + kInset + 1,
-                              contentView_.frame.size.height + kBottomMargin + kTopMargin + kInset + 1);
+            return NSMakeSize(contentView_.frame.size.width + kLeftMargin + kRightMargin + kPointerLength + kInset,
+                              contentView_.frame.size.height + kBottomMargin + kTopMargin + kInset);
     }
     assert(false);
     return NSMakeSize(0, 0);

@@ -12,6 +12,8 @@
 
 NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
 
+static const CGFloat kBottomPadding = 3;
+
 @interface PTYNoteViewController ()
 @property(nonatomic, retain) NSTextView *textView;
 @property(nonatomic, retain) NSScrollView *scrollView;
@@ -60,7 +62,7 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     self.noteView.shadow = shadow;
 
     NSRect frame = NSMakeRect(0,
-                              0,
+                              3,
                               kWidth,
                               kHeight);
     self.scrollView = [[[NSScrollView alloc] initWithFrame:frame] autorelease];
@@ -86,7 +88,16 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
     textView_.delegate = self;
     scrollView_.documentView = textView_;
 
-    noteView_.contentView = scrollView_;
+    // Put the scrollview in a wrapper so we can have a few pixels of padding
+    // at the bottom.
+    NSRect wrapperFrame = scrollView_.frame;
+    wrapperFrame.size.height += kBottomPadding;
+    NSView *wrapper = [[[NSView alloc] initWithFrame:wrapperFrame] autorelease];
+    wrapper.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    wrapper.autoresizesSubviews = YES;
+    [wrapper addSubview:scrollView_];
+
+    noteView_.contentView = wrapper;
     [self sizeToFit];
 }
 
@@ -201,10 +212,14 @@ NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewContro
                                                        borderType:NSNoBorder
                                                       controlSize:NSRegularControlSize
                                                     scrollerStyle:[scrollView_ scrollerStyle]];
-    scrollView_.frame = NSMakeRect(NSMinX(scrollView_.frame),
-                                   NSMinY(scrollView_.frame),
-                                   scrollViewSize.width,
-                                   scrollViewSize.height);
+    NSRect theFrame = NSMakeRect(NSMinX(scrollView_.frame),
+                                 NSMinY(scrollView_.frame),
+                                 scrollViewSize.width,
+                                 scrollViewSize.height);
+
+    NSView *wrapper = scrollView_.superview;
+    theFrame.size.height += kBottomPadding;
+    wrapper.frame = theFrame;
 
     textView_.minSize = usedRect.size;
     textView_.frame = NSMakeRect(0, 0, usedRect.size.width, usedRect.size.height);
