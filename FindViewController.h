@@ -82,7 +82,7 @@
 - (void)dealloc;
 - (void)close;
 - (void)open;
-- (void)toggleVisibility;
+- (void)makeVisible;
 - (void)setFrameOrigin:(NSPoint)p;
 
 - (IBAction)closeFindView:(id)sender;

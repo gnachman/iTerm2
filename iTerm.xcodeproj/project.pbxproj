@@ -449,14 +449,6 @@
 		1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
 		1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
 		1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */; };
-		1DA3E2B01970AC5900001E6E /* Glare.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AC1970AC5900001E6E /* Glare.png */; };
-		1DA3E2B11970AC5900001E6E /* Glare.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AC1970AC5900001E6E /* Glare.png */; };
-		1DA3E2B21970AC5900001E6E /* Reflection.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AD1970AC5900001E6E /* Reflection.png */; };
-		1DA3E2B31970AC5900001E6E /* Reflection.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AD1970AC5900001E6E /* Reflection.png */; };
-		1DA3E2B41970AC5900001E6E /* Tabs.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AE1970AC5900001E6E /* Tabs.png */; };
-		1DA3E2B51970AC5900001E6E /* Tabs.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AE1970AC5900001E6E /* Tabs.png */; };
-		1DA3E2B61970AC5900001E6E /* TitleBar.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AF1970AC5900001E6E /* TitleBar.png */; };
-		1DA3E2B71970AC5900001E6E /* TitleBar.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA3E2AF1970AC5900001E6E /* TitleBar.png */; };
 		1DA3E2BA1970ACBE00001E6E /* iTermLogoGenerator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */; };
 		1DA3E2BB1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */; };
 		1DA3E2BC1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */; };
@@ -913,15 +905,9 @@
 		A6B70FC219830F0D007A4284 /* NewOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FBF19830F0D007A4284 /* NewOutput.png */; };
 		A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
 		A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
-		A6B70FC719837A2B007A4284 /* Idle.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC519837A2B007A4284 /* Idle.png */; };
-		A6B70FC819837A2B007A4284 /* Idle.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC519837A2B007A4284 /* Idle.png */; };
-		A6B70FC919837A2B007A4284 /* Idle@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC619837A2B007A4284 /* Idle@2x.png */; };
-		A6B70FCA19837A2B007A4284 /* Idle@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC619837A2B007A4284 /* Idle@2x.png */; };
 		A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */; };
 		A6B70FCE1986FB39007A4284 /* PTYSession+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */; };
 		A6B70FCF1986FB39007A4284 /* PTYSession+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */; };
-		A6B70FD1198853E0007A4284 /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FD0198853E0007A4284 /* iTerm2.iconset */; };
-		A6B70FD2198853E0007A4284 /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FD0198853E0007A4284 /* iTerm2.iconset */; };
 		A6C4E8E01846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
 		A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
@@ -932,6 +918,12 @@
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
 		A6C537C41939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
 		A6C537C51939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
+		A6CEDA5B198C139500BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
+		A6CEDA5C198C139500BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
+		A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
+		A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
+		A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
+		A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
 		A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
 		A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
 		A6CFDAD4185D2587005DC94B /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
@@ -1295,10 +1287,6 @@
 		1DA26ABF15007507004B5792 /* BackgroundThread.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = BackgroundThread.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursor@2x.png"; path = "images/IBarCursor@2x.png"; sourceTree = "<group>"; };
 		1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursorXMR@2x.png"; path = "images/IBarCursorXMR@2x.png"; sourceTree = "<group>"; };
-		1DA3E2AC1970AC5900001E6E /* Glare.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Glare.png; path = images/LogoParts/Glare.png; sourceTree = "<group>"; };
-		1DA3E2AD1970AC5900001E6E /* Reflection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Reflection.png; path = images/LogoParts/Reflection.png; sourceTree = "<group>"; };
-		1DA3E2AE1970AC5900001E6E /* Tabs.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Tabs.png; path = images/LogoParts/Tabs.png; sourceTree = "<group>"; };
-		1DA3E2AF1970AC5900001E6E /* TitleBar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TitleBar.png; path = images/LogoParts/TitleBar.png; sourceTree = "<group>"; };
 		1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLogoGenerator.h; sourceTree = "<group>"; };
 		1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermLogoGenerator.m; sourceTree = "<group>"; };
 		1DA7894714AC19F500C8FBD9 /* Growl */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Growl; path = Growl.framework/Growl; sourceTree = "<absolute>"; };
@@ -1643,11 +1631,8 @@
 		A6B70FBA19830C37007A4284 /* dead@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "dead@2x.png"; path = "images/dead@2x.png"; sourceTree = "<group>"; };
 		A6B70FBF19830F0D007A4284 /* NewOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NewOutput.png; path = images/NewOutput.png; sourceTree = "<group>"; };
 		A6B70FC019830F0D007A4284 /* NewOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NewOutput@2x.png"; path = "images/NewOutput@2x.png"; sourceTree = "<group>"; };
-		A6B70FC519837A2B007A4284 /* Idle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Idle.png; path = images/Idle.png; sourceTree = "<group>"; };
-		A6B70FC619837A2B007A4284 /* Idle@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Idle@2x.png"; path = "images/Idle@2x.png"; sourceTree = "<group>"; };
 		A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYSession+Scripting.h"; sourceTree = "<group>"; };
 		A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYSession+Scripting.m"; sourceTree = "<group>"; };
-		A6B70FD0198853E0007A4284 /* iTerm2.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; name = iTerm2.iconset; path = images/icons/iTerm2.iconset; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
@@ -1656,6 +1641,9 @@
 		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6CEDA5A198C139500BB57EC /* iTerm2.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; name = iTerm2.iconset; path = images/icons/iTerm2.iconset; sourceTree = "<group>"; };
+		A6CEDA5D19988A7300BB57EC /* LogoFrame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoFrame.png; path = images/LogoParts/LogoFrame.png; sourceTree = "<group>"; };
+		A6CEDA5E19988A7300BB57EC /* LogoShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoShadow.png; path = images/LogoParts/LogoShadow.png; sourceTree = "<group>"; };
 		A6CFDAD0185D2587005DC94B /* URLAction.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = URLAction.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = AsyncHostLookupController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2159,7 +2147,7 @@
 		0464AB27006CD2EC7F000001 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				A6B70FD0198853E0007A4284 /* iTerm2.iconset */,
+				A6CEDA5A198C139500BB57EC /* iTerm2.iconset */,
 				1D03D42719144C3B0049EB8F /* Other Assets */,
 				1D03D42619144C140049EB8F /* Property Lists */,
 				1D093C131217412B0029F9AD /* Images */,
@@ -2258,8 +2246,6 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				A6B70FC519837A2B007A4284 /* Idle.png */,
-				A6B70FC619837A2B007A4284 /* Idle@2x.png */,
 				A6B70FBF19830F0D007A4284 /* NewOutput.png */,
 				A6B70FC019830F0D007A4284 /* NewOutput@2x.png */,
 				A6B70FB919830C37007A4284 /* dead.png */,
@@ -2540,10 +2526,8 @@
 		1DA3E2AB1970AC4000001E6E /* LogoParts */ = {
 			isa = PBXGroup;
 			children = (
-				1DA3E2AC1970AC5900001E6E /* Glare.png */,
-				1DA3E2AD1970AC5900001E6E /* Reflection.png */,
-				1DA3E2AE1970AC5900001E6E /* Tabs.png */,
-				1DA3E2AF1970AC5900001E6E /* TitleBar.png */,
+				A6CEDA5D19988A7300BB57EC /* LogoFrame.png */,
+				A6CEDA5E19988A7300BB57EC /* LogoShadow.png */,
 			);
 			name = LogoParts;
 			sourceTree = "<group>";
@@ -3329,9 +3313,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1DA3E2B71970AC5900001E6E /* TitleBar.png in Resources */,
 				A6B70FBC19830C37007A4284 /* dead.png in Resources */,
 				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
+				A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */,
 				1DB8FBC919468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
@@ -3341,20 +3325,18 @@
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				A6B70FBE19830C37007A4284 /* dead@2x.png in Resources */,
-				1DA3E2B51970AC5900001E6E /* Tabs.png in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				1DB8FBC519468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */,
 				1DFA7C971923EA8700DF1410 /* iTermPasswordManager.xib in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
-				A6B70FC819837A2B007A4284 /* Idle.png in Resources */,
 				A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */,
 				1DB8FBCF19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
 				1DB8FBCB19468A40006BAF5C /* AquaTabsDownNonKey_vertical.png in Resources */,
 				1DFA9D6818F37160008ADC98 /* iTermEditKeyActionWindowController.xib in Resources */,
 				A6B70FC219830F0D007A4284 /* NewOutput.png in Resources */,
-				A6B70FD2198853E0007A4284 /* iTerm2.iconset in Resources */,
-				1DA3E2B31970AC5900001E6E /* Reflection.png in Resources */,
+				A6CEDA5C198C139500BB57EC /* iTerm2.iconset in Resources */,
+				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1DB8FBC719468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */,
 				A69B4589196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */,
@@ -3366,8 +3348,6 @@
 				1DC2AF5219521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
-				1DA3E2B11970AC5900001E6E /* Glare.png in Resources */,
-				A6B70FCA19837A2B007A4284 /* Idle@2x.png in Resources */,
 				A6E713B718FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
@@ -3404,11 +3384,9 @@
 				1DC13AC71886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				1DC2A1CC1949165D005769D5 /* Maximized.png in Resources */,
 				1D5FDD8F1208E91100C46BA3 /* AquaTabsDownNonKey.png in Resources */,
-				1DC035C9198989F4007449A9 /* iTerm2.iconset in Resources */,
-				A6B70FD1198853E0007A4284 /* iTerm2.iconset in Resources */,
 				1D5FDD901208E91100C46BA3 /* AquaTabsSeparator.png in Resources */,
+				A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */,
 				1D5FDD911208E91100C46BA3 /* AquaTabsSeparatorDown.png in Resources */,
-				1DA3E2B21970AC5900001E6E /* Reflection.png in Resources */,
 				1D5FDD921208E91100C46BA3 /* overflowImage.tiff in Resources */,
 				1D01609D1852AA6F0014D26A /* mark.png in Resources */,
 				1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */,
@@ -3428,7 +3406,6 @@
 				A6B70FBB19830C37007A4284 /* dead.png in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
 				1DB8FBCE19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
-				1DA3E2B01970AC5900001E6E /* Glare.png in Resources */,
 				1DB8FBC619468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
@@ -3437,6 +3414,7 @@
 				1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */,
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
+				A6CEDA5B198C139500BB57EC /* iTerm2.iconset in Resources */,
 				1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 				1DE2154312821F1C004E3ADF /* Autocomplete.xib in Resources */,
@@ -3455,18 +3433,17 @@
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
-				A6B70FC919837A2B007A4284 /* Idle@2x.png in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
-				A6B70FC719837A2B007A4284 /* Idle.png in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
+				A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */,
 				A69B4588196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */,
 				1DB8FBC819468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */,
 				1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */,
@@ -3485,7 +3462,6 @@
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
 				1D48B28E165F3669000046EE /* AquaTabClose_Front_Rollover.png in Resources */,
 				1D48B28F165F3669000046EE /* AquaTabClose_Front_Pressed.png in Resources */,
-				1DA3E2B61970AC5900001E6E /* TitleBar.png in Resources */,
 				1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */,
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
@@ -3499,7 +3475,6 @@
 				9DB3D6E1176C8F0B0071CCF8 /* PrefsAppearance@2x.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,
 				9DB3D6E4176CB4D80071CCF8 /* PrefsProfile.png in Resources */,
-				1DA3E2B41970AC5900001E6E /* Tabs.png in Resources */,
 				9DB3D6E5176CB4D80071CCF8 /* PrefsProfile@2x.png in Resources */,
 				9DB3D6E8176CBC0C0071CCF8 /* PrefsKeyboard.png in Resources */,
 				9DB3D6E9176CBC0C0071CCF8 /* PrefsKeyboard@2x.png in Resources */,

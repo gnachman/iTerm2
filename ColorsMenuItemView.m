@@ -107,9 +107,9 @@ enum {
             break;
         case kMenuItemGray:
             gradient = [[NSGradient alloc] initWithColorsAndLocations:
-                        [NSColor colorWithDeviceRed:212.0/255.0 green:212.0/255.0 blue:212.0/255.0 alpha:1.0], 0.0,
-                        [NSColor colorWithDeviceRed:212.0/255.0 green:212.0/255.0 blue:212.0/255.0 alpha:1.0], 0.5,
-                        [NSColor colorWithDeviceRed:212.0/255.0 green:212.0/255.0 blue:212.0/255.0 alpha:1.0], 1.0, nil];
+                        [NSColor colorWithDeviceRed:150.0/255.0 green:150.0/255.0 blue:150.0/255.0 alpha:1.0], 0.0,
+                        [NSColor colorWithDeviceRed:130.0/255.0 green:130.0/255.0 blue:130.0/255.0 alpha:1.0], 0.5,
+                        [NSColor colorWithDeviceRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:1.0], 1.0, nil];
             break;
     }
 
@@ -198,7 +198,7 @@ enum {
                     color_ = [NSColor colorWithDeviceRed:193.0/255.0 green:142.0/255.0 blue:217.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemGray:
-                    color_ = [NSColor colorWithDeviceRed:174.0/255.0 green:174.0/255.0 blue:174.0/255.0 alpha:1.0];
+                    color_ = [NSColor colorWithDeviceRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:1.0];
                     break;
             }
             // perform the menu action (set the color)

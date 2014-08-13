@@ -448,6 +448,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         for (iTermSubSelection *sub in selection.allSubSelections) {
             VT100GridCoordRange newSelection;
             DLog(@"convert sub %@", sub);
+            assert(sub.range.coordRange.start.y >= 0);
+            assert(sub.range.coordRange.end.y >= 0);
             BOOL ok = [self convertRange:sub.range.coordRange
                                  toWidth:new_width
                                       to:&newSelection
@@ -474,20 +476,23 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         for (id<IntervalTreeObject> note in [intervalTree_ allObjects]) {
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             VT100GridCoordRange newRange;
-            if (noteRange.end.x < 0 && noteRange.end.y == 0 &&
-                noteRange.end.y < 0) {
+            if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
                 // note has scrolled off top
                 [intervalTree_ removeObject:note];
-            } else if ([self convertRange:noteRange
+            } else {
+                assert(noteRange.start.y >= 0);
+                assert(noteRange.end.y >= 0);
+                if ([self convertRange:noteRange
                                   toWidth:new_width
                                        to:&newRange
                              inLineBuffer:linebuffer_]) {
-                Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                  width:new_width
-                                                            linesOffset:[self totalScrollbackOverflow]];
-                [[note retain] autorelease];
-                [intervalTree_ removeObject:note];
-                [replacementTree addObject:note withInterval:newInterval];
+                    Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                                      width:new_width
+                                                                linesOffset:[self totalScrollbackOverflow]];
+                    [[note retain] autorelease];
+                    [intervalTree_ removeObject:note];
+                    [replacementTree addObject:note withInterval:newInterval];
+                }
             }
         }
         [intervalTree_ release];
@@ -630,6 +635,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
             DLog(@"Found note at %@", VT100GridCoordRangeDescription(noteRange));
             VT100GridCoordRange newRange;
+            assert(noteRange.start.y >= 0);
+            assert(noteRange.end.y >= 0);
             if ([self convertRange:noteRange toWidth:new_width to:&newRange inLineBuffer:altScreenLineBuffer]) {
                 // Anticipate the lines that will be dropped when the alt grid is restored.
                 newRange.start.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
@@ -3502,6 +3509,9 @@ static void SwapInt(int *a, int *b) {
 
 - (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
                                            inLineBuffer:(LineBuffer *)lineBuffer {
+    assert(range.end.y >= 0);
+    assert(range.start.y >= 0);
+
     LineBufferPositionRange *positionRange = [[[LineBufferPositionRange alloc] init] autorelease];
 
     BOOL endExtends = NO;

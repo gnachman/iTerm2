@@ -29,7 +29,7 @@ static const double kUserDefinedVariableMultiplier = 1;
     // sessions and scores are parallel.
     NSMutableArray *sessions = [NSMutableArray array];
     for (PseudoTerminal *term in terminals) {
-        [sessions addObjectsFromArray:term.sessions];
+        [sessions addObjectsFromArray:term.allSessions];
     }
     return sessions;
 }

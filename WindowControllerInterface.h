@@ -3,6 +3,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
 
+@class Popup;
 @class PSMTabBarControl;
 @class PTYSession;
 @class PTYTabView;
@@ -168,6 +169,8 @@ typedef enum {
 // Show or hide this window's toolbelt.
 - (IBAction)toggleToolbeltVisibility:(id)sender;
 
+- (void)popupWillClose:(Popup *)popup;
+
 #pragma mark - Tabs
 
 // Close a tab and resize/close the window if needed.
@@ -238,8 +241,8 @@ typedef enum {
 // Update sessions' dimming status.
 - (void)setDimmingForSessions;
 
-// All sessions in this winodw.
-- (NSArray*)sessions;
+// All sessions in this window.
+- (NSArray*)allSessions;
 
 // Do some cleanup after a session is removed.
 - (void)sessionWasRemoved;

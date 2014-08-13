@@ -76,7 +76,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 + (void)initialize {
     warningImage = [[NSImage imageNamed:@"important"] retain];
     gNewOutputImage = [[NSImage imageNamed:@"NewOutput"] retain];
-    gIdleImage = [[NSImage imageNamed:@"Idle"] retain];
+    // There was a separate idle graphic, but I prefer NewOutput. The distinction is already drawn
+    // because a spinner is present only while new output is being received. It's still in the git
+    // repo, named "Idle.png".
+    gIdleImage = [[NSImage imageNamed:@"NewOutput"] retain];
     gDeadImage = [[NSImage imageNamed:@"dead"] retain];
 }
 
@@ -345,7 +348,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     // focused state of all sessions in that window.
     if ([[self realParentWindow] currentTab] == self &&
         [[[self realParentWindow] window] isKeyWindow]) {
-      for (PTYSession *aSession in [[self realParentWindow] sessions]) {
+      for (PTYSession *aSession in [[self realParentWindow] allSessions]) {
         [aSession setFocused:(aSession == session)];
       }
     }

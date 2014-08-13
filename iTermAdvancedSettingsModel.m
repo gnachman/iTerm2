@@ -90,6 +90,7 @@ DEFINE_BOOL(rememberWindowPositions, YES, @"General: Remember window locations e
 DEFINE_BOOL(disableToolbar, NO, @"General: Completely disable toolbar");
 DEFINE_BOOL(disableAppNap, NO, @"General: Disable App Nap (change effective after retarting iTerm2)");
 DEFINE_FLOAT(idleTimeSeconds, 2, @"General: Time in seconds before a session is considered idle");
+DEFINE_FLOAT(findDelaySeconds, 1, @"General: Time to wait before performing Find action on 1- or 2- character queries");
 
 #pragma mark Warnings
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Warnings: Suppress a warning when Option Key Acts as Meta is enabled");

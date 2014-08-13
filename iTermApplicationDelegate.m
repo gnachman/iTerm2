@@ -350,7 +350,7 @@ static BOOL hasBecomeActive = NO;
     int numSessions = 0;
     BOOL shouldShowAlert = NO;
     for (PseudoTerminal *term in terminals) {
-        numSessions += [[term sessions] count];
+        numSessions += [[term allSessions] count];
         if ([term promptOnClose]) {
             shouldShowAlert = YES;
         }

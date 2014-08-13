@@ -68,7 +68,12 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Convert DOS-style and \n newlines to \r newlines.
 - (NSString*)stringWithLinefeedNewlines;
 
-- (void)breakDownCommandToPath:(NSString **)cmd cmdArgs:(NSArray **)path;
+// Takes a shell command like
+//   foo ~root "~"    bar\ baz   ""
+// and returns an array like:
+//   @[ @"foo", @"/Users/root", @"~", @"bar baz", @"" ]
+- (NSArray *)componentsInShellCommand;
+
 - (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s;
 - (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)s;
 - (NSString *)stringByReplacingEscapedHexValuesWithChars;

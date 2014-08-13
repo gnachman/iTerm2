@@ -105,6 +105,26 @@ BOOL IsMavericksOrLater(void) {
     return result;
 }
 
+static BOOL UncachedIsYosemiteOrLater(void) {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 10) || (major > 10);
+    } else {
+        return NO;
+    }
+}
+
+BOOL IsYosemiteOrLater(void) {
+    static BOOL result;
+    static BOOL initialized;
+    if (!initialized) {
+        initialized = YES;
+        result = UncachedIsYosemiteOrLater();
+    }
+    return result;
+}
+
 
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
@@ -220,7 +240,7 @@ static BOOL initDone = NO;
 - (PTYSession *)anyTmuxSession
 {
     for (PseudoTerminal* terminal in terminalWindows) {
-        for (PTYSession *session in [terminal sessions]) {
+        for (PTYSession *session in [terminal allSessions]) {
             if ([session isTmuxClient] || [session isTmuxGateway]) {
                 return session;
             }
@@ -819,7 +839,7 @@ static BOOL initDone = NO;
 - (PseudoTerminal *)terminalWithSession:(PTYSession *)session
 {
     for (PseudoTerminal *term in [self terminals]) {
-        if ([[term sessions] containsObject:session]) {
+        if ([[term allSessions] containsObject:session]) {
             return term;
         }
     }

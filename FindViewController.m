@@ -27,8 +27,10 @@
 
 #import "FindViewController.h"
 #import "NSTextField+iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermProgressIndicator.h"
+#import "NSTextField+iTerm.h"
 
 static const float FINDVIEW_DURATION = 0.075;
 static BOOL gDefaultIgnoresCase;
@@ -255,6 +257,16 @@ const CGFloat kEdgeWidth = 3;
     NSRect fullFrame_;
     NSSize textFieldSize_;
     NSSize textFieldSmallSize_;
+
+    // Last time the text field was edited.
+    NSTimeInterval lastEditTime_;
+    enum {
+        kFindViewDelayStateEmpty,
+        kFindViewDelayStateDelaying,
+        kFindViewDelayStateActiveShort,
+        kFindViewDelayStateActiveMedium,
+        kFindViewDelayStateActiveLong,
+    } delayState_;
 }
 
 
@@ -416,12 +428,9 @@ const CGFloat kEdgeWidth = 3;
     [[[[self view] window] contentView] setNeedsDisplay:YES];
 }
 
-- (void)toggleVisibility
-{
+- (void)makeVisible {
     BOOL wasHidden = [[self view] isHidden];
-    NSObject* firstResponder = [[[self view] window] firstResponder];
-    NSText* currentEditor = [findBarTextField_ currentEditor];
-    if (!wasHidden && (!currentEditor || currentEditor != firstResponder)) {
+    if (!wasHidden && [findBarTextField_ textFieldIsFirstResponder]) {
         // The bar was already visible but didn't have focus. Just set the focus.
         [[[self view] window] makeFirstResponder:findBarTextField_];
         return;
@@ -429,7 +438,7 @@ const CGFloat kEdgeWidth = 3;
     if (wasHidden) {
         [self open];
     } else {
-        [self close];
+        [findBarTextField_ selectText:nil];
     }
 }
 
@@ -513,7 +522,7 @@ const CGFloat kEdgeWidth = 3;
     BOOL ok = NO;
     if ([delegate_ canSearch]) {
         if ([subString length] <= 0) {
-            NSBeep();
+            [delegate_ clearHighlights];
         } else {
             [delegate_ findString:subString
                  forwardDirection:direction
@@ -631,6 +640,138 @@ const CGFloat kEdgeWidth = 3;
     if (field != findBarTextField_) {
         return;
     }
+
+    // A query becomes stale when it is 1 or 2 chars long and it hasn't been edited in 3 seconds (or
+    // the search field has lost focus since the last char was entered).
+    static const CGFloat kStaleTime = 3;
+    BOOL isStale = (([NSDate timeIntervalSinceReferenceDate] - lastEditTime_) > kStaleTime &&
+                    findBarTextField_.stringValue.length > 0 &&
+                    [self queryIsShort]);
+
+    // This state machine implements a delay before executing short (1 or 2 char) queries. The delay
+    // is incurred again when a 5+ char query becomes short. It's kind of complicated so the delay
+    // gets inserted at appropriate but minimally annoying times. Plug this into graphviz to see the
+    // full state machine:
+    //
+    // digraph g {
+    //   Empty -> Delaying [ label = "1 or 2 chars entered" ]
+    //   Empty -> ActiveShort
+    //   Empty -> ActiveMedium [ label = "3 or 4 chars entered" ]
+    //   Empty -> ActiveLong [ label = "5+ chars entered" ]
+    //
+    //   Delaying -> Empty [ label = "Erased" ]
+    //   Delaying -> ActiveShort [ label = "After Delay" ]
+    //   Delaying -> ActiveMedium
+    //   Delaying -> ActiveLong
+    //
+    //   ActiveShort -> ActiveMedium
+    //   ActiveShort -> ActiveLong
+    //   ActiveShort -> Delaying [ label = "When Stale" ]
+    //
+    //   ActiveMedium -> Empty
+    //   ActiveMedium -> ActiveLong
+    //   ActiveMedium -> Delaying [ label = "When Stale" ]
+    //
+    //   ActiveLong -> Delaying [ label = "Becomes Short" ]
+    //   ActiveLong -> ActiveMedium
+    //   ActiveLong -> Empty
+    // }
+    switch (delayState_) {
+        case kFindViewDelayStateEmpty:
+            if (findBarTextField_.stringValue.length == 0) {
+                break;
+            } else if ([self queryIsShort]) {
+                [self startDelay];
+            } else {
+                [self becomeActive];
+            }
+            break;
+
+        case kFindViewDelayStateDelaying:
+            if (findBarTextField_.stringValue.length == 0) {
+                delayState_ = kFindViewDelayStateEmpty;
+            } else if (![self queryIsShort]) {
+                [self becomeActive];
+            }
+            break;
+
+        case kFindViewDelayStateActiveShort:
+            // This differs from ActiveMedium in that it will not enter the Empty state.
+            if (isStale) {
+                [self startDelay];
+                break;
+            }
+
+            [self doSearch];
+            if ([self queryIsLong]) {
+                delayState_ = kFindViewDelayStateActiveLong;
+            } else if (![self queryIsShort]) {
+                delayState_ = kFindViewDelayStateActiveMedium;
+            }
+            break;
+
+        case kFindViewDelayStateActiveMedium:
+            if (isStale) {
+                [self startDelay];
+                break;
+            }
+            if (findBarTextField_.stringValue.length == 0) {
+                delayState_ = kFindViewDelayStateEmpty;
+            } else if ([self queryIsLong]) {
+                delayState_ = kFindViewDelayStateActiveLong;
+            }
+            // This state intentionally does not transition to ActiveShort. If you backspace over
+            // the whole query, the delay must be done again.
+            [self doSearch];
+            break;
+
+        case kFindViewDelayStateActiveLong:
+            if (findBarTextField_.stringValue.length == 0) {
+                delayState_ = kFindViewDelayStateEmpty;
+                [self doSearch];
+            } else if ([self queryIsShort]) {
+                // long->short transition. Common when select-all followed by typing.
+                [self startDelay];
+            } else if (![self queryIsLong]) {
+                delayState_ = kFindViewDelayStateActiveMedium;
+                [self doSearch];
+            } else {
+                [self doSearch];
+            }
+            break;
+    }
+    lastEditTime_ = [NSDate timeIntervalSinceReferenceDate];
+}
+
+- (void)startDelay {
+    delayState_ = kFindViewDelayStateDelaying;
+    [self retain];
+    NSTimeInterval delay = [iTermAdvancedSettingsModel findDelaySeconds];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+                       if (delayState_ == kFindViewDelayStateDelaying) {
+                           [self becomeActive];
+                       }
+                       [self release];
+                   });
+}
+
+- (BOOL)queryIsLong {
+    return findBarTextField_.stringValue.length >= 5;
+}
+
+- (BOOL)queryIsShort {
+    return findBarTextField_.stringValue.length <= 2;
+}
+
+- (void)becomeActive {
+    if ([self queryIsLong]) {
+        delayState_ = kFindViewDelayStateActiveLong;
+    } else if ([self queryIsShort]) {
+        delayState_ = kFindViewDelayStateActiveShort;
+    } else {
+        delayState_ = kFindViewDelayStateActiveMedium;
+    }
     [self doSearch];
 }
 
@@ -723,6 +864,10 @@ const CGFloat kEdgeWidth = 3;
     int move = [[[aNotification userInfo] objectForKey:@"NSTextMovement"] intValue];
     [previousFindString_ setString:@""];
     switch (move) {
+        case NSOtherTextMovement:
+            // Focus lost
+            lastEditTime_ = 0;
+            break;
         case NSReturnTextMovement:
             // Return key
             if ([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) {
