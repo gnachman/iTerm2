@@ -9,12 +9,15 @@
 #import "ToolWrapper.h"
 #import "ToolbeltView.h"
 
-static const CGFloat kTitleHeight = 17;
-static const CGFloat kMargin = 4;
+static const CGFloat kTitleHeight = 19;
+static const CGFloat kMargin = 4;  // Margin between title bar and content
 static const CGFloat kLeftMargin = 4;
 static const CGFloat kRightMargin = 4;
 static const CGFloat kBottomMargin = 8;
 static const CGFloat kButtonSize = 17;
+static const CGFloat kTopMargin = 3;  // Margin above title bar and close button
+static const CGFloat kCloseButtonLeftMargin = 5;
+
 @implementation ToolWrapper
 
 @synthesize name;
@@ -26,9 +29,9 @@ static const CGFloat kButtonSize = 17;
 {
     self = [super initWithFrame:frame];
     if (self) {
-        title_ = [[NSTextField alloc] initWithFrame:NSMakeRect(kButtonSize,
+        title_ = [[NSTextField alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin + kButtonSize,
                                                                0,
-                                                               frame.size.width - kButtonSize - kRightMargin,
+                                                               frame.size.width - kButtonSize - kRightMargin - kCloseButtonLeftMargin,
                                                                kTitleHeight)];
         [title_ setEditable:NO];
         [title_ bind:@"value" toObject:self withKeyPath:@"name" options:nil];
@@ -40,7 +43,7 @@ static const CGFloat kButtonSize = 17;
         [title_ release];
 
         NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
-        closeButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
+        closeButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin, 10, kButtonSize, kButtonSize)];
         [closeButton_ setButtonType:NSMomentaryPushInButton];
         [closeButton_ setImage:closeImage];
         [closeButton_ setTarget:self];
@@ -56,6 +59,7 @@ static const CGFloat kButtonSize = 17;
                                                                frame.size.height - kTitleHeight - kMargin - kBottomMargin)] autorelease];
         [container_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [self addSubview:container_];
+        [self relayout];
     }
     return self;
 }
@@ -74,9 +78,15 @@ static const CGFloat kButtonSize = 17;
 - (void)relayout
 {
     NSRect frame = [self frame];
-    title_.frame = NSMakeRect(kButtonSize, 0, frame.size.width - kButtonSize - kRightMargin, kTitleHeight);
-    closeButton_.frame = NSMakeRect(0, 0, kButtonSize, kButtonSize);
-    container_.frame = NSMakeRect(kLeftMargin, kTitleHeight + kMargin, MAX(0, frame.size.width - kLeftMargin - kRightMargin), MAX(0, frame.size.height - kTitleHeight - kMargin - kBottomMargin));
+    title_.frame = NSMakeRect(kCloseButtonLeftMargin + kButtonSize,
+                              kTopMargin,
+                              frame.size.width - kButtonSize - kRightMargin - kCloseButtonLeftMargin,
+                              kTitleHeight - kTopMargin);
+    closeButton_.frame = NSMakeRect(kCloseButtonLeftMargin, kTopMargin, kButtonSize, kButtonSize);
+    container_.frame = NSMakeRect(kLeftMargin,
+                                  kTitleHeight + kMargin,
+                                  MAX(0, frame.size.width - kLeftMargin - kRightMargin),
+                                  MAX(0, frame.size.height - kTitleHeight - kMargin - kBottomMargin));
 
     NSObject<ToolbeltTool> *tool = [self tool];
     if ([tool respondsToSelector:@selector(relayout)]) {

@@ -113,6 +113,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
         [splitter_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [splitter_ setDividerStyle:NSSplitViewDividerStyleThin];
         [splitter_ setDelegate:self];
+        [splitter_ setDividerColor:[NSColor colorWithCalibratedWhite:122/255.0 alpha:0.25]];
         [self addSubview:splitter_];
         tools_ = [[NSMutableDictionary alloc] init];
 
@@ -141,10 +142,6 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [[NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1] set];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
-}
-
-- (void)setUseDarkDividers:(BOOL)useDarkDividers {
-    [splitter_ setDividerColor:useDarkDividers ? [NSColor darkGrayColor] : [NSColor lightGrayColor]];
 }
 
 - (void)shutdown

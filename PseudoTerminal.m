@@ -697,7 +697,6 @@ NSString *kSessionsKVCKey = @"sessions";
                                                 term:self] autorelease];
     toolbelt_.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
     [[self.window contentView] addSubview:toolbelt_];
-    [toolbelt_ setUseDarkDividers:YES];
     [self updateToolbelt];
 
     hidingToolbeltShouldResizeWindow_ = NO;
@@ -3415,7 +3414,6 @@ NSString *kSessionsKVCKey = @"sessions";
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
     DLog(@"Window did enter lion fullscreen");
-    [toolbelt_ setUseDarkDividers:YES];
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
