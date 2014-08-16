@@ -45,6 +45,9 @@ extern NSString *const kCurrentSessionDidChange;
 // needs to be restored.
 @property(nonatomic, copy) NSString *terminalGuid;
 
+// Indicates if the window is fully initialized.
+@property(nonatomic, readonly) BOOL windowInitialized;
+
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
 // giving the screens' coordinates in the model.
@@ -360,6 +363,16 @@ extern NSString *const kCurrentSessionDidChange;
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
 
+- (id)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
+- (id)addNewSession:(NSDictionary *)addressbookEntry
+            withURL:(NSString *)url
+      forObjectType:(iTermObjectType)objectType;
+- (id)addNewSession:(NSDictionary *) addressbookEntry
+        withCommand:(NSString *)command
+      forObjectType:(iTermObjectType)objectType;
+// Add a new session to this window with the given addressbook entry.
+- (id)addNewSession:(NSDictionary *)addressbookEntry;
+
 #pragma mark - IBActions
 
 - (IBAction)findUrls:(id)sender;
@@ -448,59 +461,13 @@ extern NSString *const kCurrentSessionDidChange;
            sessions:(NSArray *)sessions;
 - (IBAction)toggleToolbeltVisibility:(id)sender;
 
-#pragma mark - Key Value Coding
+#pragma mark - Used by Scripting Category
 
-// IMPORTANT:
-// Never remove methods from here because it will break existing Applescript.
-// Be careful making any changes that might not be backward-compatible.
+- (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex;
 
-// accessors for to-many relationships:
-// accessors for attributes:
-// IMPORTANT: These accessors are here for backward compatibility with existing
-// applescript. These methods don't make sense since each tab may have a
-// different number of rows and columns.
-- (int)columns;
-- (void)setColumns: (int)columns;
-- (int)rows;
-- (void)setRows:(int)rows;
-
-// (See NSScriptKeyValueCoding.h)
-- (id)valueInSessionsAtIndex:(unsigned)index;
-- (id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey;
-- (id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey;
-- (id)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
-- (id)addNewSession:(NSDictionary *)addressbookEntry
-            withURL:(NSString *)url
-      forObjectType:(iTermObjectType)objectType;
-- (id)addNewSession:(NSDictionary *) addressbookEntry
-        withCommand:(NSString *)command
-      forObjectType:(iTermObjectType)objectType;
-- (void)appendSession:(PTYSession *)object;
-- (void)removeFromSessionsAtIndex:(unsigned)index;
-- (void)setSessions:(NSArray*)sessions;
-- (void)replaceInSessions:(PTYSession *)object atIndex:(unsigned)index;
-- (void)addInSessions:(PTYSession *)object;
-- (void)insertInSessions:(PTYSession *)object;
-- (void)insertInSessions:(PTYSession *)object atIndex:(unsigned)index;
-// Add a new session to this window with the given addressbook entry.
-- (id)addNewSession:(NSDictionary *)addressbookEntry;
-
-// This is deprecated because it's still used by applescript to get a list of
-// active sessions (one per tab) but we don't ever want to confuse it with
-// -allSessions, which returns all the sessions in a window.
-- (NSArray *)sessions __attribute__((deprecated));
-
-- (BOOL)windowInited;
-- (void)setWindowInited:(BOOL)flag;
-
-// a class method to provide the keys for KVC:
-+ (NSArray*)kvcKeys;
-
-#pragma mark - Scripting support
-
-- (void)handleSelectScriptCommand:(NSScriptCommand *)command;
-- (id)handleLaunchScriptCommand:(NSScriptCommand *)command;
-- (void)handleSplitScriptCommand:(NSScriptCommand *)command;
+- (void)setupSession:(PTYSession *)aSession
+               title:(NSString *)title
+            withSize:(NSSize *)size;
 
 @end
 

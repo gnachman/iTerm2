@@ -917,6 +917,9 @@
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
 		A6C537C41939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
 		A6C537C51939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
+		A6C7DE4F199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */; };
+		A6C7DE50199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */; };
+		A6C7DE52199F3087001E5C75 /* PseudoTerminal+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */; };
 		A6CEDA5B198C139500BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
 		A6CEDA5C198C139500BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
 		A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
@@ -1639,6 +1642,8 @@
 		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+Scripting.m"; sourceTree = "<group>"; };
+		A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+Scripting.h"; sourceTree = "<group>"; };
 		A6CEDA5A198C139500BB57EC /* iTerm2.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; name = iTerm2.iconset; path = images/icons/iTerm2.iconset; sourceTree = "<group>"; };
 		A6CEDA5D19988A7300BB57EC /* LogoFrame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoFrame.png; path = images/LogoParts/LogoFrame.png; sourceTree = "<group>"; };
 		A6CEDA5E19988A7300BB57EC /* LogoShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoShadow.png; path = images/LogoParts/LogoShadow.png; sourceTree = "<group>"; };
@@ -2022,6 +2027,7 @@
 				1D06E7D114BC04510097C0ED /* ProfileTableRow.h */,
 				1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */,
 				A6057C021878CD30004A60AF /* ProfileTagsView.h */,
+				A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */,
 				1D407A2B14BABE8700BD5035 /* PseudoTerminal.h */,
 				5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */,
 				2076B15704E8817300000106 /* PTToolbarController.h */,
@@ -2497,6 +2503,7 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */,
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				A68A30CD186D1414007F550F /* NSArray+iTerm.m */,
 				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
@@ -3020,6 +3027,7 @@
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
 				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
 				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
+				A6C7DE52199F3087001E5C75 /* PseudoTerminal+Scripting.h in Headers */,
 				1DABA03319253FEA00A228D8 /* PasswordTrigger.h in Headers */,
 				A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */,
 				A6E74761188C679C005355CF /* iTermExposeView.h in Headers */,
@@ -3752,6 +3760,7 @@
 				1D9A55AE180FA8B700B42CE9 /* PSMTabBarControl.m in Sources */,
 				A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */,
 				A6AE1EDA1926F89B00780C19 /* iTermAnnouncementViewController.m in Sources */,
+				A6C7DE50199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */,
 				A635864B184BEA57009ED690 /* AATreeNode.m in Sources */,
 				A6A13AB318C33ED300B241ED /* VT100CSIParser.m in Sources */,
 				A61B66D118D51EAC009AC9D5 /* iTermInstantReplayWindowController.m in Sources */,
@@ -4021,6 +4030,7 @@
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
 				A63F409B183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
+				A6C7DE4F199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */,
 				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
 				A6A2697F18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */,
 				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,

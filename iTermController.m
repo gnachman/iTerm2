@@ -1137,7 +1137,7 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     BOOL toggle = NO;
-    if (theTerm == nil || ![theTerm windowInited]) {
+    if (theTerm == nil || ![theTerm windowInitialized]) {
         [iTermController switchToSpaceInBookmark:aDict];
         int windowType = [self windowTypeForBookmark:aDict];
         if (isHotkey && windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
@@ -1397,7 +1397,7 @@ static BOOL initDone = NO;
     FRONT = thePseudoTerminal;
 
     // make sure this window is the key window
-    if ([thePseudoTerminal windowInited] && [[thePseudoTerminal window] isKeyWindow] == NO) {
+    if ([thePseudoTerminal windowInitialized] && [[thePseudoTerminal window] isKeyWindow] == NO) {
         [[thePseudoTerminal window] makeKeyAndOrderFront:self];
         if ([thePseudoTerminal fullScreen]) {
           [thePseudoTerminal hideMenuBar];

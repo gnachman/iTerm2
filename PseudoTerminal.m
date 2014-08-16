@@ -36,7 +36,7 @@
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "ProfilesWindow.h"
-#import "PseudoTerminal.h"
+#import "PseudoTerminal+Scripting.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMTabStyle.h"
 #import "PTToolbarController.h"
@@ -105,13 +105,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 @interface PseudoTerminal () <iTermTabBarControlViewDelegate>
 @property(nonatomic, retain) PTToolbarController *toolbarController;
+@property(nonatomic, assign) BOOL windowInitialized;
 @end
-
-// keys for attributes:
-NSString *kColumnsKVCKey = @"columns";
-NSString *kRowsKVCKey = @"rows";
-// keys for to-many relationships:
-NSString *kSessionsKVCKey = @"sessions";
 
 @implementation PseudoTerminal {
     NSPoint preferredOrigin_;
@@ -174,9 +169,6 @@ NSString *kSessionsKVCKey = @"sessions";
     // by the user.
     BOOL oldUseTransparency_;
     BOOL restoreUseTransparency_;
-
-    // True if an [init...] method was called.
-    BOOL windowInited;
 
     // How input should be broadcast (or not).
     BroadcastMode broadcastMode_;
@@ -348,7 +340,7 @@ NSString *kSessionsKVCKey = @"sessions";
     //
     // Causes insertInSessions:atIndex: to be called.
     // A followup call to finishInitializationWithSmartLayout:windowType:screen:isHotkey:
-    // finishes intialization. -windowInited will return NO until that is done.
+    // finishes intialization. -windowInitialized will return NO until that is done.
     return [self initWithWindowNibName:@"PseudoTerminal"];
 }
 
@@ -659,7 +651,7 @@ NSString *kSessionsKVCKey = @"sessions";
                                                  name:kToolbeltShouldHide
                                                object:nil];
     PtyLog(@"set window inited");
-    [self setWindowInited: YES];
+    self.windowInitialized = YES;
     useTransparency_ = YES;
     fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] boolForKey:kShowFullscreenTabBarKey];
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
@@ -1297,7 +1289,7 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
 
-    if ([TABVIEW numberOfTabViewItems] <= 1 && [self windowInited]) {
+    if ([TABVIEW numberOfTabViewItems] <= 1 && self.windowInitialized) {
         [[self window] close];
     } else {
         NSTabViewItem *aTabViewItem;
@@ -6311,7 +6303,7 @@ NSString *kSessionsKVCKey = @"sessions";
         [TABVIEW insertTabViewItem:aTabViewItem atIndex:anIndex];
         [aTabViewItem release];
         [TABVIEW selectTabViewItemAtIndex:anIndex];
-        if ([self windowInited] && !_fullScreen) {
+        if (self.windowInitialized && !_fullScreen) {
             [[self window] makeKeyAndOrderFront:self];
         } else {
             PtyLog(@"window not initialized or is fullscreen %@", [NSThread callStackSymbols]);
@@ -6343,8 +6335,7 @@ NSString *kSessionsKVCKey = @"sessions";
 }
 
 // Seamlessly change the session in a tab.
-- (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex
-{
+- (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex {
     PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
 
     if (aSession == nil) {
@@ -6369,15 +6360,14 @@ NSString *kSessionsKVCKey = @"sessions";
 
     // Bring the window to the fore.
     [self fitWindowToTabs];
-    if ([self windowInited] && !_fullScreen) {
+    if (self.windowInitialized && !_fullScreen) {
         [[self window] makeKeyAndOrderFront:self];
     }
     [[iTermController sharedInstance] setCurrentTerminal:self];
     [newTab numberOfSessionsDidChange];
 }
 
-- (NSString *)currentSessionName
-{
+- (NSString *)currentSessionName {
     PTYSession* session = [self currentSession];
     return [session windowTitle] ? [session windowTitle] : [session defaultName];
 }
@@ -7023,8 +7013,7 @@ NSString *kSessionsKVCKey = @"sessions";
     }
 }
 
-- (id)addNewSession:(NSDictionary *)addressbookEntry
-{
+- (id)addNewSession:(NSDictionary *)addressbookEntry {
     assert(addressbookEntry);
     PTYSession *aSession;
     NSString *oldCWD = nil;
@@ -7043,7 +7032,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // set our preferences
     [aSession setProfile:addressbookEntry];
     // Add this session to our term and make it current
-    [self appendSession:aSession];
+    [self addSessionInNewTab:aSession];
     if ([aSession screen]) {
         iTermObjectType objectType;
         if ([TABVIEW numberOfTabViewItems] == 1) {
@@ -7116,71 +7105,6 @@ NSString *kSessionsKVCKey = @"sessions";
     return proposedOptions | NSApplicationPresentationAutoHideToolbar;
 }
 
-
-// accessors for to-many relationships:
-// (See NSScriptKeyValueCoding.h)
-- (id)valueInSessionsAtIndex:(unsigned)anIndex {
-    PTYTab *tab = [[TABVIEW tabViewItemAtIndex:anIndex] identifier];
-    return [tab activeSession];
-}
-
-// This is kept around because it's used by applescript but it only returns the active session
-// in each tab. Use -allSessions if you want them all. This is for backward compatibility. For a
-// while it did return all sessions but that caused bug 3147.
-- (NSArray *)sessions {
-    int n = [TABVIEW numberOfTabViewItems];
-    NSMutableArray *sessions = [NSMutableArray arrayWithCapacity:n];
-    int i;
-
-    for (i = 0; i < n; ++i) {
-        PTYTab *tab = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        [sessions addObject:tab.activeSession];
-    }
-
-    return sessions;
-}
-
-- (void)setSessions:(NSArray*)sessions
-{
-}
-
-- (id)valueWithName:(NSString *)uniqueName inPropertyWithKey:(NSString *)propertyKey {
-    id result = nil;
-    int i;
-
-    if ([propertyKey isEqualToString:kSessionsKVCKey]) {
-        PTYSession *aSession;
-
-        for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-            aSession = [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
-            if ([[aSession name] isEqualToString:uniqueName] == YES) {
-                return aSession;
-            }
-        }
-    }
-
-    return result;
-}
-
-// The 'uniqueID' argument might be an NSString or an NSNumber.
-- (id)valueWithID:(NSString *)uniqueID inPropertyWithKey:(NSString*)propertyKey {
-    id result = nil;
-    int i;
-
-    if ([propertyKey isEqualToString:kSessionsKVCKey]) {
-        PTYSession *aSession;
-
-        for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-            aSession = [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
-            if ([[aSession tty] isEqualToString:uniqueID] == YES) {
-                return (aSession);
-            }
-        }
-    }
-
-    return result;
-}
-
 - (id)addNewSession:(NSDictionary *)addressbookEntry
             withURL:(NSString *)url
       forObjectType:(iTermObjectType)objectType {
@@ -7194,7 +7118,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // set our preferences
     [aSession setProfile: addressbookEntry];
     // Add this session to our term and make it current
-    [self appendSession: aSession];
+    [self addSessionInNewTab: aSession];
     if ([aSession screen]) {
         // We process the cmd to insert URL parts
         NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
@@ -7271,7 +7195,7 @@ NSString *kSessionsKVCKey = @"sessions";
     // set our preferences
     [aSession setProfile: addressbookEntry];
     // Add this session to our term and make it current
-    [self appendSession: aSession];
+    [self addSessionInNewTab: aSession];
     if ([aSession screen]) {
         NSMutableString *cmd, *name;
         NSArray *arg;
@@ -7310,9 +7234,8 @@ NSString *kSessionsKVCKey = @"sessions";
     return aSession;
 }
 
--(void)appendSession:(PTYSession *)object
-{
-    PtyLog(@"PseudoTerminal: -appendSession: %p", object);
+- (void)addSessionInNewTab:(PTYSession *)object {
+    PtyLog(@"PseudoTerminal: -addSessionInNewTab: %p", object);
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
     ++tabViewItemsBeingAdded;
@@ -7326,87 +7249,6 @@ NSString *kSessionsKVCKey = @"sessions";
         }
     }
     [[self currentTab] numberOfSessionsDidChange];
-}
-
--(void)replaceInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
-{
-    PtyLog(@"PseudoTerminal: -replaceInSessions: %p atIndex: %d", object, anIndex);
-    // TODO: Test this
-    [self setupSession:object title:nil withSize:nil];
-    if ([object screen]) {  // screen initialized ok
-        [self replaceSession:object atIndex:anIndex];
-    }
-}
-
--(void)addInSessions:(PTYSession *)object
-{
-    PtyLog(@"PseudoTerminal: -addInSessions: %p", object);
-    [self insertInSessions: object];
-}
-
--(void)insertInSessions:(PTYSession *)object
-{
-    PtyLog(@"PseudoTerminal: -insertInSessions: %p", object);
-    [self insertInSessions: object atIndex:[TABVIEW numberOfTabViewItems]];
-}
-
-- (void)insertInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
-{
-    PtyLog(@"PseudoTerminal: -insertInSessions: %p atIndex: %d", object, anIndex);
-    BOOL toggle = NO;
-    if (![self windowInited]) {
-        Profile *aDict = [object profile];
-        [self finishInitializationWithSmartLayout:YES
-                                       windowType:[[iTermController sharedInstance] windowTypeForBookmark:aDict]
-                                  savedWindowType:WINDOW_TYPE_NORMAL
-                                           screen:aDict[KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
-                                         isHotkey:NO];
-        if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-            [self hideAfterOpening];
-        }
-        [[iTermController sharedInstance] addInTerminals:self];
-        toggle = ([self windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
-    }
-
-    [self setupSession:object title:nil withSize:nil];
-    if ([object screen]) {  // screen initialized ok
-        [self insertSession:object atIndex:anIndex];
-    }
-    [[self currentTab] numberOfSessionsDidChange];
-    if (toggle) {
-        [self delayedEnterFullscreen];
-    }
-}
-
--(void)removeFromSessionsAtIndex:(unsigned)anIndex
-{
-    // NSLog(@"PseudoTerminal: -removeFromSessionsAtIndex: %d", anIndex);
-    if (anIndex < [TABVIEW numberOfTabViewItems]) {
-        PTYSession *aSession = [[[TABVIEW tabViewItemAtIndex:anIndex] identifier] activeSession];
-        [self closeSession:aSession];
-    }
-}
-
-- (BOOL)windowInited
-{
-    return (windowInited);
-}
-
-- (void) setWindowInited: (BOOL) flag
-{
-    windowInited = flag;
-}
-
-// TODO: What is KVC?
-// a class method to provide the keys for KVC:
-+ (NSArray*)kvcKeys
-{
-    static NSArray *_kvcKeys = nil;
-    if (nil == _kvcKeys ){
-        _kvcKeys = [[NSArray alloc] initWithObjects:
-            kColumnsKVCKey, kRowsKVCKey, kSessionsKVCKey, nil ];
-    }
-    return _kvcKeys;
 }
 
 - (void)sessionDidTerminate:(PTYSession *)session {
@@ -7465,86 +7307,6 @@ NSString *kSessionsKVCKey = @"sessions";
     } else {
         NSBeep();
     }
-}
-
-#pragma mark - Scripting Support
-
-// Object specifier
-- (NSScriptObjectSpecifier *)objectSpecifier
-{
-    NSUInteger anIndex = 0;
-    id classDescription = nil;
-
-    NSScriptObjectSpecifier *containerRef;
-
-    NSArray *terminals = [[iTermController sharedInstance] terminals];
-    anIndex = [terminals indexOfObjectIdenticalTo:self];
-    if (anIndex != NSNotFound) {
-        containerRef     = [NSApp objectSpecifier];
-        classDescription = [NSClassDescription classDescriptionForClass:[NSApp class]];
-        //create and return the specifier
-        return [[[NSIndexSpecifier allocWithZone:[self zone]]
-               initWithContainerClassDescription: classDescription
-                              containerSpecifier: containerRef
-                                             key: @ "terminals"
-                                           index: anIndex] autorelease];
-    } else {
-        return nil;
-    }
-}
-
-// Handlers for supported commands:
-
-- (void)handleSelectScriptCommand:(NSScriptCommand *)command
-{
-    [[iTermController sharedInstance] setCurrentTerminal: self];
-}
-
-- (id)handleLaunchScriptCommand:(NSScriptCommand *)command
-{
-    // Get the command's arguments:
-    NSDictionary *args = [command evaluatedArguments];
-    NSString *session = [args objectForKey:@"session"];
-    NSDictionary *abEntry;
-
-    abEntry = [[ProfileModel sharedInstance] bookmarkWithName:session];
-    if (abEntry == nil) {
-        abEntry = [[ProfileModel sharedInstance] defaultBookmark];
-    }
-    if (abEntry == nil) {
-        NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-        abEntry = aDict;
-    }
-
-    return [[iTermController sharedInstance] launchBookmark:abEntry inTerminal:self];
-}
-
-- (void)handleSplitScriptCommand:(NSScriptCommand *)command
-{
-    // Get the command's arguments:
-    NSDictionary *args = [command evaluatedArguments];
-    NSString *direction = args[@"direction"];
-    BOOL isVertical = [direction isEqualToString:@"vertical"];
-    NSString *profileName = args[@"profile"];
-    NSDictionary *abEntry;
-
-    abEntry = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
-    if (abEntry == nil) {
-        abEntry = [[ProfileModel sharedInstance] defaultBookmark];
-    }
-    if (abEntry == nil) {
-        NSMutableDictionary* aDict = [NSMutableDictionary dictionary];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-        abEntry = aDict;
-    }
-
-    [self splitVertically:isVertical
-             withBookmark:abEntry
-            targetSession:[[self currentTab] activeSession]];
-
 }
 
 @end
