@@ -55,7 +55,7 @@
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>iTerm</string>
+	<string>iTerm2</string>
 	<key>CFBundleGetInfoString</key>
 	<string>unknown</string>
 	<key>CFBundleHelpBookFolder</key>
@@ -69,7 +69,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>iTerm</string>
+	<string>iTerm2</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

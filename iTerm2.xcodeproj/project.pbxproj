@@ -1348,7 +1348,7 @@
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DD39ACD180B785A004E56D5 /* VT100GridTypes.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100GridTypes.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100GridTypes.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DD39AD4180B8117004E56D5 /* iTermTests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTermTests.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DD39AD4180B8117004E56D5 /* iTermTests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = iTermTests.app; path = iTerm2Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DD39AD6180B8118004E56D5 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		1DD39AD9180B8118004E56D5 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		1DD39ADA180B8118004E56D5 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -1434,7 +1434,7 @@
 		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; tabWidth = 4; };
 		5ECE4AC41451343E002A9CC2 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Growl.framework; sourceTree = "<group>"; };
 		5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Growl Registration Ticket.growlRegDict"; sourceTree = "<group>"; };
-		8742065A0564169600CFC3F1 /* iTerm.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8742065A0564169600CFC3F1 /* iTerm2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8786A96E052CEC220073D10E /* script.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = script.png; path = images/script.png; sourceTree = "<group>"; };
 		90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleScriptTest.h; sourceTree = "<group>"; };
 		90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppleScriptTest.m; sourceTree = "<group>"; };
@@ -2173,7 +2173,7 @@
 		0464AB32006CD2EC7F000001 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8742065A0564169600CFC3F1 /* iTerm.app */,
+				8742065A0564169600CFC3F1 /* iTerm2.app */,
 				1DD39AD4180B8117004E56D5 /* iTermTests.app */,
 				1DFA7C671923E83500DF1410 /* libSSKeychain.a */,
 			);
@@ -3219,9 +3219,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		1DD39AD3180B8117004E56D5 /* iTermTests */ = {
+		1DD39AD3180B8117004E56D5 /* iTerm2Tests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "iTermTests" */;
+			buildConfigurationList = 1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "iTerm2Tests" */;
 			buildPhases = (
 				1DD39AD0180B8117004E56D5 /* Sources */,
 				1DD39AD1180B8117004E56D5 /* Frameworks */,
@@ -3233,7 +3233,7 @@
 			dependencies = (
 				907F290318A5D3E400CA2ACB /* PBXTargetDependency */,
 			);
-			name = iTermTests;
+			name = iTerm2Tests;
 			productName = iTermTests;
 			productReference = 1DD39AD4180B8117004E56D5 /* iTermTests.app */;
 			productType = "com.apple.product-type.application";
@@ -3255,9 +3255,9 @@
 			productReference = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		874206460564169600CFC3F1 /* iTerm */ = {
+		874206460564169600CFC3F1 /* iTerm2 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm" */;
+			buildConfigurationList = BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm2" */;
 			buildPhases = (
 				874206480564169600CFC3F1 /* Headers */,
 				8742064A0564169600CFC3F1 /* Resources */,
@@ -3272,9 +3272,9 @@
 			dependencies = (
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
 			);
-			name = iTerm;
+			name = iTerm2;
 			productName = "JTerminal (Application)";
-			productReference = 8742065A0564169600CFC3F1 /* iTerm.app */;
+			productReference = 8742065A0564169600CFC3F1 /* iTerm2.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -3285,7 +3285,7 @@
 			attributes = {
 				LastUpgradeCheck = 0510;
 			};
-			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm" */;
+			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm2" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -3306,8 +3306,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				874206460564169600CFC3F1 /* iTerm */,
-				1DD39AD3180B8117004E56D5 /* iTermTests */,
+				874206460564169600CFC3F1 /* iTerm2 */,
+				1DD39AD3180B8117004E56D5 /* iTerm2Tests */,
 				1DFA7C661923E83500DF1410 /* SSKeychain */,
 			);
 		};
@@ -4067,7 +4067,7 @@
 /* Begin PBXTargetDependency section */
 		907F290318A5D3E400CA2ACB /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 874206460564169600CFC3F1 /* iTerm */;
+			target = 874206460564169600CFC3F1 /* iTerm2 */;
 			targetProxy = 907F290218A5D3E400CA2ACB /* PBXContainerItemProxy */;
 		};
 		A6C537BB19315CCB00A08C18 /* PBXTargetDependency */ = {
@@ -4250,7 +4250,7 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = .;
-				INFOPLIST_FILE = iTerm.plist;
+				INFOPLIST_FILE = iTerm2.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
@@ -4261,7 +4261,7 @@
 					"-laprutil-1",
 					"-licucore",
 				);
-				PRODUCT_NAME = iTerm;
+				PRODUCT_NAME = iTerm2;
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
@@ -4677,7 +4677,7 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = .;
-				INFOPLIST_FILE = iTerm.plist;
+				INFOPLIST_FILE = iTerm2.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
@@ -4689,7 +4689,7 @@
 					"-laprutil-1",
 					"-licucore",
 				);
-				PRODUCT_NAME = iTerm;
+				PRODUCT_NAME = iTerm2;
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = x86_64;
@@ -4731,7 +4731,7 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = .;
-				INFOPLIST_FILE = iTerm.plist;
+				INFOPLIST_FILE = iTerm2.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
@@ -4743,7 +4743,7 @@
 					"-laprutil-1",
 					"-licucore",
 				);
-				PRODUCT_NAME = iTerm;
+				PRODUCT_NAME = iTerm2;
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
@@ -4783,7 +4783,7 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = .;
-				INFOPLIST_FILE = iTerm.plist;
+				INFOPLIST_FILE = iTerm2.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
@@ -4794,7 +4794,7 @@
 					"-licucore",
 				);
 				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = iTerm;
+				PRODUCT_NAME = iTerm2;
 				REZ_EXECUTABLE = YES;
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
@@ -4863,7 +4863,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "iTermTests" */ = {
+		1DD39B02180B812D004E56D5 /* Build configuration list for PBXNativeTarget "iTerm2Tests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1DD39B03180B812D004E56D5 /* Development */,
@@ -4885,7 +4885,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Default;
 		};
-		BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm" */ = {
+		BB024D35096EE4080021E793 /* Build configuration list for PBXNativeTarget "iTerm2" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB024D36096EE4080021E793 /* Development */,
@@ -4896,7 +4896,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Default;
 		};
-		BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm" */ = {
+		BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm2" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB024D3A096EE4080021E793 /* Development */,

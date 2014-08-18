@@ -27,7 +27,7 @@ function SparkleSign {
 set -x
 cd ~/server/nightly/iTerm2/
 # todo: git pull origin master
-rm -rf build/Nightly/iTerm.app
+rm -rf build/Nightly/iTerm2.app
 make Nightly || die "Nightly build failed"
 ./sign.sh
 COMPACTDATE=$(date +"%Y%m%d")-nightly
@@ -37,7 +37,7 @@ SVNDIR=~/iterm2-website
 git log > $SVNDIR/appcasts/nightly_changes.txt
 
 cd build/Nightly
-zip -ry iTerm2-${NAME}.zip iTerm.app
+zip -ry iTerm2-${NAME}.zip iTerm2.app
 
 SparkleSign nightly.xml nightly_template.xml
 
