@@ -73,6 +73,11 @@
       <responds-to command="close">
         <cocoa method="handleCloseCommand:"/>
       </responds-to>
+
+      <property name="current session" code="crsn" type="session"
+          description="The current session in a tab">
+        <cocoa key="currentSession" />
+      </property>
     </class>
 
     <class name="session" code="trms" description="A terminal session">

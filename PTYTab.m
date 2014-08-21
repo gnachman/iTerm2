@@ -4220,6 +4220,20 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     return [self sessions][anIndex];
 }
 
+- (id)valueForKey:(NSString *)key {
+    if ([key isEqualToString:@"currentSession"]) {
+        return [self activeSession];
+    } else if ([key isEqualToString:@"isProcessing"]) {
+        return @([self isProcessing]);
+    } else if ([key isEqualToString:@"icon"]) {
+        return [self icon];
+    } else if ([key isEqualToString:@"objectCount"]) {
+        return @([self objectCount]);
+    } else {
+        return nil;
+    }
+}
+
 - (NSUInteger)countOfSessions {
     return [[self sessions] count];
 }
