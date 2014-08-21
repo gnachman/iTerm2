@@ -44,6 +44,11 @@
       <element type="terminal window" access="r">
         <cocoa key="terminalWindows"/>
       </element>
+
+      <property name="current window" code="crwn" type="terminal window"
+        description="The frontmost window">
+        <cocoa key="currentWindow" />
+      </property>
     </class>
 
     <class name="terminal window" code="trmw" description="A terminal window">
@@ -54,6 +59,10 @@
       <element type="tab" access="r">
         <cocoa key="tabs"/>
       </element>
+      <property name="current tab" code="crtb" type="tab"
+          description="The currently selected tab">
+        <cocoa key="currentTab" />
+      </property>
     </class>
 
     <class name="tab" code="trmt" description="A terminal tab">

@@ -133,4 +133,12 @@ static NSString *const kTabsKVCKey = @"tabs";
     [self closeTab:tabs[anIndex]];
 }
 
+- (id)valueForKey:(NSString *)key {
+    if ([key isEqualToString:@"currentTab"]) {
+        return [self currentTab];
+    } else {
+        return nil;
+    }
+}
+
 @end

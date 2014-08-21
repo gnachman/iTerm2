@@ -196,7 +196,17 @@
 }
 
 - (id)valueForKey:(NSString *)key {
-    return [[iTermController sharedInstance] terminals];
+    if ([key isEqualToString:@"terminalWindows"]) {
+        return [[iTermController sharedInstance] terminals];
+    } else if ([key isEqualToString:@"currentWindow"]) {
+        return [[iTermController sharedInstance] currentTerminal];
+    } else {
+        return nil;
+    }
+}
+
+- (PseudoTerminal *)currentWindow {
+    return [[iTermController sharedInstance] currentTerminal];
 }
 
 @end
