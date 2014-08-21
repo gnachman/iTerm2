@@ -106,7 +106,8 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
                                         inTerminal:nil
                                            withURL:nil
                                           isHotkey:YES
-                                           makeKey:YES];
+                                           makeKey:YES
+                                           command:nil];
         term = [[iTermController sharedInstance] terminalWithSession:session];
     }
     if (term) {

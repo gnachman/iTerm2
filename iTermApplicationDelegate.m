@@ -741,7 +741,8 @@ static BOOL hasBecomeActive = NO;
                                               inTerminal:term
                                                  withURL:urlStr
                                                 isHotkey:NO
-                                                 makeKey:NO];
+                                                 makeKey:NO
+                                                 command:nil];
     }
 }
 

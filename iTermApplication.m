@@ -182,5 +182,22 @@
     return (iTermApplicationDelegate *)[super delegate];
 }
 
+- (NSUInteger)countOfTerminalWindows {
+    return [[[iTermController sharedInstance] terminals] count];
+}
+
+- (id)valueInTerminalWindowsAtIndex:(unsigned)anIndex {
+    id terminalWindow = [[iTermController sharedInstance] terminals][anIndex];
+    return terminalWindow;
+}
+
+- (id)valueForUndefinedKey:(NSString *)key {
+    return @[];
+}
+
+- (id)valueForKey:(NSString *)key {
+    return [[iTermController sharedInstance] terminals];
+}
+
 @end
 

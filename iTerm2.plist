@@ -191,6 +191,8 @@
 	<string>iTermApplication</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<key>OSAScriptingDefinition</key>
+	<string>iTerm2.sdef</string>
 	<key>SUFeedURLForFinal</key>
 	<string>http://iterm2.com/appcasts/final.xml</string>
 	<key>SUFeedURLForTesting</key>

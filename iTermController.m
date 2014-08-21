@@ -1052,7 +1052,8 @@ static BOOL initDone = NO;
                      inTerminal:theTerm
                         withURL:nil
                        isHotkey:NO
-                        makeKey:YES];
+                        makeKey:YES
+                        command:nil];
 }
 
 - (NSDictionary *)profile:(NSDictionary *)aDict
@@ -1117,7 +1118,7 @@ static BOOL initDone = NO;
              withURL:(NSString *)url
             isHotkey:(BOOL)isHotkey
              makeKey:(BOOL)makeKey
-{
+             command:(NSString *)command {
     PseudoTerminal *term;
     NSDictionary *aDict;
     const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
@@ -1176,7 +1177,7 @@ static BOOL initDone = NO;
     if (url) {
         session = [term addNewSession:aDict withURL:url forObjectType:objectType];
     } else {
-        session = [term addNewSession:aDict];
+        session = [term createTabWithProfile:aDict withCommand:command];
     }
     if (toggle) {
         [term delayedEnterFullscreen];

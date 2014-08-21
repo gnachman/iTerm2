@@ -786,6 +786,10 @@ static NSString* FormatRect(NSRect r) {
     return needsFollowUp;
 }
 
+- (void)handleCloseCommand:(NSScriptCommand *)scriptCommand {
+    [[self parentWindow] closeTab:self];
+}
+
 - (void)closeSession:(PTYSession*)session
 {
     [[self parentWindow] closeSession:session];
@@ -4195,6 +4199,29 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                 kPTYTabNewOutputState |
                                 kPTYTabDeadState)];
     }
+}
+
+#pragma mark - Scripting
+
+- (NSScriptObjectSpecifier *)objectSpecifier {
+    NSScriptObjectSpecifier *containerRef;
+
+    containerRef = [PseudoTerminal objectSpecifier];
+    id classDescription = [NSClassDescription classDescriptionForClass:[PseudoTerminal class]];
+    NSInteger index = [[self realParentWindow] indexOfTab:self];
+    return [[[NSIndexSpecifier alloc]
+                 initWithContainerClassDescription:classDescription
+                 containerSpecifier:containerRef
+                 key:@"tabs"
+                 index:index] autorelease];
+}
+
+- (id)valueInSessionsAtIndex:(unsigned)anIndex {
+    return [self sessions][anIndex];
+}
+
+- (NSUInteger)countOfSessions {
+    return [[self sessions] count];
 }
 
 @end

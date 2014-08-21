@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+
+<dictionary title="iTerm2 Terminology">
+  <suite name="iTerm2 Suite" code="itrm" description="Classes just for the iTerm2 application.">
+    <command name="close" code="coreclos" description="Close a document.">
+      <cocoa class="NSCloseCommand"/>
+      <direct-parameter type="specifier"
+        description="the session, tab, or window to close."/>
+    </command>
+
+    <command name="create window with profile" code="itrmnwwp"
+      description="Create a new window">
+      <cocoa class="iTermNewWindowCommand" />
+      <direct-parameter description="The profile name">
+        <type type="text"/>
+      </direct-parameter>
+
+      <parameter name="command" code="nwcm" type="text"
+        description="Shell command to run">
+        <cocoa key="command"/>
+      </parameter>
+
+    </command>
+
+    <command name="create window with default profile" code="itrmnwwn"
+      description="Create a new window with the default profile">
+      <cocoa class="iTermNewWindowCommand" />
+
+      <parameter name="command" code="nwcm" type="text"
+        description="Shell command to run">
+        <cocoa key="command"/>
+      </parameter>
+
+    </command>
+
+    <value-type name="RGB color" code="cRGB">
+      <cocoa class="NSColor"/>
+    </value-type>
+
+    <class name="application" code="capp"
+      description="The application's top-level scripting object.">
+      <cocoa class="iTermApplication"/>
+      <element type="terminal window" access="r">
+        <cocoa key="terminalWindows"/>
+      </element>
+    </class>
+
+    <class name="terminal window" code="trmw" description="A terminal window">
+      <cocoa class="PseudoTerminal"/>
+      <responds-to command="close">
+        <cocoa method="handleCloseCommand:"/>
+      </responds-to>
+      <element type="tab" access="r">
+        <cocoa key="tabs"/>
+      </element>
+    </class>
+
+    <class name="tab" code="trmt" description="A terminal tab">
+      <cocoa class="PTYTab"/>
+      <element type="session" access="r">
+        <cocoa key="sessions"/>
+      </element>
+      <responds-to command="close">
+        <cocoa method="handleCloseCommand:"/>
+      </responds-to>
+    </class>
+
+    <class name="session" code="trms" description="A terminal session">
+      <cocoa class="PTYSession"/>
+      <responds-to command="close">
+        <cocoa method="handleCloseCommand:"/>
+      </responds-to>
+
+      <property name="color" code="colr" type="RGB color" description="The color of the text's first character.">
+        <cocoa key="foregroundColor"/>
+      </property>
+
+    <property name="background color" code="co00" type="RGB color">
+      <cocoa key="backgroundColor" />
+    </property>
+    <property name="bold color" code="co01" type="RGB color">
+      <cocoa key="boldColor" />
+    </property>
+    <property name="cursor color" code="co02" type="RGB color">
+      <cocoa key="cursorColor" />
+    </property>
+    <property name="cursor text color" code="co03" type="RGB color">
+      <cocoa key="cursorTextColor" />
+    </property>
+    <property name="foreground color" code="co04" type="RGB color">
+      <cocoa key="foregroundColor" />
+    </property>
+    <property name="selected text color" code="co05" type="RGB color">
+      <cocoa key="selectedTextColor" />
+    </property>
+    <property name="selection color" code="co06" type="RGB color">
+      <cocoa key="selectionColor" />
+    </property>
+    <property name="ANSI black color" code="co07" type="RGB color">
+      <cocoa key="ansiBlackColor" />
+    </property>
+    <property name="ANSI red color" code="co08" type="RGB color">
+      <cocoa key="ansiRedColor" />
+    </property>
+    <property name="ANSI green color" code="co09" type="RGB color">
+      <cocoa key="ansiGreenColor" />
+    </property>
+    <property name="ANSI yellow color" code="co10" type="RGB color">
+      <cocoa key="ansiYellowColor" />
+    </property>
+    <property name="ANSI blue color" code="co11" type="RGB color">
+      <cocoa key="ansiBlueColor" />
+    </property>
+    <property name="ANSI magenta color" code="co12" type="RGB color">
+      <cocoa key="ansiMagentaColor" />
+    </property>
+    <property name="ANSI cyan color" code="co13" type="RGB color">
+      <cocoa key="ansiCyanColor" />
+    </property>
+    <property name="ANSI white color" code="co14" type="RGB color">
+      <cocoa key="ansiWhiteColor" />
+    </property>
+    <property name="ANSI bright black color" code="co15" type="RGB color">
+      <cocoa key="ansiBrightBlackColor" />
+    </property>
+    <property name="ANSI bright red color" code="co16" type="RGB color">
+      <cocoa key="ansiBrightRedColor" />
+    </property>
+    <property name="ANSI bright green color" code="co17" type="RGB color">
+      <cocoa key="ansiBrightGreenColor" />
+    </property>
+    <property name="ANSI bright yellow color" code="co18" type="RGB color">
+      <cocoa key="ansiBrightYellowColor" />
+    </property>
+    <property name="ANSI bright blue color" code="co19" type="RGB color">
+      <cocoa key="ansiBrightBlueColor" />
+    </property>
+    <property name="ANSI bright magenta color" code="co20" type="RGB color">
+      <cocoa key="ansiBrightMagentaColor" />
+    </property>
+    <property name="ANSI bright cyan color" code="co21" type="RGB color">
+      <cocoa key="ansiBrightCyanColor" />
+    </property>
+    <property name="ANSI bright white color" code="co22" type="RGB color">
+      <cocoa key="ansiBrightWhiteColor" />
+    </property>
+
+    <property name="background image" code="bgim" type="text">
+      <cocoa key="backgroundImagePath" />
+    </property>
+
+    <property name="name" code="name" type="text">
+      <cocoa key="name" />
+    </property>
+
+    <property name="transparency" code="trns" type="real">
+      <cocoa key="transparency" />
+    </property>
+
+    <property name="unique ID" code="uniq" type="text" access="r">
+      <cocoa key="uniqueID" />
+    </property>
+
+    </class>
+
+  </suite>
+</dictionary>

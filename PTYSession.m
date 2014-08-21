@@ -951,7 +951,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                           inTerminal:term
                                              withURL:url
                                             isHotkey:NO
-                                             makeKey:NO];
+                                             makeKey:NO
+                                             command:nil];
 }
 
 - (void)selectPaneLeftInCurrentTerminal
@@ -6073,6 +6074,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)pasteHelperIsAtShellPrompt {
     return !_shellIntegrationEverUsed || [self currentCommand] != nil;
+}
+
+#pragma mark - Scripting
+
+- (void)handleCloseCommand:(NSScriptCommand *)scriptCommand {
+    [self.tab.realParentWindow closeSessionWithConfirmation:self];
 }
 
 @end

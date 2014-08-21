@@ -1065,9 +1065,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)newSessionInTabAtIndex:(id)sender
 {
-    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
-    if (bookmark) {
-        [self addNewSession:bookmark];
+    Profile* profile = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
+    if (profile) {
+        [self createTabWithProfile:profile withCommand:nil];
     }
 }
 
@@ -1077,9 +1077,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (NSMenuItem* item in [parent itemArray]) {
         if (![item isSeparatorItem] && ![item submenu]) {
             NSString* guid = [item representedObject];
-            Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-            if (bookmark) {
-                [self addNewSession:bookmark];
+            Profile* profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+            if (profile) {
+                [self createTabWithProfile:profile withCommand:nil];
             }
         }
     }
@@ -4225,7 +4225,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
         prototype = aDict;
     }
-    [self addNewSession:prototype];
+    [self createTabWithProfile:prototype withCommand:nil];
 }
 
 - (void)updateTabColors
@@ -4272,9 +4272,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
                 prototype = aDict;
             }
-            [self addNewSession:prototype
-                    withCommand:[commandField stringValue]
-                  forObjectType:iTermTabObject];
+            [self createTabWithProfile:prototype
+                           withCommand:[commandField stringValue]];
             break;
         }
         default:
@@ -6788,7 +6787,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                       inTerminal:term
                                                          withURL:command
                                                         isHotkey:NO
-                                                         makeKey:NO];
+                                                         makeKey:NO
+                                                         command:nil];
             } else {
                 [[NSWorkspace sharedWorkspace] openURL:url];
             }
@@ -7013,24 +7013,42 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (id)addNewSession:(NSDictionary *)addressbookEntry {
-    assert(addressbookEntry);
-    PTYSession *aSession;
-    NSString *oldCWD = nil;
+- (PTYSession *)createTabWithProfile:(Profile *)profile
+                         withCommand:(NSString *)command {
+    assert(profile);
 
     // Get active session's directory
-    PTYSession* cwdSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
-    if (cwdSession) {
-        oldCWD = [[cwdSession shell] getWorkingDirectory];
+    NSString *previousDirectory = nil;
+    PTYSession* currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    if (currentSession) {
+        previousDirectory = [[currentSession shell] getWorkingDirectory];
     }
 
     // Initialize a new session
-    aSession = [[PTYSession alloc] init];
-    [[aSession screen] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession screen] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    PTYSession *aSession = [[PTYSession alloc] init];
+    [[aSession screen] setUnlimitedScrollback:[[profile objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
+    [[aSession screen] setMaxScrollbackLines:[[profile objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+
+    // If a command was provided, create a temporary copy of the profile dictionary that runs
+    // the user-supplied command in lieu of the profile's command.
+    NSString *preferredName = nil;
+    if (command) {
+        // Create a modified profile to run "command".
+        NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
+        temp[KEY_CUSTOM_COMMAND] = @"Yes";
+
+        // Prompt user for variable values if needed and perform substitutions.
+        NSMutableString *name = [[profile[KEY_NAME] mutableCopy] autorelease];
+        NSMutableString *tempCommand = [[command mutableCopy] autorelease];
+        [self getSessionParameters:tempCommand withName:name];
+        preferredName = name;
+        temp[KEY_COMMAND] = command;
+        profile = temp;
+
+    }
 
     // set our preferences
-    [aSession setProfile:addressbookEntry];
+    [aSession setProfile:profile];
     // Add this session to our term and make it current
     [self addSessionInNewTab:aSession];
     if ([aSession screen]) {
@@ -7040,16 +7058,19 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         } else {
             objectType = iTermTabObject;
         }
-        [aSession runCommandWithOldCwd:oldCWD forObjectType:objectType];
+        [aSession runCommandWithOldCwd:previousDirectory forObjectType:objectType];
         if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
             [self setWindowTitle];
+        }
+        if (preferredName) {
+            [self setName:preferredName forSession:aSession];
         }
     }
 
     // On Lion, a window that can join all spaces can't go fullscreen.
     if ([self numberOfTabs] == 1 &&
-        [addressbookEntry objectForKey:KEY_SPACE] &&
-        [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
+        profile[KEY_SPACE] &&
+        [profile[KEY_SPACE] intValue] == -1) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
 
@@ -7178,60 +7199,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (id)addNewSession:(NSDictionary *)addressbookEntry withURL:(NSString *)url
 {
     return [self addNewSession:addressbookEntry withURL:url forObjectType:iTermWindowObject];
-}
-
-
-- (id)addNewSession:(NSDictionary *)addressbookEntry
-        withCommand:(NSString *)command
-      forObjectType:(iTermObjectType)objectType
-{
-    PtyLog(@"PseudoTerminal: addNewSession 2");
-    PTYSession *aSession;
-
-    // Initialize a new session
-    aSession = [[PTYSession alloc] init];
-    [[aSession screen] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession screen] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
-    // set our preferences
-    [aSession setProfile: addressbookEntry];
-    // Add this session to our term and make it current
-    [self addSessionInNewTab: aSession];
-    if ([aSession screen]) {
-        NSMutableString *cmd, *name;
-        NSArray *arg;
-        NSString *pwd;
-        BOOL isUTF8;
-
-        // Grab the addressbook command
-        cmd = [[[NSMutableString alloc] initWithString:command] autorelease];
-        name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_NAME]] autorelease];
-        // Get session parameters
-        [self getSessionParameters:cmd withName:name];
-
-        NSArray *components = [cmd componentsInShellCommand];
-        if (components.count > 0) {
-            cmd = components[0];
-            arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
-        } else {
-            arg = @[];
-        }
-
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
-                                           forObjectType:objectType];
-        if ([pwd length] == 0) {
-            pwd = NSHomeDirectory();
-        }
-        NSDictionary *env =[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
-
-        [self setName:name forSession:aSession];
-
-        // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
-    }
-
-    [aSession release];
-    return aSession;
 }
 
 - (void)addSessionInNewTab:(PTYSession *)object {

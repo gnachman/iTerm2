@@ -367,11 +367,11 @@ extern NSString *const kCurrentSessionDidChange;
 - (id)addNewSession:(NSDictionary *)addressbookEntry
             withURL:(NSString *)url
       forObjectType:(iTermObjectType)objectType;
-- (id)addNewSession:(NSDictionary *) addressbookEntry
-        withCommand:(NSString *)command
-      forObjectType:(iTermObjectType)objectType;
+
 // Add a new session to this window with the given addressbook entry.
-- (id)addNewSession:(NSDictionary *)addressbookEntry;
+// The optional command overrides the profile's settings.
+- (PTYSession *)createTabWithProfile:(Profile *)profile
+                         withCommand:(NSString *)command;
 
 #pragma mark - IBActions
 

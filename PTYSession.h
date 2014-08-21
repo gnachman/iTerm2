@@ -194,7 +194,7 @@ typedef enum {
 @property(nonatomic, assign) BOOL backgroundImageTiled;
 
 // Filename of background image.
-@property(nonatomic, copy) NSString *backgroundImagePath;
+@property(nonatomic, copy) NSString *backgroundImagePath;  // Used by scripting
 @property(nonatomic, retain) NSImage *backgroundImage;
 
 @property(nonatomic, retain) iTermColorMap *colorMap;

@@ -167,8 +167,6 @@
 		1D5FDD7D1208E91100C46BA3 /* config.png in Resources */ = {isa = PBXBuildFile; fileRef = FB754C5F036EFC5301F955DB /* config.png */; };
 		1D5FDD7F1208E91100C46BA3 /* important.png in Resources */ = {isa = PBXBuildFile; fileRef = FBB2EBCD040AC7C201F955DB /* important.png */; };
 		1D5FDD811208E91100C46BA3 /* newwin.png in Resources */ = {isa = PBXBuildFile; fileRef = FB896717038D935801F955DB /* newwin.png */; };
-		1D5FDD821208E91100C46BA3 /* iTerm.scriptSuite in Resources */ = {isa = PBXBuildFile; fileRef = DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */; };
-		1D5FDD831208E91100C46BA3 /* iTerm.scriptTerminology in Resources */ = {isa = PBXBuildFile; fileRef = DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */; };
 		1D5FDD891208E91100C46BA3 /* AquaTabNew.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575B09CB93C2008F320C /* AquaTabNew.png */; };
 		1D5FDD8A1208E91100C46BA3 /* AquaTabNewPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575C09CB93C2008F320C /* AquaTabNewPressed.png */; };
 		1D5FDD8B1208E91100C46BA3 /* AquaTabNewRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575D09CB93C2008F320C /* AquaTabNewRollover.png */; };
@@ -920,6 +918,14 @@
 		A6C7DE4F199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */; };
 		A6C7DE50199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */; };
 		A6C7DE52199F3087001E5C75 /* PseudoTerminal+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */; };
+		A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */; };
+		A6C7DE5619A4591E001E5C75 /* iTermNewWindowCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */; };
+		A6C7DE5719A4591E001E5C75 /* iTermNewWindowCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */; };
+		A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
+		A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
+		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
+		A6C7DE5E19A469D6001E5C75 /* NSColor+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */; };
+		A6C7DE5F19A469D6001E5C75 /* NSColor+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */; };
 		A6CEDA5B198C139500BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
 		A6CEDA5C198C139500BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
 		A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
@@ -1644,6 +1650,11 @@
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+Scripting.m"; sourceTree = "<group>"; };
 		A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+Scripting.h"; sourceTree = "<group>"; };
+		A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNewWindowCommand.h; sourceTree = "<group>"; };
+		A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNewWindowCommand.m; sourceTree = "<group>"; };
+		A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = iTerm2.sdef; sourceTree = "<group>"; };
+		A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+Scripting.h"; sourceTree = "<group>"; };
+		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
 		A6CEDA5A198C139500BB57EC /* iTerm2.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; name = iTerm2.iconset; path = images/icons/iTerm2.iconset; sourceTree = "<group>"; };
 		A6CEDA5D19988A7300BB57EC /* LogoFrame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoFrame.png; path = images/LogoParts/LogoFrame.png; sourceTree = "<group>"; };
 		A6CEDA5E19988A7300BB57EC /* LogoShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoShadow.png; path = images/LogoParts/LogoShadow.png; sourceTree = "<group>"; };
@@ -1722,8 +1733,6 @@
 		DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalPressed.png; sourceTree = "<group>"; };
 		DD02577009CB93C2008F320C /* TabNewMetalRollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalRollover.png; sourceTree = "<group>"; };
 		DD02577109CB93C2008F320C /* Warning.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Warning.png; sourceTree = "<group>"; };
-		DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = iTerm.scriptSuite; sourceTree = "<group>"; };
-		DD48F1CD03EBB20500A8A065 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = English; path = English.lproj/iTerm.scriptTerminology; sourceTree = "<group>"; };
 		DD57633005653C2E00F1905E /* iTerm_Framework.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm_Framework.plist; sourceTree = "<group>"; };
 		DD57633605653C5F00F1905E /* iTerm.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm.plist; sourceTree = "<group>"; };
 		DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyBindingMgr.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -1826,6 +1835,10 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */,
+				A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */,
+				A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */,
+				A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1D03D42519144B8E0049EB8F /* ThirdParty */,
@@ -2150,6 +2163,7 @@
 		0464AB27006CD2EC7F000001 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */,
 				A6CEDA5A198C139500BB57EC /* iTerm2.iconset */,
 				1D03D42719144C3B0049EB8F /* Other Assets */,
 				1D03D42619144C140049EB8F /* Property Lists */,
@@ -2217,8 +2231,6 @@
 			isa = PBXGroup;
 			children = (
 				93A6FEF910685E9900A5F905 /* dsa_pub.pem */,
-				DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */,
-				DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */,
 				1D1158C913444D29009B366F /* iTerm2 Help */,
 			);
 			name = "Other Assets";
@@ -3110,6 +3122,7 @@
 				A68A30F8186D150B007F550F /* SCPPath.h in Headers */,
 				1D9DDD92142E5AC600275650 /* CoprocessTrigger.h in Headers */,
 				A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */,
+				A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */,
 				A68A30F9186D150B007F550F /* TransferrableFile.h in Headers */,
 				1D9DDD9C142E5FBB00275650 /* Coprocess.h in Headers */,
 				1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */,
@@ -3205,6 +3218,7 @@
 				1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */,
 				1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */,
 				A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */,
+				A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */,
 				A6E74752188C6693005355CF /* iTermExposeWindow.h in Headers */,
 				1D085F9616F04D0900B7FCE9 /* NSBezierPath+iTerm.h in Headers */,
 				1D085F9A16F1135F00B7FCE9 /* PasteEvent.h in Headers */,
@@ -3325,6 +3339,7 @@
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1DB8FBCD19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */,
+				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				A69B458C19710CC400F5444D /* SoftDivider.png in Resources */,
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
@@ -3374,8 +3389,6 @@
 				1D5FDD7F1208E91100C46BA3 /* important.png in Resources */,
 				1DC13ABD1886146B00034DAE /* mark_err.png in Resources */,
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
-				1D5FDD821208E91100C46BA3 /* iTerm.scriptSuite in Resources */,
-				1D5FDD831208E91100C46BA3 /* iTerm.scriptTerminology in Resources */,
 				F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */,
 				1D5FDD891208E91100C46BA3 /* AquaTabNew.png in Resources */,
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
@@ -3399,6 +3412,7 @@
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
+				A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				1D01609B1852AA6F0014D26A /* mark@2x.png in Resources */,
 				A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */,
 				A67F118218D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
@@ -3551,6 +3565,8 @@
 				1DABA03519253FEA00A228D8 /* PasswordTrigger.m in Sources */,
 				A69B4581196B989D00F5444D /* iTermAlphaColorWell.m in Sources */,
 				1DB83959192E9A610037E548 /* ToolCapturedOutputView.m in Sources */,
+				A6C7DE5F19A469D6001E5C75 /* NSColor+Scripting.m in Sources */,
+				A6C7DE5719A4591E001E5C75 /* iTermNewWindowCommand.m in Sources */,
 				1D9A555B180FA83900B42CE9 /* ContextMenuActionPrefsController.m in Sources */,
 				A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D9A5531180FA73300B42CE9 /* FutureMethods.m in Sources */,
@@ -3985,6 +4001,7 @@
 				A69B45AA19731B4900F5444D /* iTermOpenQuicklyItem.m in Sources */,
 				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
+				A6C7DE5E19A469D6001E5C75 /* NSColor+Scripting.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,
 				A6099B0618D6B0FD00081FA9 /* iTermWarning.m in Sources */,
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
@@ -4041,6 +4058,7 @@
 				1D085F8E16F0328B00B7FCE9 /* PasteViewController.m in Sources */,
 				1D085F9316F03E5400B7FCE9 /* PasteView.m in Sources */,
 				1D8CDF531958F31700FE1BEE /* iTermSizeRememberingView.m in Sources */,
+				A6C7DE5619A4591E001E5C75 /* iTermNewWindowCommand.m in Sources */,
 				1D085F9716F04D0900B7FCE9 /* NSBezierPath+iTerm.m in Sources */,
 				A682DE97190C5E7000BE8758 /* iTermProgressIndicator.m in Sources */,
 				A6AE1EDE192723F700780C19 /* iTermAnnouncementView.m in Sources */,
@@ -4188,14 +4206,6 @@
 				9325FF4F0FB54E00004EC67C /* English */,
 			);
 			name = MainMenu.xib;
-			sourceTree = "<group>";
-		};
-		DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */ = {
-			isa = PBXVariantGroup;
-			children = (
-				DD48F1CD03EBB20500A8A065 /* English */,
-			);
-			name = iTerm.scriptTerminology;
 			sourceTree = "<group>";
 		};
 		FB151F2903648AC401F955DB /* iTerm.strings */ = {

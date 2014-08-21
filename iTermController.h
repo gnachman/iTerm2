@@ -110,7 +110,8 @@
           inTerminal:(PseudoTerminal *)theTerm
              withURL:(NSString *)url
             isHotkey:(BOOL)isHotkey
-             makeKey:(BOOL)makeKey;
+             makeKey:(BOOL)makeKey
+             command:(NSString *)command;
 - (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
 - (PTYTextView*)frontTextView;
 - (int)numberOfTerminals;
