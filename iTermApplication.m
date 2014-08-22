@@ -172,11 +172,6 @@
     [super sendEvent:event];
 }
 
-- (NSString *)uriToken
-{
-    return [[self delegate] uriToken];
-}
-
 - (iTermApplicationDelegate *)delegate
 {
     return (iTermApplicationDelegate *)[super delegate];

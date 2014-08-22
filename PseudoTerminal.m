@@ -4822,6 +4822,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [tab addToTerminal:self withArrangement:arrangement];
 }
 
+- (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
+    if ([[self currentTab] isTmuxTab]) {
+        [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane]
+                                                     vertically:isVertical];
+        return;
+    }
+    [self splitVertically:isVertical withBookmark:profile targetSession:[self currentSession]];
+}
+
 - (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
 {
     if ([[self currentTab] isTmuxTab]) {

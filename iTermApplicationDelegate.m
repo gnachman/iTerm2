@@ -670,67 +670,11 @@ static BOOL hasBecomeActive = NO;
     return dict;
 }
 
-- (void)launchFromUrl:(NSURL *)url
-{
-    NSString *queryString = [url query];
-    NSDictionary *query = [self dictForQueryString:queryString];
-
-    if (![[query objectForKey:@"token"] isEqualToString:token_]) {
-        NSLog(@"URL request %@ missing token", url);
-        return;
-    }
-    [token_ release];
-    token_ = nil;
-    if ([query objectForKey:@"quiet"]) {
-        quiet_ = YES;
-    }
-    PseudoTerminal *term = nil;
-    BOOL doLaunch = YES;
-    BOOL launchIfNeeded = NO;
-    if ([[url host] isEqualToString:@"newtab"]) {
-        term = [[iTermController sharedInstance] currentTerminal];
-    } else if ([[url host] isEqualToString:@"newwindow"]) {
-        term = nil;
-    } else if ([[url host] isEqualToString:@"current"]) {
-        doLaunch = NO;
-    } else if ([[url host] isEqualToString:@"tryCurrent"]) {
-        doLaunch = NO;
-        launchIfNeeded = YES;
-    } else {
-        NSLog(@"Bad host: %@", [url host]);
-        return;
-    }
-    Profile *profile = nil;
-    if ([query objectForKey:@"profile"]) {
-        NSString *bookmarkName = [[query objectForKey:@"profile"] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-        profile = [[ProfileModel sharedInstance] bookmarkWithName:bookmarkName];
-    }
-    PTYSession *aSession;
-    if (!doLaunch) {
-        aSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
-    }
-    if (doLaunch || (!aSession && launchIfNeeded)) {
-        aSession = [[iTermController sharedInstance] launchBookmark:profile
-                                                         inTerminal:term];
-    }
-    if ([query objectForKey:@"command"]) {
-        NSData *theData;
-        NSStringEncoding encoding = [[aSession terminal] encoding];
-        theData = [[[query objectForKey:@"command"] stringByReplacingPercentEscapesUsingEncoding:encoding] dataUsingEncoding:encoding];
-        [aSession writeTask:theData];
-        [aSession writeTask:[@"\r" dataUsingEncoding:encoding]];
-    }
-}
-
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
     NSString *urlStr = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
     NSURL *url = [NSURL URLWithString: urlStr];
     NSString *scheme = [url scheme];
 
-    if ([scheme isEqualToString:@"iterm2"]) {
-        [self launchFromUrl:url];
-        return;
-    }
     Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
     if (!profile) {
         profile = [[ProfileModel sharedInstance] defaultBookmark];
@@ -1608,13 +1552,6 @@ static BOOL hasBecomeActive = NO;
 {
     //NSLog(@"iTermApplicationDelegate: delegateHandlesKey: '%@'", key);
     return [[iTermController sharedInstance] application:sender delegateHandlesKey:key];
-}
-
-- (NSString *)uriToken
-{
-    [token_ release];
-    token_ = [[NSString stringWithFormat:@"%x%x", arc4random(), arc4random()] retain];
-    return token_;
 }
 
 // accessors for to-one relationships:

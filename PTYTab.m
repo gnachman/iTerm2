@@ -556,6 +556,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return [[tabViewItem_ tabView] indexOfTabViewItem:tabViewItem_];
 }
 
+- (NSNumber *)indexOfTab {
+    return @([self number]);
+}
+
 - (int)realObjectCount
 {
     return objectCount_;
@@ -4235,6 +4239,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         return @([self objectCount]);
     } else if ([key isEqualToString:@"sessions"]) {
         return [self sessions];
+    } else if ([key isEqualToString:@"indexOfTab"]) {
+        return [self indexOfTab];
     } else {
         return nil;
     }

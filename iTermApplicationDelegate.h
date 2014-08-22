@@ -197,7 +197,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key;
 
 - (PseudoTerminal *)currentTerminal;
-- (NSString *)uriToken;
 
 // accessors for to-many relationships:
 -(NSArray*)terminals;

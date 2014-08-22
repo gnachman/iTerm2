@@ -52,6 +52,44 @@
       <direct-parameter type="specifier" description="The object to send to"/>
     </command>
 
+    <command name="split vertically" code="itrmsplv"
+        description="Split a session vertically.">
+      <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="with profile" code="prfl" type="text"
+          description="Name of profile for new session.">
+        <cocoa key="profile" />
+      </parameter>
+    </command>
+
+    <command name="split vertically with default profile" code="itrmsvdp"
+        description="Split a session vertically, using the default profile for the new session">
+      <direct-parameter type="specifier" description="The object to send to"/>
+    </command>
+
+    <command name="split vertically with same profile" code="itrmsvsp"
+        description="Split a session vertically, using the original session's profile for the new session">
+      <direct-parameter type="specifier" description="The object to send to"/>
+    </command>
+
+    <command name="split horizontally" code="itrmsplh"
+        description="Split a session horizontally.">
+      <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="with profile" code="prfl" type="text"
+          description="Name of profile for new session.">
+        <cocoa key="profile" />
+      </parameter>
+    </command>
+
+    <command name="split horizontally with default profile" code="itrmshdp"
+        description="Split a session horizontally, using the default profile for the new session">
+      <direct-parameter type="specifier" description="The object to send to"/>
+    </command>
+
+    <command name="split horizontally with same profile" code="itrmshsp"
+        description="Split a session horizontally, using the original session's profile for the new session">
+      <direct-parameter type="specifier" description="The object to send to"/>
+    </command>
+
     <value-type name="RGB color" code="cRGB">
       <cocoa class="NSColor"/>
     </value-type>
@@ -104,6 +142,10 @@
           description="The current session in a tab">
         <cocoa key="currentSession" />
       </property>
+      <property name="index" code="indx" type="integer"
+          description="Index of tab in parent tab view control">
+        <cocoa key="indexOfTab" />
+      </property>
     </class>
 
     <class name="session" code="trms" description="A terminal session">
@@ -118,10 +160,38 @@
         <cocoa method="handleSelectCommand:"/>
       </responds-to>
 
-      <property name="color" code="colr" type="RGB color" description="The color of the text's first character.">
+      <responds-to command="split vertically">
+        <cocoa method="handleSplitVertically:" />
+      </responds-to>
+      <responds-to command="split vertically with default profile">
+        <cocoa method="handleSplitVerticallyWithDefaultProfile:" />
+      </responds-to>
+      <responds-to command="split vertically with same profile">
+        <cocoa method="handleSplitVerticallyWithSameProfile:" />
+      </responds-to>
+      <responds-to command="split horizontally">
+        <cocoa method="handleSplitHorizontally:" />
+      </responds-to>
+      <responds-to command="split horizontally with default profile">
+        <cocoa method="handleSplitHorizontallyWithDefaultProfile:" />
+      </responds-to>
+      <responds-to command="split horizontally with same profile">
+        <cocoa method="handleSplitHorizontallyWithSameProfile:" />
+      </responds-to>
+
+      <property name="color" code="colr" type="RGB color"
+          description="The color of the text's first character.">
         <cocoa key="foregroundColor"/>
       </property>
-
+      <property name="columns" code="cols" type="integer">
+        <cocoa key="columns" />
+      </property>
+      <property name="rows" code="rows" type="integer">
+        <cocoa key="rows" />
+      </property>
+      <property name="tty" code="stty" type="text">
+        <cocoa key="tty" />
+      </property>
       <property name="contents" code="cntt" type="text">
         <cocoa key="contents" />
       </property>
