@@ -31,7 +31,25 @@
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
+    </command>
 
+    <command name="write" code="itrmsntx"
+        description="Send text as though it was typed.">
+      <direct-parameter type="specifier" description="The session to send to"/>
+
+      <parameter name="contents of file" code="cofl" type="file"
+          description="Filename to send the contents of" optional="yes">
+        <cocoa key="contentsOfFile"/>
+      </parameter>
+      <parameter name="text" code="text" type="text"
+          description="Text to send" optional="yes">
+        <cocoa key="text"/>
+      </parameter>
+    </command>
+
+    <command name="select" code="itrmslct"
+        description="Make receiver visible and selected.">
+      <direct-parameter type="specifier" description="The object to send to"/>
     </command>
 
     <value-type name="RGB color" code="cRGB">
@@ -56,6 +74,9 @@
       <responds-to command="close">
         <cocoa method="handleCloseCommand:"/>
       </responds-to>
+      <responds-to command="select">
+        <cocoa method="handleSelectCommand:"/>
+      </responds-to>
       <element type="tab" access="r">
         <cocoa key="tabs"/>
       </element>
@@ -70,8 +91,13 @@
       <element type="session" access="r">
         <cocoa key="sessions"/>
       </element>
+
       <responds-to command="close">
         <cocoa method="handleCloseCommand:"/>
+      </responds-to>
+
+      <responds-to command="select">
+        <cocoa method="handleSelectCommand:"/>
       </responds-to>
 
       <property name="current session" code="crsn" type="session"
@@ -85,96 +111,105 @@
       <responds-to command="close">
         <cocoa method="handleCloseCommand:"/>
       </responds-to>
+      <responds-to command="write">
+        <cocoa method="handleWriteScriptCommand:"/>
+      </responds-to>
+      <responds-to command="select">
+        <cocoa method="handleSelectCommand:"/>
+      </responds-to>
 
       <property name="color" code="colr" type="RGB color" description="The color of the text's first character.">
         <cocoa key="foregroundColor"/>
       </property>
 
-    <property name="background color" code="co00" type="RGB color">
-      <cocoa key="backgroundColor" />
-    </property>
-    <property name="bold color" code="co01" type="RGB color">
-      <cocoa key="boldColor" />
-    </property>
-    <property name="cursor color" code="co02" type="RGB color">
-      <cocoa key="cursorColor" />
-    </property>
-    <property name="cursor text color" code="co03" type="RGB color">
-      <cocoa key="cursorTextColor" />
-    </property>
-    <property name="foreground color" code="co04" type="RGB color">
-      <cocoa key="foregroundColor" />
-    </property>
-    <property name="selected text color" code="co05" type="RGB color">
-      <cocoa key="selectedTextColor" />
-    </property>
-    <property name="selection color" code="co06" type="RGB color">
-      <cocoa key="selectionColor" />
-    </property>
-    <property name="ANSI black color" code="co07" type="RGB color">
-      <cocoa key="ansiBlackColor" />
-    </property>
-    <property name="ANSI red color" code="co08" type="RGB color">
-      <cocoa key="ansiRedColor" />
-    </property>
-    <property name="ANSI green color" code="co09" type="RGB color">
-      <cocoa key="ansiGreenColor" />
-    </property>
-    <property name="ANSI yellow color" code="co10" type="RGB color">
-      <cocoa key="ansiYellowColor" />
-    </property>
-    <property name="ANSI blue color" code="co11" type="RGB color">
-      <cocoa key="ansiBlueColor" />
-    </property>
-    <property name="ANSI magenta color" code="co12" type="RGB color">
-      <cocoa key="ansiMagentaColor" />
-    </property>
-    <property name="ANSI cyan color" code="co13" type="RGB color">
-      <cocoa key="ansiCyanColor" />
-    </property>
-    <property name="ANSI white color" code="co14" type="RGB color">
-      <cocoa key="ansiWhiteColor" />
-    </property>
-    <property name="ANSI bright black color" code="co15" type="RGB color">
-      <cocoa key="ansiBrightBlackColor" />
-    </property>
-    <property name="ANSI bright red color" code="co16" type="RGB color">
-      <cocoa key="ansiBrightRedColor" />
-    </property>
-    <property name="ANSI bright green color" code="co17" type="RGB color">
-      <cocoa key="ansiBrightGreenColor" />
-    </property>
-    <property name="ANSI bright yellow color" code="co18" type="RGB color">
-      <cocoa key="ansiBrightYellowColor" />
-    </property>
-    <property name="ANSI bright blue color" code="co19" type="RGB color">
-      <cocoa key="ansiBrightBlueColor" />
-    </property>
-    <property name="ANSI bright magenta color" code="co20" type="RGB color">
-      <cocoa key="ansiBrightMagentaColor" />
-    </property>
-    <property name="ANSI bright cyan color" code="co21" type="RGB color">
-      <cocoa key="ansiBrightCyanColor" />
-    </property>
-    <property name="ANSI bright white color" code="co22" type="RGB color">
-      <cocoa key="ansiBrightWhiteColor" />
-    </property>
+      <property name="contents" code="cntt" type="text">
+        <cocoa key="contents" />
+      </property>
+      <property name="background color" code="co00" type="RGB color">
+        <cocoa key="backgroundColor" />
+      </property>
+      <property name="bold color" code="co01" type="RGB color">
+        <cocoa key="boldColor" />
+      </property>
+      <property name="cursor color" code="co02" type="RGB color">
+        <cocoa key="cursorColor" />
+      </property>
+      <property name="cursor text color" code="co03" type="RGB color">
+        <cocoa key="cursorTextColor" />
+      </property>
+      <property name="foreground color" code="co04" type="RGB color">
+        <cocoa key="foregroundColor" />
+      </property>
+      <property name="selected text color" code="co05" type="RGB color">
+        <cocoa key="selectedTextColor" />
+      </property>
+      <property name="selection color" code="co06" type="RGB color">
+        <cocoa key="selectionColor" />
+      </property>
+      <property name="ANSI black color" code="co07" type="RGB color">
+        <cocoa key="ansiBlackColor" />
+      </property>
+      <property name="ANSI red color" code="co08" type="RGB color">
+        <cocoa key="ansiRedColor" />
+      </property>
+      <property name="ANSI green color" code="co09" type="RGB color">
+        <cocoa key="ansiGreenColor" />
+      </property>
+      <property name="ANSI yellow color" code="co10" type="RGB color">
+        <cocoa key="ansiYellowColor" />
+      </property>
+      <property name="ANSI blue color" code="co11" type="RGB color">
+        <cocoa key="ansiBlueColor" />
+      </property>
+      <property name="ANSI magenta color" code="co12" type="RGB color">
+        <cocoa key="ansiMagentaColor" />
+      </property>
+      <property name="ANSI cyan color" code="co13" type="RGB color">
+        <cocoa key="ansiCyanColor" />
+      </property>
+      <property name="ANSI white color" code="co14" type="RGB color">
+        <cocoa key="ansiWhiteColor" />
+      </property>
+      <property name="ANSI bright black color" code="co15" type="RGB color">
+        <cocoa key="ansiBrightBlackColor" />
+      </property>
+      <property name="ANSI bright red color" code="co16" type="RGB color">
+        <cocoa key="ansiBrightRedColor" />
+      </property>
+      <property name="ANSI bright green color" code="co17" type="RGB color">
+        <cocoa key="ansiBrightGreenColor" />
+      </property>
+      <property name="ANSI bright yellow color" code="co18" type="RGB color">
+        <cocoa key="ansiBrightYellowColor" />
+      </property>
+      <property name="ANSI bright blue color" code="co19" type="RGB color">
+        <cocoa key="ansiBrightBlueColor" />
+      </property>
+      <property name="ANSI bright magenta color" code="co20" type="RGB color">
+        <cocoa key="ansiBrightMagentaColor" />
+      </property>
+      <property name="ANSI bright cyan color" code="co21" type="RGB color">
+        <cocoa key="ansiBrightCyanColor" />
+      </property>
+      <property name="ANSI bright white color" code="co22" type="RGB color">
+        <cocoa key="ansiBrightWhiteColor" />
+      </property>
 
-    <property name="background image" code="bgim" type="text">
-      <cocoa key="backgroundImagePath" />
-    </property>
+      <property name="background image" code="bgim" type="text">
+        <cocoa key="backgroundImagePath" />
+      </property>
 
-    <property name="name" code="name" type="text">
-      <cocoa key="name" />
-    </property>
+      <property name="name" code="name" type="text">
+        <cocoa key="name" />
+      </property>
 
-    <property name="transparency" code="trns" type="real">
-      <cocoa key="transparency" />
-    </property>
+      <property name="transparency" code="trns" type="real">
+        <cocoa key="transparency" />
+      </property>
 
-    <property name="unique ID" code="uniq" type="text" access="r">
-      <cocoa key="uniqueID" />
-    </property>
+      <property name="unique ID" code="uniq" type="text" access="r">
+        <cocoa key="uniqueID" />
+      </property>
 
     </class>
 

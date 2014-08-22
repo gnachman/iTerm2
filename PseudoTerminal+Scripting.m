@@ -46,7 +46,7 @@ static NSString *const kTabsKVCKey = @"tabs";
 
 #pragma mark - Handlers for commands
 
-- (id)handleSelectScriptCommand:(NSScriptCommand *)command {
+- (id)handleSelectCommand:(NSScriptCommand *)command {
     [[iTermController sharedInstance] setCurrentTerminal:self];
     return nil;
 }
@@ -136,6 +136,8 @@ static NSString *const kTabsKVCKey = @"tabs";
 - (id)valueForKey:(NSString *)key {
     if ([key isEqualToString:@"currentTab"]) {
         return [self currentTab];
+    } else if ([key isEqualToString:@"tabs"]) {
+        return [self tabs];
     } else {
         return nil;
     }

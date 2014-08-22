@@ -62,8 +62,8 @@
     return;
 }
 
-- (void)handleSelectScriptCommand:(NSScriptCommand *)command {
-    [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:[self tab]];
+- (void)handleSelectCommand:(NSScriptCommand *)command {
+    [[self tab] setActiveSession:self];
 }
 
 - (void)handleClearScriptCommand:(NSScriptCommand *)command {
@@ -79,6 +79,17 @@
     NSString *text = [args objectForKey:@"text"];
     NSData *data = nil;
     NSString *aString = nil;
+
+    if (text && contentsOfFile) {
+        [command setScriptErrorNumber:1];
+        [command setScriptErrorString:@"Only one of text or contents of file should be specified."];
+        return;
+    }
+    if (!text && !contentsOfFile) {
+        [command setScriptErrorNumber:2];
+        [command setScriptErrorString:@"Neither text nor contents of file was specified."];
+        return;
+    }
 
     if (text != nil) {
         if ([text characterAtIndex:[text length]-1]==' ') {

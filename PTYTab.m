@@ -790,6 +790,10 @@ static NSString* FormatRect(NSRect r) {
     [[self parentWindow] closeTab:self];
 }
 
+- (void)handleSelectCommand:(NSScriptCommand *)scriptCommand {
+    [[[self parentWindow] tabView] selectTabViewItemWithIdentifier:self];
+}
+
 - (void)closeSession:(PTYSession*)session
 {
     [[self parentWindow] closeSession:session];
@@ -4229,6 +4233,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         return [self icon];
     } else if ([key isEqualToString:@"objectCount"]) {
         return @([self objectCount]);
+    } else if ([key isEqualToString:@"sessions"]) {
+        return [self sessions];
     } else {
         return nil;
     }
