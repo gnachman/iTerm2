@@ -2,11 +2,49 @@
 <!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
 
 <dictionary title="iTerm2 Terminology">
+  <suite name="Standard Suite" code="????" description="Common classes and commands for all applications.">
+    <command name="count" code="corecnte" description="Return the number of elements of a particular class within an object.">
+      <cocoa class="NSCountCommand"/>
+      <direct-parameter type="specifier" description="The objects to be counted."/>
+      <parameter name="each" code="kocl" type="type" optional="yes" description="The class of objects to be counted." hidden="yes">
+        <cocoa key="ObjectClass"/>
+      </parameter>
+      <result type="integer" description="The count."/>
+    </command>
+  </suite>
+
   <suite name="iTerm2 Suite" code="itrm" description="Classes just for the iTerm2 application.">
     <command name="close" code="coreclos" description="Close a document.">
       <cocoa class="NSCloseCommand"/>
       <direct-parameter type="specifier"
         description="the session, tab, or window to close."/>
+    </command>
+
+    <command name="create tab" code="itrmntwp"
+      description="Create a new tab">
+      <direct-parameter type="specifier"
+        description="the session, tab, or window to close."/>
+
+      <parameter name="with profile" code="ntwp" type="text"
+          description="The profile name">
+        <cocoa key="profile" />
+      </parameter>
+
+      <parameter name="command" code="nwcm" type="text" optional="yes"
+        description="Shell command to run">
+        <cocoa key="command"/>
+      </parameter>
+    </command>
+
+    <command name="create tab with default profile" code="itrmntwn"
+      description="Create a new tab with the default profile">
+      <direct-parameter type="specifier"
+        description="The window in which to create a new tab"/>
+
+      <parameter name="command" code="nwcm" type="text" optional="yes"
+        description="Shell command to run">
+        <cocoa key="command"/>
+      </parameter>
     </command>
 
     <command name="create window with profile" code="itrmnwwp"
@@ -16,7 +54,7 @@
         <type type="text"/>
       </direct-parameter>
 
-      <parameter name="command" code="nwcm" type="text"
+      <parameter name="command" code="nwcm" type="text" optional="yes"
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
@@ -27,7 +65,7 @@
       description="Create a new window with the default profile">
       <cocoa class="iTermNewWindowCommand" />
 
-      <parameter name="command" code="nwcm" type="text"
+      <parameter name="command" code="nwcm" type="text" optional="yes"
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
@@ -95,7 +133,7 @@
     </value-type>
 
     <class name="application" code="capp"
-      description="The application's top-level scripting object.">
+        description="The application's top-level scripting object.">
       <cocoa class="iTermApplication"/>
       <element type="terminal window" access="r">
         <cocoa key="terminalWindows"/>
@@ -112,15 +150,31 @@
       <responds-to command="close">
         <cocoa method="handleCloseCommand:"/>
       </responds-to>
+
       <responds-to command="select">
         <cocoa method="handleSelectCommand:"/>
       </responds-to>
+
+      <responds-to command="create tab with default profile">
+        <cocoa method="handleCreateTabWithDefaultProfileCommand:" />
+      </responds-to>
+
+      <responds-to command="create tab">
+        <cocoa method="handleCreateTabCommand:" />
+      </responds-to>
+
       <element type="tab" access="r">
         <cocoa key="tabs"/>
       </element>
+
       <property name="current tab" code="crtb" type="tab"
           description="The currently selected tab">
         <cocoa key="currentTab" />
+      </property>
+
+      <property name="current session" code="wcsn" type="session"
+          description="The current session in a window">
+        <cocoa key="currentSession" />
       </property>
     </class>
 
@@ -138,7 +192,7 @@
         <cocoa method="handleSelectCommand:"/>
       </responds-to>
 
-      <property name="current session" code="crsn" type="session"
+      <property name="current session" code="tcsn" type="session"
           description="The current session in a tab">
         <cocoa key="currentSession" />
       </property>
@@ -179,17 +233,13 @@
         <cocoa method="handleSplitHorizontallyWithSameProfile:" />
       </responds-to>
 
-      <property name="color" code="colr" type="RGB color"
-          description="The color of the text's first character.">
-        <cocoa key="foregroundColor"/>
-      </property>
       <property name="columns" code="cols" type="integer">
         <cocoa key="columns" />
       </property>
       <property name="rows" code="rows" type="integer">
         <cocoa key="rows" />
       </property>
-      <property name="tty" code="stty" type="text">
+      <property name="tty" code="stty" type="text" access="r">
         <cocoa key="tty" />
       </property>
       <property name="contents" code="cntt" type="text">

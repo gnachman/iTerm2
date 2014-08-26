@@ -101,6 +101,37 @@ static NSString *const kTabsKVCKey = @"tabs";
 
 }
 
+- (void)handleCreateTabWithDefaultProfileCommand:(NSScriptCommand *)scriptCommand {
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    NSString *command = args[@"command"];
+    Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
+    [[iTermController sharedInstance] launchBookmark:profile
+                                          inTerminal:self
+                                             withURL:nil
+                                            isHotkey:NO
+                                             makeKey:YES
+                                             command:command];
+}
+
+- (void)handleCreateTabCommand:(NSScriptCommand *)scriptCommand {
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    NSString *command = args[@"command"];
+    NSString *profileName = args[@"profile"];
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
+    if (!profile) {
+        [scriptCommand setScriptErrorNumber:1];
+        [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile exists named '%@'",
+                                             profileName]];
+        return;
+    }
+    [[iTermController sharedInstance] launchBookmark:profile
+                                          inTerminal:self
+                                             withURL:nil
+                                            isHotkey:NO
+                                             makeKey:YES
+                                             command:command];
+}
+
 #pragma mark - Accessors
 
 // -tabs is defined in PseudoTerminal.m
@@ -110,6 +141,10 @@ static NSString *const kTabsKVCKey = @"tabs";
 
 #pragma mark NSScriptKeyValueCoding for to-many relationships
 // (See NSScriptKeyValueCoding.h)
+
+- (NSUInteger)count {
+    return 1;
+}
 
 - (NSUInteger)countOfTabs {
     return [[self tabs] count];
@@ -136,6 +171,8 @@ static NSString *const kTabsKVCKey = @"tabs";
 - (id)valueForKey:(NSString *)key {
     if ([key isEqualToString:@"currentTab"]) {
         return [self currentTab];
+    } else if ([key isEqualToString:@"currentSession"]) {
+        return [self currentSession];
     } else if ([key isEqualToString:@"tabs"]) {
         return [self tabs];
     } else {

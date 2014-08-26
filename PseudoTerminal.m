@@ -6988,40 +6988,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self repositionWidgets];
 }
 
-#pragma mark - KeyValueCoding
-
-- (int)columns
-{
-    return [[self currentSession] columns];
-}
-
-- (void)setColumns:(int)columns
-{
-    if (![self currentSession]) {
-        nextSessionColumns_ = columns;
-    } else {
-        [self sessionInitiatedResize:[self currentSession]
-                               width:columns
-                              height:[[self currentSession] rows]];
-    }
-}
-
-- (int)rows
-{
-    return [[self currentSession] rows];
-}
-
-- (void)setRows:(int)rows
-{
-    if (![self currentSession]) {
-        nextSessionRows_ = rows;
-    } else {
-        [self sessionInitiatedResize:[self currentSession]
-                              width:[[self currentSession] columns]
-                              height:rows];
-    }
-}
-
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command {
     assert(profile);
@@ -7130,8 +7096,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (NSApplicationPresentationOptions)window:(NSWindow *)window
-      willUseFullScreenPresentationOptions:(NSApplicationPresentationOptions)proposedOptions
-{
+      willUseFullScreenPresentationOptions:(NSApplicationPresentationOptions)proposedOptions {
     return proposedOptions | NSApplicationPresentationAutoHideToolbar;
 }
 

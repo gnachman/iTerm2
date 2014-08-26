@@ -367,4 +367,17 @@
     [self setSessionSpecificProfileValues:@{ KEY_ANSI_15_COLOR: [color dictionaryValue] }];
 }
 
+- (void)setColumns:(int)columns {
+    [[[self tab] realParentWindow] sessionInitiatedResize:self
+                                                    width:columns
+                                                   height:self.rows];
+}
+
+- (void)setRows:(int)rows {
+    [[[self tab] realParentWindow] sessionInitiatedResize:self
+                                                    width:self.columns
+                                                   height:rows];
+}
+
+
 @end

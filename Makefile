@@ -2,7 +2,7 @@ PATH := /usr/bin:/bin:/usr/sbin:/sbin
 
 ORIG_PATH := $(PATH)
 PATH := /usr/bin:/bin:/usr/sbin:/sbin
-ITERM_PID=$(shell pgrep "iTerm")
+ITERM_PID=$(shell pgrep "iTerm2")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
 COMPACTDATE=$(shell date +"%Y%m%d")
