@@ -1354,7 +1354,7 @@
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DD39ACD180B785A004E56D5 /* VT100GridTypes.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100GridTypes.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100GridTypes.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DD39AD4180B8117004E56D5 /* iTermTests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = iTermTests.app; path = iTerm2Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DD39AD4180B8117004E56D5 /* iTerm2Tests.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm2Tests.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DD39AD6180B8118004E56D5 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		1DD39AD9180B8118004E56D5 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		1DD39ADA180B8118004E56D5 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -2188,7 +2188,7 @@
 			isa = PBXGroup;
 			children = (
 				8742065A0564169600CFC3F1 /* iTerm2.app */,
-				1DD39AD4180B8117004E56D5 /* iTermTests.app */,
+				1DD39AD4180B8117004E56D5 /* iTerm2Tests.app */,
 				1DFA7C671923E83500DF1410 /* libSSKeychain.a */,
 			);
 			name = Products;
@@ -3249,7 +3249,7 @@
 			);
 			name = iTerm2Tests;
 			productName = iTermTests;
-			productReference = 1DD39AD4180B8117004E56D5 /* iTermTests.app */;
+			productReference = 1DD39AD4180B8117004E56D5 /* iTerm2Tests.app */;
 			productType = "com.apple.product-type.application";
 		};
 		1DFA7C661923E83500DF1410 /* SSKeychain */ = {

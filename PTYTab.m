@@ -773,8 +773,8 @@ static NSString* FormatRect(NSRect r) {
         // Session has terminated.
         [self setLabelAttributesForDeadSession];
     } else {
-        if (now.tv_sec > [[self activeSession] lastOutput].tv_sec + [iTermAdvancedSettingsModel idleTimeSeconds]) {
-            // At least two seconds have passed since the last call.
+        if (!self.activeSession.isProcessing) {
+            // Too much time has passed since activity occurred and we're idle.
             [self setLabelAttributesForIdleTabAtTime:now];
         } else {
             // Less than 2 seconds has passed since the last output in the session.
@@ -4117,7 +4117,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             if (!session.havePostedIdleNotification &&
                 [session shouldPostGrowlNotification] &&
                 [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC &&
-                now.tv_sec > [session lastOutput].tv_sec + 1) {
+                session.isIdle) {
                 NSString *theDescription =
                     [NSString stringWithFormat:@"Session %@ in tab #%d became idle.",
                         [[self activeSession] name],
