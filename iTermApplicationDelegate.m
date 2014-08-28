@@ -107,13 +107,10 @@ static BOOL hasBecomeActive = NO;
 
     // Fix up various user defaults settings.
     [iTermPreferences initializeUserDefaults];
-    
+
     // read preferences
     [iTermPreferences migratePreferences];
 
-    // Make sure profiles are loaded.
-    [ITAddressBookMgr sharedInstance];
-    
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
 
@@ -168,7 +165,8 @@ static BOOL hasBecomeActive = NO;
             [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
         } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
             if (![PseudoTerminalRestorer willOpenWindows]) {
-                if ([[[iTermController sharedInstance] terminals] count] == 0) {
+                if ([[[iTermController sharedInstance] terminals] count] == 0 &&
+                    ![self isApplescriptTestApp]) {
                     [self newWindow:nil];
                 }
             }
@@ -451,8 +449,16 @@ static BOOL hasBecomeActive = NO;
     return (YES);
 }
 
+- (BOOL)isApplescriptTestApp {
+    return [[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"];
+}
+
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
+    if ([self isApplescriptTestApp]) {
+        // Don't want to do this for applescript testing so we have a blank slate.
+        return NO;
+    }
     if (!finishedLaunching_ &&
         ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
          [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup])) {

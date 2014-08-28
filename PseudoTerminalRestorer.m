@@ -42,6 +42,11 @@ typedef void (^VoidBlock)(void);
                               state:(NSCoder *)state
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler
 {
+    if ([[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"]) {
+        // Disable window restoration for iTerm2ForApplescriptTesting
+        completionHandler(nil, nil);
+        return;
+    }
     if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
         [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
         completionHandler(nil, nil);

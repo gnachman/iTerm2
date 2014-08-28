@@ -977,6 +977,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)_maybeWarnAboutShortLivedSessions
 {
+    if ([(iTermApplicationDelegate *)[NSApp delegate] isApplescriptTestApp]) {
+        return;
+    }
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < 3) {
         NSString* theName = [_profile objectForKey:KEY_NAME];
         NSString *guid = _profile[KEY_GUID];
