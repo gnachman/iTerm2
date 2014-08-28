@@ -3,10 +3,10 @@ COMPACTDATE=$(date +"%Y%m%d_%H%M%S")
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")-adhoc
 make release
-codesign --deep -s "Developer ID Application: GEORGE NACHMAN" -f "build/Deployment/iTerm.app"
-codesign --verify --verbose "build/Deployment/iTerm.app" || die "Signature not verified"
+codesign --deep -s "Developer ID Application: GEORGE NACHMAN" -f "build/Deployment/iTerm2.app"
+codesign --verify --verbose "build/Deployment/iTerm2.app" || die "Signature not verified"
 pushd build/Deployment
-zip -ry iTerm2-${NAME}.zip iTerm.app
+zip -ry iTerm2-${NAME}.zip iTerm2.app
 scp iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/adhocbuilds/
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 git checkout -b adhoc_$VERSION

@@ -42,12 +42,12 @@ function Build {
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  codesign $6 -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm.app"
-  codesign --verify --verbose "build/$BUILDTYPE/iTerm.app" || die "Signature not verified"
+  codesign $6 -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app"
+  codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
 
   # Create the zip file
-  zip -ry iTerm2-${NAME}.zip iTerm.app
+  zip -ry iTerm2-${NAME}.zip iTerm2.app
 
   # Update the list of changes
   vi $SVNDIR/appcasts/testing_changes.txt
