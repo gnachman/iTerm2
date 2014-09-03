@@ -556,10 +556,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return [[tabViewItem_ tabView] indexOfTabViewItem:tabViewItem_];
 }
 
-- (NSNumber *)indexOfTab {
-    return @([self number]);
-}
-
 - (int)realObjectCount
 {
     return objectCount_;
@@ -773,8 +769,8 @@ static NSString* FormatRect(NSRect r) {
         // Session has terminated.
         [self setLabelAttributesForDeadSession];
     } else {
-        if (now.tv_sec > [[self activeSession] lastOutput].tv_sec + [iTermAdvancedSettingsModel idleTimeSeconds]) {
-            // At least two seconds have passed since the last call.
+        if (!self.activeSession.isProcessing) {
+            // Too much time has passed since activity occurred and we're idle.
             [self setLabelAttributesForIdleTabAtTime:now];
         } else {
             // Less than 2 seconds has passed since the last output in the session.
@@ -4117,7 +4113,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             if (!session.havePostedIdleNotification &&
                 [session shouldPostGrowlNotification] &&
                 [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC &&
-                now.tv_sec > [session lastOutput].tv_sec + 1) {
+                session.isIdle) {
                 NSString *theDescription =
                     [NSString stringWithFormat:@"Session %@ in tab #%d became idle.",
                         [[self activeSession] name],
@@ -4207,47 +4203,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                 kPTYTabNewOutputState |
                                 kPTYTabDeadState)];
     }
-}
-
-#pragma mark - Scripting
-
-- (NSScriptObjectSpecifier *)objectSpecifier {
-    NSScriptObjectSpecifier *containerRef;
-
-    containerRef = [PseudoTerminal objectSpecifier];
-    id classDescription = [NSClassDescription classDescriptionForClass:[PseudoTerminal class]];
-    NSInteger index = [[self realParentWindow] indexOfTab:self];
-    return [[[NSIndexSpecifier alloc]
-                 initWithContainerClassDescription:classDescription
-                 containerSpecifier:containerRef
-                 key:@"tabs"
-                 index:index] autorelease];
-}
-
-- (id)valueInSessionsAtIndex:(unsigned)anIndex {
-    return [self sessions][anIndex];
-}
-
-- (id)valueForKey:(NSString *)key {
-    if ([key isEqualToString:@"currentSession"]) {
-        return [self activeSession];
-    } else if ([key isEqualToString:@"isProcessing"]) {
-        return @([self isProcessing]);
-    } else if ([key isEqualToString:@"icon"]) {
-        return [self icon];
-    } else if ([key isEqualToString:@"objectCount"]) {
-        return @([self objectCount]);
-    } else if ([key isEqualToString:@"sessions"]) {
-        return [self sessions];
-    } else if ([key isEqualToString:@"indexOfTab"]) {
-        return [self indexOfTab];
-    } else {
-        return nil;
-    }
-}
-
-- (NSUInteger)countOfSessions {
-    return [[self sessions] count];
 }
 
 @end

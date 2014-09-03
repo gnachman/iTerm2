@@ -113,7 +113,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, assign) int sessionID;
-@property(nonatomic, readwrite) struct timeval lastOutput;
+@property(nonatomic, readwrite) NSTimeInterval lastOutput;
 @property(nonatomic, readwrite) BOOL isDivorced;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
@@ -172,11 +172,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // needed.
     Profile *_originalProfile;
 
-    // Status reporting
-    struct timeval _lastInput;
+    // Time since reference date when last keypress was received.
+    NSTimeInterval _lastInput;
 
-    // Time that the tab label was last updated.
-    struct timeval _lastUpdate;
+    // Time since reference date when the tab label was last updated.
+    NSTimeInterval _lastUpdate;
 
     // This is used for divorced sessions. It contains the keys in profile
     // that have been customized. Changes in the original profile will be copied over
@@ -282,7 +282,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
         _triggerLine = [[NSMutableString alloc] init];
-        gettimeofday(&_lastInput, NULL);
+        _lastInput = [NSDate timeIntervalSinceReferenceDate];
 
         // Experimentally, this is enough to keep the queue primed but not overwhelmed.
         // TODO: How do slower machines fare?
@@ -977,6 +977,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)_maybeWarnAboutShortLivedSessions
 {
+    if ([(iTermApplicationDelegate *)[NSApp delegate] isApplescriptTestApp]) {
+        return;
+    }
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < 3) {
         NSString* theName = [_profile objectForKey:KEY_NAME];
         NSString *guid = _profile[KEY_GUID];
@@ -1334,7 +1337,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)finishedHandlingNewOutputOfLength:(int)length {
-    gettimeofday(&_lastOutput, NULL);
+    _lastOutput = [NSDate timeIntervalSinceReferenceDate];
     _newOutput = YES;
 
     // Make sure the screen gets redrawn soonish
@@ -2230,6 +2233,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables];
 }
 
+- (BOOL)isProcessing {
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    return (now - _lastOutput) < [iTermAdvancedSettingsModel idleTimeSeconds];
+}
+
+- (BOOL)isIdle {
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    return (now - _lastOutput) < ([iTermAdvancedSettingsModel idleTimeSeconds] + 1);
+}
+
 - (NSString *)uniqueID {
     if (!_uniqueID) {
         static int gNextUniqueId;
@@ -2760,13 +2773,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-static long long timeInTenthsOfSeconds(struct timeval t)
-{
-    return t.tv_sec * 10 + t.tv_usec / 100000;
-}
-
-- (void)updateDisplay
-{
+- (void)updateDisplay {
     _timerRunning = YES;
     BOOL anotherUpdateNeeded = [NSApp isActive];
     if (!anotherUpdateNeeded &&
@@ -2776,17 +2783,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         anotherUpdateNeeded = YES;
     }
 
-    // Set color, other attributes of a tab.
+    // Set attributes of tab to indicate idle, processing, etc.
     if (![self isTmuxGateway]) {
         anotherUpdateNeeded |= [[self tab] updateLabelAttributes];
     }
 
     if ([[self tab] activeSession] == self) {
         // Update window info for the active tab.
-        struct timeval now;
-        gettimeofday(&now, NULL);
+        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
         if (!_jobName ||
-            timeInTenthsOfSeconds(now) >= timeInTenthsOfSeconds(_lastUpdate) + 7) {
+            now >= (_lastUpdate + 0.7)) {
             // It has been more than 700ms since the last time we were here or
             // the job doesn't have a name
             if ([[self tab] isForegroundTab] && [[[self tab] parentWindow] tempTitle]) {
@@ -2804,7 +2810,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                 [oldName release];
             }
             _lastUpdate = now;
-        } else if (timeInTenthsOfSeconds(now) < timeInTenthsOfSeconds(_lastUpdate) + 7) {
+        } else if (now < _lastUpdate + 0.7) {
             // If it's been less than 700ms keep updating.
             anotherUpdateNeeded = YES;
         }
@@ -2875,12 +2881,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                     repeats:NO] retain];
 }
 
-- (void)doAntiIdle
-{
-    struct timeval now;
-    gettimeofday(&now, NULL);
-
-    if (now.tv_sec >= _lastInput.tv_sec + 60) {
+- (void)doAntiIdle {
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (now >= _lastInput + 60) {
         [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
         _lastInput = now;
     }
@@ -3837,7 +3840,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
   unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
   unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
   DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
-  gettimeofday(&_lastInput, NULL);
+  _lastInput = [NSDate timeIntervalSinceReferenceDate];
 
   if ([[[self tab] realParentWindow] inInstantReplay]) {
     DLog(@"PTYSession keyDown in IR");

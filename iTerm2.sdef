@@ -233,6 +233,10 @@
         <cocoa method="handleSplitHorizontallyWithSameProfile:" />
       </responds-to>
 
+      <property name="is processing" code="prcs" type="boolean"
+          description="The session has received output recently.">
+        <cocoa key="isProcessing" />
+      </property>
       <property name="columns" code="cols" type="integer">
         <cocoa key="columns" />
       </property>

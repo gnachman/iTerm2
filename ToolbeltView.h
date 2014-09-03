@@ -28,7 +28,7 @@ extern NSString *const kToolbeltShouldHide;
 + (int)numberOfVisibleTools;
 
 - (id)initWithFrame:(NSRect)frame term:(PseudoTerminal *)term;
-
+- (void)setUseDarkDividers:(BOOL)useDarkDividers;
 
 // Is the tool visible?
 - (BOOL)showingToolWithName:(NSString *)theName;
@@ -40,8 +40,6 @@ extern NSString *const kToolbeltShouldHide;
 
 - (BOOL)haveOnlyOneTool;
 - (void)shutdown;
-
-- (void)setUseDarkDividers:(BOOL)useDarkDividers;
 
 - (ToolCommandHistoryView *)commandHistoryView;
 - (ToolDirectoriesView *)directoriesView;

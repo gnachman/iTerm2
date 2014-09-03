@@ -1379,7 +1379,7 @@ do { \
     NSString *compactLines = @"abcd\nefgh\nijkl\nmnop";
     VT100Grid *grid = [self gridFromCompactLines:compactLines];
     const int w = 5, h = 4;
-    screen_char_t frame[w * h];
+    screen_char_t frame[(w + 1) * h];
     int o = 0;
     for (int y = 0; y < h; y++) {
         screen_char_t *line = [grid screenCharsAtLineNumber:y];
@@ -1428,7 +1428,6 @@ do { \
     assert([[testGrid compactLineDump] isEqualToString:paddedCompactLines]);
     assert(testGrid.cursorX == 1);
     assert(testGrid.cursorY == 2);
-
 }
 
 - (void)doTestDefaultLine {

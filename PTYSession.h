@@ -98,7 +98,8 @@ typedef enum {
 // The owning tab. TODO: Make this into a protocol because it's essentially a delegate.
 @property(nonatomic, assign) PTYTab *tab;
 
-@property(nonatomic, readonly) struct timeval lastOutput;
+// Time since reference date when last output was receivced.
+@property(nonatomic, readonly) NSTimeInterval lastOutput;
 
 // Is the session idle? Used by updateLabelAttributes to send a growl message when processing ends.
 @property(nonatomic, assign) BOOL havePostedIdleNotification;
@@ -270,6 +271,12 @@ typedef enum {
 @property(nonatomic, readonly) NSMutableDictionary *variables;
 
 @property(atomic, readonly) PTYSessionTmuxMode tmuxMode;
+
+// Has output been received recently?
+@property(nonatomic, readonly) BOOL isProcessing;
+
+// Has it been at least a second since isProcessing became false?
+@property(nonatomic, readonly) BOOL isIdle;
 
 #pragma mark - methods
 

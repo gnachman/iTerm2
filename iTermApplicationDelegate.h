@@ -96,6 +96,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 }
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
+@property(nonatomic, readonly) BOOL isApplescriptTestApp;
 
 - (void)awakeFromNib;
 

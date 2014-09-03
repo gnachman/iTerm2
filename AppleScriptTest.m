@@ -11,60 +11,424 @@
 #import <AppKit/NSWorkspace.h>
 #import "iTermTests.h"
 
-// NOTE: This test is finicky because its behavior can change depending on user preferences and how
-// iTerm windows are restored. It might also require the user to interact with a close confirmation
-// dialog.
+static NSString *const kTestAppName = @"iTerm2ForApplescriptTesting.app";
+static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
+
 @implementation AppleScriptTest
 
-- (void)testAppleScriptSplitCommand {
+- (NSURL *)appUrl {
+    return [NSURL fileURLWithPath:[@"./" stringByAppendingString:kTestAppName]];
+}
+
+- (void)setup {
     // ------ Arrange ------
-    NSURL *appURL = [NSURL fileURLWithPath:@"./iTerm.app"];
+    NSURL *appURL = [self appUrl];
     NSWorkspace *sharedWorkspace = [NSWorkspace sharedWorkspace];
 
+    [self killTestApp];
+
+    // Nuke its prefs
+    NSString *defaultsDelete = [NSString stringWithFormat:@"defaults delete %@", kTestBundleId];
+    system([defaultsDelete UTF8String]);
+
+    // Start it up fresh
     BOOL isRunning = [sharedWorkspace launchApplication:[appURL path]];
-
-    // Make sure iTerm is running before executing AppleScript
     assert(isRunning);
+}
 
-    // We inject the exact path of the executable to the script in order not
-    // to interfere with other iTerm instances that may be present.
-    NSString *script = [NSString stringWithFormat:
-        @"tell application\"%@\"                                                                    \n"
-         "  activate                                                                                \n"
-         "  set oldSessionCount to (count of (sessions of current terminal))                        \n"
-         "  -- by default splits horizontally                                                       \n"
-         "  tell current terminal to split                                                          \n"
-         "  tell current terminal to split direction \"vertical\"                                   \n"
-         "  tell current terminal to split direction \"horizontal\"                                 \n"
-         "  tell current terminal to split direction \"vertical\" profile \"Default\"               \n"
-         "  tell current terminal to split direction \"horizontal\" profile \"Default\"             \n"
-         "  set newSessionCount to (count of (sessions of current terminal))                        \n"
-         " -- cleanup, close 6 sessions (so iTerm does not prompt to exit and quit application      \n"
-         "  tell current terminal                                                                   \n"
-         "      repeat 6 times                                                                      \n"
-         "          tell current session to terminate                                               \n"
-         "      end repeat                                                                          \n"
-         "  end tell                                                                                \n"
-         "  quit                                                                                    \n"
-         "end tell                                                                                  \n"
-         "{oldSessionCount, newSessionCount}                                                        \n",
-        [appURL path]
-    ];
+- (void)teardown {
+    [self killTestApp];
+}
+
+- (void)killTestApp {
+    // Kill all running instances of iTerm2ForApplescriptTesting
+    pid_t thePid = 0;
+    for (NSRunningApplication *app in [[NSWorkspace sharedWorkspace] runningApplications]) {
+        if ([app.bundleIdentifier isEqualToString:kTestBundleId]) {
+            thePid = app.processIdentifier;
+            kill(app.processIdentifier, SIGKILL);
+        }
+    }
+
+    // Wait for it to die
+    if (thePid) {
+        BOOL running = NO;
+        do {
+            running = NO;
+            int rc = kill(thePid, 0);
+            if (rc && errno == ESRCH) {
+                running = NO;
+            } else {
+                running = YES;
+                usleep(100000);
+            }
+        } while (running);
+    }
+}
+
+- (NSString *)scriptWithCommands:(NSArray *)commands outputs:(NSArray *)outputs {
+    NSURL *appURL = [self appUrl];
+    return [NSString stringWithFormat:
+            @"tell application \"%@\"\n"
+            @"  activate\n"
+            @"  %@\n"
+            @"end tell\n"
+            @"{%@}\n",
+            [appURL path],
+            [commands componentsJoinedByString:@"\n"],
+            outputs ? [outputs componentsJoinedByString:@", "] : 0];
+}
+
+- (NSAppleEventDescriptor *)runScript:(NSString *)script {
     NSAppleScript *appleScript = [[[NSAppleScript alloc] initWithSource:script] autorelease];
     NSDictionary *errorInfo = NULL;
-
-    // ------- Act -------
     NSAppleEventDescriptor *eventDescriptor = [appleScript executeAndReturnError:&errorInfo];
+    if (errorInfo) {
+        NSLog(@"Script:\n%@\n\nFailed with error:\n%@",
+              script, errorInfo);
+        assert(false);
+    }
+    return eventDescriptor;
+}
 
-    // ------ Assert -----
-    // no errors were thrown in the AppleScript script
-    assert(NULL == errorInfo);
+- (void)testCreateWindowWithDefaultProfile {
+    NSArray *commands = @[ @"set oldWindowCount to (count of terminal windows)",
+                           @"create window with default profile",
+                           @"set newWindowCount to (count of terminal windows)" ];
+    NSArray *outputs = @[ @"oldWindowCount", @"newWindowCount" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    assert(eventDescriptor);
 
-    int sessionCountBefore = [[eventDescriptor descriptorAtIndex:1] int32Value];
-    int sessionCountAfter = [[eventDescriptor descriptorAtIndex:2] int32Value];
+    assert([[eventDescriptor descriptorAtIndex:1] int32Value] == 0);
+    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == 1);
+}
 
-    // newly created sessions are present
-    assert(sessionCountBefore + 5 == sessionCountAfter);
+- (void)testCreateWindowWithNamedProfile {
+    NSArray *commands = @[ @"set oldWindowCount to (count of terminal windows)",
+                           @"create window with profile \"Default\"",
+                           @"set newWindowCount to (count of terminal windows)" ];
+    NSArray *outputs = @[ @"oldWindowCount", @"newWindowCount" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    assert(eventDescriptor);
+
+    assert([[eventDescriptor descriptorAtIndex:1] int32Value] == 0);
+    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == 1);
+}
+
+- (void)testCreateWindowWithDefaultProfileAndCommand {
+    NSArray *commands = @[ @"create window with default profile command \"touch /tmp/rancommand\"" ];
+    unlink("/tmp/rancommand");
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:nil];
+    [self runScript:script];
+
+    // Wait for the command to finish running. It gets half a second.
+    BOOL ok = NO;
+    for (int i = 0; i < 5; i++) {
+        ok = [[NSFileManager defaultManager] fileExistsAtPath:@"/tmp/rancommand"];
+        if (!ok) {
+            usleep(100000);
+        }
+    }
+    assert(ok);
+}
+
+- (void)testSelectWindow {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"tell current session of current window",
+                           @"  write text \"echo NUMBER ONE\"",
+                           @"end tell",
+                           @"create window with default profile",
+                           @"tell current session of current window",
+                           @"  write text \"echo NUMBER TWO\"",
+                           @"end tell",
+                           @"delay 0.2",  // Give write text time to echo result back
+                           @"set secondWindowContents to (contents of current session of current window)",
+                           @"select first terminal window",
+                           @"set firstWindowContents to (contents of current session of current window)" ];
+    NSArray *outputs = @[ @"firstWindowContents", @"secondWindowContents" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    NSString *firstWindowContents = [[eventDescriptor descriptorAtIndex:1] stringValue];
+    NSString *secondWindowContents = [[eventDescriptor descriptorAtIndex:2] stringValue];
+
+    assert([firstWindowContents containsString:@"NUMBER ONE"]);
+    assert([secondWindowContents containsString:@"NUMBER TWO"]);
+}
+
+- (void)testSelectTab {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"tell current session of current window",
+                           @"  write text \"echo NUMBER ONE\"",
+                           @"end tell",
+                           @"tell current window",
+                           @"  create tab with default profile",
+                           @"end tell",
+                           @"tell current session of current window",
+                           @"  write text \"echo NUMBER TWO\"",
+                           @"end tell",
+                           @"delay 0.2",  // Give write text time to echo result back
+                           @"set secondTabContents to (contents of current session of current window)",
+                           @"tell first tab of current window",
+                           @"  select",
+                           @"end tell",
+                           @"set firstTabContents to (contents of current session of current window)" ];
+    NSArray *outputs = @[ @"firstTabContents", @"secondTabContents" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    NSString *firstTabContents = [[eventDescriptor descriptorAtIndex:1] stringValue];
+    NSString *secondTabContents = [[eventDescriptor descriptorAtIndex:2] stringValue];
+
+    assert([firstTabContents containsString:@"NUMBER ONE"]);
+    assert([secondTabContents containsString:@"NUMBER TWO"]);
+}
+
+- (void)testSelectSession {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"tell current session of current window",
+                           @"  write text \"echo NUMBER ONE\"",
+                           @"end tell",
+                           @"tell current session of current window",
+                           @"  split horizontally with default profile",
+                           @"end tell",
+                           @"tell current session of current window",
+                           @"  write text \"echo NUMBER TWO\"",
+                           @"end tell",
+                           @"delay 0.2",  // Give write text time to echo result back
+                           @"set secondSessionContents to (contents of current session of current window)",
+                           @"tell first session of current tab of current window",
+                           @"  select",
+                           @"end tell",
+                           @"set firstSessionContents to (contents of current session of current window)" ];
+    NSArray *outputs = @[ @"firstSessionContents", @"secondSessionContents" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    NSString *firstSessionContents = [[eventDescriptor descriptorAtIndex:1] stringValue];
+    NSString *secondSessionContents = [[eventDescriptor descriptorAtIndex:2] stringValue];
+
+    assert([firstSessionContents containsString:@"NUMBER ONE"]);
+    assert([secondSessionContents containsString:@"NUMBER TWO"]);
+}
+
+- (void)testSplitHorizontallyWithDefaultProfile {
+    NSArray *commands = @[ @"create window with profile \"Default\"",
+                           @"set oldSessionCount to (count of sessions in first tab in first terminal window)",
+                           @"tell current session of current window",
+                           @"  split horizontally with default profile",
+                           @"end tell",
+                           @"set newSessionCount to (count of sessions in first tab in first terminal window)" ];
+    NSArray *outputs = @[ @"oldSessionCount", @"newSessionCount" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    assert(eventDescriptor);
+
+    assert([[eventDescriptor descriptorAtIndex:1] int32Value] == 1);
+    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == 2);
+}
+
+- (void)testSplitVerticallyWithDefaultProfile {
+    NSArray *commands = @[ @"create window with profile \"Default\"",
+                           @"set oldSessionCount to (count of sessions in first tab in first terminal window)",
+                           @"tell current session of current window",
+                           @"  split vertically with default profile",
+                           @"end tell",
+                           @"set newSessionCount to (count of sessions in first tab in first terminal window)" ];
+    NSArray *outputs = @[ @"oldSessionCount", @"newSessionCount" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    assert(eventDescriptor);
+
+    assert([[eventDescriptor descriptorAtIndex:1] int32Value] == 1);
+    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == 2);
+}
+
+- (void)testCreateTabWithDefaultProfile {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"set oldTabCount to (count of tabs in first terminal window)",
+                           @"tell current window",
+                           @"  create tab with default profile",
+                           @"end tell",
+                           @"set newTabCount to (count of tabs in first terminal window)" ];
+    NSArray *outputs = @[ @"oldTabCount", @"newTabCount" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    assert(eventDescriptor);
+
+    assert([[eventDescriptor descriptorAtIndex:1] int32Value] == 1);
+    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == 2);
+}
+
+- (void)testCreateTabWithNamedProfile {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"set oldTabCount to (count of tabs in first terminal window)",
+                           @"tell current window",
+                           @"  create tab with profile \"Default\"",
+                           @"end tell",
+                           @"set newTabCount to (count of tabs in first terminal window)" ];
+    NSArray *outputs = @[ @"oldTabCount", @"newTabCount" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    assert(eventDescriptor);
+
+    assert([[eventDescriptor descriptorAtIndex:1] int32Value] == 1);
+    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == 2);
+}
+
+- (void)testResizeSession {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"set oldRows to (rows in current session of current window)",
+                           @"set oldColumns to (columns in current session of current window)",
+                           @"tell current session of current window",
+                           @"  set rows to 20",
+                           @"  set columns to 30",
+                           @"end tell",
+                           @"set newRows to (rows in current session of current window)",
+                           @"set newColumns to (columns in current session of current window)" ];
+
+    NSArray *outputs = @[ @"oldRows", @"oldColumns", @"newRows", @"newColumns" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    assert(eventDescriptor);
+
+    assert([[eventDescriptor descriptorAtIndex:1] int32Value] == 25);
+    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == 80);
+    assert([[eventDescriptor descriptorAtIndex:3] int32Value] == 20);
+    assert([[eventDescriptor descriptorAtIndex:4] int32Value] == 30);
+}
+
+- (void)testWriteContentsOfFile {
+    NSString *helloWorld = @"Hello world";
+    [helloWorld writeToFile:@"/tmp/testFile"
+                 atomically:NO
+                   encoding:NSUTF8StringEncoding
+                      error:NULL];
+
+    NSArray *commands = @[ @"create window with default profile",
+                           @"tell current session of current window",
+                           @"  write text \"cat > /dev/null\"",
+                           @"  write contents of file \"/tmp/testFile\"",
+                           @"end tell",
+                           @"set sessionContents to (contents of current session of current window)" ];
+    NSArray *outputs = @[ @"sessionContents" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    NSString *contents = [[eventDescriptor descriptorAtIndex:1] stringValue];
+
+    assert([contents containsString:helloWorld]);
+}
+
+- (void)testTty {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"set ttyName to (tty of current session of current window)" ];
+    NSArray *outputs = @[ @"ttyName" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    NSString *contents = [[eventDescriptor descriptorAtIndex:1] stringValue];
+
+    assert([contents hasPrefix:@"/dev/ttys"]);
+}
+
+- (void)testUniqueId {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"create window with default profile",
+                           @"set firstUniqueId to (unique ID of current session of first terminal window)",
+                           @"set secondUniqueId to (unique ID of current session of second terminal window)" ];
+    NSArray *outputs = @[ @"firstUniqueId", @"secondUniqueId" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    int uid1 = [[eventDescriptor descriptorAtIndex:1] int32Value];
+    int uid2 = [[eventDescriptor descriptorAtIndex:2] int32Value];
+    assert(uid1 != uid2);
+}
+
+- (void)testSetGetColors {
+    NSArray *colors = @[ @"foreground color",
+                         @"background color",
+                         @"bold color",
+                         @"cursor color",
+                         @"cursor text color",
+                         @"selected text color",
+                         @"selection color",
+                         @"ANSI black color",
+                         @"ANSI red color",
+                         @"ANSI green color",
+                         @"ANSI yellow color",
+                         @"ANSI blue color",
+                         @"ANSI magenta color",
+                         @"ANSI cyan color",
+                         @"ANSI white color",
+                         @"ANSI bright black color",
+                         @"ANSI bright red color",
+                         @"ANSI bright green color",
+                         @"ANSI bright yellow color",
+                         @"ANSI bright blue color",
+                         @"ANSI bright magenta color",
+                         @"ANSI bright cyan color",
+                         @"ANSI bright white color" ];
+    NSMutableArray *commands = [NSMutableArray arrayWithArray:@[ @"create window with default profile",
+                                                                 @"tell current session of current window" ]];
+    NSMutableArray *outputs = [NSMutableArray array];
+    for (NSString *color in colors) {
+        NSString *name = [color stringByReplacingOccurrencesOfString:@" " withString:@""];
+        [commands addObject:[NSString stringWithFormat:@"set old%@ to %@", name, color]];
+        [commands addObject:[NSString stringWithFormat:@"set %@ to {65535, 0, 0, 0}", color]];
+        [commands addObject:[NSString stringWithFormat:@"set new%@ to %@", name, color]];
+        [outputs addObject:[NSString stringWithFormat:@"old%@", name]];
+        [outputs addObject:[NSString stringWithFormat:@"new%@", name]];
+    }
+
+    [commands addObject:@"end tell"];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+
+    int i = 1;
+    for (NSString *name in outputs) {
+        NSString *value = [NSString stringWithFormat:@"{%d, %d, %d, %d}",
+                           [[[eventDescriptor descriptorAtIndex:i] descriptorAtIndex:1] int32Value],
+                           [[[eventDescriptor descriptorAtIndex:i] descriptorAtIndex:2] int32Value],
+                           [[[eventDescriptor descriptorAtIndex:i] descriptorAtIndex:3] int32Value],
+                           [[[eventDescriptor descriptorAtIndex:i] descriptorAtIndex:4] int32Value]];
+
+        if ([name hasPrefix:@"old"]) {
+            assert(![value isEqualToString:@"{65535, 0, 0, 0}"]);
+        } else {
+            assert([value isEqualToString:@"{65535, 0, 0, 0}"]);
+        }
+        i++;
+    }
+}
+
+- (void)testSetGetName {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"set oldName to name of current session of current window",
+                           @"tell current session of current window",
+                           @"  set name to \"Testing\"",
+                           @"end tell",
+                           @"set newName to name of current session of current window" ];
+    NSArray *outputs = @[ @"oldName", @"newName" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    NSString *oldName = [[eventDescriptor descriptorAtIndex:1] stringValue];
+    NSString *newName = [[eventDescriptor descriptorAtIndex:2] stringValue];
+    assert(![oldName isEqualToString:newName]);
+    assert([newName isEqualToString:@"Testing"]);
 }
 
 @end
