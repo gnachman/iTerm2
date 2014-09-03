@@ -37,7 +37,11 @@ SVNDIR=~/iterm2-website
 git log > $SVNDIR/appcasts/nightly_changes.txt
 
 cd build/Nightly
-zip -ry iTerm2-${NAME}.zip iTerm2.app
+
+# For the purposes of auto-update, the app's folder must be named iTerm.app since Sparkle won't accept a name change.
+rm -rf iTerm.app
+mv iTerm2.app iTerm.app
+zip -ry iTerm2-${NAME}.zip iTerm.app
 
 SparkleSign nightly.xml nightly_template.xml
 

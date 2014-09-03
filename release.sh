@@ -47,6 +47,10 @@ function Build {
   pushd "build/$BUILDTYPE"
 
   # Create the zip file
+  # For the purposes of auto-update, the app's folder must be named iTerm.app
+  # since Sparkle won't accept a name change.
+  rm -rf iTerm.app
+  mv iTerm2.app iTerm.app
   zip -ry iTerm2-${NAME}.zip iTerm.app
 
   # Update the list of changes

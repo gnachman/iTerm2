@@ -183,6 +183,8 @@
 	<string>public.app-category.utilities</string>
 	<key>NSAppleScriptEnabled</key>
 	<string>YES</string>
+	<key>OSAScriptingDefinition</key>
+	<string>iTerm2.sdef</string>
 	<key>NSExtensions</key>
 	<dict/>
 	<key>NSMainNibFile</key>
