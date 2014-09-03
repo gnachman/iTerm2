@@ -1,0 +1,76 @@
+tell application "iTerm2"
+        create window with default profile
+        tell current session of first terminal window
+                write text "date"
+                write text "cat > /dev/null"
+                write contents of file "/etc/passwd"
+                write text (tty)
+                write text (contents)
+                write text (unique ID)
+        end tell
+        create window with default profile command "ls -l -R /"
+        select first terminal window
+        tell current session of current window
+                split vertically with default profile
+                split vertically with profile "Default"
+                split vertically with same profile
+                
+                split horizontally with default profile
+                split horizontally with profile "Default"
+                split horizontally with same profile
+        end tell
+        create window with profile "Default"
+        create window with profile "Default" command "ls -l -R /"
+        repeat with aWindow in terminal windows
+                tell aWindow
+                        tell current session
+                                split horizontally with default profile
+                        end tell
+                end tell
+        end repeat
+        tell current window
+                create tab with default profile
+                create tab with profile "Projection"
+        end tell
+        tell current window
+                tell current session
+                        set columns to 40
+                        set rows to 40
+                end tell
+        end tell
+        tell current window
+                tell current session
+                        set foreground color to {65535, 0, 0, 0}
+                        set background color to {65535, 0, 0, 0}
+                        set bold color to {65535, 0, 0, 0}
+                        set cursor color to {65535, 0, 0, 0}
+                        set cursor text color to {65535, 0, 0, 0}
+                        set selected text color to {65535, 0, 0, 0}
+                        set selection color to {65535, 0, 0, 0}
+                        set ANSI black color to {65535, 0, 0, 0}
+                        set ANSI red color to {65535, 0, 0, 0}
+                        set ANSI green color to {65535, 0, 0, 0}
+                        set ANSI yellow color to {65535, 0, 0, 0}
+                        set ANSI blue color to {65535, 0, 0, 0}
+                        set ANSI magenta color to {65535, 0, 0, 0}
+                        set ANSI cyan color to {65535, 0, 0, 0}
+                        set ANSI white color to {65535, 0, 0, 0}
+                        
+                        set ANSI bright black color to {65535, 0, 0, 0}
+                        set ANSI bright red color to {65535, 0, 0, 0}
+                        set ANSI bright green color to {65535, 0, 0, 0}
+                        set ANSI bright yellow color to {65535, 0, 0, 0}
+                        set ANSI bright blue color to {65535, 0, 0, 0}
+                        set ANSI bright magenta color to {65535, 0, 0, 0}
+                        set ANSI bright cyan color to {65535, 0, 0, 0}
+                        set ANSI bright white color to {65535, 0, 0, 0}
+                end tell
+        end tell
+        tell current window
+                tell current session
+                        set background image to "/usr/share/httpd/icons/small/rainbow.png"
+                        set name to "George!"
+                        set transparency to 0.5
+                end tell
+        end tell
+end tell
