@@ -8,6 +8,7 @@
 
 #import "iTermApplication.h"
 
+// This category has methods exposed through the .sdef.
 @interface iTermApplication (Scripting)
 
 @end

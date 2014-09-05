@@ -4416,7 +4416,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return [self broadcastMode] != BROADCAST_OFF;
 }
 
--(void)replaySession:(PTYSession *)oldSession
+- (void)replaySession:(PTYSession *)oldSession
 {
     // NSLog(@"Enter instant replay. Live session is %@", oldSession);
     NSTabViewItem* oldTabViewItem = [TABVIEW selectedTabViewItem];
@@ -6114,19 +6114,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-// Set the session's address book and initialize its screen and name. Sets the
+// Set the session's profile dictionary and initialize its screen and name. Sets the
 // window title to the session's name. If size is not nil then the session is initialized to fit
 // a view of that size; otherwise the size is derived from the existing window if there is already
 // an open tab, or its bookmark's preference if it's the first session in the window.
 - (void)setupSession:(PTYSession *)aSession
                title:(NSString *)title
-            withSize:(NSSize*)size
-{
+            withSize:(NSSize*)size {
     NSDictionary *tempPrefs;
-
-    PtyLog(@"%s(%d):-[PseudoTerminal setupSession]",
-          __FILE__, __LINE__);
-
     NSParameterAssert(aSession != nil);
 
     // set some default parameters
@@ -6340,39 +6335,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [aTab setReportIdealSizeAsCurrent:NO];
         [aTab release];
     }
-}
-
-// Seamlessly change the session in a tab.
-- (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex {
-    PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
-
-    if (aSession == nil) {
-        return;
-    }
-
-    assert([TABVIEW indexOfTabViewItemWithIdentifier:aSession] == NSNotFound);
-    NSTabViewItem *aTabViewItem = [TABVIEW tabViewItemAtIndex:anIndex];
-    assert(aTabViewItem);
-
-    // Tell the session at this index that it is no longer associated with this tab.
-    PTYTab* oldTab = [aTabViewItem identifier];
-    [oldTab setTabViewItem:nil];  // TODO: This looks like a bug if there are multiple sessions in one tab
-
-    // Replace the session for the tab view item.
-    PTYTab* newTab = [[[PTYTab alloc] initWithSession:aSession] autorelease];
-    [tabBarControl changeIdentifier:newTab atIndex:anIndex];
-    [newTab setTabViewItem:aTabViewItem];
-
-    // Set other tabviewitem attributes to match the new session.
-    [TABVIEW selectTabViewItemAtIndex:anIndex];
-
-    // Bring the window to the fore.
-    [self fitWindowToTabs];
-    if (self.windowInitialized && !_fullScreen) {
-        [[self window] makeKeyAndOrderFront:self];
-    }
-    [[iTermController sharedInstance] setCurrentTerminal:self];
-    [newTab numberOfSessionsDidChange];
 }
 
 - (NSString *)currentSessionName {

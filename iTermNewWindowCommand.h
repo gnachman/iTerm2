@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
+// This is a scripting command defined in the .sdef.
 @interface iTermNewWindowCommand : NSScriptCommand
 
 @end

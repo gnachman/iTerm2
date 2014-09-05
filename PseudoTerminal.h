@@ -461,10 +461,6 @@ extern NSString *const kCurrentSessionDidChange;
            sessions:(NSArray *)sessions;
 - (IBAction)toggleToolbeltVisibility:(id)sender;
 
-#pragma mark - Used by Scripting Category
-
-- (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex;
-
 - (void)setupSession:(PTYSession *)aSession
                title:(NSString *)title
             withSize:(NSSize *)size;
