@@ -1399,7 +1399,6 @@
 		A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
 		A64AB1D819B8C1EB0033DB9C /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */; };
 		A64AB1D919B8C2670033DB9C /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */; };
-		A64AB26319B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A64AB26219B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist */; };
 		A671C067192981D000A7F796 /* NSStringCategoryTest.h in Headers */ = {isa = PBXBuildFile; fileRef = A671C065192981D000A7F796 /* NSStringCategoryTest.h */; };
 		A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
 		A671C069192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
@@ -4402,7 +4401,6 @@
 				1D6ED97A19AEA20D005A7799 /* mark_err.png in Resources */,
 				1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */,
 				1D6ED97C19AEA20D005A7799 /* iTerm.strings in Resources */,
-				A64AB26319B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist in Resources */,
 				1D6ED97D19AEA20D005A7799 /* AquaTabNew.png in Resources */,
 				1D6ED97E19AEA20D005A7799 /* QuestionMarkSign.png in Resources */,
 				1D6ED97F19AEA20D005A7799 /* AquaTabNewPressed.png in Resources */,

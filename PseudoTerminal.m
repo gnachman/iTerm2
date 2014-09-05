@@ -962,7 +962,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     term->wasDraggedFromAnotherWindow_ = YES;
     [term copySettingsFrom:self];
 
-    [[iTermController sharedInstance] addInTerminals:term];
+    [[iTermController sharedInstance] addTerminalWindow:term];
 
     if (newWindowType == WINDOW_TYPE_NORMAL ||
         newWindowType == WINDOW_TYPE_NO_TITLE_BAR) {

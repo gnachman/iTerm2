@@ -137,6 +137,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
 
+// Does self contain |substring|?
 - (BOOL)containsString:(NSString *)substring;
 
 @end

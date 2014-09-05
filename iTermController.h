@@ -147,24 +147,10 @@
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (BOOL)hasRestorableSession;
 
-#pragma mark - Key-Value Coding
+- (NSArray*)terminals;
+- (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 
-- (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key;
-
-// accessors for to-many relationships:
--(NSArray*)terminals;
--(void)setTerminals: (NSArray*)terminals;
 - (void)setCurrentTerminal:(PseudoTerminal *)aTerminal;
-
--(id)valueInTerminalsAtIndex:(unsigned)index;
--(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)index;
-- (void) addInTerminals: (PseudoTerminal *) object;
-- (void) insertInTerminals: (PseudoTerminal *) object;
--(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)index;
--(void)removeFromTerminalsAtIndex:(unsigned)index;
-
-// a class method to provide the keys for KVC:
-- (NSArray*)kvcKeys;
 
 void OnHotKeyEvent(void);
 

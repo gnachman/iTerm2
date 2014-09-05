@@ -8,6 +8,7 @@
 
 #import "PTYTab.h"
 
+// Contains methods exposed in sdef file but not used internally.
 @interface PTYTab (Scripting)
 
 @end

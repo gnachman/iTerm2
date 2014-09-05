@@ -87,7 +87,7 @@ typedef void (^VoidBlock)(void);
                     break;
             }
             completionHandler([term window], nil);
-            [[iTermController sharedInstance] addInTerminals:term];
+            [[iTermController sharedInstance] addTerminalWindow:term];
         };
         [queuedBlocks addObject:[[theBlock copy] autorelease]];
     } else {

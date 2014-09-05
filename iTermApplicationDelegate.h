@@ -190,28 +190,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 - (void)openPasswordManagerToAccountName:(NSString *)name;
 
-@end
-
-// Scripting support
-@interface iTermApplicationDelegate (KeyValueCoding)
-
-- (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key;
-
 - (PseudoTerminal *)currentTerminal;
-
-// accessors for to-many relationships:
--(NSArray*)terminals;
--(void)setTerminals: (NSArray*)terminals;
-- (void) setCurrentTerminal: (PseudoTerminal *) aTerminal;
-
--(id)valueInTerminalsAtIndex:(unsigned)index;
--(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)index;
-- (void) addInTerminals: (PseudoTerminal *) object;
-- (void) insertInTerminals: (PseudoTerminal *) object;
--(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)index;
--(void)removeFromTerminalsAtIndex:(unsigned)index;
-
-// a class method to provide the keys for KVC:
-+(NSArray*)kvcKeys;
+- (NSArray*)terminals;
 
 @end

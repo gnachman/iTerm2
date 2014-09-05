@@ -175,6 +175,10 @@
     [[self tab] closeSession:self];
 }
 
+- (void)handleCloseCommand:(NSScriptCommand *)scriptCommand {
+    [self.tab.realParentWindow closeSessionWithConfirmation:self];
+}
+
 - (NSColor *)backgroundColor {
     return [self.colorMap colorForKey:kColorMapBackground];
 }

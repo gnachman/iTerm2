@@ -10,6 +10,7 @@
 
 #import <AppKit/NSWorkspace.h>
 #import "iTermTests.h"
+#import "NSStringITerm.h"
 
 static NSString *const kTestAppName = @"iTerm2ForApplescriptTesting.app";
 static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";

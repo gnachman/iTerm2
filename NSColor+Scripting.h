@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+// This category is used by applescript to convert RGBColor to/from NSColor.
 @interface NSColor (Scripting)
 
 @end

@@ -62,9 +62,6 @@ static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
-// keys for to-many relationships:
-static NSString *const kTerminalsKey = @"terminals";
-
 static BOOL UncachedIsMountainLionOrLater(void) {
     unsigned major;
     unsigned minor;
@@ -423,7 +420,7 @@ static BOOL initDone = NO;
         for (NSDictionary* terminalArrangement in terminalArrangements) {
             PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
             if (term) {
-                [self addInTerminals:term];
+                [self addTerminalWindow:term];
             }
         }
     }
@@ -626,7 +623,7 @@ static BOOL initDone = NO;
         [self setCurrentTerminal:nil];
     }
     if (theTerminalWindow) {
-        [self removeFromTerminalsAtIndex:[terminalWindows indexOfObject:theTerminalWindow]];
+        [self removeTerminalWindow:theTerminalWindow];
     }
 }
 
@@ -1042,7 +1039,7 @@ static BOOL initDone = NO;
     if ([[bookmark objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
         [term hideAfterOpening];
     }
-    [self addInTerminals:term];
+    [self addTerminalWindow:term];
     return term;
 }
 
@@ -1161,7 +1158,7 @@ static BOOL initDone = NO;
         if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
             [term hideAfterOpening];
         }
-        [self addInTerminals:term];
+        [self addTerminalWindow:term];
         if (isHotkey) {
             // See comment above regarding hotkey windows.
             toggle = NO;
@@ -1373,35 +1370,12 @@ static BOOL initDone = NO;
     return _restorableSessions.count > 0;
 }
 
-#pragma mark - Scripting support
-
-- (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key
-{
-    BOOL ret;
-    ret = [key isEqualToString:@"terminals"] || [key isEqualToString:@"currentTerminal"];
-    return (ret);
-}
-
 // accessors for to-many relationships:
-- (NSArray*)terminals
-{
+- (NSArray*)terminals {
     return (terminalWindows);
 }
 
-- (void)setTerminals:(NSArray*)terminals
-{
-    // no-op
-}
-
-// accessors for to-many relationships:
-// (See NSScriptKeyValueCoding.h)
--(id)valueInTerminalsAtIndex:(unsigned)theIndex
-{
-    return ([terminalWindows objectAtIndex:theIndex]);
-}
-
-- (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal
-{
+- (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {
     FRONT = thePseudoTerminal;
 
     // make sure this window is the key window
@@ -1419,48 +1393,18 @@ static BOOL initDone = NO;
 
 }
 
--(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
-{
-    [terminalWindows replaceObjectAtIndex:theIndex withObject:object];
-    [self updateWindowTitles];
-}
-
-- (void)addInTerminals:(PseudoTerminal*)object
-{
-    [self insertInTerminals:object atIndex:[terminalWindows count]];
-    [self updateWindowTitles];
-}
-
-- (void)insertInTerminals:(PseudoTerminal*)object
-{
-    [self insertInTerminals:object atIndex:[terminalWindows count]];
-    [self updateWindowTitles];
-}
-
-- (void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
-{
-    if ([terminalWindows containsObject:object] == YES) {
+- (void)addTerminalWindow:(PseudoTerminal *)terminalWindow {
+    if ([terminalWindows containsObject:terminalWindow] == YES) {
         return;
     }
 
-    [terminalWindows insertObject:object atIndex:theIndex];
+    [terminalWindows addObject:terminalWindow];
     [self updateWindowTitles];
 }
 
-- (void)removeFromTerminalsAtIndex:(unsigned)theIndex
-{
-    [terminalWindows removeObjectAtIndex:theIndex];
+- (void)removeTerminalWindow:(PseudoTerminal *)terminalWindow {
+    [terminalWindows removeObject:terminalWindow];
     [self updateWindowTitles];
-}
-
-// a class method to provide the keys for KVC:
-- (NSArray*)kvcKeys
-{
-    static NSArray *_kvcKeys = nil;
-    if( nil == _kvcKeys ){
-        _kvcKeys = [[NSArray alloc] initWithObjects:kTerminalsKey,  nil ];
-    }
-    return _kvcKeys;
 }
 
 @end

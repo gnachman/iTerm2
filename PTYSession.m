@@ -978,6 +978,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)_maybeWarnAboutShortLivedSessions
 {
     if ([(iTermApplicationDelegate *)[NSApp delegate] isApplescriptTestApp]) {
+        // The applescript test driver doesn't care about short-lived sessions.
         return;
     }
     if ([[NSDate date] timeIntervalSinceDate:_creationDate] < 3) {
@@ -6077,12 +6078,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)pasteHelperIsAtShellPrompt {
     return !_shellIntegrationEverUsed || [self currentCommand] != nil;
-}
-
-#pragma mark - Scripting
-
-- (void)handleCloseCommand:(NSScriptCommand *)scriptCommand {
-    [self.tab.realParentWindow closeSessionWithConfirmation:self];
 }
 
 @end

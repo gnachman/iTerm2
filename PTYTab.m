@@ -786,14 +786,6 @@ static NSString* FormatRect(NSRect r) {
     return needsFollowUp;
 }
 
-- (void)handleCloseCommand:(NSScriptCommand *)scriptCommand {
-    [[self parentWindow] closeTab:self];
-}
-
-- (void)handleSelectCommand:(NSScriptCommand *)scriptCommand {
-    [[[self parentWindow] tabView] selectTabViewItemWithIdentifier:self];
-}
-
 - (void)closeSession:(PTYSession*)session
 {
     [[self parentWindow] closeSession:session];

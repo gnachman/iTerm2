@@ -87,7 +87,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     if (arrangement) {
         term = [PseudoTerminal terminalWithArrangement:arrangement];
         if (term) {
-            [[iTermController sharedInstance] addInTerminals:term];
+            [[iTermController sharedInstance] addTerminalWindow:term];
         }
     }
     

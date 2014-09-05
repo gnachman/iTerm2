@@ -3,23 +3,7 @@
 #import "iTermController.h"
 #import "PTYTab.h"
 
-// keys for attributes:
-static NSString *const kColumnsKVCKey = @"columns";
-static NSString *const kRowsKVCKey = @"rows";
-// keys for to-many relationships:
-static NSString *const kTabsKVCKey = @"tabs";
-
 @implementation PseudoTerminal (Scripting)
-
-// a class method to provide the keys for KVC:
-+ (NSArray*)kvcKeys {
-    static NSArray *_kvcKeys = nil;
-    if (nil == _kvcKeys ){
-        _kvcKeys = [[NSArray alloc] initWithObjects:
-            kColumnsKVCKey, kRowsKVCKey, kTabsKVCKey, nil ];
-    }
-    return _kvcKeys;
-}
 
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier {

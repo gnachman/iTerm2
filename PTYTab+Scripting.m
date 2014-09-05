@@ -54,4 +54,12 @@
   return @([self number]);
 }
 
+- (void)handleCloseCommand:(NSScriptCommand *)scriptCommand {
+    [[self parentWindow] closeTab:self];
+}
+
+- (void)handleSelectCommand:(NSScriptCommand *)scriptCommand {
+    [[[self parentWindow] tabView] selectTabViewItemWithIdentifier:self];
+}
+
 @end

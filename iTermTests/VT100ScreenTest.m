@@ -94,6 +94,25 @@
     return screen;
 }
 
+- (void)screenSetColor:(NSColor *)color forKey:(int)key {
+}
+
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
+}
+
+- (BOOL)screenShouldPlacePromptAtFirstColumn {
+    return YES;
+}
+
+- (void)screenSetBackgroundImageFile:(NSString *)filename {
+}
+
+- (void)screenSetBadgeFormat:(NSString *)theFormat {
+}
+
+- (void)screenSetUserVar:(NSString *)kvp {
+}
+
 - (void)testInit {
     VT100Screen *screen = [self screen];
 

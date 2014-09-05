@@ -977,7 +977,7 @@ static BOOL hasBecomeActive = NO;
                                                             savedWindowType:WINDOW_TYPE_NORMAL
                                                                      screen:-1] autorelease];
                         if (term) {
-                            [[iTermController sharedInstance] addInTerminals:term];
+                            [[iTermController sharedInstance] addTerminalWindow:term];
                             term.terminalGuid = restorableSession.terminalGuid;
                             [restorableSession.sessions[0] revive];
                             [term addRevivedSession:restorableSession.sessions[0]];
@@ -996,7 +996,7 @@ static BOOL hasBecomeActive = NO;
                                                                  windowType:WINDOW_TYPE_NORMAL
                                                             savedWindowType:WINDOW_TYPE_NORMAL
                                                                      screen:-1] autorelease];
-                        [[iTermController sharedInstance] addInTerminals:term];
+                        [[iTermController sharedInstance] addTerminalWindow:term];
                         term.terminalGuid = restorableSession.terminalGuid;
                         fitTermToTabs = YES;
                     }
@@ -1013,7 +1013,7 @@ static BOOL hasBecomeActive = NO;
                     // Restore a widow.
                     term = [PseudoTerminal terminalWithArrangement:restorableSession.arrangement
                                                           sessions:restorableSession.sessions];
-                    [[iTermController sharedInstance] addInTerminals:term];
+                    [[iTermController sharedInstance] addTerminalWindow:term];
                     term.terminalGuid = restorableSession.terminalGuid;
                     break;
             }
@@ -1549,79 +1549,12 @@ static BOOL hasBecomeActive = NO;
     [_passwordManagerWindowController update];
 }
 
-@end
-
-// Scripting support
-@implementation iTermApplicationDelegate (KeyValueCoding)
-
-- (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key
-{
-    //NSLog(@"iTermApplicationDelegate: delegateHandlesKey: '%@'", key);
-    return [[iTermController sharedInstance] application:sender delegateHandlesKey:key];
-}
-
-// accessors for to-one relationships:
-- (PseudoTerminal *)currentTerminal
-{
+- (PseudoTerminal *)currentTerminal {
     return [[iTermController sharedInstance] currentTerminal];
 }
 
-- (void)setCurrentTerminal:(PseudoTerminal *)aTerminal
-{
-    [[iTermController sharedInstance] setCurrentTerminal: aTerminal];
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
-    [itad updateBroadcastMenuState];
-}
-
-
-// accessors for to-many relationships:
-- (NSArray*)terminals
-{
+- (NSArray*)terminals {
     return [[iTermController sharedInstance] terminals];
-}
-
-- (void)setTerminals:(NSArray*)terminals
-{
-    // no-op
-}
-
-// accessors for to-many relationships:
-// (See NSScriptKeyValueCoding.h)
--(id)valueInTerminalsAtIndex:(unsigned)idx
-{
-    return [[iTermController sharedInstance] valueInTerminalsAtIndex:idx];
-}
-
--(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)idx
-{
-    [[iTermController sharedInstance] replaceInTerminals:object atIndex:idx];
-}
-
-- (void)addInTerminals:(PseudoTerminal *) object
-{
-    [[iTermController sharedInstance] addInTerminals:object];
-}
-
-- (void)insertInTerminals:(PseudoTerminal *) object
-{
-    [[iTermController sharedInstance] insertInTerminals:object];
-}
-
--(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)idx
-{
-    [[iTermController sharedInstance] insertInTerminals:object atIndex:idx];
-}
-
--(void)removeFromTerminalsAtIndex:(unsigned)idx
-{
-    // NSLog(@"iTerm: removeFromTerminalsAtInde %d", idx);
-    [[iTermController sharedInstance] removeFromTerminalsAtIndex: idx];
-}
-
-// a class method to provide the keys for KVC:
-+(NSArray*)kvcKeys
-{
-    return [[iTermController sharedInstance] kvcKeys];
 }
 
 @end
