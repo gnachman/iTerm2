@@ -363,10 +363,10 @@ extern NSString *const kCurrentSessionDidChange;
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
 
-- (id)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
-- (id)addNewSession:(NSDictionary *)addressbookEntry
-            withURL:(NSString *)url
-      forObjectType:(iTermObjectType)objectType;
+- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry withURL:(NSString *)url;
+- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
+                                 withURL:(NSString *)url
+                           forObjectType:(iTermObjectType)objectType;
 
 // Add a new session to this window with the given addressbook entry.
 // The optional command overrides the profile's settings.

@@ -1172,7 +1172,7 @@ static BOOL initDone = NO;
     PTYSession* session;
 
     if (url) {
-        session = [term addNewSession:aDict withURL:url forObjectType:objectType];
+        session = [term createSessionWithProfile:aDict withURL:url forObjectType:objectType];
     } else {
         session = [term createTabWithProfile:aDict withCommand:command];
     }

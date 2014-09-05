@@ -7100,9 +7100,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return proposedOptions | NSApplicationPresentationAutoHideToolbar;
 }
 
-- (id)addNewSession:(NSDictionary *)addressbookEntry
-            withURL:(NSString *)url
-      forObjectType:(iTermObjectType)objectType {
+- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
+                                 withURL:(NSString *)url
+                           forObjectType:(iTermObjectType)objectType {
     PtyLog(@"PseudoTerminal: -addNewSession");
     PTYSession *aSession;
 
@@ -7170,9 +7170,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return aSession;
 }
 
-- (id)addNewSession:(NSDictionary *)addressbookEntry withURL:(NSString *)url
-{
-    return [self addNewSession:addressbookEntry withURL:url forObjectType:iTermWindowObject];
+- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry withURL:(NSString *)url {
+    return [self createSessionWithProfile:addressbookEntry
+                                  withURL:url
+                            forObjectType:iTermWindowObject];
 }
 
 - (void)addSessionInNewTab:(PTYSession *)object {
