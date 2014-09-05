@@ -1186,6 +1186,7 @@
 		1DBB4B371901F12400832B09 /* ProfilesSessionPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */; };
 		1DBB4B381901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */; };
 		1DBB4B391901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */; };
+		1DC035C9198989F4007449A9 /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 1DC035C8198989F4007449A9 /* iTerm2.iconset */; };
 		1DC13ABD1886146B00034DAE /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
 		1DC13ABE1886146B00034DAE /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
 		1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABC1886146B00034DAE /* mark_err@2x.png */; };
@@ -2042,6 +2043,7 @@
 		1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = HotkeyWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesSessionPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesSessionPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
+		1DC035C8198989F4007449A9 /* iTerm2.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; path = iTerm2.iconset; sourceTree = "<group>"; };
 		1DC13ABB1886146B00034DAE /* mark_err.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mark_err.png; path = images/mark_err.png; sourceTree = "<group>"; };
 		1DC13ABC1886146B00034DAE /* mark_err@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mark_err@2x.png"; path = "images/mark_err@2x.png"; sourceTree = "<group>"; };
 		1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryPopup.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2565,6 +2567,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1DC035C8198989F4007449A9 /* iTerm2.iconset */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1D03D42519144B8E0049EB8F /* ThirdParty */,
@@ -5709,6 +5712,7 @@
 		1809E7B01665E2CB0069C439 /* Nightly */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = iTerm2;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_VERSION = "";
@@ -5724,6 +5728,7 @@
 		1809E7B11665E2CB0069C439 /* Nightly */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Don't Code Sign";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
@@ -6376,6 +6381,7 @@
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -6433,6 +6439,7 @@
 		BB024D37096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Don't Code Sign";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
@@ -6488,6 +6495,7 @@
 		BB024D38096EE4080021E793 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -6542,6 +6550,7 @@
 		BB024D3A096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = iTerm2;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_VERSION = "";
@@ -6563,6 +6572,7 @@
 		BB024D3B096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = iTerm2;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_VERSION = "";
@@ -6578,6 +6588,7 @@
 		BB024D3C096EE4080021E793 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = iTerm2;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_VERSION = "";
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;

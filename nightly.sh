@@ -12,14 +12,14 @@ function SparkleSign {
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
     TEMPLATE=$2
-    cp $SVNDIR/appcasts/${TEMPLATE} /tmp
+    cp $SVNDIR/source/appcasts/${TEMPLATE} /tmp
     cat /tmp/${TEMPLATE} | \
     sed -e "s/%XML%/${XML}/" | \
     sed -e "s/%VER%/${VERSION}/" | \
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
     sed -e "s/%LENGTH%/$LENGTH/" |
-    sed -e "s,%SIG%,${SIG}," > $SVNDIR/appcasts/$1
+    sed -e "s,%SIG%,${SIG}," > $SVNDIR/source/appcasts/$1
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
 
@@ -30,11 +30,11 @@ cd ~/server/nightly/iTerm2/
 rm -rf build/Nightly/iTerm2.app
 make Nightly || die "Nightly build failed"
 ./sign.sh
-COMPACTDATE=$(date +"%Y%m%d")-nightly
+COMPACTDATE=$(date +"%Y%m%d")-nightly-2
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/iterm2-website
-git log > $SVNDIR/appcasts/nightly_changes.txt
+git log > $SVNDIR/source/appcasts/nightly_changes.txt
 
 cd build/Nightly
 
@@ -48,4 +48,4 @@ SparkleSign nightly.xml nightly_template.xml
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/nightly/iTerm2-${NAME}.zip
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no gnachman@iterm2.com "./newnightly.sh iTerm2-${NAME}.zip"
 
-scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/appcasts/nightly_changes.txt $SVNDIR/appcasts/nightly.xml gnachman@iterm2.com:iterm2.com/appcasts/
+scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $SVNDIR/source/appcasts/nightly_changes.txt $SVNDIR/source/appcasts/nightly.xml gnachman@iterm2.com:iterm2.com/appcasts/

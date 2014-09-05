@@ -132,7 +132,22 @@ static const CGFloat kButtonSize = 17;
 
 - (NSColor *)dimmedBackgroundColor
 {
-    return [self dimmedColor:[NSColor windowFrameColor]];
+    NSColor *color;
+
+    if (dimmingAmount_ > 0) {
+        // Not selected
+        color = [NSColor colorWithSRGBRed:199/255.0
+                                    green:196/255.0
+                                     blue:199/255.0
+                                    alpha:1];
+    } else {
+        // selected
+        color = [NSColor colorWithSRGBRed:214/255.0
+                                    green:211/255.0
+                                     blue:214/255.0
+                                    alpha:1];
+    }
+    return [self dimmedColor:color];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

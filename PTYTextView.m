@@ -3057,6 +3057,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
                                    !mouseDragged &&
                                    !([event modifierFlags] & NSShiftKeyMask));
+    BOOL isShiftedSingleClick = ([event clickCount] == 1 &&
+                                 !mouseDragged &&
+                                 ([event modifierFlags] & NSShiftKeyMask));
     BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
                            [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
@@ -3136,7 +3139,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         } else {
             [_lastFindCoord release];
-            _lastFindCoord = nil;
             NSPoint clickPoint = [self clickPoint:event];
             _lastFindCoord =
                 [[SearchResult searchResultFromX:clickPoint.x
@@ -3144,6 +3146,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                              toX:0
                                                y:0] retain];
         }
+    } else if (isShiftedSingleClick && _lastFindCoord) {
+        [_selection beginSelectionAt:VT100GridCoordMake(_lastFindCoord->startX,
+                                                        _lastFindCoord->absStartY - [_dataSource totalScrollbackOverflow])
+                                mode:kiTermSelectionModeCharacter
+                              resume:NO
+                              append:NO];
+        NSPoint clickPoint = [self clickPoint:event];
+        [_selection moveSelectionEndpointTo:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
+        [_selection endLiveSelection];
+
+        [_lastFindCoord release];
+        _lastFindCoord = nil;
     }
 
     if ([_selection hasSelection] && _delegate) {

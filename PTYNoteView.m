@@ -16,7 +16,7 @@ static const CGFloat kLeftMargin = 5;
 static const CGFloat kRightMargin = 14;
 static const CGFloat kTopMargin = 4;
 static const CGFloat kBottomMargin = 0;
-static const CGFloat kKillButtonTopMargin = 3;
+static const CGFloat kKillButtonTopMargin = 2;
 
 static const CGFloat kInset = 5;
 static const CGFloat kRadius = 5;
