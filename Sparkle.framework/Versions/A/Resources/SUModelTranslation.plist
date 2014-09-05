@@ -9,7 +9,7 @@
 	<key>iMac4,1</key>
 	<string>iMac (Core Duo)</string>
 	<key>iMac4,2</key>
-	<string>iMac for Education (17-inch, Core Duo)</string>
+	<string>iMac for Education (17 inch, Core Duo)</string>
 	<key>iMac5,1</key>
 	<string>iMac (Core 2 Duo, 17 or 20 inch, SuperDrive)</string>
 	<key>iMac5,2</key>
@@ -17,19 +17,65 @@
 	<key>iMac6,1</key>
 	<string>iMac (Core 2 Duo, 24 inch, SuperDrive)</string>
 	<key>iMac8,1</key>
-	<string>iMac (April 2008)</string>
+	<string>iMac (Core 2 Duo, 20 or 24 inch, Early 2008 )</string>
+	<key>iMac9,1</key>
+	<string>iMac (Core 2 Duo, 20 or 24 inch, Early or Mid 2009 )</string>
+	<key>iMac10,1</key>
+	<string>iMac (Core 2 Duo, 21.5 or 27 inch, Late 2009 )</string>
+	<key>iMac11,1</key>
+	<string>iMac (Core i5 or i7, 27 inch Late 2009)</string>
+	<key>iMac11,2</key>
+	<string>iMac (Core i3 or i5, 27 inch Mid 2010)</string>
+	<key>iMac11,3</key>
+	<string>iMac (Core i5 or i7, 27 inch Mid 2010)</string>
+	<key>iMac12,1</key>
+	<string>iMac (Core i3 or i5 or i7, 21.5 inch Mid 2010 or Late 2011)</string>
+	<key>iMac12,2</key>
+	<string>iMac (Core i5 or i7, 27 inch Mid 2011)</string>
+	<key>iMac13,1</key>
+	<string>iMac (Core i3 or i5 or i7, 21.5 inch Late 2012 or Early 2013)</string>
+	<key>iMac13,2</key>
+	<string>iMac (Core i5 or i7, 27 inch Late 2012)</string>
+	<key>iMac14,1</key>
+	<string>iMac (Core i5, 21.5 inch Late 2013)</string>
+	<key>iMac14,2</key>
+	<string>iMac (Core i5 or i7, 27 inch Late 2013)</string>
+	<key>iMac14,3</key>
+	<string>iMac (Core i5 or i7, 21.5 inch Late 2013)</string>
 	<key>MacBook1,1</key>
 	<string>MacBook (Core Duo)</string>
 	<key>MacBook2,1</key>
 	<string>MacBook (Core 2 Duo)</string>
 	<key>MacBook4,1</key>
 	<string>MacBook (Core 2 Duo Feb 2008)</string>
+	<key>MacBook5,1</key>
+	<string>MacBook (Core 2 Duo, Late 2008, Unibody)</string>
+	<key>MacBook5,2</key>
+	<string>MacBook (Core 2 Duo, Early 2009, White)</string>
+	<key>MacBook6,1</key>
+	<string>MacBook (Core 2 Duo, Late 2009, Unibody)</string>
+	<key>MacBook7,1</key>
+	<string>MacBook (Core 2 Duo, Mid 2010, White)</string>
 	<key>MacBookAir1,1</key>
-	<string>MacBook Air (January 2008)</string>
+	<string>MacBook Air (Core 2 Duo, 13 inch, Early 2008)</string>
 	<key>MacBookAir2,1</key>
-	<string>MacBook Air (June 2009)</string>
+	<string>MacBook Air (Core 2 Duo, 13 inch, Mid 2009)</string>
 	<key>MacBookAir3,1</key>
-	<string>MacBook Air (October 2010)</string>
+	<string>MacBook Air (Core 2 Duo, 11 inch, Late 2010)</string>
+	<key>MacBookAir3,2</key>
+	<string>MacBook Air (Core 2 Duo, 13 inch, Late 2010)</string>
+	<key>MacBookAir4,1</key>
+	<string>MacBook Air (Core i5 or i7, 11 inch, Mid 2011)</string>
+	<key>MacBookAir4,2</key>
+	<string>MacBook Air (Core i5 or i7, 13 inch, Mid 2011)</string>
+	<key>MacBookAir5,1</key>
+	<string>MacBook Air (Core i5 or i7, 11 inch, Mid 2012)</string>
+	<key>MacBookAir5,2</key>
+	<string>MacBook Air (Core i5 or i7, 13 inch, Mid 2012)</string>
+	<key>MacBookAir6,1</key>
+	<string>MacBook Air (Core i5 or i7, 11 inch, Mid 2013 or Early 2014)</string>
+	<key>MacBookAir6,2</key>
+	<string>MacBook Air (Core i5 or i7, 13 inch, Mid 2013 or Early 2014)</string>
 	<key>MacBookPro1,1</key>
 	<string>MacBook Pro Core Duo (15-inch)</string>
 	<key>MacBookPro1,2</key>

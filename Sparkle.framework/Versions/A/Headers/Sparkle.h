@@ -12,10 +12,11 @@
 // This list should include the shared headers. It doesn't matter if some of them aren't shared (unless
 // there are name-space collisions) so we can list all of them to start with:
 
-#import <Sparkle/SUUpdater.h>
-
 #import <Sparkle/SUAppcast.h>
 #import <Sparkle/SUAppcastItem.h>
+#import <Sparkle/SUStandardVersionComparator.h>
+#import <Sparkle/SUUpdater.h>
 #import <Sparkle/SUVersionComparisonProtocol.h>
+#import <Sparkle/SUVersionDisplayProtocol.h>
 
 #endif

@@ -1218,6 +1218,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return result;
 }
 
+- (BOOL)containsString:(NSString *)substring {
+    return [self rangeOfString:substring].location != NSNotFound;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

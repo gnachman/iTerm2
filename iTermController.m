@@ -1315,6 +1315,13 @@ static BOOL initDone = NO;
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
     [[NSUserDefaults standardUserDefaults] setObject:appCast forKey:@"SUFeedURL"];
+    // Allow Sparkle to update from a zip file containing an "iTerm" directory,
+    // even though our bundle name is now "iTerm2". I had to add this feature
+    // to my fork of Sparkle so I could change the app's name without breaking
+    // auto-update. https://github.com/gnachman/Sparkle, commit
+    // bd6a8df6e63b843f1f8aff79f40bd70907761a99.
+    [[NSUserDefaults standardUserDefaults] setObject:@"iTerm"
+                                              forKey:@"SUFeedAlternateAppNameKey"];
 }
 
 - (void)addRestorableSession:(iTermRestorableSession *)session {

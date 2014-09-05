@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>BuildMachineOSBuild</key>
-	<string>12B19</string>
+	<string>13C64</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
@@ -17,24 +17,32 @@
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.5 Beta (git)</string>
+	<string>1.8.0 git-c66524b</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>54188f9</string>
+	<string>1.8.0</string>
 	<key>DTCompiler</key>
 	<string>com.apple.compilers.llvm.clang.1_0</string>
 	<key>DTPlatformBuild</key>
-	<string>4F243</string>
+	<string>5B1008</string>
 	<key>DTPlatformVersion</key>
 	<string>GM</string>
 	<key>DTSDKBuild</key>
-	<string>11E52</string>
+	<string>13C64</string>
 	<key>DTSDKName</key>
-	<string>macosx10.7</string>
+	<string>macosx10.9</string>
 	<key>DTXcode</key>
-	<string>0440</string>
+	<string>0511</string>
 	<key>DTXcodeBuild</key>
-	<string>4F243</string>
+	<string>5B1008</string>
+	<key>SUAppendVersionNumber</key>
+	<string>1</string>
+	<key>SUEnableAutomatedDowngrades</key>
+	<string>0</string>
+	<key>SUNormalizeInstalledApplicationName</key>
+	<string>0</string>
+	<key>SURelaunchToolName</key>
+	<string>Autoupdate</string>
 </dict>
 </plist>

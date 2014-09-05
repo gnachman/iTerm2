@@ -1397,6 +1397,8 @@
 		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
 		A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
 		A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
+		A64AB1D819B8C1EB0033DB9C /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */; };
+		A64AB1D919B8C2670033DB9C /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */; };
 		A671C067192981D000A7F796 /* NSStringCategoryTest.h in Headers */ = {isa = PBXBuildFile; fileRef = A671C065192981D000A7F796 /* NSStringCategoryTest.h */; };
 		A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
 		A671C069192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
@@ -1692,7 +1694,6 @@
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
-		F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
 		FB4CE4BB3E3E413B051DAFBC /* iTermRemotePreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */; };
 		FB4CE863CA46CC65A727807B /* iTermRemotePreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */; };
 		FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = FB4CECF4AC4392B21E87A07B /* iTermRemotePreferences.h */; };
@@ -1905,7 +1906,7 @@
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileListView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfileListView.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		1D6EDB0A19AEA20D005A7799 /* iTerm2ForApplescriptTesting.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iTerm2ForApplescriptTesting.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D6EDB0A19AEA20D005A7799 /* iTerm2ForApplescriptTesting.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm2ForApplescriptTesting.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1D6EDB0B19AEA20E005A7799 /* iTerm2ForApplescriptTesting-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "iTerm2ForApplescriptTesting-Info.plist"; path = "/Users/georgen/iTerm2/iTerm2ForApplescriptTesting-Info.plist"; sourceTree = "<absolute>"; };
 		1D70BA331680158700824B72 /* PTYFontInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYFontInfo.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D70BA341680158700824B72 /* PTYFontInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYFontInfo.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -1980,7 +1981,6 @@
 		1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100ScreenTest.h; path = iTermTests/VT100ScreenTest.h; sourceTree = "<group>"; };
 		1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VT100ScreenTest.m; path = iTermTests/VT100ScreenTest.m; sourceTree = "<group>"; };
 		1D9A553A180FA7C500B42CE9 /* Growl */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Growl; path = Growl.framework/Versions/A/Growl; sourceTree = "<group>"; };
-		1D9A55B6180FA90700B42CE9 /* Sparkle */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Sparkle; path = Sparkle.framework/Versions/A/Sparkle; sourceTree = "<group>"; };
 		1D9DCBFC142D7BA60016228A /* Trigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = Trigger.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D9DCBFD142D7BA60016228A /* Trigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = Trigger.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D9DCC02142D7E570016228A /* GrowlTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = GrowlTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2227,6 +2227,7 @@
 		A647E3B218C36D0300450FA1 /* VT100Token.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Token.m; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B518C5884600450FA1 /* iTermObjectPool.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermObjectPool.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; tabWidth = 4; };
+		A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		A671C065192981D000A7F796 /* NSStringCategoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringCategoryTest.h; sourceTree = "<group>"; };
 		A671C066192981D000A7F796 /* NSStringCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringCategoryTest.m; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2501,6 +2502,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A64AB1D819B8C1EB0033DB9C /* Sparkle.framework in Frameworks */,
 				1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */,
 				1D6EDAF619AEA20D005A7799 /* libSSKeychain.a in Frameworks */,
 				1D6EDAF719AEA20D005A7799 /* NMSSH.framework in Frameworks */,
@@ -2545,12 +2547,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A64AB1D919B8C2670033DB9C /* Sparkle.framework in Frameworks */,
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
 				1DFA7C931923E8AC00DF1410 /* libSSKeychain.a in Frameworks */,
 				A68A30FF186D151E007F550F /* NMSSH.framework in Frameworks */,
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
-				F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
 				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
@@ -3294,6 +3296,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */,
 				1DFA7C9D1923F77100DF1410 /* Security.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
@@ -3306,7 +3309,6 @@
 				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
 				1DF0897013DBAF4C00A52AD8 /* Quartz.framework */,
 				1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */,
-				1D9A55B6180FA90700B42CE9 /* Sparkle */,
 				1DD39AF5180B8119004E56D5 /* XCTest.framework */,
 			);
 			name = Frameworks;
@@ -5730,6 +5732,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
+					"$(PROJECT_DIR)",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -5748,6 +5751,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = .;
 				INFOPLIST_FILE = iTerm2.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
@@ -5782,6 +5786,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
+					"$(PROJECT_DIR)",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -5812,7 +5817,7 @@
 					"-laprutil-1",
 					"-licucore",
 				);
-				PRODUCT_NAME = "iTerm2ForApplescriptTesting";
+				PRODUCT_NAME = iTerm2ForApplescriptTesting;
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = x86_64;
@@ -5837,6 +5842,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
+					"$(PROJECT_DIR)",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -5866,7 +5872,7 @@
 					"-laprutil-1",
 					"-licucore",
 				);
-				PRODUCT_NAME = "iTerm2ForApplescriptTesting";
+				PRODUCT_NAME = iTerm2ForApplescriptTesting;
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
@@ -5890,6 +5896,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
+					"$(PROJECT_DIR)",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -5918,7 +5925,7 @@
 					"-laprutil-1",
 					"-licucore",
 				);
-				PRODUCT_NAME = "iTerm2ForApplescriptTesting";
+				PRODUCT_NAME = iTerm2ForApplescriptTesting;
 				SDKROOT = macosx;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = (
@@ -5940,6 +5947,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
+					"$(PROJECT_DIR)",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
@@ -5969,7 +5977,7 @@
 					"-licucore",
 				);
 				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = "iTerm2ForApplescriptTesting";
+				PRODUCT_NAME = iTerm2ForApplescriptTesting;
 				REZ_EXECUTABLE = YES;
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
@@ -6025,6 +6033,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/georgen/iterm2/Growl.framework/Versions/A,
@@ -6081,6 +6090,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/georgen/iterm2/Growl.framework/Versions/A,
@@ -6137,6 +6147,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/georgen/iterm2/Growl.framework/Versions/A,
@@ -6193,6 +6204,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/georgen/iterm2/Growl.framework/Versions/A,
@@ -6368,6 +6380,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
+					"$(PROJECT_DIR)",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -6387,6 +6400,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = .;
 				INFOPLIST_FILE = iTerm2.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
@@ -6423,6 +6437,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
+					"$(PROJECT_DIR)",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -6441,6 +6456,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = .;
 				INFOPLIST_FILE = iTerm2.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",
@@ -6474,6 +6490,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
+					"$(PROJECT_DIR)",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
@@ -6493,6 +6510,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = .;
 				INFOPLIST_FILE = iTerm2.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Growl.framework\"",

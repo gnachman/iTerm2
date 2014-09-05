@@ -137,6 +137,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
 
+- (BOOL)containsString:(NSString *)substring;
+
 @end
 
 @interface NSMutableString (iTerm)
