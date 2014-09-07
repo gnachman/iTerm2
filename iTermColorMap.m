@@ -23,6 +23,7 @@ const int kColorMapLink = 8;
 const int kColorMap8bitBase = 9;
 // This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
 const int kColorMap24bitBase = kColorMap8bitBase + 256;
+const int kColorMapSRGB24bitBase = kColorMap24bitBase + (0x1000000);
 
 const int kColorMapAnsiBlack = kColorMap8bitBase + 0;
 const int kColorMapAnsiRed = kColorMap8bitBase + 1;
@@ -54,8 +55,12 @@ const int kColorMapAnsiBrightModifier = 8;
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
                             green:(int)green
-                             blue:(int)blue {
-    return kColorMap24bitBase + ((red & 0xff) << 16) + ((green & 0xff) << 8) + (blue & 0xff);
+                             blue:(int)blue
+                             sRGB:(BOOL)sRGB {
+    if (sRGB)
+        return kColorMapSRGB24bitBase + ((red & 0xff) << 16) + ((green & 0xff) << 8) + (blue & 0xff);
+    else
+        return kColorMap24bitBase + ((red & 0xff) << 16) + ((green & 0xff) << 8) + (blue & 0xff);
 }
 
 - (id)init {
@@ -119,11 +124,19 @@ const int kColorMapAnsiBrightModifier = 8;
     if (theKey == kColorMapInvalid) {
         return [NSColor redColor];
     } else if (theKey >= kColorMap24bitBase) {
-        int n = theKey - kColorMap24bitBase;
+        BOOL sRGB;
+        int n;
+        if (theKey >= kColorMapSRGB24bitBase) {
+            sRGB = YES;
+            n = theKey - kColorMapSRGB24bitBase;
+        } else {
+            sRGB = NO;
+            n = theKey - kColorMap24bitBase;
+        }
         int blue = (n & 0xff);
         int green = (n >> 8) & 0xff;
         int red = (n >> 16) & 0xff;
-        return [NSColor colorWith8BitRed:red green:green blue:blue];
+        return [NSColor colorWith8BitRed:red green:green blue:blue sRGB:sRGB];
     } else {
         NSColor *result = _map[@(theKey)];
         if (!result) {
@@ -140,7 +153,15 @@ const int kColorMapAnsiBrightModifier = 8;
             if (theKey == kColorMapInvalid) {
                 return [NSColor redColor];
             } else if (theKey >= kColorMap24bitBase) {
-                int n = theKey - kColorMap24bitBase;
+                BOOL sRGB;
+                int n;
+                if (theKey >= kColorMapSRGB24bitBase) {
+                    sRGB = YES;
+                    n = theKey - kColorMapSRGB24bitBase;
+                } else {
+                    sRGB = NO;
+                    n = theKey - kColorMap24bitBase;
+                }
                 int blue = (n & 0xff);
                 int green = (n >> 8) & 0xff;
                 int red = (n >> 16) & 0xff;
@@ -150,7 +171,8 @@ const int kColorMapAnsiBrightModifier = 8;
                                           muting:_mutingAmount
                                    backgroundRed:_backgroundRed
                                  backgroundGreen:_backgroundGreen
-                                  backgroundBlue:_backgroundBlue];
+                                  backgroundBlue:_backgroundBlue
+                                            sRGB:sRGB];
             } else {
                 NSColor *result = _mutedMap[@(theKey)];
                 if (!result) {
