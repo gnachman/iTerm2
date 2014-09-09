@@ -321,6 +321,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                            @"  write text \"cat > /dev/null\"",
                            @"  write contents of file \"/tmp/testFile\"",
                            @"end tell",
+                           @"delay 0.2",  // Give write text time to echo result back
                            @"set sessionContents to (contents of current session of current window)" ];
     NSArray *outputs = @[ @"sessionContents" ];
     NSString *script = [self scriptWithCommands:commands
