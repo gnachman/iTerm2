@@ -3146,7 +3146,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                              toX:0
                                                y:0] retain];
         }
-    } else if (isShiftedSingleClick && _lastFindCoord) {
+    } else if (isShiftedSingleClick && _lastFindCoord && ![_selection hasSelection]) {
         [_selection beginSelectionAt:VT100GridCoordMake(_lastFindCoord->startX,
                                                         _lastFindCoord->absStartY - [_dataSource totalScrollbackOverflow])
                                 mode:kiTermSelectionModeCharacter
