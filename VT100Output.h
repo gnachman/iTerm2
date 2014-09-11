@@ -26,6 +26,7 @@ typedef enum {
 @property(nonatomic, assign) BOOL keypadMode;
 @property(nonatomic, assign) MouseFormat mouseFormat;
 @property(nonatomic, assign) BOOL cursorMode;
+@property(nonatomic, assign) BOOL optionIsMetaForSpecialKeys;
 
 - (NSData *)keyArrowUp:(unsigned int)modflag;
 - (NSData *)keyArrowDown:(unsigned int)modflag;

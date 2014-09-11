@@ -79,4 +79,6 @@
 + (double)idleTimeSeconds;
 
 + (double)findDelaySeconds;
++ (BOOL)optionIsMetaForSpecialChars;
+
 @end

@@ -297,6 +297,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         // Allocate screen, shell, and terminal objects
         _shell = [[PTYTask alloc] init];
         _terminal = [[VT100Terminal alloc] init];
+        _terminal.output.optionIsMetaForSpecialKeys =
+            [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
