@@ -103,6 +103,7 @@ typedef enum {
     self = [super init];
     if (self) {
         self.termTypeIsValid = YES;
+        _optionIsMetaForSpecialKeys = YES;
     }
     return self;
 }
@@ -559,8 +560,7 @@ typedef enum {
              cursorMod:(char*)cursorMod
              cursorSet:(char*)cursorSet
            cursorReset:(char*)cursorReset
-               modflag:(unsigned int)modflag
-{
+               modflag:(unsigned int)modflag {
     NSData* prefix = nil;
     NSData* theSuffix;
     if (_keyStrings[terminfo] && self.keypadMode) {
@@ -571,9 +571,28 @@ typedef enum {
         // Normal mode
         int mod = 0;
         static char buf[20];
-        static int modValues[] = {
-            0, 2, 5, 6, 9, 10, 13, 14
+        static int metaModifierValues[] = {
+            0,  // Nothing
+            2,  // Shift
+            5,  // Control
+            6,  // Control Shift
+            9,  // Meta
+            10, // Meta Shift
+            13, // Meta Control
+            14  // Meta Control Shift
         };
+        static int altModifierValues[] = {
+            0,  // Nothing
+            2,  // Shift
+            5,  // Control
+            6,  // Control Shift
+            3,  // Alt
+            4,  // Alt Shift
+            7,  // Alt Control
+            8   // Alt Control Shift
+        };
+
+
         int theIndex = 0;
         if (modflag & NSAlternateKeyMask) {
             theIndex |= 4;
@@ -584,6 +603,7 @@ typedef enum {
         if (modflag & NSShiftKeyMask) {
             theIndex |= 1;
         }
+        int *modValues = _optionIsMetaForSpecialKeys ? metaModifierValues : altModifierValues;
         mod = modValues[theIndex];
         
         if (mod) {
