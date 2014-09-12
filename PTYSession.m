@@ -4792,23 +4792,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                     break;
 
                 case MOUSE_REPORTING_NONE:
-                    if ([iTermAdvancedSettingsModel alternateMouseScroll] &&
-                        [_screen showingAlternateScreen]) {
-                        NSData *arrowKeyData = nil;
-                        if (deltaY > 0) {
-                            arrowKeyData = [_terminal.output keyArrowUp:modifiers];
-                        } else if (deltaY < 0) {
-                            arrowKeyData = [_terminal.output keyArrowDown:modifiers];
-                        }
-                        if (arrowKeyData) {
-                            for (int i = 0; i < ceil(fabs(deltaY)); i++) {
-                                [self writeTask:arrowKeyData];
-                            }
-                        }
-                        return YES;
-                    }
-                    break;
-
                 case MOUSE_REPORTING_HILITE:
                     break;
             }
