@@ -26,7 +26,8 @@
 @property (nonatomic, assign) BOOL eof;
 @property (nonatomic, assign) BOOL mute;
 
-+ (Coprocess *)launchedCoprocessWithCommand:(NSString *)command;
++ (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
+                                        tty:(NSString *)tty;
 
 // This has the side-effect of making the file descriptors non-blocking so
 // it should only be called after exec.
