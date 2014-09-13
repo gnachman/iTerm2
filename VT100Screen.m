@@ -3194,13 +3194,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     _lastCommandOutputRange.end = currentGrid_.cursor;
     _lastCommandOutputRange.end.y += [self numberOfScrollbackLines];
     _lastCommandOutputRange.start = nextCommandOutputStart_;
-
-    // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
-    // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [delegate_ screenAddMarkOnLine:[self numberOfScrollbackLines] + self.cursorY - 1];
 }
 
 - (void)terminalCommandDidStart {
+    // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
+    // to add to iTerm, and our answer to this is marks, which already existed anyway.
+    [delegate_ screenAddMarkOnLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+
     commandStartX_ = currentGrid_.cursorX;
     commandStartY_ = currentGrid_.cursorY + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
     [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
