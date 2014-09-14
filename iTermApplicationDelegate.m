@@ -98,8 +98,12 @@ static BOOL hasBecomeActive = NO;
 }
 
 // NSApplication delegate methods
-- (void)applicationWillFinishLaunching:(NSNotification *)aNotification
-{
+- (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+    // Start automatic debug logging if it's enabled.
+    if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
+        ToggleDebugLogging();
+    }
+
     // set the TERM_PROGRAM environment variable
     putenv("TERM_PROGRAM=iTerm.app");
 
