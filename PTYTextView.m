@@ -2552,18 +2552,54 @@ NSMutableArray* screens=0;
     [super rightMouseDragged:event];
 }
 
-- (void)scrollWheel:(NSEvent *)event
-{
+- (BOOL)scrollWheelShouldSendArrowForEvent:(NSEvent *)event at:(NSPoint)point {
+    NSRect liveRect = [self liveRect];
+    if (!NSPointInRect(point, liveRect)) {
+        return NO;
+    }
+    if (event.type != NSScrollWheel) {
+        return NO;
+    }
+    if (![iTermAdvancedSettingsModel alternateMouseScroll]) {
+        return NO;
+    }
+    if (![self.dataSource showingAlternateScreen]) {
+        return NO;
+    }
+    if ([self shouldReportMouseEvent:event at:point] &&
+        [[_dataSource terminal] mouseMode] != MOUSE_REPORTING_NONE) {
+        // Prefer to report the scroll than to send arrow keys in this mouse reporting mode.
+        return NO;
+    }
+    return YES;
+}
+
+
+- (void)scrollWheel:(NSEvent *)event {
     DLog(@"scrollWheel:%@", event);
     NSPoint locationInWindow, locationInTextView;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
-    if ([self reportMouseEvent:event]) {
-        return;
-    }
+    NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
 
-    [super scrollWheel:event];
+    if ([self scrollWheelShouldSendArrowForEvent:event at:point]) {
+        DLog(@"Scroll wheel sending arrow key");
+        NSData *arrowKeyData = nil;
+        CGFloat deltaY = [event deltaY];
+        if (deltaY > 0) {
+            arrowKeyData = [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
+        } else if (deltaY < 0) {
+            arrowKeyData = [_dataSource.terminal.output keyArrowDown:event.modifierFlags];
+        }
+        if (arrowKeyData) {
+            for (int i = 0; i < ceil(fabs(deltaY)); i++) {
+                [_delegate writeTask:arrowKeyData];
+            }
+        }
+    } else if (![self reportMouseEvent:event]) {
+        [super scrollWheel:event];
+    }
 }
 
 - (BOOL)setCursor:(NSCursor *)cursor
