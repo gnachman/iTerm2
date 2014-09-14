@@ -44,6 +44,7 @@ extern NSString *kTrouterCoprocessAction;
 
 + (NSString *)bestEditor;
 + (NSString *)schemeForEditor:(NSString *)editor;
++ (BOOL)bundleIdIsEditor:(NSString *)bundleId;
 - (IBAction)actionChanged:(id)sender;
 - (NSDictionary *)prefs;
 

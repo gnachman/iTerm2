@@ -3374,8 +3374,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self pasteSelection:nil];
 }
 
-- (void)_openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground
-{
+- (void)_openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground {
     // Command click in place.
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
@@ -3392,13 +3391,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                          maxChars:kMaxTrouterPrefixOrSuffix];
 
     URLAction *action = [self urlActionForClickAtX:x y:y];
+    DLog(@"openTargetWithEvent has action=%@", action);
     if (action) {
         switch (action.actionType) {
             case kURLActionOpenExistingFile:
                 if (![self.trouter openPath:action.string
-                      workingDirectory:action.workingDirectory
-                                prefix:prefix
-                                suffix:suffix]) {
+                           workingDirectory:action.workingDirectory
+                                     prefix:prefix
+                                     suffix:suffix]) {
                     [self _findUrlInString:action.string andOpenInBackground:openInBackground];
                 }
                 break;
@@ -3408,6 +3408,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 break;
 
             case kURLActionSmartSelectionAction: {
+                DLog(@"Run smart selection selector %@", NSStringFromSelector(action.selector));
                 [self performSelector:action.selector withObject:action];
                 break;
             }
@@ -3415,13 +3416,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)openTargetWithEvent:(NSEvent *)event
-{
+- (void)openTargetWithEvent:(NSEvent *)event {
     [self _openTargetWithEvent:event inBackground:NO];
 }
 
-- (void)openTargetInBackgroundWithEvent:(NSEvent *)event
-{
+- (void)openTargetInBackgroundWithEvent:(NSEvent *)event {
     [self _openTargetWithEvent:event inBackground:YES];
 }
 
@@ -8152,19 +8151,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // If iTerm2 is the handler for the scheme, then the bookmark is launched directly.
 // Otherwise it's passed to the OS to launch.
-- (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background
-{
+- (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background {
+    DLog(@"findUrlInString:%@", aURLString);
     NSString *trimmedURLString = [aURLString URLInStringWithOffset:NULL length:NULL];
     if (!trimmedURLString) {
+        DLog(@"string is empty");
         return;
     }
     NSString* escapedString = [trimmedURLString stringByEscapingForURL];
 
     NSURL *url = [NSURL URLWithString:escapedString];
-
+    DLog(@"Escaped string is %@", url);
     Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:[url scheme]];
 
-    if (profile)  {
+    if (profile) {
         [_delegate launchProfileInCurrentTerminal:profile withURL:trimmedURLString];
     } else {
         [self openURL:url inBackground:background];

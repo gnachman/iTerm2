@@ -127,6 +127,15 @@ enum {
     return nil;
 }
 
++ (BOOL)bundleIdIsEditor:(NSString *)bundleId {
+    NSArray *editorBundleIds = @[ kSublimeText2Identifier,
+                                  kSublimeText3Identifier,
+                                  kMacVimIdentifier,
+                                  kTextmateIdentifier,
+                                  kBBEditIdentifier ];
+    return [editorBundleIds containsObject:bundleId];
+}
+
 - (void)awakeFromNib
 {
     [editors_ addItemWithTitle:@"Sublime Text 3"];
