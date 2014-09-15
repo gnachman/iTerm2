@@ -2693,7 +2693,7 @@ NSMutableArray* screens=0;
             [self removeUnderline];
             return;
         }
-        NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin];
+        NSPoint viewPoint = [self windowLocationToRowCol:windowRect.origin allowRightMarginOverflow:NO];
         int x = viewPoint.x;
         int y = viewPoint.y;
         if (![iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs] || y < 0) {
@@ -2794,15 +2794,16 @@ NSMutableArray* screens=0;
     }
 }
 
-- (VT100GridCoord)coordForPointInWindow:(NSPoint)point
-{
+- (VT100GridCoord)coordForPointInWindow:(NSPoint)point {
     // TODO: Merge this function with windowLocationToRowCol.
-    NSPoint p = [self windowLocationToRowCol:point];
+    NSPoint p = [self windowLocationToRowCol:point allowRightMarginOverflow:NO];
     return VT100GridCoordMake(p.x, p.y);
 }
 
+// If allowRightMarginOverflow is YES then the returned value's x coordinate may be equal to
+// dataSource.width. If NO, then it will always be less than dataSource.width.
 - (NSPoint)windowLocationToRowCol:(NSPoint)locationInWindow
-{
+         allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     NSPoint locationInTextView = [self convertPoint:locationInWindow fromView: nil];
     int x, y;
     int width = [_dataSource width];
@@ -2813,17 +2814,21 @@ NSMutableArray* screens=0;
     }
     y = locationInTextView.y / lineHeight;
 
-    if (x >= width) {
-        x = width  - 1;
+    int limit;
+    if (allowRightMarginOverflow) {
+        limit = width;
+    } else {
+        limit = width - 1;
     }
+    x = MIN(x, limit);
 
     return NSMakePoint(x, y);
 }
 
-- (NSPoint)clickPoint:(NSEvent *)event
-{
+- (NSPoint)clickPoint:(NSEvent *)event  allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     NSPoint locationInWindow = [event locationInWindow];
-    return [self windowLocationToRowCol:locationInWindow];
+    return [self windowLocationToRowCol:locationInWindow
+               allowRightMarginOverflow:allowRightMarginOverflow];
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -2954,7 +2959,7 @@ NSMutableArray* screens=0;
     }
 
     NSPoint locationInWindow, locationInTextView;
-    NSPoint clickPoint = [self clickPoint:event];
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     int x = clickPoint.x;
     int y = clickPoint.y;
 
@@ -3174,7 +3179,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         } else {
             [_lastFindCoord release];
-            NSPoint clickPoint = [self clickPoint:event];
+            NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
             _lastFindCoord =
                 [[SearchResult searchResultFromX:clickPoint.x
                                                y:clickPoint.y + [_dataSource totalScrollbackOverflow]
@@ -3187,7 +3192,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 mode:kiTermSelectionModeCharacter
                               resume:NO
                               append:NO];
-        NSPoint clickPoint = [self clickPoint:event];
+        NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
         [_selection moveSelectionEndpointTo:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
         [_selection endLiveSelection];
 
@@ -3232,7 +3237,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                MAX(0, locationInTextView.y));
     NSRect  rectInTextView = [self visibleRect];
 
-    NSPoint clickPoint = [self clickPoint:event];
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     int x = clickPoint.x;
     int y = clickPoint.y;
 
@@ -3375,7 +3380,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground {
     // Command click in place.
-    NSPoint clickPoint = [self clickPoint:event];
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
@@ -3423,18 +3428,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self _openTargetWithEvent:event inBackground:YES];
 }
 
-- (void)smartSelectWithEvent:(NSEvent *)event
-{
-    NSPoint clickPoint = [self clickPoint:event];
+- (void)smartSelectWithEvent:(NSEvent *)event {
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
 
     [self smartSelectAtX:x y:y ignoringNewlines:NO];
 }
 
-- (void)smartSelectIgnoringNewlinesWithEvent:(NSEvent *)event
-{
-    NSPoint clickPoint = [self clickPoint:event];
+- (void)smartSelectIgnoringNewlinesWithEvent:(NSEvent *)event {
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
 
@@ -3442,9 +3445,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
-                        ignoringNewlines:(BOOL)ignoringNewlines
-{
-    NSPoint clickPoint = [self clickPoint:event];
+                        ignoringNewlines:(BOOL)ignoringNewlines {
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
 
@@ -3458,7 +3460,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)openContextMenuWithEvent:(NSEvent *)event {
-    NSPoint clickPoint = [self clickPoint:event];
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     openingContextMenu_ = YES;
 
     // Slowly moving away from using NSPoint for integer coordinates.
@@ -3470,7 +3472,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSMenu *)contextMenuWithEvent:(NSEvent *)event
 {
-    NSPoint clickPoint = [self clickPoint:event];
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
     NSMenu *markMenu = nil;
@@ -3517,10 +3519,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return contextMenu;
 }
 
-- (void)extendSelectionWithEvent:(NSEvent *)event
-{
+- (void)extendSelectionWithEvent:(NSEvent *)event {
     if ([_selection hasSelection]) {
-        NSPoint clickPoint = [self clickPoint:event];
+        NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
         [_selection beginExtendingSelectionAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
         [_selection endLiveSelection];
     }
@@ -3620,7 +3621,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     DLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
 
-    NSPoint clickPoint = [self clickPoint:event];
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
     int cursorY = [_dataSource absoluteLineNumberOfCursor];
@@ -8610,13 +8611,33 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return range;
 }
 
-- (VT100GridCoordRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
+- (VT100GridWindowedRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    return [extractor rangeForWrappedLineEncompassing:coord respectContinuations:NO].coordRange;
+    BOOL respectDividers = [[iTermController sharedInstance] selectionRespectsSoftBoundaries];
+    if (respectDividers) {
+        [extractor restrictToLogicalWindowIncludingCoord:coord];
+    }
+    return [extractor rangeForWrappedLineEncompassing:coord
+                                 respectContinuations:NO];
 }
 
-- (VT100GridCoordRange)selectionRangeForLineAt:(VT100GridCoord)coord {
-    return VT100GridCoordRangeMake(0, coord.y, [_dataSource width], coord.y);
+- (int)selectionViewportWidth {
+    return [_dataSource width];
+}
+
+- (VT100GridWindowedRange)selectionRangeForLineAt:(VT100GridCoord)coord {
+    BOOL respectDividers = [[iTermController sharedInstance] selectionRespectsSoftBoundaries];
+    if (respectDividers) {
+        iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+        [extractor restrictToLogicalWindowIncludingCoord:coord];
+        return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(extractor.logicalWindow.location,
+                                                                  coord.y,
+                                                                  VT100GridRangeMax(extractor.logicalWindow) + 1,
+                                                                  coord.y),
+                                          extractor.logicalWindow.location,
+                                          extractor.logicalWindow.length);
+    }
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, coord.y, [_dataSource width], coord.y), 0, 0);
 }
 
 - (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord {

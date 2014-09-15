@@ -34,16 +34,19 @@ typedef enum {
 - (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord;
 
 // Returns range of full wrapped line at coord.
-- (VT100GridCoordRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord;
+- (VT100GridWindowedRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord;
 
 // Returns range of single line at coord.
-- (VT100GridCoordRange)selectionRangeForLineAt:(VT100GridCoord)coord;
+- (VT100GridWindowedRange)selectionRangeForLineAt:(VT100GridCoord)coord;
 
 // Returns the x range of trailing nulls on a line.
 - (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber;
 
 // Returns the coordinate of the coordinate just before coord.
 - (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord;
+
+// Returns the width of the viewport (total columns in session).
+- (int)selectionViewportWidth;
 
 @end
 
