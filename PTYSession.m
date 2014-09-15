@@ -3494,7 +3494,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                            to:&range
              ignoringNewlines:NO
                actionRequired:NO
-              respectDividers:YES];
+              respectDividers:NO];
     return [_textview rangeByTrimmingNullsFromRange:range.coordRange trimSpaces:YES];
 }
 

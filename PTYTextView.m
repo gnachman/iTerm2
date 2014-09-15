@@ -2282,15 +2282,14 @@ NSMutableArray* screens=0;
                       ignoringNewlines:ignoringNewlines];
 }
 
-- (BOOL)smartSelectAtX:(int)x y:(int)y ignoringNewlines:(BOOL)ignoringNewlines
-{
+- (BOOL)smartSelectAtX:(int)x y:(int)y ignoringNewlines:(BOOL)ignoringNewlines {
     VT100GridWindowedRange range;
     SmartMatch *smartMatch = [self smartSelectAtX:x
                                                 y:y
                                                to:&range
                                  ignoringNewlines:ignoringNewlines
                                    actionRequired:NO
-                                  respectDividers:YES];
+                                  respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
 
     [_selection beginSelectionAt:VT100GridCoordMake(x, y)
                             mode:kiTermSelectionModeSmart
@@ -5897,8 +5896,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSString *)getWordForX:(int)x
                         y:(int)y
                     range:(VT100GridWindowedRange *)rangePtr
-          respectDividers:(BOOL)respectDividers
-{
+          respectDividers:(BOOL)respectDividers {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoord coord = VT100GridCoordMake(x, y);
     if (respectDividers) {
@@ -7960,7 +7958,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                to:&smartRange
                                  ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
                                    actionRequired:YES
-                                  respectDividers:YES];
+                                  respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
     NSArray *actions = [SmartSelectionController actionsInRule:smartMatch.rule];
     DLog(@"  Smart selection produces these actions: %@", actions);
     if (actions.count) {
@@ -7987,7 +7985,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        to:&smartRange
                          ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
                            actionRequired:NO
-                          respectDividers:YES];
+                          respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
         if (!VT100GridCoordEquals(smartRange.coordRange.start,
                                   smartRange.coordRange.end)) {
             NSString *name = smartMatch.components[0];
@@ -8594,7 +8592,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (VT100GridWindowedRange)selectionRangeForWordAt:(VT100GridCoord)coord {
     VT100GridWindowedRange range;
-    [self getWordForX:coord.x y:coord.y range:&range respectDividers:YES];
+    [self getWordForX:coord.x
+                    y:coord.y
+                range:&range
+      respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
     return range;
 }
 
@@ -8605,7 +8606,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                       to:&range
         ignoringNewlines:NO
           actionRequired:NO
-         respectDividers:YES];
+         respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
     return range;
 }
 
