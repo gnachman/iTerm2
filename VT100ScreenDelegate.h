@@ -143,6 +143,9 @@
 // Returns if iTermTabContentsChanged notifications should be published when the view is updated.
 - (BOOL)screenShouldSendContentsChangedNotification;
 
+// Returns whether terminal-generated notifications are allowed.
+- (BOOL)screenShouldPostTerminalGeneratedAlert;
+
 // PTYTextView deselect
 - (void)screenRemoveSelection;
 

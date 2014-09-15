@@ -25,10 +25,18 @@
     IBOutlet NSButton *_disableAltScreen;
     IBOutlet NSButton *_silenceBell;
     IBOutlet NSButton *_postNotifications;
+    IBOutlet NSButton *_filterAlertsButton;
     IBOutlet NSButton *_flashingBell;
     IBOutlet NSButton *_bellIconInTabs;
     IBOutlet NSButton *_setLocaleVars;
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
+
+    IBOutlet NSPanel *_filterAlertsPanel;
+    IBOutlet NSButton *_bellAlert;
+    IBOutlet NSButton *_idleAlert;
+    IBOutlet NSButton *_newOutputAlert;
+    IBOutlet NSButton *_sessionEndedAlert;
+    IBOutlet NSButton *_terminalGeneratedAlerts;
 }
 
 - (void)awakeFromNib {
@@ -93,10 +101,30 @@
                     key:KEY_SILENCE_BELL
                    type:kPreferenceInfoTypeCheckbox];
     
-    [self defineControl:_postNotifications
-                    key:KEY_BOOKMARK_GROWL_NOTIFICATIONS
+    info = [self defineControl:_postNotifications
+                           key:KEY_BOOKMARK_GROWL_NOTIFICATIONS
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        BOOL sendNotifications = [self boolForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
+        [_filterAlertsButton setEnabled:sendNotifications];
+    };
+
+    [self defineControl:_bellAlert
+                    key:KEY_SEND_BELL_ALERT
                    type:kPreferenceInfoTypeCheckbox];
-    
+    [self defineControl:_idleAlert
+                    key:KEY_SEND_IDLE_ALERT
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_newOutputAlert
+                    key:KEY_SEND_NEW_OUTPUT_ALERT
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_sessionEndedAlert
+                    key:KEY_SEND_SESSION_ENDED_ALERT
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_terminalGeneratedAlerts
+                    key:KEY_SEND_TERMINAL_GENERATED_ALERT
+                   type:kPreferenceInfoTypeCheckbox];
+
     [self defineControl:_flashingBell
                     key:KEY_FLASHING_BELL
                    type:kPreferenceInfoTypeCheckbox];
@@ -149,6 +177,26 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 
 - (IBAction)help:(id)sender {
     [CommandHistory showInformationalMessage];
+}
+
+- (IBAction)showFilterAlertsPanel:(id)sender {
+    [NSApp beginSheet:_filterAlertsPanel
+       modalForWindow:self.view.window
+        modalDelegate:self
+       didEndSelector:@selector(filterAlertsCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];
+}
+
+- (IBAction)closeFilterAlertsPanel:(id)sender {
+    [NSApp endSheet:_filterAlertsPanel];
+}
+
+#pragma mark - Sheet
+
+- (void)filterAlertsCloseSheet:(NSWindow *)sheet
+                    returnCode:(int)returnCode
+                   contextInfo:(id)contextInfo {
+    [sheet close];
 }
 
 @end
