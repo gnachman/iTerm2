@@ -151,7 +151,7 @@
 }
 
 - (VT100GridWindowedRange)unflippedLiveRange {
-    return [self unflippedRangeForRange:_range];
+    return [self unflippedRangeForRange:_range mode:_selectionMode];
 }
 
 - (void)beginExtendingSelectionAt:(VT100GridCoord)coord {
@@ -178,7 +178,8 @@
     }
 
     VT100GridWindowedRange range = [self rangeForCurrentModeAtCoord:coord
-                                              includeParentheticals:YES];
+                                              includeParentheticals:YES
+                                                 needAccurateWindow:NO];
     // TODO support range.
     if (range.coordRange.start.x != -1) {
         if (range.coordRange.start.x == -1) {
@@ -197,7 +198,8 @@
                 // Move the end point
                 _range.coordRange.end = range.coordRange.end;
                 _initialRange = [self rangeForCurrentModeAtCoord:_range.coordRange.start
-                                           includeParentheticals:NO];
+                                           includeParentheticals:NO
+                                              needAccurateWindow:NO];
                 ;
             } else {
                 // Flip and move what was the start point
@@ -206,7 +208,8 @@
                 VT100GridCoord anchor =
                     [_delegate selectionPredecessorOfCoord:_range.coordRange.start];
                 _initialRange = [self rangeForCurrentModeAtCoord:anchor
-                                           includeParentheticals:NO];
+                                           includeParentheticals:NO
+                                              needAccurateWindow:NO];
             }
         } else {
             // The click point is outside the live range
@@ -219,7 +222,8 @@
             if ([self coord:range.coordRange.end isAfterCoord:determinant.end]) {
                 _range.coordRange.end = range.coordRange.end;
                 _initialRange = [self rangeForCurrentModeAtCoord:_range.coordRange.start
-                                           includeParentheticals:NO];
+                                           includeParentheticals:NO
+                                              needAccurateWindow:NO];
             }
             if ([self coord:range.coordRange.start isBeforeCoord:determinant.start]) {
                 [self flip];
@@ -227,7 +231,8 @@
                 VT100GridCoord lastSelectedCharCoord =
                     [_delegate selectionPredecessorOfCoord:_range.coordRange.start];
                 _initialRange = [self rangeForCurrentModeAtCoord:lastSelectedCharCoord
-                                           includeParentheticals:NO];
+                                           includeParentheticals:NO
+                                              needAccurateWindow:NO];
 
             }
         }
@@ -236,8 +241,12 @@
     [_delegate selectionDidChange:[[self retain] autorelease]];
 }
 
- - (VT100GridWindowedRange)rangeForCurrentModeAtCoord:(VT100GridCoord)coord
-                                includeParentheticals:(BOOL)includeParentheticals {
+// needAccurateWindow means that soft boundaries must be recomputed. If it's
+// not set then the existing soft boundary in _range is used.
+ - (VT100GridWindowedRange)rangeForCurrentModeAtCoord:(VT100GridCoord)rawCoord
+                                includeParentheticals:(BOOL)includeParentheticals
+                                   needAccurateWindow:(BOOL)needAccurateWindow {
+     VT100GridCoord coord = rawCoord;
      if (_range.columnWindow.length > 0) {
          coord.x = MAX(_range.columnWindow.location,
                        MIN(_range.columnWindow.location + _range.columnWindow.length - 1,
@@ -256,7 +265,7 @@
              break;
 
          case kiTermSelectionModeWholeLine:
-             windowedRange.coordRange = [_delegate selectionRangeForWrappedLineAt:coord];
+             windowedRange = [_delegate selectionRangeForWrappedLineAt:coord];
              break;
 
          case kiTermSelectionModeSmart:
@@ -264,11 +273,21 @@
              break;
 
          case kiTermSelectionModeLine:
-             windowedRange.coordRange = [_delegate selectionRangeForLineAt:coord];
+             windowedRange = [_delegate selectionRangeForLineAt:coord];
              break;
 
          case kiTermSelectionModeCharacter:
+             if (_range.columnWindow.length > 0) {
+                 coord.x = MAX(_range.columnWindow.location,
+                               MIN(_range.columnWindow.location + _range.columnWindow.length,
+                                   rawCoord.x));
+             }
          case kiTermSelectionModeBox:
+             if (needAccurateWindow) {
+                 windowedRange = [_delegate selectionRangeForLineAt:coord];
+             } else {
+                 windowedRange = _range;
+             }
              windowedRange.coordRange = VT100GridCoordRangeMake(coord.x, coord.y, coord.x, coord.y);
              break;
      }
@@ -297,7 +316,9 @@
     _live = YES;
     _extend = NO;
     _selectionMode = mode;
-    _range = [self rangeForCurrentModeAtCoord:coord includeParentheticals:YES];
+    _range = [self rangeForCurrentModeAtCoord:coord
+                        includeParentheticals:YES
+                           needAccurateWindow:YES];
     _initialRange = _range;
 
     DLog(@"Begin selection, range=%@", VT100GridWindowedRangeDescription(_range));
@@ -397,7 +418,9 @@
     if (coord.y < 0) {
         coord.x = coord.y = 0;
     }
-    VT100GridWindowedRange range = [self rangeForCurrentModeAtCoord:coord includeParentheticals:NO];
+    VT100GridWindowedRange range = [self rangeForCurrentModeAtCoord:coord
+                                              includeParentheticals:NO
+                                                 needAccurateWindow:NO];
 
     if (!_live) {
         [self beginSelectionAt:coord mode:self.selectionMode resume:NO append:NO];
@@ -509,7 +532,7 @@
 }
 
 - (int)width {
-    return [_delegate selectionRangeForLineAt:VT100GridCoordMake(0, 0)].end.x;
+    return [_delegate selectionViewportWidth];
 }
 
 - (long long)length {
@@ -541,8 +564,23 @@
     return theCopy;
 }
 
-- (VT100GridWindowedRange)unflippedRangeForRange:(VT100GridWindowedRange)range {
-    if ([self coord:range.coordRange.end isBeforeCoord:range.coordRange.start]) {
+- (VT100GridWindowedRange)unflippedRangeForRange:(VT100GridWindowedRange)range
+                                            mode:(iTermSelectionMode)mode {
+    if (mode == kiTermSelectionModeBox) {
+        // For box selection, we always want the start to be the top left and
+        // end to be the bottom right.
+        range.coordRange = VT100GridCoordRangeMake(MIN(range.coordRange.start.x,
+                                                       range.coordRange.end.x),
+                                                   MIN(range.coordRange.start.y,
+                                                       range.coordRange.end.y),
+                                                   MAX(range.coordRange.start.x,
+                                                       range.coordRange.end.x),
+                                                   MAX(range.coordRange.start.y,
+                                                       range.coordRange.end.y));
+    } else if ([self coord:range.coordRange.end isBeforeCoord:range.coordRange.start]) {
+        // For all other kinds of selection, the coorinate pair for each of
+        // start and end must remain together, but start should precede end in
+        // reading order.
         range.coordRange = VT100GridCoordRangeMake(range.coordRange.end.x,
                                                    range.coordRange.end.y,
                                                    range.coordRange.start.x,
@@ -552,7 +590,7 @@
 }
 
 - (VT100GridWindowedRange)rangeByExtendingRangePastNulls:(VT100GridWindowedRange)range {
-    VT100GridWindowedRange unflippedRange = [self unflippedRangeForRange:range];
+    VT100GridWindowedRange unflippedRange = [self unflippedRangeForRange:range mode:_selectionMode];
     VT100GridRange nulls =
         [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.coordRange.start.y];
 

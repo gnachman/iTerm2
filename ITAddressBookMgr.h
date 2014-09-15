@@ -155,6 +155,13 @@
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
 #define KEY_SCROLLBACK_IN_ALTERNATE_SCREEN    @"Scrollback in Alternate Screen"
 #define KEY_BOOKMARK_GROWL_NOTIFICATIONS      @"BM Growl"
+
+#define KEY_SEND_BELL_ALERT                   @"Send Bell Alert"
+#define KEY_SEND_IDLE_ALERT                   @"Send Idle Alert"
+#define KEY_SEND_NEW_OUTPUT_ALERT             @"Send New Output Alert"
+#define KEY_SEND_SESSION_ENDED_ALERT          @"Send Session Ended Alert"
+#define KEY_SEND_TERMINAL_GENERATED_ALERT     @"Send Terminal Generated Alerts"
+
 #define KEY_SET_LOCALE_VARS                   @"Set Local Environment Vars"
 #define KEY_CHARACTER_ENCODING                @"Character Encoding"
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"

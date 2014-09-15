@@ -7,6 +7,7 @@
 #import "iTermController.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
@@ -4110,12 +4111,14 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                     [NSString stringWithFormat:@"Session %@ in tab #%d became idle.",
                         [[self activeSession] name],
                         [self realObjectCount]];
-                [[iTermGrowlDelegate sharedInstance] growlNotify:@"Idle"
-                                                 withDescription:theDescription
-                                                 andNotification:@"Idle"
-                                                     windowIndex:[session screenWindowIndex]
-                                                        tabIndex:[session screenTabIndex]
-                                                       viewIndex:[session screenViewIndex]];
+                if ([iTermProfilePreferences boolForKey:KEY_SEND_IDLE_ALERT inProfile:session.profile]) {
+                    [[iTermGrowlDelegate sharedInstance] growlNotify:@"Idle"
+                                                     withDescription:theDescription
+                                                     andNotification:@"Idle"
+                                                         windowIndex:[session screenWindowIndex]
+                                                            tabIndex:[session screenTabIndex]
+                                                           viewIndex:[session screenViewIndex]];
+                }
                 session.havePostedIdleNotification = YES;
                 session.havePostedNewOutputNotification = NO;
             }
@@ -4144,17 +4147,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         [[self realParentWindow] broadcastMode] == BROADCAST_OFF &&
         notify &&
         [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
-        [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",
-                                                                                            @"iTerm",
-                                                                                            [NSBundle bundleForClass:[self class]],
-                                                                                            @"Growl Alerts")
-                                         withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
-                                                          [[self activeSession] name],
-                                                          [self realObjectCount]]
-                                         andNotification:@"New Output"
-                                             windowIndex:[[self activeSession] screenWindowIndex]
-                                                tabIndex:[[self activeSession] screenTabIndex]
-                                               viewIndex:[[self activeSession] screenViewIndex]];
+        if ([iTermProfilePreferences boolForKey:KEY_SEND_NEW_OUTPUT_ALERT inProfile:self.activeSession.profile]) {
+            [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",
+                                                                                                @"iTerm",
+                                                                                                [NSBundle bundleForClass:[self class]],
+                                                                                                @"Growl Alerts")
+                                             withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
+                                                              [[self activeSession] name],
+                                                              [self realObjectCount]]
+                                             andNotification:@"New Output"
+                                                 windowIndex:[[self activeSession] screenWindowIndex]
+                                                    tabIndex:[[self activeSession] screenTabIndex]
+                                                   viewIndex:[[self activeSession] screenViewIndex]];
+        }
         [[self activeSession] setHavePostedNewOutputNotification:YES];
         [[self activeSession] setHavePostedIdleNotification:NO];
     }

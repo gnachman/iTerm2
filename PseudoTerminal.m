@@ -1319,6 +1319,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
   session.highlightCursorLine = !session.highlightCursorLine;
 }
 
+- (IBAction)toggleSelectionRespectsSoftBoundaries:(id)sender {
+    iTermController *controller = [iTermController sharedInstance];
+    controller.selectionRespectsSoftBoundaries = !controller.selectionRespectsSoftBoundaries;
+}
+
 // Save the current scroll position
 - (IBAction)saveScrollPosition:(id)sender
 {
@@ -6490,6 +6495,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
       PTYSession *session = [self currentSession];
       [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
       result = YES;
+    } else if ([item action] == @selector(toggleSelectionRespectsSoftBoundaries:)) {
+        [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSOnState : NSOffState];
+        result = YES;
     } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
         result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {

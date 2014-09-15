@@ -81,4 +81,6 @@
 + (double)findDelaySeconds;
 + (BOOL)optionIsMetaForSpecialChars;
 
++ (BOOL)startDebugLoggingAutomatically;
+
 @end

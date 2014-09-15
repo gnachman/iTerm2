@@ -187,6 +187,7 @@
 
 - (BOOL)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
     if ([self editor]) {
+        DLog(@"openFileInEditor. editor=%@", [self editor]);
         if ([[self editor] isEqualToString:kSublimeText2Identifier] ||
             [[self editor] isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
@@ -205,6 +206,7 @@
                 NSString *sublExecutable = [NSString stringWithFormat:@"%@/Contents/SharedSupport/bin/subl",
                                             bundlePath];
                 if ([[NSFileManager defaultManager] fileExistsAtPath:sublExecutable]) {
+                    DLog(@"Launch sublime text %@ %@", sublExecutable, path);
                     [NSTask launchedTaskWithLaunchPath:sublExecutable
                                              arguments:[NSArray arrayWithObjects:path, nil]];
                 } else {
@@ -216,6 +218,7 @@
                                                        bundlePath,
                                                        [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
                     if (bundle && sublimeTextExecutable) {
+                        DLog(@"Launch sublime text %@ %@ %@", sublimeTextExecutable, sublimeTextExecutable, path);
                         [NSTask launchedTaskWithLaunchPath:sublimeTextExecutable
                                                  arguments:[NSArray arrayWithObjects:sublimeTextExecutable, path, nil]];
                     }
@@ -227,6 +230,7 @@
                                                @"%@://open?url=file://%@&line=%@",
                                                [TrouterPrefsController schemeForEditor:[self editor]],
                                                path, lineNumber, nil]];
+            DLog(@"Open url %@", url);
             [[NSWorkspace sharedWorkspace] openURL:url];
 
         }
@@ -249,16 +253,16 @@
 - (BOOL)openPath:(NSString *)path
     workingDirectory:(NSString *)workingDirectory
     prefix:(NSString *)prefix
-    suffix:(NSString *)suffix
-{
+    suffix:(NSString *)suffix {
+    DLog(@"openPath:%@ workingDirectory:%@ prefix:%@ suffix:%@",
+         path, workingDirectory, prefix, suffix);
     BOOL isDirectory;
     NSString* lineNumber = @"";
 
     BOOL isRawAction = [[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction];
     if (!isRawAction) {
-        path = [self getFullPath:path
-                workingDirectory:workingDirectory
-                      lineNumber:&lineNumber];
+        path = [self getFullPath:path workingDirectory:workingDirectory lineNumber:&lineNumber];
+        DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
 
     NSString *script = [prefs_ objectForKey:kTrouterTextKey];
@@ -267,30 +271,36 @@
     script = [script stringByReplacingBackreference:3 withString:[prefix stringWithEscapedShellCharacters]];
     script = [script stringByReplacingBackreference:4 withString:[suffix stringWithEscapedShellCharacters]];
     script = [script stringByReplacingBackreference:5 withString:[workingDirectory stringWithEscapedShellCharacters]];
+    DLog(@"After escaping backrefs, script is %@", script);
 
     if (isRawAction) {
+        DLog(@"Launch raw action: /bin/sh -c %@", script);
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
         return YES;
     }
 
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
+        DLog(@"No file exists at %@, not running trouter", path);
         return NO;
     }
 
     if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterCommandAction]) {
+        DLog(@"Running /bin/sh -c %@", script);
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
         return YES;
     }
 
     if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterCoprocessAction]) {
+        DLog(@"Launch coproress with script %@", script);
         assert(delegate_);
         [delegate_ trouterLaunchCoprocessWithCommand:script];
         return YES;
     }
 
     if (isDirectory) {
+        DLog(@"Open directory %@", path);
         [[NSWorkspace sharedWorkspace] openFile:path];
         return YES;
     }
@@ -299,16 +309,37 @@
         NSString *url = [prefs_ objectForKey:kTrouterTextKey];
         url = [url stringByReplacingBackreference:1 withString:[path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
         url = [url stringByReplacingBackreference:2 withString:lineNumber];
+        DLog(@"Open url %@", url);
         [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:url]];
         return YES;
     }
 
     if ([self editor] && [self isTextFile:path]) {
-        return [self openFileInEditor: path lineNumber:lineNumber];
+        if (![self defaultAppForFileIsEditor:path]) {
+            DLog(@"Default app for %@ is NOT an editor, so open it in an editor", path);
+            return [self openFileInEditor:path lineNumber:lineNumber];
+        } else {
+            DLog(@"Default app for %@ is an editor so just open it", path);
+        }
     }
 
     [[NSWorkspace sharedWorkspace] openFile:path];
     return YES;
+}
+
+- (BOOL)defaultAppForFileIsEditor:(NSString *)file {
+    NSURL *fileUrl = [NSURL fileURLWithPath:file];
+    NSURL *appUrl = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:fileUrl];
+    if (!appUrl) {
+        return NO;
+    }
+
+    NSBundle *appBundle = [NSBundle bundleWithURL:appUrl];
+    if (!appBundle) {
+        return NO;
+    }
+    NSString *bundleId = [appBundle bundleIdentifier];
+    return [TrouterPrefsController bundleIdIsEditor:bundleId];
 }
 
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
