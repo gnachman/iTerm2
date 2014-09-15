@@ -62,6 +62,9 @@ static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
+// Pref keys
+static NSString const *kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
+
 static BOOL UncachedIsMountainLionOrLater(void) {
     unsigned major;
     unsigned minor;
@@ -1319,6 +1322,15 @@ static BOOL initDone = NO;
     // bd6a8df6e63b843f1f8aff79f40bd70907761a99.
     [[NSUserDefaults standardUserDefaults] setObject:@"iTerm"
                                               forKey:@"SUFeedAlternateAppNameKey"];
+}
+
+- (BOOL)selectionRespectsSoftBoundaries {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kSelectionRespectsSoftBoundariesKey];
+}
+
+- (void)setSelectionRespectsSoftBoundaries:(BOOL)selectionRespectsSoftBoundaries {
+    [[NSUserDefaults standardUserDefaults] setBool:selectionRespectsSoftBoundaries
+                                            forKey:kSelectionRespectsSoftBoundariesKey];
 }
 
 - (void)addRestorableSession:(iTermRestorableSession *)session {
