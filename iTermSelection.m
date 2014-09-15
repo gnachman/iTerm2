@@ -151,7 +151,7 @@
 }
 
 - (VT100GridWindowedRange)unflippedLiveRange {
-    return [self unflippedRangeForRange:_range];
+    return [self unflippedRangeForRange:_range mode:_selectionMode];
 }
 
 - (void)beginExtendingSelectionAt:(VT100GridCoord)coord {
@@ -564,8 +564,23 @@
     return theCopy;
 }
 
-- (VT100GridWindowedRange)unflippedRangeForRange:(VT100GridWindowedRange)range {
-    if ([self coord:range.coordRange.end isBeforeCoord:range.coordRange.start]) {
+- (VT100GridWindowedRange)unflippedRangeForRange:(VT100GridWindowedRange)range
+                                            mode:(iTermSelectionMode)mode {
+    if (mode == kiTermSelectionModeBox) {
+        // For box selection, we always want the start to be the top left and
+        // end to be the bottom right.
+        range.coordRange = VT100GridCoordRangeMake(MIN(range.coordRange.start.x,
+                                                       range.coordRange.end.x),
+                                                   MIN(range.coordRange.start.y,
+                                                       range.coordRange.end.y),
+                                                   MAX(range.coordRange.start.x,
+                                                       range.coordRange.end.x),
+                                                   MAX(range.coordRange.start.y,
+                                                       range.coordRange.end.y));
+    } else if ([self coord:range.coordRange.end isBeforeCoord:range.coordRange.start]) {
+        // For all other kinds of selection, the coorinate pair for each of
+        // start and end must remain together, but start should precede end in
+        // reading order.
         range.coordRange = VT100GridCoordRangeMake(range.coordRange.end.x,
                                                    range.coordRange.end.y,
                                                    range.coordRange.start.x,
@@ -575,7 +590,7 @@
 }
 
 - (VT100GridWindowedRange)rangeByExtendingRangePastNulls:(VT100GridWindowedRange)range {
-    VT100GridWindowedRange unflippedRange = [self unflippedRangeForRange:range];
+    VT100GridWindowedRange unflippedRange = [self unflippedRangeForRange:range mode:_selectionMode];
     VT100GridRange nulls =
         [_delegate selectionRangeOfTerminalNullsOnLine:unflippedRange.coordRange.start.y];
 
