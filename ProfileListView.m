@@ -111,8 +111,7 @@ const CGFloat kDefaultTagsWidth = 80;
         normalRowHeight_ = 21;
         rowHeightWithTags_ = 29;
         [tableView_ setRowHeight:rowHeightWithTags_];
-        [tableView_
-         setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
+        [tableView_ setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleRegular];
         [tableView_ setAllowsColumnResizing:YES];
         [tableView_ setAllowsColumnReordering:YES];
         [tableView_ setAllowsColumnSelection:NO];
