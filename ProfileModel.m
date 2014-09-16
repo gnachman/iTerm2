@@ -145,17 +145,21 @@ int gMigrated;
     return [filter componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
-- (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter
-{
+- (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter orGuid:(NSString *)lockedGuid {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[bookmarks_ count]];
     NSArray* tokens = [self parseFilter:filter];
     int count = [bookmarks_ count];
     for (int i = 0; i < count; ++i) {
-        if ([self doesBookmarkAtIndex:i matchFilter:tokens]) {
-            [result addObject:[NSNumber numberWithInt:i]];
+        if ([self doesBookmarkAtIndex:i matchFilter:tokens] ||
+            [bookmarks_[i][KEY_GUID] isEqualToString:lockedGuid]) {
+            [result addObject:@(i)];
         }
     }
     return result;
+}
+
+- (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter {
+    return[ self bookmarkIndicesMatchingFilter:filter orGuid:nil];
 }
 
 - (int)numberOfBookmarksWithFilter:(NSString*)filter
