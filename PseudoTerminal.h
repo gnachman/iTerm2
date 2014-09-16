@@ -104,9 +104,6 @@ extern NSString *const kCurrentSessionDidChange;
 // Called on object deallocation.
 - (void)dealloc;
 
-// accessor for commandField.
-- (id)commandField;
-
 // Fix the window frame for fullscreen, top, bottom windows.
 - (void)canonicalizeWindowFrame;
 
