@@ -62,25 +62,8 @@ static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
-static BOOL UncachedIsMountainLionOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 8) || (major > 10);
-    } else {
-        return NO;
-    }
-}
-
-BOOL IsMountainLionOrLater(void) {
-    static BOOL result;
-    static BOOL initialized;
-    if (!initialized) {
-        initialized = YES;
-        result = UncachedIsMountainLionOrLater();
-    }
-    return result;
-}
+// Pref keys
+static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 
 static BOOL UncachedIsMavericksOrLater(void) {
     unsigned major;
@@ -147,7 +130,6 @@ static BOOL initDone = NO;
     shared = nil;
 }
 
-// init
 - (id)init {
     self = [super init];
 
@@ -1334,6 +1316,15 @@ static BOOL initDone = NO;
     // bd6a8df6e63b843f1f8aff79f40bd70907761a99.
     [[NSUserDefaults standardUserDefaults] setObject:@"iTerm"
                                               forKey:@"SUFeedAlternateAppNameKey"];
+}
+
+- (BOOL)selectionRespectsSoftBoundaries {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kSelectionRespectsSoftBoundariesKey];
+}
+
+- (void)setSelectionRespectsSoftBoundaries:(BOOL)selectionRespectsSoftBoundaries {
+    [[NSUserDefaults standardUserDefaults] setBool:selectionRespectsSoftBoundaries
+                                            forKey:kSelectionRespectsSoftBoundariesKey];
 }
 
 - (void)addRestorableSession:(iTermRestorableSession *)session {

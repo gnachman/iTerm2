@@ -2627,7 +2627,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (BOOL)terminalPostGrowlNotification:(NSString *)message {
-    if (postGrowlNotifications_) {
+    if (postGrowlNotifications_ && [delegate_ screenShouldPostTerminalGeneratedAlert]) {
         [delegate_ screenIncrementBadge];
         NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
                                     [delegate_ screenName],

@@ -25,6 +25,7 @@
 {
     [bookmarks release];
     [filter release];
+    [_lockedGuid release];
     [super dealloc];
 }
 
@@ -78,15 +79,14 @@
     return underlyingModel;
 }
 
-- (void)sync
-{
+- (void)sync {
     [bookmarks removeAllObjects];
-    NSArray* filteredBookmarks = [underlyingModel bookmarkIndicesMatchingFilter:filter];
+    NSArray* filteredBookmarks = [underlyingModel bookmarkIndicesMatchingFilter:filter
+                                                                         orGuid:self.lockedGuid];
     for (NSNumber* n in filteredBookmarks) {
         int i = [n intValue];
-        //NSLog(@"Wrapper at %p add bookmark %@ at index %d", self, [[underlyingModel profileAtIndex:i] objectForKey:KEY_NAME], i);
-        [bookmarks addObject:[[[ProfileTableRow alloc] initWithBookmark:[underlyingModel profileAtIndex:i] 
-                                                    underlyingModel:underlyingModel] autorelease]];
+        [bookmarks addObject:[[[ProfileTableRow alloc] initWithBookmark:[underlyingModel profileAtIndex:i]
+                                                        underlyingModel:underlyingModel] autorelease]];
     }
     [self sort];
 }

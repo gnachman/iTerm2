@@ -41,8 +41,6 @@ const CGFloat kTagsViewWidth = 0;  // TODO: remember this for each superview
 const CGFloat kDefaultTagsWidth = 80;
 
 @interface ProfileListView () <ProfileTagsViewDelegate>
-- (NSDictionary *)rowOrder;
-- (void)syncTableViewsWithSelectedGuids:(NSArray *)guids;
 @end
 
 @implementation ProfileListView {
@@ -111,8 +109,7 @@ const CGFloat kDefaultTagsWidth = 80;
         normalRowHeight_ = 21;
         rowHeightWithTags_ = 29;
         [tableView_ setRowHeight:rowHeightWithTags_];
-        [tableView_
-         setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
+        [tableView_ setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleRegular];
         [tableView_ setAllowsColumnResizing:YES];
         [tableView_ setAllowsColumnReordering:YES];
         [tableView_ setAllowsColumnSelection:NO];
@@ -326,6 +323,14 @@ const CGFloat kDefaultTagsWidth = 80;
 - (ProfileModelWrapper*)dataSource
 {
     return dataSource_;
+}
+
+- (void)lockSelection {
+    dataSource_.lockedGuid = [self selectedGuid];
+}
+
+- (void)unlockSelection {
+    dataSource_.lockedGuid = nil;
 }
 
 #pragma mark BookmarkTableView menu handler
@@ -550,6 +555,7 @@ const CGFloat kDefaultTagsWidth = 80;
     if (self.delegate && [self.delegate respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
         [self.delegate profileTableSelectionDidChange:self];
     }
+    dataSource_.lockedGuid = nil;
     [selectedGuids_ release];
     selectedGuids_ = [self selectedGuids];
     [selectedGuids_ retain];
@@ -677,8 +683,8 @@ const CGFloat kDefaultTagsWidth = 80;
     return [NSSet setWithArray:[self orderedSelectedGuids]];
 }
 
-- (void)controlTextDidChange:(NSNotification *)aNotification
-{
+- (void)controlTextDidChange:(NSNotification *)aNotification {
+    dataSource_.lockedGuid = nil;
     [self updateResultsForSearch];
 }
 

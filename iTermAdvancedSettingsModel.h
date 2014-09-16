@@ -57,8 +57,6 @@
 // Remember window positions? If off, lets the OS pick the window position. Smart window placement takes precedence over this.
 + (BOOL)rememberWindowPositions;
 
-+ (BOOL)disableToolbar;
-
 // Regular expression for finding URLs for Edit>Find>Find URLs
 + (NSString *)findUrlsRegex;
 
@@ -80,5 +78,7 @@
 
 + (double)findDelaySeconds;
 + (BOOL)optionIsMetaForSpecialChars;
+
++ (BOOL)startDebugLoggingAutomatically;
 
 @end

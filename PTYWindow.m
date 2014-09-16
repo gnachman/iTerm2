@@ -151,17 +151,6 @@
     PtyLog(@"enter smartLayout");
     NSEnumerator* iterator;
 
-    CGSWorkspaceID currentSpace = -1;  // Valid only before 10.8 Mountain Lion.
-    CGSConnectionID con;
-    if (!IsMountainLionOrLater()) {
-        con = CGSMainConnectionID();
-        if (!con) {
-            PtyLog(@"CGSMainConnectionID failed");
-            return;
-        }
-        CGSGetWorkspace(con, &currentSpace);
-    }
-
     int currentScreen = [self screenNumber];
     NSRect screenRect = [[self screen] visibleFrame];
 
@@ -183,19 +172,9 @@
             continue;
         }
 
-        if (IsMountainLionOrLater()) {
-            // CGSGetWindowWorkspace broke in 10.8.
-            if (![otherWindow isOnActiveSpace]) {
-                PtyLog(@"  skip - not in active space");
-                continue;
-            }
-        } else {
-            CGSWorkspaceID otherSpace = -1;
-            CGSGetWindowWorkspace(con, [otherWindow windowNumber], &otherSpace);
-            if (otherSpace != currentSpace) {
-                PtyLog(@" skip - different space %d vs my %d", otherSpace, currentSpace);
-                continue;
-            }
+        if (![otherWindow isOnActiveSpace]) {
+            PtyLog(@"  skip - not in active space");
+            continue;
         }
 
         PtyLog(@" add window to array of windows");
@@ -295,28 +274,6 @@ end:
     PtyLog(@"PTYWindow - calling makeKeyAndOrderFont, which triggers a window resize");
     PtyLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);
     [super makeKeyAndOrderFront:sender];
-}
-
-- (void)setToolbar:(NSToolbar *)toolbar {
-    if ([iTermAdvancedSettingsModel disableToolbar]) {
-        return;
-    }
-    [super setToolbar:toolbar];
-}
-
-- (void)toggleToolbarShown:(id)sender {
-    id delegate = [self delegate];
-
-    // Let our delegate know
-    if([delegate conformsToProtocol: @protocol(PTYWindowDelegateProtocol)])
-    [delegate windowWillToggleToolbarVisibility: self];
-
-    [super toggleToolbarShown: sender];
-
-    // Let our delegate know
-    if([delegate conformsToProtocol: @protocol(PTYWindowDelegateProtocol)])
-    [delegate windowDidToggleToolbarVisibility: self];
-
 }
 
 - (BOOL)canBecomeKeyWindow {

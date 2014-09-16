@@ -4105,12 +4105,12 @@
     return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
 }
 
-- (VT100GridCoordRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
-    return VT100GridCoordRangeMake(0, 0, 0, 0);
+- (VT100GridWindowedRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
 }
 
-- (VT100GridCoordRange)selectionRangeForLineAt:(VT100GridCoord)coord {
-    return VT100GridCoordRangeMake(0, 0, 0, 0);
+- (VT100GridWindowedRange)selectionRangeForLineAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
 }
 
 - (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {

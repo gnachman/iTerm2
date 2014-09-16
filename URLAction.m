@@ -53,8 +53,20 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p string=%@ rule=%@>",
-            [self class], self, self.string, self.rule];
+    NSString *actionType = @"?";
+    switch (self.actionType) {
+        case kURLActionOpenExistingFile:
+            actionType = @"OpenExistingFile";
+            break;
+        case kURLActionOpenURL:
+            actionType = @"OpenURL";
+            break;
+        case kURLActionSmartSelectionAction:
+            actionType = @"SmartSelectionAction";
+            break;
+    }
+    return [NSString stringWithFormat:@"<%@: %p actionType=%@ string=%@ rule=%@>",
+            [self class], self, actionType, self.string, self.rule];
 }
 
 @end

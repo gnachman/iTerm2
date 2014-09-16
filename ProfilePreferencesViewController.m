@@ -32,6 +32,7 @@ static const CGFloat kSideMarginsWithinInnerTabView = 11;
 @interface ProfilePreferencesViewController () <
     iTermProfilePreferencesBaseViewControllerDelegate,
     NSTabViewDelegate,
+    NSWindowDelegate,
     ProfileListViewDelegate,
     ProfilesGeneralPreferencesViewControllerDelegate>
 @end
@@ -601,13 +602,19 @@ static const CGFloat kSideMarginsWithinInnerTabView = 11;
 #pragma mark - ProfilesGeneralPreferencesViewControllerDelegate
 
 - (void)profilesGeneralPreferencesNameWillChange {
-    [_profilesListView clearSearchField];
+    [_profilesListView lockSelection];
 }
 
 #pragma mark - NSTabViewDelegate
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     [self resizeWindowForTabViewItem:tabViewItem animated:YES];
+}
+
+#pragma mark - NSWindowDelegate
+
+- (void)windowWillClose:(NSNotification *)notification {
+    [_profilesListView unlockSelection];
 }
 
 @end

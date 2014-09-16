@@ -124,19 +124,16 @@ typedef enum {
 
 // Finds text before or at+after |coord|. If |respectHardNewlines|, then the whole wrapped line is
 // returned up to/from |coord|. If not, then 10 lines are returned.
-- (NSString *)wrappedStringAt:(VT100GridCoord)coord
-                      forward:(BOOL)forward
-          respectHardNewlines:(BOOL)respectHardNewlines
-                     maxChars:(int)maxChars;
-
-// Like the above, but continuation chars (a \ before the right edge when there is a software-drawn
-// boundary) are ignored. See comment at
-// -contentInRange:nullPolicy:pad:includeLastNewline:trimTrailingWhitespace:cappedAtSize:continuationChars:
+// If |continuationChars| is not empty, then it can specify a set of characters (such as \) which
+// may occur before the right edge when there is a software-drawn boundary which should be ignored.
+// See comment at -contentInRange:nullPolicy:pad:includeLastNewline:trimTrailingWhitespace:cappedAtSize:continuationChars:
+// If |convertNullToSpace| is YES then the string does not stop at a NULL character.
 - (NSString *)wrappedStringAt:(VT100GridCoord)coord
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
                      maxChars:(int)maxChars
-            continuationChars:(NSMutableIndexSet *)continuationChars;
+            continuationChars:(NSMutableIndexSet *)continuationChars
+          convertNullsToSpace:(BOOL)convertNullsToSpace;
 
 - (NSAttributedString *)attributedContentInRange:(VT100GridWindowedRange)range
                                              pad:(BOOL)pad

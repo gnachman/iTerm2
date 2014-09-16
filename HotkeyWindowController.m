@@ -16,6 +16,9 @@
 #import <Carbon/Carbon.h>
 #import <ScriptingBridge/ScriptingBridge.h>
 
+#include <CoreFoundation/CoreFoundation.h>
+#include <ApplicationServices/ApplicationServices.h>
+
 #define HKWLog DLog
 
 // Restorable arrangement for hotkey window, which doesn't go through the OS's normal window
@@ -319,6 +322,24 @@ void OnHotKeyEvent(void)
             [e keyCode] == hotkeyCode_);
 }
 
+// Indicates if the user at the keyboard is the same user that owns this process. Used to avoid
+// remapping keys when the user has switched users with fast user switching.
+static BOOL UserIsActive() {
+    CFDictionaryRef sessionInfoDict;
+
+    sessionInfoDict = CGSessionCopyCurrentDictionary();
+    if (sessionInfoDict) {
+        NSNumber *userIsActiveNumber = CFDictionaryGetValue(sessionInfoDict,
+                                                            kCGSessionOnConsoleKey);
+        if (!userIsActiveNumber) {
+            return YES;
+        } else {
+            return [userIsActiveNumber boolValue];
+        }
+    }
+    return YES;
+}
+
 /*
  * The callback is passed a proxy for the tap, the event type, the incoming event,
  * and the refcon the callback was registered with.
@@ -352,6 +373,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             CGEventTapEnable(cont->machPortRef_, true);
         }
         return NULL;
+    }
+
+    if (!UserIsActive()) {
+        // Fast user switching has switched to another user, don't do any remapping.
+        DLog(@"** not doing any remapping for event %@", [NSEvent eventWithCGEvent:event]);
+        return event;
     }
 
     NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];

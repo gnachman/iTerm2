@@ -775,8 +775,16 @@ static const int kNumCharsToSearchForDivider = 8;
 {
     screen_char_t *theLine = [_dataSource getLineAtIndex:y];
     int width = [_dataSource width];
-    if ([self xLimit] != width) {
-        return YES;
+    int xLimit = [self xLimit];
+
+    if (_logicalWindow.length != 0) {
+        // If there are soft boundaries, it's impossible to detect soft line wraps so just
+        // stop at whitespace.
+        if (theLine[xLimit - 1].complexChar) {
+            return YES;
+        }
+        unichar c = theLine[xLimit - 1].code;
+        return !(c == 0 || c == ' ');
     }
     if (respectContinuations) {
         return (theLine[width].code == EOL_SOFT ||
@@ -807,19 +815,9 @@ static const int kNumCharsToSearchForDivider = 8;
 - (NSString *)wrappedStringAt:(VT100GridCoord)coord
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
-                     maxChars:(int)maxChars {
-    return [self wrappedStringAt:coord
-                         forward:forward
-             respectHardNewlines:respectHardNewlines
-                        maxChars:maxChars
-               continuationChars:nil];
-}
-
-- (NSString *)wrappedStringAt:(VT100GridCoord)coord
-                      forward:(BOOL)forward
-          respectHardNewlines:(BOOL)respectHardNewlines
                      maxChars:(int)maxChars
-            continuationChars:(NSMutableIndexSet *)continuationChars {
+            continuationChars:(NSMutableIndexSet *)continuationChars
+          convertNullsToSpace:(BOOL)convertNullsToSpace {
     if ([self hasLogicalWindow]) {
         respectHardNewlines = NO;
     }
@@ -852,6 +850,10 @@ static const int kNumCharsToSearchForDivider = 8;
             return @"";
         }
     }
+    if (convertNullsToSpace) {
+        nullPolicy = kiTermTextExtractorNullPolicyTreatAsSpace;
+    }
+    
     NSString *content =
             [self contentInRange:range
                       nullPolicy:nullPolicy

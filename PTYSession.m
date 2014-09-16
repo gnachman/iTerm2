@@ -1447,7 +1447,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)brokenPipe {
-    if ([self shouldPostGrowlNotification]) {
+    if ([self shouldPostGrowlNotification] &&
+        [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Session Ended"
                                          withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                                                           [self name],
@@ -1891,7 +1892,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                charsTakenFromPrefix:&charsTakenFromPrefix];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
-        if ([trouter openPath:filename workingDirectory:workingDirectory prefix:selection suffix:@""]) {
+        if ([_textview openTrouterPath:filename
+                      workingDirectory:workingDirectory
+                                prefix:selection
+                                suffix:@""]) {
             return;
         }
     }
@@ -1913,7 +1917,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [[self tab] setBell:flag];
         if (_bell) {
             if ([_textview keyIsARepeat] == NO &&
-                [self shouldPostGrowlNotification]) {
+                [self shouldPostGrowlNotification] &&
+                [iTermProfilePreferences boolForKey:KEY_SEND_BELL_ALERT inProfile:self.profile]) {
                 [[iTermGrowlDelegate sharedInstance] growlNotify:@"Bell"
                                                  withDescription:[NSString stringWithFormat:@"Session %@ #%d just rang a bell!",
                                                                   [self name],
@@ -3492,7 +3497,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                            to:&range
              ignoringNewlines:NO
                actionRequired:NO
-              respectDividers:YES];
+              respectDividers:NO];
     return [_textview rangeByTrimmingNullsFromRange:range.coordRange trimSpaces:YES];
 }
 
@@ -4832,6 +4837,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [[iTermProfilePreferences objectForKey:KEY_BADGE_COLOR inProfile:_profile] colorValue];
 }
 
+- (NSDictionary *)textViewVariables {
+    return _variables;
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {
@@ -5865,6 +5874,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)screenShouldPlacePromptAtFirstColumn {
     return [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
+                                     inProfile:_profile];
+}
+
+- (BOOL)screenShouldPostTerminalGeneratedAlert {
+    return [iTermProfilePreferences boolForKey:KEY_SEND_TERMINAL_GENERATED_ALERT
                                      inProfile:_profile];
 }
 
