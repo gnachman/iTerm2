@@ -1892,7 +1892,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                charsTakenFromPrefix:&charsTakenFromPrefix];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
-        if ([trouter openPath:filename workingDirectory:workingDirectory prefix:selection suffix:@""]) {
+        if ([_textview openTrouterPath:filename
+                      workingDirectory:workingDirectory
+                                prefix:selection
+                                suffix:@""]) {
             return;
         }
     }
@@ -4832,6 +4835,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (NSColor *)textViewBadgeColor {
     return [[iTermProfilePreferences objectForKey:KEY_BADGE_COLOR inProfile:_profile] colorValue];
+}
+
+- (NSDictionary *)textViewVariables {
+    return _variables;
 }
 
 - (void)sendEscapeSequence:(NSString *)text

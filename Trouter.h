@@ -27,6 +27,12 @@
 
 #import <Cocoa/Cocoa.h>
 
+// Keys for substitutions of openPath:workingDirectory:substitutions:.
+extern NSString *const kSemanticHistoryPathSubstitutionKey;
+extern NSString *const kSemanticHistoryPrefixSubstitutionKey;
+extern NSString *const kSemanticHistorySuffixSubstitutionKey;
+extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
+
 @protocol TrouterDelegate
 - (void)trouterLaunchCoprocessWithCommand:(NSString *)command;
 @end
@@ -53,9 +59,8 @@
 - (BOOL)openFileInEditor:(NSString *) path lineNumber:(NSString *)lineNumber;
 - (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
 - (BOOL)openPath:(NSString *)path
-    workingDirectory:(NSString *)workingDirectory
-    prefix:(NSString *)prefix
-    suffix:(NSString *)suffix;
+        workingDirectory:(NSString *)workingDirectory
+           substitutions:(NSDictionary *)substitutions;
 
 // Do a brute force search by putting together suffixes of beforeString with prefixes of afterString
 // to find an existing file in |workingDirectory|. |charsSTakenFromPrefixPtr| will be filled in with

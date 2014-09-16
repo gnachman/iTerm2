@@ -140,6 +140,7 @@ typedef enum {
 - (NSColor *)textViewCursorGuideColor;
 - (BOOL)textViewUseHFSPlusMapping;
 - (NSColor *)textViewBadgeColor;
+- (NSDictionary *)textViewVariables;
 
 @end
 
@@ -417,6 +418,12 @@ typedef enum {
 - (void)highlightMarkOnLine:(int)line;
 
 - (IBAction)installShellIntegration:(id)sender;
+
+// Open a semantic history path.
+- (BOOL)openTrouterPath:(NSString *)path
+       workingDirectory:(NSString *)workingDirectory
+                 prefix:(NSString *)prefix
+                 suffix:(NSString *)suffix;
 
 @end
 

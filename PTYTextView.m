@@ -3385,28 +3385,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int y = clickPoint.y;
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoord coord = VT100GridCoordMake(x, y);
-    NSString *prefix = [extractor wrappedStringAt:coord
-                                          forward:NO
-                              respectHardNewlines:NO
-                                         maxChars:kMaxTrouterPrefixOrSuffix];
-    NSString *suffix = [extractor wrappedStringAt:coord
-                                          forward:YES
-                              respectHardNewlines:NO
-                                         maxChars:kMaxTrouterPrefixOrSuffix];
 
     URLAction *action = [self urlActionForClickAtX:x y:y];
     DLog(@"openTargetWithEvent has action=%@", action);
     if (action) {
         switch (action.actionType) {
-            case kURLActionOpenExistingFile:
-                if (![self.trouter openPath:action.string
-                           workingDirectory:action.workingDirectory
-                                     prefix:prefix
-                                     suffix:suffix]) {
+            case kURLActionOpenExistingFile: {
+                NSString *extendedPrefix = [extractor wrappedStringAt:coord
+                                                              forward:NO
+                                                  respectHardNewlines:NO
+                                                             maxChars:kMaxTrouterPrefixOrSuffix
+                                                    continuationChars:nil
+                                                  convertNullsToSpace:YES];
+                NSString *extendedSuffix = [extractor wrappedStringAt:coord
+                                                              forward:YES
+                                                  respectHardNewlines:NO
+                                                             maxChars:kMaxTrouterPrefixOrSuffix
+                                                    continuationChars:nil
+                                                  convertNullsToSpace:YES];
+                if (![self openTrouterPath:action.string
+                          workingDirectory:action.workingDirectory
+                                    prefix:extendedPrefix
+                                    suffix:extendedSuffix]) {
                     [self _findUrlInString:action.string andOpenInBackground:openInBackground];
                 }
                 break;
-
+            }
             case kURLActionOpenURL:
                 [self _findUrlInString:action.string andOpenInBackground:openInBackground];
                 break;
@@ -3418,6 +3422,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
     }
+}
+
+- (BOOL)openTrouterPath:(NSString *)path
+       workingDirectory:(NSString *)workingDirectory
+                 prefix:(NSString *)prefix
+                 suffix:(NSString *)suffix {
+    return [self.trouter openPath:path
+                 workingDirectory:workingDirectory
+                    substitutions:[self trouterSubstitutionsWithPrefix:prefix
+                                                                suffix:suffix
+                                                                  path:path
+                                                      workingDirectory:workingDirectory]];
+}
+
+- (NSDictionary *)trouterSubstitutionsWithPrefix:(NSString *)prefix
+                                          suffix:(NSString *)suffix
+                                            path:(NSString *)path
+                                workingDirectory:(NSString *)workingDirectory {
+    NSMutableDictionary *subs = [[[_delegate textViewVariables] mutableCopy] autorelease];
+    NSDictionary *trouterSubs =
+        @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharacters] ?: @"",
+           kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharacters] ?: @"",
+           kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharacters] ?: @"",
+           kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharacters] ?: @"" };
+    [subs addEntriesFromDictionary:trouterSubs];
+    return subs;
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event {
@@ -7894,12 +7924,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                           forward:NO
                               respectHardNewlines:respectHardNewlines
                                          maxChars:kMaxTrouterPrefixOrSuffix
-                                continuationChars:continuationCharsCoords];
+                                continuationChars:continuationCharsCoords
+                              convertNullsToSpace:NO];
+
     NSString *suffix = [extractor wrappedStringAt:coord
                                           forward:YES
                               respectHardNewlines:respectHardNewlines
                                          maxChars:kMaxTrouterPrefixOrSuffix
-                        continuationChars:continuationCharsCoords];
+                                continuationChars:continuationCharsCoords
+                              convertNullsToSpace:NO];
 
     NSString *possibleFilePart1 =
         [prefix substringIncludingOffset:[prefix length] - 1
@@ -8121,10 +8154,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:line];
-    if (![self.trouter openPath:trimmedURLString
-               workingDirectory:workingDirectory
-                         prefix:prefix
-                         suffix:suffix]) {
+    if (![self openTrouterPath:trimmedURLString
+              workingDirectory:workingDirectory
+                        prefix:prefix
+                        suffix:suffix]) {
         [self _findUrlInString:aURLString
               andOpenInBackground:background];
     }
