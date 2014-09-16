@@ -3403,10 +3403,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                              maxChars:kMaxTrouterPrefixOrSuffix
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES];
-                if (![self.trouter openPath:action.string
-                           workingDirectory:action.workingDirectory
-                                     prefix:extendedPrefix
-                                     suffix:extendedSuffix]) {
+                if (![self openTrouterPath:action.string
+                          workingDirectory:action.workingDirectory
+                                    prefix:extendedPrefix
+                                    suffix:extendedSuffix]) {
                     [self _findUrlInString:action.string andOpenInBackground:openInBackground];
                 }
                 break;
@@ -3422,6 +3422,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
     }
+}
+
+- (BOOL)openTrouterPath:(NSString *)path
+       workingDirectory:(NSString *)workingDirectory
+                 prefix:(NSString *)prefix
+                 suffix:(NSString *)suffix {
+    return [self.trouter openPath:path
+                 workingDirectory:workingDirectory
+                    substitutions:[self trouterSubstitutionsWithPrefix:prefix
+                                                                suffix:suffix
+                                                                  path:path
+                                                      workingDirectory:workingDirectory]];
+}
+
+- (NSDictionary *)trouterSubstitutionsWithPrefix:(NSString *)prefix
+                                          suffix:(NSString *)suffix
+                                            path:(NSString *)path
+                                workingDirectory:(NSString *)workingDirectory {
+    NSMutableDictionary *subs = [[[_delegate textViewVariables] mutableCopy] autorelease];
+    NSDictionary *trouterSubs =
+        @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharacters] ?: @"",
+           kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharacters] ?: @"",
+           kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharacters] ?: @"",
+           kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharacters] ?: @"" };
+    [subs addEntriesFromDictionary:trouterSubs];
+    return subs;
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event {
@@ -8128,10 +8154,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:line];
-    if (![self.trouter openPath:trimmedURLString
-               workingDirectory:workingDirectory
-                         prefix:prefix
-                         suffix:suffix]) {
+    if (![self openTrouterPath:trimmedURLString
+              workingDirectory:workingDirectory
+                        prefix:prefix
+                        suffix:suffix]) {
         [self _findUrlInString:aURLString
               andOpenInBackground:background];
     }

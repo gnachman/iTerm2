@@ -31,6 +31,11 @@
 #import "RegexKitLite/RegexKitLite.h"
 #import "TrouterPrefsController.h"
 
+NSString *const kSemanticHistoryPathSubstitutionKey = @"semanticHistory.path";
+NSString *const kSemanticHistoryPrefixSubstitutionKey = @"semanticHistory.prefix";
+NSString *const kSemanticHistorySuffixSubstitutionKey = @"semanticHistory.suffix";
+NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHistory.workingDirectory";
+
 @implementation Trouter
 
 @synthesize prefs = prefs_;
@@ -252,10 +257,9 @@
 
 - (BOOL)openPath:(NSString *)path
     workingDirectory:(NSString *)workingDirectory
-    prefix:(NSString *)prefix
-    suffix:(NSString *)suffix {
-    DLog(@"openPath:%@ workingDirectory:%@ prefix:%@ suffix:%@",
-         path, workingDirectory, prefix, suffix);
+       substitutions:(NSDictionary *)substitutions {
+    DLog(@"openPath:%@ workingDirectory:%@ substitutions:%@",
+         path, workingDirectory, substitutions);
     BOOL isDirectory;
     NSString* lineNumber = @"";
 
@@ -268,9 +272,11 @@
     NSString *script = [prefs_ objectForKey:kTrouterTextKey];
     script = [script stringByReplacingBackreference:1 withString:path ? [path stringWithEscapedShellCharacters] : @""];
     script = [script stringByReplacingBackreference:2 withString:lineNumber ? lineNumber : @""];
-    script = [script stringByReplacingBackreference:3 withString:[prefix stringWithEscapedShellCharacters]];
-    script = [script stringByReplacingBackreference:4 withString:[suffix stringWithEscapedShellCharacters]];
-    script = [script stringByReplacingBackreference:5 withString:[workingDirectory stringWithEscapedShellCharacters]];
+    script = [script stringByReplacingBackreference:3 withString:substitutions[kSemanticHistoryPrefixSubstitutionKey]];
+    script = [script stringByReplacingBackreference:4 withString:substitutions[kSemanticHistorySuffixSubstitutionKey]];
+    script = [script stringByReplacingBackreference:5 withString:substitutions[kSemanticHistoryWorkingDirectorySubstitutionKey]];
+    script = [script stringByReplacingVariableReferencesWithVariables:substitutions];
+
     DLog(@"After escaping backrefs, script is %@", script);
 
     if (isRawAction) {
