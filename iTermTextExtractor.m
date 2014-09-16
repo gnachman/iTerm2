@@ -815,19 +815,9 @@ static const int kNumCharsToSearchForDivider = 8;
 - (NSString *)wrappedStringAt:(VT100GridCoord)coord
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
-                     maxChars:(int)maxChars {
-    return [self wrappedStringAt:coord
-                         forward:forward
-             respectHardNewlines:respectHardNewlines
-                        maxChars:maxChars
-               continuationChars:nil];
-}
-
-- (NSString *)wrappedStringAt:(VT100GridCoord)coord
-                      forward:(BOOL)forward
-          respectHardNewlines:(BOOL)respectHardNewlines
                      maxChars:(int)maxChars
-            continuationChars:(NSMutableIndexSet *)continuationChars {
+            continuationChars:(NSMutableIndexSet *)continuationChars
+          convertNullsToSpace:(BOOL)convertNullsToSpace {
     if ([self hasLogicalWindow]) {
         respectHardNewlines = NO;
     }
@@ -860,6 +850,10 @@ static const int kNumCharsToSearchForDivider = 8;
             return @"";
         }
     }
+    if (convertNullsToSpace) {
+        nullPolicy = kiTermTextExtractorNullPolicyTreatAsSpace;
+    }
+    
     NSString *content =
             [self contentInRange:range
                       nullPolicy:nullPolicy
