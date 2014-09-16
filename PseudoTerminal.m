@@ -2771,8 +2771,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     float charWidth = [[session textview] charWidth];
     float charHeight = [[session textview] lineHeight];
 
-    // Decide when to snap.  (We snap unless control is held down.)
-    BOOL modifierDown = (([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) != 0);
+    // Decide when to snap.  (We snap unless control, and only control, is held down.)
+    const NSUInteger theMask =
+        (NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+    BOOL modifierDown =
+        (([[NSApp currentEvent] modifierFlags] & theMask) == NSControlKeyMask);
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
