@@ -2420,7 +2420,7 @@
 		DD02572E09CB9398008F320C /* PSMRolloverButton.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMRolloverButton.h; sourceTree = "<group>"; };
 		DD02572F09CB9398008F320C /* PSMRolloverButton.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMRolloverButton.m; sourceTree = "<group>"; };
 		DD02573009CB9398008F320C /* PSMTabBarCell.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabBarCell.h; sourceTree = "<group>"; };
-		DD02573109CB9398008F320C /* PSMTabBarCell.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarCell.m; sourceTree = "<group>"; };
+		DD02573109CB9398008F320C /* PSMTabBarCell.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarCell.m; sourceTree = "<group>"; };
 		DD02573209CB9398008F320C /* PSMTabBarControl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabBarControl.h; sourceTree = "<group>"; };
 		DD02573309CB9398008F320C /* PSMTabBarControl.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarControl.m; sourceTree = "<group>"; tabWidth = 4; };
 		DD02573909CB9398008F320C /* PSMTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabStyle.h; sourceTree = "<group>"; };

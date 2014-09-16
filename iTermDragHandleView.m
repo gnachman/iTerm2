@@ -39,6 +39,9 @@
             case NSLeftMouseUp:
                 done = YES;
                 break;
+
+            default:
+                break;
         }
     }
 }

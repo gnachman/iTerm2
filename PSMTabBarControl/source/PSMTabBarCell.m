@@ -434,7 +434,7 @@
 #pragma mark -
 #pragma mark Accessibility
 
--(BOOL)accessibilityIsIgnored {
+- (BOOL)accessibilityIsIgnored {
     return NO;
 }
 
@@ -459,10 +459,11 @@
     if ([attribute isEqualToString: NSAccessibilityRoleAttribute]) {
         attributeValue = NSAccessibilityRadioButtonRole;
     } else if ([attribute isEqualToString: NSAccessibilityHelpAttribute]) {
-        if ([[[self controlView] delegate] respondsToSelector:@selector(accessibilityStringForTabView:objectCount:)]) {
+        id<PSMTabBarControlDelegate> controlViewDelegate = (id<PSMTabBarControlDelegate>)[[self controlView] delegate];
+        if ([controlViewDelegate respondsToSelector:@selector(accessibilityStringForTabView:objectCount:)]) {
             attributeValue = [NSString stringWithFormat:@"%@, %i %@", [self stringValue],
                                                                         [self count],
-                                                                        [[[self controlView] delegate] accessibilityStringForTabView:[[self controlView] tabView] objectCount:[self count]]];
+                                                                        [controlViewDelegate accessibilityStringForTabView:[[self controlView] tabView] objectCount:[self count]]];
         } else {
             attributeValue = [self stringValue];
         }
