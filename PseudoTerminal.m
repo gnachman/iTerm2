@@ -39,7 +39,6 @@
 #import "PseudoTerminal+Scripting.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMTabStyle.h"
-#import "PTToolbarController.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYSession.h"
@@ -94,7 +93,7 @@ static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
 static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
 
-// In full screen, leave a bit of space at the top of the toolbar for aesthetics.
+// In full screen, leave a bit of space at the top of the toolbelt for aesthetics.
 static const CGFloat kToolbeltMargin = 8;
 static const CGFloat kLeftTabsWidth = 150;
 static const CGFloat kHorizontalTabBarHeight = 22;
@@ -104,7 +103,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 @end
 
 @interface PseudoTerminal () <iTermTabBarControlViewDelegate>
-@property(nonatomic, retain) PTToolbarController *toolbarController;
 @property(nonatomic, assign) BOOL windowInitialized;
 @end
 
@@ -568,7 +566,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     if (styleMask & NSTitledWindowMask) {
-        _toolbarController = [[PTToolbarController alloc] initWithPseudoTerminal:self];
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)])
             // TODO: Why is this here?
             [[self window] setBottomCornerRounded:NO];
@@ -747,7 +744,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     [broadcastViewIds_ release];
     [commandField release];
-    [_toolbarController release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
     [_directoriesPopupWindowController shutdown];
@@ -2986,17 +2982,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     toolbeltWidth_ = toolbelt_.frame.size.width;
 }
 
-// PTYWindowDelegateProtocol
-- (void)windowWillToggleToolbarVisibility:(id)sender
-{
-}
-
-- (void)windowDidToggleToolbarVisibility:(id)sender
-{
-    PtyLog(@"windowDidToggleToolbarVisibility - calling fitWindowToTabs");
-    [self fitWindowToTabs];
-}
-
 // See issue 2925.
 // tl;dr: Content shadow on with a transparent view produces ghosting.
 //        Content shadow off causes artifacts in the corners of the window.
@@ -3158,18 +3143,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                       VMARGIN * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
 
-- (void)setWindowStyleMask:(NSUInteger)newStyleMask {
-    if (!(newStyleMask & NSTitledWindowMask)) {
-        [self.window setToolbar:nil];
-        self.toolbarController = nil;
-        [self.window setStyleMask:newStyleMask];
-    } else if (!_toolbarController) {
-        [self.window setStyleMask:newStyleMask];
-        self.toolbarController =
-            [[[PTToolbarController alloc] initWithPseudoTerminal:self] autorelease];
-    }
-}
-
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
@@ -3181,16 +3154,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
         self.window.alphaValue = 0;
-        // The toolbar goes away for traditional fullscreen windows because a
-        // borderless window doesn't support a toolbar.
-        [self setWindowStyleMask:[self styleMask]];
+        self.window.styleMask = [self styleMask];
         [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
                       display:YES];
         self.window.alphaValue = 1;
     } else {
         [self showMenuBar];
         windowType_ = savedWindowType_;
-        [self setWindowStyleMask:[self styleMask]];
+        self.window.styleMask = [self styleMask];
 
         // This will be close but probably not quite right because tweaking to the decoration size
         // happens later.
@@ -6438,10 +6409,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                         object:[self currentSession]];
 }
 
-- (IBAction)wrapToggleToolbarShown:(id)sender {
-    [[self ptyWindow] toggleToolbarShown:sender];
-}
-
 - (void)addRevivedSession:(PTYSession *)session {
     [self insertSession:session atIndex:[self numberOfTabs]];
     [[self currentTab] numberOfSessionsDidChange];
@@ -6462,8 +6429,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:toolbelt_.isHidden ? NSOffState : NSOnState];
         return [[ToolbeltView configuredTools] count] > 0;
-    } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
-        result = ![iTermAdvancedSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||

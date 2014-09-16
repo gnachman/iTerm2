@@ -29,8 +29,6 @@
 #import <Cocoa/Cocoa.h>
 
 @protocol PTYWindowDelegateProtocol
-- (void)windowWillToggleToolbarVisibility:(id)sender;
-- (void)windowDidToggleToolbarVisibility:(id)sender;
 - (BOOL)lionFullScreen;
 @end
 
@@ -48,8 +46,6 @@
                 styleMask:(NSUInteger)aStyle
                   backing:(NSBackingStoreType)bufferingType
                     defer:(BOOL)flag;
-
-- (void)toggleToolbarShown:(id)sender;
 
 - (void)smartLayout;
 - (void)setLayoutDone;

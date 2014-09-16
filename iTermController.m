@@ -65,26 +65,6 @@ static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Script
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 
-static BOOL UncachedIsMountainLionOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 8) || (major > 10);
-    } else {
-        return NO;
-    }
-}
-
-BOOL IsMountainLionOrLater(void) {
-    static BOOL result;
-    static BOOL initialized;
-    if (!initialized) {
-        initialized = YES;
-        result = UncachedIsMountainLionOrLater();
-    }
-    return result;
-}
-
 static BOOL UncachedIsMavericksOrLater(void) {
     unsigned major;
     unsigned minor;
@@ -150,7 +130,6 @@ static BOOL initDone = NO;
     shared = nil;
 }
 
-// init
 - (id)init {
     self = [super init];
 

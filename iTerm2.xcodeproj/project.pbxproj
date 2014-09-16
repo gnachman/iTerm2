@@ -141,7 +141,6 @@
 		1D5655CE19AD2B9B001C460B /* iTermApplication+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655CC19AD2B9B001C460B /* iTermApplication+Scripting.h */; };
 		1D5655CF19AD2B9B001C460B /* iTermApplication+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */; };
 		1D5655D019AD2B9B001C460B /* iTermApplication+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */; };
-		1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */ = {isa = PBXBuildFile; fileRef = 2076B15704E8817300000106 /* PTToolbarController.h */; };
 		1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E74F4804E9089700000106 /* ITAddressBookMgr.h */; };
 		1D5FDD5A1208E8F000C46BA3 /* PSMYosemiteTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */; };
 		1D5FDD5B1208E8F000C46BA3 /* PSMOverflowPopUpButton.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */; };
@@ -204,7 +203,6 @@
 		1D5FDDAE1208E93600C46BA3 /* PTYSession.m in Sources */ = {isa = PBXBuildFile; fileRef = F52ED8DD037F0A7D01A8A066 /* PTYSession.m */; };
 		1D5FDDAF1208E93600C46BA3 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F56B230B03A1B36701A8A066 /* PTYWindow.m */; };
-		1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2076B15804E8817300000106 /* PTToolbarController.m */; };
 		1D5FDDB31208E93600C46BA3 /* ITAddressBookMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E74F4904E9089700000106 /* ITAddressBookMgr.m */; };
 		1D5FDDB61208E93600C46BA3 /* iTermKeyBindingMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */; };
 		1D5FDDBC1208E93600C46BA3 /* PSMYosemiteTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572709CB9398008F320C /* PSMYosemiteTabStyle.m */; };
@@ -240,7 +238,6 @@
 		1D6ED85819AEA20D005A7799 /* LineBufferPosition.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D78B55C183EE1C000014D49 /* LineBufferPosition.h */; };
 		1D6ED85919AEA20D005A7799 /* FindContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D53FD13181C4B4B00524D4F /* FindContext.h */; };
 		1D6ED85A19AEA20D005A7799 /* ProfilesTerminalPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */; };
-		1D6ED85B19AEA20D005A7799 /* PTToolbarController.h in Headers */ = {isa = PBXBuildFile; fileRef = 2076B15704E8817300000106 /* PTToolbarController.h */; };
 		1D6ED85C19AEA20D005A7799 /* iTermPreferencesBaseViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138718F26445008D94DD /* iTermPreferencesBaseViewController.h */; };
 		1D6ED85D19AEA20D005A7799 /* ITAddressBookMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E74F4804E9089700000106 /* ITAddressBookMgr.h */; };
 		1D6ED85E19AEA20D005A7799 /* PTYNoteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F4093183B398C003A6A6D /* PTYNoteViewController.h */; };
@@ -676,7 +673,6 @@
 		1D6EDA0E19AEA20D005A7799 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
 		1D6EDA0F19AEA20D005A7799 /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
 		1D6EDA1019AEA20D005A7799 /* FindContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D53FD14181C4B4B00524D4F /* FindContext.m */; };
-		1D6EDA1119AEA20D005A7799 /* PTToolbarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2076B15804E8817300000106 /* PTToolbarController.m */; };
 		1D6EDA1219AEA20D005A7799 /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
 		1D6EDA1319AEA20D005A7799 /* VT100AnsiParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39918C3515900450FA1 /* VT100AnsiParser.m */; };
 		1D6EDA1419AEA20D005A7799 /* iTermExposeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74751188C6693005355CF /* iTermExposeWindow.m */; };
@@ -1073,7 +1069,6 @@
 		1D9A558F180FA87000B42CE9 /* ProcessCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D988596135D23BD0072023F /* ProcessCache.m */; };
 		1D9A5590180FA87000B42CE9 /* PseudoTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */; };
 		1D9A5591180FA87000B42CE9 /* PseudoTerminalRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */; };
-		1D9A5592180FA87000B42CE9 /* PTToolbarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2076B15804E8817300000106 /* PTToolbarController.m */; };
 		1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D70BA341680158700824B72 /* PTYFontInfo.m */; };
 		1D9A5594180FA87000B42CE9 /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF755F026DDA6303A80106 /* PTYScrollView.m */; };
 		1D9A5595180FA87000B42CE9 /* PTYSession.m in Sources */ = {isa = PBXBuildFile; fileRef = F52ED8DD037F0A7D01A8A066 /* PTYSession.m */; };
@@ -1186,7 +1181,6 @@
 		1DBB4B371901F12400832B09 /* ProfilesSessionPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DBB4B351901F12400832B09 /* ProfilesSessionPreferencesViewController.h */; };
 		1DBB4B381901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */; };
 		1DBB4B391901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBB4B361901F12400832B09 /* ProfilesSessionPreferencesViewController.m */; };
-		1DC035C9198989F4007449A9 /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = 1DC035C8198989F4007449A9 /* iTerm2.iconset */; };
 		1DC13ABD1886146B00034DAE /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
 		1DC13ABE1886146B00034DAE /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
 		1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABC1886146B00034DAE /* mark_err@2x.png */; };
@@ -2142,8 +2136,6 @@
 		1DFA9D6B18F37AA5008ADC98 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/iTermKeyMapping.xib; sourceTree = "<group>"; };
 		1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PointerPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA9D6F18F3A30F008ADC98 /* PointerPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PointerPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
-		2076B15704E8817300000106 /* PTToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTToolbarController.h; sourceTree = "<group>"; tabWidth = 4; };
-		2076B15804E8817300000106 /* PTToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTToolbarController.m; sourceTree = "<group>"; tabWidth = 4; };
 		20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplicationDelegate.h; sourceTree = "<group>"; tabWidth = 4; };
 		20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplicationDelegate.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2776,7 +2768,6 @@
 				A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */,
 				1D407A2B14BABE8700BD5035 /* PseudoTerminal.h */,
 				5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */,
-				2076B15704E8817300000106 /* PTToolbarController.h */,
 				1D70BA331680158700824B72 /* PTYFontInfo.h */,
 				A63F4098183B3AA7003A6A6D /* PTYNoteView.h */,
 				A63F4093183B398C003A6A6D /* PTYNoteViewController.h */,
@@ -3408,7 +3399,6 @@
 				E8CF757F026DDAD703A80106 /* main.m */,
 				FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */,
 				5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */,
-				2076B15804E8817300000106 /* PTToolbarController.m */,
 				E8CF755F026DDA6303A80106 /* PTYScrollView.m */,
 				F52ED8DD037F0A7D01A8A066 /* PTYSession.m */,
 				1DD6707614934ADE008E4361 /* PTYSplitView.m */,
@@ -3685,7 +3675,6 @@
 				1D6ED85819AEA20D005A7799 /* LineBufferPosition.h in Headers */,
 				1D6ED85919AEA20D005A7799 /* FindContext.h in Headers */,
 				1D6ED85A19AEA20D005A7799 /* ProfilesTerminalPreferencesViewController.h in Headers */,
-				1D6ED85B19AEA20D005A7799 /* PTToolbarController.h in Headers */,
 				1D6ED85C19AEA20D005A7799 /* iTermPreferencesBaseViewController.h in Headers */,
 				1D6ED85D19AEA20D005A7799 /* ITAddressBookMgr.h in Headers */,
 				1D6ED85E19AEA20D005A7799 /* PTYNoteViewController.h in Headers */,
@@ -3987,7 +3976,6 @@
 				1D78B55E183EE1C000014D49 /* LineBufferPosition.h in Headers */,
 				1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */,
 				A6A269901900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h in Headers */,
-				1D5FDD501208E8F000C46BA3 /* PTToolbarController.h in Headers */,
 				A6E7138918F26445008D94DD /* iTermPreferencesBaseViewController.h in Headers */,
 				1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */,
 				A63F4095183B398C003A6A6D /* PTYNoteViewController.h in Headers */,
@@ -4786,7 +4774,6 @@
 				1D6EDA0E19AEA20D005A7799 /* NSMutableData+iTerm.m in Sources */,
 				1D6EDA0F19AEA20D005A7799 /* iTermInstantReplayWindowController.m in Sources */,
 				1D6EDA1019AEA20D005A7799 /* FindContext.m in Sources */,
-				1D6EDA1119AEA20D005A7799 /* PTToolbarController.m in Sources */,
 				1D6EDA1219AEA20D005A7799 /* URLAction.m in Sources */,
 				1D6EDA1319AEA20D005A7799 /* VT100AnsiParser.m in Sources */,
 				1D6EDA1419AEA20D005A7799 /* iTermExposeWindow.m in Sources */,
@@ -5228,7 +5215,6 @@
 				1D9A5594180FA87000B42CE9 /* PTYScrollView.m in Sources */,
 				1D9A5540180FA7F600B42CE9 /* ProfileModel.m in Sources */,
 				A6E7139E18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m in Sources */,
-				1D9A5592180FA87000B42CE9 /* PTToolbarController.m in Sources */,
 				1D9A553E180FA7ED00B42CE9 /* PTYWindow.m in Sources */,
 				A68A30DF186D1429007F550F /* SCPPath.m in Sources */,
 				1D9A558D180FA87000B42CE9 /* PasteViewController.m in Sources */,
@@ -5335,7 +5321,6 @@
 				A680AA1918CEBF5C0034D4F8 /* NSMutableData+iTerm.m in Sources */,
 				A61B66D018D51EAC009AC9D5 /* iTermInstantReplayWindowController.m in Sources */,
 				1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */,
-				1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */,
 				A6CFDAD3185D2587005DC94B /* URLAction.m in Sources */,
 				A647E39B18C3515900450FA1 /* VT100AnsiParser.m in Sources */,
 				A6E74753188C6693005355CF /* iTermExposeWindow.m in Sources */,
