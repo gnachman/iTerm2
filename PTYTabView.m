@@ -209,8 +209,9 @@
             return [self onKeyPressed:event];
         case NSFlagsChanged:
             return [self onFlagsChanged:event];
+        default:
+            return NO;
     }
-    return NO;
 }
 
 @end

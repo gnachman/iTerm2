@@ -115,7 +115,7 @@
 - (void)deselectAll;
 - (void)multiColumns;
 
-// Dont' use this if you've called allowMultipleSelections
+// Don't use this if you've called allowMultipleSelections
 - (NSString*)selectedGuid;
 - (NSSet*)selectedGuids;
 - (BOOL)hasSelection;
@@ -131,5 +131,10 @@
 - (void)disableArrowHandler;
 
 - (void)toggleTags;
+
+// Keep the currently selected profile in the list and selected even if it no longer matches the
+// filter.
+- (void)lockSelection;
+- (void)unlockSelection;
 
 @end

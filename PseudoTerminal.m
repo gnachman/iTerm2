@@ -39,7 +39,6 @@
 #import "PseudoTerminal+Scripting.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMTabStyle.h"
-#import "PTToolbarController.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYSession.h"
@@ -94,7 +93,7 @@ static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
 static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
 
-// In full screen, leave a bit of space at the top of the toolbar for aesthetics.
+// In full screen, leave a bit of space at the top of the toolbelt for aesthetics.
 static const CGFloat kToolbeltMargin = 8;
 static const CGFloat kLeftTabsWidth = 150;
 static const CGFloat kHorizontalTabBarHeight = 22;
@@ -104,7 +103,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 @end
 
 @interface PseudoTerminal () <iTermTabBarControlViewDelegate>
-@property(nonatomic, retain) PTToolbarController *toolbarController;
 @property(nonatomic, assign) BOOL windowInitialized;
 @end
 
@@ -145,10 +143,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // added and the tabBarControl will be shown if it is added successfully
     // if it's not currently shown.
     int tabViewItemsBeingAdded;
-
-    // A text field into which you may type a command. When you press enter in it
-    // then the text is sent to the terminal.
-    IBOutlet id commandField;
 
     ////////////////////////////////////////////////////////////////////////////
     // Miscellaneous
@@ -388,8 +382,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     // Force the nib to load
     [self window];
-    [commandField retain];
-    [commandField setDelegate:self];
     if ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
          windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
         screenNumber == -1) {
@@ -429,8 +421,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     // Force the nib to load
     [self window];
-    [commandField retain];
-    [commandField setDelegate:self];
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
 
@@ -568,7 +558,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     if (styleMask & NSTitledWindowMask) {
-        _toolbarController = [[PTToolbarController alloc] initWithPseudoTerminal:self];
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)])
             // TODO: Why is this here?
             [[self window] setBottomCornerRounded:NO];
@@ -746,8 +735,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[iTermController sharedInstance] setCurrentTerminal:nil];
     }
     [broadcastViewIds_ release];
-    [commandField release];
-    [_toolbarController release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
     [_directoriesPopupWindowController shutdown];
@@ -1038,11 +1025,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)swipeWithEvent:(NSEvent *)event
 {
     [[[self currentSession] textview] swipeWithEvent:event];
-}
-
-- (id)commandField
-{
-    return commandField;
 }
 
 - (void)selectSessionAtIndexAction:(id)sender
@@ -2789,8 +2771,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     float charWidth = [[session textview] charWidth];
     float charHeight = [[session textview] lineHeight];
 
-    // Decide when to snap.  (We snap unless control is held down.)
-    BOOL modifierDown = (([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) != 0);
+    // Decide when to snap.  (We snap unless control, and only control, is held down.)
+    const NSUInteger theMask =
+        (NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+    BOOL modifierDown =
+        (([[NSApp currentEvent] modifierFlags] & theMask) == NSControlKeyMask);
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
@@ -2986,17 +2971,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     toolbeltWidth_ = toolbelt_.frame.size.width;
 }
 
-// PTYWindowDelegateProtocol
-- (void)windowWillToggleToolbarVisibility:(id)sender
-{
-}
-
-- (void)windowDidToggleToolbarVisibility:(id)sender
-{
-    PtyLog(@"windowDidToggleToolbarVisibility - calling fitWindowToTabs");
-    [self fitWindowToTabs];
-}
-
 // See issue 2925.
 // tl;dr: Content shadow on with a transparent view produces ghosting.
 //        Content shadow off causes artifacts in the corners of the window.
@@ -3158,18 +3132,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                       VMARGIN * 2 + sessionSize.height * cellSize.height + decorationSize.height);
 }
 
-- (void)setWindowStyleMask:(NSUInteger)newStyleMask {
-    if (!(newStyleMask & NSTitledWindowMask)) {
-        [self.window setToolbar:nil];
-        self.toolbarController = nil;
-        [self.window setStyleMask:newStyleMask];
-    } else if (!_toolbarController) {
-        [self.window setStyleMask:newStyleMask];
-        self.toolbarController =
-            [[[PTToolbarController alloc] initWithPseudoTerminal:self] autorelease];
-    }
-}
-
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
@@ -3181,16 +3143,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
         self.window.alphaValue = 0;
-        // The toolbar goes away for traditional fullscreen windows because a
-        // borderless window doesn't support a toolbar.
-        [self setWindowStyleMask:[self styleMask]];
+        self.window.styleMask = [self styleMask];
         [self.window setFrame:[self traditionalFullScreenFrameForScreen:self.window.screen]
                       display:YES];
         self.window.alphaValue = 1;
     } else {
         [self showMenuBar];
         windowType_ = savedWindowType_;
-        [self setWindowStyleMask:[self styleMask]];
+        self.window.styleMask = [self styleMask];
 
         // This will be close but probably not quite right because tweaking to the decoration size
         // happens later.
@@ -4256,32 +4216,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (PTYTabView *)tabView
 {
     return TABVIEW;
-}
-
-- (void)controlTextDidEndEditing:(NSNotification *)aNotification
-{
-    int move = [[[aNotification userInfo] objectForKey:@"NSTextMovement"] intValue];
-
-    switch (move) {
-        case NSReturnTextMovement:
-            [self sendCommand: nil];
-            break;
-        case NSTabTextMovement:
-        {
-            Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
-            if (!prototype) {
-                NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
-                [ITAddressBookMgr setDefaultsInBookmark:aDict];
-                [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-                prototype = aDict;
-            }
-            [self createTabWithProfile:prototype
-                           withCommand:[commandField stringValue]];
-            break;
-        }
-        default:
-            break;
-    }
 }
 
 - (BOOL)isInitialized
@@ -6438,10 +6372,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                         object:[self currentSession]];
 }
 
-- (IBAction)wrapToggleToolbarShown:(id)sender {
-    [[self ptyWindow] toggleToolbarShown:sender];
-}
-
 - (void)addRevivedSession:(PTYSession *)session {
     [self insertSession:session atIndex:[self numberOfTabs]];
     [[self currentTab] numberOfSessionsDidChange];
@@ -6462,8 +6392,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:toolbelt_.isHidden ? NSOffState : NSOnState];
         return [[ToolbeltView configuredTools] count] > 0;
-    } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
-        result = ![iTermAdvancedSettingsModel disableToolbar] && (self.window.styleMask & NSTitledWindowMask);
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
@@ -6739,41 +6667,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (IBAction)closeWindow:(id)sender
 {
     [[self window] performClose:sender];
-}
-
-// Sends text to the current session. Also interprets URLs and opens them.
-- (IBAction)sendCommand:(id)sender {
-    NSString *command = [commandField stringValue];
-
-    if (command == nil ||
-        [[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] isEqualToString:@""]) {
-        return;
-    }
-
-    NSRange range = [command rangeOfString:@"://"];
-    if (range.location != NSNotFound) {
-        range = [[command substringToIndex:range.location] rangeOfString:@" "];
-        if (range.location == NSNotFound) {
-            NSURL *url = [NSURL URLWithString: command];
-            NSString *scheme = [url scheme];
-            Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
-
-            if (profile) {
-                PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-                [[iTermController sharedInstance] launchBookmark:profile
-                                                      inTerminal:term
-                                                         withURL:command
-                                                        isHotkey:NO
-                                                         makeKey:NO
-                                                         command:nil];
-            } else {
-                [[NSWorkspace sharedWorkspace] openURL:url];
-            }
-            return;
-        }
-    }
-    [[self currentSession] sendCommand: command];
-    [commandField setStringValue:@""];
 }
 
 - (void)reloadBookmarks

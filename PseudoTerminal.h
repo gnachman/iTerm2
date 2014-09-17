@@ -14,17 +14,15 @@
 
 @class PTYSession;
 @class PSMTabBarControl;
-@class PTToolbarController;
 @class ToolbeltView;
 @class iTermController;
 @class TmuxController;
 
 extern NSString *const kCurrentSessionDidChange;
 
-// This class is 1:1 with windows. It controls the tabs, toolbar,
-// fullscreen, and coordinates resizing of sessions (either session-initiated
+// This class is 1:1 with windows. It controls the tabs, the window's fulscreen
+// status, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
-// OS 10.5 doesn't support window delegates
 @interface PseudoTerminal : NSWindowController <
   iTermInstantReplayDelegate,
   iTermWindowController,
@@ -106,9 +104,6 @@ extern NSString *const kCurrentSessionDidChange;
 // Called on object deallocation.
 - (void)dealloc;
 
-// accessor for commandField.
-- (id)commandField;
-
 // Fix the window frame for fullscreen, top, bottom windows.
 - (void)canonicalizeWindowFrame;
 
@@ -173,137 +168,6 @@ extern NSString *const kCurrentSessionDidChange;
 - (CGFloat)growToolbeltBy:(CGFloat)diff;
 
 - (void)refreshTools;
-
-#pragma mark - NSWindowController Delegate Methods
-
-// Called when a window is unhidden.
-- (void)windowDidDeminiaturize:(NSNotification *)aNotification;
-
-// The window is trying to close. Pop a dialog if necessary and return the
-// disposition.
-- (BOOL)windowShouldClose:(NSNotification *)aNotification;
-
-// Called when the window closes. Gets our affairs in order.
-- (void)windowWillClose:(NSNotification *)aNotification;
-
-// Called when the window is hiding (cmd-h).
-- (void)windowWillMiniaturize:(NSNotification *)aNotification;
-
-// Called when this window becomes key.
-// "A key window is the current focus for keyboard events (for example, it
-// contains a text field the user is typing in)"
-- (void)windowDidBecomeKey:(NSNotification *)aNotification;
-
-// Called when this window ceases to be the key window.
-- (void)windowDidResignKey:(NSNotification *)aNotification;
-
-// Called when this window ceases to be the main window.
-// "A main window is the primary focus of user actions for the application"
-- (void)windowDidResignMain:(NSNotification *)aNotification;
-
-// Called when a resize is inevitable. Wants to resize to proposedFrameSize.
-// Returns an acceptable size which has a content size that is a multiple of the
-// widest/tallest character.
-- (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize;
-
-// Called after a window resizes. Make sessions resize to fit.
-- (void)windowDidResize:(NSNotification *)aNotification;
-
-// Called when the toolbar is shown/hidden.
-- (void)windowWillToggleToolbarVisibility:(id)sender;
-
-// Called after the toolbar is shown/hidden. Adjusts window size.
-- (void)windowDidToggleToolbarVisibility:(id)sender;
-
-// Called when the green 'zoom' button in the top left of the window is pressed.
-- (NSRect)windowWillUseStandardFrame:(NSWindow *)sender
-                        defaultFrame:(NSRect)defaultFrame;
-
-#pragma mark - PTYWindow Delegate Methods
-
-// Set the window's initial frame. Unofficial protocol.
-- (void)windowWillShowInitial;
-
-
-#pragma mark - Tab View Delegate Methods
-
-// Called before a tab view item is selected.
-- (void)tabView:(NSTabView *)tabView
-    willSelectTabViewItem:(NSTabViewItem *)tabViewItem;
-
-// Called afer a tab is selected.
-- (void)tabView:(NSTabView *)tabView
-    didSelectTabViewItem:(NSTabViewItem *)tabViewItem;
-
-// Called before removing a tab.
-- (void)tabView:(NSTabView *)tabView
-    willRemoveTabViewItem:(NSTabViewItem *)tabViewItem;
-
-// Called before adding a tab.
-- (void)tabView:(NSTabView *)tabView
-    willAddTabViewItem:(NSTabViewItem *)tabViewItem;
-
-// Called before inserting a tab at a specific location.
-- (void)tabView:(NSTabView *)tabView
-    willInsertTabViewItem:(NSTabViewItem *)tabViewItem
-        atIndex:(int)anIndex;
-
-// Called to see if a tab can be closed. May open a confirmation dialog.
-- (BOOL)tabView:(NSTabView*)tabView
-     shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem;
-
-// Called to see if a tab can be dragged.
-- (BOOL)tabView:(NSTabView*)aTabView
-    shouldDragTabViewItem:(NSTabViewItem *)tabViewItem
-     fromTabBar:(PSMTabBarControl *)tabBarControl;
-
-// Called to see if a tab can be dropped in this window.
-- (BOOL)tabView:(NSTabView*)aTabView
-    shouldDropTabViewItem:(NSTabViewItem *)tabViewItem
-       inTabBar:(PSMTabBarControl *)tabBarControl;
-
-// Called after dropping a tab in this window.
-- (void)tabView:(NSTabView*)aTabView
-    didDropTabViewItem:(NSTabViewItem *)tabViewItem
-       inTabBar:(PSMTabBarControl *)aTabBarControl;
-
-// Called just before dropping a tab in this window.
-- (void)tabView:(NSTabView*)aTabView
-    willDropTabViewItem:(NSTabViewItem *)tabViewItem
-       inTabBar:(PSMTabBarControl *)aTabBarControl;
-
-// Called after the last tab in a window is closed.
-- (void)tabView:(NSTabView *)aTabView
-    closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem;
-
-// Compose the image for a tab control.
-- (NSImage *)tabView:(NSTabView *)aTabView
- imageForTabViewItem:(NSTabViewItem *)tabViewItem
-              offset:(NSSize *)offset
-           styleMask:(unsigned int *)styleMask;
-
-// Called after a tab is added or removed.
-- (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView;
-
-// Creates a context menu for a tab control.
-- (NSMenu *)tabView:(NSTabView *)aTabView
- menuForTabViewItem:(NSTabViewItem *)tabViewItem;
-
-// Called when a tab is dragged and dropped into an area not in an existing
-// window. A new window is created having only this tab.
-- (PSMTabBarControl *)tabView:(NSTabView *)aTabView
-    newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem
-                      atPoint:(NSPoint)point;
-
-// Returns a tooltip for a tab control.
-- (NSString *)tabView:(NSTabView *)aTabView
-    toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem;
-
-// Called when a tab is double clicked.
-- (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
-
-// Called when the empty area in the tab bar is double clicked.
-- (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
 
 // Returns true if an init... method was already called.
 - (BOOL)isInitialized;
@@ -373,81 +237,11 @@ extern NSString *const kCurrentSessionDidChange;
 - (PTYSession *)createTabWithProfile:(Profile *)profile
                          withCommand:(NSString *)command;
 
-#pragma mark - IBActions
-
-- (IBAction)findUrls:(id)sender;
-- (IBAction)toggleShowTimestamps:(id)sender;
-- (IBAction)toggleAutoCommandHistory:(id)sender;
-- (IBAction)openDashboard:(id)sender;
-- (IBAction)findCursor:(id)sender;
-// Save the current scroll position
-- (IBAction)saveScrollPosition:(id)sender;
-// Jump to the saved scroll position
-- (IBAction)jumpToSavedScrollPosition:(id)sender;
-// Close foreground tab.
-- (IBAction)closeCurrentTab:(id)sender;
-// Close the active session.
-- (IBAction)closeCurrentSession:(id)sender;
-// Select the tab to the left of the foreground tab.
-- (IBAction)previousTab:(id)sender;
-// Select the tab to the right of the foreground tab.
-- (IBAction)nextTab:(id)sender;
-// Select the most recent pane
-- (IBAction)previousPane:(id)sender;
-// Select the least recently used pane
-- (IBAction)nextPane:(id)sender;
-- (IBAction)detachTmux:(id)sender;
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
-// Toggle whether transparency is allowed in this terminal.
-- (IBAction)toggleUseTransparency:(id)sender;
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.
 - (IBAction)toggleFullScreenMode:(id)sender;
-// Advance to next or previous time step
-- (IBAction)irPrev:(id)sender;
-- (IBAction)irNext:(id)sender;
-- (IBAction)stopCoprocess:(id)sender;
-- (IBAction)runCoprocess:(id)sender;
-- (IBAction)coprocessPanelEnd:(id)sender;
-- (IBAction)coprocessHelp:(id)sender;
-- (IBAction)openSplitHorizontallySheet:(id)sender;
-- (IBAction)openSplitVerticallySheet:(id)sender;
-// Show paste history window.
-- (IBAction)openPasteHistory:(id)sender;
-- (IBAction)openCommandHistory:(id)sender;
-// Show autocomplete window.
-- (IBAction)openAutocomplete:(id)sender;
-// selector for menu item to split current session vertically.
-- (IBAction)splitVertically:(id)sender;
-- (IBAction)splitHorizontally:(id)sender;
-- (IBAction)moveTabLeft:(id)sender;
-- (IBAction)moveTabRight:(id)sender;
-- (IBAction)resetCharset:(id)sender;
-- (IBAction)logStart:(id)sender;
-- (IBAction)logStop:(id)sender;
-- (IBAction)wrapToggleToolbarShown:(id)sender;
-- (IBAction)enableSendInputToAllPanes:(id)sender;
-- (IBAction)disableBroadcasting:(id)sender;
-- (IBAction)enableSendInputToAllTabs:(id)sender;
-- (IBAction)closeWindow:(id)sender;
-- (IBAction)sendCommand:(id)sender;
-- (IBAction)parameterPanelEnd:(id)sender;
-// Change active pane.
-- (IBAction)selectPaneLeft:(id)sender;
-- (IBAction)selectPaneRight:(id)sender;
-- (IBAction)selectPaneUp:(id)sender;
-- (IBAction)selectPaneDown:(id)sender;
-- (IBAction)movePaneDividerRight:(id)sender;
-- (IBAction)movePaneDividerLeft:(id)sender;
-- (IBAction)movePaneDividerDown:(id)sender;
-- (IBAction)movePaneDividerUp:(id)sender;
-- (IBAction)addNoteAtCursor:(id)sender;
-- (IBAction)showHideNotes:(id)sender;
-- (IBAction)nextMarkOrNote:(id)sender;
-- (IBAction)previousMarkOrNote:(id)sender;
-- (IBAction)toggleAlertOnNextMark:(id)sender;
-- (IBAction)duplicateTab:(id)sender;
 
 - (void)changeTabColorToMenuAction:(id)sender;
 - (void)moveSessionToWindow:(id)sender;

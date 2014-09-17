@@ -3884,7 +3884,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
   }
 
   unsigned short keycode = [event keyCode];
-  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
+  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%lu>",
+       event, modflag, keycode, keystr, unmodkeystr, unicode, unicode,
+       (modflag & NSNumericPadKeyMask));
 
   // Check if we have a custom key mapping for this event
   keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode

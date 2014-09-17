@@ -251,6 +251,15 @@ typedef enum {
 // session. Does nothing if the session does not belong to this window.
 - (void)makeSessionActive:(PTYSession *)session;
 
+// Pane navigation
+- (void)selectPaneLeft:(id)sender;
+- (void)selectPaneRight:(id)sender;
+- (void)selectPaneUp:(id)sender;
+- (void)selectPaneDown:(id)sender;
+
+// Enable or disable transparency support for a window.
+- (void)toggleUseTransparency:(id)sender;
+
 #pragma mark - Instant replay
 
 // Begin instant replay on a session.

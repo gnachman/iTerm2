@@ -386,9 +386,11 @@
 
 - (void)clearSelection {
     DLog(@"Clear selection");
-    _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
-    [_subSelections removeAllObjects];
-    [_delegate selectionDidChange:[[self retain] autorelease]];
+    if (self.hasSelection) {
+        _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
+        [_subSelections removeAllObjects];
+        [_delegate selectionDidChange:[[self retain] autorelease]];
+    }
 }
 
 - (VT100GridWindowedRange)liveRange {

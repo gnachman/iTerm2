@@ -65,26 +65,6 @@ static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Script
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 
-static BOOL UncachedIsMountainLionOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 8) || (major > 10);
-    } else {
-        return NO;
-    }
-}
-
-BOOL IsMountainLionOrLater(void) {
-    static BOOL result;
-    static BOOL initialized;
-    if (!initialized) {
-        initialized = YES;
-        result = UncachedIsMountainLionOrLater();
-    }
-    return result;
-}
-
 static BOOL UncachedIsMavericksOrLater(void) {
     unsigned major;
     unsigned minor;
@@ -150,7 +130,6 @@ static BOOL initDone = NO;
     shared = nil;
 }
 
-// init
 - (id)init {
     self = [super init];
 
@@ -1207,10 +1186,25 @@ static BOOL initDone = NO;
         [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
 
         script = [[NSAppleScript alloc] initWithContentsOfURL:aURL error:&errorInfo];
-        [script executeAndReturnError:&errorInfo];
-        [script release];
-    }
-    else {
+        if (script) {
+            [script executeAndReturnError:&errorInfo];
+            [script release];
+        } else {
+            NSValue *range = errorInfo[NSAppleScriptErrorRange];
+            NSString *location = @"Location of error not known.";
+            if (range) {
+                location = [NSString stringWithFormat:@"The error starts at byte %d of the script.",
+                            (int)[range rangeValue].location];
+            }
+            NSAlert *alert = [NSAlert alertWithMessageText:@"Error running script"
+                                             defaultButton:@"OK"
+                                           alternateButton:nil
+                                               otherButton:nil
+                                 informativeTextWithFormat:@"Script at \"%@\" failed.\n\nThe error was: \"%@\"\n\n%@",
+                              fullPath, errorInfo[NSAppleScriptErrorMessage], location];
+            [alert runModal];
+        }
+    } else {
         [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
     }
 

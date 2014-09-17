@@ -22,6 +22,9 @@
     NSArray* sortDescriptors;
 }
 
+// This guid will always appear in the model even if it doesn't match the filter.
+@property(nonatomic, copy) NSString *lockedGuid;
+
 - (id)initWithModel:(ProfileModel*)model;
 - (void)dealloc;
 - (void)setSortDescriptors:(NSArray*)newSortDescriptors;

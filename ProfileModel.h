@@ -58,6 +58,7 @@ typedef struct {
 - (int)numberOfBookmarks;
 - (int)numberOfBookmarksWithFilter:(NSString*)filter;
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter;
+- (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter orGuid:(NSString *)lockedGuid;
 - (int)indexOfProfileWithGuid:(NSString*)guid;
 - (int)indexOfProfileWithGuid:(NSString*)guid withFilter:(NSString*)filter;
 - (Profile*)profileAtIndex:(int)index;

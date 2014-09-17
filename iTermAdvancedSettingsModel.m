@@ -88,7 +88,6 @@ DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"General: Ignore hard newlines for th
 // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
 DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'()|[]", @"General: Non-alphanumeric characters considered part of a URL for Cmd-click")
 DEFINE_BOOL(rememberWindowPositions, YES, @"General: Remember window locations even after they’re closed");
-DEFINE_BOOL(disableToolbar, NO, @"General: Completely disable toolbar");
 DEFINE_BOOL(disableAppNap, NO, @"General: Disable App Nap (change effective after retarting iTerm2)");
 DEFINE_FLOAT(idleTimeSeconds, 2, @"General: Time in seconds before a session is considered idle");
 DEFINE_FLOAT(findDelaySeconds, 1, @"General: Time to wait before performing Find action on 1- or 2- character queries");
