@@ -6,8 +6,8 @@
 // Represents and item in the Open Quicky table.
 @interface iTermOpenQuicklyItem : NSObject
 
-// Globally unique session ID
-@property(nonatomic, copy) NSString *sessionId;
+// Globally unique identifier for represented object.
+@property(nonatomic, copy) NSString *identifier;
 
 // Title for table view (in large text)
 @property(nonatomic, copy) NSAttributedString *title;
@@ -23,7 +23,18 @@
 // non-highlighted items. This is hacky :(
 @property(nonatomic, retain) iTermOpenQuicklyTableCellView *view;
 
+// Icon to display with item. Should be overridden by subclasses.
+@property(nonatomic, readonly) NSImage *icon;
+
+@end
+
+
+@interface iTermOpenQuicklySessionItem : iTermOpenQuicklyItem
+
 // Holds the session's colors and can create a logo with them as needed.
 @property(nonatomic, retain) iTermLogoGenerator *logoGenerator;
 
+@end
+
+@interface iTermOpenQuicklyProfileItem : iTermOpenQuicklyItem
 @end

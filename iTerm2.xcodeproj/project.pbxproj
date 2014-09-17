@@ -1249,6 +1249,12 @@
 		1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* ToolWrapper.m */; };
 		1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */; };
 		1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */; };
+		1DEDF56919C917FD005B023A /* new-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56719C917FD005B023A /* new-tab.png */; };
+		1DEDF56A19C917FD005B023A /* new-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56719C917FD005B023A /* new-tab.png */; };
+		1DEDF56B19C917FD005B023A /* new-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56719C917FD005B023A /* new-tab.png */; };
+		1DEDF56C19C917FD005B023A /* new-tab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56819C917FD005B023A /* new-tab@2x.png */; };
+		1DEDF56D19C917FD005B023A /* new-tab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56819C917FD005B023A /* new-tab@2x.png */; };
+		1DEDF56E19C917FD005B023A /* new-tab@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56819C917FD005B023A /* new-tab@2x.png */; };
 		1DEF5E6D185F889600300319 /* Alert.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6B185F889600300319 /* Alert.png */; };
 		1DEF5E6E185F889600300319 /* Alert.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6B185F889600300319 /* Alert.png */; };
 		1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
@@ -2106,6 +2112,8 @@
 		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SessionTitleView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SessionTitleView.m; sourceTree = "<group>"; tabWidth = 4; };
+		1DEDF56719C917FD005B023A /* new-tab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "new-tab.png"; path = "images/new-tab.png"; sourceTree = "<group>"; };
+		1DEDF56819C917FD005B023A /* new-tab@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "new-tab@2x.png"; path = "images/new-tab@2x.png"; sourceTree = "<group>"; };
 		1DEF5E6B185F889600300319 /* Alert.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Alert.png; path = images/Alert.png; sourceTree = "<group>"; };
 		1DEF5E6C185F889600300319 /* Alert@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Alert@2x.png"; path = "images/Alert@2x.png"; sourceTree = "<group>"; };
 		1DF0897013DBAF4C00A52AD8 /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
@@ -2987,6 +2995,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				1DEDF56719C917FD005B023A /* new-tab.png */,
+				1DEDF56819C917FD005B023A /* new-tab@2x.png */,
 				A6B70FBF19830F0D007A4284 /* NewOutput.png */,
 				A6B70FC019830F0D007A4284 /* NewOutput@2x.png */,
 				A6B70FB919830C37007A4284 /* dead.png */,
@@ -4395,6 +4405,7 @@
 				1D6ED97D19AEA20D005A7799 /* AquaTabNew.png in Resources */,
 				1D6ED97E19AEA20D005A7799 /* QuestionMarkSign.png in Resources */,
 				1D6ED97F19AEA20D005A7799 /* AquaTabNewPressed.png in Resources */,
+				1DEDF56E19C917FD005B023A /* new-tab@2x.png in Resources */,
 				1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */,
 				1D6ED98119AEA20D005A7799 /* AquaTabNewRollover.png in Resources */,
 				1D6ED98219AEA20D005A7799 /* AquaTabsBackground.png in Resources */,
@@ -4480,6 +4491,7 @@
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
 				1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */,
 				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
+				1DEDF56B19C917FD005B023A /* new-tab.png in Resources */,
 				1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */,
 				1D6ED9D619AEA20D005A7799 /* AquaTabClose_Front_Rollover.png in Resources */,
 				1D6ED9D719AEA20D005A7799 /* AquaTabClose_Front_Pressed.png in Resources */,
@@ -4519,6 +4531,7 @@
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1DB8FBCD19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */,
 				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
+				1DEDF56A19C917FD005B023A /* new-tab.png in Resources */,
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				A69B458C19710CC400F5444D /* SoftDivider.png in Resources */,
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
@@ -4526,6 +4539,7 @@
 				A6B70FBE19830C37007A4284 /* dead@2x.png in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				1DB8FBC519468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */,
+				1DEDF56D19C917FD005B023A /* new-tab@2x.png in Resources */,
 				1DFA7C971923EA8700DF1410 /* iTermPasswordManager.xib in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
 				A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */,
@@ -4572,6 +4586,7 @@
 				1D5FDD891208E91100C46BA3 /* AquaTabNew.png in Resources */,
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				1D5FDD8A1208E91100C46BA3 /* AquaTabNewPressed.png in Resources */,
+				1DEDF56C19C917FD005B023A /* new-tab@2x.png in Resources */,
 				1DC2AF5319521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1D5FDD8B1208E91100C46BA3 /* AquaTabNewRollover.png in Resources */,
 				1D5FDD8C1208E91100C46BA3 /* AquaTabsBackground.png in Resources */,
@@ -4657,6 +4672,7 @@
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
 				1DB8FBD019468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
+				1DEDF56919C917FD005B023A /* new-tab.png in Resources */,
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
 				1D48B28E165F3669000046EE /* AquaTabClose_Front_Rollover.png in Resources */,
 				1D48B28F165F3669000046EE /* AquaTabClose_Front_Pressed.png in Resources */,

@@ -17,6 +17,9 @@ static const double kUsernameMultiplier = 0.5;
 static const double kProfileNameMultiplier = 1;
 static const double kUserDefinedVariableMultiplier = 1;
 
+// Multipliers for profile items
+static const double kProfileNameMultiplierForProfileItem = 0.1;
+
 @implementation iTermOpenQuicklyModel
 
 - (void)removeAllItems {
@@ -45,7 +48,7 @@ static const double kUserDefinedVariableMultiplier = 1;
     NSMutableArray *items = [NSMutableArray array];
     for (PTYSession *session in sessions) {
         NSMutableArray *features = [NSMutableArray array];
-        iTermOpenQuicklyItem *item = [[[iTermOpenQuicklyItem alloc] init] autorelease];
+        iTermOpenQuicklySessionItem *item = [[[iTermOpenQuicklySessionItem alloc] init] autorelease];
         item.logoGenerator.textColor = session.foregroundColor;
         item.logoGenerator.backgroundColor = session.backgroundColor;
         item.logoGenerator.tabColor = session.tabColor;
@@ -67,7 +70,27 @@ static const double kUserDefinedVariableMultiplier = 1;
                                                                   highlightedIndexes:nil];
             }
 
-            item.sessionId = session.uniqueID;
+            item.identifier = session.uniqueID;
+            [items addObject:item];
+        }
+    }
+
+    BOOL haveCurrentWindow = [[iTermController sharedInstance] currentTerminal] != nil;
+    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
+        iTermOpenQuicklyProfileItem *item = [[[iTermOpenQuicklyProfileItem alloc] init] autorelease];
+        item.score = [self scoreForProfile:profile query:query length:queryString.length];
+        if (item.score > 0) {
+            NSString *theValue;
+            if (!haveCurrentWindow || [profile[KEY_PREVENT_TAB] boolValue]) {
+                theValue = @"Create a new window with this profile";
+            } else {
+                theValue = @"Create a new tab with this profile";
+            }
+            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                            value:theValue
+                                                               highlightedIndexes:nil];
+            item.title = profile[KEY_NAME];
+            item.identifier = profile[KEY_GUID];
             [items addObject:item];
         }
     }
@@ -87,6 +110,21 @@ static const double kUserDefinedVariableMultiplier = 1;
     // Replace self.items with new items.
     self.items = items;
     free(query);
+}
+
+- (double)scoreForProfile:(Profile *)profile query:(unichar *)query length:(int)length {
+    double score = [self scoreForQuery:query
+                             documents:@[ profile[KEY_NAME] ]
+                            multiplier:kProfileNameMultiplierForProfileItem
+                                  name:nil
+                              features:nil
+                                 limit:2 * kProfileNameMultiplierForProfileItem];
+    if (score > 0 &&
+        [[[ProfileModel sharedInstance] defaultBookmark][KEY_GUID] isEqualToString:profile[KEY_GUID]]) {
+        // Make the default profile always be the highest-scored profile if it matches the query.
+        score += 0.2;
+    }
+    return score;
 }
 
 // Returns the score for a session.
@@ -304,12 +342,16 @@ static const double kUserDefinedVariableMultiplier = 1;
     return names;
 }
 
-- (PTYSession *)sessionAtIndex:(NSInteger)index {
+- (id)objectAtIndex:(NSInteger)index {
     iTermOpenQuicklyItem *item = _items[index];
-    NSString *sessionId = item.sessionId;
-    for (PTYSession *session in [self sessions]) {
-        if ([session.uniqueID isEqualTo:sessionId]) {
-            return session;
+    if ([item isKindOfClass:[iTermOpenQuicklyProfileItem class]]) {
+        return [[ProfileModel sharedInstance] bookmarkWithGuid:item.identifier];
+    } else if ([item isKindOfClass:[iTermOpenQuicklySessionItem class]]) {
+        NSString *sessionId = item.identifier;
+        for (PTYSession *session in [self sessions]) {
+            if ([session.uniqueID isEqualTo:sessionId]) {
+                return session;
+            }
         }
     }
     return nil;

@@ -23,8 +23,8 @@
 // Recalculate items, adding those that match |queryString|.
 - (void)updateWithQuery:(NSString *)queryString;
 
-// Returns the session for an item at a given index. May return nil if the
-// session has closed.
-- (PTYSession *)sessionAtIndex:(NSInteger)index;
+// Returns a PTYSession* or Profile* for an item at a given index. May return nil if the
+// session has closed or profile was deleted.
+- (id)objectAtIndex:(NSInteger)index;
 
 @end
