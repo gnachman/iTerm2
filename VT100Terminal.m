@@ -46,9 +46,9 @@
     int bgGreen_;
     int bgBlue_;
     ColorMode bgColorMode_;
-    BOOL bold_, italic_, under_, blink_, reversed_;
+    BOOL faint_, bold_, italic_, under_, blink_, reversed_;
 
-    BOOL saveBold_, saveItalic_, saveUnder_, saveBlink_, saveReversed_;
+    BOOL saveFaint_, saveBold_, saveItalic_, saveUnder_, saveBlink_, saveReversed_;
     int saveCharset_;
     int saveForeground_;
     int saveFgGreen_;
@@ -71,6 +71,7 @@
 // character attributes
 #define VT100CHARATTR_ALLOFF   0
 #define VT100CHARATTR_BOLD     1
+#define VT100CHARATTR_FAINT    2
 #define VT100CHARATTR_ITALIC   3
 #define VT100CHARATTR_UNDER    4
 #define VT100CHARATTR_BLINK    5
@@ -197,6 +198,7 @@ static const int kMaxScreenRows = 4096;
 - (void)saveTextAttributes
 {
     saveBold_ = bold_;
+    saveFaint_ = faint_;
     saveItalic_ = italic_;
     saveUnder_ = under_;
     saveBlink_ = blink_;
@@ -217,6 +219,7 @@ static const int kMaxScreenRows = 4096;
 - (void)restoreTextAttributes
 {
     bold_ = saveBold_;
+    faint_ = saveFaint_;
     italic_ = saveItalic_;
     under_ = saveUnder_;
     blink_ = saveBlink_;
@@ -275,7 +278,7 @@ static const int kMaxScreenRows = 4096;
     self.bracketedPasteMode = NO;
     _charset = 0;
     xon_ = YES;
-    bold_ = italic_ = blink_ = reversed_ = under_ = NO;
+    faint_ = bold_ = italic_ = blink_ = reversed_ = under_ = NO;
     fgColorCode_ = ALTSEM_DEFAULT;
     fgGreen_ = 0;
     fgBlue_ = 0;
@@ -348,6 +351,7 @@ static const int kMaxScreenRows = 4096;
         result.foregroundColorMode = fgColorMode_;
     }
     result.bold = bold_;
+    result.faint = faint_;
     result.italic = italic_;
     result.underline = under_;
     result.blink = blink_;
@@ -384,6 +388,7 @@ static const int kMaxScreenRows = 4096;
     result.fgBlue = fgBlue_;
     result.foregroundColorMode = fgColorMode_;
     result.bold = bold_;
+    result.faint = faint_;
     result.italic = italic_;
     result.underline = under_;
     result.blink = blink_;
@@ -619,7 +624,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)resetSGR {
     // all attributes off
-    bold_ = italic_ = under_ = blink_ = reversed_ = NO;
+    faint_ = bold_ = italic_ = under_ = blink_ = reversed_ = NO;
     fgColorCode_ = ALTSEM_DEFAULT;
     fgGreen_ = 0;
     fgBlue_ = 0;
@@ -642,7 +647,7 @@ static const int kMaxScreenRows = 4096;
                 switch (n) {
                     case VT100CHARATTR_ALLOFF:
                         // all attribute off
-                        bold_ = italic_ = under_ = blink_ = reversed_ = NO;
+                        faint_ = bold_ = italic_ = under_ = blink_ = reversed_ = NO;
                         fgColorCode_ = ALTSEM_DEFAULT;
                         fgGreen_ = 0;
                         fgBlue_ = 0;
@@ -655,8 +660,11 @@ static const int kMaxScreenRows = 4096;
                     case VT100CHARATTR_BOLD:
                         bold_ = YES;
                         break;
+                    case VT100CHARATTR_FAINT:
+                        faint_ = YES;
+                        break;
                     case VT100CHARATTR_NORMAL:
-                        bold_ = NO;
+                        faint_ = bold_ = NO;
                         break;
                     case VT100CHARATTR_ITALIC:
                         italic_ = YES;
