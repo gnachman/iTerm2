@@ -598,6 +598,7 @@ void StringToScreenChars(NSString *s,
             buf[j].backgroundColorMode = bg.backgroundColorMode;
 
             buf[j].bold = fg.bold;
+            buf[j].faint = fg.faint;
             buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
@@ -639,6 +640,7 @@ void StringToScreenChars(NSString *s,
             buf[j].backgroundColorMode = bg.backgroundColorMode;
 
             buf[j].bold = fg.bold;
+            buf[j].faint = fg.faint;
             buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
@@ -695,6 +697,7 @@ void StringToScreenChars(NSString *s,
                         buf[j].backgroundColorMode = bg.backgroundColorMode;
 
                         buf[j].bold = fg.bold;
+                        buf[j].faint = fg.faint;
                         buf[j].italic = fg.italic;
                         buf[j].blink = fg.blink;
                         buf[j].underline = fg.underline;

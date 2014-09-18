@@ -816,19 +816,24 @@ static NSImage* alertImage;
                     blue:(int)blue
                colorMode:(ColorMode)theMode
                     bold:(BOOL)isBold
-            isBackground:(BOOL)isBackground
-{
+                   faint:(BOOL)isFaint
+            isBackground:(BOOL)isBackground {
     iTermColorMapKey key = [self colorMapKeyForCode:theIndex
                                               green:green
                                                blue:blue
                                           colorMode:theMode
                                                bold:isBold
                                        isBackground:isBackground];
+    NSColor *color;
     if (isBackground && _colorMap.dimOnlyText) {
-        return [_colorMap mutedColorForKey:key];
+        color = [_colorMap mutedColorForKey:key];
     } else {
-        return [_colorMap dimmedColorForKey:key];
+        color = [_colorMap dimmedColorForKey:key];
     }
+    if (isFaint) {
+        color = [color colorWithAlphaComponent:0.5];
+    }
+    return color;
 }
 
 - (NSColor *)dimmedDefaultBackgroundColor {
@@ -837,6 +842,7 @@ static NSImage* alertImage;
                          blue:0
                     colorMode:ColorModeAlternate
                          bold:NO
+                        faint:NO
                  isBackground:YES];
 }
 
@@ -4090,17 +4096,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSDictionary *)charAttributes:(screen_char_t)c
 {
     BOOL isBold = c.bold;
+    BOOL isFaint = c.faint;
     NSColor *fgColor = [self colorForCode:c.foregroundColor
                                     green:c.fgGreen
                                      blue:c.fgBlue
                                 colorMode:c.foregroundColorMode
                                      bold:isBold
+                                    faint:isFaint
                              isBackground:NO];
     NSColor *bgColor = [self colorForCode:c.backgroundColor
                                     green:c.bgGreen
                                      blue:c.bgBlue
                                 colorMode:c.backgroundColorMode
                                      bold:NO
+                                    faint:NO
                              isBackground:YES];
 
     int underlineStyle = c.underline ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
@@ -6076,6 +6085,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lastFgBlue = -1;
     int lastForegroundColorMode = -1;
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
+    int lastFaint = 2;  // Same for faint
     NSColor *lastColor = nil;
     CGFloat curX = 0;
     NSRange underlinedRange = [self underlinedRangeOnLine:row];
@@ -6125,7 +6135,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     theLine[i].fgGreen == lastFgGreen &&
                     theLine[i].fgBlue == lastFgBlue &&
                     theLine[i].foregroundColorMode == lastForegroundColorMode &&
-                    theLine[i].bold == lastBold) {
+                    theLine[i].bold == lastBold &&
+                    theLine[i].faint == lastFaint) {
                     // Looking up colors with -colorForCode:... is expensive and it's common to
                     // have consecutive characters with the same color.
                     CRunAttrsSetColor(&attrs, storage, lastColor);
@@ -6137,6 +6148,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     lastFgBlue = theLine[i].fgBlue;
                     lastForegroundColorMode = theLine[i].foregroundColorMode;
                     lastBold = theLine[i].bold;
+                    lastFaint = theLine[i].faint;
                     CRunAttrsSetColor(&attrs,
                                       storage,
                                       [self colorForCode:theLine[i].foregroundColor
@@ -6144,6 +6156,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                     blue:theLine[i].fgBlue
                                                colorMode:theLine[i].foregroundColorMode
                                                     bold:theLine[i].bold
+                                                   faint:theLine[i].faint
                                             isBackground:NO]);
                     lastColor = attrs.color;
                 }
@@ -6752,6 +6765,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        blue:0
                                   colorMode:ColorModeAlternate
                                        bold:NO
+                                      faint:NO
                                isBackground:NO];
             } else {
                 // Use the regular background color.
@@ -6760,6 +6774,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        blue:bgBlue
                                   colorMode:bgColorMode
                                        bold:NO
+                                      faint:NO
                                isBackground:YES];
             }
         }
@@ -6775,6 +6790,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                blue:0
                           colorMode:ColorModeAlternate
                                bold:NO
+                              faint:NO
                        isBackground:YES];
         aColor = [aColor colorWithAlphaComponent:1 - _blend];
         [aColor set];
@@ -6852,6 +6868,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            blue:0
                       colorMode:ColorModeAlternate
                            bold:NO
+                          faint:NO
                    isBackground:YES];
 
     // Draw background in margins
@@ -7014,25 +7031,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return anyBlinking;
 }
 
-
 - (void)_drawCharacter:(screen_char_t)screenChar
                fgColor:(int)fgColor
                fgGreen:(int)fgGreen
                 fgBlue:(int)fgBlue
            fgColorMode:(ColorMode)fgColorMode
                 fgBold:(BOOL)fgBold
+               fgFaint:(BOOL)fgFaint
                    AtX:(double)X
                      Y:(double)Y
            doubleWidth:(BOOL)double_width
          overrideColor:(NSColor*)overrideColor
-               context:(CGContextRef)ctx
-{
+               context:(CGContextRef)ctx {
     screen_char_t temp = screenChar;
     temp.foregroundColor = fgColor;
     temp.fgGreen = fgGreen;
     temp.fgBlue = fgBlue;
     temp.foregroundColorMode = fgColorMode;
     temp.bold = fgBold;
+    temp.faint = fgFaint;
 
     CRunStorage *storage = [CRunStorage cRunStorageWithCapacity:1];
     // Draw the characters.
@@ -7069,6 +7086,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            blue:fgBlue
                       colorMode:ColorModeAlternate
                            bold:fgBold
+                          faint:fgFaint
                    isBackground:NO] set];
         }
 
@@ -7136,6 +7154,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         fg.foregroundColor = ALTSEM_DEFAULT;
         fg.foregroundColorMode = ColorModeAlternate;
         fg.bold = NO;
+        fg.faint = NO;
         fg.italic = NO;
         fg.blink = NO;
         fg.underline = NO;
@@ -7289,6 +7308,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                              blue:c.fgBlue
                         colorMode:c.foregroundColorMode
                              bold:c.bold
+                            faint:c.faint
                      isBackground:YES];
     } else {
         // normal
@@ -7296,7 +7316,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             green:c.bgGreen
                              blue:c.bgBlue
                         colorMode:c.backgroundColorMode
-                             bold:false
+                             bold:NO
+                            faint:NO
                      isBackground:YES];
     }
 }
@@ -7466,6 +7487,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             blue:screenChar.bgBlue
                                        colorMode:screenChar.backgroundColorMode
                                             bold:screenChar.bold
+                                           faint:screenChar.faint
                                     isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 } else {
@@ -7474,6 +7496,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             blue:screenChar.fgBlue
                                        colorMode:screenChar.foregroundColorMode
                                             bold:screenChar.bold
+                                           faint:screenChar.faint
                                     isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 }
@@ -7538,7 +7561,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             int fgBlue;
                             ColorMode fgColorMode;
                             BOOL fgBold;
+                            BOOL fgFaint;
                             BOOL isBold;
+                            BOOL isFaint;
                             NSColor* overrideColor = nil;
                             if ([self isInKeyWindow]) {
                                 // Draw a character in background color when
@@ -7548,6 +7573,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 fgBlue = screenChar.bgBlue;
                                 fgColorMode = screenChar.backgroundColorMode;
                                 fgBold = NO;
+                                fgFaint = NO;
                             } else {
                                 // Draw character in foreground color when there
                                 // is just a frame around it.
@@ -7556,8 +7582,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 fgBlue = screenChar.fgBlue;
                                 fgColorMode = screenChar.foregroundColorMode;
                                 fgBold = screenChar.bold;
+                                fgFaint = screenChar.faint;
                             }
                             isBold = screenChar.bold;
+                            isFaint = screenChar.faint;
 
                             // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
                             NSColor* proposedForeground = [[self colorForCode:fgColor
@@ -7565,6 +7593,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                          blue:fgBlue
                                                                     colorMode:fgColorMode
                                                                          bold:fgBold
+                                                                        faint:fgFaint
                                                                  isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [proposedForeground perceivedBrightness];
                             CGFloat bgBrightness = [bgColor perceivedBrightness];
@@ -7594,6 +7623,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                           fgBlue:fgBlue
                                      fgColorMode:fgColorMode
                                           fgBold:isBold
+                                         fgFaint:isFaint
                                              AtX:x1 * charWidth + MARGIN
                                                Y:curY + cursorHeight - lineHeight
                                      doubleWidth:double_width
@@ -7607,6 +7637,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             int theBlue;
                             ColorMode theMode;
                             BOOL isBold;
+                            BOOL isFaint;
                             if ([self isInKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
                                 theGreen = 0;
@@ -7619,13 +7650,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 theMode = screenChar.foregroundColorMode;
                             }
                             isBold = screenChar.bold;
-
+                            isFaint = screenChar.faint;
                             [self _drawCharacter:screenChar
                                          fgColor:theColor
                                          fgGreen:theGreen
                                           fgBlue:theBlue
                                      fgColorMode:theMode
                                           fgBold:isBold
+                                         fgFaint:isFaint
                                              AtX:x1 * charWidth + MARGIN
                                                Y:curY + cursorHeight - lineHeight
                                      doubleWidth:double_width
