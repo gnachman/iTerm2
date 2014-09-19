@@ -94,6 +94,22 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
         windowIndex:(int)windowIndex
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex {
+    return [self growlNotify:title
+             withDescription:description
+             andNotification:notification
+                 windowIndex:windowIndex
+                    tabIndex:tabIndex
+                   viewIndex:viewIndex
+                      sticky:NO];
+}
+
+- (BOOL)growlNotify:(NSString *)title
+    withDescription:(NSString *)description
+    andNotification:(NSString *)notification
+        windowIndex:(int)windowIndex
+           tabIndex:(int)tabIndex
+          viewIndex:(int)viewIndex
+             sticky:(BOOL)sticky {
     NSDictionary *context = nil;
     if (windowIndex >= 0) {
         context = @{ @"win": @(windowIndex),
@@ -106,7 +122,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
                            notificationName:notification
                                    iconData:nil
                                    priority:0
-                                   isSticky:NO
+                                   isSticky:sticky
                                clickContext:context];
     return YES;
 }
@@ -138,7 +154,8 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
                                 @"Miscellaneous",
                                 @"Idle",
                                 @"New Output",
-                                @"Customized Message" ];
+                                @"Customized Message",
+                                @"Mark Set" ];
     return @{ GROWL_APP_NAME: kGrowlAppName,
               GROWL_NOTIFICATIONS_ALL: notifications,
               GROWL_NOTIFICATIONS_DEFAULT: notifications };

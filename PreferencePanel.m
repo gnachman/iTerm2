@@ -246,6 +246,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 #pragma mark - NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)aNotification {
+    [_profilesViewController windowWillClose:aNotification];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 

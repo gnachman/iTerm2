@@ -361,6 +361,14 @@ static NSString *const kKey = @"key";
     }
 }
 
+- (void)controlTextDidEndEditing:(NSNotification *)aNotification {
+    id control = [aNotification object];
+    PreferenceInfo *info = [_keyMap objectForKey:control];
+    if (info.controlTextDidEndEditing) {
+        info.controlTextDidEndEditing(aNotification);
+    }
+}
+
 #pragma mark - Notifications
 
 - (void)preferenceDidChangeFromOtherPanel:(NSNotification *)notification {
