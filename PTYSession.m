@@ -40,6 +40,7 @@
 #import "PasteEvent.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
+#import "ProfilePreferencesViewController.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
@@ -225,6 +226,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     TmuxGateway *_tmuxGateway;
     int _tmuxPane;
     BOOL _tmuxSecureLogging;
+    // The tmux rename-window command is only sent when the name field resigns first responder.
+    // This tracks if a tmux client's name has changed but the tmux server has not been informed yet.
+    BOOL _tmuxTitleOutOfSync;
 
     iTermPasteHelper *_pasteHelper;
 
@@ -333,6 +337,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(terminalFileShouldStop:)
                                                      name:kTerminalFileShouldStopNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(profileSessionNameDidEndEditing:)
+                                                     name:kProfileSessionNameDidEndEditing
                                                    object:nil];
         [self updateVariables];
     }
@@ -2098,6 +2106,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return;
     }
 
+    if ([self isTmuxClient] && ![_profile[KEY_NAME] isEqualToString:aePrefs[KEY_NAME]]) {
+        _tmuxTitleOutOfSync = YES;
+    }
+
     NSDictionary *keyMap = @{ @(kColorMapForeground): KEY_FOREGROUND_COLOR,
                               @(kColorMapBackground): KEY_BACKGROUND_COLOR,
                               @(kColorMapSelection): KEY_SELECTION_COLOR,
@@ -2987,6 +2999,19 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_screen.terminal stopReceivingFile];
         [_download endOfData];
         self.download = nil;
+    }
+}
+
+- (void)profileSessionNameDidEndEditing:(NSNotification *)notification {
+    NSString *theGuid = [notification object];
+    if (_tmuxTitleOutOfSync &&
+        [self isTmuxClient] &&
+        [theGuid isEqualToString:_profile[KEY_GUID]]) {
+        Profile *profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:theGuid];
+        [_tmuxController renameWindowWithId:self.tab.tmuxWindow
+                                  inSession:nil
+                                     toName:profile[KEY_NAME]];
+        _tmuxTitleOutOfSync = NO;
     }
 }
 

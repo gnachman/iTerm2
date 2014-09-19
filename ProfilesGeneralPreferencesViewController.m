@@ -86,6 +86,9 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                            key:KEY_NAME
                           type:kPreferenceInfoTypeStringTextField];
     info.willChange = ^() { [_profileDelegate profilesGeneralPreferencesNameWillChange]; };
+    info.controlTextDidEndEditing = ^(NSNotification *notification) {
+        [_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
+    };
 
     [self defineControl:_profileShortcut
                     key:KEY_SHORTCUT
@@ -135,6 +138,12 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [_profiles selectRowByGuid:[self.delegate profilePreferencesCurrentProfile][KEY_ORIGINAL_GUID]];
 
     [self updateEditAdvancedConfigButton];
+}
+
+- (void)windowWillClose {
+    if ([_profileNameFieldForEditCurrentSession textFieldIsFirstResponder]) {
+        [_profileDelegate profilesGeneralPreferencesNameDidEndEditing];
+    }
 }
 
 - (NSArray *)keysForBulkCopy {

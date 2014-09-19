@@ -28,6 +28,7 @@
 static NSString *const kRefreshProfileTable = @"kRefreshProfileTable";
 static const CGFloat kExtraMarginBetweenWindowBottomAndTabViewForEditCurrentSessionMode = 7;
 static const CGFloat kSideMarginsWithinInnerTabView = 11;
+NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEditing";
 
 @interface ProfilePreferencesViewController () <
     iTermProfilePreferencesBaseViewControllerDelegate,
@@ -605,6 +606,11 @@ static const CGFloat kSideMarginsWithinInnerTabView = 11;
     [_profilesListView lockSelection];
 }
 
+- (void)profilesGeneralPreferencesNameDidEndEditing {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kProfileSessionNameDidEndEditing
+                                                        object:[_profilesListView selectedGuid]];
+}
+
 #pragma mark - NSTabViewDelegate
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
@@ -614,6 +620,7 @@ static const CGFloat kSideMarginsWithinInnerTabView = 11;
 #pragma mark - NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)notification {
+    [_generalViewController windowWillClose];
     [_profilesListView unlockSelection];
 }
 

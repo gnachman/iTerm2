@@ -11,6 +11,10 @@
 
 @class ProfileModel;
 
+// Posted when the name field ends editing in the "get info" dialog. The object is the guid of the
+// profile that may have changed.
+extern NSString *const kProfileSessionNameDidEndEditing;
+
 @protocol ProfilePreferencesViewControllerDelegate <NSObject>
 
 - (ProfileModel *)profilePreferencesModel;

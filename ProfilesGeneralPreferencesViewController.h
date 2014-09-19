@@ -12,6 +12,9 @@
 
 - (void)profilesGeneralPreferencesNameWillChange;
 
+// This should be called only for "edit info" dialogs when the name field resigns first responder.
+- (void)profilesGeneralPreferencesNameDidEndEditing;
+
 @end
 
 @interface ProfilesGeneralPreferencesViewController : iTermProfilePreferencesBaseViewController
@@ -23,5 +26,6 @@
 
 - (void)layoutSubviewsForEditCurrentSessionMode;
 - (void)updateShortcutTitles;
+- (void)windowWillClose;
 
 @end

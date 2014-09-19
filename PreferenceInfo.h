@@ -65,6 +65,9 @@ typedef enum {
 // state.
 @property(nonatomic, copy) void (^customSettingChangedHandler)(id sender);
 
+// For text controls, this is called when editing ends.
+@property(nonatomic, copy) void (^controlTextDidEndEditing)(NSNotification *notification);
+
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control;
