@@ -9,6 +9,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAnnouncementViewController.h"
+#import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
@@ -5435,13 +5436,26 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                 ofClass:markClass] retain];
     self.currentMarkOrNotePosition = _lastMark.entry.interval;
     if (self.alertOnNextMark) {
-        if (NSRunAlertPanel(@"Alert",
-                            @"Mark set in session “%@.”",
-                            @"Reveal",
-                            @"OK",
-                            nil,
-                            [self name]) == NSAlertDefaultReturn) {
-            [self reveal];
+        NSString *action = [(iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate] markAlertAction];
+        if ([action isEqualToString:kMarkAlertActionPostNotification]) {
+            [[iTermGrowlDelegate sharedInstance] growlNotify:@"Mark Set"
+                                             withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
+                                                              [self name],
+                                                              [[self tab] realObjectCount]]
+                                             andNotification:@"Mark Set"
+                                                 windowIndex:[self screenWindowIndex]
+                                                    tabIndex:[self screenTabIndex]
+                                                   viewIndex:[self screenViewIndex]
+                                                      sticky:YES];
+        } else {
+            if (NSRunAlertPanel(@"Alert",
+                                @"Mark set in session “%@.”",
+                                @"Reveal",
+                                @"OK",
+                                nil,
+                                [self name]) == NSAlertDefaultReturn) {
+                [self reveal];
+            }
         }
         self.alertOnNextMark = NO;
     }

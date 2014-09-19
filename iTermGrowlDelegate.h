@@ -86,4 +86,13 @@
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex;
 
+// Adds the sticky argument. Only works with Growl, not notification center.
+- (BOOL)growlNotify:(NSString *)title
+    withDescription:(NSString *)description
+    andNotification:(NSString *)notification
+        windowIndex:(int)windowIndex
+           tabIndex:(int)tabIndex
+          viewIndex:(int)viewIndex
+             sticky:(BOOL)sticky;
+
 @end

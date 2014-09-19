@@ -566,11 +566,33 @@ DQ
                                         <menuItem isSeparatorItem="YES" id="OqF-Et-Rt4">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
-                                        <menuItem title="Alert on Next Mark" keyEquivalent="a" id="Qj6-xH-l9X">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
-                                            </connections>
+                                        <menuItem title="Alerts" id="noE-Gg-Cgs">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Alerts" id="GSK-c3-R0J">
+                                                <items>
+                                                    <menuItem title="Alert on Next Mark" keyEquivalent="a" id="Qj6-xH-l9X">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem isSeparatorItem="YES" id="cY7-mh-hpz">
+                                                        <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                                    </menuItem>
+                                                    <menuItem title="Show Modal Alert Box" id="mat-0d-WzN">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="enableMarkAlertShowsModalAlert:" target="201" id="rp1-HE-PMx"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Post Notification" id="QeX-5T-qxA">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="enableMarkAlertPostsNotification:" target="201" id="LvA-zT-HJj"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                </items>
+                                            </menu>
                                         </menuItem>
                                     </items>
                                 </menu>
@@ -1052,6 +1074,9 @@ DQ
             </view>
         </window>
         <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
+        <menuItem title="Item" id="Zmu-o3-jVG">
+            <modifierMask key="keyEquivalentModifierMask"/>
+        </menuItem>
     </objects>
     <resources>
         <image name="NSApplicationIcon" width="128" height="128"/>
