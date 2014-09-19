@@ -1,7 +1,6 @@
 #import "iTermOpenQuicklyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
-#import "iTermLogoGenerator.h"
 #import "iTermOpenQuicklyItem.h"
 #import "iTermOpenQuicklyModel.h"
 #import "iTermOpenQuicklyTableCellView.h"
@@ -156,10 +155,22 @@
     NSInteger row = [_table selectedRow];
 
     if (row >= 0) {
-        PTYSession *session = [self.model sessionAtIndex:row];
-        if (session) {
-            NSWindowController<iTermWindowController> *term = session.tab.realParentWindow;
-            [term makeSessionActive:session];
+        id object = [self.model objectAtIndex:row];
+        if ([object isKindOfClass:[PTYSession class]]) {
+            PTYSession *session = object;
+            if (session) {
+                NSWindowController<iTermWindowController> *term = session.tab.realParentWindow;
+                [term makeSessionActive:session];
+            }
+        } else if ([object isKindOfClass:[Profile class]]) {
+            Profile *profile = object;
+            iTermController *controller = [iTermController sharedInstance];
+            [controller launchBookmark:profile
+                            inTerminal:[controller currentTerminal]
+                               withURL:nil
+                              isHotkey:NO
+                               makeKey:YES
+                               command:nil];
         }
     }
 
@@ -183,7 +194,7 @@
     iTermOpenQuicklyTableCellView *result = [tableView makeViewWithIdentifier:tableColumn.identifier owner:self];
     iTermOpenQuicklyItem *item = _model.items[row];
     item.view = result;
-    result.imageView.image = [item.logoGenerator generatedImage];
+    result.imageView.image = item.icon;
 
     result.textField.attributedStringValue =
         item.title ?: [[[NSAttributedString alloc] initWithString:@"Untitled" attributes:@{}] autorelease];

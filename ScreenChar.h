@@ -167,6 +167,7 @@ typedef struct screen_char_t
     // and may be rendered as some combination of font choice and color
     // intensity.
     unsigned int bold : 1;
+    unsigned int faint : 1;
     unsigned int italic : 1;
     unsigned int blink : 1;
     unsigned int underline : 1;
@@ -207,6 +208,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->fgBlue = from.fgBlue;
     to->foregroundColorMode = from.foregroundColorMode;
     to->bold = from.bold;
+    to->faint = from.faint;
     to->italic = from.italic;
     to->blink = from.blink;
     to->underline = from.underline;
@@ -247,6 +249,7 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
                                              const screen_char_t b)
 {
     if (a.bold != b.bold ||
+        a.faint != b.faint ||
         a.italic != b.italic ||
         a.blink != b.blink ||
         a.underline != b.underline) {
@@ -275,6 +278,7 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
             s.foregroundColorMode == ColorModeAlternate &&
             !s.complexChar &&
             !s.bold &&
+            !s.faint &&
             !s.italic &&
             !s.blink &&
             !s.underline);

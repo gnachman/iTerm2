@@ -144,10 +144,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // if it's not currently shown.
     int tabViewItemsBeingAdded;
 
-    // A text field into which you may type a command. When you press enter in it
-    // then the text is sent to the terminal.
-    IBOutlet id commandField;
-
     ////////////////////////////////////////////////////////////////////////////
     // Miscellaneous
 
@@ -386,8 +382,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     // Force the nib to load
     [self window];
-    [commandField retain];
-    [commandField setDelegate:self];
     if ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
          windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
         screenNumber == -1) {
@@ -427,8 +421,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     // Force the nib to load
     [self window];
-    [commandField retain];
-    [commandField setDelegate:self];
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
 
@@ -743,7 +735,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[iTermController sharedInstance] setCurrentTerminal:nil];
     }
     [broadcastViewIds_ release];
-    [commandField release];
     [autocompleteView shutdown];
     [commandHistoryPopup shutdown];
     [_directoriesPopupWindowController shutdown];
@@ -1034,11 +1025,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)swipeWithEvent:(NSEvent *)event
 {
     [[[self currentSession] textview] swipeWithEvent:event];
-}
-
-- (id)commandField
-{
-    return commandField;
 }
 
 - (void)selectSessionAtIndexAction:(id)sender
@@ -2785,8 +2771,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     float charWidth = [[session textview] charWidth];
     float charHeight = [[session textview] lineHeight];
 
-    // Decide when to snap.  (We snap unless control is held down.)
-    BOOL modifierDown = (([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) != 0);
+    // Decide when to snap.  (We snap unless control, and only control, is held down.)
+    const NSUInteger theMask =
+        (NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+    BOOL modifierDown =
+        (([[NSApp currentEvent] modifierFlags] & theMask) == NSControlKeyMask);
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
@@ -4227,32 +4216,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (PTYTabView *)tabView
 {
     return TABVIEW;
-}
-
-- (void)controlTextDidEndEditing:(NSNotification *)aNotification
-{
-    int move = [[[aNotification userInfo] objectForKey:@"NSTextMovement"] intValue];
-
-    switch (move) {
-        case NSReturnTextMovement:
-            [self sendCommand: nil];
-            break;
-        case NSTabTextMovement:
-        {
-            Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
-            if (!prototype) {
-                NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
-                [ITAddressBookMgr setDefaultsInBookmark:aDict];
-                [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-                prototype = aDict;
-            }
-            [self createTabWithProfile:prototype
-                           withCommand:[commandField stringValue]];
-            break;
-        }
-        default:
-            break;
-    }
 }
 
 - (BOOL)isInitialized
@@ -6704,41 +6667,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (IBAction)closeWindow:(id)sender
 {
     [[self window] performClose:sender];
-}
-
-// Sends text to the current session. Also interprets URLs and opens them.
-- (IBAction)sendCommand:(id)sender {
-    NSString *command = [commandField stringValue];
-
-    if (command == nil ||
-        [[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] isEqualToString:@""]) {
-        return;
-    }
-
-    NSRange range = [command rangeOfString:@"://"];
-    if (range.location != NSNotFound) {
-        range = [[command substringToIndex:range.location] rangeOfString:@" "];
-        if (range.location == NSNotFound) {
-            NSURL *url = [NSURL URLWithString: command];
-            NSString *scheme = [url scheme];
-            Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
-
-            if (profile) {
-                PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-                [[iTermController sharedInstance] launchBookmark:profile
-                                                      inTerminal:term
-                                                         withURL:command
-                                                        isHotkey:NO
-                                                         makeKey:NO
-                                                         command:nil];
-            } else {
-                [[NSWorkspace sharedWorkspace] openURL:url];
-            }
-            return;
-        }
-    }
-    [[self currentSession] sendCommand: command];
-    [commandField setStringValue:@""];
 }
 
 - (void)reloadBookmarks
