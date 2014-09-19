@@ -9,6 +9,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAnnouncementViewController.h"
+#import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
@@ -40,6 +41,7 @@
 #import "PasteEvent.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
+#import "ProfilePreferencesViewController.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
@@ -225,6 +227,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     TmuxGateway *_tmuxGateway;
     int _tmuxPane;
     BOOL _tmuxSecureLogging;
+    // The tmux rename-window command is only sent when the name field resigns first responder.
+    // This tracks if a tmux client's name has changed but the tmux server has not been informed yet.
+    BOOL _tmuxTitleOutOfSync;
 
     iTermPasteHelper *_pasteHelper;
 
@@ -334,6 +339,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(terminalFileShouldStop:)
                                                      name:kTerminalFileShouldStopNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(profileSessionNameDidEndEditing:)
+                                                     name:kProfileSessionNameDidEndEditing
                                                    object:nil];
         [self updateVariables];
     }
@@ -2099,6 +2108,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return;
     }
 
+    if ([self isTmuxClient] && ![_profile[KEY_NAME] isEqualToString:aePrefs[KEY_NAME]]) {
+        _tmuxTitleOutOfSync = YES;
+    }
+
     NSDictionary *keyMap = @{ @(kColorMapForeground): KEY_FOREGROUND_COLOR,
                               @(kColorMapBackground): KEY_BACKGROUND_COLOR,
                               @(kColorMapSelection): KEY_SELECTION_COLOR,
@@ -2988,6 +3001,19 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_screen.terminal stopReceivingFile];
         [_download endOfData];
         self.download = nil;
+    }
+}
+
+- (void)profileSessionNameDidEndEditing:(NSNotification *)notification {
+    NSString *theGuid = [notification object];
+    if (_tmuxTitleOutOfSync &&
+        [self isTmuxClient] &&
+        [theGuid isEqualToString:_profile[KEY_GUID]]) {
+        Profile *profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:theGuid];
+        [_tmuxController renameWindowWithId:self.tab.tmuxWindow
+                                  inSession:nil
+                                     toName:profile[KEY_NAME]];
+        _tmuxTitleOutOfSync = NO;
     }
 }
 
@@ -3885,7 +3911,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
   }
 
   unsigned short keycode = [event keyCode];
-  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%lu>",
+  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%u>",
        event, modflag, keycode, keystr, unmodkeystr, unicode, unicode,
        (modflag & NSNumericPadKeyMask));
 
@@ -5411,13 +5437,26 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                 ofClass:markClass] retain];
     self.currentMarkOrNotePosition = _lastMark.entry.interval;
     if (self.alertOnNextMark) {
-        if (NSRunAlertPanel(@"Alert",
-                            @"Mark set in session “%@.”",
-                            @"Reveal",
-                            @"OK",
-                            nil,
-                            [self name]) == NSAlertDefaultReturn) {
-            [self reveal];
+        NSString *action = [(iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate] markAlertAction];
+        if ([action isEqualToString:kMarkAlertActionPostNotification]) {
+            [[iTermGrowlDelegate sharedInstance] growlNotify:@"Mark Set"
+                                             withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
+                                                              [self name],
+                                                              [[self tab] realObjectCount]]
+                                             andNotification:@"Mark Set"
+                                                 windowIndex:[self screenWindowIndex]
+                                                    tabIndex:[self screenTabIndex]
+                                                   viewIndex:[self screenViewIndex]
+                                                      sticky:YES];
+        } else {
+            if (NSRunAlertPanel(@"Alert",
+                                @"Mark set in session “%@.”",
+                                @"Reveal",
+                                @"OK",
+                                nil,
+                                [self name]) == NSAlertDefaultReturn) {
+                [self reveal];
+            }
         }
         self.alertOnNextMark = NO;
     }

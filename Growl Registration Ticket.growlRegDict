@@ -8,6 +8,7 @@
             <string>Idle</string>
             <string>New Output</string>
             <string>Customized Message</string>
+            <string>Mark Set</string>
         </array>
         <key>DefaultNotifications</key>
         <array>

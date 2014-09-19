@@ -66,6 +66,9 @@ static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern in
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
 NSString *const kSavedArrangementDidChangeNotification = @"kSavedArrangementDidChangeNotification";
 NSString *const kNonTerminalWindowBecameKeyNotification = @"kNonTerminalWindowBecameKeyNotification";
+static NSString *const kMarkAlertAction = @"Mark Alert Action";
+NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
+NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
@@ -94,7 +97,52 @@ static BOOL hasBecomeActive = NO;
 
 
 @implementation iTermApplicationDelegate {
-  iTermPasswordManagerWindowController *_passwordManagerWindowController;
+    iTermPasswordManagerWindowController *_passwordManagerWindowController;
+
+    // about window
+    NSWindowController *aboutController;
+    IBOutlet id ABOUT;
+    IBOutlet NSTextView *AUTHORS;
+
+    // Menu items
+    IBOutlet NSMenu     *bookmarkMenu;
+    IBOutlet NSMenu     *toolbeltMenu;
+    NSMenuItem *downloadsMenu_;
+    NSMenuItem *uploadsMenu_;
+    IBOutlet NSMenuItem *selectTab;
+    IBOutlet NSMenuItem *previousTerminal;
+    IBOutlet NSMenuItem *nextTerminal;
+    IBOutlet NSMenuItem *logStart;
+    IBOutlet NSMenuItem *logStop;
+    IBOutlet NSMenuItem *closeTab;
+    IBOutlet NSMenuItem *closeWindow;
+    IBOutlet NSMenuItem *sendInputToAllSessions;
+    IBOutlet NSMenuItem *sendInputToAllPanes;
+    IBOutlet NSMenuItem *sendInputNormally;
+    IBOutlet NSMenuItem *toggleBookmarksView;
+    IBOutlet NSMenuItem *irNext;
+    IBOutlet NSMenuItem *irPrev;
+    IBOutlet NSMenuItem *windowArrangements_;
+
+    IBOutlet NSMenuItem *secureInput;
+    IBOutlet NSMenuItem *showFullScreenTabs;
+    IBOutlet NSMenuItem *useTransparency;
+    IBOutlet NSMenuItem *maximizePane;
+    BOOL secureInputDesired_;
+    BOOL quittingBecauseLastWindowClosed_;
+
+    // If set, skip performing launch actions.
+    BOOL quiet_;
+    NSDate* launchTime_;
+
+    // Cross app request forgery prevention token. Get this with applescript and then include
+    // in a URI request.
+    NSString *token_;
+
+    // Set to YES when applicationDidFinishLaunching: is called.
+    BOOL finishedLaunching_;
+
+    BOOL userHasInteractedWithAnySession_;  // Disables min 10-second running time
 }
 
 // NSApplication delegate methods
@@ -1402,6 +1450,12 @@ static BOOL hasBecomeActive = NO;
             menuItem.title = @"Undo Close Session";
             return [[iTermController sharedInstance] hasRestorableSession];
         }
+    } else if ([menuItem action] == @selector(enableMarkAlertShowsModalAlert:)) {
+        [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionModalAlert] ? NSOnState : NSOffState];
+        return YES;
+    } else if ([menuItem action] == @selector(enableMarkAlertPostsNotification:)) {
+        [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionPostNotification] ? NSOnState : NSOffState];
+        return YES;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
         return ![self isDefaultTerminal];
     } else if (menuItem == maximizePane) {
@@ -1536,6 +1590,23 @@ static BOOL hasBecomeActive = NO;
     [[NSUserDefaults standardUserDefaults] setBool:value forKey:kUseBackgroundPatternIndicatorKey];
     [[NSNotificationCenter defaultCenter] postNotificationName:kUseBackgroundPatternIndicatorChangedNotification
                                                         object:nil];
+}
+
+- (IBAction)enableMarkAlertShowsModalAlert:(id)sender {
+    [[NSUserDefaults standardUserDefaults] setObject:kMarkAlertActionModalAlert forKey:kMarkAlertAction];
+}
+
+- (IBAction)enableMarkAlertPostsNotification:(id)sender {
+    [[NSUserDefaults standardUserDefaults] setObject:kMarkAlertActionPostNotification forKey:kMarkAlertAction];
+}
+
+- (NSString *)markAlertAction {
+    NSString *action = [[NSUserDefaults standardUserDefaults] objectForKey:kMarkAlertAction];
+    if (!action) {
+        return kMarkAlertActionPostNotification;
+    } else {
+        return action;
+    }
 }
 
 #pragma mark - iTermPasswordManagerDelegate

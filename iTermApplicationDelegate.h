@@ -37,6 +37,9 @@ extern NSString *const kMultiLinePasteWarningUserDefaultsKey;
 extern NSString *const kSavedArrangementDidChangeNotification;
 extern NSString *const kNonTerminalWindowBecameKeyNotification;
 
+extern NSString *const kMarkAlertActionModalAlert;
+extern NSString *const kMarkAlertActionPostNotification;
+
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 
 @interface iTermAboutWindow : NSPanel
@@ -48,55 +51,12 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 @end
 
 @interface iTermApplicationDelegate : NSObject
-{
-    // about window
-    NSWindowController *aboutController;
-    IBOutlet id ABOUT;
-    IBOutlet NSTextView *AUTHORS;
-
-    // Menu items
-    IBOutlet NSMenu     *bookmarkMenu;
-    IBOutlet NSMenu     *toolbeltMenu;
-    NSMenuItem *downloadsMenu_;
-    NSMenuItem *uploadsMenu_;
-    IBOutlet NSMenuItem *selectTab;
-    IBOutlet NSMenuItem *previousTerminal;
-    IBOutlet NSMenuItem *nextTerminal;
-    IBOutlet NSMenuItem *logStart;
-    IBOutlet NSMenuItem *logStop;
-    IBOutlet NSMenuItem *closeTab;
-    IBOutlet NSMenuItem *closeWindow;
-    IBOutlet NSMenuItem *sendInputToAllSessions;
-    IBOutlet NSMenuItem *sendInputToAllPanes;
-    IBOutlet NSMenuItem *sendInputNormally;
-    IBOutlet NSMenuItem *toggleBookmarksView;
-    IBOutlet NSMenuItem *irNext;
-    IBOutlet NSMenuItem *irPrev;
-    IBOutlet NSMenuItem *windowArrangements_;
-
-    IBOutlet NSMenuItem *secureInput;
-    IBOutlet NSMenuItem *showFullScreenTabs;
-    IBOutlet NSMenuItem *useTransparency;
-    IBOutlet NSMenuItem *maximizePane;
-    BOOL secureInputDesired_;
-    BOOL quittingBecauseLastWindowClosed_;
-
-    // If set, skip performing launch actions.
-    BOOL quiet_;
-    NSDate* launchTime_;
-
-    // Cross app request forgery prevention token. Get this with applescript and then include
-    // in a URI request.
-    NSString *token_;
-
-    // Set to YES when applicationDidFinishLaunching: is called.
-    BOOL finishedLaunching_;
-
-    BOOL userHasInteractedWithAnySession_;  // Disables min 10-second running time
-}
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
 @property(nonatomic, readonly) BOOL isApplescriptTestApp;
+
+// Returns one of the kMarkAlertAction strings defined above.
+@property(nonatomic, readonly) NSString *markAlertAction;
 
 - (void)awakeFromNib;
 
