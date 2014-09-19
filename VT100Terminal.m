@@ -348,11 +348,11 @@ static int getCSIParam(unsigned char *datap,
                 datap++;
                 datalen--;
             }
-            if (param->count < VT100CSIPARAM_MAX)
+            if (param->count < VT100CSIPARAM_MAX) {
                 param->p[param->count] = n;
-            // increment the parameter count
-            param->count++;
-
+                // increment the parameter count
+                param->count++;
+            }
             // set the numeric parameter flag
             readNumericParameter = YES;
 
@@ -362,7 +362,7 @@ static int getCSIParam(unsigned char *datap,
             datalen--;
 
             // If we got an implied (blank) parameter, increment the parameter count again
-            if(readNumericParameter == NO)
+            if(readNumericParameter == NO && param->count < VT100CSIPARAM_MAX)
                 param->count++;
             // reset the parameter flag
             readNumericParameter = NO;
@@ -896,7 +896,7 @@ static VT100TCC decode_csi(unsigned char *datap,
                     } else {
                         result.type = VT100CSI_SGR;
                     }
-                    for (i = 0; i < param.count; ++i) {
+                    for (i = 0; i < param.count && i < VT100CSIPARAM_MAX; ++i) {
                         SET_PARAM_DEFAULT(param, i, 0);
                         //                        NSLog(@"m[%d]=%d",i,param.p[i]);
                     }
@@ -1221,7 +1221,7 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
 
             case 'm':
                 result.type = VT100CSI_SGR;
-                for (i = 0; i < param.count; ++i) {
+                for (i = 0; i < param.count && i < VT100CSIPARAM_MAX; ++i) {
                     SET_PARAM_DEFAULT(param, i, 0);
                     //                        NSLog(@"m[%d]=%d",i,param.p[i]);
                 }
