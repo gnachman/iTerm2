@@ -3909,7 +3909,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
   }
 
   unsigned short keycode = [event keyCode];
-  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%lu>",
+  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%u>",
        event, modflag, keycode, keystr, unmodkeystr, unicode, unicode,
        (modflag & NSNumericPadKeyMask));
 
