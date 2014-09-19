@@ -3197,7 +3197,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [delegate_ screenAddMarkOnLine:[self numberOfScrollbackLines] + self.cursorY - 1];
+    [delegate_ screenPromptDidStartAtLine:[self numberOfScrollbackLines] + self.cursorY - 1];
 }
 
 - (void)terminalCommandDidStart {
