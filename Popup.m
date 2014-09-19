@@ -72,7 +72,7 @@ DebugLog([NSString stringWithFormat:args]); \
 - (void)dealloc {
     [s_ release];
     [prefix_ release];
-    [_truncatedValue release];
+    [self.truncatedValue release];
     [super dealloc];
 }
 

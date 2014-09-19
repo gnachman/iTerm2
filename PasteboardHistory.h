@@ -68,7 +68,7 @@
 
 @end
 
-    @protocol PasteboardHistoryWindowControllerDelegate
+@protocol PasteboardHistoryWindowControllerDelegate
 
 - (void)pasteboarHistoryWindowDidClose;
 
