@@ -68,11 +68,19 @@
 
 @end
 
+@protocol PasteboardHistoryWindowControllerDelegate
+
+- (void)pasteboarHistoryWindowDidClose;
+
+@end
+
 @interface PasteboardHistoryWindowController : Popup
 {
     IBOutlet NSTableView* table_;
     NSTimer* minuteRefreshTimer_;
 }
+
+@property(nonatomic, assign) id<PasteboardHistoryWindowControllerDelegate> delegate;
 
 - (id)init;
 - (void)dealloc;
@@ -82,7 +90,7 @@
 - (void)onOpen;
 - (void)onClose;
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
-- (void)rowSelected:(id)sender;;
+- (void)rowSelected:(id)sender;
 
 @end
 

@@ -44,6 +44,10 @@ DebugLog([NSString stringWithFormat:args]); \
 } while (0)
 #endif
 
+@interface PopupEntry()
+@property(nonatomic, retain) NSString *truncatedValue;
+@end
+
 @implementation PopupEntry
 
 - (void)_setDefaultValues
@@ -65,6 +69,13 @@ DebugLog([NSString stringWithFormat:args]); \
     return self;
 }
 
+- (void)dealloc {
+    [s_ release];
+    [prefix_ release];
+    [self.truncatedValue release];
+    [super dealloc];
+}
+
 + (PopupEntry*)entryWithString:(NSString*)s score:(double)score
 {
     PopupEntry* e = [[[PopupEntry alloc] init] autorelease];
@@ -75,8 +86,7 @@ DebugLog([NSString stringWithFormat:args]); \
     return e;
 }
 
-- (NSString*)mainValue
-{
+- (NSString*)mainValue {
     return s_;
 }
 
@@ -89,6 +99,13 @@ DebugLog([NSString stringWithFormat:args]); \
 {
     [s_ autorelease];
     s_ = [s retain];
+
+    static const NSInteger kMaxTruncatedValueLength = 256;
+    if (s_.length < kMaxTruncatedValueLength) {
+        self.truncatedValue = s;
+    } else {
+        self.truncatedValue = [s substringToIndex:kMaxTruncatedValueLength];
+    }
 }
 
 - (double)advanceHitMult
@@ -332,6 +349,8 @@ DebugLog([NSString stringWithFormat:args]); \
     [unfilteredModel_ release];
     [substring_ release];
     [model_ release];
+    tableView_.delegate = nil;
+    tableView_.dataSource = nil;
     [tableView_ release];
     [session_ release];
     [super dealloc];
@@ -408,7 +427,7 @@ DebugLog([NSString stringWithFormat:args]); \
     [model_ removeAllObjects];
     [unfilteredModel_ sortByScore];
     for (PopupEntry* s in unfilteredModel_) {
-        if ([self _word:[s mainValue] matchesFilter:substring_]) {
+        if ([self _word:[s truncatedValue] matchesFilter:substring_]) {
             [model_ addObject:s];
         }
     }
@@ -572,7 +591,7 @@ DebugLog([NSString stringWithFormat:args]); \
                                     nil];
 
     [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[entry prefix] attributes:lightAttributes] autorelease]];
-    NSString* value = [[entry mainValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    NSString* value = [[entry truncatedValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
 
     NSString* temp = value;
     for (int i = 0; i < [substring_ length]; ++i) {

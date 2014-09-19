@@ -264,6 +264,7 @@
         minuteRefreshTimer_ = nil;
     }
     [self setSession:nil];
+    [self.delegate pasteboarHistoryWindowDidClose];
 }
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
