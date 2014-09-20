@@ -237,6 +237,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100ScreenMark *_lastMark;
 
     VT100GridCoordRange _commandRange;
+    long long _lastPromptLine;  // Line where last prompt began
 
     NSTimeInterval _timeOfLastScheduling;
 
@@ -5462,6 +5463,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return _lastMark;
 }
 
+- (void)screenPromptDidStartAtLine:(int)line {
+    _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
+    [self screenAddMarkOnLine:line];
+}
+
 - (void)screenAddMarkOnLine:(int)line {
     [self markAddedAtLine:line ofClass:[VT100ScreenMark class]];
 }
@@ -5899,7 +5905,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         NSString *trimmedCommand =
             [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
-            VT100ScreenMark *mark = [_screen markOnLine:range.start.y];
+            VT100ScreenMark *mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
             mark.command = command;
             [[CommandHistory sharedInstance] addCommand:trimmedCommand
                                                  onHost:[_screen remoteHostOnLine:range.end.y]
