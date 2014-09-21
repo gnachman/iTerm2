@@ -30,7 +30,7 @@ cd ~/server/nightly/iTerm2/
 rm -rf build/Nightly/iTerm2.app
 make Nightly || die "Nightly build failed"
 ./sign.sh
-COMPACTDATE=$(date +"%Y%m%d")-nightly-2
+COMPACTDATE=$(date +"%Y%m%d")-nightly
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/iterm2-website
