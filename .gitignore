@@ -5,7 +5,7 @@
 *.pbxuser
 *.perspective
 *.perspectivev3
-iTerm2.xcodeproj/project.pbxproj
+iTerm2.xcodeproj/project.xcworkspace
 .gitignore
 build/
 .DS_Store
