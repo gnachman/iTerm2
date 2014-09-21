@@ -571,48 +571,41 @@ void StringToScreenChars(NSString *s,
     }
 
     [s getCharacters:sc];
-    int lastInitializedChar = -1;
     BOOL foundCursor = NO;
     for (i = j = 0; i < l; i++, j++) {
-        // j may repeat in consecutive iterations of the loop but i increases
-        // monotonically, so initialize complexChar with i instead of j.
-        buf[i].complexChar = NO;
-
         if (cursorIndex && !foundCursor && *cursorIndex == i) {
             foundCursor = YES;
             *cursorIndex = j;
         }
-        if (j > lastInitializedChar) {
-            buf[j].code = sc[i];
-            buf[j].complexChar = NO;
 
-            buf[j].foregroundColor = fg.foregroundColor;
-            buf[j].fgGreen = fg.fgGreen;
-            buf[j].fgBlue = fg.fgBlue;
+        // Naïvely copy the input char into the output buf.
+        buf[j].code = sc[i];
+        buf[j].complexChar = NO;
 
-            buf[j].backgroundColor = bg.backgroundColor;
-            buf[j].bgGreen = bg.bgGreen;
-            buf[j].bgBlue = bg.bgBlue;
+        buf[j].foregroundColor = fg.foregroundColor;
+        buf[j].fgGreen = fg.fgGreen;
+        buf[j].fgBlue = fg.fgBlue;
 
-            buf[j].foregroundColorMode = fg.foregroundColorMode;
-            buf[j].backgroundColorMode = bg.backgroundColorMode;
+        buf[j].backgroundColor = bg.backgroundColor;
+        buf[j].bgGreen = bg.bgGreen;
+        buf[j].bgBlue = bg.bgBlue;
 
-            buf[j].bold = fg.bold;
-            buf[j].faint = fg.faint;
-            buf[j].italic = fg.italic;
-            buf[j].blink = fg.blink;
-            buf[j].underline = fg.underline;
-            buf[j].image = NO;
+        buf[j].foregroundColorMode = fg.foregroundColorMode;
+        buf[j].backgroundColorMode = bg.backgroundColorMode;
 
-            buf[j].unused = 0;
-            lastInitializedChar = j;
-        }
+        buf[j].bold = fg.bold;
+        buf[j].faint = fg.faint;
+        buf[j].italic = fg.italic;
+        buf[j].blink = fg.blink;
+        buf[j].underline = fg.underline;
+        buf[j].image = NO;
 
+        buf[j].unused = 0;
+
+        // Now fix up buf, dealing with private-use characters, zero-width spaces,
+        // combining marks, and surrogate pairs.
         if (sc[i] >= ITERM2_PRIVATE_BEGIN && sc[i] <= ITERM2_PRIVATE_END) {
-            // Translate iTerm2's private-use characters into a "?". Although the replacement
-            // character renders as a double-width char in a single-width char's space and is ugly,
-            // some fonts use dwc's to add extra glyphs. It's kinda sketch, but it's better form to
-            // render what you get than to try to be clever and break such edge cases.
+            // Translate iTerm2's private-use characters into a "?".
             buf[j].code = '?';
         } else if (sc[i] > 0xa0 &&
                    !IsCombiningMark(sc[i]) &&
@@ -620,7 +613,7 @@ void StringToScreenChars(NSString *s,
                    !IsHighSurrogate(sc[i]) &&
                    [NSString isDoubleWidthCharacter:sc[i]
                              ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
-            // This code path is for double-width characters in BMP only.
+            // This code path is for double-width characters in BMP only. Append a DWC_RIGHT.
             j++;
             buf[j].code = DWC_RIGHT;
             if (foundDwc) {
@@ -650,31 +643,41 @@ void StringToScreenChars(NSString *s,
                    sc[i] == 0x200b ||  // zero width space
                    sc[i] == 0x200c ||  // zero width non-joiner
                    sc[i] == 0x200d) {  // zero width joiner
+            // Just act like we never saw the character. This isn't quite right because a subsequent
+            // combining mark should not combine with a space.
             j--;
-            lastInitializedChar--;
         } else if (IsCombiningMark(sc[i]) || IsLowSurrogate(sc[i])) {
+            // In the case of a surrogate pair, the high surrogate will be placed in buf in the
+            // preceding iteration. When we see a low surrogate and the j-1'th char in buf is a
+            // high surrogate, then a complex char gets created at j-1. In that way, a low surrogate
+            // acts like a combining mark, which is why the two cases are handled together here.
             if (j > 0) {
-                BOOL movedBackOverDwcRight = NO;
+                // Undo the initialization of the j'th character because we won't use it
                 j--;
+
+                BOOL movedBackOverDwcRight = NO;
                 if (buf[j].code == DWC_RIGHT && j > 0 && IsCombiningMark(sc[i])) {
                     // This happens easily with ambiguous-width characters, where something like
                     // á is treated as double-width and a subsequent combining mark needs to modify
-                    // at the real code, not the DWC_RIGHT.
+                    // at the real code, not the DWC_RIGHT. Decrement j temporarily.
                     j--;
                     movedBackOverDwcRight = YES;
                 }
-                lastInitializedChar--;
                 if (buf[j].complexChar) {
                     // Adding a combining mark to a char that already has one or was
                     // built by surrogates.
                     buf[j].code = AppendToComplexChar(buf[j].code, sc[i]);
                 } else {
+                    // Turn buf[j] into a complex char by adding sc[i] to it.
                     BeginComplexChar(buf + j, sc[i], useHFSPlusMapping);
                 }
                 if (movedBackOverDwcRight) {
+                    // Undo the temporary decrement of j
                     j++;
                 }
-                if (IsLowSurrogate(sc[i])) {
+                if (IsLowSurrogate(sc[i]) && !movedBackOverDwcRight) {
+                    // We have the second part of a surrogate pair which may cause the character
+                    // to become double-width. If so, tack on a DWC_RIGHT.
                     NSString* str = ComplexCharToStr(buf[j].code);
                     if ([NSString isDoubleWidthCharacter:DecodeSurrogatePair([str characterAtIndex:0], [str characterAtIndex:1])
                                   ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
