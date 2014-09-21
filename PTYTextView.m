@@ -339,6 +339,11 @@ static NSImage* alertImage;
 
     // Size of the documentVisibleRect when the badge was set.
     NSSize _badgeDocumentVisibleRectSize;
+
+    // For focus follows mouse. This flag remembers if the cursor entered this view while the app
+    // was inactive. If it's set when the app becomes active, then make this view the first
+    // responder.
+    BOOL _makeFirstResponderWhenAppBecomesActive;
 }
 
 
@@ -436,6 +441,10 @@ static NSImage* alertImage;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(hostnameLookupSucceeded:)
                                                      name:kHostnameLookupSucceeded
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
 
         imeOffset = 0;
@@ -2772,6 +2781,7 @@ NSMutableArray* screens=0;
 - (void)mouseExited:(NSEvent *)event
 {
     mouseInRect_ = NO;
+    _makeFirstResponderWhenAppBecomesActive = NO;
     [self updateUnderlinedURLs:event];
 }
 
@@ -2796,6 +2806,8 @@ NSMutableArray* screens=0;
         }
         if ([self isInKeyWindow]) {
             [_delegate textViewDidBecomeFirstResponder];
+        } else {
+            _makeFirstResponderWhenAppBecomesActive = YES;
         }
     }
 }
@@ -8375,6 +8387,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         numTouches_ = 0;
     }
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+        if (_makeFirstResponderWhenAppBecomesActive) {
+            [[self window] makeFirstResponder:self];
+        }
+    }
+    _makeFirstResponderWhenAppBecomesActive = NO;
 }
 
 - (void)_settingsChanged:(NSNotification *)notification
