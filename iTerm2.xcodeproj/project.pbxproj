@@ -1720,7 +1720,7 @@
 		1D01609A1852AA6F0014D26A /* mark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mark.png; path = images/mark.png; sourceTree = "<group>"; };
 		1D03D41D191419080049EB8F /* DirectoriesPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = DirectoriesPopup.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D03D41E191419080049EB8F /* DirectoriesPopup.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DirectoriesPopup.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D03D41F191419080049EB8F /* DirectoriesPopup.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = DirectoriesPopup.xib; sourceTree = "<group>"; };
+		1D03D41F191419080049EB8F /* DirectoriesPopup.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/DirectoriesPopup.xib; sourceTree = "<group>"; };
 		1D06A04F134CDBED00C414EF /* Trouter.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = Trouter.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D06A051134CDBF800C414EF /* Trouter.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = Trouter.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D06E7D114BC04510097C0ED /* ProfileTableRow.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTableRow.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -1731,7 +1731,7 @@
 		1D06E7DA14BC05DB0097C0ED /* ProfileTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileTableView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D085F8416F02E7400B7FCE9 /* PasteContext.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PasteContext.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D085F8516F02E7400B7FCE9 /* PasteContext.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PasteContext.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D085F8816F030FB00B7FCE9 /* PasteView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PasteView.xib; sourceTree = "<group>"; };
+		1D085F8816F030FB00B7FCE9 /* PasteView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/PasteView.xib; sourceTree = "<group>"; };
 		1D085F8A16F0328B00B7FCE9 /* PasteViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PasteViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PasteViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D085F9016F03E5400B7FCE9 /* PasteView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PasteView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -1985,7 +1985,7 @@
 		1DC13ABC1886146B00034DAE /* mark_err@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mark_err@2x.png"; path = "images/mark_err@2x.png"; sourceTree = "<group>"; };
 		1DC13AC118864E2200034DAE /* CommandHistoryPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CommandHistoryPopup.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CommandHistoryPopup.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CommandHistoryPopup.xib; sourceTree = "<group>"; };
+		1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/CommandHistoryPopup.xib; sourceTree = "<group>"; };
 		1DC2A1CA1949165D005769D5 /* Maximized.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Maximized.png; path = images/Maximized.png; sourceTree = "<group>"; };
 		1DC2A1CB1949165D005769D5 /* Maximized@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Maximized@2x.png"; path = "images/Maximized@2x.png"; sourceTree = "<group>"; };
 		1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = QuestionMarkSign.png; path = images/QuestionMarkSign.png; sourceTree = "<group>"; };
@@ -2022,7 +2022,7 @@
 		1DD39B7A180B8842004E56D5 /* libicucore.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libicucore.dylib; path = usr/lib/libicucore.dylib; sourceTree = SDKROOT; };
 		1DD39B7C180F68BF004E56D5 /* PTYTextViewDataSource.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYTextViewDataSource.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39B7D180F969E004E56D5 /* VT100ScreenDelegate.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100ScreenDelegate.h; sourceTree = "<group>"; tabWidth = 4; };
-		1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TmuxDashboard.xib; sourceTree = "<group>"; };
+		1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/TmuxDashboard.xib; sourceTree = "<group>"; };
 		1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TmuxDashboardController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxDashboardController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DD6707514934ADE008E4361 /* PTYSplitView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYSplitView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2069,7 +2069,7 @@
 		1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychainQuery.m; path = SSKeychain/SSKeychainQuery.m; sourceTree = "<group>"; };
 		1DFA7C8F1923E89100DF1410 /* SSKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSKeychain.h; path = SSKeychain/SSKeychain.h; sourceTree = "<group>"; };
 		1DFA7C901923E89100DF1410 /* SSKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychain.m; path = SSKeychain/SSKeychain.m; sourceTree = "<group>"; };
-		1DFA7C951923EA8700DF1410 /* iTermPasswordManager.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermPasswordManager.xib; sourceTree = "<group>"; };
+		1DFA7C951923EA8700DF1410 /* iTermPasswordManager.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/iTermPasswordManager.xib; sourceTree = "<group>"; };
 		1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasswordManagerWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasswordManagerWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA7C9D1923F77100DF1410 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -2077,7 +2077,7 @@
 		1DFA9D5D18F36DC3008ADC98 /* iTermKeyMappingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyMappingViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA9D6118F37160008ADC98 /* iTermEditKeyActionWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermEditKeyActionWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA9D6218F37160008ADC98 /* iTermEditKeyActionWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEditKeyActionWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DFA9D6318F37160008ADC98 /* iTermEditKeyActionWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermEditKeyActionWindowController.xib; sourceTree = "<group>"; };
+		1DFA9D6318F37160008ADC98 /* iTermEditKeyActionWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/iTermEditKeyActionWindowController.xib; sourceTree = "<group>"; };
 		1DFA9D6B18F37AA5008ADC98 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/iTermKeyMapping.xib; sourceTree = "<group>"; };
 		1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PointerPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA9D6F18F3A30F008ADC98 /* PointerPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PointerPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2130,7 +2130,7 @@
 		A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermInstantReplayWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermInstantReplayWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
-		A61B66D218D63758009AC9D5 /* InstantReplay.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InstantReplay.xib; sourceTree = "<group>"; };
+		A61B66D218D63758009AC9D5 /* InstantReplay.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/InstantReplay.xib; sourceTree = "<group>"; };
 		A624230F19CF6B0C00182C08 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = ThirdParty/Sparkle.framework; sourceTree = "<group>"; };
 		A624231319CF6B1600182C08 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Growl.framework; path = ThirdParty/Growl.framework; sourceTree = "<group>"; };
 		A624231819CF6DE000182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
@@ -2234,7 +2234,7 @@
 		A69B457E196B989D00F5444D /* iTermAlphaColorWell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAlphaColorWell.m; sourceTree = "<group>"; };
 		A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyWindowController.h; sourceTree = "<group>"; };
 		A69B4583196F8EA100F5444D /* iTermOpenQuicklyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
-		A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermOpenQuicklyWindowController.xib; sourceTree = "<group>"; };
+		A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/iTermOpenQuicklyWindowController.xib; sourceTree = "<group>"; };
 		A69B458A19710CC400F5444D /* SoftDivider.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SoftDivider.png; path = images/SoftDivider.png; sourceTree = "<group>"; };
 		A69B458E1973193100F5444D /* iTermOpenQuicklyTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyTableView.h; sourceTree = "<group>"; };
 		A69B458F1973193100F5444D /* iTermOpenQuicklyTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyTableView.m; sourceTree = "<group>"; };
@@ -2334,7 +2334,7 @@
 		A6E7139218F50762008D94DD /* ProfilePreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilePreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7139918F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = BulkCopyProfilePreferencesWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7139A18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = BulkCopyProfilePreferencesWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
-		A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = BulkCopyProfilePreferences.xib; sourceTree = "<group>"; };
+		A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/BulkCopyProfilePreferences.xib; sourceTree = "<group>"; };
 		A6E713A118F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProfilePreferencesBaseViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E713A218F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProfilePreferencesBaseViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E713A618F7C9F4008D94DD /* iTermProfilePreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProfilePreferences.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2343,7 +2343,7 @@
 		A6E713AC18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesGeneralPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = AdvancedWorkingDirectoryWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E713B118FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = AdvancedWorkingDirectoryWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
-		A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
+		A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = English.lproj/AdvancedWorkingDirectoryWindow.xib; sourceTree = "<group>"; };
 		A6E713B818FCCDD1008D94DD /* iTermURLSchemeController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLSchemeController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E713B918FCCDD1008D94DD /* iTermURLSchemeController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermURLSchemeController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E713BD18FCF036008D94DD /* ProfilesColorsPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesColorsPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
