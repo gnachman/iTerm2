@@ -540,7 +540,6 @@
 		1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
 		1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
-		1D6ED9A819AEA20D005A7799 /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
 		1D6ED9A919AEA20D005A7799 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */; };
 		1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
 		1D6ED9AB19AEA20D005A7799 /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DE2154112821F1C004E3ADF /* Autocomplete.xib */; };
@@ -1567,8 +1566,6 @@
 		A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */; };
 		A6C7DE5E19A469D6001E5C75 /* NSColor+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */; };
 		A6C7DE5F19A469D6001E5C75 /* NSColor+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */; };
-		A6CEDA5B198C139500BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
-		A6CEDA5C198C139500BB57EC /* iTerm2.iconset in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5A198C139500BB57EC /* iTerm2.iconset */; };
 		A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
 		A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
 		A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
@@ -2311,7 +2308,6 @@
 		A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = iTerm2.sdef; sourceTree = "<group>"; };
 		A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSColor+Scripting.m"; sourceTree = "<group>"; };
-		A6CEDA5A198C139500BB57EC /* iTerm2.iconset */ = {isa = PBXFileReference; lastKnownFileType = folder.iconset; name = iTerm2.iconset; path = images/icons/iTerm2.iconset; sourceTree = "<group>"; };
 		A6CEDA5D19988A7300BB57EC /* LogoFrame.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoFrame.png; path = images/LogoParts/LogoFrame.png; sourceTree = "<group>"; };
 		A6CEDA5E19988A7300BB57EC /* LogoShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LogoShadow.png; path = images/LogoParts/LogoShadow.png; sourceTree = "<group>"; };
 		A6CFDAD0185D2587005DC94B /* URLAction.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = URLAction.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2502,7 +2498,6 @@
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				A624232319CF70CB00182C08 /* NMSSH.framework */,
 				A624232119CF708600182C08 /* NMSSH.framework */,
-				1DC035C8198989F4007449A9 /* iTerm2.iconset */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1D03D42519144B8E0049EB8F /* ThirdParty */,
@@ -2833,8 +2828,8 @@
 		0464AB27006CD2EC7F000001 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				1DC035C8198989F4007449A9 /* iTerm2.iconset */,
 				A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */,
-				A6CEDA5A198C139500BB57EC /* iTerm2.iconset */,
 				1D03D42719144C3B0049EB8F /* Other Assets */,
 				1D03D42619144C140049EB8F /* Property Lists */,
 				1D093C131217412B0029F9AD /* Images */,
@@ -4350,7 +4345,6 @@
 				1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */,
 				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
 				1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */,
-				1D6ED9A819AEA20D005A7799 /* iTerm2.iconset in Resources */,
 				1D6ED9A919AEA20D005A7799 /* PasteboardHistory.xib in Resources */,
 				1D6ED9AA19AEA20D005A7799 /* IBarCursor.png in Resources */,
 				1D6ED9AB19AEA20D005A7799 /* Autocomplete.xib in Resources */,
@@ -4438,7 +4432,6 @@
 				A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */,
 				1DFA9D6818F37160008ADC98 /* English.lproj/iTermEditKeyActionWindowController.xib in Resources */,
 				A6B70FC219830F0D007A4284 /* NewOutput.png in Resources */,
-				A6CEDA5C198C139500BB57EC /* iTerm2.iconset in Resources */,
 				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				A69B4589196F8EA100F5444D /* English.lproj/iTermOpenQuicklyWindowController.xib in Resources */,
@@ -4503,7 +4496,6 @@
 				1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */,
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
-				A6CEDA5B198C139500BB57EC /* iTerm2.iconset in Resources */,
 				1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 				1DE2154312821F1C004E3ADF /* Autocomplete.xib in Resources */,
