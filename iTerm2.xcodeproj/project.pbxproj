@@ -109,17 +109,11 @@
 		1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3314BABE8700BD5035 /* VT100Terminal.h */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
-		1D48B281165F362B000046EE /* AquaTabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27B165F362B000046EE /* AquaTabClose_Front_Rollover@2x.png */; };
-		1D48B282165F362B000046EE /* AquaTabClose_Front_Pressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27C165F362B000046EE /* AquaTabClose_Front_Pressed@2x.png */; };
-		1D48B283165F362B000046EE /* AquaTabClose_Front@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27D165F362B000046EE /* AquaTabClose_Front@2x.png */; };
 		1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */; };
 		1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */; };
 		1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B280165F362B000046EE /* TabClose_Front@2x.png */; };
 		1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B287165F3669000046EE /* TabClose_Front_Pressed.png */; };
 		1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B288165F3669000046EE /* TabClose_Front.png */; };
-		1D48B28E165F3669000046EE /* AquaTabClose_Front_Rollover.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B289165F3669000046EE /* AquaTabClose_Front_Rollover.png */; };
-		1D48B28F165F3669000046EE /* AquaTabClose_Front_Pressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B28A165F3669000046EE /* AquaTabClose_Front_Pressed.png */; };
-		1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B28B165F3669000046EE /* AquaTabClose_Front.png */; };
 		1D48B292165F405A000046EE /* important@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B291165F405A000046EE /* important@2x.png */; };
 		1D48B379167E809D000046EE /* CharacterRun.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D48B377167E809D000046EE /* CharacterRun.h */; };
 		1D48B37A167E809D000046EE /* CharacterRun.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D48B378167E809D000046EE /* CharacterRun.m */; };
@@ -172,18 +166,8 @@
 		1D5FDD7D1208E91100C46BA3 /* config.png in Resources */ = {isa = PBXBuildFile; fileRef = FB754C5F036EFC5301F955DB /* config.png */; };
 		1D5FDD7F1208E91100C46BA3 /* important.png in Resources */ = {isa = PBXBuildFile; fileRef = FBB2EBCD040AC7C201F955DB /* important.png */; };
 		1D5FDD811208E91100C46BA3 /* newwin.png in Resources */ = {isa = PBXBuildFile; fileRef = FB896717038D935801F955DB /* newwin.png */; };
-		1D5FDD891208E91100C46BA3 /* AquaTabNew.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575B09CB93C2008F320C /* AquaTabNew.png */; };
-		1D5FDD8A1208E91100C46BA3 /* AquaTabNewPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575C09CB93C2008F320C /* AquaTabNewPressed.png */; };
-		1D5FDD8B1208E91100C46BA3 /* AquaTabNewRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575D09CB93C2008F320C /* AquaTabNewRollover.png */; };
-		1D5FDD8C1208E91100C46BA3 /* AquaTabsBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575E09CB93C2008F320C /* AquaTabsBackground.png */; };
-		1D5FDD8D1208E91100C46BA3 /* AquaTabsDown.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575F09CB93C2008F320C /* AquaTabsDown.png */; };
-		1D5FDD8E1208E91100C46BA3 /* AquaTabsDownGraphite.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576009CB93C2008F320C /* AquaTabsDownGraphite.png */; };
-		1D5FDD8F1208E91100C46BA3 /* AquaTabsDownNonKey.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576109CB93C2008F320C /* AquaTabsDownNonKey.png */; };
-		1D5FDD901208E91100C46BA3 /* AquaTabsSeparator.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576209CB93C2008F320C /* AquaTabsSeparator.png */; };
-		1D5FDD911208E91100C46BA3 /* AquaTabsSeparatorDown.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576309CB93C2008F320C /* AquaTabsSeparatorDown.png */; };
 		1D5FDD921208E91100C46BA3 /* overflowImage.tiff in Resources */ = {isa = PBXBuildFile; fileRef = DD02576609CB93C2008F320C /* overflowImage.tiff */; };
 		1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02576709CB93C2008F320C /* overflowImagePressed.tif */; };
-		1D5FDD941208E91100C46BA3 /* pi.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576809CB93C2008F320C /* pi.png */; };
 		1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576E09CB93C2008F320C /* TabNewMetal.png */; };
 		1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */; };
 		1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577009CB93C2008F320C /* TabNewMetalRollover.png */; };
@@ -526,25 +510,15 @@
 		1D6ED97A19AEA20D005A7799 /* mark_err.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABB1886146B00034DAE /* mark_err.png */; };
 		1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */ = {isa = PBXBuildFile; fileRef = FB896717038D935801F955DB /* newwin.png */; };
 		1D6ED97C19AEA20D005A7799 /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
-		1D6ED97D19AEA20D005A7799 /* AquaTabNew.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575B09CB93C2008F320C /* AquaTabNew.png */; };
 		1D6ED97E19AEA20D005A7799 /* QuestionMarkSign.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF4F19521CFF005769D5 /* QuestionMarkSign.png */; };
-		1D6ED97F19AEA20D005A7799 /* AquaTabNewPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575C09CB93C2008F320C /* AquaTabNewPressed.png */; };
 		1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2AF5019521CFF005769D5 /* QuestionMarkSign@2x.png */; };
-		1D6ED98119AEA20D005A7799 /* AquaTabNewRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575D09CB93C2008F320C /* AquaTabNewRollover.png */; };
-		1D6ED98219AEA20D005A7799 /* AquaTabsBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575E09CB93C2008F320C /* AquaTabsBackground.png */; };
-		1D6ED98319AEA20D005A7799 /* AquaTabsDown.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02575F09CB93C2008F320C /* AquaTabsDown.png */; };
-		1D6ED98419AEA20D005A7799 /* AquaTabsDownGraphite.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576009CB93C2008F320C /* AquaTabsDownGraphite.png */; };
 		1D6ED98519AEA20D005A7799 /* DirectoriesPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D03D41F191419080049EB8F /* DirectoriesPopup.xib */; };
 		1D6ED98619AEA20D005A7799 /* CommandHistoryPopup.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13AC61886507D00034DAE /* CommandHistoryPopup.xib */; };
 		1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC2A1CA1949165D005769D5 /* Maximized.png */; };
-		1D6ED98819AEA20D005A7799 /* AquaTabsDownNonKey.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576109CB93C2008F320C /* AquaTabsDownNonKey.png */; };
-		1D6ED98919AEA20D005A7799 /* AquaTabsSeparator.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576209CB93C2008F320C /* AquaTabsSeparator.png */; };
 		1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5D19988A7300BB57EC /* LogoFrame.png */; };
-		1D6ED98B19AEA20D005A7799 /* AquaTabsSeparatorDown.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576309CB93C2008F320C /* AquaTabsSeparatorDown.png */; };
 		1D6ED98C19AEA20D005A7799 /* overflowImage.tiff in Resources */ = {isa = PBXBuildFile; fileRef = DD02576609CB93C2008F320C /* overflowImage.tiff */; };
 		1D6ED98D19AEA20D005A7799 /* mark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D01609A1852AA6F0014D26A /* mark.png */; };
 		1D6ED98E19AEA20D005A7799 /* overflowImagePressed.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02576709CB93C2008F320C /* overflowImagePressed.tif */; };
-		1D6ED98F19AEA20D005A7799 /* pi.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576809CB93C2008F320C /* pi.png */; };
 		1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576E09CB93C2008F320C /* TabNewMetal.png */; };
 		1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */; };
 		1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */ = {isa = PBXBuildFile; fileRef = DD02577009CB93C2008F320C /* TabNewMetalRollover.png */; };
@@ -560,12 +534,9 @@
 		1D6ED99C19AEA20D005A7799 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9325FF4E0FB54E00004EC67C /* MainMenu.xib */; };
 		1D6ED99D19AEA20D005A7799 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
 		1D6ED99E19AEA20D005A7799 /* dsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = 93A6FEF910685E9900A5F905 /* dsa_pub.pem */; };
-		1D6ED99F19AEA20D005A7799 /* AquaTabsSeparatorDown_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC219468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png */; };
-		1D6ED9A019AEA20D005A7799 /* AquaTabsBackground_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBE19468A40006BAF5C /* AquaTabsBackground_vertical.png */; };
 		1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */; };
 		1D6ED9A219AEA20D005A7799 /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
 		1D6ED9A319AEA20D005A7799 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
-		1D6ED9A419AEA20D005A7799 /* AquaTabsDownNonKey_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC019468A40006BAF5C /* AquaTabsDownNonKey_vertical.png */; };
 		1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
 		1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
@@ -580,7 +551,6 @@
 		1D6ED9B019AEA20D005A7799 /* GlobalSearch.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D99785112EEB3D600F0794D /* GlobalSearch.xib */; };
 		1D6ED9B119AEA20D005A7799 /* InstantReplay.xib in Resources */ = {isa = PBXBuildFile; fileRef = A61B66D218D63758009AC9D5 /* InstantReplay.xib */; };
 		1D6ED9B219AEA20D005A7799 /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D237D8E131D8BEE004DD60C /* FindView.xib */; };
-		1D6ED9B319AEA20D005A7799 /* AquaTabsDown_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBD19468A40006BAF5C /* AquaTabsDown_vertical.png */; };
 		1D6ED9B419AEA20D005A7799 /* mark_err@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC13ABC1886146B00034DAE /* mark_err@2x.png */; };
 		1D6ED9B519AEA20D005A7799 /* bell.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA02CFA1327612600D7E7DB /* bell.png */; };
 		1D6ED9B619AEA20D005A7799 /* BulkCopyProfilePreferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E7139B18F7B199008D94DD /* BulkCopyProfilePreferences.xib */; };
@@ -600,24 +570,16 @@
 		1D6ED9C419AEA20D005A7799 /* DefaultPointerActions.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */; };
 		1D6ED9C519AEA20D005A7799 /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
 		1D6ED9C619AEA20D005A7799 /* iTermOpenQuicklyWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A69B4584196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib */; };
-		1D6ED9C719AEA20D005A7799 /* AquaTabsDownGraphite_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBF19468A40006BAF5C /* AquaTabsDownGraphite_vertical.png */; };
 		1D6ED9C819AEA20D005A7799 /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */; };
 		1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
 		1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */; };
-		1D6ED9CB19AEA20D005A7799 /* AquaTabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27B165F362B000046EE /* AquaTabClose_Front_Rollover@2x.png */; };
-		1D6ED9CC19AEA20D005A7799 /* AquaTabClose_Front_Pressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27C165F362B000046EE /* AquaTabClose_Front_Pressed@2x.png */; };
-		1D6ED9CD19AEA20D005A7799 /* AquaTabClose_Front@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27D165F362B000046EE /* AquaTabClose_Front@2x.png */; };
 		1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */; };
-		1D6ED9CF19AEA20D005A7799 /* AquaTabsSeparator_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC119468A40006BAF5C /* AquaTabsSeparator_vertical.png */; };
 		1D6ED9D019AEA20D005A7799 /* AdvancedWorkingDirectoryWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E713B218FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib */; };
 		1D6ED9D119AEA20D005A7799 /* TabClose_Front_Pressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */; };
 		1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B280165F362B000046EE /* TabClose_Front@2x.png */; };
 		1D6ED9D319AEA20D005A7799 /* TabClose_Front_Pressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B287165F3669000046EE /* TabClose_Front_Pressed.png */; };
 		1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC319468A40006BAF5C /* TabClose_Front_Rollover.png */; };
 		1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B288165F3669000046EE /* TabClose_Front.png */; };
-		1D6ED9D619AEA20D005A7799 /* AquaTabClose_Front_Rollover.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B289165F3669000046EE /* AquaTabClose_Front_Rollover.png */; };
-		1D6ED9D719AEA20D005A7799 /* AquaTabClose_Front_Pressed.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B28A165F3669000046EE /* AquaTabClose_Front_Pressed.png */; };
-		1D6ED9D819AEA20D005A7799 /* AquaTabClose_Front.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B28B165F3669000046EE /* AquaTabClose_Front.png */; };
 		1D6ED9D919AEA20D005A7799 /* important@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B291165F405A000046EE /* important@2x.png */; };
 		1D6ED9DA19AEA20D005A7799 /* Alert@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEF5E6C185F889600300319 /* Alert@2x.png */; };
 		1D6ED9DB19AEA20D005A7799 /* PasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D085F8816F030FB00B7FCE9 /* PasteView.xib */; };
@@ -901,15 +863,12 @@
 		1D6EDAF319AEA20D005A7799 /* iTermRemotePreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = FB4CEAC661436E55F3B3A668 /* iTermRemotePreferences.m */; };
 		1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
 		1D6EDAF619AEA20D005A7799 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
-		1D6EDAF719AEA20D005A7799 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
 		1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
 		1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
 		1D6EDAFA19AEA20D005A7799 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
 		1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6EDAFD19AEA20D005A7799 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
-		1D6EDAFE19AEA20D005A7799 /* Growl in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DA7894714AC19F500C8FBD9 /* Growl */; };
-		1D6EDB0119AEA20D005A7799 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
 		1D6EDB0219AEA20D005A7799 /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
 		1D6EDB0319AEA20D005A7799 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; };
 		1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D70BA331680158700824B72 /* PTYFontInfo.h */; };
@@ -1102,7 +1061,6 @@
 		1D9A55B5180FA8F400B42CE9 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD9180B8118004E56D5 /* AppKit.framework */; };
 		1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D94EAC712D641D3008225A9 /* AddressBook.framework */; };
-		1D9A55BA180FAA1100B42CE9 /* Growl in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D9A553A180FA7C500B42CE9 /* Growl */; };
 		1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCBFC142D7BA60016228A /* Trigger.h */; };
 		1D9DCBFF142D7BA60016228A /* Trigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCBFD142D7BA60016228A /* Trigger.m */; };
 		1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC02142D7E570016228A /* GrowlTrigger.h */; };
@@ -1132,7 +1090,6 @@
 		1DA3E2BA1970ACBE00001E6E /* iTermLogoGenerator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */; };
 		1DA3E2BB1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */; };
 		1DA3E2BC1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */; };
-		1DA7894814AC19F500C8FBD9 /* Growl in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DA7894714AC19F500C8FBD9 /* Growl */; };
 		1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */; };
 		1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */; };
 		1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */; };
@@ -1161,18 +1118,6 @@
 		1DB83957192E9A610037E548 /* ToolCapturedOutputView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB83955192E9A610037E548 /* ToolCapturedOutputView.h */; };
 		1DB83958192E9A610037E548 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
 		1DB83959192E9A610037E548 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
-		1DB8FBC419468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBD19468A40006BAF5C /* AquaTabsDown_vertical.png */; };
-		1DB8FBC519468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBD19468A40006BAF5C /* AquaTabsDown_vertical.png */; };
-		1DB8FBC619468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBE19468A40006BAF5C /* AquaTabsBackground_vertical.png */; };
-		1DB8FBC719468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBE19468A40006BAF5C /* AquaTabsBackground_vertical.png */; };
-		1DB8FBC819468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBF19468A40006BAF5C /* AquaTabsDownGraphite_vertical.png */; };
-		1DB8FBC919468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBBF19468A40006BAF5C /* AquaTabsDownGraphite_vertical.png */; };
-		1DB8FBCA19468A40006BAF5C /* AquaTabsDownNonKey_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC019468A40006BAF5C /* AquaTabsDownNonKey_vertical.png */; };
-		1DB8FBCB19468A40006BAF5C /* AquaTabsDownNonKey_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC019468A40006BAF5C /* AquaTabsDownNonKey_vertical.png */; };
-		1DB8FBCC19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC119468A40006BAF5C /* AquaTabsSeparator_vertical.png */; };
-		1DB8FBCD19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC119468A40006BAF5C /* AquaTabsSeparator_vertical.png */; };
-		1DB8FBCE19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC219468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png */; };
-		1DB8FBCF19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC219468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png */; };
 		1DB8FBD019468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC319468A40006BAF5C /* TabClose_Front_Rollover.png */; };
 		1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB8FBC319468A40006BAF5C /* TabClose_Front_Rollover.png */; };
 		1DB9D8F2183FE9EF0029F0B5 /* HotkeyWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */; };
@@ -1348,6 +1293,18 @@
 		A61B66D118D51EAC009AC9D5 /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
 		A61B66D318D63758009AC9D5 /* InstantReplay.xib in Resources */ = {isa = PBXBuildFile; fileRef = A61B66D218D63758009AC9D5 /* InstantReplay.xib */; };
 		A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */ = {isa = PBXBuildFile; fileRef = A61B66D218D63758009AC9D5 /* InstantReplay.xib */; };
+		A624231019CF6B0C00182C08 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624230F19CF6B0C00182C08 /* Sparkle.framework */; };
+		A624231119CF6B0C00182C08 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624230F19CF6B0C00182C08 /* Sparkle.framework */; };
+		A624231219CF6B0C00182C08 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624230F19CF6B0C00182C08 /* Sparkle.framework */; };
+		A624231419CF6B1600182C08 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231319CF6B1600182C08 /* Growl.framework */; };
+		A624231719CF6DD100182C08 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231319CF6B1600182C08 /* Growl.framework */; };
+		A624231919CF6DE000182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
+		A624231E19CF6E2400182C08 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231319CF6B1600182C08 /* Growl.framework */; };
+		A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
+		A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
+		A624232219CF708600182C08 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232119CF708600182C08 /* NMSSH.framework */; };
+		A624232419CF70CB00182C08 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232319CF70CB00182C08 /* NMSSH.framework */; };
+		A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A628C7A918764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
 		A628C7AA18764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
@@ -1398,8 +1355,6 @@
 		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
 		A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
 		A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
-		A64AB1D819B8C1EB0033DB9C /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */; };
-		A64AB1D919B8C2670033DB9C /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */; };
 		A671C067192981D000A7F796 /* NSStringCategoryTest.h in Headers */ = {isa = PBXBuildFile; fileRef = A671C065192981D000A7F796 /* NSStringCategoryTest.h */; };
 		A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
 		A671C069192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
@@ -1458,10 +1413,6 @@
 		A68A30FB186D150B007F550F /* TransferrableFileMenuItemViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30F1186D150A007F550F /* TransferrableFileMenuItemViewController.h */; };
 		A68A30FC186D150B007F550F /* VT100RemoteHost.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30F2186D150A007F550F /* VT100RemoteHost.h */; };
 		A68A30FD186D150B007F550F /* VT100WorkingDirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */; };
-		A68A30FF186D151E007F550F /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
-		A68A3100186D151F007F550F /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
-		A68A3101186D1565007F550F /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
-		A68A3102186D1585007F550F /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A68A30FE186D151E007F550F /* NMSSH.framework */; };
 		A68A3105186D2973007F550F /* TemporaryNumberAllocator.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3103186D2973007F550F /* TemporaryNumberAllocator.h */; };
 		A68A3106186D2973007F550F /* TemporaryNumberAllocator.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */; };
 		A68A3107186D2973007F550F /* TemporaryNumberAllocator.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */; };
@@ -1731,7 +1682,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				1D6EDB0119AEA20D005A7799 /* NMSSH.framework in CopyFiles */,
+				A624232219CF708600182C08 /* NMSSH.framework in CopyFiles */,
 				1D6EDB0219AEA20D005A7799 /* Sparkle.framework in CopyFiles */,
 				1D6EDB0319AEA20D005A7799 /* Growl.framework in CopyFiles */,
 			);
@@ -1743,7 +1694,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				A68A3101186D1565007F550F /* NMSSH.framework in CopyFiles */,
+				A624232419CF70CB00182C08 /* NMSSH.framework in CopyFiles */,
 				1DAAE592180FAD9A0061611B /* Growl.framework in CopyFiles */,
 				1DAAE593180FAD9A0061611B /* Sparkle.framework in CopyFiles */,
 			);
@@ -1755,7 +1706,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				A68A3102186D1585007F550F /* NMSSH.framework in CopyFiles */,
+				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
 				5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */,
 			);
@@ -1861,17 +1812,11 @@
 		1D407A3314BABE8700BD5035 /* VT100Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Terminal.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D48B27B165F362B000046EE /* AquaTabClose_Front_Rollover@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AquaTabClose_Front_Rollover@2x.png"; sourceTree = "<group>"; };
-		1D48B27C165F362B000046EE /* AquaTabClose_Front_Pressed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AquaTabClose_Front_Pressed@2x.png"; sourceTree = "<group>"; };
-		1D48B27D165F362B000046EE /* AquaTabClose_Front@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AquaTabClose_Front@2x.png"; sourceTree = "<group>"; };
 		1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TabClose_Front_Rollover@2x.png"; sourceTree = "<group>"; };
 		1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TabClose_Front_Pressed@2x.png"; sourceTree = "<group>"; };
 		1D48B280165F362B000046EE /* TabClose_Front@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TabClose_Front@2x.png"; sourceTree = "<group>"; };
 		1D48B287165F3669000046EE /* TabClose_Front_Pressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabClose_Front_Pressed.png; sourceTree = "<group>"; };
 		1D48B288165F3669000046EE /* TabClose_Front.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabClose_Front.png; sourceTree = "<group>"; };
-		1D48B289165F3669000046EE /* AquaTabClose_Front_Rollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabClose_Front_Rollover.png; sourceTree = "<group>"; };
-		1D48B28A165F3669000046EE /* AquaTabClose_Front_Pressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabClose_Front_Pressed.png; sourceTree = "<group>"; };
-		1D48B28B165F3669000046EE /* AquaTabClose_Front.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabClose_Front.png; sourceTree = "<group>"; };
 		1D48B291165F405A000046EE /* important@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "important@2x.png"; path = "images/important@2x.png"; sourceTree = "<group>"; };
 		1D48B377167E809D000046EE /* CharacterRun.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = CharacterRun.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D48B378167E809D000046EE /* CharacterRun.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CharacterRun.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -1980,7 +1925,6 @@
 		1D9A5522180FA46100B42CE9 /* iTermTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermTests.h; path = iTermTests/iTermTests.h; sourceTree = "<group>"; };
 		1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100ScreenTest.h; path = iTermTests/VT100ScreenTest.h; sourceTree = "<group>"; };
 		1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VT100ScreenTest.m; path = iTermTests/VT100ScreenTest.m; sourceTree = "<group>"; };
-		1D9A553A180FA7C500B42CE9 /* Growl */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Growl; path = Growl.framework/Versions/A/Growl; sourceTree = "<group>"; };
 		1D9DCBFC142D7BA60016228A /* Trigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = Trigger.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D9DCBFD142D7BA60016228A /* Trigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = Trigger.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D9DCC02142D7E570016228A /* GrowlTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = GrowlTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2009,7 +1953,6 @@
 		1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursorXMR@2x.png"; path = "images/IBarCursorXMR@2x.png"; sourceTree = "<group>"; };
 		1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLogoGenerator.h; sourceTree = "<group>"; };
 		1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermLogoGenerator.m; sourceTree = "<group>"; };
-		1DA7894714AC19F500C8FBD9 /* Growl */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Growl; path = Growl.framework/Growl; sourceTree = "<absolute>"; };
 		1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FontSizeEstimator.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = FontSizeEstimator.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TmuxSessionsTable.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2032,12 +1975,6 @@
 		1DB83951192E95EB0037E548 /* CaptureTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureTrigger.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DB83955192E9A610037E548 /* ToolCapturedOutputView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCapturedOutputView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCapturedOutputView.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DB8FBBD19468A40006BAF5C /* AquaTabsDown_vertical.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsDown_vertical.png; sourceTree = "<group>"; };
-		1DB8FBBE19468A40006BAF5C /* AquaTabsBackground_vertical.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsBackground_vertical.png; sourceTree = "<group>"; };
-		1DB8FBBF19468A40006BAF5C /* AquaTabsDownGraphite_vertical.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsDownGraphite_vertical.png; sourceTree = "<group>"; };
-		1DB8FBC019468A40006BAF5C /* AquaTabsDownNonKey_vertical.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsDownNonKey_vertical.png; sourceTree = "<group>"; };
-		1DB8FBC119468A40006BAF5C /* AquaTabsSeparator_vertical.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsSeparator_vertical.png; sourceTree = "<group>"; };
-		1DB8FBC219468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsSeparatorDown_vertical.png; sourceTree = "<group>"; };
 		1DB8FBC319468A40006BAF5C /* TabClose_Front_Rollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabClose_Front_Rollover.png; sourceTree = "<group>"; };
 		1DB9D8F0183FE9EF0029F0B5 /* HotkeyWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = HotkeyWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DB9D8F1183FE9EF0029F0B5 /* HotkeyWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = HotkeyWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2194,6 +2131,12 @@
 		A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermInstantReplayWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermInstantReplayWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66D218D63758009AC9D5 /* InstantReplay.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = InstantReplay.xib; sourceTree = "<group>"; };
+		A624230F19CF6B0C00182C08 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = ThirdParty/Sparkle.framework; sourceTree = "<group>"; };
+		A624231319CF6B1600182C08 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Growl.framework; path = ThirdParty/Growl.framework; sourceTree = "<group>"; };
+		A624231819CF6DE000182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
+		A624232119CF708600182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
+		A624232319CF70CB00182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
+		A624232519CF70DF00182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -2228,7 +2171,6 @@
 		A647E3B218C36D0300450FA1 /* VT100Token.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Token.m; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B518C5884600450FA1 /* iTermObjectPool.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermObjectPool.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; tabWidth = 4; };
-		A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		A64AB26219B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "iTerm2ForApplescriptTesting-Info.plist"; sourceTree = "<group>"; };
 		A671C065192981D000A7F796 /* NSStringCategoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringCategoryTest.h; sourceTree = "<group>"; };
 		A671C066192981D000A7F796 /* NSStringCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringCategoryTest.m; sourceTree = "<group>"; };
@@ -2268,7 +2210,6 @@
 		A68A30F1186D150A007F550F /* TransferrableFileMenuItemViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TransferrableFileMenuItemViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30F2186D150A007F550F /* VT100RemoteHost.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100RemoteHost.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30F3186D150A007F550F /* VT100WorkingDirectory.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100WorkingDirectory.h; sourceTree = "<group>"; tabWidth = 4; };
-		A68A30FE186D151E007F550F /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = NMSSH.framework; sourceTree = "<group>"; };
 		A68A3103186D2973007F550F /* TemporaryNumberAllocator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TemporaryNumberAllocator.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TemporaryNumberAllocator.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A310D186E2EDA007F550F /* PopupEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PopupEntry.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2432,18 +2373,8 @@
 		DD02573209CB9398008F320C /* PSMTabBarControl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabBarControl.h; sourceTree = "<group>"; };
 		DD02573309CB9398008F320C /* PSMTabBarControl.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarControl.m; sourceTree = "<group>"; tabWidth = 4; };
 		DD02573909CB9398008F320C /* PSMTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabStyle.h; sourceTree = "<group>"; };
-		DD02575B09CB93C2008F320C /* AquaTabNew.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabNew.png; sourceTree = "<group>"; };
-		DD02575C09CB93C2008F320C /* AquaTabNewPressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabNewPressed.png; sourceTree = "<group>"; };
-		DD02575D09CB93C2008F320C /* AquaTabNewRollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabNewRollover.png; sourceTree = "<group>"; };
-		DD02575E09CB93C2008F320C /* AquaTabsBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsBackground.png; sourceTree = "<group>"; };
-		DD02575F09CB93C2008F320C /* AquaTabsDown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsDown.png; sourceTree = "<group>"; };
-		DD02576009CB93C2008F320C /* AquaTabsDownGraphite.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsDownGraphite.png; sourceTree = "<group>"; };
-		DD02576109CB93C2008F320C /* AquaTabsDownNonKey.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsDownNonKey.png; sourceTree = "<group>"; };
-		DD02576209CB93C2008F320C /* AquaTabsSeparator.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsSeparator.png; sourceTree = "<group>"; };
-		DD02576309CB93C2008F320C /* AquaTabsSeparatorDown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AquaTabsSeparatorDown.png; sourceTree = "<group>"; };
 		DD02576609CB93C2008F320C /* overflowImage.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = overflowImage.tiff; sourceTree = "<group>"; };
 		DD02576709CB93C2008F320C /* overflowImagePressed.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = overflowImagePressed.tif; sourceTree = "<group>"; };
-		DD02576809CB93C2008F320C /* pi.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pi.png; sourceTree = "<group>"; };
 		DD02576E09CB93C2008F320C /* TabNewMetal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetal.png; sourceTree = "<group>"; };
 		DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalPressed.png; sourceTree = "<group>"; };
 		DD02577009CB93C2008F320C /* TabNewMetalRollover.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = TabNewMetalRollover.png; sourceTree = "<group>"; };
@@ -2503,17 +2434,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A64AB1D819B8C1EB0033DB9C /* Sparkle.framework in Frameworks */,
+				A624231919CF6DE000182C08 /* NMSSH.framework in Frameworks */,
+				A624231719CF6DD100182C08 /* Growl.framework in Frameworks */,
+				A624231219CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
 				1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */,
 				1D6EDAF619AEA20D005A7799 /* libSSKeychain.a in Frameworks */,
-				1D6EDAF719AEA20D005A7799 /* NMSSH.framework in Frameworks */,
 				1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */,
 				1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */,
 				1D6EDAFA19AEA20D005A7799 /* Sparkle.framework in Frameworks */,
 				1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */,
 				1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */,
 				1D6EDAFD19AEA20D005A7799 /* Quartz.framework in Frameworks */,
-				1D6EDAFE19AEA20D005A7799 /* Growl in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2521,14 +2452,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */,
+				A624231E19CF6E2400182C08 /* Growl.framework in Frameworks */,
 				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
 				1DFA7C941923E8B300DF1410 /* libSSKeychain.a in Frameworks */,
-				A68A3100186D151F007F550F /* NMSSH.framework in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
-				1D9A55BA180FAA1100B42CE9 /* Growl in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,
 				1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */,
 				1D9A55B5180FA8F400B42CE9 /* AppKit.framework in Frameworks */,
+				A624231119CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
 				1D9A5534180FA77F00B42CE9 /* Quartz.framework in Frameworks */,
 				1D9A5533180FA77900B42CE9 /* Carbon.framework in Frameworks */,
 				1DD39B7B180B8842004E56D5 /* libicucore.dylib in Frameworks */,
@@ -2548,16 +2480,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A64AB1D919B8C2670033DB9C /* Sparkle.framework in Frameworks */,
+				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
 				1DFA7C931923E8AC00DF1410 /* libSSKeychain.a in Frameworks */,
-				A68A30FF186D151E007F550F /* NMSSH.framework in Frameworks */,
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
+				A624231419CF6B1600182C08 /* Growl.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
+				A624231019CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
 				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
-				1DA7894814AC19F500C8FBD9 /* Growl in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2567,6 +2499,9 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A624232519CF70DF00182C08 /* NMSSH.framework */,
+				A624232319CF70CB00182C08 /* NMSSH.framework */,
+				A624232119CF708600182C08 /* NMSSH.framework */,
 				1DC035C8198989F4007449A9 /* iTerm2.iconset */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -2605,6 +2540,7 @@
 				A647E3B118C35DD900450FA1 /* VT100 */,
 			);
 			name = Classes;
+			path = sources/;
 			sourceTree = "<group>";
 		};
 		0464AB15006CD2EC7F000001 /* Headers */ = {
@@ -2863,6 +2799,7 @@
 				1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */,
 			);
 			name = Headers;
+			path = sources/;
 			sourceTree = "<group>";
 		};
 		0464AB22006CD2EC7F000001 /* Interface Builder Files */ = {
@@ -2909,7 +2846,6 @@
 		0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				1DA7894714AC19F500C8FBD9 /* Growl */,
 				5ECE4AC41451343E002A9CC2 /* Growl.framework */,
 				F6E2DED70AE2F67200D20B3B /* Sparkle.framework */,
 				0464AB2F006CD2EC7F000001 /* AppKit.framework */,
@@ -2940,6 +2876,7 @@
 				1D94EAA312D64022008225A9 /* UKCrashReporter */,
 			);
 			name = ThirdParty;
+			path = ThirdParty/;
 			sourceTree = "<group>";
 		};
 		1D03D42619144C140049EB8F /* Property Lists */ = {
@@ -3168,6 +3105,7 @@
 				1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */,
 			);
 			name = Tests;
+			path = sources/;
 			sourceTree = "<group>";
 		};
 		1D85D1C41306687700A3E998 /* RegexKitLite */ = {
@@ -3298,14 +3236,14 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				A64AB1D619B8C1EB0033DB9C /* Sparkle.framework */,
+				A624231819CF6DE000182C08 /* NMSSH.framework */,
+				A624231319CF6B1600182C08 /* Growl.framework */,
+				A624230F19CF6B0C00182C08 /* Sparkle.framework */,
 				1DFA7C9D1923F77100DF1410 /* Security.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
 				1DD39AD6180B8118004E56D5 /* Cocoa.framework */,
-				1D9A553A180FA7C500B42CE9 /* Growl */,
 				1DD39B7A180B8842004E56D5 /* libicucore.dylib */,
-				A68A30FE186D151E007F550F /* NMSSH.framework */,
 				1DD39AD8180B8118004E56D5 /* Other Frameworks */,
 				1DEB29301288885700B2CB9F /* Quartz.framework */,
 				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
@@ -3610,36 +3548,14 @@
 		DD02575509CB93C2008F320C /* images */ = {
 			isa = PBXGroup;
 			children = (
-				1DB8FBBD19468A40006BAF5C /* AquaTabsDown_vertical.png */,
-				1DB8FBBE19468A40006BAF5C /* AquaTabsBackground_vertical.png */,
-				1DB8FBBF19468A40006BAF5C /* AquaTabsDownGraphite_vertical.png */,
-				1DB8FBC019468A40006BAF5C /* AquaTabsDownNonKey_vertical.png */,
-				1DB8FBC119468A40006BAF5C /* AquaTabsSeparator_vertical.png */,
-				1DB8FBC219468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png */,
-				1DB8FBC319468A40006BAF5C /* TabClose_Front_Rollover.png */,
-				1D48B287165F3669000046EE /* TabClose_Front_Pressed.png */,
-				1D48B288165F3669000046EE /* TabClose_Front.png */,
-				1D48B289165F3669000046EE /* AquaTabClose_Front_Rollover.png */,
-				1D48B28A165F3669000046EE /* AquaTabClose_Front_Pressed.png */,
-				1D48B28B165F3669000046EE /* AquaTabClose_Front.png */,
-				1D48B27B165F362B000046EE /* AquaTabClose_Front_Rollover@2x.png */,
-				1D48B27C165F362B000046EE /* AquaTabClose_Front_Pressed@2x.png */,
-				1D48B27D165F362B000046EE /* AquaTabClose_Front@2x.png */,
-				1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */,
-				1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */,
-				1D48B280165F362B000046EE /* TabClose_Front@2x.png */,
-				DD02575B09CB93C2008F320C /* AquaTabNew.png */,
-				DD02575C09CB93C2008F320C /* AquaTabNewPressed.png */,
-				DD02575D09CB93C2008F320C /* AquaTabNewRollover.png */,
-				DD02575E09CB93C2008F320C /* AquaTabsBackground.png */,
-				DD02575F09CB93C2008F320C /* AquaTabsDown.png */,
-				DD02576009CB93C2008F320C /* AquaTabsDownGraphite.png */,
-				DD02576109CB93C2008F320C /* AquaTabsDownNonKey.png */,
-				DD02576209CB93C2008F320C /* AquaTabsSeparator.png */,
-				DD02576309CB93C2008F320C /* AquaTabsSeparatorDown.png */,
 				DD02576609CB93C2008F320C /* overflowImage.tiff */,
 				DD02576709CB93C2008F320C /* overflowImagePressed.tif */,
-				DD02576809CB93C2008F320C /* pi.png */,
+				1D48B288165F3669000046EE /* TabClose_Front.png */,
+				1D48B280165F362B000046EE /* TabClose_Front@2x.png */,
+				1D48B287165F3669000046EE /* TabClose_Front_Pressed.png */,
+				1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */,
+				1DB8FBC319468A40006BAF5C /* TabClose_Front_Rollover.png */,
+				1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */,
 				DD02576E09CB93C2008F320C /* TabNewMetal.png */,
 				DD02576F09CB93C2008F320C /* TabNewMetalPressed.png */,
 				DD02577009CB93C2008F320C /* TabNewMetalRollover.png */,
@@ -4402,26 +4318,16 @@
 				1D6ED97A19AEA20D005A7799 /* mark_err.png in Resources */,
 				1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */,
 				1D6ED97C19AEA20D005A7799 /* iTerm.strings in Resources */,
-				1D6ED97D19AEA20D005A7799 /* AquaTabNew.png in Resources */,
 				1D6ED97E19AEA20D005A7799 /* QuestionMarkSign.png in Resources */,
-				1D6ED97F19AEA20D005A7799 /* AquaTabNewPressed.png in Resources */,
 				1DEDF56E19C917FD005B023A /* new-tab@2x.png in Resources */,
 				1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */,
-				1D6ED98119AEA20D005A7799 /* AquaTabNewRollover.png in Resources */,
-				1D6ED98219AEA20D005A7799 /* AquaTabsBackground.png in Resources */,
-				1D6ED98319AEA20D005A7799 /* AquaTabsDown.png in Resources */,
-				1D6ED98419AEA20D005A7799 /* AquaTabsDownGraphite.png in Resources */,
 				1D6ED98519AEA20D005A7799 /* DirectoriesPopup.xib in Resources */,
 				1D6ED98619AEA20D005A7799 /* CommandHistoryPopup.xib in Resources */,
 				1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */,
-				1D6ED98819AEA20D005A7799 /* AquaTabsDownNonKey.png in Resources */,
-				1D6ED98919AEA20D005A7799 /* AquaTabsSeparator.png in Resources */,
 				1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */,
-				1D6ED98B19AEA20D005A7799 /* AquaTabsSeparatorDown.png in Resources */,
 				1D6ED98C19AEA20D005A7799 /* overflowImage.tiff in Resources */,
 				1D6ED98D19AEA20D005A7799 /* mark.png in Resources */,
 				1D6ED98E19AEA20D005A7799 /* overflowImagePressed.tif in Resources */,
-				1D6ED98F19AEA20D005A7799 /* pi.png in Resources */,
 				1D6ED99019AEA20D005A7799 /* TabNewMetal.png in Resources */,
 				1D6ED99119AEA20D005A7799 /* TabNewMetalPressed.png in Resources */,
 				1D6ED99219AEA20D005A7799 /* TabNewMetalRollover.png in Resources */,
@@ -4437,12 +4343,9 @@
 				1D6ED99C19AEA20D005A7799 /* MainMenu.xib in Resources */,
 				1D6ED99D19AEA20D005A7799 /* dead.png in Resources */,
 				1D6ED99E19AEA20D005A7799 /* dsa_pub.pem in Resources */,
-				1D6ED99F19AEA20D005A7799 /* AquaTabsSeparatorDown_vertical.png in Resources */,
-				1D6ED9A019AEA20D005A7799 /* AquaTabsBackground_vertical.png in Resources */,
 				1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */,
 				1D6ED9A219AEA20D005A7799 /* ColorPresets.plist in Resources */,
 				1D6ED9A319AEA20D005A7799 /* DefaultBookmark.plist in Resources */,
-				1D6ED9A419AEA20D005A7799 /* AquaTabsDownNonKey_vertical.png in Resources */,
 				1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */,
 				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
 				1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */,
@@ -4457,7 +4360,6 @@
 				1D6ED9B019AEA20D005A7799 /* GlobalSearch.xib in Resources */,
 				1D6ED9B119AEA20D005A7799 /* InstantReplay.xib in Resources */,
 				1D6ED9B219AEA20D005A7799 /* FindView.xib in Resources */,
-				1D6ED9B319AEA20D005A7799 /* AquaTabsDown_vertical.png in Resources */,
 				1D6ED9B419AEA20D005A7799 /* mark_err@2x.png in Resources */,
 				1D6ED9B519AEA20D005A7799 /* bell.png in Resources */,
 				1D6ED9B619AEA20D005A7799 /* BulkCopyProfilePreferences.xib in Resources */,
@@ -4477,15 +4379,10 @@
 				1D6ED9C419AEA20D005A7799 /* DefaultPointerActions.plist in Resources */,
 				1D6ED9C519AEA20D005A7799 /* LogoShadow.png in Resources */,
 				1D6ED9C619AEA20D005A7799 /* iTermOpenQuicklyWindowController.xib in Resources */,
-				1D6ED9C719AEA20D005A7799 /* AquaTabsDownGraphite_vertical.png in Resources */,
 				1D6ED9C819AEA20D005A7799 /* TmuxDashboard.xib in Resources */,
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
 				1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */,
-				1D6ED9CB19AEA20D005A7799 /* AquaTabClose_Front_Rollover@2x.png in Resources */,
-				1D6ED9CC19AEA20D005A7799 /* AquaTabClose_Front_Pressed@2x.png in Resources */,
-				1D6ED9CD19AEA20D005A7799 /* AquaTabClose_Front@2x.png in Resources */,
 				1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */,
-				1D6ED9CF19AEA20D005A7799 /* AquaTabsSeparator_vertical.png in Resources */,
 				1D6ED9D019AEA20D005A7799 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1D6ED9D119AEA20D005A7799 /* TabClose_Front_Pressed@2x.png in Resources */,
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
@@ -4493,9 +4390,6 @@
 				1D6ED9D419AEA20D005A7799 /* TabClose_Front_Rollover.png in Resources */,
 				1DEDF56B19C917FD005B023A /* new-tab.png in Resources */,
 				1D6ED9D519AEA20D005A7799 /* TabClose_Front.png in Resources */,
-				1D6ED9D619AEA20D005A7799 /* AquaTabClose_Front_Rollover.png in Resources */,
-				1D6ED9D719AEA20D005A7799 /* AquaTabClose_Front_Pressed.png in Resources */,
-				1D6ED9D819AEA20D005A7799 /* AquaTabClose_Front.png in Resources */,
 				1D6ED9D919AEA20D005A7799 /* important@2x.png in Resources */,
 				1D6ED9DA19AEA20D005A7799 /* Alert@2x.png in Resources */,
 				1D6ED9DB19AEA20D005A7799 /* PasteView.xib in Resources */,
@@ -4526,10 +4420,8 @@
 				A6B70FBC19830C37007A4284 /* dead.png in Resources */,
 				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
 				A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */,
-				1DB8FBC919468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
-				1DB8FBCD19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */,
 				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				1DEDF56A19C917FD005B023A /* new-tab.png in Resources */,
 				1DC13AC81886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
@@ -4538,20 +4430,16 @@
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				A6B70FBE19830C37007A4284 /* dead@2x.png in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
-				1DB8FBC519468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */,
 				1DEDF56D19C917FD005B023A /* new-tab@2x.png in Resources */,
 				1DFA7C971923EA8700DF1410 /* iTermPasswordManager.xib in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
 				A61B66D418D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */,
-				1DB8FBCF19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
-				1DB8FBCB19468A40006BAF5C /* AquaTabsDownNonKey_vertical.png in Resources */,
 				1DFA9D6818F37160008ADC98 /* iTermEditKeyActionWindowController.xib in Resources */,
 				A6B70FC219830F0D007A4284 /* NewOutput.png in Resources */,
 				A6CEDA5C198C139500BB57EC /* iTerm2.iconset in Resources */,
 				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
-				1DB8FBC719468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */,
 				A69B4589196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */,
 				1D03D424191419080049EB8F /* DirectoriesPopup.xib in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
@@ -4583,26 +4471,16 @@
 				1DC13ABD1886146B00034DAE /* mark_err.png in Resources */,
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
 				F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */,
-				1D5FDD891208E91100C46BA3 /* AquaTabNew.png in Resources */,
 				1DC2AF5119521CFF005769D5 /* QuestionMarkSign.png in Resources */,
-				1D5FDD8A1208E91100C46BA3 /* AquaTabNewPressed.png in Resources */,
 				1DEDF56C19C917FD005B023A /* new-tab@2x.png in Resources */,
 				1DC2AF5319521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
-				1D5FDD8B1208E91100C46BA3 /* AquaTabNewRollover.png in Resources */,
-				1D5FDD8C1208E91100C46BA3 /* AquaTabsBackground.png in Resources */,
-				1D5FDD8D1208E91100C46BA3 /* AquaTabsDown.png in Resources */,
-				1D5FDD8E1208E91100C46BA3 /* AquaTabsDownGraphite.png in Resources */,
 				1D03D423191419080049EB8F /* DirectoriesPopup.xib in Resources */,
 				1DC13AC71886507D00034DAE /* CommandHistoryPopup.xib in Resources */,
 				1DC2A1CC1949165D005769D5 /* Maximized.png in Resources */,
-				1D5FDD8F1208E91100C46BA3 /* AquaTabsDownNonKey.png in Resources */,
-				1D5FDD901208E91100C46BA3 /* AquaTabsSeparator.png in Resources */,
 				A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */,
-				1D5FDD911208E91100C46BA3 /* AquaTabsSeparatorDown.png in Resources */,
 				1D5FDD921208E91100C46BA3 /* overflowImage.tiff in Resources */,
 				1D01609D1852AA6F0014D26A /* mark.png in Resources */,
 				1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */,
-				1D5FDD941208E91100C46BA3 /* pi.png in Resources */,
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
@@ -4618,12 +4496,9 @@
 				9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */,
 				A6B70FBB19830C37007A4284 /* dead.png in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
-				1DB8FBCE19468A40006BAF5C /* AquaTabsSeparatorDown_vertical.png in Resources */,
-				1DB8FBC619468A40006BAF5C /* AquaTabsBackground_vertical.png in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
 				1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */,
-				1DB8FBCA19468A40006BAF5C /* AquaTabsDownNonKey_vertical.png in Resources */,
 				1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */,
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
@@ -4638,7 +4513,6 @@
 				1D99785312EEB3D600F0794D /* GlobalSearch.xib in Resources */,
 				A61B66D318D63758009AC9D5 /* InstantReplay.xib in Resources */,
 				1D237D90131D8BEE004DD60C /* FindView.xib in Resources */,
-				1DB8FBC419468A40006BAF5C /* AquaTabsDown_vertical.png in Resources */,
 				1DC13ABF1886146B00034DAE /* mark_err@2x.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				A6E7139F18F7B199008D94DD /* BulkCopyProfilePreferences.xib in Resources */,
@@ -4658,15 +4532,10 @@
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
 				A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */,
 				A69B4588196F8EA100F5444D /* iTermOpenQuicklyWindowController.xib in Resources */,
-				1DB8FBC819468A40006BAF5C /* AquaTabsDownGraphite_vertical.png in Resources */,
 				1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */,
 				1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */,
 				1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */,
-				1D48B281165F362B000046EE /* AquaTabClose_Front_Rollover@2x.png in Resources */,
-				1D48B282165F362B000046EE /* AquaTabClose_Front_Pressed@2x.png in Resources */,
-				1D48B283165F362B000046EE /* AquaTabClose_Front@2x.png in Resources */,
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
-				1DB8FBCC19468A40006BAF5C /* AquaTabsSeparator_vertical.png in Resources */,
 				A6E713B618FCB559008D94DD /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
@@ -4674,9 +4543,6 @@
 				1DB8FBD019468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				1DEDF56919C917FD005B023A /* new-tab.png in Resources */,
 				1D48B28D165F3669000046EE /* TabClose_Front.png in Resources */,
-				1D48B28E165F3669000046EE /* AquaTabClose_Front_Rollover.png in Resources */,
-				1D48B28F165F3669000046EE /* AquaTabClose_Front_Pressed.png in Resources */,
-				1D48B290165F3669000046EE /* AquaTabClose_Front.png in Resources */,
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
 				1D085F8916F030FB00B7FCE9 /* PasteView.xib in Resources */,
@@ -5737,6 +5603,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -5753,12 +5620,15 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = .;
+				HEADER_SEARCH_PATHS = (
+					.,
+					ThirdParty,
+				);
 				INFOPLIST_FILE = iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Growl.framework\"",
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CODE_SIGN_FLAGS = "";
@@ -5791,6 +5661,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -5808,12 +5679,15 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = .;
+				HEADER_SEARCH_PATHS = (
+					.,
+					ThirdParty,
+				);
 				INFOPLIST_FILE = "iTerm2ForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Growl.framework\"",
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
@@ -5848,6 +5722,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -5864,12 +5739,15 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = .;
+				HEADER_SEARCH_PATHS = (
+					.,
+					ThirdParty,
+				);
 				INFOPLIST_FILE = "iTerm2ForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Growl.framework\"",
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				"OTHER_CFLAGS[arch=*]" = "";
@@ -5903,6 +5781,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -5919,12 +5798,15 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = .;
+				HEADER_SEARCH_PATHS = (
+					.,
+					ThirdParty,
+				);
 				INFOPLIST_FILE = "iTerm2ForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Growl.framework\"",
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CODE_SIGN_FLAGS = "";
@@ -5955,6 +5837,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
@@ -5972,12 +5855,15 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = .;
+				HEADER_SEARCH_PATHS = (
+					.,
+					ThirdParty,
+				);
 				INFOPLIST_FILE = "iTerm2ForApplescriptTesting-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Growl.framework\"",
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_LDFLAGS = (
@@ -6022,13 +5908,14 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/gnachman/iTerm2,
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_PREFIX_HEADER = "sources/iTermTests/iTermTests-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -6040,12 +5927,16 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					ThirdParty,
+				);
+				INFOPLIST_FILE = "sources/iTermTests/iTermTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/georgen/iterm2/Growl.framework/Versions/A,
-					/Users/georgen/iterm2/Sparkle.framework/Versions/A,
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
@@ -6086,23 +5977,28 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/gnachman/iTerm2,
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_PREFIX_HEADER = "sources/iTermTests/iTermTests-Prefix.pch";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					ThirdParty,
+				);
+				INFOPLIST_FILE = "sources/iTermTests/iTermTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/georgen/iterm2/Growl.framework/Versions/A,
-					/Users/georgen/iterm2/Sparkle.framework/Versions/A,
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_LDFLAGS = (
@@ -6143,23 +6039,28 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/gnachman/iTerm2,
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_PREFIX_HEADER = "sources/iTermTests/iTermTests-Prefix.pch";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					ThirdParty,
+				);
+				INFOPLIST_FILE = "sources/iTermTests/iTermTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/georgen/iterm2/Growl.framework/Versions/A,
-					/Users/georgen/iterm2/Sparkle.framework/Versions/A,
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_LDFLAGS = (
@@ -6200,23 +6101,28 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					/Users/gnachman/iTerm2,
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "iTermTests/iTermTests-Prefix.pch";
+				GCC_PREFIX_HEADER = "sources/iTermTests/iTermTests-Prefix.pch";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = "iTermTests/iTermTests-Info.plist";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					ThirdParty,
+				);
+				INFOPLIST_FILE = "sources/iTermTests/iTermTests-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/georgen/iterm2/Growl.framework/Versions/A,
-					/Users/georgen/iterm2/Sparkle.framework/Versions/A,
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_LDFLAGS = (
@@ -6255,7 +6161,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "SSKeychain/SSKeychain-Prefix.pch";
+				GCC_PREFIX_HEADER = "ThirdParty/SSKeychain/SSKeychain-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -6296,7 +6202,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "SSKeychain/SSKeychain-Prefix.pch";
+				GCC_PREFIX_HEADER = "ThirdParty/SSKeychain/SSKeychain-Prefix.pch";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -6331,7 +6237,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "SSKeychain/SSKeychain-Prefix.pch";
+				GCC_PREFIX_HEADER = "ThirdParty/SSKeychain/SSKeychain-Prefix.pch";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -6366,7 +6272,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "SSKeychain/SSKeychain-Prefix.pch";
+				GCC_PREFIX_HEADER = "ThirdParty/SSKeychain/SSKeychain-Prefix.pch";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -6390,6 +6296,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -6407,12 +6314,15 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = .;
+				HEADER_SEARCH_PATHS = (
+					.,
+					ThirdParty,
+				);
 				INFOPLIST_FILE = iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Growl.framework\"",
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
@@ -6448,6 +6358,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -6464,12 +6375,15 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = .;
+				HEADER_SEARCH_PATHS = (
+					.,
+					ThirdParty,
+				);
 				INFOPLIST_FILE = iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Growl.framework\"",
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				"OTHER_CFLAGS[arch=*]" = "";
@@ -6502,6 +6416,7 @@
 					"$(inherited)",
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
@@ -6519,12 +6434,15 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = .;
+				HEADER_SEARCH_PATHS = (
+					.,
+					ThirdParty,
+				);
 				INFOPLIST_FILE = iTerm2.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Growl.framework\"",
+					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_LDFLAGS = (
