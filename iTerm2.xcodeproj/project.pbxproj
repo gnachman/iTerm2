@@ -4598,7 +4598,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "exec ./updateVersion.py";
+			shellScript = "exec tools/updateVersion.py";
 		};
 		93BD20450FE16DD50059656D /* Update SVN Revision */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -4612,7 +4612,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "exec ./updateVersion.py";
+			shellScript = "exec tools/updateVersion.py";
 		};
 /* End PBXShellScriptBuildPhase section */
 
