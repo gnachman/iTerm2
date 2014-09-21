@@ -349,6 +349,14 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
 - (void)setDisableTabClose:(BOOL)value
 {
+    if (_disableTabClose != value) {
+        // if value has changed, tell all existing cells to update their button-ness.
+        NSEnumerator *enumerator = [_cells objectEnumerator];
+        PSMTabBarCell *nextCell;
+        while ( (nextCell = [enumerator nextObject]) ) {
+            [nextCell setHasCloseButton:!value];
+        }
+    }
     _disableTabClose = value;
     [self update:_automaticallyAnimates];
 }
@@ -509,6 +517,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     PSMTabBarCell *cell = [[PSMTabBarCell alloc] initWithControlView:self];
     [cell setRepresentedObject:item];
     [cell setModifierString:[self _modifierString]];
+    [cell setHasCloseButton:![self disableTabClose]];
 
     // add to collection
     [_cells insertObject:cell atIndex:i];
