@@ -339,6 +339,11 @@ static NSImage* alertImage;
 
     // Size of the documentVisibleRect when the badge was set.
     NSSize _badgeDocumentVisibleRectSize;
+
+    // For focus follows mouse. This flag remembers if the cursor entered this view while the app
+    // was inactive. If it's set when the app becomes active, then make this view the first
+    // responder.
+    BOOL _makeFirstResponderWhenAppBecomesActive;
 }
 
 
@@ -436,6 +441,10 @@ static NSImage* alertImage;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(hostnameLookupSucceeded:)
                                                      name:kHostnameLookupSucceeded
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
+                                                     name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
 
         imeOffset = 0;
@@ -2772,6 +2781,7 @@ NSMutableArray* screens=0;
 - (void)mouseExited:(NSEvent *)event
 {
     mouseInRect_ = NO;
+    _makeFirstResponderWhenAppBecomesActive = NO;
     [self updateUnderlinedURLs:event];
 }
 
@@ -2796,6 +2806,8 @@ NSMutableArray* screens=0;
         }
         if ([self isInKeyWindow]) {
             [_delegate textViewDidBecomeFirstResponder];
+        } else {
+            _makeFirstResponderWhenAppBecomesActive = YES;
         }
     }
 }
@@ -2910,6 +2922,18 @@ NSMutableArray* screens=0;
         [[iTermController sharedInstance] dumpViewHierarchy];
         return NO;
     }
+    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
+    if (frontTextView != self &&
+        !cmdPressed &&
+        [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+        // Clicking in an inactive pane with focus follows mouse makes it active.
+        // Becuase of how FFM works, this would only happen if another app were key.
+        // See issue 3163.
+        DLog(@"Click on inactive pain with focus follow smouse");
+        _mouseDownWasFirstMouse = YES;
+        [[self window] makeFirstResponder:self];
+        return NO;
+    }
     if (_mouseDownWasFirstMouse && !cmdPressed) {
         return NO;
     }
@@ -2940,26 +2964,28 @@ NSMutableArray* screens=0;
     }
 
     dragOk_ = YES;
-    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if (frontTextView != self) {
-        if (cmdPressed && [NSApp keyWindow] == [self window]) {
-            // A cmd-click in an inactive pane in the active window behaves like a click that
-            // doesn't make the pane active.
-            mouseDown = YES;
+    if (cmdPressed) {
+        if (frontTextView != self) {
+            if ([NSApp keyWindow] == [self window]) {
+                // A cmd-click in an inactive pane in the active window behaves like a click that
+                // doesn't make the pane active.
+                DLog(@"Cmd-click in acitve pane in active window");
+                mouseDown = YES;
+                cmdPressed = NO;
+                _mouseDownWasFirstMouse = YES;
+            } else {
+                // A cmd-click in in inactive window makes the pane active.
+                DLog(@"Cmd-click in inactive window");
+                _mouseDownWasFirstMouse = YES;
+                [[self window] makeFirstResponder:self];
+                return NO;
+            }
+        } else if ([NSApp keyWindow] != [self window]) {
+            // A cmd-click in an active session in a non-key window acts like a click without cmd.
+            DLog(@"Cmd-click in active session in non-key window");
             cmdPressed = NO;
-            _mouseDownWasFirstMouse = YES;
-        } else {
-            // A cmd-click in in inactive window or a plain click in any window (active or not)
-            // makes the pane active.
-            _mouseDownWasFirstMouse = YES;
-            [[self window] makeFirstResponder:self];
-            return NO;
         }
-    } else if (cmdPressed && [NSApp keyWindow] != [self window]) {
-        // A cmd-click in an active session in a non-key window acts like a click without cmd.
-        cmdPressed = NO;
     }
-
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         return YES;
     }
@@ -8361,6 +8387,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         numTouches_ = 0;
     }
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
+    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+        if (_makeFirstResponderWhenAppBecomesActive) {
+            [[self window] makeFirstResponder:self];
+        }
+    }
+    _makeFirstResponderWhenAppBecomesActive = NO;
 }
 
 - (void)_settingsChanged:(NSNotification *)notification

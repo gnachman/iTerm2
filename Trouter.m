@@ -390,6 +390,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     DLog(@"before chunks=%@", beforeChunks);
     DLog(@"after chunks=%@", afterChunks);
 
+    // Some programs will thoughtlessly print a filename followed by some silly suffix.
+    // We'll try versions with and without a questionable suffix. The version
+    // with the suffix is always preferred if it exists.
+    NSArray *questionableSuffixes = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];
+
     for (int i = [beforeChunks count]; i >= 0; i--) {
         NSString *beforeChunk = @"";
         if (i < [beforeChunks count]) {
@@ -411,21 +416,36 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                 continue;
             }
             [paths addObject:[[possiblePath copy] autorelease]];
-            
-            if ([self getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
-                if (charsTakenFromPrefixPtr) {
-                    *charsTakenFromPrefixPtr = left.length;
+
+            for (NSString *modifiedPossiblePath in [self pathsFromPath:possiblePath byRemovingBadSuffixes:questionableSuffixes]) {
+                if ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
+                    if (charsTakenFromPrefixPtr) {
+                        *charsTakenFromPrefixPtr = left.length;
+                    }
+                    DLog(@"Using path %@", modifiedPossiblePath);
+                    return modifiedPossiblePath;
                 }
-                DLog(@"Using path %@", possiblePath);
-                return possiblePath;
             }
-            
             if (--limit == 0) {
                 return nil;
             }
         }
     }
     return nil;
+}
+
+- (NSArray *)pathsFromPath:(NSString *)source byRemovingBadSuffixes:(NSArray *)badSuffixes {
+    NSMutableArray *result = [NSMutableArray array];
+    [result addObject:source];
+    for (NSString *badSuffix in badSuffixes) {
+        if ([source hasSuffix:badSuffix]) {
+            NSString *stripped = [source substringToIndex:source.length - badSuffix.length];
+            if (stripped.length) {
+                [result addObject:stripped];
+            }
+        }
+    }
+    return result;
 }
 
 @end
