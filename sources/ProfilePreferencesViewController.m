@@ -445,6 +445,7 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
         // If a profile was deleted, update the shortcut titles that might refer to it.
         [_generalViewController updateShortcutTitles];
     }
+    [[_delegate profilePreferencesModel] flush];
 }
 
 - (IBAction)addProfile:(id)sender {
@@ -587,6 +588,7 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
                          contextInfo:(BulkCopyProfilePreferencesWindowController *)bulkCopyController {
     [sheet close];
     [bulkCopyController autorelease];
+    [[_delegate profilePreferencesModel] flush];
 }
 
 #pragma mark - iTermProfilesPreferencesBaseViewControllerDelegate
