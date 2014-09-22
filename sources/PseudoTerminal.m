@@ -22,6 +22,7 @@
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"
+#import "iTermOpenQuicklyWindow.h"
 #import "iTermPreferences.h"
 #import "iTermTabBarControlView.h"
 #import "iTermURLSchemeController.h"
@@ -2707,6 +2708,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // be called at all because it makes us key before closing itself.
             // If a popup is opening, though, we shouldn't close ourselves.
             if (![[NSApp keyWindow] isKindOfClass:[PopupWindow class]] &&
+                ![[NSApp keyWindow] isKindOfClass:[iTermOpenQuicklyWindow class]] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
                 PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
