@@ -27,6 +27,7 @@
 }
 
 + (id)sharedInstance;
++ (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window;
 
 - (BOOL)rollingInHotkeyTerm;
 - (void)showHotKeyWindow;

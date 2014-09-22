@@ -36,6 +36,14 @@ NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArran
     return instance;
 }
 
++ (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window {
+    PseudoTerminal *hotkeyTerm = GetHotkeyWindow();
+    if (hotkeyTerm) {
+        [[hotkeyTerm window] makeKeyWindow];
+    }
+    [window close];
+}
+
 static PseudoTerminal* GetHotkeyWindow()
 {
     iTermController* cont = [iTermController sharedInstance];
