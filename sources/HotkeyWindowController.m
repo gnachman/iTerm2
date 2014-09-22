@@ -38,7 +38,7 @@ NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArran
 
 + (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window {
     PseudoTerminal *hotkeyTerm = GetHotkeyWindow();
-    if (hotkeyTerm) {
+    if (hotkeyTerm && [[hotkeyTerm window] alphaValue]) {
         [[hotkeyTerm window] makeKeyWindow];
     }
     [window close];
