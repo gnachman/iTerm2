@@ -30,6 +30,7 @@
 #import "ColorsMenuItemView.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAboutWindowController.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFontPanel.h"
@@ -86,23 +87,9 @@ static BOOL hasBecomeActive = NO;
 
 @end
 
-@implementation iTermAboutWindow
-
-- (IBAction)closeCurrentSession:(id)sender
-{
-    [self close];
-}
-
-@end
-
 
 @implementation iTermApplicationDelegate {
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
-
-    // about window
-    NSWindowController *aboutController;
-    IBOutlet id ABOUT;
-    IBOutlet NSTextView *AUTHORS;
 
     // Menu items
     IBOutlet NSMenu     *bookmarkMenu;
@@ -642,7 +629,6 @@ static BOOL hasBecomeActive = NO;
                                                          forEventClass:kInternetEventClass
                                                             andEventID:kAEGetURL];
 
-        aboutController = nil;
         launchTime_ = [[NSDate date] retain];
         _workspaceSessionActive = YES;
     }
@@ -1153,50 +1139,9 @@ static BOOL hasBecomeActive = NO;
 }
 
 // About window
-- (NSAttributedString *)_linkTo:(NSString *)urlString title:(NSString *)title
-{
-    NSDictionary *linkAttributes = [NSDictionary dictionaryWithObject:[NSURL URLWithString:urlString]
-                                                               forKey:NSLinkAttributeName];
-    NSString *localizedTitle = NSLocalizedStringFromTableInBundle(title, @"iTerm",
-                                                                  [NSBundle bundleForClass:[self class]],
-                                                                  @"About");
 
-    NSAttributedString *string = [[NSAttributedString alloc] initWithString:localizedTitle
-                                                                 attributes:linkAttributes];
-    return [string autorelease];
-}
-
-- (IBAction)showAbout:(id)sender
-{
-    // check if an About window is shown already
-    if (aboutController) {
-        [aboutController showWindow:self];
-        return;
-    }
-
-    NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
-    NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", [myDict objectForKey:@"CFBundleVersion"]];
-
-    NSAttributedString *webAString = [self _linkTo:@"http://iterm2.com/" title:@"Home Page\n"];
-    NSAttributedString *bugsAString = [self _linkTo:@"http://code.google.com/p/iterm2/issues/entry" title:@"Report a bug\n\n"];
-    NSAttributedString *creditsAString = [self _linkTo:@"http://code.google.com/p/iterm2/wiki/Credits" title:@"Credits"];
-
-    NSDictionary *linkTextViewAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-        [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
-        [NSColor blueColor], NSForegroundColorAttributeName,
-        [NSCursor pointingHandCursor], NSCursorAttributeName,
-        NULL];
-
-    [AUTHORS setLinkTextAttributes: linkTextViewAttributes];
-    [[AUTHORS textStorage] deleteCharactersInRange: NSMakeRange(0, [[AUTHORS textStorage] length])];
-    [[AUTHORS textStorage] appendAttributedString:[[[NSAttributedString alloc] initWithString:versionString] autorelease]];
-    [[AUTHORS textStorage] appendAttributedString: webAString];
-    [[AUTHORS textStorage] appendAttributedString: bugsAString];
-    [[AUTHORS textStorage] appendAttributedString: creditsAString];
-    [AUTHORS setAlignment: NSCenterTextAlignment range: NSMakeRange(0, [[AUTHORS textStorage] length])];
-
-    aboutController = [[NSWindowController alloc] initWithWindow:ABOUT];
-    [aboutController showWindow:ABOUT];
+- (IBAction)showAbout:(id)sender {
+    [[iTermAboutWindowController sharedInstance] showWindow:self];
 }
 
 // size

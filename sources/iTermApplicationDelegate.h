@@ -42,14 +42,6 @@ extern NSString *const kMarkAlertActionPostNotification;
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 
-@interface iTermAboutWindow : NSPanel
-{
-}
-
-- (IBAction)closeCurrentSession:(id)sender;
-
-@end
-
 @interface iTermApplicationDelegate : NSObject
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
