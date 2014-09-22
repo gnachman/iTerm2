@@ -910,6 +910,9 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
         float width;
 
+        // suppress close button?
+        cell.isCloseButtonSuppressed = [self disableTabClose];
+
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
             // Determine cell width
             if (_sizeCellsToFit) {

@@ -17,34 +17,10 @@
 - (void)tabClick:(id)sender;
 @end
 
-@interface PSMTabBarCell : NSActionCell {
-    // sizing
-    NSRect              _frame;
-    NSSize              _stringSize;
-    int                 _currentStep;
-    BOOL                _isPlaceholder;
-    
-    // state
-    int                 _tabState;
-    NSTrackingRectTag   _closeButtonTrackingTag;    // left side tracking, if dragging
-    NSTrackingRectTag   _cellTrackingTag;           // right side tracking, if dragging
-    BOOL                _closeButtonOver;
-    BOOL                _closeButtonPressed;
-    PSMProgressIndicator *_indicator;
-    BOOL                _isInOverflowMenu;
-    BOOL                _hasCloseButton;
-    BOOL                _hasIcon;
-    int                 _count;
-
-    //iTerm add-on
-    NSColor             *_tabColor;
-    NSString            *_modifierString;
-
-    BOOL _isLast;
-}
-
+@interface PSMTabBarCell : NSActionCell
 // Is this the last cell? Only valid while drawing.
-@property (nonatomic, assign) BOOL isLast;
+@property(nonatomic, assign) BOOL isLast;
+@property(nonatomic, assign) BOOL isCloseButtonSuppressed;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

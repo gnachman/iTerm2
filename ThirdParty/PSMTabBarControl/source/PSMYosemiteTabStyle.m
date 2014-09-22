@@ -181,7 +181,7 @@
     resultWidth = MARGIN_X;
 
     // close button?
-    if ([cell hasCloseButton]) {
+    if ([cell hasCloseButton] && ![cell isCloseButtonSuppressed]) {
         resultWidth += [metalCloseButton size].width + kPSMTabBarCellPadding;
     }
 
@@ -216,7 +216,7 @@
     resultWidth = MARGIN_X;
 
     // close button?
-    if ([cell hasCloseButton]) {
+    if ([cell hasCloseButton] && ![cell isCloseButtonSuppressed]) {
         resultWidth += [metalCloseButton size].width + kPSMTabBarCellPadding;
     }
 
@@ -449,7 +449,7 @@
     float labelPosition = cellFrame.origin.x + MARGIN_X;
 
     // close button
-    if ([cell hasCloseButton]) {
+    if ([cell hasCloseButton] && ![cell isCloseButtonSuppressed]) {
         NSSize closeButtonSize = NSZeroSize;
         NSRect closeButtonRect = [cell closeButtonRectForFrame:cellFrame];
         NSImage *closeButton = nil;

@@ -18,28 +18,44 @@
 - (void)update:(BOOL)animate;
 @end
 
-@implementation PSMTabBarCell
+@implementation PSMTabBarCell  {
+    // sizing
+    NSRect              _frame;
+    NSSize              _stringSize;
+    int                 _currentStep;
+    BOOL                _isPlaceholder;
+
+    // state
+    int                 _tabState;
+    NSTrackingRectTag   _closeButtonTrackingTag;    // left side tracking, if dragging
+    NSTrackingRectTag   _cellTrackingTag;           // right side tracking, if dragging
+    BOOL                _closeButtonOver;
+    BOOL                _closeButtonPressed;
+    PSMProgressIndicator *_indicator;
+    BOOL                _isInOverflowMenu;
+    BOOL                _hasCloseButton;
+    BOOL                _hasIcon;
+    int                 _count;
+
+    //iTerm add-on
+    NSColor             *_tabColor;
+    NSString            *_modifierString;
+
+    BOOL _isLast;
+}
 
 @synthesize isLast = _isLast;
 
 #pragma mark -
 #pragma mark Creation/Destruction
-- (id)initWithControlView:(PSMTabBarControl *)controlView
-{
+- (id)initWithControlView:(PSMTabBarControl *)controlView {
     if ( (self = [super init]) ) {
         _controlView = controlView;
-        _closeButtonTrackingTag = 0;
-        _cellTrackingTag = 0;
-        _closeButtonOver = NO;
-        _closeButtonPressed = NO;
         _indicator = [[PSMProgressIndicator alloc] initWithFrame:NSMakeRect(0.0,0.0,kPSMTabBarIndicatorWidth,kPSMTabBarIndicatorWidth)];
         [_indicator setStyle:NSProgressIndicatorSpinningStyle];
         [_indicator setAutoresizingMask:NSViewMinYMargin];
         [_indicator setControlSize:NSSmallControlSize];
         _hasCloseButton = YES;
-        _count = 0;
-        _isPlaceholder = NO;
-        _tabColor = nil;
         _modifierString = [@"" copy];
     }
     return self;
@@ -402,6 +418,7 @@
         [aCoder encodeObject:_indicator forKey:@"indicator"];
         [aCoder encodeBool:_isInOverflowMenu forKey:@"isInOverflowMenu"];
         [aCoder encodeBool:_hasCloseButton forKey:@"hasCloseButton"];
+        [aCoder encodeBool:_isCloseButtonSuppressed forKey:@"isCloseButtonSuppressed"];
         [aCoder encodeBool:_hasIcon forKey:@"hasIcon"];
         [aCoder encodeInt:_count forKey:@"count"];
     }
@@ -424,6 +441,7 @@
             _indicator = [[aDecoder decodeObjectForKey:@"indicator"] retain];
             _isInOverflowMenu = [aDecoder decodeBoolForKey:@"isInOverflowMenu"];
             _hasCloseButton = [aDecoder decodeBoolForKey:@"hasCloseButton"];
+            _isCloseButtonSuppressed = [aDecoder decodeBoolForKey:@"isCloseButtonSuppressed"];
             _hasIcon = [aDecoder decodeBoolForKey:@"hasIcon"];
             _count = [aDecoder decodeIntForKey:@"count"];
         }
