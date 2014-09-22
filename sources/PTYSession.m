@@ -1923,7 +1923,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     // Try to open it as a URL.
-    NSURL *url = [NSURL URLWithString:selection];
+    NSURL *url =
+          [NSURL URLWithString:[selection stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
     if (url) {
         [[NSWorkspace sharedWorkspace] openURL:url];
         return;
