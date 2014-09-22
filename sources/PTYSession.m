@@ -327,7 +327,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _commands = [[NSMutableArray alloc] init];
         _directories = [[NSMutableArray alloc] init];
         _hosts = [[NSMutableArray alloc] init];
-        _bellRate = [[MovingAverage alloc] init];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
@@ -5958,6 +5957,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Minimum duration to report to avoid a very short duration triggering with just two bells.
     const NSTimeInterval kMinDuration = 2;
+    if (!_bellRate) {
+        _bellRate = [[MovingAverage alloc] init];
+    }
     // Keep a moving average of the time between bells
     [_bellRate addValue:MAX(kMinDuration, MIN(kMaxDuration, [_bellRate timeSinceTimerStarted]))];
     [_bellRate startTimer];
@@ -5967,7 +5969,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     static const NSTimeInterval kThresholdForBellMovingAverageToInferAnnoyance = 4;
 
     // If you decline the offer to silence the bell, we'll stop asking for this many seconds.
-    static const NSTimeInterval kTimeToWaitAfterDecline = 60;
+    static const NSTimeInterval kTimeToWaitAfterDecline = 10;
     NSString *const identifier = @"Annoying Bell Announcement Identifier";
     if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
         !_announcements[identifier] &&
@@ -5976,10 +5978,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         iTermAnnouncementViewController *announcement =
                 [iTermAnnouncementViewController announcemenWithTitle:@"The bell is ringing a lot. Want to ignore it temporarily?"
                                                                 style:kiTermAnnouncementViewStyleQuestion
-                                                          withActions:@[ @"Suppress Bell Temporarily",
+                                                          withActions:@[ @"Silence Bell Temporarily",
                                                                          @"Suppress All Output",
                                                                          @"Don't Offer Again" ]
                                                            completion:^(int selection) {
+                                                               // Release the moving average so the count will restart after the announcement goes away.
+                                                               [_bellRate release];
+                                                               _bellRate = nil;
                                                                switch (selection) {
                                                                    case -2:  // Dismiss programmatically
                                                                        break;

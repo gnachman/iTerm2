@@ -140,25 +140,49 @@ static const CGFloat kMargin = 8;
     _block = [block copy];
     NSRect rect = _internalView.frame;
 
-    for (int i = actions.count - 1; i >= 0; i--) {
-        NSString *action = actions[i];
-        NSButton *button = [[[NSButton alloc] init] autorelease];
-        [button setButtonType:NSMomentaryPushInButton];
-        [button setTarget:self];
-        [button setAction:@selector(buttonPressed:)];
-        [button setTag:i];
-        [button setTitle:action];
-        [button setBezelStyle:NSTexturedRoundedBezelStyle];
-        [button sizeToFit];
-        button.autoresizingMask = NSViewMinXMargin;
-        _buttonWidth += kMargin;
-        _buttonWidth += button.frame.size.width;
-        button.frame = NSMakeRect(rect.size.width - _buttonWidth,
-                                  floor((rect.size.height - button.frame.size.height) / 2),
-                                  button.frame.size.width,
-                                  button.frame.size.height);
-        [_actionButtons addObject:button];
-        [_internalView addSubview:button];
+    NSPopUpButton *pullDown = nil;
+    if (actions.count > 2) {
+        pullDown = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) pullsDown:YES];
+        pullDown.autoresizingMask = NSViewMinXMargin;
+        [pullDown setBezelStyle:NSTexturedRoundedBezelStyle];
+        [pullDown setTarget:self];
+        [pullDown setAction:@selector(pullDownItemSelected:)];
+        [_internalView addSubview:pullDown];
+        [pullDown addItemWithTitle:@"Select Action…"];
+        int i = 0;
+        for (NSString *action in actions) {
+            [pullDown addItemWithTitle:action];
+            [[[pullDown itemArray] lastObject] setTag:i];
+            i++;
+        }
+        [pullDown sizeToFit];
+        _buttonWidth += pullDown.frame.size.width + kMargin;
+        pullDown.frame = NSMakeRect(rect.size.width - _buttonWidth,
+                                    floor((rect.size.height - pullDown.frame.size.height) / 2),
+                                    pullDown.frame.size.width,
+                                    pullDown.frame.size.height);
+        [_actionButtons addObject:pullDown];
+    } else {
+        for (int i = actions.count - 1; i >= 0; i--) {
+            NSString *action = actions[i];
+            NSButton *button = [[[NSButton alloc] init] autorelease];
+            [button setButtonType:NSMomentaryPushInButton];
+            [button setTarget:self];
+            [button setAction:@selector(buttonPressed:)];
+            [button setTag:i];
+            [button setTitle:action];
+            [button setBezelStyle:NSTexturedRoundedBezelStyle];
+            [button sizeToFit];
+            button.autoresizingMask = NSViewMinXMargin;
+            _buttonWidth += kMargin;
+            _buttonWidth += button.frame.size.width;
+            button.frame = NSMakeRect(rect.size.width - _buttonWidth,
+                                      floor((rect.size.height - button.frame.size.height) / 2),
+                                      button.frame.size.width,
+                                      button.frame.size.height);
+            [_actionButtons addObject:button];
+            [_internalView addSubview:button];
+        }
     }
 }
 
@@ -267,6 +291,10 @@ static const CGFloat kMargin = 8;
 
 - (void)resetCursorRects {
     [self addCursorRect:self.bounds cursor:[NSCursor arrowCursor]];
+}
+
+- (void)pullDownItemSelected:(id)sender {
+    _block([[sender selectedItem] tag]);
 }
 
 @end
