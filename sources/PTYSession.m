@@ -27,7 +27,7 @@
 #import "iTermTextExtractor.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
-#import "MovePaneController.h"
+#import "MovingAverage.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
@@ -73,6 +73,7 @@ static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdated
 
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
+static NSString *const kSuppressAnnoyingBellOffer = @"NoSyncSuppressAnnyoingBellOffer";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
@@ -278,6 +279,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // Tokens get queued when a shell enters the paused state. If it gets unpaused, then these are
     // executed before any others.
     NSMutableArray *_queuedTokens;
+
+    // Moving average of time between bell rings
+    MovingAverage *_bellRate;
+    NSTimeInterval _ignoreBellUntil;
+    NSTimeInterval _annoyingBellOfferDeclinedAt;
+    BOOL _suppressAllOutput;
 }
 
 - (id)init {
@@ -320,6 +327,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _commands = [[NSMutableArray alloc] init];
         _directories = [[NSMutableArray alloc] init];
         _hosts = [[NSMutableArray alloc] init];
+        _bellRate = [[MovingAverage alloc] init];
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -403,6 +412,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_commands release];
     [_directories release];
     [_hosts release];
+    [_bellRate release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -1299,7 +1309,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (BOOL)shouldExecuteToken {
-    return !_exited && _terminal && (self.tmuxMode == TMUX_GATEWAY || ![_shell hasMuteCoprocess]);
+    return (!_exited &&
+            _terminal &&
+            (self.tmuxMode == TMUX_GATEWAY || ![_shell hasMuteCoprocess]) &&
+            !_suppressAllOutput);
 }
 
 - (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
@@ -3876,7 +3889,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
   unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
   DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
   _lastInput = [NSDate timeIntervalSinceReferenceDate];
-
+  _suppressAllOutput = NO;
   if ([[[self tab] realParentWindow] inInstantReplay]) {
     DLog(@"PTYSession keyDown in IR");
 
@@ -4681,8 +4694,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[[self tab] realParentWindow] newTabWithBookmarkGuid:guid];
 }
 
+// Called when a key is pressed.1
 - (BOOL)textViewDelegateHandlesAllKeystrokes
 {
+    _suppressAllOutput = NO;
     return [[[self tab] realParentWindow] inInstantReplay];
 }
 
@@ -4868,6 +4883,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (NSDictionary *)textViewVariables {
     return _variables;
+}
+
+- (BOOL)textViewSuppressingAllOutput {
+    return _suppressAllOutput;
 }
 
 - (void)sendEscapeSequence:(NSString *)text
@@ -5927,6 +5946,65 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (BOOL)screenShouldPostTerminalGeneratedAlert {
     return [iTermProfilePreferences boolForKey:KEY_SEND_TERMINAL_GENERATED_ALERT
                                      inProfile:_profile];
+}
+
+- (BOOL)screenShouldIgnoreBell {
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (now < _ignoreBellUntil) {
+        return YES;
+    }
+    // Initial value that will require a reasonable amount of bell-ringing to overcome.
+    const NSTimeInterval kMaxDuration = 60;
+
+    // Minimum duration to report to avoid a very short duration triggering with just two bells.
+    const NSTimeInterval kMinDuration = 2;
+    // Keep a moving average of the time between bells
+    [_bellRate addValue:MAX(kMinDuration, MIN(kMaxDuration, [_bellRate timeSinceTimerStarted]))];
+    [_bellRate startTimer];
+
+    // If the bell rings more often than once every 4 seconds, you will eventually get an offer to
+    // silence it.
+    static const NSTimeInterval kThresholdForBellMovingAverageToInferAnnoyance = 4;
+
+    // If you decline the offer to silence the bell, we'll stop asking for this many seconds.
+    static const NSTimeInterval kTimeToWaitAfterDecline = 60;
+    NSString *const identifier = @"Annoying Bell Announcement Identifier";
+    if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
+        !_announcements[identifier] &&
+        (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
+        ![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
+        iTermAnnouncementViewController *announcement =
+                [iTermAnnouncementViewController announcemenWithTitle:@"The bell is ringing a lot. Want to ignore it temporarily?"
+                                                                style:kiTermAnnouncementViewStyleQuestion
+                                                          withActions:@[ @"Suppress Bell Temporarily",
+                                                                         @"Suppress All Output",
+                                                                         @"Don't Offer Again" ]
+                                                           completion:^(int selection) {
+                                                               switch (selection) {
+                                                                   case -2:  // Dismiss programmatically
+                                                                       break;
+
+                                                                   case -1: // No
+                                                                       _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
+                                                                       break;
+
+                                                                   case 0: // Suppress bell temporarily
+                                                                       _ignoreBellUntil = now + 60;
+                                                                       break;
+
+                                                                   case 1: // Suppress all output
+                                                                       _suppressAllOutput = YES;
+                                                                       break;
+
+                                                                   case 2: // Never offer again
+                                                                       [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                               forKey:kSuppressAnnoyingBellOffer];
+                                                                       break;
+                                                               }
+                                                           }];
+        [self queueAnnouncement:announcement identifier:identifier];
+    }
+    return NO;
 }
 
 - (NSString *)screenProfileName {

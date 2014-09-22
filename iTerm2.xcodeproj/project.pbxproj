@@ -1357,6 +1357,12 @@
 		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
 		A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
 		A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
+		A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
+		A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
+		A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
+		A663010B19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */; };
+		A663010C19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */; };
+		A663010D19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */; };
 		A671C067192981D000A7F796 /* NSStringCategoryTest.h in Headers */ = {isa = PBXBuildFile; fileRef = A671C065192981D000A7F796 /* NSStringCategoryTest.h */; };
 		A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
 		A671C069192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
@@ -2170,6 +2176,8 @@
 		A647E3B518C5884600450FA1 /* iTermObjectPool.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermObjectPool.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; tabWidth = 4; };
 		A64AB26219B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "iTerm2ForApplescriptTesting-Info.plist"; sourceTree = "<group>"; };
+		A663010619CFCE74004AF81C /* SuppressAllOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SuppressAllOutput.png; path = images/SuppressAllOutput.png; sourceTree = "<group>"; };
+		A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "SuppressAllOutput@2x.png"; path = "images/SuppressAllOutput@2x.png"; sourceTree = "<group>"; };
 		A671C065192981D000A7F796 /* NSStringCategoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringCategoryTest.h; sourceTree = "<group>"; };
 		A671C066192981D000A7F796 /* NSStringCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringCategoryTest.m; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2927,6 +2935,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A663010619CFCE74004AF81C /* SuppressAllOutput.png */,
+				A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */,
 				1DEDF56719C917FD005B023A /* new-tab.png */,
 				1DEDF56819C917FD005B023A /* new-tab@2x.png */,
 				A6B70FBF19830F0D007A4284 /* NewOutput.png */,
@@ -4309,6 +4319,7 @@
 				1D6ED97619AEA20D005A7799 /* close.png in Resources */,
 				1D6ED97719AEA20D005A7799 /* config.png in Resources */,
 				1D6ED97819AEA20D005A7799 /* iTermKeyMapping.xib in Resources */,
+				A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				1D6ED97919AEA20D005A7799 /* important.png in Resources */,
 				1D6ED97A19AEA20D005A7799 /* mark_err.png in Resources */,
 				1D6ED97B19AEA20D005A7799 /* newwin.png in Resources */,
@@ -4331,6 +4342,7 @@
 				1D6ED99519AEA20D005A7799 /* BrokenPipeDivider.png in Resources */,
 				1D6ED99619AEA20D005A7799 /* PrefsAdvanced@2x.png in Resources */,
 				1D6ED99719AEA20D005A7799 /* Warning.png in Resources */,
+				A663010D19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				1D6ED99819AEA20D005A7799 /* dead@2x.png in Resources */,
 				1D6ED99919AEA20D005A7799 /* PseudoTerminal.xib in Resources */,
 				A605D4B719CF79F800D40343 /* iTerm2.iconset in Resources */,
@@ -4441,7 +4453,9 @@
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
 				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
+				A663010C19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				1DC2AF5219521CFF005769D5 /* QuestionMarkSign.png in Resources */,
+				A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A6E713B718FCB559008D94DD /* English.lproj/AdvancedWorkingDirectoryWindow.xib in Resources */,
@@ -4462,6 +4476,7 @@
 				1D5FDD7C1208E91100C46BA3 /* close.png in Resources */,
 				1D5FDD7D1208E91100C46BA3 /* config.png in Resources */,
 				1DFA9D6C18F37AA5008ADC98 /* iTermKeyMapping.xib in Resources */,
+				A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				1D5FDD7F1208E91100C46BA3 /* important.png in Resources */,
 				1DC13ABD1886146B00034DAE /* mark_err.png in Resources */,
 				1D5FDD811208E91100C46BA3 /* newwin.png in Resources */,
@@ -4484,6 +4499,7 @@
 				A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */,
 				A67F118218D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1D5FDD9B1208E91100C46BA3 /* Warning.png in Resources */,
+				A663010B19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				A6B70FBD19830C37007A4284 /* dead@2x.png in Resources */,
 				1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */,
 				A605D4B519CF79F600D40343 /* iTerm2.iconset in Resources */,

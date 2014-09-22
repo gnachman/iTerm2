@@ -91,6 +91,7 @@ static const int kCoprocessMargin = 4;
 static const int kAlertMargin = 4;
 static const int kBadgeMargin = 4;
 static const int kBadgeRightMargin = 10;
+static const int kAllOutputSupressedMargin = 4;
 
 static NSImage* bellImage;
 static NSImage* wrapToTopImage;
@@ -99,6 +100,7 @@ static NSImage* broadcastInputImage;
 static NSImage* maximizedImage;
 static NSImage* coprocessImage;
 static NSImage* alertImage;
+static NSImage* allOutputSuppressedImage;
 
 @interface PTYTextView () <iTermSelectionDelegate>
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
@@ -384,6 +386,9 @@ static NSImage* alertImage;
 
     alertImage = [[NSImage imageNamed:@"Alert"] retain];
     [alertImage setFlipped:YES];
+
+    allOutputSuppressedImage = [[NSImage imageNamed:@"SuppressAllOutput"] retain];
+    [allOutputSuppressedImage setFlipped:YES];
 
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
@@ -1849,6 +1854,14 @@ NSMutableArray* screens=0;
                            fromRect:NSMakeRect(0, 0, size.width, size.height)
                           operation:NSCompositeSourceOver
                            fraction:0.5];
+    }
+    if ([_delegate textViewSuppressingAllOutput]) {
+        NSSize size = [allOutputSuppressedImage size];
+        x -= size.width + kAllOutputSupressedMargin;
+        [allOutputSuppressedImage drawAtPoint:NSMakePoint(x, frame.origin.y + kAllOutputSupressedMargin)
+                                     fromRect:NSMakeRect(0, 0, size.width, size.height)
+                                    operation:NSCompositeSourceOver
+                                     fraction:0.5];
     }
 
     if (flashing_ > 0) {

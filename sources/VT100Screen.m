@@ -47,6 +47,7 @@ static const double kInterBellQuietPeriod = 0.1;
     NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
     NSMutableArray *inlineFileCodes_;
     VT100GridCoord nextCommandOutputStart_;
+    NSTimeInterval lastBell_;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -973,19 +974,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 }
 
-- (void)activateBell
-{
+- (void)activateBell {
+    if ([delegate_ screenShouldIgnoreBell]) return;
     if (audibleBell_) {
         // Some bells or systems block on NSBeep so it's important to rate-limit it to prevent
         // bells from blocking the terminal indefinitely. The small delay we insert between
         // bells allows us to swallow up the vast majority of ^G characters when you cat a
         // binary file.
-        static NSDate *lastBell;
-        double interval = lastBell ? [[NSDate date] timeIntervalSinceDate:lastBell] : INFINITY;
+        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+        NSTimeInterval interval = now - lastBell_;
         if (interval > kInterBellQuietPeriod) {
             NSBeep();
-            [lastBell release];
-            lastBell = [[NSDate date] retain];
+            lastBell_ = now;
         }
     }
     if (showBellIndicator_) {

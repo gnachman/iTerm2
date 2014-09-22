@@ -141,6 +141,7 @@ typedef enum {
 - (BOOL)textViewUseHFSPlusMapping;
 - (NSColor *)textViewBadgeColor;
 - (NSDictionary *)textViewVariables;
+- (BOOL)textViewSuppressingAllOutput;
 
 @end
 
