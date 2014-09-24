@@ -379,7 +379,7 @@ int gMigrated;
     [self removeBookmarkAtIndex:[self convertFilteredIndex:i withFilter:filter]];
 }
 
-- (void)removeBookmarkWithGuid:(NSString*)guid
+- (void)removeProfileWithGuid:(NSString*)guid
 {
     int i = [self indexOfProfileWithGuid:guid];
     if (i >= 0) {

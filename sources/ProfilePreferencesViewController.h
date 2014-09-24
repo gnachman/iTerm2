@@ -49,4 +49,6 @@ extern NSString *const kProfileSessionNameDidEndEditing;
 - (void)resizeWindowForCurrentTab;
 - (void)windowWillClose:(NSNotification *)notification;
 
+- (void)removeProfileWithGuid:(NSString *)guid fromModel:(ProfileModel *)model;
+
 @end

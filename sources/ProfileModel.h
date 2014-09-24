@@ -65,7 +65,7 @@ typedef struct {
 - (Profile*)profileAtIndex:(int)index withFilter:(NSString*)filter;
 - (void)addBookmark:(Profile*)bookmark;
 - (void)addBookmark:(Profile*)bookmark inSortedOrder:(BOOL)sort;
-- (void)removeBookmarkWithGuid:(NSString*)guid;
+- (void)removeProfileWithGuid:(NSString*)guid;
 - (void)removeBookmarksAtIndices:(NSArray*)indices;
 - (void)removeBookmarkAtIndex:(int)index;
 - (void)removeBookmarkAtIndex:(int)index withFilter:(NSString*)filter;

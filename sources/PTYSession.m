@@ -3144,7 +3144,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return guid;
     }
     _isDivorced = YES;
-    [[ProfileModel sessionsInstance] removeBookmarkWithGuid:guid];
+    [[ProfileModel sessionsInstance] removeProfileWithGuid:guid];
     [[ProfileModel sessionsInstance] addBookmark:bookmark];
 
     NSString *existingOriginalGuid = bookmark[KEY_ORIGINAL_GUID];

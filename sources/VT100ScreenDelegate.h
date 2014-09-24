@@ -146,6 +146,9 @@
 // Returns whether terminal-generated notifications are allowed.
 - (BOOL)screenShouldPostTerminalGeneratedAlert;
 
+// Should this bell be ignored?
+- (BOOL)screenShouldIgnoreBell;
+
 // PTYTextView deselect
 - (void)screenRemoveSelection;
 

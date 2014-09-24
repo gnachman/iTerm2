@@ -1376,6 +1376,20 @@
 		A663011E19CFE64B004AF81C /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A663011C19CFE64B004AF81C /* AboutWindow.xib */; };
 		A663011F19CFE64B004AF81C /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A663011C19CFE64B004AF81C /* AboutWindow.xib */; };
 		A663012019CFE64B004AF81C /* AboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A663011C19CFE64B004AF81C /* AboutWindow.xib */; };
+		A663012819D0864C004AF81C /* SCConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012219D0864C004AF81C /* SCConstants.h */; };
+		A663012919D0864C004AF81C /* SCConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012219D0864C004AF81C /* SCConstants.h */; };
+		A663012A19D0864C004AF81C /* SCEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012319D0864C004AF81C /* SCEvent.h */; };
+		A663012B19D0864C004AF81C /* SCEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012319D0864C004AF81C /* SCEvent.h */; };
+		A663012C19D0864C004AF81C /* SCEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012419D0864C004AF81C /* SCEvent.m */; };
+		A663012D19D0864C004AF81C /* SCEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012419D0864C004AF81C /* SCEvent.m */; };
+		A663012E19D0864C004AF81C /* SCEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012419D0864C004AF81C /* SCEvent.m */; };
+		A663012F19D0864C004AF81C /* SCEventListenerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012519D0864C004AF81C /* SCEventListenerProtocol.h */; };
+		A663013019D0864C004AF81C /* SCEventListenerProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012519D0864C004AF81C /* SCEventListenerProtocol.h */; };
+		A663013119D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
+		A663013219D0864C004AF81C /* SCEvents.h in Headers */ = {isa = PBXBuildFile; fileRef = A663012619D0864C004AF81C /* SCEvents.h */; };
+		A663013319D0864C004AF81C /* SCEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012719D0864C004AF81C /* SCEvents.m */; };
+		A663013419D0864C004AF81C /* SCEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012719D0864C004AF81C /* SCEvents.m */; };
+		A663013519D0864C004AF81C /* SCEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012719D0864C004AF81C /* SCEvents.m */; };
 		A671C067192981D000A7F796 /* NSStringCategoryTest.h in Headers */ = {isa = PBXBuildFile; fileRef = A671C065192981D000A7F796 /* NSStringCategoryTest.h */; };
 		A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
 		A671C069192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
@@ -2196,6 +2210,12 @@
 		A663011519CFE450004AF81C /* iTermAboutWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindowController.h; sourceTree = "<group>"; };
 		A663011619CFE450004AF81C /* iTermAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAboutWindowController.m; sourceTree = "<group>"; };
 		A663011D19CFE64B004AF81C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/AboutWindow.xib; sourceTree = "<group>"; };
+		A663012219D0864C004AF81C /* SCConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCConstants.h; path = SCEvents/Source/SCConstants.h; sourceTree = "<group>"; };
+		A663012319D0864C004AF81C /* SCEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCEvent.h; path = SCEvents/Source/SCEvent.h; sourceTree = "<group>"; };
+		A663012419D0864C004AF81C /* SCEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SCEvent.m; path = SCEvents/Source/SCEvent.m; sourceTree = "<group>"; };
+		A663012519D0864C004AF81C /* SCEventListenerProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCEventListenerProtocol.h; path = SCEvents/Source/SCEventListenerProtocol.h; sourceTree = "<group>"; };
+		A663012619D0864C004AF81C /* SCEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCEvents.h; path = SCEvents/Source/SCEvents.h; sourceTree = "<group>"; };
+		A663012719D0864C004AF81C /* SCEvents.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SCEvents.m; path = SCEvents/Source/SCEvents.m; sourceTree = "<group>"; };
 		A671C065192981D000A7F796 /* NSStringCategoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringCategoryTest.h; sourceTree = "<group>"; };
 		A671C066192981D000A7F796 /* NSStringCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringCategoryTest.m; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2888,6 +2908,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A663012119D08638004AF81C /* SCEvents */,
 				1DFA7C621923E77900DF1410 /* SSKeychain */,
 				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
 				F6441F610E748404000EC682 /* CGSInternal */,
@@ -3414,6 +3435,19 @@
 			name = VT100;
 			sourceTree = "<group>";
 		};
+		A663012119D08638004AF81C /* SCEvents */ = {
+			isa = PBXGroup;
+			children = (
+				A663012219D0864C004AF81C /* SCConstants.h */,
+				A663012319D0864C004AF81C /* SCEvent.h */,
+				A663012419D0864C004AF81C /* SCEvent.m */,
+				A663012519D0864C004AF81C /* SCEventListenerProtocol.h */,
+				A663012619D0864C004AF81C /* SCEvents.h */,
+				A663012719D0864C004AF81C /* SCEvents.m */,
+			);
+			name = SCEvents;
+			sourceTree = "<group>";
+		};
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
@@ -3805,6 +3839,7 @@
 				1D6ED90819AEA20D005A7799 /* SCPPath.h in Headers */,
 				1D6ED90919AEA20D005A7799 /* CoprocessTrigger.h in Headers */,
 				1D6ED90A19AEA20D005A7799 /* iTermRestorableSession.h in Headers */,
+				A663013019D0864C004AF81C /* SCEventListenerProtocol.h in Headers */,
 				1D6ED90B19AEA20D005A7799 /* NSColor+Scripting.h in Headers */,
 				1D6ED90C19AEA20D005A7799 /* TransferrableFile.h in Headers */,
 				1D6ED90D19AEA20D005A7799 /* Coprocess.h in Headers */,
@@ -3870,6 +3905,7 @@
 				1D6ED94819AEA20D005A7799 /* PTYTextView.h in Headers */,
 				1D6ED94919AEA20D005A7799 /* CommandHistoryEntry.h in Headers */,
 				1D6ED94A19AEA20D005A7799 /* iTermFlippedView.h in Headers */,
+				A663012919D0864C004AF81C /* SCConstants.h in Headers */,
 				1D6ED94B19AEA20D005A7799 /* PTYWindow.h in Headers */,
 				1D6ED94C19AEA20D005A7799 /* VT100CSIParser.h in Headers */,
 				1D6ED94D19AEA20D005A7799 /* VT100Screen.h in Headers */,
@@ -3891,6 +3927,7 @@
 				1D6ED95D19AEA20D005A7799 /* VT100AnsiParser.h in Headers */,
 				1D6ED95E19AEA20D005A7799 /* ProfilePreferencesViewController.h in Headers */,
 				1D6ED95F19AEA20D005A7799 /* iTermOpenQuicklyModel.h in Headers */,
+				A663012B19D0864C004AF81C /* SCEvent.h in Headers */,
 				1D6ED96019AEA20D005A7799 /* BackgroundThread.h in Headers */,
 				1D6ED96119AEA20D005A7799 /* iTermFontPanel.h in Headers */,
 				1D6ED96219AEA20D005A7799 /* CharacterRun.h in Headers */,
@@ -3911,6 +3948,7 @@
 				1D6ED97119AEA20D005A7799 /* MovingAverage.h in Headers */,
 				1D6ED97219AEA20D005A7799 /* CharacterRunInline.h in Headers */,
 				1D6ED97319AEA20D005A7799 /* iTermRemotePreferences.h in Headers */,
+				A663013219D0864C004AF81C /* SCEvents.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4108,6 +4146,7 @@
 				A68A30F8186D150B007F550F /* SCPPath.h in Headers */,
 				1D9DDD92142E5AC600275650 /* CoprocessTrigger.h in Headers */,
 				A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */,
+				A663012F19D0864C004AF81C /* SCEventListenerProtocol.h in Headers */,
 				A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */,
 				A68A30F9186D150B007F550F /* TransferrableFile.h in Headers */,
 				1D9DDD9C142E5FBB00275650 /* Coprocess.h in Headers */,
@@ -4173,6 +4212,7 @@
 				1D407A4214BABE8700BD5035 /* PTYTextView.h in Headers */,
 				A6E74748188C6344005355CF /* CommandHistoryEntry.h in Headers */,
 				A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */,
+				A663012819D0864C004AF81C /* SCConstants.h in Headers */,
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
 				A6A13AB118C33ED300B241ED /* VT100CSIParser.h in Headers */,
 				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
@@ -4194,6 +4234,7 @@
 				A647E39A18C3515900450FA1 /* VT100AnsiParser.h in Headers */,
 				A6E7139418F50762008D94DD /* ProfilePreferencesViewController.h in Headers */,
 				A69B45AE19731D3200F5444D /* iTermOpenQuicklyModel.h in Headers */,
+				A663012A19D0864C004AF81C /* SCEvent.h in Headers */,
 				1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */,
 				1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */,
 				1D48B379167E809D000046EE /* CharacterRun.h in Headers */,
@@ -4214,6 +4255,7 @@
 				1D9053C617A5CCF100A0B64E /* MovingAverage.h in Headers */,
 				1D699BC417CABC060094F0C1 /* CharacterRunInline.h in Headers */,
 				FB4CEC973C7E9235362E3F26 /* iTermRemotePreferences.h in Headers */,
+				A663013119D0864C004AF81C /* SCEvents.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4738,6 +4780,7 @@
 				1D6EDA3819AEA20D005A7799 /* VT100GridTypes.m in Sources */,
 				1D6EDA3919AEA20D005A7799 /* iTermPasteHelper.m in Sources */,
 				1D6EDA3A19AEA20D005A7799 /* TerminalFile.m in Sources */,
+				A663013519D0864C004AF81C /* SCEvents.m in Sources */,
 				1D6EDA3B19AEA20D005A7799 /* LineBuffer.m in Sources */,
 				1D6EDA3C19AEA20D005A7799 /* iTermPasswordManagerWindowController.m in Sources */,
 				1D6EDA3D19AEA20D005A7799 /* iTermApplicationDelegate.m in Sources */,
@@ -4810,6 +4853,7 @@
 				1D6EDA8019AEA20D005A7799 /* WindowArrangements.m in Sources */,
 				1D6EDA8119AEA20D005A7799 /* ArrangementPreviewView.m in Sources */,
 				1D6EDA8219AEA20D005A7799 /* SplitPanel.m in Sources */,
+				A663012E19D0864C004AF81C /* SCEvent.m in Sources */,
 				1D6EDA8319AEA20D005A7799 /* MovePaneController.m in Sources */,
 				1D6EDA8419AEA20D005A7799 /* SplitSelectionView.m in Sources */,
 				1D6EDA8519AEA20D005A7799 /* FutureMethods.m in Sources */,
@@ -4942,6 +4986,7 @@
 				A63F409C183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
 				A6B70FCF1986FB39007A4284 /* PTYSession+Scripting.m in Sources */,
 				1D9A55AB180FA8B700B42CE9 /* PSMProgressIndicator.m in Sources */,
+				A663012D19D0864C004AF81C /* SCEvent.m in Sources */,
 				A6A2699E190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */,
 				A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */,
@@ -5144,6 +5189,7 @@
 				A6E7139E18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m in Sources */,
 				1D9A553E180FA7ED00B42CE9 /* PTYWindow.m in Sources */,
 				A68A30DF186D1429007F550F /* SCPPath.m in Sources */,
+				A663013419D0864C004AF81C /* SCEvents.m in Sources */,
 				1D9A558D180FA87000B42CE9 /* PasteViewController.m in Sources */,
 				1DC13AC518864E2200034DAE /* CommandHistoryPopup.m in Sources */,
 				1D9A5547180FA82E00B42CE9 /* TmuxController.m in Sources */,
@@ -5289,6 +5335,7 @@
 				1DD39ACF180B7884004E56D5 /* VT100GridTypes.m in Sources */,
 				A6B5134B18E779BB00D249A5 /* iTermPasteHelper.m in Sources */,
 				A6057C0A187A1809004A60AF /* TerminalFile.m in Sources */,
+				A663013319D0864C004AF81C /* SCEvents.m in Sources */,
 				1D5FDDC91208E93600C46BA3 /* LineBuffer.m in Sources */,
 				1DFA7C9B1923EDD900DF1410 /* iTermPasswordManagerWindowController.m in Sources */,
 				874206500564169600CFC3F1 /* iTermApplicationDelegate.m in Sources */,
@@ -5361,6 +5408,7 @@
 				1DCA5ED013EE507800B7725E /* WindowArrangements.m in Sources */,
 				1D2560AB13EE60E4006B35CD /* ArrangementPreviewView.m in Sources */,
 				1DF8AF5913FD781700C8A435 /* SplitPanel.m in Sources */,
+				A663012C19D0864C004AF81C /* SCEvent.m in Sources */,
 				1D29732814082676004C5DBE /* MovePaneController.m in Sources */,
 				1D29732C14082A52004C5DBE /* SplitSelectionView.m in Sources */,
 				1D9F6AB9140C9DC4009B5CD4 /* FutureMethods.m in Sources */,

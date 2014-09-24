@@ -33,14 +33,21 @@
 #import "iTermKeyBindingMgr.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSStringIterm.h"
+#import "SCEvents.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <pwd.h>
 
-@implementation ITAddressBookMgr
+@interface ITAddressBookMgr () <SCEventListenerProtocol>
+@end
+
+@implementation ITAddressBookMgr {
+  SCEvents *_events;
+}
 
 + (id)sharedInstance
 {
@@ -97,6 +104,10 @@
                                               [self removeBonjourProfiles];
                                           }
                                       }];
+        _events = [[SCEvents alloc] init];
+        _events.delegate = self;
+        [_events startWatchingPaths:@[ [self dynamicProfilesPath] ]];
+        [self reloadDynamicProfiles];
     }
     
     return self;
@@ -113,7 +124,7 @@
     [sshBonjourBrowser release];
     [ftpBonjourBrowser release];
     [telnetBonjourBrowser release];
-
+    [_events release];
     [super dealloc];
 }
 
@@ -132,8 +143,7 @@
     }
 }
 
-- (void)locateBonjourServices
-{
+- (void)locateBonjourServices {
     if (!bonjourServices) {
         sshBonjourBrowser = [[NSNetServiceBrowser alloc] init];
         ftpBonjourBrowser = [[NSNetServiceBrowser alloc] init];
@@ -141,17 +151,16 @@
 
         bonjourServices = [[NSMutableArray alloc] init];
 
-        [sshBonjourBrowser setDelegate: self];
-        [ftpBonjourBrowser setDelegate: self];
-        [telnetBonjourBrowser setDelegate: self];
-        [sshBonjourBrowser searchForServicesOfType: @"_ssh._tcp." inDomain: @""];
-        [ftpBonjourBrowser searchForServicesOfType: @"_ftp._tcp." inDomain: @""];
-        [telnetBonjourBrowser searchForServicesOfType: @"_telnet._tcp." inDomain: @""];
+        [sshBonjourBrowser setDelegate:self];
+        [ftpBonjourBrowser setDelegate:self];
+        [telnetBonjourBrowser setDelegate:self];
+        [sshBonjourBrowser searchForServicesOfType:@"_ssh._tcp." inDomain:@""];
+        [ftpBonjourBrowser searchForServicesOfType:@"_ftp._tcp." inDomain:@""];
+        [telnetBonjourBrowser searchForServicesOfType:@"_telnet._tcp." inDomain:@""];
     }
 }
 
-- (void)stopLocatingBonjourServices
-{
+- (void)stopLocatingBonjourServices {
     [sshBonjourBrowser stop];
     [sshBonjourBrowser release];
     sshBonjourBrowser = nil;
@@ -181,7 +190,8 @@
 
 - (void)copyProfileToBookmark:(NSMutableDictionary *)dict
 {
-    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"MigrationMap" ofType:@"plist"];
+    NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"MigrationMap"
+                                                                           ofType:@"plist"];
     NSDictionary* fileDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
     NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
     NSDictionary* keybindingProfiles = [prefs objectForKey: @"KeyBindings"];
@@ -282,10 +292,13 @@
 }
 
 // NSNetServiceBrowser delegate methods
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didFindService:(NSNetService *)aNetService moreComing:(BOOL)moreComing
+- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser
+           didFindService:(NSNetService *)aNetService
+               moreComing:(BOOL)moreComing
 {
     if ([self verbose]) {
-        NSLog(@"netServiceBrowser:%@ didFindService:%@ moreComing:%d", aNetServiceBrowser, aNetService, (int)moreComing);
+        NSLog(@"netServiceBrowser:%@ didFindService:%@ moreComing:%d",
+              aNetServiceBrowser, aNetService, (int)moreComing);
     }
     // resolve the service and add to temporary array to retain it so that
     // resolving works.
@@ -294,13 +307,15 @@
     [aNetService resolveWithTimeout:5];
 }
 
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing
-{
+- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser
+         didRemoveService:(NSNetService *)aNetService
+               moreComing:(BOOL)moreComing {
     if (aNetService == nil) {
         return;
     }
     if ([self verbose]) {
-        NSLog(@"netServiceBrowser:%@ didRemoveService:%@ moreComing:%d", aNetServiceBrowser, aNetService, (int)moreComing);
+        NSLog(@"netServiceBrowser:%@ didRemoveService:%@ moreComing:%d",
+              aNetServiceBrowser, aNetService, (int)moreComing);
     }
 
     // remove host entry from this group
@@ -330,8 +345,7 @@
     return [font stringValue];
 }
 
-+ (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict
-{
++ (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict {
     NSString* plistFile = [[NSBundle bundleForClass:[self class]]
                                     pathForResource:@"DefaultBookmark"
                                              ofType:@"plist"];
@@ -357,8 +371,7 @@
 - (void)_addBonjourHostProfileWithName:(NSString *)serviceName
                        ipAddressString:(NSString *)ipAddressString
                                   port:(int)port
-                           serviceType:(NSString *)serviceType
-{
+                           serviceType:(NSString *)serviceType {
     NSMutableDictionary *newBookmark;
     Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
     if (prototype) {
@@ -375,7 +388,8 @@
     if ([serviceType isEqualToString:@"ssh"] && port != 22) {
         optionalPortArg = [NSString stringWithFormat:@"-p %d ", port];
     }
-    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@", serviceType, optionalPortArg, ipAddressString] forKey:KEY_COMMAND];
+    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@", serviceType, optionalPortArg, ipAddressString]
+                    forKey:KEY_COMMAND];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
     [newBookmark setObject:kProfilePreferenceInitialDirectoryHomeValue
@@ -601,6 +615,195 @@
         // Home dir, custom == "No"
         return NSHomeDirectory();
     }
+}
+
+#pragma mark - SCEventListenerProtocol
+
+- (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
+    [self reloadDynamicProfiles];
+}
+
+#pragma mark - Dynamic Profiles
+
+- (NSString *)dynamicProfilesPath {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *appSupport = [fileManager applicationSupportDirectory];
+    NSString *thePath = [appSupport stringByAppendingPathComponent:@"DynamicProfiles"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:thePath
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:NULL];
+    return thePath;
+}
+
+- (void)reloadDynamicProfiles {
+    NSString *path = [self dynamicProfilesPath];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    // Load the current dynamic profiles into |newProfiles|. The |guids| set
+    // is used to ensure that guids are unique across all files.
+    NSMutableArray *newProfiles = [NSMutableArray array];
+    NSMutableSet *guids = [NSMutableSet set];
+    for (NSString *file in [fileManager enumeratorAtPath:path]) {
+        NSString *fullName = [path stringByAppendingPathComponent:file];
+        if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
+            return;
+        }
+    }
+
+    // Update changes to existing dynamic profiles and add ones whose guids are
+    // not known.
+    NSArray *oldProfiles = [self dynamicProfiles];
+    for (Profile *profile in newProfiles) {
+        Profile *existingProfile = [self profileWithGuid:profile[KEY_GUID] inArray:oldProfiles];
+        if (existingProfile) {
+            [self updateExistingDynamicProfile:existingProfile withProfile:profile];
+        } else {
+            [self addDynamicProfile:profile];
+        }
+    }
+
+    // Remove dynamic profiles whose guids no longer exist.
+    for (Profile *profile in oldProfiles) {
+        if (![self profileWithGuid:profile[KEY_GUID] inArray:newProfiles]) {
+            [self removeDynamicProfile:profile];
+        }
+    }
+}
+
+// Load the profiles from |filename| and add valid profiles into |profiles|.
+// Add their guids to |guids|.
+- (BOOL)loadDynamicProfilesFromFile:(NSString *)filename
+                          intoArray:(NSMutableArray *)profiles
+                              guids:(NSMutableSet *)guids {
+    // First, try xml and binary.
+    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:filename];
+    if (!dict) {
+        // Try JSON
+        NSData *data = [NSData dataWithContentsOfFile:filename];
+        if (!data) {
+            NSLog(@"Dynamic Profiles file %@ is unreadable", filename);
+            return NO;
+        }
+        NSError *error = nil;
+        dict = [NSJSONSerialization JSONObjectWithData:data
+                                               options:0
+                                                 error:&error];
+        if (!dict) {
+            NSLog(@"Dynamic Profiles file %@ doesn't contain a valid property list", filename);
+            return NO;
+        }
+    }
+    NSArray *entries = dict[@"Profiles"];
+    if (!entries) {
+        NSLog(@"Property list in %@ has no entries", entries);
+        return NO;
+    }
+    for (Profile *profile in entries) {
+        if (![profile[KEY_GUID] isKindOfClass:[NSString class]]) {
+            NSLog(@"Dynamic profile is missing the Guid field in file %@", filename);
+            continue;
+        }
+        if (![profile[KEY_NAME] isKindOfClass:[NSString class]]) {
+            NSLog(@"Dynamic profile with guid %@ is missing the name field", profile[KEY_GUID]);
+            continue;
+        }
+        if ([self nonDynamicProfileHasGuid:profile[KEY_GUID]]) {
+            NSLog(@"Dynamic profile with guid %@ conflicts with non-dynamic profile with same guid", profile[KEY_GUID]);
+            continue;
+        }
+        if ([guids containsObject:profile[KEY_GUID]]) {
+            NSLog(@"Two dynamic profiles have the same guid: %@", profile[KEY_GUID]);
+            continue;
+        }
+        [profiles addObject:profile];
+        [guids addObject:profile[KEY_GUID]];
+    }
+    return YES;
+}
+
+// Does any "regular" profile have Guid |guid|?
+- (BOOL)nonDynamicProfileHasGuid:(NSString *)guid {
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+    if (!profile) {
+        return NO;
+    }
+    return ![profile[KEY_TAGS] containsObject:@"dynamic"];
+}
+
+// Returns the current dynamic profiles.
+- (NSArray *)dynamicProfiles {
+    NSMutableArray *array = [NSMutableArray array];
+    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
+        NSArray *tags = profile[KEY_TAGS];
+        if ([tags containsObject:@"dynamic"]) {
+            [array addObject:profile];
+        }
+    }
+    return array;
+}
+
+// Returns the first profile in |profiles| whose guid is |guid|.
+- (Profile *)profileWithGuid:(NSString *)guid inArray:(NSArray *)profiles {
+    for (Profile *aProfile in profiles) {
+        if ([guid isEqualToString:aProfile[KEY_GUID]]) {
+            return aProfile;
+        }
+    }
+    return nil;
+}
+
+// Change an existing dynamic profile by setting its fields to those of
+// |newProfile|. The "dynamic" tag is preserved.
+- (void)updateExistingDynamicProfile:(Profile *)existingProfile
+                         withProfile:(Profile *)newProfile {
+    NSMutableDictionary *merged = [self profileByMergingProfile:newProfile
+                                                    intoProfile:existingProfile];
+    [self ensureMutableProfileHasDynamicTag:merged];
+    [[ProfileModel sharedInstance] setBookmark:merged
+                                      withGuid:merged[KEY_GUID]];
+}
+
+// Copies fields from |profile| over those in |prototype| and returns a new
+// mutable dictionary.
+- (NSMutableDictionary *)profileByMergingProfile:(Profile *)profile
+                                     intoProfile:(Profile *)prototype {
+    NSMutableDictionary *merged = [[profile mutableCopy] autorelease];
+    for (NSString *key in prototype) {
+        if (profile[key]) {
+            merged[key] = profile[key];
+        } else {
+            merged[key] = prototype[key];
+        }
+    }
+    return merged;
+}
+
+// Sets the "dynamic" tag in the mutable profile.
+- (void)ensureMutableProfileHasDynamicTag:(NSMutableDictionary *)profile {
+    NSArray *tags = profile[KEY_TAGS];
+    if (!tags) {
+        tags = @[ @"dynamic" ];
+    } else if (![tags containsObject:@"dynamic"]) {
+        tags = [tags arrayByAddingObject:@"dynamic"];
+    }
+    profile[KEY_TAGS] = tags;
+}
+
+// Add a new dynamic profile to the model.
+- (void)addDynamicProfile:(Profile *)profile {
+    Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
+    NSMutableDictionary *merged = [self profileByMergingProfile:profile
+                                                    intoProfile:prototype];
+    [self ensureMutableProfileHasDynamicTag:merged];
+
+    [[ProfileModel sharedInstance] addBookmark:merged];
+}
+
+// Remove a dynamic profile from the model. Updates displays of profiles,
+// references to the profile, etc.
+- (void)removeDynamicProfile:(Profile *)profile {
+    [[PreferencePanel sharedInstance] removeProfileWithGuid:profile[KEY_GUID]];
 }
 
 @end

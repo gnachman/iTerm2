@@ -429,23 +429,30 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     if ([[_delegate profilePreferencesModel] numberOfBookmarks] == 1 || !profile) {
         NSBeep();
     } else if ([self confirmProfileDeletion:profile]) {
-        int lastIndex = [_profilesListView selectedRow];
-
         NSString *guid = profile[KEY_GUID];
-        [self removeKeyMappingsReferringToGuid:guid];
-        [[_delegate profilePreferencesModel] removeBookmarkWithGuid:guid];
-        [_profilesListView reloadData];
-
-        int toSelect = lastIndex - 1;
-        if (toSelect < 0) {
-            toSelect = 0;
-        }
-        [_profilesListView selectRowIndex:toSelect];
-
-        // If a profile was deleted, update the shortcut titles that might refer to it.
-        [_generalViewController updateShortcutTitles];
+        [self removeProfileWithGuid:guid fromModel:[_delegate profilePreferencesModel]];
     }
     [[_delegate profilePreferencesModel] flush];
+}
+
+- (void)removeProfileWithGuid:(NSString *)guid fromModel:(ProfileModel *)model {
+    if ([model numberOfBookmarks] == 1) {
+        return;
+    }
+
+    int lastIndex = [_profilesListView selectedRow];
+    [self removeKeyMappingsReferringToGuid:guid];
+    [[_delegate profilePreferencesModel] removeProfileWithGuid:guid];
+    [_profilesListView reloadData];
+
+    int toSelect = lastIndex - 1;
+    if (toSelect < 0) {
+        toSelect = 0;
+    }
+    [_profilesListView selectRowIndex:toSelect];
+
+    // If a profile was deleted, update the shortcut titles that might refer to it.
+    [_generalViewController updateShortcutTitles];
 }
 
 - (IBAction)addProfile:(id)sender {
@@ -563,6 +570,32 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
         return;
     }
     [[ProfileModel sharedInstance] setDefaultByGuid:guid];
+}
+
+- (IBAction)copyProfileJson:(id)sender {
+    NSDictionary* profile = [self selectedProfile];
+    if (!profile) {
+        NSBeep();
+        return;
+    }
+    NSError *error = nil;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:profile
+                                                       options:NSJSONWritingPrettyPrinted
+                                                         error:&error];
+
+    if (jsonData) {
+        NSString *string =
+            [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard clearContents];
+        [pasteboard writeObjects:@[ string ]];
+    } else {
+        [NSAlert alertWithMessageText:@"Error"
+                        defaultButton:@"Ok"
+                      alternateButton:nil
+                          otherButton:nil
+            informativeTextWithFormat:@"Couldn't convert profile to JSON: %@", [error localizedDescription]];
+    }
 }
 
 #pragma mark - Notifications
