@@ -7,7 +7,7 @@ function die {
 # Usage: SparkleSign testing.xml template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
-    ruby "../../SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt
+    ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die "Signing failed"
     SIG=$(cat /tmp/sig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
@@ -28,6 +28,7 @@ set -x
 cd ~/server/nightly/iTerm2/
 # todo: git pull origin master
 rm -rf build/Nightly/iTerm2.app
+make clean || die "Make clean failed"
 make Nightly || die "Nightly build failed"
 ./sign.sh
 COMPACTDATE=$(date +"%Y%m%d")-nightly
