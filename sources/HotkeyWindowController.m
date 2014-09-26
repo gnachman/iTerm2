@@ -336,7 +336,7 @@ void OnHotKeyEvent(void)
                     [NSApp activateIgnoringOtherApps:YES];
                     [[hotkeyTerm window] makeKeyAndOrderFront:nil];
                 } else {
-                    DLog("Hide hotkey window");
+                    DLog(@"Hide hotkey window");
                     [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
                 }
             } else {
