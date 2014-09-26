@@ -74,6 +74,41 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
                                                   afterDelay:[[NSAnimationContext currentContext] duration]];
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(activeSpaceDidChange:)
+                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
+                                                                 object:nil];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
+    [super dealloc];
+}
+
+- (void)bringHotkeyWindowToFore:(NSWindow *)window {
+    DLog(@"Bring hotkey window %@ to front", window);
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    [window makeKeyAndOrderFront:nil];
+}
+
+- (void)activeSpaceDidChange:(NSNotification *)notification {
+    PseudoTerminal *term = [self hotKeyWindow];
+    NSWindow *window = [term window];
+    // Issue 3199: With a non-autohiding hotkey window that is on all spaces, changing spaces makes
+    // another app key, leaving the hotkey window open underneath other windows.
+    if ([window isVisible] &&
+        ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
+        ![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
+      DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
+        [self performSelector:@selector(bringHotkeyWindowToFore:) withObject:window afterDelay:0.5];
+    }
+}
+
 - (void)rollInFinished
 {
     rollingIn_ = NO;
@@ -296,7 +331,14 @@ void OnHotKeyEvent(void)
             HKWLog(@"already have a hotkey window created");
             if ([[hotkeyTerm window] alphaValue] == 1) {
                 HKWLog(@"hotkey window opaque");
-                [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
+                if (![[hotkeyTerm window] isOnActiveSpace]) {
+                    DLog(@"Hotkey window is active on another space. Switch to it.");
+                    [NSApp activateIgnoringOtherApps:YES];
+                    [[hotkeyTerm window] makeKeyAndOrderFront:nil];
+                } else {
+                    DLog("Hide hotkey window");
+                    [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
+                }
             } else {
                 HKWLog(@"hotkey window not opaque");
                 [[HotkeyWindowController sharedInstance] showHotKeyWindow];
