@@ -81,5 +81,6 @@
 + (BOOL)optionIsMetaForSpecialChars;
 
 + (BOOL)startDebugLoggingAutomatically;
++ (BOOL)aboutToPasteTabs;
 
 @end

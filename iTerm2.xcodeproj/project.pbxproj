@@ -1676,6 +1676,11 @@
 		A6E74761188C679C005355CF /* iTermExposeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475F188C679C005355CF /* iTermExposeView.h */; };
 		A6E74762188C679C005355CF /* iTermExposeView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74760188C679C005355CF /* iTermExposeView.m */; };
 		A6E74763188C679C005355CF /* iTermExposeView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74760188C679C005355CF /* iTermExposeView.m */; };
+		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
+		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
+		A6E8BA0619DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
+		A6E8BA0719DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
+		A6E8BA0819DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -2403,6 +2408,8 @@
 		A6E7475B188C6731005355CF /* iTermExposeGridView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExposeGridView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7475F188C679C005355CF /* iTermExposeView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermExposeView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E74760188C679C005355CF /* iTermExposeView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExposeView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
+		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMYosemiteTabStyle.h; sourceTree = "<group>"; };
 		DD02572709CB9398008F320C /* PSMYosemiteTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PSMYosemiteTabStyle.m; sourceTree = "<group>"; tabWidth = 4; };
 		DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMOverflowPopUpButton.h; sourceTree = "<group>"; };
@@ -3481,6 +3488,8 @@
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 				1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */,
 				1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */,
+				A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */,
+				A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -3669,6 +3678,7 @@
 				1D6ED85F19AEA20D005A7799 /* PSMYosemiteTabStyle.h in Headers */,
 				1D6ED86019AEA20D005A7799 /* iTermKeyMappingViewController.h in Headers */,
 				1D6ED86119AEA20D005A7799 /* iTermOpenQuicklyItem.h in Headers */,
+				A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */,
 				1D6ED86219AEA20D005A7799 /* iTermOpenQuicklyTextField.h in Headers */,
 				1D6ED86319AEA20D005A7799 /* iTermAdvancedSettingsController.h in Headers */,
 				1D6ED86419AEA20D005A7799 /* TemporaryNumberAllocator.h in Headers */,
@@ -3976,6 +3986,7 @@
 				1D5FDD5A1208E8F000C46BA3 /* PSMYosemiteTabStyle.h in Headers */,
 				1DFA9D5E18F36DC3008ADC98 /* iTermKeyMappingViewController.h in Headers */,
 				A69B45A919731B4900F5444D /* iTermOpenQuicklyItem.h in Headers */,
+				A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */,
 				A69B459F19731A4700F5444D /* iTermOpenQuicklyTextField.h in Headers */,
 				A697100618D82E79007E901D /* iTermAdvancedSettingsController.h in Headers */,
 				A68A3105186D2973007F550F /* TemporaryNumberAllocator.h in Headers */,
@@ -4924,6 +4935,7 @@
 				1D6EDAC519AEA20D005A7799 /* TmuxControllerRegistry.m in Sources */,
 				1D6EDAC619AEA20D005A7799 /* iTermPreferences.m in Sources */,
 				1D6EDAC719AEA20D005A7799 /* NSScreen+iTerm.m in Sources */,
+				A6E8BA0819DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */,
 				1D6EDAC819AEA20D005A7799 /* iTermAdvancedSettingsModel.m in Sources */,
 				1D6EDAC919AEA20D005A7799 /* TmuxWindowsTable.m in Sources */,
 				1D6EDACA19AEA20D005A7799 /* EquivalenceClassSet.m in Sources */,
@@ -5188,6 +5200,7 @@
 				1D9A5540180FA7F600B42CE9 /* ProfileModel.m in Sources */,
 				A6E7139E18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m in Sources */,
 				1D9A553E180FA7ED00B42CE9 /* PTYWindow.m in Sources */,
+				A6E8BA0719DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */,
 				A68A30DF186D1429007F550F /* SCPPath.m in Sources */,
 				A663013419D0864C004AF81C /* SCEvents.m in Sources */,
 				1D9A558D180FA87000B42CE9 /* PasteViewController.m in Sources */,
@@ -5479,6 +5492,7 @@
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				A6E7138018F1DB1E008D94DD /* iTermPreferences.m in Sources */,
 				A69B4578195F668500F5444D /* NSScreen+iTerm.m in Sources */,
+				A6E8BA0619DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */,
 				A697100C18D94CDA007E901D /* iTermAdvancedSettingsModel.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,

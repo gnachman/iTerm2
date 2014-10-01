@@ -145,4 +145,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (PseudoTerminal *)currentTerminal;
 - (NSArray*)terminals;
 
+// Convert tabs to spaces in source, perhaps asking the user questions in modal alerts.
+- (NSString *)stringByConvertingTabsToSpacesForPaste:(NSString *)source;
+
 @end

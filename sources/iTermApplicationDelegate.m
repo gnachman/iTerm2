@@ -34,6 +34,7 @@
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "iTermFontPanel.h"
+#import "iTermIntegerNumberFormatter.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -1063,6 +1064,54 @@ static BOOL hasBecomeActive = NO;
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setBool:![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey]
                    forKey:kMultiLinePasteWarningUserDefaultsKey];
+}
+
+- (int)promptForNumberOfSpacesToConverTabsToWithDefault:(int)defaultValue {
+    NSAlert *alert = [NSAlert alertWithMessageText:@"Converting tabs to spaces."
+                                     defaultButton:@"Ok"
+                                   alternateButton:@"Cancel"
+                                       otherButton:nil
+                         informativeTextWithFormat:@"How many spaces for each tab?"];
+    NSTextField *input = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 50, 24)] autorelease];
+    input.formatter = [[[iTermIntegerNumberFormatter alloc] init] autorelease];
+    input.stringValue = [NSString stringWithFormat:@"%d", defaultValue];
+    alert.accessoryView = input;
+    [alert layout];
+    [[alert window] makeFirstResponder:input];
+    if ([alert runModal] == NSAlertDefaultReturn) {
+        NSInteger n = [input integerValue];
+        if (n > 0) {
+            return n;
+        }
+    }
+    return -1;
+}
+
+- (NSString *)stringByConvertingTabsToSpacesForPaste:(NSString *)source {
+    if ([source rangeOfString:@"\t"].location != NSNotFound) {
+        iTermWarningSelection selection =
+            [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
+                                       actions:@[ @"Paste with tabs", @"Convert tabs to spaces" ]
+                                    identifier:@"AboutToPasteTabs"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable];
+        if (selection == kiTermWarningSelection1) {
+            NSString *const kTabStopSizeKey = @"PasteTabToStringTabStopSize";
+            int theDefault = [[NSUserDefaults standardUserDefaults] integerForKey:kTabStopSizeKey];
+            if (theDefault <= 0) {
+                theDefault = 4;
+            }
+            int n = [self promptForNumberOfSpacesToConverTabsToWithDefault:theDefault];
+            if (n < 0) {
+                return nil;
+            } else {
+                [[NSUserDefaults standardUserDefaults] setInteger:n
+                                                           forKey:kTabStopSizeKey];
+                return [source stringByReplacingOccurrencesOfString:@"\t"
+                                                         withString:[@" " stringRepeatedTimes:n]];
+            }
+        }
+    }
+    return source;
 }
 
 - (BOOL)warnBeforeMultiLinePaste {

@@ -140,6 +140,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Does self contain |substring|?
 - (BOOL)containsString:(NSString *)substring;
 
+// Returns self repeated |n| times.
+- (NSString *)stringRepeatedTimes:(int)n;
+
 @end
 
 @interface NSMutableString (iTerm)

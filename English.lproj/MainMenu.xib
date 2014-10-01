@@ -373,6 +373,7 @@ DQ
                                                 <action selector="paste:" target="-1" id="1170"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="5pd-MJ-ZcR"/>
                                         <menuItem title="Paste Selection" keyEquivalent="V" id="1164">
                                             <connections>
                                                 <action selector="pasteSelection:" target="-1" id="1167"/>
@@ -390,12 +391,7 @@ DQ
                                                 <action selector="pasteSelection:" target="-1" id="ac5-bf-u92"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Paste Slowly" tag="2" id="1166">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="paste:" target="-1" id="1169"/>
-                                            </connections>
-                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="meJ-Eb-j6h"/>
                                         <menuItem title="Paste File with Base64 Encoding" tag="2" id="LzY-eC-RYe">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
@@ -403,6 +399,13 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="alj-TE-sXE"/>
+                                        <menuItem title="Paste Slowly" tag="2" id="1166">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="paste:" target="-1" id="1169"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="VVy-45-Msn"/>
                                         <menuItem title="Paste Faster" tag="2" id="1483">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
@@ -437,13 +440,14 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
                             <menuItem title="Open Selection" keyEquivalent="o" id="upW-1r-eM7">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="openSelection:" target="-1" id="iqq-zv-3ZQ"/>
                                 </connections>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
+                            <menuItem isSeparatorItem="YES" id="ILa-Wg-F9W"/>
                             <menuItem title="Select All" keyEquivalent="a" id="172">
                                 <connections>
                                     <action selector="selectAll:" target="-1" id="179"/>

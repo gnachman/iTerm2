@@ -1222,6 +1222,14 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [self rangeOfString:substring].location != NSNotFound;
 }
 
+- (NSString *)stringRepeatedTimes:(int)n {
+    NSMutableString *result = [NSMutableString string];
+    for (int i = 0; i < n; i++) {
+        [result appendString:self];
+    }
+    return result;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

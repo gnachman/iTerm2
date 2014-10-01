@@ -4418,7 +4418,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // is in progress.
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags
 {
-    [_pasteHelper pasteString:theString flags:flags];
+    iTermApplicationDelegate *itad =
+            (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    NSString *converted = [itad stringByConvertingTabsToSpacesForPaste:theString];
+    if (converted) {
+        [_pasteHelper pasteString:converted flags:flags];
+    }
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
