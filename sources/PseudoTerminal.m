@@ -450,7 +450,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         case WINDOW_TYPE_BOTTOM_PARTIAL:
         case WINDOW_TYPE_LEFT_PARTIAL:
         case WINDOW_TYPE_RIGHT_PARTIAL:
-            initialFrame = [screen visibleFrame];
+            initialFrame = [screen visibleFrameIgnoringHiddenDock];
             break;
 
         case WINDOW_TYPE_LION_FULL_SCREEN:
@@ -2433,8 +2433,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
     }
     NSRect frame = [[self window] frame];
-
-    PtyLog(@"The new screen visible frame is %@", [NSValue valueWithRect:[screen visibleFrame]]);
+    NSRect screenVisibleFrame = [screen visibleFrame];
+    NSRect screenVisibleFrameIgnoringHiddenDock = [screen visibleFrameIgnoringHiddenDock];
+    PtyLog(@"The new screen visible frame is %@", [NSValue valueWithRect:screenVisibleFrame]);
 
     // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
@@ -2450,26 +2451,26 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             PtyLog(@"Window type = TOP, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
             if (desiredRows_ > 0) {
-                frame.size.height = MIN([screen visibleFrame].size.height,
+                frame.size.height = MIN(screenVisibleFrame.size.height,
                                         ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
             } else {
-                frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
+                frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
             }
             if (!edgeSpanning) {
-                frame.size.width = MIN(frame.size.width, [screen visibleFrame].size.width);
-                frame.origin.x = MAX(frame.origin.x, screen.visibleFrame.origin.x);
-                double freeSpaceOnLeft = MIN(0, [screen visibleFrame].size.width - frame.size.width - (frame.origin.x - screen.visibleFrame.origin.x));
+                frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
+                frame.origin.x = MAX(frame.origin.x, screenVisibleFrameIgnoringHiddenDock.origin.x);
+                double freeSpaceOnLeft = MIN(0, screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width - (frame.origin.x - screenVisibleFrameIgnoringHiddenDock.origin.x));
                 frame.origin.x += freeSpaceOnLeft;
             } else {
-                frame.size.width = [screen visibleFrame].size.width;
-                frame.origin.x = [screen visibleFrame].origin.x;
+                frame.size.width = screenVisibleFrameIgnoringHiddenDock.size.width;
+                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
             }
             if ([[self window] alphaValue] == 0) {
                 // Is hidden hotkey window
-                frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height;
+                frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height;
             } else {
                 // Normal case
-                frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height - frame.size.height;
+                frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
             }
 
             if (frame.size.width > 0) {
@@ -2483,26 +2484,26 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             PtyLog(@"Window type = BOTTOM, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
             if (desiredRows_ > 0) {
-                frame.size.height = MIN([screen visibleFrame].size.height,
+                frame.size.height = MIN(screenVisibleFrame.size.height,
                                         ceil([[session textview] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
             } else {
-                frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
+                frame.size.height = MIN(screenVisibleFrame.size.height, frame.size.height);
             }
             if (!edgeSpanning) {
-                frame.size.width = MIN(frame.size.width, [screen visibleFrame].size.width);
-                frame.origin.x = MAX(frame.origin.x, screen.visibleFrame.origin.x);
-                double freeSpaceOnLeft = MIN(0, [screen visibleFrame].size.width - frame.size.width - (frame.origin.x - screen.visibleFrame.origin.x));
+                frame.size.width = MIN(frame.size.width, screenVisibleFrameIgnoringHiddenDock.size.width);
+                frame.origin.x = MAX(frame.origin.x, screenVisibleFrameIgnoringHiddenDock.origin.x);
+                double freeSpaceOnLeft = MIN(0, screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width - (frame.origin.x - screenVisibleFrameIgnoringHiddenDock.origin.x));
                 frame.origin.x += freeSpaceOnLeft;
             } else {
-                frame.size.width = [screen visibleFrame].size.width;
-                frame.origin.x = [screen visibleFrame].origin.x;
+                frame.size.width = screenVisibleFrameIgnoringHiddenDock.size.width;
+                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
             }
             if ([[self window] alphaValue] == 0) {
                 // Is hidden hotkey window
-                frame.origin.y = [screen visibleFrame].origin.y - frame.size.height;
+                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y - frame.size.height;
             } else {
                 // Normal case
-                frame.origin.y = [screen visibleFrame].origin.y;
+                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
             }
 
             if (frame.size.width > 0) {
@@ -2516,26 +2517,26 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             PtyLog(@"Window type = LEFT, desired cols=%d", desiredColumns_);
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
             if (desiredColumns_ > 0) {
-                frame.size.width = MIN([screen visibleFrame].size.width,
+                frame.size.width = MIN(screenVisibleFrame.size.width,
                                        [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
             } else {
-                frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
+                frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
             }
             if (!edgeSpanning) {
-                frame.size.height = MIN(frame.size.height, [screen visibleFrame].size.height);
-                frame.origin.y = MAX(frame.origin.y, screen.visibleFrame.origin.y);
-                double freeSpaceOnBottom = MIN(0, [screen visibleFrame].size.height - frame.size.height - (frame.origin.y - screen.visibleFrame.origin.y));
+                frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
+                frame.origin.y = MAX(frame.origin.y, screenVisibleFrameIgnoringHiddenDock.origin.y);
+                double freeSpaceOnBottom = MIN(0, screenVisibleFrameIgnoringHiddenDock.size.height - frame.size.height - (frame.origin.y - screenVisibleFrameIgnoringHiddenDock.origin.y));
                 frame.origin.y += freeSpaceOnBottom;
             } else {
-                frame.size.height = [screen visibleFrame].size.height;
-                frame.origin.y = [screen visibleFrame].origin.y;
+                frame.size.height = screenVisibleFrameIgnoringHiddenDock.size.height;
+                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
             }
             if ([[self window] alphaValue] == 0) {
                 // Is hidden hotkey window
-                frame.origin.x = [screen visibleFrame].origin.x - frame.size.width;
+                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x - frame.size.width;
             } else {
                 // Normal case
-                frame.origin.x = [screen visibleFrame].origin.x;
+                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
             }
 
             if (frame.size.width > 0) {
@@ -2549,26 +2550,26 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             PtyLog(@"Window type = RIGHT, desired cols=%d", desiredColumns_);
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
             if (desiredColumns_ > 0) {
-                frame.size.width = MIN([screen visibleFrame].size.width,
+                frame.size.width = MIN(screenVisibleFrame.size.width,
                                        [[session textview] charWidth] * desiredColumns_ + 2 * MARGIN);
             } else {
-                frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
+                frame.size.width = MIN(screenVisibleFrame.size.width, frame.size.width);
             }
             if (!edgeSpanning) {
-                frame.size.height = MIN(frame.size.height, [screen visibleFrame].size.height);
-                frame.origin.y = MAX(frame.origin.y, screen.visibleFrame.origin.y);
-                double freeSpaceOnBottom = MIN(0, [screen visibleFrame].size.height - frame.size.height - (frame.origin.y - screen.visibleFrame.origin.y));
+                frame.size.height = MIN(frame.size.height, screenVisibleFrameIgnoringHiddenDock.size.height);
+                frame.origin.y = MAX(frame.origin.y, screenVisibleFrameIgnoringHiddenDock.origin.y);
+                double freeSpaceOnBottom = MIN(0, screenVisibleFrameIgnoringHiddenDock.size.height - frame.size.height - (frame.origin.y - screenVisibleFrameIgnoringHiddenDock.origin.y));
                 frame.origin.y += freeSpaceOnBottom;
             } else {
-                frame.size.height = [screen visibleFrame].size.height;
-                frame.origin.y = [screen visibleFrame].origin.y;
+                frame.size.height = screenVisibleFrameIgnoringHiddenDock.size.height;
+                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
             }
             if ([[self window] alphaValue] == 0) {
                 // Is hidden hotkey window
-                frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width;
+                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width;
             } else {
                 // Normal case
-                frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width - frame.size.width;
+                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width;
             }
 
             if (frame.size.width > 0) {
@@ -3311,11 +3312,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     NSScreen *screen = self.window.screen;
     NSRect frame = self.window.frame;
+    CGRect screenVisibleFrame = [screen visibleFrame];
+    CGRect screenVisibleFrameIgnoringHiddenDock = [screen visibleFrameIgnoringHiddenDock];
+
     switch (windowType_) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_TOP_PARTIAL:
-            frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height - frame.size.height;
-            if ((frame.size.width < [screen visibleFrame].size.width)) {
+            frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
+            if ((frame.size.width < screenVisibleFrameIgnoringHiddenDock.size.width)) {
                 windowType_ = WINDOW_TYPE_TOP_PARTIAL;
             } else {
                 windowType_ = WINDOW_TYPE_TOP;
@@ -3324,8 +3328,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_BOTTOM_PARTIAL:
-            frame.origin.y = [screen visibleFrame].origin.y;
-            if (frame.size.width < [screen visibleFrame].size.width) {
+            frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
+            if (frame.size.width < screenVisibleFrameIgnoringHiddenDock.size.width) {
                 windowType_ = WINDOW_TYPE_BOTTOM_PARTIAL;
             } else {
                 windowType_ = WINDOW_TYPE_BOTTOM;
@@ -3334,8 +3338,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_LEFT_PARTIAL:
-            frame.origin.x = [screen visibleFrame].origin.x;
-            if (frame.size.height < [screen visibleFrame].size.height) {
+            frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
+            if (frame.size.height < screenVisibleFrameIgnoringHiddenDock.size.height) {
                 windowType_ = WINDOW_TYPE_LEFT_PARTIAL;
             } else {
                 windowType_ = WINDOW_TYPE_LEFT;
@@ -3344,8 +3348,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         case WINDOW_TYPE_RIGHT:
         case WINDOW_TYPE_RIGHT_PARTIAL:
-            frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width - frame.size.width;
-            if (frame.size.height < [screen visibleFrame].size.height) {
+            frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width;
+            if (frame.size.height < screenVisibleFrameIgnoringHiddenDock.size.height) {
                 windowType_ = WINDOW_TYPE_RIGHT_PARTIAL;
             } else {
                 windowType_ = WINDOW_TYPE_RIGHT;
@@ -4959,7 +4963,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 // Bump a frame so that it's within the screen's visible frame, if possible.
 - (NSRect)frame:(NSRect)frame byConstrainingToScreen:(NSScreen *)screen {
-    NSRect screenRect = screen.visibleFrame;
+    NSRect screenRect = screen.visibleFrameIgnoringHiddenDock;
     if (frame.size.width > screenRect.size.width ||
         frame.size.height > screenRect.size.height) {
         return frame; // Sorry, can't be done.
@@ -5037,11 +5041,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSUInteger savedMask = TABVIEW.autoresizingMask;
     TABVIEW.autoresizingMask = 0;
 
-    // Set the frame for X-of-scren windows. The size doesn't change
+    // Set the frame for X-of-screen windows. The size doesn't change
     // for _PARTIAL window types.
     switch (windowType_) {
         case WINDOW_TYPE_BOTTOM:
-            frame.origin.y = self.screen.visibleFrame.origin.y;
+            frame.origin.y = self.screen.visibleFrameIgnoringHiddenDock.origin.y;
             frame.size.width = [[self window] frame].size.width;
             frame.origin.x = [[self window] frame].origin.x;
             break;
@@ -5054,8 +5058,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         case WINDOW_TYPE_LEFT:
         case WINDOW_TYPE_RIGHT:
-            frame.origin.y = self.screen.visibleFrame.origin.y;
-            frame.size.height = self.screen.visibleFrame.size.height;
+            frame.origin.y = self.screen.visibleFrameIgnoringHiddenDock.origin.y;
+            frame.size.height = self.screen.visibleFrameIgnoringHiddenDock.size.height;
 
             PTYSession* session = [self currentSession];
             if (desiredColumns_ > 0) {
@@ -5077,15 +5081,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             break;
 
         case WINDOW_TYPE_BOTTOM_PARTIAL:
-            frame.origin.y = self.screen.visibleFrame.origin.y;
+            frame.origin.y = self.screen.visibleFrameIgnoringHiddenDock.origin.y;
             break;
 
         case WINDOW_TYPE_LEFT_PARTIAL:
-            frame.origin.x = self.screen.visibleFrame.origin.x;
+            frame.origin.x = self.screen.visibleFrameIgnoringHiddenDock.origin.x;
             break;
 
         case WINDOW_TYPE_RIGHT_PARTIAL:
-            frame.origin.x = self.screen.visibleFrame.origin.x + self.screen.visibleFrame.size.width - frame.size.width;
+            frame.origin.x = self.screen.visibleFrameIgnoringHiddenDock.origin.x + self.screen.visibleFrameIgnoringHiddenDock.size.width - frame.size.width;
             break;
     }
 
