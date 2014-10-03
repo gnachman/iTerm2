@@ -1,2 +1,5 @@
 This is an ancient greek numeral that looks like a christmas tree:
 𐅐
+
+The third character below is a surrogate pair:
+⿺⿱𦍌次

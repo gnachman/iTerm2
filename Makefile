@@ -36,9 +36,9 @@ Deployment:
 	chmod -R go+rX build/Deployment
 
 Nightly: force
-	cp nightly-iTerm2.plist iTerm2.plist
+	cp plists/nightly-iTerm2.plist plists/iTerm2.plist
 	xcodebuild -parallelizeTargets -target iTerm2 -configuration Nightly && \
-	git checkout -- iTerm2.plist
+	git checkout -- plists/iTerm2.plist
 	chmod -R go+rX build/Nightly
 
 run: Development

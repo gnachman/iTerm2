@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5056" systemVersion="13F34" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment defaultVersion="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5053"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5056"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -17,7 +17,7 @@
                 <menuItem title="iTerm2" id="56">
                     <menu key="submenu" title="iTerm2" systemMenu="apple" id="57">
                         <items>
-                            <menuItem title="About iTerm" id="233">
+                            <menuItem title="About iTerm2" id="233">
                                 <connections>
                                     <action selector="showAbout:" target="201" id="509"/>
                                 </connections>
@@ -50,7 +50,7 @@
                             <menuItem isSeparatorItem="YES" id="144">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Hide iTerm" keyEquivalent="h" id="134">
+                            <menuItem title="Hide iTerm2" keyEquivalent="h" id="134">
                                 <connections>
                                     <action selector="hide:" target="-2" id="152"/>
                                 </connections>
@@ -95,7 +95,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1469"/>
-                            <menuItem title="Quit iTerm" keyEquivalent="q" id="136">
+                            <menuItem title="Quit iTerm2" keyEquivalent="q" id="136">
                                 <connections>
                                     <action selector="terminate:" target="-1" id="532"/>
                                 </connections>
@@ -373,6 +373,7 @@ DQ
                                                 <action selector="paste:" target="-1" id="1170"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="5pd-MJ-ZcR"/>
                                         <menuItem title="Paste Selection" keyEquivalent="V" id="1164">
                                             <connections>
                                                 <action selector="pasteSelection:" target="-1" id="1167"/>
@@ -390,12 +391,7 @@ DQ
                                                 <action selector="pasteSelection:" target="-1" id="ac5-bf-u92"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Paste Slowly" tag="2" id="1166">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="paste:" target="-1" id="1169"/>
-                                            </connections>
-                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="meJ-Eb-j6h"/>
                                         <menuItem title="Paste File with Base64 Encoding" tag="2" id="LzY-eC-RYe">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
@@ -403,6 +399,13 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="alj-TE-sXE"/>
+                                        <menuItem title="Paste Slowly" tag="2" id="1166">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="paste:" target="-1" id="1169"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="VVy-45-Msn"/>
                                         <menuItem title="Paste Faster" tag="2" id="1483">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
@@ -437,16 +440,23 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
                             <menuItem title="Open Selection" keyEquivalent="o" id="upW-1r-eM7">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="openSelection:" target="-1" id="iqq-zv-3ZQ"/>
                                 </connections>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
+                            <menuItem isSeparatorItem="YES" id="ILa-Wg-F9W"/>
                             <menuItem title="Select All" keyEquivalent="a" id="172">
                                 <connections>
                                     <action selector="selectAll:" target="-1" id="179"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Selection Respects Soft Boundaries" keyEquivalent="A" id="jDU-f2-OSh">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="toggleSelectionRespectsSoftBoundaries:" target="-1" id="1pQ-03-P8s"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Select Output of Last Command" keyEquivalent="A" id="JqU-xR-XbI">
@@ -560,11 +570,33 @@ DQ
                                         <menuItem isSeparatorItem="YES" id="OqF-Et-Rt4">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
-                                        <menuItem title="Alert on Next Mark" keyEquivalent="a" id="Qj6-xH-l9X">
-                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                            <connections>
-                                                <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
-                                            </connections>
+                                        <menuItem title="Alerts" id="noE-Gg-Cgs">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <menu key="submenu" title="Alerts" id="GSK-c3-R0J">
+                                                <items>
+                                                    <menuItem title="Alert on Next Mark" keyEquivalent="a" id="Qj6-xH-l9X">
+                                                        <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                                        <connections>
+                                                            <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem isSeparatorItem="YES" id="cY7-mh-hpz">
+                                                        <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                                    </menuItem>
+                                                    <menuItem title="Show Modal Alert Box" id="mat-0d-WzN">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="enableMarkAlertShowsModalAlert:" target="201" id="rp1-HE-PMx"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                    <menuItem title="Post Notification" id="QeX-5T-qxA">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="enableMarkAlertPostsNotification:" target="201" id="LvA-zT-HJj"/>
+                                                        </connections>
+                                                    </menuItem>
+                                                </items>
+                                            </menu>
                                         </menuItem>
                                     </items>
                                 </menu>
@@ -615,12 +647,6 @@ DQ
                 <menuItem title="View" id="802">
                     <menu key="submenu" title="View" id="803">
                         <items>
-                            <menuItem title="Toggle Toolbar" keyEquivalent="t" id="807">
-                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
-                                <connections>
-                                    <action selector="wrapToggleToolbarShown:" target="-1" id="1476"/>
-                                </connections>
-                            </menuItem>
                             <menuItem title="Show Tabs in Fullscreen" keyEquivalent="T" id="1257">
                                 <connections>
                                     <action selector="toggleFullScreenTabBar:" target="-1" id="1259"/>
@@ -973,8 +999,6 @@ DQ
         </menu>
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
-                <outlet property="ABOUT" destination="498" id="507"/>
-                <outlet property="AUTHORS" destination="640" id="641"/>
                 <outlet property="bookmarkMenu" destination="592" id="874"/>
                 <outlet property="closeTab" destination="635" id="795"/>
                 <outlet property="closeWindow" destination="598" id="796"/>
@@ -996,64 +1020,9 @@ DQ
             </connections>
         </customObject>
         <customObject id="266" userLabel="Font Manager" customClass="NSFontManager"/>
-        <window title="About iTerm" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="498" userLabel="About" customClass="iTermAboutWindow">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
-            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="386" y="524" width="354" height="164"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
-            <value key="minSize" type="size" width="213" height="107"/>
-            <view key="contentView" id="499">
-                <rect key="frame" x="0.0" y="0.0" width="354" height="164"/>
-                <autoresizingMask key="autoresizingMask"/>
-                <subviews>
-                    <textField verticalHuggingPriority="750" id="510">
-                        <rect key="frame" x="211" y="117" width="90" height="27"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="iTerm2" id="929">
-                            <font key="font" metaFont="system" size="22"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
-                    <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" id="639">
-                        <rect key="frame" x="169" y="20" width="165" height="92"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <clipView key="contentView" id="SLO-jw-GM5">
-                            <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
-                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                            <subviews>
-                                <textView editable="NO" importsGraphics="NO" usesRuler="YES" usesFontPanel="YES" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="640">
-                                    <rect key="frame" x="0.0" y="0.0" width="165" height="92"/>
-                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="165" height="92"/>
-                                    <size key="maxSize" width="364" height="10000000"/>
-                                    <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
-                                    <size key="minSize" width="165" height="92"/>
-                                    <size key="maxSize" width="364" height="10000000"/>
-                                </textView>
-                            </subviews>
-                        </clipView>
-                        <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" controlSize="small" horizontal="YES" id="932">
-                            <rect key="frame" x="-100" y="-100" width="87" height="18"/>
-                            <autoresizingMask key="autoresizingMask"/>
-                        </scroller>
-                        <scroller key="verticalScroller" hidden="YES" verticalHuggingPriority="750" doubleValue="1" controlSize="small" horizontal="NO" id="931">
-                            <rect key="frame" x="-100" y="-100" width="15" height="54"/>
-                            <autoresizingMask key="autoresizingMask"/>
-                        </scroller>
-                    </scrollView>
-                    <imageView id="892">
-                        <rect key="frame" x="20" y="32" width="128" height="128"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="NSApplicationIcon" id="930"/>
-                    </imageView>
-                </subviews>
-            </view>
-        </window>
         <customObject id="879" userLabel="SUUpdater" customClass="SUUpdater"/>
+        <menuItem title="Item" id="Zmu-o3-jVG">
+            <modifierMask key="keyEquivalentModifierMask"/>
+        </menuItem>
     </objects>
-    <resources>
-        <image name="NSApplicationIcon" width="128" height="128"/>
-    </resources>
 </document>
