@@ -68,7 +68,6 @@ typedef void (^VoidBlock)(void);
                 completionHandler(nil, nil);
                 return;
             }
-            /*
             // We have to set the frame for fullscreen windows because the OS tries
             // to move it up 22 pixels for no good reason. Fullscreen, top, and
             // bottom windows will also end up broken if the screen resolution
@@ -87,7 +86,6 @@ typedef void (^VoidBlock)(void);
                                afterDelay:0];
                     break;
             }
-             */
             completionHandler([term window], nil);
             [[iTermController sharedInstance] addTerminalWindow:term];
         };
