@@ -2660,6 +2660,11 @@ NSString *sessionsKey = @"sessions";
     float charHeight = [self maxCharHeight:nil];
     float charWidth = [self maxCharWidth:nil];
 
+    if (charWidth < 1 || charHeight < 1) {
+        // This avoids returning NaN's in OS 10.10.
+        return defaultFrame;
+    }
+
     NSRect proposedFrame;
     // Initially, set the proposed x-origin to remain unchanged in case we're
     // zooming vertically only. The y-origin always goes to the top of the screen
