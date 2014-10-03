@@ -68,6 +68,7 @@ typedef void (^VoidBlock)(void);
                 completionHandler(nil, nil);
                 return;
             }
+            /*
             // We have to set the frame for fullscreen windows because the OS tries
             // to move it up 22 pixels for no good reason. Fullscreen, top, and
             // bottom windows will also end up broken if the screen resolution
@@ -86,8 +87,17 @@ typedef void (^VoidBlock)(void);
                                afterDelay:0];
                     break;
             }
+             */
             completionHandler([term window], nil);
             [[iTermController sharedInstance] addTerminalWindow:term];
+/*
+            NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100)
+                                                           styleMask:NSBorderlessWindowMask
+                                                             backing:NSBackingStoreBuffered
+                                                               defer:NO];
+            [window setCollectionBehavior:[window collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
+            completionHandler(window, nil);
+*/
         };
         [queuedBlocks addObject:[[theBlock copy] autorelease]];
     } else {
