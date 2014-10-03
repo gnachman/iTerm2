@@ -1816,7 +1816,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                             savedWindowType:[arrangement[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] intValue]
                                                      screen:screenIndex
                                                    isHotkey:NO] autorelease];
-//        [term delayedEnterFullscreen];
+        [term delayedEnterFullscreen];
     } else {
         // Support legacy edge-spanning flag by adjusting the
         // window type.
@@ -3494,7 +3494,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     float charHeight = [self maxCharHeight:nil];
     float charWidth = [self maxCharWidth:nil];
     if (charHeight < 1 || charWidth < 1) {
-        DLog(@"During windowWillUseStandardFrame:defaultFrame:, charWidth or charHeight are less than 1 so using default frame. This is expected on 10.10 while restoring a fullscreen window.");
+        DLog(@"During windowWillUseStandardFrame:defaultFrame:, charWidth or charHeight are less "
+             @"than 1 so using default frame. This is expected on 10.10 while restoring a "
+             @"fullscreen window.");
         return defaultFrame;
     }
     NSRect proposedFrame;
@@ -7067,7 +7069,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (NSApplicationPresentationOptions)window:(NSWindow *)window
       willUseFullScreenPresentationOptions:(NSApplicationPresentationOptions)proposedOptions {
-    return proposedOptions;  // asdf | NSApplicationPresentationAutoHideToolbar;
+    return proposedOptions | NSApplicationPresentationAutoHideToolbar;
 }
 
 - (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
