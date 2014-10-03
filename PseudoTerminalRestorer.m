@@ -90,14 +90,6 @@ typedef void (^VoidBlock)(void);
              */
             completionHandler([term window], nil);
             [[iTermController sharedInstance] addTerminalWindow:term];
-/*
-            NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100)
-                                                           styleMask:NSBorderlessWindowMask
-                                                             backing:NSBackingStoreBuffered
-                                                               defer:NO];
-            [window setCollectionBehavior:[window collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
-            completionHandler(window, nil);
-*/
         };
         [queuedBlocks addObject:[[theBlock copy] autorelease]];
     } else {
