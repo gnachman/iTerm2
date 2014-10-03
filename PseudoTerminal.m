@@ -3418,6 +3418,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
     DLog(@"Window did enter lion fullscreen");
+    // It looks like OS 10.10 introduced a bug where the window's content view's frame can be less
+    // than the content area of the window when restoring a Lion-fullscreen window. This is a hacky
+    // workaround until the true cause can be found.
+    // TODO: Do other versions of osx have this issue?
+    NSRect correctContentRect = [self.window contentRectForFrameRect:self.window.frame];
+    [self.window.contentView setFrame:correctContentRect];
+
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
