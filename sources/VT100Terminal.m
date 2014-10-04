@@ -1980,7 +1980,10 @@ static const int kMaxScreenRows = 4096;
 
         case 'D':
             // Return code of last command
-            if (args.count >= 2) {
+            if (inCommand_) {
+                [delegate_ terminalAbortCommand];
+                inCommand_ = NO;
+            } else if (args.count >= 2) {
                 int returnCode = [args[1] intValue];
                 [delegate_ terminalReturnCodeOfLastCommandWas:returnCode];
             }

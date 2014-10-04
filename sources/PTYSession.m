@@ -5489,6 +5489,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)screenPromptDidStartAtLine:(int)line {
     _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
+    DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     [self screenAddMarkOnLine:line];
 }
 
@@ -5901,6 +5902,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                                                onHost:host];
 }
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+    DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
     _shellIntegrationEverUsed = YES;
     BOOL hadCommand = _commandRange.start.x >= 0 && [[self commandInRange:_commandRange] length] > 0;
     _commandRange = range;
@@ -5925,11 +5927,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
     _shellIntegrationEverUsed = YES;
     NSString *command = [self commandInRange:range];
+    DLog(@"FinalTerm: Command <<%@>> ended with range %@",
+         command, VT100GridCoordRangeDescription(range));
     if (command) {
         NSString *trimmedCommand =
             [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
             VT100ScreenMark *mark = [_screen markOnLine:_lastPromptLine - [_screen totalScrollbackOverflow]];
+            DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
+                 _lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
             mark.command = command;
             [[CommandHistory sharedInstance] addCommand:trimmedCommand
                                                  onHost:[_screen remoteHostOnLine:range.end.y]

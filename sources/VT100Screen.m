@@ -3186,6 +3186,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalPromptDidStart {
+    DLog(@"FinalTerm: terminalPromptDidStart");
     if (self.cursorX > 1 && [delegate_ screenShouldPlacePromptAtFirstColumn]) {
         [self crlf];
     }
@@ -3201,12 +3202,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalCommandDidStart {
+    DLog(@"FinalTerm: terminalCommandDidStart");
     commandStartX_ = currentGrid_.cursorX;
     commandStartY_ = currentGrid_.cursorY + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
     [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
 }
 
 - (void)terminalCommandDidEnd {
+    DLog(@"FinalTerm: terminalCommandDidEnd");
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
@@ -3214,6 +3217,12 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         nextCommandOutputStart_ = currentGrid_.cursor;
         nextCommandOutputStart_.y += [self numberOfScrollbackLines];
     }
+}
+
+- (void)terminalAbortCommand {
+    DLog(@"FinalTerm: terminalAbortCommand");
+    commandStartX_ = commandStartY_ = -1;
+    [delegate_ screenCommandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
 }
 
 - (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type {
@@ -3233,7 +3242,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (VT100ScreenMark *)lastCommandMark {
+    DLog(@"Searching for last command mark...");
     if (_lastCommandMark) {
+        DLog(@"Return cached mark %@", _lastCommandMark);
         return _lastCommandMark;
     }
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
@@ -3244,6 +3255,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             if ([obj isKindOfClass:[VT100ScreenMark class]]) {
                 VT100ScreenMark *mark = (VT100ScreenMark *)obj;
                 if (mark.command) {
+                    DLog(@"Found mark %@ in line number range %@", mark,
+                         VT100GridRangeDescription([self lineNumberRangeOfInterval:obj.entry.interval]));
                     self.lastCommandMark = mark;
                     return mark;
                 }
@@ -3253,14 +3266,19 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         objects = [enumerator nextObject];
     }
 
+    DLog(@"No last command mark found");
     return nil;
 }
 
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+    DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
     VT100ScreenMark *mark = self.lastCommandMark;
     if (mark) {
+        DLog(@"FinalTerm: setting code on mark %@", mark);
         mark.code = returnCode;
         [delegate_ screenNeedsRedraw];
+    } else {
+        DLog(@"No last command mark found.");
     }
 }
 

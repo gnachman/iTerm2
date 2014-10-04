@@ -182,6 +182,10 @@ NS_INLINE NSString *VT100GridCoordDescription(VT100GridCoord c) {
     return [NSString stringWithFormat:@"(%d, %d)", c.x, c.y];
 }
 
+NS_INLINE NSString *VT100GridRangeDescription(VT100GridRange r) {
+    return [NSString stringWithFormat:@"[%d, %d)", r.location, r.location + r.length];
+}
+
 NS_INLINE VT100GridCoord VT100GridCoordRangeMin(VT100GridCoordRange range) {
     if (VT100GridCoordOrder(range.start, range.end) == NSOrderedAscending) {
         return range.start;
