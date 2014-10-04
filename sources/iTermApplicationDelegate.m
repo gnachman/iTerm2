@@ -164,8 +164,12 @@ static BOOL hasBecomeActive = NO;
                                   }];
 }
 
-- (void)_performIdempotentStartupActivities
+// This performs startup activities as long as they haven't been run before.
+- (void)_performStartupActivities
 {
+    if (gStartupActivitiesPerformed) {
+        return;
+    }
     gStartupActivitiesPerformed = YES;
     if (quiet_) {
         // iTerm2 was launched with "open file" that turns off startup activities.
@@ -213,15 +217,6 @@ static BOOL hasBecomeActive = NO;
         }
     }
     ranAutoLaunchScript = YES;
-}
-
-// This performs startup activities as long as they haven't been run before.
-- (void)_performStartupActivities
-{
-    if (gStartupActivitiesPerformed) {
-        return;
-    }
-    [self _performIdempotentStartupActivities];
 }
 
 - (void)_createFlag

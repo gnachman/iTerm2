@@ -673,7 +673,11 @@ int gMigrated;
 }
 
 - (void)flush {
-    [prefs_ setObject:[self rawData] forKey:KEY_NEW_BOOKMARKS];
+    // If KEY_NEW_BOOKMARKS is a string then it was overridden at the command line to point at a
+    // file and we shouldn't save it to user defaults. If it wasn't overridden it'll be an array.
+    if (![[prefs_ objectForKey:KEY_NEW_BOOKMARKS] isKindOfClass:[NSString class]]) {
+        [prefs_ setObject:[self rawData] forKey:KEY_NEW_BOOKMARKS];
+    }
 }
 
 + (BOOL)menuHasMultipleItemsExcludingAlternates:(NSMenu *)menu fromIndex:(int)first

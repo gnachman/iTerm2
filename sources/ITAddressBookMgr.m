@@ -78,9 +78,30 @@
         }
 
         // Load new-style bookmarks.
-        if ([prefs objectForKey:KEY_NEW_BOOKMARKS]) {
-            [self setBookmarks:[prefs objectForKey:KEY_NEW_BOOKMARKS]
+        id newBookmarks = [prefs objectForKey:KEY_NEW_BOOKMARKS];
+        if ([newBookmarks isKindOfClass:[NSArray class]]) {
+            [self setBookmarks:newBookmarks
                    defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
+        } else if ([newBookmarks isKindOfClass:[NSString class]]) {
+            NSLog(@"Loading profiles from %@", newBookmarks);
+            NSMutableArray *profiles = [NSMutableArray array];
+            NSMutableSet *guids = [NSMutableSet set];
+            if ([self loadDynamicProfilesFromFile:(NSString *)newBookmarks
+                                        intoArray:profiles
+                                            guids:guids] &&
+                [profiles count] > 0) {
+                NSString *defaultGuid = profiles[0][KEY_GUID];
+                for (Profile *profile in profiles) {
+                    if ([profile[KEY_DEFAULT_BOOKMARK] isEqualToString:@"Yes"]) {
+                        defaultGuid = profile[KEY_GUID];
+                        break;
+                    }
+                }
+                [self setBookmarks:profiles defaultGuid:defaultGuid];
+            } else {
+                NSLog(@"Failed to load profiles from %@", newBookmarks);
+                exit(1);
+            }
         }
 
         // Make sure there is at least one bookmark.
