@@ -522,10 +522,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
-    // For some reason, you don't always get the frame you requested. I saw
-    // this on OS 10.10 when creating normal windows on a 2-screen display. The
-    // frames were within the visible frame of screen #2.
-    [myWindow setFrame:initialFrame display:NO];
+    if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
+        // For some reason, you don't always get the frame you requested. I saw
+        // this on OS 10.10 when creating normal windows on a 2-screen display. The
+        // frames were within the visible frame of screen #2.
+        // However, setting the frame at this point while restoring a Lion fullscreen window causes
+        // it to appear with a title bar. TODO: Test if lion fullscreen windows restore on the right
+        // monitor.
+        [myWindow setFrame:initialFrame display:NO];
+    }
     DLog(@"Create window %@", myWindow);
     if (windowType == WINDOW_TYPE_TOP ||
         windowType == WINDOW_TYPE_BOTTOM ||
@@ -3389,12 +3394,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
     DLog(@"Window did enter lion fullscreen");
-    // It looks like OS 10.10 introduced a bug where the window's content view's frame can be less
-    // than the content area of the window when restoring a Lion-fullscreen window. This is a hacky
-    // workaround until the true cause can be found.
-    // TODO: Do other versions of osx have this issue?
-    NSRect correctContentRect = [self.window contentRectForFrameRect:self.window.frame];
-    [self.window.contentView setFrame:correctContentRect];
 
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
