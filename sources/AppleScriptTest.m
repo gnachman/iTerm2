@@ -195,7 +195,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                            @"tell current session of current window",
                            @"  write text \"echo NUMBER ONE\"",
                            @"end tell",
-                           @"tell current session of current window",
+                           @"tell current session of current tab of current window",
                            @"  split horizontally with default profile",
                            @"end tell",
                            @"tell current session of current window",

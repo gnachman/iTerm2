@@ -192,7 +192,7 @@
         <cocoa method="handleSelectCommand:"/>
       </responds-to>
 
-      <property name="current session" code="Tcsn" type="session"
+      <property name="current session" code="Wcsn" type="session"
           description="The current session in a tab">
         <cocoa key="currentSession" />
       </property>
