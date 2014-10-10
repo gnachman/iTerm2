@@ -42,7 +42,7 @@ Nightly: force
 	chmod -R go+rX build/Nightly
 
 run: Development
-	build/Development/iTerm2.app/Contents/MacOS/iTerm
+	build/Development/iTerm2.app/Contents/MacOS/iTerm2
 
 devzip: Development
 	cd build/Development && \
