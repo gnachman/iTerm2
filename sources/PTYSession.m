@@ -3987,7 +3987,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [[[self tab] realParentWindow] moveTabRight:nil];
         break;
       case KEY_ACTION_NEXT_MRU_TAB:
-        [[[[self tab] parentWindow] tabView] processMRUEvent:event];
+        [[[[self tab] parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
+                                                              forwards:YES];
+        break;
+      case KEY_ACTION_PREVIOUS_MRU_TAB:
+        [[[[self tab] parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
+                                                              forwards:NO];
         break;
       case KEY_ACTION_NEXT_PANE:
         [[self tab] nextSession];

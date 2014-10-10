@@ -7,7 +7,7 @@
  **
  **  Project: iTerm
  **
- **  Description: NSTabView subclass. Implements drag and drop.
+ **  Description: NSTabView subclass.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -26,49 +26,28 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
+#import "PSMTabBarControl.h"
 
-@protocol PTYTabViewDelegateProtocol
-- (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem;
-- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem;
-- (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem;
-- (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem;
-- (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)index;
-- (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView;
-- (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
-- (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)sender;
-- (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
-- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
-@end
+// An NSTabView offers the tab bar control and a view in which one of several NSTabViewItem objects
+// (each of which has an associated NSView) is displayed. This subclass doesn't draw the control;
+// that's expected to be a subview of its container. That tab bar control is PTYTabView's delegate.
+// This implementation adds delegate callbacks as needed by PSMTabBarControl and keeps track of the
+// MRU order of tabs, as well as providing methods for cycling among them.
+@interface PTYTabView : NSTabView
 
-@interface PTYTabView : NSTabView {
-    BOOL isModifierPressed;
-    BOOL wereTabsNavigatedWithMRU;
-    NSMutableArray* mruTabs;
-    // Modifiers that are being used for cycling tabs. Only valid if
-    // isModifierPressed is true.
-    NSUInteger tabMRUModifierMask_;
-}
+// Override setDelegate so that it accepts PSMTabBarControl without warning
+@property(nonatomic, assign) id<PSMTabViewDelegate> delegate;
 
-- (id)initWithFrame:(NSRect)aFrame;
-- (void)dealloc;
-- (BOOL)acceptsFirstResponder;
-- (void)drawRect:(NSRect)rect;
-
-// NSTabView methods overridden
-- (void)addTabViewItem:(NSTabViewItem *)aTabViewItem;
-- (void)removeTabViewItem:(NSTabViewItem *)aTabViewItem;
-- (void)insertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)theIndex;
-
-// selects a tab from the contextual menu
+// Selects a tab where sender's -representedObject is a NSTabViewItem. Used from a window's
+// context menu.
 - (void)selectTab:(id)sender;
 
+// Select tab relative to current one.
 - (void)nextTab:(id)sender;
 - (void)previousTab:(id)sender;
 
-// selects next most recently used tab (MRU)
-- (BOOL)processMRUEvent:(NSEvent*)event;
-
-// Override setDelegate so that it accepts PSMTabBarControl without warning
-- (void)setDelegate:(id<PTYTabViewDelegateProtocol>)anObject;
+// Handle cycle forwards/cycle backwards actions, often bound to ctrl-tab and ctrl-shift-tab.
+- (void)cycleKeyDownWithModifiers:(NSUInteger)modifierFlags forwards:(BOOL)forwards;
+- (void)cycleFlagsChanged:(NSUInteger)modifierFlags;
 
 @end

@@ -7,7 +7,7 @@
  **
  **  Project: iTerm
  **
- **  Description: NSTabView subclass. Implements drag and drop.
+ **  Description: NSTabView subclass.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -25,115 +25,107 @@
  */
 
 #import "PTYTabView.h"
-#include <Carbon/Carbon.h>
 
-#define DEBUG_ALLOC           0
-#define DEBUG_METHOD_TRACE    0
+const NSUInteger kAllModifiers = (NSControlKeyMask |
+                                  NSCommandKeyMask |
+                                  NSAlternateKeyMask |
+                                  NSShiftKeyMask);
 
-#define kTabMRUKey kVK_Tab
+@implementation PTYTabView {
+    // Holds references to tabs with the most recently used one at index 0 and least recently used
+    // in the last position.
+    NSMutableArray *_tabViewItemsInMRUOrder;
 
-@implementation PTYTabView
+    // If set, then the user has cycled at least once and has not yet let up the modifier keys used
+    // to cycle. If the shortcut for cycling doesn't have modifiers, then this will always be NO.
+    BOOL _isCyclingWithModifierPressed;
 
-- (id)initWithFrame:(NSRect) aRect
-{
-    self = [super initWithFrame: aRect];
+    // Modifiers that are being used for cycling tabs. Only valid if _isCyclingWithModifierPressed
+    // is YES.
+    NSUInteger _cycleModifierFlags;
+}
+
+@dynamic delegate;
+
+- (id)initWithFrame:(NSRect)aRect {
+    self = [super initWithFrame:aRect];
     if (self) {
-        mruTabs = [[NSMutableArray alloc] init];
+        _tabViewItemsInMRUOrder = [[NSMutableArray alloc] init];
     }
 
     return self;
 }
 
-- (void)dealloc
-{
-    [mruTabs release];
+- (void)dealloc {
+    [_tabViewItemsInMRUOrder release];
     [super dealloc];
 }
 
-// we don't want this to be the first responder in the chain
-- (BOOL)acceptsFirstResponder
-{
+#pragma mark - NSView
+
+- (BOOL)acceptsFirstResponder {
     return NO;
 }
 
-- (void)drawRect:(NSRect)rect
-{
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabViewWillRedraw" 
-                                                        object:self];
-    [super drawRect:rect];
-}
+#pragma mark - NSTabView
 
-
-// NSTabView methods overridden
-- (void)addTabViewItem:(NSTabViewItem *) aTabViewItem
-{
+- (void)addTabViewItem:(NSTabViewItem *) aTabViewItem {
     // Let our delegate know
-    id delegate = [self delegate];
+    id<PSMTabViewDelegate> delegate = self.delegate;
 
-    if ([delegate conformsToProtocol:@protocol(PTYTabViewDelegateProtocol)]) {
+    if ([delegate conformsToProtocol:@protocol(PSMTabViewDelegate)]) {
         [delegate tabView:self willAddTabViewItem:aTabViewItem];
     }
 
-    [mruTabs addObject:aTabViewItem];
-    [super addTabViewItem: aTabViewItem];
+    [_tabViewItemsInMRUOrder addObject:aTabViewItem];
+    [super addTabViewItem:aTabViewItem];
 }
 
-- (void)removeTabViewItem:(NSTabViewItem *) aTabViewItem
-{
+- (void)removeTabViewItem:(NSTabViewItem *) aTabViewItem {
     // Let our delegate know
-    id delegate = [self delegate];
+    id<PSMTabViewDelegate> delegate = self.delegate;
 
-    if ([delegate conformsToProtocol:@protocol(PTYTabViewDelegateProtocol)]) {
+    if ([delegate conformsToProtocol:@protocol(PSMTabViewDelegate)]) {
         [delegate tabView:self willRemoveTabViewItem:aTabViewItem];
     }
     
-    [mruTabs removeObject:aTabViewItem];
+    [_tabViewItemsInMRUOrder removeObject:aTabViewItem];
 
     // remove the item
     [super removeTabViewItem:aTabViewItem];
 }
 
-- (void)insertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)theIndex
-{
+- (void)insertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(NSInteger)theIndex {
     // Let our delegate know
-    id delegate = [self delegate];
+    id<PSMTabViewDelegate> delegate = self.delegate;
 
     // Check the boundary
-    if (theIndex > [super numberOfTabViewItems]) {
-        theIndex = [super numberOfTabViewItems];
+    if (theIndex > [self numberOfTabViewItems]) {
+        theIndex = [self numberOfTabViewItems];
     }
 
-    if ([delegate conformsToProtocol:@protocol(PTYTabViewDelegateProtocol)]) {
+    if ([delegate conformsToProtocol:@protocol(PSMTabViewDelegate)]) {
         [delegate tabView:self willInsertTabViewItem:tabViewItem atIndex:theIndex];
     }
-    [mruTabs addObject:tabViewItem];
+    [_tabViewItemsInMRUOrder addObject:tabViewItem];
 
     [super insertTabViewItem:tabViewItem atIndex:theIndex];
 }
 
-- (void)selectTabViewItem:(NSTabViewItem *)tabViewItem
-{
+- (void)selectTabViewItem:(NSTabViewItem *)tabViewItem {
     [super selectTabViewItem:tabViewItem];
 
-    if (!isModifierPressed) {
-        [mruTabs removeObject:tabViewItem];
-        [mruTabs insertObject:tabViewItem atIndex:0];
+    if (!_isCyclingWithModifierPressed) {
+        [_tabViewItemsInMRUOrder removeObject:tabViewItem];
+        [_tabViewItemsInMRUOrder insertObject:tabViewItem atIndex:0];
     }
 }
 
-// selects a tab from the contextual menu
-- (void)selectTab:(id)sender
-{
+- (void)selectTab:(id)sender {
     [self selectTabViewItemWithIdentifier:[sender representedObject]];
 }
 
-- (void)setDelegate:(id<PTYTabViewDelegateProtocol>)anObject
-{
-    [super setDelegate:(id)anObject];
-}
-
-- (void)previousTab:(id)sender
-{
+- (void)previousTab:(id)sender {
     NSTabViewItem *tabViewItem = [self selectedTabViewItem];
     [self selectPreviousTabViewItem:sender];
     if (tabViewItem == [self selectedTabViewItem]) {
@@ -141,8 +133,7 @@
     }
 }
 
-- (void)nextTab:(id)sender
-{
+- (void)nextTab:(id)sender {
     NSTabViewItem *tabViewItem = [self selectedTabViewItem];
     [self selectNextTabViewItem:sender];
     if (tabViewItem == [self selectedTabViewItem]) {
@@ -150,67 +141,49 @@
     }
 }
 
-- (void)nextMRU
-{
+- (void)cycleForwards:(BOOL)forwards {
+    if ([_tabViewItemsInMRUOrder count] == 0) {
+        return;
+    }
     NSTabViewItem* tabViewItem = [self selectedTabViewItem];
-    NSUInteger theIndex = [mruTabs indexOfObject:tabViewItem] + 1;
-    if (theIndex == NSNotFound || theIndex >= [mruTabs count]) {
+    NSUInteger theIndex = [_tabViewItemsInMRUOrder indexOfObject:tabViewItem];
+    if (theIndex == NSNotFound) {
         theIndex = 0;
     }
-    NSTabViewItem* next = [mruTabs objectAtIndex:theIndex];
-    // This doesn't affect the MRU order because isModifierPressed is true.
+    if (forwards) {
+        theIndex++;
+        if (theIndex >= [_tabViewItemsInMRUOrder count]) {
+            theIndex = 0;
+        }
+    } else {
+        NSInteger temp = theIndex;
+        temp--;
+        if (temp < 0) {
+            temp = [_tabViewItemsInMRUOrder count] - 1;
+        }
+        theIndex = temp;
+    }
+    NSTabViewItem* next = _tabViewItemsInMRUOrder[theIndex];
+    // The MRU order won't be changed by cycling until you let up the modifier key in
+    // cycleFlagsChanged:.
     [self selectTabViewItem:next];
 }
 
-- (BOOL)onKeyPressed:(NSEvent*)event
-{
-    if ([event keyCode] == kTabMRUKey) {
-        if (!isModifierPressed) {
-            // Initial press; set modifier mask from current modifiers
-            tabMRUModifierMask_ =
-                ([event modifierFlags] & (NSControlKeyMask |
-                                          NSCommandKeyMask |
-                                          NSAlternateKeyMask |
-                                          NSShiftKeyMask));
-            isModifierPressed = (tabMRUModifierMask_ != 0);
-        }
-        if (isModifierPressed) {
-            wereTabsNavigatedWithMRU = YES;
-            [self nextMRU];
-        }
-        return YES;
+- (void)cycleKeyDownWithModifiers:(NSUInteger)modifierFlags forwards:(BOOL)forwards {
+    if (!_isCyclingWithModifierPressed) {
+        // Initial press; set modifier mask from current modifiers
+        _cycleModifierFlags = (modifierFlags & kAllModifiers);
+        _isCyclingWithModifierPressed = (_cycleModifierFlags != 0);
     }
-    return NO;
+    [self cycleForwards:forwards];
 }
 
-- (BOOL)onFlagsChanged:(NSEvent*)event
-{
-    if (isModifierPressed && (([event modifierFlags] & tabMRUModifierMask_) == 0)) {
-	// Modifiers released while cycling.
-        isModifierPressed = NO;
-        if (wereTabsNavigatedWithMRU) {
-            wereTabsNavigatedWithMRU = NO;
-
-            // While this looks like a no-op, it has the effect of re-ordering the MRU list.
-            [self selectTabViewItem:[self selectedTabViewItem]];
-        }
-        return YES;
-    }
-    return NO;
-}
-
-// process keyboard events
-// returns YES if the event was handled
-// otherwise returns NO, meaning that the event still needs to be processed
-- (BOOL)processMRUEvent:(NSEvent*)event
-{
-    switch ([event type]) {
-        case NSKeyDown:
-            return [self onKeyPressed:event];
-        case NSFlagsChanged:
-            return [self onFlagsChanged:event];
-        default:
-            return NO;
+- (void)cycleFlagsChanged:(NSUInteger)modifierFlags {
+    if (_isCyclingWithModifierPressed && ((modifierFlags & _cycleModifierFlags) == 0)) {
+        // Modifiers released while cycling.
+        _isCyclingWithModifierPressed = NO;
+        // While this looks like a no-op, it has the effect of re-ordering the MRU list.
+        [self selectTabViewItem:[self selectedTabViewItem]];
     }
 }
 

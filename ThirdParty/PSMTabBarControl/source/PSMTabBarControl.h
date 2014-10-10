@@ -11,7 +11,6 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "PTYTabView.h"
 
 extern NSString *const kPSMModifierChangedNotification;
 extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifier changed notification
@@ -44,7 +43,17 @@ extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifie
 @class PSMTabBarControl;
 
 @protocol PSMTabStyle;
-@protocol PTYTabViewDelegateProtocol;
+
+// Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
+@protocol PSMTabViewDelegate<NSTabViewDelegate>
+- (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem;
+- (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem;
+- (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)index;
+- (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
+- (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)sender;
+- (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
+- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+@end
 
 // These methods are KVO-observed.
 @protocol PSMTabBarControlRepresentedObjectIdentifierProtocol <NSObject>
@@ -136,7 +145,7 @@ enum {
     PSMTab_LeftTab          = 2,
 };
 
-@interface PSMTabBarControl : NSControl <PTYTabViewDelegateProtocol> {
+@interface PSMTabBarControl : NSControl<PSMTabViewDelegate> {
 
     // control basics
     NSMutableArray              *_cells;                    // the cells that draw the tabs

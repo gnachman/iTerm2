@@ -28,7 +28,7 @@ extern NSString *const kCurrentSessionDidChange;
   iTermWindowController,
   NSWindowDelegate,
   PSMTabBarControlDelegate,
-  PTYTabViewDelegateProtocol,
+  PSMTabViewDelegate,
   PTYWindowDelegateProtocol,
   WindowControllerInterface>
 

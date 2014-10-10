@@ -1381,13 +1381,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (IBAction)previousTab:(id)sender
-{
+- (IBAction)previousTab:(id)sender {
     [TABVIEW previousTab:sender];
 }
 
-- (IBAction)nextTab:(id)sender
-{
+- (IBAction)nextTab:(id)sender {
     [TABVIEW nextTab:sender];
 }
 
@@ -5798,8 +5796,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                         object:theEvent
                                                       userInfo:nil];
 
-    [TABVIEW processMRUEvent:theEvent];
 
+    [TABVIEW cycleFlagsChanged:[theEvent modifierFlags]];
+    
     NSUInteger modifierFlags = [theEvent modifierFlags];
     if (!(modifierFlags & NSCommandKeyMask) &&
         [[[self currentSession] textview] isFindingCursor]) {
