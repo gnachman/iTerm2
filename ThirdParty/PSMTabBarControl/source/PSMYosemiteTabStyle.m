@@ -324,7 +324,8 @@
 }
 
 - (NSColor *)verticalLineColor {
-    return [NSColor colorWithWhite:184/255.0 alpha:1];
+    CGFloat value = 184/255.0;
+    return [NSColor colorWithCalibratedRed:value green:value blue:value alpha:1];
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
