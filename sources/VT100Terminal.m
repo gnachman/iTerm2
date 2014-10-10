@@ -1099,7 +1099,8 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalCursorLeft:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
             break;
         case VT100CSI_CUD:
-            [delegate_ terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
+            [delegate_ terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+                         andToStartOfLine:NO];
             break;
         case VT100CSI_CUF:
             [delegate_ terminalCursorRight:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
@@ -1108,7 +1109,16 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
         case VT100CSI_CUU:
-            [delegate_ terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
+            [delegate_ terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+                       andToStartOfLine:NO];
+            break;
+        case VT100CSI_CNL:
+            [delegate_ terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+                         andToStartOfLine:YES];
+            break;
+        case VT100CSI_CPL:
+            [delegate_ terminalCursorUp:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+                       andToStartOfLine:YES];
             break;
         case VT100CSI_DA:
             if ([delegate_ terminalShouldSendReport]) {
@@ -1345,7 +1355,8 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSetCursorY:token.csi->p[0]];
             break;
         case ANSICSI_VPR:
-            [delegate_ terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1];
+            [delegate_ terminalCursorDown:token.csi->p[0] > 0 ? token.csi->p[0] : 1
+                         andToStartOfLine:NO];
             break;
         case ANSICSI_ECH:
             [delegate_ terminalEraseCharactersAfterCursor:token.csi->p[0]];

@@ -66,6 +66,8 @@ typedef enum {
     VT100CSI_CUF,                   // Cursor Forward
     VT100CSI_CUP,                   // Cursor Position
     VT100CSI_CUU,                   // Cursor Up
+    VT100CSI_CNL,                   // Cursor Next Line
+    VT100CSI_CPL,                   // Cursor Preceding Line
     VT100CSI_DA,                    // Device Attributes
     VT100CSI_DA2,                   // Secondary Device Attributes
     VT100CSI_DECALN,                // Screen Alignment Display

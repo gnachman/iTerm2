@@ -2046,9 +2046,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
-- (void)terminalCursorDown:(int)n
-{
+- (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
     [currentGrid_ moveCursorDown:n];
+    if (toStart) {
+        [currentGrid_ moveCursorToLeftMargin];
+    }
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
@@ -2058,9 +2060,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
-- (void)terminalCursorUp:(int)n
-{
+- (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart{
     [currentGrid_ moveCursorUp:n];
+    if (toStart) {
+        [currentGrid_ moveCursorToLeftMargin];
+    }
     [delegate_ screenTriggerableChangeDidOccur];
 }
 

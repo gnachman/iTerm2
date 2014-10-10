@@ -373,7 +373,17 @@ cancel:
                 result->type = VT100CSI_CUU;
                 SET_PARAM_DEFAULT(param, 0, 1);
                 break;
-                
+
+            case 'E':       // Cursor Next Line
+                result->type = VT100CSI_CNL;
+                SET_PARAM_DEFAULT(param, 0, 1);
+                break;
+
+            case 'F':       // Cursor Preceding Line
+                result->type = VT100CSI_CPL;
+                SET_PARAM_DEFAULT(param, 0, 1);
+                break;
+
             case 'H':
                 result->type = VT100CSI_CUP;
                 SET_PARAM_DEFAULT(param, 0, 1);

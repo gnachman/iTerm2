@@ -53,13 +53,13 @@ typedef enum {
 - (void)terminalCursorLeft:(int)n;
 
 // Move the cursor down one row.
-- (void)terminalCursorDown:(int)n;
+- (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart;
 
 // Move the cursor right one place.
 - (void)terminalCursorRight:(int)n;
 
 // Move the cursor up one row.
-- (void)terminalCursorUp:(int)n;
+- (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart;
 
 // Move the cursor to a 1-based coordinate.
 - (void)terminalMoveCursorToX:(int)x y:(int)y;

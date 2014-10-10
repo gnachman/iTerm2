@@ -1,0 +1,16 @@
+[2J[1;1HActual output:
+---
+
+
+ghi[2Fabc[1Edef[2Ejkl
+mno
+---
+
+Correct output looks like:
+---
+abc
+def
+ghi
+jkl
+mno
+---
