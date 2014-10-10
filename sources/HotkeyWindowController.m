@@ -331,8 +331,10 @@ void OnHotKeyEvent(void)
             HKWLog(@"already have a hotkey window created");
             if ([[hotkeyTerm window] alphaValue] == 1) {
                 HKWLog(@"hotkey window opaque");
-                if (![[hotkeyTerm window] isOnActiveSpace]) {
-                    DLog(@"Hotkey window is active on another space. Switch to it.");
+                if (![[hotkeyTerm window] isOnActiveSpace] ||
+                    (![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
+                     ![[hotkeyTerm window] isKeyWindow])) {
+                    DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
                     [NSApp activateIgnoringOtherApps:YES];
                     [[hotkeyTerm window] makeKeyAndOrderFront:nil];
                 } else {
