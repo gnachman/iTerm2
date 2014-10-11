@@ -131,6 +131,10 @@ static BOOL hasBecomeActive = NO;
     BOOL finishedLaunching_;
 
     BOOL userHasInteractedWithAnySession_;  // Disables min 10-second running time
+
+    // If the advanced pref to turn off app nap is enabled, then we hold a reference to this
+    // NSProcessInfo-provided object to make the system think we're doing something important.
+    id<NSObject> _appNapStoppingActivity;
 }
 
 // NSApplication delegate methods
@@ -311,6 +315,9 @@ static BOOL hasBecomeActive = NO;
     if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
         [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
         [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
+        _appNapStoppingActivity =
+                [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep
+                                                               reason:@"User Preference"];
     }
     [iTermFontPanel makeDefault];
 
@@ -730,10 +737,9 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-
+    [_appNapStoppingActivity release];
     [super dealloc];
 }
 
