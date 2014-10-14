@@ -176,9 +176,12 @@ typedef struct screen_char_t
     // foregroundColor, and backgroundColor (see notes above).
     unsigned int image : 1;
 
+    // Is a spacing combining mark. Gets rendered with the preceding character, if possible.
+    unsigned int isSpacingCombiningMark : 1;
+
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 6;
+    unsigned int unused : 5;
 } screen_char_t;
 
 // Typically used to store a single screen line.
@@ -312,8 +315,10 @@ void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, BOOL use
 int GetOrSetComplexChar(NSString* str);
 
 // Returns true if the given character is a combining mark, per chapter 3 of
-// the Unicode 6.0 spec, D52.
-BOOL IsCombiningMark(UTF32Char c);
+// the Unicode 6.0 spec, D52. If |isSpacingMark| is non-NULL then it will be filled into indicate if
+// the combining mark is spacing, meaning it should take its own space in additional to modifing its
+// predecessor.
+BOOL IsCombiningMark(UTF32Char c, BOOL *isSpacingMark);
 
 // Translate a surrogate pair into a single utf-32 char.
 UTF32Char DecodeSurrogatePair(unichar high, unichar low);

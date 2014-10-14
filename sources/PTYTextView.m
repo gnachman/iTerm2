@@ -1806,6 +1806,11 @@ NSMutableArray* screens=0;
     for (int i = 0; i < rectCount; i++) {
         DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
         [self drawOneRect:rectArray[i]];
+        [[NSColor colorWithRed:(float)(rand() % 256) / 255.0
+                         green:(float)(rand() % 256) / 255.0
+                          blue:(float)(rand() % 256) / 255.0
+                         alpha:1] set];
+        NSFrameRect(rectArray[i]);
     }
 
     if (drawRectDuration_) {
@@ -6220,10 +6225,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                               [_colorMap color:attrs.color withContrastAgainst:bgColor]);
         }
         BOOL drawable;
+        BOOL drawableMc = YES;
         if (blinkShow || ![self _charBlinks:theLine[i]]) {
             // This char is either not blinking or during the "on" cycle of the
             // blink. It should be drawn.
 
+            // Does the unicode general category "Mc" (spacing combining marks) affect the
+            // drawability of this code?
+            drawableMc = (!theLine[i].isSpacingCombiningMark ||
+                          (i == 0) ||
+                          (theLine[i - 1].isSpacingCombiningMark));
             // Set the character type and its unichar/string.
             if (theLine[i].complexChar) {
                 thisCharString = ComplexCharToStr(theLine[i].code);
@@ -6234,7 +6245,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     thisCharString = @"";
                     drawable = NO;
                 } else {
-                    drawable = YES;  // TODO: not all unicode is drawable
+                    // Generally we draw complex chars unless they are spacing combining marks.
+                    // The exception is spacing combining marks in the first column or those
+                    // preceeded by a spacing combining mark.
+                    drawable = drawableMc;
                 }
             } else {
                 thisCharString = nil;
@@ -6243,11 +6257,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 drawable = (theLine[i].code != 0 &&
                             theLine[i].code != '\t' &&
                             !(theLine[i].code >= ITERM2_PRIVATE_BEGIN &&
-                              theLine[i].code <= ITERM2_PRIVATE_END));
+                              theLine[i].code <= ITERM2_PRIVATE_END) &&
+                            drawableMc);
 
                 if (drawable) {
                     thisCharUnichar = theLine[i].code;
                 }
+            }
+            if (drawable && i < width - 1 && theLine[i + 1].isSpacingCombiningMark) {
+                // If the next code is a spacing combining mark, draw it as a string with both codes.
+                if (!theLine[i].complexChar) {
+                    thisCharString = [NSString stringWithCharacters:&thisCharUnichar length:1];
+                }
+                NSString *followOn;
+                screen_char_t *succ = &theLine[i + 1];
+                if (succ->complexChar) {
+                    followOn = ComplexCharToStr(succ->code);
+                    if (!followOn) {
+                        followOn = @"";
+                    }
+                } else {
+                    followOn = [NSString stringWithCharacters:&succ->code length:1];
+                }
+                thisCharString = [thisCharString stringByAppendingString:followOn];
+                doubleWidth = YES;
             }
         } else {
             // Chatacter hidden because of blinking.
@@ -6257,10 +6290,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (theLine[i].underline || inUnderlinedRange) {
             // This is not as fast as possible, but is nice and simple. Always draw underlined text
             // even if it's just a blank.
+            if (!drawable) {
+                thisCharUnichar = 0;
+                thisCharString = nil;
+            }
             drawable = YES;
         }
         // Set all other common attributes.
-        if (doubleWidth) {
+        if (!drawableMc) {
+            // Is a spacing combining mark that should be drawn along with the preceding mark
+            thisCharAdvance = 0;
+        } else if (doubleWidth) {
             thisCharAdvance = charWidth * 2;
         } else {
             thisCharAdvance = charWidth;
@@ -6750,32 +6790,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return imageSize;
 }
 
-// Draw a run of background color/image and foreground text.
-- (void)drawRunStartingAtIndex:(const int)firstIndex  // Index into line of first char
-                           row:(int)row               // Row number of line
-                         endAt:(const int)lastIndex   // Index into line of last char
-                       yOrigin:(const double)yOrigin  // Top left corner of rect to draw into
-                    hasBGImage:(const BOOL)hasBGImage  // If set, draw a bg image (else solid colors only)
-             defaultBgColorPtr:(NSColor **)defaultBgColorPtr  // Pass in default bg color; may be changed.
-      alphaIfTransparencyInUse:(const double)alphaIfTransparencyInUse  // Alpha value to use if transparency is on
-                       bgColor:(const int)bgColor      // bg color code (or red component if 24 bit)
-                   bgColorMode:(const ColorMode)bgColorMode  // bg color mode
-                        bgBlue:(const int)bgBlue       // blue component if 24 bit
-                       bgGreen:(const int)bgGreen      // green component if 24 bit
-                      reversed:(const BOOL)reversed    // reverse video?
-                    bgselected:(const BOOL)bgselected  // is selected text?
-                       isMatch:(const BOOL)isMatch     // is Find On Page match?
-                       stripes:(const BOOL)stripes     // bg is striped?
-                          line:(screen_char_t *)theLine  // Whole screen line
-                       matches:(NSData *)matches // Bitmask of Find On Page matches
-                       context:(CGContextRef)ctx       // Graphics context
-{
-    NSColor *aColor = *defaultBgColorPtr;
-
+- (NSColor *)drawBackgroundFromIndex:(const int)firstIndex
+                             toIndex:(const int)lastIndex
+                             yOrigin:(const double)yOrigin
+                          hasBGImage:(const BOOL)hasBGImage
+            alphaIfTransparencyInUse:(const double)alphaIfTransparencyInUse
+                         bgColorMode:(const ColorMode)bgColorMode
+                              bgBlue:(const int)bgBlue
+                             bgGreen:(const int)bgGreen
+                             bgColor:(const int)bgColor
+                            reversed:(const BOOL)reversed
+                          bgSelected:(const BOOL)bgSelected
+                             isMatch:(const BOOL)isMatch
+              defaultBackgroundColor:(NSColor *)defaultBackgroundColor
+                             stripes:(const BOOL)stripes
+                        textOriginPt:(NSPoint *)textOriginPtr
+                                 row:(int)row {
+    NSLog(@"draw %d to %d", firstIndex, lastIndex);
     NSRect bgRect = NSMakeRect(floor(MARGIN + firstIndex * charWidth),
                                yOrigin,
                                ceil((lastIndex - firstIndex) * charWidth),
                                lineHeight);
+    NSColor *backgroundColor;
 
     if (hasBGImage) {
         [_delegate textViewDrawBackgroundImageInView:self
@@ -6783,95 +6819,88 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                               blendDefaultBackground:NO];
     }
     if (!hasBGImage ||
-        (isMatch && !bgselected) ||
+        (isMatch && !bgSelected) ||
         !(bgColor == ALTSEM_DEFAULT && bgColorMode == ColorModeAlternate) ||
-        bgselected) {
+        bgSelected) {
         // There's no bg image, or there's a nondefault bg on a bg image.
         // We are not drawing an unmolested background image. Some
         // background fill must be drawn. If there is a background image
         // it will be blended with the bg color.
-
-        if (isMatch && !bgselected) {
-            aColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
-        } else if (bgselected) {
-            aColor = [self selectionColorForCurrentFocus];
+        
+        if (isMatch && !bgSelected) {
+            backgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
+        } else if (bgSelected) {
+            backgroundColor = [self selectionColorForCurrentFocus];
         } else {
             if (reversed && bgColor == ALTSEM_DEFAULT && bgColorMode == ColorModeAlternate) {
                 // Reverse video is only applied to default background-
                 // color chars.
-                aColor = [self colorForCode:ALTSEM_DEFAULT
-                                      green:0
-                                       blue:0
-                                  colorMode:ColorModeAlternate
-                                       bold:NO
-                                      faint:NO
-                               isBackground:NO];
+                backgroundColor = [self colorForCode:ALTSEM_DEFAULT
+                                               green:0
+                                                blue:0
+                                           colorMode:ColorModeAlternate
+                                                bold:NO
+                                               faint:NO
+                                        isBackground:NO];
             } else {
                 // Use the regular background color.
-                aColor = [self colorForCode:bgColor
-                                      green:bgGreen
-                                       blue:bgBlue
-                                  colorMode:bgColorMode
-                                       bold:NO
-                                      faint:NO
-                               isBackground:YES];
+                backgroundColor = [self colorForCode:bgColor
+                                               green:bgGreen
+                                                blue:bgBlue
+                                           colorMode:bgColorMode
+                                                bold:NO
+                                               faint:NO
+                                        isBackground:YES];
             }
         }
-        aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
-        [aColor set];
+        backgroundColor = [backgroundColor colorWithAlphaComponent:alphaIfTransparencyInUse];
+        [backgroundColor set];
         NSRectFillUsingOperation(bgRect,
                                  hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
     } else if (hasBGImage) {
         // There is a bg image and no special background on it. Blend
         // in the default background color.
-        aColor = [self colorForCode:ALTSEM_DEFAULT
-                              green:0
-                               blue:0
-                          colorMode:ColorModeAlternate
-                               bold:NO
-                              faint:NO
-                       isBackground:YES];
-        aColor = [aColor colorWithAlphaComponent:1 - _blend];
-        [aColor set];
+        backgroundColor = [self colorForCode:ALTSEM_DEFAULT
+                                       green:0
+                                        blue:0
+                                   colorMode:ColorModeAlternate
+                                        bold:NO
+                                       faint:NO
+                                isBackground:YES];
+        backgroundColor = [backgroundColor colorWithAlphaComponent:1 - _blend];
+        [backgroundColor set];
         NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+    } else {
+        // Default background color
+        backgroundColor = defaultBackgroundColor;
+        [backgroundColor set];
     }
-    *defaultBgColorPtr = aColor;
     [self drawBadgeInRect:bgRect];
-
+    
     // Draw red stripes in the background if sending input to all sessions
     if (stripes) {
         [self _drawStripesInRect:bgRect];
     }
-
-    NSPoint textOrigin;
-    textOrigin = NSMakePoint(MARGIN + firstIndex * charWidth, yOrigin);
-
+    
+    *textOriginPtr = NSMakePoint(MARGIN + firstIndex * charWidth, yOrigin);
+    
     // Highlight cursor line
     int cursorLine = [_dataSource cursorY] - 1 + [_dataSource numberOfScrollbackLines];
     if (_highlightCursorLine && row == cursorLine) {
         [[_delegate textViewCursorGuideColor] set];
-        NSRect rect = NSMakeRect(textOrigin.x,
-                                 textOrigin.y,
+        NSRect rect = NSMakeRect(textOriginPtr->x,
+                                 textOriginPtr->y,
                                  (lastIndex - firstIndex) * charWidth,
                                  lineHeight);
         NSRectFillUsingOperation(rect, NSCompositeSourceOver);
-
+        
         rect.size.height = 1;
         NSRectFillUsingOperation(rect, NSCompositeSourceOver);
-
+        
         rect.origin.y += lineHeight - 1;
         NSRectFillUsingOperation(rect, NSCompositeSourceOver);
     }
-
-    [self _drawCharactersInLine:theLine
-                            row:row
-                        inRange:NSMakeRange(firstIndex, lastIndex - firstIndex)
-                startingAtPoint:textOrigin
-                     bgselected:bgselected
-                       reversed:reversed
-                        bgColor:aColor
-                        matches:matches
-                        context:ctx];
+    return backgroundColor;
 }
 
 - (BOOL)_drawLine:(int)line
@@ -6887,11 +6916,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const BOOL stripes = useBackgroundIndicator_ && [_delegate textViewSessionIsBroadcastingInput];
     int WIDTH = [_dataSource width];
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
+    // Expand the range if needed
+    if (charRange.location > 0 && theLine[charRange.location].isSpacingCombiningMark) {
+        charRange.location--;
+        charRange.length++;
+    }
+    if (charRange.location + charRange.length < WIDTH &&
+        theLine[charRange.location + charRange.length - 1].isSpacingCombiningMark) {
+        charRange.length++;
+    }
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
     double selectedAlpha = 1.0 - _transparency;
     double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - _transparency : 1.0;
     BOOL reversed = [[_dataSource terminal] reverseVideo];
-    NSColor *aColor = nil;
+    NSColor *defaultBackgroundColor = nil;
 
     // Redraw margins ------------------------------------------------------------------------------
     NSRect leftMargin = NSMakeRect(0, curY, MARGIN, lineHeight);
@@ -6902,20 +6940,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
     rightMargin.size.height = lineHeight;
 
-    aColor = [self colorForCode:ALTSEM_DEFAULT
-                          green:0
-                           blue:0
-                      colorMode:ColorModeAlternate
-                           bold:NO
-                          faint:NO
-                   isBackground:YES];
+    defaultBackgroundColor = [self colorForCode:ALTSEM_DEFAULT
+                                          green:0
+                                           blue:0
+                                      colorMode:ColorModeAlternate
+                                           bold:NO
+                                          faint:NO
+                                   isBackground:YES];
 
     // Draw background in margins
     [_delegate textViewDrawBackgroundImageInView:self viewRect:leftMargin blendDefaultBackground:YES];
     [_delegate textViewDrawBackgroundImageInView:self viewRect:rightMargin blendDefaultBackground:YES];
 
-    aColor = [aColor colorWithAlphaComponent:selectedAlpha];
-    [aColor set];
+    defaultBackgroundColor = [defaultBackgroundColor colorWithAlphaComponent:selectedAlpha];
+    [defaultBackgroundColor set];
     // Indicate marks in margin --
     VT100ScreenMark *mark = [_dataSource markOnLine:line];
     if (mark.isVisible) {
@@ -6946,6 +6984,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int limit = charRange.location + charRange.length;
     NSIndexSet *selectedIndexes = [_selection selectedIndexesOnLine:line];
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    NSMutableArray *runs = [NSMutableArray array];
     while (j < limit) {
         if (theLine[j].code == DWC_RIGHT) {
             // Do not draw the right-hand side of double-width characters.
@@ -7001,25 +7040,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             j += (double_width ? 2 : 1);
         } else if (bgstart >= 0) {
             // This run is finished, draw it
-
-            [self drawRunStartingAtIndex:bgstart
-                                     row:line
-                                   endAt:j
-                                 yOrigin:curY
-                              hasBGImage:hasBGImage
-                       defaultBgColorPtr:&aColor
-                alphaIfTransparencyInUse:alphaIfTransparencyInUse
-                                 bgColor:bgColor
-                             bgColorMode:bgColorMode
-                                  bgBlue:bgBlue
-                                 bgGreen:bgGreen
-                                reversed:reversed
-                              bgselected:bgselected
-                                 isMatch:isMatch
-                                 stripes:stripes
-                                    line:theLine
-                                 matches:matches
-                                 context:ctx];
+            [runs addObject:@[ @(bgstart),
+                               @(line),
+                               @(j),
+                               @(curY),
+                               @(hasBGImage),
+                               @(alphaIfTransparencyInUse),
+                               @(bgColor),
+                               @(bgColorMode),
+                               @(bgBlue),
+                               @(bgGreen),
+                               @(reversed),
+                               @(bgselected),
+                               @(isMatch),
+                               @(stripes) ]];
             bgstart = -1;
             // Return to top of loop without incrementing j so this
             // character gets the chance to start its own run
@@ -7030,25 +7064,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if (bgstart >= 0) {
         // Draw last run, if necesary.
-        [self drawRunStartingAtIndex:bgstart
-                                 row:line
-                               endAt:j
-                             yOrigin:curY
-                          hasBGImage:hasBGImage
-                   defaultBgColorPtr:&aColor
-            alphaIfTransparencyInUse:alphaIfTransparencyInUse
-                             bgColor:bgColor
-                         bgColorMode:bgColorMode
-                              bgBlue:bgBlue
-                             bgGreen:bgGreen
-                            reversed:reversed
-                          bgselected:bgselected
-                             isMatch:isMatch
-                             stripes:stripes
-                                line:theLine
-                             matches:matches
-                             context:ctx];
+        [runs addObject:@[ @(bgstart),
+                           @(line),
+                           @(j),
+                           @(curY),
+                           @(hasBGImage),
+                           @(alphaIfTransparencyInUse),
+                           @(bgColor),
+                           @(bgColorMode),
+                           @(bgBlue),
+                           @(bgGreen),
+                           @(reversed),
+                           @(bgselected),
+                           @(isMatch) ]];
     }
+
+    // First, draw backgrounds.
+    NSArray *supplementaryInfo = [self drawBackgroundFromRuns:runs
+                                                      stripes:stripes
+                                       defaultBackgroundColor:defaultBackgroundColor];
+    // Now, draw text.
+    [self drawTextFromRuns:runs
+         supplementaryInfo:supplementaryInfo
+                      line:theLine
+                   matches:matches
+                   context:ctx];
 
     NSArray *noteRanges = [_dataSource charactersWithNotesOnLine:line];
     if (noteRanges.count) {
@@ -7068,6 +7108,97 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     return anyBlinking;
+}
+
+- (void)drawTextFromRuns:(NSArray *)runs
+       supplementaryInfo:(NSArray *)supplementaryInfo
+                    line:(screen_char_t *)theLine
+                 matches:(NSData *)matches
+                 context:(CGContextRef)ctx {
+    int width = [_dataSource width];
+    int j = 0;
+    BOOL extended = NO;
+    for (NSArray *run in runs) {
+        int firstIndex = [run[0] intValue];
+        int row = [run[1] intValue];
+        int lastIndex = [run[2] intValue];
+        BOOL reversed = [run[10] boolValue];
+        BOOL bgselected = [run[11] boolValue];
+        NSArray *info = supplementaryInfo[j++];
+        NSColor *color = info[0];
+        NSPoint textOrigin = [info[1] pointValue];
+
+        // Advance firstIndex if last run was extended for chars in Mc
+        if (extended) {
+            textOrigin.x += charWidth;
+            firstIndex++;
+        }
+
+        // Extend to include characters in Mc
+        if (lastIndex < width && theLine[lastIndex].isSpacingCombiningMark) {
+            ++lastIndex;
+            extended = YES;
+        } else {
+            extended = NO;
+        }
+
+        if (firstIndex == lastIndex) {
+            continue;
+        }
+
+        [self _drawCharactersInLine:theLine
+                                row:row
+                            inRange:NSMakeRange(firstIndex, lastIndex - firstIndex)
+                    startingAtPoint:textOrigin
+                         bgselected:bgselected
+                           reversed:reversed
+                            bgColor:color
+                            matches:matches
+                            context:ctx];
+    }
+}
+
+- (NSArray *)drawBackgroundFromRuns:(NSArray *)runs
+                            stripes:(BOOL)stripes
+             defaultBackgroundColor:(NSColor *)defaultBackgroundColor {
+    NSMutableArray *supplementaryInfo = [NSMutableArray array];
+    for (NSArray *run in runs) {
+        int firstIndex = [run[0] intValue];
+        int row = [run[1] intValue];
+        int lastIndex = [run[2] intValue];
+        double yOrigin = [run[3] doubleValue];
+        BOOL hasBGImage = [run[4] boolValue];
+        double alphaIfTransparencyInUse = [run[5] doubleValue];
+        int bgColor = [run[6] intValue];
+        ColorMode bgColorMode = [run[7] intValue];
+        int bgBlue = [run[8] intValue];
+        int bgGreen = [run[9] intValue];
+        BOOL reversed = [run[10] boolValue];
+        BOOL bgselected = [run[11] boolValue];
+        BOOL isMatch = [run[12] boolValue];
+        NSPoint textOrigin;
+
+        NSColor *backgroundColor =
+                [self drawBackgroundFromIndex:firstIndex
+                                      toIndex:lastIndex
+                                      yOrigin:yOrigin
+                                   hasBGImage:hasBGImage
+                     alphaIfTransparencyInUse:alphaIfTransparencyInUse
+                                  bgColorMode:bgColorMode
+                                       bgBlue:bgBlue
+                                      bgGreen:bgGreen
+                                      bgColor:bgColor
+                                     reversed:reversed
+                                   bgSelected:bgselected
+                                      isMatch:isMatch
+                       defaultBackgroundColor:defaultBackgroundColor
+                                      stripes:stripes
+                                 textOriginPt:&textOrigin
+                                          row:row];
+
+        [supplementaryInfo addObject:@[ backgroundColor, [NSValue valueWithPoint:textOrigin] ] ];
+    }
+    return supplementaryInfo;
 }
 
 - (void)_drawCharacter:(screen_char_t)screenChar

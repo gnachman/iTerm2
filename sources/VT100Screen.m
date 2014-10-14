@@ -854,14 +854,17 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     // Pick off leading combining marks and low surrogates and modify the
     // character at the cursor position with them.
+    BOOL isSpacingCombining;
     while ([string length] > 0 &&
-           (IsCombiningMark(firstChar) || IsLowSurrogate(firstChar))) {
+           ((IsCombiningMark(firstChar, &isSpacingCombining) && !isSpacingCombining) ||
+            IsLowSurrogate(firstChar))) {
         VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
+        BOOL didAddCombiningMark = NO;
         if (pred.x < 0 ||
-            ![currentGrid_ addCombiningChar:firstChar toCoord:pred]) {
+            !(didAddCombiningMark = [currentGrid_ addCombiningChar:firstChar toCoord:pred])) {
             // Combining mark will need to stand alone rather than combine
             // because nothing precedes it.
-            if (IsCombiningMark(firstChar)) {
+            if (IsCombiningMark(firstChar, NULL)) {
                 // Prepend a space to it so the combining mark has something
                 // to combine with.
                 string = [NSString stringWithFormat:@" %@", string];

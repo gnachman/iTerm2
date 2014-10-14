@@ -329,16 +329,60 @@ BOOL StringContainsCombiningMark(NSString *s)
         } else {
             value = c;
         }
-        if (IsCombiningMark(value)) {
+        if (IsCombiningMark(value, NULL)) {
             return YES;
         }
     }
     return NO;
 }
 
+// These values come from UnicodeData.txt version 7.0 where GeneralCategory is "Mc".
+static BOOL IsSpacingCombiningMark(UTF32Char c) {
+  static NSMutableCharacterSet *spacingCombiningMarks;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        spacingCombiningMarks = [[NSMutableCharacterSet alloc] init];
+        NSRange ranges[] = {
+            { 0x903, 1 }, { 0x93b, 1 }, { 0x93e, 3 }, { 0x949, 4 }, { 0x94e, 2 },
+            { 0x982, 2 }, { 0x9be, 3 }, { 0x9c7, 2 }, { 0x9cb, 2 }, { 0x9d7, 1 },
+            { 0xa03, 1 }, { 0xa3e, 3 }, { 0xa83, 1 }, { 0xabe, 3 }, { 0xac9, 1 },
+            { 0xacb, 2 }, { 0xb02, 2 }, { 0xb3e, 1 }, { 0xb40, 1 }, { 0xb47, 2 },
+            { 0xb4b, 2 }, { 0xb57, 1 }, { 0xbbe, 2 }, { 0xbc1, 2 }, { 0xbc6, 3 },
+            { 0xbca, 3 }, { 0xbd7, 1 }, { 0xc01, 3 }, { 0xc41, 4 }, { 0xc82, 2 },
+            { 0xcbe, 1 }, { 0xcc0, 5 }, { 0xcc7, 2 }, { 0xcca, 2 }, { 0xcd5, 2 },
+            { 0xd02, 2 }, { 0xd3e, 3 }, { 0xd46, 3 }, { 0xd4a, 3 }, { 0xd57, 1 },
+            { 0xd82, 2 }, { 0xdcf, 3 }, { 0xdd8, 8 }, { 0xdf2, 2 }, { 0xf3e, 2 },
+            { 0xf7f, 1 }, { 0x102b, 2 }, { 0x1031, 1 }, { 0x1038, 1 }, { 0x103b, 2 },
+            { 0x1056, 2 }, { 0x1062, 3 }, { 0x1067, 7 }, { 0x1083, 2 }, { 0x1087, 6 },
+            { 0x108f, 1 }, { 0x109a, 3 }, { 0x17b6, 1 }, { 0x17be, 8 }, { 0x17c7, 2 },
+            { 0x1923, 4 }, { 0x1929, 3 }, { 0x1930, 2 }, { 0x1933, 6 }, { 0x19b0, 17 },
+            { 0x19c8, 2 }, { 0x1a19, 2 }, { 0x1a55, 1 }, { 0x1a57, 1 }, { 0x1a61, 1 },
+            { 0x1a63, 2 }, { 0x1a6d, 6 }, { 0x1b04, 1 }, { 0x1b35, 1 }, { 0x1b3b, 1 },
+            { 0x1b3d, 5 }, { 0x1b43, 2 }, { 0x1b82, 1 }, { 0x1ba1, 1 }, { 0x1ba6, 2 },
+            { 0x1baa, 1 }, { 0x1be7, 1 }, { 0x1bea, 3 }, { 0x1bee, 1 }, { 0x1bf2, 2 },
+            { 0x1c24, 8 }, { 0x1c34, 2 }, { 0x1ce1, 1 }, { 0x1cf2, 2 }, { 0x302e, 2 },
+            { 0xa823, 2 }, { 0xa827, 1 }, { 0xa880, 2 }, { 0xa8b4, 16 }, { 0xa952, 2 },
+            { 0xa983, 1 }, { 0xa9b4, 2 }, { 0xa9ba, 2 }, { 0xa9bd, 4 }, { 0xaa2f, 2 },
+            { 0xaa33, 2 }, { 0xaa4d, 1 }, { 0xaa7b, 1 }, { 0xaa7d, 1 }, { 0xaaeb, 1 },
+            { 0xaaee, 2 }, { 0xaaf5, 1 }, { 0xabe3, 2 }, { 0xabe6, 2 }, { 0xabe9, 2 },
+            { 0xabec, 1 }, { 0x11000, 1 }, { 0x11002, 1 }, { 0x11082, 1 }, { 0x110b0, 3 },
+            { 0x110b7, 2 }, { 0x1112c, 1 }, { 0x11182, 1 }, { 0x111b3, 3 }, { 0x111bf, 2 },
+            { 0x1122c, 3 }, { 0x11232, 2 }, { 0x11235, 1 }, { 0x112e0, 3 }, { 0x11302, 2 },
+            { 0x1133e, 2 }, { 0x11341, 4 }, { 0x11347, 2 }, { 0x1134b, 3 }, { 0x11357, 1 },
+            { 0x11362, 2 }, { 0x114b0, 3 }, { 0x114b9, 1 }, { 0x114bb, 4 }, { 0x114c1, 1 },
+            { 0x115af, 3 }, { 0x115b8, 4 }, { 0x115be, 1 }, { 0x11630, 3 }, { 0x1163b, 2 },
+            { 0x1163e, 1 }, { 0x116ac, 1 }, { 0x116ae, 2 }, { 0x116b6, 1 }, { 0x16f51, 46 },
+            { 0x1d165, 2 }, { 0x1d16d, 6 }
+        };
+        for (int i = 0; i < sizeof(ranges) / sizeof(NSRange); i++) {
+            [spacingCombiningMarks addCharactersInRange:ranges[i]];
+        }
+    });
 
-BOOL IsCombiningMark(UTF32Char c)
-{
+    return [spacingCombiningMarks longCharacterIsMember:c];
+}
+
+BOOL IsCombiningMark(UTF32Char c, BOOL *isSpacingMark) {
     static NSCharacterSet* combiningMarks;
     if (!combiningMarks) {
         struct {
@@ -416,7 +460,13 @@ BOOL IsCombiningMark(UTF32Char c)
         }
         combiningMarks = temp;
     }
-    return [combiningMarks longCharacterIsMember:c];
+    BOOL isCombining = [combiningMarks longCharacterIsMember:c];
+    if (isCombining && isSpacingMark) {
+        *isSpacingMark = IsSpacingCombiningMark(c);
+    } else if (isSpacingMark) {
+        *isSpacingMark = NO;
+    }
+    return isCombining;
 }
 
 UTF32Char DecodeSurrogatePair(unichar high, unichar low)
@@ -578,6 +628,9 @@ void StringToScreenChars(NSString *s,
             *cursorIndex = j;
         }
 
+        BOOL isSpacingCombining;
+        BOOL isCombining = IsCombiningMark(sc[i], &isSpacingCombining);
+
         // Naïvely copy the input char into the output buf.
         buf[j].code = sc[i];
         buf[j].complexChar = NO;
@@ -599,8 +652,9 @@ void StringToScreenChars(NSString *s,
         buf[j].blink = fg.blink;
         buf[j].underline = fg.underline;
         buf[j].image = NO;
-
+        buf[j].isSpacingCombiningMark = isSpacingCombining;
         buf[j].unused = 0;
+
 
         // Now fix up buf, dealing with private-use characters, zero-width spaces,
         // combining marks, and surrogate pairs.
@@ -608,7 +662,7 @@ void StringToScreenChars(NSString *s,
             // Translate iTerm2's private-use characters into a "?".
             buf[j].code = '?';
         } else if (sc[i] > 0xa0 &&
-                   !IsCombiningMark(sc[i]) &&
+                   !isCombining &&
                    !IsLowSurrogate(sc[i]) &&
                    !IsHighSurrogate(sc[i]) &&
                    [NSString isDoubleWidthCharacter:sc[i]
@@ -637,6 +691,7 @@ void StringToScreenChars(NSString *s,
             buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
+            buf[j].isSpacingCombiningMark = NO;
 
             buf[j].unused = 0;
         } else if (sc[i] == 0xfeff ||  // zero width no-break space
@@ -646,7 +701,7 @@ void StringToScreenChars(NSString *s,
             // Just act like we never saw the character. This isn't quite right because a subsequent
             // combining mark should not combine with a space.
             j--;
-        } else if (IsCombiningMark(sc[i]) || IsLowSurrogate(sc[i])) {
+        } else if ((isCombining && !isSpacingCombining) || IsLowSurrogate(sc[i])) {
             // In the case of a surrogate pair, the high surrogate will be placed in buf in the
             // preceding iteration. When we see a low surrogate and the j-1'th char in buf is a
             // high surrogate, then a complex char gets created at j-1. In that way, a low surrogate
@@ -656,7 +711,7 @@ void StringToScreenChars(NSString *s,
                 j--;
 
                 BOOL movedBackOverDwcRight = NO;
-                if (buf[j].code == DWC_RIGHT && j > 0 && IsCombiningMark(sc[i])) {
+                if (buf[j].code == DWC_RIGHT && j > 0 && isCombining) {
                     // This happens easily with ambiguous-width characters, where something like
                     // á is treated as double-width and a subsequent combining mark needs to modify
                     // at the real code, not the DWC_RIGHT. Decrement j temporarily.
@@ -704,6 +759,7 @@ void StringToScreenChars(NSString *s,
                         buf[j].italic = fg.italic;
                         buf[j].blink = fg.blink;
                         buf[j].underline = fg.underline;
+                        buf[j].isSpacingCombiningMark = NO;
 
                         buf[j].unused = 0;
                     }

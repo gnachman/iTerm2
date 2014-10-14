@@ -1,1 +1,22 @@
+किंकर
+Here's a spacing combining mark adjacent to latin letters so it doesn't combine right:
 rिq
+
+Here it is in context:
+को िवस्‍मयकारी
+http://hindilanguage.info/devanagari/: कि
+
+Tamil letter ca: ச
+Tamil vowel sign o: ொ ொ
+CA + O: சொ
+
+Here's some Tamil (note CA + O at the start of the second word on the second line):
+
+யாகாவா ராயினும் நாகாக்க காவாக்கால்
+சோகாப்பர் சொல்லிழுக்குப் பட்டு.
+
+Here's some Devanagari, which has lots of spacing combining marks:
+
+किंकर {kinakar} = SERVANT(Noun)
+उदाहरण:उनके घर मे एक किंकर की आवश्यकता है !
+Usage:Faithful servant should be given work in the house.
