@@ -3889,7 +3889,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
   unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
   DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
   _lastInput = [NSDate timeIntervalSinceReferenceDate];
-  _suppressAllOutput = NO;
+  [self resumeOutputIfNeeded];
   if ([[[self tab] realParentWindow] inInstantReplay]) {
     DLog(@"PTYSession keyDown in IR");
 
@@ -4704,10 +4704,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[[self tab] realParentWindow] newTabWithBookmarkGuid:guid];
 }
 
-// Called when a key is pressed.1
+// Called when a key is pressed.
 - (BOOL)textViewDelegateHandlesAllKeystrokes
 {
-    _suppressAllOutput = NO;
+    [self resumeOutputIfNeeded];
     return [[[self tab] realParentWindow] inInstantReplay];
 }
 
@@ -5964,6 +5964,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                      inProfile:_profile];
 }
 
+- (void)resumeOutputIfNeeded {
+    if (_suppressAllOutput) {
+        // If all output was being suppressed and you hit a key, stop it but ignore bells for a few
+        // seconds until we can process any that are in the pipeline.
+        _suppressAllOutput = NO;
+        _ignoreBellUntil = [NSDate timeIntervalSinceReferenceDate] + 5;
+    }
+}
+
 - (BOOL)screenShouldIgnoreBell {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (now < _ignoreBellUntil) {
@@ -5988,12 +5997,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // If you decline the offer to silence the bell, we'll stop asking for this many seconds.
     static const NSTimeInterval kTimeToWaitAfterDecline = 10;
     NSString *const identifier = @"Annoying Bell Announcement Identifier";
+    iTermAnnouncementViewController *existingAnnouncement = _announcements[identifier];
+    if (existingAnnouncement) {
+        // Reset the auto-dismiss time each time the bell rings.
+        existingAnnouncement.timeout = 10;
+    }
     if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
-        !_announcements[identifier] &&
+        !existingAnnouncement &&
         (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
         ![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
         iTermAnnouncementViewController *announcement =
-                [iTermAnnouncementViewController announcemenWithTitle:@"The bell is ringing a lot. Want to ignore it temporarily?"
+                [iTermAnnouncementViewController announcemenWithTitle:@"The bell is ringing a lot. Silence it?"
                                                                 style:kiTermAnnouncementViewStyleQuestion
                                                           withActions:@[ @"Silence Bell Temporarily",
                                                                          @"Suppress All Output",
@@ -6024,6 +6038,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                                        break;
                                                                }
                                                            }];
+        // Set the auto-dismiss timeout.
+        announcement.timeout = 10;
         [self queueAnnouncement:announcement identifier:identifier];
     }
     return NO;

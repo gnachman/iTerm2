@@ -128,7 +128,9 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)close:(id)sender {
-    _block(-1);
+    if (_block) {
+        _block(-1);
+    }
 }
 
 - (void)willDismiss {
@@ -141,19 +143,36 @@ static const CGFloat kMargin = 8;
     NSRect rect = _internalView.frame;
 
     NSPopUpButton *pullDown = nil;
-    if (actions.count > 2) {
+
+    // If there are <=2 buttons, create all as buttons. Otherwise create first as button.
+    int start;
+    int limit;
+    int step;
+    BOOL shouldCreatePopup;
+    if (actions.count <= 2) {
+        start = actions.count - 1;
+        limit = -1;
+        step = -1;
+        shouldCreatePopup = NO;
+    } else {
+        start = 0;
+        limit = 1;
+        step = 1;
+        shouldCreatePopup = YES;
+    }
+
+    if (shouldCreatePopup) {
         pullDown = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0) pullsDown:YES];
         pullDown.autoresizingMask = NSViewMinXMargin;
         [pullDown setBezelStyle:NSTexturedRoundedBezelStyle];
         [pullDown setTarget:self];
         [pullDown setAction:@selector(pullDownItemSelected:)];
         [_internalView addSubview:pullDown];
-        [pullDown addItemWithTitle:@"Select Action…"];
-        int i = 0;
-        for (NSString *action in actions) {
+        [pullDown addItemWithTitle:@"More Actions…"];
+        for (int i = limit; i < actions.count; i++) {
+            NSString *action = actions[i];
             [pullDown addItemWithTitle:action];
             [[[pullDown itemArray] lastObject] setTag:i];
-            i++;
         }
         [pullDown sizeToFit];
         _buttonWidth += pullDown.frame.size.width + kMargin;
@@ -162,28 +181,29 @@ static const CGFloat kMargin = 8;
                                     pullDown.frame.size.width,
                                     pullDown.frame.size.height);
         [_actionButtons addObject:pullDown];
-    } else {
-        for (int i = actions.count - 1; i >= 0; i--) {
-            NSString *action = actions[i];
-            NSButton *button = [[[NSButton alloc] init] autorelease];
-            [button setButtonType:NSMomentaryPushInButton];
-            [button setTarget:self];
-            [button setAction:@selector(buttonPressed:)];
-            [button setTag:i];
-            [button setTitle:action];
-            [button setBezelStyle:NSTexturedRoundedBezelStyle];
-            [button sizeToFit];
-            button.autoresizingMask = NSViewMinXMargin;
-            _buttonWidth += kMargin;
-            _buttonWidth += button.frame.size.width;
-            button.frame = NSMakeRect(rect.size.width - _buttonWidth,
-                                      floor((rect.size.height - button.frame.size.height) / 2),
-                                      button.frame.size.width,
-                                      button.frame.size.height);
-            [_actionButtons addObject:button];
-            [_internalView addSubview:button];
-        }
     }
+
+    for (int i = start; i != limit; i += step) {
+        NSString *action = actions[i];
+        NSButton *button = [[[NSButton alloc] init] autorelease];
+        [button setButtonType:NSMomentaryPushInButton];
+        [button setTarget:self];
+        [button setAction:@selector(buttonPressed:)];
+        [button setTag:i];
+        [button setTitle:action];
+        [button setBezelStyle:NSTexturedRoundedBezelStyle];
+        [button sizeToFit];
+        button.autoresizingMask = NSViewMinXMargin;
+        _buttonWidth += kMargin;
+        _buttonWidth += button.frame.size.width;
+        button.frame = NSMakeRect(rect.size.width - _buttonWidth,
+                                  floor((rect.size.height - button.frame.size.height) / 2),
+                                  button.frame.size.width,
+                                  button.frame.size.height);
+        [_actionButtons addObject:button];
+        [_internalView addSubview:button];
+    }
+
 }
 
 - (NSImage *)iconImage {
@@ -238,29 +258,48 @@ static const CGFloat kMargin = 8;
     [textView setSelectable:NO];
 
     _textView = [textView retain];
-    CGFloat height = [title heightWithAttributes:@{ NSFontAttributeName: _textView.font } constrainedToWidth:rect.size.width];
+    NSDictionary *attributes = @{ NSFontAttributeName: _textView.font };
+    CGFloat height = [title heightWithAttributes:attributes
+                              constrainedToWidth:rect.size.width];
+    CGFloat maxHeight = [@"x\nx" heightWithAttributes:attributes constrainedToWidth:rect.size.width];
+    height = MIN(height, maxHeight);
     textView.frame = NSMakeRect(rect.origin.x,
                                  floor((_internalView.frame.size.height - height) / 2),
                                  rect.size.width,
                                  height);
+    [self updateTextViewFrame];
+
     [_internalView addSubview:textView];
 }
 
 - (void)buttonPressed:(id)sender {
-    _block([sender tag]);
+    if (_block) {
+        _block([sender tag]);
+    }
+}
+
+- (void)updateTextViewFrame {
+    NSRect rect = _textView.frame;
+    NSDictionary *attributes = @{ NSFontAttributeName: _textView.font };
+    CGFloat height = [_textView.string heightWithAttributes:attributes
+                                         constrainedToWidth:rect.size.width];
+    CGFloat maxHeight = [@"x\nx" heightWithAttributes:attributes constrainedToWidth:rect.size.width];
+    CGFloat minHeight = [@"x" heightWithAttributes:attributes constrainedToWidth:rect.size.width];
+    height = MAX(minHeight, MIN(height, maxHeight));
+
+    NSRect textRect = NSMakeRect(rect.origin.x,
+                                 floor((_internalView.frame.size.height - height) / 2),
+                                 _internalView.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin,
+                                 height);
+    _textView.frame = textRect;
+    _textView.maxSize = textRect.size;
+    _textView.minSize = textRect.size;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [super resizeSubviewsWithOldSize:oldSize];
 
-    NSRect rect = _textView.frame;
-    CGFloat height = [_textView.string heightWithAttributes:@{ NSFontAttributeName: _textView.font }
-                                         constrainedToWidth:rect.size.width];
-    _textView.frame = NSMakeRect(rect.origin.x,
-                                 floor((_internalView.frame.size.height - height) / 2),
-                                 _internalView.frame.size.width - _buttonWidth - NSMaxX(_icon.frame) - kMargin,
-                                 height);
-
+    [self updateTextViewFrame];
     NSSize closeSize = [_closeButton frame].size;
     _closeButton.frame = NSMakeRect(self.frame.size.width - closeSize.width - kMargin,
                                     floor((_internalView.frame.size.height - closeSize.height) / 2),
@@ -284,6 +323,7 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)sizeToFit {
+    [self updateTextViewFrame];
     NSRect frame = self.frame;
     frame.size.height = _textView.frame.size.height + 29;
     self.frame = frame;
@@ -294,7 +334,9 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)pullDownItemSelected:(id)sender {
-    _block([[sender selectedItem] tag]);
+    if (_block) {
+        _block([[sender selectedItem] tag]);
+    }
 }
 
 @end

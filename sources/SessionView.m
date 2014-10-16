@@ -709,13 +709,27 @@ static NSDate* lastResizeDate_;
     _currentAnnouncement.view.frame = rect;
 }
 
+- (iTermAnnouncementViewController *)nextAnnouncement {
+    iTermAnnouncementViewController *possibleAnnouncement = nil;
+    while (_announcements.count) {
+        possibleAnnouncement = [[_announcements[0] retain] autorelease];
+        [_announcements removeObjectAtIndex:0];
+        if (possibleAnnouncement.shouldBecomeVisible) {
+            return possibleAnnouncement;
+        }
+    }
+    return nil;
+}
+
 - (void)showNextAnnouncement {
     [_currentAnnouncement autorelease];
     _currentAnnouncement = nil;
     if (_announcements.count) {
-        _currentAnnouncement = [_announcements[0] retain];
-        [_announcements removeObjectAtIndex:0];
-        
+        iTermAnnouncementViewController *possibleAnnouncement = [self nextAnnouncement];
+        if (!possibleAnnouncement) {
+            return;
+        }
+        _currentAnnouncement = [possibleAnnouncement retain];
         [self updateAnnouncementFrame];
 
         // Animate in
@@ -731,6 +745,7 @@ static NSDate* lastResizeDate_;
         [_currentAnnouncement.view.animator setFrame:finalRect];
 
         _currentAnnouncement.view.autoresizingMask = NSViewWidthSizable | NSViewMinYMargin;
+        [_currentAnnouncement didBecomeVisible];
         [self addSubview:_currentAnnouncement.view];
     }
 }

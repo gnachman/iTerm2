@@ -27,4 +27,13 @@
 
 - (void)dismiss;
 
+// Amount of time announcement will stay onscreen before autodismissing.
+- (void)setTimeout:(NSTimeInterval)timeout;
+
+// Called when the announcement is displayed to the user.
+- (void)didBecomeVisible;
+
+// Indicates if it has timed out.
+- (BOOL)shouldBecomeVisible;
+
 @end

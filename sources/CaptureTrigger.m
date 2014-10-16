@@ -154,6 +154,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
                                                             style:kiTermAnnouncementViewStyleWarning
                                                       withActions:@[ ]
                                                        completion:^(int selection) { }];
+        announcement.timeout = 2;
         [session queueAnnouncement:announcement
                         identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
     }
