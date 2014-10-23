@@ -131,7 +131,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
                   kPreferenceKeyAddBonjourHostsToProfiles: @NO,
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,
-                  kPreferenceKeyCheckForTestReleases: @YES,
+                  kPreferenceKeyCheckForTestReleases: @NO,
                   kPreferenceKeyLoadPrefsFromCustomFolder: @NO,
                   kPreferenceKeyCustomFolder: [NSNull null],
                   kPreferenceKeySelectionCopiesText: @YES,
