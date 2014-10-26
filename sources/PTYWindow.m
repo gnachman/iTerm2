@@ -353,4 +353,33 @@ end:
     return totalOcclusion;
 }
 
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen {
+    BOOL isOverFullscreen = FALSE;
+    CFArrayRef windowsInSpace = CGWindowListCopyWindowInfo(kCGWindowListOptionAll | kCGWindowListOptionOnScreenOnly, kCGNullWindowID);
+    
+    // Loop through all windows of current space, and see if there's one with windowLayer set to -1, eg. a fullscreen app.
+    for (NSMutableDictionary *win in (NSArray *)windowsInSpace)
+    {
+        if ([win objectForKey:@"kCGWindowLayer"] && [[win objectForKey:@"kCGWindowLayer"] intValue] == -1)
+        {
+            isOverFullscreen = TRUE;
+            break;
+        }
+    }
+    
+    // Get default rect
+    NSRect newFrameRect = [super constrainFrameRect:frameRect toScreen:screen];
+    
+    // We're drawing over an fullscreen app and the super method would just have moved us down a bit.
+    if (isOverFullscreen && newFrameRect.origin.y < frameRect.origin.y) {
+        CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+        // Without adding an additional pixel, there's a small gap on top
+        menuBarHeight += 1;
+        newFrameRect.origin.y  = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height + menuBarHeight;
+        newFrameRect.origin.y -= frameRect.size.height;
+    }
+    
+    return newFrameRect;
+}
+
 @end
