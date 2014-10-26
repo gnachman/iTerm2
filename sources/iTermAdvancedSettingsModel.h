@@ -83,4 +83,6 @@
 + (BOOL)startDebugLoggingAutomatically;
 + (BOOL)aboutToPasteTabs;
 
++ (BOOL)alwaysAcceptFirstMouse;
+
 @end

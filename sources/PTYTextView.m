@@ -2947,7 +2947,13 @@ NSMutableArray* screens=0;
         [[self window] makeFirstResponder:self];
         return NO;
     }
-    if (_mouseDownWasFirstMouse && !cmdPressed) {
+    if (_mouseDownWasFirstMouse &&
+        !cmdPressed &&
+        ![iTermAdvancedSettingsModel alwaysAcceptFirstMouse]) {
+        // A click in an inactive window without cmd pressed by default just brings the window
+        // to the fore and takes no additional action. If you enable alwaysAcceptFirstMouse then
+        // it is treated like a normal click (issue 3236). Returning here prevents mouseDown=YES
+        // which keeps -mouseUp from doing anything such as changing first responder.
         return NO;
     }
     [pointer_ notifyLeftMouseDown];
