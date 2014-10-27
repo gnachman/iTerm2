@@ -282,6 +282,11 @@ end:
 
 - (double)approximateFractionOccluded {
     NSArray *orderedWindows = [[NSApplication sharedApplication] orderedWindows];
+
+    // If we only have one Hotkey window it will be an NSPanel and not be included here.
+    if ([orderedWindows count] == 0) {
+        return 0;
+    }
     NSUInteger myIndex = [orderedWindows indexOfObject:self];
     if (myIndex == 0) {
         return 0;

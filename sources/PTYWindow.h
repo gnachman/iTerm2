@@ -40,7 +40,7 @@
 - (void)_setContentHasShadow:(BOOL)shadow;
 @end
 
-@interface PTYWindow : NSWindow
+@interface PTYWindow : NSPanel
 
 - (id)initWithContentRect:(NSRect)contentRect
                 styleMask:(NSUInteger)aStyle
