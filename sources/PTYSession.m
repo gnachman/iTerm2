@@ -74,6 +74,7 @@ static NSString *const kAskAboutOutdatedKeyMappingKeyFormat = @"AskAboutOutdated
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
 static NSString *const kSuppressAnnoyingBellOffer = @"NoSyncSuppressAnnyoingBellOffer";
+static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyingBellAutomatically";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
@@ -282,6 +283,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Moving average of time between bell rings
     MovingAverage *_bellRate;
+    NSTimeInterval _lastBell;
     NSTimeInterval _ignoreBellUntil;
     NSTimeInterval _annoyingBellOfferDeclinedAt;
     BOOL _suppressAllOutput;
@@ -5978,21 +5980,27 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (now < _ignoreBellUntil) {
         return YES;
     }
-    // Initial value that will require a reasonable amount of bell-ringing to overcome.
-    const NSTimeInterval kMaxDuration = 60;
-
-    // Minimum duration to report to avoid a very short duration triggering with just two bells.
-    const NSTimeInterval kMinDuration = 2;
-    if (!_bellRate) {
-        _bellRate = [[MovingAverage alloc] init];
+    if (now < _lastBell + 1) {
+        // Don't sample bells more than once per second
+        return NO;
     }
-    // Keep a moving average of the time between bells
-    [_bellRate addValue:MAX(kMinDuration, MIN(kMaxDuration, [_bellRate timeSinceTimerStarted]))];
-    [_bellRate startTimer];
+    _lastBell = now;
 
     // If the bell rings more often than once every 4 seconds, you will eventually get an offer to
     // silence it.
     static const NSTimeInterval kThresholdForBellMovingAverageToInferAnnoyance = 4;
+
+    // Initial value that will require a reasonable amount of bell-ringing to overcome. This value
+    // was chosen so that one bell per second will cause the moving average's value to fall below 4
+    // after 3 seconds.
+    const NSTimeInterval kMaxDuration = 48;
+
+    if (!_bellRate) {
+        _bellRate = [[MovingAverage alloc] init];
+    }
+    // Keep a moving average of the time between bells
+    [_bellRate addValue:MIN(kMaxDuration, [_bellRate timeSinceTimerStarted])];
+    [_bellRate startTimer];
 
     // If you decline the offer to silence the bell, we'll stop asking for this many seconds.
     static const NSTimeInterval kTimeToWaitAfterDecline = 10;
@@ -6003,6 +6011,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         existingAnnouncement.timeout = 10;
     }
     if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
+        [[NSUserDefaults standardUserDefaults] boolForKey:kSilenceAnnoyingBellAutomatically]) {
+        // Silence automatically
+        _ignoreBellUntil = now + 60;
+        return YES;
+    }
+
+    if ([_bellRate value] < kThresholdForBellMovingAverageToInferAnnoyance &&
         !existingAnnouncement &&
         (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
         ![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
@@ -6011,7 +6026,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                                 style:kiTermAnnouncementViewStyleQuestion
                                                           withActions:@[ @"Silence Bell Temporarily",
                                                                          @"Suppress All Output",
-                                                                         @"Don't Offer Again" ]
+                                                                         @"Don't Offer Again",
+                                                                         @"Silence Automatically" ]
                                                            completion:^(int selection) {
                                                                // Release the moving average so the count will restart after the announcement goes away.
                                                                [_bellRate release];
@@ -6035,6 +6051,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                                    case 2: // Never offer again
                                                                        [[NSUserDefaults standardUserDefaults] setBool:YES
                                                                                                                forKey:kSuppressAnnoyingBellOffer];
+                                                                       break;
+
+                                                                   case 3:  // Silence automatically
+                                                                       [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                                                               forKey:kSilenceAnnoyingBellAutomatically];
                                                                        break;
                                                                }
                                                            }];

@@ -73,6 +73,7 @@
 + (BOOL)noSyncSuppressCaptureOutputRequiresShellIntegrationWarning;
 + (BOOL)noSyncSuppressCaptureOutputToolNotVisibleWarning;
 + (BOOL)noSyncSuppressAnnyoingBellOffer;
++ (BOOL)noSyncSilenceAnnoyingBellAutomatically;
 
 + (BOOL)disableAppNap;
 + (double)idleTimeSeconds;
