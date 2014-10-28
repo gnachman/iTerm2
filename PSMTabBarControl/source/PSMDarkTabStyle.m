@@ -35,6 +35,16 @@
     return [NSColor colorWithCalibratedWhite:0.1 alpha:1];
 }
 
+- (NSString *)fontName
+{
+    return @"Menlo";
+}
+
+- (NSFont *)tabFont
+{
+    return [NSFont fontWithName:[self fontName] size:11.0];
+}
+
 - (NSString *)name
 {
     return @"Dark";
@@ -289,8 +299,8 @@
     NSRange range = NSMakeRange(0, [contents length]);
 
     // Add font attribute
-    [attrStr addAttribute:NSFontAttributeName value:[NSFont fontWithName:@"Helvetica" size:11.0] range:range];
-    [attrStr addAttribute:NSForegroundColorAttributeName value:[[NSColor blackColor] colorWithAlphaComponent:0.85] range:range];
+    [attrStr addAttribute:NSFontAttributeName value:[self tabFont] range:range];
+    [attrStr addAttribute:NSForegroundColorAttributeName value:[self colorFG] range:range];
 
     return attrStr;
 }
@@ -302,7 +312,7 @@
     attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
     NSRange range = NSMakeRange(0, [contents length]);
 
-    [attrStr addAttribute:NSFontAttributeName value:[NSFont systemFontOfSize:11.0] range:range];
+    [attrStr addAttribute:NSFontAttributeName value:[self tabFont] range:range];
 
     // Paragraph Style for Truncating Long Text
     static NSMutableParagraphStyle *TruncatingTailParagraphStyle = nil;
