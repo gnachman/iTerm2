@@ -13,6 +13,7 @@
 
 #define kPSMDarkObjectCounterRadius 7.0
 #define kPSMDarkCounterMinWidth 20
+#define kPSMDarkLeftMargin 0.0
 
 @interface PSMDarkTabStyle (Private)
 - (void)drawInteriorWithTabCell:(PSMTabBarCell *)cell inView:(NSView*)controlView;
@@ -22,17 +23,22 @@
 
 - (NSColor *)colorBG
 {
-    return [NSColor colorWithCalibratedWhite:0.3 alpha:1];
+    return [NSColor colorWithCalibratedWhite:0.08 alpha:1];
 }
 
 - (NSColor *)colorFG
 {
-    return [NSColor colorWithCalibratedWhite:0.8 alpha:1];
+    return [NSColor colorWithCalibratedWhite:1.00 alpha:1];
+}
+
+- (NSColor *)colorBGSelected
+{
+    return [NSColor colorWithCalibratedWhite:0.50 alpha:1];
 }
 
 - (NSColor *)colorBorder
 {
-    return [NSColor colorWithCalibratedWhite:0.1 alpha:1];
+    return [NSColor colorWithCalibratedWhite:0.02 alpha:1];
 }
 
 - (NSString *)fontName
@@ -65,7 +71,7 @@
         _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNewPressed"]];
         _addTabButtonRolloverImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNewRollover"]];
 
-        leftMargin = 5.0;
+        leftMargin = kPSMDarkLeftMargin;
     }
     return self;
 }
@@ -313,6 +319,7 @@
     NSRange range = NSMakeRange(0, [contents length]);
 
     [attrStr addAttribute:NSFontAttributeName value:[self tabFont] range:range];
+    [attrStr addAttribute:NSForegroundColorAttributeName value:[self colorFG] range:range];
 
     // Paragraph Style for Truncating Long Text
     static NSMutableParagraphStyle *TruncatingTailParagraphStyle = nil;
@@ -344,128 +351,19 @@
 {
     NSRect cellFrame = [cell frame];
 
-    NSToolbar *toolbar = [[[cell controlView] window] toolbar];
-    BOOL showsBaselineSeparator = (toolbar && [toolbar respondsToSelector:@selector(showsBaselineSeparator)] && [toolbar showsBaselineSeparator]);
-    if (!showsBaselineSeparator) {
-        cellFrame.origin.y += 1.0;
-        cellFrame.size.height -= 1.0;
+    // Adjust tab size so it doesn't bleed into edges of tab bar,
+    // leaving the borders visible.
+    cellFrame.origin.y += 1.0;
+    cellFrame.size.height -= 2.0;
+
+    // TODO: use [cell isHighlighted] to change hover color.
+    // TODO: use [NSApp isActive] to change inactive window color.
+    if ([cell state] == NSOnState) {
+        [[self colorBGSelected] set];
+    } else {
+        [[self colorBG] set];
     }
-
-    NSColor * lineColor = nil;
-    NSBezierPath* bezier = [NSBezierPath bezierPath];
-    lineColor = [NSColor colorWithCalibratedWhite:0.576 alpha:1.0];
-    NSColor* tabColor = [cell tabColor];
-
-    if (!showsBaselineSeparator || [cell state] == NSOnState)
-    {
-        if ([[cell controlView] tabLocation] == PSMTab_TopTab)
-        {
-            // selected tab
-            NSRect aRect = NSMakeRect(cellFrame.origin.x+0.5, cellFrame.origin.y, cellFrame.size.width-1.0, cellFrame.size.height+1.5);
-
-            // frame
-            float radius = MIN(6.0, 0.5f * MIN(NSWidth(aRect), NSHeight(aRect)));
-            NSRect rect = NSInsetRect(aRect, radius, radius);
-
-            [bezier appendBezierPathWithArcWithCenter:NSMakePoint(NSMinX(rect), NSMinY(rect)) radius:radius startAngle:180.0 endAngle:270.0];
-
-            [bezier appendBezierPathWithArcWithCenter:NSMakePoint(NSMaxX(rect), NSMinY(rect)) radius:radius startAngle:270.0 endAngle:360.0];
-
-            NSPoint cornerPoint = NSMakePoint(NSMaxX(aRect), NSMaxY(aRect));
-            [bezier appendBezierPathWithPoints:&cornerPoint count:1];
-
-            cornerPoint = NSMakePoint(NSMinX(aRect), NSMaxY(aRect));
-            [bezier appendBezierPathWithPoints:&cornerPoint count:1];
-        }
-        else
-        {
-            // selected tab
-            NSRect aRect = NSMakeRect(cellFrame.origin.x+0.5, cellFrame.origin.y-1.5, cellFrame.size.width-1.0, cellFrame.size.height);
-
-            // frame
-            float radius = MIN(6.0, 0.5f * MIN(NSWidth(aRect), NSHeight(aRect)));
-            NSRect rect = NSInsetRect(aRect, radius, radius);
-
-            [bezier appendBezierPathWithArcWithCenter:NSMakePoint(NSMinX(rect), NSMaxY(rect)) radius:radius startAngle:90.0 endAngle:180.0];
-            NSPoint cornerPoint = NSMakePoint(NSMinX(aRect), NSMinY(aRect));
-            [bezier appendBezierPathWithPoints:&cornerPoint count:1];
-            cornerPoint = NSMakePoint(NSMaxX(aRect), NSMinY(aRect));
-            [bezier appendBezierPathWithPoints:&cornerPoint count:1];
-            [bezier appendBezierPathWithArcWithCenter:NSMakePoint(NSMaxX(rect), NSMaxY(rect)) radius:radius startAngle:0.0 endAngle:90.0];
-        }
-
-        [bezier closePath];
-
-        //[[NSColor windowBackgroundColor] set];
-        //[bezier fill];
-        if ([NSApp isActive]) {
-            if ([cell state] == NSOnState) {
-                [bezier linearGradientFillWithStartColor:[NSColor colorWithCalibratedWhite:0.99 alpha:1.0]
-                                                endColor:[NSColor colorWithCalibratedWhite:0.941 alpha:1.0]];
-            } else if ([cell isHighlighted]) {
-                [bezier linearGradientFillWithStartColor:[NSColor colorWithCalibratedWhite:0.80 alpha:1.0]
-                                                endColor:[NSColor colorWithCalibratedWhite:0.80 alpha:1.0]];
-            } else {
-                [bezier linearGradientFillWithStartColor:[NSColor colorWithCalibratedWhite:0.835 alpha:1.0]
-                                                endColor:[NSColor colorWithCalibratedWhite:0.843 alpha:1.0]];
-            }
-        }
-        if (tabColor) {
-            [self overlayTabColor:tabColor inFrame:cellFrame alpha:([cell state] == NSOnState) ? 1.0 : 0.3];
-        }
-
-        [lineColor set];
-        [bezier stroke];
-    }
-    else
-    {
-        // unselected tab
-        NSRect aRect = NSMakeRect(cellFrame.origin.x, cellFrame.origin.y, cellFrame.size.width, cellFrame.size.height);
-        aRect.origin.y += 0.5;
-        aRect.origin.x += 1.5;
-        aRect.size.width -= 1;
-
-        aRect.origin.x -= 1;
-        aRect.size.width += 1;
-
-        // rollover
-        if ([cell isHighlighted])
-        {
-            [[NSColor colorWithCalibratedWhite:0.0 alpha:0.1] set];
-            NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
-        }
-        if (tabColor) {
-            [self overlayTabColor:tabColor inFrame:cellFrame alpha:([cell state] == NSOnState) ? 1.0 : 0.3];
-        }
-
-        // frame
-
-        [lineColor set];
-        [bezier moveToPoint:NSMakePoint(aRect.origin.x + aRect.size.width, aRect.origin.y-0.5)];
-        if(!([cell tabState] & PSMTab_RightIsSelectedMask)){
-            [bezier lineToPoint:NSMakePoint(NSMaxX(aRect), NSMaxY(aRect))];
-        }
-
-        [bezier stroke];
-
-        // Create a thin lighter line next to the dividing line for a bezel effect
-        if(!([cell tabState] & PSMTab_RightIsSelectedMask)){
-            [[[NSColor whiteColor] colorWithAlphaComponent:0.5] set];
-            [NSBezierPath strokeLineFromPoint:NSMakePoint(NSMaxX(aRect)+1.0, aRect.origin.y-0.5)
-                                      toPoint:NSMakePoint(NSMaxX(aRect)+1.0, NSMaxY(aRect)-2.5)];
-        }
-
-        // If this is the leftmost tab, we want to draw a line on the left, too
-        if ([cell tabState] & PSMTab_PositionLeftMask)
-        {
-            [lineColor set];
-            [NSBezierPath strokeLineFromPoint:NSMakePoint(aRect.origin.x,aRect.origin.y-0.5)
-                                      toPoint:NSMakePoint(aRect.origin.x,NSMaxY(aRect)-2.5)];
-            [[[NSColor whiteColor] colorWithAlphaComponent:0.5] set];
-            [NSBezierPath strokeLineFromPoint:NSMakePoint(aRect.origin.x+1.0,aRect.origin.y-0.5)
-                                      toPoint:NSMakePoint(aRect.origin.x+1.0,NSMaxY(aRect)-2.5)];
-        }
-    }
+    NSRectFill(cellFrame);
 
     [self drawInteriorWithTabCell:cell inView:[cell controlView]];
 }
@@ -546,7 +444,7 @@
         labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
 
     // label
-    [[cell attributedStringValue] drawInRect:labelRect];
+    [[self attributedStringValueForTabCell:cell] drawInRect:labelRect];
 }
 
 // NOTE: This draws the tab bar background.
