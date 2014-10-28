@@ -12,6 +12,7 @@
 #import "PSMRolloverButton.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
+#import "PSMDarkTabStyle.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYTask.h"
 
@@ -124,7 +125,8 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     _cellMaxWidth = 280;
     _cellOptimumWidth = 130;
     _tabLocation = PSMTab_TopTab;
-    style = [[PSMYosemiteTabStyle alloc] init];
+    // style = [[PSMYosemiteTabStyle alloc] init];
+    style = [[PSMDarkTabStyle alloc] init];
 
     // the overflow button/menu
     NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [style rightMarginForTabBarControl] + 1, 0, [style rightMarginForTabBarControl] - 1, [self frame].size.height);
