@@ -267,13 +267,7 @@ static BOOL initDone = NO;
         // Use a very rough approximation. Users who complain should upgrade to 10.9.
         windowIsObscured = !window.isOnActiveSpace;
     }
-    if (!windowIsObscured) {
-        // Try to refine the guess by seeing if another terminal is covering this one.
-        static const double kOcclusionThreshold = 0.4;
-        if ([(PTYWindow *)terminal.window approximateFractionOccluded] > kOcclusionThreshold) {
-            windowIsObscured = YES;
-        }
-    }
+  
     return windowIsObscured;
 }
 
