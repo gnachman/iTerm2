@@ -20,6 +20,21 @@
 
 @implementation PSMDarkTabStyle
 
+- (NSColor *)colorBG
+{
+    return [NSColor colorWithCalibratedWhite:0.3 alpha:1];
+}
+
+- (NSColor *)colorFG
+{
+    return [NSColor colorWithCalibratedWhite:0.8 alpha:1];
+}
+
+- (NSColor *)colorBorder
+{
+    return [NSColor colorWithCalibratedWhite:0.1 alpha:1];
+}
+
 - (NSString *)name
 {
     return @"Dark";
@@ -524,21 +539,20 @@
     [[cell attributedStringValue] drawInRect:labelRect];
 }
 
+// NOTE: This draws the tab bar background.
 - (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color
 {
-    NSRect gradientRect = rect;
-    gradientRect.size.height -= 1.0;
-    if ([[[tabBar tabView] window] isKeyWindow]) {
-        NSBezierPath *path = [NSBezierPath bezierPathWithRect:gradientRect];
-        [path linearGradientFillWithStartColor:[NSColor colorWithCalibratedWhite:0.835 alpha:1.0]
-                                      endColor:[NSColor colorWithCalibratedWhite:0.843 alpha:1.0]];
-        [[NSColor colorWithCalibratedWhite:0.576 alpha:1.0] set];
-        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, NSMaxY(rect) - 0.5)
-                                  toPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect) - 0.5)];
-    } else {
-        [[NSColor windowBackgroundColor] set];
-        NSRectFill(gradientRect);
-    }
+    // Draw fill color
+    [[self colorBG] set];
+    NSRectFill(rect);
+
+    [[self colorBorder] set];
+    // Bottom border
+    [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, NSMaxY(rect) - 0.5)
+                              toPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect) - 0.5)];
+    // Top border
+    [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, NSMinY(rect) + 0.5)
+                              toPoint:NSMakePoint(NSMaxX(rect), NSMinY(rect) + 0.5)];
 }
 
 - (void)fillPath:(NSBezierPath*)path
