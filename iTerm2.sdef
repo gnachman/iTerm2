@@ -13,117 +13,117 @@
     </command>
   </suite>
 
-  <suite name="iTerm2 Suite" code="itrm" description="Classes just for the iTerm2 application.">
+  <suite name="iTerm2 Suite" code="Itrm" description="Classes just for the iTerm2 application.">
     <command name="close" code="coreclos" description="Close a document.">
       <cocoa class="NSCloseCommand"/>
       <direct-parameter type="specifier"
         description="the session, tab, or window to close."/>
     </command>
 
-    <command name="create tab" code="itrmntwp"
+    <command name="create tab" code="Itrmntwp"
       description="Create a new tab">
       <direct-parameter type="specifier"
         description="the session, tab, or window to close."/>
 
-      <parameter name="with profile" code="ntwp" type="text"
+      <parameter name="with profile" code="Ntwp" type="text"
           description="The profile name">
         <cocoa key="profile" />
       </parameter>
 
-      <parameter name="command" code="nwcm" type="text" optional="yes"
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
     </command>
 
-    <command name="create tab with default profile" code="itrmntwn"
+    <command name="create tab with default profile" code="Itrmntwn"
       description="Create a new tab with the default profile">
       <direct-parameter type="specifier"
         description="The window in which to create a new tab"/>
 
-      <parameter name="command" code="nwcm" type="text" optional="yes"
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
     </command>
 
-    <command name="create window with profile" code="itrmnwwp"
+    <command name="create window with profile" code="Itrmnwwp"
       description="Create a new window">
       <cocoa class="iTermNewWindowCommand" />
       <direct-parameter description="The profile name">
         <type type="text"/>
       </direct-parameter>
 
-      <parameter name="command" code="nwcm" type="text" optional="yes"
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
 
     </command>
 
-    <command name="create window with default profile" code="itrmnwwn"
+    <command name="create window with default profile" code="Itrmnwwn"
       description="Create a new window with the default profile">
       <cocoa class="iTermNewWindowCommand" />
 
-      <parameter name="command" code="nwcm" type="text" optional="yes"
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
     </command>
 
-    <command name="write" code="itrmsntx"
+    <command name="write" code="Itrmsntx"
         description="Send text as though it was typed.">
       <direct-parameter type="specifier" description="The session to send to"/>
 
-      <parameter name="contents of file" code="cofl" type="file"
+      <parameter name="contents of file" code="Cofl" type="file"
           description="Filename to send the contents of" optional="yes">
         <cocoa key="contentsOfFile"/>
       </parameter>
-      <parameter name="text" code="text" type="text"
+      <parameter name="text" code="Text" type="text"
           description="Text to send" optional="yes">
         <cocoa key="text"/>
       </parameter>
     </command>
 
-    <command name="select" code="itrmslct"
+    <command name="select" code="Itrmslct"
         description="Make receiver visible and selected.">
       <direct-parameter type="specifier" description="The object to send to"/>
     </command>
 
-    <command name="split vertically" code="itrmsplv"
+    <command name="split vertically" code="Itrmsplv"
         description="Split a session vertically.">
       <direct-parameter type="specifier" description="The object to send to"/>
-      <parameter name="with profile" code="prfl" type="text"
+      <parameter name="with profile" code="Prfl" type="text"
           description="Name of profile for new session.">
         <cocoa key="profile" />
       </parameter>
     </command>
 
-    <command name="split vertically with default profile" code="itrmsvdp"
+    <command name="split vertically with default profile" code="Itrmsvdp"
         description="Split a session vertically, using the default profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
     </command>
 
-    <command name="split vertically with same profile" code="itrmsvsp"
+    <command name="split vertically with same profile" code="Itrmsvsp"
         description="Split a session vertically, using the original session's profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
     </command>
 
-    <command name="split horizontally" code="itrmsplh"
+    <command name="split horizontally" code="Itrmsplh"
         description="Split a session horizontally.">
       <direct-parameter type="specifier" description="The object to send to"/>
-      <parameter name="with profile" code="prfl" type="text"
+      <parameter name="with profile" code="Prfl" type="text"
           description="Name of profile for new session.">
         <cocoa key="profile" />
       </parameter>
     </command>
 
-    <command name="split horizontally with default profile" code="itrmshdp"
+    <command name="split horizontally with default profile" code="Itrmshdp"
         description="Split a session horizontally, using the default profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
     </command>
 
-    <command name="split horizontally with same profile" code="itrmshsp"
+    <command name="split horizontally with same profile" code="Itrmshsp"
         description="Split a session horizontally, using the original session's profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
     </command>
@@ -139,13 +139,13 @@
         <cocoa key="terminalWindows"/>
       </element>
 
-      <property name="current window" code="crwn" type="terminal window"
+      <property name="current window" code="Crwn" type="terminal window"
         description="The frontmost window">
         <cocoa key="currentWindow" />
       </property>
     </class>
 
-    <class name="terminal window" code="trmw" description="A terminal window">
+    <class name="terminal window" code="Trmw" description="A terminal window">
       <cocoa class="PseudoTerminal"/>
       <responds-to command="close">
         <cocoa method="handleCloseCommand:"/>
@@ -167,18 +167,18 @@
         <cocoa key="tabs"/>
       </element>
 
-      <property name="current tab" code="crtb" type="tab"
+      <property name="current tab" code="Crtb" type="tab"
           description="The currently selected tab">
         <cocoa key="currentTab" />
       </property>
 
-      <property name="current session" code="wcsn" type="session"
+      <property name="current session" code="Wcsn" type="session"
           description="The current session in a window">
         <cocoa key="currentSession" />
       </property>
     </class>
 
-    <class name="tab" code="trmt" description="A terminal tab">
+    <class name="tab" code="Trmt" description="A terminal tab">
       <cocoa class="PTYTab"/>
       <element type="session" access="r">
         <cocoa key="sessions"/>
@@ -192,17 +192,17 @@
         <cocoa method="handleSelectCommand:"/>
       </responds-to>
 
-      <property name="current session" code="tcsn" type="session"
+      <property name="current session" code="Wcsn" type="session"
           description="The current session in a tab">
         <cocoa key="currentSession" />
       </property>
-      <property name="index" code="indx" type="integer"
+      <property name="index" code="Indx" type="integer"
           description="Index of tab in parent tab view control">
         <cocoa key="indexOfTab" />
       </property>
     </class>
 
-    <class name="session" code="trms" description="A terminal session">
+    <class name="session" code="Trms" description="A terminal session">
       <cocoa class="PTYSession"/>
       <responds-to command="close">
         <cocoa method="handleCloseCommand:"/>
@@ -233,105 +233,105 @@
         <cocoa method="handleSplitHorizontallyWithSameProfile:" />
       </responds-to>
 
-      <property name="is processing" code="prcs" type="boolean"
+      <property name="is processing" code="Prcs" type="boolean"
           description="The session has received output recently.">
         <cocoa key="isProcessing" />
       </property>
-      <property name="columns" code="cols" type="integer">
+      <property name="columns" code="Cols" type="integer">
         <cocoa key="columns" />
       </property>
-      <property name="rows" code="rows" type="integer">
+      <property name="rows" code="Rows" type="integer">
         <cocoa key="rows" />
       </property>
-      <property name="tty" code="stty" type="text" access="r">
+      <property name="tty" code="Stty" type="text" access="r">
         <cocoa key="tty" />
       </property>
-      <property name="contents" code="cntt" type="text">
+      <property name="contents" code="Cntt" type="text">
         <cocoa key="contents" />
       </property>
-      <property name="background color" code="co00" type="RGB color">
+      <property name="background color" code="Co00" type="RGB color">
         <cocoa key="backgroundColor" />
       </property>
-      <property name="bold color" code="co01" type="RGB color">
+      <property name="bold color" code="Co01" type="RGB color">
         <cocoa key="boldColor" />
       </property>
-      <property name="cursor color" code="co02" type="RGB color">
+      <property name="cursor color" code="Co02" type="RGB color">
         <cocoa key="cursorColor" />
       </property>
-      <property name="cursor text color" code="co03" type="RGB color">
+      <property name="cursor text color" code="Co03" type="RGB color">
         <cocoa key="cursorTextColor" />
       </property>
-      <property name="foreground color" code="co04" type="RGB color">
+      <property name="foreground color" code="Co04" type="RGB color">
         <cocoa key="foregroundColor" />
       </property>
-      <property name="selected text color" code="co05" type="RGB color">
+      <property name="selected text color" code="Co05" type="RGB color">
         <cocoa key="selectedTextColor" />
       </property>
-      <property name="selection color" code="co06" type="RGB color">
+      <property name="selection color" code="Co06" type="RGB color">
         <cocoa key="selectionColor" />
       </property>
-      <property name="ANSI black color" code="co07" type="RGB color">
+      <property name="ANSI black color" code="Co07" type="RGB color">
         <cocoa key="ansiBlackColor" />
       </property>
-      <property name="ANSI red color" code="co08" type="RGB color">
+      <property name="ANSI red color" code="Co08" type="RGB color">
         <cocoa key="ansiRedColor" />
       </property>
-      <property name="ANSI green color" code="co09" type="RGB color">
+      <property name="ANSI green color" code="Co09" type="RGB color">
         <cocoa key="ansiGreenColor" />
       </property>
-      <property name="ANSI yellow color" code="co10" type="RGB color">
+      <property name="ANSI yellow color" code="Co10" type="RGB color">
         <cocoa key="ansiYellowColor" />
       </property>
-      <property name="ANSI blue color" code="co11" type="RGB color">
+      <property name="ANSI blue color" code="Co11" type="RGB color">
         <cocoa key="ansiBlueColor" />
       </property>
-      <property name="ANSI magenta color" code="co12" type="RGB color">
+      <property name="ANSI magenta color" code="Co12" type="RGB color">
         <cocoa key="ansiMagentaColor" />
       </property>
-      <property name="ANSI cyan color" code="co13" type="RGB color">
+      <property name="ANSI cyan color" code="Co13" type="RGB color">
         <cocoa key="ansiCyanColor" />
       </property>
-      <property name="ANSI white color" code="co14" type="RGB color">
+      <property name="ANSI white color" code="Co14" type="RGB color">
         <cocoa key="ansiWhiteColor" />
       </property>
-      <property name="ANSI bright black color" code="co15" type="RGB color">
+      <property name="ANSI bright black color" code="Co15" type="RGB color">
         <cocoa key="ansiBrightBlackColor" />
       </property>
-      <property name="ANSI bright red color" code="co16" type="RGB color">
+      <property name="ANSI bright red color" code="Co16" type="RGB color">
         <cocoa key="ansiBrightRedColor" />
       </property>
-      <property name="ANSI bright green color" code="co17" type="RGB color">
+      <property name="ANSI bright green color" code="Co17" type="RGB color">
         <cocoa key="ansiBrightGreenColor" />
       </property>
-      <property name="ANSI bright yellow color" code="co18" type="RGB color">
+      <property name="ANSI bright yellow color" code="Co18" type="RGB color">
         <cocoa key="ansiBrightYellowColor" />
       </property>
-      <property name="ANSI bright blue color" code="co19" type="RGB color">
+      <property name="ANSI bright blue color" code="Co19" type="RGB color">
         <cocoa key="ansiBrightBlueColor" />
       </property>
-      <property name="ANSI bright magenta color" code="co20" type="RGB color">
+      <property name="ANSI bright magenta color" code="Co20" type="RGB color">
         <cocoa key="ansiBrightMagentaColor" />
       </property>
-      <property name="ANSI bright cyan color" code="co21" type="RGB color">
+      <property name="ANSI bright cyan color" code="Co21" type="RGB color">
         <cocoa key="ansiBrightCyanColor" />
       </property>
-      <property name="ANSI bright white color" code="co22" type="RGB color">
+      <property name="ANSI bright white color" code="Co22" type="RGB color">
         <cocoa key="ansiBrightWhiteColor" />
       </property>
 
-      <property name="background image" code="bgim" type="text">
+      <property name="background image" code="Bgim" type="text">
         <cocoa key="backgroundImagePath" />
       </property>
 
-      <property name="name" code="name" type="text">
+      <property name="name" code="Name" type="text">
         <cocoa key="name" />
       </property>
 
-      <property name="transparency" code="trns" type="real">
+      <property name="transparency" code="Trns" type="real">
         <cocoa key="transparency" />
       </property>
 
-      <property name="unique ID" code="uniq" type="text" access="r">
+      <property name="unique ID" code="Uniq" type="text" access="r">
         <cocoa key="uniqueID" />
       </property>
 
