@@ -154,6 +154,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     [dict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
     [[ProfileModel sharedInstance] addBookmark:dict];
+    [[ProfileModel sharedInstance] flush];
 }
 
 - (void)hotkeyEnabledDidChange {
