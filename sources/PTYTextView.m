@@ -3822,7 +3822,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (IBAction)installShellIntegration:(id)sender {
-    NSString *theCommand = @"curl -L iterm2.com/misc/install_shell_integration.sh | bash\n";
+    NSString *theCommand = @"curl -L http://iterm2.com/misc/install_shell_integration.sh | bash\n";
     [_delegate writeTask:[theCommand dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
