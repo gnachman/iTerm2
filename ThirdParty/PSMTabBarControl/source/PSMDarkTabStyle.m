@@ -10,14 +10,6 @@
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
 
-#define kPSMDarkObjectCounterRadius 7.0
-#define kPSMDarkCounterMinWidth 20
-#define kPSMDarkLeftMargin 0.0
-
-@interface PSMDarkTabStyle (Private)
-- (void)drawInteriorWithTabCell:(PSMTabBarCell *)cell inView:(NSView*)controlView;
-@end
-
 @implementation PSMDarkTabStyle
 
 - (NSColor *)colorBG
