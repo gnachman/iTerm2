@@ -119,13 +119,17 @@
                                   NSMinY(cellFrame),
                                   1,
                                   NSHeight(cellFrame));
+    NSRect bottomEdge = NSMakeRect(NSMinX(cellFrame),
+                                   NSMaxY(cellFrame) - 1,
+                                   NSWidth(cellFrame),
+                                   1);
     NSRectFill(backgroundRect);
 
+    [[self colorBorder] set];
     if (horizontal) {
-        [[self colorBorder] set];
         NSRectFill(rightEdge);
     } else {
-        // TODO
+        NSRectFill(bottomEdge);
     }
 
     if (tabColor) {
