@@ -4834,6 +4834,8 @@ NSString *sessionsKey = @"sessions";
 {
     PtyLog(@"repositionWidgets");
 
+    [self.ptyWindow turnOffVibrancyInTitleBar];
+
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSWindow *thisWindow = [self window];
     [thisWindow setShowsResizeIndicator:hasScrollbar];

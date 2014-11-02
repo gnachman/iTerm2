@@ -74,5 +74,7 @@
 
 - (void)setRestoreState:(NSObject *)restoreState;
 
+- (void)turnOffVibrancyInTitleBar;
+
 @end
 
