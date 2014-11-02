@@ -5821,6 +5821,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     PtyLog(@"repositionWidgets");
 
+    [self.ptyWindow turnOffVibrancyInTitleBar];
     BOOL showToolbeltInline = [self shouldShowToolbelt];
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSWindow *thisWindow = [self window];

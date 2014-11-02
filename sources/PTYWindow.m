@@ -348,4 +348,29 @@ end:
     return totalOcclusion;
 }
 
+// OS 10.10 has a spiffy feature where it finds a scrollview that is adjacent to the title bar and
+// then does some magic to makes the scrollview's content show up with "vibrancy" (i.e., blur) under
+// the title bar. The way it does this is to create an "NSScrollViewMirrorView" in the title bar's
+// view hierarchy. Unfortunately there is no way to turn this off. You can move the scroll view at
+// least two points away from the title bar, but that looks terrible. Terminal.app went so far as to
+// stop using scroll views! Trying to replace NSScrollView with my custom implementation seems
+// fraught with peril, so I'll just root out the mirror view and hide it. This'll probably break in
+// 10.11. See issue 3244 for details.
+- (void)turnOffVibrancyInTitleBar {
+    if (IsYosemiteOrLater()) {
+        NSView *frameView = [[self contentView] superview];
+        NSView *titlebarContainerView = nil;
+        if ([frameView respondsToSelector:@selector(titlebarContainerView)]) {
+            titlebarContainerView = [frameView performSelector:@selector(titlebarContainerView)];
+            if (titlebarContainerView) {
+                for (NSView *view in titlebarContainerView.subviews) {
+                    if ([NSStringFromClass([view class]) isEqualToString:@"NSScrollViewMirrorView"]) {
+                        [view setHidden:YES];
+                    }
+                }
+            }
+        }
+    }
+}
+
 @end

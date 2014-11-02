@@ -2549,7 +2549,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A663011C19CFE64B004AF81C /* AboutWindow.xib */,
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -2853,27 +2852,28 @@
 		0464AB22006CD2EC7F000001 /* Interface Builder Files */ = {
 			isa = PBXGroup;
 			children = (
-				A6E713B218FCB559008D94DD /* English.lproj/AdvancedWorkingDirectoryWindow.xib */,
+				A663011C19CFE64B004AF81C /* AboutWindow.xib */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
+				A6E713B218FCB559008D94DD /* English.lproj/AdvancedWorkingDirectoryWindow.xib */,
 				A6E7139B18F7B199008D94DD /* English.lproj/BulkCopyProfilePreferences.xib */,
 				1DC13AC61886507D00034DAE /* English.lproj/CommandHistoryPopup.xib */,
 				1D03D41F191419080049EB8F /* English.lproj/DirectoriesPopup.xib */,
-				1D237D8E131D8BEE004DD60C /* FindView.xib */,
-				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
 				A61B66D218D63758009AC9D5 /* English.lproj/InstantReplay.xib */,
-				FB151F2903648AC401F955DB /* iTerm.strings */,
 				1DFA9D6318F37160008ADC98 /* English.lproj/iTermEditKeyActionWindowController.xib */,
-				1DFA9D6A18F37AA5008ADC98 /* iTermKeyMapping.xib */,
 				A69B4584196F8EA100F5444D /* English.lproj/iTermOpenQuicklyWindowController.xib */,
 				1DFA7C951923EA8700DF1410 /* English.lproj/iTermPasswordManager.xib */,
+				1D085F8816F030FB00B7FCE9 /* English.lproj/PasteView.xib */,
+				1DD4CE7C14A5163B00ED182E /* English.lproj/TmuxDashboard.xib */,
+				1D237D8E131D8BEE004DD60C /* FindView.xib */,
+				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
+				FB151F2903648AC401F955DB /* iTerm.strings */,
+				1DFA9D6A18F37AA5008ADC98 /* iTermKeyMapping.xib */,
 				9325FF4E0FB54E00004EC67C /* MainMenu.xib */,
 				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
-				1D085F8816F030FB00B7FCE9 /* English.lproj/PasteView.xib */,
 				9325FF400FB54DF1004EC67C /* PreferencePanel.xib */,
 				9325FF460FB54DF1004EC67C /* ProfilesWindow.xib */,
 				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
 				1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */,
-				1DD4CE7C14A5163B00ED182E /* English.lproj/TmuxDashboard.xib */,
 			);
 			name = "Interface Builder Files";
 			sourceTree = "<group>";

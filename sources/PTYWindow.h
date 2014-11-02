@@ -61,5 +61,8 @@
 // Returns the approximate fraction of this window that is occluded by other windows in this app.
 - (double)approximateFractionOccluded;
 
+// Hide the mirrored scroll view.
+- (void)turnOffVibrancyInTitleBar;
+
 @end
 
