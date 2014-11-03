@@ -64,13 +64,15 @@ static PseudoTerminal* GetHotkeyWindow()
 static void RollInHotkeyTerm(PseudoTerminal* term)
 {
     HKWLog(@"Roll in [show] hotkey window");
-
-    [NSApp activateIgnoringOtherApps:YES];
+    
+    if (![iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
+        [NSApp activateIgnoringOtherApps:YES];
+    }
     [[term window] makeKeyAndOrderFront:nil];
     [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
     [[[term window] animator] setAlphaValue:1];
-    [[HotkeyWindowController sharedInstance] performSelector:@selector(rollInFinished)
-                                                  withObject:nil
+    [[HotkeyWindowController sharedInstance] performSelector:@selector(rollInFinished:)
+                                                  withObject:term
                                                   afterDelay:[[NSAnimationContext currentContext] duration]];
 }
 
@@ -91,7 +93,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 }
 
 - (void)bringHotkeyWindowToFore:(NSWindow *)window {
-    DLog(@"Bring hotkey window %@ to front", window);
+    HKWLog(@"Bring hotkey window %@ to front", window);
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     [window makeKeyAndOrderFront:nil];
 }
@@ -104,16 +106,13 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     if ([window isVisible] &&
         ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
         ![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
-      DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
+      HKWLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
         [self performSelector:@selector(bringHotkeyWindowToFore:) withObject:window afterDelay:0.5];
     }
 }
 
-- (void)rollInFinished
-{
+- (void)rollInFinished:(PseudoTerminal*)term {
     rollingIn_ = NO;
-    PseudoTerminal* term = GetHotkeyWindow();
-    [[term window] makeKeyAndOrderFront:nil];
     [[term window] makeFirstResponder:[[term currentSession] textview]];
 }
 
@@ -264,7 +263,10 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             i++;
         }
         HKWLog(@"Activate iterm2");
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        
+        if (![iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow]) {
+            [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        }
         rollingIn_ = YES;
         RollInHotkeyTerm(hotkeyTerm);
     } else {
@@ -334,11 +336,11 @@ void OnHotKeyEvent(void)
                 if (![[hotkeyTerm window] isOnActiveSpace] ||
                     (![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
                      ![[hotkeyTerm window] isKeyWindow])) {
-                    DLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
+                    HKWLog(@"Hotkey window is active on another space, or else it doesn't autohide but isn't key. Switch to it.");
                     [NSApp activateIgnoringOtherApps:YES];
                     [[hotkeyTerm window] makeKeyAndOrderFront:nil];
                 } else {
-                    DLog(@"Hide hotkey window");
+                    HKWLog(@"Hide hotkey window");
                     [[HotkeyWindowController sharedInstance] hideHotKeyWindow:hotkeyTerm];
                 }
             } else {
@@ -429,7 +431,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
     if (!UserIsActive()) {
         // Fast user switching has switched to another user, don't do any remapping.
-        DLog(@"** not doing any remapping for event %@", [NSEvent eventWithCGEvent:event]);
+        HKWLog(@"** not doing any remapping for event %@", [NSEvent eventWithCGEvent:event]);
         return event;
     }
 

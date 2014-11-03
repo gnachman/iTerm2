@@ -62,12 +62,16 @@
 #import "VT100Terminal.h"
 #include <unistd.h>
 
+#ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
+#define PtyLog NSLog
+#else
+#define PtyLog DLog
+#endif
+
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 static NSString *const kShowFullscreenTabBarKey = @"ShowFullScreenTabBar";
-
-#define PtyLog DLog
 
 // Constants for saved window arrangement key names.
 static NSString* TERMINAL_ARRANGEMENT_OLD_X_ORIGIN = @"Old X Origin";
@@ -374,7 +378,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                             savedWindowType:(iTermWindowType)savedWindowType
                                      screen:(int)screenNumber
                                    isHotkey:(BOOL)isHotkey {
-    DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
+    PtyLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d isHotkey:%@ ",
          self,
          smartLayout ? @"YES" : @"NO",
          windowType,
@@ -388,10 +392,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         screenNumber == -1) {
         NSUInteger n = [[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]];
         if (n == NSNotFound) {
-            DLog(@"Convert default screen to screen number: No screen matches the window's screen so using main screen");
+            PtyLog(@"Convert default screen to screen number: No screen matches the window's screen so using main screen");
             screenNumber = 0;
         } else {
-            DLog(@"Convert default screen to screen number: System chose screen %lu", (unsigned long)n);
+            PtyLog(@"Convert default screen to screen number: System chose screen %lu", (unsigned long)n);
             screenNumber = n;
         }
     } else if (screenNumber == -2) {
@@ -428,12 +432,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSScreen* screen;
     if (screenNumber == -1 || screenNumber >= [[NSScreen screens] count])  {
         screen = [[self window] screen];
-        DLog(@"Screen number %d is out of range [0,%d] so using 0",
+        PtyLog(@"Screen number %d is out of range [0,%d] so using 0",
              screenNumber, (int)[[NSScreen screens] count]);
         screenNumber_ = 0;
         haveScreenPreference_ = NO;
     } else if (screenNumber >= 0) {
-        DLog(@"Selecting screen number %d", screenNumber);
+        PtyLog(@"Selecting screen number %d", screenNumber);
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
         screenNumber_ = screenNumber;
         haveScreenPreference_ = YES;
@@ -473,7 +477,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
             if (haveScreenPreference_) {
-                DLog(@"Moving window to screen %d", screenNumber_);
+                PtyLog(@"Moving window to screen %d", screenNumber_);
                 // Move the frame to the desired screen
                 NSScreen* baseScreen = [[self window] deepestScreen];
                 NSPoint basePoint = [baseScreen visibleFrame].origin;
@@ -481,12 +485,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 double yoffset = initialFrame.origin.y - basePoint.y;
                 NSPoint destPoint = [screen visibleFrame].origin;
 
-                DLog(@"Assigned screen has origin %@, destination screen has origin %@", NSStringFromPoint(baseScreen.visibleFrame.origin),
+                PtyLog(@"Assigned screen has origin %@, destination screen has origin %@", NSStringFromPoint(baseScreen.visibleFrame.origin),
                      NSStringFromPoint(destPoint));
                 destPoint.x += xoffset;
                 destPoint.y += yoffset;
                 initialFrame.origin = destPoint;
-                DLog(@"New initial frame is %@", NSStringFromRect(initialFrame));
+                PtyLog(@"New initial frame is %@", NSStringFromRect(initialFrame));
                 // Make sure the top-right corner of the window is on the screen too
                 NSRect destScreenFrame = [screen visibleFrame];
                 double xover = destPoint.x + initialFrame.size.width - (destScreenFrame.origin.x + destScreenFrame.size.width);
@@ -497,7 +501,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 if (yover > 0) {
                     destPoint.y -= yover;
                 }
-                DLog(@"after adjusting top right, initial origin is %@", NSStringFromPoint(destPoint));
+                PtyLog(@"after adjusting top right, initial origin is %@", NSStringFromPoint(destPoint));
                 [[self window] setFrameOrigin:destPoint];
             }
             break;
@@ -516,8 +520,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     savedWindowType_ = savedWindowType;
 
-    DLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
+    PtyLog(@"initWithContentRect:%@ styleMask:%d", [NSValue valueWithRect:initialFrame], (int)styleMask);
     PTYWindow *myWindow;
+    if (isHotkey) {
+        styleMask |= NSNonactivatingPanelMask | NSUtilityWindowMask;
+    }
     myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
@@ -531,7 +538,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // monitor.
         [myWindow setFrame:initialFrame display:NO];
     }
-    DLog(@"Create window %@", myWindow);
+    PtyLog(@"Create window %@", myWindow);
     if (windowType == WINDOW_TYPE_TOP ||
         windowType == WINDOW_TYPE_BOTTOM ||
         windowType == WINDOW_TYPE_LEFT ||
@@ -658,14 +665,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     if (isHotkey) {
         // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
+        self.window.collectionBehavior = NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary | NSWindowCollectionBehaviorIgnoresCycle;
+        self.window.level = NSFloatingWindowLevel;
     } else {
         // This allows the window to enter Lion fullscreen.
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
-    }
-    if (isHotkey) {
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
     }
 
     // A decent default value.
@@ -1834,7 +1838,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:windowType
                                             savedWindowType:WINDOW_TYPE_NORMAL
-                                                     screen:-1] autorelease];
+                                                     screen:-1
+                                                   isHotkey: isHotkeyWindow] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
@@ -1890,7 +1895,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     TmuxController *controller = [[self currentSession] tmuxController];
     if (!controller) {
         controller = [[[iTermController sharedInstance] anyTmuxSession] tmuxController];
-        DLog(@"No controller for current session %@, picking one at random: %@",
+        PtyLog(@"No controller for current session %@, picking one at random: %@",
              [self currentSession], controller);
     }
     return controller;
@@ -2329,6 +2334,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [self hideMenuBar];
         }
     }
+    
+    // If the window is WINDOW_TYPE_TOP move it up as far as we can.
+    if (windowType_ == WINDOW_TYPE_TOP) {
+        CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+        NSRect frame = self.window.frame;
+        frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height + menuBarHeight;
+        [self.window setFrame:frame display:YES];
+    }
 
     // Note: there was a bug in the old iterm that setting fonts didn't work
     // properly if the font panel was left open in focus-follows-mouse mode.
@@ -2666,7 +2679,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 // Returns the hotkey window that should be hidden or nil if the hotkey window
 // shouldn't be hidden right now.
 - (PseudoTerminal *)hotkeyWindowToHide {
-    DLog(@"Checking if hotkey window should be hidden.");
+    PtyLog(@"Checking if hotkey window should be hidden.");
     BOOL haveMain = NO;
     BOOL otherTerminalIsKey = NO;
     for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
@@ -2677,9 +2690,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     PseudoTerminal *hotkeyTerminal = nil;
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         PTYWindow *window = [term ptyWindow];
-        DLog(@"Window %@ key=%d", window, [window isKeyWindow]);
+        PtyLog(@"Window %@ key=%d", window, [window isKeyWindow]);
         if ([window isKeyWindow] && ![term isHotKeyWindow]) {
-            DLog(@"Key window is %@", window);
+            PtyLog(@"Key window is %@", window);
             otherTerminalIsKey = YES;
         }
         if ([term isHotKeyWindow]) {
@@ -2687,11 +2700,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
     }
 
-    DLog(@"%@ haveMain=%d otherTerminalIsKey=%d", self.window, haveMain, otherTerminalIsKey);
+    PtyLog(@"%@ haveMain=%d otherTerminalIsKey=%d", self.window, haveMain, otherTerminalIsKey);
     if (hotkeyTerminal && (!haveMain || otherTerminalIsKey)) {
         return hotkeyTerminal;
     } else {
-        DLog(@"No need to hide hotkey window");
+        PtyLog(@"No need to hide hotkey window");
         return nil;
     }
 }
@@ -2702,11 +2715,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     PseudoTerminal *hotkeyTerminal = [self hotkeyWindowToHide];
     if (hotkeyTerminal) {
-        DLog(@"Want to hide hotkey window");
+        PtyLog(@"Want to hide hotkey window");
         if ([[hotkeyTerminal window] alphaValue] > 0 &&
             [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
             ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
-            DLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
+            PtyLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
             // We want to dismiss the hotkey window when some other window
             // becomes key. Note that if a popup closes this function shouldn't
             // be called at all because it makes us key before closing itself.
@@ -2927,7 +2940,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    DLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
+    PtyLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
     [self saveTmuxWindowOrigins];
 }
 
@@ -3066,7 +3079,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (IBAction)toggleFullScreenMode:(id)sender
 {
-    DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
+    PtyLog(@"toggleFullScreenMode:. window type is %d", windowType_);
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !_isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
@@ -3075,11 +3088,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
         if (lionFullScreen_) {
             // will exit fullscreen
-            DLog(@"Set window type to lion fs");
+            PtyLog(@"Set window type to lion fs");
             windowType_ = WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
             // Will enter fullscreen
-            DLog(@"Set saved window type to %d before setting window type to normal in preparation for going fullscreen", savedWindowType_);
+            PtyLog(@"Set saved window type to %d before setting window type to normal in preparation for going fullscreen", savedWindowType_);
             savedWindowType_ = windowType_;
             windowType_ = WINDOW_TYPE_NORMAL;
         }
@@ -3381,7 +3394,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification
 {
-    DLog(@"Window will enter lion fullscreen");
+    PtyLog(@"Window will enter lion fullscreen");
     [self repositionWidgets];
     togglingLionFullScreen_ = YES;
     [_divisionView removeFromSuperview];
@@ -3391,7 +3404,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
-    DLog(@"Window did enter lion fullscreen");
+    PtyLog(@"Window did enter lion fullscreen");
 
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
@@ -3410,7 +3423,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
 {
-    DLog(@"Window will exit lion fullscreen");
+    PtyLog(@"Window will exit lion fullscreen");
     exitingLionFullscreen_ = YES;
     [tabBarControl updateFlashing];
     [self fitTabsToWindow];
@@ -3419,7 +3432,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
 {
-    DLog(@"Window did exit lion fullscreen");
+    PtyLog(@"Window did exit lion fullscreen");
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
@@ -3432,7 +3445,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self invalidateRestorableState];
     [self updateToolbelt];
 
-    DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
+    PtyLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
     windowType_ = savedWindowType_;
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
@@ -3462,7 +3475,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     float charHeight = [self maxCharHeight:nil];
     float charWidth = [self maxCharWidth:nil];
     if (charHeight < 1 || charWidth < 1) {
-        DLog(@"During windowWillUseStandardFrame:defaultFrame:, charWidth or charHeight are less "
+        PtyLog(@"During windowWillUseStandardFrame:defaultFrame:, charWidth or charHeight are less "
              @"than 1 so using default frame. This is expected on 10.10 while restoring a "
              @"fullscreen window.");
         return defaultFrame;
@@ -3703,7 +3716,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
-    DLog(@"Did select tab view %@", tabViewItem);
+    PtyLog(@"Did select tab view %@", tabViewItem);
     tabBarControl.flashing = YES;
 
     if (_autoCommandHistorySessionId != -1) {
@@ -4575,7 +4588,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
     if ([session sessionID] == _autoCommandHistorySessionId) {
         [self hideAutoCommandHistory];
-        DLog(@"Cancel delayed perform of show ACH window");
+        PtyLog(@"Cancel delayed perform of show ACH window");
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(reallyShowAutoCommandHistoryForSession:)
                                                    object:session];
@@ -5050,6 +5063,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSUInteger savedMask = TABVIEW.autoresizingMask;
     TABVIEW.autoresizingMask = 0;
 
+    CGFloat menuBarHeight = [[[NSApplication sharedApplication] mainMenu] menuBarHeight];
+    
     // Set the frame for X-of-screen windows. The size doesn't change
     // for _PARTIAL window types.
     switch (windowType_) {
@@ -5060,7 +5075,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             break;
 
         case WINDOW_TYPE_TOP:
-            frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height;
+            frame.origin.y = self.screen.visibleFrame.origin.y + self.screen.visibleFrame.size.height - frame.size.height + menuBarHeight;
             frame.size.width = [[self window] frame].size.width;
             frame.origin.x = [[self window] frame].origin.x;
             break;
@@ -5103,9 +5118,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
-    DLog(@"Before frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
+    PtyLog(@"Before frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
     frame = [self frame:frame byConstrainingToScreen:[[self window] screen]];
-    DLog(@"After frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
+    PtyLog(@"After frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
     [[self window] setFrame:frame display:YES];
 
     // Restore TABVIEW's autoresizingMask and remove the stupid bugFixView.
@@ -5948,7 +5963,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     if (showToolbeltInline) {
-        DLog(@"Set toolbelt frame to %@", NSStringFromRect([self toolbeltFrame]));
+        PtyLog(@"Set toolbelt frame to %@", NSStringFromRect([self toolbeltFrame]));
         [self constrainToolbeltWidth];
         [toolbelt_ setFrame:[self toolbeltFrame]];
     }

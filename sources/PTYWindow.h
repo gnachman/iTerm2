@@ -40,7 +40,7 @@
 - (void)_setContentHasShadow:(BOOL)shadow;
 @end
 
-@interface PTYWindow : NSWindow
+@interface PTYWindow : NSPanel
 
 - (id)initWithContentRect:(NSRect)contentRect
                 styleMask:(NSUInteger)aStyle
@@ -58,8 +58,8 @@
 
 - (void)setRestoreState:(NSObject *)restoreState;
 
-// Returns the approximate fraction of this window that is occluded by other windows in this app.
-- (double)approximateFractionOccluded;
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen;
+
 
 // Hide the mirrored scroll view.
 - (void)turnOffVibrancyInTitleBar;
