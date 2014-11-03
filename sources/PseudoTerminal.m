@@ -7069,6 +7069,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
     }
     [[self currentTab] numberOfSessionsDidChange];
+    [self updateContentShadow];
 }
 
 - (void)sessionDidTerminate:(PTYSession *)session {
