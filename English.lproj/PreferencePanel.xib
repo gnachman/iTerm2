@@ -1778,6 +1778,7 @@ DQ
                 <tokenField verticalHuggingPriority="750" id="3245" userLabel="Tags token Field">
                     <rect key="frame" x="146" y="337" width="393" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">Tags with slashes create a hierarchy which you can navigate in the Profiles menu or in the tags list adjacent to lists of profiles.</string>
                     <tokenFieldCell key="cell" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" placeholderString="Example: linux, dark bg, tag/subtag/subsubtag" drawsBackground="YES" allowsEditingTextAttributes="YES" id="3246">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -1857,7 +1858,7 @@ DQ
                         <action selector="showAdvancedWorkingDirConfigPanel:" target="dVg-Ac-SiZ" id="hr1-VG-5jr"/>
                     </connections>
                 </button>
-                <textField verticalHuggingPriority="750" id="sa9-oD-SMc" userLabel="Name text field">
+                <textField toolTip="The badge is text that appears in the top right of a session." verticalHuggingPriority="750" id="sa9-oD-SMc" userLabel="Name text field">
                     <rect key="frame" x="146" y="309" width="393" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter Badge Text" drawsBackground="YES" id="M2Y-uM-p2q">
@@ -2026,6 +2027,7 @@ DQ
                 <slider verticalHuggingPriority="750" id="4896">
                     <rect key="frame" x="141" y="149" width="179" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or whtie.</string>
                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="4903"/>
                     <connections>
                         <action selector="settingChanged:" target="p8i-eM-oBc" id="FZP-HT-Cxc"/>
@@ -2071,6 +2073,7 @@ DQ
                 <slider verticalHuggingPriority="750" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
                     <rect key="frame" x="139" y="18" width="179" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">This dims all colors except that of the cursor. A pure white cursor with Smart Cursor Color off is recommended when using cursor boost.</string>
                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.80000000000000004" tickMarkPosition="above" sliderType="linear" id="gKT-qi-eSF"/>
                     <connections>
                         <action selector="settingChanged:" target="p8i-eM-oBc" id="FHJ-0a-eQc"/>
@@ -2549,7 +2552,7 @@ DQ
                         <outlet property="nextKeyView" destination="4774" id="5250"/>
                     </connections>
                 </button>
-                <button id="vNf-D5-cU4">
+                <button toolTip="The non-ASCII font affects all characters above code point 127." id="vNf-D5-cU4">
                     <rect key="frame" x="18" y="99" width="263" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Use a different font for non-ASCII text" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="e7d-pm-ySF">
@@ -2592,7 +2595,7 @@ DQ
                         <outlet property="nextKeyView" destination="4773" id="5248"/>
                     </connections>
                 </matrix>
-                <button id="5126">
+                <button toolTip="If you work mostly in East Asian languages this can be helpful. For most users, it causes misalignment." id="5126">
                     <rect key="frame" x="18" y="220" width="471" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Treat ambiguous-width characters as double width (not recommended)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5127">
@@ -2604,7 +2607,7 @@ DQ
                         <outlet property="nextKeyView" destination="4765" id="5254"/>
                     </connections>
                 </button>
-                <button id="IwR-5a-srh">
+                <button toolTip="This can help with Korean text." id="IwR-5a-srh">
                     <rect key="frame" x="18" y="200" width="396" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Use HFS+ Unicode normalization (better fidelity but slower)" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6yC-Pg-xDK">
@@ -2832,7 +2835,7 @@ DQ
                         <outlet property="nextKeyView" destination="2100" id="5267"/>
                     </connections>
                 </button>
-                <button id="6395">
+                <button toolTip="Tessellates the image instead of stretching it." id="6395">
                     <rect key="frame" x="297" y="255" width="88" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Tile image" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6396">
@@ -2974,7 +2977,7 @@ DQ
                         <outlet property="nextKeyView" destination="4978" id="6418"/>
                     </connections>
                 </button>
-                <button id="5008">
+                <button toolTip="Enable this to prevent title changes originated by an escape code from removing the profile name from the tab title." id="5008">
                     <rect key="frame" x="15" y="58" width="458" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="If showing profile name in tab title, keep it when the title is changed" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5009">
@@ -2995,7 +2998,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <slider verticalHuggingPriority="750" id="6320">
+                <slider toolTip="How much of the background image is visible through the background color." verticalHuggingPriority="750" id="6320">
                     <rect key="frame" x="367" y="230" width="177" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.29999999999999999" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
@@ -3089,7 +3092,7 @@ DQ
                 <button id="2402">
                     <rect key="frame" x="20" y="269" width="215" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Enable xterm mouse reporting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2415">
+                    <buttonCell key="cell" type="check" title="Enable mouse reporting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2415">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -3122,7 +3125,7 @@ DQ
                         <outlet property="nextKeyView" destination="2390" id="5271"/>
                     </connections>
                 </button>
-                <button id="2404">
+                <button toolTip="Growl is used if it's available, otherwise Notification Center is used." id="2404">
                     <rect key="frame" x="19" y="156" width="258" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Send Growl/Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
@@ -3227,7 +3230,7 @@ DQ
                         <action selector="settingChanged:" target="gMD-DK-gev" id="INZ-fW-6oY"/>
                     </connections>
                 </button>
-                <button id="6387">
+                <button toolTip="This may be a security risk in an untrusted environment, especially if the terminal can set the title." id="6387">
                     <rect key="frame" x="20" y="249" width="257" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Terminal may report window title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="6388">
@@ -3252,6 +3255,7 @@ DQ
                 <button id="5154">
                     <rect key="frame" x="20" y="412" width="391" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">When using a program like tmux, which shows a status bar at the bottom of the screen, history is not normally saved. This allows such history to be saved but with a performance penalty.</string>
                     <buttonCell key="cell" type="check" title="Save lines to scrollback when an app status bar is present" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5155">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3276,6 +3280,7 @@ DQ
                 <button id="6045">
                     <rect key="frame" x="20" y="75" width="231" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">LC_LANG and LC_CTYPE may be set if this is enabled. If you have an unusual combination of country and language then disabling this may help.</string>
                     <buttonCell key="cell" type="check" title="Set locale variables automatically" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6046">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3296,6 +3301,7 @@ DQ
                 <button id="Qz5-Ow-iQt">
                     <rect key="frame" x="21" y="18" width="384" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">If Shell Integration is enabled, this prevents command prompts from starting in the middle of a line when the previous command did not end with a newline.</string>
                     <buttonCell key="cell" type="check" title="Insert newline before start of command prompt if needed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="bRB-N5-KFZ">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3451,7 +3457,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="5689"/>
                 </imageView>
-                <button id="5697">
+                <button toolTip="This is not recommended." id="5697">
                     <rect key="frame" x="15" y="21" width="200" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="When idle, send ASCII code:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5701">
@@ -3578,7 +3584,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4291">
+                <matrix toolTip="+Esc is the preferred setting for users who don't need the option key to enter diacritics or other special character." verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" id="4291">
                     <rect key="frame" x="256" y="20" width="68" height="58"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -3661,6 +3667,7 @@ DQ
                 <button id="5074">
                     <rect key="frame" x="14" y="78" width="151" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">You probably don't want this; most systems use ^? (ASCII 127) for backspace. Changing this setting affects the key mappings in the table above.</string>
                     <buttonCell key="cell" type="check" title="Delete key sends ^H" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5075">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3672,6 +3679,7 @@ DQ
                 <button id="U4H-3c-nZg">
                     <rect key="frame" x="14" y="58" width="219" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">Some programs (such as vim and emacs) want to put the numeric keypad in "application" mode. Turn this off if you always want it to act as a numeric keypad.</string>
                     <buttonCell key="cell" type="check" title="Allow application keypad mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cTE-39-JA0">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4044,7 +4052,7 @@ DQ
                         <action selector="settingChanged:" target="9Se-ld-UJa" id="GEe-gf-ALm"/>
                     </connections>
                 </button>
-                <button id="6383">
+                <button toolTip="Clipboard access via an escape code poses a security risk if running untrusted applications." id="6383">
                     <rect key="frame" x="356" y="362" width="310" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Applications in terminal may access clipboard" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6384">
@@ -4102,7 +4110,7 @@ DQ
                         <outlet property="nextKeyView" destination="5051" id="5195"/>
                     </connections>
                 </textField>
-                <button id="4540">
+                <button toolTip="&quot;Zoom&quot; is the green button, except on OS 10.10 where you must hold Option while pressing the green button." id="4540">
                     <rect key="frame" x="356" y="214" width="268" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Zoom maximizes vertically only" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4541">
@@ -4116,6 +4124,7 @@ DQ
                 <button id="5319">
                     <rect key="frame" x="356" y="192" width="189" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">Native full screen windows animate into their own desktop. Non-native full screen windows quickly expand to fill the window's screen.</string>
                     <buttonCell key="cell" type="check" title="Native full screen windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5320">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -4136,7 +4145,7 @@ DQ
                         <action selector="settingChanged:" target="9Se-ld-UJa" id="E7x-cI-dhk"/>
                     </connections>
                 </button>
-                <button id="4570">
+                <button toolTip="Smart window placement puts new windows where the most free space is available." id="4570">
                     <rect key="frame" x="356" y="255" width="233" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Smart window placement" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4571">
@@ -4148,7 +4157,7 @@ DQ
                         <outlet property="nextKeyView" destination="6377" id="6382"/>
                     </connections>
                 </button>
-                <button identifier="adjustWindowForFontSizeChange" id="6377">
+                <button identifier="adjustWindowForFontSizeChange" toolTip="If enabled, changes to font size will try to preserve session dimensions." id="6377">
                     <rect key="frame" x="356" y="235" width="274" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Adjust window when changing font size" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6378">
@@ -4325,16 +4334,16 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="5629"/>
                 </imageView>
-                <popUpButton verticalHuggingPriority="750" id="6337">
+                <popUpButton toolTip="A tmux server has multiple virtual windows. This setting determines how hey are presented with attaching." verticalHuggingPriority="750" id="6337">
                     <rect key="frame" x="356" y="130" width="361" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Open tmux windows as native tabs in a new window" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="6341" id="6338">
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6338">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="6339">
                             <items>
                                 <menuItem title="Open tmux windows as native windows" id="6340"/>
-                                <menuItem title="Open tmux windows as native tabs in a new window" state="on" tag="1" id="6341"/>
+                                <menuItem title="Open tmux windows as native tabs in a new window" tag="1" id="6341"/>
                                 <menuItem title="Open tmux windows as tabs in existing window" tag="2" id="rh8-sm-6ap"/>
                             </items>
                         </menu>
@@ -4379,7 +4388,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" id="6345">
+                <textField toolTip="The tmux dashboard can be found under the Shell&gt;tmux menu and helps for managing large numbers of tmux windows." verticalHuggingPriority="750" id="6345">
                     <rect key="frame" x="610" y="109" width="36" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="6346">
@@ -4600,7 +4609,7 @@ DQ
                         <outlet property="nextKeyView" destination="4560" id="5207"/>
                     </connections>
                 </button>
-                <button id="5753">
+                <button toolTip="If this is on then transparency can be toggled window-by-window under View&gt;Use Transparency" id="5753">
                     <rect key="frame" x="360" y="18" width="366" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Disable transparency for fullscreen windows by default" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5754">
@@ -4650,7 +4659,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <slider verticalHuggingPriority="750" id="5337">
+                <slider toolTip="Inactive sessions get dimmed to help find the active session." verticalHuggingPriority="750" id="5337">
                     <rect key="frame" x="481" y="193" width="177" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="0.10000000000000001" maxValue="0.59999999999999998" doubleValue="0.40000000000000002" tickMarkPosition="above" sliderType="linear" id="5338"/>
@@ -4745,6 +4754,7 @@ DQ
                 <button id="awA-hH-ziY">
                     <rect key="frame" x="18" y="18" width="306" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">For this setting to take effect you must disable "Native full scren windows" in Prefs&gt;General. If this setting is enabled, the menu bar will remain visible. This is useful for multi-monitor systems.</string>
                     <buttonCell key="cell" type="check" title="Auto-hide menu bar in non-native fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="MM6-3I-2ep">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5423,6 +5433,7 @@ DQ
                 <button id="6111">
                     <rect key="frame" x="19" y="38" width="320" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">For terminal applications that use mouse reporting, turning this on allows control-click to be reported instead of opening the context menu.</string>
                     <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu." bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5434,6 +5445,7 @@ DQ
                 <button id="6407">
                     <rect key="frame" x="20" y="18" width="163" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">If enabled, option-click sends arrow keys to move the cursor's position. If Shell Integration is installed then it does not take effect at the command line.</string>
                     <buttonCell key="cell" type="check" title="⌥-Click moves cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6408">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -5442,7 +5454,7 @@ DQ
                         <action selector="settingChanged:" target="pwh-OY-l3e" id="gqB-43-NCa"/>
                     </connections>
                 </button>
-                <button id="6260">
+                <button toolTip="If disabled, then triple click selects one line as it appears onscreen." id="6260">
                     <rect key="frame" x="364" y="20" width="258" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Triple-click selects full wrapped lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6261">
@@ -5539,7 +5551,7 @@ DQ
                         <autoresizingMask key="autoresizingMask"/>
                     </tableHeaderView>
                 </scrollView>
-                <searchField verticalHuggingPriority="750" id="gjV-o3-wzg">
+                <searchField wantsLayer="YES" verticalHuggingPriority="750" id="gjV-o3-wzg">
                     <rect key="frame" x="20" y="392" width="378" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <searchFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" usesSingleLineMode="YES" bezelStyle="round" id="lfd-bX-IsD">
