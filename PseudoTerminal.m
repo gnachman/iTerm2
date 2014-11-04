@@ -385,11 +385,6 @@ NSString *sessionsKey = @"sessions";
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
-    if (windowType == WINDOW_TYPE_TOP ||
-        windowType == WINDOW_TYPE_BOTTOM ||
-        windowType == WINDOW_TYPE_LEFT) {
-        [myWindow setHasShadow:YES];
-    }
     [myWindow _setContentHasShadow:NO];
 
     PtyLog(@"initWithSmartLayout - new window is at %p", myWindow);
@@ -398,7 +393,6 @@ NSString *sessionsKey = @"sessions";
 
     _fullScreen = (windowType == WINDOW_TYPE_FORCE_FULL_SCREEN);
     background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
-    [[self window] setAlphaValue:1];
     [[self window] setOpaque:NO];
 
     normalBackgroundColor = [background_ color];

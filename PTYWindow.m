@@ -61,27 +61,6 @@
 
 }
 
-- initWithContentRect:(NSRect)contentRect
-            styleMask:(NSUInteger)aStyle
-              backing:(NSBackingStoreType)bufferingType
-                defer:(BOOL)flag;
-{
-#if DEBUG_METHOD_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-
-    if ((self = [super initWithContentRect:contentRect
-                 styleMask:aStyle
-                   backing:bufferingType
-                     defer:flag]) != nil) {
-        [self setAlphaValue:0.9999];
-        blurFilter = 0;
-        layoutDone = NO;
-    }
-
-    return self;
-}
-
 - (NSString *)description
 {
     return [NSString stringWithFormat:@"<%@: %p frame=%@>",
