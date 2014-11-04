@@ -163,9 +163,6 @@ typedef enum {
 // Pop the current session out and move it into its own window.
 - (void)moveSessionToWindow:(id)sender;
 
-// Call this when transparency changes.
-- (void)updateContentShadow;
-
 // Show or hide this window's toolbelt.
 - (IBAction)toggleToolbeltVisibility:(id)sender;
 

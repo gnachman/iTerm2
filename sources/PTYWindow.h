@@ -32,14 +32,6 @@
 - (BOOL)lionFullScreen;
 @end
 
-// See http://www.google.com/search?sourceid=chrome&ie=UTF-8&q=_setContentHasShadow
-// Solves bug 299 (ghosting of contents with highly transparent windows--the window's
-// views cast a shadow, and the window shadow gets messed up, which you can see through
-// the transparent window.) but causes bug 2925 (artifacts in the corners).
-@interface NSWindow (NSWindowPrivate)  // private method
-- (void)_setContentHasShadow:(BOOL)shadow;
-@end
-
 @interface PTYWindow : NSWindow
 
 - (id)initWithContentRect:(NSRect)contentRect

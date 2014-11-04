@@ -532,18 +532,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [myWindow setFrame:initialFrame display:NO];
     }
     DLog(@"Create window %@", myWindow);
-    if (windowType == WINDOW_TYPE_TOP ||
-        windowType == WINDOW_TYPE_BOTTOM ||
-        windowType == WINDOW_TYPE_LEFT ||
-        windowType == WINDOW_TYPE_RIGHT ||
-        windowType == WINDOW_TYPE_TOP_PARTIAL ||
-        windowType == WINDOW_TYPE_BOTTOM_PARTIAL ||
-        windowType == WINDOW_TYPE_LEFT_PARTIAL ||
-        windowType == WINDOW_TYPE_RIGHT_PARTIAL ||
-        windowType == WINDOW_TYPE_NO_TITLE_BAR) {
-        [myWindow setHasShadow:YES];
-    }
-    [self updateContentShadow];
 
     PtyLog(@"finishInitializationWithSmartLayout - new window is at %p", myWindow);
     [self setWindow:myWindow];
@@ -2977,29 +2965,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     toolbeltWidth_ = toolbelt_.frame.size.width;
 }
 
-// See issue 2925.
-// tl;dr: Content shadow on with a transparent view produces ghosting.
-//        Content shadow off causes artifacts in the corners of the window.
-// So turn the shadow off only when there's a transparent view.
-- (void)updateContentShadow {
-    if (useTransparency_) {
-        for (PTYSession *aSession in [self allSessions]) {
-            if (aSession.textview.transparency > 0) {
-                [self.ptyWindow _setContentHasShadow:NO];
-                return;
-            }
-        }
-    }
-    [self.ptyWindow _setContentHasShadow:YES];
-}
-
 - (void)updateUseTransparency {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateUseTransparencyMenuItem];
     for (PTYSession* aSession in [self allSessions]) {
         [[aSession view] setNeedsDisplay:YES];
     }
-    [self updateContentShadow];
     [[self currentTab] recheckBlur];
 }
 
@@ -7069,7 +7040,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
     }
     [[self currentTab] numberOfSessionsDidChange];
-    [self updateContentShadow];
 }
 
 - (void)sessionDidTerminate:(PTYSession *)session {

@@ -54,23 +54,6 @@
 
 }
 
-- (id)initWithContentRect:(NSRect)contentRect
-                styleMask:(NSUInteger)aStyle
-                  backing:(NSBackingStoreType)bufferingType
-                    defer:(BOOL)flag {
-    self = [super initWithContentRect:contentRect
-                            styleMask:aStyle
-                              backing:bufferingType
-                                defer:flag];
-    if (self) {
-        [self setAlphaValue:0.9999];
-        blurFilter = 0;
-        layoutDone = NO;
-    }
-
-    return self;
-}
-
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p frame=%@>",
             [self class],
