@@ -2163,6 +2163,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else {
         shouldClose = YES;
     }
+
+    BOOL doTmuxDetach = NO;
+
     if (shouldClose) {
         int n = 0;
         for (PTYTab *aTab in [self tabs]) {
@@ -2181,7 +2184,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         if (title) {
             iTermWarningSelection selection =
                 [iTermWarning showWarningWithTitle:title
-                                           actions:@[ @"Hide", @"Kill" ]
+                                           actions:@[ @"Hide", @"Kill", @"Detach" ]
                                         identifier:@"ClosingTmuxWindowKillsTmuxWindows"
                                        silenceable:kiTermWarningTypePermanentlySilenceable];
             // If there are tmux tabs, tell the tmux server to kill/hide the
@@ -2191,13 +2194,22 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // server to tell us to do it.
             for (PTYTab *aTab in [self tabs]) {
                 if ([aTab isTmuxTab]) {
+                    doTmuxDetach = YES;
+
                     if (selection == kiTermWarningSelection1) {
                         [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
+                    } else if (selection == kiTermWarningSelection2) {
+                        doTmuxDetach = YES;
                     } else {
                         [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
                     }
                 }
             }
+
+            if(doTmuxDetach) {
+                 PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
+                 [[aSession tmuxController] requestDetach];
+             }
         }
     }
     return shouldClose;
