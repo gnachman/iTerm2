@@ -38,6 +38,9 @@ static NSString *const kServiceName = @"iTerm2";
     }
     for (NSDictionary *account in [SSKeychain accountsForService:kServiceName]) {
         NSString *accountName = account[(NSString *)kSecAttrAccount];
+        if (!accountName) {
+            continue;
+        }
         if (!filter ||
             [accountName rangeOfString:filter
                                options:NSCaseInsensitiveSearch].location != NSNotFound) {
