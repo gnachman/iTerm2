@@ -80,13 +80,13 @@ NEWFILES=""
 if [ "$1" = normal ]; then
     echo "Build deployment release"
     make release
-    Build Deployment "" "OS 10.6+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." "" "--deep"
+    Build Deployment "" "OS 10.7+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." "" "--deep"
 fi
 
 if [ "$1" = legacy ]; then
     echo "Build legacy release"
     make legacy
-    Build "Leopard Deployment" "-LeopardPPC" "OS 10.5, Intel, PPC" "This build has a limited set of features but supports OS 10.5 and PowerPC. If you have an Intel Mac that runs OS 10.6 or newer, you don't want this." "legacy_" ""
+    Build "Leopard Deployment" "-LeopardPPC" "OS 10.6, Intel, PPC" "This build has a limited set of features but supports OS 10.6 and PowerPC. If you have an Intel Mac that runs OS 10.7 or newer, you don't want this." "legacy_" ""
 fi
 
 #set -x
