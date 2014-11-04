@@ -531,6 +531,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // monitor.
         [myWindow setFrame:initialFrame display:NO];
     }
+
+    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
+
     DLog(@"Create window %@", myWindow);
 
     PtyLog(@"finishInitializationWithSmartLayout - new window is at %p", myWindow);
