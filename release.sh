@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 function PrintUsageAndDie {
   echo Usage:
   echo release.sh 'normal|legacy'
@@ -43,7 +44,8 @@ function Build {
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
   codesign $6 -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm.app"
-  codesign --verify --verbose "build/$BUILDTYPE/iTerm.app" || die "Signature not verified"
+  # Commented out because it crashes on 10.10
+  #codesign --verify --verbose "build/$BUILDTYPE/iTerm.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
 
   # Create the zip file
