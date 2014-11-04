@@ -1221,8 +1221,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     defaultHideMenuBarInFullscreen = [prefs objectForKey:@"HideMenuBarInFullscreen"]?[[prefs objectForKey:@"HideMenuBarInFullscreen"] boolValue] : YES;
     defaultAdvancedFontRendering = [prefs objectForKey:@"HiddenAdvancedFontRendering"]?[[prefs objectForKey:@"HiddenAdvancedFontRendering"] boolValue] : NO;
     defaultStrokeThickness = [prefs objectForKey:@"HiddenAFRStrokeThickness"] ? [[prefs objectForKey:@"HiddenAFRStrokeThickness"] floatValue] : 0;
-    [defaultWordChars release];
-    defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
+    [defaultWordChars autorelease];
+    defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:[@"/-+\\~_." copy];
     defaultTmuxDashboardLimit = [prefs objectForKey: @"TmuxDashboardLimit"]?[[prefs objectForKey:@"TmuxDashboardLimit"] intValue]:10;
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
     defaultQuitWhenAllWindowsClosed = [prefs objectForKey:@"QuitWhenAllWindowsClosed"]?[[prefs objectForKey:@"QuitWhenAllWindowsClosed"] boolValue]: NO;
@@ -1655,7 +1655,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         // The OS will never call us directly with this sender, but we do call ourselves this way.
         [prefs setObject:[prefsCustomFolder stringValue]
                   forKey:@"PrefsCustomFolder"];
-        defaultPrefsCustomFolder = [prefs objectForKey:@"PrefsCustomFolder"];
+        [defaultPrefsCustomFolder autorelease];
+        defaultPrefsCustomFolder = [[prefs objectForKey:@"PrefsCustomFolder"] copy];
         customFolderChanged_ = YES;
         [self _updatePrefsDirWarning];
     } else if (sender == windowStyle ||
@@ -1789,7 +1790,7 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
         defaultOpenBookmark = ([openBookmark state] == NSOnState);
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
-                defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
+        defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
         defaultQuitWhenAllWindowsClosed = ([quitWhenAllWindowsClosed state] == NSOnState);
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
@@ -2913,7 +2914,8 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
     }
     [backgroundImage setState:[imageFilename length] > 0 ? NSOnState : NSOffState];
     [backgroundImagePreview setImage:[[[NSImage alloc] initByReferencingFile:imageFilename] autorelease]];
-    backgroundImageFilename = imageFilename;
+    [backgroundImageFilename autorelease];
+    backgroundImageFilename = [imageFilename copy];
     [backgroundImageTiled setState:[[dict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue] ? NSOnState : NSOffState];
 
     // Terminal tab
@@ -3341,10 +3343,11 @@ static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPr
             filename = [self _chooseBackgroundImage];
         }
         if (!filename) {
-                        [backgroundImagePreview setImage: nil];
+            [backgroundImagePreview setImage:nil];
             filename = @"";
         }
-        backgroundImageFilename = filename;
+        [backgroundImageFilename autorelease];
+        backgroundImageFilename = [filename copy];
     }
     [newDict setObject:backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
     [newDict setObject:[NSNumber numberWithBool:([backgroundImageTiled state]==NSOnState)] forKey:KEY_BACKGROUND_IMAGE_TILED];
