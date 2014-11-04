@@ -3140,6 +3140,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [self.window setFrame:oldFrame_ display:YES];
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
+    [self.window setHasShadow:(windowType_ == WINDOW_TYPE_NORMAL)];
 
     if (!_fullScreen &&
         [iTermPreferences boolForKey:kPreferenceKeyDisableFullscreenTransparencyByDefault]) {
