@@ -385,7 +385,7 @@ NSString *sessionsKey = @"sessions";
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
-    [myWindow _setContentHasShadow:NO];
+//    [myWindow _setContentHasShadow:NO];
 
     PtyLog(@"initWithSmartLayout - new window is at %p", myWindow);
     [self setWindow:myWindow];
