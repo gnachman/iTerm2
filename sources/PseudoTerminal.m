@@ -2175,10 +2175,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
         NSString *title = nil;
         if (n == 1) {
-            title = @"Kill tmux window, terminating its jobs, or hide it? "
+            title = @"Kill tmux window, terminating its jobs, detach it, or hide it? "
                     @"Hidden windows may be restored from the tmux dashboard.";
         } else if (n > 1) {
-            title = @"Kill tmux windows, terminating their jobs, or hide them? "
+            title = @"Kill tmux windows, terminating their jobs, detach them, or hide them? "
                     @"Hidden windows may be restored from the tmux dashboard.";
         }
         if (title) {
@@ -2194,8 +2194,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // server to tell us to do it.
             for (PTYTab *aTab in [self tabs]) {
                 if ([aTab isTmuxTab]) {
-                    doTmuxDetach = YES;
-
                     if (selection == kiTermWarningSelection1) {
                         [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
                     } else if (selection == kiTermWarningSelection2) {
