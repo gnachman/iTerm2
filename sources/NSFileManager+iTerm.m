@@ -20,6 +20,8 @@
 //
 
 #import "NSFileManager+iTerm.h"
+#include <sys/param.h>
+#include <sys/mount.h>
 
 enum
 {
@@ -180,6 +182,16 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     }
     unlink([filename UTF8String]);
     return YES;
+}
+
+- (BOOL)fileExistsAtPathLocally:(NSString *)filename {
+    struct statfs buf;
+    int rc = statfs([filename UTF8String], &buf);
+    if (rc != 0 || (buf.f_flags & MNT_LOCAL)) {
+        return [self fileExistsAtPath:filename];
+    } else {
+        return NO;
+    }
 }
 
 @end

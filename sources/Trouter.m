@@ -27,6 +27,7 @@
 
 #import "Trouter.h"
 #import "DebugLogging.h"
+#import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "TrouterPrefsController.h"
@@ -156,7 +157,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     path = [[url standardizedURL] path];
     DLog(@"  Standardized path is %@", path);
 
-    if ([fileManager fileExistsAtPath:path]) {
+    if ([fileManager fileExistsAtPathLocally:path]) {
         DLog(@"    YES: A file exists at %@", path);
         return path;
     }
@@ -351,8 +352,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
-                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
-{
+                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr {
+    if (![[NSFileManager defaultManager] fileExistsAtPathLocally:workingDirectory]) {
+        return nil;
+    }
+
     NSMutableString *beforeString = [[beforeStringIn mutableCopy] autorelease];
     NSMutableString *afterString = [[afterStringIn mutableCopy] autorelease];
     
