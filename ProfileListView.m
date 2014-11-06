@@ -237,8 +237,6 @@ const int kInterWidgetMargin = 10;
     normalRowHeight_ = 21;
     rowHeightWithTags_ = 29;
     [tableView_ setRowHeight:rowHeightWithTags_];
-    [tableView_
-         setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
     [tableView_ setAllowsColumnResizing:YES];
     [tableView_ setAllowsColumnReordering:YES];
     [tableView_ setAllowsColumnSelection:NO];
