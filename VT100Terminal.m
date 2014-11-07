@@ -62,7 +62,7 @@
 #define isbig5(c)    ((c) >= 0xa1 && (c) <= 0xfe)
 #define issjiskanji(c)  (((c) >= 0x81 && (c) <= 0x9f) ||  \
                          ((c) >= 0xe0 && (c) <= 0xef))
-#define iseuckr(c)   ((c) >= 0xa1 && (c) <= 0xfe)
+#define iseuckr(c)   ((c) >= 0x81 && (c) <= 0xfe)
 
 #define isGBEncoding(e)     ((e)==0x80000019||(e)==0x80000421|| \
                              (e)==0x80000631||(e)==0x80000632|| \
