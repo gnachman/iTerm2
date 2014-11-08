@@ -267,17 +267,24 @@
                autorelease];
 }
 
+- (NSColor *)textColorDefaultSelected:(BOOL)selected
+{
+    return [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+}
+
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     NSColor *textColor;
     if (cell.state == NSOnState) {
-        if (!cell.tabColor || [cell.tabColor brightnessComponent] > 0.2) {
+        if (!cell.tabColor) {
+            return [self textColorDefaultSelected:YES];
+        } else if ([cell.tabColor brightnessComponent] > 0.2) {
             textColor = [NSColor blackColor];
         } else {
             // dark tab
             textColor = [NSColor whiteColor];
         }
     } else {
-        textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+        textColor = [self textColorDefaultSelected:NO];
     }
     return textColor;
 }
@@ -532,6 +539,11 @@
     [[cell attributedStringValue] drawInRect:labelRect];
 }
 
+- (NSColor *)tabBarColor
+{
+    return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
+}
+
 - (void)drawBackgroundInRect:(NSRect)rect
                        color:(NSColor*)backgroundColor
                   horizontal:(BOOL)horizontal {
@@ -542,7 +554,7 @@
     [NSGraphicsContext saveGraphicsState];
     [[NSGraphicsContext currentContext] setShouldAntialias:NO];
 
-    [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
+    [backgroundColor set];
     NSRectFillUsingOperation(rect, NSCompositeSourceAtop);
 
     [[self bottomLineColorSelected:NO] set];
@@ -553,7 +565,6 @@
                                                       rect.origin.y + rect.size.height - 0.5)];
         
         [[self topLineColorSelected:NO] set];
-        [[NSColor redColor] set];
         // this looks ok with tabs on top but doesn't appear w/ tabs on bottom for some reason
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
                                                       rect.origin.y - 0.5)
@@ -594,7 +605,9 @@
         tabBar = bar;
     }
 
-    [self drawBackgroundInRect:rect color:nil horizontal:horizontal];
+    [self drawBackgroundInRect:rect color:[self tabBarColor] horizontal:horizontal];
+    [[self topLineColorSelected:NO] set];
+    [self drawHorizontalLineInFrame:rect y:NSMinY(rect)];
 
     // no tab view == not connected
     if (![bar tabView]){
