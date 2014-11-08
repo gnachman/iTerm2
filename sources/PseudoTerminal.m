@@ -5838,11 +5838,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                     heightAdjustment += 1;
                 }
 
-                BOOL isNormalWindow = ![self anyFullScreen] || (self.window.styleMask & NSTitledWindowMask);
-                if (IsYosemiteOrLater() && isNormalWindow) {
-                    heightAdjustment -= 2;
-                }
-
                 NSRect tabViewFrame =
                     NSMakeRect([self _haveLeftBorder] ? 1 : 0,
                                yOrigin,
