@@ -193,7 +193,17 @@ static int getCSIParam(unsigned char *datap,
                     }
                 }
                 
-                if (isSub) {
+                if (isSub && param->count > 0) {
+                    // This implementation is not really well aligned with the spec. In ECMA-48
+                    // section 5.4, the format of a CSI code is described. The parameter string,
+                    // which follows CSI, is a semicolon-delimited list of parameter substrings
+                    // A parameter substring is a sequence of digits with colon separators.
+                    // The data structure we use treats each parameter string up to the first
+                    // colon (if any) as the parameter, and parts after the first colon as
+                    // sub-parameters. That doesn't really make sense if a paramater string
+                    // starts with a colon, which is allowed but not defined in the spec.
+                    // Since that never should happen in practice, we'll just ignore a parameter
+                    // string that starts with a colon.
                     const int paramNum = param->count - 1;
                     assert(paramNum >= 0 && paramNum < VT100CSIPARAM_MAX);
                     int subParamNum = param->subCount[paramNum];
