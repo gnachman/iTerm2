@@ -1773,9 +1773,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     NSString *bestType = [board availableTypeFromArray:supportedTypes];
 
     NSString* info = nil;
+    DLog(@"Getting pasteboard string...");
     if ([bestType isEqualToString:NSFilenamesPboardType]) {
         NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
         NSMutableArray *escapedFilenames = [NSMutableArray array];
+        DLog(@"Pasteboard has filenames: %@.", filenames);
         for (NSString *filename in filenames) {
             [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
         }
@@ -1786,6 +1788,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             info = nil;
         }
     } else {
+        DLog(@"Pasteboard has a string.");
         info = [board stringForType:NSStringPboardType];
     }
     return info;
@@ -4424,10 +4427,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // is in progress.
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags
 {
+    DLog(@"pasteString:flags: length=%@ flags=%@", @([theString length]), @(flags));
     iTermApplicationDelegate *itad =
             (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     NSString *converted = [itad stringByConvertingTabsToSpacesForPaste:theString];
+    DLog(@"After converting tabs length=%@", @([converted length]));
     if (converted) {
+        DLog(@"Calling pasteString:flags: on helper...");
         [_pasteHelper pasteString:converted flags:flags];
     }
 }
@@ -4435,6 +4441,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
 - (void)paste:(id)sender
 {
+    DLog(@"PTYSession paste:");
     [self pasteString:[PTYSession pasteboardString] flags:[sender tag]];
 }
 

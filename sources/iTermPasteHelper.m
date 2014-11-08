@@ -64,19 +64,24 @@
 }
 
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags {
+    DLog(@"-[iTermPasteHelper pasteString:flags:");
+    DLog(@"length=%@, flags=%@", @(theString.length), @(flags));
     if ([theString length] == 0) {
         DLog(@"Tried to paste 0-byte string. Beep.");
         NSBeep();
         return;
     }
     if ([self isPasting]) {
+        DLog(@"Already pasting. Enqueue event.");
         [self enqueueEvent:[PasteEvent pasteEventWithString:theString flags:flags]];
         return;
     }
     if (![self maybeWarnAboutMultiLinePaste:theString]) {
+        DLog(@"Multiline paste declined.");
         return;
     }
 
+    DLog(@"Sanitize control characters, escape, etc....");
     // Convert DOS (\r\n) CRLF newlines and linefeeds (\n) into carriage returns (\r==13).
     theString = [theString stringWithLinefeedNewlines];
 
@@ -100,6 +105,7 @@
         [controlSet removeCharactersInRange:NSMakeRange(22, 1)];  // LNEXT (^V)
     }
     if ([_delegate pasteHelperShouldBracket]) {
+        DLog(@"Send open bracket.");
         NSString *bracketString = [NSString stringWithFormat:@"%c[200~", 27];
         NSData *theData = [bracketString dataUsingEncoding:[_delegate pasteHelperEncoding]
                                       allowLossyConversion:YES];
@@ -114,6 +120,7 @@
         NSBeep();
         return;
     }
+    DLog(@"String to paste now has length %@", @(theString.length));
 
     if (flags & kPTYSessionPasteSlowly) {
         [self pasteSlowly:theString];
@@ -125,6 +132,7 @@
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
 // Override the constants by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
 - (void)pasteSlowly:(NSString *)theString {
+    DLog(@"pasteSlowly length=%@", @(theString.length));
     [_buffer appendData:[theString dataUsingEncoding:[_delegate pasteHelperEncoding]]];
     [self pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
                          defaultValue:16
@@ -134,6 +142,7 @@
 
 - (void)pasteNormally:(NSString *)aString
 {
+    DLog(@"pasteNormally length=%@", @(aString.length));
     // This is the "normal" way of pasting. It's fast but tends not to
     // outrun a shell's ability to read from its buffer. Why this crazy
     // thing? See bug 1031.
@@ -145,22 +154,27 @@
 }
 
 - (void)dequeueEvents {
+    DLog(@"Dequeueing paste events...");
     int eventsSent = 0;
     for (NSEvent *event in _eventQueue) {
         ++eventsSent;
         if ([event isKindOfClass:[PasteEvent class]]) {
+            DLog(@"Found a queued paste event");
             PasteEvent *pasteEvent = (PasteEvent *)event;
             [self pasteString:pasteEvent.string flags:pasteEvent.flags];
             // Can't empty while pasting.
             break;
         } else {
+            DLog(@"Found a queued keydown event");
             [_delegate pasteHelperKeyDown:event];
         }
     }
+    DLog(@"Done dequeueing paste events.");
     [_eventQueue removeObjectsInRange:NSMakeRange(0, eventsSent)];
 }
 
 - (void)enqueueEvent:(NSEvent *)event {
+    DLog(@"Enqueue paste event %@", event);
     [_eventQueue addObject:event];
 }
 
@@ -187,6 +201,7 @@
 }
 
 - (void)pasteNextChunkAndScheduleTimer {
+    DLog(@"pasteNextChunkAndScheduleTimer");
     NSRange range;
     range.location = 0;
     range.length = MIN(_pasteContext.bytesPerCall, [_buffer length]);
@@ -197,6 +212,7 @@
 
     [self updatePasteIndicator];
     if ([_buffer length] > 0) {
+        DLog(@"Scheduling timer");
         [_pasteContext updateValues];
         _timer = [NSTimer scheduledTimerWithTimeInterval:_pasteContext.delayBetweenCalls
                                                   target:self
@@ -205,11 +221,14 @@
                                                  repeats:NO];
     } else {
         if ([_delegate pasteHelperShouldBracket]) {
+            DLog(@"Send close bracket");
             NSString *bracketString = [NSString stringWithFormat:@"%c[201~", 27];
             NSData *theData = [bracketString dataUsingEncoding:[_delegate pasteHelperEncoding]
                                           allowLossyConversion:YES];
             [_delegate pasteHelperWriteData:theData];
         }
+
+        DLog(@"Done pasting");
         _timer = nil;
         [self hidePasteIndicator];
         [_pasteContext release];
