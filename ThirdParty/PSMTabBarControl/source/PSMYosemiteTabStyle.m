@@ -383,14 +383,34 @@
                                                 inRect:(NSRect)cellFrame
                                               selected:(BOOL)selected
                                           withTabColor:(NSColor *)tabColor {
+
     CGFloat angle = horizontal ? 90 : 0;
     [[self backgroundGradientSelected:selected] drawInRect:cellFrame angle:angle];
 
+    if (tabColor) {
+        if (selected) {
+            [[tabColor colorWithAlphaComponent:0.8] set];
+            NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
+        } else {
+            NSRect colorRect = cellFrame;
+            if (horizontal) {
+                colorRect.size.height = 4;
+            } else {
+                colorRect.size.width = 6;
+            }
+            [[tabColor colorWithAlphaComponent:0.8] set];
+            NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
+        }
+    }
+
     if (horizontal) {
-        // Left line
-        [[self verticalLineColor] set];
-        [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
-        
+        BOOL isLeftmostTab = NSMinX(cellFrame) == 0;
+        if (!isLeftmostTab) {
+            // Left line
+            [[self verticalLineColor] set];
+            [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
+        }
+
         // Right line
         CGFloat adjustment = 0;
         [[self verticalLineColor] set];
@@ -399,7 +419,7 @@
         // Top line
         [[self topLineColorSelected:selected] set];
         [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
-        
+
         // Bottom line
         [[self bottomLineColorSelected:selected] set];
         [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
@@ -422,22 +442,6 @@
         // Right line
         [[self bottomLineColorSelected:selected] set];
         [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame)];
-    }
-    
-    if (tabColor) {
-        if (selected) {
-            [[tabColor colorWithAlphaComponent:0.8] set];
-            NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
-        } else {
-            NSRect colorRect = cellFrame;
-            if (horizontal) {
-                colorRect.size.height = 4;
-            } else {
-                colorRect.size.width = 6;
-            }
-            [[tabColor colorWithAlphaComponent:0.8] set];
-            NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
-        }
     }
 }
 

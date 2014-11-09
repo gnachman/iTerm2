@@ -125,7 +125,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     _cellMaxWidth = 280;
     _cellOptimumWidth = 130;
     _tabLocation = PSMTab_TopTab;
-//     style = [[PSMYosemiteTabStyle alloc] init];
+//    style = [[PSMYosemiteTabStyle alloc] init];
     style = [[PSMDarkTabStyle alloc] init];
 
     // the overflow button/menu
