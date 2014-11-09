@@ -2184,7 +2184,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         if (title) {
             iTermWarningSelection selection =
                 [iTermWarning showWarningWithTitle:title
-                                           actions:@[ @"Hide", @"Detach", @"Kill" ]
+                                           actions:@[ @"Hide", @"Detach Tmux Session", @"Kill" ]
                                         identifier:@"ClosingTmuxWindowKillsTmuxWindows"
                                        silenceable:kiTermWarningTypePermanentlySilenceable];
             // If there are tmux tabs, tell the tmux server to kill/hide the
