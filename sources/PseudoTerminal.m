@@ -2175,20 +2175,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
         NSString *title = nil;
         if (n == 1) {
-            title = @"Kill, detach, or hide tmux window?\n"
-                    @"Killing the tmux window terminates its job.\n"
-                    @"You can reattach to a detached window later.\n"
+            title = @"Kill window and its jobs, hide window from view, or detach from tmux session?\n"
                     @"Hidden windows may be restored from the tmux dashboard.";
         } else if (n > 1) {
-            title = @"Kill, detach or hide all tmux windows within this session? "
-                    @"Killing the tmux session terminates all running jobs.\n"
-                    @"You can reattach to the detached windows later.\n"
+            title = @"Kill all tmux windows and their jobs, hide windows from view, or detach from tmux session?\n"
                     @"Hidden windows may be restored from the tmux dashboard.";
         }
         if (title) {
             iTermWarningSelection selection =
                 [iTermWarning showWarningWithTitle:title
-                                           actions:@[ @"Hide", @"Kill", @"Detach" ]
+                                           actions:@[ @"Hide", @"Detach", @"Kill" ]
                                         identifier:@"ClosingTmuxWindowKillsTmuxWindows"
                                        silenceable:kiTermWarningTypePermanentlySilenceable];
             // If there are tmux tabs, tell the tmux server to kill/hide the
@@ -2199,9 +2195,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             for (PTYTab *aTab in [self tabs]) {
                 if ([aTab isTmuxTab]) {
                     if (selection == kiTermWarningSelection1) {
-                        [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
-                    } else if (selection == kiTermWarningSelection2) {
                         doTmuxDetach = YES;
+                    } else if (selection == kiTermWarningSelection2) {
+                        [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
                     } else {
                         [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
                     }
