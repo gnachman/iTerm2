@@ -2175,10 +2175,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
         NSString *title = nil;
         if (n == 1) {
-            title = @"Kill tmux window, terminating its jobs, detach it, or hide it? "
+            title = @"Kill, detach, or hide tmux window?\n"
+                    @"Killing the tmux window terminates its job.\n"
+                    @"You can reattach to a detached window later.\n"
                     @"Hidden windows may be restored from the tmux dashboard.";
         } else if (n > 1) {
-            title = @"Kill tmux windows, terminating their jobs, detach them, or hide them? "
+            title = @"Kill, detach or hide all tmux windows within this session? "
+                    @"Killing the tmux session terminates all running jobs.\n"
+                    @"You can reattach to the detached windows later.\n"
                     @"Hidden windows may be restored from the tmux dashboard.";
         }
         if (title) {
