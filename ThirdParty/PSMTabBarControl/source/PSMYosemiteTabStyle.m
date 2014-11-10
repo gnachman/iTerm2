@@ -267,9 +267,12 @@
                autorelease];
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected
-{
-    return [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+- (NSColor *)textColorDefaultSelected:(BOOL)selected {
+    if (selected) {
+        return [NSColor blackColor];
+    } else {
+        return [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+    }
 }
 
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
@@ -383,7 +386,6 @@
                                                 inRect:(NSRect)cellFrame
                                               selected:(BOOL)selected
                                           withTabColor:(NSColor *)tabColor {
-
     CGFloat angle = horizontal ? 90 : 0;
     [[self backgroundGradientSelected:selected] drawInRect:cellFrame angle:angle];
 

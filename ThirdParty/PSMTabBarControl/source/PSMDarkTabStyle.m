@@ -38,9 +38,18 @@
 }
 
 - (NSGradient *)backgroundGradientSelected:(BOOL)selected {
-    CGFloat lightness = selected ? 0.24 : 0.12;
-    NSColor *bg = [NSColor colorWithCalibratedWhite:lightness alpha:1.00];
-    return [[[NSGradient alloc] initWithStartingColor:bg endingColor:bg] autorelease];
+    CGFloat startValue;
+    CGFloat endValue;
+    if (selected) {
+        startValue = 0.29;
+        endValue = 0.24;
+    } else {
+        startValue = 0.12;
+        endValue = 0.15;
+    }
+    NSColor *startColor = [NSColor colorWithCalibratedWhite:startValue alpha:1.00];
+    NSColor *endColor = [NSColor colorWithCalibratedWhite:endValue alpha:1.00];
+    return [[[NSGradient alloc] initWithStartingColor:startColor endingColor:endColor] autorelease];
 }
 
 @end
