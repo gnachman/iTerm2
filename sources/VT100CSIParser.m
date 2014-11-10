@@ -13,9 +13,9 @@
 
 @implementation VT100CSIParser
 
-static int advanceAndEatControlChars(unsigned char **ppdata,
-                                     int *pdatalen,
-                                     CVector *incidentals)
+static BOOL advanceAndEatControlChars(unsigned char **ppdata,
+                                      int *pdatalen,
+                                      CVector *incidentals)
 {
     // return value represent "continuous" state.
     // If it is YES, current control sequence parsing process was not canceled.
@@ -38,15 +38,19 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
             case VT100CC_SI:
             case VT100CC_DC1:
             case VT100CC_DC3:
-            case VT100CC_CAN:
-            case VT100CC_SUB:
-            case VT100CC_ESC:
             case VT100CC_DEL:
                 CVectorAppend(incidentals, [VT100Token tokenForControlCharacter:**ppdata]);
                 break;
+
+            case VT100CC_CAN:
+            case VT100CC_SUB:
+            case VT100CC_ESC:
+                return NO;
+
             default:
-                if (**ppdata >= 0x20)
+                if (**ppdata >= 0x20) {
                     return YES;
+                }
                 break;
         }
     }
