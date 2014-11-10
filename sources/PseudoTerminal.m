@@ -2164,8 +2164,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         shouldClose = YES;
     }
 
-    BOOL doTmuxDetach = NO;
-
     if (shouldClose) {
         int n = 0;
         for (PTYTab *aTab in [self tabs]) {
@@ -2175,16 +2173,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
         NSString *title = nil;
         if (n == 1) {
-            title = @"Kill window and its jobs, hide window from view, or detach from tmux session?\n"
+            title = @"Kill window and its jobs, hide window from view, or detach from tmux session?\n\n"
                     @"Hidden windows may be restored from the tmux dashboard.";
         } else if (n > 1) {
-            title = @"Kill all tmux windows and their jobs, hide windows from view, or detach from tmux session?\n"
+            title = @"Kill all tmux windows and their jobs, hide windows from view, or detach from tmux session?\n\n"
                     @"Hidden windows may be restored from the tmux dashboard.";
         }
         if (title) {
             iTermWarningSelection selection =
                 [iTermWarning showWarningWithTitle:title
-                                           actions:@[ @"Hide", @"Detach Tmux Session", @"Kill" ]
+                                           actions:@[ @"Hide", @"Detach tmux Session", @"Kill" ]
                                         identifier:@"ClosingTmuxWindowKillsTmuxWindows"
                                        silenceable:kiTermWarningTypePermanentlySilenceable];
             // If there are tmux tabs, tell the tmux server to kill/hide the
@@ -2192,6 +2190,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // might be non-tmux tabs as well. This is a rare instance of
             // performing an action on a tmux object without waiting for the
             // server to tell us to do it.
+
+            BOOL doTmuxDetach = NO;
+
             for (PTYTab *aTab in [self tabs]) {
                 if ([aTab isTmuxTab]) {
                     if (selection == kiTermWarningSelection1) {
@@ -2204,7 +2205,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 }
             }
 
-            if(doTmuxDetach) {
+            if (doTmuxDetach) {
                  PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
                  [[aSession tmuxController] requestDetach];
              }
