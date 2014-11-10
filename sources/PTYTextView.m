@@ -2661,9 +2661,15 @@ NSMutableArray* screens=0;
     }
 }
 
+- (BOOL)hasUnderline {
+    return _underlineRange.coordRange.start.x >= 0;
+}
+
 // Reset underlined chars indicating cmd-clicakble url.
-- (void)removeUnderline
-{
+- (void)removeUnderline {
+    if (![self hasUnderline]) {
+        return;
+    }
     _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     if (self.currentUnderlineHostname) {
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
