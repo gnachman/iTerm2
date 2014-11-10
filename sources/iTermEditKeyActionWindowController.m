@@ -25,6 +25,8 @@
     IBOutlet NSPopUpButton *_profilePopup;
     IBOutlet NSPopUpButton *_menuToSelectPopup;
     IBOutlet NSTextField *_profileLabel;
+    IBOutlet NSTextField *_colorPresetsLabel;
+    IBOutlet NSPopUpButton *_colorPresetsPopup;
 }
 
 - (id)init {
@@ -57,6 +59,9 @@
     [self updateViews];
     if (!_profilePopup.isHidden) {
         [_profilePopup populateWithProfilesSelectingGuid:self.parameterValue];
+    }
+    if (!_colorPresetsPopup.isHidden) {
+        [_colorPresetsPopup loadColorPresetsSelecting:self.parameterValue];
     }
 }
 
@@ -111,6 +116,8 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
             break;
 
         case KEY_ACTION_VIM_TEXT:
@@ -122,6 +129,8 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
             break;
 
         case KEY_ACTION_RUN_COPROCESS:
@@ -132,6 +141,8 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
             break;
 
         case KEY_ACTION_SELECT_MENU_ITEM:
@@ -142,6 +153,8 @@
             [_menuToSelectPopup setHidden:NO];
             [_profileLabel setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
             break;
 
         case KEY_ACTION_ESCAPE_SEQUENCE:
@@ -153,6 +166,8 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
             break;
 
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
@@ -166,6 +181,19 @@
             [_parameterLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            break;
+
+        case KEY_ACTION_LOAD_COLOR_PRESET:
+            [_parameter setHidden:YES];
+            [_profileLabel setHidden:YES];
+            [_profilePopup setHidden:YES];
+            [_parameterLabel setHidden:YES];
+            [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:NO];
+            [_colorPresetsPopup setHidden:NO];
             break;
 
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
@@ -178,6 +206,8 @@
             [_profilePopup setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
             break;
 
         case KEY_ACTION_FIND_REGEX:
@@ -188,6 +218,8 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
             break;
 
         default:
@@ -198,6 +230,8 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
             break;
     }
 }
@@ -248,6 +282,7 @@
     [_actionPopup setTitle:[[sender selectedItem] title]];
     NSString *guid = [[_profilePopup selectedItem] representedObject];
     [_profilePopup populateWithProfilesSelectingGuid:guid];
+    [_colorPresetsPopup loadColorPresetsSelecting:_colorPresetsPopup.selectedItem.representedObject];
     [[self class] populatePopUpButtonWithMenuItems:_menuToSelectPopup
                                      selectedValue:[[_menuToSelectPopup selectedItem] title]];
     [self updateViews];
@@ -274,6 +309,10 @@
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
         case KEY_ACTION_SET_PROFILE:
             self.parameterValue = [[_profilePopup selectedItem] representedObject];
+            break;
+
+        case KEY_ACTION_LOAD_COLOR_PRESET:
+            self.parameterValue = [[_colorPresetsPopup selectedItem] title];
             break;
 
         default:

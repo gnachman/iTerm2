@@ -60,6 +60,51 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     IBOutlet NSColorWell *_guideColor;
 }
 
++ (NSDictionary *)builtInColorPresets {
+    NSString *plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"ColorPresets"
+                                                                           ofType:@"plist"];
+    return [NSDictionary dictionaryWithContentsOfFile:plistFile];
+}
+
++ (NSDictionary *)customColorPresets {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
+}
+
++ (BOOL)loadColorPresetWithName:(NSString *)presetName
+                      inProfile:(Profile *)profile
+                          model:(ProfileModel *)model {
+    NSString *guid = profile[KEY_GUID];
+    assert(guid);
+
+    NSDictionary* presetsDict = [self builtInColorPresets];
+    NSDictionary* settings = [presetsDict objectForKey:presetName];
+    if (!settings) {
+        presetsDict = [self customColorPresets];
+        settings = [presetsDict objectForKey:presetName];
+    }
+    if (!settings) {
+        return NO;
+    }
+    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
+
+    for (NSString *colorName in [self colorKeys]) {
+        // If the preset is missing an entry, the default color will be used for that entry.
+        NSDictionary *colorDict = [iTermProfilePreferences objectForKey:colorName
+                                                              inProfile:settings];
+        if (colorDict) {
+            newDict[colorName] = colorDict;
+        } else {
+            [newDict removeObjectForKey:colorName];  // Can happen for tab color, which is optional
+        }
+    }
+
+    [model setBookmark:newDict withGuid:guid];
+    [model flush];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    return YES;
+}
+
 - (void)awakeFromNib {
     // Updates fields when a preset is loaded.
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -112,6 +157,36 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     _cursorTextColor.enabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
     _cursorColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
     _cursorTextColorLabel.labelEnabled = ![self boolForKey:KEY_SMART_CURSOR_COLOR];
+}
+
++ (NSArray *)colorKeys {
+    return @[ KEY_ANSI_0_COLOR,
+              KEY_ANSI_1_COLOR,
+              KEY_ANSI_2_COLOR,
+              KEY_ANSI_3_COLOR,
+              KEY_ANSI_4_COLOR,
+              KEY_ANSI_5_COLOR,
+              KEY_ANSI_6_COLOR,
+              KEY_ANSI_7_COLOR,
+              KEY_ANSI_8_COLOR,
+              KEY_ANSI_9_COLOR,
+              KEY_ANSI_10_COLOR,
+              KEY_ANSI_11_COLOR,
+              KEY_ANSI_12_COLOR,
+              KEY_ANSI_13_COLOR,
+              KEY_ANSI_14_COLOR,
+              KEY_ANSI_15_COLOR,
+              KEY_FOREGROUND_COLOR,
+              KEY_BACKGROUND_COLOR,
+              KEY_BOLD_COLOR,
+              KEY_LINK_COLOR,
+              KEY_SELECTION_COLOR,
+              KEY_SELECTED_TEXT_COLOR,
+              KEY_CURSOR_COLOR,
+              KEY_CURSOR_TEXT_COLOR,
+              KEY_TAB_COLOR,
+              KEY_CURSOR_GUIDE_COLOR,
+              KEY_BADGE_COLOR ];
 }
 
 - (NSDictionary *)colorWellDictionary {
@@ -311,34 +386,8 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
 
 - (void)loadColorPresetWithName:(NSString *)presetName {
     Profile *profile = [self.delegate profilePreferencesCurrentProfile];
-    NSString *guid = profile[KEY_GUID];
-    assert(guid);
-
-    NSString *plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"ColorPresets"
-                                                                           ofType:@"plist"];
-    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
-    NSDictionary* settings = [presetsDict objectForKey:presetName];
-    if (!settings) {
-        presetsDict = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
-        settings = [presetsDict objectForKey:presetName];
-    }
-    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
-
-    for (id colorName in [self colorWellDictionary]) {
-        // If the preset is missing an entry, the default color will be used for that entry.
-        NSDictionary *colorDict = [iTermProfilePreferences objectForKey:colorName inProfile:settings];
-        if (colorDict) {
-            newDict[colorName] = colorDict;
-        } else {
-            [newDict removeObjectForKey:colorName];  // Can happen for tab color, which is optional
-        }
-    }
-
     ProfileModel *model = [self.delegate profilePreferencesCurrentModel];
-    [model setBookmark:newDict withGuid:guid];
-    [model flush];
-
-    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles object:nil];
+    [[self class] loadColorPresetWithName:presetName inProfile:profile model:model];
 }
 
 - (void)loadColorPreset:(id)sender {

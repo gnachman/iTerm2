@@ -374,6 +374,9 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case KEY_ACTION_SET_PROFILE:
             actionString = [NSString stringWithFormat:@"Change Profile to \"%@\"", [self _bookmarkNameForGuid:auxText]];
             break;
+        case KEY_ACTION_LOAD_COLOR_PRESET:
+            actionString = [NSString stringWithFormat:@"Load Color Preset \"%@\"", auxText];
+            break;
         case KEY_ACTION_SEND_C_H_BACKSPACE:
             actionString = @"Send ^H Backspace";
             break;

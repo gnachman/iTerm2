@@ -42,6 +42,7 @@
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "ProfilePreferencesViewController.h"
+#import "ProfilesColorsPreferencesViewController.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
@@ -4134,6 +4135,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
           Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
           if (newProfile) {
               [self setProfile:newProfile preservingName:YES];
+          }
+          break;
+      }
+      case KEY_ACTION_LOAD_COLOR_PRESET: {
+          ProfileModel *model = [ProfileModel sharedInstance];
+          Profile *profile;
+          if (_isDivorced) {
+              profile = [[ProfileModel sharedInstance] bookmarkWithGuid:_profile[KEY_ORIGINAL_GUID]];
+          } else {
+              profile = self.profile;
+          }
+          BOOL ok =
+              [ProfilesColorsPreferencesViewController loadColorPresetWithName:keyBindingText
+                                                                     inProfile:profile
+                                                                         model:model];
+          if (!ok) {
+              NSLog(@"Color preset %@ not found", keyBindingText);
+              NSBeep();
           }
           break;
       }
