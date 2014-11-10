@@ -545,8 +545,7 @@
     [[cell attributedStringValue] drawInRect:labelRect];
 }
 
-- (NSColor *)tabBarColor
-{
+- (NSColor *)tabBarColor {
     return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
 }
 
