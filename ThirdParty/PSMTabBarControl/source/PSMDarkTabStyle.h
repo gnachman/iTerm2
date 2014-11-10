@@ -14,8 +14,6 @@
 #import "PSMYosemiteTabStyle.h"
 
 @interface PSMDarkTabStyle : PSMYosemiteTabStyle <PSMTabStyle>
-{
-}
 @end
 
 #endif
