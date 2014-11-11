@@ -2163,6 +2163,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else {
         shouldClose = YES;
     }
+
     if (shouldClose) {
         int n = 0;
         for (PTYTab *aTab in [self tabs]) {
@@ -2172,16 +2173,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
         NSString *title = nil;
         if (n == 1) {
-            title = @"Kill tmux window, terminating its jobs, or hide it? "
+            title = @"Kill window and its jobs, hide window from view, or detach from tmux session?\n\n"
                     @"Hidden windows may be restored from the tmux dashboard.";
         } else if (n > 1) {
-            title = @"Kill tmux windows, terminating their jobs, or hide them? "
+            title = @"Kill all tmux windows and their jobs, hide windows from view, or detach from tmux session?\n\n"
                     @"Hidden windows may be restored from the tmux dashboard.";
         }
         if (title) {
             iTermWarningSelection selection =
                 [iTermWarning showWarningWithTitle:title
-                                           actions:@[ @"Hide", @"Kill" ]
+                                           actions:@[ @"Hide", @"Detach tmux Session", @"Kill" ]
                                         identifier:@"ClosingTmuxWindowKillsTmuxWindows"
                                        silenceable:kiTermWarningTypePermanentlySilenceable];
             // If there are tmux tabs, tell the tmux server to kill/hide the
@@ -2189,15 +2190,25 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // might be non-tmux tabs as well. This is a rare instance of
             // performing an action on a tmux object without waiting for the
             // server to tell us to do it.
+
+            BOOL doTmuxDetach = NO;
+
             for (PTYTab *aTab in [self tabs]) {
                 if ([aTab isTmuxTab]) {
                     if (selection == kiTermWarningSelection1) {
+                        doTmuxDetach = YES;
+                    } else if (selection == kiTermWarningSelection2) {
                         [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
                     } else {
                         [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
                     }
                 }
             }
+
+            if (doTmuxDetach) {
+                 PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
+                 [[aSession tmuxController] requestDetach];
+             }
         }
     }
     return shouldClose;
