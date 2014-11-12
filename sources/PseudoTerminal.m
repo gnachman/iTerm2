@@ -40,6 +40,8 @@
 #import "PseudoTerminal+Scripting.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMTabStyle.h"
+#import "PSMYosemiteTabStyle.h"
+#import "PSMDarkTabStyle.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYSession.h"
@@ -5621,20 +5623,19 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)updateTabBarStyle {
+    id<PSMTabStyle> style;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        default:
         case TAB_STYLE_LIGHT:
-//            [tabBarControl setStyleNamed:kTabStyleMetal];
-            NSLog(@"LIGHT!!!");
+            style = [[PSMYosemiteTabStyle alloc] init];
             break;
         case TAB_STYLE_DARK:
-            NSLog(@"DArk!!!");
+            style = [[PSMDarkTabStyle alloc] init];
             break;
-        default:
-            NSLog(@"Uh oh!");
-            break;
-        }
+    }
+    [tabBarControl setStyle:style];
+    [style release];
 }
-
 
 - (void)hideMenuBar
 {
