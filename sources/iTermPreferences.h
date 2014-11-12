@@ -17,6 +17,11 @@ typedef NS_ENUM(NSInteger, iTermOpenTmuxWindowsMode) {
     kOpenTmuxWindowsAsNativeTabsInExistingWindow = 2
 };
 
+typedef NS_ENUM(int, iTermPreferencesTabStyle) {
+    TAB_STYLE_LIGHT = 0,
+    TAB_STYLE_DARK = 1
+};
+
 // Values for kPreferenceKeyTabPosition (corresponds to tags in control).
 #define TAB_POSITION_TOP PSMTab_TopTab
 #define TAB_POSITION_BOTTOM PSMTab_BottomTab
@@ -61,6 +66,7 @@ extern NSString *const kPreferenceKeyTmuxDashboardLimit;
 extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
 
 // Appearance
+extern NSString *const kPreferenceKeyTabStyle;
 extern NSString *const kPreferenceKeyTabPosition;
 extern NSString *const kPreferenceKeyHideTabBar;
 extern NSString *const kPreferenceKeyHideTabNumber;

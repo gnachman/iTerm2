@@ -618,6 +618,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [tabBarControl setDelegate:self];
     [tabBarControl setHideForSingleTab:NO];
 
+    [self updateTabBarStyle];
+
     [[[self window] contentView] setAutoresizesSubviews: YES];
     [[self window] setDelegate: self];
 
@@ -5553,6 +5555,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
 
+    [self updateTabBarStyle];
+
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
         if ([[self window] isKeyWindow]) {
@@ -5615,6 +5619,22 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
     }
 }
+
+- (void)updateTabBarStyle {
+    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+        case TAB_STYLE_LIGHT:
+//            [tabBarControl setStyleNamed:kTabStyleMetal];
+            NSLog(@"LIGHT!!!");
+            break;
+        case TAB_STYLE_DARK:
+            NSLog(@"DArk!!!");
+            break;
+        default:
+            NSLog(@"Uh oh!");
+            break;
+        }
+}
+
 
 - (void)hideMenuBar
 {
