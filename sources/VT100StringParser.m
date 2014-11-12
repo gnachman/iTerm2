@@ -299,7 +299,7 @@ void ParseString(unsigned char *datap,
         encoding = NSASCIIStringEncoding;
     } else if (encoding == NSUTF8StringEncoding) {
         DecodeUTF8Bytes(datap, datalen, rmlen, result);
-    } else if (isGBEncoding(encoding)) {
+    } else if (isEUCCNEncoding(encoding)) {
         // Chinese-GB
         DecodeEUCCNBytes(datap, datalen, rmlen, result);
     } else if (isBig5Encoding(encoding)) {
