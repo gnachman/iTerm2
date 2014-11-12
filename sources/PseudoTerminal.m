@@ -3239,6 +3239,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     togglingFullScreen_ = false;
 
     [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
+    [self.ptyWindow turnOffVibrancyInTitleBar];
     [self.window makeFirstResponder:[[self currentSession] textview]];
     [self refreshTools];
     [self updateTabColors];
