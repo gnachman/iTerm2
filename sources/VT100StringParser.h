@@ -25,6 +25,10 @@ NS_INLINE BOOL issjiskanji(unsigned char c) {
 }
 
 NS_INLINE BOOL iseuckr(unsigned char c) {
+    return (c >= 0xa1 && c <= 0xfe);
+}
+
+NS_INLINE BOOL iscp949(unsigned char c) {
     return (c >= 0x81 && c <= 0xfe);
 }
 
@@ -55,11 +59,13 @@ NS_INLINE BOOL isSJISEncoding(NSStringEncoding stringEncoding) {
             stringEncoding == (0x80000000 | kCFStringEncodingShiftJIS));
 }
 
-NS_INLINE BOOL isKREncoding(NSStringEncoding stringEncoding) {
-    return (stringEncoding == (0x80000000 | kCFStringEncodingDOSKorean) ||
-            stringEncoding == (0x80000000 | kCFStringEncodingMacKorean) ||
+NS_INLINE BOOL isEUCKREncoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingMacKorean) ||
             stringEncoding == (0x80000000 | kCFStringEncodingISO_2022_KR) ||
             stringEncoding == (0x80000000 | kCFStringEncodingEUC_KR));
+}
+NS_INLINE BOOL isCP949Encoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingDOSKorean));
 }
 
 NS_INLINE BOOL isAsciiString(unsigned char *code) {
@@ -77,8 +83,10 @@ NS_INLINE BOOL isString(unsigned char *code, NSStringEncoding encoding) {
         return (*code == 0x8e || *code == 0x8f || (*code >= 0xa1 && *code <= 0xfe));
     } else if (isSJISEncoding(encoding)) {
         return *code >= 0x80;
-    } else if (isKREncoding(encoding)) {
+    } else if (isEUCKREncoding(encoding)) {
         return iseuckr(*code);
+    } else if (isCP949Encoding(encoding)) {
+        return iscp949(*code);
     } else if (*code >= 0x20) {
         return YES;
     }
