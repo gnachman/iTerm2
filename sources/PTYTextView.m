@@ -7995,8 +7995,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 
-- (URLAction *)urlActionForClickAtX:(int)x y:(int)y respectingHardNewlines:(BOOL)respectHardNewlines
-{
+- (URLAction *)urlActionForClickAtX:(int)x
+                                  y:(int)y
+             respectingHardNewlines:(BOOL)respectHardNewlines {
+    DLog(@"urlActionForClickAt:%@,%@ respectingHardNewlines:%@",
+         @(x), @(y), @(respectHardNewlines));
+
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
     if ([self imageInfoAtCoord:coord]) {
         // TODO(georgen): I guess we could do something if you cmd-click on an image?
