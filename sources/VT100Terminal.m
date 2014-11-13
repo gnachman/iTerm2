@@ -1654,10 +1654,11 @@ static const int kMaxScreenRows = 4096;
                         }
                     }
                     if (ok) {
-                        NSColor *theColor = [NSColor colorWithCalibratedRed:colors[0]
-                                                                      green:colors[1]
-                                                                       blue:colors[2]
-                                                                      alpha:1];
+                        NSColor *srgb = [NSColor colorWithSRGBRed:colors[0]
+                                                            green:colors[1]
+                                                             blue:colors[2]
+                                                            alpha:1];
+                        NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                         [delegate_ terminalSetColorTableEntryAtIndex:theIndex
                                                                color:theColor];
                     }
