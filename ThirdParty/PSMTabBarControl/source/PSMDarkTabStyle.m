@@ -21,7 +21,7 @@
 }
 
 - (NSColor *)textColorDefaultSelected:(BOOL)selected {
-    const CGFloat lightness = selected ? 1.00 : 0.80;
+    const CGFloat lightness = selected ? 0.80 : 0.60;
     return [NSColor colorWithCalibratedWhite:lightness alpha:1.00];
 }
 
@@ -41,11 +41,11 @@
     CGFloat startValue;
     CGFloat endValue;
     if (selected) {
-        startValue = 0.29;
+        startValue = 0.27;
         endValue = 0.24;
     } else {
-        startValue = 0.12;
-        endValue = 0.15;
+        startValue = 0.14;
+        endValue = 0.12;
     }
     NSColor *startColor = [NSColor colorWithCalibratedWhite:startValue alpha:1.00];
     NSColor *endColor = [NSColor colorWithCalibratedWhite:endValue alpha:1.00];
