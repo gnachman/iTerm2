@@ -5624,7 +5624,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
-    switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
         case TAB_STYLE_LIGHT:
             style = [[PSMYosemiteTabStyle alloc] init];
             break;
