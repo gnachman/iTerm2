@@ -17,6 +17,7 @@ typedef NS_ENUM(NSInteger, iTermOpenTmuxWindowsMode) {
     kOpenTmuxWindowsAsNativeTabsInExistingWindow = 2
 };
 
+// Values for kPreferenceKeyTabStyle. Do not alter values in this enumeration as they are saved in the preferences.
 typedef NS_ENUM(int, iTermPreferencesTabStyle) {
     TAB_STYLE_LIGHT = 0,
     TAB_STYLE_DARK = 1

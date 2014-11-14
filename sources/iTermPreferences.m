@@ -43,7 +43,7 @@ NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
 
-NSString *const kPreferenceKeyTabStyle = @"kPreferenceKeyTabStyle";
+NSString *const kPreferenceKeyTabStyle = @"TabStyle";
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";

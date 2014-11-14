@@ -6,14 +6,9 @@
 //
 //
 
-#ifndef iTerm_PSMDarkTabStyle_h
-#define iTerm_PSMDarkTabStyle_h
-
 #import <Cocoa/Cocoa.h>
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
 
-@interface PSMDarkTabStyle : PSMYosemiteTabStyle <PSMTabStyle>
+@interface PSMDarkTabStyle : PSMYosemiteTabStyle<PSMTabStyle>
 @end
-
-#endif

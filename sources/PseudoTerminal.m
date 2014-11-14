@@ -39,9 +39,9 @@
 #import "ProfilesWindow.h"
 #import "PseudoTerminal+Scripting.h"
 #import "PseudoTerminalRestorer.h"
+#import "PSMDarkTabStyle.h"
 #import "PSMTabStyle.h"
 #import "PSMYosemiteTabStyle.h"
-#import "PSMDarkTabStyle.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYSession.h"
@@ -5625,7 +5625,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)updateTabBarStyle {
     id<PSMTabStyle> style;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabStyle]) {
-        default:
         case TAB_STYLE_LIGHT:
             style = [[PSMYosemiteTabStyle alloc] init];
             break;
