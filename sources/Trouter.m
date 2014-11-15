@@ -353,8 +353,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
                            charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr {
-    if (![[NSFileManager defaultManager] fileExistsAtPathLocally:workingDirectory]) {
-        return nil;
+    BOOL workingDirectoryIsOk = [[NSFileManager defaultManager] fileExistsAtPathLocally:workingDirectory];
+    if (!workingDirectoryIsOk) {
+        DLog(@"Working directory %@ is a network share or doesn't exist. Not using it for context.",
+             workingDirectory);
     }
 
     NSMutableString *beforeString = [[beforeStringIn mutableCopy] autorelease];
@@ -422,7 +424,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             [paths addObject:[[possiblePath copy] autorelease]];
 
             for (NSString *modifiedPossiblePath in [self pathsFromPath:possiblePath byRemovingBadSuffixes:questionableSuffixes]) {
-                if ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
+                BOOL exists = NO;
+                if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
+                    exists = ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL] != nil);
+                }
+                if (exists) {
                     if (charsTakenFromPrefixPtr) {
                         *charsTakenFromPrefixPtr = left.length;
                     }

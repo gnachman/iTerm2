@@ -84,7 +84,7 @@ enum {
     switch (cursorType) {
         case iTermMouseCursorTypeIBeamWithCircle:
             self = [super initWithImage:[NSImage imageNamed:@"IBarCursorXMR"]
-                                hotSpot:NSMakePoint(4, 5)];
+                                hotSpot:NSMakePoint(4, 8)];
             if (self) {
                 _hasImage = YES;
             }
@@ -98,7 +98,7 @@ enum {
                 }
             } else {
                 self = [super initWithImage:[NSImage imageNamed:@"IBarCursor"]
-                                    hotSpot:NSMakePoint(4, 5)];
+                                    hotSpot:NSMakePoint(4, 8)];
                 if (self) {
                     _hasImage = YES;
                 }
