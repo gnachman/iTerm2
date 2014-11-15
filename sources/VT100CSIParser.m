@@ -13,16 +13,24 @@
 
 @implementation VT100CSIParser
 
-static BOOL advanceAndEatControlChars(unsigned char **ppdata,
+// Advances past one character and then any following control characters.
+// *ppdata and *pdatalen are incremented and decremented (respectively) by the
+// same amount. If a control character is found that cancels a CSI sequence,
+// then NO is returned. If all is well, YES is returned and parsing can
+// continue at the new *ppdata with *pdatalen bytes remaining. Non-canceling
+// control characters are appended to |incidentals|
+static BOOL AdvanceAndEatControlChars(unsigned char **ppdata,
                                       int *pdatalen,
                                       CVector *incidentals)
 {
-    // return value represent "continuous" state.
-    // If it is YES, current control sequence parsing process was not canceled.
-    // If it is NO, current control sequence parsing process was canceled by CAN, SUB, or ESC.
-    while (*pdatalen > 0) {
+    // First, advance.
+    if (*pdatalen > 0) {
         ++*ppdata;
         --*pdatalen;
+    }
+
+    // Now eat control characters.
+    while (*pdatalen > 0) {
         switch (**ppdata) {
             case VT100CC_ENQ:
                 // TODO: send answerback if it is needed
@@ -53,6 +61,8 @@ static BOOL advanceAndEatControlChars(unsigned char **ppdata,
                 }
                 break;
         }
+        ++*ppdata;
+        --*pdatalen;
     }
     return YES;
 }
@@ -115,7 +125,7 @@ static int getCSIParam(unsigned char *datap,
     
     NSCParameterAssert(*datap == '[');
     
-    if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+    if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
         goto cancel;
     }
     
@@ -159,7 +169,7 @@ static int getCSIParam(unsigned char *datap,
             case '>':
             case '?':
                 param->cmd = *datap;
-                if (!advanceAndEatControlChars(&datap, &datalen, incidentals))
+                if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals))
                     goto cancel;
                 break;
             default:
@@ -192,7 +202,7 @@ static int getCSIParam(unsigned char *datap,
                         unrecognized = YES;
                     }
                     n = n * 10 + *datap - '0';
-                    if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+                    if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                         goto cancel;
                     }
                 }
@@ -235,7 +245,7 @@ static int getCSIParam(unsigned char *datap,
                 // reset the parameter flag
                 readNumericParameter = NO;
                 
-                if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+                if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                     goto cancel;
                 }
                 break;
@@ -266,7 +276,7 @@ static int getCSIParam(unsigned char *datap,
                 //
                 // In this usage, ":" are certainly treated as sub-parameter separators.
                 isSub = YES;
-                if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+                if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                     goto cancel;
                 }
                 break;
@@ -274,7 +284,7 @@ static int getCSIParam(unsigned char *datap,
             default:
                 // '<', '=', '>', or '?'
                 unrecognized = YES;
-                if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+                if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                     goto cancel;
                 }
                 break;
@@ -294,7 +304,7 @@ static int getCSIParam(unsigned char *datap,
             unrecognized = YES;
         }
         commandBytesCount++;
-        if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+        if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
             goto cancel;
         }
     }
@@ -304,7 +314,7 @@ static int getCSIParam(unsigned char *datap,
     // CSI P...P I...I (G...G) F
     //                  ^
     // xterm allows "garbage bytes" before final byte.
-    // rxvt, urxvt, PuTTY, MinTTY, mlterm, TeraTerm also does so.
+    // rxvt, urxvt, PuTTY, MinTTY, mlterm, TeraTerm also do.
     // We skip them, too.
     //
     while (datalen > 0) {
@@ -316,7 +326,7 @@ static int getCSIParam(unsigned char *datap,
                 // mark current sequence as "unrecognized".
                 unrecognized = YES;
             }
-            if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+            if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                 goto cancel;
             }
         }
