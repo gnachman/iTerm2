@@ -516,6 +516,12 @@ Gw
                                                                 <action selector="copyProfileJson:" target="HVI-63-mNz" id="tgE-zF-x6e"/>
                                                             </connections>
                                                         </menuItem>
+                                                        <menuItem title="Copy All Profiles as JSON" id="Eqf-iD-X9H">
+                                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                                            <connections>
+                                                                <action selector="copyAllProfilesJson:" target="HVI-63-mNz" id="meW-Qu-sxh"/>
+                                                            </connections>
+                                                        </menuItem>
                                                     </items>
                                                 </menu>
                                             </popUpButtonCell>

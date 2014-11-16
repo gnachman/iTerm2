@@ -572,6 +572,54 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     [[ProfileModel sharedInstance] setDefaultByGuid:guid];
 }
 
+- (NSString *)jsonForProfile:(Profile *)profile error:(NSError **)error {
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:profile
+                                                       options:NSJSONWritingPrettyPrinted
+                                                         error:error];
+
+    if (jsonData) {
+        return [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];
+    } else {
+        return nil;
+    }
+}
+
+- (IBAction)copyAllProfilesJson:(id)sender {
+    ProfileModel *model = [_delegate profilePreferencesModel];
+    NSMutableString *profiles = [[@"{\n\"Profiles\": [\n" mutableCopy] autorelease];
+    BOOL first = YES;
+    int errors = 0;
+    for (Profile *profile in [model bookmarks]) {
+        NSError *error = nil;
+        NSString *json = [self jsonForProfile:profile error:&error];
+        if (json) {
+            if (first) {
+                first = NO;
+            } else {
+                [profiles appendString:@",\n"];
+            }
+            [profiles appendString:json];
+        } else {
+            errors++;
+            NSLog(@"Couldn't convert profile %@ to JSON: %@",
+                  profile[KEY_NAME], [error localizedDescription]);
+        }
+    }
+    [profiles appendString:@"\n]\n}\n"];
+
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    [pasteboard clearContents];
+    [pasteboard writeObjects:@[ profiles ]];
+
+    if (errors) {
+        [NSAlert alertWithMessageText:@"Error"
+                        defaultButton:@"Ok"
+                      alternateButton:nil
+                          otherButton:nil
+            informativeTextWithFormat:@"An error occurred. Check Console.app for details."];
+    }
+}
+
 - (IBAction)copyProfileJson:(id)sender {
     NSDictionary* profile = [self selectedProfile];
     if (!profile) {
@@ -579,13 +627,9 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
         return;
     }
     NSError *error = nil;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:profile
-                                                       options:NSJSONWritingPrettyPrinted
-                                                         error:&error];
+    NSString *string = [self jsonForProfile:profile error:&error];
 
-    if (jsonData) {
-        NSString *string =
-            [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];
+    if (string) {
         NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
         [pasteboard clearContents];
         [pasteboard writeObjects:@[ string ]];
@@ -594,7 +638,8 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
                         defaultButton:@"Ok"
                       alternateButton:nil
                           otherButton:nil
-            informativeTextWithFormat:@"Couldn't convert profile to JSON: %@", [error localizedDescription]];
+            informativeTextWithFormat:@"Couldn't convert profile to JSON: %@",
+                                      [error localizedDescription]];
     }
 }
 
