@@ -5860,7 +5860,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
                 heightAdjustment = tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
                 NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,
-                                                tabViewFrame.size.height - heightAdjustment,
+                                                NSMaxY(tabViewFrame) - heightAdjustment,
                                                 tabViewFrame.size.width,
                                                 kHorizontalTabBarHeight);
 
