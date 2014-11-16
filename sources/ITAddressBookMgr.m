@@ -675,10 +675,12 @@
     // Update changes to existing dynamic profiles and add ones whose guids are
     // not known.
     NSArray *oldProfiles = [self dynamicProfiles];
+    BOOL shouldReload = NO;
     for (Profile *profile in newProfiles) {
         Profile *existingProfile = [self profileWithGuid:profile[KEY_GUID] inArray:oldProfiles];
         if (existingProfile) {
             [self updateExistingDynamicProfile:existingProfile withProfile:profile];
+            shouldReload = YES;
         } else {
             [self addDynamicProfile:profile];
         }
@@ -689,6 +691,11 @@
         if (![self profileWithGuid:profile[KEY_GUID] inArray:newProfiles]) {
             [self removeDynamicProfile:profile];
         }
+    }
+    if (shouldReload) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
+                                                            object:nil
+                                                          userInfo:nil];
     }
 }
 
