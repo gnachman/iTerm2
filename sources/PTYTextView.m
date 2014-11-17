@@ -8301,11 +8301,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
 
     // get the pasteboard
-    NSPasteboard *pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
-    [pboard declareTypes:[NSArray arrayWithObject:NSTIFFPboardType] owner:self];
     NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
     NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
-    [pboard setData:tiff forType:NSTIFFPboardType];
 
     // tell our app not switch windows (currently not working)
     [NSApp preventWindowOrdering];
@@ -8337,17 +8334,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         // Adjust the drag point so the image won't jump as soon as the drag begins.
         dragPoint.x -= offset.x;
-        dragPoint.y += region.height - offset.y;
+        dragPoint.y -= offset.y;
     }
 
     // start the drag
-    [self dragImage:icon
-                 at:dragPoint
-             offset:NSMakeSize(0.0, 0.0)
-              event:mouseDownEvent
-         pasteboard:pboard
-             source:self
-          slideBack:YES];
+    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
+    [pbItem setData:tiff forType:(NSString *)kUTTypeTIFF];
+    NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
+    [dragItem setDraggingFrame:NSMakeRect(dragPoint.x, dragPoint.y, icon.size.width, icon.size.height)
+                      contents:icon];
+    NSDraggingSession *draggingSession = [self beginDraggingSessionWithItems:@[ dragItem ]
+                                                                       event:theEvent
+                                                                      source:self];
+
+    draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
+    draggingSession.draggingFormation = NSDraggingFormationNone;
+
 }
 
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent
