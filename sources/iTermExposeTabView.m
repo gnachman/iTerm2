@@ -353,14 +353,19 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
         }
     }
     
-    [image setScalesWhenResized:YES];
     [image setSize:imageFrame.size];
     
     iTermExposeView* theView =  (iTermExposeView*)[[self superview] superview];
     if (!highlight_ && !hasResult_ && [theView resultView]) {
-        [image compositeToPoint:imageFrame.origin operation:NSCompositeSourceOver fraction:0.5];
+        [image drawAtPoint:imageFrame.origin
+                  fromRect:NSZeroRect
+                 operation:NSCompositeSourceOver
+                  fraction:0.5];
     } else {
-        [image compositeToPoint:imageFrame.origin operation:NSCompositeSourceOver];
+        [image drawAtPoint:imageFrame.origin
+                  fromRect:NSZeroRect
+                 operation:NSCompositeSourceOver
+                  fraction:1.0];
     }
     
     if (windowIndex_ >= 0 && tabIndex_ >= 0) {
