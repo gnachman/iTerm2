@@ -608,30 +608,6 @@ const CGFloat kDefaultTagsWidth = 80;
     return [dataSource_ numberOfBookmarks];
 }
 
-- (void)hideSearch
-{
-    [searchField_ setStringValue:@""];
-    [searchField_ setHidden:YES];
-
-    NSRect frame = [self frame];
-    NSRect scrollViewFrame;
-    scrollViewFrame.origin.x = 0;
-    scrollViewFrame.origin.y = 0;
-    scrollViewFrame.size = frame.size;
-    [scrollView_ setFrame:scrollViewFrame];
-
-    NSRect tableViewFrame;
-    tableViewFrame.origin.x = 0;
-    tableViewFrame.origin.y = 0;;
-    tableViewFrame.size =
-        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
-                        hasHorizontalScroller:NO
-                          hasVerticalScroller:YES
-                                   borderType:[scrollView_ borderType]];
-    [tableView_ setFrame:tableViewFrame];
-    [tableView_ sizeLastColumnToFit];
-}
-
 - (void)clearSearchField {
     [searchField_ setStringValue:@""];
     [self updateResultsForSearch];
