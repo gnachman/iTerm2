@@ -5836,7 +5836,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     NSPoint p = NSMakePoint(x, y);
     p = [self convertPoint:p toView:nil];
-    p = [[self window] convertBaseToScreen:p];
+    p = [[self window] pointToScreenCoords:p];
     return p;
 }
 
@@ -5844,7 +5844,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSPoint)globalCursorLocation
 {
     NSPoint p = [self cursorLocationInScreenCoordinates];
-    p = [findCursorWindow_ convertScreenToBase:p];
+    p = [findCursorWindow_ pointFromScreenCoords:p];
     return p;
 }
 
