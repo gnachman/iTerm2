@@ -4018,7 +4018,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="1986">
-                    <rect key="frame" x="356" y="426" width="65" height="17"/>
+                    <rect key="frame" x="356" y="426" width="66" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Selection" id="1987">
                         <font key="font" metaFont="systemBold"/>
