@@ -3927,7 +3927,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 break;
         }
 
-        [tabViewImage compositeToPoint:viewRect.origin operation:NSCompositeSourceOver];
+        [tabViewImage drawAtPoint:viewRect.origin
+                         fromRect:NSZeroRect
+                        operation:NSCompositeSourceOver
+                         fraction:1.0];
         [viewImage unlockFocus];
 
         // Draw over where the tab bar would usually be.
