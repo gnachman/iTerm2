@@ -3362,7 +3362,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // Dial the alpha down to 50%
     NSImage *dragImage = [[[NSImage alloc] initWithSize:[image size]] autorelease];
     [dragImage lockFocus];
-    [image compositeToPoint:NSZeroPoint fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:0.5];
+    [image drawAtPoint:NSZeroPoint
+              fromRect:NSZeroRect
+             operation:NSCompositeSourceOver
+              fraction:0.5];
     [dragImage unlockFocus];
     return dragImage;
 }
