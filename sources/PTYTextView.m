@@ -357,38 +357,30 @@ static NSImage* allOutputSuppressedImage;
                           pathForResource:@"bell"
                           ofType:@"png"];
     bellImage = [[NSImage alloc] initWithContentsOfFile:bellFile];
-    [bellImage setFlipped:YES];
 
     NSString* wrapToTopFile = [bundle
                                pathForResource:@"wrap_to_top"
                                ofType:@"png"];
     wrapToTopImage = [[NSImage alloc] initWithContentsOfFile:wrapToTopFile];
-    [wrapToTopImage setFlipped:YES];
 
     NSString* wrapToBottomFile = [bundle
                                   pathForResource:@"wrap_to_bottom"
                                   ofType:@"png"];
     wrapToBottomImage = [[NSImage alloc] initWithContentsOfFile:wrapToBottomFile];
-    [wrapToBottomImage setFlipped:YES];
 
     NSString* broadcastInputFile = [bundle pathForResource:@"BroadcastInput"
                                                     ofType:@"png"];
     broadcastInputImage = [[NSImage alloc] initWithContentsOfFile:broadcastInputFile];
-    [broadcastInputImage setFlipped:YES];
 
     maximizedImage = [[NSImage imageNamed:@"Maximized"] retain];
-    [maximizedImage setFlipped:YES];
 
     NSString* coprocessFile = [bundle pathForResource:@"Coprocess"
                                                     ofType:@"png"];
     coprocessImage = [[NSImage alloc] initWithContentsOfFile:coprocessFile];
-    [coprocessImage setFlipped:YES];
 
     alertImage = [[NSImage imageNamed:@"Alert"] retain];
-    [alertImage setFlipped:YES];
 
     allOutputSuppressedImage = [[NSImage imageNamed:@"SuppressAllOutput"] retain];
-    [allOutputSuppressedImage setFlipped:YES];
 
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
@@ -1892,11 +1884,16 @@ NSMutableArray* screens=0;
         }
 
         NSSize size = [image size];
-        [image drawAtPoint:NSMakePoint(frame.origin.x + frame.size.width/2 - size.width/2,
-                                       frame.origin.y + frame.size.height/2 - size.height/2)
-                  fromRect:NSMakeRect(0, 0, size.width, size.height)
-                 operation:NSCompositeSourceOver
-                  fraction:flashing_];
+        NSRect destinationRect = NSMakeRect(frame.origin.x + frame.size.width/2 - size.width/2,
+                                            frame.origin.y + frame.size.height/2 - size.height/2,
+                                            size.width,
+                                            size.height);
+        [image drawInRect:destinationRect
+                 fromRect:NSMakeRect(0, 0, size.width, size.height)
+                operation:NSCompositeSourceOver
+                 fraction:flashing_
+           respectFlipped:YES
+                    hints:nil];
     }
 
     if (showTimestamps_) {
