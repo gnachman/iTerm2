@@ -26,7 +26,7 @@
  */
 
 #import "FindViewController.h"
-#import "NSTextField+iTerm.h"
+#import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermProgressIndicator.h"
@@ -36,6 +36,7 @@ static const float FINDVIEW_DURATION = 0.075;
 static BOOL gDefaultIgnoresCase;
 static BOOL gDefaultRegex;
 static NSString *gSearchString;
+static NSSize kFocusRingInset = { 2, 3 };
 
 const CGFloat kEdgeWidth = 3;
 
@@ -93,8 +94,54 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
+- (void)drawFocusRingMaskWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
+    if (IsYosemiteOrLater()) {
+        [super drawFocusRingMaskWithFrame:NSInsetRect(cellFrame, kFocusRingInset.width, kFocusRingInset.height)
+                                   inView:controlView];
+    } else {
+        [super drawFocusRingMaskWithFrame:cellFrame inView:controlView];
+    }
+}
+
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView
 {
+    if (IsYosemiteOrLater()) {
+        NSRect originalFrame = cellFrame;
+        [[NSColor whiteColor] set];
+
+        BOOL focused = ([controlView respondsToSelector:@selector(currentEditor)] &&
+                        [(NSControl *)controlView currentEditor]);
+
+        CGFloat xInset, yInset;
+        if (focused) {
+            xInset = 2.5;
+            yInset = 1.5;
+        } else {
+            xInset = 0.5;
+            yInset = 0.5;
+        }
+        cellFrame = NSInsetRect(cellFrame, xInset, yInset);
+        NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
+                                                             xRadius:4
+                                                             yRadius:4];
+        [path fill];
+
+        if (!focused) {
+            [[NSColor colorWithCalibratedWhite:0.5 alpha:1] set];
+            [path setLineWidth:0.25];
+            [path stroke];
+
+            cellFrame = NSInsetRect(cellFrame, 0.25, 0.25);
+            path = [NSBezierPath bezierPathWithRoundedRect:cellFrame
+                                                   xRadius:4
+                                                   yRadius:4];
+            [path setLineWidth:0.25];
+            [[NSColor colorWithCalibratedWhite:0.7 alpha:1] set];
+            [path stroke];
+        }
+        [self drawInteriorWithFrame:originalFrame inView:controlView];
+        return;
+    }
 	NSColor *insetTopColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.0];
 	NSColor *insetBottomColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.35];
 	NSColor *strokeTopColor = [NSColor colorWithCalibratedWhite:0.240 alpha:1.0];
