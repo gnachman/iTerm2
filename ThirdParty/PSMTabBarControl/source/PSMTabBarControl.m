@@ -14,6 +14,7 @@
 #import "PSMYosemiteTabStyle.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYTask.h"
+#import "NSWindow+PSM.h"
 
 NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotification";
 NSString *const kPSMTabModifierKey = @"TabModifier";
@@ -168,7 +169,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     if (self) {
         // Initialization
         [self initAddedProperties];
-        [self registerForDraggedTypes:[NSArray arrayWithObjects:@"PSMTabBarControlItemPBType", nil]];
+        [self registerForDraggedTypes:[NSArray arrayWithObjects:@"com.iterm2.psm.controlitem", nil]];
 
         // resize
         [self setPostsFrameChangedNotifications:YES];
@@ -270,7 +271,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 {
     delegate = object;
 
-    NSMutableArray *types = [NSMutableArray arrayWithObject:@"PSMTabBarControlItemPBType"];
+    NSMutableArray *types = [NSMutableArray arrayWithObject:@"com.iterm2.psm.controlitem"];
 
     //Update the allowed drag types
     if ([self delegate] && [[self delegate] respondsToSelector:@selector(allowedDraggedTypesForTabView:)]) {
@@ -1198,7 +1199,9 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
             // close button tracking rect
             if ([cell hasCloseButton] && ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] || [self allowsBackgroundTabClosing])) {
-                NSPoint mousePoint = [self convertPoint:[[self window] convertScreenToBase:[NSEvent mouseLocation]] fromView:nil];
+                NSPoint mousePoint =
+                    [self convertPoint:[[self window] pointFromScreenCoords:[NSEvent mouseLocation]]
+                              fromView:nil];
                 NSRect closeRect = [cell closeButtonRectForFrame:cellRect];
 
                 //add the tracking rect for the close button highlight
@@ -1207,7 +1210,9 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
                 //highlight the close button if the currently selected tab has the mouse over it
                 //this will happen if the user clicks a close button in a tab and all the tabs are rearranged
-                if ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] && [[NSApp currentEvent] type] != NSLeftMouseDown && NSMouseInRect(mousePoint, closeRect, [self isFlipped])) {
+                if ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] &&
+                    [[NSApp currentEvent] type] != NSLeftMouseDown &&
+                    NSMouseInRect(mousePoint, closeRect, [self isFlipped])) {
                     [cell setCloseButtonOver:YES];
                 }
             } else {
@@ -1577,10 +1582,12 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 // NSDraggingDestination
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
 {
-    if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
-
-        if ([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
-                ![[self delegate] tabView:[[sender draggingSource] tabView] shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] inTabBar:self]) {
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
+        if ([self delegate] &&
+            [[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
+            ![[self delegate] tabView:[[sender draggingSource] tabView]
+                shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject]
+                             inTabBar:self]) {
             return NSDragOperationNone;
         }
 
@@ -1602,7 +1609,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 {
     PSMTabBarCell *cell = [self cellForPoint:[self convertPoint:[sender draggingLocation] fromView:nil] cellFrame:nil];
 
-    if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
 
         if ([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
                 ![[self delegate] tabView:[[sender draggingSource] tabView] shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] inTabBar:self]) {
@@ -1632,7 +1639,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender
 {
     // validate the drag operation only if there's a valid tab bar to drop into
-    BOOL badType = [[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] == NSNotFound;
+    BOOL badType = [[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] == NSNotFound;
     if (badType && [[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
         ![[self delegate] tabView:tabView shouldAcceptDragFromSender:sender]) {
         badType = YES;
@@ -1649,7 +1656,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
-    if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound ||
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound ||
         [self _delegateAcceptsSender:sender]) {
         [[PSMTabDragAssistant sharedDragAssistant] performDragOperation:sender];
     } else if ([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:acceptedDraggingInfo:onTabViewItem:)]) {
@@ -2348,6 +2355,19 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 - (void)fillPath:(NSBezierPath*)path
 {
   [style fillPath:path];
+}
+
+#pragma mark - NSDraggingSource
+
+- (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    switch (context) {
+        case NSDraggingContextWithinApplication:
+            return NSDragOperationEvery;
+
+        case NSDraggingContextOutsideApplication:
+        default:
+            return NSDragOperationNone;
+    }
 }
 
 @end

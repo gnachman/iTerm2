@@ -181,7 +181,6 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 
     [[NSCursor closedHandCursor] set];
 
-    NSPasteboard *pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
     NSImage *dragImage = [cell dragImage];
     [[cell indicator] removeFromSuperview];
     [self distributePlaceholdersInTabBar:control withDraggedCell:cell];
@@ -190,28 +189,48 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
         cellFrame.origin.y += cellFrame.size.height;
     }
     [cell setHighlighted:NO];
-    NSSize offset = NSZeroSize;
-    [pboard declareTypes:[NSArray arrayWithObjects:@"PSMTabBarControlItemPBType", nil] owner: nil];
-    [pboard setString:[[NSNumber numberWithInt:[[control cells] indexOfObject:cell]] stringValue] forType:@"PSMTabBarControlItemPBType"];
     [self startAnimation];
 
     [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidBeginNotification object:nil];
 
-    //retain the control in case the drag operation causes the control to be released
+    // Retain the control in case the drag operation causes the control to be released
     [control retain];
 
-    if ([control delegate] && [[control delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
-            [[control delegate] tabView:[control tabView] shouldDropTabViewItem:[[self draggedCell] representedObject] inTabBar:nil]) {
+    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
+    [pbItem setString:[@([[control cells] indexOfObject:cell]) stringValue]
+              forType:@"com.iterm2.psm.controlitem"];
+
+    NSImage *imageToDrag;
+    NSRect draggingRect;
+
+    if ([control delegate] &&
+        [[control delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
+        [[control delegate] tabView:[control tabView] shouldDropTabViewItem:[[self draggedCell] representedObject] inTabBar:nil]) {
         _dragTabWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:cell image:dragImage styleMask:NSBorderlessWindowMask] retain];
         [_dragTabWindow setAlphaValue:kPSMTabDragWindowAlpha];
         [_dragTabWindow orderFront:nil];
 
-        //[control dragImage:dragImage at:cellFrame.origin offset:offset event:event pasteboard:pboard source:control slideBack:NO];
         cellFrame.origin.y -= cellFrame.size.height;
-        [control dragImage:[[[NSImage alloc] initWithSize:NSMakeSize(1, 1)] autorelease] at:cellFrame.origin offset:offset event:event pasteboard:pboard source:control slideBack:NO];
+
+        imageToDrag = [[[NSImage alloc] initWithSize:NSMakeSize(1, 1)] autorelease];
+        draggingRect = NSMakeRect(cellFrame.origin.x,
+                                  cellFrame.origin.y,
+                                  1,
+                                  1);
     } else {
-        [control dragImage:dragImage at:cellFrame.origin offset:offset event:event pasteboard:pboard source:control slideBack:YES];
+        imageToDrag = dragImage;
+        draggingRect = NSMakeRect(cellFrame.origin.x,
+                                  cellFrame.origin.y,
+                                  dragImage.size.width,
+                                  dragImage.size.height);
     }
+    NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
+    [dragItem setDraggingFrame:draggingRect contents:imageToDrag];
+    NSDraggingSession *draggingSession = [control beginDraggingSessionWithItems:@[ dragItem ]
+                                                                          event:event
+                                                                         source:control];
+    draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
+    draggingSession.draggingFormation = NSDraggingFormationNone;
 
     [control release];
 }
@@ -807,6 +826,5 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
     //}
     return self;
 }
-
 
 @end

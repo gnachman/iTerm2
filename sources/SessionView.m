@@ -59,7 +59,7 @@ static NSDate* lastResizeDate_;
 
 - (void)_initCommon
 {
-    [self registerForDraggedTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", @"PSMTabBarControlItemPBType", nil]];
+    [self registerForDraggedTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", @"com.iterm2.psm.controlitem", nil]];
     [lastResizeDate_ release];
     lastResizeDate_ = [[NSDate date] retain];
     _announcements = [[NSMutableArray alloc] init];
@@ -456,7 +456,7 @@ static NSDate* lastResizeDate_;
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
 {
     PTYSession *movingSession = [[MovePaneController sharedInstance] session];
-    if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"com.iterm2.psm.controlitem"] != NSNotFound) {
         // Dragging a tab handle. Source is a PSMTabBarControl.
         PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
         if (theTab == [session_ tab] || [[theTab sessions] count] > 1) {

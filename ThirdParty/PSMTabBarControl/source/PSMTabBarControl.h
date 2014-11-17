@@ -145,7 +145,7 @@ enum {
     PSMTab_LeftTab          = 2,
 };
 
-@interface PSMTabBarControl : NSControl<PSMTabViewDelegate> {
+@interface PSMTabBarControl : NSControl<NSDraggingSource, PSMTabViewDelegate> {
 
     // control basics
     NSMutableArray              *_cells;                    // the cells that draw the tabs

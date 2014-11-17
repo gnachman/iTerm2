@@ -464,13 +464,12 @@
         }
 
         closeButtonSize = [closeButton size];
-        if ([controlView isFlipped]) {
-            closeButtonRect.origin.y += closeButtonRect.size.height;
-        }
 
-        [closeButton compositeToPoint:closeButtonRect.origin
-                            operation:NSCompositeSourceOver
-                             fraction:1.0];
+        [closeButton drawAtPoint:closeButtonRect.origin
+                        fromRect:NSZeroRect
+                       operation:NSCompositeSourceOver
+                        fraction:1.0];
+
 
         // scoot label over
         labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
@@ -482,9 +481,6 @@
         iconRect = [self iconRectForTabCell:cell];
         NSImage *icon = [(id)[[cell representedObject] identifier] icon];
 
-        if ([controlView isFlipped]) {
-            iconRect.origin.y += iconRect.size.height;
-        }
         // center in available space (in case icon image is smaller than kPSMTabBarIconWidth)
         if ([icon size].width < kPSMTabBarIconWidth) {
             iconRect.origin.x += (kPSMTabBarIconWidth - [icon size].width)/2.0;
@@ -493,7 +489,10 @@
             iconRect.origin.y -= (kPSMTabBarIconWidth - [icon size].height)/2.0;
         }
 
-        [icon compositeToPoint:iconRect.origin operation:NSCompositeSourceOver fraction:1.0];
+        [icon drawAtPoint:iconRect.origin
+                 fromRect:NSZeroRect
+                operation:NSCompositeSourceOver
+                 fraction:1.0];
     }
 
     // object counter

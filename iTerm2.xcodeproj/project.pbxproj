@@ -1680,6 +1680,11 @@
 		A6E8BA0619DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
 		A6E8BA0719DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
 		A6E8BA0819DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
+		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
+		A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
+		A6E9ACCC1A19956D008B0B6F /* NSWindow+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */; };
+		A6E9ACCD1A19956D008B0B6F /* NSWindow+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */; };
+		A6E9ACCE1A19956D008B0B6F /* NSWindow+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */; };
 		DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */ = {isa = PBXBuildFile; fileRef = DDF0FD63062916F70080EF74 /* iTermApplication.h */; };
 		DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */ = {isa = PBXBuildFile; fileRef = FB151F2903648AC401F955DB /* iTerm.strings */; };
@@ -2409,6 +2414,8 @@
 		A6E74760188C679C005355CF /* iTermExposeView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExposeView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
+		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
+		A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+PSM.m"; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMYosemiteTabStyle.h; sourceTree = "<group>"; };
 		DD02572709CB9398008F320C /* PSMYosemiteTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PSMYosemiteTabStyle.m; sourceTree = "<group>"; tabWidth = 4; };
 		DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMOverflowPopUpButton.h; sourceTree = "<group>"; };
@@ -3592,6 +3599,8 @@
 		DD02571E09CB9398008F320C /* source */ = {
 			isa = PBXGroup;
 			children = (
+				A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */,
+				A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */,
 				DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */,
 				DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */,
 				DD02572C09CB9398008F320C /* PSMProgressIndicator.h */,
@@ -3815,6 +3824,7 @@
 				1D6ED8E819AEA20D005A7799 /* KeysPreferencesViewController.h in Headers */,
 				1D6ED8E919AEA20D005A7799 /* PTYNoteView.h in Headers */,
 				1D6ED8EA19AEA20D005A7799 /* ArrangementPreviewView.h in Headers */,
+				A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */,
 				1D6ED8EB19AEA20D005A7799 /* SplitPanel.h in Headers */,
 				1D6ED8EC19AEA20D005A7799 /* PTYSession+Scripting.h in Headers */,
 				1D6ED8ED19AEA20D005A7799 /* MovePaneController.h in Headers */,
@@ -4123,6 +4133,7 @@
 				1DF8FEF318F3217100722B35 /* KeysPreferencesViewController.h in Headers */,
 				A63F409A183B3AA7003A6A6D /* PTYNoteView.h in Headers */,
 				1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */,
+				A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */,
 				1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */,
 				A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */,
 				1D29732714082676004C5DBE /* MovePaneController.h in Headers */,
@@ -4876,6 +4887,7 @@
 				1D6EDA8D19AEA20D005A7799 /* ToolJobs.m in Sources */,
 				1D6EDA8E19AEA20D005A7799 /* MarkTrigger.m in Sources */,
 				1D6EDA8F19AEA20D005A7799 /* ToolNotes.m in Sources */,
+				A6E9ACCE1A19956D008B0B6F /* NSWindow+PSM.m in Sources */,
 				1D6EDA9019AEA20D005A7799 /* ProfileTagsView.m in Sources */,
 				1D6EDA9119AEA20D005A7799 /* iTermProfilePreferencesBaseViewController.m in Sources */,
 				1D6EDA9219AEA20D005A7799 /* NSFileManager+iTerm.m in Sources */,
@@ -5213,6 +5225,7 @@
 				1D9A554B180FA82E00B42CE9 /* TmuxHistoryParser.m in Sources */,
 				A6E74759188C66CF005355CF /* iTermExposeTabView.m in Sources */,
 				1D9A55AC180FA8B700B42CE9 /* PSMRolloverButton.m in Sources */,
+				A6E9ACCD1A19956D008B0B6F /* NSWindow+PSM.m in Sources */,
 				A69B4587196F8EA100F5444D /* iTermOpenQuicklyWindowController.m in Sources */,
 				A6057C061878CD30004A60AF /* ProfileTagsView.m in Sources */,
 				A6A269991902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m in Sources */,
@@ -5433,6 +5446,7 @@
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
 				1D891E44190724DB0053C4BB /* MarkTrigger.m in Sources */,
 				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
+				A6E9ACCC1A19956D008B0B6F /* NSWindow+PSM.m in Sources */,
 				A6057C051878CD30004A60AF /* ProfileTagsView.m in Sources */,
 				A6E713A418F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m in Sources */,
 				1D67ABAC14285D6000D5DA4E /* NSFileManager+iTerm.m in Sources */,

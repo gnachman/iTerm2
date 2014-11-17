@@ -452,7 +452,7 @@ Gw
                                             </connections>
                                         </tabView>
                                         <button id="2111" userLabel="Square Button - Add Profile">
-                                            <rect key="frame" x="52" y="20" width="24" height="24"/>
+                                            <rect key="frame" x="52" y="19" width="24" height="25"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2112">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -463,7 +463,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="nFj-0n-SWO" userLabel="Square Button - Tags&gt;">
-                                            <rect key="frame" x="0.0" y="20" width="53" height="24"/>
+                                            <rect key="frame" x="0.0" y="19" width="53" height="25"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" title="Tags &gt;" bezelStyle="shadowlessSquare" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="u6m-pp-fub">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -474,7 +474,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="2113" userLabel="Square Button - Delete Profile">
-                                            <rect key="frame" x="75" y="20" width="24" height="24"/>
+                                            <rect key="frame" x="75" y="19" width="24" height="25"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="2114">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -485,7 +485,7 @@ Gw
                                             </connections>
                                         </button>
                                         <popUpButton id="3230">
-                                            <rect key="frame" x="98" y="20" width="157" height="24"/>
+                                            <rect key="frame" x="98" y="19" width="157" height="25"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <popUpButtonCell key="cell" type="square" title="Other Actions..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3231">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -628,6 +628,7 @@ Gw
                 <outlet property="delegate" destination="-2" id="2982"/>
                 <outlet property="initialFirstResponder" destination="1959" id="5303"/>
             </connections>
+            <point key="canvasLocation" x="-288" y="-1058.5"/>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="1971"/>
         <customView id="3079" userLabel="FontAccessory">
@@ -671,7 +672,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="3084">
-                    <rect key="frame" x="88" y="5" width="26" height="29"/>
+                    <rect key="frame" x="88" y="20" width="31" height="14"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="50%" id="3093">
                         <font key="font" metaFont="smallSystem"/>
