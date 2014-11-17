@@ -34,11 +34,6 @@
 
 @interface PTYWindow : NSWindow
 
-- (id)initWithContentRect:(NSRect)contentRect
-                styleMask:(NSUInteger)aStyle
-                  backing:(NSBackingStoreType)bufferingType
-                    defer:(BOOL)flag;
-
 - (void)smartLayout;
 - (void)setLayoutDone;
 
