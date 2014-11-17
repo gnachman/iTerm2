@@ -1561,13 +1561,15 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-- (void)_drawSession:(PTYSession*)session inImage:(NSImage*)viewImage atOrigin:(NSPoint)origin
-{
+- (void)_drawSession:(PTYSession*)session inImage:(NSImage*)viewImage atOrigin:(NSPoint)origin {
     NSImage *textviewImage = [session snapshot];
 
     origin.y = [viewImage size].height - [textviewImage size].height - origin.y;
     [viewImage lockFocus];
-    [textviewImage compositeToPoint:origin operation:NSCompositeSourceOver];
+    [textviewImage drawAtPoint:origin
+                      fromRect:NSZeroRect
+                     operation:NSCompositeSourceOver
+                      fraction:1];
     [viewImage unlockFocus];
 }
 
