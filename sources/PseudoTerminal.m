@@ -31,6 +31,7 @@
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
+#import "NSWindow+PSM.h"
 #import "PasteboardHistory.h"
 #import "PopupModel.h"
 #import "PopupWindow.h"
@@ -6141,10 +6142,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)moveSessionToWindow:(id)sender
-{
+- (void)moveSessionToWindow:(id)sender {
     [[MovePaneController sharedInstance] moveSessionToNewWindow:[self currentSession]
-                                                        atPoint:[[self window] convertBaseToScreen:NSMakePoint(10, -10)]];
+                                                        atPoint:[[self window] pointToScreenCoords:NSMakePoint(10, -10)]];
 
 }
 
