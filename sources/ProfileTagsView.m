@@ -32,9 +32,11 @@ static const CGFloat kRowHeight = 21;
         
         NSSize tableViewSize =
             [NSScrollView contentSizeForFrameSize:_scrollView.frame.size
-                    hasHorizontalScroller:NO
-                      hasVerticalScroller:YES
-                               borderType:[_scrollView borderType]];
+                          horizontalScrollerClass:nil
+                            verticalScrollerClass:[_scrollView.verticalScroller class]
+                                       borderType:_scrollView.borderType
+                                      controlSize:NSRegularControlSize
+                                    scrollerStyle:_scrollView.scrollerStyle];
 
         NSRect tableViewFrame = NSMakeRect(0, 0, tableViewSize.width, tableViewSize.height);
         _tableView = [[NSTableView alloc] initWithFrame:tableViewFrame];
