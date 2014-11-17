@@ -9,6 +9,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "NSView+iTerm.h"
+#import "NSWindow+PSM.h"
 #import "PreferencePanel.h"
 #import "ProfileModel.h"
 #import "PSMTabBarControl.h"
@@ -230,11 +231,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [super dealloc];
 }
 
-- (NSRect)absoluteFrame
-{
+- (NSRect)absoluteFrame {
     NSRect result;
     result.origin = [root_ convertPoint:NSMakePoint(0, 0) toView:nil];
-    result.origin = [[root_ window] convertBaseToScreen:result.origin];
+    result.origin = [[root_ window] pointToScreenCoords:result.origin];
     result.size = [root_ frame].size;
     return result;
 }
