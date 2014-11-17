@@ -5774,6 +5774,7 @@
 					"-Wno-unused-parameter",
 					"-Wno-sign-compare",
 					"-Wno-missing-field-initializers",
+					"-Wundeclared-selector",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -6474,6 +6475,7 @@
 					"-Wno-unused-parameter",
 					"-Wno-sign-compare",
 					"-Wno-missing-field-initializers",
+					"-Wundeclared-selector",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -6534,6 +6536,7 @@
 					"-Wno-unused-parameter",
 					"-Wno-sign-compare",
 					"-Wno-missing-field-initializers",
+					"-Wundeclared-selector",
 				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -6594,6 +6597,7 @@
 					"-Wno-unused-parameter",
 					"-Wno-sign-compare",
 					"-Wno-missing-field-initializers",
+					"-Wundeclared-selector",
 				);
 				WRAPPER_EXTENSION = app;
 			};

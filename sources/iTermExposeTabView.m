@@ -295,7 +295,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
     [thePath stroke];
     
     [str drawWithRect:textRect
-              options:NSLineBreakByClipping];
+              options:NSStringDrawingTruncatesLastVisibleLine];
 }
 
 - (void)_drawDropShadow:(NSRect)aRect
