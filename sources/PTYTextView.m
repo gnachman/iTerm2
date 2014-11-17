@@ -102,7 +102,7 @@ static NSImage* coprocessImage;
 static NSImage* alertImage;
 static NSImage* allOutputSuppressedImage;
 
-@interface PTYTextView () <iTermSelectionDelegate>
+@interface PTYTextView () <iTermSelectionDelegate, NSDraggingSource>
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
@@ -3373,22 +3373,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSPoint dragPosition;
         NSImage *dragImage;
 
-        NSArray *fileList = [NSArray arrayWithObject: path];
-        NSPasteboard *pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
-        [pboard declareTypes:[NSArray arrayWithObject:NSFilenamesPboardType] owner:nil];
-        [pboard setPropertyList:fileList forType:NSFilenamesPboardType];
-
         dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
         dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
         dragPosition.x -= [dragImage size].width / 2;
 
-        [self dragImage:dragImage
-                     at:dragPosition
-                 offset:NSZeroSize
-                  event:event
-             pasteboard:pboard
-                 source:self
-              slideBack:YES];
+        NSURL *url = [[[NSURL alloc] initWithScheme:@"file" host:nil path:path] autorelease];
+
+        NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
+        [pbItem setString:[url absoluteString] forType:(NSString *)kUTTypeFileURL];
+        NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
+        [dragItem setDraggingFrame:NSMakeRect(dragPosition.x, dragPosition.y, dragImage.size.width, dragImage.size.height)
+                          contents:dragImage];
+        NSDraggingSession *draggingSession = [self beginDraggingSessionWithItems:@[ dragItem ]
+                                                                           event:event
+                                                                          source:self];
+
+        draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
+        draggingSession.draggingFormation = NSDraggingFormationNone;
 
         // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
         trouterDragged = NO;
@@ -8893,6 +8894,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         button:[self mouseReportingButtonNumberForEvent:event]
                                     coordinate:coord
                                         deltaY:[event deltaY]];
+}
+
+#pragma mark - NSDraggingSource
+
+- (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    return NSDragOperationEvery;
 }
 
 @end
