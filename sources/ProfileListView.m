@@ -97,12 +97,15 @@ const CGFloat kDefaultTagsWidth = 80;
         NSRect tableViewFrame;
         tableViewFrame.origin.x = 0;
         tableViewFrame.origin.y = 0;
+
         tableViewFrame.size =
             [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
-                            hasHorizontalScroller:NO
-                              hasVerticalScroller:YES
-                                       borderType:[scrollView_ borderType]];
-        
+                          horizontalScrollerClass:nil
+                            verticalScrollerClass:[scrollView_.verticalScroller class]
+                                       borderType:scrollView_.borderType
+                                      controlSize:NSRegularControlSize
+                                    scrollerStyle:scrollView_.verticalScroller.scrollerStyle];
+
         tableView_ = [[ProfileTableView alloc] initWithFrame:tableViewFrame];
         [tableView_ setMenuHandler:self];
         [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:kProfileTableViewDataType]];
