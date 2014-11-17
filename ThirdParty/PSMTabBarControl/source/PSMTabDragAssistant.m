@@ -267,46 +267,56 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
     [self setCurrentMouseLoc:mouseLoc];
 }
 
-- (void)draggingExitedTabBar:(PSMTabBarControl *)control
-{
+- (void)draggingExitedTabBar:(PSMTabBarControl *)control {
     [self setDestinationTabBar:nil];
     [self setCurrentMouseLoc:NSMakePoint(-1.0, -1.0)];
 
     if (_fadeTimer) {
         [_fadeTimer invalidate];
-        _fadeTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0 target:self selector:@selector(fadeInDragWindow:) userInfo:nil repeats:YES];
+        _fadeTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0
+                                                      target:self
+                                                    selector:@selector(fadeInDragWindow:)
+                                                    userInfo:nil
+                                                     repeats:YES];
     } else if (_dragTabWindow) {
-        //create a new floating drag window
+        // create a new floating drag window
         if (!_dragViewWindow) {
             NSImage *viewImage = nil;
             unsigned int styleMask = NSBorderlessWindowMask;
 
-            if ([control delegate] && [[control delegate] respondsToSelector:@selector(tabView:imageForTabViewItem:offset:styleMask:)]) {
-                //get a custom image representation of the view to drag from the delegate
+            if ([control delegate] &&
+                [[control delegate] respondsToSelector:@selector(tabView:imageForTabViewItem:offset:styleMask:)]) {
+                // get a custom image representation of the view to drag from the delegate
                 NSImage *tabImage = [[_dragTabWindow contentView] image];
                 NSPoint drawPoint;
                 _dragWindowOffset = NSZeroSize;
-                viewImage = [[control delegate] tabView:[control tabView] imageForTabViewItem:[[self draggedCell] representedObject] offset:&_dragWindowOffset styleMask:&styleMask];
+                viewImage = [[control delegate] tabView:[control tabView]
+                                    imageForTabViewItem:[[self draggedCell] representedObject]
+                                                 offset:&_dragWindowOffset
+                                              styleMask:&styleMask];
 
                 [viewImage lockFocus];
 
-                //draw the tab into the returned window, that way we don't have two windows being dragged (this assumes the tab will be on the window)
-                drawPoint = NSMakePoint(_dragWindowOffset.width, [viewImage size].height - _dragWindowOffset.height);
+                // draw the tab into the returned window, that way we don't have two windows being
+                // dragged (this assumes the tab will be on the window)
+                drawPoint = NSMakePoint(_dragWindowOffset.width,
+                                        [viewImage size].height - _dragWindowOffset.height);
 
                 if ([control orientation] == PSMTabBarHorizontalOrientation) {
                     drawPoint.y += kPSMTabBarControlHeight - [tabImage size].height;
                     _dragWindowOffset.height -= kPSMTabBarControlHeight - [tabImage size].height;
                 } else {
                     drawPoint.x += [control frame].size.width - [tabImage size].width;
-                    //_dragWindowOffset.height -= kPSMTabBarControlHeight - [tabImage size].height;
-                    //_dragWindowOffset.width -= ([control frame].size.width - [tabImage size].width) + 1;
                 }
 
-                [tabImage compositeToPoint:drawPoint operation:NSCompositeSourceOver];
+                [tabImage drawAtPoint:drawPoint
+                             fromRect:NSZeroRect
+                            operation:NSCompositeSourceOver
+                             fraction:1];
 
                 [viewImage unlockFocus];
             } else {
-                //the delegate doesn't give a custom image, so use an image of the view
+                // the delegate doesn't give a custom image, so use an image of the view
                 NSView *tabView = [[[self draggedCell] representedObject] view];
                 viewImage = [[[NSImage alloc] initWithSize:[tabView frame].size] autorelease];
                 [viewImage lockFocus];
@@ -318,7 +328,9 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
                 _dragWindowOffset.height += 22;
             }
 
-            _dragViewWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:[self draggedCell] image:viewImage styleMask:styleMask] retain];
+            _dragViewWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:[self draggedCell]
+                                                                    image:viewImage
+                                                                styleMask:styleMask] retain];
             [_dragViewWindow setAlphaValue:0.0];
         }
 
@@ -328,16 +340,22 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
         [_dragViewWindow setFrameTopLeftPoint:windowOrigin];
         [_dragViewWindow orderWindow:NSWindowBelow relativeTo:[_dragTabWindow windowNumber]];
 
-        //set the window's alpha mask to zero if the last tab is being dragged
-        //don't fade out the old window if the delegate doesn't respond to the new tab bar method, just to be safe
-        if ([[[self sourceTabBar] tabView] numberOfTabViewItems] == 1 && [self sourceTabBar] == control &&
-                [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:newTabBarForDraggedTabViewItem:atPoint:)]) {
+        // set the window's alpha mask to zero if the last tab is being dragged
+        // don't fade out the old window if the delegate doesn't respond to the new tab bar method, just to be safe
+        if ([[[self sourceTabBar] tabView] numberOfTabViewItems] == 1 &&
+            [self sourceTabBar] == control &&
+            [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:newTabBarForDraggedTabViewItem:atPoint:)]) {
+
             [[[self sourceTabBar] window] setAlphaValue:0.0];
             // Move the window out of the way so it doesn't block drop targets under it.
             [[[self sourceTabBar] window] setFrameOrigin:NSMakePoint(-1000000, -1000000)];
             [_dragViewWindow setAlphaValue:kPSMTabDragWindowAlpha];
         } else {
-            _fadeTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0 target:self selector:@selector(fadeInDragWindow:) userInfo:nil repeats:YES];
+            _fadeTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0
+                                                          target:self
+                                                        selector:@selector(fadeInDragWindow:)
+                                                        userInfo:nil
+                                                         repeats:YES];
         }
     }
 }
