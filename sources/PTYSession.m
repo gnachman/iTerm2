@@ -33,6 +33,7 @@
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
+#import "NSWindow+PSM.h"
 #import "PTYScrollView.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
@@ -3439,10 +3440,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
            [_textview findContext].substring != nil;
 }
 
-- (void)hideSession
-{
+- (void)hideSession {
     [[MovePaneController sharedInstance] moveSessionToNewWindow:self
-                                                        atPoint:[[_view window] convertBaseToScreen:NSMakePoint(0, 0)]];
+                                                        atPoint:[[_view window] pointToScreenCoords:NSMakePoint(0, 0)]];
     [[[_tab realParentWindow] window] miniaturize:self];
 }
 
