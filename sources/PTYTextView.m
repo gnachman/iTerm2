@@ -8349,19 +8349,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
     draggingSession.draggingFormation = NSDraggingFormationNone;
-
 }
 
-- (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent
-{
+- (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent {
     NSImage *anImage;
     int length;
     NSString *tmpString;
-    NSPasteboard *pboard;
-    NSArray *pbtypes;
     NSSize imageSize;
     NSPoint dragPoint;
-    NSSize dragOffset = NSMakeSize(0.0, 0.0);
 
     length = [aString length];
     if ([aString length] > 15) {
@@ -8369,36 +8364,41 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     imageSize = NSMakeSize(charWidth*length, lineHeight);
-    anImage = [[NSImage alloc] initWithSize: imageSize];
+    anImage = [[[NSImage alloc] initWithSize:imageSize] autorelease];
     [anImage lockFocus];
-    if ([aString length] > 15)
-        tmpString = [NSString stringWithFormat: @"%@...", [aString substringWithRange: NSMakeRange(0, 12)]];
-    else
-        tmpString = [aString substringWithRange: NSMakeRange(0, length)];
+    if ([aString length] > 15) {
+        tmpString = [NSString stringWithFormat:@"%@…",
+                        [aString substringWithRange:NSMakeRange(0, 12)]];
+    } else {
+        tmpString = [aString substringWithRange:NSMakeRange(0, length)];
+    }
 
-    [tmpString drawInRect: NSMakeRect(0, 0, charWidth*length, lineHeight) withAttributes: nil];
+    [tmpString drawInRect:NSMakeRect(0, 0, charWidth * length, lineHeight) withAttributes:nil];
     [anImage unlockFocus];
-    [anImage autorelease];
-
-    // get the pasteboard
-    pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
-
-    // Declare the types and put our tabViewItem on the pasteboard
-    pbtypes = [NSArray arrayWithObjects: NSStringPboardType, nil];
-    [pboard declareTypes: pbtypes owner: self];
-    [pboard setString: aString forType: NSStringPboardType];
 
     // tell our app not switch windows (currently not working)
     [NSApp preventWindowOrdering];
 
     // drag from center of the image
-    dragPoint = [self convertPoint: [theEvent locationInWindow] fromView: nil];
-    dragPoint.x -= imageSize.width/2;
+    dragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
+    dragPoint.x -= imageSize.width / 2;
 
     // start the drag
-    [self dragImage:anImage at: dragPoint offset:dragOffset
-              event: mouseDownEvent pasteboard:pboard source:self slideBack:YES];
+    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
+    [pbItem setString:aString forType:(NSString *)kUTTypeUTF8PlainText];
+    NSDraggingItem *dragItem =
+        [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
+    [dragItem setDraggingFrame:NSMakeRect(dragPoint.x,
+                                          dragPoint.y,
+                                          anImage.size.width,
+                                          anImage.size.height)
+                      contents:anImage];
+    NSDraggingSession *draggingSession = [self beginDraggingSessionWithItems:@[ dragItem ]
+                                                                       event:theEvent
+                                                                      source:self];
 
+    draggingSession.animatesToStartingPositionsOnCancelOrFail = YES;
+    draggingSession.draggingFormation = NSDraggingFormationNone;
 }
 
 - (BOOL)_wasAnyCharSelected
