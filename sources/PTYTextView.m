@@ -13,6 +13,7 @@
 #import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSWindow+PSM.h"
 #import "PTYNoteView.h"
 #import "PTYNoteViewController.h"
 #import "PTYScrollView.h"
@@ -5272,8 +5273,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            (y + [_dataSource numberOfLines] - [_dataSource height] + 1) * lineHeight,
                            charWidth * theRange.length,
                            lineHeight);
-    rect.origin = [[self window] convertBaseToScreen:[self convertPoint:rect.origin
-                                              toView:nil]];
+    rect.origin = [[self window] pointToScreenCoords:[self convertPoint:rect.origin toView:nil]];
     if (actualRange) {
         *actualRange = theRange;
     }
