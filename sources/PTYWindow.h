@@ -28,11 +28,15 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol PTYWindowDelegateProtocol
+@protocol PTYWindowDelegateProtocol<NSObject,NSWindowDelegate >
 - (BOOL)lionFullScreen;
+- (void)windowWillShowInitial;
+- (void)toggleTraditionalFullScreenMode;
 @end
 
 @interface PTYWindow : NSWindow
+
+@property(assign) id<PTYWindowDelegateProtocol> delegate;
 
 - (void)smartLayout;
 - (void)setLayoutDone;

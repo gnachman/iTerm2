@@ -37,6 +37,10 @@
 #define PtyLog DLog
 #endif
 
+@interface NSView (PrivateTitleBarMethods)
+- (NSView *)titlebarContainerView;
+@end
+
 @implementation PTYWindow {
     int blurFilter;
     double blurRadius_;
@@ -115,8 +119,7 @@
         ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
         // to use traditional fullscreen.
-        [[self delegate] performSelector:@selector(toggleTraditionalFullScreenMode)
-                              withObject:nil];
+        [[self delegate] toggleTraditionalFullScreenMode];
     } else {
         [super toggleFullScreen:sender];
     }
@@ -357,3 +360,4 @@ end:
 }
 
 @end
+

@@ -1332,8 +1332,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self fitTabsToWindow];
 }
 
-- (IBAction)closeCurrentTab:(id)sender
-{
+- (IBAction)closeCurrentTab:(id)sender {
     if ([self tabView:TABVIEW shouldCloseTabViewItem:[TABVIEW selectedTabViewItem]]) {
         [self closeTab:[self currentTab]];
     }
