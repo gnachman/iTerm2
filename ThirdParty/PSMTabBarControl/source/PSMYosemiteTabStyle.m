@@ -598,6 +598,10 @@
     [path stroke];
 }
 
+- (BOOL)useLightControls {
+    return NO;
+}
+
 - (void)drawTabBar:(PSMTabBarControl *)bar
             inRect:(NSRect)rect
         horizontal:(BOOL)horizontal {

@@ -52,4 +52,8 @@
     return [[[NSGradient alloc] initWithStartingColor:startColor endingColor:endColor] autorelease];
 }
 
+- (BOOL)useLightControls {
+    return YES;
+}
+
 @end
