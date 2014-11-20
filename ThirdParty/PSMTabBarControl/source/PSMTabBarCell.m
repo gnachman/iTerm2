@@ -59,7 +59,8 @@
 
 - (id)initPlaceholderWithFrame:(NSRect)frame expanded:(BOOL)value inControlView:(PSMTabBarControl *)controlView
 {
-    if ( (self = [super init]) ) {
+    self = [super init];
+    if (self) {
         [self setControlView:controlView];
         _isPlaceholder = YES;
         if (!value) {

@@ -48,6 +48,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 
 - (void)fillPath:(NSBezierPath*)path;
 
+// Should light-tinted controls be used?
 - (BOOL)useLightControls;
 
 @end
