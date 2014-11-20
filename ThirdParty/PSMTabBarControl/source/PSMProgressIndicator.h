@@ -14,6 +14,10 @@
 
 }
 
+// Should the progress indicator render in a "light" style, suitable for use over a dark background?
+// Warning: this makes the view become layer-backed.
+@property(nonatomic) BOOL light;
+
 @end
 
 @interface PSMTabBarControl (LayoutPlease)

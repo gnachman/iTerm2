@@ -463,7 +463,7 @@ Gw
                                             </connections>
                                         </button>
                                         <button id="nFj-0n-SWO" userLabel="Square Button - Tags&gt;">
-                                            <rect key="frame" x="0.0" y="19" width="53" height="25"/>
+                                            <rect key="frame" x="0.0" y="20" width="53" height="24"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <buttonCell key="cell" type="square" title="Tags &gt;" bezelStyle="shadowlessSquare" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="u6m-pp-fub">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1304,6 +1304,7 @@ DQ
                 <outlet property="_showPaneTitles" destination="6051" id="n0P-0K-pxx"/>
                 <outlet property="_showWindowBorder" destination="5144" id="wpg-cZ-0wM"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
+                <outlet property="_tabStyle" destination="uFJ-bZ-kag" id="BZV-Cb-HaF"/>
                 <outlet property="_windowNumber" destination="4529" id="QlD-L4-Oy3"/>
                 <outlet property="view" destination="yCt-fi-XI9" id="KeB-DX-cn6"/>
             </connections>
@@ -4493,15 +4494,6 @@ DQ
                         <outlet property="nextKeyView" destination="4462" id="5199"/>
                     </connections>
                 </popUpButton>
-                <textField verticalHuggingPriority="750" id="4577">
-                    <rect key="frame" x="18" y="313" width="88" height="19"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Tab position:" id="4578">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <textField verticalHuggingPriority="750" id="4556">
                     <rect key="frame" x="18" y="341" width="140" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -4775,6 +4767,33 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" controlSize="mini" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Or select Show Tabs in Fullscreen in the View menu." id="y80-TX-tcC">
                         <font key="font" metaFont="miniSystem"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" id="uFJ-bZ-kag">
+                    <rect key="frame" x="214" y="309" width="103" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" id="dAw-Fo-tf4" userLabel="Tab Style">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" title="OtherViews" id="dVY-ir-1iD">
+                            <items>
+                                <menuItem title="Light" id="ZNW-QH-Lff"/>
+                                <menuItem title="Dark" tag="1" id="jvn-mf-Qsy"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="wvi-ET-SJJ" id="16h-KZ-a62"/>
+                        <outlet property="nextKeyView" destination="4462" id="UCs-bO-Qrg"/>
+                    </connections>
+                </popUpButton>
+                <textField verticalHuggingPriority="750" id="4577">
+                    <rect key="frame" x="18" y="313" width="88" height="19"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Tab style:" id="4578">
+                        <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>

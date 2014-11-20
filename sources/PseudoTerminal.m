@@ -40,7 +40,9 @@
 #import "ProfilesWindow.h"
 #import "PseudoTerminal+Scripting.h"
 #import "PseudoTerminalRestorer.h"
+#import "PSMDarkTabStyle.h"
 #import "PSMTabStyle.h"
+#import "PSMYosemiteTabStyle.h"
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYSession.h"
@@ -609,6 +611,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [TABVIEW setDelegate:tabBarControl];
     [tabBarControl setDelegate:self];
     [tabBarControl setHideForSingleTab:NO];
+
+    [self updateTabBarStyle];
 
     [[[self window] contentView] setAutoresizesSubviews: YES];
     [[self window] setDelegate: self];
@@ -5544,6 +5548,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
 
+    [self updateTabBarStyle];
+
     // If hiding of menu bar changed.
     if ([self fullScreen] && ![self lionFullScreen]) {
         if ([[self window] isKeyWindow]) {
@@ -5605,6 +5611,21 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [self fitWindowToTabs];
         }
     }
+}
+
+- (void)updateTabBarStyle {
+    id<PSMTabStyle> style;
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_LIGHT:
+            style = [[PSMYosemiteTabStyle alloc] init];
+            break;
+        case TAB_STYLE_DARK:
+            style = [[PSMDarkTabStyle alloc] init];
+            break;
+    }
+    [tabBarControl setStyle:style];
+    [style release];
 }
 
 - (void)hideMenuBar

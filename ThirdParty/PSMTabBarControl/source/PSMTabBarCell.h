@@ -10,11 +10,17 @@
 #import "PSMTabBarControl.h"
 
 @class PSMTabBarControl;
+@protocol PSMTabStyle;
 @class PSMProgressIndicator;
 
 @protocol PSMTabBarControlProtocol <NSObject>
-@optional
 - (void)tabClick:(id)sender;
+- (id<PSMTabStyle>)style;
+- (void)update:(BOOL)animate;
+- (BOOL)automaticallyAnimates;
+- (PSMTabBarOrientation)orientation;
+- (id<PSMTabBarControlDelegate>)delegate;
+- (NSTabView *)tabView;
 @end
 
 @interface PSMTabBarCell : NSActionCell
@@ -28,8 +34,6 @@
 - (void)dealloc;
 
 // accessors
-- (id)controlView;
-- (void)setControlView:(id)view;
 - (NSTrackingRectTag)closeButtonTrackingTag;
 - (void)setCloseButtonTrackingTag:(NSTrackingRectTag)tag;
 - (NSTrackingRectTag)cellTrackingTag;
@@ -85,6 +89,7 @@
 // iTerm add-on
 - (NSColor *)tabColor;
 - (void)setTabColor:(NSColor *)aColor;
+- (void)updateForStyle;
 
 @end
 

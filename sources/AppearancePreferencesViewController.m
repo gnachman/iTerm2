@@ -10,6 +10,9 @@
 #import "PreferencePanel.h"
 
 @implementation AppearancePreferencesViewController {
+    // This is actually the tab style. See TAB_STYLE_XXX defines.
+    IBOutlet NSPopUpButton *_tabStyle;
+
     // Tab position within window. See TAB_POSITION_XXX defines.
     IBOutlet NSPopUpButton *_tabPosition;
     
@@ -77,6 +80,12 @@
                            key:kPreferenceKeyTabPosition
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [self postRefreshNotification]; };
+
+    info = [self defineControl:_tabStyle
+                           key:kPreferenceKeyTabStyle
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^() { [self postRefreshNotification]; };
+
     
     info = [self defineControl:_hideTab
                            key:kPreferenceKeyHideTabBar
