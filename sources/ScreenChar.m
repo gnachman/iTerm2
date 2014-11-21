@@ -32,6 +32,9 @@
 #import "ScreenChar.h"
 #import "charmaps.h"
 
+static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
+static NSString *const kScreenCharInverseComplexCharMapKey = @"Inverse Complex Char Map";
+
 // Maps codes to strings
 static NSMutableDictionary* complexCharMap;
 // Maps strings to codes.
@@ -733,3 +736,29 @@ void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
     }
 }
 
+NSDictionary *ScreenCharEncodedRestorableState(void) {
+    return @{ kScreenCharComplexCharMapKey: complexCharMap ?: @{},
+              kScreenCharInverseComplexCharMapKey: inverseComplexCharMap ?: @{} };
+}
+
+void ScreenCharDecodeRestorableState(NSDictionary *state) {
+    NSDictionary *stateComplexCharMap = state[kScreenCharComplexCharMapKey];
+    if (!complexCharMap && stateComplexCharMap.count) {
+        complexCharMap = [[NSMutableDictionary alloc] init];
+    }
+    for (id key in stateComplexCharMap) {
+        if (!complexCharMap[key]) {
+            complexCharMap[key] = stateComplexCharMap[key];
+        }
+    }
+
+    NSDictionary *stateInverseMap = state[kScreenCharInverseComplexCharMapKey];
+    if (!inverseComplexCharMap && stateInverseMap.count) {
+        inverseComplexCharMap = [[NSMutableDictionary alloc] init];
+    }
+    for (id key in stateInverseMap) {
+        if (!inverseComplexCharMap[key]) {
+            inverseComplexCharMap[key] = stateInverseMap[key];
+        }
+    }
+}

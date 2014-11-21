@@ -419,3 +419,8 @@ ImageInfo *GetImageInfo(unichar code);
 // Returns the position of a character within an image in cells with the origin
 // at the top left.
 VT100GridCoord GetPositionOfImageInChar(screen_char_t c);
+
+// Returns a dictionary of restorable state
+NSDictionary *ScreenCharEncodedRestorableState(void);
+void ScreenCharDecodeRestorableState(NSDictionary *state);
+
