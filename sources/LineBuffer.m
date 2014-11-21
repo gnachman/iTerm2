@@ -42,7 +42,6 @@ static NSString *const kLineBufferMaxLinesKey = @"Max Lines";
 static NSString *const kLineBufferNumDroppedBlocksKey = @"Num Dropped Blocks";
 static NSString *const kLineBufferDroppedCharsKey = @"Dropped Chars";
 static NSString *const kLineBufferTruncatedKey = @"Truncated";
-static NSString *const kLineBufferScreenCharStateKey = @"Screen Char State";
 
 static const int kLineBufferVersion = 1;
 
@@ -114,9 +113,6 @@ static const int kLineBufferVersion = 1;
                 return nil;
             }
             [blocks addObject:block];
-        }
-        if (dictionary[kLineBufferScreenCharStateKey]) {
-            ScreenCharDecodeRestorableState(dictionary[kLineBufferScreenCharStateKey]);
         }
         [self appendMessage:@"Session Restored"];
     }
@@ -1099,8 +1095,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
               kLineBufferCursorRawlineKey: @(cursor_rawline),
               kLineBufferMaxLinesKey: @(max_lines),
               kLineBufferNumDroppedBlocksKey: @(num_dropped_blocks),
-              kLineBufferDroppedCharsKey: @(droppedChars),
-              kLineBufferScreenCharStateKey: ScreenCharEncodedRestorableState() };
+              kLineBufferDroppedCharsKey: @(droppedChars) };
 }
 
 - (void)appendMessage:(NSString *)message {

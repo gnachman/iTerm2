@@ -72,6 +72,8 @@ static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 
+static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
+
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
 NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
@@ -1177,6 +1179,17 @@ static BOOL hasBecomeActive = NO;
     }
     // Set the state of the control to the new true state.
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
+}
+
+- (void)application:(NSApplication *)app willEncodeRestorableState:(NSCoder *)coder {
+    [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
+}
+
+- (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
+    NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
+    if (screenCharState) {
+        ScreenCharDecodeRestorableState(screenCharState);
+    }
 }
 
 // Debug logging
