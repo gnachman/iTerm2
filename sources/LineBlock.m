@@ -90,8 +90,13 @@ NSString *const kLineBlockMetadataKey = @"Metadata";
 
         for (int i = 0; i < cll_capacity; i++) {
             cumulative_line_lengths[i] = [cllArray[i] intValue];
-            metadata_[i].continuation.code = [metadataArray[i][0] shortValue];
-            metadata_[i].timestamp = [metadataArray[i][1] doubleValue];
+            int j = 0;
+            metadata_[i].continuation.code = [metadataArray[i][j++] unsignedShortValue];
+            metadata_[i].continuation.backgroundColor = [metadataArray[i][j++] unsignedCharValue];
+            metadata_[i].continuation.bgGreen = [metadataArray[i][j++] unsignedCharValue];
+            metadata_[i].continuation.bgBlue = [metadataArray[i][j++] unsignedCharValue];
+            metadata_[i].continuation.backgroundColorMode = [metadataArray[i][j++] unsignedCharValue];
+            metadata_[i].timestamp = [metadataArray[i][j++] doubleValue];
         }
 
         cll_entries = cll_capacity;
@@ -1179,6 +1184,10 @@ static int Search(NSString* needle,
     NSMutableArray *metadataArray = [NSMutableArray array];
     for (int i = 0; i < cll_entries; i++) {
         [metadataArray addObject:@[ @(metadata_[i].continuation.code),
+                                    @(metadata_[i].continuation.backgroundColor),
+                                    @(metadata_[i].continuation.bgGreen),
+                                    @(metadata_[i].continuation.bgBlue),
+                                    @(metadata_[i].continuation.backgroundColorMode),
                                     @(metadata_[i].timestamp) ]];
     }
     return metadataArray;
