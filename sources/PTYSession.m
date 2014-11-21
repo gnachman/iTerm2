@@ -668,6 +668,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict {
+    [_screen appendFromDictionary:dict];
 }
 
 // Session specific methods

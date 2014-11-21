@@ -57,31 +57,40 @@ static const int kLineBufferVersion = 1;
 }
 
 - (instancetype)init {
-    self = [super init];
-    if (self) {
-        blocks = [[NSMutableArray alloc] init];
-        max_lines = -1;
-        num_wrapped_lines_width = -1;
-        num_dropped_blocks = 0;
-    }
-    return self;
+    // I picked 8k because it's a multiple of the page size and should hold about 100-200 lines
+    // on average. Very small blocks make finding a wrapped line expensive because caching the
+    // number of wrapped lines is spread out over more blocks. Very large blocks are expensive
+    // because of the linear search through a block for the start of a wrapped line. This is
+    // in the middle. Ideally, the number of blocks would equal the number of wrapped lines per
+    // block, and this should be in that neighborhood for typical uses.
+    const int BLOCK_SIZE = 1024 * 8;
+    return [self initWithBlockSize:BLOCK_SIZE];
+}
+
+- (void)commonInit {
+    blocks = [[NSMutableArray alloc] init];
+    max_lines = -1;
+    num_wrapped_lines_width = -1;
+    num_dropped_blocks = 0;
 }
 
 // The designated initializer. We prefer not to explose the notion of block sizes to
 // clients, so this is internal.
 - (LineBuffer*)initWithBlockSize:(int)bs
 {
-    self = [self init];
+    self = [super init];
     if (self) {
+        [self commonInit];
         block_size = bs;
-        [self _addBlockOfSize: block_size];
+        [self _addBlockOfSize:block_size];
     }
     return self;
 }
 
 - (LineBuffer *)initWithDictionary:(NSDictionary *)dictionary {
-    self = [self init];
+    self = [super init];
     if (self) {
+        [self commonInit];
         if ([dictionary[kLineBufferVersionKey] intValue] != kLineBufferVersion) {
             [self autorelease];
             return nil;
@@ -230,18 +239,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (void)dumpWrappedToWidth:(int)width
 {
     NSLog(@"%@", [self compactLineDumpWithWidth:width]);
-}
-
-- (LineBuffer*)init
-{
-    // I picked 8k because it's a multiple of the page size and should hold about 100-200 lines
-    // on average. Very small blocks make finding a wrapped line expensive because caching the
-    // number of wrapped lines is spread out over more blocks. Very large blocks are expensive
-    // because of the linear search through a block for the start of a wrapped line. This is
-    // in the middle. Ideally, the number of blocks would equal the number of wrapped lines per
-    // block, and this should be in that neighborhood for typical uses.
-    const int BLOCK_SIZE = 1024 * 8;
-    return [self initWithBlockSize:BLOCK_SIZE];
 }
 
 - (void)appendLine:(screen_char_t*)buffer

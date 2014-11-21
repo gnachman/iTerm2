@@ -12,27 +12,27 @@
 #import "RegexKitLite/RegexKitLite.h"
 
 NSString *const kLineBlockRawBufferKey = @"Raw Buffer";
-NSString *const kLineBlockBufferStartOffsetKey @"Buffer Start Offset";
+NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
 NSString *const kLineBlockStartOffsetKey = @"Start Offset";
 NSString *const kLineBlockFirstEntryKey = @"First Entry";
 NSString *const kLineBlockBufferSizeKey = @"Buffer Size";
 NSString *const kLineBlockCLLKey = @"Cumulative Line Lengths";
 NSString *const kLineBlockIsPartialKey = @"Is Partial";
+NSString *const kLineBlockMetadataKey = @"Metadata";
 
 @implementation LineBlock
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        cached_numlines_width = -1;
-        metadata_ = (LineBlockMetadata *)malloc(sizeof(LineBlockMetadata) * cll_capacity);
+        [self commonInit];
     }
     return self;
 }
 
 - (LineBlock*)initWithRawBufferSize:(int)size
 {
-    self = [self init];
+    self = [super init];
     if (self) {
         raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * size);
         buffer_start = raw_buffer;
@@ -40,12 +40,24 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
         // Allocate enough space for a bunch of 80-character lines. It can grow if needed.
         cll_capacity = 1 + size/80;
         cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
+        [self commonInit];
     }
     return self;
 }
 
+- (void)commonInit {
+    cached_numlines_width = -1;
+    if (cll_capacity > 0) {
+        metadata_ = (LineBlockMetadata *)malloc(sizeof(LineBlockMetadata) * cll_capacity);
+    }
+}
+
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary {
-    self = [[[self alloc] init] autorelease];
+    return [[[self alloc] initWithDictionary:dictionary] autorelease];
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    self = [super init];
     if (self) {
         NSArray *requiredKeys = @[ kLineBlockRawBufferKey,
                                    kLineBlockBufferStartOffsetKey,
@@ -53,6 +65,7 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
                                    kLineBlockFirstEntryKey,
                                    kLineBlockBufferSizeKey,
                                    kLineBlockCLLKey,
+                                   kLineBlockMetadataKey,
                                    kLineBlockIsPartialKey];
         for (NSString *requiredKey in requiredKeys) {
             if (!dictionary[requiredKey]) {
@@ -67,12 +80,20 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
         start_offset = [dictionary[kLineBlockStartOffsetKey] intValue];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
         buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
+
         NSArray *cllArray = dictionary[kLineBlockCLLKey];
-        cll_capacity = [cllArray length];
+        cll_capacity = [cllArray count];
         cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
+
+        NSArray *metadataArray = dictionary[kLineBlockMetadataKey];
+        metadata_ = (LineBlockMetadata *)calloc(cll_capacity, sizeof(LineBlockMetadata));
+
         for (int i = 0; i < cll_capacity; i++) {
             cumulative_line_lengths[i] = [cllArray[i] intValue];
+            metadata_[i].continuation.code = [metadataArray[i][0] shortValue];
+            metadata_[i].timestamp = [metadataArray[i][1] doubleValue];
         }
+
         cll_entries = cll_capacity;
         is_partial = [dictionary[kLineBlockIsPartialKey] boolValue];
     }
@@ -1154,6 +1175,15 @@ static int Search(NSString* needle,
     return cllArray;
 }
 
+- (NSArray *)metadataArray {
+    NSMutableArray *metadataArray = [NSMutableArray array];
+    for (int i = 0; i < cll_entries; i++) {
+        [metadataArray addObject:@[ @(metadata_[i].continuation.code),
+                                    @(metadata_[i].timestamp) ]];
+    }
+    return metadataArray;
+}
+
 - (NSDictionary *)dictionary {
     NSData *rawBufferData = [NSData dataWithBytesNoCopy:raw_buffer
                                                         length:sizeof(screen_char_t) * buffer_size
@@ -1164,7 +1194,8 @@ static int Search(NSString* needle,
               kLineBlockFirstEntryKey: @(first_entry),
               kLineBlockBufferSizeKey: @(buffer_size),
               kLineBlockCLLKey: [self cumulativeLineLengthsArray],
-              kLineBlockIsPartialKey: @(is_partial) };
+              kLineBlockIsPartialKey: @(is_partial),
+              kLineBlockMetadataKey: [self metadataArray] };
 }
 
 @end

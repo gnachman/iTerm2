@@ -3994,11 +3994,13 @@ static void SwapInt(int *a, int *b) {
 - (void)appendFromDictionary:(NSDictionary *)dictionary {
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
     [lineBuffer setMaxLines:maxScrollbackLines_];
-    [lineBuffer dropExcessLinesWithWidth:currentGrid_.width];
-    [lineBuffer_ release];
-    lineBuffer_ = lineBuffer;
-    [self popScrollbackLines:MIN(currentGrid_.size.height,
-                                 [lineBuffer numLinesWithWidth:self.width])];
+    [lineBuffer dropExcessLinesWithWidth:self.width];
+    [linebuffer_ release];
+    linebuffer_ = lineBuffer;
+    [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
+                              withDefaultChar:[currentGrid_ defaultChar]
+                            maxLinesToRestore:MIN(currentGrid_.size.height,
+                                                  [lineBuffer numLinesWithWidth:self.width])];
 }
 
 @end
