@@ -11,24 +11,70 @@
 #import "LineBufferHelpers.h"
 #import "RegexKitLite/RegexKitLite.h"
 
+NSString *const kLineBlockRawBufferKey = @"Raw Buffer";
+NSString *const kLineBlockBufferStartOffsetKey @"Buffer Start Offset";
+NSString *const kLineBlockStartOffsetKey = @"Start Offset";
+NSString *const kLineBlockFirstEntryKey = @"First Entry";
+NSString *const kLineBlockBufferSizeKey = @"Buffer Size";
+NSString *const kLineBlockCLLKey = @"Cumulative Line Lengths";
+NSString *const kLineBlockIsPartialKey = @"Is Partial";
+
 @implementation LineBlock
 
-- (LineBlock*) initWithRawBufferSize: (int) size
-{
+- (instancetype)init {
     self = [super init];
+    if (self) {
+        cached_numlines_width = -1;
+        metadata_ = (LineBlockMetadata *)malloc(sizeof(LineBlockMetadata) * cll_capacity);
+    }
+    return self;
+}
+
+- (LineBlock*)initWithRawBufferSize:(int)size
+{
+    self = [self init];
     if (self) {
         raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * size);
         buffer_start = raw_buffer;
-        start_offset = 0;
-        first_entry = 0;
         buffer_size = size;
         // Allocate enough space for a bunch of 80-character lines. It can grow if needed.
         cll_capacity = 1 + size/80;
-        cll_entries = 0;
         cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
-        metadata_ = (LineBlockMetadata *)malloc(sizeof(LineBlockMetadata) * cll_capacity);
-        is_partial = NO;
-        cached_numlines_width = -1;
+    }
+    return self;
+}
+
++ (instancetype)blockWithDictionary:(NSDictionary *)dictionary {
+    self = [[[self alloc] init] autorelease];
+    if (self) {
+        NSArray *requiredKeys = @[ kLineBlockRawBufferKey,
+                                   kLineBlockBufferStartOffsetKey,
+                                   kLineBlockStartOffsetKey,
+                                   kLineBlockFirstEntryKey,
+                                   kLineBlockBufferSizeKey,
+                                   kLineBlockCLLKey,
+                                   kLineBlockIsPartialKey];
+        for (NSString *requiredKey in requiredKeys) {
+            if (!dictionary[requiredKey]) {
+                [self autorelease];
+                return nil;
+            }
+        }
+        NSData *data = dictionary[kLineBlockRawBufferKey];
+        raw_buffer = (screen_char_t*)malloc(data.length);
+        memmove(raw_buffer, data.bytes, data.length);
+        buffer_start = raw_buffer + [dictionary[kLineBlockBufferStartOffsetKey] intValue];
+        start_offset = [dictionary[kLineBlockStartOffsetKey] intValue];
+        first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
+        buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
+        NSArray *cllArray = dictionary[kLineBlockCLLKey];
+        cll_capacity = [cllArray length];
+        cumulative_line_lengths = (int*) malloc(sizeof(int) * cll_capacity);
+        for (int i = 0; i < cll_capacity; i++) {
+            cumulative_line_lengths[i] = [cllArray[i] intValue];
+        }
+        cll_entries = cll_capacity;
+        is_partial = [dictionary[kLineBlockIsPartialKey] boolValue];
     }
     return self;
 }
@@ -1098,6 +1144,27 @@ static int Search(NSString* needle,
     }
     NSLog(@"Didn't find position %d", position);
     return NO;
+}
+
+- (NSArray *)cumulativeLineLengthsArray {
+    NSMutableArray *cllArray = [NSMutableArray array];
+    for (int i = 0; i < cll_entries; i++) {
+        [cllArray addObject:@(cumulative_line_lengths[i])];
+    }
+    return cllArray;
+}
+
+- (NSDictionary *)dictionary {
+    NSData *rawBufferData = [NSData dataWithBytesNoCopy:raw_buffer
+                                                        length:sizeof(screen_char_t) * buffer_size
+                                                  freeWhenDone:NO];
+    return @{ kLineBlockRawBufferKey: rawBufferData,
+              kLineBlockBufferStartOffsetKey: @(buffer_start - raw_buffer),
+              kLineBlockStartOffsetKey: @(start_offset),
+              kLineBlockFirstEntryKey: @(first_entry),
+              kLineBlockBufferSizeKey: @(buffer_size),
+              kLineBlockCLLKey: [self cumulativeLineLengthsArray],
+              kLineBlockIsPartialKey: @(is_partial) };
 }
 
 @end

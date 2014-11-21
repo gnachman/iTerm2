@@ -72,9 +72,8 @@
 
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 
-- (LineBuffer*) initWithBlockSize: (int) bs;
-
-- (LineBuffer*) init;
+- (LineBuffer*)initWithBlockSize:(int)bs;
+- (LineBuffer *)initWithDictionary:(NSDictionary *)dictionary;
 
 // Returns a copy of this buffer that can be appended to but that you must not
 // pop lines from. Only the last block is deep-copied; references are held to
@@ -197,5 +196,7 @@
 - (int)numberOfDroppedBlocks;
 // Absolute block number of last block.
 - (int)largestAbsoluteBlockNumber;
+
+- (NSDictionary *)dictionary;
 
 @end

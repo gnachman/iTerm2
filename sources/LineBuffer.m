@@ -33,6 +33,17 @@
 #import "LineBlock.h"
 #import "RegexKitLite/RegexKitLite.h"
 
+static NSString *const kLineBufferVersionKey = @"Version";
+static NSString *const kLineBufferBlocksKey = @"Blocks";
+static NSString *const kLineBufferBlockSizeKey = @"Block Size";
+static NSString *const kLineBufferCursorXKey = @"Cursor X";
+static NSString *const kLineBufferCursorRawlineKey = @"Cursor Rawline";
+static NSString *const kLineBufferMaxLinesKey = @"Max Lines";
+static NSString *const kLineBufferNumDroppedBlocksKey = @"Num Dropped Blocks";
+static NSString *const kLineBufferDroppedCharsKey = @"Dropped Chars";
+
+static const int kLineBufferVersion = 1;
+
 @implementation LineBuffer
 
 // Append a block
@@ -45,18 +56,51 @@
     return block;
 }
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        blocks = [[NSMutableArray alloc] init];
+        max_lines = -1;
+        num_wrapped_lines_width = -1;
+        num_dropped_blocks = 0;
+    }
+    return self;
+}
+
 // The designated initializer. We prefer not to explose the notion of block sizes to
 // clients, so this is internal.
 - (LineBuffer*)initWithBlockSize:(int)bs
 {
-    self = [super init];
+    self = [self init];
     if (self) {
         block_size = bs;
-        blocks = [[NSMutableArray alloc] initWithCapacity: 1];
         [self _addBlockOfSize: block_size];
-        max_lines = -1;
-        num_wrapped_lines_width = -1;
-        num_dropped_blocks = 0;
+    }
+    return self;
+}
+
+- (LineBuffer *)initWithDictionary:(NSDictionary *)dictionary {
+    self = [self init];
+    if (self) {
+        if ([dictionary[kLineBufferVersionKey] intValue] != kLineBufferVersion) {
+            [self autorelease];
+            return nil;
+        }
+        blocks = [[NSMutableArray alloc] init];
+        for (NSDictionary *blockDictionary in dictionary[kLineBufferBlocksKey]) {
+            LineBlock *block = [LineBlock blockWithDictionary:blockDictionary];
+            if (!block) {
+                [self autorelease];
+                return nil;
+            }
+            [blocks addObject:block];
+        }
+        block_size = [dictionary[kLineBufferBlockSizeKey] intValue];
+        cursor_x = [dictionary[kLineBufferCursorXKey] intValue];
+        cursor_rawline = [dictionary[kLineBufferCursorRawlineKey] intValue];
+        max_lines = [dictionary[kLineBufferMaxLinesKey] intValue];
+        num_dropped_blocks = [dictionary[kLineBufferNumDroppedBlocksKey] intValue];
+        droppedChars = [dictionary[kLineBufferDroppedCharsKey] longLongValue];
     }
     return self;
 }
@@ -1019,6 +1063,25 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (int)largestAbsoluteBlockNumber {
     return blocks.count + num_dropped_blocks;
+}
+
+- (NSArray *)codedBlocks {
+    NSMutableArray *codedBlocks = [NSMutableArray array];
+    for (LineBlock *block in blocks) {
+        [codedBlocks addObject:[block dictionary]];
+    }
+    return codedBlocks;
+}
+
+- (NSDictionary *)dictionary {
+    return @{ kLineBufferVersionKey: @(kLineBufferVersion),
+              kLineBufferBlocksKey: [self codedBlocks],
+              kLineBufferBlockSizeKey: @(block_size),
+              kLineBufferCursorXKey: @(cursor_x),
+              kLineBufferCursorRawlineKey: @(cursor_rawline),
+              kLineBufferMaxLinesKey: @(max_lines),
+              kLineBufferNumDroppedBlocksKey: @(num_dropped_blocks),
+              kLineBufferDroppedCharsKey: @(droppedChars) };
 }
 
 @end

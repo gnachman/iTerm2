@@ -91,6 +91,7 @@ static NSString *const SESSION_ARRANGEMENT_ROWS = @"Rows";
 static NSString *const SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 static NSString *const SESSION_ARRANGEMENT_BOOKMARK_NAME = @"Bookmark Name";
 static NSString *const SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
+static NSString *const SESSION_ARRANGEMENT_CONTENTS = @"Contents";
 static NSString *const SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 static NSString *const SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
 static NSString *const SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
@@ -606,6 +607,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (!n) {
         [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
                          forObjectType:objectType];
+        if (arrangement[SESSION_ARRANGEMENT_CONTENTS]) {
+            [aSession setContentsFromLineBufferDictionary:arrangement[SESSION_ARRANGEMENT_CONTENTS]];
+        }
     } else {
         NSString *title = [state objectForKey:@"title"];
         if (title) {
@@ -661,6 +665,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [[aSession terminal] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
     }
     return aSession;
+}
+
+- (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict {
 }
 
 // Session specific methods
@@ -2769,6 +2776,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (_windowTitle) {
         result[SESSION_ARRANGEMENT_WINDOW_TITLE] = _windowTitle;
     }
+    result[SESSION_ARRANGEMENT_CONTENTS] = [_screen contentsDictionary];
+
     NSString* pwd = [_shell getWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     if (self.uniqueID) {

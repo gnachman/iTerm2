@@ -230,6 +230,9 @@ extern int kVT100ScreenMinRows;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
+- (NSDictionary *)contentsDictionary;
+- (void)appendFromDictionary:(NSDictionary *)dictionary;
+
 @end
 
 @interface VT100Screen (Testing)
