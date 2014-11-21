@@ -86,4 +86,6 @@
 
 + (BOOL)alwaysAcceptFirstMouse;
 
++ (BOOL)restoreWindowContents;
+
 @end

@@ -33,6 +33,19 @@
 #import "LineBlock.h"
 #import "RegexKitLite/RegexKitLite.h"
 
+static NSString *const kLineBufferVersionKey = @"Version";
+static NSString *const kLineBufferBlocksKey = @"Blocks";
+static NSString *const kLineBufferBlockSizeKey = @"Block Size";
+static NSString *const kLineBufferCursorXKey = @"Cursor X";
+static NSString *const kLineBufferCursorRawlineKey = @"Cursor Rawline";
+static NSString *const kLineBufferMaxLinesKey = @"Max Lines";
+static NSString *const kLineBufferNumDroppedBlocksKey = @"Num Dropped Blocks";
+static NSString *const kLineBufferDroppedCharsKey = @"Dropped Chars";
+static NSString *const kLineBufferTruncatedKey = @"Truncated";
+static NSString *const kLineBufferMayHaveDWCKey = @"May Have Double Width Character";
+
+static const int kLineBufferVersion = 1;
+
 @implementation LineBuffer
 
 // Append a block
@@ -45,18 +58,65 @@
     return block;
 }
 
+- (instancetype)init {
+    // I picked 8k because it's a multiple of the page size and should hold about 100-200 lines
+    // on average. Very small blocks make finding a wrapped line expensive because caching the
+    // number of wrapped lines is spread out over more blocks. Very large blocks are expensive
+    // because of the linear search through a block for the start of a wrapped line. This is
+    // in the middle. Ideally, the number of blocks would equal the number of wrapped lines per
+    // block, and this should be in that neighborhood for typical uses.
+    const int BLOCK_SIZE = 1024 * 8;
+    return [self initWithBlockSize:BLOCK_SIZE];
+}
+
+- (void)commonInit {
+    blocks = [[NSMutableArray alloc] init];
+    max_lines = -1;
+    num_wrapped_lines_width = -1;
+    num_dropped_blocks = 0;
+}
+
 // The designated initializer. We prefer not to explose the notion of block sizes to
 // clients, so this is internal.
 - (LineBuffer*)initWithBlockSize:(int)bs
 {
     self = [super init];
     if (self) {
+        [self commonInit];
         block_size = bs;
-        blocks = [[NSMutableArray alloc] initWithCapacity: 1];
-        [self _addBlockOfSize: block_size];
-        max_lines = -1;
-        num_wrapped_lines_width = -1;
-        num_dropped_blocks = 0;
+        [self _addBlockOfSize:block_size];
+    }
+    return self;
+}
+
+- (LineBuffer *)initWithDictionary:(NSDictionary *)dictionary {
+    self = [super init];
+    if (self) {
+        [self commonInit];
+        if ([dictionary[kLineBufferVersionKey] intValue] != kLineBufferVersion) {
+            [self autorelease];
+            return nil;
+        }
+        _mayHaveDoubleWidthCharacter = [dictionary[kLineBufferMayHaveDWCKey] boolValue];
+        blocks = [[NSMutableArray alloc] init];
+        block_size = [dictionary[kLineBufferBlockSizeKey] intValue];
+        cursor_x = [dictionary[kLineBufferCursorXKey] intValue];
+        cursor_rawline = [dictionary[kLineBufferCursorRawlineKey] intValue];
+        max_lines = [dictionary[kLineBufferMaxLinesKey] intValue];
+        num_dropped_blocks = [dictionary[kLineBufferNumDroppedBlocksKey] intValue];
+        droppedChars = [dictionary[kLineBufferDroppedCharsKey] longLongValue];
+        if ([dictionary[kLineBufferTruncatedKey] boolValue]) {
+            [self appendMessage:@"Restored Content Truncated"];
+        }
+        for (NSDictionary *blockDictionary in dictionary[kLineBufferBlocksKey]) {
+            LineBlock *block = [LineBlock blockWithDictionary:blockDictionary];
+            if (!block) {
+                [self autorelease];
+                return nil;
+            }
+            [blocks addObject:block];
+        }
+        [self appendMessage:@"Session Restored"];
     }
     return self;
 }
@@ -186,18 +246,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (void)dumpWrappedToWidth:(int)width
 {
     NSLog(@"%@", [self compactLineDumpWithWidth:width]);
-}
-
-- (LineBuffer*)init
-{
-    // I picked 8k because it's a multiple of the page size and should hold about 100-200 lines
-    // on average. Very small blocks make finding a wrapped line expensive because caching the
-    // number of wrapped lines is spread out over more blocks. Very large blocks are expensive
-    // because of the linear search through a block for the start of a wrapped line. This is
-    // in the middle. Ideally, the number of blocks would equal the number of wrapped lines per
-    // block, and this should be in that neighborhood for typical uses.
-    const int BLOCK_SIZE = 1024 * 8;
-    return [self initWithBlockSize:BLOCK_SIZE];
 }
 
 - (void)appendLine:(screen_char_t*)buffer
@@ -1009,6 +1057,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     theCopy->num_wrapped_lines_cache = num_wrapped_lines_cache;
     theCopy->num_wrapped_lines_width = num_wrapped_lines_width;
     theCopy->droppedChars = droppedChars;
+    theCopy.mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
 
     return theCopy;
 }
@@ -1019,6 +1068,59 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (int)largestAbsoluteBlockNumber {
     return blocks.count + num_dropped_blocks;
+}
+
+- (NSArray *)codedBlocks:(BOOL *)truncated {
+    *truncated = NO;
+    NSMutableArray *codedBlocks = [NSMutableArray array];
+    int numLines = 0;
+    for (LineBlock *block in [blocks reverseObjectEnumerator]) {
+        [codedBlocks insertObject:[block dictionary] atIndex:0];
+
+        // This caps the amount of data at a reasonable but arbitrary size.
+        numLines += [block getNumLinesWithWrapWidth:80];
+        if (numLines >= 10000) {
+            *truncated = YES;
+            break;
+        }
+    }
+    return codedBlocks;
+}
+
+- (NSDictionary *)dictionary {
+    BOOL truncated;
+    NSArray *codedBlocks = [self codedBlocks:&truncated];
+    return @{ kLineBufferVersionKey: @(kLineBufferVersion),
+              kLineBufferBlocksKey: codedBlocks,
+              kLineBufferTruncatedKey: @(truncated),
+              kLineBufferBlockSizeKey: @(block_size),
+              kLineBufferCursorXKey: @(cursor_x),
+              kLineBufferCursorRawlineKey: @(cursor_rawline),
+              kLineBufferMaxLinesKey: @(max_lines),
+              kLineBufferNumDroppedBlocksKey: @(num_dropped_blocks),
+              kLineBufferDroppedCharsKey: @(droppedChars),
+              kLineBufferMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter) };
+}
+
+- (void)appendMessage:(NSString *)message {
+    if (!blocks.count) {
+        [self _addBlockOfSize:message.length];
+    }
+    screen_char_t buffer[message.length];
+    int len;
+    screen_char_t fg = { 0 };
+    screen_char_t bg = { 0 };
+    fg.foregroundColor = ALTSEM_REVERSED_DEFAULT;
+    fg.backgroundColorMode = ColorModeAlternate;
+    bg.backgroundColor = ALTSEM_REVERSED_DEFAULT;
+    bg.backgroundColorMode = ColorModeAlternate;
+    StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO);
+    [self appendLine:buffer
+              length:len
+             partial:NO
+               width:num_wrapped_lines_width > 0 ?: 80
+           timestamp:[NSDate timeIntervalSinceReferenceDate]
+        continuation:bg];
 }
 
 @end

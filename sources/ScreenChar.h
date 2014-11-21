@@ -103,12 +103,33 @@
 // foreground for background (reverse video).
 #define ALTSEM_REVERSED_DEFAULT 3
 
+NS_ENUM(NSUInteger, kiTermScreenCharAnsiColor) {
+    kiTermScreenCharAnsiColorBlack,
+    kiTermScreenCharAnsiColorRed,
+    kiTermScreenCharAnsiColorGreen,
+    kiTermScreenCharAnsiColorYellow,
+    kiTermScreenCharAnsiColorBlue,
+    kiTermScreenCharAnsiColorMagenta,
+    kiTermScreenCharAnsiColorCyan,
+    kiTermScreenCharAnsiColorWhite,
+    kiTermScreenCharAnsiColorBrightBlack,
+    kiTermScreenCharAnsiColorBrightRed,
+    kiTermScreenCharAnsiColorBrightGreen,
+    kiTermScreenCharAnsiColorBrightYellow,
+    kiTermScreenCharAnsiColorBrightBlue,
+    kiTermScreenCharAnsiColorBrightMagenta,
+    kiTermScreenCharAnsiColorBrightCyan,
+    kiTermScreenCharAnsiColorBrightWhite
+};
+
+
+
 // Max unichars in a glyph.
 static const int kMaxParts = 20;
 
 typedef enum {
-    ColorModeAlternate = 0,
-    ColorModeNormal = 1,
+    ColorModeAlternate = 0,  // ALTSEM_XXX values
+    ColorModeNormal = 1,  // kiTermScreenCharAnsiColor values
     ColorMode24bit = 2,
     ColorModeInvalid = 3
 } ColorMode;
@@ -398,3 +419,8 @@ ImageInfo *GetImageInfo(unichar code);
 // Returns the position of a character within an image in cells with the origin
 // at the top left.
 VT100GridCoord GetPositionOfImageInChar(screen_char_t c);
+
+// Returns a dictionary of restorable state
+NSDictionary *ScreenCharEncodedRestorableState(void);
+void ScreenCharDecodeRestorableState(NSDictionary *state);
+

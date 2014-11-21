@@ -64,6 +64,7 @@
 #include <unistd.h>
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
+NSString *const kPseudoTerminalStateRestorationWindowArrangementKey = @"ptyarrangement";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 static NSString *const kShowFullscreenTabBarKey = @"ShowFullScreenTabBar";
@@ -288,6 +289,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 @synthesize shouldShowToolbelt = shouldShowToolbelt_;
+
++ (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
+    for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
+        [PTYTab registerSessionsInArrangement:tabArrangement];
+    }
+}
 
 + (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType {
     switch (windowType) {
@@ -1960,8 +1967,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return [self loadArrangement:arrangement sessions:nil];
 }
 
-- (BOOL)loadArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions
-{
+- (BOOL)loadArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions {
     PtyLog(@"Restore arrangement: %@", arrangement);
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS]) {
         desiredRows_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS] intValue];
@@ -2020,7 +2026,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
-{
+                             includingContents:(BOOL)includeContents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:7];
     NSRect rect = [[self window] frame];
     int screenNumber = 0;
@@ -2034,67 +2040,53 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [result setObject:_terminalGuid forKey:TERMINAL_GUID];
 
     // Save window frame
-    [result setObject:[NSNumber numberWithDouble:rect.origin.x]
-               forKey:TERMINAL_ARRANGEMENT_X_ORIGIN];
-    [result setObject:[NSNumber numberWithDouble:rect.origin.y]
-               forKey:TERMINAL_ARRANGEMENT_Y_ORIGIN];
-    [result setObject:[NSNumber numberWithDouble:rect.size.width]
-               forKey:TERMINAL_ARRANGEMENT_WIDTH];
-    [result setObject:[NSNumber numberWithDouble:rect.size.height]
-               forKey:TERMINAL_ARRANGEMENT_HEIGHT];
+    result[TERMINAL_ARRANGEMENT_X_ORIGIN] = @(rect.origin.x);
+    result[TERMINAL_ARRANGEMENT_Y_ORIGIN] = @(rect.origin.y);
+    result[TERMINAL_ARRANGEMENT_WIDTH] = @(rect.size.width);
+    result[TERMINAL_ARRANGEMENT_HEIGHT] = @(rect.size.height);
     result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(shouldShowToolbelt_);
-    result[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] = @(hidingToolbeltShouldResizeWindow_);
+    result[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] =
+            @(hidingToolbeltShouldResizeWindow_);
 
     if ([self anyFullScreen]) {
         // Save old window frame
-        [result setObject:[NSNumber numberWithDouble:oldFrame_.origin.x]
-                   forKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN];
-        [result setObject:[NSNumber numberWithDouble:oldFrame_.origin.y]
-                   forKey:TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN];
-        [result setObject:[NSNumber numberWithDouble:oldFrame_.size.width]
-                   forKey:TERMINAL_ARRANGEMENT_OLD_WIDTH];
-        [result setObject:[NSNumber numberWithDouble:oldFrame_.size.height]
-                   forKey:TERMINAL_ARRANGEMENT_OLD_HEIGHT];
+        result[TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] = @(oldFrame_.origin.x);
+        result[TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN] = @(oldFrame_.origin.y);
+        result[TERMINAL_ARRANGEMENT_OLD_WIDTH] = @(oldFrame_.size.width);
+        result[TERMINAL_ARRANGEMENT_OLD_HEIGHT] = @(oldFrame_.size.height);
     }
 
-    [result setObject:[NSNumber numberWithInt:([self lionFullScreen] ? WINDOW_TYPE_LION_FULL_SCREEN : windowType_)]
-               forKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE];
+    result[TERMINAL_ARRANGEMENT_WINDOW_TYPE] = @([self lionFullScreen] ? WINDOW_TYPE_LION_FULL_SCREEN : windowType_);
     result[TERMINAL_ARRANGEMENT_SAVED_WINDOW_TYPE] = @(savedWindowType_);
-    [result setObject:[NSNumber numberWithInt:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]]
-                                       forKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX];
-    [result setObject:[NSNumber numberWithInt:desiredRows_]
-               forKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS];
-    [result setObject:[NSNumber numberWithInt:desiredColumns_]
-               forKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS];
+    result[TERMINAL_ARRANGEMENT_SCREEN_INDEX] = @([[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]);
+    result[TERMINAL_ARRANGEMENT_DESIRED_ROWS] = @(desiredRows_);
+    result[TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] = @(desiredColumns_);
+
     // Save tabs.
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[self numberOfTabs]];
     for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
         PTYTab *theTab = [tabViewItem identifier];
         if ([[theTab sessions] count]) {
             if (!excludeTmux || ![theTab isTmuxTab]) {
-                [tabs addObject:[[tabViewItem identifier] arrangement]];
+                [tabs addObject:[theTab arrangementWithContents:includeContents]];
             }
         }
     }
     if ([tabs count] == 0) {
         return nil;
     }
-    [result setObject:tabs forKey:TERMINAL_ARRANGEMENT_TABS];
+    result[TERMINAL_ARRANGEMENT_TABS] = tabs;
 
     // Save index of selected tab.
-    [result setObject:[NSNumber numberWithInt:[TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]]
-               forKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX];
-    [result setObject:[NSNumber numberWithBool:hideAfterOpening_]
-               forKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING];
-
+    result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @([TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]);
+    result[TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] = @(hideAfterOpening_);
     result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(_isHotKeyWindow);
 
     return result;
 }
 
-- (NSDictionary*)arrangement
-{
-    return [self arrangementExcludingTmuxTabs:YES];
+- (NSDictionary*)arrangement {
+    return [self arrangementExcludingTmuxTabs:YES includingContents:NO];
 }
 
 // NSWindow delegate methods
@@ -5781,8 +5773,23 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
+void (^gDoomedBlock)(int);
++ (void)callDoomedBlock:(int)value {
+    gDoomedBlock(value);
+}
+int aGlobalVariable;
+
 - (void)flagsChanged:(NSEvent *)theEvent
 {
+    aGlobalVariable = 1;
+    static int i;
+    if (i == 0) {
+
+        void (^doomedBlock)(int) = ^void(int value) {NSLog(@"%d", value); };
+        gDoomedBlock= doomedBlock;
+    }
+    i++;
+
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermFlagsChanged"
                                                         object:theEvent
                                                       userInfo:nil];
@@ -6918,7 +6925,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
 {
-    [self loadArrangement:[state decodeObjectForKey:@"ptyarrangement"] sessions:nil];
+    [self loadArrangement:[state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey]
+                 sessions:nil];
 }
 
 - (BOOL)allTabsAreTmuxTabs
@@ -6931,8 +6939,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return YES;
 }
 
-- (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state
-{
+- (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state {
     if (doNotSetRestorableState_) {
         // The window has been destroyed beyond recognition at this point and
         // there is nothing to save.
@@ -6950,7 +6957,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     if (wellFormed_) {
         [lastArrangement_ release];
-        lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES] retain];
+        NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
+        BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
+        lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES
+                                             includingContents:includeContents] retain];
+        NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
+        NSLog(@"Time to encode state for window %@: %@", self, @(end - start));
     }
     // For whatever reason, setting the value in the coder here doesn't work but
     // doing it in PTYWindow immediately after this method's caller returns does

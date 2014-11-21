@@ -63,7 +63,7 @@
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
     [super encodeRestorableStateWithCoder:coder];
-    [coder encodeObject:restoreState_ forKey:@"ptyarrangement"];
+    [coder encodeObject:restoreState_ forKey:kPseudoTerminalStateRestorationWindowArrangementKey];
 }
 
 - (void)setRestoreState:(NSObject *)restoreState {

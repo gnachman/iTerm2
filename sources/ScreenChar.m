@@ -31,6 +31,13 @@
 
 #import "ScreenChar.h"
 #import "charmaps.h"
+#import "iTermAdvancedSettingsModel.h"
+
+static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
+static NSString *const kScreenCharInverseComplexCharMapKey = @"Inverse Complex Char Map";
+static NSString *const kScreenCharImageMapKey = @"Image Map";
+static NSString *const kScreenCharCCMNextKeyKey = @"Next Key";
+static NSString *const kScreenCharHasWrappedKey = @"Has Wrapped";
 
 // Maps codes to strings
 static NSMutableDictionary* complexCharMap;
@@ -38,23 +45,80 @@ static NSMutableDictionary* complexCharMap;
 static NSMutableDictionary* inverseComplexCharMap;
 // Image info. Maps a NSNumber with the image's code to an ImageInfo object.
 static NSMutableDictionary* gImages;
+static NSMutableDictionary* gEncodableImageMap;
 // Next available code.
 static int ccmNextKey = 1;
 // If ccmNextKey has wrapped then this is set to true and we have to delete old
 // strings before creating a new one with a recycled code.
 static BOOL hasWrapped = NO;
 
+static NSString *const kImageInfoSizeKey = @"Size";
+static NSString *const kImageInfoImageKey = @"Image";
+static NSString *const kImageInfoPreserveAspectRatioKey = @"Preserve Aspect Ratio";
+static NSString *const kImageInfoFilenameKey = @"Filename";
+static NSString *const kImageInfoCodeKey = @"Code";
+
 @interface ImageInfo ()
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
+
 @property(nonatomic, retain) NSImage *embeddedImage;
 @property(nonatomic, assign) unichar code;
+@property(nonatomic, retain) NSData *smallEncodedImageData;
+
 @end
 
 @implementation ImageInfo
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    self = [super init];
+    if (self) {
+        _size = [dictionary[kImageInfoSizeKey] sizeValue];
+        _image = [[NSImage alloc] initWithData:dictionary[kImageInfoImageKey]];
+        _preserveAspectRatio = [dictionary[kImageInfoPreserveAspectRatioKey] boolValue];
+        _filename = [dictionary[kImageInfoFilenameKey] copy];
+        _code = [dictionary[kImageInfoCodeKey] shortValue];
+        if (!_size.width ||
+            !_size.height ||
+            !_image) {
+            [self release];
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (NSData *)smallEncodedImageData {
+    if (_smallEncodedImageData) {
+        return _smallEncodedImageData;
+    }
+
+    NSBitmapImageRep *imgRep = [[_image representations] objectAtIndex:0];
+    NSData *data;
+    if ([imgRep isOpaque]) {
+        CGFloat pixels = (CGFloat)_image.size.width * (CGFloat)_image.size.height;
+        CGFloat factor = MIN(0.8, MAX(0.1, 1000 / pixels));
+        data = [imgRep representationUsingType:NSJPEGFileType
+                                    properties:@{ NSImageCompressionFactor: @(factor) }];
+    } else {
+        data = [imgRep representationUsingType:NSPNGFileType properties:nil];
+    }
+    _smallEncodedImageData = [data retain];
+    return _smallEncodedImageData;
+}
+
+- (NSDictionary *)dictionary {
+    return @{ kImageInfoSizeKey: [NSValue valueWithSize:_size],
+              kImageInfoImageKey: [self smallEncodedImageData],
+              kImageInfoPreserveAspectRatioKey: @(_preserveAspectRatio),
+              kImageInfoFilenameKey: _filename,
+              kImageInfoCodeKey: @(_code)};
+}
 
 - (void)dealloc {
     [_filename release];
     [_image release];
     [_embeddedImage release];
+    [_smallEncodedImageData release];
     [super dealloc];
 }
 
@@ -189,11 +253,16 @@ static BOOL ComplexCharKeyIsReserved(int k) {
     }
 }
 
-screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL preserveAspectRatio)
-{
+static void AllocateImageMapsIfNeeded(void) {
     if (!gImages) {
         gImages = [[NSMutableDictionary alloc] init];
+        gEncodableImageMap = [[NSMutableDictionary alloc] init];
     }
+}
+
+screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL preserveAspectRatio)
+{
+    AllocateImageMapsIfNeeded();
     int newKey;
     do {
         newKey = ccmNextKey++;
@@ -223,10 +292,12 @@ void SetDecodedImage(unichar code, NSImage *image)
 {
     ImageInfo *imageInfo = gImages[@(code)];
     imageInfo.image = image;
+    gEncodableImageMap[@(code)] = [imageInfo dictionary];
 }
 
 void ReleaseImage(unichar code) {
     [gImages removeObjectForKey:@(code)];
+    [gEncodableImageMap removeObjectForKey:@(code)];
 }
 
 ImageInfo *GetImageInfo(unichar code) {
@@ -260,6 +331,9 @@ int GetOrSetComplexChar(NSString* str)
     }
     complexCharMap[number] = str;
     inverseComplexCharMap[str] = number;
+    if ([iTermAdvancedSettingsModel restoreWindowContents]) {
+        [NSApp invalidateRestorableState];
+    }
     if (ccmNextKey == 0xf000) {
         ccmNextKey = 1;
         hasWrapped = YES;
@@ -733,3 +807,40 @@ void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
     }
 }
 
+NSDictionary *ScreenCharEncodedRestorableState(void) {
+    return @{ kScreenCharComplexCharMapKey: complexCharMap ?: @{},
+              kScreenCharInverseComplexCharMapKey: inverseComplexCharMap ?: @{},
+              kScreenCharImageMapKey: gEncodableImageMap ?: @{},
+              kScreenCharCCMNextKeyKey: @(ccmNextKey),
+              kScreenCharHasWrappedKey: @(hasWrapped) };
+}
+
+void ScreenCharDecodeRestorableState(NSDictionary *state) {
+    NSDictionary *stateComplexCharMap = state[kScreenCharComplexCharMapKey];
+    if (!complexCharMap && stateComplexCharMap.count) {
+        complexCharMap = [[NSMutableDictionary alloc] init];
+    }
+    for (id key in stateComplexCharMap) {
+        if (!complexCharMap[key]) {
+            complexCharMap[key] = stateComplexCharMap[key];
+        }
+    }
+
+    NSDictionary *stateInverseMap = state[kScreenCharInverseComplexCharMapKey];
+    if (!inverseComplexCharMap && stateInverseMap.count) {
+        inverseComplexCharMap = [[NSMutableDictionary alloc] init];
+    }
+    for (id key in stateInverseMap) {
+        if (!inverseComplexCharMap[key]) {
+            inverseComplexCharMap[key] = stateInverseMap[key];
+        }
+    }
+    NSDictionary *imageMap = state[kScreenCharImageMapKey];
+    AllocateImageMapsIfNeeded();
+    for (id key in imageMap) {
+        gEncodableImageMap[key] = imageMap[key];
+        gImages[key] = [[[ImageInfo alloc] initWithDictionary:imageMap[key]] autorelease];
+    }
+    ccmNextKey = [state[kScreenCharCCMNextKeyKey] intValue];
+    hasWrapped = [state[kScreenCharHasWrappedKey] boolValue];
+}

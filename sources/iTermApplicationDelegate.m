@@ -72,6 +72,8 @@ static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 
+static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
+
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
 NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
@@ -179,6 +181,7 @@ static BOOL hasBecomeActive = NO;
         // iTerm2 was launched with "open file" that turns off startup activities.
         return;
     }
+    [[iTermController sharedInstance] setStartingUp:YES];
     // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
     if (ranAutoLaunchScript == NO &&
         [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
@@ -220,6 +223,8 @@ static BOOL hasBecomeActive = NO;
             }
         }
     }
+    [[iTermController sharedInstance] setStartingUp:NO];
+    [PTYSession removeAllRegisteredSessions];
     ranAutoLaunchScript = YES;
 }
 
@@ -1177,6 +1182,18 @@ static BOOL hasBecomeActive = NO;
     }
     // Set the state of the control to the new true state.
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
+}
+
+- (void)application:(NSApplication *)app willEncodeRestorableState:(NSCoder *)coder {
+    DLog(@"app encoding restorable state");
+    [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
+}
+
+- (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
+    NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
+    if (screenCharState) {
+        ScreenCharDecodeRestorableState(screenCharState);
+    }
 }
 
 // Debug logging
