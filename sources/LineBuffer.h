@@ -197,6 +197,9 @@
 // Absolute block number of last block.
 - (int)largestAbsoluteBlockNumber;
 
+// Returns a dictionary with the contents of the line buffer. If it is more than 10k lines @ 80 columns
+// then it is truncated. The data is a weak reference and will be invalid if the line buffer is
+// changed.
 - (NSDictionary *)dictionary;
 
 @end

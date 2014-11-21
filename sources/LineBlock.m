@@ -1195,7 +1195,7 @@ static int Search(NSString* needle,
 
 - (NSDictionary *)dictionary {
     NSData *rawBufferData = [NSData dataWithBytesNoCopy:raw_buffer
-                                                        length:sizeof(screen_char_t) * buffer_size
+                                                        length:[self rawSpaceUsed] * sizeof(screen_char_t)
                                                   freeWhenDone:NO];
     return @{ kLineBlockRawBufferKey: rawBufferData,
               kLineBlockBufferStartOffsetKey: @(buffer_start - raw_buffer),

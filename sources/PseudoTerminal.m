@@ -6931,8 +6931,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return YES;
 }
 
-- (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state
-{
+- (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state {
     if (doNotSetRestorableState_) {
         // The window has been destroyed beyond recognition at this point and
         // there is nothing to save.
@@ -6950,7 +6949,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     if (wellFormed_) {
         [lastArrangement_ release];
+        NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
         lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES] retain];
+        NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
+        NSLog(@"Time to encode state for window %@: %@", self, @(end - start));
     }
     // For whatever reason, setting the value in the coder here doesn't work but
     // doing it in PTYWindow immediately after this method's caller returns does

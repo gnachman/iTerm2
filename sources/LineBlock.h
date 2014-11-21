@@ -203,6 +203,8 @@ int NumberOfFullLines(screen_char_t* buffer,
 // The slow code for dealing with DWCs is run only if mayHaveDwc is YES.
 int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc);
 
+// Returns a dictionary with the contents of this block. The data is a weak reference and will be
+// invalid if the block is changed.
 - (NSDictionary *)dictionary;
 
 @end
