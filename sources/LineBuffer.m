@@ -41,6 +41,7 @@ static NSString *const kLineBufferCursorRawlineKey = @"Cursor Rawline";
 static NSString *const kLineBufferMaxLinesKey = @"Max Lines";
 static NSString *const kLineBufferNumDroppedBlocksKey = @"Num Dropped Blocks";
 static NSString *const kLineBufferDroppedCharsKey = @"Dropped Chars";
+static NSString *const kLineBufferTruncatedKey = @"Truncated";
 
 static const int kLineBufferVersion = 1;
 
@@ -96,6 +97,15 @@ static const int kLineBufferVersion = 1;
             return nil;
         }
         blocks = [[NSMutableArray alloc] init];
+        block_size = [dictionary[kLineBufferBlockSizeKey] intValue];
+        cursor_x = [dictionary[kLineBufferCursorXKey] intValue];
+        cursor_rawline = [dictionary[kLineBufferCursorRawlineKey] intValue];
+        max_lines = [dictionary[kLineBufferMaxLinesKey] intValue];
+        num_dropped_blocks = [dictionary[kLineBufferNumDroppedBlocksKey] intValue];
+        droppedChars = [dictionary[kLineBufferDroppedCharsKey] longLongValue];
+        if ([dictionary[kLineBufferTruncatedKey] boolValue]) {
+            [self appendMessage:@"Restored Content Truncated"];
+        }
         for (NSDictionary *blockDictionary in dictionary[kLineBufferBlocksKey]) {
             LineBlock *block = [LineBlock blockWithDictionary:blockDictionary];
             if (!block) {
@@ -104,12 +114,7 @@ static const int kLineBufferVersion = 1;
             }
             [blocks addObject:block];
         }
-        block_size = [dictionary[kLineBufferBlockSizeKey] intValue];
-        cursor_x = [dictionary[kLineBufferCursorXKey] intValue];
-        cursor_rawline = [dictionary[kLineBufferCursorRawlineKey] intValue];
-        max_lines = [dictionary[kLineBufferMaxLinesKey] intValue];
-        num_dropped_blocks = [dictionary[kLineBufferNumDroppedBlocksKey] intValue];
-        droppedChars = [dictionary[kLineBufferDroppedCharsKey] longLongValue];
+        [self appendMessage:@"Session Restored"];
     }
     return self;
 }
@@ -1062,23 +1067,55 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return blocks.count + num_dropped_blocks;
 }
 
-- (NSArray *)codedBlocks {
+- (NSArray *)codedBlocks:(BOOL *)truncated {
+    *truncated = NO;
     NSMutableArray *codedBlocks = [NSMutableArray array];
-    for (LineBlock *block in blocks) {
-        [codedBlocks addObject:[block dictionary]];
+    int numLines = 0;
+    for (LineBlock *block in [blocks reverseObjectEnumerator]) {
+        [codedBlocks insertObject:[block dictionary] atIndex:0];
+
+        // This caps the amount of data at a reasonable but arbitrary size.
+        numLines += [block getNumLinesWithWrapWidth:80];
+        if (numLines >= 10000) {
+            *truncated = YES;
+            break;
+        }
     }
     return codedBlocks;
 }
 
 - (NSDictionary *)dictionary {
+    BOOL truncated;
+    NSArray *codedBlocks = [self codedBlocks:&truncated];
     return @{ kLineBufferVersionKey: @(kLineBufferVersion),
-              kLineBufferBlocksKey: [self codedBlocks],
+              kLineBufferBlocksKey: codedBlocks,
+              kLineBufferTruncatedKey: @(truncated),
               kLineBufferBlockSizeKey: @(block_size),
               kLineBufferCursorXKey: @(cursor_x),
               kLineBufferCursorRawlineKey: @(cursor_rawline),
               kLineBufferMaxLinesKey: @(max_lines),
               kLineBufferNumDroppedBlocksKey: @(num_dropped_blocks),
               kLineBufferDroppedCharsKey: @(droppedChars) };
+}
+
+- (void)appendMessage:(NSString *)message {
+    if (!blocks.count) {
+        [self _addBlockOfSize:message.length];
+    }
+    screen_char_t buffer[message.length];
+    int len;
+    screen_char_t fg = { 0 };
+    screen_char_t bg = { 0 };
+    fg.faint = YES;
+    bg.backgroundColor = kiTermScreenCharAnsiColorBlue;
+    bg.backgroundColorMode = ColorModeNormal;
+    StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO);
+    [self appendLine:buffer
+              length:len
+             partial:NO
+               width:num_wrapped_lines_width > 0 ?: 80
+           timestamp:[NSDate timeIntervalSinceReferenceDate]
+        continuation:bg];
 }
 
 @end

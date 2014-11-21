@@ -3997,10 +3997,12 @@ static void SwapInt(int *a, int *b) {
     [lineBuffer dropExcessLinesWithWidth:self.width];
     [linebuffer_ release];
     linebuffer_ = lineBuffer;
+    int linesRestored = MIN(MAX(0, currentGrid_.size.height - 1),
+                            [lineBuffer numLinesWithWidth:self.width]);
     [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
-                            maxLinesToRestore:MIN(currentGrid_.size.height,
-                                                  [lineBuffer numLinesWithWidth:self.width])];
+                            maxLinesToRestore:linesRestored];
+    currentGrid_.cursorY = linesRestored + 1;
 }
 
 @end
