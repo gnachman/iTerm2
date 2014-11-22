@@ -1106,9 +1106,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int len;
     screen_char_t fg = { 0 };
     screen_char_t bg = { 0 };
-    fg.faint = YES;
-    bg.backgroundColor = kiTermScreenCharAnsiColorBlue;
-    bg.backgroundColorMode = ColorModeNormal;
+    fg.foregroundColor = ALTSEM_REVERSED_DEFAULT;
+    fg.backgroundColorMode = ColorModeAlternate;
+    bg.backgroundColor = ALTSEM_REVERSED_DEFAULT;
+    bg.backgroundColorMode = ColorModeAlternate;
     StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO);
     [self appendLine:buffer
               length:len
