@@ -85,6 +85,21 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     gDeadImage = [[NSImage imageNamed:@"dead"] retain];
 }
 
++ (void)_recursiveRegisterSessionsInArrangement:(NSDictionary *)arrangement {
+    if ([arrangement[TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        for (NSDictionary *subviewDict in arrangement[SUBVIEWS]) {
+            [self _recursiveRegisterSessionsInArrangement:subviewDict];
+        }
+    } else {
+        // Is a session view
+        [PTYSession registerSessionInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+    }
+}
+
++ (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
+    [self _recursiveRegisterSessionsInArrangement:arrangement[TAB_ARRANGEMENT_ROOT]];
+}
+
 - (BOOL)updatePaneTitles
 {
     BOOL anyChange = NO;

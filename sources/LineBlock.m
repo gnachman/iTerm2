@@ -105,7 +105,7 @@ NSString *const kLineBlockMetadataKey = @"Metadata";
     return self;
 }
 
-- (void) dealloc
+- (void)dealloc
 {
     if (raw_buffer) {
         free(raw_buffer);

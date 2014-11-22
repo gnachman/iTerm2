@@ -99,6 +99,7 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name";  // manually set name
 static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
 static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
+static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
@@ -112,6 +113,10 @@ static NSString *const kVariableKeySessionRows = @"session.rows";
 static NSString *const kVariableKeySessionHostname = @"session.hostname";
 static NSString *const kVariableKeySessionUsername = @"session.username";
 static NSString *const kVariableKeySessionPath = @"session.path";
+
+// Maps Session GUID to saved contents. Only live between window restoration
+// and the end of startup activities.
+static NSMutableDictionary *gRegisteredSessionContents;
 
 // Rate limit for checking instant (partial-line) triggers, in seconds.
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
@@ -136,6 +141,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @property(nonatomic, copy) NSArray *arguments;
 @property(nonatomic, copy) NSDictionary *environment;
 @property(nonatomic, assign) BOOL isUTF8;
+@property(nonatomic, copy) NSString *guid;
 @end
 
 @implementation PTYSession {
@@ -292,6 +298,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     BOOL _suppressAllOutput;
 }
 
++ (void)registerSessionInArrangement:(NSDictionary *)arrangement {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gRegisteredSessionContents = [[NSMutableDictionary alloc] init];
+    });
+    NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
+    NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
+    if (guid && contents) {
+        DLog(@"Register arrangement for %@", arrangement[SESSION_ARRANGEMENT_GUID]);
+        gRegisteredSessionContents[guid] = contents;
+    }
+}
+
++ (void)removeAllRegisteredSessions {
+    DLog(@"Remove all registered sessions");
+    [gRegisteredSessionContents removeAllObjects];
+}
+
 - (id)init {
     self = [super init];
     if (self) {
@@ -332,7 +356,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _commands = [[NSMutableArray alloc] init];
         _directories = [[NSMutableArray alloc] init];
         _hosts = [[NSMutableArray alloc] init];
-
+        // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
+        _guid = [[ProfileModel freshGuid] retain];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -417,6 +442,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_directories release];
     [_hosts release];
     [_bellRate release];
+    [_guid release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -607,8 +633,30 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (!n) {
         [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
                          forObjectType:objectType];
-        if (arrangement[SESSION_ARRANGEMENT_CONTENTS]) {
-            [aSession setContentsFromLineBufferDictionary:arrangement[SESSION_ARRANGEMENT_CONTENTS]];
+
+        // |contents| will be non-nil when using system window restoration.
+        NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
+
+        // GUID will be set for new saved arrangements since late 2014.
+        // Older versions won't be able to associate saved state with windows from a saved arrangement.
+        if (arrangement[SESSION_ARRANGEMENT_GUID]) {
+            NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
+            if (guid && gRegisteredSessionContents[guid]) {
+                // There was a registered session with this guid. This session was created by
+                // restoring a saved arrangement and there is saved content registered.
+                contents = gRegisteredSessionContents[guid];
+                aSession.guid = guid;
+                DLog(@"Assign guid %@ to session %@ which will have its contents restored from registered contents",
+                     guid, aSession);
+            } else if ([[iTermController sharedInstance] startingUp]) {
+                // Use the arrangement's guid during startup because we assume the session is being
+                // restored from a saved arrangement.
+                aSession.guid = guid;
+                DLog(@"Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
+            }
+        }
+        if (contents && [iTermAdvancedSettingsModel restoreWindowContents]) {
+            [aSession setContentsFromLineBufferDictionary:contents];
         }
     } else {
         NSString *title = [state objectForKey:@"title"];
@@ -2783,6 +2831,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (includeContents) {
         result[SESSION_ARRANGEMENT_CONTENTS] = [_screen contentsDictionary];
     }
+    result[SESSION_ARRANGEMENT_GUID] = _guid;
 
     NSString* pwd = [_shell getWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";

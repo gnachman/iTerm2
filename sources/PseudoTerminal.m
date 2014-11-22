@@ -64,6 +64,7 @@
 #include <unistd.h>
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
+NSString *const kPseudoTerminalStateRestorationWindowArrangementKey = @"ptyarrangement";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
 static NSString *const kShowFullscreenTabBarKey = @"ShowFullScreenTabBar";
@@ -288,6 +289,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 @synthesize shouldShowToolbelt = shouldShowToolbelt_;
+
++ (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
+    for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
+        [PTYTab registerSessionsInArrangement:tabArrangement];
+    }
+}
 
 + (NSInteger)styleMaskForWindowType:(iTermWindowType)windowType {
     switch (windowType) {
@@ -1960,8 +1967,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return [self loadArrangement:arrangement sessions:nil];
 }
 
-- (BOOL)loadArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions
-{
+- (BOOL)loadArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions {
     PtyLog(@"Restore arrangement: %@", arrangement);
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS]) {
         desiredRows_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS] intValue];
@@ -6919,7 +6925,8 @@ int aGlobalVariable;
 
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
 {
-    [self loadArrangement:[state decodeObjectForKey:@"ptyarrangement"] sessions:nil];
+    [self loadArrangement:[state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey]
+                 sessions:nil];
 }
 
 - (BOOL)allTabsAreTmuxTabs
@@ -6951,7 +6958,9 @@ int aGlobalVariable;
     if (wellFormed_) {
         [lastArrangement_ release];
         NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
-        lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES includingContents:YES] retain];
+        BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
+        lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES
+                                             includingContents:includeContents] retain];
         NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
         NSLog(@"Time to encode state for window %@: %@", self, @(end - start));
     }

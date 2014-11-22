@@ -4003,6 +4003,7 @@ static void SwapInt(int *a, int *b) {
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:linesRestored];
     currentGrid_.cursorY = linesRestored + 1;
+    currentGrid_.cursorX = 0;
 }
 
 @end

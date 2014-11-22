@@ -19,6 +19,8 @@
 @class TmuxController;
 
 extern NSString *const kCurrentSessionDidChange;
+// The key used for a window's arrangement in encoding restorable state.
+extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 // This class is 1:1 with windows. It controls the tabs, the window's fulscreen
 // status, and coordinates resizing of sessions (either session-initiated
@@ -62,6 +64,11 @@ extern NSString *const kCurrentSessionDidChange;
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
                                sessions:(NSArray *)sessions;
+
+// Register all sessions in the window's arrangement so their contents can be
+// rescued later if the window is created from a saved arrangement. Called
+// during state restoration.
++ (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
 
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"

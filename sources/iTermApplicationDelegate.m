@@ -181,6 +181,7 @@ static BOOL hasBecomeActive = NO;
         // iTerm2 was launched with "open file" that turns off startup activities.
         return;
     }
+    [[iTermController sharedInstance] setStartingUp:YES];
     // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
     if (ranAutoLaunchScript == NO &&
         [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
@@ -222,6 +223,8 @@ static BOOL hasBecomeActive = NO;
             }
         }
     }
+    [[iTermController sharedInstance] setStartingUp:NO];
+    [PTYSession removeAllRegisteredSessions];
     ranAutoLaunchScript = YES;
 }
 

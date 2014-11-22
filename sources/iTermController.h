@@ -59,6 +59,7 @@
 
 @property(nonatomic, readonly) iTermRestorableSession *currentRestorableSession;
 @property(nonatomic, assign) BOOL selectionRespectsSoftBoundaries;
+@property(nonatomic, assign) BOOL startingUp;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
