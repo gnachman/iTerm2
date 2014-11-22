@@ -76,7 +76,7 @@ canary:
 release:
 	echo "You need to unlock your keychain for signing to work."
 	security unlock-keychain ~/Library/Keychains/login.keychain
-	cp release-iTerm2.plist iTerm2.plist
+	cp plists/release-iTerm2.plist plists/iTerm2.plist
 	make Deployment
 
 force:
