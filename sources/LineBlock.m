@@ -74,12 +74,12 @@ NSString *const kLineBlockMetadataKey = @"Metadata";
             }
         }
         NSData *data = dictionary[kLineBlockRawBufferKey];
-        raw_buffer = (screen_char_t*)malloc(data.length);
+        buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
+        raw_buffer = (screen_char_t *)malloc(buffer_size * sizeof(screen_char_t));
         memmove(raw_buffer, data.bytes, data.length);
         buffer_start = raw_buffer + [dictionary[kLineBlockBufferStartOffsetKey] intValue];
         start_offset = [dictionary[kLineBlockStartOffsetKey] intValue];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
-        buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
 
         NSArray *cllArray = dictionary[kLineBlockCLLKey];
         cll_capacity = [cllArray count];
