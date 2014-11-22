@@ -477,6 +477,8 @@ typedef enum {
 
 - (void)tryToRunShellIntegrationInstaller;
 
+- (NSDictionary *)arrangementWithContents:(BOOL)includeContents;
+
 #pragma mark - Private for use by Scripting category
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;

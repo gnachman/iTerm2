@@ -2761,8 +2761,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (NSDictionary*)arrangement
-{
+- (NSDictionary *)arrangement {
+    return [self arrangementWithContents:NO];
+}
+
+- (NSDictionary *)arrangementWithContents:(BOOL)includeContents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
@@ -2777,7 +2780,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (_windowTitle) {
         result[SESSION_ARRANGEMENT_WINDOW_TITLE] = _windowTitle;
     }
-    result[SESSION_ARRANGEMENT_CONTENTS] = [_screen contentsDictionary];
+    if (includeContents) {
+        result[SESSION_ARRANGEMENT_CONTENTS] = [_screen contentsDictionary];
+    }
 
     NSString* pwd = [_shell getWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";

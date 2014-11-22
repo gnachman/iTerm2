@@ -262,6 +262,8 @@
 
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
 
+- (NSDictionary*)arrangementWithContents:(BOOL)contents;
+
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
 // This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when

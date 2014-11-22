@@ -716,7 +716,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultsHotkeyWindowArrangement];
         return;
     }
-    NSDictionary *arrangement = [term arrangementExcludingTmuxTabs:YES];
+    NSDictionary *arrangement = [term arrangementExcludingTmuxTabs:YES includingContents:NO];
     [[NSUserDefaults standardUserDefaults] setObject:arrangement
                                               forKey:kUserDefaultsHotkeyWindowArrangement];
 }

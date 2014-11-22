@@ -1882,18 +1882,11 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-+ (NSDictionary*)frameToDict:(NSRect)frame
-{
-    return [NSDictionary dictionaryWithObjectsAndKeys:
-            [NSNumber numberWithDouble:frame.origin.x],
-            TAB_X,
-            [NSNumber numberWithDouble:frame.origin.y],
-            TAB_Y,
-            [NSNumber numberWithDouble:frame.size.width],
-            TAB_WIDTH,
-            [NSNumber numberWithDouble:frame.size.height],
-            TAB_HEIGHT,
-            nil];
++ (NSDictionary*)frameToDict:(NSRect)frame {
+    return @{ TAB_X: @(frame.origin.x),
+              TAB_Y: @(frame.origin.y),
+              TAB_WIDTH: @(frame.size.width),
+              TAB_HEIGHT: @(frame.size.height) };
 }
 
 + (NSRect)dictToFrame:(NSDictionary*)dict
@@ -1904,8 +1897,10 @@ static NSString* FormatRect(NSRect r) {
                       [[dict objectForKey:TAB_HEIGHT] doubleValue]);
 }
 
-- (NSDictionary*)_recursiveArrangement:(NSView*)view idMap:(NSMutableDictionary*)idMap isMaximized:(BOOL)isMaximized
-{
+- (NSDictionary*)_recursiveArrangement:(NSView*)view
+                                 idMap:(NSMutableDictionary*)idMap
+                           isMaximized:(BOOL)isMaximized
+                              contents:(BOOL)contents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     if (isMaximized) {
         [result setObject:[NSNumber numberWithBool:YES]
@@ -1919,7 +1914,10 @@ static NSString* FormatRect(NSRect r) {
         [result setObject:[NSNumber numberWithBool:[splitView isVertical]] forKey:SPLITTER_IS_VERTICAL];
         NSMutableArray* subviews = [NSMutableArray arrayWithCapacity:[[splitView subviews] count]];
         for (NSView* subview in [splitView subviews]) {
-            [subviews addObject:[self _recursiveArrangement:subview idMap:idMap isMaximized:isMaximized]];
+            [subviews addObject:[self _recursiveArrangement:subview
+                                                      idMap:idMap
+                                                isMaximized:isMaximized
+                                                   contents:contents]];
         }
         [result setObject:subviews forKey:SUBVIEWS];
     } else {
@@ -1927,7 +1925,7 @@ static NSString* FormatRect(NSRect r) {
         if (sessionView.session) {
             result[TAB_ARRANGEMENT_VIEW_TYPE] = VIEW_TYPE_SESSIONVIEW;
             result[TAB_ARRANGEMENT_SESSIONVIEW_FRAME] = [PTYTab frameToDict:[view frame]];
-            result[TAB_ARRANGEMENT_SESSION] = [[sessionView session] arrangement];
+            result[TAB_ARRANGEMENT_SESSION] = [[sessionView session] arrangementWithContents:contents];
             result[TAB_ARRANGEMENT_IS_ACTIVE] = @([sessionView session] == [self activeSession]);
 
             if (idMap) {
@@ -2272,14 +2270,15 @@ static NSString* FormatRect(NSRect r) {
     return theTab;
 }
 
-- (NSDictionary*)arrangementWithMap:(NSMutableDictionary*)idMap
-{
+- (NSDictionary *)arrangementWithMap:(NSMutableDictionary*)idMap
+                            contents:(BOOL)contents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:1];
     BOOL temp = isMaximized_;
     if (isMaximized_) {
         [self unmaximize];
     }
-    [result setObject:[self _recursiveArrangement:root_ idMap:idMap isMaximized:temp] forKey:TAB_ARRANGEMENT_ROOT];
+    result[TAB_ARRANGEMENT_ROOT] =
+        [self _recursiveArrangement:root_ idMap:idMap isMaximized:temp contents:contents];
     NSColor *color = [[realParentWindow_ tabBarControl] tabColorForTabViewItem:tabViewItem_];
     if (color) {
         [result setObject:[[self class] htmlNameForColor:color] forKey:TAB_ARRANGEMENT_COLOR];
@@ -2291,9 +2290,12 @@ static NSString* FormatRect(NSRect r) {
     return result;
 }
 
-- (NSDictionary*)arrangement
-{
-    return [self arrangementWithMap:nil];
+- (NSDictionary*)arrangement {
+    return [self arrangementWithMap:nil contents:NO];
+}
+
+- (NSDictionary*)arrangementWithContents:(BOOL)contents {
+    return [self arrangementWithMap:nil contents:contents];
 }
 
 + (BOOL)_recursiveBuildViewMap:(NSMutableDictionary *)viewMap
@@ -3039,7 +3041,7 @@ static NSString* FormatRect(NSRect r) {
     savedSize_ = [temp frame].size;
 
     idMap_ = [[NSMutableDictionary alloc] init];
-    savedArrangement_ = [[self arrangementWithMap:idMap_] retain];
+    savedArrangement_ = [[self arrangementWithMap:idMap_ contents:NO] retain];
     isMaximized_ = YES;
 
     NSRect oldRootFrame = [root_ frame];

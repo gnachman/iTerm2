@@ -198,7 +198,8 @@ extern NSString *const kCurrentSessionDidChange;
 - (NSDictionary*)arrangement;
 
 // Returns the arrangement for this window, optionally excluding tmux tabs.
-- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux;
+- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
+                             includingContents:(BOOL)includeContents;
 
 // Update a window's tmux layout, such as when fonts or scrollbar sizes change.
 - (void)refreshTmuxLayoutsAndWindow;
