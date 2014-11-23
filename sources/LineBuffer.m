@@ -42,6 +42,7 @@ static NSString *const kLineBufferMaxLinesKey = @"Max Lines";
 static NSString *const kLineBufferNumDroppedBlocksKey = @"Num Dropped Blocks";
 static NSString *const kLineBufferDroppedCharsKey = @"Dropped Chars";
 static NSString *const kLineBufferTruncatedKey = @"Truncated";
+static NSString *const kLineBufferMayHaveDWCKey = @"May Have Double Width Character";
 
 static const int kLineBufferVersion = 1;
 
@@ -96,6 +97,7 @@ static const int kLineBufferVersion = 1;
             [self autorelease];
             return nil;
         }
+        _mayHaveDoubleWidthCharacter = [dictionary[kLineBufferMayHaveDWCKey] boolValue];
         blocks = [[NSMutableArray alloc] init];
         block_size = [dictionary[kLineBufferBlockSizeKey] intValue];
         cursor_x = [dictionary[kLineBufferCursorXKey] intValue];
@@ -1055,6 +1057,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     theCopy->num_wrapped_lines_cache = num_wrapped_lines_cache;
     theCopy->num_wrapped_lines_width = num_wrapped_lines_width;
     theCopy->droppedChars = droppedChars;
+    theCopy.mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
 
     return theCopy;
 }
@@ -1095,7 +1098,8 @@ static int RawNumLines(LineBuffer* buffer, int width) {
               kLineBufferCursorRawlineKey: @(cursor_rawline),
               kLineBufferMaxLinesKey: @(max_lines),
               kLineBufferNumDroppedBlocksKey: @(num_dropped_blocks),
-              kLineBufferDroppedCharsKey: @(droppedChars) };
+              kLineBufferDroppedCharsKey: @(droppedChars),
+              kLineBufferMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter) };
 }
 
 - (void)appendMessage:(NSString *)message {

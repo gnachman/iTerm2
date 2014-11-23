@@ -3984,10 +3984,7 @@ static void SwapInt(int *a, int *b) {
 
 - (NSDictionary *)contentsDictionary {
     LineBuffer *temp = [[linebuffer_ newAppendOnlyCopy] autorelease];
-    [self appendScreen:currentGrid_
-          toScrollback:temp
-        withUsedHeight:[currentGrid_ numberOfLinesUsed]
-             newHeight:currentGrid_.size.height];
+    [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed] toLineBuffer:temp];
     return [temp dictionary];
 }
 

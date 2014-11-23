@@ -19,6 +19,7 @@ NSString *const kLineBlockBufferSizeKey = @"Buffer Size";
 NSString *const kLineBlockCLLKey = @"Cumulative Line Lengths";
 NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
+NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 
 @implementation LineBlock
 
@@ -66,7 +67,8 @@ NSString *const kLineBlockMetadataKey = @"Metadata";
                                    kLineBlockBufferSizeKey,
                                    kLineBlockCLLKey,
                                    kLineBlockMetadataKey,
-                                   kLineBlockIsPartialKey];
+                                   kLineBlockIsPartialKey,
+                                   kLineBlockMayHaveDWCKey ];
         for (NSString *requiredKey in requiredKeys) {
             if (!dictionary[requiredKey]) {
                 [self autorelease];
@@ -101,6 +103,7 @@ NSString *const kLineBlockMetadataKey = @"Metadata";
 
         cll_entries = cll_capacity;
         is_partial = [dictionary[kLineBlockIsPartialKey] boolValue];
+        _mayHaveDoubleWidthCharacter = [dictionary[kLineBlockMayHaveDWCKey] boolValue];
     }
     return self;
 }
@@ -1204,7 +1207,8 @@ static int Search(NSString* needle,
               kLineBlockBufferSizeKey: @(buffer_size),
               kLineBlockCLLKey: [self cumulativeLineLengthsArray],
               kLineBlockIsPartialKey: @(is_partial),
-              kLineBlockMetadataKey: [self metadataArray] };
+              kLineBlockMetadataKey: [self metadataArray],
+              kLineBlockMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter) };
 }
 
 @end
