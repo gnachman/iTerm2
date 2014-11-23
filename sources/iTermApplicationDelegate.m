@@ -1185,6 +1185,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)application:(NSApplication *)app willEncodeRestorableState:(NSCoder *)coder {
+    DLog(@"app encoding restorable state");
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
 }
 

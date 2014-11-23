@@ -263,6 +263,7 @@ int GetOrSetComplexChar(NSString* str)
     }
     complexCharMap[number] = str;
     inverseComplexCharMap[str] = number;
+    [NSApp invalidateRestorableState];
     if (ccmNextKey == 0xf000) {
         ccmNextKey = 1;
         hasWrapped = YES;

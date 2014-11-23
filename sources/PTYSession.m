@@ -1424,6 +1424,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)finishedHandlingNewOutputOfLength:(int)length {
     _lastOutput = [NSDate timeIntervalSinceReferenceDate];
     _newOutput = YES;
+    [self.tab.realParentWindow invalidateRestorableState];
 
     // Make sure the screen gets redrawn soonish
     _updateDisplayUntil = [NSDate timeIntervalSinceReferenceDate] + 10;
