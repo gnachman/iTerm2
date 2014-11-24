@@ -153,8 +153,8 @@ static NSImage* allOutputSuppressedImage;
     double _charWidthWithoutSpacing;
     double _charHeightWithoutSpacing;
 
-    PTYFontInfo *primaryFont;
-    PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
+    PTYFontInfo *_primaryFont;
+    PTYFontInfo *_secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
 
     // Underlined selection range (inclusive of all values), indicating clickable url.
     VT100GridWindowedRange _underlineRange;
@@ -452,8 +452,8 @@ static NSImage* allOutputSuppressedImage;
 
         pointer_ = [[PointerController alloc] init];
         pointer_.delegate = self;
-        primaryFont = [[PTYFontInfo alloc] init];
-        secondaryFont = [[PTYFontInfo alloc] init];
+        _primaryFont = [[PTYFontInfo alloc] init];
+        _secondaryFont = [[PTYFontInfo alloc] init];
 
         _findContext = [[FindContext alloc] init];
         if ([pointer_ viewShouldTrackTouches]) {
@@ -510,8 +510,8 @@ static NSImage* allOutputSuppressedImage;
     [findString_ release];
     [_unfocusedSelectionColor release];
 
-    [primaryFont release];
-    [secondaryFont release];
+    [_primaryFont release];
+    [_secondaryFont release];
 
     [_markedTextAttributes release];
     [_markedText release];
@@ -858,18 +858,16 @@ static NSImage* allOutputSuppressedImage;
     }
 }
 
-- (NSFont *)font
-{
-    return primaryFont.font;
+- (NSFont *)font {
+    return _primaryFont.font;
 }
 
-- (NSFont *)nonAsciiFont
-{
-    return _useNonAsciiFont ? secondaryFont.font : primaryFont.font;
+- (NSFont *)nonAsciiFont {
+    return _useNonAsciiFont ? _secondaryFont.font : _primaryFont.font;
 }
 
 - (NSFont *)nonAsciiFontEvenIfNotUsed {
-    return secondaryFont.font;
+    return _secondaryFont.font;
 }
 
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
@@ -907,32 +905,32 @@ static NSImage* allOutputSuppressedImage;
     _charWidth = ceil(_charWidthWithoutSpacing * horizontalSpacing);
     _lineHeight = ceil(_charHeightWithoutSpacing * verticalSpacing);
 
-    primaryFont.font = aFont;
-    primaryFont.baselineOffset = baseline;
-    primaryFont.boldVersion = [primaryFont computedBoldVersion];
-    primaryFont.italicVersion = [primaryFont computedItalicVersion];
-    primaryFont.boldItalicVersion = [primaryFont computedBoldItalicVersion];
+    _primaryFont.font = aFont;
+    _primaryFont.baselineOffset = baseline;
+    _primaryFont.boldVersion = [_primaryFont computedBoldVersion];
+    _primaryFont.italicVersion = [_primaryFont computedItalicVersion];
+    _primaryFont.boldItalicVersion = [_primaryFont computedBoldItalicVersion];
 
-    secondaryFont.font = nonAsciiFont;
-    secondaryFont.baselineOffset = baseline;
-    secondaryFont.boldVersion = [secondaryFont computedBoldVersion];
-    secondaryFont.italicVersion = [secondaryFont computedItalicVersion];
-    secondaryFont.boldItalicVersion = [secondaryFont computedBoldItalicVersion];
+    _secondaryFont.font = nonAsciiFont;
+    _secondaryFont.baselineOffset = baseline;
+    _secondaryFont.boldVersion = [_secondaryFont computedBoldVersion];
+    _secondaryFont.italicVersion = [_secondaryFont computedItalicVersion];
+    _secondaryFont.boldItalicVersion = [_secondaryFont computedBoldItalicVersion];
 
     // Force the secondary font to use the same baseline as the primary font.
-    secondaryFont.baselineOffset = primaryFont.baselineOffset;
-    if (secondaryFont.boldVersion) {
-        if (primaryFont.boldVersion) {
-            secondaryFont.boldVersion.baselineOffset = primaryFont.boldVersion.baselineOffset;
+    _secondaryFont.baselineOffset = _primaryFont.baselineOffset;
+    if (_secondaryFont.boldVersion) {
+        if (_primaryFont.boldVersion) {
+            _secondaryFont.boldVersion.baselineOffset = _primaryFont.boldVersion.baselineOffset;
         } else {
-            secondaryFont.boldVersion.baselineOffset = secondaryFont.baselineOffset;
+            _secondaryFont.boldVersion.baselineOffset = _secondaryFont.baselineOffset;
         }
     }
-    if (secondaryFont.italicVersion) {
-        if (primaryFont.italicVersion) {
-            secondaryFont.italicVersion.baselineOffset = primaryFont.italicVersion.baselineOffset;
+    if (_secondaryFont.italicVersion) {
+        if (_primaryFont.italicVersion) {
+            _secondaryFont.italicVersion.baselineOffset = _primaryFont.italicVersion.baselineOffset;
         } else {
-            secondaryFont.italicVersion.baselineOffset = secondaryFont.baselineOffset;
+            _secondaryFont.italicVersion.baselineOffset = _secondaryFont.baselineOffset;
         }
     }
 
@@ -4016,7 +4014,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSDictionary *attributes =
         @{ NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapSelectedText],
            NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapSelection],
-           NSFontAttributeName: primaryFont.font };
+           NSFontAttributeName: _primaryFont.font };
     NSSize size = [selectedText sizeWithAttributes:attributes];
     size.height = _lineHeight;
     NSImage* image = [[[NSImage alloc] initWithSize:size] autorelease];
@@ -6013,7 +6011,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     PTYFontInfo* theFont;
     BOOL usePrimary = !_useNonAsciiFont || (!complex && (ch < 128));
 
-    PTYFontInfo *rootFontInfo = usePrimary ? primaryFont : secondaryFont;
+    PTYFontInfo *rootFontInfo = usePrimary ? _primaryFont : _secondaryFont;
     theFont = rootFontInfo;
 
     if (isBold && isItalic) {
