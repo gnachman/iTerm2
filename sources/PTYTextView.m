@@ -171,7 +171,7 @@ static NSImage* allOutputSuppressedImage;
     // blinking cursor
     BOOL _blinkingItemsVisible;
     NSTimeInterval _timeOfLastBlink;
-    int oldCursorX, oldCursorY;
+    VT100GridCoord _oldCursorPosition;
 
     // trackingRect tab
     NSTrackingArea *trackingArea;
@@ -7734,7 +7734,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Update the last time the cursor moved.
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (column != oldCursorX || row != oldCursorY) {
+    if (column != _oldCursorPosition.x || row != _oldCursorPosition.y) {
         lastTimeCursorMoved_ = now;
     }
     BOOL shouldShowCursor = [self shouldShowCursor];
@@ -7799,8 +7799,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
 
-    oldCursorX = column;
-    oldCursorY = row;
+    _oldCursorPosition = VT100GridCoordMake(column, row);
     [selectedFont_ release];
     selectedFont_ = nil;
 }
