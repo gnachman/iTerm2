@@ -188,7 +188,7 @@ static const int kBadgeRightMargin = 10;
     int _lastAccessibilityCursorX;
     int _lastAccessibiltyAbsoluteCursorY;
 
-    BOOL changedSinceLastExpose_;
+    BOOL _changedSinceLastExpose;
 
     // The string last searched for.
     NSString* findString_;
@@ -5715,8 +5715,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)getAndResetChangedSinceLastExpose
 {
-    BOOL temp = changedSinceLastExpose_;
-    changedSinceLastExpose_ = NO;
+    BOOL temp = _changedSinceLastExpose;
+    _changedSinceLastExpose = NO;
     return temp;
 }
 
@@ -8400,7 +8400,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     if (foundDirty && [_dataSource shouldSendContentsChangedNotification]) {
-        changedSinceLastExpose_ = YES;
+        _changedSinceLastExpose = YES;
         [_delegate textViewPostTabContentsChangedNotification];
     }
 
