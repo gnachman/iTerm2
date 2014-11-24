@@ -3982,6 +3982,27 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
+- (NSDictionary *)contentsDictionary {
+    LineBuffer *temp = [[linebuffer_ newAppendOnlyCopy] autorelease];
+    [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed] toLineBuffer:temp];
+    return [temp dictionary];
+}
+
+- (void)appendFromDictionary:(NSDictionary *)dictionary {
+    LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
+    [lineBuffer setMaxLines:maxScrollbackLines_];
+    [lineBuffer dropExcessLinesWithWidth:self.width];
+    [linebuffer_ release];
+    linebuffer_ = lineBuffer;
+    int linesRestored = MIN(MAX(0, currentGrid_.size.height - 1),
+                            [lineBuffer numLinesWithWidth:self.width]);
+    [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
+                              withDefaultChar:[currentGrid_ defaultChar]
+                            maxLinesToRestore:linesRestored];
+    currentGrid_.cursorY = linesRestored + 1;
+    currentGrid_.cursorX = 0;
+}
+
 @end
 
 @implementation VT100Screen (Testing)
