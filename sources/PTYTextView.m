@@ -142,8 +142,8 @@ static NSImage* allOutputSuppressedImage;
     BOOL _inputMethodIsInserting;
     NSRange _inputMethodSelectedRange;
     NSRange _inputMethodMarkedRange;
-    NSDictionary *markedTextAttributes;
-    NSAttributedString *markedText;
+    NSDictionary *_markedTextAttributes;
+    NSAttributedString *_markedText;
 
     BOOL _useSmartCursorColor;
 
@@ -403,7 +403,7 @@ static NSImage* allOutputSuppressedImage;
         _selection.delegate = self;
         _oldSelection = [_selection copy];
         _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
-        markedText = nil;
+        _markedText = nil;
         gettimeofday(&lastBlink, NULL);
         [[self window] useOptimizedDrawing:YES];
 
@@ -513,8 +513,8 @@ static NSImage* allOutputSuppressedImage;
     [primaryFont release];
     [secondaryFont release];
 
-    [markedTextAttributes release];
-    [markedText release];
+    [_markedTextAttributes release];
+    [_markedText release];
 
     [selectionScrollTimer release];
 
@@ -746,16 +746,14 @@ static NSImage* allOutputSuppressedImage;
     [self refresh];
 }
 
-- (NSDictionary*)markedTextAttributes
-{
-    return markedTextAttributes;
+- (NSDictionary*)markedTextAttributes {
+    return _markedTextAttributes;
 }
 
 - (void)setMarkedTextAttributes:(NSDictionary *)attr
 {
-    [markedTextAttributes autorelease];
-    [attr retain];
-    markedTextAttributes = attr;
+    [_markedTextAttributes autorelease];
+    _markedTextAttributes = [attr retain];
 }
 
 - (void)updateScrollerForBackgroundColor
@@ -5111,8 +5109,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self hasMarkedText]) {
         DLog(@"insertText: clear marked text");
         _inputMethodMarkedRange = NSMakeRange(0, 0);
-        [markedText release];
-        markedText=nil;
+        [_markedText release];
+        _markedText = nil;
         imeOffset = 0;
     }
     if (![_selection hasSelection]) {
@@ -5137,7 +5135,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // Legacy NSTextInput method, probably not used.
 - (void)insertText:(id)aString {
-    [self insertText:aString replacementRange:NSMakeRange(0, [markedText length])];
+    [self insertText:aString replacementRange:NSMakeRange(0, [_markedText length])];
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
@@ -5147,18 +5145,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // TODO: Respect replacementRange
-- (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange replacementRange:(NSRange)replacementRange
-{
+- (void)setMarkedText:(id)aString
+        selectedRange:(NSRange)selRange
+     replacementRange:(NSRange)replacementRange {
     DLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
-    [markedText release];
+    [_markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
-        markedText = [[NSAttributedString alloc] initWithString:[aString string]
-                                                     attributes:[self markedTextAttributes]];
+        _markedText = [[NSAttributedString alloc] initWithString:[aString string]
+                                                      attributes:[self markedTextAttributes]];
     } else {
-        markedText = [[NSAttributedString alloc] initWithString:aString
-                                                     attributes:[self markedTextAttributes]];
+        _markedText = [[NSAttributedString alloc] initWithString:aString
+                                                      attributes:[self markedTextAttributes]];
     }
-    _inputMethodMarkedRange = NSMakeRange(0,[markedText length]);
+    _inputMethodMarkedRange = NSMakeRange(0, [_markedText length]);
     _inputMethodSelectedRange = selRange;
 
     // Compute the proper imeOffset.
@@ -5175,7 +5174,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     } while (dirtEnd > dirtMax);
 
-    if (![markedText length]) {
+    if (![_markedText length]) {
         // The call to refresh won't invalidate the IME rect because
         // there is no IME any more. If the user backspaced over the only
         // char in the IME buffer then this causes it be erased.
@@ -5200,8 +5199,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self scrollEnd];
 }
 
-- (BOOL)hasMarkedText
-{
+- (BOOL)hasMarkedText {
     BOOL result;
 
     if (_inputMethodMarkedRange.length > 0) {
@@ -5244,7 +5242,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (actualRange) {
         *actualRange = aRange;
     }
-    return [markedText attributedSubstringFromRange:NSMakeRange(0, aRange.length)];
+    return [_markedText attributedSubstringFromRange:NSMakeRange(0, aRange.length)];
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)thePoint {
@@ -7147,7 +7145,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (![self hasMarkedText]) {
         return 0;
     }
-    NSString* str = [markedText string];
+    NSString* str = [_markedText string];
 
     const int maxLen = [str length] * kMaxParts;
     screen_char_t buf[maxLen];
@@ -7191,7 +7189,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     // draw any text for NSTextInput
     if ([self hasMarkedText]) {
-        NSString* str = [markedText string];
+        NSString* str = [_markedText string];
         const int maxLen = [str length] * kMaxParts;
         screen_char_t buf[maxLen];
         screen_char_t fg = {0}, bg = {0};
