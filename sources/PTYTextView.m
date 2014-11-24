@@ -149,9 +149,9 @@ static NSImage* allOutputSuppressedImage;
 
     // geometry
     double _lineHeight;
-    double lineWidth;
     double _charWidth;
-    double charWidthWithoutSpacing, charHeightWithoutSpacing;
+    double _charWidthWithoutSpacing;
+    double _charHeightWithoutSpacing;
 
     PTYFontInfo *primaryFont;
     PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
@@ -900,12 +900,12 @@ static NSImage* allOutputSuppressedImage;
                              verticalSpacing:1.0
                                     baseline:&baseline];
 
-    charWidthWithoutSpacing = sz.width;
-    charHeightWithoutSpacing = sz.height;
+    _charWidthWithoutSpacing = sz.width;
+    _charHeightWithoutSpacing = sz.height;
     _horizontalSpacing = horizontalSpacing;
     _verticalSpacing = verticalSpacing;
-    _charWidth = ceil(charWidthWithoutSpacing * horizontalSpacing);
-    _lineHeight = ceil(charHeightWithoutSpacing * verticalSpacing);
+    _charWidth = ceil(_charWidthWithoutSpacing * horizontalSpacing);
+    _lineHeight = ceil(_charHeightWithoutSpacing * verticalSpacing);
 
     primaryFont.font = aFont;
     primaryFont.baselineOffset = baseline;
@@ -7439,10 +7439,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSSize)cursorSize {
     NSSize size;
-    if (_charWidth < charWidthWithoutSpacing) {
+    if (_charWidth < _charWidthWithoutSpacing) {
         size.width = _charWidth;
     } else {
-        size.width = charWidthWithoutSpacing;
+        size.width = _charWidthWithoutSpacing;
     }
     size.height = [self cursorHeight];
     return size;
