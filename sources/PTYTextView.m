@@ -169,7 +169,7 @@ static NSImage* allOutputSuppressedImage;
     SearchResult *_lastFindCoord;
 
     // blinking cursor
-    BOOL blinkShow;
+    BOOL _blinkingItemsVisible;
     struct timeval lastBlink;
     int oldCursorX, oldCursorY;
 
@@ -6210,7 +6210,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                               [_colorMap color:attrs.color withContrastAgainst:bgColor]);
         }
         BOOL drawable;
-        if (blinkShow || ![self _charBlinks:theLine[i]]) {
+        if (_blinkingItemsVisible || ![self _charBlinks:theLine[i]]) {
             // This char is either not blinking or during the "on" cycle of the
             // blink. It should be drawn.
 
@@ -7422,7 +7422,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [NSDate timeIntervalSinceReferenceDate] - lastTimeCursorMoved_ > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
         // in the tab, and the cursor has not moved for half a second.
-        return blinkShow;
+        return _blinkingItemsVisible;
     } else {
         return YES;
     }
@@ -8694,7 +8694,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     double timeDelta = now.tv_sec - lastBlink.tv_sec;
     timeDelta += (now.tv_usec - lastBlink.tv_usec) / 1000000.0;
     if (timeDelta >= [iTermAdvancedSettingsModel timeBetweenBlinks]) {
-        blinkShow = !blinkShow;
+        _blinkingItemsVisible = !_blinkingItemsVisible;
         lastBlink = now;
         redrawBlink = YES;
 
