@@ -194,7 +194,7 @@ static const int kBadgeRightMargin = 10;
     NSString *_lastStringSearchedFor;
 
     // The set of SearchResult objects for which matches have been found.
-    NSMutableArray* findResults_;
+    NSMutableArray *_searchResults;
 
     // The next offset into findResults_ where values from findResults_ should
     // be added to the map.
@@ -443,7 +443,7 @@ static const int kBadgeRightMargin = 10;
     [_colorMap release];
     [_cachedBackgroundColor release];
     [resultMap_ release];
-    [findResults_ release];
+    [_searchResults release];
     [_lastStringSearchedFor release];
     [_unfocusedSelectionColor release];
 
@@ -5241,7 +5241,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int start;
     int stride;
     if (forward) {
-        start = [findResults_ count] - 1;
+        start = [_searchResults count] - 1;
         stride = -1;
         if (!_lastFindCoord) {
             minPos = -1;
@@ -5260,8 +5260,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL found = NO;
     BOOL redraw = NO;
     int i = start;
-    for (int j = 0; !found && j < [findResults_ count]; j++) {
-        SearchResult* r = [findResults_ objectAtIndex:i];
+    for (int j = 0; !found && j < [_searchResults count]; j++) {
+        SearchResult* r = [_searchResults objectAtIndex:i];
         long long pos = r->startX + (long long)r->absStartY * width;
         if (!found &&
             ((maxPos >= 0 && pos <= maxPos) ||
@@ -5283,9 +5283,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         i += stride;
     }
 
-    if (!found && !foundResult_ && [findResults_ count] > 0) {
+    if (!found && !foundResult_ && [_searchResults count] > 0) {
         // Wrap around
-        SearchResult* r = [findResults_ objectAtIndex:start];
+        SearchResult* r = [_searchResults objectAtIndex:start];
         found = YES;
         [_selection clearSelection];
         VT100GridCoordRange theRange =
@@ -5348,7 +5348,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     assert([self findInProgress]);
     if (_findInProgress) {
         // Collect more results.
-        more = [_dataSource continueFindAllResults:findResults_
+        more = [_dataSource continueFindAllResults:_searchResults
                                          inContext:[_dataSource findContext]];
         *progress = [[_dataSource findContext] progress];
     } else {
@@ -5358,12 +5358,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         _findInProgress = NO;
     }
     // Add new results to map.
-    for (int i = nextOffset_; i < [findResults_ count]; i++) {
-        SearchResult* r = [findResults_ objectAtIndex:i];
+    for (int i = nextOffset_; i < [_searchResults count]; i++) {
+        SearchResult* r = [_searchResults objectAtIndex:i];
         [self addSearchResult:r];
         redraw = YES;
     }
-    nextOffset_ = [findResults_ count];
+    nextOffset_ = [_searchResults count];
 
     // Highlight next result if needed.
     if (searchingForNextResult_) {
@@ -5441,7 +5441,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Initialize state with new values.
         findRegex_ = regex;
         findIgnoreCase_ = ignoreCase;
-        findResults_ = [[NSMutableArray alloc] init];
+        _searchResults = [[NSMutableArray alloc] init];
         searchingForNextResult_ = YES;
         _lastStringSearchedFor = [aString copy];
 
@@ -5452,8 +5452,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)clearHighlights {
     [_lastStringSearchedFor release];
     _lastStringSearchedFor = nil;
-    [findResults_ release];
-    findResults_ = nil;
+    [_searchResults release];
+    _searchResults = nil;
     nextOffset_ = 0;
     foundResult_ = NO;
     [resultMap_ removeAllObjects];
