@@ -160,7 +160,7 @@ static NSImage* allOutputSuppressedImage;
     VT100GridWindowedRange _underlineRange;
     BOOL _mouseDown;
     BOOL _mouseDragged;
-    BOOL mouseDownOnSelection;
+    BOOL _mouseDownOnSelection;
     BOOL mouseDownOnImage;
     ImageInfo *theImage;
     NSEvent *mouseDownEvent;
@@ -3030,7 +3030,7 @@ NSMutableArray* screens=0;
     [mouseDownEvent autorelease];
     mouseDownEvent = [event retain];
     _mouseDragged = NO;
-    mouseDownOnSelection = NO;
+    _mouseDownOnSelection = NO;
     mouseDownOnImage = NO;
 
     int clickCount = [event clickCount];
@@ -3056,7 +3056,7 @@ NSMutableArray* screens=0;
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up (if a cmd-drag follows)
             DLog(@"mouse down on selection");
-            mouseDownOnSelection = YES;
+            _mouseDownOnSelection = YES;
             _selection.appending = NO;
             return YES;
         } else {
@@ -3312,7 +3312,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         ([event modifierFlags] & NSCommandKeyMask) &&
         dragThresholdMet) {
         [self _dragImage:theImage forEvent:event];
-    } else if (mouseDownOnSelection == YES &&
+    } else if (_mouseDownOnSelection == YES &&
         ([event modifierFlags] & NSCommandKeyMask) &&
         dragThresholdMet) {
         DLog(@"drag and drop a selection");
@@ -3332,7 +3332,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"drag during cmd click");
         return;
     }
-    if (mouseDownOnSelection == YES &&
+    if (_mouseDownOnSelection == YES &&
         ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == (NSAlternateKeyMask | NSCommandKeyMask) &&
         !dragThresholdMet) {
         // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
