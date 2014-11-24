@@ -205,7 +205,7 @@ static const int kBadgeRightMargin = 10;
 
     // Maps an absolute line number (NSNumber longlong) to an NSData bit array
     // with one bit per cell indicating whether that cell is a match.
-    NSMutableDictionary* resultMap_;
+    NSMutableDictionary *_highlightMap;
 
     // True if the last search was forward, flase if backward.
     BOOL searchingForward_;
@@ -380,7 +380,7 @@ static const int kBadgeRightMargin = 10;
                                                    object:nil];
 
         _numberOfIMELines = 0;
-        resultMap_ = [[NSMutableDictionary alloc] init];
+        _highlightMap = [[NSMutableDictionary alloc] init];
 
         _trouter = [[Trouter alloc] init];
         _trouter.delegate = self;
@@ -442,7 +442,7 @@ static const int kBadgeRightMargin = 10;
     _colorMap.delegate = nil;
     [_colorMap release];
     [_cachedBackgroundColor release];
-    [resultMap_ release];
+    [_highlightMap release];
     [_searchResults release];
     [_lastStringSearchedFor release];
     [_unfocusedSelectionColor release];
@@ -5200,7 +5200,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int width = [_dataSource width];
     for (long long y = searchResult->absStartY; y <= searchResult->absEndY; y++) {
         NSNumber* key = [NSNumber numberWithLongLong:y];
-        NSMutableData* data = [resultMap_ objectForKey:key];
+        NSMutableData* data = _highlightMap[key];
         BOOL set = NO;
         if (!data) {
             data = [NSMutableData dataWithLength:(width / 8 + 1)];
@@ -5225,7 +5225,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
         if (set) {
-            [resultMap_ setObject:data forKey:key];
+            _highlightMap[key] = data;
         }
     }
 }
@@ -5456,7 +5456,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _searchResults = nil;
     _numberOfProcessedSearchResults = 0;
     _haveRevealedSearchResult = NO;
-    [resultMap_ removeAllObjects];
+    [_highlightMap removeAllObjects];
     searchingForNextResult_ = NO;
     [self setNeedsDisplay:YES];
 }
@@ -6690,8 +6690,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     ColorMode bgColorMode = ColorModeNormal;
     BOOL bgselected = NO;
     BOOL isMatch = NO;
-    NSData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:line + [_dataSource totalScrollbackOverflow]]];
-    const char* matchBytes = [matches bytes];
+    NSData* matches = _highlightMap[@(line + [_dataSource totalScrollbackOverflow])];
+    const char *matchBytes = [matches bytes];
 
     // Iterate over each character in the line.
     // Go one past where we really need to go to simplify the code.  // TODO(georgen): Fix that.
@@ -8362,7 +8362,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (allDirty) {
         foundDirty = YES;
         for (int y = lineStart; y < lineEnd; y++) {
-            [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
+            [_highlightMap removeObjectForKey:@(y + totalScrollbackOverflow)];
         }
         [self setNeedsDisplayInRect:[self gridRect]];
 #ifdef DEBUG_DRAWING
@@ -8373,7 +8373,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
             if (range.length > 0) {
                 foundDirty = YES;
-                [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
+                [_highlightMap removeObjectForKey:@(y + totalScrollbackOverflow)];
                 [self setNeedsDisplayOnLine:y inRange:range];
 #ifdef DEBUG_DRAWING
                 NSLog(@"line %d has dirty characters", y);
