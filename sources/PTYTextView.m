@@ -191,7 +191,7 @@ static const int kBadgeRightMargin = 10;
     BOOL _changedSinceLastExpose;
 
     // The string last searched for.
-    NSString* findString_;
+    NSString *_lastStringSearchedFor;
 
     // The set of SearchResult objects for which matches have been found.
     NSMutableArray* findResults_;
@@ -444,7 +444,7 @@ static const int kBadgeRightMargin = 10;
     [_cachedBackgroundColor release];
     [resultMap_ release];
     [findResults_ release];
-    [findString_ release];
+    [_lastStringSearchedFor release];
     [_unfocusedSelectionColor release];
 
     [_primaryFont release];
@@ -5393,7 +5393,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     searchingForward_ = direction;
     findOffset_ = offset;
-    if ([findString_ isEqualToString:aString] &&
+    if ([_lastStringSearchedFor isEqualToString:aString] &&
         findRegex_ == regex &&
         findIgnoreCase_ == ignoreCase) {
         foundResult_ = NO;  // select the next item before/after the current selection.
@@ -5443,16 +5443,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         findIgnoreCase_ = ignoreCase;
         findResults_ = [[NSMutableArray alloc] init];
         searchingForNextResult_ = YES;
-        findString_ = [aString copy];
+        _lastStringSearchedFor = [aString copy];
 
         [self setNeedsDisplay:YES];
     }
 }
 
-- (void)clearHighlights
-{
-    [findString_ release];
-    findString_ = nil;
+- (void)clearHighlights {
+    [_lastStringSearchedFor release];
+    _lastStringSearchedFor = nil;
     [findResults_ release];
     findResults_ = nil;
     nextOffset_ = 0;
