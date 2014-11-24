@@ -69,8 +69,6 @@ static const double kCharWidthFractionOffset = 0.35;
 
 //#define DEBUG_DRAWING
 
-#define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
-
 // Drag-drop operation flags for different possible dropping operations.
 const unsigned int kUploadDragOperation = NSDragOperationCopy;
 const unsigned int kPasteDragOperation = NSDragOperationGeneric;
@@ -134,7 +132,7 @@ static NSImage* allOutputSuppressedImage;
     // implementation bug?
     // Fortunately, the draggingEntered and draggingUpdated methods
     // seem to return a real status, based on which we can set this flag.
-    BOOL extendedDragNDrop;
+    BOOL _extendedDragNDrop;
 
     // anti-alias flags
     BOOL asciiAntiAlias;
@@ -4807,16 +4805,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
           andOpenInBackground:NO];
 }
 
-//
-// Drag and Drop methods for our text view
-//
-
+#pragma mark - Drag and Drop
 //
 // Called when our drop area is entered
 //
-- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
-{
-    extendedDragNDrop = YES;
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
+    _extendedDragNDrop = YES;
 
     return [self dragOperationForSender:sender];
 }
@@ -4832,20 +4826,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 // Called when the dragged object leaves our drop area
 //
-- (void)draggingExited:(id <NSDraggingInfo>)sender
-{
+- (void)draggingExited:(id <NSDraggingInfo>)sender {
     // We don't do anything special, so let the parent NSTextView handle this.
     [super draggingExited:sender];
 
     // Reset our handler flag
-    extendedDragNDrop = NO;
+    _extendedDragNDrop = NO;
 }
 
 //
 // Called when the dragged item is about to be released in our drop area.
 //
-- (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender
-{
+- (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender {
     BOOL result;
 
     // Check if parent NSTextView knows how to handle this.
@@ -4902,7 +4894,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL res = NO;
 
     // If parent class does not know how to deal with this drag type, check if we do.
-    if (extendedDragNDrop) {
+    if (_extendedDragNDrop) {
         NSPasteboard *pb = [sender draggingPasteboard];
         NSArray *propertyList = nil;
         NSString *aString;
@@ -4978,15 +4970,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return res;
 }
 
-- (void)concludeDragOperation:(id <NSDraggingInfo>)sender
-{
+- (void)concludeDragOperation:(id <NSDraggingInfo>)sender {
     // If we did no handle the drag'n'drop, ask our parent to clean up
     // I really wish the concludeDragOperation would have a useful exit value.
-    if (!extendedDragNDrop) {
+    if (!_extendedDragNDrop) {
         [super concludeDragOperation:sender];
     }
 
-    extendedDragNDrop = NO;
+    _extendedDragNDrop = NO;
 }
 
 // Save method
