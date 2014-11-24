@@ -1204,12 +1204,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)hardStop {
     [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
     [_view release];
+    // -taskWasDeregistered will perform the corresponding release.
+    [self retain];
+    // -stop will cause -taskWasDeregistered to be called on a background thread.
     [_shell stop];
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
     _textview = nil;
-    [self retain];
 }
 
 - (BOOL)revive {
@@ -1328,8 +1330,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)taskWasDeregistered {
     DLog(@"taskWasDeregistered");
     // This is called on the background thread. After this is called, we won't get any more calls
-    // on the background thread and it is safe for us to be dealloc'ed.
-    [self release];
+    // on the background thread and it is safe for us to be dealloc'ed. This pairs with the retain
+    // in -hardStop. For sanity's sake, ensure dealloc gets called on the main thread.
+    [self performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
 }
 
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
