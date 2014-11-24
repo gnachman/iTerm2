@@ -324,7 +324,7 @@ static NSImage* allOutputSuppressedImage;
     // If set, the last-modified time of each line on the screen is shown on the right side of the display.
     BOOL _showTimestamps;
     float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
-    NSImage *markImage_;
+    NSImage *_markImage;
     NSImage *markErrImage_;
 
     // Point clicked, valid only during -validateMenuItem and calls made from
@@ -470,7 +470,7 @@ static NSImage* allOutputSuppressedImage;
             drawRectInterval_ = [[MovingAverage alloc] init];
         }
         [self viewDidChangeBackingProperties];
-        markImage_ = [[NSImage imageNamed:@"mark"] retain];
+        _markImage = [[NSImage imageNamed:@"mark"] retain];
         markErrImage_ = [[NSImage imageNamed:@"mark_err"] retain];
     }
     return self;
@@ -478,7 +478,7 @@ static NSImage* allOutputSuppressedImage;
 
 - (void)dealloc {
     [_selection release];
-    [markImage_ release];
+    [_markImage release];
     [markErrImage_ release];
     [drawRectDuration_ release];
     [drawRectInterval_ release];
@@ -6908,11 +6908,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Indicate marks in margin --
     VT100ScreenMark *mark = [_dataSource markOnLine:line];
     if (mark.isVisible) {
-        NSImage *image = mark.code ? markErrImage_ : markImage_;
-        CGFloat offset = (_lineHeight - markImage_.size.height) / 2.0;
+        NSImage *image = mark.code ? markErrImage_ : _markImage;
+        CGFloat offset = (_lineHeight - _markImage.size.height) / 2.0;
         [image drawAtPoint:NSMakePoint(leftMargin.origin.x,
                                        leftMargin.origin.y + offset)
-                  fromRect:NSMakeRect(0, 0, markImage_.size.width, markImage_.size.height)
+                  fromRect:NSMakeRect(0, 0, _markImage.size.width, _markImage.size.height)
                  operation:NSCompositeSourceOver
                   fraction:1.0];
     }
