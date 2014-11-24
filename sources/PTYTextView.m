@@ -196,9 +196,9 @@ static const int kBadgeRightMargin = 10;
     // The set of SearchResult objects for which matches have been found.
     NSMutableArray *_searchResults;
 
-    // The next offset into findResults_ where values from findResults_ should
+    // The next offset into _searchResults where values from _searchResults should
     // be added to the map.
-    int nextOffset_;
+    int _numberOfProcessedSearchResults;
 
     // True if a result has been highlighted & scrolled to.
     BOOL foundResult_;
@@ -5358,12 +5358,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         _findInProgress = NO;
     }
     // Add new results to map.
-    for (int i = nextOffset_; i < [_searchResults count]; i++) {
+    for (int i = _numberOfProcessedSearchResults; i < [_searchResults count]; i++) {
         SearchResult* r = [_searchResults objectAtIndex:i];
         [self addSearchResult:r];
         redraw = YES;
     }
-    nextOffset_ = [_searchResults count];
+    _numberOfProcessedSearchResults = [_searchResults count];
 
     // Highlight next result if needed.
     if (searchingForNextResult_) {
@@ -5454,7 +5454,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _lastStringSearchedFor = nil;
     [_searchResults release];
     _searchResults = nil;
-    nextOffset_ = 0;
+    _numberOfProcessedSearchResults = 0;
     foundResult_ = NO;
     [resultMap_ removeAllObjects];
     searchingForNextResult_ = NO;
