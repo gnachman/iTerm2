@@ -20,6 +20,7 @@ NSString *const kiTermIndicatorAlert = @"kiTermIndicatorAlert";
 NSString *const kiTermIndicatorAllOutputSuppressed = @"kiTermIndicatorAllOutputSuppressed";
 
 static const NSTimeInterval kFlashDuration = 0.3;
+CGFloat kiTermIndicatorStandardHeight = 20;
 
 @interface iTermIndicator : NSObject
 @property(nonatomic, retain) NSImage *image;

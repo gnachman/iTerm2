@@ -6549,7 +6549,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSSize visibleSize = [[self enclosingScrollView] documentVisibleRect].size;
     NSSize imageSize = image.size;
     NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - kBadgeRightMargin,
-                                    textViewSize.height - visibleSize.height,
+                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight,
                                     imageSize.width,
                                     imageSize.height);
     NSRect intersection = NSIntersectionRect(rect, destination);

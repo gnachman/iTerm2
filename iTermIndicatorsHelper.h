@@ -18,6 +18,8 @@ extern NSString *const kiTermIndicatorCoprocess;
 extern NSString *const kiTermIndicatorAlert;
 extern NSString *const kiTermIndicatorAllOutputSuppressed;
 
+extern CGFloat kiTermIndicatorStandardHeight;
+
 @protocol iTermIndicatorsHelperDelegate <NSObject>
 
 - (void)setNeedsDisplay:(BOOL)needsDisplay;
