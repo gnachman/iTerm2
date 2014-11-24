@@ -185,8 +185,8 @@ static const int kBadgeRightMargin = 10;
     int _numberOfIMELines;
 
     // Last position that accessibility was read up to.
-    int accX;
-    int accY;
+    int _lastAccessibilityCursorX;
+    int _lastAccessibiltyAbsoluteCursorY;
 
     BOOL changedSinceLastExpose_;
 
@@ -1505,13 +1505,13 @@ NSMutableArray* screens=0;
     }
     NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
     long long absCursorY = [_dataSource cursorY] + [_dataSource numberOfLines] + [_dataSource totalScrollbackOverflow] - [_dataSource height];
-    if ([_dataSource cursorX] != accX ||
-        absCursorY != accY) {
+    if ([_dataSource cursorX] != _lastAccessibilityCursorX ||
+        absCursorY != _lastAccessibiltyAbsoluteCursorY) {
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedTextChangedNotification);
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedRowsChangedNotification);
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedColumnsChangedNotification);
-        accX = [_dataSource cursorX];
-        accY = absCursorY;
+        _lastAccessibilityCursorX = [_dataSource cursorX];
+        _lastAccessibiltyAbsoluteCursorY = absCursorY;
         if (UAZoomEnabled()) {
             CGRect viewRect = NSRectToCGRect([self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
             CGRect selectedRect = NSRectToCGRect([self.window convertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
