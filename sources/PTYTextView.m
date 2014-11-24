@@ -163,7 +163,7 @@ static NSImage* allOutputSuppressedImage;
     BOOL _mouseDownOnSelection;
     BOOL _mouseDownOnImage;
     ImageInfo *_imageBeingClickedOn;
-    NSEvent *mouseDownEvent;
+    NSEvent *_mouseDownEvent;
 
     // Find cursor. Only the start coordinate is used. Is nil if there is no cursor.
     SearchResult *_lastFindCoord;
@@ -478,8 +478,7 @@ static NSImage* allOutputSuppressedImage;
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [_selection release];
     [markImage_ release];
     [markErrImage_ release];
@@ -488,10 +487,8 @@ static NSImage* allOutputSuppressedImage;
     [_lastFindCoord release];
     [_smartSelectionRules release];
 
-    if (mouseDownEvent != nil) {
-        [mouseDownEvent release];
-        mouseDownEvent = nil;
-    }
+    [_mouseDownEvent release];
+    _mouseDownEvent = nil;
 
     if (trackingArea) {
         [self removeTrackingArea:trackingArea];
@@ -3027,8 +3024,8 @@ NSMutableArray* screens=0;
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
     }
 
-    [mouseDownEvent autorelease];
-    mouseDownEvent = [event retain];
+    [_mouseDownEvent autorelease];
+    _mouseDownEvent = [event retain];
     _mouseDragged = NO;
     _mouseDownOnSelection = NO;
     _mouseDownOnImage = NO;
@@ -3282,7 +3279,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int x = clickPoint.x;
     int y = clickPoint.y;
 
-    NSPoint mouseDownLocation = [mouseDownEvent locationInWindow];
+    NSPoint mouseDownLocation = [_mouseDownEvent locationInWindow];
     if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
         dragThresholdMet = YES;
     }
