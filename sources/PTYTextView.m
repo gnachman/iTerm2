@@ -321,7 +321,7 @@ static NSImage* allOutputSuppressedImage;
     // Current font. Only valid for the duration of a single drawing context.
     NSFont *selectedFont_;
 
-    // Used by _drawCursor: to remember the last time the cursor moved to avoid drawing a blinked-out
+    // Used by drawCursor: to remember the last time the cursor moved to avoid drawing a blinked-out
     // cursor while it's moving.
     NSTimeInterval lastTimeCursorMoved_;
 
@@ -2192,7 +2192,7 @@ NSMutableArray* screens=0;
                                height:[_dataSource height]
                          cursorHeight:[self cursorHeight]
                                   ctx:ctx];
-    [self _drawCursor];
+    [self drawCursor];
     anyBlinking |= [self _isCursorBlinking];
 
 #ifdef DEBUG_DRAWING
@@ -6904,7 +6904,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
     double selectedAlpha = 1.0 - _transparency;
-    double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - _transparency : 1.0;
+    double alphaIfTransparencyInUse = [self transparencyAlpha];
     BOOL reversed = [[_dataSource terminal] reverseVideo];
     NSColor *aColor = nil;
 
@@ -7441,305 +7441,392 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  alpha:1];
 }
 
-- (void)_drawCursor {
-    DLog(@"_drawCursor");
-
-    int WIDTH, HEIGHT;
-    screen_char_t* theLine;
-    int yStart, x1;
-    double cursorWidth, cursorHeight;
-    double curX, curY;
-    BOOL double_width;
-    double alpha = [self useTransparency] ? 1.0 - _transparency : 1.0;
-    const BOOL reversed = [[_dataSource terminal] reverseVideo];
-
-    WIDTH = [_dataSource width];
-    HEIGHT = [_dataSource height];
-    x1 = [_dataSource cursorX] - 1;
-    yStart = [_dataSource cursorY] - 1;
-
-    NSRect docVisibleRect = [[self enclosingScrollView] documentVisibleRect];
-    int lastVisibleLine = docVisibleRect.origin.y / [self lineHeight] + HEIGHT;
-    int cursorLine = [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - [_dataSource scrollbackOverflow];
-    if (cursorLine > lastVisibleLine) {
-        return;
-    }
-    if (cursorLine < 0) {
-        return;
-    }
-
-    if (charWidth < charWidthWithoutSpacing) {
-        cursorWidth = charWidth;
-    } else {
-        cursorWidth = charWidthWithoutSpacing;
-    }
-    cursorHeight = [self cursorHeight];
-
-    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-
-    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (x1 != oldCursorX || yStart != oldCursorY) {
-        lastTimeCursorMoved_ = now;
-    }
+- (BOOL)shouldShowCursor {
     if (_blinkingCursor &&
         [self isInKeyWindow] &&
         [_delegate textViewIsActiveSession] &&
-        now - lastTimeCursorMoved_ > 0.5) {
+        [NSDate timeIntervalSinceReferenceDate] - lastTimeCursorMoved_ > 0.5) {
         // Allow the cursor to blink if it is configured, the window is key, this session is active
         // in the tab, and the cursor has not moved for half a second.
-        showCursor = blinkShow;
+        return blinkShow;
     } else {
-        showCursor = YES;
+        return YES;
     }
+}
+
+- (NSSize)cursorSize {
+    NSSize size;
+    if (charWidth < charWidthWithoutSpacing) {
+        size.width = charWidth;
+    } else {
+        size.width = charWidthWithoutSpacing;
+    }
+    size.height = [self cursorHeight];
+    return size;
+}
+
+- (void)drawBoxCursorOfSize:(NSSize)cursorSize
+              isDoubleWidth:(BOOL)double_width
+                    atPoint:(NSPoint)cursorOrigin
+                     column:(int)column
+                 screenChar:(screen_char_t)screenChar
+            backgroundColor:(NSColor *)bgColor {
+    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    [bgColor set];
+    // draw the box
+    BOOL frameOnly;
+    DLog(@"draw cursor box at %f,%f size %fx%f",
+         (float)cursorOrigin.x, (float)cursorOrigin.y,
+         (float)ceil(cursorSize.width * (double_width ? 2 : 1)), cursorSize.height);
+    if (([self isInKeyWindow] && [_delegate textViewIsActiveSession]) ||
+        [_delegate textViewShouldDrawFilledInCursor]) {
+        frameOnly = NO;
+        NSRectFill(NSMakeRect(cursorOrigin.x,
+                              cursorOrigin.y,
+                              ceil(cursorSize.width * (double_width ? 2 : 1)),
+                              cursorSize.height));
+    } else {
+        frameOnly = YES;
+        NSFrameRect(NSMakeRect(cursorOrigin.x,
+                               cursorOrigin.y,
+                               ceil(cursorSize.width * (double_width ? 2 : 1)),
+                               cursorSize.height));
+    }
+    // draw any character on cursor if we need to
+    if (screenChar.code) {
+        // Have a char at the cursor position.
+        if (_useSmartCursorColor && !frameOnly) {
+            // Pick background color for text if is key window, otherwise use fg color for text.
+            int fgColor;
+            int fgGreen;
+            int fgBlue;
+            ColorMode fgColorMode;
+            BOOL fgBold;
+            BOOL fgFaint;
+            BOOL isBold;
+            BOOL isFaint;
+            NSColor* overrideColor = nil;
+            if ([self isInKeyWindow]) {
+                // Draw a character in background color when
+                // window is key.
+                fgColor = screenChar.backgroundColor;
+                fgGreen = screenChar.bgGreen;
+                fgBlue = screenChar.bgBlue;
+                fgColorMode = screenChar.backgroundColorMode;
+                fgBold = NO;
+                fgFaint = NO;
+            } else {
+                // Draw character in foreground color when there
+                // is just a frame around it.
+                fgColor = screenChar.foregroundColor;
+                fgGreen = screenChar.fgGreen;
+                fgBlue = screenChar.fgBlue;
+                fgColorMode = screenChar.foregroundColorMode;
+                fgBold = screenChar.bold;
+                fgFaint = screenChar.faint;
+            }
+            isBold = screenChar.bold;
+            isFaint = screenChar.faint;
+            
+            // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
+            NSColor* proposedForeground = [[self colorForCode:fgColor
+                                                        green:fgGreen
+                                                         blue:fgBlue
+                                                    colorMode:fgColorMode
+                                                         bold:fgBold
+                                                        faint:fgFaint
+                                                 isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+            CGFloat fgBrightness = [proposedForeground perceivedBrightness];
+            CGFloat bgBrightness = [bgColor perceivedBrightness];
+            if (!frameOnly && fabs(fgBrightness - bgBrightness) <
+                [iTermAdvancedSettingsModel smartCursorColorFgThreshold]) {
+                // foreground and background are very similar. Just use black and
+                // white.
+                if (bgBrightness < 0.5) {
+                    overrideColor =
+                    [_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:1
+                                                                             green:1
+                                                                              blue:1
+                                                                             alpha:1]];
+                } else {
+                    overrideColor =
+                    [_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:0
+                                                                             green:0
+                                                                              blue:0
+                                                                             alpha:1]];
+                }
+            }
+            
+            BOOL saved = _useBrightBold;
+            _useBrightBold = NO;
+            [self _drawCharacter:screenChar
+                         fgColor:fgColor
+                         fgGreen:fgGreen
+                          fgBlue:fgBlue
+                     fgColorMode:fgColorMode
+                          fgBold:isBold
+                         fgFaint:isFaint
+                             AtX:column * charWidth + MARGIN
+                               Y:cursorOrigin.y + cursorSize.height - lineHeight
+                     doubleWidth:double_width
+                   overrideColor:overrideColor
+                         context:ctx];
+            _useBrightBold = saved;
+        } else {
+            // Non-inverted cursor or cursor is frame
+            int theColor;
+            int theGreen;
+            int theBlue;
+            ColorMode theMode;
+            BOOL isBold;
+            BOOL isFaint;
+            if ([self isInKeyWindow]) {
+                theColor = ALTSEM_CURSOR;
+                theGreen = 0;
+                theBlue = 0;
+                theMode = ColorModeAlternate;
+            } else {
+                theColor = screenChar.foregroundColor;
+                theGreen = screenChar.fgGreen;
+                theBlue = screenChar.fgBlue;
+                theMode = screenChar.foregroundColorMode;
+            }
+            isBold = screenChar.bold;
+            isFaint = screenChar.faint;
+            [self _drawCharacter:screenChar
+                         fgColor:theColor
+                         fgGreen:theGreen
+                          fgBlue:theBlue
+                     fgColorMode:theMode
+                          fgBold:isBold
+                         fgFaint:isFaint
+                             AtX:column * charWidth + MARGIN
+                               Y:cursorOrigin.y + cursorSize.height - lineHeight
+                     doubleWidth:double_width
+                   overrideColor:nil
+                         context:ctx];
+        }
+    }
+}
+
+- (void)drawVerticalBarCursorOfSize:(NSSize)cursorSize
+                            atPoint:(NSPoint)cursorOrigin
+                              color:(NSColor *)color {
+    DLog(@"draw cursor vline at %f,%f size %fx%f",
+         (float)cursorOrigin.x, (float)cursorOrigin.y, (float)1, cursorSize.height);
+    [color set];
+    NSRectFill(NSMakeRect(cursorOrigin.x, cursorOrigin.y, 1, cursorSize.height));
+}
+
+- (void)drawUnderlineCursorOfSize:(NSSize)cursorSize
+                    isDoubleWidth:(BOOL)double_width
+                          atPoint:(NSPoint)cursorOrigin
+                            color:(NSColor *)color {
+    DLog(@"draw cursor underline at %f,%f size %fx%f",
+         (float)cursorOrigin.x, (float)cursorOrigin.y,
+         (float)ceil(cursorSize.width * (double_width ? 2 : 1)), 2.0);
+    [color set];
+    NSRectFill(NSMakeRect(cursorOrigin.x,
+                          cursorOrigin.y + lineHeight - 2,
+                          ceil(cursorSize.width * (double_width ? 2 : 1)),
+                          2));
+}
+
+- (NSColor *)smartCursorColorForChar:(screen_char_t)screenChar
+                            column:(int)column
+                         lineOfChars:(screen_char_t *)theLine {
+    int row = [_dataSource cursorY] - 1;
+
+    screen_char_t* lineAbove = nil;
+    screen_char_t* lineBelow = nil;
+    if (row > 0) {
+        lineAbove = [_dataSource getLineAtScreenIndex:row - 1];
+    }
+    if (row + 1 < [_dataSource height]) {
+        lineBelow = [_dataSource getLineAtScreenIndex:row + 1];
+    }
+
+    NSColor *bgColor;
+    if ([[_dataSource terminal] reverseVideo]) {
+        bgColor = [self colorForCode:screenChar.backgroundColor
+                               green:screenChar.bgGreen
+                                blue:screenChar.bgBlue
+                           colorMode:screenChar.backgroundColorMode
+                                bold:screenChar.bold
+                               faint:screenChar.faint
+                        isBackground:NO];
+    } else {
+        bgColor = [self colorForCode:screenChar.foregroundColor
+                               green:screenChar.fgGreen
+                                blue:screenChar.fgBlue
+                           colorMode:screenChar.foregroundColorMode
+                                bold:screenChar.bold
+                               faint:screenChar.faint
+                        isBackground:NO];
+    }
+    
+    NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
+    CGFloat bgBrightness = [bgColor perceivedBrightness];
+    if (column > 0) {
+        [constraints addObject:@([self _brightnessOfCharBackground:theLine[column - 1]])];
+    }
+    if (column < [_dataSource width]) {
+        [constraints addObject:@([self _brightnessOfCharBackground:theLine[column + 1]])];
+    }
+    if (lineAbove) {
+        [constraints addObject:@([self _brightnessOfCharBackground:lineAbove[column]])];
+    }
+    if (lineBelow) {
+        [constraints addObject:@([self _brightnessOfCharBackground:lineBelow[column]])];
+    }
+    if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] <
+        [iTermAdvancedSettingsModel smartCursorColorBgThreshold]) {
+        CGFloat b = [self _farthestValueFromAnyValueIn:constraints];
+        bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
+    }
+    return bgColor;
+}
+
+- (double)transparencyAlpha {
+    return [self useTransparency] ? 1.0 - _transparency : 1.0;
+}
+
+- (screen_char_t)charForCursorAtColumn:(int)column
+                                inLine:(screen_char_t *)theLine
+                           doubleWidth:(BOOL *)doubleWidth {
+    screen_char_t screenChar = theLine[column];
+    int width = [_dataSource width];
+    if (column == width) {
+        screenChar = theLine[column - 1];
+        screenChar.code = 0;
+        screenChar.complexChar = NO;
+    }
+    if (screenChar.code) {
+        if (screenChar.code == DWC_RIGHT && column > 0) {
+            column--;
+            screenChar = theLine[column];
+        }
+        *doubleWidth = (column < width - 1) && (theLine[column+1].code == DWC_RIGHT);
+    } else {
+        *doubleWidth = NO;
+    }
+    return screenChar;
+}
+
+- (BOOL)cursorInDocumentVisibleRect {
+    NSRect docVisibleRect = [[self enclosingScrollView] documentVisibleRect];
+    int lastVisibleLine = docVisibleRect.origin.y / [self lineHeight] + [_dataSource height];
+    int cursorLine = ([_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] -
+                      [_dataSource scrollbackOverflow]);
+    if (cursorLine > lastVisibleLine) {
+        return NO;
+    }
+    if (cursorLine < 0) {
+        return NO;
+    }
+    return YES;
+}
+
+// screenChar isn't directly inferrable from theLine because it gets tweaked for various edge cases.
+- (NSColor *)backgroundColorForCursorOnLine:(screen_char_t *)theLine
+                                   atColumn:(int)column
+                                 screenChar:(screen_char_t)screenChar {
+    if ([self isFindingCursor]) {
+        DLog(@"Use random cursor color");
+        return [self _randomColor];
+    }
+
+    CGFloat alpha = [self transparencyAlpha];
+    if (_useSmartCursorColor) {
+        return [[self smartCursorColorForChar:screenChar
+                                         column:column
+                                    lineOfChars:theLine] colorWithAlphaComponent:alpha];
+    } else {
+        return [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:alpha];
+    }
+}
+
+- (void)drawCursor {
+    DLog(@"drawCursor");
+
+    int width = [_dataSource width];
+    int height = [_dataSource height];
+    int column = [_dataSource cursorX] - 1;
+    int row = [_dataSource cursorY] - 1;
+
+    if (![self cursorInDocumentVisibleRect]) {
+        return;
+    }
+
+    // Update the last time the cursor moved.
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (column != oldCursorX || row != oldCursorY) {
+        lastTimeCursorMoved_ = now;
+    }
+    showCursor = [self shouldShowCursor];
 
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor.
-    DLog(@"_drawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, x1=%d, yStart=%d, WIDTH=%d, HEIGHT=%d",
-         (int)[self hasMarkedText], (int)_cursorVisible, (int)showCursor, (int)x1, (int)yStart, (int)WIDTH, (int)HEIGHT);
-    if (![self hasMarkedText] && _cursorVisible) {
-        if (showCursor && x1 <= WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
-            // get the cursor line
-            screen_char_t* lineAbove = nil;
-            screen_char_t* lineBelow = nil;
-            theLine = [_dataSource getLineAtScreenIndex:yStart];
-            if (yStart > 0) {
-                lineAbove = [_dataSource getLineAtScreenIndex:yStart - 1];
-            }
-            if (yStart < HEIGHT) {
-                lineBelow = [_dataSource getLineAtScreenIndex:yStart + 1];
-            }
-            double_width = 0;
-            screen_char_t screenChar = theLine[x1];
-            if (x1 == WIDTH) {
-                screenChar = theLine[x1 - 1];
-                screenChar.code = 0;
-                screenChar.complexChar = NO;
-            }
-            int aChar = screenChar.code;
-            if (aChar) {
-                if (aChar == DWC_RIGHT && x1 > 0) {
-                    x1--;
-                    screenChar = theLine[x1];
-                    aChar = screenChar.code;
-                }
-                double_width = (x1 < WIDTH-1) && (theLine[x1+1].code == DWC_RIGHT);
-            }
-            curX = floor(x1 * charWidth + MARGIN);
-            curY = (yStart + [_dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
-            if ([self isFindingCursor]) {
-                NSPoint cp = [self globalCursorLocation];
-                if (!NSEqualPoints(findCursorView_.cursor, cp)) {
-                    findCursorView_.cursor = cp;
-                    [findCursorView_ setNeedsDisplay:YES];
-                }
-            }
-            NSColor *bgColor;
-            if (_useSmartCursorColor) {
-                if (reversed) {
-                    bgColor = [self colorForCode:screenChar.backgroundColor
-                                           green:screenChar.bgGreen
-                                            blue:screenChar.bgBlue
-                                       colorMode:screenChar.backgroundColorMode
-                                            bold:screenChar.bold
-                                           faint:screenChar.faint
-                                    isBackground:NO];
-                    bgColor = [bgColor colorWithAlphaComponent:alpha];
-                } else {
-                    bgColor = [self colorForCode:screenChar.foregroundColor
-                                           green:screenChar.fgGreen
-                                            blue:screenChar.fgBlue
-                                       colorMode:screenChar.foregroundColorMode
-                                            bold:screenChar.bold
-                                           faint:screenChar.faint
-                                    isBackground:NO];
-                    bgColor = [bgColor colorWithAlphaComponent:alpha];
-                }
+    DLog(@"drawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d, "
+         @"width=%d, height=%d",
+         (int)[self hasMarkedText], (int)_cursorVisible, (int)showCursor, column, row,
+         width, height);
+    if (![self hasMarkedText] &&
+        _cursorVisible &&
+        showCursor &&
+        column <= width &&
+        column >= 0 &&
+        row >= 0 &&
+        row < height) {
+        screen_char_t *theLine = [_dataSource getLineAtScreenIndex:row];
+        BOOL isDoubleWidth;
+        screen_char_t screenChar = [self charForCursorAtColumn:column
+                                                        inLine:theLine
+                                                   doubleWidth:&isDoubleWidth];
+        NSSize cursorSize = [self cursorSize];
+        NSPoint cursorOrigin =
+            NSMakePoint(floor(column * charWidth + MARGIN),
+                        (row + [_dataSource numberOfLines] - height + 1) * lineHeight - cursorSize.height);
 
-                NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
-                CGFloat bgBrightness = [bgColor perceivedBrightness];
-                if (x1 > 0) {
-                    [constraints addObject:@([self _brightnessOfCharBackground:theLine[x1 - 1]])];
-                }
-                if (x1 < WIDTH) {
-                    [constraints addObject:@([self _brightnessOfCharBackground:theLine[x1 + 1]])];
-                }
-                if (lineAbove) {
-                    [constraints addObject:@([self _brightnessOfCharBackground:lineAbove[x1]])];
-                }
-                if (lineBelow) {
-                    [constraints addObject:@([self _brightnessOfCharBackground:lineBelow[x1]])];
-                }
-                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < [iTermAdvancedSettingsModel smartCursorColorBgThreshold]) {
-                    CGFloat b = [self _farthestValueFromAnyValueIn:constraints];
-                    bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
-                }
-
-                [bgColor set];
-                DLog(@"Set cursor color=%@", bgColor);
-            } else {
-                bgColor = [_colorMap colorForKey:kColorMapCursor];
-                [[bgColor colorWithAlphaComponent:alpha] set];
-                DLog(@"Set cursor color=%@", [bgColor colorWithAlphaComponent:alpha]);
+        if ([self isFindingCursor]) {
+            NSPoint globalCursorLocation = [self globalCursorLocation];
+            if (!NSEqualPoints(findCursorView_.cursor, globalCursorLocation)) {
+                findCursorView_.cursor = globalCursorLocation;
+                [findCursorView_ setNeedsDisplay:YES];
             }
-            if ([self isFindingCursor]) {
-                [[self _randomColor] set];
-                DLog(@"Set random cursor color");
-            }
+        }
 
-            BOOL frameOnly;
-            switch (_cursorType) {
-                case CURSOR_BOX:
-                    // draw the box
-                    DLog(@"draw cursor box at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), cursorHeight);
-                    if (([self isInKeyWindow] && [_delegate textViewIsActiveSession]) ||
-                        [_delegate textViewShouldDrawFilledInCursor]) {
-                        frameOnly = NO;
-                        NSRectFill(NSMakeRect(curX,
-                                              curY,
-                                              ceil(cursorWidth * (double_width ? 2 : 1)),
-                                              cursorHeight));
-                    } else {
-                        frameOnly = YES;
-                        NSFrameRect(NSMakeRect(curX,
-                                               curY,
-                                               ceil(cursorWidth * (double_width ? 2 : 1)),
-                                               cursorHeight));
-                    }
-                    // draw any character on cursor if we need to
-                    if (aChar) {
-                        // Have a char at the cursor position.
-                        if (_useSmartCursorColor && !frameOnly) {
-                            // Pick background color for text if is key window, otherwise use fg color for text.
-                            int fgColor;
-                            int fgGreen;
-                            int fgBlue;
-                            ColorMode fgColorMode;
-                            BOOL fgBold;
-                            BOOL fgFaint;
-                            BOOL isBold;
-                            BOOL isFaint;
-                            NSColor* overrideColor = nil;
-                            if ([self isInKeyWindow]) {
-                                // Draw a character in background color when
-                                // window is key.
-                                fgColor = screenChar.backgroundColor;
-                                fgGreen = screenChar.bgGreen;
-                                fgBlue = screenChar.bgBlue;
-                                fgColorMode = screenChar.backgroundColorMode;
-                                fgBold = NO;
-                                fgFaint = NO;
-                            } else {
-                                // Draw character in foreground color when there
-                                // is just a frame around it.
-                                fgColor = screenChar.foregroundColor;
-                                fgGreen = screenChar.fgGreen;
-                                fgBlue = screenChar.fgBlue;
-                                fgColorMode = screenChar.foregroundColorMode;
-                                fgBold = screenChar.bold;
-                                fgFaint = screenChar.faint;
-                            }
-                            isBold = screenChar.bold;
-                            isFaint = screenChar.faint;
+        NSColor *bgColor;
+            bgColor = [self backgroundColorForCursorOnLine:theLine
+                                                  atColumn:column
+                                                screenChar:screenChar];
 
-                            // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
-                            NSColor* proposedForeground = [[self colorForCode:fgColor
-                                                                        green:fgGreen
-                                                                         blue:fgBlue
-                                                                    colorMode:fgColorMode
-                                                                         bold:fgBold
-                                                                        faint:fgFaint
-                                                                 isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-                            CGFloat fgBrightness = [proposedForeground perceivedBrightness];
-                            CGFloat bgBrightness = [bgColor perceivedBrightness];
-                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < [iTermAdvancedSettingsModel smartCursorColorFgThreshold]) {
-                                // foreground and background are very similar. Just use black and
-                                // white.
-                                if (bgBrightness < 0.5) {
-                                    overrideColor =
-                                        [_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:1
-                                                                                                 green:1
-                                                                                                  blue:1
-                                                                                                 alpha:1]];
-                                } else {
-                                    overrideColor =
-                                        [_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:0
-                                                                                                 green:0
-                                                                                                  blue:0
-                                                                                                 alpha:1]];
-                                }
-                            }
+        switch (_cursorType) {
+            case CURSOR_BOX:
+                [self drawBoxCursorOfSize:cursorSize
+                            isDoubleWidth:isDoubleWidth
+                                  atPoint:cursorOrigin
+                                   column:column
+                               screenChar:screenChar
+                          backgroundColor:bgColor];
 
-                            BOOL saved = _useBrightBold;
-                            _useBrightBold = NO;
-                            [self _drawCharacter:screenChar
-                                         fgColor:fgColor
-                                         fgGreen:fgGreen
-                                          fgBlue:fgBlue
-                                     fgColorMode:fgColorMode
-                                          fgBold:isBold
-                                         fgFaint:isFaint
-                                             AtX:x1 * charWidth + MARGIN
-                                               Y:curY + cursorHeight - lineHeight
-                                     doubleWidth:double_width
-                                   overrideColor:overrideColor
-                                         context:ctx];
-                            _useBrightBold = saved;
-                        } else {
-                            // Non-inverted cursor or cursor is frame
-                            int theColor;
-                            int theGreen;
-                            int theBlue;
-                            ColorMode theMode;
-                            BOOL isBold;
-                            BOOL isFaint;
-                            if ([self isInKeyWindow]) {
-                                theColor = ALTSEM_CURSOR;
-                                theGreen = 0;
-                                theBlue = 0;
-                                theMode = ColorModeAlternate;
-                            } else {
-                                theColor = screenChar.foregroundColor;
-                                theGreen = screenChar.fgGreen;
-                                theBlue = screenChar.fgBlue;
-                                theMode = screenChar.foregroundColorMode;
-                            }
-                            isBold = screenChar.bold;
-                            isFaint = screenChar.faint;
-                            [self _drawCharacter:screenChar
-                                         fgColor:theColor
-                                         fgGreen:theGreen
-                                          fgBlue:theBlue
-                                     fgColorMode:theMode
-                                          fgBold:isBold
-                                         fgFaint:isFaint
-                                             AtX:x1 * charWidth + MARGIN
-                                               Y:curY + cursorHeight - lineHeight
-                                     doubleWidth:double_width
-                                   overrideColor:nil
-                                         context:ctx];
-                        }
-                    }
+                break;
 
-                    break;
+            case CURSOR_VERTICAL:
+                [self drawVerticalBarCursorOfSize:cursorSize atPoint:cursorOrigin color:bgColor];
+                break;
 
-                case CURSOR_VERTICAL:
-                    DLog(@"draw cursor vline at %f,%f size %fx%f", (float)curX, (float)curY, (float)1, cursorHeight);
-                    NSRectFill(NSMakeRect(curX, curY, 1, cursorHeight));
-                    break;
-
-                case CURSOR_UNDERLINE:
-                    DLog(@"draw cursor underline at %f,%f size %fx%f", (float)curX, (float)curY, (float)ceil(cursorWidth * (double_width ? 2 : 1)), 2.0);
-                    NSRectFill(NSMakeRect(curX,
-                                          curY + lineHeight - 2,
-                                          ceil(cursorWidth * (double_width ? 2 : 1)),
-                                          2));
-                    break;
-            }
+            case CURSOR_UNDERLINE:
+                [self drawUnderlineCursorOfSize:cursorSize
+                                  isDoubleWidth:isDoubleWidth
+                                        atPoint:cursorOrigin
+                                          color:bgColor];
+                break;
         }
     }
 
-    oldCursorX = x1;
-    oldCursorY = yStart;
+    oldCursorX = column;
+    oldCursorY = row;
     [selectedFont_ release];
     selectedFont_ = nil;
 }
