@@ -4,11 +4,6 @@
 #import "LineBuffer.h"
 #import "VT100GridTypes.h"
 
-// Images that the view can flash.
-typedef enum {
-    FlashBell, FlashWrapToTop, FlashWrapToBottom
-} FlashImage;
-
 @class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;

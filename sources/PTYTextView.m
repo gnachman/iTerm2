@@ -84,24 +84,10 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
 static const int kDragThreshold = 3;
-static const int kBroadcastMargin = 4;
-static const int kMaximizedMargin = 4;
-static const int kCoprocessMargin = 4;
-static const int kAlertMargin = 4;
 static const int kBadgeMargin = 4;
 static const int kBadgeRightMargin = 10;
-static const int kAllOutputSupressedMargin = 4;
 
-static NSImage* bellImage;
-static NSImage* wrapToTopImage;
-static NSImage* wrapToBottomImage;
-static NSImage* broadcastInputImage;
-static NSImage* maximizedImage;
-static NSImage* coprocessImage;
-static NSImage* alertImage;
-static NSImage* allOutputSuppressedImage;
-
-@interface PTYTextView () <iTermSelectionDelegate, NSDraggingSource>
+@interface PTYTextView () <iTermIndicatorsHelperDelegate, iTermSelectionDelegate, NSDraggingSource>
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
@@ -113,10 +99,6 @@ static NSImage* allOutputSuppressedImage;
 @property(nonatomic, retain) NSColor *badgeColor;
 @property(nonatomic, copy) NSString *bagdgeLabel;
 
-- (NSRect)cursorRect;
-- (URLAction *)urlActionForClickAtX:(int)x
-                                  y:(int)y
-             respectingHardNewlines:(BOOL)respectHardNewlines;
 @end
 
 
@@ -245,15 +227,6 @@ static NSImage* allOutputSuppressedImage;
     // True if the last search was for a regex.
     BOOL findRegex_;
 
-    // Time that the flashing bell's alpha value was last adjusted.
-    NSDate* lastFlashUpdate_;
-
-    // Alpha value of flashing bell graphic.
-    double flashing_;
-
-    // Image currently flashing.
-    FlashImage flashImage_;
-
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
 
@@ -343,42 +316,11 @@ static NSImage* allOutputSuppressedImage;
     // was inactive. If it's set when the app becomes active, then make this view the first
     // responder.
     BOOL _makeFirstResponderWhenAppBecomesActive;
+    iTermIndicatorsHelper *_indicatorsHelper;
 }
 
 
-+ (void)initialize
-{
-    NSBundle* bundle = [NSBundle bundleForClass:[self class]];
-
-    NSString* bellFile = [bundle
-                          pathForResource:@"bell"
-                          ofType:@"png"];
-    bellImage = [[NSImage alloc] initWithContentsOfFile:bellFile];
-
-    NSString* wrapToTopFile = [bundle
-                               pathForResource:@"wrap_to_top"
-                               ofType:@"png"];
-    wrapToTopImage = [[NSImage alloc] initWithContentsOfFile:wrapToTopFile];
-
-    NSString* wrapToBottomFile = [bundle
-                                  pathForResource:@"wrap_to_bottom"
-                                  ofType:@"png"];
-    wrapToBottomImage = [[NSImage alloc] initWithContentsOfFile:wrapToBottomFile];
-
-    NSString* broadcastInputFile = [bundle pathForResource:@"BroadcastInput"
-                                                    ofType:@"png"];
-    broadcastInputImage = [[NSImage alloc] initWithContentsOfFile:broadcastInputFile];
-
-    maximizedImage = [[NSImage imageNamed:@"Maximized"] retain];
-
-    NSString* coprocessFile = [bundle pathForResource:@"Coprocess"
-                                                    ofType:@"png"];
-    coprocessImage = [[NSImage alloc] initWithContentsOfFile:coprocessFile];
-
-    alertImage = [[NSImage imageNamed:@"Alert"] retain];
-
-    allOutputSuppressedImage = [[NSImage imageNamed:@"SuppressAllOutput"] retain];
-
++ (void)initialize {
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
 
@@ -472,6 +414,8 @@ static NSImage* allOutputSuppressedImage;
         [self viewDidChangeBackingProperties];
         _markImage = [[NSImage imageNamed:@"mark"] retain];
         _markErrImage = [[NSImage imageNamed:@"mark_err"] retain];
+        _indicatorsHelper = [[iTermIndicatorsHelper alloc] init];
+        _indicatorsHelper.delegate = self;
     }
     return self;
 }
@@ -498,7 +442,6 @@ static NSImage* allOutputSuppressedImage;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     _colorMap.delegate = nil;
     [_colorMap release];
-    [lastFlashUpdate_ release];
     [_cachedBackgroundColor release];
     [resultMap_ release];
     [findResults_ release];
@@ -528,6 +471,8 @@ static NSImage* allOutputSuppressedImage;
     [_badgeImage release];
     [_badgeColor release];
     [_bagdgeLabel release];
+    _indicatorsHelper.delegate = nil;
+    [_indicatorsHelper release];
 
     [super dealloc];
 }
@@ -1778,7 +1723,7 @@ NSMutableArray* screens=0;
     }
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
     for (int i = 0; i < rectCount; i++) {
-        DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
+        NSLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
         [self drawOneRect:rectArray[i]];
     }
 
@@ -1787,96 +1732,22 @@ NSMutableArray* screens=0;
         NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
               self, drawRectDuration_.value, drawRectInterval_.value);
     }
-    const NSRect frame = [self visibleRect];
     CGFloat badgeWidth = 0;
     if (_badgeImage) {
         badgeWidth = _badgeImage.size.width + kBadgeMargin + kBadgeRightMargin;
     }
-    double x = frame.origin.x + frame.size.width - badgeWidth;
-    if ([_delegate textViewIsMaximized]) {
-        NSSize size = [maximizedImage size];
-        x -= size.width + kMaximizedMargin;
-        [maximizedImage drawAtPoint:NSMakePoint(x,
-                                                frame.origin.y + kMaximizedMargin)
-                           fromRect:NSMakeRect(0, 0, size.width, size.height)
-                          operation:NSCompositeSourceOver
-                           fraction:0.5];
-    }
-    if ([_delegate textViewSessionIsBroadcastingInput]) {
-        NSSize size = [broadcastInputImage size];
-        x -= size.width + kBroadcastMargin;
-        [broadcastInputImage drawAtPoint:NSMakePoint(x,
-                                                     frame.origin.y + kBroadcastMargin)
-                                fromRect:NSMakeRect(0, 0, size.width, size.height)
-                               operation:NSCompositeSourceOver
-                                fraction:0.5];
-    }
 
-    if ([_delegate textViewHasCoprocess]) {
-        NSSize size = [coprocessImage size];
-        x -= size.width + kCoprocessMargin;
-        [coprocessImage drawAtPoint:NSMakePoint(x,
-                                                     frame.origin.y + kCoprocessMargin)
-                                fromRect:NSMakeRect(0, 0, size.width, size.height)
-                               operation:NSCompositeSourceOver
-                                fraction:0.5];
-    }
-    if ([_delegate alertOnNextMark]) {
-        NSSize size = [alertImage size];
-        x -= size.width + kAlertMargin;
-        [alertImage drawAtPoint:NSMakePoint(x, frame.origin.y + kAlertMargin)
-                           fromRect:NSMakeRect(0, 0, size.width, size.height)
-                          operation:NSCompositeSourceOver
-                           fraction:0.5];
-    }
-    if ([_delegate textViewSuppressingAllOutput]) {
-        NSSize size = [allOutputSuppressedImage size];
-        x -= size.width + kAllOutputSupressedMargin;
-        [allOutputSuppressedImage drawAtPoint:NSMakePoint(x, frame.origin.y + kAllOutputSupressedMargin)
-                                     fromRect:NSMakeRect(0, 0, size.width, size.height)
-                                    operation:NSCompositeSourceOver
-                                     fraction:0.5];
-    }
-
-    if (flashing_ > 0) {
-        NSImage* image = nil;
-        switch (flashImage_) {
-            case FlashBell:
-                if ([iTermAdvancedSettingsModel traditionalVisualBell]) {
-                    image = [[[NSImage alloc] initWithSize: frame.size] autorelease];
-                    [image lockFocus];
-                    NSColor *foregroundColor = [_colorMap mutedColorForKey:kColorMapForeground];
-                    [foregroundColor drawSwatchInRect:NSMakeRect(0,
-                                                                 0,
-                                                                 frame.size.width,
-                                                                 frame.size.width)];
-                    [image unlockFocus];
-                } else {
-                    image = bellImage;
-                }
-                break;
-
-            case FlashWrapToTop:
-                image = wrapToTopImage;
-                break;
-
-            case FlashWrapToBottom:
-                image = wrapToBottomImage;
-                break;
-        }
-
-        NSSize size = [image size];
-        NSRect destinationRect = NSMakeRect(frame.origin.x + frame.size.width/2 - size.width/2,
-                                            frame.origin.y + frame.size.height/2 - size.height/2,
-                                            size.width,
-                                            size.height);
-        [image drawInRect:destinationRect
-                 fromRect:NSMakeRect(0, 0, size.width, size.height)
-                operation:NSCompositeSourceOver
-                 fraction:flashing_
-           respectFlipped:YES
-                    hints:nil];
-    }
+    [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
+                            visible:[_delegate textViewIsMaximized]];
+    [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInput
+                            visible:[_delegate textViewSessionIsBroadcastingInput]];
+    [_indicatorsHelper setIndicator:kiTermIndicatorCoprocess
+                            visible:[_delegate textViewHasCoprocess]];
+    [_indicatorsHelper setIndicator:kiTermIndicatorAlert
+                            visible:[_delegate alertOnNextMark]];
+    [_indicatorsHelper setIndicator:kiTermIndicatorAllOutputSuppressed
+                            visible:[_delegate textViewSuppressingAllOutput]];
+    [_indicatorsHelper drawInFrame:self.visibleRect];
 
     if (_showTimestamps) {
         [self drawTimestamps];
@@ -5494,9 +5365,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                   mode:kiTermSelectionModeCharacter];
         [_selection addSubSelection:sub];
         if (forward) {
-            [self beginFlash:FlashWrapToTop];
+            [self beginFlash:kiTermIndicatorWrapToTop];
         } else {
-            [self beginFlash:FlashWrapToBottom];
+            [self beginFlash:kiTermIndicatorWrapToBottom];
         }
     }
 
@@ -5732,52 +5603,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     selectionScrollDirection = 0;
 }
 
-// Called from a timer. Update the alpha value for the graphic and request
-// that the view be redrawn.
-- (void)setFlashAlpha
-{
-    NSDate* now = [NSDate date];
-    double interval = [now timeIntervalSinceDate:lastFlashUpdate_];
-    double ratio = interval / 0.016;
-    // Decrement proprotionate to the time between calls (exactly 0.05 if time
-    // was 0.016 sec).
-    flashing_ -= 0.05 * ratio;
-    if (flashing_ < 0) {
-        // All done.
-        flashing_ = 0;
+- (void)beginFlash:(NSString *)flashIdentifier {
+    if ([flashIdentifier isEqualToString:kiTermIndicatorBell] &&
+        [iTermAdvancedSettingsModel traditionalVisualBell]) {
+        [_indicatorsHelper beginFlashingFullScreen];
     } else {
-        // Schedule another decrementation.
-        [lastFlashUpdate_ release];
-        lastFlashUpdate_ = [now retain];
-        [NSTimer scheduledTimerWithTimeInterval:0.016
-                                         target:self
-                                       selector:@selector(setFlashAlpha)
-                                       userInfo:nil
-                                        repeats:NO];
+        [_indicatorsHelper beginFlashingIndicator:flashIdentifier];
     }
-    [self setNeedsDisplay:YES];
-}
-
-- (void)beginFlash:(FlashImage)image
-{
-    flashImage_ = image;
-    if (flashing_ == 0) {
-        // The timer is not running so start it.
-        [lastFlashUpdate_ release];
-        lastFlashUpdate_ = [[NSDate date] retain];
-        [NSTimer scheduledTimerWithTimeInterval:0.016
-                                         target:self
-                                       selector:@selector(setFlashAlpha)
-                                       userInfo:nil
-                                        repeats:NO];
-    }
-    // Turn the image to opaque and ask to redraw the screen.
-    if ([iTermAdvancedSettingsModel traditionalVisualBell]) {
-        flashing_ = 0.33;
-    } else {
-        flashing_ = 1;
-    }
-    [self setNeedsDisplay:YES];
 }
 
 - (void)highlightMarkOnLine:(int)line {
@@ -8872,6 +8704,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)colorMap:(iTermColorMap *)colorMap
     mutingAmountDidChangeTo:(double)mutingAmount {
     [[self superview] setNeedsDisplay:YES];
+}
+
+#pragma mark - iTermInidcatorsHelperDelegate
+
+- (NSColor *)indicatorFullScreenFlashColor {
+    return [_colorMap mutedColorForKey:kColorMapForeground];
 }
 
 #pragma mark - Mouse reporting

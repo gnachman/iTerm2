@@ -3750,7 +3750,7 @@
 - (void)screenMouseModeDidChange {
 }
 
-- (void)screenFlashImage:(FlashImage)image {
+- (void)screenFlashImage:(NSString *)identifier {
 }
 
 - (void)screenIncrementBadge {

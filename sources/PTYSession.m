@@ -3681,7 +3681,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         if (!objects.count) {
             objects = [_screen lastMarksOrNotes];
             if (objects.count) {
-                [_textview beginFlash:FlashWrapToBottom];
+                [_textview beginFlash:kiTermIndicatorWrapToBottom];
             }
         }
     }
@@ -3705,7 +3705,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         if (!objects.count) {
             objects = [_screen firstMarksOrNotes];
             if (objects.count) {
-                [_textview beginFlash:FlashWrapToTop];
+                [_textview beginFlash:kiTermIndicatorWrapToTop];
             }
         }
     }
@@ -5498,8 +5498,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview updateTrackingAreas];
 }
 
-- (void)screenFlashImage:(FlashImage)image {
-    [_textview beginFlash:image];
+- (void)screenFlashImage:(NSString *)identifier {
+    [_textview beginFlash:identifier];
 }
 
 - (void)screenIncrementBadge {

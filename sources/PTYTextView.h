@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "CharacterRun.h"
+#import "iTermIndicatorsHelper.h"
 #import "LineBuffer.h"
 #import "PTYFontInfo.h"
 #import "PasteEvent.h"
@@ -383,7 +384,7 @@ typedef enum {
 - (void)aboutToHide;
 
 // Flash a graphic.
-- (void)beginFlash:(FlashImage)image;
+- (void)beginFlash:(NSString *)identifier;
 
 // Returns true if any character in the buffer is selected.
 - (BOOL)isAnyCharSelected;

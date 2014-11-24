@@ -1675,6 +1675,11 @@
 		A6E74761188C679C005355CF /* iTermExposeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475F188C679C005355CF /* iTermExposeView.h */; };
 		A6E74762188C679C005355CF /* iTermExposeView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74760188C679C005355CF /* iTermExposeView.m */; };
 		A6E74763188C679C005355CF /* iTermExposeView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E74760188C679C005355CF /* iTermExposeView.m */; };
+		A6E77F651A22FBC8009B1CB6 /* iTermIndicatorsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F631A22FBC8009B1CB6 /* iTermIndicatorsHelper.h */; };
+		A6E77F661A22FBC8009B1CB6 /* iTermIndicatorsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F631A22FBC8009B1CB6 /* iTermIndicatorsHelper.h */; };
+		A6E77F671A22FBC8009B1CB6 /* iTermIndicatorsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F641A22FBC8009B1CB6 /* iTermIndicatorsHelper.m */; };
+		A6E77F681A22FBC8009B1CB6 /* iTermIndicatorsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F641A22FBC8009B1CB6 /* iTermIndicatorsHelper.m */; };
+		A6E77F691A22FBC8009B1CB6 /* iTermIndicatorsHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F641A22FBC8009B1CB6 /* iTermIndicatorsHelper.m */; };
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0619DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
@@ -2412,6 +2417,8 @@
 		A6E7475B188C6731005355CF /* iTermExposeGridView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExposeGridView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7475F188C679C005355CF /* iTermExposeView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermExposeView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E74760188C679C005355CF /* iTermExposeView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExposeView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6E77F631A22FBC8009B1CB6 /* iTermIndicatorsHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIndicatorsHelper.h; sourceTree = "<group>"; };
+		A6E77F641A22FBC8009B1CB6 /* iTermIndicatorsHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIndicatorsHelper.m; sourceTree = "<group>"; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
@@ -2554,6 +2561,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6E77F631A22FBC8009B1CB6 /* iTermIndicatorsHelper.h */,
+				A6E77F641A22FBC8009B1CB6 /* iTermIndicatorsHelper.m */,
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -3958,6 +3967,7 @@
 				1D6ED96919AEA20D005A7799 /* PasteView.h in Headers */,
 				1D6ED96A19AEA20D005A7799 /* NSMutableData+iTerm.h in Headers */,
 				1D6ED96B19AEA20D005A7799 /* iTermNewWindowCommand.h in Headers */,
+				A6E77F661A22FBC8009B1CB6 /* iTermIndicatorsHelper.h in Headers */,
 				1D6ED96C19AEA20D005A7799 /* iTermExposeWindow.h in Headers */,
 				1D6ED96D19AEA20D005A7799 /* NSBezierPath+iTerm.h in Headers */,
 				1D6ED96E19AEA20D005A7799 /* PasteEvent.h in Headers */,
@@ -4267,6 +4277,7 @@
 				1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */,
 				A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */,
 				A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */,
+				A6E77F651A22FBC8009B1CB6 /* iTermIndicatorsHelper.h in Headers */,
 				A6E74752188C6693005355CF /* iTermExposeWindow.h in Headers */,
 				1D085F9616F04D0900B7FCE9 /* NSBezierPath+iTerm.h in Headers */,
 				1D085F9A16F1135F00B7FCE9 /* PasteEvent.h in Headers */,
@@ -4911,6 +4922,7 @@
 				1D6EDAA319AEA20D005A7799 /* SmartSelectionController.m in Sources */,
 				1D6EDAA419AEA20D005A7799 /* iTermOpenQuicklyItem.m in Sources */,
 				1D6EDAA519AEA20D005A7799 /* TrouterPrefsController.m in Sources */,
+				A6E77F691A22FBC8009B1CB6 /* iTermIndicatorsHelper.m in Sources */,
 				1D6EDAA619AEA20D005A7799 /* SessionTitleView.m in Sources */,
 				1D6EDAA719AEA20D005A7799 /* NSColor+Scripting.m in Sources */,
 				1D6EDAA819AEA20D005A7799 /* PseudoTerminalRestorer.m in Sources */,
@@ -5027,6 +5039,7 @@
 				1DB83959192E9A610037E548 /* ToolCapturedOutputView.m in Sources */,
 				A6C7DE5F19A469D6001E5C75 /* NSColor+Scripting.m in Sources */,
 				A6C7DE5719A4591E001E5C75 /* iTermNewWindowCommand.m in Sources */,
+				A6E77F681A22FBC8009B1CB6 /* iTermIndicatorsHelper.m in Sources */,
 				1D9A555B180FA83900B42CE9 /* ContextMenuActionPrefsController.m in Sources */,
 				A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D9A5531180FA73300B42CE9 /* FutureMethods.m in Sources */,
@@ -5470,6 +5483,7 @@
 				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
 				A69B45AA19731B4900F5444D /* iTermOpenQuicklyItem.m in Sources */,
 				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
+				A6E77F671A22FBC8009B1CB6 /* iTermIndicatorsHelper.m in Sources */,
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 				A6C7DE5E19A469D6001E5C75 /* NSColor+Scripting.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,
