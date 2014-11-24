@@ -135,8 +135,8 @@ static NSImage* allOutputSuppressedImage;
     BOOL _extendedDragNDrop;
 
     // anti-alias flags
-    BOOL asciiAntiAlias;
-    BOOL nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
+    BOOL _asciiAntiAlias;
+    BOOL _nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
 
     // NSTextInputClient support
     BOOL _inputMethodIsInserting;
@@ -695,10 +695,9 @@ static NSImage* allOutputSuppressedImage;
     [self updateMarkedTextAttributes];
 }
 
-- (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA
-{
-    asciiAntiAlias = asciiAA;
-    nonasciiAntiAlias = nonAsciiAA;
+- (void)setAntiAlias:(BOOL)asciiAntiAlias nonAscii:(BOOL)nonAsciiAntiAlias {
+    _asciiAntiAlias = asciiAntiAlias;
+    _nonasciiAntiAlias = nonAsciiAntiAlias;
     [self setNeedsDisplay:YES];
 }
 
@@ -6149,9 +6148,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         CGFloat thisCharAdvance;
 
         if (!_useNonAsciiFont || (theLine[i].code < 128 && !theLine[i].complexChar)) {
-            attrs.antiAlias = asciiAntiAlias;
+            attrs.antiAlias = _asciiAntiAlias;
         } else {
-            attrs.antiAlias = nonasciiAntiAlias;
+            attrs.antiAlias = _nonasciiAntiAlias;
         }
         BOOL isSelection = NO;
 
