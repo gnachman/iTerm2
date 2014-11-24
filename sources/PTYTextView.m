@@ -159,7 +159,7 @@ static NSImage* allOutputSuppressedImage;
     // Underlined selection range (inclusive of all values), indicating clickable url.
     VT100GridWindowedRange _underlineRange;
     BOOL _mouseDown;
-    BOOL mouseDragged;
+    BOOL _mouseDragged;
     BOOL mouseDownOnSelection;
     BOOL mouseDownOnImage;
     ImageInfo *theImage;
@@ -3029,7 +3029,7 @@ NSMutableArray* screens=0;
 
     [mouseDownEvent autorelease];
     mouseDownEvent = [event retain];
-    mouseDragged = NO;
+    _mouseDragged = NO;
     mouseDownOnSelection = NO;
     mouseDownOnImage = NO;
 
@@ -3135,10 +3135,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     selectionScrollDirection = 0;
 
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
-                                   !mouseDragged &&
+                                   !_mouseDragged &&
                                    !([event modifierFlags] & NSShiftKeyMask));
     BOOL isShiftedSingleClick = ([event clickCount] == 1 &&
-                                 !mouseDragged &&
+                                 !_mouseDragged &&
                                  ([event modifierFlags] & NSShiftKeyMask));
     BOOL willFollowLink = (isUnshiftedSingleClick &&
                            cmdPressed &&
@@ -3304,7 +3304,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL pressingCmdOnly = ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask;
     if (!pressingCmdOnly || dragThresholdMet) {
         DLog(@"mousedragged = yes");
-        mouseDragged = YES;
+        _mouseDragged = YES;
     }
 
 
