@@ -161,7 +161,7 @@ static NSImage* allOutputSuppressedImage;
     BOOL _mouseDown;
     BOOL _mouseDragged;
     BOOL _mouseDownOnSelection;
-    BOOL mouseDownOnImage;
+    BOOL _mouseDownOnImage;
     ImageInfo *theImage;
     NSEvent *mouseDownEvent;
 
@@ -3031,7 +3031,7 @@ NSMutableArray* screens=0;
     mouseDownEvent = [event retain];
     _mouseDragged = NO;
     _mouseDownOnSelection = NO;
-    mouseDownOnImage = NO;
+    _mouseDownOnImage = NO;
 
     int clickCount = [event clickCount];
     DLog(@"clickCount=%d altPressed=%d cmdPressed=%d", clickCount, (int)altPressed, (int)cmdPressed);
@@ -3050,7 +3050,7 @@ NSMutableArray* screens=0;
         }
 
         if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
-            mouseDownOnImage = YES;
+            _mouseDownOnImage = YES;
             _selection.appending = NO;
         } else if ([_selection containsCoord:VT100GridCoordMake(x, y)]) {
             // not holding down shift key but there is an existing selection.
@@ -3308,7 +3308,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
 
-    if (mouseDownOnImage &&
+    if (_mouseDownOnImage &&
         ([event modifierFlags] & NSCommandKeyMask) &&
         dragThresholdMet) {
         [self _dragImage:theImage forEvent:event];
