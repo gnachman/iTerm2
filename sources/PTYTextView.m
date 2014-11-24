@@ -170,7 +170,7 @@ static NSImage* allOutputSuppressedImage;
 
     // blinking cursor
     BOOL _blinkingItemsVisible;
-    struct timeval lastBlink;
+    NSTimeInterval _timeOfLastBlink;
     int oldCursorX, oldCursorY;
 
     // trackingRect tab
@@ -402,7 +402,7 @@ static NSImage* allOutputSuppressedImage;
         _oldSelection = [_selection copy];
         _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
         _markedText = nil;
-        gettimeofday(&lastBlink, NULL);
+        _timeOfLastBlink = [NSDate timeIntervalSinceReferenceDate];
         [[self window] useOptimizedDrawing:YES];
 
         // register for drag and drop
@@ -8685,17 +8685,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (BOOL)_updateBlink
-{
+- (BOOL)_updateBlink {
     // Time to redraw blinking text or cursor?
-    struct timeval now;
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     BOOL redrawBlink = NO;
-    gettimeofday(&now, NULL);
-    double timeDelta = now.tv_sec - lastBlink.tv_sec;
-    timeDelta += (now.tv_usec - lastBlink.tv_usec) / 1000000.0;
+    double timeDelta = now - _timeOfLastBlink;
     if (timeDelta >= [iTermAdvancedSettingsModel timeBetweenBlinks]) {
         _blinkingItemsVisible = !_blinkingItemsVisible;
-        lastBlink = now;
+        _timeOfLastBlink = now;
         redrawBlink = YES;
 
         if (_blinkingCursor &&
