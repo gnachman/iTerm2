@@ -329,7 +329,7 @@ static NSImage* allOutputSuppressedImage;
 
     // Point clicked, valid only during -validateMenuItem and calls made from
     // the context menu and if x and y are nonnegative.
-    VT100GridCoord validationClickPoint_;
+    VT100GridCoord _validationClickPoint;
 
     iTermSelection *_oldSelection;
 
@@ -3530,9 +3530,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     openingContextMenu_ = YES;
 
     // Slowly moving away from using NSPoint for integer coordinates.
-    validationClickPoint_ = VT100GridCoordMake(clickPoint.x, clickPoint.y);
+    _validationClickPoint = VT100GridCoordMake(clickPoint.x, clickPoint.y);
     [NSMenu popUpContextMenu:[self contextMenuWithEvent:event] withEvent:event forView:self];
-    validationClickPoint_ = VT100GridCoordMake(-1, -1);
+    _validationClickPoint = VT100GridCoordMake(-1, -1);
     openingContextMenu_ = NO;
 }
 
@@ -4029,10 +4029,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)showNotes:(id)sender
 {
-    for (PTYNoteViewController *note in [_dataSource notesInRange:VT100GridCoordRangeMake(validationClickPoint_.x,
-                                                                                          validationClickPoint_.y,
-                                                                                          validationClickPoint_.x + 1,
-                                                                                          validationClickPoint_.y)]) {
+    for (PTYNoteViewController *note in [_dataSource notesInRange:VT100GridCoordRangeMake(_validationClickPoint.x,
+                                                                                          _validationClickPoint.y,
+                                                                                          _validationClickPoint.x + 1,
+                                                                                          _validationClickPoint.y)]) {
         [note setNoteHidden:NO];
     }
 }
@@ -4244,11 +4244,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      onLine:_selection.lastRange.coordRange.start.y] != nil);
     }
     if ([item action]==@selector(showNotes:)) {
-        return validationClickPoint_.x >= 0 &&
-               [[_dataSource notesInRange:VT100GridCoordRangeMake(validationClickPoint_.x,
-                                                                  validationClickPoint_.y,
-                                                                  validationClickPoint_.x + 1,
-                                                                  validationClickPoint_.y)] count] > 0;
+        return _validationClickPoint.x >= 0 &&
+               [[_dataSource notesInRange:VT100GridCoordRangeMake(_validationClickPoint.x,
+                                                                  _validationClickPoint.y,
+                                                                  _validationClickPoint.x + 1,
+                                                                  _validationClickPoint.y)] count] > 0;
     }
 
     // Image actions
