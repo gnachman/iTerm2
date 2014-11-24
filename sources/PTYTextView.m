@@ -150,7 +150,7 @@ static NSImage* allOutputSuppressedImage;
     // geometry
     double _lineHeight;
     double lineWidth;
-    double charWidth;
+    double _charWidth;
     double charWidthWithoutSpacing, charHeightWithoutSpacing;
 
     PTYFontInfo *primaryFont;
@@ -732,9 +732,9 @@ static NSImage* allOutputSuppressedImage;
     int lineStart = [_dataSource numberOfLines] - [_dataSource height];
     int cursorX = [_dataSource cursorX] - 1;
     int cursorY = [_dataSource cursorY] - 1;
-    NSRect dirtyRect = NSMakeRect(MARGIN + cursorX * charWidth,
+    NSRect dirtyRect = NSMakeRect(MARGIN + cursorX * _charWidth,
                                   (lineStart + cursorY) * _lineHeight,
-                                  charWidth,
+                                  _charWidth,
                                   _lineHeight);
     [self setNeedsDisplayInRect:dirtyRect];
 }
@@ -904,7 +904,7 @@ static NSImage* allOutputSuppressedImage;
     charHeightWithoutSpacing = sz.height;
     _horizontalSpacing = horizontalSpacing;
     _verticalSpacing = verticalSpacing;
-    charWidth = ceil(charWidthWithoutSpacing * horizontalSpacing);
+    _charWidth = ceil(charWidthWithoutSpacing * horizontalSpacing);
     _lineHeight = ceil(charHeightWithoutSpacing * verticalSpacing);
 
     primaryFont.font = aFont;
@@ -963,14 +963,12 @@ static NSImage* allOutputSuppressedImage;
     _lineHeight = ceil(aLineHeight);
 }
 
-- (double)charWidth
-{
-    return ceil(charWidth);
+- (double)charWidth {
+    return _charWidth;
 }
 
-- (void)setCharWidth:(double)width
-{
-    charWidth = width;
+- (void)setCharWidth:(double)width {
+    _charWidth = ceil(width);
 }
 
 - (void)toggleShowTimestamps
@@ -1297,7 +1295,7 @@ NSMutableArray* screens=0;
         NSRect windowRect = [self.window convertRectFromScreen:screenRect];
         NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
         NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-        int x = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+        int x = (locationInTextView.x - MARGIN - visibleRect.origin.x) / _charWidth;
         int y = locationInTextView.y / _lineHeight;
 
         if (y < 0) {
@@ -1325,9 +1323,9 @@ NSMutableArray* screens=0;
         int yMax = MAX(yStart, y2);
         int xMin = MIN(xStart, x2);
         int xMax = MAX(xStart, x2);
-        NSRect result = NSMakeRect(MAX(0, floor(xMin * charWidth + MARGIN)),
+        NSRect result = NSMakeRect(MAX(0, floor(xMin * _charWidth + MARGIN)),
                                    MAX(0, yMin * _lineHeight),
-                                   MAX(0, (xMax - xMin) * charWidth),
+                                   MAX(0, (xMax - xMin) * _charWidth),
                                    MAX(0, (yMax - yMin + 1) * _lineHeight));
         result = [self convertRect:result toView:nil];
         result = [self.window convertRectToScreen:result];
@@ -1982,8 +1980,8 @@ NSMutableArray* screens=0;
 - (void)drawOneRect:(NSRect)rect
 {
     // The range of chars in the line that need to be drawn.
-    NSRange charRange = NSMakeRange(MAX(0, (rect.origin.x - MARGIN) / charWidth),
-                                    (rect.origin.x + rect.size.width - MARGIN) / charWidth);
+    NSRange charRange = NSMakeRange(MAX(0, (rect.origin.x - MARGIN) / _charWidth),
+                                    (rect.origin.x + rect.size.width - MARGIN) / _charWidth);
     charRange.length -= charRange.location;
     if (charRange.location + charRange.length > [_dataSource width]) {
         charRange.length = [_dataSource width] - charRange.location;
@@ -2001,7 +1999,7 @@ NSMutableArray* screens=0;
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
           [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
 #endif
-    double curLineWidth = [_dataSource width] * charWidth;
+    double curLineWidth = [_dataSource width] * _charWidth;
     if (_lineHeight <= 0 || curLineWidth <= 0) {
         DebugLog(@"height or width too small");
         return;
@@ -2834,7 +2832,7 @@ NSMutableArray* screens=0;
     int x, y;
     int width = [_dataSource width];
 
-    x = (locationInTextView.x - MARGIN + charWidth * kCharWidthFractionOffset)/charWidth;
+    x = (locationInTextView.x - MARGIN + _charWidth * kCharWidthFractionOffset) / _charWidth;
     if (x < 0) {
         x = 0;
     }
@@ -4027,7 +4025,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [image unlockFocus];
 
     VT100GridCoordRange range = _selection.lastRange.coordRange;
-    NSRect windowRect = [self convertRect:NSMakeRect(range.start.x * charWidth + MARGIN,
+    NSRect windowRect = [self convertRect:NSMakeRect(range.start.x * _charWidth + MARGIN,
                                                      range.start.y * _lineHeight,
                                                      0,
                                                      0)
@@ -4058,7 +4056,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 (PTYNoteViewController *)noteView.delegate.noteViewController;
             VT100GridCoordRange coordRange = [_dataSource coordRangeOfNote:note];
             if (coordRange.end.y >= 0) {
-                [note setAnchor:NSMakePoint(coordRange.end.x * charWidth + MARGIN,
+                [note setAnchor:NSMakePoint(coordRange.end.x * _charWidth + MARGIN,
                                             (1 + coordRange.end.y) * _lineHeight)];
             }
         }
@@ -5243,7 +5241,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)thePoint {
-    return MAX(0, thePoint.x / charWidth);
+    return MAX(0, thePoint.x / _charWidth);
 }
 
 - (long)conversationIdentifier {
@@ -5254,9 +5252,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int y = [_dataSource cursorY] - 1;
     int x = [_dataSource cursorX] - 1;
 
-    NSRect rect=NSMakeRect(x * charWidth + MARGIN,
+    NSRect rect=NSMakeRect(x * _charWidth + MARGIN,
                            (y + [_dataSource numberOfLines] - [_dataSource height] + 1) * _lineHeight,
-                           charWidth * theRange.length,
+                           _charWidth * theRange.length,
                            _lineHeight);
     rect.origin = [[self window] pointToScreenCoords:[self convertPoint:rect.origin toView:nil]];
     if (actualRange) {
@@ -5806,9 +5804,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSRect)cursorRect
 {
     NSRect frame = [self visibleRect];
-    double x = MARGIN + charWidth * ([_dataSource cursorX] - 1);
+    double x = MARGIN + _charWidth * ([_dataSource cursorX] - 1);
     double y = frame.origin.y + _lineHeight * ([_dataSource cursorY] - 1);
-    return NSMakeRect(x, y, charWidth, _lineHeight);
+    return NSMakeRect(x, y, _charWidth, _lineHeight);
 }
 
 - (NSPoint)cursorLocationInScreenCoordinates
@@ -6262,9 +6260,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
         // Set all other common attributes.
         if (doubleWidth) {
-            thisCharAdvance = charWidth * 2;
+            thisCharAdvance = _charWidth * 2;
         } else {
-            thisCharAdvance = charWidth;
+            thisCharAdvance = _charWidth;
         }
 
         if (drawable) {
@@ -6432,7 +6430,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         default:
             break;
     }
-    CGFloat xs[] = { 0, charWidth / 2, charWidth };
+    CGFloat xs[] = { 0, _charWidth / 2, _charWidth };
     CGFloat ys[] = { 0, _lineHeight / 2, _lineHeight };
     NSBezierPath *path = [NSBezierPath bezierPath];
     BOOL first = YES;
@@ -6454,7 +6452,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     if (complexRun->attrs.imageCode > 0) {
         ImageInfo *imageInfo = GetImageInfo(complexRun->attrs.imageCode);
-        NSImage *image = [imageInfo imageEmbeddedInRegionOfSize:NSMakeSize(charWidth * imageInfo.size.width,
+        NSImage *image = [imageInfo imageEmbeddedInRegionOfSize:NSMakeSize(_charWidth * imageInfo.size.width,
                                                                            _lineHeight * imageInfo.size.height)];
         NSSize chunkSize = NSMakeSize(image.size.width / imageInfo.size.width,
                                       image.size.height / imageInfo.size.height);
@@ -6466,9 +6464,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         NSColor *backgroundColor = [_colorMap mutedColorForKey:kColorMapBackground];
         [backgroundColor set];
-        NSRectFill(NSMakeRect(0, 0, charWidth * complexRun->numImageCells, _lineHeight));
+        NSRectFill(NSMakeRect(0, 0, _charWidth * complexRun->numImageCells, _lineHeight));
 
-        [image drawInRect:NSMakeRect(0, 0, charWidth * complexRun->numImageCells, _lineHeight)
+        [image drawInRect:NSMakeRect(0, 0, _charWidth * complexRun->numImageCells, _lineHeight)
                  fromRect:NSMakeRect(chunkSize.width * complexRun->attrs.imageColumn,
                                      image.size.height - _lineHeight - chunkSize.height * complexRun->attrs.imageLine,
                                      chunkSize.width * complexRun->numImageCells,
@@ -6773,9 +6771,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     NSColor *aColor = *defaultBgColorPtr;
 
-    NSRect bgRect = NSMakeRect(floor(MARGIN + firstIndex * charWidth),
+    NSRect bgRect = NSMakeRect(floor(MARGIN + firstIndex * _charWidth),
                                yOrigin,
-                               ceil((lastIndex - firstIndex) * charWidth),
+                               ceil((lastIndex - firstIndex) * _charWidth),
                                _lineHeight);
 
     if (hasBGImage) {
@@ -6845,7 +6843,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     NSPoint textOrigin;
-    textOrigin = NSMakePoint(MARGIN + firstIndex * charWidth, yOrigin);
+    textOrigin = NSMakePoint(MARGIN + firstIndex * _charWidth, yOrigin);
 
     // Highlight cursor line
     int cursorLine = [_dataSource cursorY] - 1 + [_dataSource numberOfScrollbackLines];
@@ -6853,7 +6851,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [[_delegate textViewCursorGuideColor] set];
         NSRect rect = NSMakeRect(textOrigin.x,
                                  textOrigin.y,
-                                 (lastIndex - firstIndex) * charWidth,
+                                 (lastIndex - firstIndex) * _charWidth,
                                  _lineHeight);
         NSRectFillUsingOperation(rect, NSCompositeSourceOver);
 
@@ -6898,7 +6896,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSRect leftMargin = NSMakeRect(0, curY, MARGIN, _lineHeight);
     NSRect rightMargin;
     NSRect visibleRect = [self visibleRect];
-    rightMargin.origin.x = charWidth * WIDTH;
+    rightMargin.origin.x = _charWidth * WIDTH;
     rightMargin.origin.y = curY;
     rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
     rightMargin.size.height = _lineHeight;
@@ -7055,11 +7053,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (noteRanges.count) {
         for (NSValue *value in noteRanges) {
             VT100GridRange range = [value gridRangeValue];
-            CGFloat x = range.location * charWidth + MARGIN;
+            CGFloat x = range.location * _charWidth + MARGIN;
             CGFloat y = line * _lineHeight;
             [[NSColor yellowColor] set];
 
-            CGFloat maxX = MIN(self.bounds.size.width - MARGIN, range.length * charWidth + x);
+            CGFloat maxX = MIN(self.bounds.size.width - MARGIN, range.length * _charWidth + x);
             CGFloat w = maxX - x;
             NSRectFill(NSMakeRect(x, y + _lineHeight - 1.5, w, 1));
             [[NSColor orangeColor] set];
@@ -7132,12 +7130,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         NSRectFill(NSMakeRect(X,
                               Y + _lineHeight - 2,
-                              double_width ? charWidth * 2 : charWidth,
+                              double_width ? _charWidth * 2 : _charWidth,
                               1));
     }
 }
 
-// Compute the length, in charWidth cells, of the input method text.
+// Compute the length, in _charWidth cells, of the input method text.
 - (int)inputMethodEditorLength
 {
     if (![self hasMarkedText]) {
@@ -7211,7 +7209,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             NULL,
                             [_delegate textViewUseHFSPlusMapping]);
         int cursorX = 0;
-        int baseX = floor(xStart * charWidth + MARGIN);
+        int baseX = floor(xStart * _charWidth + MARGIN);
         int i;
         int y = (yStart + [_dataSource numberOfLines] - height) * _lineHeight;
         int cursorY = y;
@@ -7236,7 +7234,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Draw the background.
             NSRect r = NSMakeRect(x,
                                   y,
-                                  charsInLine * charWidth,
+                                  charsInLine * _charWidth,
                                   _lineHeight);
             if (!_colorMap.dimOnlyText) {
                 [[_colorMap dimmedColorForKey:kColorMapBackground] set];
@@ -7267,7 +7265,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [foregroundColor set];
             NSRect s = NSMakeRect(x,
                                   y + _lineHeight - 1,
-                                  charsInLine * charWidth,
+                                  charsInLine * _charWidth,
                                   1);
             NSRectFill(s);
 
@@ -7275,7 +7273,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (i <= cursorIndex && i + charsInLine > cursorIndex) {
                 // The char the cursor is at was drawn in this line.
                 const int cellsAfterStart = cursorIndex - i;
-                cursorX = x + charWidth * cellsAfterStart;
+                cursorX = x + _charWidth * cellsAfterStart;
                 cursorY = y;
                 foundCursor = YES;
             }
@@ -7290,14 +7288,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             } else {
                 justWrapped = NO;
             }
-            x = floor(xStart * charWidth + MARGIN);
+            x = floor(xStart * _charWidth + MARGIN);
             y = (yStart + [_dataSource numberOfLines] - height) * _lineHeight;
             i += charsInLine;
         }
 
         if (!foundCursor && i == cursorIndex) {
             if (justWrapped) {
-                cursorX = MARGIN + width * charWidth;
+                cursorX = MARGIN + width * _charWidth;
                 cursorY = preWrapY;
             } else {
                 cursorX = x;
@@ -7305,7 +7303,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         }
         const double kCursorWidth = 2.0;
-        double rightMargin = MARGIN + [_dataSource width] * charWidth;
+        double rightMargin = MARGIN + [_dataSource width] * _charWidth;
         if (cursorX + kCursorWidth >= rightMargin) {
             // Make sure the cursor doesn't draw in the margin. Shove it left
             // a little bit so it fits.
@@ -7441,8 +7439,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSSize)cursorSize {
     NSSize size;
-    if (charWidth < charWidthWithoutSpacing) {
-        size.width = charWidth;
+    if (_charWidth < charWidthWithoutSpacing) {
+        size.width = _charWidth;
     } else {
         size.width = charWidthWithoutSpacing;
     }
@@ -7551,7 +7549,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                      fgColorMode:fgColorMode
                           fgBold:isBold
                          fgFaint:isFaint
-                             AtX:column * charWidth + MARGIN
+                             AtX:column * _charWidth + MARGIN
                                Y:cursorOrigin.y + cursorSize.height - _lineHeight
                      doubleWidth:double_width
                    overrideColor:overrideColor
@@ -7585,7 +7583,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                      fgColorMode:theMode
                           fgBold:isBold
                          fgFaint:isFaint
-                             AtX:column * charWidth + MARGIN
+                             AtX:column * _charWidth + MARGIN
                                Y:cursorOrigin.y + cursorSize.height - _lineHeight
                      doubleWidth:double_width
                    overrideColor:nil
@@ -7770,7 +7768,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                    doubleWidth:&isDoubleWidth];
         NSSize cursorSize = [self cursorSize];
         NSPoint cursorOrigin =
-            NSMakePoint(floor(column * charWidth + MARGIN),
+            NSMakePoint(floor(column * _charWidth + MARGIN),
                         (row + [_dataSource numberOfLines] - height + 1) * _lineHeight - cursorSize.height);
 
         if ([self isFindingCursor]) {
@@ -8367,7 +8365,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_dragImage:(ImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
 {
-    NSSize region = NSMakeSize(charWidth * imageInfo.size.width,
+    NSSize region = NSMakeSize(_charWidth * imageInfo.size.width,
                                _lineHeight * imageInfo.size.height);
     NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
 
@@ -8381,7 +8379,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // drag from center of the image
     NSPoint dragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
 
-    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - MARGIN) / charWidth,
+    VT100GridCoord coord = VT100GridCoordMake((dragPoint.x - MARGIN) / _charWidth,
                                               dragPoint.y / _lineHeight);
     screen_char_t* theLine = [_dataSource getLineAtIndex:coord.y];
     if (theLine &&
@@ -8396,7 +8394,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                             coord.y - pos.y);
 
         // Compute the pixel coordinate of the image's top left point
-        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * charWidth + MARGIN,
+        NSPoint imageTopLeftPoint = NSMakePoint(imageCellOrigin.x * _charWidth + MARGIN,
                                                 imageCellOrigin.y * _lineHeight);
 
         // Compute the distance from the click location to the image's origin
@@ -8434,7 +8432,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         length = 15;
     }
 
-    imageSize = NSMakeSize(charWidth*length, _lineHeight);
+    imageSize = NSMakeSize(_charWidth * length, _lineHeight);
     anImage = [[[NSImage alloc] initWithSize:imageSize] autorelease];
     [anImage lockFocus];
     if ([aString length] > 15) {
@@ -8444,7 +8442,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         tmpString = [aString substringWithRange:NSMakeRange(0, length)];
     }
 
-    [tmpString drawInRect:NSMakeRect(0, 0, charWidth * length, _lineHeight) withAttributes:nil];
+    [tmpString drawInRect:NSMakeRect(0, 0, _charWidth * length, _lineHeight) withAttributes:nil];
     [anImage unlockFocus];
 
     // tell our app not switch windows (currently not working)
@@ -8525,17 +8523,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const int x = range.location;
     const int maxX = range.location + range.length - 1;
 
-    dirtyRect.origin.x = MARGIN + x * charWidth;
+    dirtyRect.origin.x = MARGIN + x * _charWidth;
     dirtyRect.origin.y = y * _lineHeight;
-    dirtyRect.size.width = (maxX - x + 1) * charWidth;
+    dirtyRect.size.width = (maxX - x + 1) * _charWidth;
     dirtyRect.size.height = _lineHeight;
 
     if (showTimestamps_) {
         dirtyRect.size.width = self.visibleRect.size.width - dirtyRect.origin.x;
     }
     // Add a character on either side for glyphs that render unexpectedly wide.
-    dirtyRect.origin.x -= charWidth;
-    dirtyRect.size.width += 2 * charWidth;
+    dirtyRect.origin.x -= _charWidth;
+    dirtyRect.size.width += 2 * _charWidth;
     DLog(@"Line %d is dirty from %d to %d, set rect %@ dirty",
          y, x, maxX, [NSValue valueWithRect:dirtyRect]);
     [self setNeedsDisplayInRect:dirtyRect];
@@ -8670,7 +8668,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     NSRect imeRect = NSMakeRect(MARGIN,
                                 ([_dataSource cursorY] - 1 + [_dataSource numberOfLines] - [_dataSource height]) * _lineHeight,
-                                [_dataSource width] * charWidth,
+                                [_dataSource width] * _charWidth,
                                 imeLines * _lineHeight);
     [self setNeedsDisplayInRect:imeRect];
 }
@@ -8899,7 +8897,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     rect.origin.y = numLines - height;
     rect.origin.y *= _lineHeight;
     rect.origin.x = MARGIN;
-    rect.size.width = charWidth * [_dataSource width];
+    rect.size.width = _charWidth * [_dataSource width];
     rect.size.height = _lineHeight * [_dataSource height];
     return rect;
 }
@@ -8953,7 +8951,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     NSRect liveRect = [self liveRect];
-    VT100GridCoord coord = VT100GridCoordMake((point.x - liveRect.origin.x) / charWidth,
+    VT100GridCoord coord = VT100GridCoordMake((point.x - liveRect.origin.x) / _charWidth,
                                               (point.y - liveRect.origin.y) / _lineHeight);
     coord.x = MAX(0, coord.x);
     coord.y = MAX(0, coord.y);
