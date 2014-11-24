@@ -158,7 +158,7 @@ static NSImage* allOutputSuppressedImage;
 
     // Underlined selection range (inclusive of all values), indicating clickable url.
     VT100GridWindowedRange _underlineRange;
-    BOOL mouseDown;
+    BOOL _mouseDown;
     BOOL mouseDragged;
     BOOL mouseDownOnSelection;
     BOOL mouseDownOnImage;
@@ -2853,8 +2853,7 @@ NSMutableArray* screens=0;
                allowRightMarginOverflow:allowRightMarginOverflow];
 }
 
-- (void)mouseDown:(NSEvent *)event
-{
+- (void)mouseDown:(NSEvent *)event {
     if ([threeFingerTapGestureRecognizer_ mouseDown:event]) {
         return;
     }
@@ -2913,8 +2912,7 @@ NSMutableArray* screens=0;
 }
 
 // Returns yes if [super mouseDown:event] should be run by caller.
-- (BOOL)mouseDownImpl:(NSEvent*)event
-{
+- (BOOL)mouseDownImpl:(NSEvent*)event {
     _mouseDownWasFirstMouse = ([event eventNumber] == firstMouseEventNumber_) || ![NSApp keyWindow];
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
     BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
@@ -2962,7 +2960,7 @@ NSMutableArray* screens=0;
             [pointer_ mouseDown:event
                     withTouches:numTouches_
                    ignoreOption:[_delegate xtermMouseReporting]];
-            mouseDown = YES;
+            _mouseDown = YES;
         }
         return NO;
     }
@@ -2980,7 +2978,7 @@ NSMutableArray* screens=0;
                 // A cmd-click in an inactive pane in the active window behaves like a click that
                 // doesn't make the pane active.
                 DLog(@"Cmd-click in acitve pane in active window");
-                mouseDown = YES;
+                _mouseDown = YES;
                 cmdPressed = NO;
                 _mouseDownWasFirstMouse = YES;
             } else {
@@ -3017,7 +3015,7 @@ NSMutableArray* screens=0;
         }
     }
 
-    mouseDown = YES;
+    _mouseDown = YES;
 
     if ([self reportMouseEvent:event]) {
         return NO;
@@ -3118,7 +3116,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else if (numTouches_ == 3 && mouseDown) {
         // Three finger tap is valid but not emulating middle button
         [pointer_ mouseUp:event withTouches:numTouches_];
-        mouseDown = NO;
+        _mouseDown = NO;
         return;
     }
     dragOk_ = NO;
@@ -3132,7 +3130,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (mouseDown == NO) {
         return;
     }
-    mouseDown = NO;
+    _mouseDown = NO;
 
     selectionScrollDirection = 0;
 
