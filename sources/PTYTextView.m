@@ -322,7 +322,7 @@ static NSImage* allOutputSuppressedImage;
     NSTimeInterval lastTimeCursorMoved_;
 
     // If set, the last-modified time of each line on the screen is shown on the right side of the display.
-    BOOL showTimestamps_;
+    BOOL _showTimestamps;
     float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
     NSImage *markImage_;
     NSImage *markErrImage_;
@@ -964,9 +964,8 @@ static NSImage* allOutputSuppressedImage;
     _charWidth = ceil(width);
 }
 
-- (void)toggleShowTimestamps
-{
-    showTimestamps_ = !showTimestamps_;
+- (void)toggleShowTimestamps {
+    _showTimestamps = !_showTimestamps;
     [self setNeedsDisplay:YES];
 }
 
@@ -1879,7 +1878,7 @@ NSMutableArray* screens=0;
                     hints:nil];
     }
 
-    if (showTimestamps_) {
+    if (_showTimestamps) {
         [self drawTimestamps];
     }
 
@@ -8518,7 +8517,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     dirtyRect.size.width = (maxX - x + 1) * _charWidth;
     dirtyRect.size.height = _lineHeight;
 
-    if (showTimestamps_) {
+    if (_showTimestamps) {
         dirtyRect.size.width = self.visibleRect.size.width - dirtyRect.origin.x;
     }
     // Add a character on either side for glyphs that render unexpectedly wide.
