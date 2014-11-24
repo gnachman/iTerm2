@@ -201,7 +201,7 @@ static const int kBadgeRightMargin = 10;
     int _numberOfProcessedSearchResults;
 
     // True if a result has been highlighted & scrolled to.
-    BOOL foundResult_;
+    BOOL _haveRevealedSearchResult;
 
     // Maps an absolute line number (NSNumber longlong) to an NSData bit array
     // with one bit per cell indicating whether that cell is a match.
@@ -5283,7 +5283,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         i += stride;
     }
 
-    if (!found && !foundResult_ && [_searchResults count] > 0) {
+    if (!found && !_haveRevealedSearchResult && [_searchResults count] > 0) {
         // Wrap around
         SearchResult* r = [_searchResults objectAtIndex:start];
         found = YES;
@@ -5316,10 +5316,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                         y:(long long)range.start.y + overflowAdustment
                                                       toX:0
                                                         y:0] retain];
-        foundResult_ = YES;
+        _haveRevealedSearchResult = YES;
     }
 
-    if (!_findInProgress && !foundResult_) {
+    if (!_findInProgress && !_haveRevealedSearchResult) {
         // Clear the selection.
         [_selection clearSelection];
         [_lastFindCoord release];
@@ -5396,7 +5396,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([_lastStringSearchedFor isEqualToString:aString] &&
         findRegex_ == regex &&
         findIgnoreCase_ == ignoreCase) {
-        foundResult_ = NO;  // select the next item before/after the current selection.
+        _haveRevealedSearchResult = NO;  // select the next item before/after the current selection.
         searchingForNextResult_ = YES;
         // I would like to call _selectNextResultForward:withOffset: here, but
         // it results in drawing errors (drawing is clipped to the findbar for
@@ -5455,7 +5455,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_searchResults release];
     _searchResults = nil;
     _numberOfProcessedSearchResults = 0;
-    foundResult_ = NO;
+    _haveRevealedSearchResult = NO;
     [resultMap_ removeAllObjects];
     searchingForNextResult_ = NO;
     [self setNeedsDisplay:YES];
