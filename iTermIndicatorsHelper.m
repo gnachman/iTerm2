@@ -52,6 +52,7 @@ static const NSTimeInterval kFlashDuration = 0.3;
     // Maps an identifier to a NSNumber in [0, 1]
     NSMutableDictionary *_visibleIndicators;
     NSTimeInterval _fullScreenFlashStartTime;
+    BOOL _checkForFlashUpdatePending;
 }
 
 + (NSDictionary *)indicatorImages {
@@ -154,26 +155,27 @@ static const NSTimeInterval kFlashDuration = 0.3;
 
     // Draw full screen flash.
     NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _fullScreenFlashStartTime;
-    const CGFloat kMaxFullScreenFlashAlpha = 0.3;
+    const CGFloat kMaxFullScreenFlashAlpha = 0.5;
     static const NSTimeInterval kFullScreenFlashDuration = 0.3;
-    CGFloat alpha = MAX(0, 1.0 - elapsed / kFullScreenFlashDuration) * kMaxFullScreenFlashAlpha;
-    if (alpha > 0) {
-        [[[_delegate indicatorFullScreenFlashColor] colorWithAlphaComponent:alpha] set];
-        NSRectFill(NSMakeRect(0, 0, frame.size.width, frame.size.height));
+    CGFloat fullScreenAlpha = MAX(0, 1.0 - elapsed / kFullScreenFlashDuration) * kMaxFullScreenFlashAlpha;
+    if (fullScreenAlpha > 0) {
+        [[[_delegate indicatorFullScreenFlashColor] colorWithAlphaComponent:fullScreenAlpha] set];
+        NSRectFillUsingOperation(frame, NSCompositeSourceOver);
+    } else if (_fullScreenFlashStartTime > 0 && fullScreenAlpha == 0) {
+        _fullScreenFlashStartTime = 0;
     }
 
     // Request another update if needed.
-    if ([self haveFlashingIndicator]) {
-        [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                                 selector:@selector(checkForFlashUpdate)
-                                                   object:nil];
+    if ((_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) &&
+        !_checkForFlashUpdatePending) {
+        _checkForFlashUpdatePending = YES;
         [self performSelector:@selector(checkForFlashUpdate) withObject:nil afterDelay:1 / 60.0];
     }
 }
 
 - (void)checkForFlashUpdate {
-    if ([self haveFlashingIndicator]) {
-        NSLog(@"setNeedsDisplay");
+    _checkForFlashUpdatePending = NO;
+    if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
         [_delegate setNeedsDisplay:YES];
     }
 }

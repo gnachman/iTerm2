@@ -1723,7 +1723,7 @@ NSMutableArray* screens=0;
     }
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
     for (int i = 0; i < rectCount; i++) {
-        NSLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
+        DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
         [self drawOneRect:rectArray[i]];
     }
 
