@@ -45,6 +45,7 @@
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
+#import "iTermSelectionScrollHelper.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLSchemeController.h"
@@ -158,7 +159,8 @@ static const int kBadgeRightMargin = 10;
     // trackingRect tab
     NSTrackingArea *_trackingArea;
 
-    BOOL keyIsARepeat;
+    // Was the last pressed key a "repeat" where the key is held down?
+    BOOL _keyIsARepeat;
 
     // Is a find currently executing?
     BOOL _findInProgress;
@@ -169,19 +171,8 @@ static const int kBadgeRightMargin = 10;
     // Dimmed background color with alpha.
     double _cachedBackgroundColorAlpha;  // cached alpha value (comparable to another double)
 
-    // Indicates if a selection that scrolls the window is in progress.
-    // Negative value: scroll up.
-    // Positive value: scroll down.
-    // Zero: don't scroll.
-    int selectionScrollDirection;
-    NSTimeInterval lastSelectionScroll;
-
-    // Scrolls view when you drag a selection to top or bottom of view.
-    NSTimer* selectionScrollTimer;
-    double prevScrollDelay;
-    int scrollingX;
-    int scrollingY;
-    NSPoint scrollingLocation;
+    // Helps with "selection scroll"
+    iTermSelectionScrollHelper *_selectionScrollHelper;
 
     // This gives the number of lines added to the bottom of the frame that do
     // not correspond to a line in the _dataSource. They are used solely for
@@ -416,6 +407,9 @@ static const int kBadgeRightMargin = 10;
         _markErrImage = [[NSImage imageNamed:@"mark_err"] retain];
         _indicatorsHelper = [[iTermIndicatorsHelper alloc] init];
         _indicatorsHelper.delegate = self;
+
+        _selectionScrollHelper = [[iTermSelectionScrollHelper alloc] init];
+        _selectionScrollHelper.delegate = self;
     }
     return self;
 }
@@ -454,8 +448,6 @@ static const int kBadgeRightMargin = 10;
     [_markedTextAttributes release];
     [_markedText release];
 
-    [selectionScrollTimer release];
-
     [_trouter release];
 
     [pointer_ release];
@@ -473,6 +465,8 @@ static const int kBadgeRightMargin = 10;
     [_bagdgeLabel release];
     _indicatorsHelper.delegate = nil;
     [_indicatorsHelper release];
+    _selectionScrollHelper.delegate = nil;
+    [_selectionScrollHelper release];
 
     [super dealloc];
 }
@@ -960,63 +954,6 @@ NSMutableArray* screens=0;
     [_delegate textViewSizeDidChange];
 }
 
-- (void)scheduleSelectionScroll
-{
-    if (selectionScrollTimer) {
-        [selectionScrollTimer release];
-        if (prevScrollDelay > 0.001) {
-            // Maximum speed hasn't been reached so accelerate scrolling speed by 5%.
-            prevScrollDelay *= 0.95;
-        }
-    } else {
-        // Set a slow initial scrolling speed.
-        prevScrollDelay = 0.1;
-    }
-
-    lastSelectionScroll = [[NSDate date] timeIntervalSince1970];
-    selectionScrollTimer = [[NSTimer scheduledTimerWithTimeInterval:prevScrollDelay
-                                                             target:self
-                                                           selector:@selector(updateSelectionScroll)
-                                                           userInfo:nil
-                                                            repeats:NO] retain];
-}
-
-// Scroll the screen up or down a line for a selection drag scroll.
-- (void)updateSelectionScroll
-{
-    double actualDelay = [[NSDate date] timeIntervalSince1970] - lastSelectionScroll;
-    const int kMaxLines = 100;
-    int numLines = MIN(kMaxLines, MAX(1, actualDelay / prevScrollDelay));
-    NSRect visibleRect = [self visibleRect];
-
-    int y = 0;
-    if (!selectionScrollDirection) {
-        [selectionScrollTimer release];
-        selectionScrollTimer = nil;
-        return;
-    } else if (selectionScrollDirection < 0) {
-        visibleRect.origin.y -= [self lineHeight] * numLines;
-        // Allow the origin to go as far as y=-VMARGIN so the top border is shown when the first line is
-        // on screen.
-        if (visibleRect.origin.y >= -VMARGIN) {
-            [self scrollRectToVisible:visibleRect];
-        }
-        y = visibleRect.origin.y / _lineHeight;
-    } else if (selectionScrollDirection > 0) {
-        visibleRect.origin.y += _lineHeight * numLines;
-        if (visibleRect.origin.y + visibleRect.size.height > [self frame].size.height) {
-            visibleRect.origin.y = [self frame].size.height - visibleRect.size.height;
-        }
-        [self scrollRectToVisible:visibleRect];
-        y = (visibleRect.origin.y + visibleRect.size.height - [self excess]) / _lineHeight;
-    }
-
-    [self moveSelectionEndpointToX:scrollingX
-                                 Y:y
-                locationInTextView:scrollingLocation];
-
-    [self scheduleSelectionScroll];
-}
 
 - (BOOL)accessibilityIsIgnored
 {
@@ -2238,7 +2175,7 @@ NSMutableArray* screens=0;
     BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
     BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
-    keyIsARepeat = [event isARepeat];
+    _keyIsARepeat = [event isARepeat];
     DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
     DLog(@"prev=%d", (int)prev);
     DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
@@ -2249,10 +2186,10 @@ NSMutableArray* screens=0;
     DLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
     DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
     DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
-    DLog(@"event is repeated=%d", keyIsARepeat);
+    DLog(@"event is repeated=%d", _keyIsARepeat);
 
     // discard repeated key events if auto repeat mode (DECARM) is disabled
-    if (keyIsARepeat && ![[_dataSource terminal] autorepeatMode]) {
+    if (_keyIsARepeat && ![[_dataSource terminal] autorepeatMode]) {
         return;
     }
 
@@ -2346,9 +2283,8 @@ NSMutableArray* screens=0;
     DLog(@"PTYTextView keyDown END");
 }
 
-- (BOOL)keyIsARepeat
-{
-    return (keyIsARepeat);
+- (BOOL)keyIsARepeat {
+    return (_keyIsARepeat);
 }
 
 - (BOOL)xtermMouseReporting
@@ -2712,7 +2648,7 @@ NSMutableArray* screens=0;
     return NSMakePoint(x, y);
 }
 
-- (NSPoint)clickPoint:(NSEvent *)event  allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
+- (NSPoint)clickPoint:(NSEvent *)event allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     NSPoint locationInWindow = [event locationInWindow];
     return [self windowLocationToRowCol:locationInWindow
                allowRightMarginOverflow:allowRightMarginOverflow];
@@ -2997,7 +2933,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     _mouseDown = NO;
 
-    selectionScrollDirection = 0;
+    [_selectionScrollHelper mouseUp];
 
     BOOL isUnshiftedSingleClick = ([event clickCount] < 2 &&
                                    !_mouseDragged &&
@@ -3141,7 +3077,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Clamp the y position to be within the view. Sometimes we get events we probably shouldn't.
     locationInTextView.y = MIN(self.frame.size.height - 1,
                                MAX(0, locationInTextView.y));
-    NSRect  rectInTextView = [self visibleRect];
 
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     int x = clickPoint.x;
@@ -3248,27 +3183,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     }
 
-    int prevScrolling = selectionScrollDirection;
-    if (locationInTextView.y <= rectInTextView.origin.y) {
-        DLog(@"selection scroll up");
-        selectionScrollDirection = -1;
-        scrollingX = x;
-        scrollingY = y;
-        scrollingLocation = locationInTextView;
-    } else if (locationInTextView.y >= rectInTextView.origin.y + rectInTextView.size.height) {
-        DLog(@"selection scroll down");
-        selectionScrollDirection = 1;
-        scrollingX = x;
-        scrollingY = y;
-        scrollingLocation = locationInTextView;
-    } else {
-        DLog(@"selection scroll off");
-        selectionScrollDirection = 0;
-    }
-    if (selectionScrollDirection && !prevScrolling) {
-        DLog(@"selection scroll scheduling");
-        [self scheduleSelectionScroll];
-    }
+    [_selectionScrollHelper mouseDraggedTo:locationInTextView coord:VT100GridCoordMake(x, y)];
 
     [self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView];
 }
@@ -5598,9 +5513,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // This textview is about to be hidden behind another tab.
-- (void)aboutToHide
-{
-    selectionScrollDirection = 0;
+- (void)aboutToHide {
+    [_selectionScrollHelper mouseUp];
 }
 
 - (void)beginFlash:(NSString *)flashIdentifier {
