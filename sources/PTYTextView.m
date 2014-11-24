@@ -88,7 +88,12 @@ static const int kDragThreshold = 3;
 static const int kBadgeMargin = 4;
 static const int kBadgeRightMargin = 10;
 
-@interface PTYTextView () <iTermIndicatorsHelperDelegate, iTermSelectionDelegate, NSDraggingSource>
+@interface PTYTextView () <
+    iTermIndicatorsHelperDelegate,
+    iTermSelectionDelegate,
+    iTermSelectionScrollHelperDelegate,
+    NSDraggingSource>
+
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
@@ -177,7 +182,7 @@ static const int kBadgeRightMargin = 10;
     // This gives the number of lines added to the bottom of the frame that do
     // not correspond to a line in the _dataSource. They are used solely for
     // IME text.
-    int imeOffset;
+    int _numberOfIMELines;
 
     // Last position that accessibility was read up to.
     int accX;
@@ -374,7 +379,7 @@ static const int kBadgeRightMargin = 10;
                                                      name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
 
-        imeOffset = 0;
+        _numberOfIMELines = 0;
         resultMap_ = [[NSMutableDictionary alloc] init];
 
         _trouter = [[Trouter alloc] init];
@@ -945,7 +950,7 @@ NSMutableArray* screens=0;
 - (void)setFrameSize:(NSSize)frameSize
 {
     // Force the height to always be correct
-    frameSize.height = [_dataSource numberOfLines] * _lineHeight + [self excess] + imeOffset * _lineHeight;
+    frameSize.height = [_dataSource numberOfLines] * _lineHeight + [self excess] + _numberOfIMELines * _lineHeight;
     [super setFrameSize:frameSize];
 
     frameSize.height += VMARGIN;  // This causes a margin to be left at the top
@@ -1420,10 +1425,10 @@ NSMutableArray* screens=0;
 
     double excess = [self excess];
 
-    if ((int)(height + excess + imeOffset * _lineHeight) != (int)frame.size.height) {
+    if ((int)(height + excess + _numberOfIMELines * _lineHeight) != (int)frame.size.height) {
         // Grow the frame
         // Add VMARGIN to include top margin.
-        frame.size.height = height + excess + imeOffset * _lineHeight + VMARGIN;
+        frame.size.height = height + excess + _numberOfIMELines * _lineHeight + VMARGIN;
         [[self superview] setFrame:frame];
         frame.size.height -= VMARGIN;
         NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
@@ -1590,7 +1595,7 @@ NSMutableArray* screens=0;
       return;
     }
     NSRect lastLine = [self visibleRect];
-    lastLine.origin.y = ([_dataSource numberOfLines] - 1) * _lineHeight + [self excess] + imeOffset * _lineHeight;
+    lastLine.origin.y = ([_dataSource numberOfLines] - 1) * _lineHeight + [self excess] + _numberOfIMELines * _lineHeight;
     lastLine.size.height = _lineHeight;
     if (!NSContainsRect(self.visibleRect, lastLine)) {
         [self scrollRectToVisible:lastLine];
@@ -1903,7 +1908,7 @@ NSMutableArray* screens=0;
     [self appendDebug:lineDebug];
 #endif
     NSRect excessRect;
-    if (imeOffset) {
+    if (_numberOfIMELines) {
         // Draw a default-color rectangle from below the last line of text to
         // the bottom of the frame to make sure that IME offset lines are
         // cleared when the screen is scrolled up.
@@ -4856,6 +4861,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)doCommandBySelector:(SEL)aSelector
 {
+    DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
     if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
         // See comment in -keyDown:
         DLog(@"Rerouting doCommandBySelector from %@ to %@", self, gCurrentKeyEventTextView);
@@ -4867,6 +4873,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // TODO: Respect replacementRange
 - (void)insertText:(id)aString replacementRange:(NSRange)replacementRange {
+    DLog(@"insertText:%@ replacementRange:%@", aString ,NSStringFromRange(replacementRange));
     if ([aString isKindOfClass:[NSAttributedString class]]) {
         aString = [aString string];
     }
@@ -4882,7 +4889,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         _inputMethodMarkedRange = NSMakeRange(0, 0);
         [_markedText release];
         _markedText = nil;
-        imeOffset = 0;
+        _numberOfIMELines = 0;
     }
     if (![_selection hasSelection]) {
         [self resetFindCursor];
@@ -4919,7 +4926,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setMarkedText:(id)aString
         selectedRange:(NSRange)selRange
      replacementRange:(NSRange)replacementRange {
-    DLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
+    DLog(@"setMarkedText%@ selectedRange%@ replacementRange:%@",
+         aString, NSStringFromRange(selRange), NSStringFromRange(replacementRange));
     [_markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
         _markedText = [[NSAttributedString alloc] initWithString:[aString string]
@@ -4935,13 +4943,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int dirtStart;
     int dirtEnd;
     int dirtMax;
-    imeOffset = 0;
+    _numberOfIMELines = 0;
     do {
-        dirtStart = ([_dataSource cursorY] - 1 - imeOffset) * [_dataSource width] + [_dataSource cursorX] - 1;
+        dirtStart = ([_dataSource cursorY] - 1 - _numberOfIMELines) * [_dataSource width] + [_dataSource cursorX] - 1;
         dirtEnd = dirtStart + [self inputMethodEditorLength];
         dirtMax = [_dataSource height] * [_dataSource width];
         if (dirtEnd > dirtMax) {
-            ++imeOffset;
+            ++_numberOfIMELines;
         }
     } while (dirtEnd > dirtMax);
 
@@ -4959,12 +4967,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setMarkedText:aString selectedRange:selRange replacementRange:NSMakeRange(0, 0)];
 }
 
-- (void)unmarkText
-{
-    DLog(@"clear marked text");
+- (void)unmarkText {
+    DLog(@"unmarkText");
     // As far as I can tell this is never called.
     _inputMethodMarkedRange = NSMakeRange(0, 0);
-    imeOffset = 0;
+    _numberOfIMELines = 0;
     [self invalidateInputMethodEditorRect];
     [_delegate refreshAndStartTimerIfNeeded];
     [self scrollEnd];
@@ -4978,20 +4985,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         result = NO;
     }
+    DLog(@"hasMarkedText->%@", @(result));
     return result;
 }
 
-- (NSRange)markedRange
-{
+- (NSRange)markedRange {
+    NSRange range;
     if (_inputMethodMarkedRange.length > 0) {
-        return NSMakeRange([_dataSource cursorX]-1, _inputMethodMarkedRange.length);
+        range = NSMakeRange([_dataSource cursorX]-1, _inputMethodMarkedRange.length);
     } else {
-        return NSMakeRange([_dataSource cursorX]-1, 0);
+        range = NSMakeRange([_dataSource cursorX]-1, 0);
     }
+    DLog(@"markedRange->%@", NSStringFromRange(range));
+    return range;
 }
 
-- (NSRange)selectedRange
-{
+- (NSRange)selectedRange {
+    DLog(@"selectedRange->NSNotFound");
     return NSMakeRange(NSNotFound, 0);
 }
 
@@ -5008,10 +5018,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [self attributedSubstringForProposedRange:theRange actualRange:NULL];
 }
 
-- (NSAttributedString *)attributedSubstringForProposedRange:(NSRange)aRange
+- (NSAttributedString *)attributedSubstringForProposedRange:(NSRange)proposedRange
                                                 actualRange:(NSRangePointer)actualRange {
+    DLog(@"attributedSubstringForProposedRange:%@", NSStringFromRange(proposedRange));
+    NSRange aRange = NSIntersectionRange(proposedRange, NSMakeRange(0, _markedText.length));
+    if (proposedRange.length > 0 && aRange.length == 0) {
+        aRange.location = NSNotFound;
+    }
     if (actualRange) {
         *actualRange = aRange;
+    }
+    if (aRange.location == NSNotFound) {
+        return nil;
     }
     return [_markedText attributedSubstringFromRange:NSMakeRange(0, aRange.length)];
 }

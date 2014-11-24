@@ -13,14 +13,13 @@
 
 - (CGFloat)lineHeight;
 - (CGFloat)excess;
-- (NSScrollView *)scrollView;
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView;
 
 @end
 
 @interface iTermSelectionScrollHelper : NSObject
 
-@property(nonatomic, assign) NSScrollView<iTermSelectionScrollHelperDelegate> *delegate;
+@property(nonatomic, assign) NSView<iTermSelectionScrollHelperDelegate> *delegate;
 
 - (void)mouseUp;
 - (void)mouseDraggedTo:(NSPoint)locationInTextView coord:(VT100GridCoord)coord;
