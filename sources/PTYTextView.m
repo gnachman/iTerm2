@@ -162,7 +162,7 @@ static NSImage* allOutputSuppressedImage;
     BOOL _mouseDragged;
     BOOL _mouseDownOnSelection;
     BOOL _mouseDownOnImage;
-    ImageInfo *theImage;
+    ImageInfo *_imageBeingClickedOn;
     NSEvent *mouseDownEvent;
 
     // Find cursor. Only the start coordinate is used. Is nil if there is no cursor.
@@ -3049,7 +3049,7 @@ NSMutableArray* screens=0;
             mode = kiTermSelectionModeCharacter;
         }
 
-        if ((theImage = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
+        if ((_imageBeingClickedOn = [self imageInfoAtCoord:VT100GridCoordMake(x, y)])) {
             _mouseDownOnImage = YES;
             _selection.appending = NO;
         } else if ([_selection containsCoord:VT100GridCoordMake(x, y)]) {
@@ -3311,7 +3311,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (_mouseDownOnImage &&
         ([event modifierFlags] & NSCommandKeyMask) &&
         dragThresholdMet) {
-        [self _dragImage:theImage forEvent:event];
+        [self _dragImage:_imageBeingClickedOn forEvent:event];
     } else if (_mouseDownOnSelection == YES &&
         ([event modifierFlags] & NSCommandKeyMask) &&
         dragThresholdMet) {
