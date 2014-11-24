@@ -156,7 +156,7 @@ static const int kBadgeRightMargin = 10;
     VT100GridCoord _oldCursorPosition;
 
     // trackingRect tab
-    NSTrackingArea *trackingArea;
+    NSTrackingArea *_trackingArea;
 
     BOOL keyIsARepeat;
 
@@ -432,8 +432,8 @@ static const int kBadgeRightMargin = 10;
     [_mouseDownEvent release];
     _mouseDownEvent = nil;
 
-    if (trackingArea) {
-        [self removeTrackingArea:trackingArea];
+    if (_trackingArea) {
+        [self removeTrackingArea:_trackingArea];
     }
     if ([self isFindingCursor]) {
         [findCursorWindow_ close];
@@ -574,9 +574,9 @@ static const int kBadgeRightMargin = 10;
 
 - (void)viewWillMoveToWindow:(NSWindow *)win
 {
-    if (!win && [self window] && trackingArea) {
-        [self removeTrackingArea:trackingArea];
-        trackingArea = nil;
+    if (!win && [self window] && _trackingArea) {
+        [self removeTrackingArea:_trackingArea];
+        _trackingArea = nil;
     }
     [super viewWillMoveToWindow:win];
 }
@@ -596,20 +596,20 @@ static const int kBadgeRightMargin = 10;
             ([NSEvent modifierFlags] & NSCommandKeyMask)) {
             trackingOptions |= NSTrackingMouseMoved;
         }
-        if (trackingArea &&
-            NSEqualRects(trackingArea.rect, self.visibleRect) &&
-            trackingArea.options == trackingOptions) {
+        if (_trackingArea &&
+            NSEqualRects(_trackingArea.rect, self.visibleRect) &&
+            _trackingArea.options == trackingOptions) {
             // Nothing would change.
             return;
         }
-        if (trackingArea) {
-            [self removeTrackingArea:trackingArea];
+        if (_trackingArea) {
+            [self removeTrackingArea:_trackingArea];
         }
-        trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
-                                                     options:trackingOptions
-                                                       owner:self
-                                                    userInfo:nil] autorelease];
-        [self addTrackingArea:trackingArea];
+        _trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
+                                                      options:trackingOptions
+                                                        owner:self
+                                                     userInfo:nil] autorelease];
+        [self addTrackingArea:_trackingArea];
     }
 }
 
