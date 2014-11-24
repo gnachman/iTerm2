@@ -168,9 +168,7 @@ static NSImage* allOutputSuppressedImage;
     // Find cursor. Only the start coordinate is used. Is nil if there is no cursor.
     SearchResult *_lastFindCoord;
 
-
     // blinking cursor
-    BOOL showCursor;
     BOOL blinkShow;
     struct timeval lastBlink;
     int oldCursorX, oldCursorY;
@@ -7739,17 +7737,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (column != oldCursorX || row != oldCursorY) {
         lastTimeCursorMoved_ = now;
     }
-    showCursor = [self shouldShowCursor];
+    BOOL shouldShowCursor = [self shouldShowCursor];
 
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor.
     DLog(@"drawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d, "
          @"width=%d, height=%d",
-         (int)[self hasMarkedText], (int)_cursorVisible, (int)showCursor, column, row,
+         (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, column, row,
          width, height);
     if (![self hasMarkedText] &&
         _cursorVisible &&
-        showCursor &&
+        shouldShowCursor &&
         column <= width &&
         column >= 0 &&
         row >= 0 &&
