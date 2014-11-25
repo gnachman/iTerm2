@@ -5347,19 +5347,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [blue performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:0.75];
 }
 
-- (NSRect)cursorRect
-{
+#pragma mark - Find Cursor
+
+- (NSRect)cursorRect {
     NSRect frame = [self visibleRect];
-    double x = MARGIN + _charWidth * ([_dataSource cursorX] - 1);
-    double y = frame.origin.y + _lineHeight * ([_dataSource cursorY] - 1);
+    CGFloat x = MARGIN + _charWidth * ([_dataSource cursorX] - 1);
+    CGFloat y = frame.origin.y + _lineHeight * ([_dataSource cursorY] - 1);
     return NSMakeRect(x, y, _charWidth, _lineHeight);
 }
 
-- (NSPoint)cursorLocationInScreenCoordinates
-{
+- (NSPoint)cursorLocationInScreenCoordinates {
     NSRect cursorFrame = [self cursorRect];
-    double x = cursorFrame.origin.x + cursorFrame.size.width / 2;
-    double y = cursorFrame.origin.y + cursorFrame.size.height / 2;
+    CGFloat x = cursorFrame.origin.x + cursorFrame.size.width / 2;
+    CGFloat y = cursorFrame.origin.y + cursorFrame.size.height / 2;
     if ([self hasMarkedText]) {
         x = imeCursorLastPos_.x + 1;
         y = imeCursorLastPos_.y + _lineHeight / 2;
@@ -5371,8 +5371,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // Returns the location of the cursor relative to the origin of findCursorWindow_.
-- (NSPoint)globalCursorLocation
-{
+- (NSPoint)globalCursorLocation {
     NSPoint p = [self cursorLocationInScreenCoordinates];
     p = [findCursorWindow_ pointFromScreenCoords:p];
     return p;
@@ -5380,8 +5379,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // Returns the proper frame for findCursorWindow_, including every screen that the
 // "hole" will be in.
-- (NSRect)_cursorScreenFrame
-{
+- (NSRect)cursorScreenFrame {
     NSRect frame = NSZeroRect;
     for (NSScreen *aScreen in [NSScreen screens]) {
         NSRect screenFrame = [aScreen frame];
@@ -5395,8 +5393,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return frame;
 }
 
-#pragma mark - Find Cursor
-
 - (void)createFindCursorWindow {
     findCursorWindow_ = [[NSWindow alloc] initWithContentRect:NSZeroRect
                                                     styleMask:NSBorderlessWindowMask
@@ -5406,7 +5402,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [findCursorWindow_ makeKeyAndOrderFront:nil];
     [findCursorWindow_ setLevel:NSFloatingWindowLevel];
     [findCursorWindow_ setAlphaValue:0];
-    [findCursorWindow_ setFrame:[self _cursorScreenFrame] display:YES];
+    [findCursorWindow_ setFrame:[self cursorScreenFrame] display:YES];
     [[NSAnimationContext currentContext] setDuration:0.5];
     [[findCursorWindow_ animator] setAlphaValue:0.7];
 
