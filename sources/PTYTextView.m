@@ -194,7 +194,7 @@ static const int kBadgeRightMargin = 10;
     BOOL dragOk_;
 
     // Flag to make sure a Trouter drag check is only one once per drag
-    BOOL trouterDragged;
+    BOOL _trouterDragged;
 
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
@@ -345,7 +345,7 @@ static const int kBadgeRightMargin = 10;
 
         _trouter = [[Trouter alloc] init];
         _trouter.delegate = self;
-        trouterDragged = NO;
+        _trouterDragged = NO;
 
         pointer_ = [[PointerController alloc] init];
         pointer_.delegate = self;
@@ -2886,7 +2886,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     dragOk_ = NO;
-    trouterDragged = NO;
+    _trouterDragged = NO;
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseUp:event withTouches:numTouches_];
         return;
@@ -3103,10 +3103,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if (![_selection hasSelection] && pressingCmdOnly && trouterDragged == NO) {
+    if (![_selection hasSelection] && pressingCmdOnly && _trouterDragged == NO) {
         DLog(@"do trouter check");
         // Only one Trouter check per drag
-        trouterDragged = YES;
+        _trouterDragged = YES;
 
         // Drag a file handle (only possible when there is no selection).
         URLAction *action = [self urlActionForClickAtX:x y:y];
@@ -3138,7 +3138,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         draggingSession.draggingFormation = NSDraggingFormationNone;
 
         // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
-        trouterDragged = NO;
+        _trouterDragged = NO;
         DLog(@"did trouter drag");
 
         return;
