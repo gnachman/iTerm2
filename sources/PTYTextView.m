@@ -200,12 +200,14 @@ static const int kBadgeRightMargin = 10;
     // selection.
     NSInteger _firstMouseEventNumber;
 
-    // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
+    // For accessibility. This is a giant string with the entire scrollback buffer plus screen
+    // concatenated with newlines for hard eol's.
     NSMutableString *_allText;
-    // For accessibility. This is the indices at which soft newlines occur in allText_, ignoring multi-char compositing characters.
-    NSMutableArray* lineBreakIndexOffsets_;
+    // For accessibility. This is the indices at which soft newlines occur in allText_, ignoring
+    // multi-char compositing characters.
+    NSMutableArray *_lineBreakIndexOffsets;
     // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
-    NSMutableArray* lineBreakCharOffsets_;
+    NSMutableArray *_lineBreakCharOffsets;
 
     // Brightness of background color
     double backgroundBrightness_;
@@ -969,12 +971,12 @@ NSMutableArray* screens=0;
     if (lineNumber == 0) {
         range.location = 0;
     } else {
-        range.location = [[lineBreakCharOffsets_ objectAtIndex:lineNumber-1] unsignedLongValue];
+        range.location = [[_lineBreakCharOffsets objectAtIndex:lineNumber-1] unsignedLongValue];
     }
-    if (lineNumber >= [lineBreakCharOffsets_ count]) {
+    if (lineNumber >= [_lineBreakCharOffsets count]) {
         range.length = [_allText length] - range.location;
     } else {
-        range.length = [[lineBreakCharOffsets_ objectAtIndex:lineNumber] unsignedLongValue] - range.location;
+        range.length = [[_lineBreakCharOffsets objectAtIndex:lineNumber] unsignedLongValue] - range.location;
     }
     return range;
 }
@@ -983,7 +985,7 @@ NSMutableArray* screens=0;
 - (NSUInteger)_lineNumberOfIndex:(NSUInteger)theIndex
 {
     NSUInteger lineNum = 0;
-    for (NSNumber* n in lineBreakIndexOffsets_) {
+    for (NSNumber* n in _lineBreakIndexOffsets) {
         NSUInteger offset = [n unsignedLongValue];
         if (offset > theIndex) {
             break;
@@ -997,7 +999,7 @@ NSMutableArray* screens=0;
 - (NSUInteger)_lineNumberOfChar:(NSUInteger)location
 {
     NSUInteger lineNum = 0;
-    for (NSNumber* n in lineBreakCharOffsets_) {
+    for (NSNumber* n in _lineBreakCharOffsets) {
         NSUInteger offset = [n unsignedLongValue];
         if (offset > location) {
             break;
@@ -1019,8 +1021,8 @@ NSMutableArray* screens=0;
     if (lineNum == 0) {
         return 0;
     }
-    assert(lineNum < [lineBreakCharOffsets_ count] + 1);
-    return [[lineBreakCharOffsets_ objectAtIndex:lineNum - 1] unsignedLongValue];
+    assert(lineNum < [_lineBreakCharOffsets count] + 1);
+    return [[_lineBreakCharOffsets objectAtIndex:lineNum - 1] unsignedLongValue];
 }
 
 // Onscreen X-position of a location (respecting compositing chars) in allText_.
@@ -1040,10 +1042,10 @@ NSMutableArray* screens=0;
 // Index (ignoring compositing chars) of a line in allText_.
 - (NSUInteger)_startingIndexOfLineNumber:(NSUInteger)lineNumber
 {
-    if (lineNumber < [lineBreakIndexOffsets_ count]) {
-        return [[lineBreakCharOffsets_ objectAtIndex:lineNumber] unsignedLongValue];
-    } else if ([lineBreakIndexOffsets_ count] > 0) {
-        return [[lineBreakIndexOffsets_ lastObject] unsignedLongValue];
+    if (lineNumber < [_lineBreakIndexOffsets count]) {
+        return [[_lineBreakCharOffsets objectAtIndex:lineNumber] unsignedLongValue];
+    } else if ([_lineBreakIndexOffsets count] > 0) {
+        return [[_lineBreakIndexOffsets lastObject] unsignedLongValue];
     } else {
         return 0;
     }
@@ -1115,7 +1117,7 @@ NSMutableArray* screens=0;
     } else if ([attribute isEqualToString:NSAccessibilityRangeForLineParameterizedAttribute]) {
         //(NSValue *)  - (rangeValue) range of line; param:(NSNumber *)
         NSUInteger lineNumber = [(NSNumber*)parameter unsignedLongValue];
-        if (lineNumber >= [lineBreakIndexOffsets_ count]) {
+        if (lineNumber >= [_lineBreakIndexOffsets count]) {
             return [NSValue valueWithRange:NSMakeRange(NSNotFound, 0)];
         } else {
             return [NSValue valueWithRange:[self _rangeOfLine:lineNumber]];
@@ -1199,12 +1201,12 @@ NSMutableArray* screens=0;
 - (NSString*)_allText
 {
     [_allText release];
-    [lineBreakCharOffsets_ release];
-    [lineBreakIndexOffsets_ release];
+    [_lineBreakCharOffsets release];
+    [_lineBreakIndexOffsets release];
 
     _allText = [[NSMutableString alloc] init];
-    lineBreakCharOffsets_ = [[NSMutableArray alloc] init];
-    lineBreakIndexOffsets_ = [[NSMutableArray alloc] init];
+    _lineBreakCharOffsets = [[NSMutableArray alloc] init];
+    _lineBreakIndexOffsets = [[NSMutableArray alloc] init];
 
     int width = [_dataSource width];
     unichar chars[width * kMaxParts];
@@ -1245,8 +1247,8 @@ NSMutableArray* screens=0;
             [_allText appendString:@"\n"];
             ++offset;
         }
-        [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[_allText length]]];
-        [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
+        [_lineBreakCharOffsets addObject:[NSNumber numberWithUnsignedLong:[_allText length]]];
+        [_lineBreakIndexOffsets addObject:[NSNumber numberWithUnsignedLong:offset]];
     }
 
     return _allText;
