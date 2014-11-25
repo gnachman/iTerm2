@@ -1685,6 +1685,11 @@
 		A6E77F7C1A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F791A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h */; };
 		A6E77F7D1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F7A1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h */; };
 		A6E77F7E1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F7A1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h */; };
+		A6E77F811A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */; };
+		A6E77F821A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */; };
+		A6E77F831A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */; };
+		A6E77F841A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */; };
+		A6E77F851A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */; };
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0619DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
@@ -2426,6 +2431,8 @@
 		A6E77F721A23D195009B1CB6 /* iTermIndicatorsHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIndicatorsHelper.m; sourceTree = "<group>"; };
 		A6E77F791A23D1A5009B1CB6 /* iTermSelectionScrollHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelectionScrollHelper.h; sourceTree = "<group>"; };
 		A6E77F7A1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIndicatorsHelper.h; sourceTree = "<group>"; };
+		A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFindOnPageHelper.h; sourceTree = "<group>"; };
+		A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindOnPageHelper.m; sourceTree = "<group>"; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
@@ -3513,6 +3520,8 @@
 				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
+				A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */,
+				A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -3805,6 +3814,7 @@
 				1D6ED8C319AEA20D005A7799 /* SessionView.h in Headers */,
 				1D6ED8C419AEA20D005A7799 /* ScreenChar.h in Headers */,
 				1D6ED8C519AEA20D005A7799 /* UKCrashReporter.h in Headers */,
+				A6E77F821A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
 				1D6ED8C619AEA20D005A7799 /* UKNibOwner.h in Headers */,
 				1D6ED8C719AEA20D005A7799 /* VT100GridTest.h in Headers */,
 				1D6ED8C819AEA20D005A7799 /* CommandHistory.h in Headers */,
@@ -4116,6 +4126,7 @@
 				1D2E813112A18F7500F3D71E /* SessionView.h in Headers */,
 				1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */,
 				1D94EAAE12D64022008225A9 /* UKCrashReporter.h in Headers */,
+				A6E77F811A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
 				1D94EAB212D64022008225A9 /* UKNibOwner.h in Headers */,
 				1DD39B14180B819A004E56D5 /* VT100GridTest.h in Headers */,
 				A6057C0E187BC4C3004A60AF /* CommandHistory.h in Headers */,
@@ -4932,6 +4943,7 @@
 				1D6EDAA019AEA20D005A7799 /* CoprocessTrigger.m in Sources */,
 				1D6EDAA119AEA20D005A7799 /* Coprocess.m in Sources */,
 				1D6EDAA219AEA20D005A7799 /* SendTextTrigger.m in Sources */,
+				A6E77F851A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */,
 				1D6EDAA319AEA20D005A7799 /* SmartSelectionController.m in Sources */,
 				1D6EDAA419AEA20D005A7799 /* iTermOpenQuicklyItem.m in Sources */,
 				1D6EDAA519AEA20D005A7799 /* TrouterPrefsController.m in Sources */,
@@ -5084,6 +5096,7 @@
 				A663011319CFE41A004AF81C /* iTermAboutWindow.m in Sources */,
 				A69B45B019731D3200F5444D /* iTermOpenQuicklyModel.m in Sources */,
 				1D9A55AA180FA8B700B42CE9 /* PSMOverflowPopUpButton.m in Sources */,
+				A6E77F841A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */,
 				A6E7474F188C6394005355CF /* CommandUse.m in Sources */,
 				1D9A5560180FA83900B42CE9 /* TriggerController.m in Sources */,
 				1D78B560183EE1C000014D49 /* LineBufferPosition.m in Sources */,
@@ -5495,6 +5508,7 @@
 				1D9DDD93142E5AC600275650 /* CoprocessTrigger.m in Sources */,
 				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
 				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
+				A6E77F831A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */,
 				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
 				A69B45AA19731B4900F5444D /* iTermOpenQuicklyItem.m in Sources */,
 				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,

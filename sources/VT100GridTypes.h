@@ -14,6 +14,11 @@ typedef struct {
 } VT100GridCoord;
 
 typedef struct {
+    int x;
+    long long y;
+} VT100GridAbsCoord;
+
+typedef struct {
     int width;
     int height;
 } VT100GridSize;
@@ -69,6 +74,13 @@ NSString *VT100GridWindowedRangeDescription(VT100GridWindowedRange range);
 
 NS_INLINE VT100GridCoord VT100GridCoordMake(int x, int y) {
     VT100GridCoord coord;
+    coord.x = x;
+    coord.y = y;
+    return coord;
+}
+
+NS_INLINE VT100GridAbsCoord VT100GridAbsCoordMake(int x, long long y) {
+    VT100GridAbsCoord coord;
     coord.x = x;
     coord.y = y;
     return coord;

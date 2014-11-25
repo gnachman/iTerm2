@@ -111,7 +111,6 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     for (NSString *identifier in sequentialIdentifiers) {
         iTermIndicator *indicator = _visibleIndicators[identifier];
         if (indicator) {
-            NSLog(@"Draw %@ at %@", identifier, NSStringFromPoint(point));
             static const CGFloat kInterIndicatorHorizontalMargin = 4;
             point.x -= indicator.image.size.width;
             point.x -= kInterIndicatorHorizontalMargin;
@@ -140,7 +139,6 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                                                 frame.origin.y + frame.size.height / 2 - size.height / 2,
                                                 size.width,
                                                 size.height);
-            NSLog(@"Draw alpha=%@", @(alpha));
             [image drawInRect:destinationRect
                      fromRect:NSMakeRect(0, 0, size.width, size.height)
                     operation:NSCompositeSourceOver

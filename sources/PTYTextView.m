@@ -41,6 +41,7 @@
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
+#import "iTermFindOnPageHelper.h"
 #import "iTermMouseCursor.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermPreferences.h"
@@ -89,6 +90,7 @@ static const int kBadgeMargin = 4;
 static const int kBadgeRightMargin = 10;
 
 @interface PTYTextView () <
+    iTermFindOnPageHelperDelegate,
     iTermIndicatorsHelperDelegate,
     iTermSelectionDelegate,
     iTermSelectionScrollHelperDelegate,
@@ -153,9 +155,6 @@ static const int kBadgeRightMargin = 10;
     ImageInfo *_imageBeingClickedOn;
     NSEvent *_mouseDownEvent;
 
-    // Find cursor. Only the start coordinate is used. Is nil if there is no cursor.
-    SearchResult *_lastFindCoord;
-
     // blinking cursor
     BOOL _blinkingItemsVisible;
     NSTimeInterval _timeOfLastBlink;
@@ -166,9 +165,6 @@ static const int kBadgeRightMargin = 10;
 
     // Was the last pressed key a "repeat" where the key is held down?
     BOOL _keyIsARepeat;
-
-    // Is a find currently executing?
-    BOOL _findInProgress;
 
     // Previous tracking rect to avoid expensive calls to addTrackingRect.
     NSRect _trackingRect;
@@ -190,38 +186,7 @@ static const int kBadgeRightMargin = 10;
 
     BOOL _changedSinceLastExpose;
 
-    // The string last searched for.
-    NSString *_lastStringSearchedFor;
-
-    // The set of SearchResult objects for which matches have been found.
-    NSMutableArray *_searchResults;
-
-    // The next offset into _searchResults where values from _searchResults should
-    // be added to the map.
-    int _numberOfProcessedSearchResults;
-
-    // True if a result has been highlighted & scrolled to.
-    BOOL _haveRevealedSearchResult;
-
-    // Maps an absolute line number (NSNumber longlong) to an NSData bit array
-    // with one bit per cell indicating whether that cell is a match.
-    NSMutableDictionary *_highlightMap;
-
-    // True if the last search was forward, flase if backward.
-    BOOL searchingForward_;
-
-    // Offset value for last search.
-    int findOffset_;
-
-    // True if trying to find a result before/after current selection to
-    // highlight.
-    BOOL searchingForNextResult_;
-
-    // True if the last search was case insensitive.
-    BOOL findIgnoreCase_;
-
-    // True if the last search was for a regex.
-    BOOL findRegex_;
+    iTermFindOnPageHelper *_findOnPageHelper;
 
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
@@ -265,16 +230,13 @@ static const int kBadgeRightMargin = 10;
     // Show a background indicator when in broadcast input mode
     BOOL useBackgroundIndicator_;
 
-    // Find context just after initialization.
-    FindContext *_findContext;
-
     PointerController *pointer_;
     NSCursor *cursor_;
 
     // True while the context menu is being opened.
     BOOL openingContextMenu_;
 
-        // Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
+    // Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
     ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
 
     // Position of cursor last time we looked. Since the cursor might move around a lot between
@@ -380,7 +342,6 @@ static const int kBadgeRightMargin = 10;
                                                    object:nil];
 
         _numberOfIMELines = 0;
-        _highlightMap = [[NSMutableDictionary alloc] init];
 
         _trouter = [[Trouter alloc] init];
         _trouter.delegate = self;
@@ -391,7 +352,6 @@ static const int kBadgeRightMargin = 10;
         _primaryFont = [[PTYFontInfo alloc] init];
         _secondaryFont = [[PTYFontInfo alloc] init];
 
-        _findContext = [[FindContext alloc] init];
         if ([pointer_ viewShouldTrackTouches]) {
             DLog(@"Begin tracking touches in view %@", self);
             [self setAcceptsTouchEvents:YES];
@@ -415,6 +375,9 @@ static const int kBadgeRightMargin = 10;
 
         _selectionScrollHelper = [[iTermSelectionScrollHelper alloc] init];
         _selectionScrollHelper.delegate = self;
+
+        _findOnPageHelper = [[iTermFindOnPageHelper alloc] init];
+        _findOnPageHelper.delegate = self;
     }
     return self;
 }
@@ -425,7 +388,6 @@ static const int kBadgeRightMargin = 10;
     [_markErrImage release];
     [drawRectDuration_ release];
     [drawRectInterval_ release];
-    [_lastFindCoord release];
     [_smartSelectionRules release];
 
     [_mouseDownEvent release];
@@ -442,9 +404,6 @@ static const int kBadgeRightMargin = 10;
     _colorMap.delegate = nil;
     [_colorMap release];
     [_cachedBackgroundColor release];
-    [_highlightMap release];
-    [_searchResults release];
-    [_lastStringSearchedFor release];
     [_unfocusedSelectionColor release];
 
     [_primaryFont release];
@@ -460,7 +419,6 @@ static const int kBadgeRightMargin = 10;
     [threeFingerTapGestureRecognizer_ disconnectTarget];
     [threeFingerTapGestureRecognizer_ release];
 
-    [_findContext release];
     if (self.currentUnderlineHostname) {
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
@@ -472,6 +430,8 @@ static const int kBadgeRightMargin = 10;
     [_indicatorsHelper release];
     _selectionScrollHelper.delegate = nil;
     [_selectionScrollHelper release];
+    _findOnPageHelper.delegate = nil;
+    [_findOnPageHelper release];
 
     [super dealloc];
 }
@@ -3025,17 +2985,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [self openTargetWithEvent:event];
             }
         } else {
-            [_lastFindCoord release];
             NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
-            _lastFindCoord =
-                [[SearchResult searchResultFromX:clickPoint.x
-                                               y:clickPoint.y + [_dataSource totalScrollbackOverflow]
-                                             toX:0
-                                               y:0] retain];
+            [_findOnPageHelper setStartPoint:VT100GridAbsCoordMake(clickPoint.x,
+                                                                   [_dataSource totalScrollbackOverflow] + clickPoint.y)];
         }
-    } else if (isShiftedSingleClick && _lastFindCoord && ![_selection hasSelection]) {
-        [_selection beginSelectionAt:VT100GridCoordMake(_lastFindCoord->startX,
-                                                        _lastFindCoord->absStartY - [_dataSource totalScrollbackOverflow])
+    } else if (isShiftedSingleClick && _findOnPageHelper.haveFindCursor && ![_selection hasSelection]) {
+        VT100GridAbsCoord absCursor = [_findOnPageHelper findCursorAbsCoord];
+        VT100GridCoord cursor = VT100GridCoordMake(absCursor.x,
+                                                   absCursor.y - [_dataSource totalScrollbackOverflow]);
+        [_selection beginSelectionAt:cursor
                                 mode:kiTermSelectionModeCharacter
                               resume:NO
                               append:NO];
@@ -3043,8 +3001,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_selection moveSelectionEndpointTo:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
         [_selection endLiveSelection];
 
-        [_lastFindCoord release];
-        _lastFindCoord = nil;
+        [_findOnPageHelper resetFindCursor];
     }
 
     if ([_selection hasSelection] && _delegate) {
@@ -5062,9 +5019,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [self firstRectForCharacterRange:theRange actualRange:NULL];
 }
 
-- (BOOL)findInProgress
-{
-    return _findInProgress || searchingForNextResult_;
+- (BOOL)findInProgress {
+    return _findOnPageHelper.findInProgress;
 }
 
 - (void)setTrouterPrefs:(NSDictionary *)prefs
@@ -5195,270 +5151,107 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_selection setFirstRange:newRange mode:kiTermSelectionModeCharacter];
 }
 
-// Add a match to resultMap_
+#pragma mark - Find on page
+
 - (void)addSearchResult:(SearchResult *)searchResult {
-    int width = [_dataSource width];
-    for (long long y = searchResult->absStartY; y <= searchResult->absEndY; y++) {
-        NSNumber* key = [NSNumber numberWithLongLong:y];
-        NSMutableData* data = _highlightMap[key];
-        BOOL set = NO;
-        if (!data) {
-            data = [NSMutableData dataWithLength:(width / 8 + 1)];
-            char* b = [data mutableBytes];
-            memset(b, 0, (width / 8) + 1);
-            set = YES;
-        }
-        char* b = [data mutableBytes];
-        int lineEndX = MIN(searchResult->endX + 1, width);
-        int lineStartX = searchResult->startX;
-        if (searchResult->absEndY > y) {
-            lineEndX = width;
-        }
-        if (y > searchResult->absStartY) {
-            lineStartX = 0;
-        }
-        for (int i = lineStartX; i < lineEndX; i++) {
-            const int byteIndex = i/8;
-            const int bit = 1 << (i & 7);
-            if (byteIndex < [data length]) {
-                b[byteIndex] |= bit;
-            }
-        }
-        if (set) {
-            _highlightMap[key] = data;
-        }
-    }
+    [_findOnPageHelper addSearchResult:searchResult width:[_dataSource width]];
 }
 
-// Select the next highlighted result by searching findResults_ for a match just before/after the
-// current selection.
-- (BOOL)_selectNextResultForward:(BOOL)forward withOffset:(int)offset
-{
-    long long overflowAdustment = [_dataSource totalScrollbackOverflow] - [_dataSource scrollbackOverflow];
-    long long width = [_dataSource width];
-    long long maxPos = -1;
-    long long minPos = -1;
-    int start;
-    int stride;
-    if (forward) {
-        start = [_searchResults count] - 1;
-        stride = -1;
-        if (!_lastFindCoord) {
-            minPos = -1;
-        } else {
-            minPos = _lastFindCoord->startX + _lastFindCoord->absStartY * width + offset;
-        }
+- (FindContext *)findContext {
+    return _findOnPageHelper.copiedContext;
+}
+
+- (BOOL)continueFind:(double *)progress {
+    return [_findOnPageHelper continueFind:progress
+                                   context:[_dataSource findContext]
+                                     width:[_dataSource width]
+                             numberOfLines:[_dataSource numberOfLines]
+                        overflowAdjustment:[_dataSource totalScrollbackOverflow] - [_dataSource scrollbackOverflow]];
+}
+
+- (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
+    return [_dataSource continueFindAllResults:results inContext:context];
+}
+
+- (void)findOnPageSetFindString:(NSString*)aString
+               forwardDirection:(BOOL)direction
+                   ignoringCase:(BOOL)ignoreCase
+                          regex:(BOOL)regex
+                    startingAtX:(int)x
+                    startingAtY:(int)y
+                     withOffset:(int)offset
+                      inContext:(FindContext*)context
+                multipleResults:(BOOL)multipleResults {
+    [_dataSource setFindString:aString
+              forwardDirection:direction
+                  ignoringCase:ignoreCase
+                         regex:regex
+                   startingAtX:x
+                   startingAtY:y
+                    withOffset:offset
+                     inContext:context
+               multipleResults:multipleResults];
+}
+
+- (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped {
+    [_selection clearSelection];
+    iTermSubSelection *sub =
+        [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(range, 0, 0)
+                                            mode:kiTermSelectionModeCharacter];
+    [_selection addSubSelection:sub];
+    if (!wrapped) {
+        [self setNeedsDisplay:YES];
+    }
+
+}
+
+- (void)findOnPageSaveFindContextAbsPos {
+    [_dataSource saveFindContextAbsPos];
+}
+
+- (void)findOnPageDidWrapForwards:(BOOL)directionIsForwards {
+    if (directionIsForwards) {
+        [self beginFlash:kiTermIndicatorWrapToTop];
     } else {
-        start = 0;
-        stride = 1;
-        if (!_lastFindCoord) {
-            maxPos = (1 + [_dataSource numberOfLines] + overflowAdustment) * width;
-        } else {
-            maxPos = _lastFindCoord->startX + _lastFindCoord->absStartY * width - offset;
-        }
+        [self beginFlash:kiTermIndicatorWrapToBottom];
     }
-    BOOL found = NO;
-    BOOL redraw = NO;
-    int i = start;
-    for (int j = 0; !found && j < [_searchResults count]; j++) {
-        SearchResult* r = [_searchResults objectAtIndex:i];
-        long long pos = r->startX + (long long)r->absStartY * width;
-        if (!found &&
-            ((maxPos >= 0 && pos <= maxPos) ||
-             (minPos >= 0 && pos >= minPos))) {
-                found = YES;
-                redraw = YES;
-                [_selection clearSelection];
-                VT100GridCoordRange theRange =
-                    VT100GridCoordRangeMake(r->startX,
-                                            r->absStartY - overflowAdustment,
-                                            r->endX + 1,  // half-open
-                                            r->absEndY - overflowAdustment);
-                iTermSubSelection *sub;
-                sub = [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange,
-                                                                                          0, 0)
-                                                          mode:kiTermSelectionModeCharacter];
-                [_selection addSubSelection:sub];
-        }
-        i += stride;
-    }
-
-    if (!found && !_haveRevealedSearchResult && [_searchResults count] > 0) {
-        // Wrap around
-        SearchResult* r = [_searchResults objectAtIndex:start];
-        found = YES;
-        [_selection clearSelection];
-        VT100GridCoordRange theRange =
-            VT100GridCoordRangeMake(r->startX,
-                                    r->absStartY - overflowAdustment,
-                                    r->endX + 1,  // half-open
-                                    r->absEndY - overflowAdustment);
-        iTermSubSelection *sub;
-        sub = [iTermSubSelection subSelectionWithRange:VT100GridWindowedRangeMake(theRange, 0, 0)
-                                                  mode:kiTermSelectionModeCharacter];
-        [_selection addSubSelection:sub];
-        if (forward) {
-            [self beginFlash:kiTermIndicatorWrapToTop];
-        } else {
-            [self beginFlash:kiTermIndicatorWrapToBottom];
-        }
-    }
-
-    if (found) {
-        // Lock scrolling after finding text
-        [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
-
-        VT100GridCoordRange range = _selection.lastRange.coordRange;
-        [self _scrollToCenterLine:range.end.y];
-        [self setNeedsDisplay:YES];
-        [_lastFindCoord release];
-        _lastFindCoord = [[SearchResult searchResultFromX:range.start.x
-                                                        y:(long long)range.start.y + overflowAdustment
-                                                      toX:0
-                                                        y:0] retain];
-        _haveRevealedSearchResult = YES;
-    }
-
-    if (!_findInProgress && !_haveRevealedSearchResult) {
-        // Clear the selection.
-        [_selection clearSelection];
-        [_lastFindCoord release];
-        _lastFindCoord = nil;
-        redraw = YES;
-    }
-
-    if (redraw) {
-        [self setNeedsDisplay:YES];
-    }
-
-    return found;
 }
 
-// continueFind is called by a timer in the client until it returns NO. It does
-// two things:
-// 1. If _findInProgress is true, search for more results in the _dataSource and
-//   call _addResultFromX:absY:toX:toAbsY: for each.
-// 2. If searchingForNextResult_ is true, highlight the next result before/after
-//   the current selection and flip searchingForNextResult_ to false.
-- (BOOL)continueFind:(double *)progress
-{
-    BOOL more = NO;
-    BOOL redraw = NO;
+- (void)findOnPageRevealRange:(VT100GridCoordRange)range {
+    // Lock scrolling after finding text
+    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
-    assert([self findInProgress]);
-    if (_findInProgress) {
-        // Collect more results.
-        more = [_dataSource continueFindAllResults:_searchResults
-                                         inContext:[_dataSource findContext]];
-        *progress = [[_dataSource findContext] progress];
-    } else {
-        *progress = 1;
-    }
-    if (!more) {
-        _findInProgress = NO;
-    }
-    // Add new results to map.
-    for (int i = _numberOfProcessedSearchResults; i < [_searchResults count]; i++) {
-        SearchResult* r = [_searchResults objectAtIndex:i];
-        [self addSearchResult:r];
-        redraw = YES;
-    }
-    _numberOfProcessedSearchResults = [_searchResults count];
-
-    // Highlight next result if needed.
-    if (searchingForNextResult_) {
-        if ([self _selectNextResultForward:searchingForward_
-                                withOffset:findOffset_]) {
-            searchingForNextResult_ = NO;
-        }
-    }
-
-    if (redraw) {
-        [self setNeedsDisplay:YES];
-    }
-    return more;
+    [self _scrollToCenterLine:range.end.y];
+    [self setNeedsDisplay:YES];
 }
 
-- (void)resetFindCursor
-{
-    [_lastFindCoord release];
-    _lastFindCoord = nil;
+- (void)findOnPageFailed {
+    [_selection clearSelection];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)resetFindCursor {
+    [_findOnPageHelper resetFindCursor];
 }
 
 - (void)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
       ignoringCase:(BOOL)ignoreCase
              regex:(BOOL)regex
-        withOffset:(int)offset
-{
-    searchingForward_ = direction;
-    findOffset_ = offset;
-    if ([_lastStringSearchedFor isEqualToString:aString] &&
-        findRegex_ == regex &&
-        findIgnoreCase_ == ignoreCase) {
-        _haveRevealedSearchResult = NO;  // select the next item before/after the current selection.
-        searchingForNextResult_ = YES;
-        // I would like to call _selectNextResultForward:withOffset: here, but
-        // it results in drawing errors (drawing is clipped to the findbar for
-        // some reason). So we return YES and continueFind is run from a timer
-        // and everything works fine. The 100ms delay introduced is not
-        // noticable.
-    } else {
-        // Begin a brand new search.
-        if (_findInProgress) {
-            [[_dataSource findContext] reset];
-        }
-
-        [_lastFindCoord release];
-        long long findY =
-            (long long)([_dataSource numberOfLines] + 1) + [_dataSource totalScrollbackOverflow];
-        _lastFindCoord = [[SearchResult searchResultFromX:0
-                                                        y:findY
-                                                      toX:0
-                                                        y:0] retain];
-
-        // Search backwards from the end. This is slower than searching
-        // forwards, but most searches are reverse searches begun at the end,
-        // so it will get a result sooner.
-        [_dataSource setFindString:aString
-                  forwardDirection:NO
-                      ignoringCase:ignoreCase
-                             regex:regex
-                       startingAtX:0
-                       startingAtY:[_dataSource numberOfLines] + 1 + [_dataSource totalScrollbackOverflow]
-                        withOffset:0
-                         inContext:[_dataSource findContext]
-                   multipleResults:YES];
-
-        [_findContext copyFromFindContext:[_dataSource findContext]];
-        _findContext.results = nil;
-        [_dataSource saveFindContextAbsPos];
-        _findInProgress = YES;
-
-        // Reset every bit of state.
-        [self clearHighlights];
-
-        // Initialize state with new values.
-        findRegex_ = regex;
-        findIgnoreCase_ = ignoreCase;
-        _searchResults = [[NSMutableArray alloc] init];
-        searchingForNextResult_ = YES;
-        _lastStringSearchedFor = [aString copy];
-
-        [self setNeedsDisplay:YES];
-    }
+        withOffset:(int)offset {
+    [_findOnPageHelper findString:aString
+                 forwardDirection:direction
+                     ignoringCase:ignoreCase
+                            regex:regex
+                       withOffset:offset
+                          context:[_dataSource findContext]
+                    numberOfLines:[_dataSource numberOfLines]
+          totalScrollbackOverflow:[_dataSource totalScrollbackOverflow]];
 }
 
 - (void)clearHighlights {
-    [_lastStringSearchedFor release];
-    _lastStringSearchedFor = nil;
-    [_searchResults release];
-    _searchResults = nil;
-    _numberOfProcessedSearchResults = 0;
-    _haveRevealedSearchResult = NO;
-    [_highlightMap removeAllObjects];
-    searchingForNextResult_ = NO;
-    [self setNeedsDisplay:YES];
+    [_findOnPageHelper clearHighlights];
+    [_findOnPageHelper resetCopiedFindContext];
 }
 
 - (void)setTransparency:(double)fVal
@@ -6690,7 +6483,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     ColorMode bgColorMode = ColorModeNormal;
     BOOL bgselected = NO;
     BOOL isMatch = NO;
-    NSData* matches = _highlightMap[@(line + [_dataSource totalScrollbackOverflow])];
+    NSData* matches = _findOnPageHelper.highlightMap[@(line + [_dataSource totalScrollbackOverflow])];
     const char *matchBytes = [matches bytes];
 
     // Iterate over each character in the line.
@@ -8361,9 +8154,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Remove results from dirty lines and mark parts of the view as needing display.
     if (allDirty) {
         foundDirty = YES;
-        for (int y = lineStart; y < lineEnd; y++) {
-            [_highlightMap removeObjectForKey:@(y + totalScrollbackOverflow)];
-        }
+        [_findOnPageHelper removeHighlightsInRange:NSMakeRange(lineStart + totalScrollbackOverflow,
+                                                               lineEnd - lineStart)];
         [self setNeedsDisplayInRect:[self gridRect]];
 #ifdef DEBUG_DRAWING
         NSLog(@"allDirty is set, redraw the whole view");
@@ -8373,7 +8165,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
             if (range.length > 0) {
                 foundDirty = YES;
-                [_highlightMap removeObjectForKey:@(y + totalScrollbackOverflow)];
+                [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [self setNeedsDisplayOnLine:y inRange:range];
 #ifdef DEBUG_DRAWING
                 NSLog(@"line %d has dirty characters", y);
