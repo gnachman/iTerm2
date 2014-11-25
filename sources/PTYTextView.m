@@ -224,9 +224,6 @@ static const int kBadgeRightMargin = 10;
     // mouseDown.
     BOOL _mouseDownIsThreeFingerClick;
 
-    // Is the mouse inside our view?
-    BOOL mouseInRect_;
-
     // Show a background indicator when in broadcast input mode
     BOOL useBackgroundIndicator_;
 
@@ -2536,16 +2533,13 @@ NSMutableArray* screens=0;
     [pointer_ swipeWithEvent:event];
 }
 
-- (void)mouseExited:(NSEvent *)event
-{
-    mouseInRect_ = NO;
+- (void)mouseExited:(NSEvent *)event {
     _makeFirstResponderWhenAppBecomesActive = NO;
     [self updateUnderlinedURLs:event];
 }
 
 - (void)mouseEntered:(NSEvent *)event
 {
-    mouseInRect_ = YES;
     [self updateCursor:event];
     [self updateUnderlinedURLs:event];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
