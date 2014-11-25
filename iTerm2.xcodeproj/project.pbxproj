@@ -251,7 +251,7 @@
 		1D6ED87619AEA20D005A7799 /* PSMTabBarControl.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02573209CB9398008F320C /* PSMTabBarControl.h */; };
 		1D6ED87719AEA20D005A7799 /* iTermDirectoriesModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4983491912CD9E002E942D /* iTermDirectoriesModel.h */; };
 		1D6ED87819AEA20D005A7799 /* SCPFile.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30ED186D150A007F550F /* SCPFile.h */; };
-		1D6ED87919AEA20D005A7799 /* FindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* FindCursorView.h */; };
+		1D6ED87919AEA20D005A7799 /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
 		1D6ED87A19AEA20D005A7799 /* SBSystemPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */; };
 		1D6ED87B19AEA20D005A7799 /* PSMTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02573909CB9398008F320C /* PSMTabStyle.h */; };
 		1D6ED87C19AEA20D005A7799 /* AdvancedWorkingDirectoryWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713B018FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h */; };
@@ -810,7 +810,7 @@
 		1D6EDABF19AEA20D005A7799 /* PTYSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD6707614934ADE008E4361 /* PTYSplitView.m */; };
 		1D6EDAC019AEA20D005A7799 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		1D6EDAC119AEA20D005A7799 /* TmuxDashboardController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */; };
-		1D6EDAC219AEA20D005A7799 /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
+		1D6EDAC219AEA20D005A7799 /* iTermFindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */; };
 		1D6EDAC319AEA20D005A7799 /* TmuxSessionsTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */; };
 		1D6EDAC419AEA20D005A7799 /* CaptureTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83951192E95EB0037E548 /* CaptureTrigger.m */; };
 		1D6EDAC519AEA20D005A7799 /* TmuxControllerRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */; };
@@ -1411,9 +1411,9 @@
 		A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE991915DB1F00BE8758 /* iTermFlippedView.h */; };
 		A682DE9C1915DB1F00BE8758 /* iTermFlippedView.m in Sources */ = {isa = PBXBuildFile; fileRef = A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */; };
 		A682DE9D1915DB1F00BE8758 /* iTermFlippedView.m in Sources */ = {isa = PBXBuildFile; fileRef = A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */; };
-		A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* FindCursorView.h */; };
-		A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
-		A68A30C3186D0DC1007F550F /* FindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* FindCursorView.m */; };
+		A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
+		A68A30C2186D0DC1007F550F /* iTermFindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */; };
+		A68A30C3186D0DC1007F550F /* iTermFindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */; };
 		A68A30C6186D0F37007F550F /* SmartMatch.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30C4186D0F36007F550F /* SmartMatch.h */; };
 		A68A30C7186D0F37007F550F /* SmartMatch.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C5186D0F36007F550F /* SmartMatch.m */; };
 		A68A30C8186D0F37007F550F /* SmartMatch.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C5186D0F36007F550F /* SmartMatch.m */; };
@@ -2254,8 +2254,8 @@
 		A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProgressIndicator.m; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE991915DB1F00BE8758 /* iTermFlippedView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFlippedView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFlippedView.m; sourceTree = "<group>"; tabWidth = 4; };
-		A68A30BF186D0DC1007F550F /* FindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FindCursorView.h; sourceTree = "<group>"; tabWidth = 4; };
-		A68A30C0186D0DC1007F550F /* FindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = FindCursorView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFindCursorView.h; sourceTree = "<group>"; tabWidth = 4; };
+		A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindCursorView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C4186D0F36007F550F /* SmartMatch.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SmartMatch.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C5186D0F36007F550F /* SmartMatch.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SmartMatch.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30CC186D1414007F550F /* FileTransferManager.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = FileTransferManager.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2653,7 +2653,7 @@
 				1D173857126C820A004622DC /* FakeWindow.h */,
 				A68A30EA186D150A007F550F /* FileTransferManager.h */,
 				1D53FD13181C4B4B00524D4F /* FindContext.h */,
-				A68A30BF186D0DC1007F550F /* FindCursorView.h */,
+				A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */,
 				1D237D26131D8741004DD60C /* FindView.h */,
 				1D237D92131D8D66004DD60C /* FindViewController.h */,
 				1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */,
@@ -3114,7 +3114,7 @@
 			isa = PBXGroup;
 			children = (
 				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
-				A68A30C0186D0DC1007F550F /* FindCursorView.m */,
+				A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */,
 				1D237D27131D8741004DD60C /* FindView.m */,
 				A6AE1EDC192723F700780C19 /* iTermAnnouncementView.m */,
 				A69B45BC197CB78B00F5444D /* iTermDragHandleView.m */,
@@ -3736,7 +3736,7 @@
 				1D6ED87619AEA20D005A7799 /* PSMTabBarControl.h in Headers */,
 				1D6ED87719AEA20D005A7799 /* iTermDirectoriesModel.h in Headers */,
 				1D6ED87819AEA20D005A7799 /* SCPFile.h in Headers */,
-				1D6ED87919AEA20D005A7799 /* FindCursorView.h in Headers */,
+				1D6ED87919AEA20D005A7799 /* iTermFindCursorView.h in Headers */,
 				1D6ED87A19AEA20D005A7799 /* SBSystemPreferences.h in Headers */,
 				1D6ED87B19AEA20D005A7799 /* PSMTabStyle.h in Headers */,
 				1D6ED87C19AEA20D005A7799 /* AdvancedWorkingDirectoryWindowController.h in Headers */,
@@ -4048,7 +4048,7 @@
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
 				1D49834B1912CD9E002E942D /* iTermDirectoriesModel.h in Headers */,
 				A68A30F7186D150B007F550F /* SCPFile.h in Headers */,
-				A68A30C1186D0DC1007F550F /* FindCursorView.h in Headers */,
+				A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */,
 				1D81F0C3183C3CCD00910838 /* SBSystemPreferences.h in Headers */,
 				1D5FDD601208E8F000C46BA3 /* PSMTabStyle.h in Headers */,
 				A6E713B318FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.h in Headers */,
@@ -4975,7 +4975,7 @@
 				1D6EDABF19AEA20D005A7799 /* PTYSplitView.m in Sources */,
 				1D6EDAC019AEA20D005A7799 /* DebugLogging.m in Sources */,
 				1D6EDAC119AEA20D005A7799 /* TmuxDashboardController.m in Sources */,
-				1D6EDAC219AEA20D005A7799 /* FindCursorView.m in Sources */,
+				1D6EDAC219AEA20D005A7799 /* iTermFindCursorView.m in Sources */,
 				1D6EDAC319AEA20D005A7799 /* TmuxSessionsTable.m in Sources */,
 				1D6EDAC419AEA20D005A7799 /* CaptureTrigger.m in Sources */,
 				1D6EDAC519AEA20D005A7799 /* TmuxControllerRegistry.m in Sources */,
@@ -5137,7 +5137,7 @@
 				A68A30C8186D0F37007F550F /* SmartMatch.m in Sources */,
 				1D9A5595180FA87000B42CE9 /* PTYSession.m in Sources */,
 				1D9A555E180FA83900B42CE9 /* PreferencePanel.m in Sources */,
-				A68A30C3186D0DC1007F550F /* FindCursorView.m in Sources */,
+				A68A30C3186D0DC1007F550F /* iTermFindCursorView.m in Sources */,
 				1DFA9D6018F36DC3008ADC98 /* iTermKeyMappingViewController.m in Sources */,
 				1D9A558B180FA87000B42CE9 /* PasteEvent.m in Sources */,
 				A6E713A518F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m in Sources */,
@@ -5540,7 +5540,7 @@
 				1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */,
 				1DD39B1B180B82F5004E56D5 /* DebugLogging.m in Sources */,
 				1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */,
-				A68A30C2186D0DC1007F550F /* FindCursorView.m in Sources */,
+				A68A30C2186D0DC1007F550F /* iTermFindCursorView.m in Sources */,
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 				1DB83953192E95EB0037E548 /* CaptureTrigger.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,

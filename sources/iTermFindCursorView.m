@@ -6,7 +6,7 @@
 //
 //
 
-#import "FindCursorView.h"
+#import "iTermFindCursorView.h"
 
 // Delay before teardown.
 static const double kFindCursorHoldTime = 1;
@@ -16,7 +16,7 @@ static const double kFindCursorHoldTime = 1;
 // pixels.
 const double kFindCursorHoleRadius = 30;
 
-@implementation FindCursorView {
+@implementation iTermFindCursorView {
     NSTimer *_findCursorTeardownTimer;
     NSTimer *_findCursorBlinkTimer;
 }

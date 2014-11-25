@@ -1,29 +1,45 @@
+#import "PTYTextView.h"
+
 #import "AsyncHostLookupController.h"
 #import "CharacterRun.h"
 #import "CharacterRunInline.h"
+#import "charmaps.h"
 #import "CommandHistory.h"
 #import "FileTransferManager.h"
-#import "FindCursorView.h"
 #import "FontSizeEstimator.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermColorMap.h"
+#import "iTermController.h"
+#import "iTermExpose.h"
+#import "iTermFindCursorView.h"
+#import "iTermFindOnPageHelper.h"
+#import "iTermMouseCursor.h"
+#import "iTermNSKeyBindingEmulator.h"
+#import "iTermPreferences.h"
+#import "iTermSelection.h"
+#import "iTermSelectionScrollHelper.h"
+#import "iTermTextExtractor.h"
+#import "iTermURLSchemeController.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
 #import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+PSM.h"
+#import "PasteboardHistory.h"
+#import "PointerController.h"
+#import "PointerPrefsController.h"
+#import "PreferencePanel.h"
 #import "PTYNoteView.h"
 #import "PTYNoteViewController.h"
 #import "PTYScrollView.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
-#import "PTYTextView.h"
-#import "PasteboardHistory.h"
-#import "PointerController.h"
-#import "PointerPrefsController.h"
-#import "PreferencePanel.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
@@ -35,21 +51,6 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "WindowControllerInterface.h"
-#import "charmaps.h"
-#import "iTerm.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermColorMap.h"
-#import "iTermController.h"
-#import "iTermExpose.h"
-#import "iTermFindOnPageHelper.h"
-#import "iTermMouseCursor.h"
-#import "iTermNSKeyBindingEmulator.h"
-#import "iTermPreferences.h"
-#import "iTermSelection.h"
-#import "iTermSelectionScrollHelper.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermTextExtractor.h"
-#import "iTermURLSchemeController.h"
 #include <math.h>
 #include <sys/time.h>
 
@@ -211,7 +212,7 @@ static const int kBadgeRightMargin = 10;
 
     // For find-cursor animation
     NSWindow *findCursorWindow_;
-    FindCursorView *_findCursorView;
+    iTermFindCursorView *_findCursorView;
 
     NSPoint imeCursorLastPos_;
 
@@ -5408,10 +5409,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[NSAnimationContext currentContext] setDuration:0.5];
     [[findCursorWindow_ animator] setAlphaValue:0.7];
 
-    _findCursorView = [[FindCursorView alloc] initWithFrame:NSMakeRect(0,
-                                                                       0,
-                                                                       [[self window] frame].size.width,
-                                                                       [[self window] frame].size.height)];
+    _findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
+                                                                            0,
+                                                                            [[self window] frame].size.width,
+                                                                            [[self window] frame].size.height)];
     _findCursorView.delegate = self;
     NSPoint p = [self globalCursorLocation];
     _findCursorView.cursor = p;

@@ -15,7 +15,7 @@
 
 @end
 
-@interface FindCursorView : NSView {
+@interface iTermFindCursorView : NSView {
     NSPoint cursor;
 }
 

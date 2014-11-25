@@ -14,20 +14,20 @@
 #include <sys/time.h>
 
 @class CRunStorage;
-@class FindCursorView;
+@class iTermFindCursorView;
 @class iTermSelection;
 @class MovingAverage;
-@class PTYScrollView;
 @class PTYScroller;
+@class PTYScrollView;
 @class PTYTask;
 @class PTYTextView;
 @class SCPPath;
 @class SearchResult;
 @class SmartMatch;
 @class ThreeFingerTapGestureRecognizer;
-@protocol TrouterDelegate;
 @class VT100Screen;
 @class VT100Terminal;
+@protocol TrouterDelegate;
 
 // Number of pixels margin on left and right edge.
 #define MARGIN  5
