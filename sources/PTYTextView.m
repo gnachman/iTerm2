@@ -201,7 +201,7 @@ static const int kBadgeRightMargin = 10;
     NSInteger _firstMouseEventNumber;
 
     // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
-    NSMutableString* allText_;
+    NSMutableString *_allText;
     // For accessibility. This is the indices at which soft newlines occur in allText_, ignoring multi-char compositing characters.
     NSMutableArray* lineBreakIndexOffsets_;
     // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
@@ -972,7 +972,7 @@ NSMutableArray* screens=0;
         range.location = [[lineBreakCharOffsets_ objectAtIndex:lineNumber-1] unsignedLongValue];
     }
     if (lineNumber >= [lineBreakCharOffsets_ count]) {
-        range.length = [allText_ length] - range.location;
+        range.length = [_allText length] - range.location;
     } else {
         range.length = [[lineBreakCharOffsets_ objectAtIndex:lineNumber] unsignedLongValue] - range.location;
     }
@@ -1123,7 +1123,7 @@ NSMutableArray* screens=0;
     } else if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {
         //(NSString *) - substring; param:(NSValue * - rangeValue)
         NSRange range = [(NSValue*)parameter rangeValue];
-        return [allText_ substringWithRange:range];
+        return [_allText substringWithRange:range];
     } else if ([attribute isEqualToString:NSAccessibilityRangeForPositionParameterizedAttribute]) {
         //(NSValue *)  - (rangeValue) composed char range; param:(NSValue * - pointValue)
         NSPoint screenPosition = [(NSValue*)parameter pointValue];
@@ -1175,7 +1175,7 @@ NSMutableArray* screens=0;
         if (range.location == NSNotFound || range.length == 0) {
             return nil;
         } else {
-            NSString *theString = [allText_ substringWithRange:range];
+            NSString *theString = [_allText substringWithRange:range];
             NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:theString] autorelease];
             return attributedString;
         }
@@ -1198,11 +1198,11 @@ NSMutableArray* screens=0;
 // amounts of text.
 - (NSString*)_allText
 {
-    [allText_ release];
+    [_allText release];
     [lineBreakCharOffsets_ release];
     [lineBreakIndexOffsets_ release];
 
-    allText_ = [[NSMutableString alloc] init];
+    _allText = [[NSMutableString alloc] init];
     lineBreakCharOffsets_ = [[NSMutableArray alloc] init];
     lineBreakIndexOffsets_ = [[NSMutableArray alloc] init];
 
@@ -1238,18 +1238,18 @@ NSMutableArray* screens=0;
         // Append this line to allText_.
         offset += o;
         if (k >= 0) {
-            [allText_ appendString:[NSString stringWithCharacters:chars length:o]];
+            [_allText appendString:[NSString stringWithCharacters:chars length:o]];
         }
         if (line[width].code == EOL_HARD) {
             // Add a newline and update offsets arrays that track line break locations.
-            [allText_ appendString:@"\n"];
+            [_allText appendString:@"\n"];
             ++offset;
         }
-        [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[allText_ length]]];
+        [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[_allText length]]];
         [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
     }
 
-    return allText_;
+    return _allText;
 }
 
 - (id)_accessibilityAttributeValue:(NSString *)attribute
