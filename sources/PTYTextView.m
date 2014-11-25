@@ -5395,6 +5395,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return frame;
 }
 
+#pragma mark - Find Cursor
+
 - (void)createFindCursorWindow {
     findCursorWindow_ = [[NSWindow alloc] initWithContentRect:NSZeroRect
                                                     styleMask:NSBorderlessWindowMask
