@@ -28,6 +28,7 @@
 #import "MovePaneController.h"
 #import "MovingAverage.h"
 #import "NSColor+iTerm.h"
+#import "NSEvent+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+PSM.h"
@@ -217,7 +218,7 @@ static const int kBadgeRightMargin = 10;
 
     // Number of fingers currently down (only valid if three finger click
     // emulates middle button)
-    int numTouches_;
+    int _numTouches;
 
     // If true, ignore the next mouse up because it's due to a three finger
     // mouseDown.
@@ -466,16 +467,10 @@ static const int kBadgeRightMargin = 10;
 }
 
 - (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
-    CGEventRef cgEvent = [event CGEvent];
-    CGEventRef fakeCgEvent = CGEventCreateMouseEvent(NULL,
-                                                     isDown ? kCGEventLeftMouseDown : kCGEventLeftMouseUp,
-                                                     CGEventGetLocation(cgEvent),
-                                                     2);
-    CGEventSetIntegerValueField(fakeCgEvent, kCGMouseEventClickState, 1);  // always a single click
-    CGEventSetFlags(fakeCgEvent, CGEventGetFlags(cgEvent));
-    NSEvent *fakeEvent = [NSEvent eventWithCGEvent:fakeCgEvent];
-    int saved = numTouches_;
-    numTouches_ = 3;
+    NSEvent *fakeEvent = isDown ? [event mouseDownEventFromGesture] : [event mouseUpEventFromGesture];
+
+    int saved = _numTouches;
+    _numTouches = 3;
     if (isDown) {
         DLog(@"Emulate three finger click down");
         [self mouseDown:fakeEvent];
@@ -486,8 +481,7 @@ static const int kBadgeRightMargin = 10;
         DLog(@"Returned from mouseDown");
     }
     DLog(@"Restore numTouches to saved value of %d", saved);
-    numTouches_ = saved;
-    CFRelease(fakeCgEvent);
+    _numTouches = saved;
 }
 
 - (void)threeFingerTap:(NSEvent *)ev {
@@ -495,27 +489,24 @@ static const int kBadgeRightMargin = 10;
     [self sendFakeThreeFingerClickDown:NO basedOnEvent:ev];
 }
 
-- (void)touchesBeganWithEvent:(NSEvent *)ev
-{
-    numTouches_ = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
+- (void)touchesBeganWithEvent:(NSEvent *)ev {
+    _numTouches = [[ev touchesMatchingPhase:NSTouchPhaseBegan | NSTouchPhaseStationary
                                            inView:self] count];
     [threeFingerTapGestureRecognizer_ touchesBeganWithEvent:ev];
-    DLog(@"%@ Begin touch. numTouches_ -> %d", self, numTouches_);
+    DLog(@"%@ Begin touch. numTouches_ -> %d", self, _numTouches);
 }
 
-- (void)touchesEndedWithEvent:(NSEvent *)ev
-{
-    numTouches_ = [[ev touchesMatchingPhase:NSTouchPhaseStationary
+- (void)touchesEndedWithEvent:(NSEvent *)ev {
+    _numTouches = [[ev touchesMatchingPhase:NSTouchPhaseStationary
                                      inView:self] count];
     [threeFingerTapGestureRecognizer_ touchesEndedWithEvent:ev];
-    DLog(@"%@ End touch. numTouches_ -> %d", self, numTouches_);
+    DLog(@"%@ End touch. numTouches_ -> %d", self, _numTouches);
 }
 
-- (void)touchesCancelledWithEvent:(NSEvent *)event
-{
-    numTouches_ = 0;
+- (void)touchesCancelledWithEvent:(NSEvent *)event {
+    _numTouches = 0;
     [threeFingerTapGestureRecognizer_ touchesCancelledWithEvent:event];
-    DLog(@"%@ Cancel touch. numTouches_ -> %d", self, numTouches_);
+    DLog(@"%@ Cancel touch. numTouches_ -> %d", self, _numTouches);
 }
 
 - (BOOL)resignFirstResponder
@@ -2264,7 +2255,7 @@ NSMutableArray* screens=0;
     [self reportMouseEvent:event];
 
     [pointer_ mouseDown:event
-            withTouches:numTouches_
+            withTouches:_numTouches
            ignoreOption:[_delegate xtermMouseReporting]];
 }
 
@@ -2279,7 +2270,7 @@ NSMutableArray* screens=0;
         [super otherMouseUp:event];
     }
     DLog(@"Sending third button press up to pointer controller");
-    [pointer_ mouseUp:event withTouches:numTouches_];
+    [pointer_ mouseUp:event withTouches:_numTouches];
 }
 
 - (void)otherMouseDragged:(NSEvent *)event
@@ -2290,13 +2281,12 @@ NSMutableArray* screens=0;
     [super otherMouseDragged:event];
 }
 
-- (void)rightMouseDown:(NSEvent*)event
-{
+- (void)rightMouseDown:(NSEvent*)event {
     if ([threeFingerTapGestureRecognizer_ rightMouseDown:event]) {
         DLog(@"Cancel right mouse down");
         return;
     }
-    if ([pointer_ mouseDown:event withTouches:numTouches_ ignoreOption:[_delegate xtermMouseReporting]]) {
+    if ([pointer_ mouseDown:event withTouches:_numTouches ignoreOption:[_delegate xtermMouseReporting]]) {
         return;
     }
     if ([self reportMouseEvent:event]) {
@@ -2306,13 +2296,12 @@ NSMutableArray* screens=0;
     [super rightMouseDown:event];
 }
 
-- (void)rightMouseUp:(NSEvent *)event
-{
+- (void)rightMouseUp:(NSEvent *)event {
     if ([threeFingerTapGestureRecognizer_ rightMouseUp:event]) {
         return;
     }
 
-    if ([pointer_ mouseUp:event withTouches:numTouches_]) {
+    if ([pointer_ mouseUp:event withTouches:_numTouches]) {
         return;
     }
     if ([self reportMouseEvent:event]) {
@@ -2622,7 +2611,7 @@ NSMutableArray* screens=0;
     if ([threeFingerTapGestureRecognizer_ mouseDown:event]) {
         return;
     }
-    DLog(@"Mouse Down on %@ with event %@, num touches=%d", self, event, numTouches_);
+    DLog(@"Mouse Down on %@ with event %@, num touches=%d", self, event, _numTouches);
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
     }
@@ -2641,26 +2630,10 @@ NSMutableArray* screens=0;
         DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=YES");
     }
 
-    CGEventRef cgEvent = [event CGEvent];
-    CGEventSourceRef source = CGEventCreateSourceFromEvent(cgEvent);
-    CGPoint globalCoord = CGEventGetLocation(cgEvent);
-    // Because the fakeEvent will have a nil window, adjust the coordinate to report a proper
-    // locationInWindow. Not quite sure what's going on here, but this works :/.
-    NSPoint windowOrigin = self.window.frame.origin;
-    globalCoord.x -= windowOrigin.x;
-    globalCoord.y -= self.window.screen.frame.origin.y;
-    globalCoord.y += windowOrigin.y;
-    CGEventRef fakeCgEvent = CGEventCreateMouseEvent(source,
-                                                     isDown ? kCGEventOtherMouseDown : kCGEventOtherMouseUp,
-                                                     globalCoord,
-                                                     2);
-    CFRelease(source);
-    CGEventSetIntegerValueField(fakeCgEvent, kCGMouseEventClickState, [event clickCount]);
-    CGEventSetFlags(fakeCgEvent, CGEventGetFlags(cgEvent));
-    NSEvent *fakeEvent = [NSEvent eventWithCGEvent:fakeCgEvent];
+    NSEvent *fakeEvent = isDown ? [event mouseDownEventFromGesture] : [event mouseUpEventFromGesture];
 
-    int saved = numTouches_;
-    numTouches_ = 1;
+    int saved = _numTouches;
+    _numTouches = 1;
     if (isDown) {
         DLog(@"Emulate third button press down");
         [self otherMouseDown:fakeEvent];
@@ -2668,8 +2641,7 @@ NSMutableArray* screens=0;
         DLog(@"Emulate third button press up");
         [self otherMouseUp:fakeEvent];
     }
-    numTouches_ = saved;
-    CFRelease(fakeCgEvent);
+    _numTouches = saved;
     if (!isDown) {
         mouseDownIsThreeFingerClick_ = isDown;
         DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=NO");
@@ -2717,13 +2689,13 @@ NSMutableArray* screens=0;
         [_delegate textViewBeginDrag];
         return NO;
     }
-    if (numTouches_ == 3) {
+    if (_numTouches == 3) {
         if ([iTermPreferences boolForKey:kPreferenceKeyThreeFingerEmulatesMiddle]) {
             [self emulateThirdButtonPressDown:YES withEvent:event];
         } else {
             // Perform user-defined gesture action, if any
             [pointer_ mouseDown:event
-                    withTouches:numTouches_
+                    withTouches:_numTouches
                    ignoreOption:[_delegate xtermMouseReporting]];
             _mouseDown = YES;
         }
@@ -2731,7 +2703,7 @@ NSMutableArray* screens=0;
     }
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseDown:event
-                withTouches:numTouches_
+                withTouches:_numTouches
                ignoreOption:[_delegate xtermMouseReporting]];
         return NO;
     }
@@ -2771,7 +2743,7 @@ NSMutableArray* screens=0;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
-    if (numTouches_ <= 1) {
+    if (_numTouches <= 1) {
         for (NSView *view in [self subviews]) {
             if ([view isKindOfClass:[PTYNoteView class]]) {
                 PTYNoteView *noteView = (PTYNoteView *)view;
@@ -2873,21 +2845,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([threeFingerTapGestureRecognizer_ mouseUp:event]) {
         return;
     }
-    DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, numTouches_);
+    DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, _numTouches);
     _firstMouseEventNumber = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (mouseDownIsThreeFingerClick_) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
         return;
-    } else if (numTouches_ == 3 && mouseDown) {
+    } else if (_numTouches == 3 && mouseDown) {
         // Three finger tap is valid but not emulating middle button
-        [pointer_ mouseUp:event withTouches:numTouches_];
+        [pointer_ mouseUp:event withTouches:_numTouches];
         _mouseDown = NO;
         return;
     }
     dragOk_ = NO;
     _trouterDragged = NO;
     if ([pointer_ eventEmulatesRightClick:event]) {
-        [pointer_ mouseUp:event withTouches:numTouches_];
+        [pointer_ mouseUp:event withTouches:_numTouches];
         return;
     }
     const BOOL cmdActuallyPressed = (([event modifierFlags] & NSCommandKeyMask) != 0);
@@ -7997,8 +7969,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [_oldSelection hasSelection];
 }
 
-- (void)_pointerSettingsChanged:(NSNotification *)notification
-{
+- (void)_pointerSettingsChanged:(NSNotification *)notification {
     BOOL track = [pointer_ viewShouldTrackTouches];
     [self setAcceptsTouchEvents:track];
     [self setWantsRestingTouches:track];
@@ -8010,7 +7981,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                                               selector:@selector(threeFingerTap:)];
         }
     } else {
-        numTouches_ = 0;
+        _numTouches = 0;
     }
 }
 

@@ -5473,9 +5473,9 @@ DQ
                     </connections>
                 </button>
                 <button id="6227">
-                    <rect key="frame" x="364" y="40" width="308" height="18"/>
+                    <rect key="frame" x="364" y="40" width="258" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Three-finger tap reports middle click to apps" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6228">
+                    <buttonCell key="cell" type="check" title="Three-finger tap emulates middle click" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6228">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
