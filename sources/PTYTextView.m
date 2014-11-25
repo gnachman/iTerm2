@@ -213,7 +213,7 @@ static const int kBadgeRightMargin = 10;
     NSWindow *_findCursorWindow;
     iTermFindCursorView *_findCursorView;
 
-    NSPoint imeCursorLastPos_;
+    NSPoint _imeCursorLastPos;
 
     // Number of fingers currently down (only valid if three finger click
     // emulates middle button)
@@ -5360,8 +5360,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CGFloat x = cursorFrame.origin.x + cursorFrame.size.width / 2;
     CGFloat y = cursorFrame.origin.y + cursorFrame.size.height / 2;
     if ([self hasMarkedText]) {
-        x = imeCursorLastPos_.x + 1;
-        y = imeCursorLastPos_.y + _lineHeight / 2;
+        x = _imeCursorLastPos.x + 1;
+        y = _imeCursorLastPos.y + _lineHeight / 2;
     }
     NSPoint p = NSMakePoint(x, y);
     p = [self convertPoint:p toView:nil];
@@ -6836,7 +6836,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         cursorY,
                                         2.0,
                                         cursorHeight);
-        imeCursorLastPos_ = cursorFrame.origin;
+        _imeCursorLastPos = cursorFrame.origin;
         if ([self isFindingCursor]) {
             NSPoint cp = [self globalCursorLocation];
             if (!NSEqualPoints(_findCursorView.cursorPosition, cp)) {
