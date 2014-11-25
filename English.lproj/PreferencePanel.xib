@@ -636,7 +636,7 @@ Gw
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <textField verticalHuggingPriority="750" id="3088">
-                    <rect key="frame" x="308" y="20" width="30" height="13"/>
+                    <rect key="frame" x="308" y="22" width="40" height="11"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="150%" id="3089">
                         <font key="font" metaFont="label"/>
@@ -663,7 +663,7 @@ Gw
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="3085">
-                    <rect key="frame" x="415" y="20" width="37" height="14"/>
+                    <rect key="frame" x="404" y="20" width="37" height="14"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="200%" id="3092">
                         <font key="font" metaFont="smallSystem"/>
@@ -711,7 +711,7 @@ Gw
                     </connections>
                 </slider>
                 <textField verticalHuggingPriority="750" id="3080">
-                    <rect key="frame" x="170" y="106" width="118" height="17"/>
+                    <rect key="frame" x="170" y="106" width="130" height="17"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Character Spacing" id="3097">
                         <font key="font" metaFont="system"/>
