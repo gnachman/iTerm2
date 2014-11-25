@@ -210,7 +210,7 @@ static const int kBadgeRightMargin = 10;
     NSMutableArray *_lineBreakCharOffsets;
 
     // For find-cursor animation
-    NSWindow *findCursorWindow_;
+    NSWindow *_findCursorWindow;
     iTermFindCursorView *_findCursorView;
 
     NSPoint imeCursorLastPos_;
@@ -396,7 +396,7 @@ static const int kBadgeRightMargin = 10;
         [self removeTrackingArea:_trackingArea];
     }
     if ([self isFindingCursor]) {
-        [findCursorWindow_ close];
+        [_findCursorWindow close];
     }
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -5372,7 +5372,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // Returns the location of the cursor relative to the origin of findCursorWindow_.
 - (NSPoint)globalCursorLocation {
     NSPoint p = [self cursorLocationInScreenCoordinates];
-    p = [findCursorWindow_ pointFromScreenCoords:p];
+    p = [_findCursorWindow pointFromScreenCoords:p];
     return p;
 }
 
@@ -5393,17 +5393,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)createFindCursorWindow {
-    findCursorWindow_ = [[NSWindow alloc] initWithContentRect:NSZeroRect
+    _findCursorWindow = [[NSWindow alloc] initWithContentRect:NSZeroRect
                                                     styleMask:NSBorderlessWindowMask
                                                       backing:NSBackingStoreBuffered
                                                         defer:YES];
-    [findCursorWindow_ setOpaque:NO];
-    [findCursorWindow_ makeKeyAndOrderFront:nil];
-    [findCursorWindow_ setLevel:NSFloatingWindowLevel];
-    [findCursorWindow_ setAlphaValue:0];
-    [findCursorWindow_ setFrame:[self cursorScreenFrame] display:YES];
+    [_findCursorWindow setOpaque:NO];
+    [_findCursorWindow makeKeyAndOrderFront:nil];
+    [_findCursorWindow setLevel:NSFloatingWindowLevel];
+    [_findCursorWindow setAlphaValue:0];
+    [_findCursorWindow setFrame:[self cursorScreenFrame] display:YES];
     [[NSAnimationContext currentContext] setDuration:0.5];
-    [[findCursorWindow_ animator] setAlphaValue:0.7];
+    [[_findCursorWindow animator] setAlphaValue:0.7];
 
     _findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
                                                                             0,
@@ -5412,7 +5412,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _findCursorView.delegate = self;
     NSPoint p = [self globalCursorLocation];
     _findCursorView.cursorPosition = p;
-    [findCursorWindow_ setContentView:_findCursorView];
+    [_findCursorWindow setContentView:_findCursorView];
     [_findCursorView release];
     [_findCursorView startBlinkNotifications];
 }
@@ -5460,12 +5460,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)endFindCursor {
-    [[findCursorWindow_ animator] setAlphaValue:0];
+    [[_findCursorWindow animator] setAlphaValue:0];
     [_findCursorView stopTearDownTimer];
     [self performSelector:@selector(closeFindCursorWindow:)
-               withObject:findCursorWindow_
+               withObject:_findCursorWindow
                afterDelay:[[NSAnimationContext currentContext] duration]];
-    findCursorWindow_ = nil;
+    _findCursorWindow = nil;
     _findCursorView.stopping = YES;
     _findCursorView = nil;
 }
