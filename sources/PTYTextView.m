@@ -90,6 +90,7 @@ static const int kBadgeMargin = 4;
 static const int kBadgeRightMargin = 10;
 
 @interface PTYTextView () <
+    iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
     iTermIndicatorsHelperDelegate,
     iTermSelectionDelegate,
@@ -210,10 +211,8 @@ static const int kBadgeRightMargin = 10;
 
     // For find-cursor animation
     NSWindow *findCursorWindow_;
-    FindCursorView *findCursorView_;
-    NSTimer *findCursorTeardownTimer_;
-    NSTimer *findCursorBlinkTimer_;
-    BOOL autoHideFindCursor_;
+    FindCursorView *_findCursorView;
+
     NSPoint imeCursorLastPos_;
 
     // Number of fingers currently down (only valid if three finger click
@@ -5409,21 +5408,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[NSAnimationContext currentContext] setDuration:0.5];
     [[findCursorWindow_ animator] setAlphaValue:0.7];
 
-    findCursorView_ = [[FindCursorView alloc] initWithFrame:NSMakeRect(0, 0, [[self window] frame].size.width, [[self window] frame].size.height)];
+    _findCursorView = [[FindCursorView alloc] initWithFrame:NSMakeRect(0,
+                                                                       0,
+                                                                       [[self window] frame].size.width,
+                                                                       [[self window] frame].size.height)];
+    _findCursorView.delegate = self;
     NSPoint p = [self globalCursorLocation];
-    findCursorView_.cursor = p;
-    [findCursorWindow_ setContentView:findCursorView_];
-    [findCursorView_ release];
-
-    findCursorBlinkTimer_ = [NSTimer scheduledTimerWithTimeInterval:0.1
-                                                             target:self
-                                                           selector:@selector(invalidateCursor)
-                                                           userInfo:nil
-                                                            repeats:YES];
+    _findCursorView.cursor = p;
+    [findCursorWindow_ setContentView:_findCursorView];
+    [_findCursorView release];
+    [_findCursorView startBlinkNotifications];
 }
 
-- (void)invalidateCursor
-{
+- (void)findCursorBlink {
     int HEIGHT = [_dataSource height];
     NSRect rect = [self cursorRect];
     int yStart = [_dataSource cursorY] - 1;
@@ -5435,62 +5432,46 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)beginFindCursor:(BOOL)hold
 {
     self.cursorVisible = YES;
-    if (!findCursorView_) {
+    if (!_findCursorView) {
         [self createFindCursorWindow];
     } else {
         [findCursorWindow_ setAlphaValue:1];
     }
-    [findCursorTeardownTimer_ invalidate];
-    autoHideFindCursor_ = NO;
     if (hold) {
-        findCursorTeardownTimer_ = [NSTimer scheduledTimerWithTimeInterval:kFindCursorHoldTime
-                                                                    target:self
-                                                                  selector:@selector(startCloseFindCursorWindow)
-                                                                  userInfo:nil
-                                                                   repeats:NO];
+        [_findCursorView startTearDownTimer];
     } else {
-        findCursorTeardownTimer_ = nil;
+        [_findCursorView stopTearDownTimer];
     }
+    _findCursorView.autohide = NO;
 }
 
-- (void)placeFindCursorOnAutoHide
-{
-    autoHideFindCursor_ = YES;
+- (void)placeFindCursorOnAutoHide {
+    _findCursorView.autohide = YES;
 }
 
-- (BOOL)isFindingCursor
-{
-    return findCursorView_ != nil;
+- (BOOL)isFindingCursor {
+    return _findCursorView != nil;
 }
 
-- (void)startCloseFindCursorWindow
-{
-    findCursorTeardownTimer_ = nil;
-    if (autoHideFindCursor_ && [self isFindingCursor]) {
-        [self endFindCursor];
-    }
-}
-
-- (void)closeFindCursorWindow:(NSTimer *)timer
-{
-    NSWindowController *win = [timer userInfo];
+- (void)closeFindCursorWindow:(NSWindow *)win {
     [win close];
-    [findCursorBlinkTimer_ invalidate];
-    findCursorBlinkTimer_ = nil;
-    findCursorTeardownTimer_ = nil;
+    [_findCursorView stopBlinkNotifications];
+    [_findCursorView stopTearDownTimer];
 }
 
-- (void)endFindCursor
-{
+- (void)findCursorViewDismiss {
+    [self endFindCursor];
+}
+
+- (void)endFindCursor {
     [[findCursorWindow_ animator] setAlphaValue:0];
-    [findCursorTeardownTimer_ invalidate];
-    findCursorTeardownTimer_ = [NSTimer scheduledTimerWithTimeInterval:[[NSAnimationContext currentContext] duration]
-                                                                target:self
-                                                              selector:@selector(closeFindCursorWindow:)
-                                                              userInfo:findCursorWindow_
-                                                               repeats:NO];
+    [_findCursorView stopTearDownTimer];
+    [self performSelector:@selector(closeFindCursorWindow:)
+               withObject:findCursorWindow_
+               afterDelay:[[NSAnimationContext currentContext] duration]];
     findCursorWindow_ = nil;
-    findCursorView_ = nil;
+    _findCursorView.stopping = YES;
+    _findCursorView = nil;
 }
 
 // The background color is cached separately from other dimmed colors because
@@ -6862,9 +6843,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         imeCursorLastPos_ = cursorFrame.origin;
         if ([self isFindingCursor]) {
             NSPoint cp = [self globalCursorLocation];
-            if (!NSEqualPoints(findCursorView_.cursor, cp)) {
-                findCursorView_.cursor = cp;
-                [findCursorView_ setNeedsDisplay:YES];
+            if (!NSEqualPoints(_findCursorView.cursor, cp)) {
+                _findCursorView.cursor = cp;
+                [_findCursorView setNeedsDisplay:YES];
             }
         }
         [[_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:1.0
@@ -7319,9 +7300,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         if ([self isFindingCursor]) {
             NSPoint globalCursorLocation = [self globalCursorLocation];
-            if (!NSEqualPoints(findCursorView_.cursor, globalCursorLocation)) {
-                findCursorView_.cursor = globalCursorLocation;
-                [findCursorView_ setNeedsDisplay:YES];
+            if (!NSEqualPoints(_findCursorView.cursor, globalCursorLocation)) {
+                _findCursorView.cursor = globalCursorLocation;
+                [_findCursorView setNeedsDisplay:YES];
             }
         }
 

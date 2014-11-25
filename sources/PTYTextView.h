@@ -38,9 +38,6 @@
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
 
-// Amount of time to highlight the cursor after beginFindCursor:YES
-static const double kFindCursorHoldTime = 1;
-
 // Types of characters. Used when classifying characters for word selection.
 typedef enum {
     CHARTYPE_WHITESPACE,  // whitespace chars or NUL

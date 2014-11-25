@@ -8,14 +8,18 @@
 
 #import "FindCursorView.h"
 
+// Delay before teardown.
+static const double kFindCursorHoldTime = 1;
+
 // When performing the "find cursor" action, a gray window is shown with a
 // transparent "hole" around the cursor. This is the radius of that hole in
 // pixels.
 const double kFindCursorHoleRadius = 30;
 
-@implementation FindCursorView
-
-@synthesize cursor;
+@implementation FindCursorView {
+    NSTimer *_findCursorTeardownTimer;
+    NSTimer *_findCursorBlinkTimer;
+}
 
 - (void)drawRect:(NSRect)dirtyRect
 {
@@ -49,4 +53,44 @@ const double kFindCursorHoleRadius = 30;
         [circle fill];
     }
 }
+
+- (void)startTearDownTimer {
+    [self stopTearDownTimer];
+    _findCursorTeardownTimer = [NSTimer scheduledTimerWithTimeInterval:kFindCursorHoldTime
+                                                                target:self
+                                                              selector:@selector(startCloseFindCursorWindow:)
+                                                              userInfo:nil
+                                                               repeats:NO];
+}
+
+- (void)stopTearDownTimer {
+    [_findCursorTeardownTimer invalidate];
+    _findCursorTeardownTimer = nil;
+}
+
+- (void)startCloseFindCursorWindow:(NSTimer *)timer {
+    _findCursorTeardownTimer = nil;
+    if (_autohide && !_stopping) {
+        [_delegate findCursorViewDismiss];
+    }
+}
+
+- (void)startBlinkNotifications {
+    [_findCursorBlinkTimer invalidate];
+    _findCursorBlinkTimer = [NSTimer scheduledTimerWithTimeInterval:0.1
+                                                             target:self
+                                                           selector:@selector(blinkCursor)
+                                                           userInfo:nil
+                                                            repeats:YES];
+}
+
+- (void)stopBlinkNotifications {
+    [_findCursorBlinkTimer invalidate];
+    _findCursorBlinkTimer = nil;
+}
+
+- (void)blinkCursor {
+    [_delegate findCursorBlink];
+}
+
 @end
