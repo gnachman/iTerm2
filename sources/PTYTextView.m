@@ -209,9 +209,6 @@ static const int kBadgeRightMargin = 10;
     // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
     NSMutableArray *_lineBreakCharOffsets;
 
-    // Brightness of background color
-    double backgroundBrightness_;
-
     // For find-cursor animation
     NSWindow *findCursorWindow_;
     iTermFindCursorView *_findCursorView;
