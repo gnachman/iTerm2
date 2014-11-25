@@ -26,15 +26,14 @@ const double kFindCursorHoleRadius = 30;
     const double initialAlpha = 0.7;
     NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]
                                                      endingColor:[NSColor blackColor]];
-    NSPoint relativeCursorPosition = NSMakePoint(2 * (cursor.x / self.frame.size.width - 0.5),
-                                                 2 * (cursor.y / self.frame.size.height - 0.5));
+    NSPoint relativeCursorPosition = NSMakePoint(2 * (_cursorPosition.x / self.frame.size.width - 0.5),
+                                                 2 * (_cursorPosition.y / self.frame.size.height - 0.5));
     [grad drawInRect:NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height)
         relativeCenterPosition:relativeCursorPosition];
     [grad release];
-    
-    double x = cursor.x;
-    double y = cursor.y;
-    
+
+    NSPoint point = _cursorPosition;
+
     const double numSteps = 1;
     const double stepSize = 1;
     const double initialRadius = kFindCursorHoleRadius + numSteps * stepSize;
@@ -43,8 +42,8 @@ const double kFindCursorHoleRadius = 30;
          a > 0 && focusRadius >= initialRadius - numSteps * stepSize;
          focusRadius -= stepSize) {
         [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
-        NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(x - focusRadius,
-                                                                                 y - focusRadius,
+        NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(point.x - focusRadius,
+                                                                                 point.y - focusRadius,
                                                                                  focusRadius * 2,
                                                                                  focusRadius * 2)];
         a -= initialAlpha / numSteps;

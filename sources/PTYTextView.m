@@ -5415,7 +5415,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                             [[self window] frame].size.height)];
     _findCursorView.delegate = self;
     NSPoint p = [self globalCursorLocation];
-    _findCursorView.cursor = p;
+    _findCursorView.cursorPosition = p;
     [findCursorWindow_ setContentView:_findCursorView];
     [_findCursorView release];
     [_findCursorView startBlinkNotifications];
@@ -6844,8 +6844,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         imeCursorLastPos_ = cursorFrame.origin;
         if ([self isFindingCursor]) {
             NSPoint cp = [self globalCursorLocation];
-            if (!NSEqualPoints(_findCursorView.cursor, cp)) {
-                _findCursorView.cursor = cp;
+            if (!NSEqualPoints(_findCursorView.cursorPosition, cp)) {
+                _findCursorView.cursorPosition = cp;
                 [_findCursorView setNeedsDisplay:YES];
             }
         }
@@ -7301,8 +7301,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         if ([self isFindingCursor]) {
             NSPoint globalCursorLocation = [self globalCursorLocation];
-            if (!NSEqualPoints(_findCursorView.cursor, globalCursorLocation)) {
-                _findCursorView.cursor = globalCursorLocation;
+            if (!NSEqualPoints(_findCursorView.cursorPosition, globalCursorLocation)) {
+                _findCursorView.cursorPosition = globalCursorLocation;
                 [_findCursorView setNeedsDisplay:YES];
             }
         }

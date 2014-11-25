@@ -15,12 +15,10 @@
 
 @end
 
-@interface iTermFindCursorView : NSView {
-    NSPoint cursor;
-}
+@interface iTermFindCursorView : NSView
 
 @property(nonatomic, assign) id<iTermFindCursorViewDelegate> delegate;
-@property(nonatomic, assign) NSPoint cursor;
+@property(nonatomic, assign) NSPoint cursorPosition;
 @property(nonatomic, assign) BOOL autohide;
 @property(nonatomic, assign) BOOL stopping;
 
