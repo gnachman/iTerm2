@@ -222,7 +222,7 @@ static const int kBadgeRightMargin = 10;
 
     // If true, ignore the next mouse up because it's due to a three finger
     // mouseDown.
-    BOOL mouseDownIsThreeFingerClick_;
+    BOOL _mouseDownIsThreeFingerClick;
 
     // Is the mouse inside our view?
     BOOL mouseInRect_;
@@ -2265,7 +2265,7 @@ NSMutableArray* screens=0;
         return;
     }
 
-    if (!mouseDownIsThreeFingerClick_) {
+    if (!_mouseDownIsThreeFingerClick) {
         DLog(@"Sending third button press up to super");
         [super otherMouseUp:event];
     }
@@ -2626,7 +2626,7 @@ NSMutableArray* screens=0;
 // buttonNumber field.
 - (void)emulateThirdButtonPressDown:(BOOL)isDown withEvent:(NSEvent *)event {
     if (isDown) {
-        mouseDownIsThreeFingerClick_ = isDown;
+        _mouseDownIsThreeFingerClick = isDown;
         DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=YES");
     }
 
@@ -2643,7 +2643,7 @@ NSMutableArray* screens=0;
     }
     _numTouches = saved;
     if (!isDown) {
-        mouseDownIsThreeFingerClick_ = isDown;
+        _mouseDownIsThreeFingerClick = isDown;
         DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=NO");
     }
 }
@@ -2683,7 +2683,7 @@ NSMutableArray* screens=0;
         return NO;
     }
     [pointer_ notifyLeftMouseDown];
-    mouseDownIsThreeFingerClick_ = NO;
+    _mouseDownIsThreeFingerClick = NO;
     DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         [_delegate textViewBeginDrag];
@@ -2847,7 +2847,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, _numTouches);
     _firstMouseEventNumber = -1;  // Synergy seems to interfere with event numbers, so reset it here.
-    if (mouseDownIsThreeFingerClick_) {
+    if (_mouseDownIsThreeFingerClick) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
         return;
     } else if (_numTouches == 3 && mouseDown) {
@@ -2997,7 +2997,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)mouseDragged:(NSEvent *)event
 {
     DLog(@"mouseDragged");
-    if (mouseDownIsThreeFingerClick_) {
+    if (_mouseDownIsThreeFingerClick) {
         DLog(@"is three finger click");
         return;
     }
