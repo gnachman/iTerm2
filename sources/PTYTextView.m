@@ -198,7 +198,7 @@ static const int kBadgeRightMargin = 10;
 
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
-    int firstMouseEventNumber_;
+    NSInteger _firstMouseEventNumber;
 
     // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
     NSMutableString* allText_;
@@ -293,7 +293,7 @@ static const int kBadgeRightMargin = 10;
         _colorMap = [colorMap retain];
         _colorMap.delegate = self;
 
-        firstMouseEventNumber_ = -1;
+        _firstMouseEventNumber = -1;
 
         [self updateMarkedTextAttributes];
         _cursorVisible = YES;
@@ -2679,7 +2679,7 @@ NSMutableArray* screens=0;
 
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event {
-    _mouseDownWasFirstMouse = ([event eventNumber] == firstMouseEventNumber_) || ![NSApp keyWindow];
+    _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
     BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
@@ -2875,7 +2875,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, numTouches_);
-    firstMouseEventNumber_ = -1;  // Synergy seems to interfere with event numbers, so reset it here.
+    _firstMouseEventNumber = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (mouseDownIsThreeFingerClick_) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
         return;
@@ -3048,7 +3048,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
         dragThresholdMet = YES;
     }
-    if ([event eventNumber] == firstMouseEventNumber_) {
+    if ([event eventNumber] == _firstMouseEventNumber) {
         // We accept first mouse for the purposes of focusing or dragging a
         // split pane but not for making a selection.
         return;
@@ -4875,7 +4875,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
 {
-    firstMouseEventNumber_ = [theEvent eventNumber];
+    _firstMouseEventNumber = [theEvent eventNumber];
     return YES;
 }
 
