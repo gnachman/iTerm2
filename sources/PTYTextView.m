@@ -5395,8 +5395,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return frame;
 }
 
-- (void)createFindCursorWindow
-{
+- (void)createFindCursorWindow {
     findCursorWindow_ = [[NSWindow alloc] initWithContentRect:NSZeroRect
                                                     styleMask:NSBorderlessWindowMask
                                                       backing:NSBackingStoreBuffered
@@ -5434,9 +5433,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     self.cursorVisible = YES;
     if (!_findCursorView) {
+        NSLog(@"Create find cursor window");
         [self createFindCursorWindow];
-    } else {
-        [findCursorWindow_ setAlphaValue:1];
     }
     if (hold) {
         [_findCursorView startTearDownTimer];
