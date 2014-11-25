@@ -225,7 +225,7 @@ static const int kBadgeRightMargin = 10;
     BOOL _mouseDownIsThreeFingerClick;
 
     // Show a background indicator when in broadcast input mode
-    BOOL useBackgroundIndicator_;
+    BOOL _showStripesWhenBroadcastingInput;
 
     PointerController *pointer_;
     NSCursor *cursor_;
@@ -309,10 +309,10 @@ static const int kBadgeRightMargin = 10;
             nil]];
 
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_useBackgroundIndicatorChanged:)
+                                                 selector:@selector(useBackgroundIndicatorChanged:)
                                                      name:kUseBackgroundPatternIndicatorChangedNotification
                                                    object:nil];
-        [self _useBackgroundIndicatorChanged:nil];
+        [self useBackgroundIndicatorChanged:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_settingsChanged:)
                                                      name:kRefreshTerminalNotification
@@ -6372,7 +6372,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int screenstartline = [self frame].origin.y / _lineHeight;
     DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen)", line, (line - screenstartline)]);
 #endif
-    const BOOL stripes = useBackgroundIndicator_ && [_delegate textViewSessionIsBroadcastingInput];
+    const BOOL stripes = _showStripesWhenBroadcastingInput && [_delegate textViewSessionIsBroadcastingInput];
     int WIDTH = [_dataSource width];
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
@@ -7302,9 +7302,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     selectedFont_ = nil;
 }
 
-- (void)_useBackgroundIndicatorChanged:(NSNotification *)notification
-{
-    useBackgroundIndicator_ = [(iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate] useBackgroundPatternIndicator];
+- (void)useBackgroundIndicatorChanged:(NSNotification *)notification {
+    _showStripesWhenBroadcastingInput =
+            [(iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate] useBackgroundPatternIndicator];
     [self setNeedsDisplay:YES];
 }
 
