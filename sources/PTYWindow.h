@@ -36,8 +36,6 @@
 
 @interface PTYWindow : NSWindow
 
-@property(assign) id<PTYWindowDelegateProtocol> delegate;
-
 - (void)smartLayout;
 - (void)setLayoutDone;
 

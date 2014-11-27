@@ -119,7 +119,7 @@
         ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
         // to use traditional fullscreen.
-        [[self delegate] toggleTraditionalFullScreenMode];
+        [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];
     } else {
         [super toggleFullScreen:sender];
     }
