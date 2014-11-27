@@ -19,6 +19,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermDirectoriesModel.h"
+#import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"

@@ -9,7 +9,7 @@
 #import "iTermFindCursorView.h"
 
 // Delay before teardown.
-static const double kFindCursorHoldTime = 1;
+const double kFindCursorHoldTime = 1;
 
 // When performing the "find cursor" action, a gray window is shown with a
 // transparent "hole" around the cursor. This is the radius of that hole in

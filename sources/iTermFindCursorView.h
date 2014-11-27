@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern const double kFindCursorHoldTime;
+
 @protocol iTermFindCursorViewDelegate <NSObject>
 
 - (void)findCursorViewDismiss;
