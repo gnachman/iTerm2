@@ -7,6 +7,7 @@
 
 #import "TmuxGateway.h"
 #import "RegexKitLite.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "TmuxController.h"
 #import "iTermApplicationDelegate.h"
 #import "NSStringITerm.h"
@@ -456,9 +457,15 @@ error:
             [self parseBegin:command];
         }
     } else {
-        // We'll be tolerant of unrecognized commands.
-        NSLog(@"Unrecognized command \"%@\"", command);
-        [strayMessages_ appendFormat:@"%@\n", command];
+        if (![command hasPrefix:@"%"] && ![iTermAdvancedSettingsModel tolerateUnrecognizedTmuxCommands]) {
+            [delegate_ tmuxPrintLine:@"Unrecognized command from tmux. Did your ssh session die?. The command was:"];
+            [delegate_ tmuxPrintLine:command];
+            [self hostDisconnected];
+        } else {
+            // We'll be tolerant of unrecognized commands.
+            NSLog(@"Unrecognized command \"%@\"", command);
+            [strayMessages_ appendFormat:@"%@\n", command];
+        }
     }
 }
 

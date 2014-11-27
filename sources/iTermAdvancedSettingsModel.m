@@ -96,6 +96,9 @@ DEFINE_FLOAT(idleTimeSeconds, 2, @"General: Time in seconds before a session is 
 DEFINE_FLOAT(findDelaySeconds, 1, @"General: Time to wait before performing Find action on 1- or 2- character queries");
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"General: Start debug logging automatically when iTerm2 is launched");
 
+#pragma mark tmux
+DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server");
+
 #pragma mark Warnings
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Warnings: Suppress a warning when Option Key Acts as Meta is enabled");
 DEFINE_BOOL(neverWarnAboutSpaces, NO, @"Warnings: Suppress a warning about how to configure Spaces when setting a window's Space")
