@@ -29,6 +29,7 @@
 #import "MovePaneController.h"
 #import "MovingAverage.h"
 #import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
@@ -1826,36 +1827,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return nil;
 }
 
-+ (NSString*)pasteboardString
-{
-    NSPasteboard *board;
-
-    board = [NSPasteboard generalPasteboard];
-    assert(board != nil);
-
-    NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil];
-    NSString *bestType = [board availableTypeFromArray:supportedTypes];
-
-    NSString* info = nil;
-    DLog(@"Getting pasteboard string...");
-    if ([bestType isEqualToString:NSFilenamesPboardType]) {
-        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
-        NSMutableArray *escapedFilenames = [NSMutableArray array];
-        DLog(@"Pasteboard has filenames: %@.", filenames);
-        for (NSString *filename in filenames) {
-            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
-        }
-        if (escapedFilenames.count > 0) {
-            info = [escapedFilenames componentsJoinedByString:@" "];
-        }
-        if ([info length] == 0) {
-            info = nil;
-        }
-    } else {
-        DLog(@"Pasteboard has a string.");
-        info = [board stringForType:NSStringPboardType];
-    }
-    return info;
++ (NSString*)pasteboardString {
+    return [NSString stringFromPasteboard];
 }
 
 - (void)insertText:(NSString *)string
@@ -4753,29 +4726,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 {
     NSData *data = [[self class] pasteboardFile];
     if (data) {
-        int length = apr_base64_encode_len(data.length);
-        NSMutableData *buffer = [NSMutableData dataWithLength:length];
-        if (buffer) {
-            apr_base64_encode_binary(buffer.mutableBytes,
-                                     data.bytes,
-                                     data.length);
-        }
-        NSMutableString *string = [NSMutableString string];
-        int remaining = length;
-        int offset = 0;
-        char *bytes = (char *)buffer.mutableBytes;
-        while (remaining > 0) {
-            @autoreleasepool {
-                NSString *chunk = [[[NSString alloc] initWithBytes:bytes + offset
-                                                            length:MIN(77, remaining)
-                                                          encoding:NSUTF8StringEncoding] autorelease];
-                [string appendString:chunk];
-                [string appendString:@"\n"];
-                remaining -= chunk.length;
-                offset += chunk.length;
-            }
-        }
-        [self pasteString:string flags:0];
+        NSString *encodedString = [data stringWithBase64Encoding];
+        [self pasteString:encodedString flags:0];
     }
 }
 

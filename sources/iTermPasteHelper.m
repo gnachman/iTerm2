@@ -30,6 +30,14 @@
 
 }
 
++ (NSMutableCharacterSet *)unsafeControlCodeSet {
+    NSMutableCharacterSet *controlSet = [[[NSMutableCharacterSet alloc] init] autorelease];
+    [controlSet addCharactersInRange:NSMakeRange(0, 32)];
+    [controlSet removeCharactersInRange:NSMakeRange(9, 1)];  // Tab
+    [controlSet removeCharactersInRange:NSMakeRange(12, 2)];  // Form feed and carriage return
+    return controlSet;
+}
+
 - (id)init {
     self = [super init];
     if (self) {
@@ -87,10 +95,7 @@
 
     // All control codes except tab (9), newline (10), and form feed (12) are removed unless we are
     // pasting with literal tabs, in which case we also keep LNEXT (22, ^V).
-    NSMutableCharacterSet *controlSet = [[[NSMutableCharacterSet alloc] init] autorelease];
-    [controlSet addCharactersInRange:NSMakeRange(0, 32)];
-    [controlSet removeCharactersInRange:NSMakeRange(9, 1)];  // Tab
-    [controlSet removeCharactersInRange:NSMakeRange(12, 2)];  // Form feed and carriage return
+    NSMutableCharacterSet *controlSet = [iTermPasteHelper unsafeControlCodeSet];
 
     if (flags & kPTYSessionPasteEscapingSpecialCharacters) {
         // Paste escaping special characters

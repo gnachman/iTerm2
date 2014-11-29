@@ -34,6 +34,8 @@
 @property(nonatomic, assign) id<iTermPasteHelperDelegate> delegate;
 @property(nonatomic, readonly) BOOL isPasting;
 
++ (NSMutableCharacterSet *)unsafeControlCodeSet;
+
 // Queue up a string to paste. If the queue is empty, it will begin pasting immediately.
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags;
 

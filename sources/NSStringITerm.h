@@ -56,6 +56,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 + (NSString *)stringWithInt:(int)num;
 + (BOOL)isDoubleWidthCharacter:(int)unicode
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
++ (NSString *)stringFromPasteboard;
++ (NSString *)shellEscapableCharacters;
 
 - (NSString *)stringWithEscapedShellCharacters;
 
@@ -148,5 +150,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 @interface NSMutableString (iTerm)
 
 - (void)trimTrailingWhitespace;
+- (void)escapeShellCharacters;
 
 @end

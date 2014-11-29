@@ -26,11 +26,11 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define NSSTRINGJTERMINAL_CLASS_COMPILE
 #import "NSStringITerm.h"
+#import "DebugLogging.h"
+#import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
-#import "RegexKitLite.h"
 #import <wctype.h>
 
 #define AMB_CHAR_NUMBER (sizeof(ambiguous_chars) / sizeof(int))
@@ -182,19 +182,45 @@ static const int ambiguous_chars[] = {
     return NO;
 }
 
++ (NSString *)stringFromPasteboard {
+    NSPasteboard *board;
+
+    board = [NSPasteboard generalPasteboard];
+    assert(board != nil);
+
+    NSArray *supportedTypes = @[ NSFilenamesPboardType, NSStringPboardType ];
+    NSString *bestType = [board availableTypeFromArray:supportedTypes];
+
+    NSString* info = nil;
+    DLog(@"Getting pasteboard string...");
+    if ([bestType isEqualToString:NSFilenamesPboardType]) {
+        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+        NSMutableArray *escapedFilenames = [NSMutableArray array];
+        DLog(@"Pasteboard has filenames: %@.", filenames);
+        for (NSString *filename in filenames) {
+            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+        }
+        if (escapedFilenames.count > 0) {
+            info = [escapedFilenames componentsJoinedByString:@" "];
+        }
+        if ([info length] == 0) {
+            info = nil;
+        }
+    } else {
+        DLog(@"Pasteboard has a string.");
+        info = [board stringForType:NSStringPboardType];
+    }
+    return info;
+}
+
++ (NSString *)shellEscapableCharacters {
+    return @"\\ ()\"&'!$<>;|*?[]#`";
+}
+
 - (NSString *)stringWithEscapedShellCharacters
 {
-    NSMutableString *aMutableString = [[[NSMutableString alloc] initWithString: self] autorelease];
-    NSString* charsToEscape = @"\\ ()\"&'!$<>;|*?[]#`";
-    for (int i = 0; i < [charsToEscape length]; i++) {
-        NSString* before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
-        NSString* after = [@"\\" stringByAppendingString:before];
-        [aMutableString replaceOccurrencesOfString:before
-                                        withString:after
-                                           options:0
-                                             range:NSMakeRange(0, [aMutableString length])];
-    }
-
+    NSMutableString *aMutableString = [[[NSMutableString alloc] initWithString:self] autorelease];
+    [aMutableString escapeShellCharacters];
     return [NSString stringWithString:aMutableString];
 }
 
@@ -1243,6 +1269,18 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     } else if (rangeOfLastWantedCharacter.location < self.length - 1) {
         NSUInteger i = rangeOfLastWantedCharacter.location + 1;
         [self deleteCharactersInRange:NSMakeRange(i, self.length - i)];
+    }
+}
+
+- (void)escapeShellCharacters {
+    NSString* charsToEscape = [NSString shellEscapableCharacters];
+    for (int i = 0; i < [charsToEscape length]; i++) {
+        NSString* before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
+        NSString* after = [@"\\" stringByAppendingString:before];
+        [self replaceOccurrencesOfString:before
+                              withString:after
+                                 options:0
+                                   range:NSMakeRange(0, [self length])];
     }
 }
 
