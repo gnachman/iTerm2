@@ -4726,20 +4726,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)textViewPasteWithEncoding:(TextViewPasteEncoding)encoding
-{
-    NSData *data = [[self class] pasteboardFile];
-    if (data) {
-        NSString *encodedString = [data stringWithBase64EncodingWithLineBreak:@"\r"];
-        [self pasteString:encodedString flags:0];
-    }
-}
-
-- (BOOL)textViewCanPasteFile
-{
-    return [[self class] pasteboardFile] != nil;
-}
-
 - (BOOL)textViewWindowUsesTransparency
 {
     return [[[self tab] realParentWindow] useTransparency];

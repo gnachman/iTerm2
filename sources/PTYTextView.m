@@ -3898,10 +3898,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate textViewPasteFromSessionWithMostRecentSelection:[sender tag]];
 }
 
-- (IBAction)pasteBase64Encoded:(id)sender {
-    [_delegate textViewPasteWithEncoding:kTextViewPasteEncodingBase64];
-}
-
 - (BOOL)_broadcastToggleable
 {
     // There used to be a restriction that you could not toggle broadcasting on
@@ -3983,9 +3979,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if ([item action] == @selector(reRunCommand:)) {
         return YES;
-    }
-    if ([item action] == @selector(pasteBase64Encoded:)) {
-        return [_delegate textViewCanPasteFile];
     }
 
     SEL theSel = [item action];

@@ -527,4 +527,11 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     [self updatePreview];
 }
 
+#pragma mark - NSTextField Delegate
+
+- (void)controlTextDidChange:(NSNotification *)obj {
+    _spacesPerTab.integerValue = MAX(0, MIN(100, _spacesPerTab.integerValue));
+    _stepper.integerValue = _spacesPerTab.integerValue;
+}
+
 @end

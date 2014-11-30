@@ -46,10 +46,6 @@ typedef enum {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 } PTYCharType;
 
-typedef enum {
-    kTextViewPasteEncodingBase64
-} TextViewPasteEncoding;
-
 @protocol PTYTextViewDelegate <NSObject>
 
 - (BOOL)xtermMouseReporting;
@@ -110,8 +106,6 @@ typedef enum {
 - (void)textViewCloseWithConfirmation;
 - (NSString *)textViewPasteboardString;
 - (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags;
-- (void)textViewPasteWithEncoding:(TextViewPasteEncoding)encoding;
-- (BOOL)textViewCanPasteFile;
 - (BOOL)textViewWindowUsesTransparency;
 - (BOOL)textViewAmbiguousWidthCharsAreDoubleWidth;
 - (PTYScroller *)textViewVerticalScroller;
@@ -307,8 +301,6 @@ typedef enum {
 
 // Copy the current selection to the pasteboard, preserving style.
 - (IBAction)copyWithStyles:(id)sender;
-
-- (IBAction)pasteBase64Encoded:(id)sender;
 
 // Paste from the pasteboard.
 - (void)paste:(id)sender;

@@ -361,7 +361,7 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Paste Special" id="1159">
                                     <items>
-                                        <menuItem title="Paste Options…" tag="1" keyEquivalent="v" id="tnr-HI-5ah">
+                                        <menuItem title="Advanced Paste…" tag="1" keyEquivalent="v" id="tnr-HI-5ah">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="pasteOptions:" target="-1" id="tHt-uB-46s"/>
@@ -386,13 +386,6 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="meJ-Eb-j6h"/>
-                                        <menuItem title="Paste File with Base64 Encoding" tag="2" id="LzY-eC-RYe">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="pasteBase64Encoded:" target="-1" id="OMO-E1-H3J"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="alj-TE-sXE"/>
                                         <menuItem title="Paste Slowly" tag="2" id="1166">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
