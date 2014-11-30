@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-typedef void (^iTermPasteSpecialCompletionBlock)(NSData *, NSInteger, NSTimeInterval);
+typedef void (^iTermPasteSpecialCompletionBlock)(NSString *, NSInteger, NSTimeInterval);
 
 @interface iTermPasteSpecialWindowController : NSWindowController
 
@@ -16,6 +16,7 @@ typedef void (^iTermPasteSpecialCompletionBlock)(NSData *, NSInteger, NSTimeInte
                   chunkSize:(NSInteger)chunkSize
          delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
           bracketingEnabled:(BOOL)bracketingEnabled
+                   encoding:(NSStringEncoding)encoding
                  completion:(iTermPasteSpecialCompletionBlock)completion;
 
 @end

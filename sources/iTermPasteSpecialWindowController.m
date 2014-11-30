@@ -9,16 +9,49 @@
 #import "iTermPasteSpecialWindowController.h"
 #import "iTermPasteHelper.h"
 #import "NSData+iTerm.h"
-#import "NSMutableData+iTerm.h"
 #import "NSStringITerm.h"
+
+@interface iTermFileReference : NSObject
+@property(nonatomic, readonly) NSData *data;
+- (instancetype)initWithName:(NSString *)url;
+- (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;
+@end
+
+@implementation iTermFileReference {
+    NSString *_name;
+}
+
+- (instancetype)initWithName:(NSString *)url {
+    self = [super init];
+    if (self) {
+        _name = [url copy];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_name release];
+    [super dealloc];
+}
+
+- (NSData *)data {
+    return [NSData dataWithContentsOfFile:_name];
+}
+
+- (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak {
+    return [self.data stringWithBase64EncodingWithLineBreak:lineBreak];
+}
+
+@end
 
 typedef struct {
     double min;
     double max;
+    double visualCenter;
 } iTermFloatingRange;
 
-static iTermFloatingRange kChunkSizeRange = { 1, 1024 * 1024 };
-static iTermFloatingRange kDelayRange = { 0.001, 10 };
+static iTermFloatingRange kChunkSizeRange = { 1, 1024 * 1024, 1024 };
+static iTermFloatingRange kDelayRange = { 0.001, 10, .01 };
 
 // These values correspond to cell tags on the matrix.
 NS_ENUM(NSInteger, iTermTabTransformTags) {
@@ -38,7 +71,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 
 @interface iTermPasteSpecialWindowController ()
 
-@property(nonatomic, readonly) NSData *dataToPaste;
+@property(nonatomic, readonly) NSString *stringToPaste;
 @property(nonatomic, assign) BOOL shouldPaste;
 @property(nonatomic, assign) NSInteger chunkSize;
 @property(nonatomic, assign) NSTimeInterval delayBetweenChunks;
@@ -46,14 +79,24 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 @end
 
 @implementation iTermPasteSpecialWindowController {
+    // Pre-processed string
+    NSString *_rawString;
+
     // Terminal app expects bracketed data?
     BOOL _bracketingEnabled;
 
-    // If this came from a string then it is UTF-8 encoded. It could also be a binary file with no
-    // string encoding.
-    NSData *_originalPasteboardData;
+    // String to paste before transforms.
+    NSArray *_originalValues;
+    NSArray *_labels;
+
+    NSInteger _index;
+
+    // Encoding to use.
+    NSStringEncoding _encoding;
 
     // Outlets
+    IBOutlet NSPopUpButton *_itemList;
+    IBOutlet NSTextView *_preview;
     IBOutlet NSTextField *_spacesPerTab;
     IBOutlet NSButton *_escapeShellCharsWithBackslash;
     IBOutlet NSButton *_removeControlCodes;
@@ -69,12 +112,78 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 
 - (instancetype)initWithChunkSize:(NSInteger)chunkSize
                delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
-                bracketingEnabled:(BOOL)bracketingEnabled {
+                bracketingEnabled:(BOOL)bracketingEnabled
+                   encoding:(NSStringEncoding)encoding {
     self = [super initWithWindowNibName:@"iTermPasteSpecialWindow"];
     if (self) {
+        _index = -1;
         _bracketingEnabled = bracketingEnabled;
-        _originalPasteboardData =
-                [[[NSString stringFromPasteboard] dataUsingEncoding:NSUTF8StringEncoding] retain];
+        NSMutableArray *values = [NSMutableArray array];
+        NSMutableArray *labels = [NSMutableArray array];
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+
+        for (NSPasteboardItem *item in pasteboard.pasteboardItems) {
+            NSString *string = [item stringForType:(NSString *)kUTTypeUTF8PlainText];
+            if (string && ![item stringForType:(NSString *)kUTTypeFileURL]) {
+                // Is a non-file URL string. File URLs get special handling.
+                [values addObject:string];
+                CFStringRef description = UTTypeCopyDescription((CFStringRef)item.types[0]);
+                [labels addObject:(NSString *)description];
+                CFRelease(description);
+            }
+            if (!string) {
+                NSString *theType = (NSString *)kUTTypeData;
+                CFStringRef description = NULL;
+                NSData *data = [item dataForType:theType];
+                if (!data) {
+                    for (NSString *typeName in item.types) {
+                        if ([typeName hasPrefix:@"public."] &&
+                            ![typeName isEqualTo:(NSString *)kUTTypeFileURL]) {
+                            data = [item dataForType:typeName];
+                            description = UTTypeCopyDescription((CFStringRef)typeName);
+                            break;
+                        }
+                    }
+                }
+                if (data) {
+                    [values addObject:data];
+                    [labels addObject:(NSString *)description];
+                    if (description) {
+                        CFRelease(description);
+                    }
+                }
+            }
+        }
+
+        // Now handle file references.
+        NSArray *filenames = [pasteboard propertyListForType:NSFilenamesPboardType];
+
+        // Escape and join the filenames to add an item for the names themselves.
+        NSMutableArray *escapedFilenames = [NSMutableArray array];
+        for (NSString *filename in filenames) {
+            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+        }
+        [values addObject:[escapedFilenames componentsJoinedByString:@" "]];
+        if (filenames.count > 1) {
+            [labels addObject:@"Filenames joined by spaces"];
+        } else {
+            [labels addObject:@"Filename"];
+        }
+
+        // Add an item for each existing non-directory file.
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        for (NSString *filename in filenames) {
+            BOOL isDirectory;
+            if ([fileManager fileExistsAtPath:filename isDirectory:&isDirectory] &&
+                !isDirectory) {
+                [values addObject:[[[iTermFileReference alloc] initWithName:filename] autorelease]];
+                [labels addObject:[NSString stringWithFormat:@"Contents of %@", filename]];
+            }
+        }
+
+        _labels = [labels retain];
+        _originalValues = [values retain];
+        _encoding = encoding;
         self.chunkSize = chunkSize;
         self.delayBetweenChunks = delayBetweenChunks;
     }
@@ -82,16 +191,49 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 }
 
 - (void)dealloc {
-    [_originalPasteboardData release];
+    [_originalValues release];
+    [_labels release];
+    [_rawString release];
     [super dealloc];
 }
 
 - (void)awakeFromNib {
+    for (NSString *label in _labels) {
+        [_itemList addItemWithTitle:label];
+    }
+    [self selectValueAtIndex:0];
+}
+
+- (void)selectValueAtIndex:(NSInteger)index {
+    if (index == _index) {
+        return;
+    }
+    NSObject *value = _originalValues[index];
+    NSString *string;
+    BOOL isData = ![value isKindOfClass:[NSString class]];
+    BOOL base64Only = NO;
+    if (isData) {
+        NSData *data;
+        if ([value isKindOfClass:[NSData class]]) {
+            data = (NSData *)value;
+        } else {
+            data = [(id)value data];
+        }
+
+        // If the data happens to be valid UTF-8 data then don't insist on base64 encoding it.
+        string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+        if (!string) {
+            base64Only = YES;
+            string = [data stringWithBase64EncodingWithLineBreak:@"\r"];
+        }
+    } else {
+        string = (NSString *)value;
+    }
+    _index = index;
+    [_rawString autorelease];
+    _rawString = [string copy];
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSData *tabData = [NSData dataWithBytes:"\t" length:1];
-    BOOL containsTabs = [_originalPasteboardData rangeOfData:tabData
-                                                     options:0
-                                                       range:NSMakeRange(0, _originalPasteboardData.length)].location != NSNotFound;
+    BOOL containsTabs = [string containsString:@"\t"];
 
     _spacesPerTab.enabled = containsTabs;
     _spacesPerTab.integerValue = [userDefaults integerForKey:kSpacesPerTab] ?: kDefaultSpacesPerTab;
@@ -108,13 +250,9 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     NSCharacterSet *theSet =
             [NSCharacterSet characterSetWithCharactersInString:[NSString shellEscapableCharacters]];
     BOOL containsShellCharacters =
-            [_originalPasteboardData containsAsciiCharacterInSet:theSet];
+    [string rangeOfCharacterFromSet:theSet].location != NSNotFound;
 
-    NSData *crlfData = [NSData dataWithBytes:"\r\n" length:2];
-    BOOL containsDosNewlines =
-        [_originalPasteboardData rangeOfData:crlfData
-                                     options:0
-                                       range:NSMakeRange(0, _originalPasteboardData.length)].location != NSNotFound;
+    BOOL containsDosNewlines = [string containsString:@"\r\n"];
     _convertNewlines.enabled = containsDosNewlines;
     NSNumber *convertValue = [userDefaults objectForKey:kConvertDosNewlines];
     if (!convertValue) {
@@ -126,14 +264,19 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     _escapeShellCharsWithBackslash.state =
             [userDefaults boolForKey:kEscapeShellCharsWithBackslash] ? NSOnState : NSOffState;
 
+    _delayBetweenChunksSlider.minValue = log(kDelayRange.min);
+    _delayBetweenChunksSlider.maxValue = log(kDelayRange.max);
     _delayBetweenChunksSlider.floatValue = [self floatValueForDelayBetweenChunks];
     _delayBetweenChunksLabel.stringValue = [self descriptionForDuration:_delayBetweenChunks];
 
+    _chunkSizeSlider.minValue = log(kChunkSizeRange.min);
+    _chunkSizeSlider.maxValue = log(kChunkSizeRange.max);
     _chunkSizeSlider.floatValue = [self floatValueForChunkSize];
     _chunkSizeLabel.stringValue = [self descriptionForByteSize:_chunkSize];
 
     NSCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
-    BOOL containsControlCodes = [_originalPasteboardData containsAsciiCharacterInSet:unsafeSet];
+    NSRange unsafeRange = [string rangeOfCharacterFromSet:unsafeSet];
+    BOOL containsControlCodes = unsafeRange.location != NSNotFound;
     _removeControlCodes.enabled = containsControlCodes;
     NSNumber *removeValue = [userDefaults objectForKey:kRemoveControlCodes];
     if (!removeValue) {
@@ -145,18 +288,28 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     _bracketedPasteMode.state =
         (_bracketingEnabled && [userDefaults boolForKey:kBracketedPasteMode]) ? NSOnState : NSOffState;
 
-    _base64Encode.state = NSOffState;
+    _base64Encode.state = base64Only ? NSOnState : NSOffState;
+    _base64Encode.enabled = !base64Only;
+
+    [self updatePreview];
+}
+
+- (void)updatePreview {
+    _preview.string = [[self stringToPaste] stringByReplacingOccurrencesOfString:@"\x16\t"
+                                                                      withString:@"^V\t"];
 }
 
 + (void)showAsPanelInWindow:(NSWindow *)presentingWindow
                   chunkSize:(NSInteger)chunkSize
          delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
           bracketingEnabled:(BOOL)bracketingEnabled
+                   encoding:(NSStringEncoding)encoding
                  completion:(iTermPasteSpecialCompletionBlock)completion {
     iTermPasteSpecialWindowController *controller =
         [[[iTermPasteSpecialWindowController alloc] initWithChunkSize:chunkSize
                                                    delayBetweenChunks:delayBetweenChunks
-                                                    bracketingEnabled:bracketingEnabled] autorelease];
+                                                    bracketingEnabled:bracketingEnabled
+                                                             encoding:encoding] autorelease];
     NSWindow *window = [controller window];
     [NSApp beginSheet:window
        modalForWindow:presentingWindow
@@ -170,7 +323,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     [window close];
 
     if (controller.shouldPaste) {
-        completion(controller.dataToPaste,
+        completion(controller.stringToPaste,
                    controller.chunkSize,
                    controller.delayBetweenChunks);
         [controller saveUserDefaults];
@@ -179,7 +332,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 
 #pragma mark - Sheet Delegate
 
-- (void)sheetDidEnd:(NSWindow *)sheet
++ (void)sheetDidEnd:(NSWindow *)sheet
          returnCode:(NSInteger)returnCode
         contextInfo:(void *)contextInfo {
     [NSApp stopModal];
@@ -209,8 +362,11 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 - (NSString *)descriptionForDuration:(NSTimeInterval)duration {
     NSString *units;
     double multiplier;
-    if (duration < 1) {
+    if (duration < 0.00001) {
         units = @"µs";
+        multiplier = 0.00001;
+    } else if (duration < 1) {
+        units = @"ms";
         multiplier = 0.001;
     } else {
         units = @"sec";
@@ -226,34 +382,13 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     return description;
 }
 
-// Returns a value in |range|. Takes a value in [0, 1].
-- (NSInteger)floatValue:(float)floatValue mappedLogarithmicallyIntoRange:(iTermFloatingRange)range {
-    // f(0)=range.min
-    // f(1)=range.max;
-    // f(x)=range.min + (10^x - 1) / 9 * (range.max - range.min);
-    const double base = 10;
-    // factor scales exponentially from 0 to 1
-    double factor = (pow(base, floatValue) - 1) / (base - 1);
-    return range.min + factor * (range.max - range.min);
-}
 
-// Returns a value from 0 to 1. Takes a |value| in range.
-- (float)value:(NSInteger)value mappedLogarithmicallyFromRange:(iTermFloatingRange)range {
-    // This is the inverse of:
-    // f'(x)=range.min + (10^x - 1) / 9 * (range.max - range.min);
-    // Which is:
-    // f(y) = log10(1 + 9 * (y - range.min) / (range.max - range.min))
-
-    const double base = 10;
-    return log10(1 + (base - 1) * (value - range.min) / (range.max - range.min));
+- (float)floatValueForChunkSize {
+    return log(_chunkSize);
 }
 
 - (float)floatValueForDelayBetweenChunks {
-    return [self value:_chunkSize mappedLogarithmicallyFromRange:kChunkSizeRange];
-}
-
-- (float)floatValueForChunkSize {
-    return [self value:_delayBetweenChunks mappedLogarithmicallyFromRange:kDelayRange];
+    return log(_delayBetweenChunks);
 }
 
 - (void)saveUserDefaults {
@@ -276,90 +411,102 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     }
 }
 
-- (NSData *)dataToPaste {
-    NSMutableCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
+- (NSString *)stringToPaste {
+    return [self stringByProcessingString:_rawString];
+}
 
-    NSMutableData *data = [_originalPasteboardData mutableCopy];
+- (NSMutableString *)stringByProcessingString:(NSString *)inputString {
+    NSMutableString *string = [[inputString mutableCopy] autorelease];
     if (_convertNewlines.enabled && _convertNewlines.state == NSOnState) {
-        [data replaceOccurrencesOfBytes:"\r\n" length:2 withBytes:"\n" length:1];
+        [string replaceOccurrencesOfString:@"\r\n"
+                                withString:@"\n"
+                                   options:0
+                                     range:NSMakeRange(0, string.length)];
     }
 
     if (_escapeShellCharsWithBackslash.enabled && _escapeShellCharsWithBackslash.state == NSOnState) {
-        [data escapeShellCharacters];
+        [string escapeShellCharacters];
     }
 
+    NSMutableCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
     if (_tabTransform.enabled) {
         switch (_tabTransform.selectedTag) {
             case kTabTransformNone:
                 break;
 
             case kTabTransformConvertToSpaces: {
-                NSString *spaces = [@" " stringRepeatedTimes:_spacesPerTab.integerValue];
-                [data replaceOccurrencesOfBytes:"\t"
-                                         length:1
-                                      withBytes:[spaces UTF8String]
-                                         length:spaces.length];
+                [string replaceOccurrencesOfString:@"\t"
+                                        withString:[@" " stringRepeatedTimes:_spacesPerTab.integerValue]
+                                           options:0
+                                             range:NSMakeRange(0, string.length)];
                 break;
             }
 
             case kTabTransformEscapeWithCtrlZ:
                 if (_removeControlCodes.state == NSOnState) {
                     // First remove ^Vs if we're stripping unsafe codes.
-                    [data replaceOccurrencesOfBytes:"\x16"
-                                             length:1
-                                          withBytes:""
-                                             length:0];
+                    [string replaceOccurrencesOfString:@"\x16"
+                                            withString:@""
+                                               options:0
+                                                 range:NSMakeRange(0, string.length)];
                     // Remove ^V from the unsafe set so the ones added next can survive.
                     [unsafeSet removeCharactersInRange:NSMakeRange(22, 1)];
                 }
                 // Add ^Vs before each tab
-                [data replaceOccurrencesOfBytes:"t"
-                                         length:1
-                                      withBytes:"\x16\t"
-                                         length:2];
+                [string replaceOccurrencesOfString:@"\t"
+                                        withString:@"\x16\t"
+                                           options:0
+                                             range:NSMakeRange(0, string.length)];
                 break;
         }
     }
 
     if (_removeControlCodes.state == NSOnState) {
-        [data removeAsciiCharactersInSet:unsafeSet];
+        [[string componentsSeparatedByCharactersInSet:unsafeSet] componentsJoinedByString:@""];
     }
 
     if (_bracketedPasteMode.state == NSOnState) {
         NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
         NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
-        [data replaceBytesInRange:NSMakeRange(0, 0) withBytes:[startBracket UTF8String]];
-        [data appendBytes:[endBracket UTF8String] length:endBracket.length];
+        [string insertString:startBracket atIndex:0];
+        [string appendString:endBracket];
     }
 
     if (_base64Encode.state == NSOnState) {
-        NSString *encoded = [data stringWithBase64Encoding];
-        [data setData:[encoded dataUsingEncoding:NSUTF8StringEncoding]];
+        [string setString:[[string dataUsingEncoding:_encoding] stringWithBase64EncodingWithLineBreak:@"\r"]];
     }
 
-    return data;
+    return string;
 }
 
 #pragma mark - Actions
 
 - (IBAction)chunkSizeDidChange:(id)sender {
-    _chunkSize = [self floatValue:[sender floatValue] mappedLogarithmicallyIntoRange:kChunkSizeRange];
+    _chunkSize = exp([sender floatValue]);
     _chunkSizeLabel.stringValue = [self descriptionForByteSize:_chunkSize];
 }
 
 - (IBAction)delayBetweenChunksDidChange:(id)sender {
-    _delayBetweenChunks = [self floatValue:[sender floatValue] mappedLogarithmicallyIntoRange:kDelayRange];
+    _delayBetweenChunks = exp([sender floatValue]);
     _delayBetweenChunksLabel.stringValue = [self descriptionForDuration:_delayBetweenChunks];
 }
 
-- (void)ok:(id)sender {
+- (IBAction)ok:(id)sender {
     _shouldPaste = YES;
     [NSApp stopModal];
 }
 
-- (void)cancel:(id)sender {
+- (IBAction)cancel:(id)sender {
     _shouldPaste = NO;
     [NSApp stopModal];
+}
+
+- (IBAction)selectItem:(id)sender {
+    [self selectValueAtIndex:[sender indexOfSelectedItem]];
+}
+
+- (IBAction)settingChanged:(id)sender {
+    [self updatePreview];
 }
 
 @end

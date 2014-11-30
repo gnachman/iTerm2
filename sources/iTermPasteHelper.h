@@ -45,4 +45,6 @@
 // Remove all queued events and pending pastes, and hide the paste indicator if shown.
 - (void)abort;
 
+- (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled;
+
 @end

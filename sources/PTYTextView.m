@@ -3889,6 +3889,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (void)pasteOptions:(id)sender {
+    [_delegate pasteOptions:sender];
+}
+
 - (void)pasteSelection:(id)sender
 {
     [_delegate textViewPasteFromSessionWithMostRecentSelection:[sender tag]];
@@ -3914,6 +3918,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Check if there is a string type on the pasteboard
         return ([pboard stringForType:NSStringPboardType] != nil);
     }
+
+    if ([item action] == @selector(pasteOptions:)) {
+        NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+        return [[pboard pasteboardItems] count] > 0;
+    }
+
     if ([item action ] == @selector(cut:)) {
         // Never allow cut.
         return NO;

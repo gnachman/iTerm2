@@ -11,8 +11,10 @@
 
 @implementation NSData (iTerm)
 
-- (NSString *)stringWithBase64Encoding {
-    int length = apr_base64_encode_len(self.length);
+- (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak {
+    // Subtract because the result includes the trailing null. Take MAX in case it returns 0 for
+    // some reason.
+    int length = MAX(0, apr_base64_encode_len(self.length) - 1);
     NSMutableData *buffer = [NSMutableData dataWithLength:length];
     if (buffer) {
         apr_base64_encode_binary(buffer.mutableBytes,
@@ -29,7 +31,7 @@
                                                         length:MIN(77, remaining)
                                                       encoding:NSUTF8StringEncoding] autorelease];
             [string appendString:chunk];
-            [string appendString:@"\n"];
+            [string appendString:lineBreak];
             remaining -= chunk.length;
             offset += chunk.length;
         }

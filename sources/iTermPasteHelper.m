@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermPasteSpecialWindowController.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "PasteContext.h"
@@ -56,6 +57,21 @@
         [_timer invalidate];
     }
     [super dealloc];
+}
+
+- (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled {
+    [iTermPasteSpecialWindowController showAsPanelInWindow:window
+                                                 chunkSize:self.normalChunkSize
+                                        delayBetweenChunks:self.normalDelay
+                                         bracketingEnabled:bracketingEnabled
+                                                  encoding:[_delegate pasteHelperEncoding]
+                                                completion:^(NSString *string, NSInteger chunkSize, NSTimeInterval delay) {
+                                                    [_buffer appendData:[string dataUsingEncoding:_delegate.pasteHelperEncoding]];
+                                                    [self pasteWithBytePerCallPrefKey:@"UnusedKeyForChunkSize"
+                                                                         defaultValue:chunkSize
+                                                             delayBetweenCallsPrefKey:@"UnusedKeyForChunkDelay"
+                                                                         defaultValue:delay];
+                                                }];
 }
 
 - (void)abort {
@@ -156,6 +172,24 @@
                          defaultValue:1024
              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
                          defaultValue:0.01];
+}
+
+- (NSInteger)normalChunkSize {
+    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"QuickPasteBytesPerCall"];
+    if (!n) {
+        return 1024;
+    } else {
+        return [n integerValue];
+    }
+}
+
+- (NSTimeInterval)normalDelay {
+    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"QuickPasteDelayBetweenCalls"];
+    if (!n) {
+        return 0.01;
+    } else {
+        return [n doubleValue];
+    }
 }
 
 - (void)dequeueEvents {

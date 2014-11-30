@@ -10,7 +10,7 @@
 
 @interface NSData (iTerm)
 
-- (NSString *)stringWithBase64Encoding;
+- (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;
 - (BOOL)containsAsciiCharacterInSet:(NSCharacterSet *)asciiSet;
 
 @end

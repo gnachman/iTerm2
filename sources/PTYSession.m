@@ -4504,10 +4504,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.
-- (void)paste:(id)sender
-{
+- (void)paste:(id)sender {
     DLog(@"PTYSession paste:");
     [self pasteString:[PTYSession pasteboardString] flags:[sender tag]];
+}
+
+- (IBAction)pasteOptions:(id)sender {
+    [_pasteHelper showPasteOptionsInWindow:self.tab.realParentWindow.window
+                         bracketingEnabled:_terminal.bracketedPasteMode];
 }
 
 - (void)textViewFontDidChange
@@ -4726,7 +4730,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 {
     NSData *data = [[self class] pasteboardFile];
     if (data) {
-        NSString *encodedString = [data stringWithBase64Encoding];
+        NSString *encodedString = [data stringWithBase64EncodingWithLineBreak:@"\r"];
         [self pasteString:encodedString flags:0];
     }
 }

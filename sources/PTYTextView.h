@@ -63,6 +63,7 @@ typedef enum {
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 - (void)pasteString:(NSString *)aString;
 - (void)paste:(id)sender;
+- (void)pasteOptions:(id)sender;
 - (void)textViewFontDidChange;
 - (void)textViewSizeDidChange;
 - (void)textViewDrawBackgroundImageInView:(NSView *)view
