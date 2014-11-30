@@ -145,6 +145,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns self repeated |n| times.
 - (NSString *)stringRepeatedTimes:(int)n;
 
+// Returns an ellipsized version of the string.
+- (NSString *)ellipsizedDescriptionNoLongerThan:(int)maxLength;
+
+- (NSString *)stringWithFirstLetterCapitalized;
+
 @end
 
 @interface NSMutableString (iTerm)

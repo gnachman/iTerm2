@@ -10,6 +10,7 @@
 #import "iTermPasteHelper.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
+#import "NSTextField+iTerm.h"
 
 @interface iTermFileReference : NSObject
 @property(nonatomic, readonly) NSData *data;
@@ -110,6 +111,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     IBOutlet NSTextField *_chunkSizeLabel;
     IBOutlet NSTextField *_delayBetweenChunksLabel;
     IBOutlet NSStepper *_stepper;
+    IBOutlet NSTextField *_estimatedDuration;
 }
 
 - (instancetype)initWithChunkSize:(NSInteger)chunkSize
@@ -130,8 +132,11 @@ static const NSInteger kDefaultSpacesPerTab = 4;
                 // Is a non-file URL string. File URLs get special handling.
                 [values addObject:string];
                 CFStringRef description = UTTypeCopyDescription((CFStringRef)item.types[0]);
-                [labels addObject:(NSString *)description];
+                NSString *label = [NSString stringWithFormat:@"%@: %@",
+                                   (NSString *)description,
+                                   [string ellipsizedDescriptionNoLongerThan:100]];
                 CFRelease(description);
+                [labels addObject:label];
             }
             if (!string) {
                 NSString *theType = (NSString *)kUTTypeData;
@@ -299,16 +304,49 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 }
 
 - (void)updatePreview {
-    _preview.string = [[self stringToPaste] stringByReplacingOccurrencesOfString:@"\x16\t"
-                                                                      withString:@"^V\t"];
-    NSNumberFormatter *formatter = [[[NSNumberFormatter alloc] init] autorelease];
-    [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
+    BOOL spacesPerTabEnabled = _tabTransform.enabled && _tabTransform.selectedTag == kTabTransformConvertToSpaces;
+    _spacesPerTab.enabled = spacesPerTabEnabled;
 
+    _preview.string = [self stringToPaste];
+    NSNumberFormatter *bytesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
+    int numBytes = _preview.string.length;
+    if (numBytes < 10) {
+        bytesFormatter.numberStyle = NSNumberFormatterSpellOutStyle;
+    } else {
+        bytesFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+    }
+
+    NSNumberFormatter *linesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
     NSUInteger numberOfLines = _preview.string.numberOfLines;
-    _statsLabel.stringValue = [NSString stringWithFormat:@"%@ bytes in %@ line%@.",
-                               [formatter stringFromNumber:@(_preview.string.length)],
-                               [formatter stringFromNumber:@(numberOfLines)],
+    if (numberOfLines < 10) {
+        linesFormatter.numberStyle = NSNumberFormatterSpellOutStyle;
+    } else {
+        linesFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+    }
+
+    _statsLabel.stringValue = [NSString stringWithFormat:@"%@ byte%@ in %@ line%@.",
+                               [[bytesFormatter stringFromNumber:@(numBytes)] stringWithFirstLetterCapitalized],
+                               numBytes == 1 ? @"" : @"s",
+                               [linesFormatter stringFromNumber:@(numberOfLines)],
                                numberOfLines == 1 ? @"" : @"s"];
+    [self updateDuration];
+}
+
+- (void)updateDuration {
+    int numChunks = (_preview.string.length / [self chunkSize]);
+    NSTimeInterval duration = MAX(0, numChunks - 1) * [self delayBetweenChunks];
+    // This is very high (pasting locally can be quite fast), and it just here to prevent
+    // absurdly low time estimates.
+    static const double kAssumedBandwidthInBytesPerSecond = 2000000;
+    duration += _preview.string.length / kAssumedBandwidthInBytesPerSecond;
+    if (duration > 1) {
+        duration = ceil(duration);
+    }
+    if (duration < 0.01) {
+        _estimatedDuration.stringValue = @"Instant";
+    } else {
+        _estimatedDuration.stringValue = [self descriptionForDuration:duration];
+    }
 }
 
 + (void)showAsPanelInWindow:(NSWindow *)presentingWindow
@@ -380,9 +418,12 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     } else if (duration < 1) {
         units = @"ms";
         multiplier = 0.001;
-    } else {
+    } else if (duration < 60) {
         units = @"sec";
         multiplier = 1;
+    } else {
+        units = @"min";
+        multiplier = 60;
     }
 
     NSNumberFormatter *formatter = [[[NSNumberFormatter alloc] init] autorelease];
@@ -496,11 +537,13 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 - (IBAction)chunkSizeDidChange:(id)sender {
     _chunkSize = exp([sender floatValue]);
     _chunkSizeLabel.stringValue = [self descriptionForByteSize:_chunkSize];
+    [self updateDuration];
 }
 
 - (IBAction)delayBetweenChunksDidChange:(id)sender {
     _delayBetweenChunks = exp([sender floatValue]);
     _delayBetweenChunksLabel.stringValue = [self descriptionForDuration:_delayBetweenChunks];
+    [self updateDuration];
 }
 
 - (IBAction)ok:(id)sender {

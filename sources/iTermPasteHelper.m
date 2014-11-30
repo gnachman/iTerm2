@@ -17,6 +17,9 @@
 #import "PasteEvent.h"
 #import "PasteViewController.h"
 
+static NSString *const kPasteSpecialChunkSize = @"PasteSpecialChunkSize";
+static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
+
 @interface iTermPasteHelper () <PasteViewControllerDelegate>
 @end
 
@@ -34,7 +37,7 @@
 + (NSMutableCharacterSet *)unsafeControlCodeSet {
     NSMutableCharacterSet *controlSet = [[[NSMutableCharacterSet alloc] init] autorelease];
     [controlSet addCharactersInRange:NSMakeRange(0, 32)];
-    [controlSet removeCharactersInRange:NSMakeRange(9, 1)];  // Tab
+    [controlSet removeCharactersInRange:NSMakeRange(9, 2)];  // Tab and linefeed
     [controlSet removeCharactersInRange:NSMakeRange(12, 2)];  // Form feed and carriage return
     return controlSet;
 }
@@ -60,17 +63,32 @@
 }
 
 - (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSNumber *chunkSize = [userDefaults objectForKey:kPasteSpecialChunkSize];
+    NSNumber *chunkDelay = [userDefaults objectForKey:kPasteSpecialChunkDelay];
+    if (!chunkSize) {
+        chunkSize = @(self.normalChunkSize);
+    }
+    if (!chunkDelay) {
+        chunkDelay = @(self.normalDelay);
+    }
     [iTermPasteSpecialWindowController showAsPanelInWindow:window
-                                                 chunkSize:self.normalChunkSize
-                                        delayBetweenChunks:self.normalDelay
+                                                 chunkSize:[chunkSize intValue]
+                                        delayBetweenChunks:[chunkDelay doubleValue]
                                          bracketingEnabled:bracketingEnabled
                                                   encoding:[_delegate pasteHelperEncoding]
-                                                completion:^(NSString *string, NSInteger chunkSize, NSTimeInterval delay) {
+                                                completion:^(NSString *string,
+                                                             NSInteger chosenChunkSize,
+                                                             NSTimeInterval chosenDelay) {
                                                     [_buffer appendData:[string dataUsingEncoding:_delegate.pasteHelperEncoding]];
-                                                    [self pasteWithBytePerCallPrefKey:@"UnusedKeyForChunkSize"
-                                                                         defaultValue:chunkSize
-                                                             delayBetweenCallsPrefKey:@"UnusedKeyForChunkDelay"
-                                                                         defaultValue:delay];
+                                                    [userDefaults setInteger:chosenChunkSize
+                                                                      forKey:kPasteSpecialChunkSize];
+                                                    [userDefaults setDouble:chosenDelay
+                                                                     forKey:kPasteSpecialChunkDelay];
+                                                    [self pasteWithBytePerCallPrefKey:kPasteSpecialChunkSize
+                                                                         defaultValue:chosenChunkSize
+                                                             delayBetweenCallsPrefKey:kPasteSpecialChunkDelay
+                                                                         defaultValue:chosenDelay];
                                                 }];
 }
 
@@ -240,6 +258,8 @@
 }
 
 - (void)pasteNextChunkAndScheduleTimer {
+    static int i;
+    NSLog(@"Paste chunk %d of size %d", i++, (int)_pasteContext.bytesPerCall);
     DLog(@"pasteNextChunkAndScheduleTimer");
     NSRange range;
     range.location = 0;
@@ -252,6 +272,7 @@
     [self updatePasteIndicator];
     if ([_buffer length] > 0) {
         DLog(@"Scheduling timer");
+        NSLog(@"Schedule timer after %@", @(_pasteContext.delayBetweenCalls));
         [_pasteContext updateValues];
         _timer = [NSTimer scheduledTimerWithTimeInterval:_pasteContext.delayBetweenCalls
                                                   target:self

@@ -14,6 +14,7 @@
                 <outlet property="_delayBetweenChunksLabel" destination="Fyw-12-8i3" id="ZUl-hv-qEF"/>
                 <outlet property="_delayBetweenChunksSlider" destination="WaR-gZ-B2I" id="yT5-MC-4aa"/>
                 <outlet property="_escapeShellCharsWithBackslash" destination="fjL-Nc-8Th" id="BX4-bi-TCN"/>
+                <outlet property="_estimatedDuration" destination="DaX-cj-kvw" id="qVd-MC-05M"/>
                 <outlet property="_itemList" destination="vVV-1I-dAt" id="yOZ-sr-R04"/>
                 <outlet property="_preview" destination="ddg-3D-gh1" id="Gyc-Y1-foa"/>
                 <outlet property="_removeControlCodes" destination="ZDQ-KL-xte" id="0xD-xn-M5d"/>
@@ -35,15 +36,6 @@
                 <rect key="frame" x="0.0" y="0.0" width="501" height="507"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="bmq-66-LEX">
-                        <rect key="frame" x="255" y="247" width="102" height="17"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Spaces per tab:" id="JcZ-pN-vsg">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
                     <button id="fjL-Nc-8Th">
                         <rect key="frame" x="255" y="202" width="207" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -66,7 +58,7 @@
                             <action selector="settingChanged:" target="-2" id="wqb-75-7kq"/>
                         </connections>
                     </button>
-                    <button toolTip="Tab, form feed, and carriage return are the only “safe” control codes." id="ZDQ-KL-xte">
+                    <button toolTip="Tab, line feed, form feed, and carriage return are the only “safe” control codes." id="ZDQ-KL-xte">
                         <rect key="frame" x="18" y="182" width="206" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Remove unsafe control codes" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="HV2-89-672">
@@ -109,7 +101,7 @@
                     <slider verticalHuggingPriority="750" id="k92-1w-IiU">
                         <rect key="frame" x="18" y="74" width="206" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="below" numberOfTickMarks="7" sliderType="linear" id="QJO-OY-Abr"/>
+                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="below" numberOfTickMarks="11" allowsTickMarkValuesOnly="YES" sliderType="linear" id="QJO-OY-Abr"/>
                         <connections>
                             <action selector="chunkSizeDidChange:" target="-2" id="caD-rs-cyW"/>
                         </connections>
@@ -190,7 +182,7 @@ Gw
                     <slider verticalHuggingPriority="750" id="WaR-gZ-B2I">
                         <rect key="frame" x="255" y="74" width="206" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="below" numberOfTickMarks="5" sliderType="linear" id="CWb-GI-8zw"/>
+                        <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" doubleValue="1" tickMarkPosition="below" numberOfTickMarks="11" allowsTickMarkValuesOnly="YES" sliderType="linear" id="CWb-GI-8zw"/>
                         <connections>
                             <action selector="delayBetweenChunksDidChange:" target="-2" id="eRR-yE-2kP"/>
                         </connections>
@@ -241,10 +233,10 @@ Gw
                         </textFieldCell>
                     </textField>
                     <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="6ms-o7-DAr">
-                        <rect key="frame" x="20" y="226" width="230" height="58"/>
+                        <rect key="frame" x="20" y="226" width="171" height="58"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                        <size key="cellSize" width="166" height="18"/>
+                        <size key="cellSize" width="171" height="18"/>
                         <size key="intercellSpacing" width="4" height="2"/>
                         <buttonCell key="prototype" type="radio" title="Radio" imagePosition="left" alignment="left" inset="2" id="giI-VY-WgU">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -259,7 +251,7 @@ Gw
                                         <action selector="settingChanged:" target="-2" id="jCY-OH-t3e"/>
                                     </connections>
                                 </buttonCell>
-                                <buttonCell type="radio" title="Convert tabs to spaces" imagePosition="left" alignment="left" tag="1" inset="2" id="lQb-cV-Zma">
+                                <buttonCell type="radio" title="Convert tabs to spaces:" imagePosition="left" alignment="left" tag="1" inset="2" id="lQb-cV-Zma">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                     <connections>
@@ -279,6 +271,7 @@ Gw
                     <button id="0Vz-Q3-hzV">
                         <rect key="frame" x="255" y="182" width="162" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <string key="toolTip">This is enabled when the running app has sent an escape code to turn on “bracketed paste mode.” The pasted string will be “bracketed” by escape codes indicating the text within is from a paste operation.</string>
                         <buttonCell key="cell" type="check" title="Bracketed paste mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="y8N-f1-8q7">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
@@ -337,10 +330,28 @@ Gw
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <textField verticalHuggingPriority="750" id="YVM-VT-aec">
-                        <rect key="frame" x="363" y="244" width="52" height="22"/>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="Ckp-Vw-AtQ">
+                        <rect key="frame" x="18" y="22" width="120" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="dyz-CP-6qG">
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Minimum duration:" id="Vi3-0q-5iR">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="DaX-cj-kvw">
+                        <rect key="frame" x="142" y="22" width="105" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="mm:ss" id="8zE-aR-AaJ">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField verticalHuggingPriority="750" id="YVM-VT-aec">
+                        <rect key="frame" x="194" y="245" width="31" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" title="100" drawsBackground="YES" id="dyz-CP-6qG">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -350,7 +361,7 @@ Gw
                         </connections>
                     </textField>
                     <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" id="8Ma-Zq-Spi">
-                        <rect key="frame" x="419" y="241" width="19" height="27"/>
+                        <rect key="frame" x="225" y="242" width="19" height="27"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="LZk-Eq-vqI"/>
                         <connections>
