@@ -122,72 +122,10 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     if (self) {
         _index = -1;
         _bracketingEnabled = bracketingEnabled;
+
         NSMutableArray *values = [NSMutableArray array];
         NSMutableArray *labels = [NSMutableArray array];
-        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-
-        for (NSPasteboardItem *item in pasteboard.pasteboardItems) {
-            NSString *string = [item stringForType:(NSString *)kUTTypeUTF8PlainText];
-            if (string && ![item stringForType:(NSString *)kUTTypeFileURL]) {
-                // Is a non-file URL string. File URLs get special handling.
-                [values addObject:string];
-                CFStringRef description = UTTypeCopyDescription((CFStringRef)item.types[0]);
-                NSString *label = [NSString stringWithFormat:@"%@: %@",
-                                   (NSString *)description,
-                                   [string ellipsizedDescriptionNoLongerThan:100]];
-                CFRelease(description);
-                [labels addObject:label];
-            }
-            if (!string) {
-                NSString *theType = (NSString *)kUTTypeData;
-                CFStringRef description = NULL;
-                NSData *data = [item dataForType:theType];
-                if (!data) {
-                    for (NSString *typeName in item.types) {
-                        if ([typeName hasPrefix:@"public."] &&
-                            ![typeName isEqualTo:(NSString *)kUTTypeFileURL]) {
-                            data = [item dataForType:typeName];
-                            description = UTTypeCopyDescription((CFStringRef)typeName);
-                            break;
-                        }
-                    }
-                }
-                if (data) {
-                    [values addObject:data];
-                    [labels addObject:(NSString *)description];
-                    if (description) {
-                        CFRelease(description);
-                    }
-                }
-            }
-        }
-
-        // Now handle file references.
-        NSArray *filenames = [pasteboard propertyListForType:NSFilenamesPboardType];
-
-        // Escape and join the filenames to add an item for the names themselves.
-        NSMutableArray *escapedFilenames = [NSMutableArray array];
-        for (NSString *filename in filenames) {
-            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
-        }
-        [values addObject:[escapedFilenames componentsJoinedByString:@" "]];
-        if (filenames.count > 1) {
-            [labels addObject:@"Filenames joined by spaces"];
-        } else if (filenames.count == 1) {
-            [labels addObject:@"Filename"];
-        }
-
-        // Add an item for each existing non-directory file.
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        for (NSString *filename in filenames) {
-            BOOL isDirectory;
-            if ([fileManager fileExistsAtPath:filename isDirectory:&isDirectory] &&
-                !isDirectory) {
-                [values addObject:[[[iTermFileReference alloc] initWithName:filename] autorelease]];
-                [labels addObject:[NSString stringWithFormat:@"Contents of %@", filename]];
-            }
-        }
-
+        [self getLabels:labels andValues:values];
         _labels = [labels retain];
         _originalValues = [values retain];
         _encoding = encoding;
@@ -209,6 +147,72 @@ static const NSInteger kDefaultSpacesPerTab = 4;
         [_itemList addItemWithTitle:label];
     }
     [self selectValueAtIndex:0];
+}
+
+- (void)getLabels:(NSMutableArray *)labels andValues:(NSMutableArray *)values {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+
+    for (NSPasteboardItem *item in pasteboard.pasteboardItems) {
+        NSString *string = [item stringForType:(NSString *)kUTTypeUTF8PlainText];
+        if (string && ![item stringForType:(NSString *)kUTTypeFileURL]) {
+            // Is a non-file URL string. File URLs get special handling.
+            [values addObject:string];
+            CFStringRef description = UTTypeCopyDescription((CFStringRef)item.types[0]);
+            NSString *label = [NSString stringWithFormat:@"%@: %@",
+                               (NSString *)description,
+                               [string ellipsizedDescriptionNoLongerThan:100]];
+            CFRelease(description);
+            [labels addObject:label];
+        }
+        if (!string) {
+            NSString *theType = (NSString *)kUTTypeData;
+            CFStringRef description = NULL;
+            NSData *data = [item dataForType:theType];
+            if (!data) {
+                for (NSString *typeName in item.types) {
+                    if ([typeName hasPrefix:@"public."] &&
+                        ![typeName isEqualTo:(NSString *)kUTTypeFileURL]) {
+                        data = [item dataForType:typeName];
+                        description = UTTypeCopyDescription((CFStringRef)typeName);
+                        break;
+                    }
+                }
+            }
+            if (data) {
+                [values addObject:data];
+                [labels addObject:(NSString *)description];
+                if (description) {
+                    CFRelease(description);
+                }
+            }
+        }
+    }
+
+    // Now handle file references.
+    NSArray *filenames = [pasteboard propertyListForType:NSFilenamesPboardType];
+
+    // Escape and join the filenames to add an item for the names themselves.
+    NSMutableArray *escapedFilenames = [NSMutableArray array];
+    for (NSString *filename in filenames) {
+        [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+    }
+    [values addObject:[escapedFilenames componentsJoinedByString:@" "]];
+    if (filenames.count > 1) {
+        [labels addObject:@"Filenames joined by spaces"];
+    } else if (filenames.count == 1) {
+        [labels addObject:@"Filename"];
+    }
+
+    // Add an item for each existing non-directory file.
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    for (NSString *filename in filenames) {
+        BOOL isDirectory;
+        if ([fileManager fileExistsAtPath:filename isDirectory:&isDirectory] &&
+            !isDirectory) {
+            [values addObject:[[[iTermFileReference alloc] initWithName:filename] autorelease]];
+            [labels addObject:[NSString stringWithFormat:@"Contents of %@", filename]];
+        }
+    }
 }
 
 - (void)selectValueAtIndex:(NSInteger)index {
@@ -261,7 +265,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     BOOL containsShellCharacters =
     [string rangeOfCharacterFromSet:theSet].location != NSNotFound;
 
-    BOOL containsDosNewlines = [string containsString:@"\r\n"];
+    BOOL containsDosNewlines = [string containsString:@"\n"];
     _convertNewlines.enabled = containsDosNewlines;
     NSNumber *convertValue = [userDefaults objectForKey:kConvertDosNewlines];
     if (!convertValue) {
@@ -283,7 +287,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     _chunkSizeSlider.floatValue = [self floatValueForChunkSize];
     _chunkSizeLabel.stringValue = [self descriptionForByteSize:_chunkSize];
 
-    NSCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
+    NSMutableCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
     NSRange unsafeRange = [string rangeOfCharacterFromSet:unsafeSet];
     BOOL containsControlCodes = unsafeRange.location != NSNotFound;
     _removeControlCodes.enabled = containsControlCodes;
@@ -294,8 +298,12 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     _removeControlCodes.state = (containsControlCodes && [removeValue boolValue]) ? NSOnState : NSOffState;
 
     _bracketedPasteMode.enabled = _bracketingEnabled;
-    _bracketedPasteMode.state =
-        (_bracketingEnabled && [userDefaults boolForKey:kBracketedPasteMode]) ? NSOnState : NSOffState;
+    NSNumber *bracketSetting = [userDefaults objectForKey:kBracketedPasteMode];
+    BOOL shouldBracket = YES;
+    if (bracketSetting && ![bracketSetting boolValue]) {
+        shouldBracket = NO;
+    }
+    _bracketedPasteMode.state = (_bracketingEnabled && shouldBracket) ? NSOnState : NSOffState;
 
     _base64Encode.state = base64Only ? NSOnState : NSOffState;
     _base64Encode.enabled = !base64Only;
@@ -307,7 +315,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     BOOL spacesPerTabEnabled = _tabTransform.enabled && _tabTransform.selectedTag == kTabTransformConvertToSpaces;
     _spacesPerTab.enabled = spacesPerTabEnabled;
 
-    _preview.string = [self stringToPaste];
+    _preview.string = [self stringByProcessingString:_rawString];
     NSNumberFormatter *bytesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
     int numBytes = _preview.string.length;
     if (numBytes < 10) {
@@ -435,7 +443,6 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     return description;
 }
 
-
 - (float)floatValueForChunkSize {
     return log(_chunkSize);
 }
@@ -465,68 +472,45 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 }
 
 - (NSString *)stringToPaste {
-    return [self stringByProcessingString:_rawString];
+    NSString *unbracketed = [self stringByProcessingString:_rawString];
+    if (_bracketedPasteMode.state == NSOnState) {
+        return [iTermPasteHelper sanitizeString:unbracketed withFlags:kPasteFlagsBracket];
+    } else {
+        return unbracketed;
+    }
 }
 
-- (NSMutableString *)stringByProcessingString:(NSString *)inputString {
-    NSMutableString *string = [[inputString mutableCopy] autorelease];
+- (NSString *)stringByProcessingString:(NSString *)string {
+    NSUInteger flags = 0;
     if (_convertNewlines.enabled && _convertNewlines.state == NSOnState) {
-        [string replaceOccurrencesOfString:@"\r\n"
-                                withString:@"\n"
-                                   options:0
-                                     range:NSMakeRange(0, string.length)];
+        flags |= kPasteFlagsSanitizingNewlines;
     }
-
     if (_escapeShellCharsWithBackslash.enabled && _escapeShellCharsWithBackslash.state == NSOnState) {
-        [string escapeShellCharacters];
+        flags |= kPasteFlagsEscapeSpecialCharacters;
     }
-
-    NSMutableCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
     if (_tabTransform.enabled) {
         switch (_tabTransform.selectedTag) {
             case kTabTransformNone:
                 break;
 
-            case kTabTransformConvertToSpaces: {
-                [string replaceOccurrencesOfString:@"\t"
-                                        withString:[@" " stringRepeatedTimes:_spacesPerTab.integerValue]
-                                           options:0
-                                             range:NSMakeRange(0, string.length)];
+            case kTabTransformConvertToSpaces:
+                string = [string stringByReplacingOccurrencesOfString:@"\t"
+                                                           withString:[@" " stringRepeatedTimes:_spacesPerTab.integerValue]];
                 break;
-            }
 
             case kTabTransformEscapeWithCtrlZ:
-                if (_removeControlCodes.state == NSOnState) {
-                    // First remove ^Vs if we're stripping unsafe codes.
-                    [string replaceOccurrencesOfString:@"\x16"
-                                            withString:@""
-                                               options:0
-                                                 range:NSMakeRange(0, string.length)];
-                    // Remove ^V from the unsafe set so the ones added next can survive.
-                    [unsafeSet removeCharactersInRange:NSMakeRange(22, 1)];
-                }
-                // Add ^Vs before each tab
-                [string replaceOccurrencesOfString:@"\t"
-                                        withString:@"\x16\t"
-                                           options:0
-                                             range:NSMakeRange(0, string.length)];
+                flags |= kPasteFlagsWithShellEscapedTabs;
                 break;
         }
     }
-
     if (_removeControlCodes.state == NSOnState) {
-        [[string componentsSeparatedByCharactersInSet:unsafeSet] componentsJoinedByString:@""];
+        flags |= kPasteFlagsRemovingUnsafeControlCodes;
     }
 
-    if (_bracketedPasteMode.state == NSOnState) {
-        NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
-        NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
-        [string insertString:startBracket atIndex:0];
-        [string appendString:endBracket];
-    }
+    string = [iTermPasteHelper sanitizeString:string withFlags:flags];
 
     if (_base64Encode.state == NSOnState) {
-        [string setString:[[string dataUsingEncoding:_encoding] stringWithBase64EncodingWithLineBreak:@"\r"]];
+        string = [[string dataUsingEncoding:_encoding] stringWithBase64EncodingWithLineBreak:@"\r"];
     }
 
     return string;

@@ -47,10 +47,10 @@
                             <action selector="settingChanged:" target="-2" id="uaW-EA-xaW"/>
                         </connections>
                     </button>
-                    <button id="Po3-oW-Knx">
-                        <rect key="frame" x="18" y="202" width="149" height="18"/>
+                    <button toolTip="Both DOS and UNIX newlines are generally not used as input. CR is standard." id="Po3-oW-Knx">
+                        <rect key="frame" x="18" y="202" width="195" height="18"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="check" title="Convert CRLF to CR" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="5Ta-Lf-7Uv">
+                        <buttonCell key="cell" type="check" title="Convert CRLF and LF to CR" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="5Ta-Lf-7Uv">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>

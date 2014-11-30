@@ -12,7 +12,7 @@ typedef void (^iTermPasteSpecialCompletionBlock)(NSString *, NSInteger, NSTimeIn
 
 @interface iTermPasteSpecialWindowController : NSWindowController
 
-+ (void)e:(NSWindow *)presentingWindow
++ (void)showAsPanelInWindow:(NSWindow *)presentingWindow
                   chunkSize:(NSInteger)chunkSize
          delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
           bracketingEnabled:(BOOL)bracketingEnabled

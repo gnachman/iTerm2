@@ -36,6 +36,9 @@
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet;
 
++ (NSString *)sanitizeString:(NSString *)theString
+                   withFlags:(iTermPasteFlags)flags;
+
 // Queue up a string to paste. If the queue is empty, it will begin pasting immediately.
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags;
 

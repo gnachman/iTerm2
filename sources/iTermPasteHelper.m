@@ -37,7 +37,7 @@ static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
 + (NSMutableCharacterSet *)unsafeControlCodeSet {
     NSMutableCharacterSet *controlSet = [[[NSMutableCharacterSet alloc] init] autorelease];
     [controlSet addCharactersInRange:NSMakeRange(0, 32)];
-    [controlSet removeCharactersInRange:NSMakeRange(9, 2)];  // Tab and linefeed
+    [controlSet removeCharactersInRange:NSMakeRange(9, 2)];  // Tab and line feed
     [controlSet removeCharactersInRange:NSMakeRange(12, 2)];  // Form feed and carriage return
     return controlSet;
 }
@@ -105,6 +105,51 @@ static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
     return _timer != nil;
 }
 
++ (NSString *)sanitizeString:(NSString *)theString
+                   withFlags:(iTermPasteFlags)flags {
+    if (flags & kPasteFlagsSanitizingNewlines) {
+        // Convert DOS (\r\n) CRLF newlines and linefeeds (\n) into carriage returns (\r==13).
+        theString = [theString stringWithLinefeedNewlines];
+    }
+
+    NSMutableCharacterSet *controlSet = nil;
+    if (flags & kPasteFlagsRemovingUnsafeControlCodes) {
+        // All control codes except tab (9), newline (10), and form feed (12) are removed unless we are
+        // pasting with literal tabs, in which case we also keep LNEXT (22, ^V).
+        controlSet = [iTermPasteHelper unsafeControlCodeSet];
+    }
+
+    if (flags & kPasteFlagsEscapeSpecialCharacters) {
+        // Paste escaping special characters
+        theString = [theString stringWithEscapedShellCharacters];
+    }
+
+    if (flags & kPasteFlagsWithShellEscapedTabs) {
+        // Remove ^Vs before adding them
+        theString = [theString stringByReplacingOccurrencesOfString:@"\x16" withString:@""];
+        // Add ^Vs before each tab.
+        theString = [theString stringWithShellEscapedTabs];
+        // Allow the ^Vs that were just added to survive cleaning up control chars.
+        [controlSet removeCharactersInRange:NSMakeRange(22, 1)];  // LNEXT (^V)
+    }
+
+    if (flags & kPasteFlagsRemovingUnsafeControlCodes) {
+        // Remove control characters
+        theString =
+            [[theString componentsSeparatedByCharactersInSet:controlSet] componentsJoinedByString:@""];
+    }
+
+    if (flags & kPasteFlagsBracket) {
+        DLog(@"Send open bracket.");
+        NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
+        NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
+        NSArray *components = @[ startBracket, theString, endBracket ];
+        theString = [components componentsJoinedByString:@""];
+    }
+
+    return theString;
+}
+
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags {
     DLog(@"-[iTermPasteHelper pasteString:flags:");
     DLog(@"length=%@, flags=%@", @(theString.length), @(flags));
@@ -124,42 +169,20 @@ static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
     }
 
     DLog(@"Sanitize control characters, escape, etc....");
-    // Convert DOS (\r\n) CRLF newlines and linefeeds (\n) into carriage returns (\r==13).
-    theString = [theString stringWithLinefeedNewlines];
 
-    // All control codes except tab (9), newline (10), and form feed (12) are removed unless we are
-    // pasting with literal tabs, in which case we also keep LNEXT (22, ^V).
-    NSMutableCharacterSet *controlSet = [iTermPasteHelper unsafeControlCodeSet];
+    NSUInteger bracketFlag = [_delegate pasteHelperShouldBracket] ? kPasteFlagsBracket : 0;
+    theString = [iTermPasteHelper sanitizeString:theString
+                                       withFlags:(flags |
+                                                  kPasteFlagsSanitizingNewlines |
+                                                  kPasteFlagsRemovingUnsafeControlCodes |
+                                                  bracketFlag)];
 
-    if (flags & kPTYSessionPasteEscapingSpecialCharacters) {
-        // Paste escaping special characters
-        theString = [theString stringWithEscapedShellCharacters];
-    }
-    if (flags & kPTYSessionPasteWithShellEscapedTabs) {
-        // Remove ^Vs before adding them
-        theString = [theString stringByReplacingOccurrencesOfString:@"\x16" withString:@""];
-        // Add ^Vs before each tab.
-        theString = [theString stringWithShellEscapedTabs];
-        // Allow the ^Vs that were just added to survive cleaning up control chars.
-        [controlSet removeCharactersInRange:NSMakeRange(22, 1)];  // LNEXT (^V)
-    }
-    if ([_delegate pasteHelperShouldBracket]) {
-        DLog(@"Send open bracket.");
-        NSString *bracketString = [NSString stringWithFormat:@"%c[200~", 27];
-        NSData *theData = [bracketString dataUsingEncoding:[_delegate pasteHelperEncoding]
-                                      allowLossyConversion:YES];
-        [_delegate pasteHelperWriteData:theData];
-    }
-
-    // Remove control characters
-    theString =
-        [[theString componentsSeparatedByCharactersInSet:controlSet] componentsJoinedByString:@""];
+    DLog(@"String to paste now has length %@", @(theString.length));
     if ([theString length] == 0) {
         DLog(@"Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
         NSBeep();
         return;
     }
-    DLog(@"String to paste now has length %@", @(theString.length));
 
     if (flags & kPTYSessionPasteSlowly) {
         [self pasteSlowly:theString];
@@ -258,8 +281,6 @@ static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
 }
 
 - (void)pasteNextChunkAndScheduleTimer {
-    static int i;
-    NSLog(@"Paste chunk %d of size %d", i++, (int)_pasteContext.bytesPerCall);
     DLog(@"pasteNextChunkAndScheduleTimer");
     NSRange range;
     range.location = 0;
@@ -280,14 +301,6 @@ static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
                                                 userInfo:nil
                                                  repeats:NO];
     } else {
-        if ([_delegate pasteHelperShouldBracket]) {
-            DLog(@"Send close bracket");
-            NSString *bracketString = [NSString stringWithFormat:@"%c[201~", 27];
-            NSData *theData = [bracketString dataUsingEncoding:[_delegate pasteHelperEncoding]
-                                          allowLossyConversion:YES];
-            [_delegate pasteHelperWriteData:theData];
-        }
-
         DLog(@"Done pasting");
         _timer = nil;
         [self hidePasteIndicator];
