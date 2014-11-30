@@ -8,6 +8,7 @@
 
 #import "iTermPasteSpecialWindowController.h"
 #import "iTermPasteHelper.h"
+#import "iTermPreferences.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
@@ -60,15 +61,6 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
     kTabTransformConvertToSpaces = 1,
     kTabTransformEscapeWithCtrlZ = 2
 };
-
-static const NSInteger kDefaultTabTransform = kTabTransformNone;
-static NSString *const kSpacesPerTab = @"NumberOfSpacesPerTab";
-static NSString *const kTabTransform = @"TabTransform";
-static NSString *const kEscapeShellCharsWithBackslash = @"EscapeShellCharsWithBackslash";
-static NSString *const kConvertDosNewlines = @"ConvertDosNewlines";
-static NSString *const kRemoveControlCodes = @"RemoveControlCodes";
-static NSString *const kBracketedPasteMode = @"BracketedPasteMode";
-static const NSInteger kDefaultSpacesPerTab = 4;
 
 @interface iTermPasteSpecialWindowController ()
 
@@ -243,21 +235,15 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     _index = index;
     [_rawString autorelease];
     _rawString = [string copy];
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     BOOL containsTabs = [string containsString:@"\t"];
 
     _spacesPerTab.enabled = containsTabs;
-    _spacesPerTab.integerValue = [userDefaults integerForKey:kSpacesPerTab] ?: kDefaultSpacesPerTab;
+    _spacesPerTab.integerValue = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialSpacesPerTab];
     _stepper.integerValue = _spacesPerTab.integerValue;
     _stepper.enabled = _spacesPerTab.enabled;
 
     _tabTransform.enabled = containsTabs;
-    NSInteger tabTransformTag;
-    if ([userDefaults objectForKey:kTabTransform]) {
-        tabTransformTag = [userDefaults integerForKey:kTabTransform];
-    } else {
-        tabTransformTag = kDefaultTabTransform;
-    }
+    NSInteger tabTransformTag = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialTabTransform];
     [_tabTransform selectCellWithTag:tabTransformTag];
 
     NSCharacterSet *theSet =
@@ -267,15 +253,13 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 
     BOOL containsDosNewlines = [string containsString:@"\n"];
     _convertNewlines.enabled = containsDosNewlines;
-    NSNumber *convertValue = [userDefaults objectForKey:kConvertDosNewlines];
-    if (!convertValue) {
-        convertValue = @YES;
-    }
-    _convertNewlines.state = (containsDosNewlines && [convertValue boolValue]) ? NSOnState : NSOffState;
+    BOOL convertValue = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialConvertDosNewlines];
+    _convertNewlines.state = (containsDosNewlines && convertValue) ? NSOnState : NSOffState;
 
     _escapeShellCharsWithBackslash.enabled = containsShellCharacters;
+    BOOL shouldEscape = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash];
     _escapeShellCharsWithBackslash.state =
-            (containsShellCharacters && [userDefaults boolForKey:kEscapeShellCharsWithBackslash]) ? NSOnState : NSOffState;
+            (containsShellCharacters && shouldEscape) ? NSOnState : NSOffState;
 
     _delayBetweenChunksSlider.minValue = log(kDelayRange.min);
     _delayBetweenChunksSlider.maxValue = log(kDelayRange.max);
@@ -291,14 +275,12 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     NSRange unsafeRange = [string rangeOfCharacterFromSet:unsafeSet];
     BOOL containsControlCodes = unsafeRange.location != NSNotFound;
     _removeControlCodes.enabled = containsControlCodes;
-    NSNumber *removeValue = [userDefaults objectForKey:kRemoveControlCodes];
-    if (!removeValue) {
-        removeValue = @YES;
-    }
-    _removeControlCodes.state = (containsControlCodes && [removeValue boolValue]) ? NSOnState : NSOffState;
+    BOOL removeValue = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialRemoveControlCodes];
+    _removeControlCodes.state = (containsControlCodes && removeValue) ? NSOnState : NSOffState;
 
     _bracketedPasteMode.enabled = _bracketingEnabled;
-    NSNumber *bracketSetting = [userDefaults objectForKey:kBracketedPasteMode];
+    NSNumber *bracketSetting =
+        [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialBracketedPasteMode];
     BOOL shouldBracket = YES;
     if (bracketSetting && ![bracketSetting boolValue]) {
         shouldBracket = NO;
@@ -452,22 +434,25 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 }
 
 - (void)saveUserDefaults {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     if (_tabTransform.enabled) {
-        [userDefaults setInteger:_tabTransform.selectedTag forKey:kTabTransform];
+        [iTermPreferences setInt:_tabTransform.selectedTag
+                          forKey:kPreferenceKeyPasteSpecialTabTransform];
     }
     if (_spacesPerTab.enabled) {
-        [userDefaults setInteger:_spacesPerTab.integerValue forKey:kSpacesPerTab];
+        [iTermPreferences setInt:_spacesPerTab.integerValue
+                          forKey:kPreferenceKeyPasteSpecialSpacesPerTab];
     }
     if (_escapeShellCharsWithBackslash.enabled) {
-        [userDefaults setBool:_escapeShellCharsWithBackslash.state == NSOnState
-                       forKey:kEscapeShellCharsWithBackslash];
+        [iTermPreferences setBool:_escapeShellCharsWithBackslash.state == NSOnState
+                       forKey:kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash];
     }
     if (_convertNewlines.enabled) {
-        [userDefaults setBool:_convertNewlines.state == NSOnState forKey:kConvertDosNewlines];
+        [iTermPreferences setBool:_convertNewlines.state == NSOnState
+                           forKey:kPreferenceKeyPasteSpecialConvertDosNewlines];
     }
     if (_bracketingEnabled) {
-        [userDefaults setBool:_bracketedPasteMode.state == NSOnState forKey:kBracketedPasteMode];
+        [iTermPreferences setBool:_bracketedPasteMode.state == NSOnState
+                           forKey:kPreferenceKeyPasteSpecialBracketedPasteMode];
     }
 }
 

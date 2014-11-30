@@ -89,6 +89,15 @@ NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClick
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";
 NSString *const kPreferenceAutoCommandHistory = @"AutoCommandHistory";
 
+NSString *const kPreferenceKeyPasteSpecialChunkSize = @"PasteSpecialChunkSize";
+NSString *const kPreferenceKeyPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
+NSString *const kPreferenceKeyPasteSpecialSpacesPerTab = @"NumberOfSpacesPerTab";
+NSString *const kPreferenceKeyPasteSpecialTabTransform = @"TabTransform";
+NSString *const kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash = @"EscapeShellCharsWithBackslash";
+NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines = @"ConvertDosNewlines";
+NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes = @"RemoveControlCodes";
+NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode = @"BracketedPasteMode";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -190,7 +199,16 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyTripleClickSelectsFullWrappedLines: @NO,
                   
                   kPreferenceAutoCommandHistory: @NO,
-                  };
+
+                  kPreferenceKeyPasteSpecialChunkSize: @1024,
+                  kPreferenceKeyPasteSpecialChunkDelay: @0.01,
+                  kPreferenceKeyPasteSpecialSpacesPerTab: @4,
+                  kPreferenceKeyPasteSpecialTabTransform: @0,
+                  kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash: @NO,
+                  kPreferenceKeyPasteSpecialConvertDosNewlines: @YES,
+                  kPreferenceKeyPasteSpecialRemoveControlCodes: @YES,
+                  kPreferenceKeyPasteSpecialBracketedPasteMode: @YES,
+              };
         [dict retain];
     }
     return dict;

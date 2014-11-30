@@ -113,6 +113,15 @@ extern NSString *const kPreferenceKeyAppVersion;
 // Auto-command history (set through menu)
 extern NSString *const kPreferenceAutoCommandHistory;
 
+extern NSString *const kPreferenceKeyPasteSpecialChunkSize;
+extern NSString *const kPreferenceKeyPasteSpecialChunkDelay;
+extern NSString *const kPreferenceKeyPasteSpecialSpacesPerTab;
+extern NSString *const kPreferenceKeyPasteSpecialTabTransform;
+extern NSString *const kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash;
+extern NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines;
+extern NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes;
+extern NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode;
+
 @interface iTermPreferences : NSObject
 
 // This should be called early during startup to set user defaults keys that fix problematic Apple

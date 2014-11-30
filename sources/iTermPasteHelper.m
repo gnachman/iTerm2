@@ -11,14 +11,12 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermPasteSpecialWindowController.h"
+#import "iTermPreferences.h"
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
 #import "PasteViewController.h"
-
-static NSString *const kPasteSpecialChunkSize = @"PasteSpecialChunkSize";
-static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
 
 @interface iTermPasteHelper () <PasteViewControllerDelegate>
 @end
@@ -63,31 +61,26 @@ static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
 }
 
 - (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled {
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSNumber *chunkSize = [userDefaults objectForKey:kPasteSpecialChunkSize];
-    NSNumber *chunkDelay = [userDefaults objectForKey:kPasteSpecialChunkDelay];
-    if (!chunkSize) {
-        chunkSize = @(self.normalChunkSize);
-    }
-    if (!chunkDelay) {
-        chunkDelay = @(self.normalDelay);
-    }
+    int chunkSize = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialChunkSize];
+    NSTimeInterval chunkDelay = [iTermPreferences floatForKey:kPreferenceKeyPasteSpecialChunkDelay];
     [iTermPasteSpecialWindowController showAsPanelInWindow:window
-                                                 chunkSize:[chunkSize intValue]
-                                        delayBetweenChunks:[chunkDelay doubleValue]
+                                                 chunkSize:chunkSize
+                                        delayBetweenChunks:chunkDelay
                                          bracketingEnabled:bracketingEnabled
                                                   encoding:[_delegate pasteHelperEncoding]
                                                 completion:^(NSString *string,
                                                              NSInteger chosenChunkSize,
                                                              NSTimeInterval chosenDelay) {
                                                     [_buffer appendData:[string dataUsingEncoding:_delegate.pasteHelperEncoding]];
-                                                    [userDefaults setInteger:chosenChunkSize
-                                                                      forKey:kPasteSpecialChunkSize];
-                                                    [userDefaults setDouble:chosenDelay
-                                                                     forKey:kPasteSpecialChunkDelay];
-                                                    [self pasteWithBytePerCallPrefKey:kPasteSpecialChunkSize
+
+                                                    [iTermPreferences setInt:chosenChunkSize
+                                                                      forKey:kPreferenceKeyPasteSpecialChunkSize];
+                                                    [iTermPreferences setFloat:chosenDelay
+                                                                        forKey:kPreferenceKeyPasteSpecialChunkDelay];
+
+                                                    [self pasteWithBytePerCallPrefKey:kPreferenceKeyPasteSpecialChunkSize
                                                                          defaultValue:chosenChunkSize
-                                                             delayBetweenCallsPrefKey:kPasteSpecialChunkDelay
+                                                             delayBetweenCallsPrefKey:kPreferenceKeyPasteSpecialChunkDelay
                                                                          defaultValue:chosenDelay];
                                                 }];
 }
@@ -281,7 +274,7 @@ static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
 }
 
 - (void)pasteNextChunkAndScheduleTimer {
-        DLog(@"pasteNextChunkAndScheduleTimer");
+    DLog(@"pasteNextChunkAndScheduleTimer");
     NSRange range;
     range.location = 0;
     range.length = MIN(_pasteContext.bytesPerCall, [_buffer length]);
