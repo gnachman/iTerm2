@@ -1256,6 +1256,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return result;
 }
 
+- (NSUInteger)numberOfLines {
+    NSUInteger stringLength = [self length];
+    NSUInteger numberOfLines = 0;
+    for (NSUInteger index = 0; index < stringLength; numberOfLines++) {
+        index = NSMaxRange([self lineRangeForRange:NSMakeRange(index, 0)]);
+    }
+    return numberOfLines;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

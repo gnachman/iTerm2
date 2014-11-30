@@ -95,6 +95,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     NSStringEncoding _encoding;
 
     // Outlets
+    IBOutlet NSTextField *_statsLabel;
     IBOutlet NSPopUpButton *_itemList;
     IBOutlet NSTextView *_preview;
     IBOutlet NSTextField *_spacesPerTab;
@@ -108,6 +109,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     IBOutlet NSSlider *_delayBetweenChunksSlider;
     IBOutlet NSTextField *_chunkSizeLabel;
     IBOutlet NSTextField *_delayBetweenChunksLabel;
+    IBOutlet NSStepper *_stepper;
 }
 
 - (instancetype)initWithChunkSize:(NSInteger)chunkSize
@@ -166,7 +168,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
         [values addObject:[escapedFilenames componentsJoinedByString:@" "]];
         if (filenames.count > 1) {
             [labels addObject:@"Filenames joined by spaces"];
-        } else {
+        } else if (filenames.count == 1) {
             [labels addObject:@"Filename"];
         }
 
@@ -237,6 +239,8 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 
     _spacesPerTab.enabled = containsTabs;
     _spacesPerTab.integerValue = [userDefaults integerForKey:kSpacesPerTab] ?: kDefaultSpacesPerTab;
+    _stepper.integerValue = _spacesPerTab.integerValue;
+    _stepper.enabled = _spacesPerTab.enabled;
 
     _tabTransform.enabled = containsTabs;
     NSInteger tabTransformTag;
@@ -258,11 +262,11 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     if (!convertValue) {
         convertValue = @YES;
     }
-    _convertNewlines.state = [convertValue boolValue] ? NSOnState : NSOffState;
+    _convertNewlines.state = (containsDosNewlines && [convertValue boolValue]) ? NSOnState : NSOffState;
 
     _escapeShellCharsWithBackslash.enabled = containsShellCharacters;
     _escapeShellCharsWithBackslash.state =
-            [userDefaults boolForKey:kEscapeShellCharsWithBackslash] ? NSOnState : NSOffState;
+            (containsShellCharacters && [userDefaults boolForKey:kEscapeShellCharsWithBackslash]) ? NSOnState : NSOffState;
 
     _delayBetweenChunksSlider.minValue = log(kDelayRange.min);
     _delayBetweenChunksSlider.maxValue = log(kDelayRange.max);
@@ -282,7 +286,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
     if (!removeValue) {
         removeValue = @YES;
     }
-    _removeControlCodes.state = [removeValue boolValue] ? NSOnState : NSOffState;
+    _removeControlCodes.state = (containsControlCodes && [removeValue boolValue]) ? NSOnState : NSOffState;
 
     _bracketedPasteMode.enabled = _bracketingEnabled;
     _bracketedPasteMode.state =
@@ -297,6 +301,14 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 - (void)updatePreview {
     _preview.string = [[self stringToPaste] stringByReplacingOccurrencesOfString:@"\x16\t"
                                                                       withString:@"^V\t"];
+    NSNumberFormatter *formatter = [[[NSNumberFormatter alloc] init] autorelease];
+    [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
+
+    NSUInteger numberOfLines = _preview.string.numberOfLines;
+    _statsLabel.stringValue = [NSString stringWithFormat:@"%@ bytes in %@ line%@.",
+                               [formatter stringFromNumber:@(_preview.string.length)],
+                               [formatter stringFromNumber:@(numberOfLines)],
+                               numberOfLines == 1 ? @"" : @"s"];
 }
 
 + (void)showAsPanelInWindow:(NSWindow *)presentingWindow
@@ -506,6 +518,12 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 }
 
 - (IBAction)settingChanged:(id)sender {
+    [self updatePreview];
+}
+
+- (IBAction)stepperDidChange:(id)sender {
+    NSStepper *stepper = sender;
+    _spacesPerTab.integerValue = stepper.integerValue;
     [self updatePreview];
 }
 

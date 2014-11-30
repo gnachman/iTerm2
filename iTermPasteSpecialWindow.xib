@@ -17,7 +17,9 @@
                 <outlet property="_itemList" destination="vVV-1I-dAt" id="yOZ-sr-R04"/>
                 <outlet property="_preview" destination="ddg-3D-gh1" id="Gyc-Y1-foa"/>
                 <outlet property="_removeControlCodes" destination="ZDQ-KL-xte" id="0xD-xn-M5d"/>
-                <outlet property="_spacesPerTab" destination="2gg-Lu-jlP" id="eoM-HJ-UBJ"/>
+                <outlet property="_spacesPerTab" destination="YVM-VT-aec" id="I2C-xh-Quw"/>
+                <outlet property="_statsLabel" destination="TNo-3d-Gpd" id="LFq-bt-bEG"/>
+                <outlet property="_stepper" destination="8Ma-Zq-Spi" id="GT9-d4-GH2"/>
                 <outlet property="_tabTransform" destination="6ms-o7-DAr" id="Ggm-OT-q56"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="YJW-d0-UjS"/>
             </connections>
@@ -32,18 +34,6 @@
                 <rect key="frame" x="0.0" y="0.0" width="501" height="507"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <textField verticalHuggingPriority="750" id="2gg-Lu-jlP">
-                        <rect key="frame" x="363" y="245" width="83" height="22"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="F0v-kR-gv8">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                        <connections>
-                            <action selector="settingChanged:" target="-2" id="IcX-ux-bxv"/>
-                        </connections>
-                    </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="bmq-66-LEX">
                         <rect key="frame" x="255" y="247" width="102" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -210,6 +200,15 @@ Gw
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="A35-pj-nfu">
+                        <rect key="frame" x="339" y="61" width="38" height="11"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="mini" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="100 ms" id="S6h-Us-6uQ">
+                            <font key="font" metaFont="miniSystem"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="gDW-zY-9Cv">
                         <rect key="frame" x="428" y="61" width="34" height="11"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -229,7 +228,7 @@ Gw
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="TNo-3d-Gpd">
-                        <rect key="frame" x="18" y="327" width="129" height="17"/>
+                        <rect key="frame" x="18" y="327" width="465" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="xxx lines, xxx bytes." id="g9t-TC-J5B">
                             <font key="font" metaFont="system"/>
@@ -334,6 +333,23 @@ Gw
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
+                    <textField verticalHuggingPriority="750" id="YVM-VT-aec">
+                        <rect key="frame" x="363" y="244" width="52" height="22"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="dyz-CP-6qG">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" id="8Ma-Zq-Spi">
+                        <rect key="frame" x="419" y="241" width="19" height="27"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="LZk-Eq-vqI"/>
+                        <connections>
+                            <action selector="stepperDidChange:" target="-2" id="wHL-95-gQu"/>
+                        </connections>
+                    </stepper>
                 </subviews>
             </view>
             <point key="canvasLocation" x="329.5" y="305.5"/>

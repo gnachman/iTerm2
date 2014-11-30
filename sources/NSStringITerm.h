@@ -58,7 +58,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
 + (NSString *)stringFromPasteboard;
 + (NSString *)shellEscapableCharacters;
-
+- (NSUInteger)numberOfLines;
 - (NSString *)stringWithEscapedShellCharacters;
 
 // Replaces tab with ^V + tab.
