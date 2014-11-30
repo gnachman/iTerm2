@@ -281,7 +281,7 @@ static NSString *const kPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
 }
 
 - (void)pasteNextChunkAndScheduleTimer {
-    DLog(@"pasteNextChunkAndScheduleTimer");
+        DLog(@"pasteNextChunkAndScheduleTimer");
     NSRange range;
     range.location = 0;
     range.length = MIN(_pasteContext.bytesPerCall, [_buffer length]);

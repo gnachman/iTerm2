@@ -454,7 +454,7 @@ static const NSInteger kDefaultSpacesPerTab = 4;
 - (void)saveUserDefaults {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     if (_tabTransform.enabled) {
-        [userDefaults setInteger:_tabTransform.selectedCell forKey:kTabTransform];
+        [userDefaults setInteger:_tabTransform.selectedTag forKey:kTabTransform];
     }
     if (_spacesPerTab.enabled) {
         [userDefaults setInteger:_spacesPerTab.integerValue forKey:kSpacesPerTab];
