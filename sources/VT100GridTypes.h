@@ -44,6 +44,11 @@ typedef struct {
 } VT100GridCoordRange;
 
 typedef struct {
+    VT100GridAbsCoord start;
+    VT100GridAbsCoord end;
+} VT100GridAbsCoordRange;
+
+typedef struct {
     VT100GridCoordRange coordRange;
     VT100GridRange columnWindow;
 } VT100GridWindowedRange;
@@ -183,6 +188,18 @@ NS_INLINE VT100GridRun VT100GridRunMake(int x, int y, int length) {
 
 NS_INLINE VT100GridCoordRange VT100GridCoordRangeMake(int startX, int startY, int endX, int endY) {
     VT100GridCoordRange coordRange;
+    coordRange.start.x = startX;
+    coordRange.start.y = startY;
+    coordRange.end.x = endX;
+    coordRange.end.y = endY;
+    return coordRange;
+}
+
+NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeMake(int startX,
+                                                            long long startY,
+                                                            int endX,
+                                                            long long endY) {
+    VT100GridAbsCoordRange coordRange;
     coordRange.start.x = startX;
     coordRange.start.y = startY;
     coordRange.end.x = endX;

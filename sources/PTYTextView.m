@@ -3540,12 +3540,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (IBAction)selectOutputOfLastCommand:(id)sender {
-    VT100GridCoordRange range = [_delegate textViewRangeOfLastCommandOutput];
+    VT100GridAbsCoordRange range = [_delegate textViewRangeOfLastCommandOutput];
     if (range.start.x < 0) {
         return;
     }
-    [_selection beginSelectionAt:range.start mode:kiTermSelectionModeCharacter resume:NO append:NO];
-    [_selection moveSelectionEndpointTo:range.end];
+    VT100GridCoord relativeStart =
+        VT100GridCoordMake(range.start.x,
+                           range.start.y - [_dataSource totalScrollbackOverflow]);
+    VT100GridCoord relativeEnd =
+        VT100GridCoordMake(range.end.x,
+                           range.end.y - [_dataSource totalScrollbackOverflow]);
+    [_selection beginSelectionAt:relativeStart
+                            mode:kiTermSelectionModeCharacter
+                          resume:NO
+                          append:NO];
+    [_selection moveSelectionEndpointTo:relativeEnd];
     [_selection endLiveSelection];
 
     if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
