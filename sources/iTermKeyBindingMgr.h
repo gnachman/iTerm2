@@ -123,6 +123,7 @@
 #define KEY_ACTION_VIM_TEXT 38
 #define KEY_ACTION_PREVIOUS_MRU_TAB 39
 #define KEY_ACTION_LOAD_COLOR_PRESET 40
+#define KEY_ACTION_PASTE_SPECIAL 41
 
 @interface iTermKeyBindingMgr : NSObject {
 }

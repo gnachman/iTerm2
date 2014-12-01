@@ -7,6 +7,7 @@
 //
 
 #import "iTermPasteSpecialWindowController.h"
+#import "iTermPasteSpecialViewController.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "NSData+iTerm.h"
@@ -46,23 +47,7 @@
 
 @end
 
-typedef struct {
-    double min;
-    double max;
-    double visualCenter;
-} iTermFloatingRange;
-
-static iTermFloatingRange kChunkSizeRange = { 1, 1024 * 1024, 1024 };
-static iTermFloatingRange kDelayRange = { 0.001, 10, .01 };
-
-// These values correspond to cell tags on the matrix.
-NS_ENUM(NSInteger, iTermTabTransformTags) {
-    kTabTransformNone = 0,
-    kTabTransformConvertToSpaces = 1,
-    kTabTransformEscapeWithCtrlZ = 2
-};
-
-@interface iTermPasteSpecialWindowController ()
+@interface iTermPasteSpecialWindowController () <iTermPasteSpecialViewControllerDelegate>
 
 @property(nonatomic, readonly) NSString *stringToPaste;
 @property(nonatomic, assign) BOOL shouldPaste;
@@ -91,19 +76,10 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
     IBOutlet NSTextField *_statsLabel;
     IBOutlet NSPopUpButton *_itemList;
     IBOutlet NSTextView *_preview;
-    IBOutlet NSTextField *_spacesPerTab;
-    IBOutlet NSButton *_escapeShellCharsWithBackslash;
-    IBOutlet NSButton *_removeControlCodes;
-    IBOutlet NSButton *_bracketedPasteMode;
-    IBOutlet NSMatrix *_tabTransform;
-    IBOutlet NSButton *_convertNewlines;
-    IBOutlet NSButton *_base64Encode;
-    IBOutlet NSSlider *_chunkSizeSlider;
-    IBOutlet NSSlider *_delayBetweenChunksSlider;
-    IBOutlet NSTextField *_chunkSizeLabel;
-    IBOutlet NSTextField *_delayBetweenChunksLabel;
-    IBOutlet NSStepper *_stepper;
     IBOutlet NSTextField *_estimatedDuration;
+    IBOutlet NSView *_pasteSpecialViewContainer;
+
+    iTermPasteSpecialViewController *_pasteSpecialViewController;
 }
 
 - (instancetype)initWithChunkSize:(NSInteger)chunkSize
@@ -123,6 +99,8 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
         _encoding = encoding;
         self.chunkSize = chunkSize;
         self.delayBetweenChunks = delayBetweenChunks;
+        _pasteSpecialViewController = [[iTermPasteSpecialViewController alloc] init];
+        _pasteSpecialViewController.delegate = self;
     }
     return self;
 }
@@ -131,6 +109,7 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
     [_originalValues release];
     [_labels release];
     [_rawString release];
+    [_pasteSpecialViewController release];
     [super dealloc];
 }
 
@@ -138,6 +117,9 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
     for (NSString *label in _labels) {
         [_itemList addItemWithTitle:label];
     }
+    [_pasteSpecialViewContainer addSubview:_pasteSpecialViewController.view];
+    _pasteSpecialViewController.view.frame = _pasteSpecialViewController.view.bounds;
+
     [self selectValueAtIndex:0];
 }
 
@@ -236,67 +218,41 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
     [_rawString autorelease];
     _rawString = [string copy];
     BOOL containsTabs = [string containsString:@"\t"];
-
-    _spacesPerTab.enabled = containsTabs;
-    _spacesPerTab.integerValue = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialSpacesPerTab];
-    _stepper.integerValue = _spacesPerTab.integerValue;
-    _stepper.enabled = _spacesPerTab.enabled;
-
-    _tabTransform.enabled = containsTabs;
     NSInteger tabTransformTag = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialTabTransform];
-    [_tabTransform selectCellWithTag:tabTransformTag];
-
     NSCharacterSet *theSet =
             [NSCharacterSet characterSetWithCharactersInString:[NSString shellEscapableCharacters]];
     BOOL containsShellCharacters =
-    [string rangeOfCharacterFromSet:theSet].location != NSNotFound;
-
+        [string rangeOfCharacterFromSet:theSet].location != NSNotFound;
     BOOL containsDosNewlines = [string containsString:@"\n"];
-    _convertNewlines.enabled = containsDosNewlines;
     BOOL convertValue = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialConvertDosNewlines];
-    _convertNewlines.state = (containsDosNewlines && convertValue) ? NSOnState : NSOffState;
-
-    _escapeShellCharsWithBackslash.enabled = containsShellCharacters;
     BOOL shouldEscape = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash];
-    _escapeShellCharsWithBackslash.state =
-            (containsShellCharacters && shouldEscape) ? NSOnState : NSOffState;
-
-    _delayBetweenChunksSlider.minValue = log(kDelayRange.min);
-    _delayBetweenChunksSlider.maxValue = log(kDelayRange.max);
-    _delayBetweenChunksSlider.floatValue = [self floatValueForDelayBetweenChunks];
-    _delayBetweenChunksLabel.stringValue = [self descriptionForDuration:_delayBetweenChunks];
-
-    _chunkSizeSlider.minValue = log(kChunkSizeRange.min);
-    _chunkSizeSlider.maxValue = log(kChunkSizeRange.max);
-    _chunkSizeSlider.floatValue = [self floatValueForChunkSize];
-    _chunkSizeLabel.stringValue = [self descriptionForByteSize:_chunkSize];
-
     NSMutableCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
     NSRange unsafeRange = [string rangeOfCharacterFromSet:unsafeSet];
     BOOL containsControlCodes = unsafeRange.location != NSNotFound;
-    _removeControlCodes.enabled = containsControlCodes;
     BOOL removeValue = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialRemoveControlCodes];
-    _removeControlCodes.state = (containsControlCodes && removeValue) ? NSOnState : NSOffState;
-
-    _bracketedPasteMode.enabled = _bracketingEnabled;
-    NSNumber *bracketSetting =
+    BOOL shouldBracket =
         [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialBracketedPasteMode];
-    BOOL shouldBracket = YES;
-    if (bracketSetting && ![bracketSetting boolValue]) {
-        shouldBracket = NO;
-    }
-    _bracketedPasteMode.state = (_bracketingEnabled && shouldBracket) ? NSOnState : NSOffState;
 
-    _base64Encode.state = base64Only ? NSOnState : NSOffState;
-    _base64Encode.enabled = !base64Only;
+    _pasteSpecialViewController.numberOfSpacesPerTab = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialSpacesPerTab];
+    _pasteSpecialViewController.enableTabTransforms = containsTabs;
+    _pasteSpecialViewController.selectedTabTransform = tabTransformTag;
+    _pasteSpecialViewController.enableConvertNewlines = containsDosNewlines;
+    _pasteSpecialViewController.shouldConvertNewlines = (containsDosNewlines && convertValue);
+    _pasteSpecialViewController.enableEscapeShellCharsWithBackslash = containsShellCharacters;
+    _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash = (containsShellCharacters && shouldEscape);
+    _pasteSpecialViewController.delayBetweenChunks = _delayBetweenChunks;
+    _pasteSpecialViewController.chunkSize = _chunkSize;
+    _pasteSpecialViewController.enableRemoveControlCodes = containsControlCodes;
+    _pasteSpecialViewController.shouldRemoveControlCodes = (containsControlCodes && removeValue);
+    _pasteSpecialViewController.enableBracketedPaste = _bracketingEnabled;
+    _pasteSpecialViewController.shouldUseBracketedPasteMode = (_bracketingEnabled && shouldBracket);
+    _pasteSpecialViewController.enableBase64 = !base64Only;
+    _pasteSpecialViewController.shouldBase64Encode = base64Only;
 
     [self updatePreview];
 }
 
 - (void)updatePreview {
-    BOOL spacesPerTabEnabled = _tabTransform.enabled && _tabTransform.selectedTag == kTabTransformConvertToSpaces;
-    _spacesPerTab.enabled = spacesPerTabEnabled;
-
     _preview.string = [self stringByProcessingString:_rawString];
     NSNumberFormatter *bytesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
     int numBytes = _preview.string.length;
@@ -335,7 +291,7 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
     if (duration < 0.01) {
         _estimatedDuration.stringValue = @"Instant";
     } else {
-        _estimatedDuration.stringValue = [self descriptionForDuration:duration];
+        _estimatedDuration.stringValue = [_pasteSpecialViewController descriptionForDuration:duration];
     }
 }
 
@@ -380,85 +336,36 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
 
 #pragma mark - Private
 
-// TODO: When 10.7 support is dropped use NSByteCountFormatter
-- (NSString *)descriptionForByteSize:(double)chunkSize {
-    NSArray *units = @[ @"", @"k", @"M", @"G", @"T" , @"P", @"E", @"Z", @"Y" ];
-    int multiplier = 1024;
-    int exponent = 0;
-
-    while (chunkSize >= multiplier && exponent < units.count) {
-        chunkSize /= multiplier;
-        exponent++;
-    }
-    NSNumberFormatter *formatter = [[[NSNumberFormatter alloc] init] autorelease];
-    [formatter setMaximumFractionDigits:2];
-    [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
-    NSString *description = [NSString stringWithFormat:@"%@ %@B",
-                             [formatter stringFromNumber:@(chunkSize)],
-                             units[exponent]];
-    return description;
-}
-
-- (NSString *)descriptionForDuration:(NSTimeInterval)duration {
-    NSString *units;
-    double multiplier;
-    if (duration < 0.00001) {
-        units = @"µs";
-        multiplier = 0.00001;
-    } else if (duration < 1) {
-        units = @"ms";
-        multiplier = 0.001;
-    } else if (duration < 60) {
-        units = @"sec";
-        multiplier = 1;
-    } else {
-        units = @"min";
-        multiplier = 60;
-    }
-
-    NSNumberFormatter *formatter = [[[NSNumberFormatter alloc] init] autorelease];
-    [formatter setMaximumFractionDigits:2];
-    [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
-    NSString *description = [NSString stringWithFormat:@"%@ %@",
-                             [formatter stringFromNumber:@(duration / multiplier)],
-                             units];
-    return description;
-}
-
-- (float)floatValueForChunkSize {
-    return log(_chunkSize);
-}
-
-- (float)floatValueForDelayBetweenChunks {
-    return log(_delayBetweenChunks);
-}
-
 - (void)saveUserDefaults {
-    if (_tabTransform.enabled) {
-        [iTermPreferences setInt:_tabTransform.selectedTag
+    if (_pasteSpecialViewController.areTabTransformsEnabled) {
+        [iTermPreferences setInt:_pasteSpecialViewController.selectedTabTransform
                           forKey:kPreferenceKeyPasteSpecialTabTransform];
     }
-    if (_spacesPerTab.enabled) {
-        [iTermPreferences setInt:_spacesPerTab.integerValue
+    if (_pasteSpecialViewController.selectedTabTransform == kTabTransformConvertToSpaces) {
+        [iTermPreferences setInt:_pasteSpecialViewController.numberOfSpacesPerTab
                           forKey:kPreferenceKeyPasteSpecialSpacesPerTab];
     }
-    if (_escapeShellCharsWithBackslash.enabled) {
-        [iTermPreferences setBool:_escapeShellCharsWithBackslash.state == NSOnState
+    if (_pasteSpecialViewController.isEscapeShellCharsWithBackslashEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldEscapeShellCharsWithBackslash
                        forKey:kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash];
     }
-    if (_convertNewlines.enabled) {
-        [iTermPreferences setBool:_convertNewlines.state == NSOnState
+    if (_pasteSpecialViewController.isConvertNewlinesEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldConvertNewlines
                            forKey:kPreferenceKeyPasteSpecialConvertDosNewlines];
     }
-    if (_bracketingEnabled) {
-        [iTermPreferences setBool:_bracketedPasteMode.state == NSOnState
+    if (_pasteSpecialViewController.isBracketedPasteEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldUseBracketedPasteMode
                            forKey:kPreferenceKeyPasteSpecialBracketedPasteMode];
+    }
+    if (_pasteSpecialViewController.isRemoveControlCodesEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldRemoveControlCodes
+                           forKey:kPreferenceKeyPasteSpecialRemoveControlCodes];
     }
 }
 
 - (NSString *)stringToPaste {
     NSString *unbracketed = [self stringByProcessingString:_rawString];
-    if (_bracketedPasteMode.state == NSOnState) {
+    if (_pasteSpecialViewController.shouldUseBracketedPasteMode == NSOnState) {
         return [iTermPasteHelper sanitizeString:unbracketed withFlags:kPasteFlagsBracket];
     } else {
         return unbracketed;
@@ -467,34 +374,39 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
 
 - (NSString *)stringByProcessingString:(NSString *)string {
     NSUInteger flags = 0;
-    if (_convertNewlines.enabled && _convertNewlines.state == NSOnState) {
+    if (_pasteSpecialViewController.isConvertNewlinesEnabled &&
+        _pasteSpecialViewController.shouldConvertNewlines) {
         flags |= kPasteFlagsSanitizingNewlines;
     }
-    if (_escapeShellCharsWithBackslash.enabled && _escapeShellCharsWithBackslash.state == NSOnState) {
+    if (_pasteSpecialViewController.isEscapeShellCharsWithBackslashEnabled &&
+        _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash) {
         flags |= kPasteFlagsEscapeSpecialCharacters;
     }
-    if (_tabTransform.enabled) {
-        switch (_tabTransform.selectedTag) {
+    if (_pasteSpecialViewController.areTabTransformsEnabled) {
+        switch (_pasteSpecialViewController.selectedTabTransform) {
             case kTabTransformNone:
                 break;
 
-            case kTabTransformConvertToSpaces:
+            case kTabTransformConvertToSpaces: {
+                NSString *spaces =
+                    [@" " stringRepeatedTimes:_pasteSpecialViewController.numberOfSpacesPerTab];
                 string = [string stringByReplacingOccurrencesOfString:@"\t"
-                                                           withString:[@" " stringRepeatedTimes:_spacesPerTab.integerValue]];
+                                                           withString:spaces];
                 break;
+            }
 
             case kTabTransformEscapeWithCtrlZ:
                 flags |= kPasteFlagsWithShellEscapedTabs;
                 break;
         }
     }
-    if (_removeControlCodes.state == NSOnState) {
+    if (_pasteSpecialViewController.shouldRemoveControlCodes) {
         flags |= kPasteFlagsRemovingUnsafeControlCodes;
     }
 
     string = [iTermPasteHelper sanitizeString:string withFlags:flags];
 
-    if (_base64Encode.state == NSOnState) {
+    if (_pasteSpecialViewController.shouldBase64Encode) {
         string = [[string dataUsingEncoding:_encoding] stringWithBase64EncodingWithLineBreak:@"\r"];
     }
 
@@ -502,18 +414,6 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
 }
 
 #pragma mark - Actions
-
-- (IBAction)chunkSizeDidChange:(id)sender {
-    _chunkSize = exp([sender floatValue]);
-    _chunkSizeLabel.stringValue = [self descriptionForByteSize:_chunkSize];
-    [self updateDuration];
-}
-
-- (IBAction)delayBetweenChunksDidChange:(id)sender {
-    _delayBetweenChunks = exp([sender floatValue]);
-    _delayBetweenChunksLabel.stringValue = [self descriptionForDuration:_delayBetweenChunks];
-    [self updateDuration];
-}
 
 - (IBAction)ok:(id)sender {
     _shouldPaste = YES;
@@ -529,21 +429,16 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
     [self selectValueAtIndex:[sender indexOfSelectedItem]];
 }
 
-- (IBAction)settingChanged:(id)sender {
-    [self updatePreview];
+#pragma mark - iTermPasteSpecialViewControllerDelegate
+
+- (void)pasteSpecialViewSpeedDidChange {
+    _delayBetweenChunks = _pasteSpecialViewController.delayBetweenChunks;
+    _chunkSize = _pasteSpecialViewController.chunkSize;
+    [self updateDuration];
 }
 
-- (IBAction)stepperDidChange:(id)sender {
-    NSStepper *stepper = sender;
-    _spacesPerTab.integerValue = stepper.integerValue;
+- (void)pasteSpecialTransformDidChange {
     [self updatePreview];
-}
-
-#pragma mark - NSTextField Delegate
-
-- (void)controlTextDidChange:(NSNotification *)obj {
-    _spacesPerTab.integerValue = MAX(0, MIN(100, _spacesPerTab.integerValue));
-    _stepper.integerValue = _spacesPerTab.integerValue;
 }
 
 @end

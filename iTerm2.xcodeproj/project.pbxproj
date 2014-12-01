@@ -1716,6 +1716,14 @@
 		A6E77FB31A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */; };
 		A6E77FB41A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */; };
 		A6E77FB51A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */; };
+		A6E77FB91A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */; };
+		A6E77FBA1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */; };
+		A6E77FBB1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */; };
+		A6E77FBC1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */; };
+		A6E77FBD1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */; };
+		A6E77FBE1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E77FB81A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib */; };
+		A6E77FBF1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E77FB81A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib */; };
+		A6E77FC01A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E77FB81A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib */; };
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0619DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
@@ -2469,6 +2477,9 @@
 		A6E77FAB1A2BE350009B1CB6 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/NumberOfSpacesAccessoryView.xib; sourceTree = "<group>"; };
 		A6E77FAF1A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNumberOfSpacesAccessoryViewController.h; sourceTree = "<group>"; };
 		A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNumberOfSpacesAccessoryViewController.m; sourceTree = "<group>"; };
+		A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermPasteSpecialViewController.h; path = sources/iTermPasteSpecialViewController.h; sourceTree = "<group>"; };
+		A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermPasteSpecialViewController.m; path = sources/iTermPasteSpecialViewController.m; sourceTree = "<group>"; };
+		A6E77FB81A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermPasteSpecialViewController.xib; path = sources/iTermPasteSpecialViewController.xib; sourceTree = "<group>"; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
@@ -2611,6 +2622,9 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */,
+				A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */,
+				A6E77FB81A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib */,
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -3980,6 +3994,7 @@
 				1D6ED93319AEA20D005A7799 /* TmuxControllerRegistry.h in Headers */,
 				1D6ED93419AEA20D005A7799 /* TmuxWindowsTable.h in Headers */,
 				1D6ED93519AEA20D005A7799 /* EquivalenceClassSet.h in Headers */,
+				A6E77FBA1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h in Headers */,
 				1D6ED93619AEA20D005A7799 /* CommandUse.h in Headers */,
 				A6E77F7E1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h in Headers */,
 				1D6ED93719AEA20D005A7799 /* ProfilesTextPreferencesViewController.h in Headers */,
@@ -4296,6 +4311,7 @@
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
 				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
+				A6E77FB91A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h in Headers */,
 				A6E7474D188C6394005355CF /* CommandUse.h in Headers */,
 				A6E77F7D1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h in Headers */,
 				A6A2697E18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h in Headers */,
@@ -4567,6 +4583,7 @@
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
 				1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */,
 				1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */,
+				A6E77FC01A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib in Resources */,
 				1D6ED9D019AEA20D005A7799 /* English.lproj/AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1D6ED9D119AEA20D005A7799 /* TabClose_Front_Pressed@2x.png in Resources */,
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
@@ -4608,6 +4625,7 @@
 				A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				A605D4B619CF79F700D40343 /* iTerm2.iconset in Resources */,
+				A6E77FBF1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib in Resources */,
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				1DEDF56A19C917FD005B023A /* new-tab.png in Resources */,
@@ -4730,6 +4748,7 @@
 				1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */,
 				1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */,
 				1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */,
+				A6E77FBE1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6E713B618FCB559008D94DD /* English.lproj/AdvancedWorkingDirectoryWindow.xib in Resources */,
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
@@ -4993,6 +5012,7 @@
 				1D6EDA9419AEA20D005A7799 /* PTYSession+Scripting.m in Sources */,
 				1D6EDA9519AEA20D005A7799 /* VT100Grid.m in Sources */,
 				1D6EDA9619AEA20D005A7799 /* TriggerController.m in Sources */,
+				A6E77FBD1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */,
 				1D6EDA9719AEA20D005A7799 /* Trigger.m in Sources */,
 				A663011419CFE41A004AF81C /* iTermAboutWindow.m in Sources */,
 				1D6EDA9819AEA20D005A7799 /* iTermExposeGridView.m in Sources */,
@@ -5370,6 +5390,7 @@
 				A6A13AB818C33FC500B241ED /* VT100Parser.m in Sources */,
 				1D9A559C180FA87000B42CE9 /* SessionTitleView.m in Sources */,
 				1D9A55B0180FA8B700B42CE9 /* PSMTabDragWindow.m in Sources */,
+				A6E77FBC1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */,
 				1D9A554D180FA82E00B42CE9 /* TmuxSessionsTable.m in Sources */,
 				A6C537C01938374600A08C18 /* iTermTabBarControlView.m in Sources */,
 				A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */,
@@ -5566,6 +5587,7 @@
 				A6B70FCE1986FB39007A4284 /* PTYSession+Scripting.m in Sources */,
 				1D8B8A151806038F00C2DC25 /* VT100Grid.m in Sources */,
 				1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */,
+				A6E77FBB1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */,
 				1D9DCBFF142D7BA60016228A /* Trigger.m in Sources */,
 				A663011219CFE41A004AF81C /* iTermAboutWindow.m in Sources */,
 				A6E7475D188C6731005355CF /* iTermExposeGridView.m in Sources */,
