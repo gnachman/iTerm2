@@ -3513,7 +3513,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)hideSession {
     [[MovePaneController sharedInstance] moveSessionToNewWindow:self
                                                         atPoint:[[_view window] pointToScreenCoords:NSMakePoint(0, 0)]];
-    [[[_tab realParentWindow] window] miniaturize:self];
+//    [[[_tab realParentWindow] window] miniaturize:self];
 }
 
 - (NSString *)preferredTmuxClientName {
