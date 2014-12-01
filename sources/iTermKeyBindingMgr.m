@@ -417,13 +417,23 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case KEY_ACTION_FIND_REGEX:
             actionString = [NSString stringWithFormat:@"Find Regex “%@”", auxText];
             break;
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
+            NSString *pasteDetails =
+                [iTermPasteSpecialViewController descriptionForCodedSettings:auxText];
+            if (pasteDetails.length) {
+                actionString = [NSString stringWithFormat:@"Paste from Selection: %@", pasteDetails];
+            } else {
+                actionString = @"Paste from Selection";
+            }
+            break;
+        }
         case KEY_ACTION_PASTE_SPECIAL: {
             NSString *pasteDetails =
                 [iTermPasteSpecialViewController descriptionForCodedSettings:auxText];
             if (pasteDetails.length) {
-                actionString = [NSString stringWithFormat:@"Paste Special: %@", pasteDetails];
+                actionString = [NSString stringWithFormat:@"Paste: %@", pasteDetails];
             } else {
-                actionString = @"Paste Special";
+                actionString = @"Paste";
             }
             break;
         }

@@ -3915,505 +3915,515 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
-- (void)keyDown:(NSEvent *)event
-{
-  unsigned char *send_str = NULL;
-  unsigned char *dataPtr = NULL;
-  int dataLength = 0;
-  size_t send_strlen = 0;
-  int send_pchr = -1;
-  int keyBindingAction;
-  NSString *keyBindingText;
+- (void)keyDown:(NSEvent *)event {
+    unsigned char *send_str = NULL;
+    unsigned char *dataPtr = NULL;
+    int dataLength = 0;
+    size_t send_strlen = 0;
+    int send_pchr = -1;
+    int keyBindingAction;
+    NSString *keyBindingText;
 
-  unsigned int modflag;
-  NSString *keystr;
-  NSString *unmodkeystr;
-  unichar unicode, unmodunicode;
+    unsigned int modflag;
+    NSString *keystr;
+    NSString *unmodkeystr;
+    unichar unicode, unmodunicode;
 
-  modflag = [event modifierFlags];
-  keystr  = [event characters];
-  unmodkeystr = [event charactersIgnoringModifiers];
-  if ([unmodkeystr length] == 0) {
-    return;
-  }
-  unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
-  unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-  DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
-  _lastInput = [NSDate timeIntervalSinceReferenceDate];
-  [self resumeOutputIfNeeded];
-  if ([[[self tab] realParentWindow] inInstantReplay]) {
-    DLog(@"PTYSession keyDown in IR");
+    modflag = [event modifierFlags];
+    keystr  = [event characters];
+    unmodkeystr = [event charactersIgnoringModifiers];
+    if ([unmodkeystr length] == 0) {
+        return;
+    }
+    unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
+    unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+    DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
+    _lastInput = [NSDate timeIntervalSinceReferenceDate];
+    [self resumeOutputIfNeeded];
+    if ([[[self tab] realParentWindow] inInstantReplay]) {
+        DLog(@"PTYSession keyDown in IR");
 
-    // Special key handling in IR mode, and keys never get sent to the live
-    // session, even though it might be displayed.
-    if (unicode == 27) {
-      // Escape exits IR
-      [[[self tab] realParentWindow] closeInstantReplay:self];
-      return;
-    } else if (unmodunicode == NSLeftArrowFunctionKey) {
-      // Left arrow moves to prev frame
-      int n = 1;
-      if (modflag & NSShiftKeyMask) {
-        n = 15;
-      }
-      for (int i = 0; i < n; i++) {
-        [[[self tab] realParentWindow] irPrev:self];
-      }
-    } else if (unmodunicode == NSRightArrowFunctionKey) {
-      // Right arrow moves to next frame
-      int n = 1;
-      if (modflag & NSShiftKeyMask) {
-        n = 15;
-      }
-      for (int i = 0; i < n; i++) {
-        [[[self tab] realParentWindow] irNext:self];
-      }
+        // Special key handling in IR mode, and keys never get sent to the live
+        // session, even though it might be displayed.
+        if (unicode == 27) {
+            // Escape exits IR
+            [[[self tab] realParentWindow] closeInstantReplay:self];
+            return;
+        } else if (unmodunicode == NSLeftArrowFunctionKey) {
+            // Left arrow moves to prev frame
+            int n = 1;
+            if (modflag & NSShiftKeyMask) {
+                n = 15;
+            }
+            for (int i = 0; i < n; i++) {
+                [[[self tab] realParentWindow] irPrev:self];
+            }
+        } else if (unmodunicode == NSRightArrowFunctionKey) {
+            // Right arrow moves to next frame
+            int n = 1;
+            if (modflag & NSShiftKeyMask) {
+                n = 15;
+            }
+            for (int i = 0; i < n; i++) {
+                [[[self tab] realParentWindow] irNext:self];
+            }
+        } else {
+            NSBeep();
+        }
+        return;
+    }
+
+    unsigned short keycode = [event keyCode];
+    DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%lu>",
+         event, modflag, keycode, keystr, unmodkeystr, unicode, unicode,
+         (modflag & NSNumericPadKeyMask));
+
+    // Check if we have a custom key mapping for this event
+    keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
+                                                  modifiers:modflag
+                                                       text:&keyBindingText
+                                                keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
+
+    if (keyBindingAction >= 0) {
+        DLog(@"PTYSession keyDown action=%d", keyBindingAction);
+        // A special action was bound to this key combination.
+        NSString* temp;
+        int profileAction = [iTermKeyBindingMgr localActionForKeyCode:unmodunicode
+                                                            modifiers:modflag
+                                                                 text:&temp
+                                                          keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
+        if (profileAction == keyBindingAction &&  // Don't warn if it's a global mapping
+            (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
+             keyBindingAction == KEY_ACTION_PREVIOUS_SESSION)) {
+                // Warn users about outdated default key bindings.
+                int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
+                int tempKeyCode = unmodunicode;
+                if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
+                    (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
+                    [[[self tab] sessions] count] > 1) {
+                    if ([self _askAboutOutdatedKeyMappings]) {
+                        int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
+                                                     @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
+                                                     @"Remove it",
+                                                     @"Remind me later",
+                                                     @"Keep it");
+                        switch (result) {
+                            case NSAlertDefaultReturn:
+                                // Remove it
+                                [self _removeOutdatedKeyMapping];
+                                return;
+                                break;
+                            case NSAlertAlternateReturn:
+                                // Remind me later
+                                break;
+                            case NSAlertOtherReturn:
+                                // Keep it
+                                [self _setKeepOutdatedKeyMapping];
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
+        BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
+
+        switch (keyBindingAction) {
+            case KEY_ACTION_MOVE_TAB_LEFT:
+                [[[self tab] realParentWindow] moveTabLeft:nil];
+                break;
+            case KEY_ACTION_MOVE_TAB_RIGHT:
+                [[[self tab] realParentWindow] moveTabRight:nil];
+                break;
+            case KEY_ACTION_NEXT_MRU_TAB:
+                [[[[self tab] parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
+                                                                      forwards:YES];
+                break;
+            case KEY_ACTION_PREVIOUS_MRU_TAB:
+                [[[[self tab] parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
+                                                                      forwards:NO];
+                break;
+            case KEY_ACTION_NEXT_PANE:
+                [[self tab] nextSession];
+                break;
+            case KEY_ACTION_PREVIOUS_PANE:
+                [[self tab] previousSession];
+                break;
+            case KEY_ACTION_NEXT_SESSION:
+                [[[self tab] parentWindow] nextTab:nil];
+                break;
+            case KEY_ACTION_NEXT_WINDOW:
+                [[iTermController sharedInstance] nextTerminal:nil];
+                break;
+            case KEY_ACTION_PREVIOUS_SESSION:
+                [[[self tab] parentWindow] previousTab:nil];
+                break;
+            case KEY_ACTION_PREVIOUS_WINDOW:
+                [[iTermController sharedInstance] previousTerminal:nil];
+                break;
+            case KEY_ACTION_SCROLL_END:
+                [_textview scrollEnd];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                break;
+            case KEY_ACTION_SCROLL_HOME:
+                [_textview scrollHome];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                break;
+            case KEY_ACTION_SCROLL_LINE_DOWN:
+                [_textview scrollLineDown:self];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                break;
+            case KEY_ACTION_SCROLL_LINE_UP:
+                [_textview scrollLineUp:self];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                break;
+            case KEY_ACTION_SCROLL_PAGE_DOWN:
+                [_textview scrollPageDown:self];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                break;
+            case KEY_ACTION_SCROLL_PAGE_UP:
+                [_textview scrollPageUp:self];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                break;
+            case KEY_ACTION_ESCAPE_SEQUENCE:
+                if (_exited || isTmuxGateway) {
+                    return;
+                }
+                [self sendEscapeSequence:keyBindingText];
+                break;
+            case KEY_ACTION_HEX_CODE:
+                if (_exited || isTmuxGateway) {
+                    return;
+                }
+                [self sendHexCode:keyBindingText];
+                break;
+            case KEY_ACTION_TEXT:
+                if (_exited || isTmuxGateway) {
+                    return;
+                }
+                [self sendText:keyBindingText];
+                break;
+            case KEY_ACTION_VIM_TEXT:
+                if (_exited || isTmuxGateway) {
+                    return;
+                }
+                [self sendText:[keyBindingText stringByExpandingVimSpecialCharacters]];
+                break;
+            case KEY_ACTION_RUN_COPROCESS:
+                if (_exited || isTmuxGateway) {
+                    return;
+                }
+                [self launchCoprocessWithCommand:keyBindingText];
+                break;
+            case KEY_ACTION_SELECT_MENU_ITEM:
+                [PTYSession selectMenuItem:keyBindingText];
+                break;
+
+            case KEY_ACTION_SEND_C_H_BACKSPACE:
+                if (_exited || isTmuxGateway) {
+                    return;
+                }
+                [self writeTask:[@"\010" dataUsingEncoding:NSUTF8StringEncoding]];
+                break;
+            case KEY_ACTION_SEND_C_QM_BACKSPACE:
+                if (_exited || isTmuxGateway) {
+                    return;
+                }
+                [self writeTask:[@"\177" dataUsingEncoding:NSUTF8StringEncoding]]; // decimal 127
+                break;
+            case KEY_ACTION_IGNORE:
+                break;
+            case KEY_ACTION_IR_FORWARD:
+                if (isTmuxGateway) {
+                    return;
+                }
+                [[iTermController sharedInstance] irAdvance:1];
+                break;
+            case KEY_ACTION_IR_BACKWARD:
+                if (isTmuxGateway) {
+                    return;
+                }
+                [[iTermController sharedInstance] irAdvance:-1];
+                break;
+            case KEY_ACTION_SELECT_PANE_LEFT:
+                [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+                break;
+            case KEY_ACTION_SELECT_PANE_RIGHT:
+                [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+                break;
+            case KEY_ACTION_SELECT_PANE_ABOVE:
+                [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+                break;
+            case KEY_ACTION_SELECT_PANE_BELOW:
+                [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+                break;
+            case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+            case KEY_ACTION_REMAP_LOCALLY:
+                break;
+            case KEY_ACTION_TOGGLE_FULLSCREEN:
+                [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];
+                break;
+            case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
+                [[[self tab] realParentWindow] newWindowWithBookmarkGuid:keyBindingText];
+                break;
+            case KEY_ACTION_NEW_TAB_WITH_PROFILE:
+                [[[self tab] realParentWindow] newTabWithBookmarkGuid:keyBindingText];
+                break;
+            case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
+                [[[self tab] realParentWindow] splitVertically:NO withBookmarkGuid:keyBindingText];
+                break;
+            case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+                [[[self tab] realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
+                break;
+            case KEY_ACTION_SET_PROFILE: {
+                Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
+                if (newProfile) {
+                    [self setProfile:newProfile preservingName:YES];
+                }
+                break;
+            }
+            case KEY_ACTION_LOAD_COLOR_PRESET: {
+                ProfileModel *model = [ProfileModel sharedInstance];
+                Profile *profile;
+                if (_isDivorced) {
+                    profile = [[ProfileModel sharedInstance] bookmarkWithGuid:_profile[KEY_ORIGINAL_GUID]];
+                } else {
+                    profile = self.profile;
+                }
+                BOOL ok =
+                [ProfilesColorsPreferencesViewController loadColorPresetWithName:keyBindingText
+                                                                       inProfile:profile
+                                                                           model:model];
+                if (!ok) {
+                    NSLog(@"Color preset %@ not found", keyBindingText);
+                    NSBeep();
+                }
+                break;
+            }
+
+            case KEY_ACTION_FIND_REGEX:
+                [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
+                                                                      ignoringCase:NO
+                                                                             regex:YES];
+                break;
+
+            case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
+                NSString *string = [self mostRecentlySelectedText];
+                if (string.length) {
+                    [_pasteHelper pasteString:string
+                                 stringConfig:keyBindingText];
+                }
+                break;
+            }
+
+            case KEY_ACTION_PASTE_SPECIAL: {
+                NSString *string = [NSString stringFromPasteboard];
+                if (string.length) {
+                    [_pasteHelper pasteString:string
+                                 stringConfig:keyBindingText];
+                }
+                break;
+            }
+
+            default:
+                NSLog(@"Unknown key action %d", keyBindingAction);
+                break;
+        }
     } else {
-      NSBeep();
-    }
-    return;
-  }
+        // Key is not bound to an action.
+        if (!_exited && self.tmuxMode == TMUX_GATEWAY) {
+            [self handleKeypressInTmuxGateway:unicode];
+            return;
+        }
+        DLog(@"PTYSession keyDown no keybinding action");
+        if (_exited) {
+            DebugLog(@"Terminal already dead");
+            return;
+        }
 
-  unsigned short keycode = [event keyCode];
-  DLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%lu>",
-       event, modflag, keycode, keystr, unmodkeystr, unicode, unicode,
-       (modflag & NSNumericPadKeyMask));
+        BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+        BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
-  // Check if we have a custom key mapping for this event
-  keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
-                                                modifiers:modflag
-                                                     text:&keyBindingText
-                                              keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
+        // No special binding for this key combination.
+        if (modflag & NSFunctionKeyMask) {
+            DLog(@"PTYSession keyDown is a function key");
+            // Handle all "special" keys (arrows, etc.)
+            NSData *data = nil;
 
-  if (keyBindingAction >= 0) {
-    DLog(@"PTYSession keyDown action=%d", keyBindingAction);
-    // A special action was bound to this key combination.
-    NSString* temp;
-    int profileAction = [iTermKeyBindingMgr localActionForKeyCode:unmodunicode
-                                                        modifiers:modflag
-                                                             text:&temp
-                                                      keyMappings:[[self profile] objectForKey:KEY_KEYBOARD_MAP]];
-    if (profileAction == keyBindingAction &&  // Don't warn if it's a global mapping
-        (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
-         keyBindingAction == KEY_ACTION_PREVIOUS_SESSION)) {
-          // Warn users about outdated default key bindings.
-          int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
-          int tempKeyCode = unmodunicode;
-          if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
-              (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
-              [[[self tab] sessions] count] > 1) {
-            if ([self _askAboutOutdatedKeyMappings]) {
-              int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
-                                           @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
-                                           @"Remove it",
-                                           @"Remind me later",
-                                           @"Keep it");
-              switch (result) {
-                case NSAlertDefaultReturn:
-                  // Remove it
-                  [self _removeOutdatedKeyMapping];
-                  return;
-                  break;
-                case NSAlertAlternateReturn:
-                  // Remind me later
-                  break;
-                case NSAlertOtherReturn:
-                  // Keep it
-                  [self _setKeepOutdatedKeyMapping];
-                  break;
-                default:
-                  break;
-              }
+            switch (unicode) {
+                case NSUpArrowFunctionKey:
+                    data = [_terminal.output keyArrowUp:modflag];
+                    break;
+                case NSDownArrowFunctionKey:
+                    data = [_terminal.output keyArrowDown:modflag];
+                    break;
+                case NSLeftArrowFunctionKey:
+                    data = [_terminal.output keyArrowLeft:modflag];
+                    break;
+                case NSRightArrowFunctionKey:
+                    data = [_terminal.output keyArrowRight:modflag];
+                    break;
+                case NSInsertFunctionKey:
+                    data = [_terminal.output keyInsert];
+                    break;
+                case NSDeleteFunctionKey:
+                    // This is forward delete, not backspace.
+                    data = [_terminal.output keyDelete];
+                    break;
+                case NSHomeFunctionKey:
+                    data = [_terminal.output keyHome:modflag];
+                    break;
+                case NSEndFunctionKey:
+                    data = [_terminal.output keyEnd:modflag];
+                    break;
+                case NSPageUpFunctionKey:
+                    data = [_terminal.output keyPageUp:modflag];
+                    break;
+                case NSPageDownFunctionKey:
+                    data = [_terminal.output keyPageDown:modflag];
+                    break;
+                case NSClearLineFunctionKey:
+                    data = [@"\e" dataUsingEncoding:NSUTF8StringEncoding];
+                    break;
             }
-          }
-        }
 
-    BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
+            if (NSF1FunctionKey <= unicode && unicode <= NSF35FunctionKey) {
+                data = [_terminal.output keyFunction:unicode - NSF1FunctionKey + 1];
+            }
 
-    switch (keyBindingAction) {
-      case KEY_ACTION_MOVE_TAB_LEFT:
-        [[[self tab] realParentWindow] moveTabLeft:nil];
-        break;
-      case KEY_ACTION_MOVE_TAB_RIGHT:
-        [[[self tab] realParentWindow] moveTabRight:nil];
-        break;
-      case KEY_ACTION_NEXT_MRU_TAB:
-        [[[[self tab] parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
-                                                              forwards:YES];
-        break;
-      case KEY_ACTION_PREVIOUS_MRU_TAB:
-        [[[[self tab] parentWindow] tabView] cycleKeyDownWithModifiers:[event modifierFlags]
-                                                              forwards:NO];
-        break;
-      case KEY_ACTION_NEXT_PANE:
-        [[self tab] nextSession];
-        break;
-      case KEY_ACTION_PREVIOUS_PANE:
-        [[self tab] previousSession];
-        break;
-      case KEY_ACTION_NEXT_SESSION:
-        [[[self tab] parentWindow] nextTab:nil];
-        break;
-      case KEY_ACTION_NEXT_WINDOW:
-        [[iTermController sharedInstance] nextTerminal:nil];
-        break;
-      case KEY_ACTION_PREVIOUS_SESSION:
-        [[[self tab] parentWindow] previousTab:nil];
-        break;
-      case KEY_ACTION_PREVIOUS_WINDOW:
-        [[iTermController sharedInstance] previousTerminal:nil];
-        break;
-      case KEY_ACTION_SCROLL_END:
-        [_textview scrollEnd];
-        [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-        break;
-      case KEY_ACTION_SCROLL_HOME:
-        [_textview scrollHome];
-        [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-        break;
-      case KEY_ACTION_SCROLL_LINE_DOWN:
-        [_textview scrollLineDown:self];
-        [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-        break;
-      case KEY_ACTION_SCROLL_LINE_UP:
-        [_textview scrollLineUp:self];
-        [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-        break;
-      case KEY_ACTION_SCROLL_PAGE_DOWN:
-        [_textview scrollPageDown:self];
-        [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-        break;
-      case KEY_ACTION_SCROLL_PAGE_UP:
-        [_textview scrollPageUp:self];
-        [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
-        break;
-      case KEY_ACTION_ESCAPE_SEQUENCE:
-        if (_exited || isTmuxGateway) {
-          return;
-        }
-        [self sendEscapeSequence:keyBindingText];
-        break;
-      case KEY_ACTION_HEX_CODE:
-        if (_exited || isTmuxGateway) {
-          return;
-        }
-        [self sendHexCode:keyBindingText];
-        break;
-      case KEY_ACTION_TEXT:
-        if (_exited || isTmuxGateway) {
-          return;
-        }
-        [self sendText:keyBindingText];
-        break;
-      case KEY_ACTION_VIM_TEXT:
-        if (_exited || isTmuxGateway) {
-          return;
-        }
-        [self sendText:[keyBindingText stringByExpandingVimSpecialCharacters]];
-        break;
-      case KEY_ACTION_RUN_COPROCESS:
-        if (_exited || isTmuxGateway) {
-          return;
-        }
-        [self launchCoprocessWithCommand:keyBindingText];
-        break;
-      case KEY_ACTION_SELECT_MENU_ITEM:
-        [PTYSession selectMenuItem:keyBindingText];
-        break;
+            if (data != nil) {
+                send_str = (unsigned char *)[data bytes];
+                send_strlen = [data length];
+            } else if (keystr != nil) {
+                NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
+                [keystr dataUsingEncoding:NSUTF8StringEncoding] :
+                [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
+                send_str = (unsigned char *)[keydat bytes];
+                send_strlen = [keydat length];
+            }
+        } else if ((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
+                   (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) {
+            DLog(@"PTYSession keyDown opt + key -> modkey");
+            // A key was pressed while holding down option and the option key
+            // is not behaving normally. Apply the modified behavior.
+            int mode;  // The modified behavior based on which modifier is pressed.
+            if (leftAltPressed) {
+                mode = [self optionKey];
+            } else {
+                assert(rightAltPressed);
+                mode = [self rightOptionKey];
+            }
 
-      case KEY_ACTION_SEND_C_H_BACKSPACE:
-        if (_exited || isTmuxGateway) {
-          return;
-        }
-        [self writeTask:[@"\010" dataUsingEncoding:NSUTF8StringEncoding]];
-        break;
-      case KEY_ACTION_SEND_C_QM_BACKSPACE:
-        if (_exited || isTmuxGateway) {
-          return;
-        }
-        [self writeTask:[@"\177" dataUsingEncoding:NSUTF8StringEncoding]]; // decimal 127
-        break;
-      case KEY_ACTION_IGNORE:
-        break;
-      case KEY_ACTION_IR_FORWARD:
-        if (isTmuxGateway) {
-          return;
-        }
-        [[iTermController sharedInstance] irAdvance:1];
-        break;
-      case KEY_ACTION_IR_BACKWARD:
-        if (isTmuxGateway) {
-          return;
-        }
-        [[iTermController sharedInstance] irAdvance:-1];
-        break;
-      case KEY_ACTION_SELECT_PANE_LEFT:
-        [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
-        break;
-      case KEY_ACTION_SELECT_PANE_RIGHT:
-        [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
-        break;
-      case KEY_ACTION_SELECT_PANE_ABOVE:
-        [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
-        break;
-      case KEY_ACTION_SELECT_PANE_BELOW:
-        [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
-        break;
-      case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
-      case KEY_ACTION_REMAP_LOCALLY:
-        break;
-      case KEY_ACTION_TOGGLE_FULLSCREEN:
-        [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];
-        break;
-      case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
-        [[[self tab] realParentWindow] newWindowWithBookmarkGuid:keyBindingText];
-        break;
-      case KEY_ACTION_NEW_TAB_WITH_PROFILE:
-        [[[self tab] realParentWindow] newTabWithBookmarkGuid:keyBindingText];
-        break;
-      case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
-        [[[self tab] realParentWindow] splitVertically:NO withBookmarkGuid:keyBindingText];
-        break;
-      case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
-        [[[self tab] realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
-        break;
-      case KEY_ACTION_SET_PROFILE: {
-          Profile *newProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:keyBindingText];
-          if (newProfile) {
-              [self setProfile:newProfile preservingName:YES];
-          }
-          break;
-      }
-      case KEY_ACTION_LOAD_COLOR_PRESET: {
-          ProfileModel *model = [ProfileModel sharedInstance];
-          Profile *profile;
-          if (_isDivorced) {
-              profile = [[ProfileModel sharedInstance] bookmarkWithGuid:_profile[KEY_ORIGINAL_GUID]];
-          } else {
-              profile = self.profile;
-          }
-          BOOL ok =
-              [ProfilesColorsPreferencesViewController loadColorPresetWithName:keyBindingText
-                                                                     inProfile:profile
-                                                                         model:model];
-          if (!ok) {
-              NSLog(@"Color preset %@ not found", keyBindingText);
-              NSBeep();
-          }
-          break;
-      }
+            NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0)?
+            [keystr dataUsingEncoding:NSUTF8StringEncoding]:
+            [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
+            if (keydat != nil) {
+                send_str = (unsigned char *)[keydat bytes];
+                send_strlen = [keydat length];
+            }
+            if (mode == OPT_ESC) {
+                send_pchr = '\e';
+            } else if (mode == OPT_META && send_str != NULL) {
+                int i;
+                for (i = 0; i < send_strlen; ++i) {
+                    send_str[i] |= 0x80;
+                }
+            }
+        } else {
+            DLog(@"PTYSession keyDown regular path");
+            // Regular path for inserting a character from a keypress.
+            int max = [keystr length];
+            NSData *data=nil;
 
-      case KEY_ACTION_FIND_REGEX:
-        [[_view findViewController] closeViewAndDoTemporarySearchForString:keyBindingText
-                                                              ignoringCase:NO
-                                                                     regex:YES];
-        break;
-        case KEY_ACTION_PASTE_SPECIAL: {
-            NSString *string = [NSString stringFromPasteboard];
-            if (string.length) {
-                [_pasteHelper pasteString:[NSString stringFromPasteboard]
-                             stringConfig:keyBindingText];
+            if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
+                DLog(@"PTYSession keyDown non-ascii");
+                data = [keystr dataUsingEncoding:[_terminal encoding]];
+            } else {
+                DLog(@"PTYSession keyDown ascii");
+                data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
+            }
+
+            // Enter key is on numeric keypad, but not marked as such
+            if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
+                modflag |= NSNumericPadKeyMask;
+                DLog(@"PTYSession keyDown enter key");
+                keystr = @"\015";  // Enter key -> 0x0d
+            }
+            // Check if we are in keypad mode
+            if (modflag & NSNumericPadKeyMask) {
+                DLog(@"PTYSession keyDown numeric keyoad");
+                data = [_terminal.output keypadData:unicode keystr:keystr];
+            }
+
+            int indMask = modflag & NSDeviceIndependentModifierFlagsMask;
+            if ((indMask & NSCommandKeyMask) &&   // pressing cmd
+                ([keystr isEqualToString:@"0"] ||  // pressed 0 key
+                 ([keystr intValue] > 0 && [keystr intValue] <= 9) || // or any other digit key
+                 [keystr isEqualToString:@"\r"])) {   // or enter
+                    // Do not send anything for cmd+number because the user probably
+                    // fat-fingered switching of tabs/windows.
+                    // Do not send anything for cmd+[shift]+enter if it wasn't
+                    // caught by the menu.
+                    DLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
+                    data = nil;
+                }
+            if (data != nil) {
+                send_str = (unsigned char *)[data bytes];
+                send_strlen = [data length];
+                DLog(@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
+                     modflag, send_strlen, send_str[0], send_str[0]);
+            }
+            
+            if ((modflag & NSControlKeyMask) &&
+                send_strlen == 1 &&
+                send_str[0] == '|') {
+                DLog(@"PTYSession keyDown c-|");
+                // Control-| is sent as Control-backslash
+                send_str = (unsigned char*)"\034";
+                send_strlen = 1;
+            } else if ((modflag & NSControlKeyMask) &&
+                       (modflag & NSShiftKeyMask) &&
+                       send_strlen == 1 &&
+                       send_str[0] == '/') {
+                DLog(@"PTYSession keyDown c-?");
+                // Control-shift-/ is sent as Control-?
+                send_str = (unsigned char*)"\177";
+                send_strlen = 1;
+            } else if ((modflag & NSControlKeyMask) &&
+                       send_strlen == 1 &&
+                       send_str[0] == '/') {
+                DLog(@"PTYSession keyDown c-/");
+                // Control-/ is sent as Control-/, but needs some help to do so.
+                send_str = (unsigned char*)"\037"; // control-/
+                send_strlen = 1;
+            } else if ((modflag & NSShiftKeyMask) &&
+                       send_strlen == 1 &&
+                       send_str[0] == '\031') {
+                DLog(@"PTYSession keyDown shift-tab -> esc[Z");
+                // Shift-tab is sent as Esc-[Z (or "backtab")
+                send_str = (unsigned char*)"\033[Z";
+                send_strlen = 3;
+            }
+            
+        }
+        
+        if (_exited == NO) {
+            if (send_pchr >= 0) {
+                // Send a prefix character (e.g., esc).
+                char c = send_pchr;
+                dataPtr = (unsigned char*)&c;
+                dataLength = 1;
+                [self writeTask:[NSData dataWithBytes:dataPtr length:dataLength]];
+            }
+            
+            if (send_str != NULL) {
+                dataPtr = send_str;
+                dataLength = send_strlen;
+                [self writeTask:[NSData dataWithBytes:dataPtr length:dataLength]];
             }
         }
-            break;
-      default:
-        NSLog(@"Unknown key action %d", keyBindingAction);
-        break;
     }
-  } else {
-    // Key is not bound to an action.
-    if (!_exited && self.tmuxMode == TMUX_GATEWAY) {
-      [self handleKeypressInTmuxGateway:unicode];
-      return;
-    }
-    DLog(@"PTYSession keyDown no keybinding action");
-    if (_exited) {
-      DebugLog(@"Terminal already dead");
-      return;
-    }
-
-    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
-
-    // No special binding for this key combination.
-    if (modflag & NSFunctionKeyMask) {
-      DLog(@"PTYSession keyDown is a function key");
-      // Handle all "special" keys (arrows, etc.)
-      NSData *data = nil;
-
-      switch (unicode) {
-        case NSUpArrowFunctionKey:
-          data = [_terminal.output keyArrowUp:modflag];
-          break;
-        case NSDownArrowFunctionKey:
-          data = [_terminal.output keyArrowDown:modflag];
-          break;
-        case NSLeftArrowFunctionKey:
-          data = [_terminal.output keyArrowLeft:modflag];
-          break;
-        case NSRightArrowFunctionKey:
-          data = [_terminal.output keyArrowRight:modflag];
-          break;
-        case NSInsertFunctionKey:
-          data = [_terminal.output keyInsert];
-          break;
-        case NSDeleteFunctionKey:
-          // This is forward delete, not backspace.
-          data = [_terminal.output keyDelete];
-          break;
-        case NSHomeFunctionKey:
-          data = [_terminal.output keyHome:modflag];
-          break;
-        case NSEndFunctionKey:
-          data = [_terminal.output keyEnd:modflag];
-          break;
-        case NSPageUpFunctionKey:
-          data = [_terminal.output keyPageUp:modflag];
-          break;
-        case NSPageDownFunctionKey:
-          data = [_terminal.output keyPageDown:modflag];
-          break;
-        case NSClearLineFunctionKey:
-          data = [@"\e" dataUsingEncoding:NSUTF8StringEncoding];
-          break;
-      }
-
-      if (NSF1FunctionKey <= unicode && unicode <= NSF35FunctionKey) {
-        data = [_terminal.output keyFunction:unicode - NSF1FunctionKey + 1];
-      }
-
-      if (data != nil) {
-        send_str = (unsigned char *)[data bytes];
-        send_strlen = [data length];
-      } else if (keystr != nil) {
-        NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
-        [keystr dataUsingEncoding:NSUTF8StringEncoding] :
-        [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
-        send_str = (unsigned char *)[keydat bytes];
-        send_strlen = [keydat length];
-      }
-    } else if ((leftAltPressed && [self optionKey] != OPT_NORMAL) ||
-               (rightAltPressed && [self rightOptionKey] != OPT_NORMAL)) {
-                 DLog(@"PTYSession keyDown opt + key -> modkey");
-                 // A key was pressed while holding down option and the option key
-                 // is not behaving normally. Apply the modified behavior.
-                 int mode;  // The modified behavior based on which modifier is pressed.
-                 if (leftAltPressed) {
-                   mode = [self optionKey];
-                 } else {
-                   assert(rightAltPressed);
-                   mode = [self rightOptionKey];
-                 }
-
-                 NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0)?
-                 [keystr dataUsingEncoding:NSUTF8StringEncoding]:
-                 [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
-                 if (keydat != nil) {
-                   send_str = (unsigned char *)[keydat bytes];
-                   send_strlen = [keydat length];
-                 }
-                 if (mode == OPT_ESC) {
-                   send_pchr = '\e';
-                 } else if (mode == OPT_META && send_str != NULL) {
-                   int i;
-                   for (i = 0; i < send_strlen; ++i) {
-                     send_str[i] |= 0x80;
-                   }
-                 }
-               } else {
-                 DLog(@"PTYSession keyDown regular path");
-                 // Regular path for inserting a character from a keypress.
-                 int max = [keystr length];
-                 NSData *data=nil;
-
-                 if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
-                   DLog(@"PTYSession keyDown non-ascii");
-                   data = [keystr dataUsingEncoding:[_terminal encoding]];
-                 } else {
-                   DLog(@"PTYSession keyDown ascii");
-                   data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
-                 }
-
-                 // Enter key is on numeric keypad, but not marked as such
-                 if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
-                   modflag |= NSNumericPadKeyMask;
-                   DLog(@"PTYSession keyDown enter key");
-                   keystr = @"\015";  // Enter key -> 0x0d
-                 }
-                 // Check if we are in keypad mode
-                 if (modflag & NSNumericPadKeyMask) {
-                   DLog(@"PTYSession keyDown numeric keyoad");
-                   data = [_terminal.output keypadData:unicode keystr:keystr];
-                 }
-
-                 int indMask = modflag & NSDeviceIndependentModifierFlagsMask;
-                 if ((indMask & NSCommandKeyMask) &&   // pressing cmd
-                     ([keystr isEqualToString:@"0"] ||  // pressed 0 key
-                      ([keystr intValue] > 0 && [keystr intValue] <= 9) || // or any other digit key
-                      [keystr isEqualToString:@"\r"])) {   // or enter
-                       // Do not send anything for cmd+number because the user probably
-                       // fat-fingered switching of tabs/windows.
-                       // Do not send anything for cmd+[shift]+enter if it wasn't
-                       // caught by the menu.
-                       DLog(@"PTYSession keyDown cmd+0-9 or cmd+enter");
-                       data = nil;
-                     }
-                 if (data != nil) {
-                   send_str = (unsigned char *)[data bytes];
-                   send_strlen = [data length];
-                   DLog(@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                        modflag, send_strlen, send_str[0], send_str[0]);
-                 }
-
-                 if ((modflag & NSControlKeyMask) &&
-                     send_strlen == 1 &&
-                     send_str[0] == '|') {
-                   DLog(@"PTYSession keyDown c-|");
-                   // Control-| is sent as Control-backslash
-                   send_str = (unsigned char*)"\034";
-                   send_strlen = 1;
-                 } else if ((modflag & NSControlKeyMask) &&
-                            (modflag & NSShiftKeyMask) &&
-                            send_strlen == 1 &&
-                            send_str[0] == '/') {
-                   DLog(@"PTYSession keyDown c-?");
-                   // Control-shift-/ is sent as Control-?
-                   send_str = (unsigned char*)"\177";
-                   send_strlen = 1;
-                 } else if ((modflag & NSControlKeyMask) &&
-                            send_strlen == 1 &&
-                            send_str[0] == '/') {
-                   DLog(@"PTYSession keyDown c-/");
-                   // Control-/ is sent as Control-/, but needs some help to do so.
-                   send_str = (unsigned char*)"\037"; // control-/
-                   send_strlen = 1;
-                 } else if ((modflag & NSShiftKeyMask) &&
-                            send_strlen == 1 &&
-                            send_str[0] == '\031') {
-                   DLog(@"PTYSession keyDown shift-tab -> esc[Z");
-                   // Shift-tab is sent as Esc-[Z (or "backtab")
-                   send_str = (unsigned char*)"\033[Z";
-                   send_strlen = 3;
-                 }
-
-               }
-
-    if (_exited == NO) {
-      if (send_pchr >= 0) {
-        // Send a prefix character (e.g., esc).
-        char c = send_pchr;
-        dataPtr = (unsigned char*)&c;
-        dataLength = 1;
-        [self writeTask:[NSData dataWithBytes:dataPtr length:dataLength]];
-      }
-
-      if (send_str != NULL) {
-        dataPtr = send_str;
-        dataLength = send_strlen;
-        [self writeTask:[NSData dataWithBytes:dataPtr length:dataLength]];
-      }
-    }
-  }
 }
 
 - (NSData *)backspaceData {
@@ -4734,14 +4744,21 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [[self class] pasteboardString];
 }
 
-- (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags
-{
+- (NSString *)mostRecentlySelectedText {
     PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
     if (session) {
         PTYTextView *textview = [session textview];
         if ([textview isAnyCharSelected]) {
-            [self pasteString:[textview selectedText] flags:flags];
+            return [textview selectedText];
         }
+    }
+    return nil;
+}
+
+- (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags {
+    NSString *string = [self mostRecentlySelectedText];
+    if (string) {
+        [self pasteString:string flags:flags];
     }
 }
 

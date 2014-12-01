@@ -77,7 +77,8 @@
     _pasteSpecialViewController = [[iTermPasteSpecialViewController alloc] init];
     [_pasteSpecialViewController view];
 
-    if (self.action == KEY_ACTION_PASTE_SPECIAL) {
+    if (self.action == KEY_ACTION_PASTE_SPECIAL ||
+        self.action == KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION) {
         [_pasteSpecialViewController loadSettingsFromString:self.parameterValue];
     } else {
         // Set a few defaults; otherwise everything is reasonable.
@@ -255,6 +256,7 @@
             [self setPasteSpecialHidden:YES];
             break;
 
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
         case KEY_ACTION_PASTE_SPECIAL:
             [_parameter setHidden:YES];
             [_parameterLabel setHidden:YES];
@@ -372,6 +374,7 @@
             self.parameterValue = [[_colorPresetsPopup selectedItem] title];
             break;
 
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
         case KEY_ACTION_PASTE_SPECIAL:
             self.parameterValue = [_pasteSpecialViewController stringEncodedSettings];
             break;
