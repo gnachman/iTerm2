@@ -367,22 +367,9 @@ DQ
                                                 <action selector="pasteOptions:" target="-1" id="tHt-uB-46s"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="5pd-MJ-ZcR"/>
                                         <menuItem title="Paste Selection" keyEquivalent="V" id="1164">
                                             <connections>
                                                 <action selector="pasteSelection:" target="-1" id="1167"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Paste Selection Escaping Special Characters" tag="1" id="1165">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="pasteSelection:" target="-1" id="1168"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Paste Selection with Literal Tabs" tag="4" id="IVX-cX-2lC">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="pasteSelection:" target="-1" id="ac5-bf-u92"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="meJ-Eb-j6h"/>
