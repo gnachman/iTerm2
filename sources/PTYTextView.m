@@ -5330,6 +5330,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return NSMakeRect(x, y, _charWidth, _lineHeight);
 }
 
+- (CGFloat)verticalOffset {
+    return self.frame.size.height - NSMaxY(self.enclosingScrollView.documentVisibleRect);
+}
+
 - (NSPoint)cursorLocationInScreenCoordinates {
     NSRect cursorFrame = [self cursorRect];
     CGFloat x = cursorFrame.origin.x + cursorFrame.size.width / 2;
@@ -5339,6 +5343,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         y = _imeCursorLastPos.y + _lineHeight / 2;
     }
     NSPoint p = NSMakePoint(x, y);
+    p.y += [self verticalOffset];
     p = [self convertPoint:p toView:nil];
     p = [[self window] pointToScreenCoords:p];
     return p;

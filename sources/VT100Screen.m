@@ -23,7 +23,7 @@
 
 #import <apr-1/apr_base64.h>
 #include <string.h>
-#include <unistd.h>
+
 
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
