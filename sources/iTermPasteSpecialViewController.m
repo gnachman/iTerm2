@@ -7,6 +7,7 @@
 //
 
 #import "iTermPasteSpecialViewController.h"
+#import "PasteEvent.h"
 
 typedef struct {
     double min;
@@ -16,6 +17,17 @@ typedef struct {
 
 static iTermFloatingRange kChunkSizeRange = { 1, 1024 * 1024, 1024 };
 static iTermFloatingRange kDelayRange = { 0.001, 10, .01 };
+
+// Keys for string encoding
+static NSString *const kChunkSize = @"ChunkSize";
+static NSString *const kDelayBetweenChunks = @"Delay";
+static NSString *const kNumberOfSpacesPerTab = @"TabStopSize";
+static NSString *const kSelectedTabTransform = @"TabTransform";
+static NSString *const kShouldConvertNewlines = @"ConvertNewlines";
+static NSString *const kShouldEscapeShellCharsWithBackslash = @"EscapeForShell";
+static NSString *const kShouldRemoveControlCodes = @"RemoveControls";
+static NSString *const kShouldUseBracketedPasteMode = @"BracketAllowed";
+static NSString *const kShouldBase64Encode = @"Base64";
 
 @implementation iTermPasteSpecialViewController {
     IBOutlet NSTextField *_spacesPerTab;
@@ -253,6 +265,142 @@ static iTermFloatingRange kDelayRange = { 0.001, 10, .01 };
 
 - (BOOL)shouldBase64Encode {
     return _base64Encode.state == NSOnState;
+}
+
+- (NSString *)stringEncodedSettings {
+    NSDictionary *dict =
+        @{ kChunkSize: @(self.chunkSize),
+           kDelayBetweenChunks: @(self.delayBetweenChunks),
+           kNumberOfSpacesPerTab: @(self.numberOfSpacesPerTab),
+           kSelectedTabTransform: @(self.selectedTabTransform),
+           kShouldConvertNewlines: @(self.shouldConvertNewlines),
+           kShouldEscapeShellCharsWithBackslash: @(self.shouldEscapeShellCharsWithBackslash),
+           kShouldRemoveControlCodes: @(self.shouldRemoveControlCodes),
+           kShouldUseBracketedPasteMode: @(self.shouldUseBracketedPasteMode),
+           kShouldBase64Encode: @(self.shouldBase64Encode) };
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict
+                                                       options:0
+                                                         error:nil];
+    return [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];
+}
+
++ (NSString *)descriptionForCodedSettings:(NSString *)jsonString {
+    NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:NULL];
+    iTermTabTransformTags tabTransform = [dict[kSelectedTabTransform] integerValue];
+    NSMutableArray *components = [NSMutableArray array];
+
+    if ([dict[kShouldBase64Encode] boolValue]) {
+        [components addObject:@"Base64"];
+    }
+
+    if (tabTransform == kTabTransformConvertToSpaces) {
+        [components addObject:[NSString stringWithFormat:@"Tabs->%@ spcs", dict[kNumberOfSpacesPerTab]]];
+    } else if (tabTransform == kTabTransformEscapeWithCtrlZ) {
+        [components addObject:@"^V+Tab"];
+    }
+
+    double delay = [dict[kDelayBetweenChunks] doubleValue];
+    if (delay > 1) {
+        [components addObject:@"V.Slow"];
+    } else if (delay > 0.25) {
+        [components addObject:@"Slow"];
+    } else if ([dict[kChunkSize] integerValue] > 100000) {
+        [components addObject:@"HugeChunks"];
+    }
+
+    if ([dict[kShouldEscapeShellCharsWithBackslash] boolValue]) {
+        [components addObject:@"\\Escape"];
+    }
+
+    if (![dict[kShouldRemoveControlCodes] boolValue]) {
+        [components addObject:@"UnsafeControls"];
+    }
+
+    if (![dict[kShouldUseBracketedPasteMode] boolValue]) {
+        [components addObject:@"BracketingOff"];
+    }
+
+    if (![dict[kShouldConvertNewlines] boolValue]) {
+        [components addObject:@"NoCRLFConversion"];
+    }
+
+    return [components componentsJoinedByString:@", "];
+}
+
+- (void)loadSettingsFromString:(NSString *)jsonString {
+    NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:NULL];
+    self.chunkSize = [dict[kChunkSize] integerValue];
+    self.delayBetweenChunks = [dict[kDelayBetweenChunks] doubleValue];
+    self.numberOfSpacesPerTab = [dict[kNumberOfSpacesPerTab] integerValue];
+    self.selectedTabTransform = [dict[kSelectedTabTransform] integerValue];
+    self.shouldConvertNewlines = [dict[kShouldConvertNewlines] boolValue];
+    self.shouldEscapeShellCharsWithBackslash = [dict[kShouldEscapeShellCharsWithBackslash] boolValue];
+    self.shouldRemoveControlCodes = [dict[kShouldRemoveControlCodes] boolValue];
+    self.shouldUseBracketedPasteMode = [dict[kShouldUseBracketedPasteMode] boolValue];
+    self.shouldBase64Encode = [dict[kShouldBase64Encode] boolValue];
+}
+
++ (PasteEvent *)pasteEventForConfig:(NSString *)jsonConfig string:(NSString *)string {
+    NSData *jsonData = [jsonConfig dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:NULL];
+
+    int chunkSize = [dict[kChunkSize] integerValue];
+    NSTimeInterval delayBetweenChunks = [dict[kDelayBetweenChunks] doubleValue];
+    int numberOfSpacesPerTab = [dict[kNumberOfSpacesPerTab] integerValue];
+    iTermTabTransformTags selectedTabTransform = [dict[kSelectedTabTransform] integerValue];
+    BOOL shouldConvertNewlines = [dict[kShouldConvertNewlines] boolValue];
+    BOOL shouldEscapeShellCharsWithBackslash = [dict[kShouldEscapeShellCharsWithBackslash] boolValue];
+    BOOL shouldRemoveControlCodes = [dict[kShouldRemoveControlCodes] boolValue];
+    BOOL shouldUseBracketedPasteMode = [dict[kShouldUseBracketedPasteMode] boolValue];
+    BOOL shouldBase64Encode = [dict[kShouldBase64Encode] boolValue];
+
+    NSUInteger flags = 0;
+    if (shouldConvertNewlines) {
+        flags |= kPasteFlagsSanitizingNewlines;
+    }
+    if (shouldEscapeShellCharsWithBackslash) {
+        flags |= kPasteFlagsEscapeSpecialCharacters;
+    }
+    if (shouldRemoveControlCodes) {
+        flags |= kPasteFlagsRemovingUnsafeControlCodes;
+    }
+    if (shouldUseBracketedPasteMode) {
+        flags |= kPasteFlagsBracket;
+    }
+    if (shouldBase64Encode) {
+        flags |= kPasteFlagsBase64Encode;
+    }
+    PasteEvent *pasteEvent = [PasteEvent pasteEventWithString:string
+                                                        flags:flags
+                                             defaultChunkSize:chunkSize
+                                                     chunkKey:nil
+                                                 defaultDelay:delayBetweenChunks
+                                                     delayKey:nil
+                                                 tabTransform:selectedTabTransform
+                                                 spacesPerTab:numberOfSpacesPerTab];
+    return pasteEvent;
+}
+
+- (iTermPasteFlags)flags {
+    NSUInteger flags = 0;
+    if (self.shouldConvertNewlines) {
+        flags |= kPasteFlagsSanitizingNewlines;
+    }
+    if (self.shouldEscapeShellCharsWithBackslash) {
+        flags |= kPasteFlagsEscapeSpecialCharacters;
+    }
+    if (self.shouldRemoveControlCodes) {
+        flags |= kPasteFlagsRemovingUnsafeControlCodes;
+    }
+    if (self.shouldUseBracketedPasteMode) {
+        flags |= kPasteFlagsBracket;
+    }
+    if (self.shouldBase64Encode) {
+        flags |= kPasteFlagsBase64Encode;
+    }
+    return flags;
 }
 
 @end

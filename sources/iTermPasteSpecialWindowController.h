@@ -7,8 +7,9 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "PasteEvent.h"
 
-typedef void (^iTermPasteSpecialCompletionBlock)(NSString *, NSInteger, NSTimeInterval);
+typedef void (^iTermPasteSpecialCompletionBlock)(PasteEvent *pasteEvent);
 
 @interface iTermPasteSpecialWindowController : NSWindowController
 

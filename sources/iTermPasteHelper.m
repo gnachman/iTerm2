@@ -11,9 +11,11 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermNumberOfSpacesAccessoryViewController.h"
+#import "iTermPasteSpecialViewController.h"
 #import "iTermPasteSpecialWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
+#import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
@@ -69,20 +71,12 @@
                                         delayBetweenChunks:chunkDelay
                                          bracketingEnabled:bracketingEnabled
                                                   encoding:[_delegate pasteHelperEncoding]
-                                                completion:^(NSString *string,
-                                                             NSInteger chosenChunkSize,
-                                                             NSTimeInterval chosenDelay) {
-                                                    [_buffer appendData:[string dataUsingEncoding:_delegate.pasteHelperEncoding]];
-
-                                                    [iTermPreferences setInt:chosenChunkSize
+                                                completion:^(PasteEvent *event) {
+                                                    [self pasteEvent:event];
+                                                    [iTermPreferences setInt:event.defaultChunkSize
                                                                       forKey:kPreferenceKeyPasteSpecialChunkSize];
-                                                    [iTermPreferences setFloat:chosenDelay
+                                                    [iTermPreferences setFloat:event.defaultDelay
                                                                         forKey:kPreferenceKeyPasteSpecialChunkDelay];
-
-                                                    [self pasteWithBytePerCallPrefKey:kPreferenceKeyPasteSpecialChunkSize
-                                                                         defaultValue:chosenChunkSize
-                                                             delayBetweenCallsPrefKey:kPreferenceKeyPasteSpecialChunkDelay
-                                                                         defaultValue:chosenDelay];
                                                 }];
 }
 
@@ -99,90 +93,153 @@
     return _timer != nil;
 }
 
-+ (NSString *)sanitizeString:(NSString *)theString
-                   withFlags:(iTermPasteFlags)flags {
++ (void)sanitizePasteEvent:(PasteEvent *)pasteEvent encoding:(NSStringEncoding)encoding {
+    NSUInteger flags = pasteEvent.flags;
+    NSString *theString = pasteEvent.string;
+
     if (flags & kPasteFlagsSanitizingNewlines) {
         // Convert DOS (\r\n) CRLF newlines and linefeeds (\n) into carriage returns (\r==13).
         theString = [theString stringWithLinefeedNewlines];
     }
 
-    NSMutableCharacterSet *controlSet = nil;
-    if (flags & kPasteFlagsRemovingUnsafeControlCodes) {
-        // All control codes except tab (9), newline (10), and form feed (12) are removed unless we are
-        // pasting with literal tabs, in which case we also keep LNEXT (22, ^V).
-        controlSet = [iTermPasteHelper unsafeControlCodeSet];
-    }
-
     if (flags & kPasteFlagsEscapeSpecialCharacters) {
-        // Paste escaping special characters
+        // Put backslash before anything the shell might interpret.
         theString = [theString stringWithEscapedShellCharacters];
     }
 
-    if (flags & kPasteFlagsWithShellEscapedTabs) {
-        // Remove ^Vs before adding them
-        theString = [theString stringByReplacingOccurrencesOfString:@"\x16" withString:@""];
-        // Add ^Vs before each tab.
-        theString = [theString stringWithShellEscapedTabs];
-        // Allow the ^Vs that were just added to survive cleaning up control chars.
-        [controlSet removeCharactersInRange:NSMakeRange(22, 1)];  // LNEXT (^V)
-    }
-
     if (flags & kPasteFlagsRemovingUnsafeControlCodes) {
-        // Remove control characters
+        // All control codes except tab (9), newline (10), form feed (12), and carriage return (13)
+        // are removed.
         theString =
-            [[theString componentsSeparatedByCharactersInSet:controlSet] componentsJoinedByString:@""];
+            [[theString componentsSeparatedByCharactersInSet:[iTermPasteHelper unsafeControlCodeSet]]
+                componentsJoinedByString:@""];
     }
 
-    if (flags & kPasteFlagsBracket) {
-        DLog(@"Send open bracket.");
-        NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
-        NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
-        NSArray *components = @[ startBracket, theString, endBracket ];
-        theString = [components componentsJoinedByString:@""];
+    switch (pasteEvent.tabTransform) {
+        case kTabTransformNone:
+            break;
+
+        case kTabTransformConvertToSpaces: {
+            NSString *spaces = [@" " stringRepeatedTimes:pasteEvent.spacesPerTab];
+            theString = [theString stringByReplacingOccurrencesOfString:@"\t"
+                                                             withString:spaces];
+            break;
+        }
+
+        case kTabTransformEscapeWithCtrlZ:
+            theString = [theString stringWithShellEscapedTabs];
+            break;
     }
 
-    return theString;
+    if (pasteEvent.flags & kPasteFlagsBase64Encode) {
+        NSData *temp = [pasteEvent.string dataUsingEncoding:encoding];
+        theString = [temp stringWithBase64EncodingWithLineBreak:@"\r"];
+    }
+
+    pasteEvent.string = theString;
 }
 
-- (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags {
+- (void)pasteString:(NSString *)theString stringConfig:(NSString *)jsonConfig {
+    PasteEvent *pasteEvent = [iTermPasteSpecialViewController pasteEventForConfig:jsonConfig
+                                                                           string:theString];
+    [self pasteEvent:pasteEvent];
+}
+
+- (void)pasteString:(NSString *)theString
+             slowly:(BOOL)slowly
+   escapeShellChars:(BOOL)escapeShellChars
+       tabTransform:(iTermTabTransformTags)tabTransform
+       spacesPerTab:(int)spacesPerTab {
+    NSUInteger bracketFlag = [_delegate pasteHelperShouldBracket] ? kPasteFlagsBracket : 0;
+    NSUInteger flags = (kPasteFlagsSanitizingNewlines |
+                        kPasteFlagsRemovingUnsafeControlCodes |
+                        bracketFlag);
+    if (escapeShellChars) {
+        flags |= kPasteFlagsEscapeSpecialCharacters;
+    }
+    int defaultChunkSize;
+    NSTimeInterval defaultDelay;
+    NSString *chunkKey;
+    NSString *delayKey;
+    if (slowly) {
+        defaultChunkSize = 16;
+        defaultDelay = 0.125;
+        chunkKey = @"SlowPasteBytesPerCall";
+        delayKey = @"SlowPasteDelayBetweenCalls";
+    } else {
+        defaultChunkSize = 1024;
+        defaultDelay = 0.01;
+        chunkKey = @"QuickPasteBytesPerCall";
+        delayKey = @"QuickPasteDelayBetweenCalls";
+    }
+    PasteEvent *event = [PasteEvent pasteEventWithString:theString
+                                                   flags:flags
+                                        defaultChunkSize:defaultChunkSize
+                                                chunkKey:chunkKey
+                                            defaultDelay:defaultDelay
+                                                delayKey:delayKey
+                                            tabTransform:tabTransform
+                                            spacesPerTab:spacesPerTab];
+    [self pasteEvent:event];
+}
+
+// this needs to take the delay, chunk size, key names, and the exact flags it wants
+- (void)pasteEvent:(PasteEvent *)pasteEvent {
+    static BOOL running;
+    assert(!running);
+    running = YES;
     DLog(@"-[iTermPasteHelper pasteString:flags:");
-    DLog(@"length=%@, flags=%@", @(theString.length), @(flags));
-    if ([theString length] == 0) {
+    DLog(@"length=%@, flags=%@", @(pasteEvent.string.length), @(pasteEvent.flags));
+    if ([pasteEvent.string length] == 0) {
         DLog(@"Tried to paste 0-byte string. Beep.");
         NSBeep();
+        running = NO;
         return;
     }
     if ([self isPasting]) {
         DLog(@"Already pasting. Enqueue event.");
-        [self enqueueEvent:[PasteEvent pasteEventWithString:theString flags:flags]];
+        [self enqueueEvent:pasteEvent];
+        running = NO;
         return;
     }
-    if (![self maybeWarnAboutMultiLinePaste:theString]) {
+    if (![self maybeWarnAboutMultiLinePaste:pasteEvent.string]) {
         DLog(@"Multiline paste declined.");
+        running = NO;
         return;
     }
 
     DLog(@"Sanitize control characters, escape, etc....");
 
-    NSUInteger bracketFlag = [_delegate pasteHelperShouldBracket] ? kPasteFlagsBracket : 0;
-    theString = [iTermPasteHelper sanitizeString:theString
-                                       withFlags:(flags |
-                                                  kPasteFlagsSanitizingNewlines |
-                                                  kPasteFlagsRemovingUnsafeControlCodes |
-                                                  bracketFlag)];
+    // A queued up paste command might have wanted bracketing but the host might not accept it
+    // any more.
+    if (![_delegate pasteHelperShouldBracket]) {
+        pasteEvent.flags = pasteEvent.flags & ~kPasteFlagsBracket;
+    }
 
-    DLog(@"String to paste now has length %@", @(theString.length));
-    if ([theString length] == 0) {
+    [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:[_delegate pasteHelperEncoding]];
+
+    if (pasteEvent.flags & kPasteFlagsBracket) {
+        DLog(@"Send open bracket.");
+        NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
+        NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
+        NSArray *components = @[ startBracket, pasteEvent.string, endBracket ];
+        pasteEvent.string = [components componentsJoinedByString:@""];
+    }
+
+    DLog(@"String to paste now has length %@", @(pasteEvent.string.length));
+    if ([pasteEvent.string length] == 0) {
         DLog(@"Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
         NSBeep();
+        running = NO;
         return;
     }
 
-    if (flags & kPTYSessionPasteSlowly) {
-        [self pasteSlowly:theString];
-    } else {
-        [self pasteNormally:theString];
-    }
+    [_buffer appendData:[pasteEvent.string dataUsingEncoding:[_delegate pasteHelperEncoding]]];
+    [self pasteWithBytePerCallPrefKey:pasteEvent.chunkKey
+                         defaultValue:pasteEvent.defaultChunkSize
+             delayBetweenCallsPrefKey:pasteEvent.delayKey
+                         defaultValue:pasteEvent.defaultDelay];
+    running = NO;
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
@@ -229,13 +286,14 @@
 
 - (void)dequeueEvents {
     DLog(@"Dequeueing paste events...");
-    int eventsSent = 0;
-    for (NSEvent *event in _eventQueue) {
-        ++eventsSent;
+    while (_eventQueue.count) {
+        NSEvent *event = [[[_eventQueue firstObject] retain] autorelease];
+        [_eventQueue removeObjectAtIndex:0];
         if ([event isKindOfClass:[PasteEvent class]]) {
             DLog(@"Found a queued paste event");
             PasteEvent *pasteEvent = (PasteEvent *)event;
-            [self pasteString:pasteEvent.string flags:pasteEvent.flags];
+            // -pasteEvent: can call dequeueEvents indirectly, so this method must be reentrant.
+            [self pasteEvent:pasteEvent];
             // Can't empty while pasting.
             break;
         } else {
@@ -244,7 +302,6 @@
         }
     }
     DLog(@"Done dequeueing paste events.");
-    [_eventQueue removeObjectsInRange:NSMakeRange(0, eventsSent)];
 }
 
 - (void)enqueueEvent:(NSEvent *)event {
@@ -354,30 +411,27 @@
     return selection == kiTermWarningSelection0;
 }
 
-- (NSString *)stringAfterPromptingUserToConvertTabsToSpaces:(NSString *)source {
+- (int)numberOfSpacesToConvertTabsTo:(NSString *)source {
     if ([source rangeOfString:@"\t"].location != NSNotFound) {
         iTermNumberOfSpacesAccessoryViewController *accessoryController =
             [[[iTermNumberOfSpacesAccessoryViewController alloc] init] autorelease];
 
         iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
-                                   actions:@[ @"Paste with tabs", @"Convert tabs to spaces", @"Cancel" ]
+                                   actions:@[ @"Paste with tabs", @"Convert tabs to spaces" ]
                                  accessory:accessoryController.view
                                 identifier:@"AboutToPasteTabs"
                                silenceable:kiTermWarningTypePermanentlySilenceable];
         switch (selection) {
-            case kiTermWarningSelection0:
-                return source;
             case kiTermWarningSelection1:
                 [accessoryController saveToUserDefaults];
-                return [source stringByReplacingOccurrencesOfString:@"\t"
-                                                         withString:[@" " stringRepeatedTimes:accessoryController.numberOfSpaces]];
-            case kiTermWarningSelection2:
+                return accessoryController.numberOfSpaces;
+            case kiTermWarningSelection0:
             default:
-                return nil;
+                return -1;
         }
     }
-    return source;
+    return -1;
 }
 
 #pragma mark - PasteViewControllerDelegate

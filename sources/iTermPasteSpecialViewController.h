@@ -7,13 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-
-// These values correspond to cell tags on the matrix.
-NS_ENUM(NSInteger, iTermTabTransformTags) {
-    kTabTransformNone = 0,
-    kTabTransformConvertToSpaces = 1,
-    kTabTransformEscapeWithCtrlZ = 2
-};
+#import "PasteEvent.h"
 
 @protocol iTermPasteSpecialViewControllerDelegate <NSObject>
 
@@ -42,6 +36,13 @@ NS_ENUM(NSInteger, iTermTabTransformTags) {
 @property(nonatomic, assign, getter=isBase64Enabled) BOOL enableBase64;
 @property(nonatomic, assign) BOOL shouldBase64Encode;
 
+@property(nonatomic, readonly) NSString *stringEncodedSettings;
+@property(nonatomic, readonly) iTermPasteFlags flags;
+
++ (NSString *)descriptionForCodedSettings:(NSString *)jsonString;
++ (PasteEvent *)pasteEventForConfig:(NSString *)jsonConfig string:(NSString *)string;
+
 - (NSString *)descriptionForDuration:(NSTimeInterval)duration;
+- (void)loadSettingsFromString:(NSString *)jsonString;
 
 @end

@@ -49,7 +49,6 @@
 
 @interface iTermPasteSpecialWindowController () <iTermPasteSpecialViewControllerDelegate>
 
-@property(nonatomic, readonly) NSString *stringToPaste;
 @property(nonatomic, assign) BOOL shouldPaste;
 @property(nonatomic, assign) NSInteger chunkSize;
 @property(nonatomic, assign) NSTimeInterval delayBetweenChunks;
@@ -253,7 +252,9 @@
 }
 
 - (void)updatePreview {
-    _preview.string = [self stringByProcessingString:_rawString];
+    PasteEvent *pasteEvent = [self pasteEvent];
+    [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:_encoding];
+    _preview.string = pasteEvent.string;
     NSNumberFormatter *bytesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
     int numBytes = _preview.string.length;
     if (numBytes < 10) {
@@ -319,9 +320,7 @@
     [window close];
 
     if (controller.shouldPaste) {
-        completion(controller.stringToPaste,
-                   controller.chunkSize,
-                   controller.delayBetweenChunks);
+        completion(controller.pasteEvent);
         [controller saveUserDefaults];
     }
 }
@@ -363,54 +362,15 @@
     }
 }
 
-- (NSString *)stringToPaste {
-    NSString *unbracketed = [self stringByProcessingString:_rawString];
-    if (_pasteSpecialViewController.shouldUseBracketedPasteMode == NSOnState) {
-        return [iTermPasteHelper sanitizeString:unbracketed withFlags:kPasteFlagsBracket];
-    } else {
-        return unbracketed;
-    }
-}
-
-- (NSString *)stringByProcessingString:(NSString *)string {
-    NSUInteger flags = 0;
-    if (_pasteSpecialViewController.isConvertNewlinesEnabled &&
-        _pasteSpecialViewController.shouldConvertNewlines) {
-        flags |= kPasteFlagsSanitizingNewlines;
-    }
-    if (_pasteSpecialViewController.isEscapeShellCharsWithBackslashEnabled &&
-        _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash) {
-        flags |= kPasteFlagsEscapeSpecialCharacters;
-    }
-    if (_pasteSpecialViewController.areTabTransformsEnabled) {
-        switch (_pasteSpecialViewController.selectedTabTransform) {
-            case kTabTransformNone:
-                break;
-
-            case kTabTransformConvertToSpaces: {
-                NSString *spaces =
-                    [@" " stringRepeatedTimes:_pasteSpecialViewController.numberOfSpacesPerTab];
-                string = [string stringByReplacingOccurrencesOfString:@"\t"
-                                                           withString:spaces];
-                break;
-            }
-
-            case kTabTransformEscapeWithCtrlZ:
-                flags |= kPasteFlagsWithShellEscapedTabs;
-                break;
-        }
-    }
-    if (_pasteSpecialViewController.shouldRemoveControlCodes) {
-        flags |= kPasteFlagsRemovingUnsafeControlCodes;
-    }
-
-    string = [iTermPasteHelper sanitizeString:string withFlags:flags];
-
-    if (_pasteSpecialViewController.shouldBase64Encode) {
-        string = [[string dataUsingEncoding:_encoding] stringWithBase64EncodingWithLineBreak:@"\r"];
-    }
-
-    return string;
+- (PasteEvent *)pasteEvent {
+    return [PasteEvent pasteEventWithString:_rawString
+                                      flags:_pasteSpecialViewController.flags
+                           defaultChunkSize:self.chunkSize
+                                   chunkKey:nil
+                               defaultDelay:self.delayBetweenChunks
+                                   delayKey:nil
+                               tabTransform:_pasteSpecialViewController.selectedTabTransform
+                               spacesPerTab:_pasteSpecialViewController.numberOfSpacesPerTab];
 }
 
 #pragma mark - Actions

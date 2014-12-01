@@ -4208,6 +4208,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                               ignoringCase:NO
                                                                      regex:YES];
         break;
+        case KEY_ACTION_PASTE_SPECIAL: {
+            NSString *string = [NSString stringFromPasteboard];
+            if (string.length) {
+                [_pasteHelper pasteString:[NSString stringFromPasteboard]
+                             stringConfig:keyBindingText];
+            }
+        }
+            break;
       default:
         NSLog(@"Unknown key action %d", keyBindingAction);
         break;
@@ -4491,13 +4499,27 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // Pastes a specific string. All pastes go through this method. Adds to the event queue if a paste
 // is in progress.
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags {
-    DLog(@"pasteString:flags: length=%@ flags=%@", @([theString length]), @(flags));
-    NSString *converted = [_pasteHelper stringAfterPromptingUserToConvertTabsToSpaces:theString];
-    DLog(@"After converting tabs length=%@", @([converted length]));
-    if (converted) {
-        DLog(@"Calling pasteString:flags: on helper...");
-        [_pasteHelper pasteString:converted flags:flags];
+    if (!theString.length) {
+        return;
     }
+    DLog(@"pasteString:flags: length=%@ flags=%@", @([theString length]), @(flags));
+    iTermTabTransformTags tabTransform = kTabTransformNone;
+    int spacesPerTab = -1;
+    if (flags & kPTYSessionPasteWithShellEscapedTabs) {
+        tabTransform = kTabTransformEscapeWithCtrlZ;
+    } else if (!_terminal.bracketedPasteMode) {
+        spacesPerTab = [_pasteHelper numberOfSpacesToConvertTabsTo:theString];
+        if (spacesPerTab >= 0) {
+            tabTransform = kTabTransformConvertToSpaces;
+        }
+    }
+
+    DLog(@"Calling pasteString:flags: on helper...");
+    [_pasteHelper pasteString:theString
+                       slowly:flags
+             escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
+                 tabTransform:tabTransform
+                 spacesPerTab:spacesPerTab];
 }
 
 // Pastes the current string in the clipboard. Uses the sender's tag to get flags.

@@ -36,11 +36,18 @@
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet;
 
-+ (NSString *)sanitizeString:(NSString *)theString
-                   withFlags:(iTermPasteFlags)flags;
++ (void)sanitizePasteEvent:(PasteEvent *)pasteEvent
+                  encoding:(NSStringEncoding)encoding;
 
 // Queue up a string to paste. If the queue is empty, it will begin pasting immediately.
-- (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags;
+- (void)pasteString:(NSString *)theString
+             slowly:(BOOL)slowly
+   escapeShellChars:(BOOL)escapeShellChars
+       tabTransform:(iTermTabTransformTags)tabTransform
+       spacesPerTab:(int)spacesPerTab;
+
+// The string comes from the paste special view controller.
+- (void)pasteString:(NSString *)theString stringConfig:(NSString *)jsonConfig;
 
 // Save an event to process after pasting is done.
 - (void)enqueueEvent:(NSEvent *)event;
@@ -51,6 +58,6 @@
 - (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled;
 
 // Convert tabs to spaces in source, perhaps asking the user questions in modal alerts.
-- (NSString *)stringAfterPromptingUserToConvertTabsToSpaces:(NSString *)source;
+- (int)numberOfSpacesToConvertTabsTo:(NSString *)source;
 
 @end

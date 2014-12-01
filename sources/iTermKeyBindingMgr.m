@@ -73,6 +73,7 @@
 
 #import "ITAddressBookMgr.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
 #import "HotkeyWindowController.h"
 #import <Carbon/Carbon.h>
@@ -416,6 +417,16 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case KEY_ACTION_FIND_REGEX:
             actionString = [NSString stringWithFormat:@"Find Regex “%@”", auxText];
             break;
+        case KEY_ACTION_PASTE_SPECIAL: {
+            NSString *pasteDetails =
+                [iTermPasteSpecialViewController descriptionForCodedSettings:auxText];
+            if (pasteDetails.length) {
+                actionString = [NSString stringWithFormat:@"Paste Special: %@", pasteDetails];
+            } else {
+                actionString = @"Paste Special";
+            }
+            break;
+        }
         default:
             actionString = [NSString stringWithFormat: @"%@ %d", @"Unknown Action ID", action];
             break;
