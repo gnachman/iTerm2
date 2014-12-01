@@ -372,6 +372,12 @@ DQ
                                                 <action selector="pasteSelection:" target="-1" id="1167"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Paste File Base64-Encoded" id="Xn8-na-Zys">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="pasteBase64Encoded:" target="-1" id="GCk-nQ-lWq"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="meJ-Eb-j6h"/>
                                         <menuItem title="Paste Slowly" tag="2" id="1166">
                                             <modifierMask key="keyEquivalentModifierMask"/>

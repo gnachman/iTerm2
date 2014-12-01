@@ -79,6 +79,9 @@
     IBOutlet NSView *_pasteSpecialViewContainer;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
+
+    // Object to paste not representable as a string and is pre-base64 encoded.
+    BOOL _base64only;
 }
 
 - (instancetype)initWithChunkSize:(NSInteger)chunkSize
@@ -195,7 +198,7 @@
     NSObject *value = _originalValues[index];
     NSString *string;
     BOOL isData = ![value isKindOfClass:[NSString class]];
-    BOOL base64Only = NO;
+    _base64only = NO;
     if (isData) {
         NSData *data;
         if ([value isKindOfClass:[NSData class]]) {
@@ -207,7 +210,7 @@
         // If the data happens to be valid UTF-8 data then don't insist on base64 encoding it.
         string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
         if (!string) {
-            base64Only = YES;
+            _base64only = YES;
             string = [data stringWithBase64EncodingWithLineBreak:@"\r"];
         }
     } else {
@@ -245,8 +248,8 @@
     _pasteSpecialViewController.shouldRemoveControlCodes = (containsControlCodes && removeValue);
     _pasteSpecialViewController.enableBracketedPaste = _bracketingEnabled;
     _pasteSpecialViewController.shouldUseBracketedPasteMode = (_bracketingEnabled && shouldBracket);
-    _pasteSpecialViewController.enableBase64 = !base64Only;
-    _pasteSpecialViewController.shouldBase64Encode = base64Only;
+    _pasteSpecialViewController.enableBase64 = !_base64only;
+    _pasteSpecialViewController.shouldBase64Encode = _base64only;
 
     [self updatePreview];
 }
@@ -363,8 +366,13 @@
 }
 
 - (PasteEvent *)pasteEvent {
+    iTermPasteFlags flags = _pasteSpecialViewController.flags;
+    if (_base64only) {
+        // We already base64 encoded the data, so don't set the flag or else it gets double encoded.
+        flags &= ~kPasteFlagsBase64Encode;
+    }
     return [PasteEvent pasteEventWithString:_rawString
-                                      flags:_pasteSpecialViewController.flags
+                                      flags:flags
                            defaultChunkSize:self.chunkSize
                                    chunkKey:nil
                                defaultDelay:self.delayBetweenChunks
