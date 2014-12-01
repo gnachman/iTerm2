@@ -5410,7 +5410,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     self.cursorVisible = YES;
     if (!_findCursorView) {
-        NSLog(@"Create find cursor window");
         [self createFindCursorWindow];
     }
     if (hold) {
@@ -5431,8 +5430,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)closeFindCursorWindow:(NSWindow *)win {
     [win close];
-    [_findCursorView stopBlinkNotifications];
-    [_findCursorView stopTearDownTimer];
 }
 
 - (void)findCursorViewDismiss {
@@ -5445,6 +5442,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self performSelector:@selector(closeFindCursorWindow:)
                withObject:_findCursorWindow
                afterDelay:[[NSAnimationContext currentContext] duration]];
+    [_findCursorView performSelector:@selector(stopBlinkNotifications)
+                          withObject:nil
+                          afterDelay:[[NSAnimationContext currentContext] duration]];
+    [_findCursorView stopTearDownTimer];
     _findCursorWindow = nil;
     _findCursorView.stopping = YES;
     _findCursorView = nil;
