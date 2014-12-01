@@ -1708,6 +1708,14 @@
 		A6E77FA31A2A8A5A009B1CB6 /* NSData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */; };
 		A6E77FA41A2A8A5A009B1CB6 /* NSData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */; };
 		A6E77FA51A2A8A5A009B1CB6 /* NSData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */; };
+		A6E77FAC1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E77FAA1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib */; };
+		A6E77FAD1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E77FAA1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib */; };
+		A6E77FAE1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6E77FAA1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib */; };
+		A6E77FB11A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77FAF1A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h */; };
+		A6E77FB21A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E77FAF1A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h */; };
+		A6E77FB31A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */; };
+		A6E77FB41A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */; };
+		A6E77FB51A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */; };
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0619DBCB01005C79E8 /* iTermIntegerNumberFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */; };
@@ -2458,6 +2466,9 @@
 		A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteSpecialWindowController.m; sourceTree = "<group>"; };
 		A6E77F9F1A2A8A5A009B1CB6 /* NSData+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+iTerm.h"; sourceTree = "<group>"; };
 		A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+iTerm.m"; sourceTree = "<group>"; };
+		A6E77FAB1A2BE350009B1CB6 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/NumberOfSpacesAccessoryView.xib; sourceTree = "<group>"; };
+		A6E77FAF1A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNumberOfSpacesAccessoryViewController.h; sourceTree = "<group>"; };
+		A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNumberOfSpacesAccessoryViewController.m; sourceTree = "<group>"; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
@@ -2600,7 +2611,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A6E77F941A2A63E3009B1CB6 /* iTermPasteSpecialWindow.xib */,
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -2907,6 +2917,7 @@
 			isa = PBXGroup;
 			children = (
 				A663011C19CFE64B004AF81C /* AboutWindow.xib */,
+				A6E77F941A2A63E3009B1CB6 /* iTermPasteSpecialWindow.xib */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
 				A6E713B218FCB559008D94DD /* English.lproj/AdvancedWorkingDirectoryWindow.xib */,
 				A6E7139B18F7B199008D94DD /* English.lproj/BulkCopyProfilePreferences.xib */,
@@ -2928,6 +2939,7 @@
 				9325FF460FB54DF1004EC67C /* ProfilesWindow.xib */,
 				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
 				1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */,
+				A6E77FAA1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib */,
 			);
 			name = "Interface Builder Files";
 			sourceTree = "<group>";
@@ -3617,6 +3629,8 @@
 				A663011619CFE450004AF81C /* iTermAboutWindowController.m */,
 				A6E77F981A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h */,
 				A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */,
+				A6E77FAF1A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h */,
+				A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -3848,6 +3862,7 @@
 				1D6ED8C319AEA20D005A7799 /* SessionView.h in Headers */,
 				1D6ED8C419AEA20D005A7799 /* ScreenChar.h in Headers */,
 				1D6ED8C519AEA20D005A7799 /* UKCrashReporter.h in Headers */,
+				A6E77FB21A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */,
 				A6E77F821A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
 				1D6ED8C619AEA20D005A7799 /* UKNibOwner.h in Headers */,
 				1D6ED8C719AEA20D005A7799 /* VT100GridTest.h in Headers */,
@@ -4163,6 +4178,7 @@
 				1D2E813112A18F7500F3D71E /* SessionView.h in Headers */,
 				1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */,
 				1D94EAAE12D64022008225A9 /* UKCrashReporter.h in Headers */,
+				A6E77FB11A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */,
 				A6E77F811A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
 				1D94EAB212D64022008225A9 /* UKNibOwner.h in Headers */,
 				1DD39B14180B819A004E56D5 /* VT100GridTest.h in Headers */,
@@ -4563,6 +4579,7 @@
 				1D6ED9DA19AEA20D005A7799 /* Alert@2x.png in Resources */,
 				1D6ED9DB19AEA20D005A7799 /* English.lproj/PasteView.xib in Resources */,
 				1D6ED9DC19AEA20D005A7799 /* PrefsGeneral.png in Resources */,
+				A6E77FAE1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib in Resources */,
 				1D6ED9DD19AEA20D005A7799 /* NewOutput.png in Resources */,
 				1D6ED9DE19AEA20D005A7799 /* PrefsAdvanced.png in Resources */,
 				1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */,
@@ -4622,6 +4639,7 @@
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A6E713B718FCB559008D94DD /* English.lproj/AdvancedWorkingDirectoryWindow.xib in Resources */,
 				A6E77F961A2A63E3009B1CB6 /* iTermPasteSpecialWindow.xib in Resources */,
+				A6E77FAD1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib in Resources */,
 				A663011F19CFE64B004AF81C /* AboutWindow.xib in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
@@ -4724,6 +4742,7 @@
 				1DEF5E6F185F889600300319 /* Alert@2x.png in Resources */,
 				1D085F8916F030FB00B7FCE9 /* English.lproj/PasteView.xib in Resources */,
 				9D737D5F17495B4100B3334D /* PrefsGeneral.png in Resources */,
+				A6E77FAC1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib in Resources */,
 				A6B70FC119830F0D007A4284 /* NewOutput.png in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				9D737D6017495B4100B3334D /* PrefsGeneral@2x.png in Resources */,
@@ -5002,6 +5021,7 @@
 				1D6EDAAE19AEA20D005A7799 /* ContextMenuActionPrefsController.m in Sources */,
 				1D6EDAAF19AEA20D005A7799 /* ProfilesColorsPreferencesViewController.m in Sources */,
 				1D6EDAB019AEA20D005A7799 /* ToolDirectoriesView.m in Sources */,
+				A6E77FB51A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */,
 				1D6EDAB119AEA20D005A7799 /* TmuxGateway.m in Sources */,
 				1D6EDAB219AEA20D005A7799 /* TmuxController.m in Sources */,
 				1D6EDAB319AEA20D005A7799 /* NSStringCategoryTest.m in Sources */,
@@ -5254,6 +5274,7 @@
 				1DD39B16180B81B3004E56D5 /* VT100GridTest.m in Sources */,
 				A6057C0B187A1809004A60AF /* TerminalFile.m in Sources */,
 				A682DE9D1915DB1F00BE8758 /* iTermFlippedView.m in Sources */,
+				A6E77FB41A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */,
 				1D9A558C180FA87000B42CE9 /* PasteView.m in Sources */,
 				1D9A557E180FA87000B42CE9 /* FindView.m in Sources */,
 				A6E74763188C679C005355CF /* iTermExposeView.m in Sources */,
@@ -5573,6 +5594,7 @@
 				1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */,
 				A6E713C018FCF036008D94DD /* ProfilesColorsPreferencesViewController.m in Sources */,
 				1D4983511912FC0B002E942D /* ToolDirectoriesView.m in Sources */,
+				A6E77FB31A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m in Sources */,
 				1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */,
 				1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */,
 				A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */,
@@ -5784,6 +5806,14 @@
 				A663011D19CFE64B004AF81C /* English */,
 			);
 			name = AboutWindow.xib;
+			sourceTree = "<group>";
+		};
+		A6E77FAA1A2BE350009B1CB6 /* NumberOfSpacesAccessoryView.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A6E77FAB1A2BE350009B1CB6 /* English */,
+			);
+			name = NumberOfSpacesAccessoryView.xib;
 			sourceTree = "<group>";
 		};
 		FB151F2903648AC401F955DB /* iTerm.strings */ = {

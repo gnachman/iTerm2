@@ -98,6 +98,8 @@ NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines = @"ConvertDosNewli
 NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes = @"RemoveControlCodes";
 NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode = @"BracketedPasteMode";
 
+NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStringTabStopSize";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -208,6 +210,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyPasteSpecialConvertDosNewlines: @YES,
                   kPreferenceKeyPasteSpecialRemoveControlCodes: @YES,
                   kPreferenceKeyPasteSpecialBracketedPasteMode: @YES,
+
+                  kPreferenceKeyPasteWarningNumberOfSpacesPerTab: @4,
               };
         [dict retain];
     }

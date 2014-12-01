@@ -4490,12 +4490,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 // Pastes a specific string. All pastes go through this method. Adds to the event queue if a paste
 // is in progress.
-- (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags
-{
+- (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags {
     DLog(@"pasteString:flags: length=%@ flags=%@", @([theString length]), @(flags));
-    iTermApplicationDelegate *itad =
-            (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    NSString *converted = [itad stringByConvertingTabsToSpacesForPaste:theString];
+    NSString *converted = [_pasteHelper stringAfterPromptingUserToConvertTabsToSpaces:theString];
     DLog(@"After converting tabs length=%@", @([converted length]));
     if (converted) {
         DLog(@"Calling pasteString:flags: on helper...");

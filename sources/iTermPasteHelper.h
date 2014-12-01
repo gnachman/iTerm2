@@ -50,4 +50,7 @@
 
 - (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled;
 
+// Convert tabs to spaces in source, perhaps asking the user questions in modal alerts.
+- (NSString *)stringAfterPromptingUserToConvertTabsToSpaces:(NSString *)source;
+
 @end

@@ -1093,33 +1093,6 @@ static BOOL hasBecomeActive = NO;
     return -1;
 }
 
-- (NSString *)stringByConvertingTabsToSpacesForPaste:(NSString *)source {
-    if ([source rangeOfString:@"\t"].location != NSNotFound) {
-        iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
-                                       actions:@[ @"Paste with tabs", @"Convert tabs to spaces" ]
-                                    identifier:@"AboutToPasteTabs"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable];
-        if (selection == kiTermWarningSelection1) {
-            NSString *const kTabStopSizeKey = @"PasteTabToStringTabStopSize";
-            int theDefault = [[NSUserDefaults standardUserDefaults] integerForKey:kTabStopSizeKey];
-            if (theDefault <= 0) {
-                theDefault = 4;
-            }
-            int n = [self promptForNumberOfSpacesToConverTabsToWithDefault:theDefault];
-            if (n < 0) {
-                return nil;
-            } else {
-                [[NSUserDefaults standardUserDefaults] setInteger:n
-                                                           forKey:kTabStopSizeKey];
-                return [source stringByReplacingOccurrencesOfString:@"\t"
-                                                         withString:[@" " stringRepeatedTimes:n]];
-            }
-        }
-    }
-    return source;
-}
-
 - (BOOL)warnBeforeMultiLinePaste {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     return ![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];

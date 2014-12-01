@@ -122,6 +122,8 @@ extern NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines;
 extern NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes;
 extern NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode;
 
+extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;
+
 @interface iTermPreferences : NSObject
 
 // This should be called early during startup to set user defaults keys that fix problematic Apple

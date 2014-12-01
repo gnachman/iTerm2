@@ -23,4 +23,10 @@ typedef enum {
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType;
 
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                    accessory:(NSView *)accessory
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType;
+
 @end

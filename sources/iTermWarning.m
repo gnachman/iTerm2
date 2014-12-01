@@ -8,8 +8,16 @@ static NSString *const kCancel = @"Cancel";
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
                                    identifier:(NSString *)identifier
-                                  silenceable:(iTermWarningType)warningType
-{
+                                  silenceable:(iTermWarningType)warningType {
+    return [self showWarningWithTitle:title actions:actions accessory:nil identifier:identifier silenceable:warningType];
+}
+
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                  actions:(NSArray *)actions
+                                    accessory:(NSView *)accessory
+                               identifier:(NSString *)identifier
+                              silenceable:(iTermWarningType)warningType {
+
     if (warningType != kiTermWarningTypePersistent && [self identifierIsSilenced:identifier]) {
         return [self savedSelectionForIdentifier:identifier];
     }
@@ -43,6 +51,10 @@ static NSString *const kCancel = @"Cancel";
             alert.suppressionButton.title = @"Do not warn again and use my choice from now on";
         }
         alert.showsSuppressionButton = YES;
+    }
+
+    if (accessory) {
+        [alert setAccessoryView:accessory];
     }
     
     NSInteger result = [alert runModal];

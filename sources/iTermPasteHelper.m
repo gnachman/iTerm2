@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermNumberOfSpacesAccessoryViewController.h"
 #import "iTermPasteSpecialWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
@@ -353,6 +354,31 @@
     return selection == kiTermWarningSelection0;
 }
 
+- (NSString *)stringAfterPromptingUserToConvertTabsToSpaces:(NSString *)source {
+    if ([source rangeOfString:@"\t"].location != NSNotFound) {
+        iTermNumberOfSpacesAccessoryViewController *accessoryController =
+            [[[iTermNumberOfSpacesAccessoryViewController alloc] init] autorelease];
+
+        iTermWarningSelection selection =
+        [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
+                                   actions:@[ @"Paste with tabs", @"Convert tabs to spaces", @"Cancel" ]
+                                 accessory:accessoryController.view
+                                identifier:@"AboutToPasteTabs"
+                               silenceable:kiTermWarningTypePermanentlySilenceable];
+        switch (selection) {
+            case kiTermWarningSelection0:
+                return source;
+            case kiTermWarningSelection1:
+                [accessoryController saveToUserDefaults];
+                return [source stringByReplacingOccurrencesOfString:@"\t"
+                                                         withString:[@" " stringRepeatedTimes:accessoryController.numberOfSpaces]];
+            case kiTermWarningSelection2:
+            default:
+                return nil;
+        }
+    }
+    return source;
+}
 
 #pragma mark - PasteViewControllerDelegate
 
