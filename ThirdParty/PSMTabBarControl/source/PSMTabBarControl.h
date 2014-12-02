@@ -153,46 +153,29 @@ enum {
 + (NSBundle *)bundle;
 
 // control configuration
-- (PSMTabBarOrientation)orientation;
-- (void)setOrientation:(PSMTabBarOrientation)value;
-- (BOOL)disableTabClose;
-- (void)setDisableTabClose:(BOOL)value;
-- (id<PSMTabStyle>)style;
-- (void)setStyle:(id <PSMTabStyle>)newStyle;
-- (BOOL)hideForSingleTab;
-- (void)setHideForSingleTab:(BOOL)value;
-- (BOOL)showAddTabButton;
-- (void)setShowAddTabButton:(BOOL)value;
-- (int)cellMinWidth;
-- (void)setCellMinWidth:(int)value;
-- (int)cellMaxWidth;
-- (void)setCellMaxWidth:(int)value;
-- (int)cellOptimumWidth;
-- (void)setCellOptimumWidth:(int)value;
-- (BOOL)sizeCellsToFit;
-- (void)setSizeCellsToFit:(BOOL)value;
-- (BOOL)useOverflowMenu;
-- (void)setUseOverflowMenu:(BOOL)value;
-- (BOOL)allowsBackgroundTabClosing;
-- (void)setAllowsBackgroundTabClosing:(BOOL)value;
-- (BOOL)allowsResizing;
-- (void)setAllowsResizing:(BOOL)value;
-- (BOOL)selectsTabsOnMouseDown;
-- (void)setSelectsTabsOnMouseDown:(BOOL)value;
-- (BOOL)automaticallyAnimates;
-- (void)setAutomaticallyAnimates:(BOOL)value;
-- (int)tabLocation;
-- (void)setTabLocation:(int)value;
+@property(nonatomic, assign) PSMTabBarOrientation orientation;
+@property(nonatomic, assign) BOOL disableTabClose;
+@property(nonatomic, retain) id<PSMTabStyle> style;
+@property(nonatomic, assign) BOOL hideForSingleTab;
+@property(nonatomic, assign) BOOL showAddTabButton;
+@property(nonatomic, assign) int cellMinWidth;
+@property(nonatomic, assign) int cellMaxWidth;
+@property(nonatomic, assign) int cellOptimumWidth;
+@property(nonatomic, assign) BOOL sizeCellsToFit;
+@property(nonatomic, assign) BOOL useOverflowMenu;
+@property(nonatomic, assign) BOOL allowsBackgroundTabClosing;
+@property(nonatomic, assign) BOOL allowsResizing;
+@property(nonatomic, assign) BOOL selectsTabsOnMouseDown;
+@property(nonatomic, assign) BOOL automaticallyAnimates;
+@property(nonatomic, assign) int tabLocation;
+
+@property(nonatomic, retain) NSTabView *tabView;
+@property(nonatomic, assign) id<PSMTabBarControlDelegate> delegate;
+@property(nonatomic, retain) id partnerView;
+
+
 - (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex;
 - (void)moveTabAtIndex:(NSInteger)i1 toIndex:(NSInteger)i2;
-
-// accessors
-- (NSTabView *)tabView;
-- (void)setTabView:(NSTabView *)view;
-- (id<PSMTabBarControlDelegate>)delegate;
-- (void)setDelegate:(id<PSMTabBarControlDelegate>)object;
-- (id)partnerView;
-- (void)setPartnerView:(id)view;
 
 // the buttons
 - (PSMRolloverButton *)addTabButton;
