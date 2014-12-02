@@ -768,6 +768,7 @@ const CGFloat kDefaultTagsWidth = 80;
         margin_ = 5;
         [self resizeSubviewsWithOldSize:self.frame.size];
     }
+    [tagsView_ setFont:theFont];
 }
 
 - (void)disableArrowHandler

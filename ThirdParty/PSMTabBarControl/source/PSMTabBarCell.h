@@ -8,10 +8,10 @@
 
 #import <Cocoa/Cocoa.h>
 #import "PSMTabBarControl.h"
+#import "PSMProgressIndicator.h"
 
 @class PSMTabBarControl;
 @protocol PSMTabStyle;
-@class PSMProgressIndicator;
 
 @protocol PSMTabBarControlProtocol <NSObject>
 - (void)tabClick:(id)sender;
@@ -46,7 +46,7 @@
 - (NSAttributedString *)attributedStringValue;
 - (int)tabState;
 - (void)setTabState:(int)state;
-- (NSProgressIndicator *)indicator;
+- (PSMProgressIndicator *)indicator;
 - (BOOL)isInOverflowMenu;
 - (void)setIsInOverflowMenu:(BOOL)value;
 - (BOOL)closeButtonPressed;

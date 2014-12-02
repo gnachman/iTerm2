@@ -21,4 +21,6 @@
 @property(nonatomic, assign) id<ProfileTagsViewDelegate> delegate;
 @property(nonatomic, readonly) NSArray *selectedTags;
 
+- (void)setFont:(NSFont *)font;
+
 @end

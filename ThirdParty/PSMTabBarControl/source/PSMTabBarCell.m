@@ -176,7 +176,7 @@
     _tabState = state;
 }
 
-- (NSProgressIndicator *)indicator
+- (PSMProgressIndicator *)indicator
 {
     return _indicator;
 }

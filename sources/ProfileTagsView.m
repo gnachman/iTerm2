@@ -175,4 +175,12 @@ static const CGFloat kRowHeight = 21;
     return _cache;
 }
 
+- (void)setFont:(NSFont *)theFont {
+    for (NSTableColumn *col in [_tableView tableColumns]) {
+        [[col dataCell] setFont:theFont];
+    }
+    NSLayoutManager* layoutManager = [[[NSLayoutManager alloc] init] autorelease];
+    [_tableView setRowHeight:[layoutManager defaultLineHeightForFont:theFont]];
+}
+
 @end
