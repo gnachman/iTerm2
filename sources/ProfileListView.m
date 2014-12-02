@@ -444,15 +444,18 @@ const CGFloat kDefaultTagsWidth = 80;
                                             tag:(NSString *)tags
                                        selected:(BOOL)selected
                                       isDefault:(BOOL)isDefault {
-    NSColor* textColor;
+    NSColor *textColor;
+    NSColor *tagColor;
     if (selected) {
         textColor = [NSColor whiteColor];
+        tagColor = [NSColor whiteColor];
     } else {
         textColor = [NSColor blackColor];
+        tagColor = [NSColor colorWithCalibratedWhite:0.5 alpha:1];
     }
     NSDictionary* plainAttributes = @{ NSForegroundColorAttributeName: textColor,
                                        NSFontAttributeName: self.mainFont };
-    NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: textColor,
+    NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: tagColor,
                                        NSFontAttributeName: self.tagFont };
 
     NSString *defaultCheckmark;
