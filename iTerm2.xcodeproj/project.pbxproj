@@ -135,6 +135,8 @@
 		1D5655CE19AD2B9B001C460B /* iTermApplication+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655CC19AD2B9B001C460B /* iTermApplication+Scripting.h */; };
 		1D5655CF19AD2B9B001C460B /* iTermApplication+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */; };
 		1D5655D019AD2B9B001C460B /* iTermApplication+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */; };
+		1D5937AD1A2D764900F808EB /* PSMDarkTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */; };
+		1D5937AE1A2D764A00F808EB /* PSMDarkTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = D3CE2D4D1A00936F0098ED99 /* PSMDarkTabStyle.m */; };
 		1D5FDD511208E8F000C46BA3 /* ITAddressBookMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 20E74F4804E9089700000106 /* ITAddressBookMgr.h */; };
 		1D5FDD5A1208E8F000C46BA3 /* PSMYosemiteTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572609CB9398008F320C /* PSMYosemiteTabStyle.h */; };
 		1D5FDD5B1208E8F000C46BA3 /* PSMOverflowPopUpButton.h in Headers */ = {isa = PBXBuildFile; fileRef = DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */; };
@@ -2453,7 +2455,7 @@
 		DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMOverflowPopUpButton.h; sourceTree = "<group>"; };
 		DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMOverflowPopUpButton.m; sourceTree = "<group>"; };
 		DD02572C09CB9398008F320C /* PSMProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMProgressIndicator.h; sourceTree = "<group>"; };
-		DD02572D09CB9398008F320C /* PSMProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMProgressIndicator.m; sourceTree = "<group>"; };
+		DD02572D09CB9398008F320C /* PSMProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PSMProgressIndicator.m; sourceTree = "<group>"; tabWidth = 4; };
 		DD02572E09CB9398008F320C /* PSMRolloverButton.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMRolloverButton.h; sourceTree = "<group>"; };
 		DD02572F09CB9398008F320C /* PSMRolloverButton.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMRolloverButton.m; sourceTree = "<group>"; };
 		DD02573009CB9398008F320C /* PSMTabBarCell.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabBarCell.h; sourceTree = "<group>"; };
@@ -4989,6 +4991,7 @@
 				1D6EDABA19AEA20D005A7799 /* VT100ScreenMark.m in Sources */,
 				1D6EDABB19AEA20D005A7799 /* TmuxHistoryParser.m in Sources */,
 				1D6EDABC19AEA20D005A7799 /* TmuxStateParser.m in Sources */,
+				1D5937AE1A2D764A00F808EB /* PSMDarkTabStyle.m in Sources */,
 				1D6EDABD19AEA20D005A7799 /* SolidColorView.m in Sources */,
 				1D6EDABE19AEA20D005A7799 /* IntervalMap.m in Sources */,
 				1D6EDABF19AEA20D005A7799 /* PTYSplitView.m in Sources */,
@@ -5103,6 +5106,7 @@
 				1D9A556C180FA85900B42CE9 /* ToolbeltView.m in Sources */,
 				1D9A558E180FA87000B42CE9 /* PointerController.m in Sources */,
 				1D9A5596180FA87000B42CE9 /* PTYSplitView.m in Sources */,
+				1D5937AD1A2D764900F808EB /* PSMDarkTabStyle.m in Sources */,
 				A6E713BC18FCCDD1008D94DD /* iTermURLSchemeController.m in Sources */,
 				1D9A55A3180FA87000B42CE9 /* ToastWindowController.m in Sources */,
 				1D9A5575180FA85D00B42CE9 /* BellTrigger.m in Sources */,
