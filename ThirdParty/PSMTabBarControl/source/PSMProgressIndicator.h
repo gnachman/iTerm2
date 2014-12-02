@@ -7,21 +7,23 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "PSMTabBarControl.h"
 
-
-@interface PSMProgressIndicator : NSProgressIndicator {
-
-}
-
-// Should the progress indicator render in a "light" style, suitable for use over a dark background?
-// Warning: this makes the view become layer-backed.
-@property(nonatomic) BOOL light;
-
+@protocol PSMProgressIndicatorDelegate
+- (void)progressIndicatorNeedsUpdate;
 @end
 
-@interface PSMTabBarControl (LayoutPlease)
+// This is a wrapper around an NSProgressIndicator. The main difference between this and
+// NSProgressIndicator is that setting the |light| property changes the appearance of the progress
+// indicator so it looks good against a dark background.
+@interface PSMProgressIndicator : NSView
 
-- (void)update;
+// Should the progress indicator render in a "light" style, suitable for use over a dark background?
+@property(nonatomic, assign) BOOL light;
+@property(nonatomic, assign) id<PSMProgressIndicatorDelegate> delegate;
+@property(nonatomic, assign) NSProgressIndicatorStyle style;
+@property(nonatomic, assign) NSControlSize controlSize;
+
+- (void)startAnimation:(id)sender;
+- (void)stopAnimation:(id)sender;
 
 @end

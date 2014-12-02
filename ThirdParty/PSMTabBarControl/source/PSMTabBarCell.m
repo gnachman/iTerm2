@@ -47,6 +47,7 @@
     if ((self = [super init])) {
         [self setControlView:controlView];
         _indicator = [[PSMProgressIndicator alloc] initWithFrame:NSMakeRect(0.0,0.0,kPSMTabBarIndicatorWidth,kPSMTabBarIndicatorWidth)];
+        _indicator.delegate = controlView;
         [_indicator setStyle:NSProgressIndicatorSpinningStyle];
         [_indicator setAutoresizingMask:NSViewMinYMargin];
         [_indicator setControlSize:NSSmallControlSize];

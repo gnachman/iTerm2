@@ -22,9 +22,67 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end
 
-@implementation PSMTabBarControl
+@implementation PSMTabBarControl {
+
+    // control basics
+    NSMutableArray              *_cells;                    // the cells that draw the tabs
+    IBOutlet NSTabView          *tabView;                   // the tab view being navigated
+    PSMOverflowPopUpButton      *_overflowPopUpButton;      // for too many tabs
+    PSMRolloverButton           *_addTabButton;
+
+    // drawing style
+    id<PSMTabStyle>             style;
+    BOOL                        _disableTabClose;
+    BOOL                        _hideForSingleTab;
+    BOOL                        _showAddTabButton;
+    BOOL                        _sizeCellsToFit;
+    BOOL                        _useOverflowMenu;
+    int                         _resizeAreaCompensation;
+    PSMTabBarOrientation        _orientation;
+    BOOL                        _automaticallyAnimates;
+    NSTimer                     *_animationTimer;
+    float                       _animationDelta;
+
+    // behavior
+    BOOL                        _allowsBackgroundTabClosing;
+    BOOL                        _selectsTabsOnMouseDown;
+
+    // vertical tab resizing
+    BOOL                        _allowsResizing;
+    BOOL                        _resizing;
+
+    // cell width
+    int                         _cellMinWidth;
+    int                         _cellMaxWidth;
+    int                         _cellOptimumWidth;
+
+    // animation for hide/show
+    int                         _currentStep;
+    BOOL                        _isHidden;
+    BOOL                        _hideIndicators;
+    IBOutlet id                 partnerView;                // gets resized when hide/show
+    BOOL                        _awakenedFromNib;
+    int                         _tabBarWidth;
+
+    // drag and drop
+    NSEvent                     *_lastMouseDownEvent;      // keep this for dragging reference
+    NSEvent                     *_lastMiddleMouseDownEvent;
+    BOOL                        _didDrag;
+    BOOL                        _closeClicked;
+
+    // MVC help
+    IBOutlet id<PSMTabBarControlDelegate> delegate;
+
+    // orientation, top or bottom
+    int                         _tabLocation;
+
+    // iTerm2 additions
+    int                         _modifier;
+}
+
 #pragma mark -
 #pragma mark Characteristics
+
 + (NSBundle *)bundle
 {
     static NSBundle *bundle = nil;
@@ -2323,6 +2381,12 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
         default:
             return NSDragOperationNone;
     }
+}
+
+#pragma mark - PSMProgressIndicatorDelegate
+
+- (void)progressIndicatorNeedsUpdate {
+    [self update];
 }
 
 @end
