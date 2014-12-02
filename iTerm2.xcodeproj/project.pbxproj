@@ -1083,6 +1083,12 @@
 		1DA02CFB1327612600D7E7DB /* bell.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA02CFA1327612600D7E7DB /* bell.png */; };
 		1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */; };
 		1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
+		1DA1C1F21A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
+		1DA1C1F31A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
+		1DA1C1F41A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */; };
+		1DA1C1F51A2E49A3007381D3 /* NSTableColumn+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */; };
+		1DA1C1F61A2E49A3007381D3 /* NSTableColumn+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */; };
+		1DA1C1F71A2E49A3007381D3 /* NSTableColumn+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */; };
 		1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA26ABE15007507004B5792 /* BackgroundThread.h */; };
 		1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
 		1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
@@ -2013,6 +2019,8 @@
 		1DA02CFA1327612600D7E7DB /* bell.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = bell.png; path = images/bell.png; sourceTree = "<group>"; };
 		1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_bottom.png; path = images/wrap_to_bottom.png; sourceTree = "<group>"; };
 		1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_top.png; path = images/wrap_to_top.png; sourceTree = "<group>"; };
+		1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTableColumn+iTerm.h"; sourceTree = "<group>"; };
+		1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTableColumn+iTerm.m"; sourceTree = "<group>"; };
 		1DA26ABE15007507004B5792 /* BackgroundThread.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = BackgroundThread.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DA26ABF15007507004B5792 /* BackgroundThread.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = BackgroundThread.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursor@2x.png"; path = "images/IBarCursor@2x.png"; sourceTree = "<group>"; };
@@ -3317,6 +3325,8 @@
 				A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */,
 				A6E77F8D1A2449EF009B1CB6 /* NSEvent+iTerm.h */,
 				A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */,
+				1DA1C1F01A2E49A3007381D3 /* NSTableColumn+iTerm.h */,
+				1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -3969,6 +3979,7 @@
 				1D6ED94619AEA20D005A7799 /* BulkCopyProfilePreferencesWindowController.h in Headers */,
 				1D6ED94719AEA20D005A7799 /* PTYTask.h in Headers */,
 				1D6ED94819AEA20D005A7799 /* PTYTextView.h in Headers */,
+				1DA1C1F41A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */,
 				1D6ED94919AEA20D005A7799 /* CommandHistoryEntry.h in Headers */,
 				1D6ED94A19AEA20D005A7799 /* iTermFlippedView.h in Headers */,
 				A663012919D0864C004AF81C /* SCConstants.h in Headers */,
@@ -4024,6 +4035,7 @@
 			files = (
 				1DFA7C911923E89100DF1410 /* SSKeychain.h in Headers */,
 				1DFA7C8D1923E86400DF1410 /* SSKeychainQuery.h in Headers */,
+				1DA1C1F31A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4295,6 +4307,7 @@
 				1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */,
 				1D06E7D714BC04E20097C0ED /* ProfileModelWrapper.h in Headers */,
 				1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */,
+				1DA1C1F21A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */,
 				1DB83957192E9A610037E548 /* ToolCapturedOutputView.h in Headers */,
 				A69B45A419731AC500F5444D /* iTermOpenQuicklyWindow.h in Headers */,
 				A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */,
@@ -4932,6 +4945,7 @@
 				A663012E19D0864C004AF81C /* SCEvent.m in Sources */,
 				1D6EDA8319AEA20D005A7799 /* MovePaneController.m in Sources */,
 				1D6EDA8419AEA20D005A7799 /* SplitSelectionView.m in Sources */,
+				1DA1C1F71A2E49A3007381D3 /* NSTableColumn+iTerm.m in Sources */,
 				1D6EDA8519AEA20D005A7799 /* FutureMethods.m in Sources */,
 				1D6EDA8619AEA20D005A7799 /* ToolbeltView.m in Sources */,
 				1D6EDA8719AEA20D005A7799 /* iTermExposeTabView.m in Sources */,
@@ -5339,6 +5353,7 @@
 			files = (
 				1DFA7C8E1923E86400DF1410 /* SSKeychainQuery.m in Sources */,
 				1DFA7C921923E89100DF1410 /* SSKeychain.m in Sources */,
+				1DA1C1F61A2E49A3007381D3 /* NSTableColumn+iTerm.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5501,6 +5516,7 @@
 				1DF8AF5913FD781700C8A435 /* SplitPanel.m in Sources */,
 				A663012C19D0864C004AF81C /* SCEvent.m in Sources */,
 				1D29732814082676004C5DBE /* MovePaneController.m in Sources */,
+				1DA1C1F51A2E49A3007381D3 /* NSTableColumn+iTerm.m in Sources */,
 				1D29732C14082A52004C5DBE /* SplitSelectionView.m in Sources */,
 				1D9F6AB9140C9DC4009B5CD4 /* FutureMethods.m in Sources */,
 				1DE8DC8A1415513A00F83147 /* ToolbeltView.m in Sources */,
