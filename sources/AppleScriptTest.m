@@ -11,23 +11,8 @@
 #import <AppKit/NSWorkspace.h>
 #import <ScriptingBridge/ScriptingBridge.h>
 #import "iTermTests.h"
+#import "iTerm2GeneratedScriptingBridge.h"
 #import "NSStringITerm.h"
-
-// These interfaces are used to test the scripting bridge
-@interface iTerm2Session : NSObject
-- (void)writeContentsOfFile:(NSString *)file text:(NSString *)text;
-- (NSString *)contents;
-@end
-
-@interface iTerm2Terminal : NSObject
-- (iTerm2Session *)currentSession;
-@end
-
-@interface iTerm2ITermApplication : NSObject
-- (void)activate;
-- (void)createWindowWithDefaultProfileCommand:(NSString *)command;
-- (iTerm2Terminal *)currentWindow;
-@end
 
 static NSString *const kTestAppName = @"iTerm2ForApplescriptTesting.app";
 static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
@@ -114,10 +99,10 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 }
 
 - (void)testScriptingBridge {
-    iTerm2ITermApplication *iterm = [SBApplication applicationWithBundleIdentifier:kTestBundleId];
+    iTerm2Application *iterm = [SBApplication applicationWithBundleIdentifier:kTestBundleId];
     [iterm activate];
     [iterm createWindowWithDefaultProfileCommand:nil];
-    iTerm2Terminal *terminal = [iterm currentWindow];
+    iTerm2TerminalWindow *terminal = [iterm currentWindow];
     [terminal.currentSession writeContentsOfFile:nil text:@"echo Testing123"];
     for (int i = 0; i < 10; i++) {
         NSString *contents = [terminal.currentSession contents];
