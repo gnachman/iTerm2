@@ -9,8 +9,25 @@
 #import "AppleScriptTest.h"
 
 #import <AppKit/NSWorkspace.h>
+#import <ScriptingBridge/ScriptingBridge.h>
 #import "iTermTests.h"
 #import "NSStringITerm.h"
+
+// These interfaces are used to test the scripting bridge
+@interface iTerm2Session : NSObject
+- (void)writeContentsOfFile:(NSString *)file text:(NSString *)text;
+- (NSString *)contents;
+@end
+
+@interface iTerm2Terminal : NSObject
+- (iTerm2Session *)currentSession;
+@end
+
+@interface iTerm2ITermApplication : NSObject
+- (void)activate;
+- (void)createWindowWithDefaultProfileCommand:(NSString *)command;
+- (iTerm2Terminal *)currentWindow;
+@end
 
 static NSString *const kTestAppName = @"iTerm2ForApplescriptTesting.app";
 static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
@@ -64,6 +81,10 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                 usleep(100000);
             }
         } while (running);
+    } else {
+        // For some reason the scripting bridge test produces an app that doesn't show up in
+        // runningApplications.
+        system("killall -9 iTerm2ForApplescriptTesting");
     }
 }
 
@@ -90,6 +111,22 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
         assert(false);
     }
     return eventDescriptor;
+}
+
+- (void)testScriptingBridge {
+    iTerm2ITermApplication *iterm = [SBApplication applicationWithBundleIdentifier:kTestBundleId];
+    [iterm activate];
+    [iterm createWindowWithDefaultProfileCommand:nil];
+    iTerm2Terminal *terminal = [iterm currentWindow];
+    [terminal.currentSession writeContentsOfFile:nil text:@"echo Testing123"];
+    for (int i = 0; i < 10; i++) {
+        NSString *contents = [terminal.currentSession contents];
+        if ([contents containsString:@"Testing123"]) {
+            return;
+        }
+        usleep(200000);
+    }
+    assert(false);
 }
 
 - (void)testCreateWindowWithDefaultProfile {
