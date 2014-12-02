@@ -1952,18 +1952,23 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 }
 
 - (void)emptyEventQueue {
+  DLog(@"emptyEventQueue: %@", eventQueue_);
     int eventsSent = 0;
     for (NSEvent *event in eventQueue_) {
         ++eventsSent;
         if ([event isKindOfClass:[PasteEvent class]]) {
             PasteEvent *pasteEvent = (PasteEvent *)event;
+          DLog(@"paste queued up event for string %@", pasteEvent.string);
             [self pasteString:pasteEvent.string flags:pasteEvent.flags];
+          DLog(@"Done with queued up event %@", pasteEvent.string);
             // Can't empty while pasting.
             break;
         } else {
+          DLog(@"Handle queued keypress");
             [TEXTVIEW keyDown:event];
         }
     }
+  DLog(@"Remove first %d events from queue", (int)eventsSent);
     [eventQueue_ removeObjectsInRange:NSMakeRange(0, eventsSent)];
 }
 
@@ -1976,14 +1981,16 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil];
     NSString *bestType = [board availableTypeFromArray:supportedTypes];
-
+  DLog(@"Getting string from pasteboard. Best available type is %@", bestType);
     NSString* info = nil;
     if ([bestType isEqualToString:NSFilenamesPboardType]) {
         NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+      DLog(@"Filenames: %@", filenames);
         NSMutableArray *escapedFilenames = [NSMutableArray array];
         for (NSString *filename in filenames) {
             [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
         }
+      DLog(@"Escaped filenames: %@", escapedFilenames);
         if (escapedFilenames.count > 0) {
             info = [escapedFilenames componentsJoinedByString:@"\n"];
         }
@@ -1992,7 +1999,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         }
     } else {
         info = [board stringForType:NSStringPboardType];
+      DLog(@"String value is %@", info);
     }
+
+  DLog(@"Return pasteboard string of: %@", info);
     return info;
 }
 
@@ -2039,6 +2049,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)_pasteStringImmediately:(NSString*)aString
 {
+  DLog(@"_pasteStringImmediately:%@", aString);
     if ([aString length] > 0) {
         NSData *data = [aString dataUsingEncoding:[TERMINAL encoding]
                              allowLossyConversion:YES];
@@ -2049,6 +2060,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 }
 
 - (void)pasteAgain {
+  DLog(@"pasteAgain");
     NSRange range;
     range.location = 0;
     range.length = MIN(pasteContext_.bytesPerCall, [slowPasteBuffer length]);
@@ -2056,7 +2068,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [slowPasteBuffer deleteCharactersInRange:range];
     [self updatePasteUI];
     if ([slowPasteBuffer length] > 0) {
+      DLog(@"Schedule another call to pasteAgain");
         [pasteContext_ updateValues];
+      DLog(@"Set slow paste timer");
         slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:pasteContext_.delayBetweenCalls
                                                           target:self
                                                         selector:@selector(pasteAgain)
@@ -2068,6 +2082,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                              dataUsingEncoding:[TERMINAL encoding]
                              allowLossyConversion:YES]];
         }
+      DLog(@"Finished pasting.");
+      DLog(@"Clear slow paste timer");
         slowPasteTimer = nil;
         [self hidePasteUI];
         [pasteContext_ release];
@@ -2081,6 +2097,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
                         defaultValue:(float)delayBetweenCallsDefault
 {
+  DLog(@"_pasteWithBPCPK:dV:dBCPK:dV starting.");
     [pasteContext_ release];
     pasteContext_ = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
                                                          defaultValue:bytesPerCallDefault
@@ -2114,19 +2131,23 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)_pasteString:(NSString *)aString
 {
+  DLog(@"_pasteString:%@", aString);
     if ([aString length] > 0) {
         // This is the "normal" way of pasting. It's fast but tends not to
         // outrun a shell's ability to read from its buffer. Why this crazy
         // thing? See bug 1031.
+      DLog(@"Append string to slow paste buffer and call _pasteStringMore");
         [slowPasteBuffer appendString:[aString stringWithLinefeedNewlines]];
         [self _pasteStringMore];
     } else {
+      DLog(@"Beep!");
         NSBeep();
     }
 }
 
 - (void)pasteString:(NSString *)str flags:(int)flags
 {
+  DLog(@"pasteString:%@ flags:%d", str, flags);
     if (flags & 1) {
         // paste escaping special characters
         str = [str stringWithEscapedShellCharacters];
@@ -2137,24 +2158,32 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                          allowLossyConversion:YES]];
     }
     if (flags & 2) {
+      DLog(@"Add to slowPasteBuffer adn call pasteSlowly");
         [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
         [self pasteSlowly:nil];
     } else {
+      DLog(@"Call _pastString:%@", str);
         [self _pasteString:str];
     }
 }
 
 - (void)paste:(id)sender
 {
+  DLog(@"PTYSession paste: called");
     NSString* pbStr = [PTYSession pasteboardString];
+  DLog(@"Pasteboard string is %@", pbStr);
     if (pbStr) {
         if ([self isPasting]) {
+          DLog(@"Am already pasting");
             if ([pbStr length] == 0) {
+              DLog(@"Empty string, just beep");
                 NSBeep();
             } else {
+              DLog(@"Queue up string to paste later.");
                 [eventQueue_ addObject:[PasteEvent pasteEventWithString:pbStr flags:[sender tag]]];
             }
         } else {
+          DLog(@"Pasting immediately.");
             [self pasteString:pbStr flags:[sender tag]];
         }
     }
@@ -4089,6 +4118,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)pasteViewControllerDidCancel
 {
+  DLog(@"CANCEL: clear slow paste timer");
     [self hidePasteUI];
     [slowPasteTimer invalidate];
     slowPasteTimer = nil;
