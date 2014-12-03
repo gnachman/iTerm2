@@ -2826,8 +2826,10 @@
 				1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */,
 				A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */,
 				A6C7DE5B19A469D6001E5C75 /* NSColor+Scripting.h */,
+				A6E77F9F1A2A8A5A009B1CB6 /* NSData+iTerm.h */,
 				1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */,
 				A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */,
+				A6E77F8D1A2449EF009B1CB6 /* NSEvent+iTerm.h */,
 				1D67ABA914285D6000D5DA4E /* NSFileManager+iTerm.h */,
 				A6A2698118FE48B200437DA9 /* NSFont+iTerm.h */,
 				A69B45B6197C60FB00F5444D /* NSImage+iTerm.h */,
@@ -3402,9 +3404,7 @@
 				A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */,
 				1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */,
 				A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */,
-				A6E77F8D1A2449EF009B1CB6 /* NSEvent+iTerm.h */,
 				A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */,
-				A6E77F9F1A2A8A5A009B1CB6 /* NSData+iTerm.h */,
 				A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */,
 			);
 			name = Categories;
