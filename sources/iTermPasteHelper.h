@@ -36,6 +36,7 @@
 
 + (NSMutableCharacterSet *)unsafeControlCodeSet;
 
+// This performs all the transformations except for bracketing.
 + (void)sanitizePasteEvent:(PasteEvent *)pasteEvent
                   encoding:(NSStringEncoding)encoding;
 

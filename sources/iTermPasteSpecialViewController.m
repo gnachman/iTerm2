@@ -296,7 +296,7 @@ static NSString *const kShouldBase64Encode = @"Base64";
 
     if (tabTransform == kTabTransformConvertToSpaces) {
         [components addObject:[NSString stringWithFormat:@"Tabs->%@ spcs", dict[kNumberOfSpacesPerTab]]];
-    } else if (tabTransform == kTabTransformEscapeWithCtrlZ) {
+    } else if (tabTransform == kTabTransformEscapeWithCtrlV) {
         [components addObject:@"^V+Tab"];
     }
 

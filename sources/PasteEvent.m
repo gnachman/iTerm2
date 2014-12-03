@@ -11,7 +11,7 @@
 @implementation PasteEvent
 
 + (PasteEvent *)pasteEventWithString:(NSString *)string
-                               flags:(int)flags
+                               flags:(iTermPasteFlags)flags
                     defaultChunkSize:(int)defaultChunkSize
                             chunkKey:(NSString *)chunkKey
                         defaultDelay:(NSTimeInterval)defaultDelay

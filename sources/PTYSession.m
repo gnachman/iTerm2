@@ -4515,7 +4515,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     iTermTabTransformTags tabTransform = kTabTransformNone;
     int spacesPerTab = -1;
     if (flags & kPTYSessionPasteWithShellEscapedTabs) {
-        tabTransform = kTabTransformEscapeWithCtrlZ;
+        tabTransform = kTabTransformEscapeWithCtrlV;
     } else if (!_terminal.bracketedPasteMode) {
         spacesPerTab = [_pasteHelper numberOfSpacesToConvertTabsTo:theString];
         if (spacesPerTab >= 0) {

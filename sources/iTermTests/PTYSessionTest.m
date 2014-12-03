@@ -81,7 +81,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
     NSString *theString = @"\t";
     [_session pasteString:theString flags:kPTYSessionPasteWithShellEscapedTabs];
     assert([_fakePasteHelper.string isEqualToString:theString]);
-    assert(_fakePasteHelper.tabTransform == kTabTransformEscapeWithCtrlZ);
+    assert(_fakePasteHelper.tabTransform == kTabTransformEscapeWithCtrlV);
     assert(!_fakePasteHelper.slowly);
     assert(!_fakePasteHelper.escapeShellChars);
 }

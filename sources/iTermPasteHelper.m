@@ -127,13 +127,13 @@
             break;
         }
 
-        case kTabTransformEscapeWithCtrlZ:
+        case kTabTransformEscapeWithCtrlV:
             theString = [theString stringWithShellEscapedTabs];
             break;
     }
 
     if (pasteEvent.flags & kPasteFlagsBase64Encode) {
-        NSData *temp = [pasteEvent.string dataUsingEncoding:encoding];
+        NSData *temp = [theString dataUsingEncoding:encoding];
         theString = [temp stringWithBase64EncodingWithLineBreak:@"\r"];
     }
 
