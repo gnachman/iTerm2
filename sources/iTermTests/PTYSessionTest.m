@@ -86,6 +86,24 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
     assert(!_fakePasteHelper.escapeShellChars);
 }
 
+- (void)testPasteSlowly {
+    NSString *theString = @".";
+    [_session pasteString:theString flags:kPTYSessionPasteSlowly];
+    assert([_fakePasteHelper.string isEqualToString:theString]);
+    assert(_fakePasteHelper.tabTransform == kTabTransformNone);
+    assert(_fakePasteHelper.slowly);
+    assert(!_fakePasteHelper.escapeShellChars);
+}
+
+- (void)testEscapeSpecialChars {
+    NSString *theString = @".";
+    [_session pasteString:theString flags:kPTYSessionPasteEscapingSpecialCharacters];
+    assert([_fakePasteHelper.string isEqualToString:theString]);
+    assert(_fakePasteHelper.tabTransform == kTabTransformNone);
+    assert(!_fakePasteHelper.slowly);
+    assert(_fakePasteHelper.escapeShellChars);
+}
+
 - (void)testEmbeddedTabsConvertToSpaces {
     NSString *theString = @"a\tb";
     _warningBlock = ^NSModalResponse(NSAlert *alert, NSString *identifier) {
