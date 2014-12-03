@@ -92,10 +92,12 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
         assert([identifier isEqualToString:@"AboutToPasteTabs"]);
         BOOL found = NO;
         for (NSView *subview in alert.accessoryView.subviews) {
-            if ([subview isKindOfClass:[NSTextField class]]) {
+            if ([subview isKindOfClass:[NSTextField class]] &&
+                [(NSTextField *)subview isEditable]) {
                 found = YES;
                 NSTextField *textField = (NSTextField *)subview;
                 textField.intValue = 8;
+                [(id)textField.delegate controlTextDidChange:nil];
                 break;
             }
         }
@@ -105,7 +107,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
     [_session pasteString:theString flags:0];
     assert([_warningIdentifiers containsObject:@"AboutToPasteTabs"]);
 
-    assert([_fakePasteHelper.string isEqualToString:@"\t"]);
+    assert([_fakePasteHelper.string isEqualToString:theString]);
     assert(_fakePasteHelper.tabTransform == kTabTransformConvertToSpaces);
     assert(!_fakePasteHelper.slowly);
     assert(!_fakePasteHelper.escapeShellChars);
