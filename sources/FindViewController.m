@@ -246,7 +246,7 @@ const CGFloat kEdgeWidth = 3;
 	[self drawInteriorWithFrame:cellFrame inView:controlView];
 	if ([controlView respondsToSelector:@selector(currentEditor)] && [(NSControl *)controlView currentEditor]) {
 		[[NSGraphicsContext currentContext] saveGraphicsState];
-		NSSetFocusRingStyle([controlView focusRingType]);
+		NSSetFocusRingStyle(NSFocusRingOnly);
 		[strokePath fill];
 		[[NSGraphicsContext currentContext] restoreGraphicsState];
 	}
