@@ -4739,11 +4739,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[[self tab] realParentWindow] closeSessionWithConfirmation:self];
 }
 
-- (NSString *)textViewPasteboardString
-{
-    return [[self class] pasteboardString];
-}
-
 - (NSString *)mostRecentlySelectedText {
     PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
     if (session) {

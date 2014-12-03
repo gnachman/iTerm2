@@ -3874,14 +3874,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)paste:(id)sender
 {
-    DLog(@"paste:");
-    NSString* info = [_delegate textViewPasteboardString];
-    DLog(@"Pasteboard string is %@ long", @([info length]));
-    if (info) {
-        DLog(@"Save to paste history...");
-        [[PasteboardHistory sharedInstance] save:info];
-    }
-
     DLog(@"Checking if delegate %@ can paste", _delegate);
     if ([_delegate respondsToSelector:@selector(paste:)]) {
         DLog(@"Calling paste on delegate.");
@@ -3893,8 +3885,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate pasteOptions:sender];
 }
 
-- (void)pasteSelection:(id)sender
-{
+- (void)pasteSelection:(id)sender {
     [_delegate textViewPasteFromSessionWithMostRecentSelection:[sender tag]];
 }
 

@@ -19,6 +19,7 @@
 #import "NSStringITerm.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
+#import "PasteboardHistory.h"
 #import "PasteViewController.h"
 
 @interface iTermPasteHelper () <PasteViewControllerDelegate>
@@ -218,8 +219,14 @@
 
     [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:[_delegate pasteHelperEncoding]];
 
+    // Save to history
+    if (pasteEvent.string.length > 0) {
+        DLog(@"Save string being pasted to history");
+        [[PasteboardHistory sharedInstance] save:pasteEvent.string];
+    }
+
     if (pasteEvent.flags & kPasteFlagsBracket) {
-        DLog(@"Send open bracket.");
+        DLog(@"Bracketing string to paste.");
         NSString *startBracket = [NSString stringWithFormat:@"%c[200~", 27];
         NSString *endBracket = [NSString stringWithFormat:@"%c[201~", 27];
         NSArray *components = @[ startBracket, pasteEvent.string, endBracket ];
