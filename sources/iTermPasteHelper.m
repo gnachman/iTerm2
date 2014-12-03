@@ -350,8 +350,7 @@
 
     [self updatePasteIndicator];
     if ([_buffer length] > 0) {
-        DLog(@"Scheduling timer");
-        NSLog(@"Schedule timer after %@", @(_pasteContext.delayBetweenCalls));
+        DLog(@"Schedule timer after %@", @(_pasteContext.delayBetweenCalls));
         [_pasteContext updateValues];
         _timer = [NSTimer scheduledTimerWithTimeInterval:_pasteContext.delayBetweenCalls
                                                   target:self

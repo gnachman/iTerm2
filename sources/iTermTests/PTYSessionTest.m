@@ -101,7 +101,8 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
     assert([_fakePasteHelper.string isEqualToString:theString]);
     assert(_fakePasteHelper.tabTransform == kTabTransformNone);
     assert(!_fakePasteHelper.slowly);
-    assert(_fakePasteHelper.escapeShellChars);
+    assert(
+           _fakePasteHelper.escapeShellChars);
 }
 
 - (void)testEmbeddedTabsConvertToSpaces {
