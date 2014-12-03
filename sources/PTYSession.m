@@ -143,6 +143,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @property(nonatomic, copy) NSDictionary *environment;
 @property(nonatomic, assign) BOOL isUTF8;
 @property(nonatomic, copy) NSString *guid;
+@property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @end
 
 @implementation PTYSession {
@@ -242,8 +243,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // The tmux rename-window command is only sent when the name field resigns first responder.
     // This tracks if a tmux client's name has changed but the tmux server has not been informed yet.
     BOOL _tmuxTitleOutOfSync;
-
-    iTermPasteHelper *_pasteHelper;
 
     NSInteger _requestAttentionId;  // Last request-attention identifier
     VT100ScreenMark *_lastMark;
@@ -4526,7 +4525,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     DLog(@"Calling pasteString:flags: on helper...");
     [_pasteHelper pasteString:theString
-                       slowly:flags
+                       slowly:!!(flags & kPTYSessionPasteSlowly)
              escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
                  tabTransform:tabTransform
                  spacesPerTab:spacesPerTab];

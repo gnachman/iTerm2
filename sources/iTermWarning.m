@@ -2,8 +2,14 @@
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static NSString *const kCancel = @"Cancel";
+static id<iTermWarningHandler> gWarningHandler;
 
 @implementation iTermWarning
+
++ (void)setWarningHandler:(id<iTermWarningHandler>)handler {
+    [gWarningHandler autorelease];
+    gWarningHandler = [handler retain];
+}
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
@@ -18,7 +24,9 @@ static NSString *const kCancel = @"Cancel";
                                identifier:(NSString *)identifier
                               silenceable:(iTermWarningType)warningType {
 
-    if (warningType != kiTermWarningTypePersistent && [self identifierIsSilenced:identifier]) {
+    if (!gWarningHandler &&
+        warningType != kiTermWarningTypePersistent &&
+        [self identifierIsSilenced:identifier]) {
         return [self savedSelectionForIdentifier:identifier];
     }
     
@@ -57,7 +65,12 @@ static NSString *const kCancel = @"Cancel";
         [alert setAccessoryView:accessory];
     }
     
-    NSInteger result = [alert runModal];
+    NSInteger result;
+    if (gWarningHandler) {
+        result = [gWarningHandler warningWouldShowAlert:alert identifier:identifier];
+    } else {
+        result = [alert runModal];
+    }
 
     BOOL remember = NO;
     iTermWarningSelection selection;

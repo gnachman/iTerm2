@@ -1288,6 +1288,7 @@
 		A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
 		A6099B0618D6B0FD00081FA9 /* iTermWarning.m in Sources */ = {isa = PBXBuildFile; fileRef = A6099B0418D6B0FD00081FA9 /* iTermWarning.m */; };
 		A6099B0718D6B0FD00081FA9 /* iTermWarning.m in Sources */ = {isa = PBXBuildFile; fileRef = A6099B0418D6B0FD00081FA9 /* iTermWarning.m */; };
+		A61397731A2ED74D00B8BEFA /* PTYSessionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */; };
 		A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */; };
 		A61B66CB18D4D855009AC9D5 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A61B66CC18D4D855009AC9D5 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
@@ -2218,6 +2219,8 @@
 		A6057C161883D12E004A60AF /* broken_image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = broken_image.png; path = images/broken_image.png; sourceTree = "<group>"; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6099B0418D6B0FD00081FA9 /* iTermWarning.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWarning.m; sourceTree = "<group>"; tabWidth = 4; };
+		A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PTYSessionTest.h; path = iTermTests/PTYSessionTest.h; sourceTree = "<group>"; };
+		A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PTYSessionTest.m; path = iTermTests/PTYSessionTest.m; sourceTree = "<group>"; };
 		A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermInstantReplayWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3244,6 +3247,8 @@
 				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
 				1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */,
+				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
+				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
 			);
 			name = Tests;
 			path = sources/;
@@ -5389,6 +5394,7 @@
 				A6E7137C18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
 				A6E7138618F263BC008D94DD /* PreferenceInfo.m in Sources */,
 				1DA3E2BC1970ACBE00001E6E /* iTermLogoGenerator.m in Sources */,
+				A61397731A2ED74D00B8BEFA /* PTYSessionTest.m in Sources */,
 				1D9A5574180FA85D00B42CE9 /* AlertTrigger.m in Sources */,
 				1D9A55A9180FA8B700B42CE9 /* PSMYosemiteTabStyle.m in Sources */,
 				1DB83954192E95EB0037E548 /* CaptureTrigger.m in Sources */,

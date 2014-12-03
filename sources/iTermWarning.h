@@ -1,5 +1,10 @@
 #import <Cocoa/Cocoa.h>
 
+@protocol iTermWarningHandler <NSObject>
+
+- (NSModalResponse)warningWouldShowAlert:(NSAlert *)alert identifier:(NSString *)identifier;
+
+@end
 // The type of warning.
 typedef enum {
     kiTermWarningTypePersistent,
@@ -15,6 +20,9 @@ typedef enum {
 } iTermWarningSelection;
 
 @interface iTermWarning : NSObject
+
+// Tests can use this to prevent warning popups.
++ (void)setWarningHandler:(id<iTermWarningHandler>)handler;
 
 // Show a warning, optionally with a suppression checkbox. It may not be shown
 // if it was previously suppressed.

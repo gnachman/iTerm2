@@ -424,11 +424,11 @@
             [[[iTermNumberOfSpacesAccessoryViewController alloc] init] autorelease];
 
         iTermWarningSelection selection =
-        [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
-                                   actions:@[ @"Paste with tabs", @"Convert tabs to spaces" ]
-                                 accessory:accessoryController.view
-                                identifier:@"AboutToPasteTabs"
-                               silenceable:kiTermWarningTypePermanentlySilenceable];
+            [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
+                                       actions:@[ @"Paste with tabs", @"Convert tabs to spaces" ]
+                                     accessory:accessoryController.view
+                                    identifier:@"AboutToPasteTabs"
+                                   silenceable:kiTermWarningTypePermanentlySilenceable];
         switch (selection) {
             case kiTermWarningSelection1:
                 [accessoryController saveToUserDefaults];

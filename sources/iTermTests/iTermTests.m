@@ -15,14 +15,14 @@
 #define DECLARE_TEST(t) \
 @interface t : iTermTest \
 @end
-/*
+
 DECLARE_TEST(VT100GridTest)
 DECLARE_TEST(VT100ScreenTest)
 DECLARE_TEST(IntervalTreeTest)
 DECLARE_TEST(AppleScriptTest)
 DECLARE_TEST(NSStringCategoryTest)
- */
 DECLARE_TEST(PTYTextViewTest)
+DECLARE_TEST(PTYSessionTest)
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -54,8 +54,9 @@ int main(int argc, const char * argv[]) {
     RunTestsInObject([[IntervalTreeTest new] autorelease]);
     RunTestsInObject([[NSStringCategoryTest new] autorelease]);
     RunTestsInObject([[AppleScriptTest new] autorelease]);
-*/
     RunTestsInObject([[PTYTextViewTest new] autorelease]);
+*/
+    RunTestsInObject([[PTYSessionTest new] autorelease]);
 
     NSLog(@"All tests passed");
     return 0;
