@@ -1,0 +1,278 @@
+﻿/* NSComboBox (0) : <title: > (oid:246) */
+" " = " ";
+
+/* NSButton (When idle, sends) : <title: When idle, sends> (oid:273) */
+" When idle, sends" = " When idle, sends";
+
+/* NSTextField (%) : <title:%> (oid:147) */
+"%" = "%";
+
+/* NSComboBox (0) : <title:0> (oid:246) */
+"0" = "0";
+
+/* NSComboBox (0) : <title:1> (oid:246) */
+"1" = "1";
+
+/* NSComboBox (0) : <title:2> (oid:246) */
+"2" = "2";
+
+/* NSComboBox (0) : <title:3> (oid:246) */
+"3" = "3";
+
+/* NSComboBox (0) : <title:4> (oid:246) */
+"4" = "4";
+
+/* NSComboBox (0) : <title:5> (oid:246) */
+"5" = "5";
+
+/* NSComboBox (0) : <title:6> (oid:246) */
+"6" = "6";
+
+/* NSComboBox (0) : <title:7> (oid:246) */
+"7" = "7";
+
+/* NSComboBox (0) : <title:8> (oid:246) */
+"8" = "8";
+
+/* NSComboBox (0) : <title:9> (oid:246) */
+"9" = "9";
+
+/* NSComboBox (0) : <title:A> (oid:246) */
+"A" = "A";
+
+/* NSTextField (ANSI Colors:) : <title:ANSI Colors:> (oid:143) */
+"ANSI Colors:" = "ANSI Colors:";
+
+/* NSTextField (ASCII code:) : <title:ASCII code:> (oid:274) */
+"ASCII code:" = "ASCII code:";
+
+/* NSButton (Add) : <title:Add> (oid:369) */
+"Add" = "Add";
+
+/* NSComboBox (0) : <title:B> (oid:246) */
+"B" = "B";
+
+/* NSTextField (Background) : <title:Background
+> (oid:130) */
+"Background\n" = "Background\n";
+
+/* NSTextField (Bold) : <title:Bold> (oid:198) */
+"Bold" = "Bold";
+
+/* NSPanel (Bookmarks) : <title:Bookmarks> (oid:18) */
+"Bookmarks" = "Bookmarks";
+
+/* NSBox : <title:Box> (oid:175) */
+"Box" = "Box";
+
+/* NSComboBox (0) : <title:C> (oid:246) */
+"C" = "C";
+
+/* NSButton (Cancel) : <title:Cancel> (oid:148) */
+"Cancel" = "Cancel";
+
+/* NSButton (Close the session when it ends) : <title:Close the session when it ends> (oid:126) */
+"Close the session when it ends" = "Close the session when it ends";
+
+/* NSTextField (Col) : <title:Col> (oid:132) */
+"Col" = "Col";
+
+/* NSTabViewItem : <title:Color> (oid:195) */
+"Color" = "Color";
+
+/* NSTextField (Color scheme:) : <title:Color scheme:> (oid:183) */
+"Color scheme:" = "Color scheme:";
+
+/* NSTextField (Command) : <title:Command> (oid:248) */
+"Command" = "Command";
+
+/* NSMenuItem : <title:Custom> (oid:152) */
+"Custom" = "Custom";
+
+/* NSComboBox (0) : <title:D> (oid:246) */
+"D" = "D";
+
+/* NSButton (Delete key sends backspace) : <title:Delete key sends backspace> (oid:265) */
+"Delete key sends backspace" = "Delete key sends backspace";
+
+/* NSTabViewItem : <title:Display> (oid:187) */
+"Display" = "Display";
+
+/* NSButton (Duplicate) : <title:Duplicate> (oid:348) */
+"Duplicate" = "Duplicate";
+
+/* NSComboBox (0) : <title:E> (oid:246) */
+"E" = "E";
+
+/* NSButton (Edit) : <title:Edit> (oid:37) */
+"Edit" = "Edit";
+
+/* NSTextField (Encoding) : <title:Encoding
+> (oid:254) */
+"Encoding\n" = "Encoding\n";
+
+/* NSComboBox (0) : <title:F> (oid:246) */
+"F" = "F";
+
+/* NSButton (Font) : <title:Font> (oid:123) */
+"Font" = "Font";
+
+/* NSTextField (Font Name) : <title:Font Name
+> (oid:207) */
+"Font Name\n" = "Font Name\n";
+
+/* NSTextField (Foreground) : <title:Foreground
+> (oid:204) */
+"Foreground\n" = "Foreground\n";
+
+/* NSComboBox (0) : <title:G> (oid:246) */
+"G" = "G";
+
+/* NSComboBox (0) : <title:H> (oid:246) */
+"H" = "H";
+
+/* NSTextField (Highlight) : <title:Highlight> (oid:129) */
+"Highlight" = "Highlight";
+
+/* NSComboBox (0) : <title:I> (oid:246) */
+"I" = "I";
+
+/* NSMenuItem : <title:Item1> (oid:257) */
+"Item1" = "Item1";
+
+/* NSMenuItem : <title:Item2> (oid:255) */
+"Item2" = "Item2";
+
+/* NSMenuItem : <title:Item3> (oid:259) */
+"Item3" = "Item3";
+
+/* NSComboBox (0) : <title:J> (oid:246) */
+"J" = "J";
+
+/* NSComboBox (0) : <title:K> (oid:246) */
+"K" = "K";
+
+/* NSComboBox (0) : <title:L> (oid:246) */
+"L" = "L";
+
+/* NSComboBox (0) : <title:M> (oid:246) */
+"M" = "M";
+
+/* NSComboBox (0) : <title:N> (oid:246) */
+"N" = "N";
+
+/* NSTableColumn : <title:Name> (oid:26) */
+"Name" = "Name";
+
+/* NSTextField (Name:) : <title:Name:> (oid:243) */
+"Name:" = "Name:";
+
+/* NSButton (New Tab) : <title:New Tab> (oid:11) */
+"New Tab" = "New Tab";
+
+/* NSButton (New Window) : <title:New Window> (oid:350) */
+"New Window" = "New Window";
+
+/* NSButton (Non ASCII Font) : <title:Non ASCII Font> (oid:169) */
+"Non ASCII Font" = "Non ASCII Font";
+
+/* NSTextField (Normal) : <title:Normal> (oid:119) */
+"Normal" = "Normal";
+
+/* NSComboBox (0) : <title:O> (oid:246) */
+"O" = "O";
+
+/* NSButton (OK) : <title:OK> (oid:140) */
+"OK" = "OK";
+
+/* NSMenu : <title:OtherViews> (oid:264) */
+"OtherViews" = "OtherViews";
+
+/* NSComboBox (0) : <title:P> (oid:246) */
+"P" = "P";
+
+/* NSComboBox (0) : <title:Q> (oid:246) */
+"Q" = "Q";
+
+/* NSComboBox (0) : <title:R> (oid:246) */
+"R" = "R";
+
+/* NSButton (Remove) : <title:Remove> (oid:347) */
+"Remove" = "Remove";
+
+/* NSTextField (Row) : <title:Row> (oid:159) */
+"Row" = "Row";
+
+/* NSComboBox (0) : <title:S> (oid:246) */
+"S" = "S";
+
+/* NSTextField (Selection) : <title:Selection> (oid:138) */
+"Selection" = "Selection";
+
+/* NSBox : <title:Session> (oid:360) */
+"Session" = "Session";
+
+/* NSPanel (Session Settings) : <title:Session Settings> (oid:122) */
+"Session Settings" = "Session Settings";
+
+/* NSTabViewItem : <title:Shell> (oid:166) */
+"Shell" = "Shell";
+
+/* NSTableColumn : <title:Shortcut> (oid:60) */
+"Shortcut" = "Shortcut";
+
+/* NSTextField (Shortcut key:                          ^⌥) : <title:Shortcut key:                          ^⌥> (oid:245) */
+"Shortcut key:                          ^⌥" = "Shortcut key:                          ^⌥";
+
+/* NSComboBox (0) : <title:T> (oid:246) */
+"T" = "T";
+
+/* NSTextField (Terminal) : <title:Terminal> (oid:251) */
+"Terminal" = "Terminal";
+
+/* NSTextField (Transparency) : <title:Transparency
+> (oid:172) */
+"Transparency\n" = "Transparency\n";
+
+/* NSButton (Treat Non-ASCII characters as double width) : <title:Treat Non-ASCII characters as double width> (oid:266) */
+"Treat Non-ASCII characters as double width" = "Treat Non-ASCII characters as double width";
+
+/* NSComboBox (0) : <title:U> (oid:246) */
+"U" = "U";
+
+/* NSComboBox (0) : <title:V> (oid:246) */
+"V" = "V";
+
+/* NSComboBox (0) : <title:W> (oid:246) */
+"W" = "W";
+
+/* NSTextField (Working Dir) : <title:Working Dir> (oid:250) */
+"Working Dir" = "Working Dir";
+
+/* NSComboBox (0) : <title:X> (oid:246) */
+"X" = "X";
+
+/* NSComboBox (0) : <title:Y> (oid:246) */
+"Y" = "Y";
+
+/* NSComboBox (0) : <title:Z> (oid:246) */
+"Z" = "Z";
+
+/* NSMenuItem : <title:ansi> (oid:302) */
+"ansi" = "ansi";
+
+/* NSMenuItem : <title:iTerm> (oid:156) */
+"iTerm" = "iTerm";
+
+/* NSMenuItem : <title:rxvt> (oid:301) */
+"rxvt" = "rxvt";
+
+/* NSMenuItem : <title:vt100> (oid:260) */
+"vt100" = "vt100";
+
+/* NSMenuItem : <title:xterm> (oid:263) */
+"xterm" = "xterm";
+
+/* NSMenuItem : <title:xterm-color> (oid:261) */
+"xterm-color" = "xterm-color";
+

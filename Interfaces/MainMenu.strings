@@ -1,0 +1,174 @@
+﻿/* NSMenuItem : <title: > (oid:349) */
+" " = " ";
+
+/* NSPanel (About iTerm) : <title:About iTerm> (oid:498) */
+"About iTerm" = "About iTerm";
+
+/* NSMenuItem : <title:Bigger Font> (oid:804) */
+"Bigger Font" = "Bigger Font";
+
+/* NSMenuItem : <title:Bring All To Front> (oid:5) */
+"Bring All To Front" = "Bring All To Front";
+
+/* NSMenuItem : <title:Clear Buffer> (oid:217) */
+"Clear Buffer" = "Clear Buffer";
+
+/* NSMenuItem : <title:Clear Scrollback Buffer> (oid:755) */
+"Clear Scrollback Buffer" = "Clear Scrollback Buffer";
+
+/* NSMenuItem : <title:Close Tab> (oid:635) */
+"Close Tab" = "Close Tab";
+
+/* NSMenuItem : <title:Close Window> (oid:598) */
+"Close Window" = "Close Window";
+
+/* NSMenuItem : <title:Configure> (oid:594) */
+"Configure" = "Configure";
+
+/* NSMenuItem : <title:Copy> (oid:157) */
+"Copy" = "Copy";
+
+/* NSMenu : <title:Edit> (oid:169) */
+"Edit" = "Edit";
+
+/* NSMenu : <title:Find> (oid:760) */
+"Find" = "Find";
+
+/* NSMenuItem : <title:Find Next> (oid:761) */
+"Find Next" = "Find Next";
+
+/* NSMenuItem : <title:Find Previous> (oid:763) */
+"Find Previous" = "Find Previous";
+
+/* NSMenuItem : <title:Find...> (oid:762) */
+"Find..." = "Find...";
+
+/* NSTextField (FreeMono font is under GPL from http://savannah.nongnu.org/projects/freefont) : <title:FreeMono font is under GPL from http://savannah.nongnu.org/projects/freefont> (oid:757) */
+"FreeMono font is under GPL from http://savannah.nongnu.org/projects/freefont" = "FreeMono font is under GPL from http://savannah.nongnu.org/projects/freefont";
+
+/* NSMenu : <title:Help> (oid:106) */
+"Help" = "Help";
+
+/* NSMenuItem : <title:Hide Others> (oid:145) */
+"Hide Others" = "Hide Others";
+
+/* NSMenuItem : <title:Hide iTerm> (oid:134) */
+"Hide iTerm" = "Hide iTerm";
+
+/* NSTextField (JTerminal Parts Copyright by Kiichi Kusama, kuma@icon.rim.or.jp) : <title:JTerminal Parts Copyright by Kiichi Kusama, kuma@icon.rim.or.jp> (oid:634) */
+"JTerminal Parts Copyright by Kiichi Kusama, kuma@icon.rim.or.jp" = "JTerminal Parts Copyright by Kiichi Kusama, kuma@icon.rim.or.jp";
+
+/* NSMenuItem : <title:Jump to Selection> (oid:764) */
+"Jump to Selection" = "Jump to Selection";
+
+/* NSMenu : <title:Log> (oid:228) */
+"Log" = "Log";
+
+/* NSMenu : <title:MainMenu> (oid:29) */
+"MainMenu" = "MainMenu";
+
+/* NSMenuItem : <title:Minimize Window> (oid:23) */
+"Minimize Window" = "Minimize Window";
+
+/* NSMenuItem : <title:New Tab> (oid:600) */
+"New Tab" = "New Tab";
+
+/* NSMenuItem : <title:New Window> (oid:581) */
+"New Window" = "New Window";
+
+/* NSMenuItem : <title:Next Tab> (oid:619) */
+"Next Tab" = "Next Tab";
+
+/* NSMenuItem : <title:Next Window> (oid:783) */
+"Next Window" = "Next Window";
+
+/* NSButton (OK) : <title:OK> (oid:506) */
+"OK" = "OK";
+
+/* NSMenuItem : <title:Page Setup...> (oid:685) */
+"Page Setup..." = "Page Setup...";
+
+/* NSMenuItem : <title:Paste> (oid:213) */
+"Paste" = "Paste";
+
+/* NSMenuItem : <title:Paste Selection> (oid:778) */
+"Paste Selection" = "Paste Selection";
+
+/* NSMenuItem : <title:Preferences...> (oid:129) */
+"Preferences..." = "Preferences...";
+
+/* NSMenuItem : <title:Previous Tab> (oid:615) */
+"Previous Tab" = "Previous Tab";
+
+/* NSMenuItem : <title:Previous Window> (oid:782) */
+"Previous Window" = "Previous Window";
+
+/* NSMenuItem : <title:Print...> (oid:687) */
+"Print..." = "Print...";
+
+/* NSMenuItem : <title:Quit iTerm> (oid:136) */
+"Quit iTerm" = "Quit iTerm";
+
+/* NSMenuItem : <title:Save Display Profile> (oid:818) */
+"Save Display Profile" = "Save Display Profile";
+
+/* NSMenuItem : <title:Save Terminal Profile> (oid:819) */
+"Save Terminal Profile" = "Save Terminal Profile";
+
+/* NSMenuItem : <title:Save Text As...> (oid:692) */
+"Save Text As..." = "Save Text As...";
+
+/* NSMenuItem : <title:Select All> (oid:172) */
+"Select All" = "Select All";
+
+/* NSMenu : <title:Select Tab> (oid:775) */
+"Select Tab" = "Select Tab";
+
+/* NSMenuItem : <title:Send Input to all Tabs> (oid:812) */
+"Send Input to all Tabs" = "Send Input to all Tabs";
+
+/* NSMenuItem : <title:Services> (oid:131) */
+"Services" = "Services";
+
+/* NSMenuItem : <title:Shell> (oid:83) */
+"Shell" = "Shell";
+
+/* NSMenuItem : <title:Show All> (oid:150) */
+"Show All" = "Show All";
+
+/* NSMenuItem : <title:Smaller Font> (oid:805) */
+"Smaller Font" = "Smaller Font";
+
+/* NSMenuItem : <title:Start> (oid:229) */
+"Start" = "Start";
+
+/* NSMenuItem : <title:Stop> (oid:230) */
+"Stop" = "Stop";
+
+/* NSTextField (This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.) : <title:This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+> (oid:633) */
+"This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+" = "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+";
+
+/* NSMenuItem : <title:Toggle Toolbar> (oid:807) */
+"Toggle Toolbar" = "Toggle Toolbar";
+
+/* NSMenu : <title:Tools> (oid:592) */
+"Tools" = "Tools";
+
+/* NSMenuItem : <title:Use Selection for Find> (oid:758) */
+"Use Selection for Find" = "Use Selection for Find";
+
+/* NSMenu : <title:View> (oid:803) */
+"View" = "View";
+
+/* NSMenu : <title:Window> (oid:24) */
+"Window" = "Window";
+
+/* NSTextField (iTerm) : <title:iTerm> (oid:510) */
+"iTerm" = "iTerm";
+
+/* NSMenuItem : <title:iTerm Help> (oid:111) */
+"iTerm Help" = "iTerm Help";
+

@@ -1,0 +1,484 @@
+﻿/* NSButton (When idle, sends) : <title: When idle, sends> (oid:926) */
+" When idle, sends" = " When idle, sends";
+
+/* NSTextField (%) : <title:%> (oid:1374) */
+"%" = "%";
+
+/* NSButton (+) : <title:+> (oid:895) */
+"+" = "+";
+
+/* NSButtonCell (+Esc) : <title:+Esc> (oid:861) */
+"+Esc" = "+Esc";
+
+/* NSButton (-) : <title:-> (oid:943) */
+"-" = "-";
+
+/* NSButton (...) : <title:...> (oid:1457) */
+"..." = "...";
+
+/* NSTextField (0.5) : <title:0.5
+> (oid:1316) */
+"0.5\n" = "0.5\n";
+
+/* NSTextField (2.0) : <title:2.0> (oid:1317) */
+"2.0" = "2.0";
+
+/* NSTextField (ANSI Colors) : <title:ANSI Colors
+> (oid:1136) */
+"ANSI Colors\n" = "ANSI Colors\n";
+
+/* NSTextField (ASCII code:) : <title:ASCII code:> (oid:880) */
+"ASCII code:" = "ASCII code:";
+
+/* NSTableColumn : <title:Action> (oid:882) */
+"Action" = "Action";
+
+/* NSTextField (Action :) : <title:Action :> (oid:368) */
+"Action :" = "Action :";
+
+/* NSPanel (Add Bookmark Folder) : <title:Add Bookmark Folder> (oid:1415) */
+"Add Bookmark Folder" = "Add Bookmark Folder";
+
+/* NSButton (Add Folder) : <title:Add Folder> (oid:745) */
+"Add Folder" = "Add Folder";
+
+/* NSPanel (Add Profile) : <title:Add Profile> (oid:487) */
+"Add Profile" = "Add Profile";
+
+/* NSButton (Anti-Aliasing) : <title:Anti-Aliasing> (oid:1147) */
+"Anti-Aliasing" = "Anti-Aliasing";
+
+/* NSTextField (Background) : <title:Background
+> (oid:1115) */
+"Background\n" = "Background\n";
+
+/* NSButton (Background Image) : <title:Background Image> (oid:1137) */
+"Background Image" = "Background Image";
+
+/* NSButton (Blinking cursor) : <title:Blinking cursor> (oid:1033) */
+"Blinking cursor" = "Blinking cursor";
+
+/* NSTextField (Bold) : <title:Bold> (oid:1118) */
+"Bold" = "Bold";
+
+/* NSTextField (Bookmark) : <title:Bookmark> (oid:747) */
+"Bookmark" = "Bookmark";
+
+/* NSTabViewItem : <title:Bookmarks> (oid:710) */
+"Bookmarks" = "Bookmarks";
+
+/* NSMenuItem : <title:Bottom> (oid:1531) */
+"Bottom" = "Bottom";
+
+/* NSBox : <title:Box> (oid:1161) */
+"Box" = "Box";
+
+/* NSButton (Cancel) : <title:Cancel> (oid:1424) */
+"Cancel" = "Cancel";
+
+/* NSTextField (Character Spacing) : <title:Character Spacing> (oid:1311) */
+"Character Spacing" = "Character Spacing";
+
+/* NSTextField (Characters considered part of word:) : <title:Characters considered part of word:> (oid:1239) */
+"Characters considered part of word:" = "Characters considered part of word:";
+
+/* NSButton (Close the session when it ends) : <title:Close the session when it ends> (oid:930) */
+"Close the session when it ends" = "Close the session when it ends";
+
+/* NSTextField (Col) : <title:Col> (oid:1140) */
+"Col" = "Col";
+
+/* NSTextField (Command) : <title:Command> (oid:783) */
+"Command" = "Command";
+
+/* NSButton (Control) : <title:Control> (oid:584) */
+"Control" = "Control";
+
+/* NSTextField (Cursor) : <title:Cursor> (oid:1117) */
+"Cursor" = "Cursor";
+
+/* NSTextField (Cursor Text) : <title:Cursor Text> (oid:1113) */
+"Cursor Text" = "Cursor Text";
+
+/* NSMenuItem : <title:Default> (oid:862) */
+"Default" = "Default";
+
+/* NSPanel (Delete Bookmark) : <title:Delete Bookmark> (oid:1425) */
+"Delete Bookmark" = "Delete Bookmark";
+
+/* NSTextField (Delete Bookmarks/Folder?) : <title:Delete Bookmarks/Folder?> (oid:1421) */
+"Delete Bookmarks/Folder?" = "Delete Bookmarks/Folder?";
+
+/* NSPanel (Delete Profile) : <title:Delete Profile> (oid:539) */
+"Delete Profile" = "Delete Profile";
+
+/* NSTextField (Delete Profile?) : <title:Delete Profile?> (oid:541) */
+"Delete Profile?" = "Delete Profile?";
+
+/* NSTableColumn : <title:Description> (oid:714) */
+"Description" = "Description";
+
+/* NSTextField (Display) : <title:Display> (oid:1204) */
+"Display" = "Display";
+
+/* NSTextField (Encoding) : <title:Encoding
+> (oid:952) */
+"Encoding\n" = "Encoding\n";
+
+/* NSMenuItem : <title:F1> (oid:380) */
+"F1" = "F1";
+
+/* NSMenuItem : <title:F10> (oid:391) */
+"F10" = "F10";
+
+/* NSMenuItem : <title:F11> (oid:390) */
+"F11" = "F11";
+
+/* NSMenuItem : <title:F12> (oid:392) */
+"F12" = "F12";
+
+/* NSMenuItem : <title:F13> (oid:393) */
+"F13" = "F13";
+
+/* NSMenuItem : <title:F14> (oid:394) */
+"F14" = "F14";
+
+/* NSMenuItem : <title:F15> (oid:395) */
+"F15" = "F15";
+
+/* NSMenuItem : <title:F16> (oid:396) */
+"F16" = "F16";
+
+/* NSMenuItem : <title:F17> (oid:397) */
+"F17" = "F17";
+
+/* NSMenuItem : <title:F18> (oid:398) */
+"F18" = "F18";
+
+/* NSMenuItem : <title:F19> (oid:399) */
+"F19" = "F19";
+
+/* NSMenuItem : <title:F2> (oid:381) */
+"F2" = "F2";
+
+/* NSMenuItem : <title:F20> (oid:400) */
+"F20" = "F20";
+
+/* NSMenuItem : <title:F3> (oid:383) */
+"F3" = "F3";
+
+/* NSMenuItem : <title:F4> (oid:382) */
+"F4" = "F4";
+
+/* NSMenuItem : <title:F5> (oid:384) */
+"F5" = "F5";
+
+/* NSMenuItem : <title:F6> (oid:385) */
+"F6" = "F6";
+
+/* NSMenuItem : <title:F7> (oid:388) */
+"F7" = "F7";
+
+/* NSMenuItem : <title:F8> (oid:387) */
+"F8" = "F8";
+
+/* NSMenuItem : <title:F9> (oid:389) */
+"F9" = "F9";
+
+/* NSButton (Focus follows mouse) : <title:Focus follows mouse> (oid:304) */
+"Focus follows mouse" = "Focus follows mouse";
+
+/* NSButton (Font) : <title:Font> (oid:1145) */
+"Font" = "Font";
+
+/* NSTextField (Foreground) : <title:Foreground
+> (oid:1110) */
+"Foreground\n" = "Foreground\n";
+
+/* NSTabViewItem : <title:General> (oid:321) */
+"General" = "General";
+
+/* NSButton (Hide tab when there is only one session) : <title:Hide tab when there is only one session> (oid:269) */
+"Hide tab when there is only one session" = "Hide tab when there is only one session";
+
+/* NSTextField (Horizontal) : <title:Horizontal> (oid:1314) */
+"Horizontal" = "Horizontal";
+
+/* NSMenuItem : <title:Item1> (oid:1196) */
+"Item1" = "Item1";
+
+/* NSMenuItem : <title:Item2> (oid:1208) */
+"Item2" = "Item2";
+
+/* NSMenuItem : <title:Item3> (oid:1206) */
+"Item3" = "Item3";
+
+/* NSTextField (Key :) : <title:Key :
+> (oid:356) */
+"Key :\n" = "Key :\n";
+
+/* NSPanel (Key Binding Entry) : <title:Key Binding Entry> (oid:354) */
+"Key Binding Entry" = "Key Binding Entry";
+
+/* NSTableColumn : <title:Key Combination> (oid:890) */
+"Key Combination" = "Key Combination";
+
+/* NSTextField (Keyboard) : <title:Keyboard> (oid:1216) */
+"Keyboard" = "Keyboard";
+
+/* NSMenuItem : <title:Left> (oid:1533) */
+"Left" = "Left";
+
+/* NSTextField (Mapping) : <title:Mapping> (oid:846) */
+"Mapping" = "Mapping";
+
+/* NSButtonCell (Meta) : <title:Meta> (oid:949) */
+"Meta" = "Meta";
+
+/* NSTextField (Modifier :) : <title:Modifier :> (oid:362) */
+"Modifier :" = "Modifier :";
+
+/* NSTextField (Name) : <title:Name> (oid:785) */
+"Name" = "Name";
+
+/* NSTextField (Name) : <title:Name
+> (oid:1417) */
+"Name\n" = "Name\n";
+
+/* NSButton (Non-Ascii Font) : <title:Non-Ascii Font> (oid:1146) */
+"Non-Ascii Font" = "Non-Ascii Font";
+
+/* NSMenuItem : <title:None> (oid:1536) */
+"None" = "None";
+
+/* NSButtonCell (Normal) : <title:Normal> (oid:829) */
+"Normal" = "Normal";
+
+/* NSButton (OK) : <title:OK> (oid:1423) */
+"OK" = "OK";
+
+/* NSButton (Option) : <title:Option> (oid:583) */
+"Option" = "Option";
+
+/* NSTextField (Option Key as) : <title:Option Key as> (oid:833) */
+"Option Key as" = "Option Key as";
+
+/* NSMenu : <title:OtherViews> (oid:1530) */
+"OtherViews" = "OtherViews";
+
+/* NSPanel (Panel) : <title:Panel> (oid:779) */
+"Panel" = "Panel";
+
+/* NSWindow (Preferences) : <title:Preferences> (oid:32) */
+"Preferences" = "Preferences";
+
+/* NSTextField (Profile) : <title:Profile
+
+> (oid:1320) */
+"Profile\n\n" = "Profile\n\n";
+
+/* NSWindow (Profiles) : <title:Profiles> (oid:815) */
+"Profiles" = "Profiles";
+
+/* NSButton (Profiles...) : <title:Profiles...> (oid:1163) */
+"Profiles..." = "Profiles...";
+
+/* NSButton (Prompt when quitting or closing window) : <title:Prompt when quitting or closing window> (oid:281) */
+"Prompt when quitting or closing window" = "Prompt when quitting or closing window";
+
+/* NSMenuItem : <title:Right> (oid:1535) */
+"Right" = "Right";
+
+/* NSTextField (Row) : <title:Row> (oid:1141) */
+"Row" = "Row";
+
+/* NSTextField (Scrollback Lines) : <title:Scrollback Lines
+> (oid:1089) */
+"Scrollback Lines\n" = "Scrollback Lines\n";
+
+/* NSTextField (Selected Text) : <title:Selected Text> (oid:1108) */
+"Selected Text" = "Selected Text";
+
+/* NSTextField (Selection) : <title:Selection> (oid:1109) */
+"Selection" = "Selection";
+
+/* NSButton (Selection copies text) : <title:Selection copies text> (oid:1091) */
+"Selection copies text" = "Selection copies text";
+
+/* NSButton (Shift) : <title:Shift> (oid:585) */
+"Shift" = "Shift";
+
+/* NSButton (Silence terminal bell) : <title:Silence terminal bell> (oid:1035) */
+"Silence terminal bell" = "Silence terminal bell";
+
+/* NSTextField (Tab Position) : <title:Tab Position
+
+
+> (oid:278) */
+"Tab Position\n\n\n" = "Tab Position\n\n\n";
+
+/* NSTextField (Terminal) : <title:Terminal> (oid:1209) */
+"Terminal" = "Terminal";
+
+/* NSBox : <title:Title> (oid:945) */
+"Title" = "Title";
+
+/* NSMenuItem : <title:Top> (oid:1532) */
+"Top" = "Top";
+
+/* NSTextField (Transparency) : <title:Transparency> (oid:1373) */
+"Transparency" = "Transparency";
+
+/* NSButton (Treat Non-ASCII characters as double width) : <title:Treat Non-ASCII characters as double width> (oid:877) */
+"Treat Non-ASCII characters as double width" = "Treat Non-ASCII characters as double width";
+
+/* NSTextField (Type) : <title:Type> (oid:914) */
+"Type" = "Type";
+
+/* NSTextField (Vertical) : <title:Vertical> (oid:1315) */
+"Vertical" = "Vertical";
+
+/* NSBox : <title:Window> (oid:1148) */
+"Window" = "Window";
+
+/* NSTextField (Working Dir) : <title:Working Dir> (oid:780) */
+"Working Dir" = "Working Dir";
+
+/* NSMenuItem : <title:ansi> (oid:1212) */
+"ansi" = "ansi";
+
+/* NSMenuItem : <title:cursor down> (oid:359) */
+"cursor down" = "cursor down";
+
+/* NSMenuItem : <title:cursor left> (oid:357) */
+"cursor left" = "cursor left";
+
+/* NSMenuItem : <title:cursor right > (oid:360) */
+"cursor right " = "cursor right ";
+
+/* NSMenuItem : <title:cursor up> (oid:377) */
+"cursor up" = "cursor up";
+
+/* NSMenuItem : <title:del> (oid:378) */
+"del" = "del";
+
+/* NSMenuItem : <title:delete> (oid:379) */
+"delete" = "delete";
+
+/* NSMenuItem : <title:end> (oid:386) */
+"end" = "end";
+
+/* NSMenuItem : <title:hex code> (oid:573) */
+"hex code" = "hex code";
+
+/* NSMenuItem : <title:home> (oid:401) */
+"home" = "home";
+
+/* NSMenuItem : <title:ignore> (oid:1238) */
+"ignore" = "ignore";
+
+/* NSMenuItem : <title:next tab> (oid:371) */
+"next tab" = "next tab";
+
+/* NSMenuItem : <title:next window> (oid:372) */
+"next window" = "next window";
+
+/* NSMenuItem : <title:numeric *> (oid:422) */
+"numeric *" = "numeric *";
+
+/* NSMenuItem : <title:numeric +> (oid:424) */
+"numeric +" = "numeric +";
+
+/* NSMenuItem : <title:numeric -> (oid:423) */
+"numeric -" = "numeric -";
+
+/* NSMenuItem : <title:numeric .> (oid:425) */
+"numeric ." = "numeric .";
+
+/* NSMenuItem : <title:numeric /> (oid:421) */
+"numeric /" = "numeric /";
+
+/* NSMenuItem : <title:numeric 0> (oid:411) */
+"numeric 0" = "numeric 0";
+
+/* NSMenuItem : <title:numeric 1> (oid:412) */
+"numeric 1" = "numeric 1";
+
+/* NSMenuItem : <title:numeric 2> (oid:413) */
+"numeric 2" = "numeric 2";
+
+/* NSMenuItem : <title:numeric 3> (oid:414) */
+"numeric 3" = "numeric 3";
+
+/* NSMenuItem : <title:numeric 4> (oid:415) */
+"numeric 4" = "numeric 4";
+
+/* NSMenuItem : <title:numeric 5> (oid:416) */
+"numeric 5" = "numeric 5";
+
+/* NSMenuItem : <title:numeric 6> (oid:417) */
+"numeric 6" = "numeric 6";
+
+/* NSMenuItem : <title:numeric 7> (oid:402) */
+"numeric 7" = "numeric 7";
+
+/* NSMenuItem : <title:numeric 8> (oid:418) */
+"numeric 8" = "numeric 8";
+
+/* NSMenuItem : <title:numeric 9> (oid:419) */
+"numeric 9" = "numeric 9";
+
+/* NSMenuItem : <title:numeric => (oid:420) */
+"numeric =" = "numeric =";
+
+/* NSMenuItem : <title:numlock> (oid:403) */
+"numlock" = "numlock";
+
+/* NSMenuItem : <title:page down> (oid:426) */
+"page down" = "page down";
+
+/* NSMenuItem : <title:page up> (oid:427) */
+"page up" = "page up";
+
+/* NSMenuItem : <title:previous tab> (oid:369) */
+"previous tab" = "previous tab";
+
+/* NSMenuItem : <title:previous window> (oid:405) */
+"previous window" = "previous window";
+
+/* NSMenuItem : <title:rxvt> (oid:1213) */
+"rxvt" = "rxvt";
+
+/* NSMenuItem : <title:scroll end> (oid:591) */
+"scroll end" = "scroll end";
+
+/* NSMenuItem : <title:scroll home> (oid:592) */
+"scroll home" = "scroll home";
+
+/* NSMenuItem : <title:scroll line down> (oid:406) */
+"scroll line down" = "scroll line down";
+
+/* NSMenuItem : <title:scroll line up> (oid:407) */
+"scroll line up" = "scroll line up";
+
+/* NSMenuItem : <title:scroll page down> (oid:408) */
+"scroll page down" = "scroll page down";
+
+/* NSMenuItem : <title:scroll page up> (oid:409) */
+"scroll page up" = "scroll page up";
+
+/* NSMenuItem : <title:send escape sequence> (oid:410) */
+"send escape sequence" = "send escape sequence";
+
+/* NSMenuItem : <title:send hex code> (oid:428) */
+"send hex code" = "send hex code";
+
+/* NSMenuItem : <title:vt100> (oid:1211) */
+"vt100" = "vt100";
+
+/* NSMenuItem : <title:xterm> (oid:1215) */
+"xterm" = "xterm";
+
+/* NSMenuItem : <title:xterm-color> (oid:1207) */
+"xterm-color" = "xterm-color";
+
