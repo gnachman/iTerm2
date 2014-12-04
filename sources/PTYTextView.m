@@ -3540,12 +3540,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (IBAction)selectOutputOfLastCommand:(id)sender {
-    VT100GridCoordRange range = [_delegate textViewRangeOfLastCommandOutput];
+    VT100GridAbsCoordRange range = [_delegate textViewRangeOfLastCommandOutput];
     if (range.start.x < 0) {
         return;
     }
-    [_selection beginSelectionAt:range.start mode:kiTermSelectionModeCharacter resume:NO append:NO];
-    [_selection moveSelectionEndpointTo:range.end];
+    VT100GridCoord relativeStart =
+        VT100GridCoordMake(range.start.x,
+                           range.start.y - [_dataSource totalScrollbackOverflow]);
+    VT100GridCoord relativeEnd =
+        VT100GridCoordMake(range.end.x,
+                           range.end.y - [_dataSource totalScrollbackOverflow]);
+    [_selection beginSelectionAt:relativeStart
+                            mode:kiTermSelectionModeCharacter
+                          resume:NO
+                          append:NO];
+    [_selection moveSelectionEndpointTo:relativeEnd];
     [_selection endLiveSelection];
 
     if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
@@ -5322,6 +5331,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return NSMakeRect(x, y, _charWidth, _lineHeight);
 }
 
+- (CGFloat)verticalOffset {
+    return self.frame.size.height - NSMaxY(self.enclosingScrollView.documentVisibleRect);
+}
+
 - (NSPoint)cursorLocationInScreenCoordinates {
     NSRect cursorFrame = [self cursorRect];
     CGFloat x = cursorFrame.origin.x + cursorFrame.size.width / 2;
@@ -5331,6 +5344,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         y = _imeCursorLastPos.y + _lineHeight / 2;
     }
     NSPoint p = NSMakePoint(x, y);
+    p.y += [self verticalOffset];
     p = [self convertPoint:p toView:nil];
     p = [[self window] pointToScreenCoords:p];
     return p;
@@ -5397,7 +5411,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     self.cursorVisible = YES;
     if (!_findCursorView) {
-        NSLog(@"Create find cursor window");
         [self createFindCursorWindow];
     }
     if (hold) {
@@ -5418,8 +5431,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)closeFindCursorWindow:(NSWindow *)win {
     [win close];
-    [_findCursorView stopBlinkNotifications];
-    [_findCursorView stopTearDownTimer];
 }
 
 - (void)findCursorViewDismiss {
@@ -5432,6 +5443,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self performSelector:@selector(closeFindCursorWindow:)
                withObject:_findCursorWindow
                afterDelay:[[NSAnimationContext currentContext] duration]];
+    [_findCursorView performSelector:@selector(stopBlinkNotifications)
+                          withObject:nil
+                          afterDelay:[[NSAnimationContext currentContext] duration]];
+    [_findCursorView stopTearDownTimer];
     _findCursorWindow = nil;
     _findCursorView.stopping = YES;
     _findCursorView = nil;

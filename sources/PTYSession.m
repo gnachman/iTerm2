@@ -4951,10 +4951,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return NO;
 }
 
-- (VT100GridCoordRange)textViewRangeOfLastCommandOutput {
+- (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
     if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
         [CommandHistory showInformationalMessage];
-        return VT100GridCoordRangeMake(-1, -1, -1, -1);
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         return _screen.lastCommandOutputRange;
     }

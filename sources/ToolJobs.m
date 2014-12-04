@@ -7,11 +7,12 @@
 //
 
 #import "ToolJobs.h"
-#import "ToolWrapper.h"
+#import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTask.h"
 #import "ProcessCache.h"
+#import "ToolWrapper.h"
 
 // For SignalPicker
 static const int kDefaultSignal = 9;
@@ -211,9 +212,9 @@ static const CGFloat kMargin = 4;
         [[col headerCell] setStringValue:@"Name"];
         NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         [[col dataCell] setFont:theFont];
-        [tableView_ setRowHeight:[[[[NSLayoutManager alloc] init] autorelease] defaultLineHeightForFont:theFont]];
+        tableView_.rowHeight = col.suggestedRowHeight;
         [col release];
-        
+
         col = [[NSTableColumn alloc] initWithIdentifier:@"pid"];
         [col setEditable:NO];
         [col setWidth:75];

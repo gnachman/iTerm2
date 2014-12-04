@@ -10,6 +10,7 @@
 #import "iTermDirectoriesModel.h"
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
+#import "NSTableColumn+iTerm.h"
 #import "PTYSession.h"
 #import "ToolWrapper.h"
 
@@ -75,7 +76,7 @@ static const CGFloat kHelpMargin = 5;
         [[col headerCell] setStringValue:@"Directories"];
         NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         [[col dataCell] setFont:theFont];
-        [tableView_ setRowHeight:[[[[NSLayoutManager alloc] init] autorelease] defaultLineHeightForFont:theFont]];
+        tableView_.rowHeight = col.suggestedRowHeight;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];

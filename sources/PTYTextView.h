@@ -129,7 +129,7 @@ typedef enum {
                       coordinate:(VT100GridCoord)coord
                           deltaY:(CGFloat)deltaY;
 
-- (VT100GridCoordRange)textViewRangeOfLastCommandOutput;
+- (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput;
 - (BOOL)textViewCanSelectOutputOfLastCommand;
 - (NSColor *)textViewCursorGuideColor;
 - (BOOL)textViewUseHFSPlusMapping;

@@ -121,7 +121,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, readonly) VT100GridCoord savedCursor;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
 @property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
-@property(nonatomic, readonly) VT100GridCoordRange lastCommandOutputRange;
+@property(nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;
 @property(nonatomic, assign) BOOL useHFSPlusMapping;
 @property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
 

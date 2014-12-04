@@ -7,10 +7,11 @@
 //
 
 #import "ToolPasteHistory.h"
-#import "NSDateFormatterExtras.h"
 #import "iTermController.h"
-#import "ToolWrapper.h"
+#import "NSDateFormatterExtras.h"
+#import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
+#import "ToolWrapper.h"
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
@@ -45,7 +46,7 @@ static const CGFloat kMargin = 4;
         [[col headerCell] setStringValue:@"Contents"];
         NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         [[col dataCell] setFont:theFont];
-        [tableView_ setRowHeight:[[[[NSLayoutManager alloc] init] autorelease] defaultLineHeightForFont:theFont]];
+        tableView_.rowHeight = col.suggestedRowHeight;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];

@@ -19,61 +19,70 @@
 NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotification";
 NSString *const kPSMTabModifierKey = @"TabModifier";
 
-@interface PSMTabBarControl (Private)
-// characteristics
-- (float)availableCellWidth;
-- (NSRect)genericCellRect;
-
-    // constructor/destructor
-- (void)initAddedProperties;
-- (void)dealloc;
-
-    // accessors
-- (NSEvent *)lastMouseDownEvent;
-- (NSEvent *)lastMiddleMouseDownEvent;
-- (void)setLastMouseDownEvent:(NSEvent *)event;
-- (void)setLastMiddleMouseDownEvent:(NSEvent *)event;
-
-    // contents
-- (void)addTabViewItem:(NSTabViewItem *)item;
-- (void)removeTabForCell:(PSMTabBarCell *)cell;
-
-    // draw
-- (void)update:(BOOL)animate;
-- (void)_removeCellTrackingRects;
-- (void)_finishCellUpdate:(NSArray *)newWidths;
-- (NSMenu *)_setupCells:(NSArray *)newWidths;
-- (void)_setupOverflowMenu:(NSMenu *)overflowMenu;
-- (void)_setupAddTabButton:(NSRect)frame;
-
-    // actions
-- (void)overflowMenuAction:(id)sender;
-- (void)closeTabClick:(id)sender;
-- (void)tabClick:(id)sender;
-- (void)tabNothing:(id)sender;
-- (void)frameDidChange:(NSNotification *)notification;
-- (void)windowDidMove:(NSNotification *)aNotification;
-- (void)windowStatusDidChange:(NSNotification *)notification;
-
-    // NSTabView delegate
-- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem;
-- (BOOL)tabView:(NSTabView *)tabView shouldSelectTabViewItem:(NSTabViewItem *)tabViewItem;
-- (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem;
-- (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView;
-
-    // archiving
-- (void)encodeWithCoder:(NSCoder *)aCoder;
-- (id)initWithCoder:(NSCoder *)aDecoder;
-
-    // convenience
-- (id)cellForPoint:(NSPoint)point cellFrame:(NSRectPointer)outFrame;
-- (PSMTabBarCell *)lastVisibleTab;
-
+@interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end
 
-@implementation PSMTabBarControl
+@implementation PSMTabBarControl {
+
+    // control basics
+    NSMutableArray              *_cells;                    // the cells that draw the tabs
+    IBOutlet NSTabView          *tabView;                   // the tab view being navigated
+    PSMOverflowPopUpButton      *_overflowPopUpButton;      // for too many tabs
+    PSMRolloverButton           *_addTabButton;
+
+    // drawing style
+    id<PSMTabStyle>             style;
+    BOOL                        _disableTabClose;
+    BOOL                        _hideForSingleTab;
+    BOOL                        _showAddTabButton;
+    BOOL                        _sizeCellsToFit;
+    BOOL                        _useOverflowMenu;
+    int                         _resizeAreaCompensation;
+    PSMTabBarOrientation        _orientation;
+    BOOL                        _automaticallyAnimates;
+    NSTimer                     *_animationTimer;
+    float                       _animationDelta;
+
+    // behavior
+    BOOL                        _allowsBackgroundTabClosing;
+    BOOL                        _selectsTabsOnMouseDown;
+
+    // vertical tab resizing
+    BOOL                        _allowsResizing;
+    BOOL                        _resizing;
+
+    // cell width
+    int                         _cellMinWidth;
+    int                         _cellMaxWidth;
+    int                         _cellOptimumWidth;
+
+    // animation for hide/show
+    int                         _currentStep;
+    BOOL                        _isHidden;
+    BOOL                        _hideIndicators;
+    IBOutlet id                 partnerView;                // gets resized when hide/show
+    BOOL                        _awakenedFromNib;
+    int                         _tabBarWidth;
+
+    // drag and drop
+    NSEvent                     *_lastMouseDownEvent;      // keep this for dragging reference
+    NSEvent                     *_lastMiddleMouseDownEvent;
+    BOOL                        _didDrag;
+    BOOL                        _closeClicked;
+
+    // MVC help
+    IBOutlet id<PSMTabBarControlDelegate> delegate;
+
+    // orientation, top or bottom
+    int                         _tabLocation;
+
+    // iTerm2 additions
+    int                         _modifier;
+}
+
 #pragma mark -
 #pragma mark Characteristics
+
 + (NSBundle *)bundle
 {
     static NSBundle *bundle = nil;
@@ -305,20 +314,23 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
 - (void)setStyle:(id <PSMTabStyle>)newStyle
 {
-    [style release];
+    [style autorelease];
     style = [newStyle retain];
 
     // restyle add tab button
-    if(_addTabButton){
+    if (_addTabButton){
         NSImage *newButtonImage = [style addTabButtonImage];
-        if(newButtonImage)
+        if (newButtonImage) {
             [_addTabButton setUsualImage:newButtonImage];
+        }
         newButtonImage = [style addTabButtonPressedImage];
-        if(newButtonImage)
+        if (newButtonImage) {
             [_addTabButton setAlternateImage:newButtonImage];
+        }
         newButtonImage = [style addTabButtonRolloverImage];
-        if(newButtonImage)
+        if (newButtonImage) {
             [_addTabButton setRolloverImage:newButtonImage];
+        }
     }
 
     [self update:_automaticallyAnimates];
@@ -887,7 +899,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     }
 
     // hide/show? (these return if already in desired state)
-    if((_hideForSingleTab) && ([_cells count] <= 1)){
+    if ((_hideForSingleTab) && ([_cells count] <= 1)) {
         [self hideTabBar:YES animate:YES];
     } else {
         [self hideTabBar:NO animate:YES];
@@ -909,6 +921,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
     for (i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
+        [cell updateForStyle];
         float width;
 
         // suppress close button?
@@ -2368,6 +2381,12 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
         default:
             return NSDragOperationNone;
     }
+}
+
+#pragma mark - PSMProgressIndicatorDelegate
+
+- (void)progressIndicatorNeedsUpdate {
+    [self update];
 }
 
 @end

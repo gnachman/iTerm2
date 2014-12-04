@@ -23,7 +23,7 @@
 
 #import <apr-1/apr_base64.h>
 #include <string.h>
-#include <unistd.h>
+
 
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
@@ -46,7 +46,7 @@ static const double kInterBellQuietPeriod = 0.1;
 @implementation VT100Screen {
     NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
     NSMutableArray *inlineFileCodes_;
-    VT100GridCoord nextCommandOutputStart_;
+    VT100GridAbsCoord nextCommandOutputStart_;
     NSTimeInterval lastBell_;
 }
 
@@ -104,8 +104,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         markCache_ = [[NSMutableDictionary alloc] init];
         commandStartX_ = commandStartY_ = -1;
 
-        nextCommandOutputStart_ = VT100GridCoordMake(-1, -1);
-        _lastCommandOutputRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
+        nextCommandOutputStart_ = VT100GridAbsCoordMake(-1, -1);
+        _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     }
     return self;
 }
@@ -3196,8 +3196,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     _shellIntegrationInstalled = YES;
 
-    _lastCommandOutputRange.end = currentGrid_.cursor;
-    _lastCommandOutputRange.end.y += [self numberOfScrollbackLines];
+    _lastCommandOutputRange.end.x = currentGrid_.cursor.x;
+    _lastCommandOutputRange.end.y =
+        currentGrid_.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
     _lastCommandOutputRange.start = nextCommandOutputStart_;
 
     // FinalTerm uses this to define the start of a collapsable region. That would be a nightmare
@@ -3218,8 +3219,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
         [delegate_ screenCommandDidChangeWithRange:[self commandRange]];
-        nextCommandOutputStart_ = currentGrid_.cursor;
-        nextCommandOutputStart_.y += [self numberOfScrollbackLines];
+        nextCommandOutputStart_.x = currentGrid_.cursor.x;
+        nextCommandOutputStart_.y =
+            currentGrid_.cursor.y + [self numberOfScrollbackLines] + [self totalScrollbackOverflow];
     }
 }
 

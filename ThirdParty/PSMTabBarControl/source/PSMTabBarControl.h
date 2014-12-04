@@ -6,11 +6,8 @@
 //  Copyright 2005 Positive Spin Media. All rights reserved.
 //
 
-/*
- This view provides a control interface to manage a regular NSTabView.  It looks and works like the tabbed browsing interface of many popular browsers.
- */
-
 #import <Cocoa/Cocoa.h>
+#import "PSMProgressIndicator.h"
 
 extern NSString *const kPSMModifierChangedNotification;
 extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifier changed notification
@@ -145,108 +142,40 @@ enum {
     PSMTab_LeftTab          = 2,
 };
 
-@interface PSMTabBarControl : NSControl<NSDraggingSource, PSMTabViewDelegate> {
-
-    // control basics
-    NSMutableArray              *_cells;                    // the cells that draw the tabs
-    IBOutlet NSTabView          *tabView;                   // the tab view being navigated
-    PSMOverflowPopUpButton      *_overflowPopUpButton;      // for too many tabs
-    PSMRolloverButton           *_addTabButton;
-
-    // drawing style
-    id<PSMTabStyle>             style;
-    BOOL                        _disableTabClose;
-    BOOL                        _hideForSingleTab;
-    BOOL                        _showAddTabButton;
-    BOOL                        _sizeCellsToFit;
-    BOOL                        _useOverflowMenu;
-    int                         _resizeAreaCompensation;
-    PSMTabBarOrientation        _orientation;
-    BOOL                        _automaticallyAnimates;
-    NSTimer                     *_animationTimer;
-    float                       _animationDelta;
-
-    // behavior
-    BOOL                        _allowsBackgroundTabClosing;
-    BOOL                        _selectsTabsOnMouseDown;
-
-    // vertical tab resizing
-    BOOL                        _allowsResizing;
-    BOOL                        _resizing;
-
-    // cell width
-    int                         _cellMinWidth;
-    int                         _cellMaxWidth;
-    int                         _cellOptimumWidth;
-
-    // animation for hide/show
-    int                         _currentStep;
-    BOOL                        _isHidden;
-    BOOL                        _hideIndicators;
-    IBOutlet id                 partnerView;                // gets resized when hide/show
-    BOOL                        _awakenedFromNib;
-    int                         _tabBarWidth;
-
-    // drag and drop
-    NSEvent                     *_lastMouseDownEvent;      // keep this for dragging reference
-    NSEvent                     *_lastMiddleMouseDownEvent;
-    BOOL                        _didDrag;
-    BOOL                        _closeClicked;
-
-    // MVC help
-    IBOutlet id<PSMTabBarControlDelegate> delegate;
-
-    // orientation, top or bottom
-    int                         _tabLocation;
-
-    // iTerm2 additions
-    int                         _modifier;
-}
+// This view provides a control interface to manage a regular NSTabView.  It looks and works like
+// the tabbed browsing interface of many popular browsers.
+@interface PSMTabBarControl : NSControl<
+  NSDraggingSource,
+  PSMProgressIndicatorDelegate,
+  PSMTabViewDelegate> 
 
 // control characteristics
 + (NSBundle *)bundle;
 
 // control configuration
-- (PSMTabBarOrientation)orientation;
-- (void)setOrientation:(PSMTabBarOrientation)value;
-- (BOOL)disableTabClose;
-- (void)setDisableTabClose:(BOOL)value;
-- (id<PSMTabStyle>)style;
-- (void)setStyle:(id <PSMTabStyle>)newStyle;
-- (BOOL)hideForSingleTab;
-- (void)setHideForSingleTab:(BOOL)value;
-- (BOOL)showAddTabButton;
-- (void)setShowAddTabButton:(BOOL)value;
-- (int)cellMinWidth;
-- (void)setCellMinWidth:(int)value;
-- (int)cellMaxWidth;
-- (void)setCellMaxWidth:(int)value;
-- (int)cellOptimumWidth;
-- (void)setCellOptimumWidth:(int)value;
-- (BOOL)sizeCellsToFit;
-- (void)setSizeCellsToFit:(BOOL)value;
-- (BOOL)useOverflowMenu;
-- (void)setUseOverflowMenu:(BOOL)value;
-- (BOOL)allowsBackgroundTabClosing;
-- (void)setAllowsBackgroundTabClosing:(BOOL)value;
-- (BOOL)allowsResizing;
-- (void)setAllowsResizing:(BOOL)value;
-- (BOOL)selectsTabsOnMouseDown;
-- (void)setSelectsTabsOnMouseDown:(BOOL)value;
-- (BOOL)automaticallyAnimates;
-- (void)setAutomaticallyAnimates:(BOOL)value;
-- (int)tabLocation;
-- (void)setTabLocation:(int)value;
+@property(nonatomic, assign) PSMTabBarOrientation orientation;
+@property(nonatomic, assign) BOOL disableTabClose;
+@property(nonatomic, retain) id<PSMTabStyle> style;
+@property(nonatomic, assign) BOOL hideForSingleTab;
+@property(nonatomic, assign) BOOL showAddTabButton;
+@property(nonatomic, assign) int cellMinWidth;
+@property(nonatomic, assign) int cellMaxWidth;
+@property(nonatomic, assign) int cellOptimumWidth;
+@property(nonatomic, assign) BOOL sizeCellsToFit;
+@property(nonatomic, assign) BOOL useOverflowMenu;
+@property(nonatomic, assign) BOOL allowsBackgroundTabClosing;
+@property(nonatomic, assign) BOOL allowsResizing;
+@property(nonatomic, assign) BOOL selectsTabsOnMouseDown;
+@property(nonatomic, assign) BOOL automaticallyAnimates;
+@property(nonatomic, assign) int tabLocation;
+
+@property(nonatomic, retain) NSTabView *tabView;
+@property(nonatomic, assign) id<PSMTabBarControlDelegate> delegate;
+@property(nonatomic, retain) id partnerView;
+
+
 - (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex;
 - (void)moveTabAtIndex:(NSInteger)i1 toIndex:(NSInteger)i2;
-
-// accessors
-- (NSTabView *)tabView;
-- (void)setTabView:(NSTabView *)view;
-- (id<PSMTabBarControlDelegate>)delegate;
-- (void)setDelegate:(id<PSMTabBarControlDelegate>)object;
-- (id)partnerView;
-- (void)setPartnerView:(id)view;
 
 // the buttons
 - (PSMRolloverButton *)addTabButton;
@@ -272,8 +201,5 @@ enum {
 - (NSString*)_modifierString;
 - (void)fillPath:(NSBezierPath*)path;
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
-
-// This used to be private. Updates the cell layout.
-- (void)update;
 
 @end
