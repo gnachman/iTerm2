@@ -26,8 +26,8 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import "NSStringITerm.h"
 #import "DebugLogging.h"
+#import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
@@ -217,8 +217,7 @@ static const int ambiguous_chars[] = {
     return @"\\ ()\"&'!$<>;|*?[]#`";
 }
 
-- (NSString *)stringWithEscapedShellCharacters
-{
+- (NSString *)stringWithEscapedShellCharacters {
     NSMutableString *aMutableString = [[[NSMutableString alloc] initWithString:self] autorelease];
     [aMutableString escapeShellCharacters];
     return [NSString stringWithString:aMutableString];

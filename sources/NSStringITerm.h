@@ -56,8 +56,14 @@ int decode_utf8_char(const unsigned char * restrict datap,
 + (NSString *)stringWithInt:(int)num;
 + (BOOL)isDoubleWidthCharacter:(int)unicode
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
+
+// Returns the current string on the pasteboard (if any).
 + (NSString *)stringFromPasteboard;
+
+// Returns the set of characters that should be backslash-escaped.
 + (NSString *)shellEscapableCharacters;
+
+// Returns the number of lines in a string.
 - (NSUInteger)numberOfLines;
 - (NSString *)stringWithEscapedShellCharacters;
 
@@ -145,9 +151,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns self repeated |n| times.
 - (NSString *)stringRepeatedTimes:(int)n;
 
-// Returns an ellipsized version of the string.
+// Truncates the string and adds an ellipsis if it is longer than maxLength.
 - (NSString *)ellipsizedDescriptionNoLongerThan:(int)maxLength;
 
+// Turns a string like fooBar into FooBar.
 - (NSString *)stringWithFirstLetterCapitalized;
 
 @end
@@ -155,6 +162,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 @interface NSMutableString (iTerm)
 
 - (void)trimTrailingWhitespace;
+
+// Puts backslashes before characters in shellEscapableCharacters.
 - (void)escapeShellCharacters;
 
 @end

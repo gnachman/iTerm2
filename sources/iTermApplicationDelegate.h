@@ -42,7 +42,7 @@ extern NSString *const kMarkAlertActionPostNotification;
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 
-@interface iTermApplicationDelegate : NSObject
+@interface iTermApplicationDelegate : NSObject<NSApplicationDelegate>
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
 @property(nonatomic, readonly) BOOL isApplescriptTestApp;

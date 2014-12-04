@@ -1,13 +1,14 @@
 #import "PTYSession.h"
 
-#import "CVector.h"
 #import "CommandHistory.h"
 #import "Coprocess.h"
+#import "CVector.h"
 #import "FakeWindow.h"
 #import "FileTransferManager.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
@@ -23,7 +24,6 @@
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
 #import "iTermSelection.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "iTermTextExtractor.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -35,16 +35,16 @@
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+PSM.h"
-#import "PTYScrollView.h"
-#import "PTYTab.h"
-#import "PTYTask.h"
-#import "PTYTextView.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "ProfilePreferencesViewController.h"
 #import "ProfilesColorsPreferencesViewController.h"
+#import "PTYScrollView.h"
+#import "PTYTab.h"
+#import "PTYTask.h"
+#import "PTYTextView.h"
 #import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
@@ -4505,8 +4505,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-// Pastes a specific string. All pastes go through this method. Adds to the event queue if a paste
-// is in progress.
+// All pastes except "Advanced" go through this method.
 - (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags {
     if (!theString.length) {
         return;
@@ -4537,6 +4536,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self pasteString:[PTYSession pasteboardString] flags:[sender tag]];
 }
 
+// Show advanced paste window.
 - (IBAction)pasteOptions:(id)sender {
     [_pasteHelper showPasteOptionsInWindow:self.tab.realParentWindow.window
                          bracketingEnabled:_terminal.bracketedPasteMode];

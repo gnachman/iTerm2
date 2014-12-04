@@ -46,7 +46,7 @@
 - (void)windowDidLoad
 {
     [super windowDidLoad];
-    
+
     // For some reason, the first item is checked by default. Make sure every
     // item is unchecked before making a selection.
     for (NSMenuItem *item in [_actionPopup itemArray]) {

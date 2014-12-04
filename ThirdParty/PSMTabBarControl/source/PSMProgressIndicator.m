@@ -93,7 +93,7 @@
     [self addSubview:_indicator];
     [self observeIndicator];
     if (_animating) {
-        [_indicator startAnimation:YES];
+        [_indicator startAnimation:nil];
     }
 
     if (light) {

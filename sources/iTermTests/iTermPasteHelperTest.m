@@ -12,6 +12,7 @@
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "PasteEvent.h"
+#import "PasteboardHistory.h"
 
 typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier);
 
@@ -67,6 +68,7 @@ static const double kFloatingPointTolerance = 0.00001;
   _helper = [[[iTermInstrumentedPasteHelper alloc] init] autorelease];
   _helper.delegate = self;
   [iTermWarning setWarningHandler:self];
+  [[PasteboardHistory sharedInstance] clear];
   _warningBlock = ^NSModalResponse(NSAlert *alert, NSString *identifier) {
     if ([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]) {
       return NSAlertDefaultReturn;
@@ -188,6 +190,7 @@ static const double kFloatingPointTolerance = 0.00001;
   [self runTimer];
   assert([_dataWritten isEqualToData:[kHelloWorld dataUsingEncoding:NSUTF8StringEncoding]]);
   assert(_helper.duration == 0);
+  assert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:kHelloWorld]);
 }
 
 - (void)testDefaultFlagsOnPasteString {
@@ -268,6 +271,7 @@ static const double kFloatingPointTolerance = 0.00001;
   [self runTimer];
   NSString *expected = @"\x1b[200~Hello World\x1b[201~";
   assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
+  assert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:kHelloWorld]);
 }
 
 // You still get a close bracket even if you change your mind about wanting it unless the whole paste
@@ -350,6 +354,8 @@ static const double kFloatingPointTolerance = 0.00001;
   assert([_dataWritten isEqualToData:[[test1 stringByAppendingString:test2] dataUsingEncoding:NSUTF8StringEncoding]]);
   NSTimeInterval expectedDuration = 2 * 0.01;
   assert(fabs(_helper.duration - expectedDuration) < kFloatingPointTolerance);
+  assert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:test1]);
+  assert([[[[PasteboardHistory sharedInstance] entries][1] mainValue] isEqualToString:test2]);
 }
 
 - (void)testQueuedKeystrokeAndPaste {

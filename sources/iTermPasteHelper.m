@@ -6,20 +6,20 @@
 //
 //
 
-#import "iTermPasteHelper.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermNumberOfSpacesAccessoryViewController.h"
+#import "iTermPasteHelper.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPasteSpecialWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermWarning.h"
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
+#import "PasteboardHistory.h"
 #import "PasteContext.h"
 #import "PasteEvent.h"
-#import "PasteboardHistory.h"
 #import "PasteViewController.h"
 
 @interface iTermPasteHelper () <PasteViewControllerDelegate>

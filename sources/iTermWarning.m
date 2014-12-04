@@ -33,7 +33,7 @@ static id<iTermWarningHandler> gWarningHandler;
         [self identifierIsSilenced:identifier]) {
         return [self savedSelectionForIdentifier:identifier];
     }
-    
+
     NSAlert *alert = [NSAlert alertWithMessageText:@"Warning"
                                      defaultButton:actions.count > 0 ? actions[0] : nil
                                    alternateButton:actions.count > 1 ? actions[1] : nil
@@ -68,7 +68,7 @@ static id<iTermWarningHandler> gWarningHandler;
     if (accessory) {
         [alert setAccessoryView:accessory];
     }
-    
+
     NSInteger result;
     if (gWarningHandler) {
         result = [gWarningHandler warningWouldShowAlert:alert identifier:identifier];
