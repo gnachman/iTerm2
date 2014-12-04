@@ -127,6 +127,7 @@
                                       }];
         _events = [[SCEvents alloc] init];
         _events.delegate = self;
+        NSLog(@"Watch dynamic profiles path %@", [self dynamicProfilesPath]);
         [_events startWatchingPaths:@[ [self dynamicProfilesPath] ]];
         [self reloadDynamicProfiles];
     }
@@ -641,6 +642,7 @@
 #pragma mark - SCEventListenerProtocol
 
 - (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
+    NSLog(@"Path watcher observed an event");
     [self reloadDynamicProfiles];
 }
 
@@ -659,18 +661,23 @@
 
 - (void)reloadDynamicProfiles {
     NSString *path = [self dynamicProfilesPath];
+    NSLog(@"Trying to load dynamic profiles from %@", path);
     NSFileManager *fileManager = [NSFileManager defaultManager];
 
     // Load the current dynamic profiles into |newProfiles|. The |guids| set
     // is used to ensure that guids are unique across all files.
     NSMutableArray *newProfiles = [NSMutableArray array];
     NSMutableSet *guids = [NSMutableSet set];
+    NSLog(@"Enumerating files...");
     for (NSString *file in [fileManager enumeratorAtPath:path]) {
+        NSLog(@"Check file %@", file);
         NSString *fullName = [path stringByAppendingPathComponent:file];
         if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
+            NSLog(@"Error encountered; aborting.");
             return;
         }
     }
+    NSLog(@"Done enumerating files");
 
     // Update changes to existing dynamic profiles and add ones whose guids are
     // not known.
@@ -682,6 +689,7 @@
             [self updateExistingDynamicProfile:existingProfile withProfile:profile];
             shouldReload = YES;
         } else {
+            NSLog(@"Add dynamic profile with guid %@", profile[KEY_GUID]);
             [self addDynamicProfile:profile];
         }
     }
@@ -689,6 +697,7 @@
     // Remove dynamic profiles whose guids no longer exist.
     for (Profile *profile in oldProfiles) {
         if (![self profileWithGuid:profile[KEY_GUID] inArray:newProfiles]) {
+            NSLog(@"Remove dynamic profile with guid %@", profile[KEY_GUID]);
             [self removeDynamicProfile:profile];
         }
     }
@@ -747,6 +756,8 @@
         [profiles addObject:profile];
         [guids addObject:profile[KEY_GUID]];
     }
+
+    NSLog(@"Loaded dynamic profiles ok.");
     return YES;
 }
 
