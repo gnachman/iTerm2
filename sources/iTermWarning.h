@@ -23,6 +23,7 @@ typedef enum {
 
 // Tests can use this to prevent warning popups.
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler;
++ (id<iTermWarningHandler>)warningHandler;
 
 // Show a warning, optionally with a suppression checkbox. It may not be shown
 // if it was previously suppressed.

@@ -73,7 +73,7 @@
                                          bracketingEnabled:bracketingEnabled
                                                   encoding:[_delegate pasteHelperEncoding]
                                                 completion:^(PasteEvent *event) {
-                                                    [self pasteEvent:event];
+                                                    [self tryToPasteEvent:event];
                                                     [iTermPreferences setInt:event.defaultChunkSize
                                                                       forKey:kPreferenceKeyPasteSpecialChunkSize];
                                                     [iTermPreferences setFloat:event.defaultDelay
@@ -143,7 +143,7 @@
 - (void)pasteString:(NSString *)theString stringConfig:(NSString *)jsonConfig {
     PasteEvent *pasteEvent = [iTermPasteSpecialViewController pasteEventForConfig:jsonConfig
                                                                            string:theString];
-    [self pasteEvent:pasteEvent];
+    [self tryToPasteEvent:pasteEvent];
 }
 
 - (void)pasteString:(NSString *)theString
@@ -181,36 +181,33 @@
                                                 delayKey:delayKey
                                             tabTransform:tabTransform
                                             spacesPerTab:spacesPerTab];
-    [self pasteEvent:event];
+    [self tryToPasteEvent:event];
 }
 
 // this needs to take the delay, chunk size, key names, and the exact flags it wants
-- (void)pasteEvent:(PasteEvent *)pasteEvent {
-    static BOOL running;
-    assert(!running);
-    running = YES;
+- (void)tryToPasteEvent:(PasteEvent *)pasteEvent {
     DLog(@"-[iTermPasteHelper pasteString:flags:");
     DLog(@"length=%@, flags=%@", @(pasteEvent.string.length), @(pasteEvent.flags));
     if ([pasteEvent.string length] == 0) {
         DLog(@"Tried to paste 0-byte string. Beep.");
         NSBeep();
-        running = NO;
+        return;
+    }
+    if (![self maybeWarnAboutMultiLinePaste:pasteEvent.string]) {
+        DLog(@"Multiline paste declined.");
         return;
     }
     if ([self isPasting]) {
         DLog(@"Already pasting. Enqueue event.");
         [self enqueueEvent:pasteEvent];
-        running = NO;
-        return;
-    }
-    if (![self maybeWarnAboutMultiLinePaste:pasteEvent.string]) {
-        DLog(@"Multiline paste declined.");
-        running = NO;
         return;
     }
 
     DLog(@"Sanitize control characters, escape, etc....");
+    [self pasteEventImmediately:pasteEvent];
+}
 
+- (void)pasteEventImmediately:(PasteEvent *)pasteEvent {
     // A queued up paste command might have wanted bracketing but the host might not accept it
     // any more.
     if (![_delegate pasteHelperShouldBracket]) {
@@ -237,7 +234,6 @@
     if ([pasteEvent.string length] == 0) {
         DLog(@"Tried to paste 0-byte string (became 0 length after removing controls). Beep.");
         NSBeep();
-        running = NO;
         return;
     }
 
@@ -246,7 +242,6 @@
                          defaultValue:pasteEvent.defaultChunkSize
              delayBetweenCallsPrefKey:pasteEvent.delayKey
                          defaultValue:pasteEvent.defaultDelay];
-    running = NO;
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
@@ -299,8 +294,7 @@
         if ([event isKindOfClass:[PasteEvent class]]) {
             DLog(@"Found a queued paste event");
             PasteEvent *pasteEvent = (PasteEvent *)event;
-            // -pasteEvent: can call dequeueEvents indirectly, so this method must be reentrant.
-            [self pasteEvent:pasteEvent];
+            [self pasteEventImmediately:pasteEvent];
             // Can't empty while pasting.
             break;
         } else {
@@ -352,11 +346,11 @@
     if ([_buffer length] > 0) {
         DLog(@"Schedule timer after %@", @(_pasteContext.delayBetweenCalls));
         [_pasteContext updateValues];
-        _timer = [NSTimer scheduledTimerWithTimeInterval:_pasteContext.delayBetweenCalls
-                                                  target:self
-                                                selector:@selector(pasteNextChunkAndScheduleTimer)
-                                                userInfo:nil
-                                                 repeats:NO];
+        _timer = [self scheduledTimerWithTimeInterval:_pasteContext.delayBetweenCalls
+                                               target:self
+                                             selector:@selector(pasteNextChunkAndScheduleTimer)
+                                             userInfo:nil
+                                              repeats:NO];
     } else {
         DLog(@"Done pasting");
         _timer = nil;
@@ -370,8 +364,7 @@
 - (void)pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
                        defaultValue:(int)bytesPerCallDefault
            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
-                       defaultValue:(float)delayBetweenCallsDefault
-{
+                       defaultValue:(float)delayBetweenCallsDefault {
     [_pasteContext release];
     _pasteContext = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
                                                          defaultValue:bytesPerCallDefault
@@ -389,13 +382,14 @@
     [self pasteNextChunkAndScheduleTimer];
 }
 
-- (BOOL)maybeWarnAboutMultiLinePaste:(NSString *)string
-{
+- (BOOL)maybeWarnAboutMultiLinePaste:(NSString *)string {
     iTermApplicationDelegate *applicationDelegate = [[NSApplication sharedApplication] delegate];
     if (![applicationDelegate warnBeforeMultiLinePaste]) {
         return YES;
     }
-    NSRange rangeOfFirstNewline = [string rangeOfString:@"\n"];
+    NSCharacterSet *newlineCharacterSet =
+        [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
+    NSRange rangeOfFirstNewline = [string rangeOfCharacterFromSet:newlineCharacterSet];
     if (rangeOfFirstNewline.length == 0) {
         return YES;
     }
@@ -450,6 +444,20 @@
     [_buffer release];
     _buffer = [[NSMutableData alloc] init];
     [self dequeueEvents];
+}
+
+#pragma mark - Testing
+
+- (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti
+                                     target:(id)aTarget
+                                   selector:(SEL)aSelector
+                                   userInfo:(id)userInfo
+                                    repeats:(BOOL)yesOrNo {
+    return [NSTimer scheduledTimerWithTimeInterval:ti
+                                            target:aTarget
+                                          selector:aSelector
+                                          userInfo:userInfo
+                                           repeats:yesOrNo];
 }
 
 @end

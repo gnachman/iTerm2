@@ -11,6 +11,10 @@ static id<iTermWarningHandler> gWarningHandler;
     gWarningHandler = [handler retain];
 }
 
++ (id<iTermWarningHandler>)warningHandler {
+    return gWarningHandler;
+}
+
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
                                    identifier:(NSString *)identifier

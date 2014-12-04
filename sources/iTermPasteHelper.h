@@ -61,4 +61,13 @@
 // Convert tabs to spaces in source, perhaps asking the user questions in modal alerts.
 - (int)numberOfSpacesToConvertTabsTo:(NSString *)source;
 
+#pragma mark - Testing
+
+// This method can be overridden for testing.
+- (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti
+                                     target:(id)aTarget
+                                   selector:(SEL)aSelector
+                                   userInfo:(id)userInfo
+                                    repeats:(BOOL)yesOrNo;
+
 @end

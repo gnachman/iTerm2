@@ -1094,6 +1094,10 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (BOOL)warnBeforeMultiLinePaste {
+    if ([iTermWarning warningHandler]) {
+        // In a test.
+        return YES;
+    }
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     return ![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];
 }

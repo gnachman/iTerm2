@@ -8,6 +8,7 @@
 
 #import "iTermTests.h"
 #import <objc/runtime.h>
+#import "iTermApplicationDelegate.h"
 
 @implementation iTermTest
 @end
@@ -49,6 +50,7 @@ static void RunTestsInObject(iTermTest *test) {
 }
 
 int main(int argc, const char * argv[]) {
+    [[NSApplication sharedApplication] setDelegate:[[iTermApplicationDelegate alloc] init]];
 /*
     RunTestsInObject([[VT100GridTest new] autorelease]);
     RunTestsInObject([[VT100ScreenTest new] autorelease]);
