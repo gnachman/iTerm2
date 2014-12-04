@@ -671,6 +671,10 @@
     NSLog(@"Enumerating files...");
     for (NSString *file in [fileManager enumeratorAtPath:path]) {
         NSLog(@"Check file %@", file);
+        if ([file hasPrefix:@"."]) {
+            NSLog(@"Ignoring dotfile.");
+            continue;
+        }
         NSString *fullName = [path stringByAppendingPathComponent:file];
         if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
             NSLog(@"Error encountered; aborting.");
