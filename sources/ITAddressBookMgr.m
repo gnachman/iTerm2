@@ -666,6 +666,9 @@
     NSMutableArray *newProfiles = [NSMutableArray array];
     NSMutableSet *guids = [NSMutableSet set];
     for (NSString *file in [fileManager enumeratorAtPath:path]) {
+        if ([file hasPrefix:@"."]) {
+            continue;
+        }
         NSString *fullName = [path stringByAppendingPathComponent:file];
         if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
             return;
