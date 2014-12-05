@@ -1,5 +1,5 @@
 //
-//  TrouterPrefsController.h
+//  iTermSemanticHistoryPrefsController.h
 //  iTerm
 //
 //  Created by George Nachman on 9/28/11.
@@ -26,13 +26,13 @@ extern NSString *kSemanticHistoryCommandAction;
 extern NSString *kSemanticHistoryRawCommandAction;
 extern NSString *kSemanticHistoryCoprocessAction;
 
-@class TrouterPrefsController;
+@class iTermSemanticHistoryPrefsController;
 
-@protocol TrouterPrefsControllerDelegate <NSObject>
-- (void)trouterPrefsControllerSettingChanged:(TrouterPrefsController *)controller;
+@protocol iTermSemanticHistoryPrefsControllerDelegate <NSObject>
+- (void)trouterPrefsControllerSettingChanged:(iTermSemanticHistoryPrefsController *)controller;
 @end
 
-@interface TrouterPrefsController : NSObject {
+@interface iTermSemanticHistoryPrefsController : NSObject {
     NSString *guid_;
     IBOutlet NSPopUpButton *action_;
     IBOutlet NSTextField *text_;
@@ -41,7 +41,7 @@ extern NSString *kSemanticHistoryCoprocessAction;
 }
 
 @property (nonatomic, copy) NSString *guid;
-@property (nonatomic, assign) IBOutlet id<TrouterPrefsControllerDelegate> delegate;
+@property (nonatomic, assign) IBOutlet id<iTermSemanticHistoryPrefsControllerDelegate> delegate;
 
 + (NSString *)bestEditor;
 + (NSString *)schemeForEditor:(NSString *)editor;

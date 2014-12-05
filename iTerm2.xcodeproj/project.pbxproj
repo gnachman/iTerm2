@@ -126,8 +126,8 @@
 		1D4983501912FC0B002E942D /* ToolDirectoriesView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */; };
 		1D4983511912FC0B002E942D /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
 		1D4983521912FC0B002E942D /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
-		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
-		1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
+		1D4AE8FE14343A760092EB49 /* iTermSemanticHistoryPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */; };
+		1D4AE8FF14343A760092EB49 /* iTermSemanticHistoryPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
 		1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D53FD13181C4B4B00524D4F /* FindContext.h */; };
 		1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D53FD14181C4B4B00524D4F /* FindContext.m */; };
@@ -406,7 +406,7 @@
 		1D6ED90F19AEA20D005A7799 /* SmartSelectionController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D24C2C3142FEACF006B246F /* SmartSelectionController.h */; };
 		1D6ED91019AEA20D005A7799 /* NSMutableAttributedString+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */; };
 		1D6ED91119AEA20D005A7799 /* iTermExposeGridView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475A188C6731005355CF /* iTermExposeGridView.h */; };
-		1D6ED91219AEA20D005A7799 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
+		1D6ED91219AEA20D005A7799 /* iTermSemanticHistoryPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */; };
 		1D6ED91319AEA20D005A7799 /* SessionTitleView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */; };
 		1D6ED91419AEA20D005A7799 /* PointerPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */; };
 		1D6ED91519AEA20D005A7799 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
@@ -761,7 +761,7 @@
 		1D6EDAA219AEA20D005A7799 /* SendTextTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C283142EF334006B246F /* SendTextTrigger.m */; };
 		1D6EDAA319AEA20D005A7799 /* SmartSelectionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C2C4142FEACF006B246F /* SmartSelectionController.m */; };
 		1D6EDAA419AEA20D005A7799 /* iTermOpenQuicklyItem.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45A819731B4900F5444D /* iTermOpenQuicklyItem.m */; };
-		1D6EDAA519AEA20D005A7799 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
+		1D6EDAA519AEA20D005A7799 /* iTermSemanticHistoryPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */; };
 		1D6EDAA619AEA20D005A7799 /* SessionTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */; };
 		1D6EDAA719AEA20D005A7799 /* NSColor+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */; };
 		1D6EDAA819AEA20D005A7799 /* PseudoTerminalRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */; };
@@ -957,7 +957,7 @@
 		1D9A555E180FA83900B42CE9 /* PreferencePanel.m in Sources */ = {isa = PBXBuildFile; fileRef = FB019DE103670C6501F955DB /* PreferencePanel.m */; };
 		1D9A555F180FA83900B42CE9 /* SmartSelectionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C2C4142FEACF006B246F /* SmartSelectionController.m */; };
 		1D9A5560180FA83900B42CE9 /* TriggerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D31BC64142D33CA001F7ECB /* TriggerController.m */; };
-		1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
+		1D9A5561180FA83900B42CE9 /* iTermSemanticHistoryPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */; };
 		1D9A5562180FA83900B42CE9 /* WindowArrangements.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECE13EE507800B7725E /* WindowArrangements.m */; };
 		1D9A5563180FA84700B42CE9 /* NSBezierPath+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */; };
 		1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
@@ -1963,8 +1963,8 @@
 		1D49834A1912CD9E002E942D /* iTermDirectoriesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDirectoriesModel.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolDirectoriesView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolDirectoriesView.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; tabWidth = 4; };
-		1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TrouterPrefsController.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSemanticHistoryPrefsController.h; sourceTree = "<group>"; tabWidth = 4; };
+		1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSemanticHistoryPrefsController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D4F359F1813386600699FDF /* iTermCursor.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermCursor.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
 		1D53FD13181C4B4B00524D4F /* FindContext.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FindContext.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2964,7 +2964,7 @@
 				1D9DCBFC142D7BA60016228A /* Trigger.h */,
 				1D31BC63142D33CA001F7ECB /* TriggerController.h */,
 				1D06A051134CDBF800C414EF /* iTermSemanticHistoryController.h */,
-				1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */,
+				1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */,
 				1D3D21931483144600FAC8E7 /* TSVParser.h */,
 				A6CFDAD0185D2587005DC94B /* URLAction.h */,
 				A647E39818C3515900450FA1 /* VT100AnsiParser.h */,
@@ -3238,7 +3238,7 @@
 				A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */,
 				1D24C2C4142FEACF006B246F /* SmartSelectionController.m */,
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
-				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
+				1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
 				1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */,
 				1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */,
@@ -4050,7 +4050,7 @@
 				1D6ED90F19AEA20D005A7799 /* SmartSelectionController.h in Headers */,
 				1D6ED91019AEA20D005A7799 /* NSMutableAttributedString+iTerm.h in Headers */,
 				1D6ED91119AEA20D005A7799 /* iTermExposeGridView.h in Headers */,
-				1D6ED91219AEA20D005A7799 /* TrouterPrefsController.h in Headers */,
+				1D6ED91219AEA20D005A7799 /* iTermSemanticHistoryPrefsController.h in Headers */,
 				1D6ED91319AEA20D005A7799 /* SessionTitleView.h in Headers */,
 				1D6ED91419AEA20D005A7799 /* PointerPreferencesViewController.h in Headers */,
 				1D6ED91519AEA20D005A7799 /* PseudoTerminalRestorer.h in Headers */,
@@ -4371,7 +4371,7 @@
 				1D24C2C5142FEACF006B246F /* SmartSelectionController.h in Headers */,
 				A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */,
 				A6E7475C188C6731005355CF /* iTermExposeGridView.h in Headers */,
-				1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */,
+				1D4AE8FE14343A760092EB49 /* iTermSemanticHistoryPrefsController.h in Headers */,
 				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
 				1DFA9D7018F3A30F008ADC98 /* PointerPreferencesViewController.h in Headers */,
 				5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */,
@@ -5156,7 +5156,7 @@
 				A6E77F851A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */,
 				1D6EDAA319AEA20D005A7799 /* SmartSelectionController.m in Sources */,
 				1D6EDAA419AEA20D005A7799 /* iTermOpenQuicklyItem.m in Sources */,
-				1D6EDAA519AEA20D005A7799 /* TrouterPrefsController.m in Sources */,
+				1D6EDAA519AEA20D005A7799 /* iTermSemanticHistoryPrefsController.m in Sources */,
 				1D6EDAA619AEA20D005A7799 /* SessionTitleView.m in Sources */,
 				1D6EDAA719AEA20D005A7799 /* NSColor+Scripting.m in Sources */,
 				1D6EDAA819AEA20D005A7799 /* PseudoTerminalRestorer.m in Sources */,
@@ -5406,7 +5406,7 @@
 				A68A3107186D2973007F550F /* TemporaryNumberAllocator.m in Sources */,
 				1D9A5580180FA87000B42CE9 /* FontSizeEstimator.m in Sources */,
 				A647E3B418C36D0300450FA1 /* VT100Token.m in Sources */,
-				1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */,
+				1D9A5561180FA83900B42CE9 /* iTermSemanticHistoryPrefsController.m in Sources */,
 				1D9A556F180FA85900B42CE9 /* ToolNotes.m in Sources */,
 				1D9A5581180FA87000B42CE9 /* IntervalMap.m in Sources */,
 				1D9A557A180FA85D00B42CE9 /* SendTextTrigger.m in Sources */,
@@ -5742,7 +5742,7 @@
 				A6E77F831A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */,
 				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
 				A69B45AA19731B4900F5444D /* iTermOpenQuicklyItem.m in Sources */,
-				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
+				1D4AE8FF14343A760092EB49 /* iTermSemanticHistoryPrefsController.m in Sources */,
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 				A6C7DE5E19A469D6001E5C75 /* NSColor+Scripting.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,

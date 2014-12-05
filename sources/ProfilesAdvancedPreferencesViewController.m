@@ -10,28 +10,28 @@
 #import "CommandHistory.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
+#import "iTermSemanticHistoryPrefsController.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 #import "SmartSelectionController.h"
 #import "TriggerController.h"
-#import "TrouterPrefsController.h"
 
 @interface ProfilesAdvancedPreferencesViewController () <
     NSTableViewDataSource,
     NSTableViewDelegate,
     SmartSelectionDelegate,
     TriggerDelegate,
-    TrouterPrefsControllerDelegate>
+    iTermSemanticHistoryPrefsControllerDelegate>
 @end
 
 @implementation ProfilesAdvancedPreferencesViewController {
     IBOutlet TriggerController *_triggerWindowController;
     IBOutlet SmartSelectionController *_smartSelectionWindowController;
-    IBOutlet TrouterPrefsController *_trouterPrefController;
+    IBOutlet iTermSemanticHistoryPrefsController *_trouterPrefController;
     IBOutlet NSButton *_removeHost;
     IBOutlet NSTableView *_boundHostsTableView;
-    
+
     IBOutlet NSControl *_boundHostTitle;
     IBOutlet NSControl *_boundHostLabel;
     IBOutlet NSControl *_addBoundHost;
@@ -141,7 +141,7 @@
 
 #pragma mark - Semantic History
 
-- (void)trouterPrefsControllerSettingChanged:(TrouterPrefsController *)controller {
+- (void)trouterPrefsControllerSettingChanged:(iTermSemanticHistoryPrefsController *)controller {
     [self setObject:[controller prefs] forKey:KEY_SEMANTIC_HISTORY];
 }
 

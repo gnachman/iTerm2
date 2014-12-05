@@ -6,10 +6,10 @@
 //  Copyright 2011 Georgetech. All rights reserved.
 //
 
-#import "TrouterPrefsController.h"
-#import "ProfileModel.h"
+#import "iTermSemanticHistoryPrefsController.h"
 #import "ITAddressBookMgr.h"
 #import "PreferencePanel.h"
+#import "ProfileModel.h"
 
 NSString *kSemanticHistoryActionKey = @"action";
 NSString *kSemanticHistoryEditorKey = @"editor";
@@ -29,7 +29,7 @@ NSString *kSemanticHistoryCommandAction = @"command";
 NSString *kSemanticHistoryRawCommandAction = @"raw command";
 NSString *kSemanticHistoryCoprocessAction = @"coprocess";
 
-@implementation TrouterPrefsController
+@implementation iTermSemanticHistoryPrefsController
 
 enum {
     kSublimeText2Tag = 1,
@@ -111,7 +111,7 @@ enum {
     NSDictionary *overrides = @{ kTextmate2Identifier: kTextmateIdentifier };
 
     for (NSString *identifier in [self editorsInPreferenceOrder]) {
-        if ([TrouterPrefsController applicationExists:identifier]) {
+        if ([iTermSemanticHistoryPrefsController applicationExists:identifier]) {
             return overrides[identifier] ?: identifier;
         }
     }
@@ -162,7 +162,7 @@ enum {
             [item setEnabled:NO];
             items[names[identifier]] = item;
         }
-        if ([TrouterPrefsController applicationExists:identifier]) {
+        if ([iTermSemanticHistoryPrefsController applicationExists:identifier]) {
             [item setEnabled:YES];
         }
     }
@@ -286,7 +286,7 @@ enum {
         bookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:self.guid];
     }
     NSDictionary *prefs = bookmark[KEY_SEMANTIC_HISTORY];
-    prefs = prefs ? prefs : [TrouterPrefsController defaultPrefs];
+    prefs = prefs ? prefs : [iTermSemanticHistoryPrefsController defaultPrefs];
     NSString *action = prefs[kSemanticHistoryActionKey];
     // Uncheck all items
     for (NSMenuItem *item in [[action_ menu] itemArray]) {

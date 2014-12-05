@@ -24,10 +24,10 @@
 
 #import "iTermSemanticHistoryController.h"
 #import "DebugLogging.h"
+#import "iTermSemanticHistoryPrefsController.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite/RegexKitLite.h"
-#import "TrouterPrefsController.h"
 
 NSString *const kSemanticHistoryPathSubstitutionKey = @"semanticHistory.path";
 NSString *const kSemanticHistoryPrefixSubstitutionKey = @"semanticHistory.prefix";
@@ -130,9 +130,9 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (NSString *)editor
 {
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryBestEditorAction]) {
-        return [TrouterPrefsController bestEditor];
+        return [iTermSemanticHistoryPrefsController bestEditor];
     } else if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction]) {
-        return [TrouterPrefsController schemeForEditor:prefs_[kSemanticHistoryEditorKey]] ?
+        return [iTermSemanticHistoryPrefsController schemeForEditor:prefs_[kSemanticHistoryEditorKey]] ?
             prefs_[kSemanticHistoryEditorKey] : nil;
     } else {
         return nil;
@@ -196,7 +196,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             path = [path stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
             NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
                                                @"%@://open?url=file://%@&line=%@",
-                                               [TrouterPrefsController schemeForEditor:[self editor]],
+                                               [iTermSemanticHistoryPrefsController schemeForEditor:[self editor]],
                                                path, lineNumber, nil]];
             DLog(@"Open url %@", url);
             [[NSWorkspace sharedWorkspace] openURL:url];
@@ -308,7 +308,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return NO;
     }
     NSString *bundleId = [appBundle bundleIdentifier];
-    return [TrouterPrefsController bundleIdIsEditor:bundleId];
+    return [iTermSemanticHistoryPrefsController bundleIdIsEditor:bundleId];
 }
 
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn

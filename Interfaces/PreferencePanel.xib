@@ -77,7 +77,7 @@
                 <outlet property="window" destination="5910" id="5916"/>
             </connections>
         </customObject>
-        <customObject id="5949" customClass="TrouterPrefsController">
+        <customObject id="5949" userLabel="iTerm Semantic History Prefs Controller" customClass="iTermSemanticHistoryPrefsController">
             <connections>
                 <outlet property="action_" destination="5934" id="5950"/>
                 <outlet property="caveat_" destination="5957" id="5960"/>
@@ -750,7 +750,7 @@ Gw
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
-                                    <rect key="frame" x="0.0" y="0.0" width="762" height="19"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="761" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -795,7 +795,7 @@ Gw
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="42" minWidth="10" maxWidth="3.4028234663852886e+38" id="4jW-vz-58j">
+                                        <tableColumn width="41" minWidth="10" maxWidth="3.4028234663852886e+38" id="4jW-vz-58j">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Instant">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
