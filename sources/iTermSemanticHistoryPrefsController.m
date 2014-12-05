@@ -1,5 +1,5 @@
 //
-//  TrouterPrefsController.m
+//  iTermSemanticHistoryPrefsController.m
 //  iTerm
 //
 //  Created by George Nachman on 9/28/11.
@@ -205,7 +205,7 @@ enum {
 }
 
 - (void)controlTextDidChange:(NSNotification *)obj {
-    [_delegate trouterPrefsControllerSettingChanged:self];
+    [_delegate semanticHistoryPrefsControllerSettingChanged:self];
 }
 
 - (IBAction)actionChanged:(id)sender
@@ -267,7 +267,7 @@ enum {
             NSString *stringValue = self.prefs[kSemanticHistoryTextKey];
             [text_ setStringValue:stringValue ? stringValue : @""];
         }
-        [_delegate trouterPrefsControllerSettingChanged:self];
+        [_delegate semanticHistoryPrefsControllerSettingChanged:self];
     }
 }
 

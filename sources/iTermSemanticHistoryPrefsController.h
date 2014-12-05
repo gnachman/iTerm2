@@ -29,7 +29,7 @@ extern NSString *kSemanticHistoryCoprocessAction;
 @class iTermSemanticHistoryPrefsController;
 
 @protocol iTermSemanticHistoryPrefsControllerDelegate <NSObject>
-- (void)trouterPrefsControllerSettingChanged:(iTermSemanticHistoryPrefsController *)controller;
+- (void)semanticHistoryPrefsControllerSettingChanged:(iTermSemanticHistoryPrefsController *)controller;
 @end
 
 @interface iTermSemanticHistoryPrefsController : NSObject {

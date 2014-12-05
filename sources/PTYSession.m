@@ -2277,7 +2277,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
     }
     [_textview setSmartSelectionRules:[aDict objectForKey:KEY_SMART_SELECTION_RULES]];
-    [_textview setTrouterPrefs:[aDict objectForKey:KEY_SEMANTIC_HISTORY]];
+    [_textview setSemanticHistoryPrefs:[aDict objectForKey:KEY_SEMANTIC_HISTORY]];
     [_textview setUseNonAsciiFont:[[aDict objectForKey:KEY_USE_NONASCII_FONT] boolValue]];
     [_textview setAntiAlias:asciiAA nonAscii:nonasciiAA];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];

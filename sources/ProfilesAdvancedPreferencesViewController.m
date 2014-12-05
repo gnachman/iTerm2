@@ -28,7 +28,7 @@
 @implementation ProfilesAdvancedPreferencesViewController {
     IBOutlet TriggerController *_triggerWindowController;
     IBOutlet SmartSelectionController *_smartSelectionWindowController;
-    IBOutlet iTermSemanticHistoryPrefsController *_trouterPrefController;
+    IBOutlet iTermSemanticHistoryPrefsController *_semanticHistoryPrefController;
     IBOutlet NSButton *_removeHost;
     IBOutlet NSTableView *_boundHostsTableView;
 
@@ -83,7 +83,7 @@
     NSString *selectedGuid = [self.delegate profilePreferencesCurrentProfile][KEY_GUID];
     _triggerWindowController.guid = selectedGuid;
     _smartSelectionWindowController.guid = selectedGuid;
-    _trouterPrefController.guid = selectedGuid;
+    _semanticHistoryPrefController.guid = selectedGuid;
     [_boundHostsTableView reloadData];
 }
 
@@ -141,7 +141,7 @@
 
 #pragma mark - Semantic History
 
-- (void)trouterPrefsControllerSettingChanged:(iTermSemanticHistoryPrefsController *)controller {
+- (void)semanticHistoryPrefsControllerSettingChanged:(iTermSemanticHistoryPrefsController *)controller {
     [self setObject:[controller prefs] forKey:KEY_SEMANTIC_HISTORY];
 }
 
