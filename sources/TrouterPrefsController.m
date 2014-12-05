@@ -21,7 +21,7 @@ NSString *kMacVimIdentifier = @"org.vim.MacVim";
 NSString *kTextmateIdentifier = @"com.macromates.textmate";
 NSString *kTextmate2Identifier = @"com.macromates.textmate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
-
+NSString *kAtomIdentifier = @"com.github.atom";
 NSString *kTrouterBestEditorAction = @"best editor";
 NSString *kTrouterUrlAction = @"url";
 NSString *kTrouterEditorAction = @"editor";
@@ -36,7 +36,8 @@ enum {
     kMacVimTag,
     kTextmateTag,
     kBBEditTag,
-    kSublimeText3Tag
+    kSublimeText3Tag,
+    kAtomTag,
     // Only append to the end of the list; never delete or change.
 };
 
@@ -88,41 +89,34 @@ enum {
     }
 }
 
-+ (NSString *)schemeForEditor:(NSString *)editor
-{
-    if ([editor isEqualToString:kSublimeText2Identifier] ||
-        [editor isEqualToString:kSublimeText3Identifier]) {
-        return @"subl";
-    }
-    if ([editor isEqualToString:kMacVimIdentifier]) {
-        return @"mvim";
-    }
-    if ([editor isEqualToString:kTextmateIdentifier]) {
-        return @"txmt";
-    }
-    if ([editor isEqualToString:kBBEditIdentifier]) {
-        return @"txmt";
-    }
-    return nil;
++ (NSString *)schemeForEditor:(NSString *)editor {
+    NSDictionary *schemes = @{ kSublimeText2Identifier: @"subl",
+                               kSublimeText3Identifier: @"subl",
+                               kMacVimIdentifier: @"mvim",
+                               kTextmateIdentifier: @"txmt",
+                               kBBEditIdentifier: @"txmt",
+                               kAtomIdentifier: @"atom" };
+    return schemes[editor];
 }
 
-+ (NSString *)bestEditor
-{
-    if ([TrouterPrefsController applicationExists:kSublimeText3Identifier]) {
-        return kSublimeText3Identifier;
-    }
-    if ([TrouterPrefsController applicationExists:kSublimeText2Identifier]) {
-        return kSublimeText2Identifier;
-    }
-    if ([TrouterPrefsController applicationExists:kMacVimIdentifier]) {
-        return kMacVimIdentifier;
-    }
-    if ([TrouterPrefsController applicationExists:kTextmateIdentifier] ||
-        [TrouterPrefsController applicationExists:kTextmate2Identifier]) {
-        return kTextmateIdentifier;
-    }
-    if ([TrouterPrefsController applicationExists:kBBEditIdentifier]) {
-        return kBBEditIdentifier;
++ (NSArray *)editorsInPreferenceOrder {
+    // Editors from most to least preferred.
+    return @[ kSublimeText3Identifier,
+              kSublimeText2Identifier,
+              kMacVimIdentifier,
+              kTextmateIdentifier,
+              kTextmate2Identifier,
+              kBBEditIdentifier,
+              kAtomIdentifier ];
+}
+
++ (NSString *)bestEditor {
+    NSDictionary *overrides = @{ kTextmate2Identifier: kTextmateIdentifier };
+
+    for (NSString *identifier in [self editorsInPreferenceOrder]) {
+        if ([TrouterPrefsController applicationExists:identifier]) {
+            return overrides[identifier] ?: identifier;
+        }
     }
     return nil;
 }
@@ -132,44 +126,54 @@ enum {
                                   kSublimeText3Identifier,
                                   kMacVimIdentifier,
                                   kTextmateIdentifier,
-                                  kBBEditIdentifier ];
+                                  kBBEditIdentifier,
+                                  kAtomIdentifier ];
     return [editorBundleIds containsObject:bundleId];
 }
 
-- (void)awakeFromNib
-{
-    [editors_ addItemWithTitle:@"Sublime Text 3"];
++ (NSDictionary *)identifierToTagMap {
+    NSDictionary *tags = @{ kSublimeText3Identifier: @(kSublimeText3Tag),
+                            kSublimeText2Identifier: @(kSublimeText2Tag),
+                                  kMacVimIdentifier: @(kMacVimTag),
+                                kTextmateIdentifier: @(kTextmateTag),
+                               kTextmate2Identifier: @(kTextmateTag),
+                                  kBBEditIdentifier: @(kBBEditTag),
+                                    kAtomIdentifier: @(kAtomTag) };
+    return tags;
+}
+
+- (void)awakeFromNib {
+    NSDictionary *names = @{ kSublimeText3Identifier: @"Sublime Text 3",
+                             kSublimeText2Identifier: @"Sublime Text 2",
+                                   kMacVimIdentifier: @"MacVim",
+                                 kTextmateIdentifier: @"Textmate",
+                                kTextmate2Identifier: @"Textmate",
+                                   kBBEditIdentifier: @"BBEdit",
+                                     kAtomIdentifier: @"Atom" };
+
+    NSDictionary *tags = [[self class] identifierToTagMap];
+
+    NSMutableDictionary *items = [NSMutableDictionary dictionary];
     [editors_ setAutoenablesItems:NO];
-    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeText3Tag];
-    if (![TrouterPrefsController applicationExists:kSublimeText3Identifier]) {
-        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
+    for (NSString *identifier in [[self class] editorsInPreferenceOrder]) {
+        NSMenuItem *item = items[names[identifier]];
+        if (!item) {
+            [editors_ addItemWithTitle:names[identifier]];
+            item = (NSMenuItem *)[[[editors_ menu] itemArray] lastObject];
+            int tag = [tags[identifier] integerValue];
+            [item setTag:tag];
+            [item setEnabled:NO];
+            items[names[identifier]] = item;
+        }
+        if ([TrouterPrefsController applicationExists:identifier]) {
+            [item setEnabled:YES];
+        }
     }
-    [editors_ addItemWithTitle:@"Sublime Text 2"];
-    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeText2Tag];
-    if (![TrouterPrefsController applicationExists:kSublimeText2Identifier]) {
-        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
-    }
-    [editors_ addItemWithTitle:@"MacVim"];
-    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kMacVimTag];
-    if (![TrouterPrefsController applicationExists:kMacVimIdentifier]) {
-        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
-    }
-    [editors_ addItemWithTitle:@"Textmate"];
-    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kTextmateTag];
-    if (![TrouterPrefsController applicationExists:kTextmateIdentifier] &&
-        ![TrouterPrefsController applicationExists:kTextmate2Identifier]) {
-        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
-    }
-    [editors_ addItemWithTitle:@"BBEdit"];
-    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kBBEditTag];
-    if (![TrouterPrefsController applicationExists:kBBEditIdentifier]) {
-        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
-    }
+
     [self actionChanged:nil];
 }
 
-- (NSString *)actionIdentifier
-{
+- (NSString *)actionIdentifier {
     switch ([[action_ selectedItem] tag]) {
         case 1:
             return kTrouterBestEditorAction;
@@ -199,23 +203,13 @@ enum {
 
 - (NSString *)editorIdentifier
 {
-    switch ([[editors_ selectedItem] tag]) {
-        case kSublimeText3Tag:
-            return kSublimeText3Identifier;
-            
-        case kSublimeText2Tag:
-            return kSublimeText2Identifier;
-            
-        case kMacVimTag:
-            return kMacVimIdentifier;
-            
-        case kTextmateTag:
-            return kTextmateIdentifier;
-
-        case kBBEditTag:
-            return kBBEditIdentifier;
-    }
-    return nil;
+    NSDictionary *map = @{ @(kSublimeText3Tag): kSublimeText3Identifier,
+                           @(kSublimeText2Tag): kSublimeText2Identifier,
+                                 @(kMacVimTag): kMacVimIdentifier,
+                               @(kTextmateTag): kTextmateIdentifier,
+                                 @(kBBEditTag): kBBEditIdentifier,
+                                   @(kAtomTag): kAtomIdentifier };
+    return map[@([[editors_ selectedItem] tag])];
 }
 
 - (void)controlTextDidChange:(NSNotification *)obj {
@@ -338,17 +332,11 @@ enum {
         [text_ setStringValue:@""];
     }
     NSString *editor = [prefs objectForKey:kTrouterEditorKey];
-    if ([editor isEqualToString:kSublimeText2Identifier]) {
-        [editors_ selectItemWithTag:kSublimeText2Tag];
-    } else if ([editor isEqualToString:kSublimeText3Identifier]) {
-        [editors_ selectItemWithTag:kSublimeText3Tag];
-    } else if ([editor isEqualToString:kMacVimIdentifier]) {
-        [editors_ selectItemWithTag:kMacVimTag];
-    } else if ([editor isEqualToString:kTextmateIdentifier]) {
-        [editors_ selectItemWithTag:kTextmateTag];
-    } else if ([editor isEqualToString:kBBEditIdentifier]) {
-        [editors_ selectItemWithTag:kBBEditTag];
+    NSDictionary *map = [[self class] identifierToTagMap];
+    NSNumber *tagNumber = map[editor];
+    if (tagNumber) {
+        [editors_ selectItemWithTag:[tagNumber integerValue]];
     }
 }
-         
+
 @end
