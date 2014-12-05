@@ -101,6 +101,9 @@
         [filter setDefaults];
         [filter setValue:@0.3 forKey:@"inputBrightness"];
         [_indicator setWantsLayer:YES];
+        if ([_indicator respondsToSelector:@selector(layerUsesCoreImageFilters)]) {
+            _indicator.layerUsesCoreImageFilters = YES;
+        }
         [_indicator setContentFilters:@[ filter ]];
     }
 }
