@@ -194,8 +194,22 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (BOOL)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
     if ([self editor]) {
         DLog(@"openFileInEditor. editor=%@", [self editor]);
-        if ([[self editor] isEqualToString:kSublimeText2Identifier] ||
-            [[self editor] isEqualToString:kSublimeText3Identifier]) {
+        if ([[self editor] isEqualToString:kAtomIdentifier]) {
+            if (lineNumber != nil) {
+                path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+            }
+            NSString *bundlePath =
+                [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:@"com.github.atom"];
+            NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
+            NSString *executable = [NSString stringWithFormat:@"%@/Contents/MacOS/%@",
+                                    bundlePath,
+                                    [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
+            if (bundle && executable) {
+                DLog(@"Launch Atom %@ %@ %@", executable, executable, path);
+                [NSTask launchedTaskWithLaunchPath:executable arguments:@[ executable, path ]];
+            }
+        } else if ([[self editor] isEqualToString:kSublimeText2Identifier] ||
+                   [[self editor] isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
