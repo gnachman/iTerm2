@@ -42,6 +42,9 @@
 #include <sys/types.h>
 #include <pwd.h>
 
+static NSString *const kDynamicTag = @"Dynamic";
+static NSString *const kLegacyDynamicTag = @"dynamic";
+
 @interface ITAddressBookMgr () <SCEventListenerProtocol>
 @end
 
@@ -759,7 +762,8 @@
     if (!profile) {
         return NO;
     }
-    return ![profile[KEY_TAGS] containsObject:@"dynamic"];
+    return (![profile[KEY_TAGS] containsObject:kDynamicTag] &&
+            ![profile[KEY_TAGS] containsObject:kLegacyDynamicTag]);
 }
 
 // Returns the current dynamic profiles.
@@ -767,7 +771,7 @@
     NSMutableArray *array = [NSMutableArray array];
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
         NSArray *tags = profile[KEY_TAGS];
-        if ([tags containsObject:@"dynamic"]) {
+        if ([tags containsObject:kDynamicTag] || [tags containsObject:kLegacyDynamicTag]) {
             [array addObject:profile];
         }
     }
@@ -810,13 +814,13 @@
     return merged;
 }
 
-// Sets the "dynamic" tag in the mutable profile.
+// Sets the "Dynamic" tag in the mutable profile.
 - (void)ensureMutableProfileHasDynamicTag:(NSMutableDictionary *)profile {
     NSArray *tags = profile[KEY_TAGS];
     if (!tags) {
-        tags = @[ @"dynamic" ];
-    } else if (![tags containsObject:@"dynamic"]) {
-        tags = [tags arrayByAddingObject:@"dynamic"];
+        tags = @[ kDynamicTag ];
+    } else if (![tags containsObject:kDynamicTag] && ![tags containsObject:kLegacyDynamicTag]) {
+        tags = [tags arrayByAddingObject:kDynamicTag];
     }
     profile[KEY_TAGS] = tags;
 }
