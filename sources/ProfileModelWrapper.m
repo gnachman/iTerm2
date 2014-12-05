@@ -117,6 +117,7 @@
         [underlyingModel moveGuid:[theRow guid] toRow:i++];
     }
     [underlyingModel rebuildMenus];
+    [underlyingModel flush];
 }
 
 - (NSArray *)names
