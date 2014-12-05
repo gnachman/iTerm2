@@ -25,6 +25,7 @@ DECLARE_TEST(NSStringCategoryTest)
 DECLARE_TEST(PTYTextViewTest)
 DECLARE_TEST(PTYSessionTest)
 DECLARE_TEST(iTermPasteHelperTest)
+DECLARE_TEST(TrouterTest)
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -51,7 +52,7 @@ static void RunTestsInObject(iTermTest *test) {
 
 int main(int argc, const char * argv[]) {
     [[NSApplication sharedApplication] setDelegate:[[iTermApplicationDelegate alloc] init]];
-
+/*
     RunTestsInObject([[VT100GridTest new] autorelease]);
     RunTestsInObject([[VT100ScreenTest new] autorelease]);
     RunTestsInObject([[IntervalTreeTest new] autorelease]);
@@ -60,7 +61,8 @@ int main(int argc, const char * argv[]) {
     RunTestsInObject([[PTYTextViewTest new] autorelease]);
     RunTestsInObject([[PTYSessionTest new] autorelease]);
     RunTestsInObject([[iTermPasteHelperTest new] autorelease]);
-
+ RunTestsInObject([[TrouterTest new] autorelease]);
+*/
     NSLog(@"All tests passed");
     return 0;
 }

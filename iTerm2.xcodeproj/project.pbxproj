@@ -109,6 +109,7 @@
 		1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3314BABE8700BD5035 /* VT100Terminal.h */; };
 		1D4097B91A2F947F00100892 /* iTermPasteHelperTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */; };
 		1D4097BB1A2F948900100892 /* iTermPasteHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */; };
+		1D4097BE1A3237CF00100892 /* TrouterTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4097BD1A3237CF00100892 /* TrouterTest.m */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */; };
@@ -1946,6 +1947,8 @@
 		1D407A3314BABE8700BD5035 /* VT100Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Terminal.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermPasteHelperTest.h; path = iTermTests/iTermPasteHelperTest.h; sourceTree = "<group>"; };
 		1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermPasteHelperTest.m; path = iTermTests/iTermPasteHelperTest.m; sourceTree = "<group>"; };
+		1D4097BC1A3237CF00100892 /* TrouterTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TrouterTest.h; path = iTermTests/TrouterTest.h; sourceTree = "<group>"; };
+		1D4097BD1A3237CF00100892 /* TrouterTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TrouterTest.m; path = iTermTests/TrouterTest.m; sourceTree = "<group>"; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TabClose_Front_Rollover@2x.png"; sourceTree = "<group>"; };
@@ -2054,7 +2057,7 @@
 		1D94EAC712D641D3008225A9 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = System/Library/Frameworks/AddressBook.framework; sourceTree = SDKROOT; };
 		1D988595135D23BD0072023F /* ProcessCache.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProcessCache.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D988596135D23BD0072023F /* ProcessCache.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProcessCache.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D9A5521180FA46100B42CE9 /* iTermTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermTests.m; path = iTermTests/iTermTests.m; sourceTree = "<group>"; };
+		1D9A5521180FA46100B42CE9 /* iTermTests.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = iTermTests.m; path = iTermTests/iTermTests.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D9A5522180FA46100B42CE9 /* iTermTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermTests.h; path = iTermTests/iTermTests.h; sourceTree = "<group>"; };
 		1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100ScreenTest.h; path = iTermTests/VT100ScreenTest.h; sourceTree = "<group>"; };
 		1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VT100ScreenTest.m; path = iTermTests/VT100ScreenTest.m; sourceTree = "<group>"; };
@@ -3316,6 +3319,8 @@
 				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
 				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
 				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
+				1D4097BC1A3237CF00100892 /* TrouterTest.h */,
+				1D4097BD1A3237CF00100892 /* TrouterTest.m */,
 				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
 				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
@@ -5290,6 +5295,7 @@
 				A69B45921973193100F5444D /* iTermOpenQuicklyTableView.m in Sources */,
 				1DB9D8F4183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */,
 				1D9A556C180FA85900B42CE9 /* ToolbeltView.m in Sources */,
+				1D4097BE1A3237CF00100892 /* TrouterTest.m in Sources */,
 				1D9A558E180FA87000B42CE9 /* PointerController.m in Sources */,
 				1D9A5596180FA87000B42CE9 /* PTYSplitView.m in Sources */,
 				1D5937AD1A2D764900F808EB /* PSMDarkTabStyle.m in Sources */,

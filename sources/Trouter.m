@@ -42,33 +42,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
 
-- (Trouter *)init
-{
-    self = [super init];
-    if (self) {
-      fileManager = [[NSFileManager alloc] init];
-    }
-    return self;
-}
-
-- (void)dealloc
-{
-    [fileManager release];
-    [super dealloc];
-}
-
-- (NSFileManager *)fileManager
-{
-    return fileManager;
-}
-
-- (BOOL) isDirectory:(NSString *)path
-{
-    BOOL ret;
-    [fileManager fileExistsAtPath:path isDirectory:&ret];
-    return ret;
-}
-
 - (BOOL)isTextFile:(NSString *)path
 {
     // TODO(chendo): link in the "magic" library from file instead of calling it.
@@ -87,28 +60,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     BOOL ret = ([output rangeOfRegex:@"\\btext\\b"].location != NSNotFound);
     [output release];
-    return ret;
-}
-
-- (BOOL)file:(NSString *)path conformsToUTI:(NSString *)uti
-{
-    BOOL ret = FALSE;
-    MDItemRef item = MDItemCreate(kCFAllocatorDefault, (CFStringRef)path);
-    CFTypeRef ref = 0;
-    if (item) {
-      ref = MDItemCopyAttribute(item, CFSTR("kMDItemContentType"));
-    }
-
-    if (ref) {
-        if (UTTypeConformsTo(ref, (CFStringRef) uti)) {
-            ret = TRUE;
-        }
-        CFRelease(ref);
-    }
-
-    if (item) {
-      CFRelease(item);
-    }
     return ret;
 }
 
@@ -157,7 +108,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     path = [[url standardizedURL] path];
     DLog(@"  Standardized path is %@", path);
 
-    if ([fileManager fileExistsAtPathLocally:path]) {
+    if ([[NSFileManager defaultManager] fileExistsAtPathLocally:path]) {
         DLog(@"    YES: A file exists at %@", path);
         return path;
     }
@@ -263,7 +214,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     NSString *fullPath = [self getFullPath:path
                           workingDirectory:workingDirectory
                                 lineNumber:NULL];
-    return [fileManager fileExistsAtPath:fullPath];
+    return [[NSFileManager defaultManager] fileExistsAtPath:fullPath];
 }
 
 - (BOOL)activatesOnAnyString {
@@ -301,7 +252,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return YES;
     }
 
-    if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
         DLog(@"No file exists at %@, not running trouter", path);
         return NO;
     }

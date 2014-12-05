@@ -1,4 +1,3 @@
-// -*- mode:objc -*-
 /*
  **  Trouter.h
  **
@@ -25,7 +24,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 // Keys for substitutions of openPath:workingDirectory:substitutions:.
 extern NSString *const kSemanticHistoryPathSubstitutionKey;
@@ -37,27 +36,35 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 - (void)trouterLaunchCoprocessWithCommand:(NSString *)command;
 @end
 
-@interface Trouter : NSObject {
-    NSDictionary *prefs_;
-    NSFileManager *fileManager;
-	id<TrouterDelegate> delegate_;
-}
+@interface Trouter : NSObject
 
 @property (nonatomic, copy) NSDictionary *prefs;
 @property (nonatomic, assign) id<TrouterDelegate> delegate;
 @property (nonatomic, readonly) BOOL activatesOnAnyString;  // Doesn't have to be a real file?
 
-- (Trouter*)init;
-- (void)dealloc;
-- (BOOL)isTextFile:(NSString *)path;
-- (BOOL)file:(NSString *)path conformsToUTI:(NSString *)uti;
-- (BOOL)isDirectory:(NSString *)path;
-- (NSFileManager *)fileManager;
+// Given a possibly relative |path| and |workingDirectory|, returns the absolute path. If |path|
+// includes a line number then *lineNumber will be filled in with it. Files on network shares are
+// rejected.
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber;
-- (BOOL)openFileInEditor:(NSString *) path lineNumber:(NSString *)lineNumber;
+
+// Given a relative |path| (which may include a :line number) and a |workingDirectory|, returns
+// whether it is openable. See notes on getFullPath:workingDirectory:lineNumber:.
 - (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
+
+// Opens the file at the relative |path| (which may include :lineNumber) in |workingDirectory|.
+// The |substitutions| dictionary is used to expand \references in the command to run (gotten from
+// self.prefs[kTrouterTextKey]) as follows:
+//
+// \1 -> path
+// \2 -> line number
+// \3 -> substitutions[kSemanticHistoryPrefixSubstitutionKey]
+// \4 -> substitutions[kSemanticHistorySuffixSubstitutionKey]
+// \5 -> substitutions[kSemanticHistoryWorkingDirectorySubstitutionKey]
+// \(key) -> substitutions[key]
+//
+// Returns YES if the file was opened, NO if it could not be opened.
 - (BOOL)openPath:(NSString *)path
         workingDirectory:(NSString *)workingDirectory
            substitutions:(NSDictionary *)substitutions;
@@ -65,6 +72,12 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 // Do a brute force search by putting together suffixes of beforeString with prefixes of afterString
 // to find an existing file in |workingDirectory|. |charsSTakenFromPrefixPtr| will be filled in with
 // the number of characters from beforeString used.
+//
+// For example, [trouter pathOfExistingFileFoundWithPrefix:@"cat et"
+//                                                  suffix:@"c/passwd > /dev/null"
+//                                        workingDirectory:@"/"
+//                                    charsTakenFromPrefix:&n]
+// will return @"/etc/passwd". *n will be set to 2.
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
