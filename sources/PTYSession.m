@@ -24,6 +24,7 @@
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
 #import "iTermSelection.h"
+#import "iTermSemanticHistoryController.h"
 #import "iTermTextExtractor.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -57,7 +58,6 @@
 #import "TmuxStateParser.h"
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
-#import "Trouter.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
@@ -1930,7 +1930,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)openSelection {
-    Trouter *trouter = _textview.trouter;
+    iTermSemanticHistoryController *semanticHistoryController = _textview.semanticHistoryController;
     int lineNumber;
     NSArray *subSelections = _textview.selection.allSubSelections;
     if ([subSelections count]) {
@@ -1949,16 +1949,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     int charsTakenFromPrefix;
-    NSString *filename = [trouter pathOfExistingFileFoundWithPrefix:selection
-                                                             suffix:@""
-                                                   workingDirectory:workingDirectory
-                                               charsTakenFromPrefix:&charsTakenFromPrefix];
+    NSString *filename =
+        [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
+                                                              suffix:@""
+                                                    workingDirectory:workingDirectory
+                                                charsTakenFromPrefix:&charsTakenFromPrefix];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
-        if ([_textview openTrouterPath:filename
-                      workingDirectory:workingDirectory
-                                prefix:selection
-                                suffix:@""]) {
+        if ([_textview openSemanticHistoryPath:filename
+                              workingDirectory:workingDirectory
+                                        prefix:selection
+                                        suffix:@""]) {
             return;
         }
     }
@@ -2276,7 +2277,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
     }
     [_textview setSmartSelectionRules:[aDict objectForKey:KEY_SMART_SELECTION_RULES]];
-    [_textview setTrouterPrefs:[aDict objectForKey:KEY_TROUTER]];
+    [_textview setTrouterPrefs:[aDict objectForKey:KEY_SEMANTIC_HISTORY]];
     [_textview setUseNonAsciiFont:[[aDict objectForKey:KEY_USE_NONASCII_FONT] boolValue]];
     [_textview setAntiAlias:asciiAA nonAscii:nonasciiAA];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];

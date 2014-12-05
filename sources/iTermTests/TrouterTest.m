@@ -7,7 +7,7 @@
 //
 
 #import "TrouterTest.h"
-#import "Trouter.h"
+#import "iTermSemanticHistoryController.h"
 
 @implementation TrouterTest
 

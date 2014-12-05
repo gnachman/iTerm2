@@ -11,9 +11,9 @@
 #import "ITAddressBookMgr.h"
 #import "PreferencePanel.h"
 
-NSString *kTrouterActionKey = @"action";
-NSString *kTrouterEditorKey = @"editor";
-NSString *kTrouterTextKey = @"text";
+NSString *kSemanticHistoryActionKey = @"action";
+NSString *kSemanticHistoryEditorKey = @"editor";
+NSString *kSemanticHistoryTextKey = @"text";
 
 NSString *kSublimeText2Identifier = @"com.sublimetext.2";
 NSString *kSublimeText3Identifier = @"com.sublimetext.3";
@@ -22,12 +22,12 @@ NSString *kTextmateIdentifier = @"com.macromates.textmate";
 NSString *kTextmate2Identifier = @"com.macromates.textmate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
 NSString *kAtomIdentifier = @"com.github.atom";
-NSString *kTrouterBestEditorAction = @"best editor";
-NSString *kTrouterUrlAction = @"url";
-NSString *kTrouterEditorAction = @"editor";
-NSString *kTrouterCommandAction = @"command";
-NSString *kTrouterRawCommandAction = @"raw command";
-NSString *kTrouterCoprocessAction = @"coprocess";
+NSString *kSemanticHistoryBestEditorAction = @"best editor";
+NSString *kSemanticHistoryUrlAction = @"url";
+NSString *kSemanticHistoryEditorAction = @"editor";
+NSString *kSemanticHistoryCommandAction = @"command";
+NSString *kSemanticHistoryRawCommandAction = @"raw command";
+NSString *kSemanticHistoryCoprocessAction = @"coprocess";
 
 @implementation TrouterPrefsController
 
@@ -43,11 +43,8 @@ enum {
 
 @synthesize guid = guid_;
 
-+ (NSDictionary *)defaultPrefs
-{
-    return [NSDictionary dictionaryWithObjectsAndKeys:
-            kTrouterBestEditorAction, kTrouterActionKey,
-            nil];
++ (NSDictionary *)defaultPrefs {
+    return @{ kSemanticHistoryActionKey: kSemanticHistoryBestEditorAction };
 }
 
 - (void)dealloc
@@ -173,32 +170,27 @@ enum {
     [self actionChanged:nil];
 }
 
++ (NSDictionary *)actionToTagMap {
+    NSDictionary *tagToActionMap = [self tagToActionMap];
+    NSArray *keys = [tagToActionMap allKeys];
+    NSArray *values = [tagToActionMap allValues];
+    return [NSDictionary dictionaryWithObjects:keys forKeys:values];
+}
+
++ (NSDictionary *)tagToActionMap {
+    return @{ @1: kSemanticHistoryBestEditorAction,
+              @2: kSemanticHistoryUrlAction,
+              @3: kSemanticHistoryEditorAction,
+              @4: kSemanticHistoryCommandAction,
+              @5: kSemanticHistoryRawCommandAction,
+              @6: kSemanticHistoryCoprocessAction };
+}
+
 - (NSString *)actionIdentifier {
-    switch ([[action_ selectedItem] tag]) {
-        case 1:
-            return kTrouterBestEditorAction;
-            
-        case 2:
-            return kTrouterUrlAction;
-            break;
-            
-        case 3:
-            return kTrouterEditorAction;
-            break;
-            
-        case 4:
-            return kTrouterCommandAction;
-            break;
-
-        case 5:
-            return kTrouterRawCommandAction;
-            break;
-
-        case 6:
-            return kTrouterCoprocessAction;
-            break;
-    }
-    return nil;
+    // Maps a tag number to an action string.
+    NSDictionary *actions = [[self class] tagToActionMap];
+    NSInteger tag = [[action_ selectedItem] tag];
+    return actions[@(tag)];
 }
 
 - (NSString *)editorIdentifier
@@ -272,20 +264,17 @@ enum {
     }
     if (sender) {
         if (![text_ isHidden]) {
-            NSString *stringValue = [[self prefs] objectForKey:kTrouterTextKey];
+            NSString *stringValue = self.prefs[kSemanticHistoryTextKey];
             [text_ setStringValue:stringValue ? stringValue : @""];
         }
         [_delegate trouterPrefsControllerSettingChanged:self];
     }
 }
 
-- (NSDictionary *)prefs
-{
-    return [NSDictionary dictionaryWithObjectsAndKeys:
-            [self actionIdentifier], kTrouterActionKey,
-            [text_ stringValue], kTrouterTextKey,
-            [self editorIdentifier], kTrouterEditorKey,
-            nil];
+- (NSDictionary *)prefs {
+    return @{ kSemanticHistoryActionKey: [self actionIdentifier],
+              kSemanticHistoryTextKey: [text_ stringValue],
+              kSemanticHistoryEditorKey: [self editorIdentifier] };
 }
 
 - (void)setGuid:(NSString *)guid
@@ -296,42 +285,30 @@ enum {
     if (!bookmark) {
         bookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:self.guid];
     }
-    NSDictionary *prefs = [bookmark objectForKey:KEY_TROUTER];
+    NSDictionary *prefs = bookmark[KEY_SEMANTIC_HISTORY];
     prefs = prefs ? prefs : [TrouterPrefsController defaultPrefs];
-    NSString *action = [prefs objectForKey:kTrouterActionKey];
+    NSString *action = prefs[kSemanticHistoryActionKey];
     // Uncheck all items
     for (NSMenuItem *item in [[action_ menu] itemArray]) {
         [item setState:NSOffState];
     }
     // Set selection in menu
-    if ([action isEqualToString:kTrouterBestEditorAction]) {
-        [action_ selectItemWithTag:1];
+    NSDictionary *actionToTagMap = [[self class] actionToTagMap];
+    NSNumber *tag = actionToTagMap[action];
+    if (tag) {
+        [action_ selectItemWithTag:[tag integerValue]];
     }
-    if ([action isEqualToString:kTrouterUrlAction]) {
-        [action_ selectItemWithTag:2];
-    }
-    if ([action isEqualToString:kTrouterEditorAction]) {
-        [action_ selectItemWithTag:3];
-    }
-    if ([action isEqualToString:kTrouterCommandAction]) {
-        [action_ selectItemWithTag:4];
-    }
-    if ([action isEqualToString:kTrouterRawCommandAction]) {
-        [action_ selectItemWithTag:5];
-    }
-    if ([action isEqualToString:kTrouterCoprocessAction]) {
-        [action_ selectItemWithTag:6];
-    }
+
     // Check selected item
     [[[action_ menu] itemWithTag:[action_ selectedTag]] setState:NSOnState];
     [self actionChanged:nil];
-    NSString *text = [prefs objectForKey:kTrouterTextKey];
+    NSString *text = prefs[kSemanticHistoryTextKey];
     if (text) {
         [text_ setStringValue:text];
     } else {
         [text_ setStringValue:@""];
     }
-    NSString *editor = [prefs objectForKey:kTrouterEditorKey];
+    NSString *editor = [prefs objectForKey:kSemanticHistoryEditorKey];
     NSDictionary *map = [[self class] identifierToTagMap];
     NSNumber *tagNumber = map[editor];
     if (tagNumber) {

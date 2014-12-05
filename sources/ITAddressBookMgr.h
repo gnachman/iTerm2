@@ -189,7 +189,7 @@
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
 #define KEY_SMART_SELECTION_RULES            @"Smart Selection Rules"
-#define KEY_TROUTER                          @"Semantic History"
+#define KEY_SEMANTIC_HISTORY                 @"Semantic History"
 #define KEY_BOUND_HOSTS                      @"Bound Hosts"
 
 // The numerical values for each enum matter because they are used in

@@ -52,7 +52,7 @@
 - (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_TRIGGERS,
                        KEY_SMART_SELECTION_RULES,
-                       KEY_TROUTER,
+                       KEY_SEMANTIC_HISTORY,
                        KEY_BOUND_HOSTS ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
@@ -139,10 +139,10 @@
     [NSApp endSheet:[_smartSelectionWindowController window]];
 }
 
-#pragma mark - Trouter
+#pragma mark - Semantic History
 
 - (void)trouterPrefsControllerSettingChanged:(TrouterPrefsController *)controller {
-    [self setObject:[controller prefs] forKey:KEY_TROUTER];
+    [self setObject:[controller prefs] forKey:KEY_SEMANTIC_HISTORY];
 }
 
 #pragma mark - Bound Hosts

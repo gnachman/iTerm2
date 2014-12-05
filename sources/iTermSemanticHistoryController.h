@@ -1,5 +1,5 @@
 /*
- **  Trouter.h
+ **  iTermSemanticHistoryController.h
  **
  **  Copyright (c) 2011
  **
@@ -32,14 +32,14 @@ extern NSString *const kSemanticHistoryPrefixSubstitutionKey;
 extern NSString *const kSemanticHistorySuffixSubstitutionKey;
 extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 
-@protocol TrouterDelegate
-- (void)trouterLaunchCoprocessWithCommand:(NSString *)command;
+@protocol iTermSemanticHistoryControllerDelegate
+- (void)semanticHistoryLaunchCoprocessWithCommand:(NSString *)command;
 @end
 
-@interface Trouter : NSObject
+@interface iTermSemanticHistoryController : NSObject
 
 @property (nonatomic, copy) NSDictionary *prefs;
-@property (nonatomic, assign) id<TrouterDelegate> delegate;
+@property (nonatomic, assign) id<iTermSemanticHistoryControllerDelegate> delegate;
 @property (nonatomic, readonly) BOOL activatesOnAnyString;  // Doesn't have to be a real file?
 
 // Given a possibly relative |path| and |workingDirectory|, returns the absolute path. If |path|
@@ -55,7 +55,7 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 
 // Opens the file at the relative |path| (which may include :lineNumber) in |workingDirectory|.
 // The |substitutions| dictionary is used to expand \references in the command to run (gotten from
-// self.prefs[kTrouterTextKey]) as follows:
+// self.prefs[kSemanticHistoryTextKey]) as follows:
 //
 // \1 -> path
 // \2 -> line number
@@ -73,10 +73,11 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 // to find an existing file in |workingDirectory|. |charsSTakenFromPrefixPtr| will be filled in with
 // the number of characters from beforeString used.
 //
-// For example, [trouter pathOfExistingFileFoundWithPrefix:@"cat et"
-//                                                  suffix:@"c/passwd > /dev/null"
-//                                        workingDirectory:@"/"
-//                                    charsTakenFromPrefix:&n]
+// For example:
+//   [semanticHistoryController pathOfExistingFileFoundWithPrefix:@"cat et"
+//                                                         suffix:@"c/passwd > /dev/null"
+//                                               workingDirectory:@"/"
+//                                           charsTakenFromPrefix:&n]
 // will return @"/etc/passwd". *n will be set to 2.
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
                                          suffix:(NSString *)afterStringIn

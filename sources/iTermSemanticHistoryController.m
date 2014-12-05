@@ -1,7 +1,4 @@
-// -*- mode:objc -*-
 /*
- **  Trouter.h
- **
  **  Copyright (c) 2011
  **
  **  Author: Jack Chen (chendo)
@@ -25,7 +22,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import "Trouter.h"
+#import "iTermSemanticHistoryController.h"
 #import "DebugLogging.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
@@ -37,7 +34,7 @@ NSString *const kSemanticHistoryPrefixSubstitutionKey = @"semanticHistory.prefix
 NSString *const kSemanticHistorySuffixSubstitutionKey = @"semanticHistory.suffix";
 NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHistory.workingDirectory";
 
-@implementation Trouter
+@implementation iTermSemanticHistoryController
 
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
@@ -132,11 +129,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
 - (NSString *)editor
 {
-    if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterBestEditorAction]) {
+    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryBestEditorAction]) {
         return [TrouterPrefsController bestEditor];
-    } else if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterEditorAction]) {
-        return [TrouterPrefsController schemeForEditor:[prefs_ objectForKey:kTrouterEditorKey]] ?
-            [prefs_ objectForKey:kTrouterEditorKey] : nil;
+    } else if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction]) {
+        return [TrouterPrefsController schemeForEditor:prefs_[kSemanticHistoryEditorKey]] ?
+            prefs_[kSemanticHistoryEditorKey] : nil;
     } else {
         return nil;
     }
@@ -218,7 +215,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (BOOL)activatesOnAnyString {
-    return [[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction];
+    return [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
 }
 
 - (BOOL)openPath:(NSString *)path
@@ -229,13 +226,13 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     BOOL isDirectory;
     NSString* lineNumber = @"";
 
-    BOOL isRawAction = [[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction];
+    BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
     if (!isRawAction) {
         path = [self getFullPath:path workingDirectory:workingDirectory lineNumber:&lineNumber];
         DLog(@"Not a raw action. New path is %@, line number is %@", path, lineNumber);
     }
 
-    NSString *script = [prefs_ objectForKey:kTrouterTextKey];
+    NSString *script = [prefs_ objectForKey:kSemanticHistoryTextKey];
     script = [script stringByReplacingBackreference:1 withString:path ? [path stringWithEscapedShellCharacters] : @""];
     script = [script stringByReplacingBackreference:2 withString:lineNumber ? lineNumber : @""];
     script = [script stringByReplacingBackreference:3 withString:substitutions[kSemanticHistoryPrefixSubstitutionKey]];
@@ -253,21 +250,21 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 
     if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
-        DLog(@"No file exists at %@, not running trouter", path);
+        DLog(@"No file exists at %@, not running semantic history", path);
         return NO;
     }
 
-    if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterCommandAction]) {
+    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
         DLog(@"Running /bin/sh -c %@", script);
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
         return YES;
     }
 
-    if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterCoprocessAction]) {
+    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
         DLog(@"Launch coproress with script %@", script);
         assert(delegate_);
-        [delegate_ trouterLaunchCoprocessWithCommand:script];
+        [delegate_ semanticHistoryLaunchCoprocessWithCommand:script];
         return YES;
     }
 
@@ -277,8 +274,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return YES;
     }
 
-    if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterUrlAction]) {
-        NSString *url = [prefs_ objectForKey:kTrouterTextKey];
+    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryUrlAction]) {
+        NSString *url = prefs_[kSemanticHistoryTextKey];
         url = [url stringByReplacingBackreference:1 withString:[path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
         url = [url stringByReplacingBackreference:2 withString:lineNumber];
         DLog(@"Open url %@", url);
