@@ -1274,7 +1274,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
                 [[cell indicator] setFrame:[cell indicatorRectForFrame:cellRect]];
                 if (![[self subviews] containsObject:[cell indicator]]) {
                     [self addSubview:[cell indicator]];
-                    [[cell indicator] startAnimation:self];
+                    [[cell indicator] setAnimate:YES];
                 }
             }
 
@@ -1768,8 +1768,8 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     NSEnumerator *e = [_cells objectEnumerator];
     PSMTabBarCell *cell;
     while ( (cell = [e nextObject]) ) {
-        [[cell indicator] stopAnimation:self];
-        [[cell indicator] startAnimation:self];
+        [[cell indicator] setAnimate:NO];
+        [[cell indicator] setAnimate:YES];
     }
     [self setNeedsDisplay];
 }
@@ -1779,7 +1779,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     NSEnumerator *e = [_cells objectEnumerator];
     PSMTabBarCell *cell;
     while ( (cell = [e nextObject]) ) {
-        [[cell indicator] stopAnimation:self];
+        [[cell indicator] setAnimate:NO];
     }
     [self setNeedsDisplay];
 }
@@ -1789,7 +1789,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     NSEnumerator *e = [_cells objectEnumerator];
     PSMTabBarCell *cell;
     while ( (cell = [e nextObject]) ) {
-        [[cell indicator] startAnimation:self];
+        [[cell indicator] setAnimate:YES];
     }
     [self setNeedsDisplay];
 }

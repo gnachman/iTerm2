@@ -20,10 +20,6 @@
 // Should the progress indicator render in a "light" style, suitable for use over a dark background?
 @property(nonatomic, assign) BOOL light;
 @property(nonatomic, assign) id<PSMProgressIndicatorDelegate> delegate;
-@property(nonatomic, assign) NSProgressIndicatorStyle style;
-@property(nonatomic, assign) NSControlSize controlSize;
-
-- (void)startAnimation:(id)sender;
-- (void)stopAnimation:(id)sender;
+@property(nonatomic, assign) BOOL animate;
 
 @end

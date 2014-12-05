@@ -48,9 +48,7 @@
         [self setControlView:controlView];
         _indicator = [[PSMProgressIndicator alloc] initWithFrame:NSMakeRect(0.0,0.0,kPSMTabBarIndicatorWidth,kPSMTabBarIndicatorWidth)];
         _indicator.delegate = controlView;
-        [_indicator setStyle:NSProgressIndicatorSpinningStyle];
         [_indicator setAutoresizingMask:NSViewMinYMargin];
-        [_indicator setControlSize:NSSmallControlSize];
         _indicator.light = controlView.style.useLightControls;
         _hasCloseButton = YES;
         _modifierString = [@"" copy];
