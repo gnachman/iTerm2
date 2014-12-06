@@ -82,6 +82,16 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 //
 // Note that the result may be a relative path. To get the full path,
 // use getFullPath:workingDirectory:lineNumber.
+//
+// Furthermore, the result may be decorated. For example:
+//   [semanticHistoryController pathOfExistingFileFoundWithPrefix:@"at Object.<anonymous> (/priva"
+//                                                         suffix:@"te/tmp/test_iterm_node.js:1:69)"
+//                                               workingDirectory:@"/"
+//                                           charsTakenFromPrefix:&n]
+//
+// Will return "(/private/tmp/test_iterm_node.js:1:60)". It is suitable to pass this to
+// getFullPath:workingDirectory:lineNumber:, which will remove the parens and extract the line
+// number, returning just the filename component.
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory

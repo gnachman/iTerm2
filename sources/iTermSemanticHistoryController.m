@@ -355,10 +355,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     beforeString = [[beforeString copy] autorelease];
     // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
-    // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autoRelease]
+    // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autorelease]
     // then the items in the array get over-released.
-    NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:@"([\t ])"];
-    NSArray *afterChunks = [afterString componentsSeparatedByRegex:@"([\t ])"];
+    NSString *const kSplitRegex = @"([\t ])";
+    NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:kSplitRegex];
+    NSArray *afterChunks = [afterString componentsSeparatedByRegex:kSplitRegex];
     
     // If the before/after string didn't produce any chunks, allow the other
     // half to stand alone.

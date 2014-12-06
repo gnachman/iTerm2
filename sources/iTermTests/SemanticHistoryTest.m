@@ -586,7 +586,52 @@
     assert(numCharsFromPrefix == [@"five six " length]);
 }
 
-- (void)testPathOfExistingFile_Network {
+- (void)testPathOfExistingFileSupportsParens {
+    int numCharsFromPrefix;
+    NSString *kWorkingDirectory = @"/directory";
+    NSString *kRelativeFilename = @"five six seven eight";
+    NSString *kFilename = [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    [_semanticHistoryController.fakeFileManager.directories addObject:kWorkingDirectory];
+    NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"one two three four (five six "
+                                                                            suffix:@"seven eight) nine ten eleven"
+                                                                  workingDirectory:kWorkingDirectory
+                                                              charsTakenFromPrefix:&numCharsFromPrefix];
+    assert([@"(five six seven eight)" isEqualToString:path]);
+    assert(numCharsFromPrefix == [@"(five six " length]);
+}
+
+- (void)testPathOfExistingFileSupportsLineNumberAndColumnNumber {
+    int numCharsFromPrefix;
+    NSString *kWorkingDirectory = @"/directory";
+    NSString *kRelativeFilename = @"five six seven eight";
+    NSString *kFilename = [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    [_semanticHistoryController.fakeFileManager.directories addObject:kWorkingDirectory];
+    NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"one two three four five six "
+                                                                            suffix:@"seven eight:123:456 nine ten eleven"
+                                                                  workingDirectory:kWorkingDirectory
+                                                              charsTakenFromPrefix:&numCharsFromPrefix];
+    assert([@"five six seven eight:123:456" isEqualToString:path]);
+    assert(numCharsFromPrefix == [@"five six " length]);
+}
+
+- (void)testPathOfExistingFileSupportsLineNumberAndColumnNumberAndParensAndNonspaceSeparators {
+    int numCharsFromPrefix;
+    NSString *kWorkingDirectory = @"/directory";
+    NSString *kRelativeFilename = @"five.six\tseven eight";
+    NSString *kFilename = [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    [_semanticHistoryController.fakeFileManager.directories addObject:kWorkingDirectory];
+    NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"one two three four (five.six\t"
+                                                                            suffix:@"seven eight:123:456). nine ten eleven"
+                                                                  workingDirectory:kWorkingDirectory
+                                                              charsTakenFromPrefix:&numCharsFromPrefix];
+    assert([@"(five.six\tseven eight:123:456)" isEqualToString:path]);
+    assert(numCharsFromPrefix == [@"(five.six\t" length]);
+}
+
+- (void)testPathOfExistingFile_IgnoresFilesOnNetworkVolumes {
     int numCharsFromPrefix;
     NSString *kWorkingDirectory = @"/directory";
     NSString *kRelativeFilename = @"five six seven eight";
