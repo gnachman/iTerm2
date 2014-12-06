@@ -109,7 +109,6 @@
 		1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3314BABE8700BD5035 /* VT100Terminal.h */; };
 		1D4097B91A2F947F00100892 /* iTermPasteHelperTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */; };
 		1D4097BB1A2F948900100892 /* iTermPasteHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */; };
-		1D4097BE1A3237CF00100892 /* TrouterTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4097BD1A3237CF00100892 /* TrouterTest.m */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */; };
@@ -1286,6 +1285,7 @@
 		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
 		A635864A184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
 		A635864B184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
+		A63679831A328E7E000DB943 /* SemanticHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A63679821A328E7D000DB943 /* SemanticHistoryTest.m */; };
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39618A9CB43002BE075 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
 		A63BA39718A9CB43002BE075 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
@@ -1947,8 +1947,6 @@
 		1D407A3314BABE8700BD5035 /* VT100Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Terminal.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermPasteHelperTest.h; path = iTermTests/iTermPasteHelperTest.h; sourceTree = "<group>"; };
 		1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermPasteHelperTest.m; path = iTermTests/iTermPasteHelperTest.m; sourceTree = "<group>"; };
-		1D4097BC1A3237CF00100892 /* TrouterTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TrouterTest.h; path = iTermTests/TrouterTest.h; sourceTree = "<group>"; };
-		1D4097BD1A3237CF00100892 /* TrouterTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TrouterTest.m; path = iTermTests/TrouterTest.m; sourceTree = "<group>"; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TabClose_Front_Rollover@2x.png"; sourceTree = "<group>"; };
@@ -2270,6 +2268,8 @@
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358645184BEA57009ED690 /* AATreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATreeNode.m; path = "objc-aatree-master/AATreeNode.m"; sourceTree = "<group>"; tabWidth = 4; };
+		A63679811A328E7D000DB943 /* SemanticHistoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemanticHistoryTest.h; path = iTermTests/SemanticHistoryTest.h; sourceTree = "<group>"; };
+		A63679821A328E7D000DB943 /* SemanticHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SemanticHistoryTest.m; path = iTermTests/SemanticHistoryTest.m; sourceTree = "<group>"; };
 		A63BA39318A9CB43002BE075 /* iTermSelection.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelection.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39418A9CB43002BE075 /* iTermSelection.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelection.m; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextExtractor.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3304,31 +3304,31 @@
 		1D5FD9AD11F61CA900C46BA3 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
 				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
 				1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */,
 				1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */,
 				A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */,
 				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
+				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
+				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
+				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
 				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
 				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
 				A671C065192981D000A7F796 /* NSStringCategoryTest.h */,
 				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
+				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
+				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
 				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
 				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
-				1D4097BC1A3237CF00100892 /* TrouterTest.h */,
-				1D4097BD1A3237CF00100892 /* TrouterTest.m */,
 				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
 				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
 				1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */,
-				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
-				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
-				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
-				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
+				A63679811A328E7D000DB943 /* SemanticHistoryTest.h */,
+				A63679821A328E7D000DB943 /* SemanticHistoryTest.m */,
 			);
 			name = Tests;
 			path = sources/;
@@ -5292,10 +5292,10 @@
 				1D5655CB19AD2B1A001C460B /* PTYTab+Scripting.m in Sources */,
 				1D9A5545180FA81400B42CE9 /* ProfileTableView.m in Sources */,
 				A6358648184BEA57009ED690 /* AATree.m in Sources */,
+				A63679831A328E7E000DB943 /* SemanticHistoryTest.m in Sources */,
 				A69B45921973193100F5444D /* iTermOpenQuicklyTableView.m in Sources */,
 				1DB9D8F4183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */,
 				1D9A556C180FA85900B42CE9 /* ToolbeltView.m in Sources */,
-				1D4097BE1A3237CF00100892 /* TrouterTest.m in Sources */,
 				1D9A558E180FA87000B42CE9 /* PointerController.m in Sources */,
 				1D9A5596180FA87000B42CE9 /* PTYSplitView.m in Sources */,
 				1D5937AD1A2D764900F808EB /* PSMDarkTabStyle.m in Sources */,

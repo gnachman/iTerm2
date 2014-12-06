@@ -39,8 +39,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
 
-- (BOOL)isTextFile:(NSString *)path
-{
+- (BOOL)isTextFile:(NSString *)path {
     // TODO(chendo): link in the "magic" library from file instead of calling it.
     NSTask *task = [[[NSTask alloc] init] autorelease];
     NSPipe *myPipe = [NSPipe pipe];
@@ -48,7 +47,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     [task setStandardOutput:myPipe];
     [task setLaunchPath:@"/usr/bin/file"];
-    [task setArguments:[NSArray arrayWithObject:path]];
+    [task setArguments:@[ path ]];
     [task launch];
     [task waitUntilExit];
 
@@ -62,11 +61,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
-               lineNumber:(NSString **)lineNumber
-{
+               lineNumber:(NSString **)lineNumber {
     DLog(@"Check if %@ is a valid path in %@", path, workingDirectory);
     NSString *origPath = path;
-    // TODO(chendo): Move regex, define capture semants in config file/prefs
+    // TODO(chendo): Move regex, define capture semantics in config file/prefs
     if (!path || [path length] == 0) {
         DLog(@"  no: it is empty");
         return nil;
@@ -95,7 +93,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return nil;
     }
     if ([path rangeOfRegex:@"^/"].location == NSNotFound) {
-        path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
+        path = [workingDirectory stringByAppendingPathComponent:path];
         DLog(@"  Prepend working directory, giving %@", path);
     }
 
@@ -105,7 +103,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     path = [[url standardizedURL] path];
     DLog(@"  Standardized path is %@", path);
 
-    if ([[NSFileManager defaultManager] fileExistsAtPathLocally:path]) {
+    if ([self.fileManager fileExistsAtPathLocally:path]) {
         DLog(@"    YES: A file exists at %@", path);
         return path;
     }
@@ -127,8 +125,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return nil;
 }
 
-- (NSString *)editor
-{
+- (NSString *)editor {
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryBestEditorAction]) {
         return [iTermSemanticHistoryPrefsController bestEditor];
     } else if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction]) {
@@ -139,6 +136,44 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 }
 
+- (void)launchAtomWithPath:(NSString *)path {
+    [self launchAppWithBundleIdentifier:kAtomIdentifier path:path];
+}
+
+- (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier path:(NSString *)path {
+    NSString *bundlePath =
+        [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier];
+    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
+    NSString *executable = [bundlePath stringByAppendingPathComponent:@"Contents/MacOS"];
+    executable = [executable stringByAppendingPathComponent:
+                            [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
+    if (bundle && executable) {
+        DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, path);
+        [self launchTaskWithPath:executable arguments:@[ executable, path ]];
+    }
+}
+
+- (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
+    return [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
+}
+
+- (void)launchSublimeTextWithBundleIdentifier:(NSString *)bundleId path:(NSString *)path {
+    NSString *bundlePath = [self absolutePathForAppBundleWithIdentifier:bundleId];
+    if (bundlePath) {
+        NSString *sublExecutable =
+            [bundlePath stringByAppendingPathComponent:@"%@/Contents/SharedSupport/bin/subl"];
+        if ([self.fileManager fileExistsAtPath:sublExecutable]) {
+            DLog(@"Launch sublime text %@ %@", sublExecutable, path);
+            [self launchTaskWithPath:sublExecutable arguments:@[ path ]];
+        } else {
+            // This isn't as good as opening "subl" because it always opens a new instance
+            // of the app but it's the OS-sanctioned way of running Sublimetext.  We can't
+            // use Applescript because it won't open the file to a particular line number.
+            [self launchAppWithBundleIdentifier:bundleId path:path];
+        }
+    }
+}
+
 - (BOOL)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
     if ([self editor]) {
         DLog(@"openFileInEditor. editor=%@", [self editor]);
@@ -146,85 +181,64 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
-            NSString *bundlePath =
-                [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:@"com.github.atom"];
-            NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
-            NSString *executable = [NSString stringWithFormat:@"%@/Contents/MacOS/%@",
-                                    bundlePath,
-                                    [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
-            if (bundle && executable) {
-                DLog(@"Launch Atom %@ %@ %@", executable, executable, path);
-                [NSTask launchedTaskWithLaunchPath:executable arguments:@[ executable, path ]];
-            }
+            [self launchAtomWithPath:path];
         } else if ([[self editor] isEqualToString:kSublimeText2Identifier] ||
                    [[self editor] isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
-
-            NSString *bundlePath;
+            NSString *bundleId;
             if ([[self editor] isEqualToString:kSublimeText3Identifier]) {
-                bundlePath = [[NSWorkspace sharedWorkspace]
-                                 absolutePathForAppBundleWithIdentifier:@"com.sublimetext.3"];
+                bundleId = @"com.sublimetext.3";
             } else {
-                bundlePath = [[NSWorkspace sharedWorkspace]
-                                 absolutePathForAppBundleWithIdentifier:@"com.sublimetext.2"];
+                bundleId = @"com.sublimetext.2";
             }
-            if (bundlePath) {
-                NSString *sublExecutable = [NSString stringWithFormat:@"%@/Contents/SharedSupport/bin/subl",
-                                            bundlePath];
-                if ([[NSFileManager defaultManager] fileExistsAtPath:sublExecutable]) {
-                    DLog(@"Launch sublime text %@ %@", sublExecutable, path);
-                    [NSTask launchedTaskWithLaunchPath:sublExecutable
-                                             arguments:[NSArray arrayWithObjects:path, nil]];
-                } else {
-                    // This isn't as good as opening "subl" because it always opens a new instance
-                    // of the app but it's the OS-sanctioned way of running Sublimetext.  We can't
-                    // use Applescript because it won't open the file to a particular line number.
-                    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
-                    NSString *sublimeTextExecutable = [NSString stringWithFormat:@"%@/Contents/MacOS/%@",
-                                                       bundlePath,
-                                                       [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
-                    if (bundle && sublimeTextExecutable) {
-                        DLog(@"Launch sublime text %@ %@ %@", sublimeTextExecutable, sublimeTextExecutable, path);
-                        [NSTask launchedTaskWithLaunchPath:sublimeTextExecutable
-                                                 arguments:[NSArray arrayWithObjects:sublimeTextExecutable, path, nil]];
-                    }
-                }
-            }
+
+            [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
         } else {
-            path = [path stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
+            path = [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
             NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
                                                @"%@://open?url=file://%@&line=%@",
                                                [iTermSemanticHistoryPrefsController schemeForEditor:[self editor]],
                                                path, lineNumber, nil]];
             DLog(@"Open url %@", url);
-            [[NSWorkspace sharedWorkspace] openURL:url];
+            [self openURL:url];
 
         }
     }
     return YES;
 }
 
-- (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory
-{
+- (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
     NSString *fullPath = [self getFullPath:path
                           workingDirectory:workingDirectory
                                 lineNumber:NULL];
-    return [[NSFileManager defaultManager] fileExistsAtPath:fullPath];
+    return [self.fileManager fileExistsAtPath:fullPath];
 }
 
 - (BOOL)activatesOnAnyString {
     return [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
 }
 
+- (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments {
+    [[NSTask launchedTaskWithLaunchPath:path
+                              arguments:arguments] waitUntilExit];
+}
+
+- (BOOL)openFile:(NSString *)fullPath {
+    return [[NSWorkspace sharedWorkspace] openFile:fullPath];
+}
+
+- (BOOL)openURL:(NSURL *)url {
+    return [[NSWorkspace sharedWorkspace] openURL:url];
+}
+
 - (BOOL)openPath:(NSString *)path
     workingDirectory:(NSString *)workingDirectory
        substitutions:(NSDictionary *)substitutions {
-    DLog(@"openPath:%@ workingDirectory:%@ substitutions:%@",
-         path, workingDirectory, substitutions);
+    DLog(@"openPath:%@ workingDirectory:%@ substitutions:%@", path, workingDirectory, substitutions);
     BOOL isDirectory;
-    NSString* lineNumber = @"";
+    NSString *lineNumber = @"";
 
     BOOL isRawAction = [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
     if (!isRawAction) {
@@ -233,31 +247,30 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 
     NSString *script = [prefs_ objectForKey:kSemanticHistoryTextKey];
-    script = [script stringByReplacingBackreference:1 withString:path ? [path stringWithEscapedShellCharacters] : @""];
-    script = [script stringByReplacingBackreference:2 withString:lineNumber ? lineNumber : @""];
-    script = [script stringByReplacingBackreference:3 withString:substitutions[kSemanticHistoryPrefixSubstitutionKey]];
-    script = [script stringByReplacingBackreference:4 withString:substitutions[kSemanticHistorySuffixSubstitutionKey]];
-    script = [script stringByReplacingBackreference:5 withString:substitutions[kSemanticHistoryWorkingDirectorySubstitutionKey]];
-    script = [script stringByReplacingVariableReferencesWithVariables:substitutions];
+    NSMutableDictionary *augmentedSubs = [[substitutions mutableCopy] autorelease];
+    augmentedSubs[@"1"] = path ? [path stringWithEscapedShellCharacters] : @"";
+    augmentedSubs[@"2"] = lineNumber ? lineNumber : @"";
+    augmentedSubs[@"3"] = substitutions[kSemanticHistoryPrefixSubstitutionKey];
+    augmentedSubs[@"4"] = substitutions[kSemanticHistorySuffixSubstitutionKey];
+    augmentedSubs[@"5"] = substitutions[kSemanticHistoryWorkingDirectorySubstitutionKey];
+    script = [script stringByReplacingVariableReferencesWithVariables:augmentedSubs];
 
     DLog(@"After escaping backrefs, script is %@", script);
 
     if (isRawAction) {
         DLog(@"Launch raw action: /bin/sh -c %@", script);
-        [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
-                                  arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
+        [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ]];
         return YES;
     }
 
-    if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
+    if (![self.fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
         DLog(@"No file exists at %@, not running semantic history", path);
         return NO;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
         DLog(@"Running /bin/sh -c %@", script);
-        [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
-                                  arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
+        [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ]];
         return YES;
     }
 
@@ -270,16 +283,22 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     if (isDirectory) {
         DLog(@"Open directory %@", path);
-        [[NSWorkspace sharedWorkspace] openFile:path];
+        [self openFile:path];
         return YES;
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryUrlAction]) {
         NSString *url = prefs_[kSemanticHistoryTextKey];
-        url = [url stringByReplacingBackreference:1 withString:[path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-        url = [url stringByReplacingBackreference:2 withString:lineNumber];
+        // Replace the path with a non-shell-escaped path.
+        augmentedSubs[@"1"] = path ?: @"";
+        // Percent-escape all the arguments.
+        for (NSString *key in augmentedSubs.allKeys) {
+            augmentedSubs[key] =
+                [augmentedSubs[key] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        }
+        url = [url stringByReplacingVariableReferencesWithVariables:augmentedSubs];
         DLog(@"Open url %@", url);
-        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:url]];
+        [self openURL:[NSURL URLWithString:url]];
         return YES;
     }
 
@@ -292,7 +311,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         }
     }
 
-    [[NSWorkspace sharedWorkspace] openFile:path];
+    [self openFile:path];
     return YES;
 }
 
@@ -315,7 +334,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
                            charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr {
-    BOOL workingDirectoryIsOk = [[NSFileManager defaultManager] fileExistsAtPathLocally:workingDirectory];
+    BOOL workingDirectoryIsOk = [self.fileManager fileExistsAtPathLocally:workingDirectory];
     if (!workingDirectoryIsOk) {
         DLog(@"Working directory %@ is a network share or doesn't exist. Not using it for context.",
              workingDirectory);
@@ -342,10 +361,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // If the before/after string didn't produce any chunks, allow the other
     // half to stand alone.
     if (!beforeChunks.count) {
-        beforeChunks = [beforeChunks arrayByAddingObject:@""];
+        beforeChunks = @[ @"" ];
     }
     if (!afterChunks.count) {
-        afterChunks = [afterChunks arrayByAddingObject:@""];
+        afterChunks = @[ @"" ];
     }
     
     NSMutableString *left = [NSMutableString string];
@@ -353,7 +372,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     int limit = 100;
 
     NSMutableSet *paths = [NSMutableSet set];
-    NSMutableSet *befores = [NSMutableSet set];
 
     DLog(@"before chunks=%@", beforeChunks);
     DLog(@"after chunks=%@", afterChunks);
@@ -369,11 +387,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             beforeChunk = [beforeChunks objectAtIndex:i];
         }
 
-        if ([befores containsObject:beforeChunk]) {
-            continue;
-        }
-        [befores addObject:beforeChunk];
-        
         [left insertString:beforeChunk atIndex:0];
         NSMutableString *possiblePath = [NSMutableString stringWithString:left];
         
@@ -418,6 +431,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         }
     }
     return result;
+}
+
+- (NSFileManager *)fileManager {
+    return [NSFileManager defaultManager];
 }
 
 @end

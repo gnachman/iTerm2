@@ -1195,7 +1195,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
-// Replace substrings like \(foo) with the value of vars[@"foo"].
+// Replace substrings like \(foo) or \1...\9 with the value of vars[@"foo"] or vars[@"1"].
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars {
     unichar *chars = (unichar *)malloc(self.length * sizeof(unichar));
     [self getCharacters:chars];
@@ -1222,7 +1222,14 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                     state = kInParens;
                     varName = [NSMutableString string];
                 } else {
-                    [result appendFormat:@"%C", c];
+                    // \1...\9 also work as subs.
+                    NSString *singleCharVar = [NSString stringWithFormat:@"%C", c];
+                    if (singleCharVar.integerValue > 0 && vars[singleCharVar]) {
+                        [result appendString:vars[singleCharVar]];
+                    } else {
+                        [result appendFormat:@"\\%C", c];
+                    }
+                    state = kLiteral;
                 }
                 break;
 
