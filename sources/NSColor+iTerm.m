@@ -33,7 +33,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                         green:(int)green
                          blue:(int)blue
                          sRGB:(BOOL)sRGB {
-    // XXX use sRGB as this the specification should be device independent.
     if (sRGB) {
         return [NSColor colorWithSRGBRed:red / 255.0
                                    green:green / 255.0
