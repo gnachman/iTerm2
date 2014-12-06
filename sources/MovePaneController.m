@@ -5,9 +5,10 @@
 //  Created by George Nachman on 8/26/11.
 
 #import "MovePaneController.h"
-#import "PTYSession.h"
+#import "DebugLogging.h"
 #import "iTermController.h"
 #import "PseudoTerminal.h"
+#import "PTYSession.h"
 #import "PTYTab.h"
 #import "SessionView.h"
 #import "TmuxController.h"
