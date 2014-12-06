@@ -1236,29 +1236,32 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)writeTaskImpl:(NSData *)data
-{
+- (void)writeTaskImpl:(NSData *)data canBroadcast:(BOOL)canBroadcast {
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
-        DLog(@"writeTaskImpl %p: called from %@", self, stack);
+        DLog(@"writeTaskImpl<%p> canBroadcast=%@: called from %@", self, @(canBroadcast), stack);
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            DLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
+            DLog(@"writeTask keydown %d: %d (%c)", i, (int)bytes[i], bytes[i]);
         }
     }
 
     // check if we want to send this input to all the sessions
-    if (![[[self tab] realParentWindow] broadcastInputToSession:self]) {
+    if (canBroadcast && [[[self tab] realParentWindow] broadcastInputToSession:self]) {
+        // Ask the parent window to write directly to the PTYTask of all
+        // sessions being broadcasted to.
+        [[[self tab] realParentWindow] sendInputToAllSessions:data];
+    } else if (!_exited) {
         // Send to only this session
-        if (!_exited) {
+        if (canBroadcast) {
+            // It happens that canBroadcast coincides with explicit user input. This is less than
+            // beautiful here, but in that case we want to turn off the bell and scroll to the
+            // bottom.
             [self setBell:NO];
             PTYScroller* ptys = (PTYScroller*)[_scrollview verticalScroller];
-            [_shell writeTask:data];
             [ptys setUserScroll:NO];
         }
-    } else {
-        // send to all sessions
-        [[[self tab] realParentWindow] sendInputToAllSessions:data];
+        [_shell writeTask:data];
     }
 }
 
@@ -1269,7 +1272,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                toWindowPane:_tmuxPane];
         return;
     }
-    [self writeTaskImpl:data];
+    [self writeTaskImpl:data canBroadcast:NO];
 }
 
 - (void)handleKeypressInTmuxGateway:(unichar)unicode
@@ -1324,7 +1327,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return;
     }
     self.currentMarkOrNotePosition = nil;
-    [self writeTaskImpl:data];
+    [self writeTaskImpl:data canBroadcast:YES];
 }
 
 - (void)taskWasDeregistered {
@@ -3795,7 +3798,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (_tmuxGateway.tmuxLogging) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
     }
-    [self writeTaskImpl:data];
+    [self writeTaskImpl:data canBroadcast:YES];
 }
 
 + (dispatch_queue_t)tmuxQueue {
@@ -5381,7 +5384,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)screenWriteDataToTask:(NSData *)data {
-    [self writeTask:data];
+    [self writeTaskNoBroadcast:data];
 }
 
 - (NSRect)screenWindowFrame {
