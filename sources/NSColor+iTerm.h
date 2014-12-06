@@ -23,7 +23,8 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
-                         blue:(int)blue;
+                         blue:(int)blue
+                         sRGB:(BOOL)sRGB;
 
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
@@ -31,7 +32,8 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
                        muting:(double)muting
                 backgroundRed:(CGFloat)bgRed
               backgroundGreen:(CGFloat)bgGreen
-               backgroundBlue:(CGFloat)bgBlue;
+               backgroundBlue:(CGFloat)bgBlue
+                         sRGB:(BOOL)sRGB;
 
 + (NSColor *)calibratedColorWithRed:(double)r
                               green:(double)g

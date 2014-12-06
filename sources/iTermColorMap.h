@@ -48,6 +48,7 @@ extern const int kColorMapAnsiBrightModifier;
 
 // This value plus 0...2^24-1 are accepted as read-only keys. These must be the highest-valued keys.
 extern const int kColorMap24bitBase;
+extern const int kColorMapSRGB24bitBase;
 
 @class iTermColorMap;
 
@@ -76,7 +77,8 @@ extern const int kColorMap24bitBase;
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
                             green:(int)green
-                             blue:(int)blue;
+                             blue:(int)blue
+                             sRGB:(BOOL)sRGB;
 
 - (void)setColor:(NSColor *)theColor forKey:(iTermColorMapKey)theKey;
 - (NSColor *)colorForKey:(iTermColorMapKey)theKey;
