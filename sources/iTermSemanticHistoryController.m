@@ -149,7 +149,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                             [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
     if (bundle && executable) {
         DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, path);
-        [self launchTaskWithPath:executable arguments:@[ executable, path ]];
+        [self launchTaskWithPath:executable arguments:@[ executable, path ] wait:NO];
     }
 }
 
@@ -161,10 +161,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     NSString *bundlePath = [self absolutePathForAppBundleWithIdentifier:bundleId];
     if (bundlePath) {
         NSString *sublExecutable =
-            [bundlePath stringByAppendingPathComponent:@"%@/Contents/SharedSupport/bin/subl"];
+            [bundlePath stringByAppendingPathComponent:@"Contents/SharedSupport/bin/subl"];
         if ([self.fileManager fileExistsAtPath:sublExecutable]) {
             DLog(@"Launch sublime text %@ %@", sublExecutable, path);
-            [self launchTaskWithPath:sublExecutable arguments:@[ path ]];
+            [self launchTaskWithPath:sublExecutable arguments:@[ path ] wait:NO];
         } else {
             // This isn't as good as opening "subl" because it always opens a new instance
             // of the app but it's the OS-sanctioned way of running Sublimetext.  We can't
@@ -220,9 +220,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return [prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryRawCommandAction];
 }
 
-- (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments {
-    [[NSTask launchedTaskWithLaunchPath:path
-                              arguments:arguments] waitUntilExit];
+- (void)launchTaskWithPath:(NSString *)path arguments:(NSArray *)arguments wait:(BOOL)wait {
+    NSTask *task = [NSTask launchedTaskWithLaunchPath:path arguments:arguments];
+    if (wait) {
+        [task waitUntilExit];
+    }
 }
 
 - (BOOL)openFile:(NSString *)fullPath {
@@ -259,7 +261,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     if (isRawAction) {
         DLog(@"Launch raw action: /bin/sh -c %@", script);
-        [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ]];
+        [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ] wait:YES];
         return YES;
     }
 
@@ -270,7 +272,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCommandAction]) {
         DLog(@"Running /bin/sh -c %@", script);
-        [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ]];
+        [self launchTaskWithPath:@"/bin/sh" arguments:@[ @"-c", script ] wait:YES];
         return YES;
     }
 

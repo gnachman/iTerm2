@@ -52,7 +52,7 @@ static void RunTestsInObject(iTermTest *test) {
 
 int main(int argc, const char * argv[]) {
     [[NSApplication sharedApplication] setDelegate:[[iTermApplicationDelegate alloc] init]];
-/*
+
     RunTestsInObject([[VT100GridTest new] autorelease]);
     RunTestsInObject([[VT100ScreenTest new] autorelease]);
     RunTestsInObject([[IntervalTreeTest new] autorelease]);
@@ -61,8 +61,8 @@ int main(int argc, const char * argv[]) {
     RunTestsInObject([[PTYTextViewTest new] autorelease]);
     RunTestsInObject([[PTYSessionTest new] autorelease]);
     RunTestsInObject([[iTermPasteHelperTest new] autorelease]);
-*/
     RunTestsInObject([[SemanticHistoryTest new] autorelease]);
+
     NSLog(@"All tests passed");
     return 0;
 }
