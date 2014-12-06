@@ -3034,13 +3034,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
 
-    if (_mouseDownOnImage &&
-        ([event modifierFlags] & NSCommandKeyMask) &&
-        dragThresholdMet) {
+    if (_mouseDownOnImage && dragThresholdMet) {
         [self _dragImage:_imageBeingClickedOn forEvent:event];
-    } else if (_mouseDownOnSelection == YES &&
-        ([event modifierFlags] & NSCommandKeyMask) &&
-        dragThresholdMet) {
+    } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
         DLog(@"drag and drop a selection");
         // Drag and drop a selection
         NSString *theSelectedText = [self selectedTextWithPad:NO];
