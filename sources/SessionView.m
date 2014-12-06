@@ -501,11 +501,19 @@ static NSDate* lastResizeDate_;
     return NSDragOperationMove;
 }
 
-- (BOOL)performDragOperation:(id < NSDraggingInfo >)sender
-{
+- (BOOL)performDragOperation:(id < NSDraggingInfo >)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"iTermDragPanePBType"] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+            if (session_.tab.sessions.count == 1) {
+                // If you dragged a session from a tab with split panes onto itself then do nothing.
+                // But if you drag a session onto itself in a tab WITHOUT split panes, then move the
+                // whole window.
+                [[MovePaneController sharedInstance] moveWindowBy:[sender draggedImageLocation]];
+            }
+            // Regardless, we must say the drag failed because otherwise
+            // draggedImage:endedAt:operation: will try to move the session to its own window.
             [[MovePaneController sharedInstance] setDragFailed:YES];
+            return NO;
         }
         SplitSessionHalf half = [splitSelectionView_ half];
         [splitSelectionView_ removeFromSuperview];

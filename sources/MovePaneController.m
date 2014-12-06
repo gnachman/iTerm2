@@ -64,6 +64,16 @@
     session_ = nil;
 }
 
+- (void)moveWindowBy:(NSPoint)point {
+    NSWindow *window = session_.tab.realParentWindow.window;
+    NSPoint origin = window.frame.origin;
+    origin.x += point.x;
+    origin.y += point.y;
+    DLog(@"Move window from %@ to %@",
+         NSStringFromPoint(window.frame.origin), NSStringFromPoint(origin));
+    [window setFrameOrigin:origin];
+}
+
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point
 {
     if ([movingSession isTmuxClient]) {
