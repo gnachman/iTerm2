@@ -163,9 +163,6 @@ static const int kBadgeRightMargin = 10;
     NSTimeInterval _timeOfLastBlink;
     VT100GridCoord _oldCursorPosition;
 
-    // trackingRect tab
-    NSTrackingArea *_trackingArea;
-
     // Was the last pressed key a "repeat" where the key is held down?
     BOOL _keyIsARepeat;
 
@@ -379,6 +376,12 @@ static const int kBadgeRightMargin = 10;
     return self;
 }
 
+- (void)removeAllTrackingAreas {
+    while (self.trackingAreas.count) {
+        [self removeTrackingArea:self.trackingAreas[0]];
+    }
+}
+
 - (void)dealloc {
     [_selection release];
     [_markImage release];
@@ -390,9 +393,7 @@ static const int kBadgeRightMargin = 10;
     [_mouseDownEvent release];
     _mouseDownEvent = nil;
 
-    if (_trackingArea) {
-        [self removeTrackingArea:_trackingArea];
-    }
+    [self removeAllTrackingAreas];
     if ([self isFindingCursor]) {
         [_findCursorWindow close];
     }
@@ -518,44 +519,45 @@ static const int kBadgeRightMargin = 10;
     return YES;
 }
 
-- (void)viewWillMoveToWindow:(NSWindow *)win
-{
-    if (!win && [self window] && _trackingArea) {
-        [self removeTrackingArea:_trackingArea];
-        _trackingArea = nil;
+- (void)viewWillMoveToWindow:(NSWindow *)win {
+    if (!win && [self window]) {
+        [self removeAllTrackingAreas];
     }
     [super viewWillMoveToWindow:win];
 }
 
-- (void)viewDidMoveToWindow
-{
+- (void)viewDidMoveToWindow {
     [self updateTrackingAreas];
 }
 
 - (void)updateTrackingAreas
 {
-    int trackingOptions;
-
     if ([self window]) {
-        trackingOptions = NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag;
-        if ([[_dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION ||
-            ([NSEvent modifierFlags] & NSCommandKeyMask)) {
-            trackingOptions |= NSTrackingMouseMoved;
-        }
-        if (_trackingArea &&
-            NSEqualRects(_trackingArea.rect, self.visibleRect) &&
-            _trackingArea.options == trackingOptions) {
+        // Do we want to track mouse motions?
+        // Enter and exit events are tracked by the superview and passed down
+        // to us because our frame changes all the time. When our frame
+        // changes, this method is called, which causes mouseExit's to be
+        // missed and spurious mouseEnter's to be called. See issue 3345.
+        BOOL shouldTrack = ([[_dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION ||
+                            ([NSEvent modifierFlags] & NSCommandKeyMask));
+        if (self.trackingAreas.count &&
+            shouldTrack &&
+            NSEqualRects([self.trackingAreas[0] rect], self.visibleRect)) {
             // Nothing would change.
             return;
         }
-        if (_trackingArea) {
-            [self removeTrackingArea:_trackingArea];
+        [self removeAllTrackingAreas];
+        if (shouldTrack) {
+            NSInteger trackingOptions = (NSTrackingInVisibleRect |
+                                         NSTrackingActiveAlways |
+                                         NSTrackingMouseMoved);
+            NSTrackingArea *trackingArea =
+                [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
+                                              options:trackingOptions
+                                                owner:self
+                                             userInfo:nil] autorelease];
+            [self addTrackingArea:trackingArea];
         }
-        _trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
-                                                      options:trackingOptions
-                                                        owner:self
-                                                     userInfo:nil] autorelease];
-        [self addTrackingArea:_trackingArea];
     }
 }
 
@@ -2542,8 +2544,7 @@ NSMutableArray* screens=0;
     [self updateUnderlinedURLs:event];
 }
 
-- (void)mouseEntered:(NSEvent *)event
-{
+- (void)mouseEntered:(NSEvent *)event {
     [self updateCursor:event];
     [self updateUnderlinedURLs:event];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&

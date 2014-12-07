@@ -114,6 +114,9 @@ static NSDate* lastResizeDate_;
     [_currentAnnouncement dismiss];
     [_currentAnnouncement release];
     [_announcements release];
+    while (self.trackingAreas.count) {
+        [self removeTrackingArea:self.trackingAreas[0]];
+    }
     [super dealloc];
 }
 
@@ -243,6 +246,32 @@ static NSDate* lastResizeDate_;
 {
     shuttingDown_ = YES;
     [timer_ invalidate];
+}
+
+// See comments in -[PTYTextView updateTrackingAreas] about why this is done.
+- (void)updateTrackingAreas {
+    if ([self window]) {
+        int trackingOptions;
+        trackingOptions = (NSTrackingMouseEnteredAndExited |
+                           NSTrackingActiveAlways |
+                           NSTrackingEnabledDuringMouseDrag);
+        while (self.trackingAreas.count) {
+            [self removeTrackingArea:self.trackingAreas[0]];
+        }
+        NSTrackingArea *trackingArea = [[[NSTrackingArea alloc] initWithRect:self.bounds
+                                                                     options:trackingOptions
+                                                                       owner:self
+                                                                    userInfo:nil] autorelease];
+        [self addTrackingArea:trackingArea];
+    }
+}
+
+- (void)mouseEntered:(NSEvent *)theEvent {
+    [[session_ textview] mouseEntered:theEvent];
+}
+
+- (void)mouseExited:(NSEvent *)theEvent {
+    [[session_ textview] mouseEntered:theEvent];
 }
 
 - (void)rightMouseDown:(NSEvent*)event
@@ -453,6 +482,7 @@ static NSDate* lastResizeDate_;
 }
 
 #pragma mark NSDraggingDestination protocol
+
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
 {
     PTYSession *movingSession = [[MovePaneController sharedInstance] session];
