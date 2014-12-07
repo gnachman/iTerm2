@@ -3716,9 +3716,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (parts.count != 1) {
         return;
     }
-    NSString *unescapedText = parts[0];
-    NSString *text = [unescapedText stringWithEscapedShellCharacters];
-    scpPath = [_dataSource scpPathForFile:text onLine:_selection.lastRange.coordRange.start.y];
+    scpPath = [_dataSource scpPathForFile:parts[0] onLine:_selection.lastRange.coordRange.start.y];
     [_delegate startDownloadOverSCP:scpPath];
 
     NSDictionary *attributes =
