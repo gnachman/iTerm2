@@ -162,14 +162,15 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
                                                          @"Key Names");
             break;
 
-        // For no apparent reason, these are standard on Apple en_GB keyboards where ~/`
-        // typically goes (between esc and tab).
+        // These are standard on Apple en_GB keyboards where ~ and ` go on US keyboards (between esc
+        // and tab).
         case 0xa7:
             aString = @"§";
             break;
         case 0xb1: // shifted version of above.
             aString = @"±";
             break;
+
         case '0':
         case '1':
         case '2':
