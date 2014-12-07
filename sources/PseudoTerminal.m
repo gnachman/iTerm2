@@ -5611,6 +5611,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [self fitWindowToTabs];
         }
     }
+
+    // If the theme changed from light to dark make sure split pane dividers redraw.
+    [TABVIEW setNeedsDisplay:YES];
 }
 
 - (void)updateTabBarStyle {
