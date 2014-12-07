@@ -1269,7 +1269,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             restorableSession.arrangement = [aTab arrangement];
             restorableSession.group = kiTermRestorableSessionGroupTab;
         }
-        [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
+        if (restorableSession.arrangement) {
+            [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
+        }
         for (PTYSession* session in [aTab sessions]) {
             [session terminate];
         }
@@ -2278,11 +2280,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.arrangement = [self arrangement];
         restorableSession.group = kiTermRestorableSessionGroupWindow;
-        [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
+        if (restorableSession.arrangement) {
+            [[iTermController sharedInstance] pushCurrentRestorableSession:restorableSession];
+        }
         for (PTYSession* session in [self allSessions]) {
             [session terminate];
         }
-        [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
+        if (restorableSession.arrangement) {
+            [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
+        }
     }
 
     [[self retain] autorelease];
