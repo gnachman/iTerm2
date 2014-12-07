@@ -858,10 +858,11 @@ static const int kMaxScreenRows = 4096;
             g <= 255 &&
             b >= 0 &&
             b <= 255) {
-            NSColor* theColor = [NSColor colorWithCalibratedRed:((double)r)/255.0
-                                                          green:((double)g)/255.0
-                                                           blue:((double)b)/255.0
-                                                          alpha:1];
+            NSColor* srgb = [NSColor colorWithSRGBRed:((double)r)/255.0
+                                                green:((double)g)/255.0
+                                                 blue:((double)b)/255.0
+                                                alpha:1];
+            NSColor *theColor = [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
             *numberPtr = n;
             return theColor;
         }
