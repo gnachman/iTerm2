@@ -111,6 +111,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionScrollDirection) {
     }
     if (_selectionScrollDirection && previousDirection == kiTermSelectionScrollDirectionStopped) {
         DLog(@"selection scroll scheduling");
+        [self.delegate selectionScrollWillStart];
         [self scheduleSelectionScroll];
     }
 }

@@ -2101,7 +2101,12 @@ NSMutableArray* screens=0;
 
 - (void)keyDown:(NSEvent*)event
 {
-    [self deselect];
+    if (!_selection.live) {
+        // Remove selection when you type, unless the selection is live because it's handy to be
+        // able to scroll up, click, hit a key, and then drag to select to (near) the end. See
+        // issue 3340.
+        [self deselect];
+    }
     static BOOL isFirstInteraction = YES;
     if (isFirstInteraction) {
         iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
@@ -8466,6 +8471,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
     return NSDragOperationEvery;
+}
+
+#pragma mark - Selection Scroll
+
+- (void)selectionScrollWillStart {
+    PTYScroller *scroller = (PTYScroller *)self.enclosingScrollView.verticalScroller;
+    scroller.userScroll = YES;
 }
 
 @end
