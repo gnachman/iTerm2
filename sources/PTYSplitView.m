@@ -20,6 +20,10 @@
     [super setDelegate:delegate];
 }
 
+- (NSColor *)dividerColor {
+    return [NSColor lightGrayColor];
+}
+
 - (NSString *)description
 {
     NSMutableString *d = [NSMutableString stringWithString:@"<PTYSplitView "];
