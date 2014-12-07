@@ -1275,7 +1275,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         for (PTYSession* session in [aTab sessions]) {
             [session terminate];
         }
-        [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
+        if (restorableSession.arrangement) {
+            [[iTermController sharedInstance] commitAndPopCurrentRestorableSession];
+        }
     } else {
         for (PTYSession* session in [aTab sessions]) {
             [session terminate];
