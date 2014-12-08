@@ -7058,7 +7058,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                Y:cursorOrigin.y + cursorSize.height - _lineHeight
                      doubleWidth:double_width
                    overrideColor:overrideColor
-                         context:ctx];
+                         context:ctx
+                 backgroundColor:nil];
             _useBrightBold = saved;
         } else {
             // Non-inverted cursor or cursor is frame
