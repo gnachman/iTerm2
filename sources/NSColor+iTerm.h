@@ -38,7 +38,6 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
                                blue:(double)b
                               alpha:(double)a
                 perceivedBrightness:(CGFloat)t
-                            mutedBy:(double)muting
                    towardComponents:(CGFloat *)baseColorComponents;
 
 + (NSColor*)colorWithComponents:(double *)mainComponents

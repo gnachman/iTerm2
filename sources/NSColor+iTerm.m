@@ -59,7 +59,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                blue:(double)b
                               alpha:(double)a
                 perceivedBrightness:(CGFloat)t
-                            mutedBy:(double)muting
                    towardComponents:(CGFloat *)baseColorComponents {
     /*
      Given:
@@ -123,11 +122,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     const CGFloat x2 = p * e2 + (1 - p) * c2;
     const CGFloat x3 = p * e3 + (1 - p) * c3;
 
-    // Now apply muting
-    const CGFloat mutedRed = x1 * (1 - muting) + baseColorComponents[0] * muting;
-    const CGFloat mutedGreen = x2 * (1 - muting) + baseColorComponents[1] * muting;
-    const CGFloat mutedBlue = x3 * (1 - muting) + baseColorComponents[2] * muting;
-    return [NSColor colorWithCalibratedRed:mutedRed green:mutedGreen blue:mutedBlue alpha:a];
+    return [NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a];
 }
 
 + (NSColor *)colorForAnsi256ColorIndex:(int)index {
@@ -163,37 +158,49 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     double mainBrightness = PerceivedBrightness(r, g, b);
     double otherBrightness = PerceivedBrightness(or, og, ob);
     CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
+
     if (brightnessDiff < minimumContrast) {
+        // Muting defines the range of possible brightnesses; with more muting, text colors converge
+        // towards the default background color (called otherComponents here). To pick an allowable
+        // target brightness, we limit it to the range of brightnesses permitted by the muting
+        // level.
+        double minBrightness = PerceivedBrightness(baseColorComponents[0] * muting,
+                                                   baseColorComponents[1] * muting,
+                                                   baseColorComponents[2] * muting);
+        double maxBrightness = PerceivedBrightness(1 - muting + baseColorComponents[0] * muting,
+                                                   1 - muting + baseColorComponents[1] * muting,
+                                                   1 - muting + baseColorComponents[2] * muting);
+
+
         CGFloat error = fabs(brightnessDiff - minimumContrast);
         CGFloat targetBrightness = mainBrightness;
         if (mainBrightness < otherBrightness) {
             targetBrightness -= error;
-            if (targetBrightness < 0) {
+            if (targetBrightness < minBrightness) {
                 const double alternative = otherBrightness + minimumContrast;
                 const double baseContrast = otherBrightness;
-                const double altContrast = MIN(alternative, 1) - otherBrightness;
+                const double altContrast = MIN(alternative, maxBrightness) - otherBrightness;
                 if (altContrast > baseContrast) {
                     targetBrightness = alternative;
                 }
             }
         } else {
             targetBrightness += error;
-            if (targetBrightness > 1) {
+            if (targetBrightness > maxBrightness) {
                 const double alternative = otherBrightness - minimumContrast;
-                const double baseContrast = 1 - otherBrightness;
-                const double altContrast = otherBrightness - MAX(alternative, 0);
+                const double baseContrast = maxBrightness - otherBrightness;
+                const double altContrast = otherBrightness - MAX(alternative, minBrightness);
                 if (altContrast > baseContrast) {
                     targetBrightness = alternative;
                 }
             }
         }
-        targetBrightness = MIN(MAX(0, targetBrightness), 1);
+        targetBrightness = MIN(MAX(minBrightness, targetBrightness), maxBrightness);
         return [NSColor calibratedColorWithRed:r
                                          green:g
                                           blue:b
                                          alpha:a
                            perceivedBrightness:targetBrightness
-                                       mutedBy:muting
                               towardComponents:baseColorComponents];
     } else {
         return nil;

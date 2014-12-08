@@ -6584,7 +6584,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                      Y:(double)Y
            doubleWidth:(BOOL)double_width
          overrideColor:(NSColor*)overrideColor
-               context:(CGContextRef)ctx {
+               context:(CGContextRef)ctx
+       backgroundColor:(NSColor *)backgroundColor {
     screen_char_t temp = screenChar;
     temp.foregroundColor = fgColor;
     temp.fgGreen = fgGreen;
@@ -6602,7 +6603,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           bgselected:NO
                                width:[_dataSource width]
                           indexRange:NSMakeRange(0, 1)
-                             bgColor:nil
+                             bgColor:backgroundColor
                              matches:nil
                              storage:storage];
     if (run) {
@@ -7091,7 +7092,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                Y:cursorOrigin.y + cursorSize.height - _lineHeight
                      doubleWidth:double_width
                    overrideColor:nil
-                         context:ctx];
+                         context:ctx
+                 backgroundColor:bgColor];  // Pass bgColor so min contrast can apply
         }
     }
 }
