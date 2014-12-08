@@ -159,9 +159,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
 - (void)launchSublimeTextWithBundleIdentifier:(NSString *)bundleId path:(NSString *)path {
     NSString *bundlePath = [self absolutePathForAppBundleWithIdentifier:bundleId];
+    DLog(@"Bundle path for bundle id %@ is %@", bundleId, bundlePath);
     if (bundlePath) {
         NSString *sublExecutable =
             [bundlePath stringByAppendingPathComponent:@"Contents/SharedSupport/bin/subl"];
+        DLog(@"Checking for executable at %@", sublExecutable);
         if ([self.fileManager fileExistsAtPath:sublExecutable]) {
             DLog(@"Launch sublime text %@ %@", sublExecutable, path);
             [self launchTaskWithPath:sublExecutable arguments:@[ path ] wait:NO];
@@ -169,6 +171,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             // This isn't as good as opening "subl" because it always opens a new instance
             // of the app but it's the OS-sanctioned way of running Sublimetext.  We can't
             // use Applescript because it won't open the file to a particular line number.
+            DLog(@"Launch sublime text by bundle ID because subl executable not found.");
             [self launchAppWithBundleIdentifier:bundleId path:path];
         }
     }
