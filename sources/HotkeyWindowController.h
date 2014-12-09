@@ -26,6 +26,11 @@
     CFRunLoopSourceRef eventSrc_;
 }
 
+// Hotkey windows' restorable state is saved in the application delegate because these windows are
+// often ordered out, and ordered-out windows are not saved. This is assigned to when the app state
+// is decoded and updated from saveHotkeyWindowState.
+@property(nonatomic, retain) NSDictionary *restorableState;
+
 + (id)sharedInstance;
 + (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window;
 
@@ -46,7 +51,7 @@
 // Returns the profile to be used for new hotkey windows, or nil if none defined.
 - (Profile *)profile;
 
-// Saves or deletes the hotkey window's state from user defaults.
+// Updates -restorableState and invalidates the app's restorable state.
 - (void)saveHotkeyWindowState;
 
 - (int)controlRemapping;

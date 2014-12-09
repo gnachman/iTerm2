@@ -73,6 +73,7 @@ NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
+static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";
 
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
@@ -1163,13 +1164,27 @@ static BOOL hasBecomeActive = NO;
 
 - (void)application:(NSApplication *)app willEncodeRestorableState:(NSCoder *)coder {
     DLog(@"app encoding restorable state");
+    NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
+
+    NSDictionary *hotkeyWindowState = [[HotkeyWindowController sharedInstance] restorableState];
+    if (hotkeyWindowState) {
+        [coder encodeObject:hotkeyWindowState
+                     forKey:kHotkeyWindowRestorableState];
+    }
+    NSLog(@"Time to save app restorable state: %@",
+          @([NSDate timeIntervalSinceReferenceDate] - start));
 }
 
 - (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
     NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);
+    }
+
+    NSDictionary *hotkeyWindowState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
+    if (hotkeyWindowState) {
+        [[HotkeyWindowController sharedInstance] setRestorableState:hotkeyWindowState];
     }
 }
 

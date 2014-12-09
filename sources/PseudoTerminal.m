@@ -6977,13 +6977,17 @@ int aGlobalVariable;
         // there is nothing to save.
         return;
     }
-    if ([self isHotKeyWindow] || [self allTabsAreTmuxTabs]) {
-        // Don't save and restore hotkey windows or tmux windows. The
-        // OS only restores windows that are in the window order, and
-        // hotkey windows may be ordered in or out, depending on
-        // whether they were in use. So they get a special path for
-        // restoration where the arrangement is saved in user
-        // defaults.
+    // Don't save and restore the hotkey window. The OS only restores windows that are in the window
+    // order, and hotkey windows may be ordered in or out, depending on whether they were in use. So
+    // they get a special path for restoration where the arrangement is saved in user defaults.
+    if ([self isHotKeyWindow]) {
+        [[self ptyWindow] setRestoreState:nil];
+        [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
+        return;
+    }
+
+    // Don't restore tmux windows since their canonical state is on the server.
+    if ([self allTabsAreTmuxTabs]) {
         [[self ptyWindow] setRestoreState:nil];
         return;
     }

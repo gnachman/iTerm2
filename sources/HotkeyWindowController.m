@@ -21,10 +21,6 @@
 
 #define HKWLog DLog
 
-// Restorable arrangement for hotkey window, which doesn't go through the OS's normal window
-// restoration flow since it may be ordered out.
-NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArrangement";
-
 @implementation HotkeyWindowController
 
 + (HotkeyWindowController *)sharedInstance {
@@ -87,6 +83,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 
 - (void)dealloc {
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
+    [_restorableState release];
     [super dealloc];
 }
 
@@ -128,7 +125,19 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 
 - (BOOL)openHotkeyWindow {
     HKWLog(@"Open hotkey window");
-    NSDictionary *arrangement = [self savedArrangement];
+    NSDictionary *arrangement = [[self.restorableState copy] autorelease];
+    if (!arrangement) {
+        // If the user had an arrangement saved in user defaults, restore it and delete it. This is
+        // how hotkey window state was preserved prior to 12/9/14 when it was moved into application-
+        // level restorable state. Eventually this migration code can be deleted.
+        NSString *const kUserDefaultsHotkeyWindowArrangement = @"NoSyncHotkeyWindowArrangement";  // DEPRECATED
+        arrangement =
+            [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
+        if (arrangement) {
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultsHotkeyWindowArrangement];
+        }
+    }
+    self.restorableState = nil;
     PseudoTerminal *term = nil;
     if (arrangement) {
         term = [PseudoTerminal terminalWithArrangement:arrangement];
@@ -712,17 +721,14 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
 - (void)saveHotkeyWindowState {
     PseudoTerminal *term = [self hotKeyWindow];
-    if (!term) {
-        [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultsHotkeyWindowArrangement];
-        return;
+    if (term) {
+        BOOL includeContents = [iTermAdvancedSettingsModel restoreWindowContents];
+        self.restorableState = [term arrangementExcludingTmuxTabs:YES
+                                                includingContents:includeContents];
+    } else {
+        self.restorableState = nil;
     }
-    NSDictionary *arrangement = [term arrangementExcludingTmuxTabs:YES includingContents:NO];
-    [[NSUserDefaults standardUserDefaults] setObject:arrangement
-                                              forKey:kUserDefaultsHotkeyWindowArrangement];
-}
-
-- (NSDictionary *)savedArrangement {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:kUserDefaultsHotkeyWindowArrangement];
+    [NSApp invalidateRestorableState];
 }
 
 - (int)controlRemapping {
