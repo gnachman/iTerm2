@@ -4826,7 +4826,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];
     [self setDimmingForSession:targetSession];
-    [sessionView updateDim];
+    for (PTYSession *session in self.currentTab.sessions) {
+        [session.view updateDim];
+    }
     newSession.tabColor = tabColor;
     [self updateTabColors];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"

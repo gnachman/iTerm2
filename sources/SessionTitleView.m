@@ -78,7 +78,7 @@ static const CGFloat kButtonSize = 17;
         [label_ setDrawsBackground:NO];
         [label_ setEditable:NO];
         [label_ setSelectable:NO];
-        [label_ setFont:[NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]]];
+        [label_ setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [label_ sizeToFit];
         [label_ setAutoresizingMask:NSViewMaxYMargin | NSViewWidthSizable];
 
@@ -131,45 +131,31 @@ static const CGFloat kButtonSize = 17;
     return [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
 }
 
-- (NSColor *)dimmedBackgroundColor
-{
-    NSColor *color;
-
+- (NSColor *)dimmedBackgroundColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    CGFloat whiteLevel = 0;
     switch (preferredStyle) {
         case TAB_STYLE_LIGHT:
             if (dimmingAmount_ > 0) {
                 // Not selected
-                color = [NSColor colorWithSRGBRed:199/255.0
-                                            green:196/255.0
-                                             blue:199/255.0
-                                            alpha:1];
+                whiteLevel = 0.58;
             } else {
                 // selected
-                color = [NSColor colorWithSRGBRed:214/255.0
-                                            green:211/255.0
-                                             blue:214/255.0
-                                            alpha:1];
+                whiteLevel = 0.85;
             }
             break;
         case TAB_STYLE_DARK:
             if (dimmingAmount_ > 0) {
                 // Not selected
-                color = [NSColor colorWithSRGBRed:100/255.0
-                                            green:98/255.0
-                                             blue:100/255.0
-                                            alpha:1];
+                whiteLevel = 0.22;
             } else {
                 // selected
-                color = [NSColor colorWithSRGBRed:157/255.0
-                                            green:155/255.0
-                                             blue:157/255.0
-                                            alpha:1];
+                whiteLevel = 0.27;
             }
             break;
     }
 
-    return [self dimmedColor:color];
+    return [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
 }
 
 - (void)drawRect:(NSRect)dirtyRect
@@ -181,15 +167,10 @@ static const CGFloat kButtonSize = 17;
         [[self dimmedBackgroundColor] set];
     }
     NSRectFill(dirtyRect);
-    [[NSColor blackColor] set];
-
-    [[NSColor lightGrayColor] set];
-    NSRectFill(NSMakeRect(dirtyRect.origin.x, 1, dirtyRect.size.width, 1));
 
     [[NSColor blackColor] set];
     NSRectFill(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1));
-    NSRectFill(NSMakeRect(self.frame.size.width - 1, 0, 1, self.frame.size.height));
-    
+
     [super drawRect:dirtyRect];
 }
 
@@ -203,7 +184,29 @@ static const CGFloat kButtonSize = 17;
 {
     dimmingAmount_ = value;
     [self setNeedsDisplay:YES];
-    [label_ setTextColor:[self dimmedColor:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]]];
+    CGFloat whiteLevel = 0;
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_LIGHT:
+            if (dimmingAmount_ > 0) {
+                // Not selected
+                whiteLevel = 0.3;
+            } else {
+                // selected
+                whiteLevel = 0.2;
+            }
+            break;
+        case TAB_STYLE_DARK:
+            if (dimmingAmount_ > 0) {
+                // Not selected
+                whiteLevel = 0.4;
+            } else {
+                // selected
+                whiteLevel = 0.8;
+            }
+            break;
+    }
+    [label_ setTextColor:[NSColor colorWithCalibratedWhite:whiteLevel alpha:1]];
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent
