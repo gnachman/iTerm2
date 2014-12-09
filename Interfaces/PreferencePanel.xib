@@ -750,7 +750,7 @@ Gw
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
-                                    <rect key="frame" x="0.0" y="0.0" width="762" height="19"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="761" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -1126,7 +1126,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
-                                    <rect key="frame" x="0.0" y="0.0" width="532" height="19"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="533" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -1332,6 +1332,7 @@ DQ
             <connections>
                 <outlet property="_cmdSelection" destination="6107" id="aP0-Ty-y8T"/>
                 <outlet property="_controlLeftClickActsLikeRightClick" destination="6111" id="tra-Ty-UvV"/>
+                <outlet property="_doubleClickPerformsSmartSelection" destination="yP8-R7-nbQ" id="2EU-IR-9z1"/>
                 <outlet property="_focusFollowsMouse" destination="6062" id="wHi-NP-8ue"/>
                 <outlet property="_optionClickMovesCursor" destination="6407" id="hKN-R0-UCE"/>
                 <outlet property="_threeFingerEmulatesMiddle" destination="6227" id="eEX-cI-LAf"/>
@@ -5309,22 +5310,11 @@ DQ
             </subviews>
         </customView>
         <customView id="qwf-ly-A8K" userLabel="Prefs - Pointer" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="892" height="416"/>
+            <rect key="frame" x="0.0" y="-6" width="892" height="421"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <button id="6062">
-                    <rect key="frame" x="364" y="60" width="154" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Focus follows mouse" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6071">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="pwh-OY-l3e" id="vIN-1n-iUm"/>
-                    </connections>
-                </button>
                 <textField verticalHuggingPriority="750" id="6082">
-                    <rect key="frame" x="18" y="399" width="288" height="17"/>
+                    <rect key="frame" x="18" y="404" width="288" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Mouse Button &amp; Trackpad Gesture Actions" id="6083">
                         <font key="font" metaFont="systemBold"/>
@@ -5332,26 +5322,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" id="6088">
-                    <rect key="frame" x="18" y="82" width="130" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Left Click Behavior" id="6089">
-                        <font key="font" metaFont="systemBold"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-                <textField verticalHuggingPriority="750" id="6410">
-                    <rect key="frame" x="363" y="82" width="99" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Miscellaneous" id="6411">
-                        <font key="font" metaFont="systemBold"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="6090">
-                    <rect key="frame" x="21" y="145" width="851" height="246"/>
+                    <rect key="frame" x="20" y="150" width="851" height="246"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="2zv-hI-Vxj">
                         <rect key="frame" x="1" y="17" width="849" height="228"/>
@@ -5413,7 +5385,7 @@ DQ
                     </tableHeaderView>
                 </scrollView>
                 <button verticalHuggingPriority="750" id="6115">
-                    <rect key="frame" x="63" y="115" width="106" height="23"/>
+                    <rect key="frame" x="60" y="120" width="106" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="smallSquare" title="Load Defaults" bezelStyle="smallSquare" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6116">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5424,7 +5396,7 @@ DQ
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" id="6214">
-                    <rect key="frame" x="42" y="115" width="21" height="23"/>
+                    <rect key="frame" x="40" y="120" width="21" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="NSRemoveTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6215">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5436,7 +5408,7 @@ DQ
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" id="6216">
-                    <rect key="frame" x="21" y="115" width="21" height="23"/>
+                    <rect key="frame" x="20" y="120" width="21" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="NSAddTemplate" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6217">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5447,7 +5419,7 @@ DQ
                     </connections>
                 </button>
                 <button id="6107">
-                    <rect key="frame" x="19" y="58" width="209" height="18"/>
+                    <rect key="frame" x="18" y="88" width="209" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="⌘-Click Opens Filename/URL" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6108">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5458,10 +5430,10 @@ DQ
                     </connections>
                 </button>
                 <button id="6111">
-                    <rect key="frame" x="19" y="38" width="320" height="18"/>
+                    <rect key="frame" x="18" y="68" width="316" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">For terminal applications that use mouse reporting, turning this on allows control-click to be reported instead of opening the context menu.</string>
-                    <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu." bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
+                    <buttonCell key="cell" type="check" title="^-Click reported to apps, does not open menu" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6112">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -5470,7 +5442,7 @@ DQ
                     </connections>
                 </button>
                 <button id="6407">
-                    <rect key="frame" x="20" y="18" width="163" height="18"/>
+                    <rect key="frame" x="18" y="48" width="163" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">If enabled, option-click sends arrow keys to move the cursor's position. If Shell Integration is installed then it does not take effect at the command line.</string>
                     <buttonCell key="cell" type="check" title="⌥-Click moves cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6408">
@@ -5482,7 +5454,7 @@ DQ
                     </connections>
                 </button>
                 <button toolTip="If disabled, then triple click selects one line as it appears onscreen." id="6260">
-                    <rect key="frame" x="364" y="20" width="258" height="18"/>
+                    <rect key="frame" x="390" y="68" width="258" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Triple-click selects full wrapped lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6261">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5493,7 +5465,7 @@ DQ
                     </connections>
                 </button>
                 <button id="6227">
-                    <rect key="frame" x="364" y="40" width="258" height="18"/>
+                    <rect key="frame" x="390" y="48" width="274" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Three-finger tap emulates middle click" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6228">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5504,13 +5476,37 @@ DQ
                     </connections>
                 </button>
                 <box verticalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="6413">
-                    <rect key="frame" x="21" y="105" width="851" height="5"/>
+                    <rect key="frame" x="20" y="110" width="851" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                     <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                     <font key="titleFont" metaFont="system"/>
                 </box>
+                <button id="yP8-R7-nbQ">
+                    <rect key="frame" x="390" y="88" width="264" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">If enabled, option-click sends arrow keys to move the cursor's position. If Shell Integration is installed then it does not take effect at the command line.</string>
+                    <buttonCell key="cell" type="check" title="Double-click performs smart selection" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="TVI-Sd-JFA">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="pwh-OY-l3e" id="gGk-pS-ZtM"/>
+                    </connections>
+                </button>
+                <button id="6062">
+                    <rect key="frame" x="18" y="18" width="154" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Focus follows mouse" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6071">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="pwh-OY-l3e" id="vIN-1n-iUm"/>
+                    </connections>
+                </button>
             </subviews>
+            <point key="canvasLocation" x="318" y="-5.5"/>
         </customView>
         <customView id="FiR-vo-BeU" userLabel="Prefs - Advanced" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="992" height="416"/>

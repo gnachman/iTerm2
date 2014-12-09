@@ -2803,7 +2803,7 @@ NSMutableArray* screens=0;
                                   append:(cmdPressed && !altPressed)];
             _selection.resumable = YES;
         }
-    } else if (clickCount == 2) {
+    } else if ([self shouldSelectWordWithClicks:clickCount]) {
         [_selection beginSelectionAt:VT100GridCoordMake(x, y)
                                 mode:kiTermSelectionModeWord
                               resume:YES
@@ -2818,7 +2818,7 @@ NSMutableArray* screens=0;
                                 mode:mode
                               resume:YES
                               append:_selection.appending];
-    } else if (clickCount == 4) {
+    } else if ([self shouldSmartSelectWithClicks:clickCount]) {
         [_selection beginSelectionAt:VT100GridCoordMake(x, y)
                                 mode:kiTermSelectionModeSmart
                               resume:YES
@@ -2829,6 +2829,22 @@ NSMutableArray* screens=0;
     [_delegate refreshAndStartTimerIfNeeded];
 
     return NO;
+}
+
+- (BOOL)shouldSelectWordWithClicks:(int)clickCount {
+    if ([iTermPreferences boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection]) {
+        return clickCount == 4;
+    } else {
+        return clickCount == 2;
+    }
+}
+
+- (BOOL)shouldSmartSelectWithClicks:(int)clickCount {
+    if ([iTermPreferences boolForKey:kPreferenceKeyDoubleClickPerformsSmartSelection]) {
+        return clickCount == 2;
+    } else {
+        return clickCount == 4;
+    }
 }
 
 static double Square(double n) {

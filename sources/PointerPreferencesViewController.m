@@ -29,6 +29,9 @@ NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification"
 
     // Triple click selects full, wrapped lines.
     IBOutlet NSButton *_tripleClickSelectsFullLines;
+
+    // Double click perform smart selection
+    IBOutlet NSButton *_doubleClickPerformsSmartSelection;
 }
 
 - (void)awakeFromNib {
@@ -62,6 +65,9 @@ NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification"
 
     [self defineControl:_tripleClickSelectsFullLines
                     key:kPreferenceKeyTripleClickSelectsFullWrappedLines
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_doubleClickPerformsSmartSelection
+                    key:kPreferenceKeyDoubleClickPerformsSmartSelection
                    type:kPreferenceInfoTypeCheckbox];
 }
 

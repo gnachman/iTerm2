@@ -112,6 +112,7 @@ extern NSString *const kPreferenceKeyOptionClickMovesCursor;
 extern NSString *const kPreferenceKeyThreeFingerEmulatesMiddle;
 extern NSString *const kPreferenceKeyFocusFollowsMouse;
 extern NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines;
+extern NSString *const kPreferenceKeyDoubleClickPerformsSmartSelection;
 
 // Not in prefs
 // Stores the last CFBundleVersion run.
