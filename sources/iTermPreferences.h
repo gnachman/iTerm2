@@ -17,6 +17,12 @@ typedef NS_ENUM(NSInteger, iTermOpenTmuxWindowsMode) {
     kOpenTmuxWindowsAsNativeTabsInExistingWindow = 2
 };
 
+// Values for kPreferenceKeyTabStyle. Do not alter values in this enumeration as they are saved in the preferences.
+typedef NS_ENUM(int, iTermPreferencesTabStyle) {
+    TAB_STYLE_LIGHT = 0,
+    TAB_STYLE_DARK = 1
+};
+
 // Values for kPreferenceKeyTabPosition (corresponds to tags in control).
 #define TAB_POSITION_TOP PSMTab_TopTab
 #define TAB_POSITION_BOTTOM PSMTab_BottomTab
@@ -61,6 +67,7 @@ extern NSString *const kPreferenceKeyTmuxDashboardLimit;
 extern NSString *const kPreferenceKeyAutoHideTmuxClientSession;
 
 // Appearance
+extern NSString *const kPreferenceKeyTabStyle;
 extern NSString *const kPreferenceKeyTabPosition;
 extern NSString *const kPreferenceKeyHideTabBar;
 extern NSString *const kPreferenceKeyHideTabNumber;
@@ -112,6 +119,17 @@ extern NSString *const kPreferenceKeyAppVersion;
 
 // Auto-command history (set through menu)
 extern NSString *const kPreferenceAutoCommandHistory;
+
+extern NSString *const kPreferenceKeyPasteSpecialChunkSize;
+extern NSString *const kPreferenceKeyPasteSpecialChunkDelay;
+extern NSString *const kPreferenceKeyPasteSpecialSpacesPerTab;
+extern NSString *const kPreferenceKeyPasteSpecialTabTransform;
+extern NSString *const kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash;
+extern NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines;
+extern NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes;
+extern NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode;
+
+extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;
 
 @interface iTermPreferences : NSObject
 

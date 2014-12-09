@@ -21,11 +21,12 @@ int gDebugLogFile = -1;
 static void WriteDebugLogHeader() {
   NSMutableString *windows = [NSMutableString string];
   for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
-    [windows appendFormat:@"\nWindow %@, frame=%@. isMain=%d  isKey=%d\n%@\n",
+    [windows appendFormat:@"\nWindow %@, frame=%@. isMain=%d  isKey=%d  isVisible=%d\n%@\n",
      window,
      [NSValue valueWithRect:window.frame],
      (int)[window isMainWindow],
      (int)[window isKeyWindow],
+     (int)[window isVisible],
      [window.contentView iterm_recursiveDescription]];
   }
   NSString *header = [NSString stringWithFormat:

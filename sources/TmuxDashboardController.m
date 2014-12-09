@@ -321,6 +321,7 @@
     return [[connectionsButton_ selectedItem] title];
 }
 
+
 - (IBAction)connectionSelectionDidChange:(id)sender {
     [sessionsTable_ setSessions:[[self tmuxController] sessions]];
     [self reloadWindows];

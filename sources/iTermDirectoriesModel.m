@@ -399,19 +399,26 @@ static const int kMaxDirectoriesToSavePerHost = 200;
 }
 
 - (NSArray *)arrayForEntries:(NSArray *)entries {
+    // Keep starred entries separate from non-starred to ensure they never go away.
     NSMutableArray *array = [NSMutableArray array];
+    NSMutableArray *starredArray = [NSMutableArray array];
     NSDate *minLastUse = [[NSDate date] dateByAddingTimeInterval:-kMaxTimeToRememberDirectories];
     for (iTermDirectoryEntry *entry in entries) {
-        if ([entry.lastUse compare:minLastUse] == NSOrderedDescending) {
+        if (entry.starred) {
+            [starredArray addObject:[entry dictionary]];
+        } else if ([entry.lastUse compare:minLastUse] == NSOrderedDescending) {
             [array addObject:[entry dictionary]];
         }
     }
+    NSArray *baseArray;
     if (array.count > kMaxDirectoriesToSavePerHost) {
-        return [array subarrayWithRange:NSMakeRange(array.count - kMaxDirectoriesToSavePerHost,
-                                                    kMaxDirectoriesToSavePerHost)];
+        baseArray = [array subarrayWithRange:NSMakeRange(array.count - kMaxDirectoriesToSavePerHost,
+                                                         kMaxDirectoriesToSavePerHost)];
     } else {
-        return array;
+        baseArray = array;
     }
+    [starredArray addObjectsFromArray:baseArray];
+    return starredArray;
 }
 
 - (void)loadDirectories {

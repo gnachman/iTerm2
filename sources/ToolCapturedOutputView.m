@@ -10,6 +10,7 @@
 #import "CaptureTrigger.h"
 #import "CommandHistoryEntry.h"
 #import "iTermSearchField.h"
+#import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "ToolbeltView.h"
@@ -75,7 +76,7 @@ static const CGFloat kMargin = 4;
         [[col headerCell] setStringValue:@"Contents"];
         NSFont *theFont = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
         [[col dataCell] setFont:theFont];
-        [tableView_ setRowHeight:[[[[NSLayoutManager alloc] init] autorelease] defaultLineHeightForFont:theFont]];
+        tableView_.rowHeight = col.suggestedRowHeight;
         [tableView_ setHeaderView:nil];
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];

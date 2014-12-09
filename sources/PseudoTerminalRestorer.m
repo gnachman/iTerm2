@@ -47,8 +47,16 @@ typedef void (^VoidBlock)(void);
         completionHandler(nil, nil);
         return;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
-        [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+        NSDictionary *arrangement =
+            [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
+        if (arrangement) {
+            [PseudoTerminal registerSessionsInArrangement:arrangement];
+        }
+        completionHandler(nil, nil);
+        return;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
         completionHandler(nil, nil);
         return;
     }
@@ -60,7 +68,7 @@ typedef void (^VoidBlock)(void);
                                                      name:kApplicationDidFinishLaunchingNotification
                                                    object:nil];
     }
-    NSDictionary *arrangement = [state decodeObjectForKey:@"ptyarrangement"];
+    NSDictionary *arrangement = [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
     if (arrangement) {
         VoidBlock theBlock = ^{
             PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement];

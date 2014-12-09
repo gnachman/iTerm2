@@ -26,11 +26,11 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define NSSTRINGJTERMINAL_CLASS_COMPILE
+#import "DebugLogging.h"
 #import "NSStringITerm.h"
+#import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
-#import "RegexKitLite.h"
 #import <wctype.h>
 
 #define AMB_CHAR_NUMBER (sizeof(ambiguous_chars) / sizeof(int))
@@ -182,19 +182,44 @@ static const int ambiguous_chars[] = {
     return NO;
 }
 
-- (NSString *)stringWithEscapedShellCharacters
-{
-    NSMutableString *aMutableString = [[[NSMutableString alloc] initWithString: self] autorelease];
-    NSString* charsToEscape = @"\\ ()\"&'!$<>;|*?[]#`";
-    for (int i = 0; i < [charsToEscape length]; i++) {
-        NSString* before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
-        NSString* after = [@"\\" stringByAppendingString:before];
-        [aMutableString replaceOccurrencesOfString:before
-                                        withString:after
-                                           options:0
-                                             range:NSMakeRange(0, [aMutableString length])];
-    }
++ (NSString *)stringFromPasteboard {
+    NSPasteboard *board;
 
+    board = [NSPasteboard generalPasteboard];
+    assert(board != nil);
+
+    NSArray *supportedTypes = @[ NSFilenamesPboardType, NSStringPboardType ];
+    NSString *bestType = [board availableTypeFromArray:supportedTypes];
+
+    NSString* info = nil;
+    DLog(@"Getting pasteboard string...");
+    if ([bestType isEqualToString:NSFilenamesPboardType]) {
+        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+        NSMutableArray *escapedFilenames = [NSMutableArray array];
+        DLog(@"Pasteboard has filenames: %@.", filenames);
+        for (NSString *filename in filenames) {
+            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+        }
+        if (escapedFilenames.count > 0) {
+            info = [escapedFilenames componentsJoinedByString:@" "];
+        }
+        if ([info length] == 0) {
+            info = nil;
+        }
+    } else {
+        DLog(@"Pasteboard has a string.");
+        info = [board stringForType:NSStringPboardType];
+    }
+    return info;
+}
+
++ (NSString *)shellEscapableCharacters {
+    return @"\\ ()\"&'!$<>;|*?[]#`";
+}
+
+- (NSString *)stringWithEscapedShellCharacters {
+    NSMutableString *aMutableString = [[[NSMutableString alloc] initWithString:self] autorelease];
+    [aMutableString escapeShellCharacters];
     return [NSString stringWithString:aMutableString];
 }
 
@@ -1170,7 +1195,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
-// Replace substrings like \(foo) with the value of vars[@"foo"].
+// Replace substrings like \(foo) or \1...\9 with the value of vars[@"foo"] or vars[@"1"].
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars {
     unichar *chars = (unichar *)malloc(self.length * sizeof(unichar));
     [self getCharacters:chars];
@@ -1197,7 +1222,14 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                     state = kInParens;
                     varName = [NSMutableString string];
                 } else {
-                    [result appendFormat:@"%C", c];
+                    // \1...\9 also work as subs.
+                    NSString *singleCharVar = [NSString stringWithFormat:@"%C", c];
+                    if (singleCharVar.integerValue > 0 && vars[singleCharVar]) {
+                        [result appendString:vars[singleCharVar]];
+                    } else {
+                        [result appendFormat:@"\\%C", c];
+                    }
+                    state = kLiteral;
                 }
                 break;
 
@@ -1230,6 +1262,44 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return result;
 }
 
+- (NSUInteger)numberOfLines {
+    NSUInteger stringLength = [self length];
+    NSUInteger numberOfLines = 0;
+    for (NSUInteger index = 0; index < stringLength; numberOfLines++) {
+        index = NSMaxRange([self lineRangeForRange:NSMakeRange(index, 0)]);
+    }
+    return numberOfLines;
+}
+
+- (NSString *)ellipsizedDescriptionNoLongerThan:(int)maxLength {
+    NSString *noNewlineSelf = [self stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    if (noNewlineSelf.length <= maxLength) {
+        return noNewlineSelf;
+    }
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSRange firstNonWhitespaceRange = [noNewlineSelf rangeOfCharacterFromSet:[whitespace invertedSet]];
+    if (firstNonWhitespaceRange.location == NSNotFound) {
+        return @"";
+    }
+    int length = noNewlineSelf.length - firstNonWhitespaceRange.location;
+    if (length < maxLength) {
+        return [noNewlineSelf substringFromIndex:firstNonWhitespaceRange.location];
+    } else {
+        NSString *prefix = [noNewlineSelf substringWithRange:NSMakeRange(firstNonWhitespaceRange.location, maxLength - 1)];
+        return [prefix stringByAppendingString:@"…"];
+    }
+}
+
+- (NSString *)stringWithFirstLetterCapitalized {
+    if (self.length == 0) {
+        return self;
+    }
+    if (self.length == 1) {
+        return [self uppercaseString];
+    }
+    return [[[self substringToIndex:1] uppercaseString] stringByAppendingString:[self substringFromIndex:1]];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)
@@ -1243,6 +1313,18 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     } else if (rangeOfLastWantedCharacter.location < self.length - 1) {
         NSUInteger i = rangeOfLastWantedCharacter.location + 1;
         [self deleteCharactersInRange:NSMakeRange(i, self.length - i)];
+    }
+}
+
+- (void)escapeShellCharacters {
+    NSString* charsToEscape = [NSString shellEscapableCharacters];
+    for (int i = 0; i < [charsToEscape length]; i++) {
+        NSString* before = [charsToEscape substringWithRange:NSMakeRange(i, 1)];
+        NSString* after = [@"\\" stringByAppendingString:before];
+        [self replaceOccurrencesOfString:before
+                              withString:after
+                                 options:0
+                                   range:NSMakeRange(0, [self length])];
     }
 }
 

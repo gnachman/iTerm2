@@ -283,6 +283,15 @@ typedef enum {
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;
 
+// Register the contents in the arrangement so that if the session is later
+// restored from an arrangement with the same guid as |arrangement|, the
+// contents will be copied over.
++ (void)registerSessionInArrangement:(NSDictionary *)arrangement;
+
+// Forget all sessions registered with registerSessionInArrangement. Normally
+// called after startup activities are done.
++ (void)removeAllRegisteredSessions;
+
 // Jump to a particular point in time.
 - (long long)irSeekToAtLeast:(long long)timestamp;
 
@@ -476,6 +485,8 @@ typedef enum {
                identifier:(NSString *)identifier;
 
 - (void)tryToRunShellIntegrationInstaller;
+
+- (NSDictionary *)arrangementWithContents:(BOOL)includeContents;
 
 #pragma mark - Private for use by Scripting category
 

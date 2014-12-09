@@ -96,6 +96,11 @@
 @property(nonatomic, assign) int uniqueId;
 @property(nonatomic, readonly) BOOL isMaximized;
 
+// Save the contents of all sessions. Used during window restoration so that if
+// the sessions are later restored from a saved arrangement during startup
+// activities, their contents can be rescued.
++ (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
+
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session;
 - (id)initWithRoot:(NSSplitView*)root;
@@ -261,6 +266,8 @@
       withArrangement:(NSDictionary *)arrangement;
 
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
+
+- (NSDictionary*)arrangementWithContents:(BOOL)contents;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;

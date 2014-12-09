@@ -43,6 +43,7 @@ NSString *const kPreferenceKeyOpenTmuxWindowsIn = @"OpenTmuxWindowsIn";
 NSString *const kPreferenceKeyTmuxDashboardLimit = @"TmuxDashboardLimit";
 NSString *const kPreferenceKeyAutoHideTmuxClientSession = @"AutoHideTmuxClientSession";
 
+NSString *const kPreferenceKeyTabStyle = @"TabStyle";
 NSString *const kPreferenceKeyTabPosition = @"TabViewType";
 NSString *const kPreferenceKeyHideTabBar = @"HideTab";
 NSString *const kPreferenceKeyHideTabNumber = @"HideTabNumber";
@@ -88,6 +89,17 @@ NSString *const kPreferenceKeyTripleClickSelectsFullWrappedLines = @"TripleClick
 
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";
 NSString *const kPreferenceAutoCommandHistory = @"AutoCommandHistory";
+
+NSString *const kPreferenceKeyPasteSpecialChunkSize = @"PasteSpecialChunkSize";
+NSString *const kPreferenceKeyPasteSpecialChunkDelay = @"PasteSpecialChunkDelay";
+NSString *const kPreferenceKeyPasteSpecialSpacesPerTab = @"NumberOfSpacesPerTab";
+NSString *const kPreferenceKeyPasteSpecialTabTransform = @"TabTransform";
+NSString *const kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash = @"EscapeShellCharsWithBackslash";
+NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines = @"ConvertDosNewlines";
+NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes = @"RemoveControlCodes";
+NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode = @"BracketedPasteMode";
+
+NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStringTabStopSize";
 
 static NSMutableDictionary *gObservers;
 
@@ -145,7 +157,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyOpenTmuxWindowsIn: @(kOpenTmuxWindowsAsNativeWindows),
                   kPreferenceKeyTmuxDashboardLimit: @10,
                   kPreferenceKeyAutoHideTmuxClientSession: @NO,
-                  
+
+                  kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabPosition: @(TAB_POSITION_TOP),
                   kPreferenceKeyHideTabBar: @YES,
                   kPreferenceKeyHideTabNumber: @NO,
@@ -188,9 +201,20 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyThreeFingerEmulatesMiddle: @NO,
                   kPreferenceKeyFocusFollowsMouse: @NO,
                   kPreferenceKeyTripleClickSelectsFullWrappedLines: @NO,
-                  
+
                   kPreferenceAutoCommandHistory: @NO,
-                  };
+
+                  kPreferenceKeyPasteSpecialChunkSize: @1024,
+                  kPreferenceKeyPasteSpecialChunkDelay: @0.01,
+                  kPreferenceKeyPasteSpecialSpacesPerTab: @4,
+                  kPreferenceKeyPasteSpecialTabTransform: @0,
+                  kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash: @NO,
+                  kPreferenceKeyPasteSpecialConvertDosNewlines: @YES,
+                  kPreferenceKeyPasteSpecialRemoveControlCodes: @YES,
+                  kPreferenceKeyPasteSpecialBracketedPasteMode: @YES,
+
+                  kPreferenceKeyPasteWarningNumberOfSpacesPerTab: @4,
+              };
         [dict retain];
     }
     return dict;

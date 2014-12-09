@@ -8,6 +8,7 @@
 
 #import "iTermTests.h"
 #import <objc/runtime.h>
+#import "iTermApplicationDelegate.h"
 
 @implementation iTermTest
 @end
@@ -21,6 +22,10 @@ DECLARE_TEST(VT100ScreenTest)
 DECLARE_TEST(IntervalTreeTest)
 DECLARE_TEST(AppleScriptTest)
 DECLARE_TEST(NSStringCategoryTest)
+DECLARE_TEST(PTYTextViewTest)
+DECLARE_TEST(PTYSessionTest)
+DECLARE_TEST(iTermPasteHelperTest)
+DECLARE_TEST(SemanticHistoryTest)
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -46,11 +51,17 @@ static void RunTestsInObject(iTermTest *test) {
 }
 
 int main(int argc, const char * argv[]) {
+    [[NSApplication sharedApplication] setDelegate:[[iTermApplicationDelegate alloc] init]];
+
     RunTestsInObject([[VT100GridTest new] autorelease]);
     RunTestsInObject([[VT100ScreenTest new] autorelease]);
     RunTestsInObject([[IntervalTreeTest new] autorelease]);
     RunTestsInObject([[NSStringCategoryTest new] autorelease]);
     RunTestsInObject([[AppleScriptTest new] autorelease]);
+    RunTestsInObject([[PTYTextViewTest new] autorelease]);
+    RunTestsInObject([[PTYSessionTest new] autorelease]);
+    RunTestsInObject([[iTermPasteHelperTest new] autorelease]);
+    RunTestsInObject([[SemanticHistoryTest new] autorelease]);
 
     NSLog(@"All tests passed");
     return 0;

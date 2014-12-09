@@ -56,8 +56,6 @@
   NSTableViewDataSource,
   NSTableViewDelegate,
   ProfileTableMenuHandler> {
-    int normalRowHeight_;
-    int rowHeightWithTags_;
     NSScrollView* scrollView_;
     iTermSearchField* searchField_;
     ProfileTableView* tableView_;
@@ -108,7 +106,6 @@
 - (void)selectRowIndex:(int)theIndex;
 - (void)selectRowByGuid:(NSString*)guid;
 - (int)numberOfRows;
-- (void)hideSearch;
 - (void)clearSearchField;
 - (void)allowEmptySelection;
 - (void)allowMultipleSelections;

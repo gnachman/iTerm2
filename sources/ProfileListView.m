@@ -97,18 +97,18 @@ const CGFloat kDefaultTagsWidth = 80;
         NSRect tableViewFrame;
         tableViewFrame.origin.x = 0;
         tableViewFrame.origin.y = 0;
+
         tableViewFrame.size =
             [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
-                            hasHorizontalScroller:NO
-                              hasVerticalScroller:YES
-                                       borderType:[scrollView_ borderType]];
-        
+                          horizontalScrollerClass:nil
+                            verticalScrollerClass:[scrollView_.verticalScroller class]
+                                       borderType:scrollView_.borderType
+                                      controlSize:NSRegularControlSize
+                                    scrollerStyle:scrollView_.verticalScroller.scrollerStyle];
+
         tableView_ = [[ProfileTableView alloc] initWithFrame:tableViewFrame];
         [tableView_ setMenuHandler:self];
         [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:kProfileTableViewDataType]];
-        normalRowHeight_ = 21;
-        rowHeightWithTags_ = 29;
-        [tableView_ setRowHeight:rowHeightWithTags_];
         [tableView_ setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleRegular];
         [tableView_ setAllowsColumnResizing:YES];
         [tableView_ setAllowsColumnReordering:YES];
@@ -117,18 +117,19 @@ const CGFloat kDefaultTagsWidth = 80;
         [tableView_ setAllowsMultipleSelection:NO];
         [tableView_ setAllowsTypeSelect:NO];
         [tableView_ setBackgroundColor:[NSColor whiteColor]];
-        
+
+
         tableColumn_ =
             [[NSTableColumn alloc] initWithIdentifier:@"name"];
         [tableColumn_ setEditable:NO];
         [tableView_ addTableColumn:tableColumn_];
-        
+
         [scrollView_ setDocumentView:tableView_];
-        
+
         [tableView_ setDelegate:self];
         [tableView_ setDataSource:self];
         selectedGuids_ = [[NSMutableSet alloc] init];
-        
+
         [tableView_ setDoubleAction:@selector(onDoubleClick:)];
         
         NSTableHeaderView* header = [[[NSTableHeaderView alloc] init] autorelease];
@@ -422,15 +423,62 @@ const CGFloat kDefaultTagsWidth = 80;
     [self reloadData];
 }
 
-- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex
-{
-    Profile* bookmark = [dataSource_ profileAtIndex:rowIndex];
-    NSArray* tags = [bookmark objectForKey:KEY_TAGS];
-    if ([tags count] == 0) {
-        return normalRowHeight_;
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex {
+    NSCell *cell = [tableView preparedCellAtColumn:[[tableView tableColumns] indexOfObject:tableColumn_]
+                                               row:rowIndex];
+    NSRect constrainedBounds = NSMakeRect(0, 0, tableColumn_.width, CGFLOAT_MAX);
+    NSSize naturalSize = [cell cellSizeForBounds:constrainedBounds];
+
+    return naturalSize.height;
+}
+
+- (NSFont *)mainFont {
+    return [[tableColumn_ dataCell] font];
+}
+
+- (NSFont *)tagFont {
+    return [NSFont systemFontOfSize:self.mainFont.pointSize - 2];
+}
+
+- (NSAttributedString *)attributedStringForName:(NSString *)name
+                                            tag:(NSString *)tags
+                                       selected:(BOOL)selected
+                                      isDefault:(BOOL)isDefault {
+    NSColor *textColor;
+    NSColor *tagColor;
+    if (selected) {
+        textColor = [NSColor whiteColor];
+        tagColor = [NSColor whiteColor];
     } else {
-        return rowHeightWithTags_;
+        textColor = [NSColor blackColor];
+        tagColor = [NSColor colorWithCalibratedWhite:0.5 alpha:1];
     }
+    NSDictionary* plainAttributes = @{ NSForegroundColorAttributeName: textColor,
+                                       NSFontAttributeName: self.mainFont };
+    NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: tagColor,
+                                       NSFontAttributeName: self.tagFont };
+
+    NSString *defaultCheckmark;
+    if (isDefault) {
+        defaultCheckmark = @"★ ";
+    } else {
+        defaultCheckmark = @"";
+    }
+
+    if (tags.length) {
+        name = [name stringByAppendingString:@"\n"];
+    }
+    NSMutableAttributedString *theAttributedString =
+        [[[NSMutableAttributedString alloc] initWithString:name
+                                                attributes:plainAttributes] autorelease];
+    if (tags.length) {
+        NSAttributedString *tagsAttributedString =
+            [[[NSAttributedString alloc] initWithString:tags
+                                             attributes:smallAttributes] autorelease];
+        [theAttributedString appendAttributedString:tagsAttributedString];
+    }
+
+    return theAttributedString;
 }
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
@@ -438,20 +486,21 @@ const CGFloat kDefaultTagsWidth = 80;
     Profile* bookmark = [dataSource_ profileAtIndex:rowIndex];
 
     if (aTableColumn == tableColumn_) {
+        Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+        return [self attributedStringForName:bookmark[KEY_NAME]
+                                         tag:[bookmark[KEY_TAGS] componentsJoinedByString:@", "]
+                                    selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
+                                   isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]];
         NSColor* textColor;
         if ([[tableView_ selectedRowIndexes] containsIndex:rowIndex]) {
             textColor = [NSColor whiteColor];
         } else {
             textColor = [NSColor blackColor];
         }
-        NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                         textColor, NSForegroundColorAttributeName,
-                                         [[aTableColumn dataCell] font], NSFontAttributeName,
-                                         nil];
-        NSDictionary* smallAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                         textColor, NSForegroundColorAttributeName,
-                                         [NSFont systemFontOfSize:10], NSFontAttributeName,
-                                         nil];
+        NSDictionary* plainAttributes = @{ NSForegroundColorAttributeName: textColor,
+                                           NSFontAttributeName: self.mainFont };
+        NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: textColor,
+                                           NSFontAttributeName: self.tagFont };
 
         NSString *defaultCheckmark;
         if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[ProfileModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
@@ -605,30 +654,6 @@ const CGFloat kDefaultTagsWidth = 80;
     return [dataSource_ numberOfBookmarks];
 }
 
-- (void)hideSearch
-{
-    [searchField_ setStringValue:@""];
-    [searchField_ setHidden:YES];
-
-    NSRect frame = [self frame];
-    NSRect scrollViewFrame;
-    scrollViewFrame.origin.x = 0;
-    scrollViewFrame.origin.y = 0;
-    scrollViewFrame.size = frame.size;
-    [scrollView_ setFrame:scrollViewFrame];
-
-    NSRect tableViewFrame;
-    tableViewFrame.origin.x = 0;
-    tableViewFrame.origin.y = 0;;
-    tableViewFrame.size =
-        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
-                        hasHorizontalScroller:NO
-                          hasVerticalScroller:YES
-                                   borderType:[scrollView_ borderType]];
-    [tableView_ setFrame:tableViewFrame];
-    [tableView_ sizeLastColumnToFit];
-}
-
 - (void)clearSearchField {
     [searchField_ setStringValue:@""];
     [self updateResultsForSearch];
@@ -775,11 +800,6 @@ const CGFloat kDefaultTagsWidth = 80;
     for (NSTableColumn *col in [tableView_ tableColumns]) {
         [[col dataCell] setFont:theFont];
     }
-    NSLayoutManager* layoutManager = [[NSLayoutManager alloc] init];
-    [layoutManager autorelease];
-    normalRowHeight_ = [layoutManager defaultLineHeightForFont:theFont];
-    rowHeightWithTags_ =  normalRowHeight_ + [layoutManager defaultLineHeightForFont:[NSFont systemFontOfSize:10]];
-    [tableView_ setRowHeight:normalRowHeight_];
 
     if ([theFont pointSize] < 13) {
         [[searchField_ cell] setFont:theFont];
@@ -789,6 +809,8 @@ const CGFloat kDefaultTagsWidth = 80;
         margin_ = 5;
         [self resizeSubviewsWithOldSize:self.frame.size];
     }
+    [tagsView_ setFont:theFont];
+    [tableView_ reloadData];
 }
 
 - (void)disableArrowHandler

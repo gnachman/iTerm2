@@ -58,4 +58,9 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     self.results = nil;
 }
 
+- (void)setSubstring:(NSString *)substring {
+    [substring_ autorelease];
+    substring_ = [substring copy];
+}
+
 @end

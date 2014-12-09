@@ -165,7 +165,7 @@
 - (void)screenMouseModeDidChange;
 
 // An image should be flashed over the view.
-- (void)screenFlashImage:(FlashImage)image;
+- (void)screenFlashImage:(NSString *)identifier;
 
 - (void)screenIncrementBadge;
 

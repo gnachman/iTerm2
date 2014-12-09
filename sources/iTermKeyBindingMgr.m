@@ -73,6 +73,7 @@
 
 #import "ITAddressBookMgr.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
 #import "HotkeyWindowController.h"
 #import <Carbon/Carbon.h>
@@ -160,6 +161,16 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
                                                          [NSBundle bundleForClass:[self class]],
                                                          @"Key Names");
             break;
+
+        // These are standard on Apple en_GB keyboards where ~ and ` go on US keyboards (between esc
+        // and tab).
+        case 0xa7:
+            aString = @"§";
+            break;
+        case 0xb1: // shifted version of above.
+            aString = @"±";
+            break;
+
         case '0':
         case '1':
         case '2':
@@ -374,6 +385,9 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case KEY_ACTION_SET_PROFILE:
             actionString = [NSString stringWithFormat:@"Change Profile to \"%@\"", [self _bookmarkNameForGuid:auxText]];
             break;
+        case KEY_ACTION_LOAD_COLOR_PRESET:
+            actionString = [NSString stringWithFormat:@"Load Color Preset \"%@\"", auxText];
+            break;
         case KEY_ACTION_SEND_C_H_BACKSPACE:
             actionString = @"Send ^H Backspace";
             break;
@@ -413,6 +427,26 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case KEY_ACTION_FIND_REGEX:
             actionString = [NSString stringWithFormat:@"Find Regex “%@”", auxText];
             break;
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
+            NSString *pasteDetails =
+                [iTermPasteSpecialViewController descriptionForCodedSettings:auxText];
+            if (pasteDetails.length) {
+                actionString = [NSString stringWithFormat:@"Paste from Selection: %@", pasteDetails];
+            } else {
+                actionString = @"Paste from Selection";
+            }
+            break;
+        }
+        case KEY_ACTION_PASTE_SPECIAL: {
+            NSString *pasteDetails =
+                [iTermPasteSpecialViewController descriptionForCodedSettings:auxText];
+            if (pasteDetails.length) {
+                actionString = [NSString stringWithFormat:@"Paste: %@", pasteDetails];
+            } else {
+                actionString = @"Paste";
+            }
+            break;
+        }
         default:
             actionString = [NSString stringWithFormat: @"%@ %d", @"Unknown Action ID", action];
             break;

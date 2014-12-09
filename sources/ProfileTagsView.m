@@ -32,9 +32,11 @@ static const CGFloat kRowHeight = 21;
         
         NSSize tableViewSize =
             [NSScrollView contentSizeForFrameSize:_scrollView.frame.size
-                    hasHorizontalScroller:NO
-                      hasVerticalScroller:YES
-                               borderType:[_scrollView borderType]];
+                          horizontalScrollerClass:nil
+                            verticalScrollerClass:[_scrollView.verticalScroller class]
+                                       borderType:_scrollView.borderType
+                                      controlSize:NSRegularControlSize
+                                    scrollerStyle:_scrollView.scrollerStyle];
 
         NSRect tableViewFrame = NSMakeRect(0, 0, tableViewSize.width, tableViewSize.height);
         _tableView = [[NSTableView alloc] initWithFrame:tableViewFrame];
@@ -171,6 +173,14 @@ static const CGFloat kRowHeight = 21;
     }
 
     return _cache;
+}
+
+- (void)setFont:(NSFont *)theFont {
+    for (NSTableColumn *col in [_tableView tableColumns]) {
+        [[col dataCell] setFont:theFont];
+    }
+    NSLayoutManager* layoutManager = [[[NSLayoutManager alloc] init] autorelease];
+    [_tableView setRowHeight:[layoutManager defaultLineHeightForFont:theFont]];
 }
 
 @end

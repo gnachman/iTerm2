@@ -72,6 +72,8 @@ static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 
+static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
+
 // There was an older userdefaults key "Multi-Line Paste Warning" that had the opposite semantics.
 // This was changed for compatibility with the iTermWarning mechanism.
 NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
@@ -179,6 +181,7 @@ static BOOL hasBecomeActive = NO;
         // iTerm2 was launched with "open file" that turns off startup activities.
         return;
     }
+    [[iTermController sharedInstance] setStartingUp:YES];
     // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
     if (ranAutoLaunchScript == NO &&
         [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
@@ -220,6 +223,8 @@ static BOOL hasBecomeActive = NO;
             }
         }
     }
+    [[iTermController sharedInstance] setStartingUp:NO];
+    [PTYSession removeAllRegisteredSessions];
     ranAutoLaunchScript = YES;
 }
 
@@ -1088,34 +1093,11 @@ static BOOL hasBecomeActive = NO;
     return -1;
 }
 
-- (NSString *)stringByConvertingTabsToSpacesForPaste:(NSString *)source {
-    if ([source rangeOfString:@"\t"].location != NSNotFound) {
-        iTermWarningSelection selection =
-            [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
-                                       actions:@[ @"Paste with tabs", @"Convert tabs to spaces" ]
-                                    identifier:@"AboutToPasteTabs"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable];
-        if (selection == kiTermWarningSelection1) {
-            NSString *const kTabStopSizeKey = @"PasteTabToStringTabStopSize";
-            int theDefault = [[NSUserDefaults standardUserDefaults] integerForKey:kTabStopSizeKey];
-            if (theDefault <= 0) {
-                theDefault = 4;
-            }
-            int n = [self promptForNumberOfSpacesToConverTabsToWithDefault:theDefault];
-            if (n < 0) {
-                return nil;
-            } else {
-                [[NSUserDefaults standardUserDefaults] setInteger:n
-                                                           forKey:kTabStopSizeKey];
-                return [source stringByReplacingOccurrencesOfString:@"\t"
-                                                         withString:[@" " stringRepeatedTimes:n]];
-            }
-        }
-    }
-    return source;
-}
-
 - (BOOL)warnBeforeMultiLinePaste {
+    if ([iTermWarning warningHandler]) {
+        // In a test.
+        return YES;
+    }
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     return ![userDefaults boolForKey:kMultiLinePasteWarningUserDefaultsKey];
 }
@@ -1177,6 +1159,18 @@ static BOOL hasBecomeActive = NO;
     }
     // Set the state of the control to the new true state.
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
+}
+
+- (void)application:(NSApplication *)app willEncodeRestorableState:(NSCoder *)coder {
+    DLog(@"app encoding restorable state");
+    [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
+}
+
+- (void)application:(NSApplication *)app didDecodeRestorableState:(NSCoder *)coder {
+    NSDictionary *screenCharState = [coder decodeObjectForKey:kScreenCharRestorableStateKey];
+    if (screenCharState) {
+        ScreenCharDecodeRestorableState(screenCharState);
+    }
 }
 
 // Debug logging
@@ -1483,37 +1477,31 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (IBAction)buildScriptMenu:(id)sender
-{
-    if ([[[[NSApp mainMenu] itemAtIndex: 5] title] isEqualToString:NSLocalizedStringFromTableInBundle(@"Script",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Script")])
-            [[NSApp mainMenu] removeItemAtIndex:5];
-
-        // add our script menu to the menu bar
-    // get image
-    NSImage *scriptIcon = [NSImage imageNamed: @"script"];
-    [scriptIcon setScalesWhenResized: YES];
-    [scriptIcon setSize: NSMakeSize(16, 16)];
+- (IBAction)buildScriptMenu:(id)sender {
+    static NSString *kScriptTitle = @"Scripts";
+    static const int kScriptMenuItemIndex = 5;
+    if ([[[[NSApp mainMenu] itemAtIndex:kScriptMenuItemIndex] title] isEqualToString:kScriptTitle]) {
+        [[NSApp mainMenu] removeItemAtIndex:kScriptMenuItemIndex];
+    }
 
     // create menu item with no title and set image
-    NSMenuItem *scriptMenuItem = [[[NSMenuItem alloc] initWithTitle: @"" action: nil keyEquivalent: @""] autorelease];
-    [scriptMenuItem setImage: scriptIcon];
+    NSMenuItem *scriptMenuItem = [[[NSMenuItem alloc] initWithTitle:kScriptTitle action: nil keyEquivalent: @""] autorelease];
 
     // create submenu
     int count = 0;
-    NSMenu *scriptMenu = [[NSMenu alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Script",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Script")];
+    NSMenu *scriptMenu = [[NSMenu alloc] initWithTitle:kScriptTitle];
     [scriptMenuItem setSubmenu: scriptMenu];
     // populate the submenu with ascripts found in the script directory
-    NSDirectoryEnumerator *directoryEnumerator = [[NSFileManager defaultManager] enumeratorAtPath: [SCRIPT_DIRECTORY stringByExpandingTildeInPath]];
-    NSString *file;
-
-    while ((file = [directoryEnumerator nextObject])) {
-        if ([[NSWorkspace sharedWorkspace] isFilePackageAtPath:[NSString stringWithFormat:@"%@/%@",
-                                                                [SCRIPT_DIRECTORY stringByExpandingTildeInPath],
-                                                                file]]) {
-                [directoryEnumerator skipDescendents];
+    NSDirectoryEnumerator *directoryEnumerator =
+        [[NSFileManager defaultManager] enumeratorAtPath:[SCRIPT_DIRECTORY stringByExpandingTildeInPath]];
+    NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
+    for (NSString *file in directoryEnumerator) {
+        NSString *path = [[SCRIPT_DIRECTORY stringByExpandingTildeInPath] stringByAppendingPathComponent:file];
+        if ([workspace isFilePackageAtPath:path]) {
+            [directoryEnumerator skipDescendents];
         }
-        if ([[file pathExtension] isEqualToString: @"scpt"] ||
-            [[file pathExtension] isEqualToString: @"app"] ) {
+        if ([[file pathExtension] isEqualToString:@"scpt"] ||
+            [[file pathExtension] isEqualToString:@"app"] ) {
             NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:file
                                                                 action:@selector(launchScript:)
                                                          keyEquivalent:@""];
@@ -1525,10 +1513,7 @@ static BOOL hasBecomeActive = NO;
     }
     if (count > 0) {
             [scriptMenu addItem:[NSMenuItem separatorItem]];
-            NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Refresh",
-                                                                                                          @"iTerm",
-                                                                                                          [NSBundle bundleForClass:[iTermController class]],
-                                                                                                          @"Script")
+            NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:@"Refresh"
                                                                 action:@selector(buildScriptMenu:)
                                                          keyEquivalent:@""];
             [scriptItem setTarget:self];
@@ -1540,11 +1525,8 @@ static BOOL hasBecomeActive = NO;
 
     // add new menu item
     if (count) {
-        [[NSApp mainMenu] insertItem:scriptMenuItem atIndex:5];
-        [scriptMenuItem setTitle:NSLocalizedStringFromTableInBundle(@"Script",
-                                                                    @"iTerm",
-                                                                    [NSBundle bundleForClass:[iTermController class]],
-                                                                    @"Script")];
+        [[NSApp mainMenu] insertItem:scriptMenuItem atIndex:kScriptMenuItemIndex];
+        [scriptMenuItem setTitle:kScriptTitle];
     }
 }
 

@@ -31,7 +31,7 @@
 
 - (PTYFontInfo *)computedBoldVersion {
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
-    NSFont* boldFont = [fontManager convertFont:font_ toHaveTrait:NSBoldFontMask];
+    NSFont* boldFont = [fontManager convertWeight:YES ofFont:font_];
     if (boldFont && ([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {
         return [PTYFontInfo fontInfoWithFont:boldFont baseline:baselineOffset_];
     } else {

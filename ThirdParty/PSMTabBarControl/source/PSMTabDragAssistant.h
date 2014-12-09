@@ -19,7 +19,8 @@
 #define kPSMTabDragWindowAlpha 0.75
 #define PI 3.1417
 
-@interface PSMTabDragAssistant : NSObject {
+@interface PSMTabDragAssistant : NSObject
+{
     PSMTabBarControl            *_sourceTabBar;
     PSMTabBarControl            *_destinationTabBar;
     NSMutableSet                *_participatingTabBars;

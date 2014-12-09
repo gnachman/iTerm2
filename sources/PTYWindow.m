@@ -37,6 +37,10 @@
 #define PtyLog DLog
 #endif
 
+@interface NSView (PrivateTitleBarMethods)
+- (NSView *)titlebarContainerView;
+@end
+
 @implementation PTYWindow {
     int blurFilter;
     double blurRadius_;
@@ -54,23 +58,6 @@
 
 }
 
-- (id)initWithContentRect:(NSRect)contentRect
-                styleMask:(NSUInteger)aStyle
-                  backing:(NSBackingStoreType)bufferingType
-                    defer:(BOOL)flag {
-    self = [super initWithContentRect:contentRect
-                            styleMask:aStyle
-                              backing:bufferingType
-                                defer:flag];
-    if (self) {
-        [self setAlphaValue:0.9999];
-        blurFilter = 0;
-        layoutDone = NO;
-    }
-
-    return self;
-}
-
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p frame=%@>",
             [self class],
@@ -80,7 +67,7 @@
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {
     [super encodeRestorableStateWithCoder:coder];
-    [coder encodeObject:restoreState_ forKey:@"ptyarrangement"];
+    [coder encodeObject:restoreState_ forKey:kPseudoTerminalStateRestorationWindowArrangementKey];
 }
 
 - (void)setRestoreState:(NSObject *)restoreState {
@@ -132,8 +119,7 @@
         ![iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
         // to use traditional fullscreen.
-        [[self delegate] performSelector:@selector(toggleTraditionalFullScreenMode)
-                              withObject:nil];
+        [(id<PTYWindowDelegateProtocol>)[self delegate] toggleTraditionalFullScreenMode];
     } else {
         [super toggleFullScreen:sender];
     }
@@ -348,4 +334,30 @@ end:
     return totalOcclusion;
 }
 
+// OS 10.10 has a spiffy feature where it finds a scrollview that is adjacent to the title bar and
+// then does some magic to makes the scrollview's content show up with "vibrancy" (i.e., blur) under
+// the title bar. The way it does this is to create an "NSScrollViewMirrorView" in the title bar's
+// view hierarchy. Unfortunately there is no way to turn this off. You can move the scroll view at
+// least two points away from the title bar, but that looks terrible. Terminal.app went so far as to
+// stop using scroll views! Trying to replace NSScrollView with my custom implementation seems
+// fraught with peril, so I'll just root out the mirror view and hide it. This'll probably break in
+// 10.11. See issue 3244 for details.
+- (void)turnOffVibrancyInTitleBar {
+    if (IsYosemiteOrLater()) {
+        NSView *frameView = [[self contentView] superview];
+        NSView *titlebarContainerView = nil;
+        if ([frameView respondsToSelector:@selector(titlebarContainerView)]) {
+            titlebarContainerView = [frameView performSelector:@selector(titlebarContainerView)];
+            if (titlebarContainerView) {
+                for (NSView *view in titlebarContainerView.subviews) {
+                    if ([NSStringFromClass([view class]) isEqualToString:@"NSScrollViewMirrorView"]) {
+                        [view setHidden:YES];
+                    }
+                }
+            }
+        }
+    }
+}
+
 @end
+

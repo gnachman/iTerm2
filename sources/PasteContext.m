@@ -28,10 +28,10 @@
 }
 
 - (void)updateValues {
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:bytesPerCallKey_]) {
+    if (bytesPerCallKey_ && [[NSUserDefaults standardUserDefaults] objectForKey:bytesPerCallKey_]) {
         bytesPerCall_ = [[NSUserDefaults standardUserDefaults] integerForKey:bytesPerCallKey_];
     }
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:delayBetweenCallsKey_]) {
+    if (delayBetweenCallsKey_ && [[NSUserDefaults standardUserDefaults] objectForKey:delayBetweenCallsKey_]) {
         delayBetweenCalls_ = [[NSUserDefaults standardUserDefaults] floatForKey:delayBetweenCallsKey_];
     }
 }
@@ -42,7 +42,9 @@
 
 - (void)setBytesPerCall:(int)newBytesPerCall {
     bytesPerCall_ = newBytesPerCall;
-    [[NSUserDefaults standardUserDefaults] setInteger:bytesPerCall_ forKey:bytesPerCallKey_];
+    if (bytesPerCallKey_) {
+        [[NSUserDefaults standardUserDefaults] setInteger:bytesPerCall_ forKey:bytesPerCallKey_];
+    }
 }
 
 - (float)delayBetweenCalls {
@@ -51,8 +53,10 @@
 
 - (void)setDelayBetweenCalls:(float)newDelayBetweenCalls {
     delayBetweenCalls_ = newDelayBetweenCalls;
-    [[NSUserDefaults standardUserDefaults] setFloat:newDelayBetweenCalls
-                                             forKey:delayBetweenCallsKey_];
+    if (delayBetweenCallsKey_) {
+        [[NSUserDefaults standardUserDefaults] setFloat:newDelayBetweenCalls
+                                                 forKey:delayBetweenCallsKey_];
+    }
 }
 
 @end

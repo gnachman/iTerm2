@@ -13,16 +13,24 @@
 
 @implementation VT100CSIParser
 
-static int advanceAndEatControlChars(unsigned char **ppdata,
-                                     int *pdatalen,
-                                     CVector *incidentals)
+// Advances past one character and then any following control characters.
+// *ppdata and *pdatalen are incremented and decremented (respectively) by the
+// same amount. If a control character is found that cancels a CSI sequence,
+// then NO is returned. If all is well, YES is returned and parsing can
+// continue at the new *ppdata with *pdatalen bytes remaining. Non-canceling
+// control characters are appended to |incidentals|
+static BOOL AdvanceAndEatControlChars(unsigned char **ppdata,
+                                      int *pdatalen,
+                                      CVector *incidentals)
 {
-    // return value represent "continuous" state.
-    // If it is YES, current control sequence parsing process was not canceled.
-    // If it is NO, current control sequence parsing process was canceled by CAN, SUB, or ESC.
-    while (*pdatalen > 0) {
+    // First, advance.
+    if (*pdatalen > 0) {
         ++*ppdata;
         --*pdatalen;
+    }
+
+    // Now eat control characters.
+    while (*pdatalen > 0) {
         switch (**ppdata) {
             case VT100CC_ENQ:
                 // TODO: send answerback if it is needed
@@ -38,17 +46,23 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
             case VT100CC_SI:
             case VT100CC_DC1:
             case VT100CC_DC3:
-            case VT100CC_CAN:
-            case VT100CC_SUB:
-            case VT100CC_ESC:
             case VT100CC_DEL:
                 CVectorAppend(incidentals, [VT100Token tokenForControlCharacter:**ppdata]);
                 break;
+
+            case VT100CC_CAN:
+            case VT100CC_SUB:
+            case VT100CC_ESC:
+                return NO;
+
             default:
-                if (**ppdata >= 0x20)
+                if (**ppdata >= 0x20) {
                     return YES;
+                }
                 break;
         }
+        ++*ppdata;
+        --*pdatalen;
     }
     return YES;
 }
@@ -111,7 +125,7 @@ static int getCSIParam(unsigned char *datap,
     
     NSCParameterAssert(*datap == '[');
     
-    if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+    if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
         goto cancel;
     }
     
@@ -155,7 +169,7 @@ static int getCSIParam(unsigned char *datap,
             case '>':
             case '?':
                 param->cmd = *datap;
-                if (!advanceAndEatControlChars(&datap, &datalen, incidentals))
+                if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals))
                     goto cancel;
                 break;
             default:
@@ -188,12 +202,22 @@ static int getCSIParam(unsigned char *datap,
                         unrecognized = YES;
                     }
                     n = n * 10 + *datap - '0';
-                    if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+                    if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                         goto cancel;
                     }
                 }
                 
-                if (isSub) {
+                if (isSub && param->count > 0) {
+                    // This implementation is not really well aligned with the spec. In ECMA-48
+                    // section 5.4, the format of a CSI code is described. The parameter string,
+                    // which follows CSI, is a semicolon-delimited list of parameter substrings
+                    // A parameter substring is a sequence of digits with colon separators.
+                    // The data structure we use treats each parameter string up to the first
+                    // colon (if any) as the parameter, and parts after the first colon as
+                    // sub-parameters. That doesn't really make sense if a paramater string
+                    // starts with a colon, which is allowed but not defined in the spec.
+                    // Since that never should happen in practice, we'll just ignore a parameter
+                    // string that starts with a colon.
                     const int paramNum = param->count - 1;
                     assert(paramNum >= 0 && paramNum < VT100CSIPARAM_MAX);
                     int subParamNum = param->subCount[paramNum];
@@ -221,7 +245,7 @@ static int getCSIParam(unsigned char *datap,
                 // reset the parameter flag
                 readNumericParameter = NO;
                 
-                if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+                if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                     goto cancel;
                 }
                 break;
@@ -252,7 +276,7 @@ static int getCSIParam(unsigned char *datap,
                 //
                 // In this usage, ":" are certainly treated as sub-parameter separators.
                 isSub = YES;
-                if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+                if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                     goto cancel;
                 }
                 break;
@@ -260,7 +284,7 @@ static int getCSIParam(unsigned char *datap,
             default:
                 // '<', '=', '>', or '?'
                 unrecognized = YES;
-                if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+                if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                     goto cancel;
                 }
                 break;
@@ -280,7 +304,7 @@ static int getCSIParam(unsigned char *datap,
             unrecognized = YES;
         }
         commandBytesCount++;
-        if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+        if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
             goto cancel;
         }
     }
@@ -290,7 +314,7 @@ static int getCSIParam(unsigned char *datap,
     // CSI P...P I...I (G...G) F
     //                  ^
     // xterm allows "garbage bytes" before final byte.
-    // rxvt, urxvt, PuTTY, MinTTY, mlterm, TeraTerm also does so.
+    // rxvt, urxvt, PuTTY, MinTTY, mlterm, TeraTerm also do.
     // We skip them, too.
     //
     while (datalen > 0) {
@@ -302,7 +326,7 @@ static int getCSIParam(unsigned char *datap,
                 // mark current sequence as "unrecognized".
                 unrecognized = YES;
             }
-            if (!advanceAndEatControlChars(&datap, &datalen, incidentals)) {
+            if (!AdvanceAndEatControlChars(&datap, &datalen, incidentals)) {
                 goto cancel;
             }
         }

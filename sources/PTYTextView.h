@@ -1,30 +1,31 @@
 #import <Cocoa/Cocoa.h>
 #import "CharacterRun.h"
+#import "iTerm.h"
+#import "iTermColorMap.h"
+#import "iTermIndicatorsHelper.h"
+#import "iTermSemanticHistoryController.h"
 #import "LineBuffer.h"
-#import "PTYFontInfo.h"
 #import "PasteEvent.h"
 #import "PointerController.h"
 #import "PreferencePanel.h"
+#import "PTYFontInfo.h"
 #import "ScreenChar.h"
-#import "Trouter.h"
-#import "iTerm.h"
-#import "iTermColorMap.h"
 #import "VT100Output.h"
 #include <sys/time.h>
 
 @class CRunStorage;
-@class FindCursorView;
+@class iTermFindCursorView;
 @class iTermSelection;
+@protocol iTermSemanticHistoryControllerDelegate;
 @class MovingAverage;
-@class PTYScrollView;
 @class PTYScroller;
+@class PTYScrollView;
 @class PTYTask;
 @class PTYTextView;
 @class SCPPath;
 @class SearchResult;
 @class SmartMatch;
 @class ThreeFingerTapGestureRecognizer;
-@protocol TrouterDelegate;
 @class VT100Screen;
 @class VT100Terminal;
 
@@ -37,9 +38,6 @@
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
 
-// Amount of time to highlight the cursor after beginFindCursor:YES
-static const double kFindCursorHoldTime = 1;
-
 // Types of characters. Used when classifying characters for word selection.
 typedef enum {
     CHARTYPE_WHITESPACE,  // whitespace chars or NUL
@@ -47,10 +45,6 @@ typedef enum {
     CHARTYPE_DW_FILLER,   // Double-width character effluvia.
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 } PTYCharType;
-
-typedef enum {
-    kTextViewPasteEncodingBase64
-} TextViewPasteEncoding;
 
 @protocol PTYTextViewDelegate <NSObject>
 
@@ -64,7 +58,10 @@ typedef enum {
 // Contextual menu
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 - (void)pasteString:(NSString *)aString;
+- (BOOL)textViewCanPasteFile;
+- (void)textViewPasteFileWithBase64Encoding;
 - (void)paste:(id)sender;
+- (void)pasteOptions:(id)sender;
 - (void)textViewFontDidChange;
 - (void)textViewSizeDidChange;
 - (void)textViewDrawBackgroundImageInView:(NSView *)view
@@ -109,10 +106,7 @@ typedef enum {
 - (void)textViewEditSession;
 - (void)textViewToggleBroadcastingInput;
 - (void)textViewCloseWithConfirmation;
-- (NSString *)textViewPasteboardString;
 - (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags;
-- (void)textViewPasteWithEncoding:(TextViewPasteEncoding)encoding;
-- (BOOL)textViewCanPasteFile;
 - (BOOL)textViewWindowUsesTransparency;
 - (BOOL)textViewAmbiguousWidthCharsAreDoubleWidth;
 - (PTYScroller *)textViewVerticalScroller;
@@ -135,7 +129,7 @@ typedef enum {
                       coordinate:(VT100GridCoord)coord
                           deltaY:(CGFloat)deltaY;
 
-- (VT100GridCoordRange)textViewRangeOfLastCommandOutput;
+- (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput;
 - (BOOL)textViewCanSelectOutputOfLastCommand;
 - (NSColor *)textViewCursorGuideColor;
 - (BOOL)textViewUseHFSPlusMapping;
@@ -146,11 +140,11 @@ typedef enum {
 @end
 
 @interface PTYTextView : NSView <
+  iTermColorMapDelegate,
+  iTermSemanticHistoryControllerDelegate,
   NSDraggingDestination,
   NSTextInputClient,
-  PointerControllerDelegate,
-  TrouterDelegate,
-  iTermColorMapDelegate>
+  PointerControllerDelegate>
 
 // Current selection
 @property(nonatomic, readonly) iTermSelection *selection;
@@ -255,7 +249,7 @@ typedef enum {
 @property(nonatomic, readonly) NSColor *dimmedDefaultBackgroundColor;
 
 // Semantic history. TODO: Move this into PTYSession.
-@property(nonatomic, readonly) Trouter *trouter;
+@property(nonatomic, readonly) iTermSemanticHistoryController *semanticHistoryController;
 
 // A text badge shown in the top right of the window
 @property(nonatomic, copy) NSString *badgeLabel;
@@ -309,8 +303,6 @@ typedef enum {
 // Copy the current selection to the pasteboard, preserving style.
 - (IBAction)copyWithStyles:(id)sender;
 
-- (IBAction)pasteBase64Encoded:(id)sender;
-
 // Paste from the pasteboard.
 - (void)paste:(id)sender;
 
@@ -322,7 +314,7 @@ typedef enum {
 - (void)growSelectionRight;
 
 // Updates the preferences for semantic history.
-- (void)setTrouterPrefs:(NSDictionary *)prefs;
+- (void)setSemanticHistoryPrefs:(NSDictionary *)prefs;
 
 // Various accessors (TODO: convert as many as possible into properties)
 - (void)setFont:(NSFont*)aFont
@@ -383,7 +375,7 @@ typedef enum {
 - (void)aboutToHide;
 
 // Flash a graphic.
-- (void)beginFlash:(FlashImage)image;
+- (void)beginFlash:(NSString *)identifier;
 
 // Returns true if any character in the buffer is selected.
 - (BOOL)isAnyCharSelected;
@@ -421,10 +413,10 @@ typedef enum {
 - (IBAction)installShellIntegration:(id)sender;
 
 // Open a semantic history path.
-- (BOOL)openTrouterPath:(NSString *)path
-       workingDirectory:(NSString *)workingDirectory
-                 prefix:(NSString *)prefix
-                 suffix:(NSString *)suffix;
+- (BOOL)openSemanticHistoryPath:(NSString *)path
+               workingDirectory:(NSString *)workingDirectory
+                         prefix:(NSString *)prefix
+                         suffix:(NSString *)suffix;
 
 @end
 

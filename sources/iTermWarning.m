@@ -2,18 +2,38 @@
 
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static NSString *const kCancel = @"Cancel";
+static id<iTermWarningHandler> gWarningHandler;
 
 @implementation iTermWarning
+
++ (void)setWarningHandler:(id<iTermWarningHandler>)handler {
+    [gWarningHandler autorelease];
+    gWarningHandler = [handler retain];
+}
+
++ (id<iTermWarningHandler>)warningHandler {
+    return gWarningHandler;
+}
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
                                    identifier:(NSString *)identifier
-                                  silenceable:(iTermWarningType)warningType
-{
-    if (warningType != kiTermWarningTypePersistent && [self identifierIsSilenced:identifier]) {
+                                  silenceable:(iTermWarningType)warningType {
+    return [self showWarningWithTitle:title actions:actions accessory:nil identifier:identifier silenceable:warningType];
+}
+
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                  actions:(NSArray *)actions
+                                    accessory:(NSView *)accessory
+                               identifier:(NSString *)identifier
+                              silenceable:(iTermWarningType)warningType {
+
+    if (!gWarningHandler &&
+        warningType != kiTermWarningTypePersistent &&
+        [self identifierIsSilenced:identifier]) {
         return [self savedSelectionForIdentifier:identifier];
     }
-    
+
     NSAlert *alert = [NSAlert alertWithMessageText:@"Warning"
                                      defaultButton:actions.count > 0 ? actions[0] : nil
                                    alternateButton:actions.count > 1 ? actions[1] : nil
@@ -44,8 +64,17 @@ static NSString *const kCancel = @"Cancel";
         }
         alert.showsSuppressionButton = YES;
     }
-    
-    NSInteger result = [alert runModal];
+
+    if (accessory) {
+        [alert setAccessoryView:accessory];
+    }
+
+    NSInteger result;
+    if (gWarningHandler) {
+        result = [gWarningHandler warningWouldShowAlert:alert identifier:identifier];
+    } else {
+        result = [alert runModal];
+    }
 
     BOOL remember = NO;
     iTermWarningSelection selection;

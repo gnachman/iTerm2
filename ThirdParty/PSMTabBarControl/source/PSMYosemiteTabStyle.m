@@ -267,17 +267,27 @@
                autorelease];
 }
 
+- (NSColor *)textColorDefaultSelected:(BOOL)selected {
+    if (selected) {
+        return [NSColor blackColor];
+    } else {
+        return [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+    }
+}
+
 - (NSColor *)textColorForCell:(PSMTabBarCell *)cell {
     NSColor *textColor;
     if (cell.state == NSOnState) {
-        if (!cell.tabColor || [cell.tabColor brightnessComponent] > 0.2) {
+        if (!cell.tabColor) {
+            return [self textColorDefaultSelected:YES];
+        } else if ([cell.tabColor brightnessComponent] > 0.2) {
             textColor = [NSColor blackColor];
         } else {
             // dark tab
             textColor = [NSColor whiteColor];
         }
     } else {
-        textColor = [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+        textColor = [self textColorDefaultSelected:NO];
     }
     return textColor;
 }
@@ -379,11 +389,30 @@
     CGFloat angle = horizontal ? 90 : 0;
     [[self backgroundGradientSelected:selected] drawInRect:cellFrame angle:angle];
 
+    if (tabColor) {
+        if (selected) {
+            [[tabColor colorWithAlphaComponent:0.8] set];
+            NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
+        } else {
+            NSRect colorRect = cellFrame;
+            if (horizontal) {
+                colorRect.size.height = 4;
+            } else {
+                colorRect.size.width = 6;
+            }
+            [[tabColor colorWithAlphaComponent:0.8] set];
+            NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
+        }
+    }
+
     if (horizontal) {
-        // Left line
-        [[self verticalLineColor] set];
-        [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
-        
+        BOOL isLeftmostTab = NSMinX(cellFrame) == 0;
+        if (!isLeftmostTab) {
+            // Left line
+            [[self verticalLineColor] set];
+            [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
+        }
+
         // Right line
         CGFloat adjustment = 0;
         [[self verticalLineColor] set];
@@ -392,7 +421,7 @@
         // Top line
         [[self topLineColorSelected:selected] set];
         [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
-        
+
         // Bottom line
         [[self bottomLineColorSelected:selected] set];
         [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
@@ -415,22 +444,6 @@
         // Right line
         [[self bottomLineColorSelected:selected] set];
         [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame)];
-    }
-    
-    if (tabColor) {
-        if (selected) {
-            [[tabColor colorWithAlphaComponent:0.8] set];
-            NSRectFillUsingOperation(cellFrame, NSCompositeSourceOver);
-        } else {
-            NSRect colorRect = cellFrame;
-            if (horizontal) {
-                colorRect.size.height = 4;
-            } else {
-                colorRect.size.width = 6;
-            }
-            [[tabColor colorWithAlphaComponent:0.8] set];
-            NSRectFillUsingOperation(colorRect, NSCompositeSourceOver);
-        }
     }
 }
 
@@ -464,13 +477,12 @@
         }
 
         closeButtonSize = [closeButton size];
-        if ([controlView isFlipped]) {
-            closeButtonRect.origin.y += closeButtonRect.size.height;
-        }
 
-        [closeButton compositeToPoint:closeButtonRect.origin
-                            operation:NSCompositeSourceOver
-                             fraction:1.0];
+        [closeButton drawAtPoint:closeButtonRect.origin
+                        fromRect:NSZeroRect
+                       operation:NSCompositeSourceOver
+                        fraction:1.0];
+
 
         // scoot label over
         labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
@@ -482,9 +494,6 @@
         iconRect = [self iconRectForTabCell:cell];
         NSImage *icon = [(id)[[cell representedObject] identifier] icon];
 
-        if ([controlView isFlipped]) {
-            iconRect.origin.y += iconRect.size.height;
-        }
         // center in available space (in case icon image is smaller than kPSMTabBarIconWidth)
         if ([icon size].width < kPSMTabBarIconWidth) {
             iconRect.origin.x += (kPSMTabBarIconWidth - [icon size].width)/2.0;
@@ -493,7 +502,10 @@
             iconRect.origin.y -= (kPSMTabBarIconWidth - [icon size].height)/2.0;
         }
 
-        [icon compositeToPoint:iconRect.origin operation:NSCompositeSourceOver fraction:1.0];
+        [icon drawAtPoint:iconRect.origin
+                 fromRect:NSZeroRect
+                operation:NSCompositeSourceOver
+                 fraction:1.0];
     }
 
     // object counter
@@ -532,6 +544,10 @@
     [[cell attributedStringValue] drawInRect:labelRect];
 }
 
+- (NSColor *)tabBarColor {
+    return [NSColor colorWithCalibratedWhite:0.0 alpha:0.2];
+}
+
 - (void)drawBackgroundInRect:(NSRect)rect
                        color:(NSColor*)backgroundColor
                   horizontal:(BOOL)horizontal {
@@ -542,7 +558,7 @@
     [NSGraphicsContext saveGraphicsState];
     [[NSGraphicsContext currentContext] setShouldAntialias:NO];
 
-    [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
+    [backgroundColor set];
     NSRectFillUsingOperation(rect, NSCompositeSourceAtop);
 
     [[self bottomLineColorSelected:NO] set];
@@ -553,7 +569,6 @@
                                                       rect.origin.y + rect.size.height - 0.5)];
         
         [[self topLineColorSelected:NO] set];
-        [[NSColor redColor] set];
         // this looks ok with tabs on top but doesn't appear w/ tabs on bottom for some reason
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
                                                       rect.origin.y - 0.5)
@@ -583,6 +598,10 @@
     [path stroke];
 }
 
+- (BOOL)useLightControls {
+    return NO;
+}
+
 - (void)drawTabBar:(PSMTabBarControl *)bar
             inRect:(NSRect)rect
         horizontal:(BOOL)horizontal {
@@ -594,7 +613,9 @@
         tabBar = bar;
     }
 
-    [self drawBackgroundInRect:rect color:nil horizontal:horizontal];
+    [self drawBackgroundInRect:rect color:[self tabBarColor] horizontal:horizontal];
+    [[self topLineColorSelected:NO] set];
+    [self drawHorizontalLineInFrame:rect y:NSMinY(rect)];
 
     // no tab view == not connected
     if (![bar tabView]){

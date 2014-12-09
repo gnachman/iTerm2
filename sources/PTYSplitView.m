@@ -6,7 +6,8 @@
 //
 
 #import "PTYSplitView.h"
-#import "iTermApplicationDelegate.h"  // For DLog
+#import "DebugLogging.h"
+#import "iTermPreferences.h"
 
 @implementation PTYSplitView
 
@@ -18,6 +19,18 @@
 - (void)setDelegate:(NSObject<PTYSplitViewDelegate> *)delegate
 {
     [super setDelegate:delegate];
+}
+
+- (NSColor *)dividerColor {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_LIGHT:
+            return [NSColor lightGrayColor];
+            break;
+        case TAB_STYLE_DARK:
+            return [NSColor darkGrayColor];
+            break;
+    }
 }
 
 - (NSString *)description

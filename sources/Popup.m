@@ -2,6 +2,7 @@
 
 #import "Popup.h"
 #import "DebugLogging.h"
+#import "NSWindow+PSM.h"
 #import "PopupEntry.h"
 #import "PopupModel.h"
 #import "PopupWindow.h"
@@ -183,7 +184,7 @@
     NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth],
                             ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
     p = [tv convertPoint:p toView:nil];
-    p = [[tv window] convertBaseToScreen:p];
+    p = [[tv window] pointToScreenCoords:p];
     p.y -= frame.size.height;
 
     NSRect monitorFrame = [[[[self.delegate popupWindowController] window] screen] visibleFrame];

@@ -175,10 +175,11 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
         [aGradient drawInRect:[self frame] relativeCenterPosition:NSMakePoint(0, 0)];
         [cache_ unlockFocus];
     }
-    
-    [cache_ compositeToPoint:rect.origin
-                    fromRect:rect
-                   operation:NSCompositeSourceOver];
+
+    [cache_ drawAtPoint:rect.origin
+               fromRect:rect
+              operation:NSCompositeSourceOver
+               fraction:1];
 }
 
 - (NSRect)zoomedFrame:(NSRect)dest size:(NSSize)origSize visibleScreenFrame:(NSRect)visibleScreenFrame

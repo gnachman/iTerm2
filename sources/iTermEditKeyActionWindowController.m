@@ -7,6 +7,8 @@
 //
 
 #import "iTermEditKeyActionWindowController.h"
+#import "iTermPasteSpecialViewController.h"
+#import "iTermPreferences.h"
 #import "iTermShortcutInputView.h"
 #import "iTermKeyBindingMgr.h"
 #import "NSPopUpButton+iTerm.h"
@@ -25,16 +27,26 @@
     IBOutlet NSPopUpButton *_profilePopup;
     IBOutlet NSPopUpButton *_menuToSelectPopup;
     IBOutlet NSTextField *_profileLabel;
+    IBOutlet NSTextField *_colorPresetsLabel;
+    IBOutlet NSPopUpButton *_colorPresetsPopup;
+    IBOutlet NSView *_pasteSpecialViewContainer;
+
+    iTermPasteSpecialViewController *_pasteSpecialViewController;
 }
 
 - (id)init {
     return [super initWithWindowNibName:@"iTermEditKeyActionWindowController"];
 }
 
+- (void)dealloc {
+    [_pasteSpecialViewController release];
+    [super dealloc];
+}
+
 - (void)windowDidLoad
 {
     [super windowDidLoad];
-    
+
     // For some reason, the first item is checked by default. Make sure every
     // item is unchecked before making a selection.
     for (NSMenuItem *item in [_actionPopup itemArray]) {
@@ -58,6 +70,24 @@
     if (!_profilePopup.isHidden) {
         [_profilePopup populateWithProfilesSelectingGuid:self.parameterValue];
     }
+    if (!_colorPresetsPopup.isHidden) {
+        [_colorPresetsPopup loadColorPresetsSelecting:self.parameterValue];
+    }
+
+    _pasteSpecialViewController = [[iTermPasteSpecialViewController alloc] init];
+    [_pasteSpecialViewController view];
+
+    if (self.action == KEY_ACTION_PASTE_SPECIAL ||
+        self.action == KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION) {
+        [_pasteSpecialViewController loadSettingsFromString:self.parameterValue];
+    } else {
+        // Set a few defaults; otherwise everything is reasonable.
+        _pasteSpecialViewController.numberOfSpacesPerTab = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialSpacesPerTab];
+        _pasteSpecialViewController.shouldBase64Encode = NO;
+        _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash = NO;
+    }
+    _pasteSpecialViewController.view.frame = _pasteSpecialViewController.view.bounds;
+    [_pasteSpecialViewContainer addSubview:_pasteSpecialViewController.view];
 }
 
 - (NSString *)titleOfActionWithTag:(int)theTag {
@@ -111,6 +141,9 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
             break;
 
         case KEY_ACTION_VIM_TEXT:
@@ -122,6 +155,9 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
             break;
 
         case KEY_ACTION_RUN_COPROCESS:
@@ -132,6 +168,9 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
             break;
 
         case KEY_ACTION_SELECT_MENU_ITEM:
@@ -142,6 +181,9 @@
             [_menuToSelectPopup setHidden:NO];
             [_profileLabel setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
             break;
 
         case KEY_ACTION_ESCAPE_SEQUENCE:
@@ -153,6 +195,9 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
             break;
 
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
@@ -166,6 +211,21 @@
             [_parameterLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
+            break;
+
+        case KEY_ACTION_LOAD_COLOR_PRESET:
+            [_parameter setHidden:YES];
+            [_profileLabel setHidden:YES];
+            [_profilePopup setHidden:YES];
+            [_parameterLabel setHidden:YES];
+            [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:NO];
+            [_colorPresetsPopup setHidden:NO];
+            [self setPasteSpecialHidden:YES];
             break;
 
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
@@ -178,6 +238,9 @@
             [_profilePopup setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
             break;
 
         case KEY_ACTION_FIND_REGEX:
@@ -188,6 +251,22 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
+            break;
+
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
+        case KEY_ACTION_PASTE_SPECIAL:
+            [_parameter setHidden:YES];
+            [_parameterLabel setHidden:YES];
+            [_profilePopup setHidden:YES];
+            [_profileLabel setHidden:YES];
+            [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:NO];
             break;
 
         default:
@@ -198,8 +277,22 @@
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
             break;
     }
+}
+
+- (void)setPasteSpecialHidden:(BOOL)hidden {
+    _pasteSpecialViewContainer.hidden = hidden;
+    NSRect rect = self.window.frame;
+    if (hidden) {
+        rect.size = NSMakeSize(442, 157);
+    } else {
+        rect.size = NSMakeSize(484, 382);
+    }
+    [self.window setFrame:rect display:YES animate:YES];
 }
 
 + (void)populatePopUpButtonWithMenuItems:(NSPopUpButton *)button
@@ -248,6 +341,7 @@
     [_actionPopup setTitle:[[sender selectedItem] title]];
     NSString *guid = [[_profilePopup selectedItem] representedObject];
     [_profilePopup populateWithProfilesSelectingGuid:guid];
+    [_colorPresetsPopup loadColorPresetsSelecting:_colorPresetsPopup.selectedItem.representedObject];
     [[self class] populatePopUpButtonWithMenuItems:_menuToSelectPopup
                                      selectedValue:[[_menuToSelectPopup selectedItem] title]];
     [self updateViews];
@@ -274,6 +368,15 @@
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
         case KEY_ACTION_SET_PROFILE:
             self.parameterValue = [[_profilePopup selectedItem] representedObject];
+            break;
+
+        case KEY_ACTION_LOAD_COLOR_PRESET:
+            self.parameterValue = [[_colorPresetsPopup selectedItem] title];
+            break;
+
+        case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
+        case KEY_ACTION_PASTE_SPECIAL:
+            self.parameterValue = [_pasteSpecialViewController stringEncodedSettings];
             break;
 
         default:

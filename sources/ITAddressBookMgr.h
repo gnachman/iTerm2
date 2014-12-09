@@ -189,8 +189,11 @@
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
 #define KEY_SMART_SELECTION_RULES            @"Smart Selection Rules"
-#define KEY_TROUTER                          @"Semantic History"
+#define KEY_SEMANTIC_HISTORY                 @"Semantic History"
 #define KEY_BOUND_HOSTS                      @"Bound Hosts"
+
+// Dynamic Profiles (not in prefs ui)
+#define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
 
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also

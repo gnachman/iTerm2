@@ -55,9 +55,9 @@ extern NSString *const kReloadAllProfiles;
 #define PROMPT_EX_JOBS 2
 
 @class iTermController;
-@class TriggerController;
+@class iTermSemanticHistoryPrefsController;
 @class SmartSelectionController;
-@class TrouterPrefsController;
+@class TriggerController;
 
 void LoadPrefsFromCustomFolder(void);
 

@@ -19,6 +19,8 @@
 @class TmuxController;
 
 extern NSString *const kCurrentSessionDidChange;
+// The key used for a window's arrangement in encoding restorable state.
+extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 // This class is 1:1 with windows. It controls the tabs, the window's fulscreen
 // status, and coordinates resizing of sessions (either session-initiated
@@ -62,6 +64,11 @@ extern NSString *const kCurrentSessionDidChange;
 
 + (instancetype)terminalWithArrangement:(NSDictionary *)arrangement
                                sessions:(NSArray *)sessions;
+
+// Register all sessions in the window's arrangement so their contents can be
+// rescued later if the window is created from a saved arrangement. Called
+// during state restoration.
++ (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
 
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
@@ -198,7 +205,8 @@ extern NSString *const kCurrentSessionDidChange;
 - (NSDictionary*)arrangement;
 
 // Returns the arrangement for this window, optionally excluding tmux tabs.
-- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux;
+- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
+                             includingContents:(BOOL)includeContents;
 
 // Update a window's tmux layout, such as when fonts or scrollbar sizes change.
 - (void)refreshTmuxLayoutsAndWindow;
@@ -242,6 +250,7 @@ extern NSString *const kCurrentSessionDidChange;
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.
 - (IBAction)toggleFullScreenMode:(id)sender;
+- (IBAction)closeCurrentTab:(id)sender;
 
 - (void)changeTabColorToMenuAction:(id)sender;
 - (void)moveSessionToWindow:(id)sender;

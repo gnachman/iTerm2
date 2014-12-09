@@ -34,13 +34,40 @@
 @property(nonatomic, assign) id<iTermPasteHelperDelegate> delegate;
 @property(nonatomic, readonly) BOOL isPasting;
 
++ (NSMutableCharacterSet *)unsafeControlCodeSet;
+
+// This performs all the transformations except for bracketing.
++ (void)sanitizePasteEvent:(PasteEvent *)pasteEvent
+                  encoding:(NSStringEncoding)encoding;
+
 // Queue up a string to paste. If the queue is empty, it will begin pasting immediately.
-- (void)pasteString:(NSString *)theString flags:(PTYSessionPasteFlags)flags;
+- (void)pasteString:(NSString *)theString
+             slowly:(BOOL)slowly
+   escapeShellChars:(BOOL)escapeShellChars
+       tabTransform:(iTermTabTransformTags)tabTransform
+       spacesPerTab:(int)spacesPerTab;
+
+// The string comes from the paste special view controller.
+- (void)pasteString:(NSString *)theString stringConfig:(NSString *)jsonConfig;
 
 // Save an event to process after pasting is done.
 - (void)enqueueEvent:(NSEvent *)event;
 
 // Remove all queued events and pending pastes, and hide the paste indicator if shown.
 - (void)abort;
+
+- (void)showPasteOptionsInWindow:(NSWindow *)window bracketingEnabled:(BOOL)bracketingEnabled;
+
+// Convert tabs to spaces in source, perhaps asking the user questions in modal alerts.
+- (int)numberOfSpacesToConvertTabsTo:(NSString *)source;
+
+#pragma mark - Testing
+
+// This method can be overridden for testing.
+- (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)ti
+                                     target:(id)aTarget
+                                   selector:(SEL)aSelector
+                                   userInfo:(id)userInfo
+                                    repeats:(BOOL)yesOrNo;
 
 @end

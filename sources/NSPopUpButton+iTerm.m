@@ -8,6 +8,7 @@
 
 #import "NSPopUpButton+iTerm.h"
 #import "ITAddressBookMgr.h"
+#import "ProfilesColorsPreferencesViewController.h"
 #import "ProfileModel.h"
 
 @implementation NSPopUpButton (iTerm)
@@ -35,6 +36,34 @@
             selectedIndex = i;
         }
         i++;
+    }
+    [self selectItemAtIndex:selectedIndex];
+}
+
+- (void)loadColorPresetsSelecting:(NSString *)presetName {
+    int selectedIndex = 0;
+    [self removeAllItems];
+    int i = 0;
+    NSDictionary* presetsDict = [ProfilesColorsPreferencesViewController builtInColorPresets];
+    for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+        [self addItemWithTitle:key];
+        if ([key isEqualToString:presetName]) {
+            selectedIndex = i;
+        }
+        i++;
+    }
+
+    NSDictionary* customPresets = [ProfilesColorsPreferencesViewController customColorPresets];
+    if (customPresets && [customPresets count] > 0) {
+        [self.menu addItem:[NSMenuItem separatorItem]];
+        i++;
+        for (NSString* key in  [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+            [self addItemWithTitle:key];
+            if ([key isEqualToString:presetName]) {
+                selectedIndex = i;
+            }
+            i++;
+        }
     }
     [self selectItemAtIndex:selectedIndex];
 }

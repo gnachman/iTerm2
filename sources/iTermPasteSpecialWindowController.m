@@ -1,0 +1,412 @@
+//
+//  iTermPasteSpecialWindowController.m
+//  iTerm2
+//
+//  Created by George Nachman on 11/29/14.
+//
+//
+
+#import "iTermPasteSpecialWindowController.h"
+#import "iTermPasteSpecialViewController.h"
+#import "iTermPasteHelper.h"
+#import "iTermPreferences.h"
+#import "NSData+iTerm.h"
+#import "NSStringITerm.h"
+#import "NSTextField+iTerm.h"
+
+@interface iTermFileReference : NSObject
+@property(nonatomic, readonly) NSData *data;
+- (instancetype)initWithName:(NSString *)url;
+- (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;
+@end
+
+@implementation iTermFileReference {
+    NSString *_name;
+}
+
+- (instancetype)initWithName:(NSString *)url {
+    self = [super init];
+    if (self) {
+        _name = [url copy];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_name release];
+    [super dealloc];
+}
+
+- (NSData *)data {
+    return [NSData dataWithContentsOfFile:_name];
+}
+
+- (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak {
+    return [self.data stringWithBase64EncodingWithLineBreak:lineBreak];
+}
+
+@end
+
+@interface iTermPasteSpecialWindowController () <iTermPasteSpecialViewControllerDelegate>
+
+@property(nonatomic, assign) BOOL shouldPaste;
+@property(nonatomic, assign) NSInteger chunkSize;
+@property(nonatomic, assign) NSTimeInterval delayBetweenChunks;
+
+@end
+
+@implementation iTermPasteSpecialWindowController {
+    // Pre-processed string
+    NSString *_rawString;
+
+    // Terminal app expects bracketed data?
+    BOOL _bracketingEnabled;
+
+    // String to paste before transforms.
+    NSArray *_originalValues;
+    NSArray *_labels;
+
+    NSInteger _index;
+
+    // Encoding to use.
+    NSStringEncoding _encoding;
+
+    // Outlets
+    IBOutlet NSTextField *_statsLabel;
+    IBOutlet NSPopUpButton *_itemList;
+    IBOutlet NSTextView *_preview;
+    IBOutlet NSTextField *_estimatedDuration;
+    IBOutlet NSView *_pasteSpecialViewContainer;
+
+    iTermPasteSpecialViewController *_pasteSpecialViewController;
+
+    // Object to paste not representable as a string and is pre-base64 encoded.
+    BOOL _base64only;
+}
+
+- (instancetype)initWithChunkSize:(NSInteger)chunkSize
+               delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
+                bracketingEnabled:(BOOL)bracketingEnabled
+                   encoding:(NSStringEncoding)encoding {
+    self = [super initWithWindowNibName:@"iTermPasteSpecialWindow"];
+    if (self) {
+        _index = -1;
+        _bracketingEnabled = bracketingEnabled;
+
+        NSMutableArray *values = [NSMutableArray array];
+        NSMutableArray *labels = [NSMutableArray array];
+        [self getLabels:labels andValues:values];
+        _labels = [labels retain];
+        _originalValues = [values retain];
+        _encoding = encoding;
+        self.chunkSize = chunkSize;
+        self.delayBetweenChunks = delayBetweenChunks;
+        _pasteSpecialViewController = [[iTermPasteSpecialViewController alloc] init];
+        _pasteSpecialViewController.delegate = self;
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_originalValues release];
+    [_labels release];
+    [_rawString release];
+    [_pasteSpecialViewController release];
+    [super dealloc];
+}
+
+- (void)awakeFromNib {
+    for (NSString *label in _labels) {
+        [_itemList addItemWithTitle:label];
+    }
+    [_pasteSpecialViewContainer addSubview:_pasteSpecialViewController.view];
+    _pasteSpecialViewController.view.frame = _pasteSpecialViewController.view.bounds;
+
+    [self selectValueAtIndex:0];
+}
+
+- (void)getLabels:(NSMutableArray *)labels andValues:(NSMutableArray *)values {
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+
+    for (NSPasteboardItem *item in pasteboard.pasteboardItems) {
+        NSString *string = [item stringForType:(NSString *)kUTTypeUTF8PlainText];
+        if (string && ![item stringForType:(NSString *)kUTTypeFileURL]) {
+            // Is a non-file URL string. File URLs get special handling.
+            [values addObject:string];
+            CFStringRef description = UTTypeCopyDescription((CFStringRef)item.types[0]);
+            NSString *label = [NSString stringWithFormat:@"%@: %@",
+                               (NSString *)description,
+                               [string ellipsizedDescriptionNoLongerThan:100]];
+            CFRelease(description);
+            [labels addObject:label];
+        }
+        if (!string) {
+            NSString *theType = (NSString *)kUTTypeData;
+            CFStringRef description = NULL;
+            NSData *data = [item dataForType:theType];
+            if (!data) {
+                for (NSString *typeName in item.types) {
+                    if ([typeName hasPrefix:@"public."] &&
+                        ![typeName isEqualTo:(NSString *)kUTTypeFileURL]) {
+                        data = [item dataForType:typeName];
+                        description = UTTypeCopyDescription((CFStringRef)typeName);
+                        break;
+                    }
+                }
+            }
+            if (data) {
+                [values addObject:data];
+                [labels addObject:(NSString *)description];
+                if (description) {
+                    CFRelease(description);
+                }
+            }
+        }
+    }
+
+    // Now handle file references.
+    NSArray *filenames = [pasteboard propertyListForType:NSFilenamesPboardType];
+
+    // Escape and join the filenames to add an item for the names themselves.
+    NSMutableArray *escapedFilenames = [NSMutableArray array];
+    for (NSString *filename in filenames) {
+        [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+    }
+    [values addObject:[escapedFilenames componentsJoinedByString:@" "]];
+    if (filenames.count > 1) {
+        [labels addObject:@"Filenames joined by spaces"];
+    } else if (filenames.count == 1) {
+        [labels addObject:@"Filename"];
+    }
+
+    // Add an item for each existing non-directory file.
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    for (NSString *filename in filenames) {
+        BOOL isDirectory;
+        if ([fileManager fileExistsAtPath:filename isDirectory:&isDirectory] &&
+            !isDirectory) {
+            [values addObject:[[[iTermFileReference alloc] initWithName:filename] autorelease]];
+            [labels addObject:[NSString stringWithFormat:@"Contents of %@", filename]];
+        }
+    }
+}
+
+- (void)selectValueAtIndex:(NSInteger)index {
+    if (index == _index) {
+        return;
+    }
+    NSObject *value = _originalValues[index];
+    NSString *string;
+    BOOL isData = ![value isKindOfClass:[NSString class]];
+    _base64only = NO;
+    if (isData) {
+        NSData *data;
+        if ([value isKindOfClass:[NSData class]]) {
+            data = (NSData *)value;
+        } else {
+            data = [(id)value data];
+        }
+
+        // If the data happens to be valid UTF-8 data then don't insist on base64 encoding it.
+        string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+        if (!string) {
+            _base64only = YES;
+            string = [data stringWithBase64EncodingWithLineBreak:@"\r"];
+        }
+    } else {
+        string = (NSString *)value;
+    }
+    _index = index;
+    [_rawString autorelease];
+    _rawString = [string copy];
+    BOOL containsTabs = [string containsString:@"\t"];
+    NSInteger tabTransformTag = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialTabTransform];
+    NSCharacterSet *theSet =
+            [NSCharacterSet characterSetWithCharactersInString:[NSString shellEscapableCharacters]];
+    BOOL containsShellCharacters =
+        [string rangeOfCharacterFromSet:theSet].location != NSNotFound;
+    BOOL containsDosNewlines = [string containsString:@"\n"];
+    BOOL convertValue = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialConvertDosNewlines];
+    BOOL shouldEscape = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash];
+    NSMutableCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
+    NSRange unsafeRange = [string rangeOfCharacterFromSet:unsafeSet];
+    BOOL containsControlCodes = unsafeRange.location != NSNotFound;
+    BOOL removeValue = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialRemoveControlCodes];
+    BOOL shouldBracket =
+        [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialBracketedPasteMode];
+
+    _pasteSpecialViewController.numberOfSpacesPerTab = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialSpacesPerTab];
+    _pasteSpecialViewController.enableTabTransforms = containsTabs;
+    _pasteSpecialViewController.selectedTabTransform = tabTransformTag;
+    _pasteSpecialViewController.enableConvertNewlines = containsDosNewlines;
+    _pasteSpecialViewController.shouldConvertNewlines = (containsDosNewlines && convertValue);
+    _pasteSpecialViewController.enableEscapeShellCharsWithBackslash = containsShellCharacters;
+    _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash = (containsShellCharacters && shouldEscape);
+    _pasteSpecialViewController.delayBetweenChunks = _delayBetweenChunks;
+    _pasteSpecialViewController.chunkSize = _chunkSize;
+    _pasteSpecialViewController.enableRemoveControlCodes = containsControlCodes;
+    _pasteSpecialViewController.shouldRemoveControlCodes = (containsControlCodes && removeValue);
+    _pasteSpecialViewController.enableBracketedPaste = _bracketingEnabled;
+    _pasteSpecialViewController.shouldUseBracketedPasteMode = (_bracketingEnabled && shouldBracket);
+    _pasteSpecialViewController.enableBase64 = !_base64only;
+    _pasteSpecialViewController.shouldBase64Encode = _base64only;
+
+    [self updatePreview];
+}
+
+- (void)updatePreview {
+    PasteEvent *pasteEvent = [self pasteEvent];
+    [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:_encoding];
+    _preview.string = pasteEvent.string;
+    NSNumberFormatter *bytesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
+    int numBytes = _preview.string.length;
+    if (numBytes < 10) {
+        bytesFormatter.numberStyle = NSNumberFormatterSpellOutStyle;
+    } else {
+        bytesFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+    }
+
+    NSNumberFormatter *linesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
+    NSUInteger numberOfLines = _preview.string.numberOfLines;
+    if (numberOfLines < 10) {
+        linesFormatter.numberStyle = NSNumberFormatterSpellOutStyle;
+    } else {
+        linesFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+    }
+
+    _statsLabel.stringValue = [NSString stringWithFormat:@"%@ byte%@ in %@ line%@.",
+                               [[bytesFormatter stringFromNumber:@(numBytes)] stringWithFirstLetterCapitalized],
+                               numBytes == 1 ? @"" : @"s",
+                               [linesFormatter stringFromNumber:@(numberOfLines)],
+                               numberOfLines == 1 ? @"" : @"s"];
+    [self updateDuration];
+}
+
+- (void)updateDuration {
+    int numChunks = (_preview.string.length / [self chunkSize]);
+    NSTimeInterval duration = MAX(0, numChunks - 1) * [self delayBetweenChunks];
+    // This is very high (pasting locally can be quite fast), and it just here to prevent
+    // absurdly low time estimates.
+    static const double kAssumedBandwidthInBytesPerSecond = 2000000;
+    duration += _preview.string.length / kAssumedBandwidthInBytesPerSecond;
+    if (duration > 1) {
+        duration = ceil(duration);
+    }
+    if (duration < 0.01) {
+        _estimatedDuration.stringValue = @"Instant";
+    } else {
+        _estimatedDuration.stringValue = [_pasteSpecialViewController descriptionForDuration:duration];
+    }
+}
+
++ (void)showAsPanelInWindow:(NSWindow *)presentingWindow
+                  chunkSize:(NSInteger)chunkSize
+         delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
+          bracketingEnabled:(BOOL)bracketingEnabled
+                   encoding:(NSStringEncoding)encoding
+                 completion:(iTermPasteSpecialCompletionBlock)completion {
+    iTermPasteSpecialWindowController *controller =
+        [[[iTermPasteSpecialWindowController alloc] initWithChunkSize:chunkSize
+                                                   delayBetweenChunks:delayBetweenChunks
+                                                    bracketingEnabled:bracketingEnabled
+                                                             encoding:encoding] autorelease];
+    NSWindow *window = [controller window];
+    [NSApp beginSheet:window
+       modalForWindow:presentingWindow
+        modalDelegate:self
+       didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:)
+          contextInfo:nil];
+
+    [NSApp runModalForWindow:window];
+    [NSApp endSheet:window];
+    [window orderOut:nil];
+    [window close];
+
+    if (controller.shouldPaste) {
+        completion(controller.pasteEvent);
+        [controller saveUserDefaults];
+    }
+}
+
+#pragma mark - Sheet Delegate
+
++ (void)sheetDidEnd:(NSWindow *)sheet
+         returnCode:(NSInteger)returnCode
+        contextInfo:(void *)contextInfo {
+    [NSApp stopModal];
+}
+
+#pragma mark - Private
+
+- (void)saveUserDefaults {
+    if (_pasteSpecialViewController.areTabTransformsEnabled) {
+        [iTermPreferences setInt:_pasteSpecialViewController.selectedTabTransform
+                          forKey:kPreferenceKeyPasteSpecialTabTransform];
+    }
+    if (_pasteSpecialViewController.selectedTabTransform == kTabTransformConvertToSpaces) {
+        [iTermPreferences setInt:_pasteSpecialViewController.numberOfSpacesPerTab
+                          forKey:kPreferenceKeyPasteSpecialSpacesPerTab];
+    }
+    if (_pasteSpecialViewController.isEscapeShellCharsWithBackslashEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldEscapeShellCharsWithBackslash
+                       forKey:kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash];
+    }
+    if (_pasteSpecialViewController.isConvertNewlinesEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldConvertNewlines
+                           forKey:kPreferenceKeyPasteSpecialConvertDosNewlines];
+    }
+    if (_pasteSpecialViewController.isBracketedPasteEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldUseBracketedPasteMode
+                           forKey:kPreferenceKeyPasteSpecialBracketedPasteMode];
+    }
+    if (_pasteSpecialViewController.isRemoveControlCodesEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldRemoveControlCodes
+                           forKey:kPreferenceKeyPasteSpecialRemoveControlCodes];
+    }
+}
+
+- (PasteEvent *)pasteEvent {
+    iTermPasteFlags flags = _pasteSpecialViewController.flags;
+    if (_base64only) {
+        // We already base64 encoded the data, so don't set the flag or else it gets double encoded.
+        flags &= ~kPasteFlagsBase64Encode;
+    }
+    return [PasteEvent pasteEventWithString:_rawString
+                                      flags:flags
+                           defaultChunkSize:self.chunkSize
+                                   chunkKey:nil
+                               defaultDelay:self.delayBetweenChunks
+                                   delayKey:nil
+                               tabTransform:_pasteSpecialViewController.selectedTabTransform
+                               spacesPerTab:_pasteSpecialViewController.numberOfSpacesPerTab];
+}
+
+#pragma mark - Actions
+
+- (IBAction)ok:(id)sender {
+    _shouldPaste = YES;
+    [NSApp stopModal];
+}
+
+- (IBAction)cancel:(id)sender {
+    _shouldPaste = NO;
+    [NSApp stopModal];
+}
+
+- (IBAction)selectItem:(id)sender {
+    [self selectValueAtIndex:[sender indexOfSelectedItem]];
+}
+
+#pragma mark - iTermPasteSpecialViewControllerDelegate
+
+- (void)pasteSpecialViewSpeedDidChange {
+    _delayBetweenChunks = _pasteSpecialViewController.delayBetweenChunks;
+    _chunkSize = _pasteSpecialViewController.chunkSize;
+    [self updateDuration];
+}
+
+- (void)pasteSpecialTransformDidChange {
+    [self updatePreview];
+}
+
+@end

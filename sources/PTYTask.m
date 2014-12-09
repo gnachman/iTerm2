@@ -562,7 +562,7 @@ static void HandleSigChld(int n)
             logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
         }
         [logHandle retain];
-        [logHandle seekToEndOfFile];
+        [logHandle truncateFileAtOffset:0];
 
         rc = (logHandle == nil ? NO : YES);
     }

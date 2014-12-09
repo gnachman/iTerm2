@@ -87,4 +87,7 @@
 
 + (BOOL)alwaysAcceptFirstMouse;
 
++ (BOOL)restoreWindowContents;
++ (BOOL)tolerateUnrecognizedTmuxCommands;
+
 @end

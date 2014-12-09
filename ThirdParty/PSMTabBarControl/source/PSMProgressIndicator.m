@@ -7,14 +7,101 @@
 //
 
 #import "PSMProgressIndicator.h"
+#import "AMIndeterminateProgressIndicator.h"
+#import <QuartzCore/QuartzCore.h>
 
-@implementation PSMProgressIndicator
+@protocol PSMMinimalProgressIndicatorInterface <NSObject>
 
-// overrides to make tab bar control re-layout things if status changes
-- (void)setHidden:(BOOL)flag
-{
+- (void)startAnimation:(id)sender;
+- (void)stopAnimation:(id)sender;
+- (void)setHidden:(BOOL)hide;
+- (BOOL)isHidden;
+
+@end
+
+@implementation PSMProgressIndicator {
+    AMIndeterminateProgressIndicator *_lightIndicator;
+    NSProgressIndicator *_darkIndicator;
+    BOOL _light;
+}
+
+- (id)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        _darkIndicator = [[NSProgressIndicator alloc] initWithFrame:self.bounds];
+        [_darkIndicator setStyle:NSProgressIndicatorSpinningStyle];
+        [_darkIndicator setControlSize:NSSmallControlSize];
+        [self addSubview:_darkIndicator];
+        [[self class] exposeBinding:@"animate"];
+        [[self class] exposeBinding:@"hidden"];
+
+        _lightIndicator =
+            [[AMIndeterminateProgressIndicator alloc] initWithFrame:_darkIndicator.frame];
+        _lightIndicator.color = [NSColor colorWithCalibratedWhite:0.8 alpha:1];
+        [self addSubview:_lightIndicator];
+        _lightIndicator.hidden = YES;
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_darkIndicator release];
+    [_lightIndicator release];
+    [super dealloc];
+}
+
+- (void)setHidden:(BOOL)flag {
     [super setHidden:flag];
-    [(PSMTabBarControl *)[self superview] update];
+    [_delegate progressIndicatorNeedsUpdate];
+    if (_animate && flag) {
+        [self stopAnimation:nil];
+    }
+}
+
+- (id<PSMMinimalProgressIndicatorInterface>)currentIndicator {
+    if (self.light) {
+        return (id<PSMMinimalProgressIndicatorInterface>)_lightIndicator;
+    } else {
+        return (id<PSMMinimalProgressIndicatorInterface>)_darkIndicator;
+    }
+}
+
+- (void)startAnimation:(id)sender {
+    self.animate = YES;
+    [self.currentIndicator startAnimation:sender];
+}
+
+- (void)stopAnimation:(id)sender {
+    self.animate = NO;
+    [self.currentIndicator stopAnimation:sender];
+}
+
+- (void)setLight:(BOOL)light {
+    if (light == _light) {
+        return;
+    }
+
+    BOOL shouldHide = self.currentIndicator.isHidden;
+    [self.currentIndicator setHidden:YES];
+    [self.currentIndicator stopAnimation:nil];
+
+    _light = light;
+
+    [self.currentIndicator setHidden:shouldHide];
+    if (!shouldHide && _animate) {
+        [self.currentIndicator startAnimation:nil];
+    }
+}
+
+- (void)setAnimate:(BOOL)animate {
+    if (animate != _animate) {
+        _animate = animate;
+        if (animate && !self.isHidden) {
+            [self startAnimation:nil];
+        } else {
+            [self stopAnimation:nil];
+        }
+    }
 }
 
 @end

@@ -42,7 +42,7 @@ extern NSString *const kMarkAlertActionPostNotification;
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);
 
-@interface iTermApplicationDelegate : NSObject
+@interface iTermApplicationDelegate : NSObject<NSApplicationDelegate>
 
 @property(nonatomic, readonly) BOOL workspaceSessionActive;
 @property(nonatomic, readonly) BOOL isApplescriptTestApp;
@@ -144,8 +144,5 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 - (PseudoTerminal *)currentTerminal;
 - (NSArray*)terminals;
-
-// Convert tabs to spaces in source, perhaps asking the user questions in modal alerts.
-- (NSString *)stringByConvertingTabsToSpacesForPaste:(NSString *)source;
 
 @end
