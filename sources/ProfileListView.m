@@ -125,6 +125,7 @@ const CGFloat kDefaultTagsWidth = 80;
         [tableView_ addTableColumn:tableColumn_];
 
         [scrollView_ setDocumentView:tableView_];
+        [scrollView_ setBorderType:NSBezelBorder];
 
         [tableView_ setDelegate:self];
         [tableView_ setDataSource:self];

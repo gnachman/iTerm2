@@ -55,6 +55,7 @@ static const CGFloat kRowHeight = 21;
         [_tableView addTableColumn:_tagsColumn];
 
         [_scrollView setDocumentView:_tableView];
+        [_scrollView setBorderType:NSBezelBorder];
 
         _tableView.delegate = self;
         _tableView.dataSource = self;
