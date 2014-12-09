@@ -2362,6 +2362,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                withObject:nil
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    [[[self window] contentView] setNeedsDisplay:YES];
 }
 
 - (void)makeCurrentSessionFirstResponder
