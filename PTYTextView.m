@@ -3967,7 +3967,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    int cursorY = [dataSource absoluteLineNumberOfCursor];
+    if (y < [dataSource numberOfLines] - [dataSource height]) {
+        DLog(@"Option-click outside live area, aborting.");
+        return;
+    }
+    int cursorY = [dataSource absoluteLineNumberOfCursor] - [dataSource totalScrollbackOverflow];
     int cursorX = [dataSource cursorX];
     int width = [dataSource width];
     VT100Terminal *terminal = [dataSource terminal];
