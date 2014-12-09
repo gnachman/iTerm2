@@ -7,6 +7,7 @@
 //
 
 #import "SessionTitleView.h"
+#import "iTermPreferences.h"
 
 const double kBottomMargin = 0;
 static const CGFloat kButtonSize = 17;
@@ -134,19 +135,40 @@ static const CGFloat kButtonSize = 17;
 {
     NSColor *color;
 
-    if (dimmingAmount_ > 0) {
-        // Not selected
-        color = [NSColor colorWithSRGBRed:199/255.0
-                                    green:196/255.0
-                                     blue:199/255.0
-                                    alpha:1];
-    } else {
-        // selected
-        color = [NSColor colorWithSRGBRed:214/255.0
-                                    green:211/255.0
-                                     blue:214/255.0
-                                    alpha:1];
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    switch (preferredStyle) {
+        case TAB_STYLE_LIGHT:
+            if (dimmingAmount_ > 0) {
+                // Not selected
+                color = [NSColor colorWithSRGBRed:199/255.0
+                                            green:196/255.0
+                                             blue:199/255.0
+                                            alpha:1];
+            } else {
+                // selected
+                color = [NSColor colorWithSRGBRed:214/255.0
+                                            green:211/255.0
+                                             blue:214/255.0
+                                            alpha:1];
+            }
+            break;
+        case TAB_STYLE_DARK:
+            if (dimmingAmount_ > 0) {
+                // Not selected
+                color = [NSColor colorWithSRGBRed:100/255.0
+                                            green:98/255.0
+                                             blue:100/255.0
+                                            alpha:1];
+            } else {
+                // selected
+                color = [NSColor colorWithSRGBRed:157/255.0
+                                            green:155/255.0
+                                             blue:157/255.0
+                                            alpha:1];
+            }
+            break;
     }
+
     return [self dimmedColor:color];
 }
 

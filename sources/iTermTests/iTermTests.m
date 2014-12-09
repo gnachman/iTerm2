@@ -25,6 +25,7 @@ DECLARE_TEST(NSStringCategoryTest)
 DECLARE_TEST(PTYTextViewTest)
 DECLARE_TEST(PTYSessionTest)
 DECLARE_TEST(iTermPasteHelperTest)
+DECLARE_TEST(SemanticHistoryTest)
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -60,6 +61,7 @@ int main(int argc, const char * argv[]) {
     RunTestsInObject([[PTYTextViewTest new] autorelease]);
     RunTestsInObject([[PTYSessionTest new] autorelease]);
     RunTestsInObject([[iTermPasteHelperTest new] autorelease]);
+    RunTestsInObject([[SemanticHistoryTest new] autorelease]);
 
     NSLog(@"All tests passed");
     return 0;

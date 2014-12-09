@@ -14,8 +14,8 @@
 		1D03D420191419080049EB8F /* DirectoriesPopup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D03D41D191419080049EB8F /* DirectoriesPopup.h */; };
 		1D03D421191419080049EB8F /* DirectoriesPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D03D41E191419080049EB8F /* DirectoriesPopup.m */; };
 		1D03D422191419080049EB8F /* DirectoriesPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D03D41E191419080049EB8F /* DirectoriesPopup.m */; };
-		1D06A050134CDBED00C414EF /* Trouter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* Trouter.m */; };
-		1D06A052134CDBF800C414EF /* Trouter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* Trouter.h */; };
+		1D06A050134CDBED00C414EF /* iTermSemanticHistoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */; };
+		1D06A052134CDBF800C414EF /* iTermSemanticHistoryController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* iTermSemanticHistoryController.h */; };
 		1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D114BC04510097C0ED /* ProfileTableRow.h */; };
 		1D06E7D414BC04510097C0ED /* ProfileTableRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D214BC04510097C0ED /* ProfileTableRow.m */; };
 		1D06E7D714BC04E20097C0ED /* ProfileModelWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D514BC04E20097C0ED /* ProfileModelWrapper.h */; };
@@ -45,6 +45,11 @@
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
 		1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
 		1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
+		1D1F8C1A1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D1F8C181A32616A00167161 /* AMIndeterminateProgressIndicator.h */; };
+		1D1F8C1B1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D1F8C181A32616A00167161 /* AMIndeterminateProgressIndicator.h */; };
+		1D1F8C1C1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D1F8C191A32616A00167161 /* AMIndeterminateProgressIndicator.m */; };
+		1D1F8C1D1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D1F8C191A32616A00167161 /* AMIndeterminateProgressIndicator.m */; };
+		1D1F8C1E1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D1F8C191A32616A00167161 /* AMIndeterminateProgressIndicator.m */; };
 		1D21EE3B147711300066E04A /* ContextMenuActionPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */; };
 		1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */; };
 		1D237D28131D8741004DD60C /* FindView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D26131D8741004DD60C /* FindView.h */; };
@@ -120,8 +125,8 @@
 		1D4983501912FC0B002E942D /* ToolDirectoriesView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */; };
 		1D4983511912FC0B002E942D /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
 		1D4983521912FC0B002E942D /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
-		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
-		1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
+		1D4AE8FE14343A760092EB49 /* iTermSemanticHistoryPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */; };
+		1D4AE8FF14343A760092EB49 /* iTermSemanticHistoryPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
 		1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D53FD13181C4B4B00524D4F /* FindContext.h */; };
 		1D53FD16181C4B4B00524D4F /* FindContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D53FD14181C4B4B00524D4F /* FindContext.m */; };
@@ -341,7 +346,7 @@
 		1D6ED8D419AEA20D005A7799 /* FindView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D26131D8741004DD60C /* FindView.h */; };
 		1D6ED8D519AEA20D005A7799 /* FindViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D92131D8D66004DD60C /* FindViewController.h */; };
 		1D6ED8D619AEA20D005A7799 /* ProfilesKeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */; };
-		1D6ED8D719AEA20D005A7799 /* Trouter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* Trouter.h */; };
+		1D6ED8D719AEA20D005A7799 /* iTermSemanticHistoryController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* iTermSemanticHistoryController.h */; };
 		1D6ED8D819AEA20D005A7799 /* ProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D988595135D23BD0072023F /* ProcessCache.h */; };
 		1D6ED8D919AEA20D005A7799 /* iTermProfilePreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713A618F7C9F4008D94DD /* iTermProfilePreferences.h */; };
 		1D6ED8DA19AEA20D005A7799 /* GTMCarbonEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BD81386E0B600111319 /* GTMCarbonEvent.h */; };
@@ -400,7 +405,7 @@
 		1D6ED90F19AEA20D005A7799 /* SmartSelectionController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D24C2C3142FEACF006B246F /* SmartSelectionController.h */; };
 		1D6ED91019AEA20D005A7799 /* NSMutableAttributedString+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F418550F3900CE38D8 /* NSMutableAttributedString+iTerm.h */; };
 		1D6ED91119AEA20D005A7799 /* iTermExposeGridView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475A188C6731005355CF /* iTermExposeGridView.h */; };
-		1D6ED91219AEA20D005A7799 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
+		1D6ED91219AEA20D005A7799 /* iTermSemanticHistoryPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */; };
 		1D6ED91319AEA20D005A7799 /* SessionTitleView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */; };
 		1D6ED91419AEA20D005A7799 /* PointerPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */; };
 		1D6ED91519AEA20D005A7799 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
@@ -711,7 +716,7 @@
 		1D6EDA7619AEA20D005A7799 /* iTermOpenQuicklyWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45A319731AC500F5444D /* iTermOpenQuicklyWindow.m */; };
 		1D6EDA7719AEA20D005A7799 /* FindViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D93131D8D66004DD60C /* FindViewController.m */; };
 		1D6EDA7819AEA20D005A7799 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
-		1D6EDA7919AEA20D005A7799 /* Trouter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* Trouter.m */; };
+		1D6EDA7919AEA20D005A7799 /* iTermSemanticHistoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */; };
 		1D6EDA7A19AEA20D005A7799 /* ProcessCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D988596135D23BD0072023F /* ProcessCache.m */; };
 		1D6EDA7B19AEA20D005A7799 /* SCPFile.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30D5186D1429007F550F /* SCPFile.m */; };
 		1D6EDA7C19AEA20D005A7799 /* GTMCarbonEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D624BC71386E09E00111319 /* GTMCarbonEvent.m */; };
@@ -755,7 +760,7 @@
 		1D6EDAA219AEA20D005A7799 /* SendTextTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C283142EF334006B246F /* SendTextTrigger.m */; };
 		1D6EDAA319AEA20D005A7799 /* SmartSelectionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C2C4142FEACF006B246F /* SmartSelectionController.m */; };
 		1D6EDAA419AEA20D005A7799 /* iTermOpenQuicklyItem.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45A819731B4900F5444D /* iTermOpenQuicklyItem.m */; };
-		1D6EDAA519AEA20D005A7799 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
+		1D6EDAA519AEA20D005A7799 /* iTermSemanticHistoryPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */; };
 		1D6EDAA619AEA20D005A7799 /* SessionTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */; };
 		1D6EDAA719AEA20D005A7799 /* NSColor+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */; };
 		1D6EDAA819AEA20D005A7799 /* PseudoTerminalRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */; };
@@ -951,7 +956,7 @@
 		1D9A555E180FA83900B42CE9 /* PreferencePanel.m in Sources */ = {isa = PBXBuildFile; fileRef = FB019DE103670C6501F955DB /* PreferencePanel.m */; };
 		1D9A555F180FA83900B42CE9 /* SmartSelectionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C2C4142FEACF006B246F /* SmartSelectionController.m */; };
 		1D9A5560180FA83900B42CE9 /* TriggerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D31BC64142D33CA001F7ECB /* TriggerController.m */; };
-		1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
+		1D9A5561180FA83900B42CE9 /* iTermSemanticHistoryPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */; };
 		1D9A5562180FA83900B42CE9 /* WindowArrangements.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECE13EE507800B7725E /* WindowArrangements.m */; };
 		1D9A5563180FA84700B42CE9 /* NSBezierPath+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */; };
 		1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
@@ -1014,7 +1019,7 @@
 		1D9A55A1180FA87000B42CE9 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		1D9A55A2180FA87000B42CE9 /* ThreeFingerTapGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */; };
 		1D9A55A3180FA87000B42CE9 /* ToastWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085FA116F138A000B7FCE9 /* ToastWindowController.m */; };
-		1D9A55A4180FA87000B42CE9 /* Trouter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* Trouter.m */; };
+		1D9A55A4180FA87000B42CE9 /* iTermSemanticHistoryController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */; };
 		1D9A55A5180FA87000B42CE9 /* VT100Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7563026DDA6303A80106 /* VT100Terminal.m */; };
 		1D9A55A9180FA8B700B42CE9 /* PSMYosemiteTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572709CB9398008F320C /* PSMYosemiteTabStyle.m */; };
 		1D9A55AA180FA8B700B42CE9 /* PSMOverflowPopUpButton.m in Sources */ = {isa = PBXBuildFile; fileRef = DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */; };
@@ -1280,6 +1285,7 @@
 		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
 		A635864A184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
 		A635864B184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
+		A63679831A328E7E000DB943 /* SemanticHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A63679821A328E7D000DB943 /* SemanticHistoryTest.m */; };
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39618A9CB43002BE075 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
 		A63BA39718A9CB43002BE075 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
@@ -1851,8 +1857,8 @@
 		1D01609A1852AA6F0014D26A /* mark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mark.png; path = images/mark.png; sourceTree = "<group>"; };
 		1D03D41D191419080049EB8F /* DirectoriesPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = DirectoriesPopup.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D03D41E191419080049EB8F /* DirectoriesPopup.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DirectoriesPopup.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D06A04F134CDBED00C414EF /* Trouter.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = Trouter.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D06A051134CDBF800C414EF /* Trouter.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = Trouter.h; sourceTree = "<group>"; tabWidth = 4; };
+		1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSemanticHistoryController.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D06A051134CDBF800C414EF /* iTermSemanticHistoryController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSemanticHistoryController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D06E7D114BC04510097C0ED /* ProfileTableRow.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTableRow.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D06E7D214BC04510097C0ED /* ProfileTableRow.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileTableRow.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D06E7D514BC04E20097C0ED /* ProfileModelWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfileModelWrapper.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -1882,6 +1888,8 @@
 		1D173858126C820A004622DC /* FakeWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = FakeWindow.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D19C71214171F1D00617E08 /* ToolJobs.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolJobs.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D19C71314171F1D00617E08 /* ToolJobs.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolJobs.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D1F8C181A32616A00167161 /* AMIndeterminateProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AMIndeterminateProgressIndicator.h; sourceTree = "<group>"; };
+		1D1F8C191A32616A00167161 /* AMIndeterminateProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AMIndeterminateProgressIndicator.m; sourceTree = "<group>"; };
 		1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ContextMenuActionPrefsController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ContextMenuActionPrefsController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D237D26131D8741004DD60C /* FindView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FindView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -1953,8 +1961,8 @@
 		1D49834A1912CD9E002E942D /* iTermDirectoriesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDirectoriesModel.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolDirectoriesView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolDirectoriesView.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; tabWidth = 4; };
-		1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TrouterPrefsController.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSemanticHistoryPrefsController.h; sourceTree = "<group>"; tabWidth = 4; };
+		1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSemanticHistoryPrefsController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D4F359F1813386600699FDF /* iTermCursor.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermCursor.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
 		1D53FD13181C4B4B00524D4F /* FindContext.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FindContext.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2047,7 +2055,7 @@
 		1D94EAC712D641D3008225A9 /* AddressBook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AddressBook.framework; path = System/Library/Frameworks/AddressBook.framework; sourceTree = SDKROOT; };
 		1D988595135D23BD0072023F /* ProcessCache.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProcessCache.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D988596135D23BD0072023F /* ProcessCache.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProcessCache.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D9A5521180FA46100B42CE9 /* iTermTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermTests.m; path = iTermTests/iTermTests.m; sourceTree = "<group>"; };
+		1D9A5521180FA46100B42CE9 /* iTermTests.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = iTermTests.m; path = iTermTests/iTermTests.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D9A5522180FA46100B42CE9 /* iTermTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermTests.h; path = iTermTests/iTermTests.h; sourceTree = "<group>"; };
 		1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100ScreenTest.h; path = iTermTests/VT100ScreenTest.h; sourceTree = "<group>"; };
 		1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VT100ScreenTest.m; path = iTermTests/VT100ScreenTest.m; sourceTree = "<group>"; };
@@ -2260,6 +2268,8 @@
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358645184BEA57009ED690 /* AATreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATreeNode.m; path = "objc-aatree-master/AATreeNode.m"; sourceTree = "<group>"; tabWidth = 4; };
+		A63679811A328E7D000DB943 /* SemanticHistoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemanticHistoryTest.h; path = iTermTests/SemanticHistoryTest.h; sourceTree = "<group>"; };
+		A63679821A328E7D000DB943 /* SemanticHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SemanticHistoryTest.m; path = iTermTests/SemanticHistoryTest.m; sourceTree = "<group>"; };
 		A63BA39318A9CB43002BE075 /* iTermSelection.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelection.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39418A9CB43002BE075 /* iTermSelection.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSelection.m; sourceTree = "<group>"; tabWidth = 4; };
 		A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextExtractor.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2953,8 +2963,8 @@
 				A68A30F1186D150A007F550F /* TransferrableFileMenuItemViewController.h */,
 				1D9DCBFC142D7BA60016228A /* Trigger.h */,
 				1D31BC63142D33CA001F7ECB /* TriggerController.h */,
-				1D06A051134CDBF800C414EF /* Trouter.h */,
-				1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */,
+				1D06A051134CDBF800C414EF /* iTermSemanticHistoryController.h */,
+				1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */,
 				1D3D21931483144600FAC8E7 /* TSVParser.h */,
 				A6CFDAD0185D2587005DC94B /* URLAction.h */,
 				A647E39818C3515900450FA1 /* VT100AnsiParser.h */,
@@ -3059,13 +3069,14 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
-				A663012119D08638004AF81C /* SCEvents */,
-				1DFA7C621923E77900DF1410 /* SSKeychain */,
-				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
+				1D1F8C171A32616A00167161 /* AMIndeterminateProgressIndicator */,
 				F6441F610E748404000EC682 /* CGSInternal */,
 				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
+				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
 				DD02571D09CB9363008F320C /* PSMTabBarControl */,
 				1D85D1C41306687700A3E998 /* RegexKitLite */,
+				A663012119D08638004AF81C /* SCEvents */,
+				1DFA7C621923E77900DF1410 /* SSKeychain */,
 				1D94EAA312D64022008225A9 /* UKCrashReporter */,
 			);
 			name = ThirdParty;
@@ -3183,6 +3194,15 @@
 			name = Images;
 			sourceTree = "<group>";
 		};
+		1D1F8C171A32616A00167161 /* AMIndeterminateProgressIndicator */ = {
+			isa = PBXGroup;
+			children = (
+				1D1F8C181A32616A00167161 /* AMIndeterminateProgressIndicator.h */,
+				1D1F8C191A32616A00167161 /* AMIndeterminateProgressIndicator.m */,
+			);
+			path = AMIndeterminateProgressIndicator;
+			sourceTree = "<group>";
+		};
 		1D24C37714303E00006B246F /* Preferences */ = {
 			isa = PBXGroup;
 			children = (
@@ -3218,7 +3238,7 @@
 				A6A2698718FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m */,
 				1D24C2C4142FEACF006B246F /* SmartSelectionController.m */,
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
-				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
+				1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
 				1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */,
 				1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */,
@@ -3284,29 +3304,31 @@
 		1D5FD9AD11F61CA900C46BA3 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
 				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
 				1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */,
 				1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */,
 				A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */,
 				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
+				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
+				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
+				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
 				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
 				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
 				A671C065192981D000A7F796 /* NSStringCategoryTest.h */,
 				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
+				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
+				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
 				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
 				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
 				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
 				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
 				1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */,
-				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
-				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
-				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
-				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
+				A63679811A328E7D000DB943 /* SemanticHistoryTest.h */,
+				A63679821A328E7D000DB943 /* SemanticHistoryTest.m */,
 			);
 			name = Tests;
 			path = sources/;
@@ -3568,7 +3590,7 @@
 				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
 				A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */,
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
-				1D06A04F134CDBED00C414EF /* Trouter.m */,
+				1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */,
 				1D8B8A131806038F00C2DC25 /* VT100Grid.m */,
 				1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */,
 				A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */,
@@ -3960,12 +3982,13 @@
 				1D6ED8CF19AEA20D005A7799 /* VT100Parser.h in Headers */,
 				1D6ED8D019AEA20D005A7799 /* GlobalSearch.h in Headers */,
 				1D6ED8D119AEA20D005A7799 /* NSStringCategoryTest.h in Headers */,
+				1D1F8C1B1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */,
 				1D6ED8D219AEA20D005A7799 /* iTermSearchField.h in Headers */,
 				1D6ED8D319AEA20D005A7799 /* RegexKitLite.h in Headers */,
 				1D6ED8D419AEA20D005A7799 /* FindView.h in Headers */,
 				1D6ED8D519AEA20D005A7799 /* FindViewController.h in Headers */,
 				1D6ED8D619AEA20D005A7799 /* ProfilesKeysPreferencesViewController.h in Headers */,
-				1D6ED8D719AEA20D005A7799 /* Trouter.h in Headers */,
+				1D6ED8D719AEA20D005A7799 /* iTermSemanticHistoryController.h in Headers */,
 				1D6ED8D819AEA20D005A7799 /* ProcessCache.h in Headers */,
 				1D6ED8D919AEA20D005A7799 /* iTermProfilePreferences.h in Headers */,
 				1D6ED8DA19AEA20D005A7799 /* GTMCarbonEvent.h in Headers */,
@@ -4027,7 +4050,7 @@
 				1D6ED90F19AEA20D005A7799 /* SmartSelectionController.h in Headers */,
 				1D6ED91019AEA20D005A7799 /* NSMutableAttributedString+iTerm.h in Headers */,
 				1D6ED91119AEA20D005A7799 /* iTermExposeGridView.h in Headers */,
-				1D6ED91219AEA20D005A7799 /* TrouterPrefsController.h in Headers */,
+				1D6ED91219AEA20D005A7799 /* iTermSemanticHistoryPrefsController.h in Headers */,
 				1D6ED91319AEA20D005A7799 /* SessionTitleView.h in Headers */,
 				1D6ED91419AEA20D005A7799 /* PointerPreferencesViewController.h in Headers */,
 				1D6ED91519AEA20D005A7799 /* PseudoTerminalRestorer.h in Headers */,
@@ -4284,7 +4307,7 @@
 				1D237D28131D8741004DD60C /* FindView.h in Headers */,
 				1D237D94131D8D66004DD60C /* FindViewController.h in Headers */,
 				A6A269971902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h in Headers */,
-				1D06A052134CDBF800C414EF /* Trouter.h in Headers */,
+				1D06A052134CDBF800C414EF /* iTermSemanticHistoryController.h in Headers */,
 				1D988597135D23BD0072023F /* ProcessCache.h in Headers */,
 				A6E713A818F7C9F4008D94DD /* iTermProfilePreferences.h in Headers */,
 				1D624BD91386E0B600111319 /* GTMCarbonEvent.h in Headers */,
@@ -4320,6 +4343,7 @@
 				A68A30FC186D150B007F550F /* VT100RemoteHost.h in Headers */,
 				1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */,
 				1D67ABAB14285D6000D5DA4E /* NSFileManager+iTerm.h in Headers */,
+				1D1F8C1A1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */,
 				1D4097B91A2F947F00100892 /* iTermPasteHelperTest.h in Headers */,
 				1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */,
 				A6E713A318F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h in Headers */,
@@ -4347,7 +4371,7 @@
 				1D24C2C5142FEACF006B246F /* SmartSelectionController.h in Headers */,
 				A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */,
 				A6E7475C188C6731005355CF /* iTermExposeGridView.h in Headers */,
-				1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */,
+				1D4AE8FE14343A760092EB49 /* iTermSemanticHistoryPrefsController.h in Headers */,
 				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
 				1DFA9D7018F3A30F008ADC98 /* PointerPreferencesViewController.h in Headers */,
 				5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */,
@@ -5021,6 +5045,7 @@
 				1D6EDA3D19AEA20D005A7799 /* iTermApplicationDelegate.m in Sources */,
 				1D6EDA3E19AEA20D005A7799 /* iTermApplication.m in Sources */,
 				1D6EDA3F19AEA20D005A7799 /* ProfileModel.m in Sources */,
+				1D1F8C1E1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 				1D6EDA4019AEA20D005A7799 /* ProfileListView.m in Sources */,
 				1D6EDA4119AEA20D005A7799 /* NSTextField+iTerm.m in Sources */,
 				1D6EDA4219AEA20D005A7799 /* CommandHistoryEntry.m in Sources */,
@@ -5081,7 +5106,7 @@
 				1D6EDA7619AEA20D005A7799 /* iTermOpenQuicklyWindow.m in Sources */,
 				1D6EDA7719AEA20D005A7799 /* FindViewController.m in Sources */,
 				1D6EDA7819AEA20D005A7799 /* iTermRestorableSession.m in Sources */,
-				1D6EDA7919AEA20D005A7799 /* Trouter.m in Sources */,
+				1D6EDA7919AEA20D005A7799 /* iTermSemanticHistoryController.m in Sources */,
 				1D6EDA7A19AEA20D005A7799 /* ProcessCache.m in Sources */,
 				1D6EDA7B19AEA20D005A7799 /* SCPFile.m in Sources */,
 				1D6EDA7C19AEA20D005A7799 /* GTMCarbonEvent.m in Sources */,
@@ -5131,7 +5156,7 @@
 				A6E77F851A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */,
 				1D6EDAA319AEA20D005A7799 /* SmartSelectionController.m in Sources */,
 				1D6EDAA419AEA20D005A7799 /* iTermOpenQuicklyItem.m in Sources */,
-				1D6EDAA519AEA20D005A7799 /* TrouterPrefsController.m in Sources */,
+				1D6EDAA519AEA20D005A7799 /* iTermSemanticHistoryPrefsController.m in Sources */,
 				1D6EDAA619AEA20D005A7799 /* SessionTitleView.m in Sources */,
 				1D6EDAA719AEA20D005A7799 /* NSColor+Scripting.m in Sources */,
 				1D6EDAA819AEA20D005A7799 /* PseudoTerminalRestorer.m in Sources */,
@@ -5255,7 +5280,7 @@
 				1D9A555B180FA83900B42CE9 /* ContextMenuActionPrefsController.m in Sources */,
 				A63F40AB183F3CED003A6A6D /* LineBufferHelpers.m in Sources */,
 				1D9A5531180FA73300B42CE9 /* FutureMethods.m in Sources */,
-				1D9A55A4180FA87000B42CE9 /* Trouter.m in Sources */,
+				1D9A55A4180FA87000B42CE9 /* iTermSemanticHistoryController.m in Sources */,
 				1D9A552E180FA69C00B42CE9 /* iTermExpose.m in Sources */,
 				1D9A554E180FA82E00B42CE9 /* TmuxStateParser.m in Sources */,
 				A6C4E8E11846E13800CFAA77 /* IntervalTree.m in Sources */,
@@ -5267,6 +5292,7 @@
 				1D5655CB19AD2B1A001C460B /* PTYTab+Scripting.m in Sources */,
 				1D9A5545180FA81400B42CE9 /* ProfileTableView.m in Sources */,
 				A6358648184BEA57009ED690 /* AATree.m in Sources */,
+				A63679831A328E7E000DB943 /* SemanticHistoryTest.m in Sources */,
 				A69B45921973193100F5444D /* iTermOpenQuicklyTableView.m in Sources */,
 				1DB9D8F4183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */,
 				1D9A556C180FA85900B42CE9 /* ToolbeltView.m in Sources */,
@@ -5380,7 +5406,7 @@
 				A68A3107186D2973007F550F /* TemporaryNumberAllocator.m in Sources */,
 				1D9A5580180FA87000B42CE9 /* FontSizeEstimator.m in Sources */,
 				A647E3B418C36D0300450FA1 /* VT100Token.m in Sources */,
-				1D9A5561180FA83900B42CE9 /* TrouterPrefsController.m in Sources */,
+				1D9A5561180FA83900B42CE9 /* iTermSemanticHistoryPrefsController.m in Sources */,
 				1D9A556F180FA85900B42CE9 /* ToolNotes.m in Sources */,
 				1D9A5581180FA87000B42CE9 /* IntervalMap.m in Sources */,
 				1D9A557A180FA85D00B42CE9 /* SendTextTrigger.m in Sources */,
@@ -5429,6 +5455,7 @@
 				1DFA9D6618F37160008ADC98 /* iTermEditKeyActionWindowController.m in Sources */,
 				A6057C10187BC4C3004A60AF /* CommandHistory.m in Sources */,
 				1D9A553D180FA7EA00B42CE9 /* ITAddressBookMgr.m in Sources */,
+				1D1F8C1D1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 				A6E7138B18F26445008D94DD /* iTermPreferencesBaseViewController.m in Sources */,
 				A6A2698518FE48B200437DA9 /* NSFont+iTerm.m in Sources */,
 				A6A13AA918C2D45900B241ED /* NSColor+iTerm.m in Sources */,
@@ -5603,6 +5630,7 @@
 				A6E77FA31A2A8A5A009B1CB6 /* NSData+iTerm.m in Sources */,
 				874206500564169600CFC3F1 /* iTermApplicationDelegate.m in Sources */,
 				DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */,
+				1D1F8C1C1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 				1DCF3E8F122419D200AD56F1 /* ProfileModel.m in Sources */,
 				1D6C50A81226EEFB00E0AA3E /* ProfileListView.m in Sources */,
 				A6DF401D1897607E00F05947 /* NSTextField+iTerm.m in Sources */,
@@ -5664,7 +5692,7 @@
 				A69B45A519731AC500F5444D /* iTermOpenQuicklyWindow.m in Sources */,
 				1D237D95131D8D66004DD60C /* FindViewController.m in Sources */,
 				A6C537C41939507100A08C18 /* iTermRestorableSession.m in Sources */,
-				1D06A050134CDBED00C414EF /* Trouter.m in Sources */,
+				1D06A050134CDBED00C414EF /* iTermSemanticHistoryController.m in Sources */,
 				1D988598135D23BD0072023F /* ProcessCache.m in Sources */,
 				A68A30DC186D1429007F550F /* SCPFile.m in Sources */,
 				1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */,
@@ -5714,7 +5742,7 @@
 				A6E77F831A23F484009B1CB6 /* iTermFindOnPageHelper.m in Sources */,
 				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
 				A69B45AA19731B4900F5444D /* iTermOpenQuicklyItem.m in Sources */,
-				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
+				1D4AE8FF14343A760092EB49 /* iTermSemanticHistoryPrefsController.m in Sources */,
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 				A6C7DE5E19A469D6001E5C75 /* NSColor+Scripting.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,

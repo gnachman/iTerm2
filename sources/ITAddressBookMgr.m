@@ -668,13 +668,18 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
     // is used to ensure that guids are unique across all files.
     NSMutableArray *newProfiles = [NSMutableArray array];
     NSMutableSet *guids = [NSMutableSet set];
+    NSMutableArray *fileNames = [NSMutableArray array];
     for (NSString *file in [fileManager enumeratorAtPath:path]) {
+        [fileNames addObject:file];
+    }
+    [fileNames sortUsingSelector:@selector(compare:)];
+    for (NSString *file in fileNames) {
         if ([file hasPrefix:@"."]) {
             continue;
         }
         NSString *fullName = [path stringByAppendingPathComponent:file];
         if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
-            return;
+            NSLog(@"Igoring dynamic profiles in malformed file %@ and continuing.", fullName);
         }
     }
 
@@ -685,7 +690,7 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
     for (Profile *profile in newProfiles) {
         Profile *existingProfile = [self profileWithGuid:profile[KEY_GUID] inArray:oldProfiles];
         if (existingProfile) {
-            [self updateExistingDynamicProfile:existingProfile withProfile:profile];
+            [self updateDynamicProfile:profile];
             shouldReload = YES;
         } else {
             [self addDynamicProfile:profile];
@@ -788,12 +793,11 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
     return nil;
 }
 
-// Change an existing dynamic profile by setting its fields to those of
-// |newProfile|. The "dynamic" tag is preserved.
-- (void)updateExistingDynamicProfile:(Profile *)existingProfile
-                         withProfile:(Profile *)newProfile {
+// Reload a dynamic profile, re-merging it with its parent.
+- (void)updateDynamicProfile:(Profile *)newProfile {
+    Profile *prototype = [self prototypeForDynamicProfile:newProfile];
     NSMutableDictionary *merged = [self profileByMergingProfile:newProfile
-                                                    intoProfile:existingProfile];
+                                                    intoProfile:prototype];
     [self ensureMutableProfileHasDynamicTag:merged];
     [[ProfileModel sharedInstance] setBookmark:merged
                                       withGuid:merged[KEY_GUID]];
@@ -825,9 +829,25 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
     profile[KEY_TAGS] = tags;
 }
 
+- (Profile *)prototypeForDynamicProfile:(Profile *)profile {
+    Profile *prototype = nil;
+    NSString *parentName = profile[KEY_DYNAMIC_PROFILE_PARENT_NAME];
+    if (parentName) {
+        prototype = [[ProfileModel sharedInstance] bookmarkWithName:parentName];
+        if (!prototype) {
+            NSLog(@"Dynamic profile %@ references unknown parent name %@. Using default profile as parent.",
+                  profile[KEY_NAME], parentName);
+        }
+    }
+    if (!prototype) {
+        prototype = [[ProfileModel sharedInstance] defaultBookmark];
+    }
+    return prototype;
+}
+
 // Add a new dynamic profile to the model.
 - (void)addDynamicProfile:(Profile *)profile {
-    Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
+    Profile *prototype = [self prototypeForDynamicProfile:profile];
     NSMutableDictionary *merged = [self profileByMergingProfile:profile
                                                     intoProfile:prototype];
     [self ensureMutableProfileHasDynamicTag:merged];

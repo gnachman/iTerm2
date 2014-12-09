@@ -51,4 +51,7 @@
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession
                        atPoint:(NSPoint)point;
 
+// Move the window by |distance|.
+- (void)moveWindowBy:(NSPoint)distance;
+
 @end

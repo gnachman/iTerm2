@@ -24,6 +24,7 @@
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
 #import "iTermSelection.h"
+#import "iTermSemanticHistoryController.h"
 #import "iTermTextExtractor.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -57,7 +58,6 @@
 #import "TmuxStateParser.h"
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
-#import "Trouter.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
@@ -1236,29 +1236,32 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)writeTaskImpl:(NSData *)data
-{
+- (void)writeTaskImpl:(NSData *)data canBroadcast:(BOOL)canBroadcast {
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
-        DLog(@"writeTaskImpl %p: called from %@", self, stack);
+        DLog(@"writeTaskImpl<%p> canBroadcast=%@: called from %@", self, @(canBroadcast), stack);
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            DLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
+            DLog(@"writeTask keydown %d: %d (%c)", i, (int)bytes[i], bytes[i]);
         }
     }
 
     // check if we want to send this input to all the sessions
-    if (![[[self tab] realParentWindow] broadcastInputToSession:self]) {
+    if (canBroadcast && [[[self tab] realParentWindow] broadcastInputToSession:self]) {
+        // Ask the parent window to write directly to the PTYTask of all
+        // sessions being broadcasted to.
+        [[[self tab] realParentWindow] sendInputToAllSessions:data];
+    } else if (!_exited) {
         // Send to only this session
-        if (!_exited) {
+        if (canBroadcast) {
+            // It happens that canBroadcast coincides with explicit user input. This is less than
+            // beautiful here, but in that case we want to turn off the bell and scroll to the
+            // bottom.
             [self setBell:NO];
             PTYScroller* ptys = (PTYScroller*)[_scrollview verticalScroller];
-            [_shell writeTask:data];
             [ptys setUserScroll:NO];
         }
-    } else {
-        // send to all sessions
-        [[[self tab] realParentWindow] sendInputToAllSessions:data];
+        [_shell writeTask:data];
     }
 }
 
@@ -1269,7 +1272,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                toWindowPane:_tmuxPane];
         return;
     }
-    [self writeTaskImpl:data];
+    [self writeTaskImpl:data canBroadcast:NO];
 }
 
 - (void)handleKeypressInTmuxGateway:(unichar)unicode
@@ -1324,7 +1327,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return;
     }
     self.currentMarkOrNotePosition = nil;
-    [self writeTaskImpl:data];
+    [self writeTaskImpl:data canBroadcast:YES];
 }
 
 - (void)taskWasDeregistered {
@@ -1930,7 +1933,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)openSelection {
-    Trouter *trouter = _textview.trouter;
+    iTermSemanticHistoryController *semanticHistoryController = _textview.semanticHistoryController;
     int lineNumber;
     NSArray *subSelections = _textview.selection.allSubSelections;
     if ([subSelections count]) {
@@ -1949,16 +1952,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     int charsTakenFromPrefix;
-    NSString *filename = [trouter pathOfExistingFileFoundWithPrefix:selection
-                                                             suffix:@""
-                                                   workingDirectory:workingDirectory
-                                               charsTakenFromPrefix:&charsTakenFromPrefix];
+    NSString *filename =
+        [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
+                                                              suffix:@""
+                                                    workingDirectory:workingDirectory
+                                                charsTakenFromPrefix:&charsTakenFromPrefix];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
-        if ([_textview openTrouterPath:filename
-                      workingDirectory:workingDirectory
-                                prefix:selection
-                                suffix:@""]) {
+        if ([_textview openSemanticHistoryPath:filename
+                              workingDirectory:workingDirectory
+                                        prefix:selection
+                                        suffix:@""]) {
             return;
         }
     }
@@ -2276,7 +2280,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
     }
     [_textview setSmartSelectionRules:[aDict objectForKey:KEY_SMART_SELECTION_RULES]];
-    [_textview setTrouterPrefs:[aDict objectForKey:KEY_TROUTER]];
+    [_textview setSemanticHistoryPrefs:[aDict objectForKey:KEY_SEMANTIC_HISTORY]];
     [_textview setUseNonAsciiFont:[[aDict objectForKey:KEY_USE_NONASCII_FONT] boolValue]];
     [_textview setAntiAlias:asciiAA nonAscii:nonasciiAA];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
@@ -3794,7 +3798,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (_tmuxGateway.tmuxLogging) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
     }
-    [self writeTaskImpl:data];
+    [self writeTaskImpl:data canBroadcast:YES];
 }
 
 + (dispatch_queue_t)tmuxQueue {
@@ -4659,15 +4663,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk {
+    if (coord.y < _screen.numberOfLines - _screen.height ||
+        coord.x < 0 ||
+        coord.x >= _screen.width ||
+        coord.y >= _screen.numberOfLines) {
+        // Click must be in the live area and not in a margin.
+        return NO;
+    }
     if (_commandRange.start.x < 0) {
-      // Always ok to move cursor when not at the command line
-      *verticalOk = YES;
-      return YES;
+        // Not at a command prompt; no restrictions.
+        *verticalOk = YES;
+        return YES;
     } else {
-      // Ok to move to any char in current command, but no up or down arrows please.
-      NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(_commandRange), coord);
-      *verticalOk = NO;
-      return (order != NSOrderedDescending);
+        // At the command prompt. Ok to move to any char within current command, but no up or down
+        // arrows please.
+        NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(_commandRange),
+                                                       coord);
+        *verticalOk = NO;
+        return (order != NSOrderedDescending);
     }
 }
 
@@ -5380,7 +5393,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)screenWriteDataToTask:(NSData *)data {
-    [self writeTask:data];
+    [self writeTaskNoBroadcast:data];
 }
 
 - (NSRect)screenWindowFrame {

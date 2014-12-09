@@ -56,7 +56,7 @@
 #include <sys/time.h>
 
 static const int kMaxSelectedTextLengthForCustomActions = 400;
-static const int kMaxTrouterPrefixOrSuffix = 2000;
+static const int kMaxSemanticHistoryPrefixOrSuffix = 2000;
 
 // This defines the fraction of a character's width on its right side that is used to
 // select the NEXT character.
@@ -105,7 +105,7 @@ static const int kBadgeRightMargin = 10;
 @property(nonatomic, retain) iTermSelection *selection;
 @property(nonatomic, retain) NSColor *cachedBackgroundColor;
 @property(nonatomic, retain) NSColor *unfocusedSelectionColor;
-@property(nonatomic, retain) Trouter *trouter;
+@property(nonatomic, retain) iTermSemanticHistoryController *semanticHistoryController;
 @property(nonatomic, retain) NSImage *badgeImage;
 @property(nonatomic, retain) NSColor *badgeColor;
 @property(nonatomic, copy) NSString *bagdgeLabel;
@@ -163,9 +163,6 @@ static const int kBadgeRightMargin = 10;
     NSTimeInterval _timeOfLastBlink;
     VT100GridCoord _oldCursorPosition;
 
-    // trackingRect tab
-    NSTrackingArea *_trackingArea;
-
     // Was the last pressed key a "repeat" where the key is held down?
     BOOL _keyIsARepeat;
 
@@ -194,8 +191,8 @@ static const int kBadgeRightMargin = 10;
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
 
-    // Flag to make sure a Trouter drag check is only one once per drag
-    BOOL _trouterDragged;
+    // Flag to make sure a Semantic History drag check is only one once per drag
+    BOOL _semanticHistoryDragged;
 
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
@@ -340,9 +337,9 @@ static const int kBadgeRightMargin = 10;
 
         _numberOfIMELines = 0;
 
-        _trouter = [[Trouter alloc] init];
-        _trouter.delegate = self;
-        _trouterDragged = NO;
+        _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
+        _semanticHistoryController.delegate = self;
+        _semanticHistoryDragged = NO;
 
         pointer_ = [[PointerController alloc] init];
         pointer_.delegate = self;
@@ -379,6 +376,12 @@ static const int kBadgeRightMargin = 10;
     return self;
 }
 
+- (void)removeAllTrackingAreas {
+    while (self.trackingAreas.count) {
+        [self removeTrackingArea:self.trackingAreas[0]];
+    }
+}
+
 - (void)dealloc {
     [_selection release];
     [_markImage release];
@@ -390,9 +393,7 @@ static const int kBadgeRightMargin = 10;
     [_mouseDownEvent release];
     _mouseDownEvent = nil;
 
-    if (_trackingArea) {
-        [self removeTrackingArea:_trackingArea];
-    }
+    [self removeAllTrackingAreas];
     if ([self isFindingCursor]) {
         [_findCursorWindow close];
     }
@@ -409,7 +410,7 @@ static const int kBadgeRightMargin = 10;
     [_markedTextAttributes release];
     [_markedText release];
 
-    [_trouter release];
+    [_semanticHistoryController release];
 
     [pointer_ release];
     [cursor_ release];
@@ -518,44 +519,45 @@ static const int kBadgeRightMargin = 10;
     return YES;
 }
 
-- (void)viewWillMoveToWindow:(NSWindow *)win
-{
-    if (!win && [self window] && _trackingArea) {
-        [self removeTrackingArea:_trackingArea];
-        _trackingArea = nil;
+- (void)viewWillMoveToWindow:(NSWindow *)win {
+    if (!win && [self window]) {
+        [self removeAllTrackingAreas];
     }
     [super viewWillMoveToWindow:win];
 }
 
-- (void)viewDidMoveToWindow
-{
+- (void)viewDidMoveToWindow {
     [self updateTrackingAreas];
 }
 
 - (void)updateTrackingAreas
 {
-    int trackingOptions;
-
     if ([self window]) {
-        trackingOptions = NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag;
-        if ([[_dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION ||
-            ([NSEvent modifierFlags] & NSCommandKeyMask)) {
-            trackingOptions |= NSTrackingMouseMoved;
-        }
-        if (_trackingArea &&
-            NSEqualRects(_trackingArea.rect, self.visibleRect) &&
-            _trackingArea.options == trackingOptions) {
+        // Do we want to track mouse motions?
+        // Enter and exit events are tracked by the superview and passed down
+        // to us because our frame changes all the time. When our frame
+        // changes, this method is called, which causes mouseExit's to be
+        // missed and spurious mouseEnter's to be called. See issue 3345.
+        BOOL shouldTrack = ([[_dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION ||
+                            ([NSEvent modifierFlags] & NSCommandKeyMask));
+        if (self.trackingAreas.count &&
+            shouldTrack &&
+            NSEqualRects([self.trackingAreas[0] rect], self.visibleRect)) {
             // Nothing would change.
             return;
         }
-        if (_trackingArea) {
-            [self removeTrackingArea:_trackingArea];
+        [self removeAllTrackingAreas];
+        if (shouldTrack) {
+            NSInteger trackingOptions = (NSTrackingInVisibleRect |
+                                         NSTrackingActiveAlways |
+                                         NSTrackingMouseMoved);
+            NSTrackingArea *trackingArea =
+                [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
+                                              options:trackingOptions
+                                                owner:self
+                                             userInfo:nil] autorelease];
+            [self addTrackingArea:trackingArea];
         }
-        _trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
-                                                      options:trackingOptions
-                                                        owner:self
-                                                     userInfo:nil] autorelease];
-        [self addTrackingArea:_trackingArea];
     }
 }
 
@@ -2104,7 +2106,12 @@ NSMutableArray* screens=0;
 
 - (void)keyDown:(NSEvent*)event
 {
-    [self deselect];
+    if (!_selection.live) {
+        // Remove selection when you type, unless the selection is live because it's handy to be
+        // able to scroll up, click, hit a key, and then drag to select to (near) the end. See
+        // issue 3340.
+        [self deselect];
+    }
     static BOOL isFirstInteraction = YES;
     if (isFirstInteraction) {
         iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
@@ -2434,17 +2441,16 @@ NSMutableArray* screens=0;
     return NO;
 }
 
-- (BOOL)canOpenURL:(NSString *)aURLString onLine:(int)line
-{
-    // A URL is openable if Trouter can handle it or if it looks enough like a web URL to pass
-    // muster.
+- (BOOL)canOpenURL:(NSString *)aURLString onLine:(int)line {
+    // A URL is openable if Semantic History can handle it or if it looks enough like a web URL to
+    // pass muster.
     NSString* trimmedURLString;
 
     NSCharacterSet *charsToTrim = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:charsToTrim];
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:line];
-    if ([self.trouter canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
+    if ([self.semanticHistoryController canOpenPath:trimmedURLString workingDirectory:workingDirectory]) {
         return YES;
     }
 
@@ -2541,8 +2547,7 @@ NSMutableArray* screens=0;
     [self updateUnderlinedURLs:event];
 }
 
-- (void)mouseEntered:(NSEvent *)event
-{
+- (void)mouseEntered:(NSEvent *)event {
     [self updateCursor:event];
     [self updateUnderlinedURLs:event];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
@@ -2854,7 +2859,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     dragOk_ = NO;
-    _trouterDragged = NO;
+    _semanticHistoryDragged = NO;
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseUp:event withTouches:_numTouches];
         return;
@@ -2998,7 +3003,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"is three finger click");
         return;
     }
-    // Prevent accidental dragging while dragging trouter item.
+    // Prevent accidental dragging while dragging semantic history item.
     BOOL dragThresholdMet = NO;
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
@@ -3038,13 +3043,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
 
-    if (_mouseDownOnImage &&
-        ([event modifierFlags] & NSCommandKeyMask) &&
-        dragThresholdMet) {
+    if (_mouseDownOnImage && dragThresholdMet) {
         [self _dragImage:_imageBeingClickedOn forEvent:event];
-    } else if (_mouseDownOnSelection == YES &&
-        ([event modifierFlags] & NSCommandKeyMask) &&
-        dragThresholdMet) {
+    } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
         DLog(@"drag and drop a selection");
         // Drag and drop a selection
         NSString *theSelectedText = [self selectedTextWithPad:NO];
@@ -3071,10 +3072,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if (![_selection hasSelection] && pressingCmdOnly && _trouterDragged == NO) {
-        DLog(@"do trouter check");
-        // Only one Trouter check per drag
-        _trouterDragged = YES;
+    if (![_selection hasSelection] && pressingCmdOnly && _semanticHistoryDragged == NO) {
+        DLog(@"do semantic history check");
+        // Only one Semantic History check per drag
+        _semanticHistoryDragged = YES;
 
         // Drag a file handle (only possible when there is no selection).
         URLAction *action = [self urlActionForClickAtX:x y:y];
@@ -3106,8 +3107,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         draggingSession.draggingFormation = NSDraggingFormationNone;
 
         // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
-        _trouterDragged = NO;
-        DLog(@"did trouter drag");
+        _semanticHistoryDragged = NO;
+        DLog(@"did semantic history drag");
 
         return;
 
@@ -3146,19 +3147,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSString *extendedPrefix = [extractor wrappedStringAt:coord
                                                               forward:NO
                                                   respectHardNewlines:NO
-                                                             maxChars:kMaxTrouterPrefixOrSuffix
+                                                             maxChars:kMaxSemanticHistoryPrefixOrSuffix
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES];
                 NSString *extendedSuffix = [extractor wrappedStringAt:coord
                                                               forward:YES
                                                   respectHardNewlines:NO
-                                                             maxChars:kMaxTrouterPrefixOrSuffix
+                                                             maxChars:kMaxSemanticHistoryPrefixOrSuffix
                                                     continuationChars:nil
                                                   convertNullsToSpace:YES];
-                if (![self openTrouterPath:action.string
-                          workingDirectory:action.workingDirectory
-                                    prefix:extendedPrefix
-                                    suffix:extendedSuffix]) {
+                if (![self openSemanticHistoryPath:action.string
+                                  workingDirectory:action.workingDirectory
+                                            prefix:extendedPrefix
+                                            suffix:extendedSuffix]) {
                     [self _findUrlInString:action.string andOpenInBackground:openInBackground];
                 }
                 break;
@@ -3176,29 +3177,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (BOOL)openTrouterPath:(NSString *)path
-       workingDirectory:(NSString *)workingDirectory
-                 prefix:(NSString *)prefix
-                 suffix:(NSString *)suffix {
-    return [self.trouter openPath:path
-                 workingDirectory:workingDirectory
-                    substitutions:[self trouterSubstitutionsWithPrefix:prefix
-                                                                suffix:suffix
-                                                                  path:path
-                                                      workingDirectory:workingDirectory]];
+- (BOOL)openSemanticHistoryPath:(NSString *)path
+               workingDirectory:(NSString *)workingDirectory
+                         prefix:(NSString *)prefix
+                         suffix:(NSString *)suffix {
+    NSDictionary *subs = [self semanticHistorySubstitutionsWithPrefix:prefix
+                                                               suffix:suffix
+                                                                 path:path
+                                                     workingDirectory:workingDirectory];
+    return [self.semanticHistoryController openPath:path
+                                   workingDirectory:workingDirectory
+                                      substitutions:subs];
 }
 
-- (NSDictionary *)trouterSubstitutionsWithPrefix:(NSString *)prefix
-                                          suffix:(NSString *)suffix
-                                            path:(NSString *)path
-                                workingDirectory:(NSString *)workingDirectory {
+- (NSDictionary *)semanticHistorySubstitutionsWithPrefix:(NSString *)prefix
+                                                  suffix:(NSString *)suffix
+                                                    path:(NSString *)path
+                                        workingDirectory:(NSString *)workingDirectory {
     NSMutableDictionary *subs = [[[_delegate textViewVariables] mutableCopy] autorelease];
-    NSDictionary *trouterSubs =
+    NSDictionary *semanticHistorySubs =
         @{ kSemanticHistoryPrefixSubstitutionKey: [prefix stringWithEscapedShellCharacters] ?: @"",
            kSemanticHistorySuffixSubstitutionKey: [suffix stringWithEscapedShellCharacters] ?: @"",
            kSemanticHistoryPathSubstitutionKey: [path stringWithEscapedShellCharacters] ?: @"",
            kSemanticHistoryWorkingDirectorySubstitutionKey: [workingDirectory stringWithEscapedShellCharacters] ?: @"" };
-    [subs addEntriesFromDictionary:trouterSubs];
+    [subs addEntriesFromDictionary:semanticHistorySubs];
     return subs;
 }
 
@@ -3406,7 +3408,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    int cursorY = [_dataSource absoluteLineNumberOfCursor];
+    int cursorY = [_dataSource absoluteLineNumberOfCursor] - [_dataSource totalScrollbackOverflow];
     int cursorX = [_dataSource cursorX];
     int width = [_dataSource width];
     VT100Terminal *terminal = [_dataSource terminal];
@@ -3723,9 +3725,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (parts.count != 1) {
         return;
     }
-    NSString *unescapedText = parts[0];
-    NSString *text = [unescapedText stringWithEscapedShellCharacters];
-    scpPath = [_dataSource scpPathForFile:text onLine:_selection.lastRange.coordRange.start.y];
+    scpPath = [_dataSource scpPathForFile:parts[0] onLine:_selection.lastRange.coordRange.start.y];
     [_delegate startDownloadOverSCP:scpPath];
 
     NSDictionary *attributes =
@@ -5001,9 +5001,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return _findOnPageHelper.findInProgress;
 }
 
-- (void)setTrouterPrefs:(NSDictionary *)prefs
-{
-    self.trouter.prefs = prefs;
+- (void)setSemanticHistoryPrefs:(NSDictionary *)prefs {
+    self.semanticHistoryController.prefs = prefs;
 }
 
 - (void)setBadgeLabel:(NSString *)badgeLabel {
@@ -5501,9 +5500,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         cappedAtSize:-1];
 }
 
-#pragma mark - Trouter Delegate
+#pragma mark - Semantic History Delegate
 
-- (void)trouterLaunchCoprocessWithCommand:(NSString *)command {
+- (void)semanticHistoryLaunchCoprocessWithCommand:(NSString *)command {
     [_delegate launchCoprocessWithCommand:command];
 }
 
@@ -6588,7 +6587,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                      Y:(double)Y
            doubleWidth:(BOOL)double_width
          overrideColor:(NSColor*)overrideColor
-               context:(CGContextRef)ctx {
+               context:(CGContextRef)ctx
+       backgroundColor:(NSColor *)backgroundColor {
     screen_char_t temp = screenChar;
     temp.foregroundColor = fgColor;
     temp.fgGreen = fgGreen;
@@ -6606,7 +6606,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           bgselected:NO
                                width:[_dataSource width]
                           indexRange:NSMakeRange(0, 1)
-                             bgColor:nil
+                             bgColor:backgroundColor
                              matches:nil
                              storage:storage];
     if (run) {
@@ -7061,7 +7061,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                Y:cursorOrigin.y + cursorSize.height - _lineHeight
                      doubleWidth:double_width
                    overrideColor:overrideColor
-                         context:ctx];
+                         context:ctx
+                 backgroundColor:nil];
             _useBrightBold = saved;
         } else {
             // Non-inverted cursor or cursor is frame
@@ -7095,7 +7096,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                Y:cursorOrigin.y + cursorSize.height - _lineHeight
                      doubleWidth:double_width
                    overrideColor:nil
-                         context:ctx];
+                         context:ctx
+                 backgroundColor:bgColor];  // Pass bgColor so min contrast can apply
         }
     }
 }
@@ -7589,14 +7591,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *prefix = [extractor wrappedStringAt:coord
                                           forward:NO
                               respectHardNewlines:respectHardNewlines
-                                         maxChars:kMaxTrouterPrefixOrSuffix
+                                         maxChars:kMaxSemanticHistoryPrefixOrSuffix
                                 continuationChars:continuationCharsCoords
                               convertNullsToSpace:NO];
 
     NSString *suffix = [extractor wrappedStringAt:coord
                                           forward:YES
                               respectHardNewlines:respectHardNewlines
-                                         maxChars:kMaxTrouterPrefixOrSuffix
+                                         maxChars:kMaxSemanticHistoryPrefixOrSuffix
                                 continuationChars:continuationCharsCoords
                               convertNullsToSpace:NO];
 
@@ -7620,10 +7622,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         workingDirectory = @"";
     }
     // First, try to locate an existing filename at this location.
-    NSString *filename = [self.trouter pathOfExistingFileFoundWithPrefix:possibleFilePart1
-                                                                  suffix:possibleFilePart2
-                                                        workingDirectory:workingDirectory
-                                                    charsTakenFromPrefix:&fileCharsTaken];
+    NSString *filename =
+        [self.semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
+                                                                   suffix:possibleFilePart2
+                                                         workingDirectory:workingDirectory
+                                                     charsTakenFromPrefix:&fileCharsTaken];
 
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
@@ -7643,9 +7646,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 
-        action.fullPath = [self.trouter getFullPath:filename
-                                   workingDirectory:workingDirectory
-                                         lineNumber:NULL];
+        action.fullPath = [self.semanticHistoryController getFullPath:filename
+                                                     workingDirectory:workingDirectory
+                                                           lineNumber:NULL];
         action.workingDirectory = workingDirectory;
         return action;
     }
@@ -7678,8 +7681,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return action;
     }
 
-    if (_trouter.activatesOnAnyString) {
-        // Just do smart selection and let Trouter take it.
+    if (_semanticHistoryController.activatesOnAnyString) {
+        // Just do smart selection and let Semantic History take it.
         smartMatch = [self smartSelectAtX:x
                                         y:y
                                        to:&smartRange
@@ -7820,10 +7823,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     NSString *workingDirectory = [_dataSource workingDirectoryOnLine:line];
-    if (![self openTrouterPath:trimmedURLString
-              workingDirectory:workingDirectory
-                        prefix:prefix
-                        suffix:suffix]) {
+    if (![self openSemanticHistoryPath:trimmedURLString
+                      workingDirectory:workingDirectory
+                                prefix:prefix
+                                suffix:suffix]) {
         [self _findUrlInString:aURLString
               andOpenInBackground:background];
     }
@@ -8475,6 +8478,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
     return NSDragOperationEvery;
+}
+
+#pragma mark - Selection Scroll
+
+- (void)selectionScrollWillStart {
+    PTYScroller *scroller = (PTYScroller *)self.enclosingScrollView.verticalScroller;
+    scroller.userScroll = YES;
 }
 
 @end

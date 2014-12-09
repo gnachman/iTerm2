@@ -10,28 +10,28 @@
 #import "CommandHistory.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
+#import "iTermSemanticHistoryPrefsController.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 #import "SmartSelectionController.h"
 #import "TriggerController.h"
-#import "TrouterPrefsController.h"
 
 @interface ProfilesAdvancedPreferencesViewController () <
     NSTableViewDataSource,
     NSTableViewDelegate,
     SmartSelectionDelegate,
     TriggerDelegate,
-    TrouterPrefsControllerDelegate>
+    iTermSemanticHistoryPrefsControllerDelegate>
 @end
 
 @implementation ProfilesAdvancedPreferencesViewController {
     IBOutlet TriggerController *_triggerWindowController;
     IBOutlet SmartSelectionController *_smartSelectionWindowController;
-    IBOutlet TrouterPrefsController *_trouterPrefController;
+    IBOutlet iTermSemanticHistoryPrefsController *_semanticHistoryPrefController;
     IBOutlet NSButton *_removeHost;
     IBOutlet NSTableView *_boundHostsTableView;
-    
+
     IBOutlet NSControl *_boundHostTitle;
     IBOutlet NSControl *_boundHostLabel;
     IBOutlet NSControl *_addBoundHost;
@@ -52,7 +52,7 @@
 - (NSArray *)keysForBulkCopy {
     NSArray *keys = @[ KEY_TRIGGERS,
                        KEY_SMART_SELECTION_RULES,
-                       KEY_TROUTER,
+                       KEY_SEMANTIC_HISTORY,
                        KEY_BOUND_HOSTS ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
@@ -83,7 +83,7 @@
     NSString *selectedGuid = [self.delegate profilePreferencesCurrentProfile][KEY_GUID];
     _triggerWindowController.guid = selectedGuid;
     _smartSelectionWindowController.guid = selectedGuid;
-    _trouterPrefController.guid = selectedGuid;
+    _semanticHistoryPrefController.guid = selectedGuid;
     [_boundHostsTableView reloadData];
 }
 
@@ -139,10 +139,10 @@
     [NSApp endSheet:[_smartSelectionWindowController window]];
 }
 
-#pragma mark - Trouter
+#pragma mark - Semantic History
 
-- (void)trouterPrefsControllerSettingChanged:(TrouterPrefsController *)controller {
-    [self setObject:[controller prefs] forKey:KEY_TROUTER];
+- (void)semanticHistoryPrefsControllerSettingChanged:(iTermSemanticHistoryPrefsController *)controller {
+    [self setObject:[controller prefs] forKey:KEY_SEMANTIC_HISTORY];
 }
 
 #pragma mark - Bound Hosts

@@ -1,21 +1,22 @@
 #import <Cocoa/Cocoa.h>
 #import "CharacterRun.h"
+#import "iTerm.h"
+#import "iTermColorMap.h"
 #import "iTermIndicatorsHelper.h"
+#import "iTermSemanticHistoryController.h"
 #import "LineBuffer.h"
-#import "PTYFontInfo.h"
 #import "PasteEvent.h"
 #import "PointerController.h"
 #import "PreferencePanel.h"
+#import "PTYFontInfo.h"
 #import "ScreenChar.h"
-#import "Trouter.h"
-#import "iTerm.h"
-#import "iTermColorMap.h"
 #import "VT100Output.h"
 #include <sys/time.h>
 
 @class CRunStorage;
 @class iTermFindCursorView;
 @class iTermSelection;
+@protocol iTermSemanticHistoryControllerDelegate;
 @class MovingAverage;
 @class PTYScroller;
 @class PTYScrollView;
@@ -27,7 +28,6 @@
 @class ThreeFingerTapGestureRecognizer;
 @class VT100Screen;
 @class VT100Terminal;
-@protocol TrouterDelegate;
 
 // Number of pixels margin on left and right edge.
 #define MARGIN  5
@@ -140,11 +140,11 @@ typedef enum {
 @end
 
 @interface PTYTextView : NSView <
+  iTermColorMapDelegate,
+  iTermSemanticHistoryControllerDelegate,
   NSDraggingDestination,
   NSTextInputClient,
-  PointerControllerDelegate,
-  TrouterDelegate,
-  iTermColorMapDelegate>
+  PointerControllerDelegate>
 
 // Current selection
 @property(nonatomic, readonly) iTermSelection *selection;
@@ -249,7 +249,7 @@ typedef enum {
 @property(nonatomic, readonly) NSColor *dimmedDefaultBackgroundColor;
 
 // Semantic history. TODO: Move this into PTYSession.
-@property(nonatomic, readonly) Trouter *trouter;
+@property(nonatomic, readonly) iTermSemanticHistoryController *semanticHistoryController;
 
 // A text badge shown in the top right of the window
 @property(nonatomic, copy) NSString *badgeLabel;
@@ -314,7 +314,7 @@ typedef enum {
 - (void)growSelectionRight;
 
 // Updates the preferences for semantic history.
-- (void)setTrouterPrefs:(NSDictionary *)prefs;
+- (void)setSemanticHistoryPrefs:(NSDictionary *)prefs;
 
 // Various accessors (TODO: convert as many as possible into properties)
 - (void)setFont:(NSFont*)aFont
@@ -413,10 +413,10 @@ typedef enum {
 - (IBAction)installShellIntegration:(id)sender;
 
 // Open a semantic history path.
-- (BOOL)openTrouterPath:(NSString *)path
-       workingDirectory:(NSString *)workingDirectory
-                 prefix:(NSString *)prefix
-                 suffix:(NSString *)suffix;
+- (BOOL)openSemanticHistoryPath:(NSString *)path
+               workingDirectory:(NSString *)workingDirectory
+                         prefix:(NSString *)prefix
+                         suffix:(NSString *)suffix;
 
 @end
 

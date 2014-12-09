@@ -114,6 +114,9 @@ static NSDate* lastResizeDate_;
     [_currentAnnouncement dismiss];
     [_currentAnnouncement release];
     [_announcements release];
+    while (self.trackingAreas.count) {
+        [self removeTrackingArea:self.trackingAreas[0]];
+    }
     [super dealloc];
 }
 
@@ -243,6 +246,32 @@ static NSDate* lastResizeDate_;
 {
     shuttingDown_ = YES;
     [timer_ invalidate];
+}
+
+// See comments in -[PTYTextView updateTrackingAreas] about why this is done.
+- (void)updateTrackingAreas {
+    if ([self window]) {
+        int trackingOptions;
+        trackingOptions = (NSTrackingMouseEnteredAndExited |
+                           NSTrackingActiveAlways |
+                           NSTrackingEnabledDuringMouseDrag);
+        while (self.trackingAreas.count) {
+            [self removeTrackingArea:self.trackingAreas[0]];
+        }
+        NSTrackingArea *trackingArea = [[[NSTrackingArea alloc] initWithRect:self.bounds
+                                                                     options:trackingOptions
+                                                                       owner:self
+                                                                    userInfo:nil] autorelease];
+        [self addTrackingArea:trackingArea];
+    }
+}
+
+- (void)mouseEntered:(NSEvent *)theEvent {
+    [[session_ textview] mouseEntered:theEvent];
+}
+
+- (void)mouseExited:(NSEvent *)theEvent {
+    [[session_ textview] mouseEntered:theEvent];
 }
 
 - (void)rightMouseDown:(NSEvent*)event
@@ -453,6 +482,7 @@ static NSDate* lastResizeDate_;
 }
 
 #pragma mark NSDraggingDestination protocol
+
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
 {
     PTYSession *movingSession = [[MovePaneController sharedInstance] session];
@@ -501,11 +531,19 @@ static NSDate* lastResizeDate_;
     return NSDragOperationMove;
 }
 
-- (BOOL)performDragOperation:(id < NSDraggingInfo >)sender
-{
+- (BOOL)performDragOperation:(id < NSDraggingInfo >)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"iTermDragPanePBType"] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+            if (session_.tab.sessions.count == 1) {
+                // If you dragged a session from a tab with split panes onto itself then do nothing.
+                // But if you drag a session onto itself in a tab WITHOUT split panes, then move the
+                // whole window.
+                [[MovePaneController sharedInstance] moveWindowBy:[sender draggedImageLocation]];
+            }
+            // Regardless, we must say the drag failed because otherwise
+            // draggedImage:endedAt:operation: will try to move the session to its own window.
             [[MovePaneController sharedInstance] setDragFailed:YES];
+            return NO;
         }
         SplitSessionHalf half = [splitSelectionView_ half];
         [splitSelectionView_ removeFromSuperview];

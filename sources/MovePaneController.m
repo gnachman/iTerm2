@@ -5,9 +5,10 @@
 //  Created by George Nachman on 8/26/11.
 
 #import "MovePaneController.h"
-#import "PTYSession.h"
+#import "DebugLogging.h"
 #import "iTermController.h"
 #import "PseudoTerminal.h"
+#import "PTYSession.h"
 #import "PTYTab.h"
 #import "SessionView.h"
 #import "TmuxController.h"
@@ -62,6 +63,16 @@
         [term setSplitSelectionMode:NO excludingSession:nil move:NO];
     }
     session_ = nil;
+}
+
+- (void)moveWindowBy:(NSPoint)point {
+    NSWindow *window = session_.tab.realParentWindow.window;
+    NSPoint origin = window.frame.origin;
+    origin.x += point.x;
+    origin.y += point.y;
+    DLog(@"Move window from %@ to %@",
+         NSStringFromPoint(window.frame.origin), NSStringFromPoint(origin));
+    [window setFrameOrigin:origin];
 }
 
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point

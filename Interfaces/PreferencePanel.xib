@@ -77,7 +77,7 @@
                 <outlet property="window" destination="5910" id="5916"/>
             </connections>
         </customObject>
-        <customObject id="5949" customClass="TrouterPrefsController">
+        <customObject id="5949" userLabel="iTerm Semantic History Prefs Controller" customClass="iTermSemanticHistoryPrefsController">
             <connections>
                 <outlet property="action_" destination="5934" id="5950"/>
                 <outlet property="caveat_" destination="5957" id="5960"/>
@@ -795,7 +795,7 @@ Gw
                                             </textFieldCell>
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                         </tableColumn>
-                                        <tableColumn width="42" minWidth="10" maxWidth="3.4028234663852886e+38" id="4jW-vz-58j">
+                                        <tableColumn width="41" minWidth="10" maxWidth="3.4028234663852886e+38" id="4jW-vz-58j">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Instant">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -1126,7 +1126,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
-                                    <rect key="frame" x="0.0" y="0.0" width="533" height="19"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="532" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -1559,9 +1559,9 @@ DQ
                 <outlet property="_boundHostsTableView" destination="69M-P0-mzb" id="ZAz-IG-Mss"/>
                 <outlet property="_removeBoundHost" destination="gfT-wm-XMY" id="Z6O-cE-9Bh"/>
                 <outlet property="_removeHost" destination="gfT-wm-XMY" id="nhN-4I-zB3"/>
+                <outlet property="_semanticHistoryPrefController" destination="5949" id="VpU-Nh-h9R"/>
                 <outlet property="_smartSelectionWindowController" destination="5863" id="gCD-sP-3vG"/>
                 <outlet property="_triggerWindowController" destination="5797" id="s19-Zp-Wt4"/>
-                <outlet property="_trouterPrefController" destination="5949" id="Nbl-jf-RaM"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="XlF-0B-sbO"/>
                 <outlet property="view" destination="prV-vq-Wo2" id="GbH-gF-fmF"/>
             </connections>
