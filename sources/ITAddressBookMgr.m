@@ -668,7 +668,12 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
     // is used to ensure that guids are unique across all files.
     NSMutableArray *newProfiles = [NSMutableArray array];
     NSMutableSet *guids = [NSMutableSet set];
+    NSMutableArray *fileNames = [NSMutableArray array];
     for (NSString *file in [fileManager enumeratorAtPath:path]) {
+        [fileNames addObject:file];
+    }
+    [fileNames sortUsingSelector:@selector(compare:)];
+    for (NSString *file in fileNames) {
         if ([file hasPrefix:@"."]) {
             continue;
         }
