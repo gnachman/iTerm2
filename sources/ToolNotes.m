@@ -24,6 +24,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
 
         NSScrollView *scrollview = [[[NSScrollView alloc]
                                      initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)] autorelease];
+        [scrollview setBorderType:NSBezelBorder];
         [scrollview setHasVerticalScroller:YES];
         [scrollview setHasHorizontalScroller:NO];
         [scrollview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];

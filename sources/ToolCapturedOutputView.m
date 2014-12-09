@@ -65,6 +65,7 @@ static const CGFloat kMargin = 4;
         scrollView_ = [[NSScrollView alloc] initWithFrame:CGRectZero];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
+        [scrollView_ setBorderType:NSBezelBorder];
         NSSize contentSize = [scrollView_ contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 

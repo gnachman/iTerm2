@@ -61,16 +61,17 @@ static const CGFloat kHelpMargin = 5;
         [clear_ setAutoresizingMask:NSViewMinYMargin];
         [self addSubview:clear_];
         [clear_ release];
-        
+
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0,
                                                                      searchField_.frame.size.height + kMargin,
                                                                      frame.size.width,
                                                                      frame.size.height - kButtonHeight - 2 * kMargin - searchField_.frame.size.height)];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
+        [scrollView_ setBorderType:NSBezelBorder];
         NSSize contentSize = [self contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        
+
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col;
         col = [[[NSTableColumn alloc] initWithIdentifier:@"commands"] autorelease];
@@ -88,13 +89,13 @@ static const CGFloat kHelpMargin = 5;
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
         [searchField_ setArrowHandler:tableView_];
-        
+
         [scrollView_ setDocumentView:tableView_];
         [self addSubview:scrollView_];
-        
+
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
-        
+
         // Save the bold version of the table's default font
         NSFontManager *fontManager = [NSFontManager sharedFontManager];
         NSFont *font = [[col dataCell] font];
@@ -221,11 +222,11 @@ static const CGFloat kHelpMargin = 5;
     NSArray *reversed = [[expanded reverseObjectEnumerator] allObjects];
     entries_ = [reversed retain];
     [tableView_ reloadData];
-    
+
     [self computeFilteredEntries];
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
-    
+
     NSResponder *firstResponder = [[tableView_ window] firstResponder];
     if (firstResponder != tableView_) {
         [tableView_ scrollToEndOfDocument:nil];

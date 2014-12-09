@@ -35,6 +35,7 @@ static const CGFloat kMargin = 4;
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
+        [scrollView_ setBorderType:NSBezelBorder];
         NSSize contentSize = [scrollView_ contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
@@ -52,7 +53,7 @@ static const CGFloat kMargin = 4;
         [tableView_ setDelegate:self];
 
         [tableView_ setDoubleAction:@selector(doubleClickOnTableView:)];
-        [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [tableView_ setAutoresizingMask:NSViewWidthSizable];
 
 
         [scrollView_ setDocumentView:tableView_];
@@ -93,12 +94,19 @@ static const CGFloat kMargin = 4;
     minuteRefreshTimer_ = nil;
 }
 
+- (NSSize)contentSize {
+    NSSize size = [scrollView_ contentSize];
+    size.height = [[tableView_ headerView] frame].size.height;
+    size.height += [tableView_ numberOfRows] * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
+    return size;
+}
+
 - (void)relayout
 {
     NSRect frame = self.frame;
     [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
     [scrollView_ setFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
-    NSSize contentSize = [scrollView_ contentSize];
+    NSSize contentSize = [self contentSize];
     [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
 
@@ -138,7 +146,7 @@ static const CGFloat kMargin = 4;
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-	[[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
 }
 
 - (void)doubleClickOnTableView:(id)sender

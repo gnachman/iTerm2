@@ -54,7 +54,7 @@ static const CGFloat kMargin = 4;
     if (x > 0 && x < [[self signalNames] count]) {
         return x;
     }
-    
+
     NSArray *signalNames = [self signalNames];
     NSUInteger index = [signalNames indexOfObject:signalName];
     if (index == NSNotFound) {
@@ -71,7 +71,7 @@ static const CGFloat kMargin = 4;
         [self setUsesDataSource:YES];
         [self setCompletes:YES];
         [self setDataSource:self];
-        
+
         [[self cell] setControlSize:NSSmallControlSize];
         [[self cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
     }
@@ -141,24 +141,24 @@ static const CGFloat kMargin = 4;
     if ([uncompletedString hasPrefix:@"SIG"]) {
         uncompletedString = [uncompletedString substringFromIndex:3];
     }
-    
+
     if ([uncompletedString length] == 0) {
         return @"";
     }
-    
+
     NSArray *signalNames = [[self class] signalNames];
     int x = [uncompletedString intValue];
     if (x > 0 && x < [signalNames count]) {
         return uncompletedString;
     }
-    
+
     for (int i = 1; i < [signalNames count]; i++) {
         if ([signalNames[i] hasPrefix:uncompletedString]) {
             // Found a prefix match
             return signalNames[i];
         }
     }
-    
+
     return nil;
 }
 
@@ -197,15 +197,16 @@ static const CGFloat kMargin = 4;
         [signal_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
         [signal_ sizeToFit];
         [self addSubview:signal_];
-        
+
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
+        [scrollView_ setBorderType:NSBezelBorder];
         NSSize contentSize = [scrollView_ contentSize];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        
+
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-        NSTableColumn *col;        
+        NSTableColumn *col;
         col = [[NSTableColumn alloc] initWithIdentifier:@"name"];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
@@ -224,13 +225,13 @@ static const CGFloat kMargin = 4;
         [[col dataCell] setFont:theFont];
         [[col headerCell] setStringValue:@"pid"];
         [col release];
-        
+
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
-        
+
         [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        
-        
+
+
         [scrollView_ setDocumentView:tableView_];
         [self addSubview:scrollView_];
 

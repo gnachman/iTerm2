@@ -67,6 +67,7 @@ static const CGFloat kHelpMargin = 5;
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
         [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [scrollView_ setBorderType:NSBezelBorder];
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
         NSTableColumn *col;
