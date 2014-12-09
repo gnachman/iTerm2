@@ -192,6 +192,9 @@
 #define KEY_SEMANTIC_HISTORY                 @"Semantic History"
 #define KEY_BOUND_HOSTS                      @"Bound Hosts"
 
+// Dynamic Profiles (not in prefs ui)
+#define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
+
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also
 // stored in saved arrangements.
