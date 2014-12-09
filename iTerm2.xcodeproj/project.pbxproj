@@ -5929,7 +5929,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
@@ -6629,7 +6629,7 @@
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				"OTHER_CFLAGS[arch=*]" = "-DITERM_DEBUG=1";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
@@ -6690,7 +6690,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				"OTHER_CFLAGS[arch=*]" = "";
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
@@ -6750,7 +6750,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/ThirdParty/Growl.framework\"",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
