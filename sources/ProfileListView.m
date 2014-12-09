@@ -458,11 +458,8 @@ const CGFloat kDefaultTagsWidth = 80;
     NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: tagColor,
                                        NSFontAttributeName: self.tagFont };
 
-    NSString *defaultCheckmark;
     if (isDefault) {
-        defaultCheckmark = @"★ ";
-    } else {
-        defaultCheckmark = @"";
+        name = [@"★ " stringByAppendingString:name];
     }
 
     if (tags.length) {
@@ -491,32 +488,6 @@ const CGFloat kDefaultTagsWidth = 80;
                                          tag:[bookmark[KEY_TAGS] componentsJoinedByString:@", "]
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
                                    isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]];
-        NSColor* textColor;
-        if ([[tableView_ selectedRowIndexes] containsIndex:rowIndex]) {
-            textColor = [NSColor whiteColor];
-        } else {
-            textColor = [NSColor blackColor];
-        }
-        NSDictionary* plainAttributes = @{ NSForegroundColorAttributeName: textColor,
-                                           NSFontAttributeName: self.mainFont };
-        NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: textColor,
-                                           NSFontAttributeName: self.tagFont };
-
-        NSString *defaultCheckmark;
-        if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[ProfileModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
-            defaultCheckmark = @"★ ";
-        } else {
-            defaultCheckmark = @"";
-        }
-        NSString *name = [NSString stringWithFormat:@"%@%@\n", defaultCheckmark, [bookmark objectForKey:KEY_NAME]];
-        NSString* tags = [[bookmark objectForKey:KEY_TAGS] componentsJoinedByString:@", "];
-
-        NSMutableAttributedString *theAttributedString = [[[NSMutableAttributedString alloc] initWithString:name
-                                                                                                 attributes:plainAttributes] autorelease];
-
-        [theAttributedString appendAttributedString:[[[NSAttributedString alloc] initWithString:tags
-                                                                                     attributes:smallAttributes] autorelease]];
-        return theAttributedString;
     } else if (aTableColumn == commandColumn_) {
         if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
             return @"Login shell";
