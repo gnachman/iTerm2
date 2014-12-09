@@ -3405,7 +3405,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    int cursorY = [_dataSource absoluteLineNumberOfCursor];
+    int cursorY = [_dataSource absoluteLineNumberOfCursor] - [_dataSource totalScrollbackOverflow];
     int cursorX = [_dataSource cursorX];
     int width = [_dataSource width];
     VT100Terminal *terminal = [_dataSource terminal];

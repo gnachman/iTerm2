@@ -4663,15 +4663,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (BOOL)textViewShouldPlaceCursorAt:(VT100GridCoord)coord verticalOk:(BOOL *)verticalOk {
+    if (coord.y < _screen.numberOfLines - _screen.height ||
+        coord.x < 0 ||
+        coord.x >= _screen.width ||
+        coord.y >= _screen.numberOfLines) {
+        // Click must be in the live area and not in a margin.
+        return NO;
+    }
     if (_commandRange.start.x < 0) {
-      // Always ok to move cursor when not at the command line
-      *verticalOk = YES;
-      return YES;
+        // Not at a command prompt; no restrictions.
+        *verticalOk = YES;
+        return YES;
     } else {
-      // Ok to move to any char in current command, but no up or down arrows please.
-      NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(_commandRange), coord);
-      *verticalOk = NO;
-      return (order != NSOrderedDescending);
+        // At the command prompt. Ok to move to any char within current command, but no up or down
+        // arrows please.
+        NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(_commandRange),
+                                                       coord);
+        *verticalOk = NO;
+        return (order != NSOrderedDescending);
     }
 }
 
