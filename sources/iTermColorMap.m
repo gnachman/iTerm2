@@ -57,10 +57,11 @@ const int kColorMapAnsiBrightModifier = 8;
                             green:(int)green
                              blue:(int)blue
                              sRGB:(BOOL)sRGB {
+    int rgb = ((red & 0xff) << 16) + ((green & 0xff) << 8) + (blue & 0xff);
     if (sRGB)
-        return kColorMapSRGB24bitBase + ((red & 0xff) << 16) + ((green & 0xff) << 8) + (blue & 0xff);
+        return kColorMapSRGB24bitBase + rgb;
     else
-        return kColorMap24bitBase + ((red & 0xff) << 16) + ((green & 0xff) << 8) + (blue & 0xff);
+        return kColorMap24bitBase + rgb;
 }
 
 - (id)init {
