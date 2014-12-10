@@ -1949,6 +1949,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (PTYSession *aSession in [tab sessions]) {
         [tmuxController registerSession:aSession withPane:[aSession tmuxPane] inWindow:window];
         [aSession setTmuxController:tmuxController];
+        [self setDimmingForSession:aSession];
     }
     [self endTmuxOriginatedResize];
 }
@@ -3709,8 +3710,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[aSession textview] setNeedsDisplay:YES];
         [aSession updateDisplay];
         [aSession scheduleUpdateIn:kFastTimerIntervalSec];
-                [self setDimmingForSession:aSession];
-                [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
+        [self setDimmingForSession:aSession];
+        [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
     }
 
     for (PTYSession *session in [self allSessions]) {

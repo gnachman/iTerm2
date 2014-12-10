@@ -1902,7 +1902,7 @@ static const int kMaxScreenRows = 4096;
     if (func) {
         if ([func isEqualToString:@"1"]) {
             // Adjusts a color modifier. This attempts to roughly follow the pattern that Eterm
-            // estabilshed.
+            // defines.
             //
             // ESC ] 6 ; 1 ; class ; color ; attribute ; value BEL
             // ESC ] 6 ; 1 ; class ; color ; action BEL
