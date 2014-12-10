@@ -95,7 +95,8 @@
 // uniqueId lazily auto-assigns a unique id unless you assign it a value first. It is never 0.
 @property(nonatomic, assign) int uniqueId;
 @property(nonatomic, readonly) BOOL isMaximized;
-
+// Sessions ordered in a similar-to-reading-order fashion.
+@property(nonatomic, readonly) NSArray *orderedSessions;
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup
 // activities, their contents can be rescued.

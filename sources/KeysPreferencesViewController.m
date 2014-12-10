@@ -29,6 +29,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSPopUpButton *_leftCommandButton;
     IBOutlet NSPopUpButton *_rightCommandButton;
 
+    IBOutlet NSPopUpButton *_switchPaneModifierButton;
     IBOutlet NSPopUpButton *_switchTabModifierButton;
     IBOutlet NSPopUpButton *_switchWindowModifierButton;
 
@@ -78,7 +79,12 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     info.onChange = ^() { [self startEventTapIfNecessary]; };
 
     // ---------------------------------------------------------------------------------------------
-    // Modifiers for switching tabs.
+    // Modifiers for switching tabs/windows/panes.
+    info = [self defineControl:_switchPaneModifierButton
+                           key:kPreferenceKeySwitchPaneModifier
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^() { [self postModifierChangedNotification]; };
+
     info = [self defineControl:_switchTabModifierButton
                            key:kPreferenceKeySwitchTabModifier
                           type:kPreferenceInfoTypePopup];

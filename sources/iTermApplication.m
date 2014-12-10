@@ -35,6 +35,7 @@
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
+#import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
 
@@ -128,6 +129,24 @@
             }
 
             const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+            if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]]) {
+                int digit = [[event charactersIgnoringModifiers] intValue];
+                if (!digit) {
+                    digit = [[event characters] intValue];
+                }
+                NSArray *orderedSessions = currentTerminal.currentTab.orderedSessions;
+                int numSessions = [orderedSessions count];
+                if (digit == 9 && numSessions > 0) {
+                    // Modifier+9: Switch to last split pane if there are fewer than 9.
+                    [currentTerminal.currentTab setActiveSession:[orderedSessions lastObject]];
+                    return;
+                }
+                if (digit >= 1 && digit <= numSessions) {
+                    // Modifier+number: Switch to split pane by number.
+                    [currentTerminal.currentTab setActiveSession:orderedSessions[digit - 1]];
+                    return;
+                }
+            }
             if (([event modifierFlags] & mask) == [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]) {
                 int digit = [[event charactersIgnoringModifiers] intValue];
                 if (!digit) {
