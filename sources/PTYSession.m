@@ -459,9 +459,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                [self class], self, [_screen width], [_screen height]];
 }
 
-- (void)cancelTimers
-{
-    [_view cancelTimers];
+- (void)cancelTimers {
     [_updateTimer invalidate];
     [_antiIdleTimer invalidate];
 }

@@ -38,6 +38,8 @@ typedef NS_ENUM(int, iTermPreferencesModifierTag) {
     kPreferencesModifierTagCommandAndOption = 6,  // both cmd and opt at the same time
     kPreferencesModifierTagLeftCommand = 7,
     kPreferencesModifierTagRightCommand = 8,
+
+    kPreferenceModifierTagNone = 9,  // No modifier assigned (not available for all popups)
 };
 
 // General
@@ -94,6 +96,7 @@ extern NSString *const kPreferenceKeyLeftOptionRemapping;
 extern NSString *const kPreferenceKeyRightOptionRemapping;
 extern NSString *const kPreferenceKeyLeftCommandRemapping;
 extern NSString *const kPreferenceKeyRightCommandRemapping;
+extern NSString *const kPreferenceKeySwitchPaneModifier;
 extern NSString *const kPreferenceKeySwitchTabModifier;
 extern NSString *const kPreferenceKeySwitchWindowModifier;
 extern NSString *const kPreferenceKeyHotkeyEnabled;

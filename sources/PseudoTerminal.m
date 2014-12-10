@@ -725,11 +725,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // Do not assume that [self window] is valid here. It may have been freed.
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
-    // Cancel any SessionView timers.
-    for (PTYSession* aSession in [self allSessions]) {
-        [[aSession view] cancelTimers];
-    }
-
     // Release all our sessions
     NSTabViewItem *aTabViewItem;
     for (; [TABVIEW numberOfTabViewItems]; )  {
