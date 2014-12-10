@@ -35,22 +35,19 @@
 @class SplitSelectionView;
 @class SessionTitleView;
 
-@interface SessionView : NSView <SessionTitleViewDelegate> 
+@interface SessionView : NSView <SessionTitleViewDelegate>
+@property(nonatomic, retain) PTYSession *session;
+// Unique per-process id of view, used for ordering them in PTYTab.
+@property(nonatomic, assign) int viewId;
 
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;
 + (void)windowDidResize;
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session;
-- (void)dealloc;
-- (PTYSession*)session;
-- (void)setSession:(PTYSession*)session;
 - (void)setDimmed:(BOOL)isDimmed;
 - (FindViewController*)findViewController;
-- (int)viewId;
-- (void)setViewId:(int)id;
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed;
 - (void)updateDim;
-- (BOOL)backgroundDimmed;
 - (void)saveFrameSize;
 - (void)restoreFrameSize;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move;
