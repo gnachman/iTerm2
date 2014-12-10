@@ -35,35 +35,7 @@
 @class SplitSelectionView;
 @class SessionTitleView;
 
-@interface SessionView : NSView <SessionTitleViewDelegate> {
-    PTYSession* session_;
-    BOOL dim_;
-    BOOL backgroundDimmed_;
-
-    float currentDimmingAmount_;
-    NSDate* previousUpdate_;
-    float changePerSecond_;
-    float targetDimmingAmount_;
-    NSTimer* timer_;
-    BOOL shuttingDown_;
-
-    // Find window
-    FindViewController* findView_;
-
-    // Unique per-process id of view, used for ordering them in PTYTab.
-    int viewId_;
-
-    // Saved size for unmaximizing.
-    NSSize savedSize_;
-
-    // When moving a pane, a view is put over all sessions to help the user
-    // choose how to split the destination.
-    SplitSelectionView *splitSelectionView_;
-
-    BOOL showTitle_;
-    SessionTitleView *title_;
-	NSCursor *cursor_;
-}
+@interface SessionView : NSView <SessionTitleViewDelegate> 
 
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;

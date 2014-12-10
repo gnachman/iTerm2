@@ -931,7 +931,21 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                  pane1, pane2];
 
     NSArray *commands = @[ [gateway_ dictionaryForCommand:swapPaneCommand
+                                           responseTarget:nil
+                                         responseSelector:NULL
+                                           responseObject:nil
+                                                    flags:0],
+                           [gateway_ dictionaryForCommand:@"list-windows -F \"#{window_id} #{window_layout}\""
                                            responseTarget:self
+                                         responseSelector:@selector(parseListWindowsResponseAndUpdateLayouts:)
+                                           responseObject:nil
+                                                    flags:0] ];
+    [gateway_ sendCommandList:commands];
+}
+
+- (void)toggleZoomForPane:(int)pane {
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"resize-pane -Z -t %%%d", pane]
+                                           responseTarget:nil
                                          responseSelector:NULL
                                            responseObject:nil
                                                     flags:0],

@@ -60,9 +60,6 @@
     // Dim background windows.
     IBOutlet NSButton *_dimBackgroundWindows;
 
-    // Animate dimming.
-    IBOutlet NSButton *_animateDimming;
-
     // Window border.
     IBOutlet NSButton *_showWindowBorder;
 
@@ -157,11 +154,6 @@
 
     info = [self defineControl:_dimBackgroundWindows
                            key:kPreferenceKeyDimBackgroundWindows
-                          type:kPreferenceInfoTypeCheckbox];
-    info.onChange = ^() { [self postRefreshNotification]; };
-
-    info = [self defineControl:_animateDimming
-                           key:kPreferenceKeyAnimateDimming
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 

@@ -488,6 +488,8 @@ typedef enum {
 
 - (NSDictionary *)arrangementWithContents:(BOOL)includeContents;
 
+- (void)toggleTmuxZoom;
+
 #pragma mark - Private for use by Scripting category
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;

@@ -92,6 +92,8 @@ static const CGFloat kButtonSize = 17;
 
         [self addCursorRect:NSMakeRect(0, 0, frame.size.width, frame.size.height)
                      cursor:[NSCursor arrowCursor]];
+
+        [self updateTextColor];
     }
     return self;
 }
@@ -199,7 +201,10 @@ static const CGFloat kButtonSize = 17;
 - (void)setDimmingAmount:(double)value
 {
     dimmingAmount_ = value;
-    [self setNeedsDisplay:YES];
+    [self updateTextColor];
+}
+
+- (void)updateTextColor {
     CGFloat whiteLevel = 0;
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
     switch (preferredStyle) {
@@ -223,6 +228,7 @@ static const CGFloat kButtonSize = 17;
             break;
     }
     [label_ setTextColor:[NSColor colorWithCalibratedWhite:whiteLevel alpha:1]];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent
