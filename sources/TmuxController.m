@@ -931,7 +931,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                  pane1, pane2];
 
     NSArray *commands = @[ [gateway_ dictionaryForCommand:swapPaneCommand
-                                           responseTarget:self
+                                           responseTarget:nil
                                          responseSelector:NULL
                                            responseObject:nil
                                                     flags:0],
