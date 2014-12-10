@@ -1735,7 +1735,7 @@ NSMutableArray* screens=0;
 {
     // The range of chars in the line that need to be drawn.
     NSRange charRange = NSMakeRange(MAX(0, (rect.origin.x - MARGIN) / _charWidth),
-                                    (rect.origin.x + rect.size.width - MARGIN) / _charWidth);
+                                    ceil((rect.origin.x + rect.size.width - MARGIN) / _charWidth));
     charRange.length -= charRange.location;
     if (charRange.location + charRange.length > [_dataSource width]) {
         charRange.length = [_dataSource width] - charRange.location;
