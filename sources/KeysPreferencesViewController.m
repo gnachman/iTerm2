@@ -83,17 +83,32 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     info = [self defineControl:_switchPaneModifierButton
                            key:kPreferenceKeySwitchPaneModifier
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [self postModifierChangedNotification]; };
+    info.onChange = ^() {
+        [self ensureUniqunessOfModifierForButton:_switchPaneModifierButton
+                                       inButtons:@[ _switchTabModifierButton,
+                                                    _switchWindowModifierButton ]];
+        [self postModifierChangedNotification];
+    };
 
     info = [self defineControl:_switchTabModifierButton
                            key:kPreferenceKeySwitchTabModifier
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [self postModifierChangedNotification]; };
+    info.onChange = ^() {
+        [self ensureUniqunessOfModifierForButton:_switchTabModifierButton
+                                       inButtons:@[ _switchPaneModifierButton,
+                                                    _switchWindowModifierButton ]];
+        [self postModifierChangedNotification];
+    };
 
     info = [self defineControl:_switchWindowModifierButton
                            key:kPreferenceKeySwitchWindowModifier
                           type:kPreferenceInfoTypePopup];
-    info.onChange = ^() { [self postModifierChangedNotification]; };
+    info.onChange = ^() {
+        [self ensureUniqunessOfModifierForButton:_switchWindowModifierButton
+                                       inButtons:@[ _switchTabModifierButton,
+                                                    _switchPaneModifierButton ]];
+        [self postModifierChangedNotification];
+    };
 
     // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_hotkeyEnabled
@@ -118,6 +133,18 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                 settingChanged:^(id sender) { [self hotkeyProfileDidChange]; }
                         update:^BOOL { [self populateHotKeyProfilesMenu]; return YES; }];
     [self populateHotKeyProfilesMenu];
+}
+
+- (void)ensureUniqunessOfModifierForButton:(NSPopUpButton *)buttonThatChanged
+                                 inButtons:(NSArray *)buttons {
+    if (buttonThatChanged.selectedTag == kPreferenceModifierTagNone) {
+        return;
+    }
+    for (NSPopUpButton *button in buttons) {
+        if (button.selectedTag == buttonThatChanged.selectedTag) {
+            [button selectItemWithTag:kPreferenceModifierTagNone];
+        }
+    }
 }
 
 - (void)hotkeyProfileDidChange {

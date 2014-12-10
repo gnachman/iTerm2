@@ -5004,12 +5004,15 @@ DQ
                 <popUpButton verticalHuggingPriority="750" id="4118">
                     <rect key="frame" x="163" y="190" width="72" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4129">
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4132" id="4129">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
-                        <menu key="menu" title="OtherViews" id="4130">
+                        <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4130">
                             <items>
-                                <menuItem title="⌥" tag="5" id="4132">
+                                <menuItem tag="9" id="4132">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌥" tag="5" id="kEx-j4-xkm">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
                                 <menuItem title="⌘" tag="4" id="4133">
@@ -5029,12 +5032,15 @@ DQ
                 <popUpButton verticalHuggingPriority="750" id="4269">
                     <rect key="frame" x="163" y="160" width="72" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="⌘⌥" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="6" imageScaling="proportionallyDown" inset="2" selectedItem="4273" id="4270">
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="4274" id="4270">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
-                        <menu key="menu" title="OtherViews" id="4271">
+                        <menu key="menu" title="OtherViews" autoenablesItems="NO" id="4271">
                             <items>
-                                <menuItem title="⌥" tag="5" id="4274">
+                                <menuItem tag="9" id="4274">
+                                    <modifierMask key="keyEquivalentModifierMask"/>
+                                </menuItem>
+                                <menuItem title="⌥" tag="5" id="XvI-gy-pDy">
                                     <modifierMask key="keyEquivalentModifierMask"/>
                                 </menuItem>
                                 <menuItem title="⌘" tag="4" id="4272">
@@ -5090,10 +5096,10 @@ DQ
                 <popUpButton verticalHuggingPriority="750" id="LXv-KO-6t6">
                     <rect key="frame" x="163" y="219" width="72" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" selectedItem="dAC-MA-Mtf" id="T7I-ty-osf">
+                    <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="9" imageScaling="proportionallyDown" inset="2" autoenablesItems="NO" selectedItem="dAC-MA-Mtf" id="T7I-ty-osf">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
-                        <menu key="menu" title="OtherViews" id="G8M-3E-Bit">
+                        <menu key="menu" title="OtherViews" autoenablesItems="NO" id="G8M-3E-Bit">
                             <items>
                                 <menuItem tag="9" id="dAC-MA-Mtf">
                                     <modifierMask key="keyEquivalentModifierMask"/>

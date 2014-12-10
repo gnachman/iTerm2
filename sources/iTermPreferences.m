@@ -386,7 +386,10 @@ static NSMutableDictionary *gObservers;
             
         case kPreferencesModifierTagEitherOption:
             return NSAlternateKeyMask;
-            
+
+        case kPreferenceModifierTagNone:
+            return NSUIntegerMax;
+
         default:
             NSLog(@"Unexpected value for maskForModifierTag: %d", tag);
             return NSCommandKeyMask | NSAlternateKeyMask;
