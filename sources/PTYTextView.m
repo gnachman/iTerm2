@@ -682,10 +682,7 @@ static const int kBadgeRightMargin = 10;
             }
             break;
         case ColorMode24bit:
-            return [iTermColorMap keyFor8bitRed:theIndex
-                                          green:green
-                                           blue:blue
-                                           sRGB:[iTermAdvancedSettingsModel useSRGBColors]];
+            return [iTermColorMap keyFor8bitRed:theIndex green:green blue:blue];
         case ColorModeNormal:
             // Render bold text as bright. The spec (ECMA-48) describes the intense
             // display setting (esc[1m) as "bold or bright". We make it a

@@ -31,19 +31,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
-                         blue:(int)blue
-                         sRGB:(BOOL)sRGB {
-    if (sRGB) {
-        return [NSColor colorWithSRGBRed:red / 255.0
-                                   green:green / 255.0
-                                    blue:blue / 255.0
-                                   alpha:1];
-    } else {
-        return [NSColor colorWithCalibratedRed:red / 255.0
-                                         green:green / 255.0
-                                          blue:blue / 255.0
-                                         alpha:1];
-    }
+                         blue:(int)blue {
+    return [NSColor colorWithSRGBRed:red / 255.0
+                               green:green / 255.0
+                                blue:blue / 255.0
+                               alpha:1];
 }
 
 + (NSColor *)colorWith8BitRed:(int)red
@@ -52,23 +44,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                        muting:(double)muting
                 backgroundRed:(CGFloat)bgRed
               backgroundGreen:(CGFloat)bgGreen
-               backgroundBlue:(CGFloat)bgBlue
-                         sRGB:(BOOL)sRGB {
+               backgroundBlue:(CGFloat)bgBlue {
     CGFloat r = (red / 255.0) * (1 - muting) + bgRed * muting;
     CGFloat g = (green / 255.0) * (1 - muting) + bgGreen * muting;
     CGFloat b = (blue / 255.0) * (1 - muting) + bgBlue * muting;
 
-    if (sRGB) {
-        return [NSColor colorWithSRGBRed:r
-                                   green:g
-                                    blue:b
-                                   alpha:1];
-    } else {
-        return [NSColor colorWithCalibratedRed:r
-                                         green:g
-                                          blue:b
-                                         alpha:1];
-    }
+    return [NSColor colorWithSRGBRed:r
+                               green:g
+                                blue:b
+                               alpha:1];
 }
 
 + (NSColor *)calibratedColorWithRed:(double)r
