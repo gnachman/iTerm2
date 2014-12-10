@@ -210,8 +210,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     // Post a notification
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabClosing"
                                                         object:self
@@ -219,7 +218,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     PtyLog(@"PTYTab dealloc");
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     for (PTYSession* aSession in [self sessions]) {
-        [[aSession view] cancelTimers];
         [aSession setTab:nil];
     }
     [root_ release];
@@ -228,7 +226,6 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         SessionView* aView = [idMap_ objectForKey:key];
 
         PTYSession* aSession = [aView session];
-        [[aSession view] cancelTimers];
         [aSession cancelTimers];
         [aSession setTab:nil];
     }
@@ -921,8 +918,7 @@ static NSString* FormatRect(NSRect r) {
     [newSession updateDisplay];
 }
 
-- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
-{
+- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {
     PtyLog(@"PTYTab showLiveSession:%p", liveSession);
     [replaySession cancelTimers];
     [liveSession setProfile:[replaySession profile]];

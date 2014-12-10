@@ -45,7 +45,6 @@
 - (PTYSession*)session;
 - (void)setSession:(PTYSession*)session;
 - (void)setDimmed:(BOOL)isDimmed;
-- (void)cancelTimers;
 - (FindViewController*)findViewController;
 - (int)viewId;
 - (void)setViewId:(int)id;
