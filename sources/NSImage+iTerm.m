@@ -49,4 +49,57 @@
     return destination;
 }
 
+- (CGContextRef)bitmapContextWithStorage:(NSMutableData *)data {
+  NSSize size = self.size;
+  NSInteger bytesPerRow = size.width * 4;
+  NSUInteger storageNeeded = bytesPerRow * size.height;
+  [data setLength:storageNeeded];
+
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  CGContextRef context = CGBitmapContextCreate((void *)data.bytes,
+                                               size.width,
+                                               size.height,
+                                               8,
+                                               bytesPerRow,
+                                               colorSpace,
+                                               kCGImageAlphaPremultipliedLast);
+  if (!context) {
+    return NULL;
+  }
+
+  CGColorSpaceRelease(colorSpace);
+
+  return context;
+}
+
+- (NSImage *)imageWithColor:(NSColor *)color {
+  NSSize size = self.size;
+  NSRect rect = NSZeroRect;
+  rect.size = size;
+
+  // Create a bitmap context.
+  NSMutableData *data = [NSMutableData data];
+  CGContextRef context = [self bitmapContextWithStorage:data];
+
+  // Draw myself into that context.
+  CGContextDrawImage(context, rect, [self CGImageForProposedRect:NULL context:nil hints:nil]);
+
+  // Now draw over it with |color|.
+  CGContextSetFillColorWithColor(context, [color CGColor]);
+  CGContextSetBlendMode(context, kCGBlendModeSourceAtop);
+  CGContextFillRect(context, rect);
+
+  // Extract the resulting image into the graphics context.
+  CGImageRef image = CGBitmapContextCreateImage(context);
+
+  // Convert to NSImage
+  NSImage *coloredImage = [[[NSImage alloc] initWithCGImage:image size:size] autorelease];
+
+  // Release memory.
+  CGContextRelease(context);
+  CGImageRelease(image);
+
+  return coloredImage;
+}
+
 @end

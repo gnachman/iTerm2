@@ -8,6 +8,7 @@
 
 #import "SessionTitleView.h"
 #import "iTermPreferences.h"
+#import "NSImage+iTerm.h"
 
 const double kBottomMargin = 0;
 static const CGFloat kButtonSize = 17;
@@ -50,28 +51,29 @@ static const CGFloat kButtonSize = 17;
         [closeButton_ release];
 
         x += closeButton_.frame.size.width + kMargin;
-        menuButton_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 42, 16.0) pullsDown:YES];
+        // Popup buttons want to have huge margins on the sides. This one look best right up against
+        // the right margin, though. So I'll make it as small as it can be and then push it right so
+        // some of it is clipped.
+        menuButton_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 36, 16.0) pullsDown:YES];
         [(NSPopUpButtonCell *)[menuButton_ cell] setBezeled:NO];
-        [[menuButton_ cell] setArrowPosition:NSPopUpArrowAtBottom];
+        [[menuButton_ cell] setArrowPosition:NSPopUpNoArrow];
         [menuButton_ setBordered:NO];
         [menuButton_ addItemWithTitle:@""];
         NSMenuItem *item = [menuButton_ itemAtIndex:0];
-        [item setImage:[NSImage imageNamed:@"NSActionTemplate"]];
-        [item setOnStateImage:nil];
-        [item setMixedStateImage:nil];
+        [self setImagesForActionItem:item];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(popupWillOpen:)
                                                      name:NSPopUpButtonWillPopUpNotification
                                                    object:menuButton_];
         [menuButton_ addItemWithTitle:@"Foo"];
 
-        menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.frame.size.width - kMargin,
+        menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.frame.size.width + 6,
                                        (frame.size.height - menuButton_.frame.size.height) / 2 + 1,
                                        menuButton_.frame.size.width,
                                        menuButton_.frame.size.height);
         [menuButton_ setAutoresizingMask:NSViewMinXMargin];
         [self addSubview:menuButton_];
-        
+
         label_ = [[[NSTextField alloc] initWithFrame:NSMakeRect(x, 0, menuButton_.frame.origin.x - x - kMargin, frame.size.height)] autorelease];
         [label_ setStringValue:@""];
         [label_ setBezeled:NO];
@@ -94,6 +96,22 @@ static const CGFloat kButtonSize = 17;
     return self;
 }
 
+- (void)setImagesForActionItem:(NSMenuItem *)item {
+    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    CGFloat whiteLevel = 0;
+    switch (preferredStyle) {
+        case TAB_STYLE_LIGHT:
+            whiteLevel = 0.45;
+            break;
+        case TAB_STYLE_DARK:
+            whiteLevel = 0.45;
+            break;
+    }
+    NSColor *color = [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
+    NSImage *theImage = [[NSImage imageNamed:@"NSActionTemplate"] imageWithColor:color];
+    [item setImage:theImage];
+}
+
 - (void)dealloc
 {
     [title_ release];
@@ -106,9 +124,7 @@ static const CGFloat kButtonSize = 17;
         NSMenu *menu = [delegate_ menu];
         NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""] autorelease];
         [menu insertItem:item atIndex:0];
-        [item setImage:[NSImage imageNamed:@"NSActionTemplate"]];
-        [item setOnStateImage:nil];
-        [item setMixedStateImage:nil];
+        [self setImagesForActionItem:item];
         [menuButton_ setMenu:menu];
     }
 }
@@ -141,7 +157,7 @@ static const CGFloat kButtonSize = 17;
                 whiteLevel = 0.58;
             } else {
                 // selected
-                whiteLevel = 0.85;
+                whiteLevel = 0.70;
             }
             break;
         case TAB_STYLE_DARK:
