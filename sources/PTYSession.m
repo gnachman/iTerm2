@@ -3557,6 +3557,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     self.tmuxMode = TMUX_CLIENT;
 }
 
+- (void)toggleTmuxZoom {
+    [_tmuxController toggleZoomForPane:self.tmuxPane];
+}
+
 - (void)resizeFromArrangement:(NSDictionary *)arrangement
 {
     [self setWidth:[[arrangement objectForKey:SESSION_ARRANGEMENT_COLUMNS] intValue]

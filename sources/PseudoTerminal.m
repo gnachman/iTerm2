@@ -4667,7 +4667,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)toggleMaximizeActivePane
 {
-    if ([[self currentTab] hasMaximizedPane]) {
+    if (self.currentTab.activeSession.isTmuxClient) {
+        [self.currentTab.activeSession toggleTmuxZoom];
+    } else if ([[self currentTab] hasMaximizedPane]) {
         [[self currentTab] unmaximize];
     } else {
         [[self currentTab] maximize];

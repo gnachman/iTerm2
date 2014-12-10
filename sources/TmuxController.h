@@ -142,5 +142,6 @@ extern NSString *kTmuxControllerSessionWasRenamed;
                    andTerminal:(PseudoTerminal *)term;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
+- (void)toggleZoomForPane:(int)pane;
 
 @end

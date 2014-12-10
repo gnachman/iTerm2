@@ -1466,6 +1466,8 @@ static BOOL hasBecomeActive = NO;
         if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
             // Things get too complex if you allow this. It crashes.
             return NO;
+        } else if ([[[[[iTermController sharedInstance] currentTerminal] currentTab] activeSession] isTmuxClient]) {
+            return YES;
         } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane]) {
             return YES;
         } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMultipleSessions]) {
