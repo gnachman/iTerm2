@@ -1,0 +1,80 @@
+//
+//  iTermWindowShortcutLabelTitlebarAccessoryViewController.m
+//  iTerm2
+//
+//  Created by George Nachman on 12/11/14.
+//
+//
+
+#import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
+#import "iTermPreferences.h"
+#import "NSStringITerm.h"
+#import "PSMTabBarControl.h"
+
+@implementation iTermWindowShortcutLabelTitlebarAccessoryViewController {
+    IBOutlet NSTextField *_label;
+}
+
+- (void)awakeFromNib {
+    self.layoutAttribute = NSLayoutAttributeRight;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(modifiersDidChange:)
+                                                 name:kPSMModifierChangedNotification
+                                               object:nil];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
+
+- (void)setOrdinal:(int)ordinal {
+    _ordinal = ordinal;
+    [self updateLabel];
+}
+
+- (void)updateLabel {
+    NSString *mods = [self modifiersString];
+    if (_ordinal == 0 || !mods) {
+        _label.stringValue = @"";
+    } else {
+        _label.stringValue = [NSString stringWithFormat:@"%@%d", mods, _ordinal];
+    }
+}
+
+- (NSString *)modifiersString {
+    switch ([iTermPreferences intForKey:kPreferenceKeySwitchWindowModifier]) {
+        case kPreferenceModifierTagNone:
+            return nil;
+            break;
+
+        case kPreferencesModifierTagEitherCommand:
+            return [NSString stringForModifiersWithMask:NSCommandKeyMask];
+            break;
+
+        case kPreferencesModifierTagEitherOption:
+            return [NSString stringForModifiersWithMask:NSAlternateKeyMask];
+            break;
+
+        case kPreferencesModifierTagCommandAndOption:
+            return [NSString stringForModifiersWithMask:(NSCommandKeyMask | NSAlternateKeyMask)];
+            break;
+    }
+
+    return @"";
+}
+
+- (void)setIsMain:(BOOL)value {
+    _isMain = value;
+    [self updateTextColor];
+}
+
+- (void)updateTextColor {
+    _label.textColor = _isMain ? [NSColor windowFrameTextColor] : [NSColor colorWithWhite:0.67 alpha:1];
+}
+
+- (void)modifiersDidChange:(NSNotification *)notification {
+    [self updateLabel];
+}
+
+@end

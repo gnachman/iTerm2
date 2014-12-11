@@ -28,6 +28,7 @@
 #import "iTermTabBarControlView.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
+#import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
@@ -289,6 +290,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     // Should the toolbelt be visible?
     BOOL shouldShowToolbelt_;
+
+    iTermWindowShortcutLabelTitlebarAccessoryViewController *_shortcutAccessoryViewController;
 }
 
 @synthesize shouldShowToolbelt = shouldShowToolbelt_;
@@ -696,6 +699,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
     self.terminalGuid = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
+
+    if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
+        _shortcutAccessoryViewController =
+            [[iTermWindowShortcutLabelTitlebarAccessoryViewController alloc] initWithNibName:@"iTermWindowShortcutAccessoryView"
+                                                                                      bundle:nil];
+    }
+    if ((self.window.styleMask & NSTitledWindowMask) && _shortcutAccessoryViewController) {
+        [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+    }
+    _shortcutAccessoryViewController.ordinal = number_ + 1;
 }
 
 - (void)finishToolbeltInitialization {
@@ -754,6 +767,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [_terminalGuid release];
     [lastArrangement_ release];
     [_divisionView release];
+    [_shortcutAccessoryViewController release];
     [super dealloc];
 }
 
@@ -991,11 +1005,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return nil;
 }
 
-- (NSScreen*)screen
-{
+- (NSScreen*)screen {
     NSArray* screens = [NSScreen screens];
+    if (!haveScreenPreference_) {
+        return self.window.deepestScreen;
+    }
     if ([screens count] > screenNumber_) {
-        return [screens objectAtIndex:screenNumber_];
+        return screens[screenNumber_];
     } else {
         return [NSScreen mainScreen];
     }
@@ -1452,7 +1468,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             tmuxId = [NSString stringWithFormat:@" [%@]",
                       [[[self currentSession] tmuxController] clientName]];
         }
-        title = [NSString stringWithFormat:@"%d. %@%@", number_+1, title, tmuxId];
+        NSString *windowNumber = @"";
+        if (!_shortcutAccessoryViewController ||
+            !(self.window.styleMask & NSTitledWindowMask)) {
+            windowNumber = [NSString stringWithFormat:@"%d. ", number_ + 1];
+        }
+        title = [NSString stringWithFormat:@"%@%@%@", windowNumber, title, tmuxId];
     }
 
     // In bug 2593, we see a crazy thing where setting the window title right
@@ -2306,8 +2327,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                       userInfo:nil];
 }
 
-- (void)windowDidBecomeKey:(NSNotification *)aNotification
-{
+- (void)windowDidBecomeKey:(NSNotification *)aNotification {
     if (!_isHotKeyWindow) {
         [self maybeHideHotkeyWindow];
     }
@@ -2618,8 +2638,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self canonicalizeWindowFrame];
 }
 
-- (void)windowDidResignKey:(NSNotification *)aNotification
-{
+- (void)windowDidResignKey:(NSNotification *)aNotification {
     for (PTYSession *aSession in [self allSessions]) {
         if ([[aSession textview] isFindingCursor]) {
             [[aSession textview] endFindCursor];
@@ -2728,8 +2747,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)windowDidResignMain:(NSNotification *)aNotification
-{
+- (void)windowDidBecomeMain:(NSNotification *)notification {
+    _shortcutAccessoryViewController.isMain = YES;
+}
+
+- (void)windowDidResignMain:(NSNotification *)aNotification {
+    _shortcutAccessoryViewController.isMain = NO;
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
     [self maybeHideHotkeyWindow];
@@ -3132,6 +3155,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         oldFrame_ = self.window.frame;
         oldFrameSizeIsBogus_ = NO;
         savedWindowType_ = windowType_;
+        if ([_shortcutAccessoryViewController respondsToSelector:@selector(removeFromParentViewController)]) {
+            [_shortcutAccessoryViewController removeFromParentViewController];
+        }
         windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
         self.window.alphaValue = 0;
@@ -3150,6 +3176,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
         }
         [self.window setFrame:oldFrame_ display:YES];
+        if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
+            [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+        }
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
     [self.window setHasShadow:(windowType_ == WINDOW_TYPE_NORMAL)];

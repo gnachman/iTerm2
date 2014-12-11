@@ -1357,6 +1357,14 @@
 		A663013319D0864C004AF81C /* SCEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012719D0864C004AF81C /* SCEvents.m */; };
 		A663013419D0864C004AF81C /* SCEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012719D0864C004AF81C /* SCEvents.m */; };
 		A663013519D0864C004AF81C /* SCEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = A663012719D0864C004AF81C /* SCEvents.m */; };
+		A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */; };
+		A66A1FA91A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */; };
+		A66A1FAA1A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */; };
+		A66A1FAB1A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */; };
+		A66A1FAC1A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */; };
+		A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
+		A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
+		A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */ = {isa = PBXBuildFile; fileRef = A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */; };
 		A671C067192981D000A7F796 /* NSStringCategoryTest.h in Headers */ = {isa = PBXBuildFile; fileRef = A671C065192981D000A7F796 /* NSStringCategoryTest.h */; };
 		A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
 		A671C069192981D000A7F796 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
@@ -2311,6 +2319,9 @@
 		A663012519D0864C004AF81C /* SCEventListenerProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCEventListenerProtocol.h; path = SCEvents/Source/SCEventListenerProtocol.h; sourceTree = "<group>"; };
 		A663012619D0864C004AF81C /* SCEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCEvents.h; path = SCEvents/Source/SCEvents.h; sourceTree = "<group>"; };
 		A663012719D0864C004AF81C /* SCEvents.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SCEvents.m; path = SCEvents/Source/SCEvents.m; sourceTree = "<group>"; };
+		A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.h; sourceTree = "<group>"; };
+		A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.m; sourceTree = "<group>"; };
+		A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermWindowShortcutAccessoryView.xib; path = Interfaces/iTermWindowShortcutAccessoryView.xib; sourceTree = "<group>"; };
 		A671C065192981D000A7F796 /* NSStringCategoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringCategoryTest.h; sourceTree = "<group>"; };
 		A671C066192981D000A7F796 /* NSStringCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringCategoryTest.m; sourceTree = "<group>"; };
 		A67D0D111A2EE12A003A8B35 /* AboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AboutWindow.xib; path = Interfaces/AboutWindow.xib; sourceTree = "<group>"; };
@@ -3028,6 +3039,7 @@
 				A67D0D2E1A2EE12A003A8B35 /* PseudoTerminal.xib */,
 				A67D0D2F1A2EE12A003A8B35 /* SplitPanel.xib */,
 				A67D0D301A2EE12A003A8B35 /* TmuxDashboard.xib */,
+				A66A1FAD1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib */,
 			);
 			name = "Interface Builder Files";
 			sourceTree = "<group>";
@@ -3735,6 +3747,8 @@
 				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
+				A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */,
+				A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -4115,6 +4129,7 @@
 				A663012919D0864C004AF81C /* SCConstants.h in Headers */,
 				1D6ED94B19AEA20D005A7799 /* PTYWindow.h in Headers */,
 				1D6ED94C19AEA20D005A7799 /* VT100CSIParser.h in Headers */,
+				A66A1FA91A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */,
 				1D6ED94D19AEA20D005A7799 /* VT100Screen.h in Headers */,
 				1D6ED94E19AEA20D005A7799 /* CaptureTrigger.h in Headers */,
 				1D6ED94F19AEA20D005A7799 /* DirectoriesPopup.h in Headers */,
@@ -4273,6 +4288,7 @@
 				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
 				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
 				A6C7DE52199F3087001E5C75 /* PseudoTerminal+Scripting.h in Headers */,
+				A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */,
 				1DABA03319253FEA00A228D8 /* PasswordTrigger.h in Headers */,
 				A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */,
 				A6E74761188C679C005355CF /* iTermExposeView.h in Headers */,
@@ -4661,6 +4677,7 @@
 				A67D0D671A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
 				1D6ED9B519AEA20D005A7799 /* bell.png in Resources */,
 				1D6ED9B719AEA20D005A7799 /* SoftDivider.png in Resources */,
+				A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
 				A67D0D881A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
 				1D6ED9B819AEA20D005A7799 /* wrap_to_bottom.png in Resources */,
 				1D6ED9B919AEA20D005A7799 /* wrap_to_top.png in Resources */,
@@ -4781,6 +4798,7 @@
 				A67D0D601A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A67D0D541A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
 				A67D0D5A1A2EE12A003A8B35 /* iTerm.strings in Resources */,
+				A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
 				1DC13AC01886146B00034DAE /* mark_err@2x.png in Resources */,
 				A67D0D511A2EE12A003A8B35 /* FindView.xib in Resources */,
 				A67D0D7E1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
@@ -4857,6 +4875,7 @@
 				A697101318DFA7D5007E901D /* closebutton.png in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
+				A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
@@ -5121,6 +5140,7 @@
 				1D6EDA8419AEA20D005A7799 /* SplitSelectionView.m in Sources */,
 				1DA1C1F71A2E49A3007381D3 /* NSTableColumn+iTerm.m in Sources */,
 				1D6EDA8519AEA20D005A7799 /* FutureMethods.m in Sources */,
+				A66A1FAC1A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */,
 				1D6EDA8619AEA20D005A7799 /* ToolbeltView.m in Sources */,
 				1D6EDA8719AEA20D005A7799 /* iTermExposeTabView.m in Sources */,
 				1D6EDA8819AEA20D005A7799 /* ToolProfiles.m in Sources */,
@@ -5273,6 +5293,7 @@
 				A6A13ABD18C34F6400B241ED /* VT100XtermParser.m in Sources */,
 				A6E77FA41A2A8A5A009B1CB6 /* NSData+iTerm.m in Sources */,
 				1DABA03519253FEA00A228D8 /* PasswordTrigger.m in Sources */,
+				A66A1FAB1A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */,
 				A69B4581196B989D00F5444D /* iTermAlphaColorWell.m in Sources */,
 				1DB83959192E9A610037E548 /* ToolCapturedOutputView.m in Sources */,
 				A6C7DE5F19A469D6001E5C75 /* NSColor+Scripting.m in Sources */,
@@ -5706,6 +5727,7 @@
 				1D29732814082676004C5DBE /* MovePaneController.m in Sources */,
 				1DA1C1F51A2E49A3007381D3 /* NSTableColumn+iTerm.m in Sources */,
 				1D29732C14082A52004C5DBE /* SplitSelectionView.m in Sources */,
+				A66A1FAA1A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */,
 				1D9F6AB9140C9DC4009B5CD4 /* FutureMethods.m in Sources */,
 				1DE8DC8A1415513A00F83147 /* ToolbeltView.m in Sources */,
 				A6E74758188C66CF005355CF /* iTermExposeTabView.m in Sources */,
