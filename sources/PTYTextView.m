@@ -74,10 +74,6 @@ static const double kCharWidthFractionOffset = 0.35;
 
 //#define DEBUG_DRAWING
 
-// Drag-drop operation flags for different possible dropping operations.
-const unsigned int kUploadDragOperation = NSDragOperationCopy;
-const unsigned int kPasteDragOperation = NSDragOperationGeneric;
-
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
 
 // Notifications posted when hostname lookups finish. Notifications are used to
@@ -4525,15 +4521,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 // Called when our drop area is entered
 //
-- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
-    return [self dragOperationForSender:sender];
+- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
+    // NOTE: draggingUpdated: calls this method because they need the same implementation.
+    int numValid = -1;
+    NSDragOperation operation = [self dragOperationForSender:sender numberOfValidItems:&numValid];
+    if (numValid != sender.numberOfValidItemsForDrop) {
+        sender.numberOfValidItemsForDrop = numValid;
+    }
+    return operation;
 }
 
 //
 // Called when the dragged object is moved within our drop area
 //
 - (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
-    return [self dragOperationForSender:sender];
+    return [self draggingEntered:sender];
 }
 
 //
@@ -4593,7 +4595,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
     int dropLine = dropPoint.y / _lineHeight;
     SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
-    NSArray *filenames = [pasteboard filenamesOnPasteboard];
+    NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:NO];
     if ([types containsObject:NSFilenamesPboardType] && filenames.count) {
         // This is all so the mouse cursor will change to a plain arrow instead of the
         // drop target cursor.
@@ -4613,7 +4615,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([types containsObject:NSFilenamesPboardType]) {
         // Filenames were dragged.
-        NSArray *filenames = [pasteboard filenamesOnPasteboard];
+        NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:YES];
         if (filenames.count) {
             BOOL pasteNewline = NO;
 
@@ -4656,10 +4658,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
     NSDragOperation dragOperation = [sender draggingSourceOperationMask];
-    if (dragOperation == kUploadDragOperation) {  // Option-drag
+    if (dragOperation == NSDragOperationCopy) {  // Option-drag to copy
         NSPoint windowDropPoint = [sender draggingLocation];
         return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
-    } else if (dragOperation & kPasteDragOperation) {  // Generic drag; either regular or cmd-drag
+    } else if (dragOperation & NSDragOperationGeneric) {  // Generic drag; either regular or cmd-drag
         return [self pasteValuesOnPasteboard:draggingPasteboard
                                cdToDirectory:(dragOperation == NSDragOperationGeneric)];
     } else {
@@ -7751,10 +7753,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
 }
 
+- (NSDragOperation)dragOperationForSender:(id<NSDraggingInfo>)sender {
+    return [self dragOperationForSender:sender numberOfValidItems:NULL];
+}
+
+
 // Returns the drag operation to use. It is determined from the type of thing
 // being dragged, the modifiers pressed, and where it's being dropped.
-- (NSDragOperation)dragOperationForSender:(id <NSDraggingInfo>)sender
-{
+- (NSDragOperation)dragOperationForSender:(id<NSDraggingInfo>)sender
+                       numberOfValidItems:(int *)numberOfValidItemsPtr {
     NSPasteboard *pb = [sender draggingPasteboard];
     NSArray *types = [pb types];
     NSPoint windowDropPoint = [sender draggingLocation];
@@ -7773,18 +7780,42 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // value by masking out all but one bit (if the sender allows modifiers
     // to affect dragging).
     NSDragOperation sourceMask = [sender draggingSourceOperationMask];
-    NSDragOperation both = (kUploadDragOperation | kPasteDragOperation);
+    NSDragOperation both = (NSDragOperationCopy | NSDragOperationGeneric);  // Copy or paste
     if ((sourceMask & both) == both && pasteOK) {
         // No modifier key was pressed and pasting is OK, so select the paste operation.
-        return kPasteDragOperation;
-    } else if ((sourceMask & kUploadDragOperation) && uploadOK) {
+        NSArray *filenames = [pb filenamesOnPasteboardWithShellEscaping:YES];
+        if (numberOfValidItemsPtr) {
+            if (filenames.count) {
+                *numberOfValidItemsPtr = filenames.count;
+            } else {
+                *numberOfValidItemsPtr = 1;
+            }
+        }
+        return NSDragOperationGeneric;
+    } else if ((sourceMask & NSDragOperationCopy) && uploadOK) {
         // Either Option was pressed or the sender allows Copy but not Generic,
         // and it's ok to upload, so select the upload operation.
-        return kUploadDragOperation;
-    } else if ((sourceMask & kPasteDragOperation) && pasteOK) {
-        // Either Command was prsesed or the sender allows Generic but not
+        if (numberOfValidItemsPtr){
+            *numberOfValidItemsPtr = [[pb filenamesOnPasteboardWithShellEscaping:NO] count];
+        }
+        return NSDragOperationCopy;
+    } else if ((sourceMask == NSDragOperationGeneric) && uploadOK) {
+        // Cmd-drag only allows one filename.
+        NSArray *filenames = [pb filenamesOnPasteboardWithShellEscaping:YES];
+        if (filenames.count == 0) {
+            // This shouldn't happen.
+            return NSDragOperationNone;
+        } else if (numberOfValidItemsPtr) {
+            *numberOfValidItemsPtr = MIN(1, filenames.count);
+        }
+        return NSDragOperationGeneric;
+    } else if ((sourceMask & NSDragOperationGeneric) && pasteOK) {
+        // Either Command was pressed or the sender allows Generic but not
         // copy, and it's ok to paste, so select the paste operation.
-        return kPasteDragOperation;
+        if (numberOfValidItemsPtr) {
+            *numberOfValidItemsPtr = 1;
+        }
+        return NSDragOperationGeneric;
     } else {
         // No luck.
         return NSDragOperationNone;

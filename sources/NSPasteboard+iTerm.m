@@ -7,10 +7,11 @@
 //
 
 #import "NSPasteboard+iTerm.h"
+#import "NSStringITerm.h"
 
 @implementation NSPasteboard (iTerm)
 
-- (NSArray *)filenamesOnPasteboard {
+- (NSArray *)filenamesOnPasteboardWithShellEscaping:(BOOL)escape {
     NSMutableArray *results = [NSMutableArray array];
     NSArray *propertyList = [self propertyListForType:NSFilenamesPboardType];
     for (NSString *filename in propertyList) {
@@ -23,6 +24,9 @@
             continue;
         }
 
+        if (escape) {
+            filename = [filename stringWithEscapedShellCharacters];
+        }
         [results addObject:filename];
     }
     return results;

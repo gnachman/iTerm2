@@ -10,6 +10,6 @@
 
 @interface NSPasteboard (iTerm)
 
-- (NSArray *)filenamesOnPasteboard;
+- (NSArray *)filenamesOnPasteboardWithShellEscaping:(BOOL)escape;
 
 @end
