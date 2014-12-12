@@ -135,7 +135,7 @@ static const int kMaxScreenRows = 4096;
     self = [super init];
     if (self) {
         _output = [[VT100Output alloc] init];
-        _encoding = NSASCIIStringEncoding;
+        _encoding = _canonicalEncoding = NSASCIIStringEncoding;
         _parser = [[VT100Parser alloc] init];
         _parser.encoding = _encoding;
 
@@ -171,6 +171,13 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setEncoding:(NSStringEncoding)encoding {
+    [self setEncoding:encoding canonical:YES];
+}
+
+- (void)setEncoding:(NSStringEncoding)encoding canonical:(BOOL)canonical {
+    if (canonical) {
+        _canonicalEncoding = encoding;
+    }
     _encoding = encoding;
     _parser.encoding = encoding;
 }
@@ -297,6 +304,8 @@ static const int kMaxScreenRows = 4096;
     self.strictAnsiMode = NO;
     self.allowColumnMode = NO;
     receivingFile_ = NO;
+    _encoding = _canonicalEncoding;
+    _parser.encoding = _canonicalEncoding;
     [delegate_ terminalResetPreservingPrompt:preservePrompt];
 }
 
@@ -1323,6 +1332,17 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_SCS3:
             [delegate_ terminalSetCharset:3 toLineDrawingMode:(token->code=='0')];
             break;
+
+        // The parser sets its own encoding property when these codes are parsed because it must
+        // change synchronously, since it also does decoding in its own thread (possibly long before
+        // this happens in the main thread).
+        case ISO2022_SELECT_UTF_8:
+            _encoding = NSUTF8StringEncoding;
+            break;
+        case ISO2022_SELECT_LATIN_1:
+            _encoding = NSISOLatin1StringEncoding;
+            break;
+
         case VT100CSI_SGR:
         case VT100CSI_SM:
             break;

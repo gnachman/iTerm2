@@ -19,7 +19,11 @@
 
 @property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
 @property(nonatomic, copy) NSString *termType;
+// The current encoding. May be changed by ISO2022_* code.
 @property(nonatomic, assign) NSStringEncoding encoding;
+// The "canonical" encoding, which is changed by user preference and never
+// escape code. On reset, we restore to this.
+@property(nonatomic, assign) NSStringEncoding canonicalEncoding;
 @property(nonatomic, readonly) BOOL reportFocus;
 
 @property(nonatomic, readonly) BOOL reverseVideo;
