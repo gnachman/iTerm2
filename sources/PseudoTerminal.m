@@ -2344,6 +2344,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
+    _shortcutAccessoryViewController.isMain = YES;
     if (!_isHotKeyWindow) {
         [self maybeHideHotkeyWindow];
     }

@@ -34,6 +34,7 @@
 }
 
 - (void)updateLabel {
+    [self view];  // Ensure the label exists.
     NSString *mods = [self modifiersString];
     if (_ordinal == 0 || !mods) {
         _label.stringValue = @"";
