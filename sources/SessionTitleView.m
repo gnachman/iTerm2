@@ -9,6 +9,8 @@
 #import "SessionTitleView.h"
 #import "iTermPreferences.h"
 #import "NSImage+iTerm.h"
+#import "NSStringITerm.h"
+#import "PSMTabBarControl.h"
 
 const double kBottomMargin = 0;
 static const CGFloat kButtonSize = 17;
@@ -26,7 +28,14 @@ static const CGFloat kButtonSize = 17;
 
 @end
 
-@implementation SessionTitleView
+@implementation SessionTitleView {
+    NSString *title_;
+    NSTextField *label_;
+    NSButton *closeButton_;
+    NSPopUpButton *menuButton_;
+    NSObject<SessionTitleViewDelegate> *delegate_;
+    double dimmingAmount_;
+}
 
 @synthesize title = title_;
 @synthesize delegate = delegate_;
@@ -65,6 +74,10 @@ static const CGFloat kButtonSize = 17;
                                                  selector:@selector(popupWillOpen:)
                                                      name:NSPopUpButtonWillPopUpNotification
                                                    object:menuButton_];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(modifierShortcutDidChange:)
+                                                     name:kPSMModifierChangedNotification
+                                                   object:nil];
         [menuButton_ addItemWithTitle:@"Foo"];
 
         menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.frame.size.width + 6,
@@ -114,9 +127,9 @@ static const CGFloat kButtonSize = 17;
     [item setImage:theImage];
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [title_ release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
 
@@ -192,9 +205,39 @@ static const CGFloat kButtonSize = 17;
     [super drawRect:dirtyRect];
 }
 
-- (void)setTitle:(NSString *)title
-{
-    [label_ setStringValue:title];
+- (void)setTitle:(NSString *)title {
+    [title_ autorelease];
+    title_ = [title copy];
+    [self updateTitle];
+}
+
+- (NSString *)titleString {
+    if (_ordinal == 0) {
+        return title_;
+    }
+    NSString *prefix = @"";
+    switch ([iTermPreferences intForKey:kPreferenceKeySwitchPaneModifier]) {
+        case kPreferenceModifierTagNone:
+            return title_;
+            break;
+
+        case kPreferencesModifierTagEitherCommand:
+            prefix = [NSString stringForModifiersWithMask:NSCommandKeyMask];
+            break;
+
+        case kPreferencesModifierTagEitherOption:
+            prefix = [NSString stringForModifiersWithMask:NSAlternateKeyMask];
+            break;
+
+        case kPreferencesModifierTagCommandAndOption:
+            prefix = [NSString stringForModifiersWithMask:(NSCommandKeyMask | NSAlternateKeyMask)];
+            break;
+    }
+    return [NSString stringWithFormat:@"%@%@   %@", prefix, @(_ordinal), title_];
+}
+
+- (void)updateTitle {
+    [label_ setStringValue:[self titleString]];
     [self setNeedsDisplay:YES];
 }
 
@@ -234,6 +277,15 @@ static const CGFloat kButtonSize = 17;
 - (void)mouseDragged:(NSEvent *)theEvent
 {
     [delegate_ beginDrag];
+}
+
+- (void)setOrdinal:(int)ordinal {
+    _ordinal = ordinal;
+    [self updateTitle];
+}
+
+- (void)modifierShortcutDidChange:(NSNotification *)notification {
+    [self updateTitle];
 }
 
 @end

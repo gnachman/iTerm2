@@ -516,6 +516,11 @@ static NSDate* lastResizeDate_;
     return YES;
 }
 
+- (void)setOrdinal:(int)ordinal {
+    _ordinal = ordinal;
+    _title.ordinal = ordinal;
+}
+
 - (NSSize)compactFrame {
     NSSize cellSize = NSMakeSize([[_session textview] charWidth], [[_session textview] lineHeight]);
     NSSize dim = NSMakeSize([_session columns], [_session rows]);

@@ -32,10 +32,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
                          blue:(int)blue {
-    return [NSColor colorWithCalibratedRed:red / 255.0
-                                     green:green / 255.0
-                                      blue:blue / 255.0
-                                     alpha:1];
+    return [NSColor colorWithSRGBRed:red / 255.0
+                               green:green / 255.0
+                                blue:blue / 255.0
+                               alpha:1];
 }
 
 + (NSColor *)colorWith8BitRed:(int)red
@@ -48,10 +48,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     CGFloat r = (red / 255.0) * (1 - muting) + bgRed * muting;
     CGFloat g = (green / 255.0) * (1 - muting) + bgGreen * muting;
     CGFloat b = (blue / 255.0) * (1 - muting) + bgBlue * muting;
-    return [NSColor colorWithCalibratedRed:r
-                                     green:g
-                                      blue:b
-                                     alpha:1];
+
+    return [NSColor colorWithSRGBRed:r
+                               green:g
+                                blue:b
+                               alpha:1];
 }
 
 + (NSColor *)calibratedColorWithRed:(double)r

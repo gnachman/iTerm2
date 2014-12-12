@@ -351,22 +351,8 @@ typedef enum {
     }
 }
 
-+ (NSString *)localizedModifers:(int)keyMods
-{
-    NSMutableString *theKeyString = [NSMutableString string];
-    if (keyMods & NSControlKeyMask) {
-        [theKeyString appendString: @"^"];
-    }
-    if (keyMods & NSAlternateKeyMask) {
-        [theKeyString appendString: @"⌥"];
-    }
-    if (keyMods & NSShiftKeyMask) {
-        [theKeyString appendString: @"⇧"];
-    }
-    if (keyMods & NSCommandKeyMask) {
-        [theKeyString appendString: @"⌘"];
-    }
-    return theKeyString;
++ (NSString *)localizedModifers:(int)keyMods {
+    return [NSString stringForModifiersWithMask:keyMods];
 }
 
 + (NSDictionary *)localizedActionMap

@@ -40,6 +40,9 @@
 // Unique per-process id of view, used for ordering them in PTYTab.
 @property(nonatomic, assign) int viewId;
 
+// If a modifier+digit switches panes, this is the value of digit. Used to show in title bar.
+@property(nonatomic, assign) int ordinal;
+
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;
 + (void)windowDidResize;

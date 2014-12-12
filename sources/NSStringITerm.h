@@ -157,6 +157,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Turns a string like fooBar into FooBar.
 - (NSString *)stringWithFirstLetterCapitalized;
 
+// Given a bitmask of modifiers like NSAlternateKeyMask, return a string indicating those modifiers.
++ (NSString *)stringForModifiersWithMask:(NSUInteger)mask;
+
 @end
 
 @interface NSMutableString (iTerm)

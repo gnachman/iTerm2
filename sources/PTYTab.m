@@ -130,6 +130,18 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if ([self updatePaneTitles] && [self isTmuxTab]) {
         [tmuxController_ windowDidResize:realParentWindow_];
     }
+    int i = 1;
+    NSArray *orderedSessions = [self orderedSessions];
+    for (PTYSession *aSession in orderedSessions) {
+        if (i < 9) {
+            aSession.view.ordinal = i++;
+        } else {
+            aSession.view.ordinal = 0;
+        }
+    }
+    if (i == 9) {
+        [(SessionView *)[[orderedSessions lastObject] view] setOrdinal:9];
+    }
     [realParentWindow_ invalidateRestorableState];
 }
 
