@@ -175,7 +175,13 @@ typedef enum {
     TMUX_EXIT,  // Exit tmux mode
 
     // Ambiguous codes - disambiguated at execution time.
-    VT100CSI_DECSLRM_OR_ANSICSI_SCP
+    VT100CSI_DECSLRM_OR_ANSICSI_SCP,
+
+    // ISO-2022 codes for choosing character encoding. There are a bunch of other encodings that
+    // there are escape codes for but they're really old-fashioned, so only these two are supported
+    // so far.
+    ISO2022_SELECT_LATIN_1,
+    ISO2022_SELECT_UTF_8
 } VT100TerminalTokenType;
 
 typedef struct {
