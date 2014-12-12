@@ -99,9 +99,6 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 - (PTYTab *)tabWithUniqueId:(int)uniqueId;
 
-// The window's original screen.
-- (NSScreen*)screen;
-
 // Sets the window frame. Value should have an NSRect value.
 - (void)setFrameValue:(NSValue *)value;
 
