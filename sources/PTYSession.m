@@ -78,6 +78,7 @@ NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
 static NSString *const kSuppressAnnoyingBellOffer = @"NoSyncSuppressAnnyoingBellOffer";
 static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyingBellAutomatically";
+static NSString *const kReopenSessionWarningIdentifier = @"ReopenSessionAfterBrokenPipe";
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
@@ -296,6 +297,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     NSTimeInterval _ignoreBellUntil;
     NSTimeInterval _annoyingBellOfferDeclinedAt;
     BOOL _suppressAllOutput;
+
+    // Session should auto-restart after the pipe breaks.
+    BOOL _shouldRestart;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -1091,15 +1095,23 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return restorableSession;
 }
 
+- (void)restartSession {
+    [self dismissAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
+    if (_exited) {
+        [self replaceTerminatedShellWithNewInstance];
+    } else {
+        _shouldRestart = YES;
+        [_shell sendSignal:SIGKILL];
+    }
+}
+
 // Terminate a replay session but not the live session
-- (void)softTerminate
-{
+- (void)softTerminate {
     _liveSession = nil;
     [self terminate];
 }
 
-- (void)terminate
-{
+- (void)terminate {
     if ([[self textview] isFindingCursor]) {
         [[self textview] endFindCursor];
     }
@@ -1137,7 +1149,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
-    BOOL undoable = ![self isTmuxClient];
+    BOOL undoable = ![self isTmuxClient] && !_shouldRestart;
     _terminal.parser.tmuxParser = nil;
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -1486,7 +1498,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)appendBrokenPipeMessage {
+- (void)appendBrokenPipeMessage:(NSString *)message {
     if (_screen.cursorX != 1) {
         [_screen crlf];
     }
@@ -1499,7 +1511,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                                  alpha:1]];
     [_terminal setBackgroundColor:ALTSEM_DEFAULT
                alternateSemantics:YES];
-    NSString *message = @"Broken Pipe ";
     int width = (_screen.width - message.length) / 2;
     if (width > 0) {
         [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
@@ -1511,6 +1522,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                        image:[NSImage imageNamed:@"BrokenPipeDivider"]];
     }
     [_screen appendStringAtCursor:message];
+    [_screen appendStringAtCursor:@" "];
     if (width > 0) {
         [_screen appendImageAtCursorWithName:@"BrokenPipeDivider"
                                        width:(_screen.width - _screen.cursorX + 1)
@@ -1549,11 +1561,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     [[self tab] updateLabelAttributes];
 
-    if ([self autoClose]) {
+    if (_shouldRestart) {
+        [_terminal resetPreservingPrompt:NO];
+        [self appendBrokenPipeMessage:@"Session Restarted"];
+        [self replaceTerminatedShellWithNewInstance];
+    } else if ([self autoClose]) {
         [[self tab] closeSession:self];
     } else {
         // Offer to restart the session by rerunning its program.
-        [self appendBrokenPipeMessage];
+        [self appendBrokenPipeMessage:@"Broken Pipe"];
         iTermAnnouncementViewController *announcement =
             [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
                                                             style:kiTermAnnouncementViewStyleQuestion
@@ -1567,22 +1583,28 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                                    break;
 
                                                                case 0: // Yes
-                                                                   _exited = NO;
-                                                                   [_shell release];
-                                                                   _shell = [[PTYTask alloc] init];
-                                                                   [_shell setDelegate:self];
-                                                                   [_shell setWidth:_screen.width
-                                                                             height:_screen.height];
-                                                                   [self startProgram:_program
-                                                                            arguments:_arguments
-                                                                          environment:_environment
-                                                                               isUTF8:_isUTF8];
+                                                                   [self replaceTerminatedShellWithNewInstance];
                                                                    break;
                                                            }
                                                        }];
-        [self queueAnnouncement:announcement identifier:@"ReopenSessionAfterBrokenPipe"];
+        [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
         [self updateDisplay];
     }
+}
+
+- (void)replaceTerminatedShellWithNewInstance {
+    assert(_exited);
+    _shouldRestart = NO;
+    _exited = NO;
+    [_shell release];
+    _shell = [[PTYTask alloc] init];
+    [_shell setDelegate:self];
+    [_shell setWidth:_screen.width
+              height:_screen.height];
+    [self startProgram:_program
+             arguments:_arguments
+           environment:_environment
+                isUTF8:_isUTF8];
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle
@@ -4748,9 +4770,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[[self tab] realParentWindow] toggleBroadcastingInputToSession:self];
 }
 
-- (void)textViewCloseWithConfirmation
-{
+- (void)textViewCloseWithConfirmation {
     [[[self tab] realParentWindow] closeSessionWithConfirmation:self];
+}
+
+- (void)textViewRestartWithConfirmation {
+    [[[self tab] realParentWindow] restartSessionWithConfirmation:self];
 }
 
 - (NSString *)mostRecentlySelectedText {

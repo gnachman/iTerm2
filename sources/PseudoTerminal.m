@@ -1399,6 +1399,22 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
+- (IBAction)restartSession:(id)sender {
+    [self restartSessionWithConfirmation:self.currentSession];
+}
+
+- (void)restartSessionWithConfirmation:(PTYSession *)aSession {
+    [[self retain] autorelease];
+    NSAlert *alert = [NSAlert alertWithMessageText:@"Restart session?"
+                                     defaultButton:@"OK"
+                                   alternateButton:@"Cancel"
+                                       otherButton:nil
+                         informativeTextWithFormat:@"Running jobs will be killed."];
+    if (aSession.exited || [alert runModal] == NSAlertDefaultReturn) {
+        [self.currentSession restartSession];
+    }
+}
+
 - (IBAction)previousTab:(id)sender {
     [TABVIEW previousTab:sender];
 }
@@ -6526,6 +6542,8 @@ int aGlobalVariable;
         } else {
             result = NO;
         }
+    } else if ([item action] == @selector(restartSession:)) {
+        return YES;
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] screen] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {

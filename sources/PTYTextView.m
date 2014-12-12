@@ -3802,9 +3802,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate textViewToggleBroadcastingInput];
 }
 
-- (void)closeTextViewSession:(id)sender
-{
+- (void)closeTextViewSession:(id)sender {
     [_delegate textViewCloseWithConfirmation];
+}
+
+- (void)restartTextViewSession:(id)sender {
+    [_delegate textViewRestartWithConfirmation];
 }
 
 - (void)copySelectionAccordingToUserPreferences
@@ -3956,6 +3959,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                [item action]==@selector(clearTextViewBuffer:) ||
                [item action]==@selector(editTextViewSession:) ||
                [item action]==@selector(closeTextViewSession:) ||
+               [item action]==@selector(restartTextViewSession:) ||
                [item action]==@selector(movePane:) ||
                [item action]==@selector(swapSessions:) ||
                [item action]==@selector(installShellIntegration:) ||
@@ -4478,6 +4482,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Close current pane
     [theMenu addItemWithTitle:@"Close"
                        action:@selector(closeTextViewSession:)
+                keyEquivalent:@""];
+    [theMenu addItemWithTitle:@"Restart"
+                       action:@selector(restartTextViewSession:)
                 keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
