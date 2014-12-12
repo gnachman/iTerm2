@@ -265,5 +265,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
                title:(NSString *)title
             withSize:(NSSize *)size;
 
+- (NSColor *)accessoryTextColor;
+
 @end
 

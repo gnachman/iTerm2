@@ -4274,15 +4274,22 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return TABVIEW != nil;
 }
 
-- (void)fillPath:(NSBezierPath*)path
-{
-    if ([tabBarControl isHidden]) {
+- (void)fillPath:(NSBezierPath*)path {
+    if ([tabBarControl isHidden] && ![self anyFullScreen]) {
         [[NSColor windowBackgroundColor] set];
         [path fill];
         [[NSColor darkGrayColor] set];
         [path stroke];
     } else {
-      [tabBarControl fillPath:path];
+        [tabBarControl fillPath:path];
+    }
+}
+
+- (NSColor *)accessoryTextColor {
+    if ([tabBarControl isHidden] && ![self anyFullScreen]) {
+        return [NSColor blackColor];
+    } else {
+        return [tabBarControl accessoryTextColor];
     }
 }
 

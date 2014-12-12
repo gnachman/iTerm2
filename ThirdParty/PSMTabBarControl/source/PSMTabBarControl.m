@@ -2365,9 +2365,12 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     [self setNeedsDisplay];
 }
 
-- (void)fillPath:(NSBezierPath*)path
-{
+- (void)fillPath:(NSBezierPath*)path {
   [style fillPath:path];
+}
+
+- (NSColor *)accessoryTextColor {
+    return [style accessoryTextColor] ?: [NSColor blackColor];
 }
 
 #pragma mark - NSDraggingSource

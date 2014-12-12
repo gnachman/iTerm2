@@ -589,12 +589,24 @@
     [NSGraphicsContext restoreGraphicsState];
 }
 
+- (NSColor *)accessoryFillColor {
+    return [NSColor windowBackgroundColor];
+}
+
+- (NSColor *)accessoryStrokeColor {
+    return [NSColor darkGrayColor];
+}
+
+- (NSColor *)accessoryTextColor {
+    return [NSColor blackColor];
+}
+
 - (void)fillPath:(NSBezierPath*)path {
-    [[NSColor windowBackgroundColor] set];
+    [[self accessoryFillColor] set];
     [path fill];
     [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
     [path fill];
-    [[NSColor darkGrayColor] set];
+    [[self accessoryStrokeColor] set];
     [path stroke];
 }
 

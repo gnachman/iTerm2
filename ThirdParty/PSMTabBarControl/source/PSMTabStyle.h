@@ -46,7 +46,10 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 - (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color horizontal:(BOOL)horizontal;
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect horizontal:(BOOL)horizontal;
 
+- (NSColor *)accessoryFillColor;
+- (NSColor *)accessoryStrokeColor;
 - (void)fillPath:(NSBezierPath*)path;
+- (NSColor *)accessoryTextColor;
 
 // Should light-tinted controls be used?
 - (BOOL)useLightControls;
