@@ -6908,6 +6908,9 @@ int aGlobalVariable;
       dockTile = [[NSApplication sharedApplication] dockTile];
     }
     int count = [[dockTile badgeLabel] intValue];
+    if (count == 999) {
+        return;
+    }
     ++count;
     [dockTile setBadgeLabel:[NSString stringWithFormat:@"%d", count]];
     [self.window.dockTile setShowsApplicationBadge:YES];
