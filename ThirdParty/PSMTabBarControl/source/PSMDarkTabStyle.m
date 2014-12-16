@@ -56,4 +56,16 @@
     return YES;
 }
 
+- (NSColor *)accessoryFillColor {
+    return [NSColor colorWithCalibratedWhite:0.27 alpha:1.00];
+}
+
+- (NSColor *)accessoryStrokeColor {
+    return [NSColor colorWithCalibratedWhite:0.12 alpha:1.00];
+}
+
+- (NSColor *)accessoryTextColor {
+    return [self textColorDefaultSelected:YES];
+}
+
 @end

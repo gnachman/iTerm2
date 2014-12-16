@@ -232,6 +232,9 @@ typedef enum {
 // Close a session if the user agrees to a modal alert.
 - (void)closeSessionWithConfirmation:(PTYSession *)aSession;
 
+// Restart a session if the user agrees to a modal alert.
+- (void)restartSessionWithConfirmation:(PTYSession *)aSession;
+
 // Close a session but don't kill the underlying window pane if it's a tmux session.
 - (void)softCloseSession:(PTYSession *)aSession;
 

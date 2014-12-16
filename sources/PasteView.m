@@ -18,13 +18,11 @@
     [arrow setOnMouseEntered:YES];
 }
 
-- (BOOL)isFlipped
-{
+- (BOOL)isFlipped {
     return YES;
 }
 
-- (void)drawRect:(NSRect)dirtyRect
-{
+- (void)drawRect:(NSRect)dirtyRect {
     NSBezierPath *path = [NSBezierPath smoothPathAroundBottomOfFrame:self.frame];
     PseudoTerminal* term = [[self window] windowController];
     if ([term isKindOfClass:[PseudoTerminal class]]) {

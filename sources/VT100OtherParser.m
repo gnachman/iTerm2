@@ -30,7 +30,20 @@
             result->type = VT100_NOTSUPPORT;
             *rmlen = 1;
             break;
-            
+
+        case '%':
+            if (c2 == '@') {
+                result->type = ISO2022_SELECT_LATIN_1;
+                *rmlen = 3;
+            } else if (c2 == 'G') {
+                result->type = ISO2022_SELECT_UTF_8;
+                *rmlen = 3;
+            } else {
+                result->type = VT100_NOTSUPPORT;
+                *rmlen = 2;
+            }
+            break;
+
         case '#':
             if (c2 < 0) {
                 result->type = VT100_WAIT;

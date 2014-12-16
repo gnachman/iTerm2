@@ -106,6 +106,7 @@ typedef enum {
 - (void)textViewEditSession;
 - (void)textViewToggleBroadcastingInput;
 - (void)textViewCloseWithConfirmation;
+- (void)textViewRestartWithConfirmation;
 - (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags;
 - (BOOL)textViewWindowUsesTransparency;
 - (BOOL)textViewAmbiguousWidthCharsAreDoubleWidth;

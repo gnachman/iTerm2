@@ -8,10 +8,15 @@
 
 #import "PasteViewController.h"
 #import "PasteContext.h"
+#import "PasteView.h"
+#import "PseudoTerminal.h"
+#import "PreferencePanel.h"
 
 static float kAnimationDuration = 0.25;
 
-@implementation PasteViewController
+@implementation PasteViewController {
+    IBOutlet NSTextField *_label;
+}
 
 @synthesize delegate = delegate_;
 
@@ -29,13 +34,29 @@ static float kAnimationDuration = 0.25;
         }
         pasteContext_ = [pasteContext retain];
         totalLength_ = remainingLength_ = length;
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(themeDidChange:)
+                                                     name:kRefreshTerminalNotification
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [pasteContext_ release];
     [super dealloc];
+}
+
+- (void)viewDidAppear {
+    [self updateLabelColor];
+}
+
+- (void)updateLabelColor {
+    PseudoTerminal* term = [[self.view window] windowController];
+    if ([term isKindOfClass:[PseudoTerminal class]]) {
+        _label.textColor = [term accessoryTextColor];
+    }
 }
 
 - (IBAction)cancel:(id)sender {
@@ -70,6 +91,10 @@ static float kAnimationDuration = 0.25;
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     [[self.view animator] setFrame:newFrame];
     [self.view performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:kAnimationDuration];
+}
+
+- (void)themeDidChange:(id)sender {
+    [self updateLabelColor];
 }
 
 @end

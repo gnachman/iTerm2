@@ -30,6 +30,7 @@
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+PSM.h"
 #import "PasteboardHistory.h"
@@ -73,10 +74,6 @@ static const double kCharWidthFractionOffset = 0.35;
 
 //#define DEBUG_DRAWING
 
-// Drag-drop operation flags for different possible dropping operations.
-const unsigned int kUploadDragOperation = NSDragOperationCopy;
-const unsigned int kPasteDragOperation = NSDragOperationGeneric;
-
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
 
 // Notifications posted when hostname lookups finish. Notifications are used to
@@ -114,19 +111,6 @@ static const int kBadgeRightMargin = 10;
 
 
 @implementation PTYTextView {
-    // This is a flag to let us know whether we are handling this
-    // particular drag and drop operation. We are using it because
-    // the prepareDragOperation and performDragOperation of the
-    // parent NSTextView class return "YES" even if the parent
-    // cannot handle the drag type. To make matters worse, the
-    // concludeDragOperation does not have any return value.
-    // This all results in the inability to test whether the
-    // parent could handle the drag type properly. Is this a Cocoa
-    // implementation bug?
-    // Fortunately, the draggingEntered and draggingUpdated methods
-    // seem to return a real status, based on which we can set this flag.
-    BOOL _extendedDragNDrop;
-
     // anti-alias flags
     BOOL _asciiAntiAlias;
     BOOL _nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
@@ -3802,9 +3786,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate textViewToggleBroadcastingInput];
 }
 
-- (void)closeTextViewSession:(id)sender
-{
+- (void)closeTextViewSession:(id)sender {
     [_delegate textViewCloseWithConfirmation];
+}
+
+- (void)restartTextViewSession:(id)sender {
+    [_delegate textViewRestartWithConfirmation];
 }
 
 - (void)copySelectionAccordingToUserPreferences
@@ -3956,6 +3943,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                [item action]==@selector(clearTextViewBuffer:) ||
                [item action]==@selector(editTextViewSession:) ||
                [item action]==@selector(closeTextViewSession:) ||
+               [item action]==@selector(restartTextViewSession:) ||
                [item action]==@selector(movePane:) ||
                [item action]==@selector(swapSessions:) ||
                [item action]==@selector(installShellIntegration:) ||
@@ -4479,6 +4467,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [theMenu addItemWithTitle:@"Close"
                        action:@selector(closeTextViewSession:)
                 keyEquivalent:@""];
+    [theMenu addItemWithTitle:@"Restart"
+                       action:@selector(restartTextViewSession:)
+                keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Ask the delegate if there is anything to be added
@@ -4530,29 +4521,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 // Called when our drop area is entered
 //
-- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
-    _extendedDragNDrop = YES;
-
-    return [self dragOperationForSender:sender];
+- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
+    // NOTE: draggingUpdated: calls this method because they need the same implementation.
+    int numValid = -1;
+    NSDragOperation operation = [self dragOperationForSender:sender numberOfValidItems:&numValid];
+    if (numValid != sender.numberOfValidItemsForDrop) {
+        sender.numberOfValidItemsForDrop = numValid;
+    }
+    return operation;
 }
 
 //
 // Called when the dragged object is moved within our drop area
 //
-- (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender
-{
-    return [self dragOperationForSender:sender];
-}
-
-//
-// Called when the dragged object leaves our drop area
-//
-- (void)draggingExited:(id <NSDraggingInfo>)sender {
-    // We don't do anything special, so let the parent NSTextView handle this.
-    [super draggingExited:sender];
-
-    // Reset our handler flag
-    _extendedDragNDrop = NO;
+- (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
+    return [self draggingEntered:sender];
 }
 
 //
@@ -4606,99 +4589,84 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (BOOL)uploadFilenamesOnPasteboard:(NSPasteboard *)pasteboard location:(NSPoint)windowDropPoint {
+    // Upload a file.
+    NSArray *types = [pasteboard types];
+    NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
+    int dropLine = dropPoint.y / _lineHeight;
+    SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
+    NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:NO];
+    if ([types containsObject:NSFilenamesPboardType] && filenames.count) {
+        // This is all so the mouse cursor will change to a plain arrow instead of the
+        // drop target cursor.
+        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        [[self window] makeKeyAndOrderFront:nil];
+        [self performSelector:@selector(maybeUpload:)
+                   withObject:@[ filenames, dropScpPath ]
+                   afterDelay:0];
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)pasteValuesOnPasteboard:(NSPasteboard *)pasteboard cdToDirectory:(BOOL)cdToDirectory {
+    // Paste string or filenames in.
+    NSArray *types = [pasteboard types];
+
+    if ([types containsObject:NSFilenamesPboardType]) {
+        // Filenames were dragged.
+        NSArray *filenames = [pasteboard filenamesOnPasteboardWithShellEscaping:YES];
+        if (filenames.count) {
+            BOOL pasteNewline = NO;
+
+            if (cdToDirectory) {
+                // cmd-drag: "cd" to dragged directory (well, we assume it's a directory).
+                // If multiple files are dragged, balk.
+                if (filenames.count > 1) {
+                    return NO;
+                } else {
+                    [_delegate pasteString:@"cd "];
+                    pasteNewline = YES;
+                }
+            }
+
+            // Paste filenames separated by spaces.
+            [_delegate pasteString:[filenames componentsJoinedByString:@" "]];
+
+            if (pasteNewline) {
+                // For cmd-drag, we append a newline.
+                [_delegate pasteString:@"\r"];
+            }
+            return YES;
+        }
+    }
+
+    if ([types containsObject:NSStringPboardType]) {
+        NSString *string = [pasteboard stringForType:NSStringPboardType];
+        if (string.length) {
+            [_delegate pasteString:string];
+            return YES;
+        }
+    }
+
+    return NO;
+}
+
 //
 // Called when the dragged item is released in our drop area.
 //
-- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
-{
-    unsigned int dragOperation;
-    BOOL res = NO;
-
-    // If parent class does not know how to deal with this drag type, check if we do.
-    if (_extendedDragNDrop) {
-        NSPasteboard *pb = [sender draggingPasteboard];
-        NSArray *propertyList = nil;
-        NSString *aString;
-        int i;
-
-        dragOperation = [sender draggingSourceOperationMask];
-        if (dragOperation & kPasteDragOperation) {
-            // Paste string or filenames in.
-            NSArray *types = [pb types];
-
-            if ([types containsObject:NSFilenamesPboardType]) {
-                propertyList = [pb propertyListForType:NSFilenamesPboardType];
-
-                for (i = 0; i < (int)[propertyList count]; i++) {
-                    // Ignore text clippings
-                    NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
-                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filename
-                                                                                                         error:nil];
-                    if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
-                         [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
-                        [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
-                        continue;
-                    }
-
-                    // Just paste the file names into the shell after escaping special characters.
-                    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
-                        NSMutableString *path;
-
-                        path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
-
-                        // get rid of special characters
-                        [_delegate pasteString:[path stringWithEscapedShellCharacters]];
-                        [_delegate pasteString:@" "];
-                        [path release];
-
-                        res = YES;
-                    }
-                }
-            }
-            if (!res && [types containsObject:NSStringPboardType]) {
-                aString = [pb stringForType:NSStringPboardType];
-                if (aString != nil) {
-                    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
-                        [_delegate pasteString:aString];
-                        res = YES;
-                    }
-                }
-            }
-        } else if (dragOperation & kUploadDragOperation) {
-            // Upload a file.
-            NSArray *types = [pb types];
-
-            propertyList = [pb propertyListForType:NSFilenamesPboardType];
-            NSPoint windowDropPoint = [sender draggingLocation];
-            NSPoint dropPoint = [self convertPoint:windowDropPoint fromView:nil];
-            int dropLine = dropPoint.y / _lineHeight;
-            SCPPath *dropScpPath = [_dataSource scpPathForFile:@"" onLine:dropLine];
-            if ([types containsObject:NSFilenamesPboardType]) {
-                // This is all so the mouse cursor will change to a plain arrow instead of the
-                // drop target cursor.
-                [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-                [[self window] makeKeyAndOrderFront:nil];
-                [self performSelector:@selector(maybeUpload:)
-                           withObject:@[ propertyList, dropScpPath ]
-                           afterDelay:0];
-                return YES;
-            }
-            return NO;
-        }
-
+- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+    NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
+    NSDragOperation dragOperation = [sender draggingSourceOperationMask];
+    if (dragOperation == NSDragOperationCopy) {  // Option-drag to copy
+        NSPoint windowDropPoint = [sender draggingLocation];
+        return [self uploadFilenamesOnPasteboard:draggingPasteboard location:windowDropPoint];
+    } else if (dragOperation & NSDragOperationGeneric) {  // Generic drag; either regular or cmd-drag
+        return [self pasteValuesOnPasteboard:draggingPasteboard
+                               cdToDirectory:(dragOperation == NSDragOperationGeneric)];
+    } else {
+        return NO;
     }
-
-    return res;
-}
-
-- (void)concludeDragOperation:(id <NSDraggingInfo>)sender {
-    // If we did no handle the drag'n'drop, ask our parent to clean up
-    // I really wish the concludeDragOperation would have a useful exit value.
-    if (!_extendedDragNDrop) {
-        [super concludeDragOperation:sender];
-    }
-
-    _extendedDragNDrop = NO;
 }
 
 // Save method
@@ -7785,10 +7753,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
 }
 
+- (NSDragOperation)dragOperationForSender:(id<NSDraggingInfo>)sender {
+    return [self dragOperationForSender:sender numberOfValidItems:NULL];
+}
+
+
 // Returns the drag operation to use. It is determined from the type of thing
 // being dragged, the modifiers pressed, and where it's being dropped.
-- (NSDragOperation)dragOperationForSender:(id <NSDraggingInfo>)sender
-{
+- (NSDragOperation)dragOperationForSender:(id<NSDraggingInfo>)sender
+                       numberOfValidItems:(int *)numberOfValidItemsPtr {
     NSPasteboard *pb = [sender draggingPasteboard];
     NSArray *types = [pb types];
     NSPoint windowDropPoint = [sender draggingLocation];
@@ -7807,18 +7780,42 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // value by masking out all but one bit (if the sender allows modifiers
     // to affect dragging).
     NSDragOperation sourceMask = [sender draggingSourceOperationMask];
-    NSDragOperation both = (kUploadDragOperation | kPasteDragOperation);
+    NSDragOperation both = (NSDragOperationCopy | NSDragOperationGeneric);  // Copy or paste
     if ((sourceMask & both) == both && pasteOK) {
         // No modifier key was pressed and pasting is OK, so select the paste operation.
-        return kPasteDragOperation;
-    } else if ((sourceMask & kUploadDragOperation) && uploadOK) {
+        NSArray *filenames = [pb filenamesOnPasteboardWithShellEscaping:YES];
+        if (numberOfValidItemsPtr) {
+            if (filenames.count) {
+                *numberOfValidItemsPtr = filenames.count;
+            } else {
+                *numberOfValidItemsPtr = 1;
+            }
+        }
+        return NSDragOperationGeneric;
+    } else if ((sourceMask & NSDragOperationCopy) && uploadOK) {
         // Either Option was pressed or the sender allows Copy but not Generic,
         // and it's ok to upload, so select the upload operation.
-        return kUploadDragOperation;
-    } else if ((sourceMask & kPasteDragOperation) && pasteOK) {
-        // Either Command was prsesed or the sender allows Generic but not
+        if (numberOfValidItemsPtr){
+            *numberOfValidItemsPtr = [[pb filenamesOnPasteboardWithShellEscaping:NO] count];
+        }
+        return NSDragOperationCopy;
+    } else if ((sourceMask == NSDragOperationGeneric) && uploadOK) {
+        // Cmd-drag only allows one filename.
+        NSArray *filenames = [pb filenamesOnPasteboardWithShellEscaping:YES];
+        if (filenames.count == 0) {
+            // This shouldn't happen.
+            return NSDragOperationNone;
+        } else if (numberOfValidItemsPtr) {
+            *numberOfValidItemsPtr = MIN(1, filenames.count);
+        }
+        return NSDragOperationGeneric;
+    } else if ((sourceMask & NSDragOperationGeneric) && pasteOK) {
+        // Either Command was pressed or the sender allows Generic but not
         // copy, and it's ok to paste, so select the paste operation.
-        return kPasteDragOperation;
+        if (numberOfValidItemsPtr) {
+            *numberOfValidItemsPtr = 1;
+        }
+        return NSDragOperationGeneric;
     } else {
         // No luck.
         return NSDragOperationNone;

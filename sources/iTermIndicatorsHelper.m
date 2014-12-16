@@ -53,7 +53,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     // Maps an identifier to a NSNumber in [0, 1]
     NSMutableDictionary *_visibleIndicators;
     NSTimeInterval _fullScreenFlashStartTime;
-    BOOL _checkForFlashUpdatePending;
+    // Rate limits calls to setNeedsDisplay: to not be faster than drawRect can be called.
+    BOOL _haveSetNeedsDisplay;
 }
 
 + (NSDictionary *)indicatorImages {
@@ -98,13 +99,23 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     }
 }
 
++ (NSArray *)flashingIndicatorIdentifiers {
+    return @[ kiTermIndicatorBell,
+              kiTermIndicatorWrapToTop,
+              kiTermIndicatorWrapToBottom ];
+}
+
++ (NSArray *)sequentiaIndicatorlIdentifiers {
+    return @[ kiTermIndicatorMaximized,
+              kItermIndicatorBroadcastInput,
+              kiTermIndicatorCoprocess,
+              kiTermIndicatorAlert,
+              kiTermIndicatorAllOutputSuppressed ];
+}
+
 - (void)drawInFrame:(NSRect)frame {
     // Draw top-right indicators.
-    NSArray *sequentialIdentifiers = @[ kiTermIndicatorMaximized,
-                                        kItermIndicatorBroadcastInput,
-                                        kiTermIndicatorCoprocess,
-                                        kiTermIndicatorAlert,
-                                        kiTermIndicatorAllOutputSuppressed ];
+    NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentiaIndicatorlIdentifiers];
     static const CGFloat kIndicatorTopMargin = 4;
     NSPoint point = NSMakePoint(frame.origin.x + frame.size.width,
                                 frame.origin.y + kIndicatorTopMargin);
@@ -125,9 +136,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     }
 
     // Draw centered flashing indicators.
-    NSArray *centeredIdentifiers = @[ kiTermIndicatorBell,
-                                      kiTermIndicatorWrapToTop,
-                                      kiTermIndicatorWrapToBottom ];
+    NSArray *centeredIdentifiers = [iTermIndicatorsHelper flashingIndicatorIdentifiers];
     NSMutableArray *keysToRemove = [NSMutableArray array];
     for (NSString *identifier in centeredIdentifiers) {
         iTermIndicator *indicator = _visibleIndicators[identifier];
@@ -145,8 +154,6 @@ CGFloat kiTermIndicatorStandardHeight = 20;
                      fraction:alpha
                respectFlipped:YES
                         hints:nil];
-        } else if (indicator) {
-            [keysToRemove addObject:identifier];
         }
     }
 
@@ -163,30 +170,44 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     } else if (_fullScreenFlashStartTime > 0 && fullScreenAlpha == 0) {
         _fullScreenFlashStartTime = 0;
     }
+    _haveSetNeedsDisplay = NO;
+}
+
+- (void)checkForFlashUpdate {
+    if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
+        if (!_haveSetNeedsDisplay) {
+            [_delegate setNeedsDisplay:YES];
+        }
+        _haveSetNeedsDisplay = YES;
+    }
+
+    // Remove any indicators that became invisible since the last check.
+    NSArray *visibleIdentifiers = [[_visibleIndicators.allKeys copy] autorelease];
+    for (NSString *identifier in visibleIdentifiers) {
+        if ([_visibleIndicators[identifier] alpha] == 0) {
+            [_visibleIndicators removeObjectForKey:identifier];
+        }
+    }
 
     // Request another update if needed.
-    if ((_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) &&
-        !_checkForFlashUpdatePending) {
-        _checkForFlashUpdatePending = YES;
+    if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
         [self performSelector:@selector(checkForFlashUpdate) withObject:nil afterDelay:1 / 60.0];
     }
 }
 
-- (void)checkForFlashUpdate {
-    _checkForFlashUpdatePending = NO;
-    if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
-        [_delegate setNeedsDisplay:YES];
-    }
-}
-
 - (void)beginFlashingIndicator:(NSString *)identifier {
+    assert([[iTermIndicatorsHelper flashingIndicatorIdentifiers] containsObject:identifier]);
+    if (_visibleIndicators[identifier]) {
+        return;
+    }
     [self setIndicator:identifier visible:YES];
     [_visibleIndicators[identifier] startFlash];
+    [self checkForFlashUpdate];
 }
 
 - (BOOL)haveFlashingIndicator {
-    for (iTermIndicator *indicator in [_visibleIndicators allValues]) {
-        if (indicator.alpha > 0) {
+    for (NSString *identifier in [iTermIndicatorsHelper flashingIndicatorIdentifiers]) {
+        if (_visibleIndicators[identifier]) {
             return YES;
         }
     }
