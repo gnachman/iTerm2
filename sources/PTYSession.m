@@ -116,6 +116,7 @@ static NSString *const kVariableKeySessionHostname = @"session.hostname";
 static NSString *const kVariableKeySessionUsername = @"session.username";
 static NSString *const kVariableKeySessionPath = @"session.path";
 static NSString *const kVariableKeySessionLastCommand = @"session.lastCommand";
+static NSString *const kVariableKeySessionTTY = @"session.tty";
 
 // Maps Session GUID to saved contents. Only live between window restoration
 // and the end of startup activities.
@@ -557,6 +558,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _variables[kVariableKeySessionLastCommand] = _lastCommand;
     } else {
         [_variables removeObjectForKey:kVariableKeySessionLastCommand];
+    }
+    NSString *tty = [self tty];
+    if (tty) {
+        _variables[kVariableKeySessionTTY] = tty;
+    } else {
+        [_variables removeObjectForKey:kVariableKeySessionTTY];
     }
     [_textview setBadgeLabel:[self badgeLabel]];
 }
@@ -2591,8 +2598,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 
-- (NSString *)tty
-{
+- (NSString *)tty {
     return [_shell tty];
 }
 
