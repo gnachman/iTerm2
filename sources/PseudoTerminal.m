@@ -698,7 +698,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
-    self.terminalGuid = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
+    self.terminalGuid = [[NSString stringWithFormat:@"pty-%@", [NSString uuid]] retain];
 
     if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
         _shortcutAccessoryViewController =

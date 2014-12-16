@@ -13,6 +13,7 @@
 #import "NMSSH.framework/Headers/libssh2.h"
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 
 static NSString *const kSCPFileErrorDomain = @"com.googlecode.iterm2.SCPFile";
 
@@ -495,16 +496,7 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 - (NSString *)tempFileName {
-    CFUUIDRef   uuid;
-    CFStringRef uuidStr;
-    
-    uuid = CFUUIDCreate(NULL);
-    uuidStr = CFUUIDCreateString(NULL, uuid);
-    
-    NSString *result = [NSString stringWithFormat:@".iTerm2.%@", uuidStr];
-
-    CFRelease(uuidStr);
-    CFRelease(uuid);
+    NSString *result = [NSString stringWithFormat:@".iTerm2.%@", [NSString uuid]];
 
     return result;
 }

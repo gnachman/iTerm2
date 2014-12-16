@@ -1317,6 +1317,13 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return theKeyString;
 }
 
++ (NSString *)uuid {
+    CFUUIDRef uuidObj = CFUUIDCreate(nil);
+    NSString *uuidString = (NSString *)CFUUIDCreateString(nil, uuidObj);
+    CFRelease(uuidObj);
+    return [uuidString autorelease];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

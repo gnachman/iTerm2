@@ -361,7 +361,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _directories = [[NSMutableArray alloc] init];
         _hosts = [[NSMutableArray alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
-        _guid = [[ProfileModel freshGuid] retain];
+        _guid = [[NSString uuid] retain];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
