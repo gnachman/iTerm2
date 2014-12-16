@@ -41,9 +41,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{?window_active,1,0}\"";
 
 
-// Session GUIDs we are currently attached to.
-static NSMutableSet *gAttachedSessionGuids;
-
 @interface TmuxController ()
 
 @property(nonatomic, copy) NSString *clientName;
@@ -325,6 +322,7 @@ static NSMutableSet *gAttachedSessionGuids;
 
 // Returns the mutable set of session GUIDs we're attached to.
 - (NSMutableSet *)attachedSessionGuids {
+    static NSMutableSet *gAttachedSessionGuids;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         gAttachedSessionGuids = [[NSMutableSet alloc] init];
@@ -340,6 +338,7 @@ static NSMutableSet *gAttachedSessionGuids;
     } else if (_sessionGuid) {
         [self.attachedSessionGuids removeObject:_sessionGuid];
     }
+    [_sessionGuid autorelease];
     _sessionGuid = [guid copy];
 }
 
