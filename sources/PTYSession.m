@@ -115,6 +115,8 @@ static NSString *const kVariableKeySessionRows = @"session.rows";
 static NSString *const kVariableKeySessionHostname = @"session.hostname";
 static NSString *const kVariableKeySessionUsername = @"session.username";
 static NSString *const kVariableKeySessionPath = @"session.path";
+static NSString *const kVariableKeySessionLastCommand = @"session.lastCommand";
+static NSString *const kVariableKeySessionTTY = @"session.tty";
 
 // Maps Session GUID to saved contents. Only live between window restoration
 // and the end of startup activities.
@@ -145,6 +147,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @property(nonatomic, assign) BOOL isUTF8;
 @property(nonatomic, copy) NSString *guid;
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
+@property(nonatomic, copy) NSString *lastCommand;
 @end
 
 @implementation PTYSession {
@@ -447,6 +450,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_hosts release];
     [_bellRate release];
     [_guid release];
+    [_lastCommand release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -549,6 +553,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _variables[kVariableKeySessionPath] = path;
     } else {
         [_variables removeObjectForKey:kVariableKeySessionPath];
+    }
+    if (_lastCommand) {
+        _variables[kVariableKeySessionLastCommand] = _lastCommand;
+    } else {
+        [_variables removeObjectForKey:kVariableKeySessionLastCommand];
+    }
+    NSString *tty = [self tty];
+    if (tty) {
+        _variables[kVariableKeySessionTTY] = tty;
+    } else {
+        [_variables removeObjectForKey:kVariableKeySessionTTY];
     }
     [_textview setBadgeLabel:[self badgeLabel]];
 }
@@ -2583,8 +2598,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 
-- (NSString *)tty
-{
+- (NSString *)tty {
     return [_shell tty];
 }
 
@@ -6077,6 +6091,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [_commands addObject:trimmedCommand];
         }
     }
+    self.lastCommand = command;
+    [self updateVariables];
     _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
     DLog(@"Hide ACH because command ended");
     [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
