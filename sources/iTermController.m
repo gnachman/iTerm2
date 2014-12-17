@@ -1173,13 +1173,12 @@ static BOOL initDone = NO;
     return session;
 }
 
-- (void)launchScript:(id)sender
-{
+- (void)launchScript:(id)sender {
     NSString *fullPath = [NSString stringWithFormat:@"%@/%@", [SCRIPT_DIRECTORY stringByExpandingTildeInPath], [sender title]];
 
     if ([[[sender title] pathExtension] isEqualToString:@"scpt"]) {
         NSAppleScript *script;
-        NSDictionary *errorInfo = [NSDictionary dictionary];
+        NSDictionary *errorInfo = nil;
         NSURL *aURL = [NSURL fileURLWithPath:fullPath];
 
         // Make sure our script suite registry is loaded
@@ -1188,26 +1187,33 @@ static BOOL initDone = NO;
         script = [[NSAppleScript alloc] initWithContentsOfURL:aURL error:&errorInfo];
         if (script) {
             [script executeAndReturnError:&errorInfo];
+            if (errorInfo) {
+                [self showAlertForScript:fullPath error:errorInfo];
+            }
             [script release];
         } else {
-            NSValue *range = errorInfo[NSAppleScriptErrorRange];
-            NSString *location = @"Location of error not known.";
-            if (range) {
-                location = [NSString stringWithFormat:@"The error starts at byte %d of the script.",
-                            (int)[range rangeValue].location];
-            }
-            NSAlert *alert = [NSAlert alertWithMessageText:@"Error running script"
-                                             defaultButton:@"OK"
-                                           alternateButton:nil
-                                               otherButton:nil
-                                 informativeTextWithFormat:@"Script at \"%@\" failed.\n\nThe error was: \"%@\"\n\n%@",
-                              fullPath, errorInfo[NSAppleScriptErrorMessage], location];
-            [alert runModal];
+            [self showAlertForScript:fullPath error:errorInfo];
         }
     } else {
         [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
     }
 
+}
+
+- (void)showAlertForScript:(NSString *)fullPath error:(NSDictionary *)errorInfo {
+    NSValue *range = errorInfo[NSAppleScriptErrorRange];
+    NSString *location = @"Location of error not known.";
+    if (range) {
+        location = [NSString stringWithFormat:@"The error starts at byte %d of the script.",
+                    (int)[range rangeValue].location];
+    }
+    NSAlert *alert = [NSAlert alertWithMessageText:@"Error running script"
+                                     defaultButton:@"OK"
+                                   alternateButton:nil
+                                       otherButton:nil
+                         informativeTextWithFormat:@"Script at \"%@\" failed.\n\nThe error was: \"%@\"\n\n%@",
+                      fullPath, errorInfo[NSAppleScriptErrorMessage], location];
+    [alert runModal];
 }
 
 - (PTYTextView *)frontTextView
