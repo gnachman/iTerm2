@@ -146,16 +146,16 @@ const CGFloat kEdgeWidth = 3;
         NSColor *insetBottomColor = [NSColor colorWithCalibratedWhite:1.0 alpha:0.35];
         NSColor *strokeTopColor = [NSColor colorWithCalibratedWhite:0.240 alpha:1.0];
         NSColor *strokeBottomColor = [NSColor colorWithCalibratedWhite:0.380 alpha:1.0];
-        
+
         if (![[controlView window] isKeyWindow]) {
                 strokeTopColor = [NSColor colorWithCalibratedWhite:0.550 alpha:1.0];
                 strokeBottomColor = [NSColor colorWithCalibratedWhite:0.557 alpha:1.0];
         }
-        
+
         NSRect strokeRect = cellFrame;
         strokeRect.size.height -= 1.0;
         NSBezierPath *strokePath = [NSBezierPath bezierPathWithRoundedRect:strokeRect xRadius:strokeRect.size.height/2.0 yRadius:strokeRect.size.height/2.0];
-        
+
         NSBezierPath *insetPath = [NSBezierPath bezierPath];
         [insetPath appendBezierPath:strokePath];
         NSAffineTransform *transform = [NSAffineTransform transform];
@@ -164,11 +164,11 @@ const CGFloat kEdgeWidth = 3;
         NSGradient *insetGradient = [[NSGradient alloc] initWithStartingColor:insetTopColor endingColor:insetBottomColor];
         [insetGradient drawInBezierPath:insetPath angle:90.0];
         [insetGradient release];
-        
+
         NSGradient *strokeGradient = [[NSGradient alloc] initWithStartingColor:strokeTopColor endingColor:strokeBottomColor];
         [strokeGradient drawInBezierPath:strokePath angle:90.0];
         [strokeGradient release];
-        
+
         NSRect fieldRect = NSInsetRect(cellFrame, 1.0, 1.0);
         fieldRect.size.height -= 1.0;
         NSBezierPath *fieldPath = [NSBezierPath bezierPathWithRoundedRect:fieldRect xRadius:fieldRect.size.height/2.0 yRadius:fieldRect.size.height/2.0];
@@ -179,7 +179,7 @@ const CGFloat kEdgeWidth = 3;
     CGFloat w = fieldRect.size.width;
     [[NSGraphicsContext currentContext] saveGraphicsState];
     [fieldPath addClip];
-    
+
     NSRect blueRect = NSMakeRect(0, 0, w * [self fraction] + kEdgeWidth, cellFrame.size.height);
     const CGFloat alpha = 0.3 * _alphaMultiplier;
     NSGradient *horizontalGradient =
@@ -192,7 +192,7 @@ const CGFloat kEdgeWidth = 3;
                                                                               blue:239.0/255.0
                                                                              alpha:alpha]] autorelease];
     [horizontalGradient drawInRect:blueRect angle:0];
-    
+
     NSGradient *verticalGradient =
         [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedRed:0/255.0
                                                                              green:0/255.0
@@ -204,7 +204,7 @@ const CGFloat kEdgeWidth = 3;
                                                                              alpha:alpha]] autorelease];
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositePlusLighter];
     [verticalGradient drawInRect:blueRect angle:90];
-    
+
     NSGradient *edgeGradient =
         [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedRed:255/255.0
                                                                              green:255/255.0
@@ -219,7 +219,7 @@ const CGFloat kEdgeWidth = 3;
     [edgeGradient drawInRect:edgeRect angle:0];
 
     [[NSGraphicsContext currentContext] restoreGraphicsState];
-    
+
         // Draw the inner shadow
         [[NSGraphicsContext currentContext] saveGraphicsState];
         NSShadow *innerShadow = [[NSShadow alloc] init];
@@ -230,16 +230,16 @@ const CGFloat kEdgeWidth = 3;
         [innerShadow setShadowOffset:NSMakeSize(0, -1.0)];
         [innerShadow setShadowBlurRadius:1.0];
         [innerShadow set];
-        
+
         [fieldPath addClip];
-        
+
         NSBezierPath *outlinePath = [NSBezierPath bezierPath];
         [outlinePath appendBezierPath:strokePath];
         [outlinePath appendBezierPath:fieldPath];
         [outlinePath setWindingRule:NSEvenOddWindingRule];
         [strokeTopColor set];
         [outlinePath fill];
-        
+
         [[NSGraphicsContext currentContext] restoreGraphicsState];
         [innerShadow release];
 
@@ -286,20 +286,20 @@ const CGFloat kEdgeWidth = 3;
     // items.
     IBOutlet NSMenuItem* ignoreCaseMenuItem_;
     IBOutlet NSMenuItem* regexMenuItem_;
-    
+
     FindState *savedState_;
     FindState *state_;
-    
+
     // Find happens incrementally. This remembers the string to search for.
     NSMutableString* previousFindString_;
-    
+
     // Find runs out of a timer so that if you have a huge buffer then it
     // doesn't lock up. This timer runs the show.
     NSTimer* timer_;
-    
+
     // Fades out the progress indicator.
     NSTimer *_animationTimer;
-    
+
     id<FindViewControllerDelegate> delegate_;
     NSRect fullFrame_;
     NSSize textFieldSize_;
@@ -392,8 +392,7 @@ const CGFloat kEdgeWidth = 3;
     }
 }
 
-- (IBAction)closeFindView:(id)sender
-{
+- (IBAction)closeFindView:(id)sender {
     [self close];
 }
 
@@ -413,14 +412,14 @@ const CGFloat kEdgeWidth = 3;
                       fullFrame_.size.height);
 }
 
-- (void)close
-{
+- (void)close {
+    [self updateDelayState];
     BOOL wasHidden = [[self view] isHidden];
     if (!wasHidden && timer_) {
         [timer_ invalidate];
         timer_ = nil;
     }
-    
+
     [[NSAnimationContext currentContext] setDuration:FINDVIEW_DURATION];
     [[[self view] animator] setFrame:[self collapsedFrame]];
     [self performSelector:@selector(_hide)
@@ -466,7 +465,7 @@ const CGFloat kEdgeWidth = 3;
     [delegate_ takeFocus];
     [self performSelector:@selector(_grabFocus)
                withObject:nil
-               afterDelay:[[NSAnimationContext currentContext] duration]];    
+               afterDelay:[[NSAnimationContext currentContext] duration]];
 }
 
 - (void)_grabFocus
@@ -796,7 +795,8 @@ const CGFloat kEdgeWidth = 3;
     NSTimeInterval delay = [iTermAdvancedSettingsModel findDelaySeconds];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
-                       if (delayState_ == kFindViewDelayStateDelaying) {
+                       if (![[self view] isHidden] &&
+                           delayState_ == kFindViewDelayStateDelaying) {
                            [self becomeActive];
                        }
                        [self release];
@@ -812,6 +812,11 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (void)becomeActive {
+    [self updateDelayState];
+    [self doSearch];
+}
+
+- (void)updateDelayState {
     if ([self queryIsLong]) {
         delayState_ = kFindViewDelayStateActiveLong;
     } else if ([self queryIsShort]) {
@@ -819,7 +824,6 @@ const CGFloat kEdgeWidth = 3;
     } else {
         delayState_ = kFindViewDelayStateActiveMedium;
     }
-    [self doSearch];
 }
 
 - (void)doSearch {
@@ -907,7 +911,7 @@ const CGFloat kEdgeWidth = 3;
     if (postingObject != findBarTextField_) {
         return;
     }
-    
+
     int move = [[[aNotification userInfo] objectForKey:@"NSTextMovement"] intValue];
     [previousFindString_ setString:@""];
     switch (move) {
