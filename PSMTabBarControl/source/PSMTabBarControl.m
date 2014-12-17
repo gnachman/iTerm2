@@ -17,6 +17,8 @@
 #import "PSMAdiumTabStyle.h"
 #import "PSMTabDragAssistant.h"
 #import "PTYTask.h"
+#import "iTermApplicationDelegate.h"
+#import "NSView+RecursiveDescription.h"
 
 @interface PSMTabBarControl (Private)
 // characteristics
@@ -1376,6 +1378,7 @@
 
 - (void)mouseDown:(NSEvent *)theEvent
 {
+  DLog(@"PSMTabBarControl mouseDown: self=%@", self);
     _didDrag = NO;
 
     // keep for dragging
@@ -1385,24 +1388,31 @@
     NSRect frame = [self frame];
 
     if ([self orientation] == PSMTabBarVerticalOrientation && [self allowsResizing] && partnerView && (mousePt.x > frame.size.width - 3)) {
+      DLog(@"  _resizing<-YES");
         _resizing = YES;
     }
 
     NSRect cellFrame;
     PSMTabBarCell *cell = [self cellForPoint:mousePt cellFrame:&cellFrame];
+  DLog(@"  cell=%@", cell);
     if(cell){
         BOOL overClose = NSMouseInRect(mousePt, [cell closeButtonRectForFrame:cellFrame], [self isFlipped]);
         if (overClose && ![self disableTabClose] && ([self allowsBackgroundTabClosing] || [[cell representedObject] isEqualTo:[tabView selectedTabViewItem]])) {
+          DLog(@"  on close button.");
             [cell setCloseButtonOver:NO];
             [cell setCloseButtonPressed:YES];
             _closeClicked = YES;
         } else {
+          DLog(@"  Not on close button");
             [cell setCloseButtonPressed:NO];
             if ([theEvent clickCount] == 2) {
+              DLog(@"  call tabDoubleClick on self");
                 [self performSelector:@selector(tabDoubleClick:) withObject:cell];
             }
             else {
+              DLog(@"  not a double click");
                 if (_selectsTabsOnMouseDown) {
+                  DLog(@"  selects tabs on mouse down so call tabClick:");
                     [self performSelector:@selector(tabClick:) withObject:cell];
                 }
             }
@@ -1410,7 +1420,9 @@
         [self setNeedsDisplay];
     }
     else {
+      DLog(@"  no cell");
         if ([theEvent clickCount] == 2) {
+          DLog(@"  call tabBarDoubleClick");
             [self performSelector:@selector(tabBarDoubleClick)];
         }
     }
@@ -1695,7 +1707,25 @@
 
 - (void)tabClick:(id)sender
 {
+  DLog(@"self=%@ tabClick:%@ sender.representedObject=%@", self, sender, [sender representedObject]);
+  for (int i = 0; i < [tabView numberOfTabViewItems]; i++) {
+    NSTabViewItem *item = [tabView tabViewItemAtIndex:i];
+    DLog(@"    Tab %d (%@) has identifier %@", i, item, item.identifier);
+  }
+  DLog(@"  tabView=%@", tabView);
+  DLog(@"  Before call, selected tab view item is %@ (identifier %@)", [tabView selectedTabViewItem],
+       [[tabView selectedTabViewItem] identifier]);
+  DLog(@"%@", [self.window.contentView iterm_recursiveDescription]);
+  DLog(@"  performing call to selectTabViewItem:%@", [sender representedObject]);
     [tabView selectTabViewItem:[sender representedObject]];
+  DLog(@"  returned from call to selectTabViewItem:%@", [sender representedObject]);
+  DLog(@"  After call, selected tab view item is %@ (identifier %@)", [tabView selectedTabViewItem],
+       [[tabView selectedTabViewItem] identifier]);
+  DLog(@"%@", [self.window.contentView iterm_recursiveDescription]);
+  for (int i = 0; i < [tabView numberOfTabViewItems]; i++) {
+    NSTabViewItem *item = [tabView tabViewItemAtIndex:i];
+    DLog(@"    after selection, tab %d (%@) has identifier %@", i, item, item.identifier);
+  }
     [self update];
 }
 
@@ -1877,13 +1907,16 @@
 
 - (void)tabView:(NSTabView *)aTabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+  DLog(@"self=%@ tabView:%@ didSelectTabViewItem:%@", self, aTabView, tabViewItem);
     // here's a weird one - this message is sent before the "tabViewDidChangeNumberOfTabViewItems"
     // message, thus I can end up updating when there are no cells, if no tabs were (yet) present
     if([_cells count] > 0){
         [self update];
     }
+  DLog(@"  self.delegate=%@", self.delegate);
     if([self delegate]){
         if([[self delegate] respondsToSelector:@selector(tabView:didSelectTabViewItem:)]){
+          DLog(@" delegate responds to tabView:didSelectTabViewItem:");
             [[self delegate] tabView: aTabView didSelectTabViewItem: tabViewItem];
         }
     }
@@ -1897,21 +1930,32 @@
 
 - (BOOL)tabView:(NSTabView *)aTabView shouldSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+  DLog(@"self=%@ tabView:%@ shouldSelectTabViewItem:%@", self, aTabView, tabViewItem);
+  DLog(@"  self.delegate=%@", self.delegate);
     if([self delegate]){
         if([[self delegate] respondsToSelector:@selector(tabView:shouldSelectTabViewItem:)]){
-            return (int)[[self delegate] tabView: aTabView shouldSelectTabViewItem: tabViewItem];
+          DLog(@"  delegate responds to tabView:shouldSelectTabViewItem:");
+            BOOL result =[[self delegate] tabView: aTabView shouldSelectTabViewItem: tabViewItem];
+          DLog(@"  delegate returned %@", @(result));
+          return result;
         } else {
+          DLog(@"  delegate does not respond to shouldselecttabviewitem");
             return YES;
         }
     } else {
+      DLog(@"  no delegate");
         return YES;
     }
 }
 
 - (void)tabView:(NSTabView *)aTabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+  DLog(@"self=%@ tabView:%@ willSelectTabViewItem:%@", self, aTabView, tabViewItem);
+  DLog(@"  self.delegate=%@", self.delegate);
+
     if([self delegate]){
         if([[self delegate] respondsToSelector:@selector(tabView:willSelectTabViewItem:)]){
+          DLog(@"  delegate responds to willSelectTabViewItem");
             [[self delegate] tabView: aTabView willSelectTabViewItem: tabViewItem];
         }
     }

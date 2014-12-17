@@ -165,6 +165,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [self appendSessionViewToViewOrder:[session view]];
 }
 
+- (NSString *)description {
+  return [NSString stringWithFormat:@"<%@: %p root=%@>", self.class, self, root_];
+}
+
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session
 {

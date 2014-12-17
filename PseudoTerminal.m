@@ -2851,31 +2851,39 @@ NSString *sessionsKey = @"sessions";
 // NSTabView
 - (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+  DLog(@"PseudoTerminal=%@ tabView:%@ willSelectTabViewItem:%@", self, tabView, tabViewItem);
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal tabView: willSelectTabViewItem]", __FILE__, __LINE__);
 #endif
     if (![[self currentSession] exited]) {
+      DLog(@"  setNewOutput:NO");
         [[self currentSession] setNewOutput:NO];
     }
     // If the user is currently select-dragging the text view, stop it so it
     // doesn't keep going in the background.
+  DLog(@"  aboutToHide");
     [[[self currentSession] TEXTVIEW] aboutToHide];
 
     if ([[autocompleteView window] isVisible]) {
+      DLog(@"  close autocomplete view");
         [autocompleteView close];
     }
+  DLog(@"  just before if statement");
     NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
     if ([tabView numberOfTabViewItems] == 1 &&
         [[PreferencePanel sharedInstance] hideTab] &&
         newTabColor) {
+      DLog(@"    in if claused");
         // Draw colored title bar (and tab bar, and tab bar background).
         [[self window] setBackgroundColor:newTabColor];
         [background_ setColor:newTabColor];
     } else {
+      DLog(@"    in else clause");
         // Draw normal title bar.
         [[self window] setBackgroundColor:nil];
         [background_ setColor:normalBackgroundColor];
     }
+  DLog(@"  returning from PseudoTerminal tabView:willSelectTabViewItem:");
 }
 
 - (void)enableBlur:(double)radius
@@ -2898,6 +2906,8 @@ NSString *sessionsKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
+  DLog(@"self=%@ tabView:%@ didSelectTabViewItem:%@", self, tabView, tabViewItem);
+  DLog(@"Before first for loop");
     for (PTYSession* aSession in [[tabViewItem identifier] sessions]) {
         [aSession setNewOutput:NO];
 
@@ -2908,11 +2918,13 @@ NSString *sessionsKey = @"sessions";
         [aSession scheduleUpdateIn:kFastTimerIntervalSec];
     }
 
+  DLog(@"Before second for loop");
     for (PTYSession *session in [self sessions]) {
         if ([[session TEXTVIEW] isFindingCursor]) {
             [[session TEXTVIEW] endFindCursor];
         }
     }
+  DLog(@"Before first if");
     PTYSession* aSession = [[tabViewItem identifier] activeSession];
     if (_fullScreen) {
         [self _drawFullScreenBlackBackground];
@@ -2921,25 +2933,34 @@ NSString *sessionsKey = @"sessions";
         [self setWindowTitle];
     }
 
+  DLog(@"Set first responder.");
     [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] TEXTVIEW]];
+  DLog(@"Before second if");
     if ([[aSession tab] blur]) {
         [self enableBlur:[[aSession tab] blurRadius]];
     } else {
         [self disableBlur];
     }
 
+  DLog(@"Before third if");
     if (![bottomBar isHidden]) {
         [self updateInstantReplay];
     }
+
+  DLog(@"Post notification");
     // Post notifications
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                         object:[[tabViewItem identifier] activeSession]];
 
+  DLog(@"before last for");
     PTYSession *activeSession = [self currentSession];
     for (PTYSession *s in [self sessions]) {
       [aSession setFocused:(s == activeSession)];
     }
+
+  DLog(@"Before show or hide IR bar");
     [self showOrHideInstantReplayBar];
+  DLog(@"returning from didSelect");
 }
 
 - (void)showOrHideInstantReplayBar

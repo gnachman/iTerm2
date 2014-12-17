@@ -26,6 +26,7 @@
 
 #import "PTYTabView.h"
 #include <Carbon/Carbon.h>
+#import "iTermApplicationDelegate.h"
 
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
@@ -184,7 +185,14 @@
 // selects a tab from the contextual menu
 - (void)selectTab:(id)sender
 {
+  DLog(@"self=%@: selectTab:. Calling selectTabViewItemWithIdentifier:%@", self, [sender representedObject]);
+
+  for (int i = 0; i < self.numberOfTabViewItems; i++) {
+    DLog(@"FYI, tab %d has identifier %@", i, [sender representedObject]);
+  }
+  DLog(@"Before call, the selected item is %@ and its identifier is %@", self.selectedTabViewItem, [self.selectedTabViewItem identifier]);
     [self selectTabViewItemWithIdentifier:[sender representedObject]];
+  DLog(@"After call, the selected item is %@ and its identifier is %@", self.selectedTabViewItem, [self.selectedTabViewItem identifier]);
 }
 
 - (void)setDelegate:(id<PTYTabViewDelegateProtocol>)anObject
