@@ -143,7 +143,12 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (NSArray *)keyValuePair;
 
-- (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
+typedef iTermStringReplacementFunction (^NSString *)(NSArray *);
+
+// vars maps a variable name to a value
+// functions maps a function name to an iTermStringReplacementFunction.
+- (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars
+                                                     functions:(NSDictionary *)functions;
 
 // Does self contain |substring|?
 - (BOOL)containsString:(NSString *)substring;

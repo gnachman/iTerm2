@@ -24,6 +24,9 @@ extern NSString *const kPTYSessionTmuxFontDidChange;
 // Called when captured output for the current session changes.
 extern NSString *const kPTYSessionCapturedOutputDidChange;
 
+// Notification to post when variables should be recomputed.
+extern NSString *const kPTYSessionShouldRecalculateVariables;
+
 @class CapturedOutput;
 @class FakeWindow;
 @class iTermAnnouncementViewController;
@@ -492,6 +495,8 @@ typedef enum {
 
 // Kill the running command (if possible), print a banner, and rerun the profile's command.
 - (void)restartSession;
+
+- (void)updateVariables;
 
 #pragma mark - Private for use by Scripting category
 

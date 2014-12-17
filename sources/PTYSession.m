@@ -118,12 +118,26 @@ static NSString *const kVariableKeySessionPath = @"session.path";
 static NSString *const kVariableKeySessionLastCommand = @"session.lastCommand";
 static NSString *const kVariableKeySessionTTY = @"session.tty";
 
+static NSString *const kVariableKeySystemDateFormattedYYYYMMDD = @"system.date.formatted.yyyymmdd";
+static NSString *const kVariableKeySystemDateFormattedHHMMSS = @"system.date.formatted.hhmmss";
+static NSString *const kVariableKeySystemDateFormattedLocalizedShortDate = @"system.date.formatted.localizedShortDate";
+static NSString *const kVariableKeySystemDateFormattedLocalizedTime = @"system.date.formatted.localizedShortTime";
+static NSString *const kVariableKeyWindowNumber = @"window.number";
+static NSString *const kVariableKeyTabNumber = @"tab.number";
+static NSString *const kVariableKeySessionNumber = @"session.number";
+static NSString *const kVariableKeyiTerm2Pid = @"iterm2.pid";
+
 // Maps Session GUID to saved contents. Only live between window restoration
 // and the end of startup activities.
 static NSMutableDictionary *gRegisteredSessionContents;
 
 // Rate limit for checking instant (partial-line) triggers, in seconds.
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
+
+// Notification posted once per minute to update variables
+static NSString *const kPTYSessionClockDidAdvanceByOneMinute = @"kPTYSessionClockDidAdvanceByOneMinute";
+
+extern NSString *const kPTYSessionShouldRecalculateVariables = @"kPTYSessionShouldRecalculateVariables";
 
 @interface PTYSession () <iTermPasteHelperDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
@@ -323,9 +337,32 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [gRegisteredSessionContents removeAllObjects];
 }
 
++ (void)postClockDidAdvanceByOneMinuteNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionClockDidAdvanceByOneMinute
+                                                        object:nil];
+}
+
 - (id)init {
     self = [super init];
     if (self) {
+        // Dispatch a global once-per-minute timer to update time-related variables.
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            NSDate *date = [NSDate date];
+            NSCalendar *calendar = [NSCalendar currentCalendar];
+            NSDateComponents *components = [calendar components:NSCalendarUnitSecond fromDate:date];
+            NSInteger second = [components second];
+            NSTimeInterval delay = 60 - second;
+            // Start the timer running at the top of the next minute.
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                [NSTimer scheduledTimerWithTimeInterval:60
+                                                 target:PTYSession
+                                               selector:@selector(postClockDidAdvanceByOneMinuteNotification)
+                                               userInfo:nil
+                                                repeats:YES];
+            });
+        });
         _sessionID = gNextSessionID++;
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
@@ -388,6 +425,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(profileSessionNameDidEndEditing:)
                                                      name:kProfileSessionNameDidEndEditing
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(clockDidAdvanceByOneMinute:)
+                                                     name:kPTYSessionClockDidAdvanceByOneMinute
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(recalculateVariables:)
+                                                     name:kPTYSessionShouldRecalculateVariables
                                                    object:nil];
         [self updateVariables];
     }
@@ -565,6 +610,31 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     } else {
         [_variables removeObjectForKey:kVariableKeySessionTTY];
     }
+
+    NSDate *date = [NSDate date];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateFormat = @"yyyyMMdd";
+    _variables[kVariableKeySystemDateFormattedYYYYMMDD] = [dateFormatter stringFromDate:date];
+
+    dateFormatter.dateFormat = @"HHmmss";
+    _variables[kVariableKeySystemDateFormattedHHMMSS] = [dateFormatter stringFromDate:date];
+
+    _variables[kVariableKeySystemDateFormattedLocalizedShortDate] =
+        [NSDateFormatter localizedStringFromDate:date
+                                       dateStyle:NSDateFormatterShortStyle
+                                       timeStyle:NSDateFormatterNoStyle];
+
+    _variables[kVariableKeySystemDateFormattedLocalizedShortTime] =
+        [NSDateFormatter localizedStringFromDate:date
+                                       dateStyle:NSDateFormatterNoStyle
+                                       timeStyle:NSDateFormatterShortStyle];
+
+    _variables[kVariableKeyWindowNumber] = [@(_tab.realParentWindow.number) stringValue];
+    _variables[kVariableKeyTabNumber] = [@(_tab.realObjectCount - 1) stringValue];
+    _variables[kVariableKeySessionNumber] = [@([_tab indexOfSessionView:[self view]]) stringValue];
+    _variables[kVariableKeyiTerm2Pid] = [@(getpid()) stringValue];
+    _variables[kVariableKeySystemRandomUInt32] = arc4random();
+
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
@@ -955,9 +1025,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return YES;
 }
 
-- (NSString *)_autoLogFilenameForTermId:(NSString *)termid
-{
+- (NSString *)autoLogFilenameForTermId:(NSString *)termid {
     // $(LOGDIR)/YYYYMMDD_HHMMSS.$(NAME).wNtNpN.$(PID).$(RANDOM).log
+
     return [NSString stringWithFormat:@"%@/%@.%@.%@.%d.%0x.log",
             [_profile objectForKey:KEY_LOGDIR],
             [[NSDate date] descriptionWithCalendarFormat:@"%Y%m%d_%H%M%S"
@@ -1026,7 +1096,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         env[@"ITERM_PROFILE"] = _profile[KEY_NAME];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
-        [_shell loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
+        [_shell loggingStartWithPath:[self autoLogFilenameForTermId:itermId]];
     }
     [_shell launchWithPath:_program
                  arguments:_arguments
@@ -3114,6 +3184,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                      toName:profile[KEY_NAME]];
         _tmuxTitleOutOfSync = NO;
     }
+}
+
+- (void)clockDidAdvanceByOneMinute:(NSNotification *)notification {
+    [self updateVariables];
+}
+
+- (void)recalculateVariables:(NSNotification *)notification {
+    [self updateVariables];
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification

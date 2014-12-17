@@ -1196,7 +1196,8 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 // Replace substrings like \(foo) or \1...\9 with the value of vars[@"foo"] or vars[@"1"].
-- (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars {
+- (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars
+                                                     functions:(NSDictionary *)functions {
     unichar *chars = (unichar *)malloc(self.length * sizeof(unichar));
     [self getCharacters:chars];
     enum {
@@ -1206,6 +1207,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     } state = kLiteral;
     NSMutableString *result = [NSMutableString string];
     NSMutableString *varName = nil;
+    int depth = 0;
     for (int i = 0; i < self.length; i++) {
         unichar c = chars[i];
         switch (state) {
@@ -1219,6 +1221,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
             case kEscaped:
                 if (c == '(') {
+                    ++depth;
                     state = kInParens;
                     varName = [NSMutableString string];
                 } else {
@@ -1235,12 +1238,35 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
             case kInParens:
                 if (c == ')') {
-                    state = kLiteral;
-                    NSString *value = vars[varName];
-                    if (value) {
-                        [result appendString:value];
+                    --depth;
+                    if (depth == 0) {
+                        state = kLiteral;
+                        NSString *value = vars[varName];
+                        if (value) {
+                            [result appendString:value];
+                        } else if ([varName hasSuffix:@")"]) {
+                            // Some day, hopefully, a real swift interpreter will be provided. Until
+                            // then this is a minimum viable parser for function calls.
+                            NSRange openParenRange = [varName rangeOfString:@"("];
+                            if (openParenRange.location != NSNotFound) {
+                                NSString *functionName = [varName substringToIndex:openParenRange.location];
+                                NSRange argRange = NSMakeRange(openParenRange.location + 1,
+                                                               varName.length - openParenRange.location - 1);
+                                NSString *arguments = [varName substringWithRange:argRange];
+                                iTermStringReplacementFunction function = functions[functionName];
+                                if (function) {
+                                    [varName appendString:function()];
+                                }
+                            }
+                        }
+
+                    } else {
+                        [varName appendFormat:@"%C", c];
                     }
                 } else {
+                    if (c == '(') {
+                        ++depth;
+                    }
                     [varName appendFormat:@"%C", c];
                 }
                 break;

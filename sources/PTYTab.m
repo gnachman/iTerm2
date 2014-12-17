@@ -142,6 +142,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if (i == 9) {
         [(SessionView *)[[orderedSessions lastObject] view] setOrdinal:9];
     }
+    for (PTYSession *aSession in self.sessions) {
+        [aSession updateVariables];
+    }
     [realParentWindow_ invalidateRestorableState];
 }
 
@@ -3336,7 +3339,10 @@ static NSString* FormatRect(NSRect r) {
     
     [session1Tab fitSessionToCurrentViewSize:session1];
     [session2Tab fitSessionToCurrentViewSize:session1];
-    
+
+    [session1 updateVariables];
+    [session2 updateVariables];
+
     DLog(@"After swap, %@ has superview %@ and %@ has superview %@",
          session1.view, session1.view.superview,
          session2.view, session2.view.superview);
