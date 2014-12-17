@@ -89,4 +89,6 @@
 + (BOOL)restoreWindowContents;
 + (BOOL)tolerateUnrecognizedTmuxCommands;
 
++ (int)maximumBytesToProvideToServices;
+
 @end

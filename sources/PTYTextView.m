@@ -5254,20 +5254,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // Service
-- (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard types:(NSArray *)types
-{
-    NSString *copyString;
-
+- (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard types:(NSArray *)types {
     // It is agonizingly slow to copy hundreds of thousands of lines just because the context
     // menu is opening. Services use this to get access to the clipboard contents but
     // it's lousy to hang for a few minutes for a feature that won't be used very much, esp. for
     // such large selections. In OS 10.9 this is called when opening the context menu, even though
-    // it is deprecated by 10.9 (!).
-    copyString = [self selectedTextWithPad:NO cappedAtSize:100000];
+    // it is deprecated by 10.9.
+    NSString *copyString =
+        [self selectedTextWithPad:NO
+                     cappedAtSize:[iTermAdvancedSettingsModel maximumBytesToProvideToServices]];
 
-    if (copyString && [copyString length]>0) {
-        [pboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: self];
-        [pboard setString: copyString forType: NSStringPboardType];
+    if (copyString && [copyString length] > 0) {
+        [pboard declareTypes:@[ NSStringPboardType ] owner:self];
+        [pboard setString:copyString forType:NSStringPboardType];
         return YES;
     }
 
