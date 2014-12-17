@@ -40,16 +40,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_layout}\t"
     "#{?window_active,1,0}\"";
 
+
 @interface TmuxController ()
 
-@property (nonatomic, copy) NSString *clientName;
-
-- (int)windowIdFromString:(NSString *)s;
-- (void)retainWindow:(int)window withTab:(PTYTab *)tab;
-- (void)releaseWindow:(int)window;
-- (void)closeAllPanes;
-- (void)windowDidOpen:(NSNumber *)windowIndex;
-- (void)getOriginsResponse:(NSString *)result;
+@property(nonatomic, copy) NSString *clientName;
+@property(nonatomic, copy) NSString *sessionGuid;
 
 @end
 
@@ -78,8 +73,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [_clientName release];
     [gateway_ release];
     [windowPanes_ release];
@@ -91,6 +85,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [lastSaveAffinityCommand_ release];
     [hiddenWindows_ release];
     [lastOrigins_ release];
+    [_sessionGuid release];
     [super dealloc];
 }
 
@@ -150,6 +145,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid {
+    self.sessionGuid = nil;
     self.sessionName = newSessionName;
     sessionId_ = sessionid;
     [self closeAllPanes];
@@ -267,9 +263,18 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)openWindowsInitial
-{
+- (void)openWindowsInitial {
     NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
+    // There's a (hopefully) minor race condition here. When we initially connect to
+    // a session we get its @iterm2_id. If one doesn't exist, it is assigned. This
+    // lets us know if a single instance of iTerm2 is trying to attach to the same
+    // session twice. A really evil user could attach twice to the same session
+    // simultaneously, and we'd get the value twice, see it's empty twice, and set
+    // it twice, causing chaos. Or two separate instances of iTerm2 attaching
+    // simultaneously could also hit this race. The consequence of this race
+    // condition is easily recovered from by reattaching.
+    NSString *getSessionGuidCommand = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_id",
+                                       sessionId_];
     NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
              (int)size.width, (int)size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
@@ -277,39 +282,80 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
     NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @origins", sessionId_];
     NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hidden", sessionId_];
-    NSArray *commands = [NSArray arrayWithObjects:
-                         [gateway_ dictionaryForCommand:setSizeCommand
-                                         responseTarget:nil
-                                       responseSelector:nil
-                                         responseObject:nil
-                                                  flags:0],
-                         [gateway_ dictionaryForCommand:getHiddenWindowsCommand
-                                         responseTarget:self
-                                       responseSelector:@selector(getHiddenWindowsResponse:)
-                                         responseObject:nil
-                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
-                         [gateway_ dictionaryForCommand:getAffinitiesCommand
-                                         responseTarget:self
-                                       responseSelector:@selector(getAffinitiesResponse:)
-                                         responseObject:nil
-                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
-                         [gateway_ dictionaryForCommand:getOriginsCommand
-                                         responseTarget:self
-                                       responseSelector:@selector(getOriginsResponse:)
-                                         responseObject:nil
-                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
-                         [gateway_ dictionaryForCommand:listSessionsCommand
-                                         responseTarget:self
-                                       responseSelector:@selector(listSessionsResponse:)
-                                         responseObject:nil
-                                                  flags:0],
-                         [gateway_ dictionaryForCommand:listWindowsCommand
-                                         responseTarget:self
-                                       responseSelector:@selector(initialListWindowsResponse:)
-                                         responseObject:nil
-                                                  flags:0],
-                         nil];
+    NSArray *commands = @[ [gateway_ dictionaryForCommand:getSessionGuidCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(getSessionGuidResponse:)
+                                           responseObject:nil
+                                                    flags:0],
+                           [gateway_ dictionaryForCommand:setSizeCommand
+                                           responseTarget:nil
+                                         responseSelector:nil
+                                           responseObject:nil
+                                                    flags:0],
+                           [gateway_ dictionaryForCommand:getHiddenWindowsCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(getHiddenWindowsResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:getAffinitiesCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(getAffinitiesResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:getOriginsCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(getOriginsResponse:)
+                                           responseObject:nil
+                                                    flags:kTmuxGatewayCommandShouldTolerateErrors],
+                           [gateway_ dictionaryForCommand:listSessionsCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(listSessionsResponse:)
+                                           responseObject:nil
+                                                    flags:0],
+                           [gateway_ dictionaryForCommand:listWindowsCommand
+                                           responseTarget:self
+                                         responseSelector:@selector(initialListWindowsResponse:)
+                                           responseObject:nil
+                                                    flags:0] ];
     [gateway_ sendCommandList:commands];
+}
+
+// Returns the mutable set of session GUIDs we're attached to.
+- (NSMutableSet *)attachedSessionGuids {
+    static NSMutableSet *gAttachedSessionGuids;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gAttachedSessionGuids = [[NSMutableSet alloc] init];
+    });
+    return gAttachedSessionGuids;
+}
+
+// Sets the current controller's session guid and updates the global set of attached session GUIDs.
+// If guid is nil then it is removed from the global set.
+- (void)setSessionGuid:(NSString *)guid {
+    if (guid) {
+        [self.attachedSessionGuids addObject:guid];
+    } else if (_sessionGuid) {
+        [self.attachedSessionGuids removeObject:_sessionGuid];
+    }
+    [_sessionGuid autorelease];
+    _sessionGuid = [guid copy];
+}
+
+// This is where the race condition described in openWindowsInitial occurs.
+- (void)getSessionGuidResponse:(NSString *)sessionGuid {
+    if (!sessionGuid.length) {
+        NSString *guid = [NSString uuid];
+        NSString *command = [NSString stringWithFormat:@"set -t $%d @iterm2_id \"%@\"",
+                             sessionId_, guid];
+        [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
+        self.sessionGuid = guid;
+    } else if ([self.attachedSessionGuids containsObject:sessionGuid]) {
+        [self.gateway abortWithErrorMessage:@"This instance of iTerm2 is already attached to this session."
+                                      title:@"Could not attach to session."];
+    } else {
+        self.sessionGuid = sessionGuid;
+    }
 }
 
 - (NSNumber *)_keyForWindowPane:(int)windowPane
@@ -354,8 +400,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [self.gateway detach];
 }
 
-- (void)detach
-{
+- (void)detach {
+    self.sessionGuid = nil;
     [listSessionsTimer_ invalidate];
     listSessionsTimer_ = nil;
     [listWindowsTimer_ invalidate];

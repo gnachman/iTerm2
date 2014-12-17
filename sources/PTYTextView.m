@@ -4197,16 +4197,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)openImage:(id)sender {
     ImageInfo *imageInfo = [sender representedObject];
     if (imageInfo.image) {
-        CFUUIDRef   uuid;
-        CFStringRef uuidStr;
-
-        uuid = CFUUIDCreate(NULL);
-        uuidStr = CFUUIDCreateString(NULL, uuid);
-
-        NSString *filename = [NSString stringWithFormat:@"iterm2TempImage.%@.tiff", uuidStr];
-
-        CFRelease(uuidStr);
-        CFRelease(uuid);
+        NSString *filename = [NSString stringWithFormat:@"iterm2TempImage.%@.tiff",
+                              [NSString uuid]];
 
         NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
         NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];

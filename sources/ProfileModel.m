@@ -23,6 +23,7 @@
  */
 
 #import "ITAddressBookMgr.h"
+#import "NSStringITerm.h"
 #import "ProfileModel.h"
 #import "PreferencePanel.h"
 
@@ -465,13 +466,8 @@ int gMigrated;
     [bookmarks_ retain];
 }
 
-+ (NSString*)freshGuid
-{
-    CFUUIDRef uuidObj = CFUUIDCreate(nil); //create a new UUID
-    //get the string representation of the UUID
-    NSString *uuidString = (NSString*)CFUUIDCreateString(nil, uuidObj);
-    CFRelease(uuidObj);
-    return [uuidString autorelease];
++ (NSString*)freshGuid {
+    return [NSString uuid];
 }
 
 - (int)indexOfProfileWithGuid:(NSString*)guid

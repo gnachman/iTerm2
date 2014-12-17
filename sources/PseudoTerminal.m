@@ -698,7 +698,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
-    self.terminalGuid = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
+    self.terminalGuid = [[NSString stringWithFormat:@"pty-%@", [NSString uuid]] retain];
 
     if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
         _shortcutAccessoryViewController =
@@ -5081,23 +5081,37 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     frame.size = winSize;
     frame.origin.y -= heightChange;
 
-    // Ok, so some silly things are happening here. Issue 2096 reported that
-    // when a session-initiated resize grows a window, the window's background
-    // color becomes almost solid (it's actually a very gentle gradient between
-    // two almost identical grays). For reasons that escape me, this happens if
-    // the window's content view does not have a subview with an autoresizing
-    // mask or autoresizing is off for the content view. I'm sure this isn't
-    // the best fix, but it's all I could find: I turn off the autoresizing
-    // mask for the TABVIEW (which I really don't want autoresized--it needs to
-    // be done by hand in fitTabToWindow), and add a silly one pixel view
-    // that lives just long enough to be resized in this function. I don't know
-    // why it works but it does.
-    NSView *bugFixView = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)] autorelease];
-    bugFixView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
-    [[[self window] contentView] addSubview:bugFixView];
-    NSUInteger savedMask = TABVIEW.autoresizingMask;
-    TABVIEW.autoresizingMask = 0;
-
+    NSView *bugFixView = nil;
+    NSUInteger savedMask = 0;
+    // The following code doesn't play nicely with the constraints that are
+    // unfortunately added by the system in 10.10 when using title bar
+    // accessories. The addition of title bar accessories forces a bunch of
+    // constraints to exist. There was a bug where when creating a tmux window
+    // we'd set the window frame to one value (e.g., 378pt tall);
+    // windowDidResize would be called for 378pt. Then constraints would decide
+    // that's not cool and windowDidResize would be called again (e.g., with
+    // 399pt). No matter how many times you call setFrame:display:,
+    // windowDidResize would get called twice, and you literally couldn't set
+    // the window to certain heights. It was related to this bugfix view,
+    // somehow. Better not to have it and live with screwed up title colors.
+    if (!_shortcutAccessoryViewController) {
+        // Ok, so some silly things are happening here. Issue 2096 reported that
+        // when a session-initiated resize grows a window, the window's background
+        // color becomes almost solid (it's actually a very gentle gradient between
+        // two almost identical grays). For reasons that escape me, this happens if
+        // the window's content view does not have a subview with an autoresizing
+        // mask or autoresizing is off for the content view. I'm sure this isn't
+        // the best fix, but it's all I could find: I turn off the autoresizing
+        // mask for the TABVIEW (which I really don't want autoresized--it needs to
+        // be done by hand in fitTabToWindow), and add a silly one pixel view
+        // that lives just long enough to be resized in this function. I don't know
+        // why it works but it does.
+        bugFixView = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)] autorelease];
+        bugFixView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+        [[[self window] contentView] addSubview:bugFixView];
+        savedMask = TABVIEW.autoresizingMask;
+        TABVIEW.autoresizingMask = 0;
+    }
     // Set the frame for X-of-screen windows. The size doesn't change
     // for _PARTIAL window types.
     switch (windowType_) {
@@ -5156,9 +5170,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     DLog(@"After frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
     [[self window] setFrame:frame display:YES];
 
-    // Restore TABVIEW's autoresizingMask and remove the stupid bugFixView.
-    TABVIEW.autoresizingMask = savedMask;
-    [bugFixView removeFromSuperview];
+    if (bugFixView) {
+        // Restore TABVIEW's autoresizingMask and remove the stupid bugFixView.
+        TABVIEW.autoresizingMask = savedMask;
+        [bugFixView removeFromSuperview];
+    }
     [[[self window] contentView] setAutoresizesSubviews:YES];
 
     PtyLog(@"fitWindowToTabs - refresh textview");

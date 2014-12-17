@@ -160,6 +160,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Given a bitmask of modifiers like NSAlternateKeyMask, return a string indicating those modifiers.
 + (NSString *)stringForModifiersWithMask:(NSUInteger)mask;
 
+// Returns a fresh UUID
++ (NSString *)uuid;
+
 @end
 
 @interface NSMutableString (iTerm)
