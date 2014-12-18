@@ -26,14 +26,15 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
     // These values have the same values as flags in PTYSessionPasteFlags
     kPasteFlagsEscapeSpecialCharacters = (1 << 0),
     // 1 and 2 aren't used.
-    
+
     // These are unique to sanitization
     kPasteFlagsSanitizingNewlines = (1 << 3),
     kPasteFlagsRemovingUnsafeControlCodes = (1 << 4),
     kPasteFlagsBracket = (1 << 5),
+    kPasteFlagsConvertUnicodePunctuation = (1 << 7),
 
-    // Only used by key actions
-    kPasteFlagsBase64Encode = (1 << 6)
+    // Only used by key actions and paste special
+    kPasteFlagsBase64Encode = (1 << 6),
 };
 
 @interface PasteEvent : NSEvent

@@ -96,6 +96,7 @@ NSString *const kPreferenceKeyPasteSpecialChunkDelay = @"PasteSpecialChunkDelay"
 NSString *const kPreferenceKeyPasteSpecialSpacesPerTab = @"NumberOfSpacesPerTab";
 NSString *const kPreferenceKeyPasteSpecialTabTransform = @"TabTransform";
 NSString *const kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash = @"EscapeShellCharsWithBackslash";
+NSString *const kPreferenceKeyPasteSpecialConvertUnicodePunctuation = @"ConvertUnicodePunctuation";
 NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines = @"ConvertDosNewlines";
 NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes = @"RemoveControlCodes";
 NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode = @"BracketedPasteMode";
@@ -211,6 +212,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyPasteSpecialSpacesPerTab: @4,
                   kPreferenceKeyPasteSpecialTabTransform: @0,
                   kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash: @NO,
+                  kPreferenceKeyPasteSpecialConvertUnicodePunctuation: @NO,
                   kPreferenceKeyPasteSpecialConvertDosNewlines: @YES,
                   kPreferenceKeyPasteSpecialRemoveControlCodes: @YES,
                   kPreferenceKeyPasteSpecialBracketedPasteMode: @YES,

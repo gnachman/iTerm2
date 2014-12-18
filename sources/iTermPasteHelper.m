@@ -103,6 +103,21 @@
         theString = [theString stringWithLinefeedNewlines];
     }
 
+    if (flags & kPasteFlagsConvertUnicodePunctuation) {
+        theString = [theString stringByReplacingOccurrencesOfString:kPasteSpecialViewControllerUnicodeDoubleQuotesRegularExpression
+                                                         withString:@"\""
+                                                            options:NSRegularExpressionSearch
+                                                              range:NSMakeRange(0, theString.length)];
+        theString = [theString stringByReplacingOccurrencesOfString:kPasteSpecialViewControllerUnicodeSingleQuotesRegularExpression
+                                                         withString:@"'"
+                                                            options:NSRegularExpressionSearch
+                                                              range:NSMakeRange(0, theString.length)];
+        theString = [theString stringByReplacingOccurrencesOfString:kPasteSpecialViewControllerUnicodeDashesRegularExpression
+                                                         withString:@"-"
+                                                            options:NSRegularExpressionSearch
+                                                              range:NSMakeRange(0, theString.length)];
+    }
+
     if (flags & kPasteFlagsEscapeSpecialCharacters) {
         // Put backslash before anything the shell might interpret.
         theString = [theString stringWithEscapedShellCharacters];

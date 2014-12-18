@@ -15,6 +15,20 @@ typedef struct {
     double visualCenter;
 } iTermFloatingRange;
 
+#define DASHES @"\u2010-\u2015\u207b\u208b\u2212\u2e3a\u2e3b\ufe58\ufe63\uff0d"
+#define DOUBLE_QUOTES @"\u201c-\u201f\u301d-\u301f\uff02"
+#define SINGLE_QUOTES @"\u2018-\u201b\uff07"
+
+NSString *const kPasteSpecialViewControllerUnicodePunctuationRegularExpression =
+    @"[" DASHES DOUBLE_QUOTES SINGLE_QUOTES @"]";
+NSString *const kPasteSpecialViewControllerUnicodeDashesRegularExpression =
+    @"[" DASHES @"]";
+NSString *const kPasteSpecialViewControllerUnicodeDoubleQuotesRegularExpression =
+    @"[" DOUBLE_QUOTES @"]";
+NSString *const kPasteSpecialViewControllerUnicodeSingleQuotesRegularExpression =
+    @"[" SINGLE_QUOTES @"]";
+
+
 static iTermFloatingRange kChunkSizeRange = { 1, 1024 * 1024, 1024 };
 static iTermFloatingRange kDelayRange = { 0.001, 10, .01 };
 
@@ -28,6 +42,7 @@ static NSString *const kShouldEscapeShellCharsWithBackslash = @"EscapeForShell";
 static NSString *const kShouldRemoveControlCodes = @"RemoveControls";
 static NSString *const kShouldUseBracketedPasteMode = @"BracketAllowed";
 static NSString *const kShouldBase64Encode = @"Base64";
+static NSString *const kShouldConvertUnicodePunctuation = @"ConvertUnicodePunctuation";
 
 @implementation iTermPasteSpecialViewController {
     IBOutlet NSTextField *_spacesPerTab;
@@ -37,6 +52,7 @@ static NSString *const kShouldBase64Encode = @"Base64";
     IBOutlet NSMatrix *_tabTransform;
     IBOutlet NSButton *_convertNewlines;
     IBOutlet NSButton *_base64Encode;
+    IBOutlet NSButton *_convertUnicodePunctuation;
     IBOutlet NSSlider *_chunkSizeSlider;
     IBOutlet NSSlider *_delayBetweenChunksSlider;
     IBOutlet NSTextField *_chunkSizeLabel;
@@ -183,6 +199,22 @@ static NSString *const kShouldBase64Encode = @"Base64";
     return _convertNewlines.enabled;
 }
 
+- (void)setEnableConvertUnicodePunctuation:(BOOL)enableConvertUnicodePunctuation {
+    _convertUnicodePunctuation.enabled = enableConvertUnicodePunctuation;
+}
+
+- (BOOL)isConvertUnicodePunctuationEnabled {
+    return _convertUnicodePunctuation.enabled;
+}
+
+- (void)setShouldConvertUnicodePunctuation:(BOOL)shouldConvertUnicodePunctuation {
+    _convertUnicodePunctuation.state = shouldConvertUnicodePunctuation ? NSOnState : NSOffState;
+}
+
+- (BOOL)shouldConvertUnicodePunctuation {
+    return _convertUnicodePunctuation.state == NSOnState;
+}
+
 - (void)setShouldConvertNewlines:(BOOL)shouldConvertNewlines {
     _convertNewlines.state = shouldConvertNewlines ? NSOnState : NSOffState;
 }
@@ -274,6 +306,7 @@ static NSString *const kShouldBase64Encode = @"Base64";
            kNumberOfSpacesPerTab: @(self.numberOfSpacesPerTab),
            kSelectedTabTransform: @(self.selectedTabTransform),
            kShouldConvertNewlines: @(self.shouldConvertNewlines),
+           kShouldConvertUnicodePunctuation: @(self.shouldConvertUnicodePunctuation),
            kShouldEscapeShellCharsWithBackslash: @(self.shouldEscapeShellCharsWithBackslash),
            kShouldRemoveControlCodes: @(self.shouldRemoveControlCodes),
            kShouldUseBracketedPasteMode: @(self.shouldUseBracketedPasteMode),
@@ -325,6 +358,10 @@ static NSString *const kShouldBase64Encode = @"Base64";
         [components addObject:@"NoCRLFConversion"];
     }
 
+    if ([dict[kShouldConvertUnicodePunctuation] boolValue]) {
+        [components addObject:@"ConvertPunctuation"];
+    }
+
     return [components componentsJoinedByString:@", "];
 }
 
@@ -336,6 +373,7 @@ static NSString *const kShouldBase64Encode = @"Base64";
     self.numberOfSpacesPerTab = [dict[kNumberOfSpacesPerTab] integerValue];
     self.selectedTabTransform = [dict[kSelectedTabTransform] integerValue];
     self.shouldConvertNewlines = [dict[kShouldConvertNewlines] boolValue];
+    self.shouldConvertUnicodePunctuation = [dict[kShouldConvertUnicodePunctuation] boolValue];
     self.shouldEscapeShellCharsWithBackslash = [dict[kShouldEscapeShellCharsWithBackslash] boolValue];
     self.shouldRemoveControlCodes = [dict[kShouldRemoveControlCodes] boolValue];
     self.shouldUseBracketedPasteMode = [dict[kShouldUseBracketedPasteMode] boolValue];
@@ -355,6 +393,7 @@ static NSString *const kShouldBase64Encode = @"Base64";
     BOOL shouldRemoveControlCodes = [dict[kShouldRemoveControlCodes] boolValue];
     BOOL shouldUseBracketedPasteMode = [dict[kShouldUseBracketedPasteMode] boolValue];
     BOOL shouldBase64Encode = [dict[kShouldBase64Encode] boolValue];
+    BOOL shouldConvertUnicodePunctuation = [dict[kShouldConvertUnicodePunctuation] boolValue];
 
     NSUInteger flags = 0;
     if (shouldConvertNewlines) {
@@ -372,6 +411,10 @@ static NSString *const kShouldBase64Encode = @"Base64";
     if (shouldBase64Encode) {
         flags |= kPasteFlagsBase64Encode;
     }
+    if (shouldConvertUnicodePunctuation) {
+        flags |= kPasteFlagsConvertUnicodePunctuation;
+    }
+
     PasteEvent *pasteEvent = [PasteEvent pasteEventWithString:string
                                                         flags:flags
                                              defaultChunkSize:chunkSize
@@ -399,6 +442,9 @@ static NSString *const kShouldBase64Encode = @"Base64";
     }
     if (self.shouldBase64Encode) {
         flags |= kPasteFlagsBase64Encode;
+    }
+    if (self.shouldConvertUnicodePunctuation) {
+        flags |= kPasteFlagsConvertUnicodePunctuation;
     }
     return flags;
 }

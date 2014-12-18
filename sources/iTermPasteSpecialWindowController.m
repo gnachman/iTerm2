@@ -13,6 +13,7 @@
 #import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
+#import "RegexKitLite.h"
 
 @interface iTermFileReference : NSObject
 @property(nonatomic, readonly) NSData *data;
@@ -226,8 +227,10 @@
     BOOL containsShellCharacters =
         [string rangeOfCharacterFromSet:theSet].location != NSNotFound;
     BOOL containsDosNewlines = [string containsString:@"\n"];
+    BOOL containsUnicodePunctuation = ([string rangeOfRegex:kPasteSpecialViewControllerUnicodePunctuationRegularExpression].location != NSNotFound);
     BOOL convertValue = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialConvertDosNewlines];
     BOOL shouldEscape = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash];
+    BOOL convertUnicodePunctuation = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialConvertUnicodePunctuation];
     NSMutableCharacterSet *unsafeSet = [iTermPasteHelper unsafeControlCodeSet];
     NSRange unsafeRange = [string rangeOfCharacterFromSet:unsafeSet];
     BOOL containsControlCodes = unsafeRange.location != NSNotFound;
@@ -240,6 +243,9 @@
     _pasteSpecialViewController.selectedTabTransform = tabTransformTag;
     _pasteSpecialViewController.enableConvertNewlines = containsDosNewlines;
     _pasteSpecialViewController.shouldConvertNewlines = (containsDosNewlines && convertValue);
+    _pasteSpecialViewController.enableConvertUnicodePunctuation = containsUnicodePunctuation;
+    _pasteSpecialViewController.shouldConvertUnicodePunctuation =
+        (containsUnicodePunctuation && convertUnicodePunctuation);
     _pasteSpecialViewController.enableEscapeShellCharsWithBackslash = containsShellCharacters;
     _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash = (containsShellCharacters && shouldEscape);
     _pasteSpecialViewController.delayBetweenChunks = _delayBetweenChunks;
@@ -362,6 +368,10 @@
     if (_pasteSpecialViewController.isRemoveControlCodesEnabled) {
         [iTermPreferences setBool:_pasteSpecialViewController.shouldRemoveControlCodes
                            forKey:kPreferenceKeyPasteSpecialRemoveControlCodes];
+    }
+    if (_pasteSpecialViewController.isConvertUnicodePunctuationEnabled) {
+        [iTermPreferences setBool:_pasteSpecialViewController.shouldConvertUnicodePunctuation
+                           forKey:kPreferenceKeyPasteSpecialConvertUnicodePunctuation];
     }
 }
 

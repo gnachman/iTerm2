@@ -9,6 +9,11 @@
 #import <Cocoa/Cocoa.h>
 #import "PasteEvent.h"
 
+extern NSString *const kPasteSpecialViewControllerUnicodePunctuationRegularExpression;
+extern NSString *const kPasteSpecialViewControllerUnicodeDashesRegularExpression;
+extern NSString *const kPasteSpecialViewControllerUnicodeDoubleQuotesRegularExpression;
+extern NSString *const kPasteSpecialViewControllerUnicodeSingleQuotesRegularExpression;
+
 @protocol iTermPasteSpecialViewControllerDelegate <NSObject>
 
 - (void)pasteSpecialViewSpeedDidChange;
@@ -35,6 +40,8 @@
 @property(nonatomic, assign) BOOL shouldUseBracketedPasteMode;
 @property(nonatomic, assign, getter=isBase64Enabled) BOOL enableBase64;
 @property(nonatomic, assign) BOOL shouldBase64Encode;
+@property(nonatomic, assign, getter=isConvertUnicodePunctuationEnabled) BOOL enableConvertUnicodePunctuation;
+@property(nonatomic, assign) BOOL shouldConvertUnicodePunctuation;
 
 @property(nonatomic, readonly) NSString *stringEncodedSettings;
 @property(nonatomic, readonly) iTermPasteFlags flags;

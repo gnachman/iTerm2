@@ -128,6 +128,7 @@ extern NSString *const kPreferenceKeyPasteSpecialChunkDelay;
 extern NSString *const kPreferenceKeyPasteSpecialSpacesPerTab;
 extern NSString *const kPreferenceKeyPasteSpecialTabTransform;
 extern NSString *const kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash;
+extern NSString *const kPreferenceKeyPasteSpecialConvertUnicodePunctuation;
 extern NSString *const kPreferenceKeyPasteSpecialConvertDosNewlines;
 extern NSString *const kPreferenceKeyPasteSpecialRemoveControlCodes;
 extern NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode;

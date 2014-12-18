@@ -10,13 +10,14 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermPasteHelper.h"
 #import "iTermWarning.h"
+#import "NSData+iTerm.h"
 #import "NSStringITerm.h"
 #import "PasteEvent.h"
 #import "PasteboardHistory.h"
 
 typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier);
 
-static NSString *const kTestString = @"a (\t\r\r\n" @"\x16" @"b";
+static NSString *const kTestString = @"a (\t\r\r\n" @"\x16" @"“”‘’–—b";
 static NSString *const kHelloWorld = @"Hello World";
 static const double kFloatingPointTolerance = 0.00001;
 
@@ -114,7 +115,7 @@ static const double kFloatingPointTolerance = 0.00001;
 
 - (void)testSanitizeEscapeSpecialCharacters {
   [self sanitizeString:kTestString
-                expect:@"a\\ \\(\t\r\r\n" @"\x16" @"b"
+                expect:@"a\\ \\(\t\r\r\n" @"\x16" @"“”‘’–—b"
                  flags:kPasteFlagsEscapeSpecialCharacters
           tabTransform:kTabTransformNone
           spacesPerTab:0];
@@ -122,7 +123,7 @@ static const double kFloatingPointTolerance = 0.00001;
 
 - (void)testSanitizeSanitizingNewlines {
   [self sanitizeString:kTestString
-                expect:@"a (\t\r\r" @"\x16" @"b"
+                expect:@"a (\t\r\r" @"\x16" @"“”‘’–—b"
                  flags:kPasteFlagsSanitizingNewlines
           tabTransform:kTabTransformNone
           spacesPerTab:0];
@@ -130,7 +131,7 @@ static const double kFloatingPointTolerance = 0.00001;
 
 - (void)testSanitizeRemovingUnsafeControlCodes {
   [self sanitizeString:kTestString
-                expect:@"a (\t\r\r\nb"
+                expect:@"a (\t\r\r\n“”‘’–—b"
                  flags:kPasteFlagsRemovingUnsafeControlCodes
           tabTransform:kTabTransformNone
           spacesPerTab:0];
@@ -152,17 +153,28 @@ static const double kFloatingPointTolerance = 0.00001;
           spacesPerTab:0];
 }
 
+- (void)testSanitizeQuotes {
+    [self sanitizeString:@"a“”‘’–—b"
+                  expect:@"a\"\"''--b"
+                   flags:kPasteFlagsConvertUnicodePunctuation
+            tabTransform:kTabTransformNone
+            spacesPerTab:0];
+}
+
 - (void)testSanitizeAllFlagsOn {
-  // Test string gets transformed to @"a\\ \\(\t\r\rb"
-  [self sanitizeString:kTestString
-                expect:@"YVwgXCgJDQ1i\r"
-                 flags:(kPasteFlagsEscapeSpecialCharacters |
-                        kPasteFlagsSanitizingNewlines |
-                        kPasteFlagsRemovingUnsafeControlCodes |
-                        kPasteFlagsBracket |
-                        kPasteFlagsBase64Encode)
-          tabTransform:kTabTransformNone
-          spacesPerTab:0];
+    NSString *expectedString = @"a\\ \\(\t\r\r\\\"\\\"\\'\\'--b";
+    NSData *data = [expectedString dataUsingEncoding:NSUTF8StringEncoding];
+    NSString *expected = [data stringWithBase64EncodingWithLineBreak:@"\r"];
+    [self sanitizeString:kTestString
+                  expect:expected
+                   flags:(kPasteFlagsEscapeSpecialCharacters |
+                          kPasteFlagsSanitizingNewlines |
+                          kPasteFlagsRemovingUnsafeControlCodes |
+                          kPasteFlagsBracket |
+                          kPasteFlagsBase64Encode |
+                          kPasteFlagsConvertUnicodePunctuation)
+            tabTransform:kTabTransformNone
+            spacesPerTab:0];
 }
 
 - (void)testSanitizeTabsToSpaces {
@@ -200,7 +212,7 @@ static const double kFloatingPointTolerance = 0.00001;
           tabTransform:kTabTransformNone
           spacesPerTab:0];
   [self runTimer];
-  NSString *expected = @"a (\t\r\rb";
+  NSString *expected = @"a (\t\r\r“”‘’–—b";
   assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
 }
 
@@ -211,7 +223,7 @@ static const double kFloatingPointTolerance = 0.00001;
           tabTransform:kTabTransformConvertToSpaces
           spacesPerTab:4];
   [self runTimer];
-  NSString *expected = @"a\\ \\(    \r\rb";
+  NSString *expected = @"a\\ \\(    \r\r“”‘’–—b";
   assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
 }
 
@@ -222,7 +234,7 @@ static const double kFloatingPointTolerance = 0.00001;
           tabTransform:kTabTransformEscapeWithCtrlV
           spacesPerTab:0];
   [self runTimer];
-  NSString *expected = @"a\\ \\(\x16\t\r\rb";
+  NSString *expected = @"a\\ \\(\x16\t\r\r“”‘’–—b";
   assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
 }
 

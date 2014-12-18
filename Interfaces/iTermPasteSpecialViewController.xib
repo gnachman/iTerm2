@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6250" systemVersion="14A389" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6250"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6254"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermPasteSpecialViewController">
@@ -11,6 +11,7 @@
                 <outlet property="_chunkSizeLabel" destination="e6w-C2-mnH" id="AiR-gz-exx"/>
                 <outlet property="_chunkSizeSlider" destination="VoL-gQ-ZeY" id="gmS-gk-4p4"/>
                 <outlet property="_convertNewlines" destination="FKu-pE-gGN" id="lPd-34-hJ2"/>
+                <outlet property="_convertUnicodePunctuation" destination="C2O-DY-y76" id="Omr-LF-Lqw"/>
                 <outlet property="_delayBetweenChunksLabel" destination="l9P-RY-F8r" id="EMT-5p-KWq"/>
                 <outlet property="_delayBetweenChunksSlider" destination="sHW-Ak-i7W" id="a8I-OM-vZc"/>
                 <outlet property="_escapeShellCharsWithBackslash" destination="jfQ-7z-viz" id="nXK-uy-Mmm"/>
@@ -199,7 +200,7 @@
                     </connections>
                 </matrix>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6tG-RX-FWF">
-                    <rect key="frame" x="235" y="125" width="162" height="18"/>
+                    <rect key="frame" x="235" y="105" width="162" height="18"/>
                     <string key="toolTip">This is enabled when the running app has sent an escape code to turn on “bracketed paste mode.” The pasted string will be “bracketed” by escape codes indicating the text within is from a paste operation.</string>
                     <buttonCell key="cell" type="check" title="Bracketed paste mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="vTr-f3-LoJ">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -235,8 +236,18 @@
                         <action selector="stepperDidChange:" target="-2" id="7bw-dG-m6K"/>
                     </connections>
                 </stepper>
+                <button toolTip="Converts various forms of quotation marks and dashes to their ASCII equivalents." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="C2O-DY-y76">
+                    <rect key="frame" x="235" y="125" width="203" height="18"/>
+                    <buttonCell key="cell" type="check" title="Convert Unicode punctuation" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="a6z-Q5-O3y">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="-2" id="qUY-Jf-2hA"/>
+                    </connections>
+                </button>
             </subviews>
-            <point key="canvasLocation" x="166" y="280"/>
+            <point key="canvasLocation" x="183" y="280"/>
         </customView>
     </objects>
 </document>
