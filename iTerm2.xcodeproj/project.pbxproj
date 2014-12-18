@@ -11,6 +11,11 @@
 		1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D0160991852AA6F0014D26A /* mark@2x.png */; };
 		1D01609D1852AA6F0014D26A /* mark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D01609A1852AA6F0014D26A /* mark.png */; };
 		1D01609E1852AA6F0014D26A /* mark.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D01609A1852AA6F0014D26A /* mark.png */; };
+		1D0318281A42563A00932107 /* iTermImageWell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0318261A42563A00932107 /* iTermImageWell.h */; };
+		1D0318291A42563A00932107 /* iTermImageWell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0318261A42563A00932107 /* iTermImageWell.h */; };
+		1D03182A1A42563A00932107 /* iTermImageWell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0318271A42563A00932107 /* iTermImageWell.m */; };
+		1D03182B1A42563A00932107 /* iTermImageWell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0318271A42563A00932107 /* iTermImageWell.m */; };
+		1D03182C1A42563A00932107 /* iTermImageWell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0318271A42563A00932107 /* iTermImageWell.m */; };
 		1D03D420191419080049EB8F /* DirectoriesPopup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D03D41D191419080049EB8F /* DirectoriesPopup.h */; };
 		1D03D421191419080049EB8F /* DirectoriesPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D03D41E191419080049EB8F /* DirectoriesPopup.m */; };
 		1D03D422191419080049EB8F /* DirectoriesPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D03D41E191419080049EB8F /* DirectoriesPopup.m */; };
@@ -1868,6 +1873,8 @@
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1D0160991852AA6F0014D26A /* mark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mark@2x.png"; path = "images/mark@2x.png"; sourceTree = "<group>"; };
 		1D01609A1852AA6F0014D26A /* mark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mark.png; path = images/mark.png; sourceTree = "<group>"; };
+		1D0318261A42563A00932107 /* iTermImageWell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermImageWell.h; sourceTree = "<group>"; };
+		1D0318271A42563A00932107 /* iTermImageWell.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageWell.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D03D41D191419080049EB8F /* DirectoriesPopup.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = DirectoriesPopup.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D03D41E191419080049EB8F /* DirectoriesPopup.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DirectoriesPopup.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSemanticHistoryController.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -3286,6 +3293,8 @@
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				A663010E19CFE41A004AF81C /* iTermAboutWindow.h */,
 				A663010F19CFE41A004AF81C /* iTermAboutWindow.m */,
+				1D0318261A42563A00932107 /* iTermImageWell.h */,
+				1D0318271A42563A00932107 /* iTermImageWell.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -4134,6 +4143,7 @@
 				1D6ED94719AEA20D005A7799 /* PTYTask.h in Headers */,
 				1D6ED94819AEA20D005A7799 /* PTYTextView.h in Headers */,
 				1DA1C1F41A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */,
+				1D0318291A42563A00932107 /* iTermImageWell.h in Headers */,
 				1D6ED94919AEA20D005A7799 /* CommandHistoryEntry.h in Headers */,
 				1D6ED94A19AEA20D005A7799 /* iTermFlippedView.h in Headers */,
 				A663012919D0864C004AF81C /* SCConstants.h in Headers */,
@@ -4432,6 +4442,7 @@
 				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
 				A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */,
 				1DC13AC318864E2200034DAE /* CommandHistoryPopup.h in Headers */,
+				1D0318281A42563A00932107 /* iTermImageWell.h in Headers */,
 				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
@@ -4996,6 +5007,7 @@
 				1D6ED9F019AEA20D005A7799 /* CommandUse.m in Sources */,
 				1D6ED9F119AEA20D005A7799 /* PseudoTerminal.m in Sources */,
 				1D6ED9F219AEA20D005A7799 /* iTermTabBarControlView.m in Sources */,
+				1D03182C1A42563A00932107 /* iTermImageWell.m in Sources */,
 				1D6ED9F319AEA20D005A7799 /* PTYScrollView.m in Sources */,
 				1D6ED9F419AEA20D005A7799 /* VT100Output.m in Sources */,
 				1D6ED9F519AEA20D005A7799 /* PTYTextView.m in Sources */,
@@ -5529,6 +5541,7 @@
 				A6E7139018F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */,
 				A6E7138118F1DB1E008D94DD /* iTermPreferences.m in Sources */,
 				1D9A556B180FA85500B42CE9 /* FakeWindow.m in Sources */,
+				1D03182B1A42563A00932107 /* iTermImageWell.m in Sources */,
 				A68A30E7186D1429007F550F /* VT100RemoteHost.m in Sources */,
 				1D9A557D180FA87000B42CE9 /* Coprocess.m in Sources */,
 				1D9A55AE180FA8B700B42CE9 /* PSMTabBarControl.m in Sources */,
@@ -5585,6 +5598,7 @@
 				A6E7474E188C6394005355CF /* CommandUse.m in Sources */,
 				1D5FDDA51208E93600C46BA3 /* PseudoTerminal.m in Sources */,
 				A6C537BF1938374600A08C18 /* iTermTabBarControlView.m in Sources */,
+				1D03182A1A42563A00932107 /* iTermImageWell.m in Sources */,
 				1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */,
 				A6A13AAD18C3347200B241ED /* VT100Output.m in Sources */,
 				1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */,

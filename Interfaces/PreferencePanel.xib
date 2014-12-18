@@ -2857,10 +2857,13 @@ DQ
                         <outlet property="nextKeyView" destination="2100" id="6398"/>
                     </connections>
                 </button>
-                <imageView id="4974">
+                <imageView id="4974" customClass="iTermImageWell">
                     <rect key="frame" x="296" y="276" width="249" height="96"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" imageFrameStyle="grayBezel" id="4987"/>
+                    <imageCell key="cell" selectable="YES" editable="YES" alignment="left" imageScaling="proportionallyDown" imageFrameStyle="grayBezel" id="4987"/>
+                    <connections>
+                        <outlet property="delegate" destination="BMA-OA-Kzc" id="LYX-Fx-510"/>
+                    </connections>
                 </imageView>
                 <textField verticalHuggingPriority="750" id="4975">
                     <rect key="frame" x="15" y="359" width="97" height="34"/>

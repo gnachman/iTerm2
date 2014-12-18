@@ -9,11 +9,12 @@
 #import "ProfilesWindowPreferencesViewController.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTermImageWell.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
-@interface ProfilesWindowPreferencesViewController ()
+@interface ProfilesWindowPreferencesViewController ()<iTermImageWellDelegate>
 
 @property(nonatomic, copy) NSString *backgroundImageFilename;
 
@@ -24,7 +25,7 @@
     IBOutlet NSButton *_useBlur;
     IBOutlet NSSlider *_blurRadius;
     IBOutlet NSButton *_useBackgroundImage;
-    IBOutlet NSImageView *_backgroundImagePreview;
+    IBOutlet iTermImageWell *_backgroundImagePreview;
     IBOutlet NSButton *_backgroundImageTiled;
     IBOutlet NSSlider *_blendAmount;
     IBOutlet NSTextField *_columnsField;
@@ -158,23 +159,42 @@
 
 // Opens a file picker and updates views and state.
 - (IBAction)useBackgroundImageDidChange:(id)sender {
-    NSOpenPanel *panel;
-    int sts;
-    NSString *filename = nil;
-    
     if ([_useBackgroundImage state] == NSOnState) {
-        panel = [NSOpenPanel openPanel];
-        [panel setAllowsMultipleSelection:NO];
-        
-        sts = [panel legacyRunModalForDirectory:NSHomeDirectory()
-                                           file:@""
-                                          types:[NSImage imageFileTypes]];
-        if (sts == NSOKButton && [[panel legacyFilenames] count] > 0) {
-            filename = [[panel legacyFilenames] objectAtIndex:0];
-        }
+        [self openFilePicker];
+    } else {
+        [self loadBackgroundImageWithFilename:nil];
+        [self setString:nil forKey:KEY_BACKGROUND_IMAGE_LOCATION];
     }
+}
+
+- (void)openFilePicker {
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseDirectories = NO;
+    panel.canChooseFiles = YES;
+    panel.allowsMultipleSelection = NO;
+    [panel setAllowedFileTypes:[NSImage imageTypes]];
+
+    [panel beginWithCompletionHandler:^(NSInteger result){
+        if (result == NSFileHandlingPanelOKButton) {
+            NSURL *url = [[panel URLs] objectAtIndex:0];
+            [self loadBackgroundImageWithFilename:[url path]];
+            [self setString:self.backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+        } else {
+            NSString *previous = [self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION];
+            [self loadBackgroundImageWithFilename:previous];
+        }
+    }];
+}
+
+#pragma mark - iTermImageWellDelegate
+
+- (void)imageWellDidClick:(iTermImageWell *)imageWell {
+    [self openFilePicker];
+}
+
+- (void)imageWellDidPerformDropOperation:(iTermImageWell *)imageWell filename:(NSString *)filename {
     [self loadBackgroundImageWithFilename:filename];
-    [self setString:self.backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+    [self setString:filename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
 }
 
 #pragma mark - Background Image
