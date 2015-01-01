@@ -16,4 +16,6 @@
 // Indicates if the data contains a single-byte code belonging to |asciiSet|.
 - (BOOL)containsAsciiCharacterInSet:(NSCharacterSet *)asciiSet;
 
+- (BOOL)hasPrefixOfBytes:(char *)bytes length:(int)length;
+
 @end

@@ -62,7 +62,7 @@
                                                8,
                                                bytesPerRow,
                                                colorSpace,
-                                               kCGImageAlphaPremultipliedLast);
+                                               (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
   if (!context) {
     return NULL;
   }

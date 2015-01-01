@@ -54,4 +54,12 @@
     return NO;
 }
 
+- (BOOL)hasPrefixOfBytes:(char *)bytes length:(int)length {
+    if (self.length < length) {
+        return NO;
+    }
+    char *myBytes = (char *)self.bytes;
+    return !memcmp(myBytes, bytes, length);
+}
+
 @end

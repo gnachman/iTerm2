@@ -7,9 +7,9 @@
 //
 
 #import "VT100XtermParser.h"
+#import "NSData+iTerm.h"
 
 #define ADVANCE(datap, datalen, rmlen) do { datap++; datalen--; (*rmlen)++; } while (0)
-#define kMaxTempBufferLength 1024
 
 @implementation VT100XtermParser
 
@@ -18,10 +18,10 @@
           bytesUsed:(int *)rmlen
               token:(VT100Token *)result
            encoding:(NSStringEncoding)encoding {
+    const int kLinuxSetPaletteMode = -1;
+    const int kMaxParameterValue = 9999;
     int mode = 0;
-    NSData *data;
-    char tempBuffer[kMaxTempBufferLength] = { 0 };
-    char *outputPointer = NULL;
+    NSMutableData *data = [NSMutableData data];
     
     assert(datap != NULL);
     assert(datalen >= 2);
@@ -36,8 +36,9 @@
         int n = *datap - '0';
         ADVANCE(datap, datalen, rmlen);
         while (datalen > 0 && isdigit(*datap)) {
-            // TODO(georgen): Handle integer overflow
-            n = n * 10 + *datap - '0';
+            if (n <= kMaxParameterValue) {  // This prevents crazyness when there are too many digits.
+                n = n * 10 + *datap - '0';
+            }
             ADVANCE(datap, datalen, rmlen);
         }
         mode = n;
@@ -50,20 +51,14 @@
             unrecognized = YES;
         } else {
             if (*datap == 'P') {
-                mode = -1;
+                mode = kLinuxSetPaletteMode;
             }
             // Consume ';' or 'P'.
             ADVANCE(datap, datalen, rmlen);
         }
         BOOL str_end = NO;
-        outputPointer = tempBuffer;
         // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
         while (datalen > 0) {
-            // broken OSC (ESC ] P NRRGGBB) does not need any terminator
-            if (mode == -1 && outputPointer - tempBuffer >= 7) {
-                str_end = YES;
-                break;
-            }
             // A string control should be canceled by CAN or SUB.
             if (*datap == VT100CC_CAN || *datap == VT100CC_SUB) {
                 ADVANCE(datap, datalen, rmlen);
@@ -120,23 +115,29 @@
             }
             if ((mode == 50 || mode == 1337) &&
                 *datap == ':' &&
-                !memcmp(tempBuffer, "File=", MIN(outputPointer - tempBuffer, 5))) {
+                [data hasPrefixOfBytes:"File=" length:5]) {
                 // Long base-64 encoded part of code begins. Terminate the OSC so we don't have to
                 // buffer the whole string here.
                 ADVANCE(datap, datalen, rmlen);
                 str_end = YES;
                 break;
-            } else if (outputPointer - tempBuffer < kMaxTempBufferLength) {
-                // if 0 <= mode <=2 and current *datap is a control character, replace it with '?'.
+            } else {
+                // if 0 <= mode <= 2 and current *datap is a control character, replace it with '?'.
                 if ((*datap < 0x20 || *datap == 0x7f) && (mode == 0 || mode == 1 || mode == 2)) {
-                    *outputPointer = '?';
+                    [data appendBytes:"?" length:1];
                 } else {
-                    *outputPointer = *datap;
+                    [data appendBytes:datap length:1];
                 }
-                outputPointer++;
             }
             ADVANCE(datap, datalen, rmlen);
-        }
+
+            // Nonstandard OSC (ESC ] P NRRGGBB) does not need any terminator
+            if (mode == kLinuxSetPaletteMode && data.length >= 7) {
+                str_end = YES;
+                break;
+            }
+        }  // while loop
+
         if (!str_end && datalen == 0) {
             // Ran out of data before terminator. Keep trying.
             *rmlen = 0;
@@ -152,11 +153,10 @@
         // Found terminator but it's malformed.
         result->type = VT100_NOTSUPPORT;
     } else {
-        data = [NSData dataWithBytes:tempBuffer length:outputPointer - tempBuffer];
         result.string = [[[NSString alloc] initWithData:data
                                                encoding:encoding] autorelease];
         switch (mode) {
-            case -1:
+            case kLinuxSetPaletteMode:
                 // Nonstandard Linux OSC P nrrggbb ST to change color palette
                 // entry.
                 result->type = XTERMCC_SET_PALETTE;
