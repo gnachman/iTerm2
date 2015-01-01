@@ -124,8 +124,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
     NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
     assert(eventDescriptor);
 
-    assert([[eventDescriptor descriptorAtIndex:1] int32Value] == 0);
-    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == 1);
+    assert([[eventDescriptor descriptorAtIndex:2] int32Value] == [[eventDescriptor descriptorAtIndex:1] int32Value] + 1);
 }
 
 - (void)testCreateWindowWithNamedProfile {
@@ -340,6 +339,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 
     NSArray *commands = @[ @"create window with default profile",
                            @"tell current session of current window",
+                           @"delay 0.2",  // Wait for prompt to finish being written
                            @"  write text \"cat > /dev/null\"",
                            @"  write contents of file \"/tmp/testFile\"",
                            @"end tell",
