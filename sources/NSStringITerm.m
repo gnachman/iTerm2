@@ -1324,6 +1324,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [uuidString autorelease];
 }
 
+- (NSString *)stringByReplacingControlCharsWithQuestionMark {
+    return [self stringByReplacingOccurrencesOfRegex:@"[\x00-\x1f\x7f]" withString:@"?"];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

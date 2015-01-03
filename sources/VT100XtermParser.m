@@ -122,12 +122,7 @@
                 str_end = YES;
                 break;
             } else {
-                // if 0 <= mode <= 2 and current *datap is a control character, replace it with '?'.
-                if ((*datap < 0x20 || *datap == 0x7f) && (mode == 0 || mode == 1 || mode == 2)) {
-                    [data appendBytes:"?" length:1];
-                } else {
-                    [data appendBytes:datap length:1];
-                }
+                [data appendBytes:datap length:1];
             }
             ADVANCE(datap, datalen, rmlen);
 

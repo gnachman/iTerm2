@@ -96,18 +96,6 @@
     assert([token.kvpValue isEqualToString:@"blah;foo=bar"]);
 }
 
-- (void)testTitleCodesConvertEscapesIntoQuestionMarks {
-    for (int i = 0; i < 4; i++) {
-        VT100Token *token = [self tokenForDataWithFormat:@"%c]%d;ti%ctle%c", ESC, i, 1, VT100CC_BEL];
-        if (i < 3) {
-            assert([token.string isEqualToString:@"ti?tle"]);
-        } else {
-            NSString *expected = [NSString stringWithFormat:@"ti%ctle", 1];
-            assert([token.string isEqualToString:expected]);
-        }
-    }
-}
-
 - (void)testUnterminatedOSCWaits {
     VT100Token *token = [self tokenForDataWithFormat:@"%c]0;foo", ESC];
     assert(token->type == VT100_WAIT);

@@ -1410,11 +1410,11 @@ static const int kMaxScreenRows = 4096;
 
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
-            [delegate_ terminalSetWindowTitle:token.string];
+            [delegate_ terminalSetWindowTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
         case XTERMCC_WINICON_TITLE:
-            [delegate_ terminalSetWindowTitle:token.string];
-            [delegate_ terminalSetIconTitle:token.string];
+            [delegate_ terminalSetWindowTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
+            [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
         case XTERMCC_PASTE64: {
             NSString *decoded = [self decodedBase64PasteCommand:token.string];
@@ -1427,7 +1427,7 @@ static const int kMaxScreenRows = 4096;
             [self executeFinalTermToken:token];
             break;
         case XTERMCC_ICON_TITLE:
-            [delegate_ terminalSetIconTitle:token.string];
+            [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
         case XTERMCC_INSBLNK:
             [delegate_ terminalInsertEmptyCharsAtCursor:token.csi->p[0]];
