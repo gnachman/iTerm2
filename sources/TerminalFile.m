@@ -132,7 +132,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
                                  didFinishTransmissionWithError:[self errorWithDescription:@"File corrupted (not valid base64)."]];
         return;
     }
-   
+    [data setLength:resultLength];
     if (![data writeToFile:self.localPath atomically:NO]) {
         [[FileTransferManager sharedInstance] transferrableFile:self
                                  didFinishTransmissionWithError:[self errorWithDescription:@"Failed to write file to disk."]];
