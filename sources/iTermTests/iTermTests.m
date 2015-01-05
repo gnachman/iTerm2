@@ -51,19 +51,55 @@ static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Finished tests in %@ --", [test class]);
 }
 
+NSArray *AllTestClasses() {
+    return @[ [VT100GridTest class],
+              [VT100ScreenTest class],
+              [IntervalTreeTest class],
+              [NSStringCategoryTest class],
+              [AppleScriptTest class],
+              [PTYTextViewTest class],
+              [PTYSessionTest class],
+              [iTermPasteHelperTest class],
+              [SemanticHistoryTest class],
+              [VT100XtermParserTest class] ];
+}
+
+NSArray *TestClassesToRun(NSArray *include, NSArray *exclude) {
+    NSArray *allTestClasses = AllTestClasses();
+    assert(!(include != nil && exclude != nil));
+
+    NSMutableArray *testClassesToRun = [NSMutableArray array];
+    if (include == nil && exclude == nil) {
+        NSLog(@"Running all tests");
+        [testClassesToRun addObjectsFromArray:allTestClasses];
+    } else if (include) {
+        NSLog(@"Running only these tests: %@", include);
+        [testClassesToRun addObjectsFromArray:include];
+    } else {
+        NSLog(@"Running all tests except: %@", exclude);
+        for (Class cls in allTestClasses) {
+            if (![exclude containsObject:cls]) {
+                [testClassesToRun addObject:cls];
+            }
+        }
+    }
+    return testClassesToRun;
+}
+
 int main(int argc, const char * argv[]) {
     [[NSApplication sharedApplication] setDelegate:[[iTermApplicationDelegate alloc] init]];
 
-    RunTestsInObject([[VT100GridTest new] autorelease]);
-    RunTestsInObject([[VT100ScreenTest new] autorelease]);
-    RunTestsInObject([[IntervalTreeTest new] autorelease]);
-    RunTestsInObject([[NSStringCategoryTest new] autorelease]);
-    RunTestsInObject([[AppleScriptTest new] autorelease]);
-    RunTestsInObject([[PTYTextViewTest new] autorelease]);
-    RunTestsInObject([[PTYSessionTest new] autorelease]);
-    RunTestsInObject([[iTermPasteHelperTest new] autorelease]);
-    RunTestsInObject([[SemanticHistoryTest new] autorelease]);
-    RunTestsInObject([[VT100XtermParserTest new] autorelease]);
+    // Up to one of |include| or |exclude| may be non-nil. Set it to an array of test Class objects.
+    // If include is set, exactly the listed tests will be run. If exclude is set, all but the
+    // listed tests will run.
+    NSArray *include = nil;
+    NSArray *exclude = nil;
+
+    NSArray *testClassesToRun = TestClassesToRun(include, exclude);
+    NSLog(@"Running tests: %@", testClassesToRun);
+    for (Class cls in testClassesToRun) {
+        RunTestsInObject([[cls new] autorelease]);
+    }
 
     NSLog(@"All tests passed");
     return 0;
