@@ -69,20 +69,20 @@ static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedS
             datalen = bytesAvailable - *rmlen;
             datap = theBytes + *rmlen;
         }
-        BOOL str_end = NO;
+        BOOL endOfCodeReached = NO;
         // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
         while (datalen > 0) {
             // A string control should be canceled by CAN or SUB.
             if (*datap == VT100CC_CAN || *datap == VT100CC_SUB) {
                 ADVANCE(datap, datalen, rmlen);
-                str_end = YES;
+                endOfCodeReached = YES;
                 unrecognized = YES;
                 break;
             }
             // BEL terminator
             if (*datap == VT100CC_BEL) {
                 ADVANCE(datap, datalen, rmlen);
-                str_end = YES;
+                endOfCodeReached = YES;
                 break;
             }
             if (*datap == VT100CC_ESC) {
@@ -109,7 +109,7 @@ static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedS
                     //
                     ADVANCE(datap, datalen, rmlen);
                     ADVANCE(datap, datalen, rmlen);
-                    str_end = YES;
+                    endOfCodeReached = YES;
                     break;
                 } else {
                     // otherwise, terminate OSC unsuccessfully and backtrack before ESC.
@@ -121,7 +121,7 @@ static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedS
                     // "abc" should be discarded.
                     // ESC c is also accepted and causes hard reset(RIS).
                     //
-                    str_end = YES;
+                    endOfCodeReached = YES;
                     unrecognized = YES;
                     break;
                 }
@@ -132,7 +132,7 @@ static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedS
                 // Long base-64 encoded part of code begins. Terminate the OSC so we don't have to
                 // buffer the whole string here.
                 ADVANCE(datap, datalen, rmlen);
-                str_end = YES;
+                endOfCodeReached = YES;
                 break;
             } else {
                 [data appendBytes:datap length:1];
@@ -141,12 +141,12 @@ static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedS
 
             // Nonstandard OSC (ESC ] P NRRGGBB) does not need any terminator
             if (mode == kLinuxSetPaletteMode && data.length >= 7) {
-                str_end = YES;
+                endOfCodeReached = YES;
                 break;
             }
         }  // while loop
 
-        if (!str_end && datalen == 0) {
+        if (!endOfCodeReached && datalen == 0) {
             // Ran out of data before terminator. Keep trying.
             bytesUsed = *rmlen;
             *rmlen = 0;
@@ -202,7 +202,7 @@ static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedS
             case 1337:
                 // 50 is a nonstandard escape code implemented by Konsole.
                 // xterm since started using it for setting the font, so 1337 is the preferred code
-                // for this in iterm.
+                // for this in iTerm2.
                 // <Esc>]50;key=value^G
                 // <Esc>]1337;key=value^G
                 result->type = XTERMCC_SET_KVP;
