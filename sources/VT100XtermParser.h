@@ -21,6 +21,7 @@ NS_INLINE BOOL isXTERM(unsigned char *code, int len) {
              length:(int)datalen
           bytesUsed:(int *)rmlen
               token:(VT100Token *)result
-           encoding:(NSStringEncoding)encoding;
+           encoding:(NSStringEncoding)encoding
+         savedState:(NSMutableDictionary *)savedState;
 
 @end

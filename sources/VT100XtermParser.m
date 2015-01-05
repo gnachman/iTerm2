@@ -9,18 +9,25 @@
 #import "VT100XtermParser.h"
 #import "NSData+iTerm.h"
 
+static NSString *const kXtermParserSavedStateDataKey = @"kXtermParserSavedStateDataKey";
+static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedStateBytesUsedKey";
+
 #define ADVANCE(datap, datalen, rmlen) do { datap++; datalen--; (*rmlen)++; } while (0)
 
 @implementation VT100XtermParser
 
-+ (void)decodeBytes:(unsigned char *)datap
-             length:(int)datalen
++ (void)decodeBytes:(unsigned char *)theBytes
+             length:(int)bytesAvailable
           bytesUsed:(int *)rmlen
               token:(VT100Token *)result
-           encoding:(NSStringEncoding)encoding {
+           encoding:(NSStringEncoding)encoding
+         savedState:(NSMutableDictionary *)savedState {
     const int kLinuxSetPaletteMode = -1;
     const int kMaxParameterValue = 9999;
     int mode = 0;
+    int datalen = bytesAvailable;
+    int bytesUsed = 0;
+    unsigned char *datap = theBytes;
     NSMutableData *data = [NSMutableData data];
     
     assert(datap != NULL);
@@ -55,6 +62,12 @@
             }
             // Consume ';' or 'P'.
             ADVANCE(datap, datalen, rmlen);
+        }
+        if (savedState[kXtermParserSavedStateDataKey]) {
+            data = savedState[kXtermParserSavedStateDataKey];
+            *rmlen = [savedState[kXtermParserSavedStateBytesUsedKey] intValue];
+            datalen = bytesAvailable - *rmlen;
+            datap = theBytes + *rmlen;
         }
         BOOL str_end = NO;
         // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
@@ -135,6 +148,7 @@
 
         if (!str_end && datalen == 0) {
             // Ran out of data before terminator. Keep trying.
+            bytesUsed = *rmlen;
             *rmlen = 0;
         }
     } else {
@@ -143,6 +157,12 @@
     }
     
     if (!(*rmlen)) {
+        if (bytesUsed) {
+            savedState[kXtermParserSavedStateDataKey] = data;
+            savedState[kXtermParserSavedStateBytesUsedKey] = @(bytesUsed);
+        } else {
+            [savedState removeAllObjects];
+        }
         result->type = VT100_WAIT;
     } else if (unrecognized) {
         // Found terminator but it's malformed.

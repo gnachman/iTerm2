@@ -21,7 +21,8 @@ void ParseControl(unsigned char *datap,
                   CVector *incidentals,
                   VT100Token *token,
                   NSStringEncoding encoding,
-                  int tmuxCodeWrapCount) {
+                  int tmuxCodeWrapCount,
+                  NSMutableDictionary *savedState) {
     if (tmuxCodeWrapCount && datalen >= 2 && datap[0] == ESC && datap[1] == '\\') {
         token->type = DCS_END_TMUX_CODE_WRAP;
         *rmlen = 2;
@@ -38,7 +39,8 @@ void ParseControl(unsigned char *datap,
                                length:datalen
                             bytesUsed:rmlen
                                 token:token
-                             encoding:encoding];
+                             encoding:encoding
+                           savedState:savedState];
     } else if (isANSI(datap, datalen)) {
         [VT100AnsiParser decodeBytes:datap
                               length:datalen

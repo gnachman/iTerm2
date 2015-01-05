@@ -20,6 +20,7 @@
     int _totalStreamLength;
     int _streamOffset;
     BOOL _saveData;
+    NSMutableDictionary *_savedStateForPartialParse;
     int _tmuxCodeWrap;  // How many levels deep we are in DCS tmux; ESC <escape code> ST. Incremented by DCS tmux ESC and decremented by ST.
 }
 
@@ -28,6 +29,7 @@
     if (self) {
         _totalStreamLength = kDefaultStreamSize;
         _stream = malloc(_totalStreamLength);
+        _savedStateForPartialParse = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -35,6 +37,7 @@
 - (void)dealloc {
     free(_stream);
     [_tmuxParser release];
+    [_savedStateForPartialParse release];
     [super dealloc];
 }
 
@@ -81,7 +84,11 @@
                          vector,
                          token,
                          self.encoding,
-                         _tmuxCodeWrap);
+                         _tmuxCodeWrap,
+                         _savedStateForPartialParse);
+            if (token->type != VT100_WAIT) {
+                [_savedStateForPartialParse removeAllObjects];
+            }
             // Some tokens have synchronous side-effects.
             switch (token->type) {
                 case XTERMCC_SET_KVP:

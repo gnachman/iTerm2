@@ -10,7 +10,13 @@
 #import "VT100XtermParser.h"
 #import "VT100Token.h"
 
-@implementation VT100XtermParserTest
+@implementation VT100XtermParserTest {
+    NSMutableDictionary *_savedState;
+}
+
+- (void)setup {
+    _savedState = [NSMutableDictionary dictionary];
+}
 
 - (VT100Token *)tokenForDataWithFormat:(NSString *)formatString, ... {
     va_list args;
@@ -24,7 +30,8 @@
                            length:data.length
                         bytesUsed:&bytesUsed
                             token:token
-                         encoding:NSUTF8StringEncoding];
+                         encoding:NSUTF8StringEncoding
+                       savedState:_savedState];
     return token;
 }
 
@@ -104,6 +111,25 @@
 - (void)testUnterminateOSCWaits_2 {
     VT100Token *token = [self tokenForDataWithFormat:@"%c]0", ESC];
     assert(token->type == VT100_WAIT);
+}
+
+- (void)testMultiPartOSC {
+    // Pass in a partial escape code. The already-parsed data should be saved in the saved-state
+    // dictionary.
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;foo", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(_savedState.allKeys.count == 2);
+
+    // Give it a more-formed code. The first three characters have changed. Normally they would be
+    // the same, but it's done here to ensure that they are ignored.
+    token = [self tokenForDataWithFormat:@"%c]0;XXXbar", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(_savedState.allKeys.count == 2);
+
+    // Now a fully-formed code. The entire string value must come from saved state.
+    token = [self tokenForDataWithFormat:@"%c]0;XXXXXX%c", ESC, VT100CC_BEL];
+    assert(token->type == XTERMCC_WINICON_TITLE);
+    assert([token.string isEqualToString:@"foobar"]);
 }
 
 @end

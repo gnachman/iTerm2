@@ -22,6 +22,7 @@ void ParseControl(unsigned char *datap,
                   CVector *incidentals,
                   VT100Token *token,
                   NSStringEncoding encoding,
-                  int tmuxCodeWrapCount);
+                  int tmuxCodeWrapCount,
+                  NSMutableDictionary *savedState);
 
 @end
