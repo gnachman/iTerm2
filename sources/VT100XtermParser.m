@@ -11,215 +11,272 @@
 
 static NSString *const kXtermParserSavedStateDataKey = @"kXtermParserSavedStateDataKey";
 static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedStateBytesUsedKey";
+static NSString *const kXtermParserSavedStateModeKey = @"kXtermParserSavedStateModeKey";
+static NSString *const kXtermParserSavedStateStateKey = @"kXtermParserSavedStateStateKey";
 
-#define ADVANCE(datap, datalen, rmlen) do { datap++; datalen--; (*rmlen)++; } while (0)
+// Nonstandard Linux OSC P nrrggbb ST to change color palette
+// entry. Since no mode number exists for this code, we use -1 as a temporary placeholder until
+// it can be translated into XTERMCC_SET_PALETTE.
+static const int kLinuxSetPaletteMode = -1;
+
+// This parser operates as a state machine. Each state has a corresponding
+// method that implements a hand-build parser.
+typedef enum {
+    // Reading the mode at the start. Either a number followed by a semicolon, or the letter P.
+    kXtermParserParsingModeState,
+
+    // Reading the 7 digits after mode letter P.
+    kXtermParserParsingPState,
+
+    // Reading the string after the mode number and semicolon, up to and including the terminator.
+    kXtermParserParsingStringState,
+
+    // Have encountered an illegal character (e.g., bogus mode). Continue until the code ends as a
+    // normal OSC would.
+    kXtermParserFailingState,
+
+    // These states will cause the state machine to terminate.
+
+    // Return VT100_NOTSUPPORT.
+    kXtermParserFailedState,
+
+    // Return a legal token (assuming the mode is supported).
+    kXtermParserFinishedState,
+
+    // Save state into the savedState dictionary, backtrack all consumed data, and have client try
+    // again when more data is available.
+    kXtermParserOutOfDataState,
+} iTermXtermParserState;
 
 @implementation VT100XtermParser
 
-+ (void)decodeBytes:(unsigned char *)theBytes
-             length:(int)bytesAvailable
-          bytesUsed:(int *)rmlen
-              token:(VT100Token *)result
-           encoding:(NSStringEncoding)encoding
-         savedState:(NSMutableDictionary *)savedState {
-    const int kLinuxSetPaletteMode = -1;
-    const int kMaxParameterValue = 9999;
-    int mode = 0;
-    int datalen = bytesAvailable;
-    int bytesUsed = 0;
-    unsigned char *datap = theBytes;
-    NSMutableData *data = [NSMutableData data];
-    
-    assert(datap != NULL);
-    assert(datalen >= 2);
-    *rmlen = 0;
-    assert(*datap == ESC);
-    ADVANCE(datap, datalen, rmlen);
-    assert(*datap == ']');
-    ADVANCE(datap, datalen, rmlen);
-    
-    if (datalen > 0 && isdigit(*datap)) {
-        // read an integer from datap and store it in mode.
-        int n = *datap - '0';
-        ADVANCE(datap, datalen, rmlen);
-        while (datalen > 0 && isdigit(*datap)) {
-            if (n <= kMaxParameterValue) {  // This prevents crazyness when there are too many digits.
-                n = n * 10 + *datap - '0';
-            }
-            ADVANCE(datap, datalen, rmlen);
-        }
-        mode = n;
-    }
-    BOOL unrecognized = NO;
-    if (datalen > 0) {
-        if (*datap != ';' && *datap != 'P') {
-            // Bogus first char after "esc ] [number]". Consume up to and
-            // including terminator and then return VT100_NOTSUPPORT.
-            unrecognized = YES;
-        } else {
-            if (*datap == 'P') {
-                mode = kLinuxSetPaletteMode;
-            }
-            // Consume ';' or 'P'.
-            ADVANCE(datap, datalen, rmlen);
-        }
-        if (savedState[kXtermParserSavedStateDataKey]) {
-            data = savedState[kXtermParserSavedStateDataKey];
-            *rmlen = [savedState[kXtermParserSavedStateBytesUsedKey] intValue];
-            datalen = bytesAvailable - *rmlen;
-            datap = theBytes + *rmlen;
-        }
-        BOOL endOfCodeReached = NO;
-        // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
-        while (datalen > 0) {
-            // A string control should be canceled by CAN or SUB.
-            if (*datap == VT100CC_CAN || *datap == VT100CC_SUB) {
-                ADVANCE(datap, datalen, rmlen);
-                endOfCodeReached = YES;
-                unrecognized = YES;
-                break;
-            }
-            // BEL terminator
-            if (*datap == VT100CC_BEL) {
-                ADVANCE(datap, datalen, rmlen);
-                endOfCodeReached = YES;
-                break;
-            }
-            if (*datap == VT100CC_ESC) {
-                if (datalen >= 2 && *(datap + 1) == ']') {
-                    // if Esc + ] is present recursively, simply skip it.
-                    //
-                    // Example:
-                    //
-                    //    ESC ] 0 ; a b c ESC ] d e f BEL
-                    //
-                    // title string "abcdef" should be accepted.
-                    //
-                    ADVANCE(datap, datalen, rmlen);
-                    ADVANCE(datap, datalen, rmlen);
-                    continue;
-                } else if (datalen >= 2 && *(datap + 1) == '\\') {
-                    // if Esc + \ is present, terminate OSC successfully.
-                    //
-                    // Example:
-                    //
-                    //    ESC ] 0 ; a b c ESC '\\'
-                    //
-                    // title string "abc" should be accepted.
-                    //
-                    ADVANCE(datap, datalen, rmlen);
-                    ADVANCE(datap, datalen, rmlen);
-                    endOfCodeReached = YES;
-                    break;
-                } else {
-                    // otherwise, terminate OSC unsuccessfully and backtrack before ESC.
-                    //
-                    // Example:
-                    //
-                    //    ESC ] 0 ; a b c ESC c
-                    //
-                    // "abc" should be discarded.
-                    // ESC c is also accepted and causes hard reset(RIS).
-                    //
-                    endOfCodeReached = YES;
-                    unrecognized = YES;
-                    break;
-                }
-            }
-            if ((mode == 50 || mode == 1337) &&
-                *datap == ':' &&
-                [data hasPrefixOfBytes:"File=" length:5]) {
-                // Long base-64 encoded part of code begins. Terminate the OSC so we don't have to
-                // buffer the whole string here.
-                ADVANCE(datap, datalen, rmlen);
-                endOfCodeReached = YES;
-                break;
+// Read either an integer followed by a semicolon or letter "P".
++ (iTermXtermParserState)parseModeFromContext:(iTermParserContext *)context mode:(int *)mode {
+    if (iTermParserConsumeInteger(context, mode)) {
+        // Read an integer. Either out of data or a semicolon should follow; anything else is
+        // a malformed input.
+        if (iTermParserCanAdvance(context)) {
+            if (iTermParserPeek(context) == ';') {
+                // Semicolon
+                iTermParserAdvance(context);
+                return kXtermParserParsingStringState;
             } else {
-                [data appendBytes:datap length:1];
+                // Malformed
+                return kXtermParserFailingState;
             }
-            ADVANCE(datap, datalen, rmlen);
-
-            // Nonstandard OSC (ESC ] P NRRGGBB) does not need any terminator
-            if (mode == kLinuxSetPaletteMode && data.length >= 7) {
-                endOfCodeReached = YES;
-                break;
-            }
-        }  // while loop
-
-        if (!endOfCodeReached && datalen == 0) {
-            // Ran out of data before terminator. Keep trying.
-            bytesUsed = *rmlen;
-            *rmlen = 0;
-        }
-    } else {
-        // No data yet, keep trying.
-        *rmlen = 0;
-    }
-    
-    if (!(*rmlen)) {
-        if (bytesUsed) {
-            savedState[kXtermParserSavedStateDataKey] = data;
-            savedState[kXtermParserSavedStateBytesUsedKey] = @(bytesUsed);
         } else {
-            [savedState removeAllObjects];
+            // Out of data.
+            return kXtermParserOutOfDataState;
         }
-        result->type = VT100_WAIT;
-    } else if (unrecognized) {
-        // Found terminator but it's malformed.
-        result->type = VT100_NOTSUPPORT;
     } else {
-        result.string = [[[NSString alloc] initWithData:data
-                                               encoding:encoding] autorelease];
-        switch (mode) {
-            case kLinuxSetPaletteMode:
-                // Nonstandard Linux OSC P nrrggbb ST to change color palette
-                // entry.
-                result->type = XTERMCC_SET_PALETTE;
-                break;
-            case 0:
-                result->type = XTERMCC_WINICON_TITLE;
-                break;
-            case 1:
-                result->type = XTERMCC_ICON_TITLE;
-                break;
-            case 2:
-                result->type = XTERMCC_WIN_TITLE;
-                break;
-            case 4:
-                result->type = XTERMCC_SET_RGB;
-                break;
-            case 6:
-                // This is not a real xterm code. It is from eTerm, which extended the xterm
-                // protocol for its own purposes. We don't follow the eTerm protocol,
-                // but we follow the template it set.
-                // http://www.eterm.org/docs/view.php?doc=ref#escape
-                result->type = XTERMCC_PROPRIETARY_ETERM_EXT;
-                break;
-            case 9:
-                result->type = ITERM_GROWL;
-                break;
-            case 50:
-            case 1337:
-                // 50 is a nonstandard escape code implemented by Konsole.
-                // xterm since started using it for setting the font, so 1337 is the preferred code
-                // for this in iTerm2.
-                // <Esc>]50;key=value^G
-                // <Esc>]1337;key=value^G
-                result->type = XTERMCC_SET_KVP;
-                [self parseKeyValuePairInToken:result];
-                break;
-            case 52:
-                // base64 copy/paste (OPT_PASTE64)
-                result->type = XTERMCC_PASTE64;
-                break;
-            case 133:
-                // FinalTerm proprietary codes
-                result->type = XTERMCC_FINAL_TERM;
-                break;
-            default:
-                result->type = VT100_NOTSUPPORT;
-                break;
+        // Failed to read an integer. Could be out of data, could be the nonstandard 'P' code, or
+        // could be a malformed input.
+        if (iTermParserCanAdvance(context)) {
+            if (iTermParserPeek(context) == 'P') {
+                // Got a nonstandard P code.
+                iTermParserAdvance(context);
+                *mode = kLinuxSetPaletteMode;
+                return kXtermParserParsingPState;
+            } else {
+                // Malformed input.
+                return kXtermParserFailingState;
+            }
+        } else {
+            // Out of data.
+            return kXtermParserOutOfDataState;
         }
+    }
+}
+
+// Read seven characters and append them to 'data'.
++ (iTermXtermParserState)parsePFromContext:(iTermParserContext *)context data:(NSMutableData *)data {
+    for (int i = 0; i < 7; i++) {
+        unsigned char c;
+        if (!iTermParserTryConsume(context, &c)) {
+            return kXtermParserOutOfDataState;
+        }
+        [data appendBytes:&c length:1];
+    }
+    return kXtermParserFinishedState;
+}
+
+// Read the next characters and append them to data. Various substrings may end parsing:
+//   ESC ]                This is ignored
+//   ESC \ or BEL         Finishes parsing
+//   ESC <anything else>  Fails
+//   File= KVP code       Finish prior to true end of OSC
+//   CAN or SUB           Fails
+// Other characters are appended to |data|.
++ (iTermXtermParserState)parseNextCharsInStringFromContext:(iTermParserContext *)context
+                                                      data:(NSMutableData *)data
+                                                      mode:(int)mode {
+    iTermXtermParserState nextState = kXtermParserParsingStringState;
+    do {
+        if (!iTermParserCanAdvance(context)) {
+            nextState = kXtermParserOutOfDataState;
+        } else {
+            unsigned char c = iTermParserConsume(context);
+            BOOL append = YES;
+            switch (c) {
+                case VT100CC_ESC:
+                    if (iTermParserTryConsume(context, &c)) {
+                        if (c == ']') {
+                            append = NO;
+                            nextState = kXtermParserParsingStringState;
+                        } else if (c == '\\') {
+                            nextState = kXtermParserFinishedState;
+                        } else {
+                            nextState = kXtermParserFailedState;
+                        }
+                    } else {
+                        // Ended after ESC. Backtrack over the ESC so it can be parsed again when more
+                        // data arrives.
+                        iTermParserBacktrackBy(context, 1);
+                        nextState = kXtermParserOutOfDataState;
+                    }
+                    break;
+
+                case ':':
+                    if ((mode == 50 || mode == 1337) &&
+                        [data hasPrefixOfBytes:"File=" length:5]) {
+                        // This is a wonky special case for file downloads. The OSC code can be
+                        // really, really big. So we mark it as ended at the colon, and the client
+                        // is responsible for handling this properly. TODO: Clean this up.
+                        nextState = kXtermParserFinishedState;
+                    } else {
+                        nextState = kXtermParserParsingStringState;
+                    }
+                    break;
+
+                case VT100CC_CAN:
+                case VT100CC_SUB:
+                    nextState = kXtermParserFailedState;
+                    break;
+
+                case VT100CC_BEL:
+                    nextState = kXtermParserFinishedState;
+                    break;
+
+                default:
+                    nextState = kXtermParserParsingStringState;
+                    break;
+            }
+            if (append && nextState == kXtermParserParsingStringState) {
+                [data appendBytes:&c length:1];
+            }
+        }
+    } while (nextState == kXtermParserParsingStringState);
+    return nextState;
+}
+
+// Returns the enum value for the mode.
++ (VT100TerminalTokenType)tokenTypeForMode:(int)mode {
+    static NSDictionary *theMap = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        theMap =
+            @{ @(kLinuxSetPaletteMode): @(XTERMCC_SET_PALETTE),
+               @0: @(XTERMCC_WINICON_TITLE),
+               @1: @(XTERMCC_ICON_TITLE),
+               @2: @(XTERMCC_WIN_TITLE),
+               @4: @(XTERMCC_SET_RGB),
+               @6: @(XTERMCC_PROPRIETARY_ETERM_EXT),
+               @9: @(ITERM_GROWL),
+               // 50 is a nonstandard escape code implemented by Konsole.
+               // xterm since started using it for setting the font, so 1337 is the preferred code
+               // for this in iTerm2.
+               @50: @(XTERMCC_SET_KVP),
+               @52: @(XTERMCC_PASTE64),
+               @133: @(XTERMCC_FINAL_TERM),
+               @1337: @(XTERMCC_SET_KVP),
+           };
+        [theMap retain];
+    });
+
+
+    NSNumber *enumNumber = theMap[@(mode)];
+    if (enumNumber) {
+        return [enumNumber intValue];
+    } else {
+        return VT100_NOTSUPPORT;
+    }
+}
+
++ (void)decodeFromContext:(iTermParserContext *)context
+                    token:(VT100Token *)result
+                 encoding:(NSStringEncoding)encoding
+               savedState:(NSMutableDictionary *)savedState {
+    // Initialize the state.
+    NSMutableData *data = [NSMutableData data];
+    int mode = 0;
+    iTermXtermParserState state = kXtermParserParsingModeState;
+
+    if (savedState.count) {
+        data = savedState[kXtermParserSavedStateDataKey];
+        iTermParserAdvanceMultiple(context,
+                                   [savedState[kXtermParserSavedStateBytesUsedKey] intValue]);
+        mode = [savedState[kXtermParserSavedStateModeKey] intValue];
+        state = [savedState[kXtermParserSavedStateStateKey] intValue];
+    } else {
+        iTermParserConsumeOrDie(context, VT100CC_ESC);
+        iTermParserConsumeOrDie(context, ']');
+    }
+
+    iTermXtermParserState previousState = state;
+
+    // Run the state machine.
+    while (1) {
+        iTermXtermParserState stateSwitchedOn = state;
+        switch (state) {
+            case kXtermParserParsingModeState:
+                state = [self parseModeFromContext:context mode:&mode];
+                break;
+
+            case kXtermParserParsingPState:
+                state = [self parsePFromContext:context data:data];
+                break;
+
+            case kXtermParserParsingStringState:
+                state = [self parseNextCharsInStringFromContext:context data:data mode:mode];
+                break;
+
+            case kXtermParserFailingState:
+                state = [self parseNextCharsInStringFromContext:context data:nil mode:0];
+
+                // Convert success states into failure states.
+                if (state == kXtermParserFinishedState) {
+                    state = kXtermParserFailedState;
+                } else if (state == kXtermParserParsingStringState) {
+                    // This should never happen but is here for the sake of completeness.
+                    state = kXtermParserFailingState;
+                }
+                break;
+
+            case kXtermParserFailedState:
+                [savedState removeAllObjects];
+                result->type = VT100_NOTSUPPORT;
+                return;
+
+            case kXtermParserFinishedState:
+                result.string = [[[NSString alloc] initWithData:data
+                                                       encoding:encoding] autorelease];
+                result->type = [self tokenTypeForMode:mode];
+                if (result->type == XTERMCC_SET_KVP) {
+                    [self parseKeyValuePairInToken:result];
+                }
+                return;
+                
+            case kXtermParserOutOfDataState:
+                savedState[kXtermParserSavedStateDataKey] = data;
+                savedState[kXtermParserSavedStateBytesUsedKey] = @(iTermParserNumberOfBytesConsumed(context));
+                savedState[kXtermParserSavedStateModeKey] = @(mode);
+                savedState[kXtermParserSavedStateStateKey] = @(previousState);
+
+                iTermParserBacktrack(context);
+                result->type = VT100_WAIT;
+                return;
+        }
+        previousState = stateSwitchedOn;
     }
 }
 

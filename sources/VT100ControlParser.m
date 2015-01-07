@@ -35,12 +35,12 @@ void ParseControl(unsigned char *datap,
                         incidentals:incidentals
                               token:token];
     } else if (isXTERM(datap, datalen)) {
-        [VT100XtermParser decodeBytes:datap
-                               length:datalen
-                            bytesUsed:rmlen
-                                token:token
-                             encoding:encoding
-                           savedState:savedState];
+        iTermParserContext context = iTermParserContextMake(datap, datalen);
+        [VT100XtermParser decodeFromContext:&context
+                                      token:token
+                                   encoding:encoding
+                                 savedState:savedState];
+        *rmlen = context.rmlen;
     } else if (isANSI(datap, datalen)) {
         [VT100AnsiParser decodeBytes:datap
                               length:datalen
