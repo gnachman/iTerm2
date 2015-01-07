@@ -26,7 +26,8 @@
 @end
 
 @implementation VT100Terminal {
-    // True if between BeginFile and EndFile codes.
+    // True if receiving a file in multitoken mode, or if between BeginFile and
+    // EndFile codes (which are deprecated).
     BOOL receivingFile_;
 
     // In FinalTerm command mode (user is at the prompt typing a command).
@@ -996,27 +997,17 @@ static const int kMaxScreenRows = 4096;
         return;
     }
 
-    // Handle sending input to pasteboard/receving files.
+    // Handle file downloads, which come as a series of MULTITOKEN_BODY tokens.
     if (receivingFile_) {
-        if (token->type == VT100CC_BEL) {
-            [delegate_ terminalDidFinishReceivingFile];
-            receivingFile_ = NO;
+        if (token->type == XTERMCC_MULTITOKEN_BODY) {
+            [delegate_ terminalDidReceiveBase64FileData:token.string];
             return;
         } else if (token->type == VT100_ASCIISTRING) {
             [delegate_ terminalDidReceiveBase64FileData:[token stringForAsciiData]];
             return;
-        } else if (token->type == VT100CC_CR ||
-                   token->type == VT100CC_LF) {
-          return;
-        } else  if (token->type == XTERMCC_SET_KVP) {
-          NSArray *kvp = [self keyValuePairInToken:token];
-          if ([kvp[0] isEqualToString:@"EndFile"]) {
-            [self executeXtermSetKvp:token];
-          } else {
-            [delegate_ terminalFileReceiptEndedUnexpectedly];
-            receivingFile_ = NO;
-          }
-          return;
+        } else if (token->type == XTERMCC_MULTITOKEN_END) {
+            [delegate_ terminalDidFinishReceivingFile];
+            return;
         } else {
             [delegate_ terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
@@ -1553,8 +1544,18 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalPostGrowlNotification:token.string];
             break;
 
+        case XTERMCC_MULTITOKEN_HEADER_SET_KVP:
         case XTERMCC_SET_KVP:
             [self executeXtermSetKvp:token];
+            break;
+
+        case XTERMCC_MULTITOKEN_BODY:
+            // You'd get here if the user stops a file download before it finishes.
+            [delegate_ terminalAppendString:token.string];
+            break;
+
+        case XTERMCC_MULTITOKEN_END:
+            // Handled prior to switch.
             break;
 
         case VT100CC_NULL:

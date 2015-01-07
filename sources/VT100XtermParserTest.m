@@ -7,6 +7,7 @@
 //
 
 #import "VT100XtermParserTest.h"
+#import "CVector.h"
 #import "iTermParser.h"
 #import "VT100XtermParser.h"
 #import "VT100Token.h"
@@ -14,10 +15,16 @@
 @implementation VT100XtermParserTest {
     NSMutableDictionary *_savedState;
     iTermParserContext _context;
+    CVector _incidentals;
 }
 
 - (void)setup {
     _savedState = [NSMutableDictionary dictionary];
+    CVectorCreate(&_incidentals, 1);
+}
+
+- (void)teardown {
+    CVectorDestroy(&_incidentals);
 }
 
 - (VT100Token *)tokenForDataWithFormat:(NSString *)formatString, ... {
@@ -30,6 +37,7 @@
     VT100Token *token = [[[VT100Token alloc] init] autorelease];
     _context = iTermParserContextMake((unsigned char *)data.bytes, data.length);
     [VT100XtermParser decodeFromContext:&_context
+                            incidentals:&_incidentals
                                   token:token
                                encoding:NSUTF8StringEncoding
                              savedState:_savedState];
@@ -120,18 +128,142 @@
     assert(token->type == VT100_NOTSUPPORT);
 }
 
-- (void)testCustomFileCodeParsesUpToColon {
+- (void)testUnfinishedMultitoken {
     VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", ESC];
-    assert(token->type == XTERMCC_SET_KVP);
-    assert([token.kvpKey isEqualToString:@"File"]);
-    assert([token.kvpValue isEqualToString:@"blah;foo=bar"]);
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 2);
+
+    VT100Token *header = CVectorGetObject(&_incidentals, 0);
+    assert(header->type = XTERMCC_MULTITOKEN_HEADER_SET_KVP);
+    assert([header.kvpKey isEqualToString:@"File"]);
+    assert([header.kvpValue isEqualToString:@"blah;foo=bar"]);
+
+    VT100Token *body = CVectorGetObject(&_incidentals, 1);
+    assert(body->type = XTERMCC_MULTITOKEN_BODY);
+    assert([body.string isEqualToString:@"abc"]);
 }
 
-- (void)testDeprecatedCustomFileCodeParsesUpToColon {
+- (void)testCompleteMultitoken {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c",
+                         ESC, VT100CC_BEL];
+    assert(token->type == XTERMCC_MULTITOKEN_END);
+    assert(CVectorCount(&_incidentals) == 2);
+
+    VT100Token *header = CVectorGetObject(&_incidentals, 0);
+    assert(header->type = XTERMCC_MULTITOKEN_HEADER_SET_KVP);
+    assert([header.kvpKey isEqualToString:@"File"]);
+    assert([header.kvpValue isEqualToString:@"blah;foo=bar"]);
+
+    VT100Token *body = CVectorGetObject(&_incidentals, 1);
+    assert(body->type = XTERMCC_MULTITOKEN_BODY);
+    assert([body.string isEqualToString:@"abc"]);
+}
+
+- (void)testCompleteMultitokenInMultiplePasses {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 0);
+
+    // Give it some more header
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 0);
+
+    // Give it the final colon so the header can be parsed
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 1);
+
+    VT100Token *header = CVectorGetObject(&_incidentals, 0);
+    assert(header->type = XTERMCC_MULTITOKEN_HEADER_SET_KVP);
+    assert([header.kvpKey isEqualToString:@"File"]);
+    assert([header.kvpValue isEqualToString:@"blah;foo=bar"]);
+
+    // Give it some body.
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:a", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 2);
+
+    VT100Token *body = CVectorGetObject(&_incidentals, 1);
+    assert(body->type = XTERMCC_MULTITOKEN_BODY);
+    assert([body.string isEqualToString:@"a"]);
+
+    // More body
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 3);
+
+    body = CVectorGetObject(&_incidentals, 2);
+    assert(body->type = XTERMCC_MULTITOKEN_BODY);
+    assert([body.string isEqualToString:@"bc"]);
+
+    // Start finishing up
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c", ESC, ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 3);
+
+    // And, done.
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c\\", ESC, ESC];
+    assert(token->type == XTERMCC_MULTITOKEN_END);
+    assert(CVectorCount(&_incidentals) == 3);
+}
+
+- (void)testLateFailureMultitokenInMultiplePasses {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 0);
+
+    // Give it some more header
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 0);
+
+    // Give it the final colon so the header can be parsed
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 1);
+
+    VT100Token *header = CVectorGetObject(&_incidentals, 0);
+    assert(header->type = XTERMCC_MULTITOKEN_HEADER_SET_KVP);
+    assert([header.kvpKey isEqualToString:@"File"]);
+    assert([header.kvpValue isEqualToString:@"blah;foo=bar"]);
+
+    // Give it some body.
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:a", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 2);
+
+    VT100Token *body = CVectorGetObject(&_incidentals, 1);
+    assert(body->type = XTERMCC_MULTITOKEN_BODY);
+    assert([body.string isEqualToString:@"a"]);
+
+    // More body
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", ESC];
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 3);
+
+    body = CVectorGetObject(&_incidentals, 2);
+    assert(body->type = XTERMCC_MULTITOKEN_BODY);
+    assert([body.string isEqualToString:@"bc"]);
+
+    // Now a bogus character.
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c", ESC, VT100CC_SUB];
+    assert(token->type == VT100_NOTSUPPORT);
+}
+
+- (void)testUnfinishedMultitokenWithDeprecatedMode {
     VT100Token *token = [self tokenForDataWithFormat:@"%c]50;File=blah;foo=bar:abc", ESC];
-    assert(token->type == XTERMCC_SET_KVP);
-    assert([token.kvpKey isEqualToString:@"File"]);
-    assert([token.kvpValue isEqualToString:@"blah;foo=bar"]);
+    assert(token->type == VT100_WAIT);
+    assert(CVectorCount(&_incidentals) == 2);
+
+    VT100Token *header = CVectorGetObject(&_incidentals, 0);
+    assert(header->type = XTERMCC_MULTITOKEN_HEADER_SET_KVP);
+    assert([header.kvpKey isEqualToString:@"File"]);
+    assert([header.kvpValue isEqualToString:@"blah;foo=bar"]);
+
+    VT100Token *body = CVectorGetObject(&_incidentals, 1);
+    assert(body->type = XTERMCC_MULTITOKEN_BODY);
+    assert([body.string isEqualToString:@"abc"]);
 }
 
 - (void)testUnterminatedOSCWaits {

@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermParser.h"
+#import "CVector.h"
 #import "VT100Token.h"
 
 NS_INLINE BOOL isXTERM(unsigned char *code, int len) {
@@ -17,6 +18,7 @@ NS_INLINE BOOL isXTERM(unsigned char *code, int len) {
 @interface VT100XtermParser : NSObject
 
 + (void)decodeFromContext:(iTermParserContext *)context
+              incidentals:(CVector *)incidentals
                     token:(VT100Token *)result
                  encoding:(NSStringEncoding)encoding
                savedState:(NSMutableDictionary *)savedState;

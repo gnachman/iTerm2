@@ -145,8 +145,17 @@ typedef enum {
     XTERMCC_PROPRIETARY_ETERM_EXT,
     XTERMCC_SET_PALETTE,
     XTERMCC_SET_KVP,
+    // OSC 1337;File=(args):(data) gets changed by the parser from XTERMCC_SET_KVP to a
+    // series of incidental tokens beginning with XTERMCC_MULTITOKEN_HEADER_SET_KVP.
+    // See comment above XTERMCC_MULTITOKEN_BODY for details.
+    XTERMCC_MULTITOKEN_HEADER_SET_KVP,
     XTERMCC_PASTE64,
     XTERMCC_FINAL_TERM,
+
+    // If a sequence is split into mutiple tokens, the first will be one of the above whose name
+    // includes MULTITOKEN_HEADER, then zero or more of these, and then XTERMCC_MULTITOKEN_END.
+    XTERMCC_MULTITOKEN_BODY,
+    XTERMCC_MULTITOKEN_END,
 
     // Some ansi stuff
     ANSICSI_CHA,     // Cursor Horizontal Absolute

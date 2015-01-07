@@ -37,6 +37,7 @@ void ParseControl(unsigned char *datap,
     } else if (isXTERM(datap, datalen)) {
         iTermParserContext context = iTermParserContextMake(datap, datalen);
         [VT100XtermParser decodeFromContext:&context
+                                incidentals:incidentals
                                       token:token
                                    encoding:encoding
                                  savedState:savedState];

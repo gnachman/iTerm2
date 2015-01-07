@@ -13,6 +13,7 @@ static NSString *const kXtermParserSavedStateDataKey = @"kXtermParserSavedStateD
 static NSString *const kXtermParserSavedStateBytesUsedKey = @"kXtermParserSavedStateBytesUsedKey";
 static NSString *const kXtermParserSavedStateModeKey = @"kXtermParserSavedStateModeKey";
 static NSString *const kXtermParserSavedStateStateKey = @"kXtermParserSavedStateStateKey";
+static NSString *const kXtermParserMultitokenHeaderEmittedkey = @"kXtermParserMultitokenHeaderEmittedkey";
 
 // Nonstandard Linux OSC P nrrggbb ST to change color palette
 // entry. Since no mode number exists for this code, we use -1 as a temporary placeholder until
@@ -34,6 +35,9 @@ typedef enum {
     // Have encountered an illegal character (e.g., bogus mode). Continue until the code ends as a
     // normal OSC would.
     kXtermParserFailingState,
+
+    // Finished parsing the header portion of a multitoken code.
+    kXtermParserHeaderEndState,
 
     // These states will cause the state machine to terminate.
 
@@ -141,8 +145,8 @@ typedef enum {
                         [data hasPrefixOfBytes:"File=" length:5]) {
                         // This is a wonky special case for file downloads. The OSC code can be
                         // really, really big. So we mark it as ended at the colon, and the client
-                        // is responsible for handling this properly. TODO: Clean this up.
-                        nextState = kXtermParserFinishedState;
+                        // is responsible for handling this properly.
+                        nextState = kXtermParserHeaderEndState;
                     } else {
                         nextState = kXtermParserParsingStringState;
                     }
@@ -202,7 +206,29 @@ typedef enum {
     }
 }
 
++ (void)emitIncidentalForSetKvpHeaderInVector:(CVector *)vector
+                                         data:(NSData *)data
+                                     encoding:(NSStringEncoding)encoding {
+    VT100Token *headerToken = [VT100Token token];
+    headerToken->type = XTERMCC_MULTITOKEN_HEADER_SET_KVP;
+    headerToken.string = [[[NSString alloc] initWithData:data
+                                                encoding:encoding] autorelease];
+    [self parseKeyValuePairInToken:headerToken];
+    CVectorAppend(vector, headerToken);
+}
+
++ (void)emitIncidentalForMultitokenBodyInVector:(CVector *)vector
+                                           data:(NSData *)data
+                                       encoding:(NSStringEncoding)encoding {
+    VT100Token *token = [VT100Token token];
+    token->type = XTERMCC_MULTITOKEN_BODY;
+    token.string = [[[NSString alloc] initWithData:data
+                                          encoding:encoding] autorelease];
+    CVectorAppend(vector, token);
+}
+
 + (void)decodeFromContext:(iTermParserContext *)context
+              incidentals:(CVector *)incidentals
                     token:(VT100Token *)result
                  encoding:(NSStringEncoding)encoding
                savedState:(NSMutableDictionary *)savedState {
@@ -210,6 +236,7 @@ typedef enum {
     NSMutableData *data = [NSMutableData data];
     int mode = 0;
     iTermXtermParserState state = kXtermParserParsingModeState;
+    BOOL multitokenHeaderEmitted = NO;
 
     if (savedState.count) {
         data = savedState[kXtermParserSavedStateDataKey];
@@ -217,6 +244,7 @@ typedef enum {
                                    [savedState[kXtermParserSavedStateBytesUsedKey] intValue]);
         mode = [savedState[kXtermParserSavedStateModeKey] intValue];
         state = [savedState[kXtermParserSavedStateStateKey] intValue];
+        multitokenHeaderEmitted = [savedState[kXtermParserMultitokenHeaderEmittedkey] boolValue];
     } else {
         iTermParserConsumeOrDie(context, VT100CC_ESC);
         iTermParserConsumeOrDie(context, ']');
@@ -240,14 +268,26 @@ typedef enum {
                 state = [self parseNextCharsInStringFromContext:context data:data mode:mode];
                 break;
 
+            case kXtermParserHeaderEndState:
+                // There's currently only one multitoken mode. Emit a header for it as an incidental.
+                assert([self tokenTypeForMode:mode] == XTERMCC_SET_KVP);
+                [self emitIncidentalForSetKvpHeaderInVector:incidentals
+                                                       data:data
+                                                   encoding:encoding];
+                state = kXtermParserParsingStringState;
+                mode = XTERMCC_MULTITOKEN_BODY;
+                multitokenHeaderEmitted = YES;
+                [data setLength:0];
+                break;
+
             case kXtermParserFailingState:
                 state = [self parseNextCharsInStringFromContext:context data:nil mode:0];
 
                 // Convert success states into failure states.
                 if (state == kXtermParserFinishedState) {
                     state = kXtermParserFailedState;
-                } else if (state == kXtermParserParsingStringState) {
-                    // This should never happen but is here for the sake of completeness.
+                } else if (state == kXtermParserParsingStringState ||  // Shouldn't happen
+                           state == kXtermParserHeaderEndState) {
                     state = kXtermParserFailingState;
                 }
                 break;
@@ -258,20 +298,36 @@ typedef enum {
                 return;
 
             case kXtermParserFinishedState:
-                result.string = [[[NSString alloc] initWithData:data
-                                                       encoding:encoding] autorelease];
-                result->type = [self tokenTypeForMode:mode];
-                if (result->type == XTERMCC_SET_KVP) {
-                    [self parseKeyValuePairInToken:result];
+                if (multitokenHeaderEmitted) {
+                    if (data.length) {
+                        [self emitIncidentalForMultitokenBodyInVector:incidentals
+                                                                 data:data
+                                                             encoding:encoding];
+                        [data setLength:0];
+                    }
+                    result->type = XTERMCC_MULTITOKEN_END;
+                } else {
+                    result.string = [[[NSString alloc] initWithData:data
+                                                           encoding:encoding] autorelease];
+                    result->type = [self tokenTypeForMode:mode];
+                    if (result->type == XTERMCC_SET_KVP) {
+                        [self parseKeyValuePairInToken:result];
+                    }
                 }
                 return;
                 
             case kXtermParserOutOfDataState:
+                if (data.length && multitokenHeaderEmitted) {
+                    [self emitIncidentalForMultitokenBodyInVector:incidentals
+                                                             data:data
+                                                         encoding:encoding];
+                    [data setLength:0];
+                }
                 savedState[kXtermParserSavedStateDataKey] = data;
                 savedState[kXtermParserSavedStateBytesUsedKey] = @(iTermParserNumberOfBytesConsumed(context));
                 savedState[kXtermParserSavedStateModeKey] = @(mode);
                 savedState[kXtermParserSavedStateStateKey] = @(previousState);
-
+                savedState[kXtermParserMultitokenHeaderEmittedkey] = @(multitokenHeaderEmitted);
                 iTermParserBacktrack(context);
                 result->type = VT100_WAIT;
                 return;
