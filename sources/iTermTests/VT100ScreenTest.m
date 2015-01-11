@@ -88,29 +88,12 @@
     write_ = [NSMutableData data];
 }
 
+#pragma mark - Convenience methods
+
 - (VT100Screen *)screen {
     VT100Screen *screen = [[[VT100Screen alloc] initWithTerminal:terminal_] autorelease];
     terminal_.delegate = screen;
     return screen;
-}
-
-- (void)screenSetColor:(NSColor *)color forKey:(int)key {
-}
-
-- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
-}
-
-- (BOOL)screenShouldPlacePromptAtFirstColumn {
-    return YES;
-}
-
-- (void)screenSetBackgroundImageFile:(NSString *)filename {
-}
-
-- (void)screenSetBadgeFormat:(NSString *)theFormat {
-}
-
-- (void)screenSetUserVar:(NSString *)kvp {
 }
 
 - (void)testInit {
@@ -291,6 +274,211 @@
     }
 }
 
+- (void)setSelectionRange:(VT100GridCoordRange)range {
+    [selection_ clearSelection];
+    VT100GridWindowedRange theRange =
+    VT100GridWindowedRangeMake(range, 0, 0);
+    iTermSubSelection *theSub =
+    [iTermSubSelection subSelectionWithRange:theRange
+                                        mode:kiTermSelectionModeCharacter];
+    [selection_ addSubSelection:theSub];
+}
+
+
+- (VT100Screen *)screenFromCompactLines:(NSString *)compactLines {
+    NSArray *lines = [compactLines componentsSeparatedByString:@"\n"];
+    VT100Screen *screen = [self screenWithWidth:[[lines objectAtIndex:0] length]
+                                         height:[lines count]];
+    int i = 0;
+    for (NSString *line in lines) {
+        screen_char_t *s = [screen getLineAtScreenIndex:i++];
+        for (int j = 0; j < [line length]; j++) {
+            unichar c = [line characterAtIndex:j];;
+            if (c == '.') c = 0;
+            if (c == '-') c = DWC_RIGHT;
+            if (j == [line length] - 1) {
+                if (c == '>') {
+                    c = DWC_SKIP;
+                    s[j+1].code = EOL_DWC;
+                } else {
+                    s[j+1].code = EOL_HARD;
+                }
+            }
+            s[j].code = c;
+        }
+    }
+    return screen;
+}
+
+- (VT100Screen *)screenFromCompactLinesWithContinuationMarks:(NSString *)compactLines {
+    NSArray *lines = [compactLines componentsSeparatedByString:@"\n"];
+    VT100Screen *screen = [self screenWithWidth:[[lines objectAtIndex:0] length] - 1
+                                         height:[lines count]];
+    int i = 0;
+    for (NSString *line in lines) {
+        screen_char_t *s = [screen getLineAtScreenIndex:i++];
+        for (int j = 0; j < [line length] - 1; j++) {
+            unichar c = [line characterAtIndex:j];;
+            if (c == '.') c = 0;
+            if (c == '-') {
+                c = DWC_RIGHT;
+                [screen setMayHaveDoubleWidthCharacters:YES];
+            }
+            if (j == [line length] - 1) {
+                if (c == '>') {
+                    [screen setMayHaveDoubleWidthCharacters:YES];
+                    c = DWC_SKIP;
+                }
+            }
+            s[j].code = c;
+        }
+        int j = [line length] - 1;
+        switch ([line characterAtIndex:j]) {
+            case '!':
+                s[j].code = EOL_HARD;
+                break;
+
+            case '+':
+                s[j].code = EOL_SOFT;
+                break;
+
+            case '>':
+                [screen setMayHaveDoubleWidthCharacters:YES];
+                s[j].code = EOL_DWC;
+                break;
+
+            default:
+                assert(false);  // bogus continution mark
+        }
+    }
+    return screen;
+}
+
+- (NSString *)selectedStringInScreen:(VT100Screen *)screen {
+    if (![selection_ hasSelection]) {
+        return nil;
+    }
+    NSMutableString *s = [NSMutableString string];
+    [selection_ enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
+        int sx = range.coordRange.start.x;
+        for (int y = range.coordRange.start.y; y <= range.coordRange.end.y; y++) {
+            screen_char_t *line = [screen getLineAtIndex:y];
+            int x;
+            int ex = y == range.coordRange.end.y ? range.coordRange.end.x : [screen width];
+            BOOL newline = NO;
+            for (x = sx; x < ex; x++) {
+                if (line[x].code) {
+                    [s appendString:ScreenCharArrayToStringDebug(line + x, 1)];
+                } else {
+                    newline = YES;
+                    [s appendString:@"\n"];
+                    break;
+                }
+            }
+            if (line[x].code == EOL_HARD && !newline && y != range.coordRange.end.y) {
+                [s appendString:@"\n"];
+            }
+            sx = 0;
+        }
+        if (eol) {
+            [s appendString:@"\n"];
+        }
+    }];
+    return s;
+}
+
+- (void)sendDataToTerminal:(NSData *)data {
+    [terminal_.parser putStreamData:data.bytes length:data.length];
+    CVector vector;
+    CVectorCreate(&vector, 1);
+    [terminal_.parser addParsedTokensToVector:&vector];
+    assert(CVectorCount(&vector) == 1);
+    [terminal_ executeToken:CVectorGetObject(&vector, 0)];
+    CVectorDestroy(&vector);
+}
+
+- (void)sendEscapeCodes:(NSString *)codes {
+    NSString *esc = [NSString stringWithFormat:@"%c", 27];
+    NSString *bel = [NSString stringWithFormat:@"%c", 7];
+    codes = [codes stringByReplacingOccurrencesOfString:@"^[" withString:esc];
+    codes = [codes stringByReplacingOccurrencesOfString:@"^G" withString:bel];
+    NSData *data = [codes dataUsingEncoding:NSUTF8StringEncoding];
+    [terminal_.parser putStreamData:data.bytes length:data.length];
+
+    CVector vector;
+    CVectorCreate(&vector, 1);
+    [terminal_.parser addParsedTokensToVector:&vector];
+    for (int i = 0; i < CVectorCount(&vector); i++) {
+        VT100Token *token = CVectorGetObject(&vector, i);
+        [terminal_ executeToken:token];
+    }
+    CVectorDestroy(&vector);
+}
+
+- (NSData *)screenCharLineForString:(NSString *)s {
+    NSMutableData *data = [NSMutableData dataWithLength:s.length * sizeof(screen_char_t)];
+    int len;
+    StringToScreenChars(s,
+                        (screen_char_t *)[data mutableBytes],
+                        [terminal_ foregroundColorCode],
+                        [terminal_ backgroundColorCode],
+                        &len,
+                        NO,
+                        NULL,
+                        NULL,
+                        NO);
+    return data;
+}
+
+- (void)assertScreen:(VT100Screen *)screen
+   matchesHighlights:(NSArray *)expectedHighlights
+         highlightFg:(int)hfg
+     highlightFgMode:(ColorMode)hfm
+         highlightBg:(int)hbg
+     highlightBgMode:(ColorMode)hbm {
+    int defaultFg = [terminal_ foregroundColorCode].foregroundColor;
+    int defaultBg = [terminal_ foregroundColorCode].backgroundColor;
+    for (int i = 0; i < screen.height; i++) {
+        screen_char_t *line = [screen getLineAtScreenIndex:i];
+        NSString *expected = expectedHighlights[i];
+        for (int j = 0; j < screen.width; j++) {
+            if ([expected characterAtIndex:j] == 'h') {
+                assert(line[j].foregroundColor == hfg &&
+                       line[j].foregroundColorMode ==  hfm&&
+                       line[j].backgroundColor == hbg &&
+                       line[j].backgroundColorMode == hbm);
+            } else {
+                assert(line[j].foregroundColor == defaultFg &&
+                       line[j].foregroundColorMode == ColorModeAlternate &&
+                       line[j].backgroundColor == defaultBg &&
+                       line[j].backgroundColorMode == ColorModeAlternate);
+            }
+        }
+    }
+
+}
+
+#pragma mark - VT100ScreenDelegate
+
+- (void)screenSetColor:(NSColor *)color forKey:(int)key {
+}
+
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
+}
+
+- (BOOL)screenShouldPlacePromptAtFirstColumn {
+    return YES;
+}
+
+- (void)screenSetBackgroundImageFile:(NSString *)filename {
+}
+
+- (void)screenSetBadgeFormat:(NSString *)theFormat {
+}
+
+- (void)screenSetUserVar:(NSString *)kvp {
+}
+
 - (void)screenUpdateDisplay {
     ++updates_;
 }
@@ -380,39 +568,6 @@
     return NSMakeRect(30, 40, 1000, 2000);
 }
 
-- (NSString *)selectedStringInScreen:(VT100Screen *)screen {
-    if (![selection_ hasSelection]) {
-        return nil;
-    }
-    NSMutableString *s = [NSMutableString string];
-    [selection_ enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
-        int sx = range.coordRange.start.x;
-        for (int y = range.coordRange.start.y; y <= range.coordRange.end.y; y++) {
-            screen_char_t *line = [screen getLineAtIndex:y];
-            int x;
-            int ex = y == range.coordRange.end.y ? range.coordRange.end.x : [screen width];
-            BOOL newline = NO;
-            for (x = sx; x < ex; x++) {
-                if (line[x].code) {
-                    [s appendString:ScreenCharArrayToStringDebug(line + x, 1)];
-                } else {
-                    newline = YES;
-                    [s appendString:@"\n"];
-                    break;
-                }
-            }
-            if (line[x].code == EOL_HARD && !newline && y != range.coordRange.end.y) {
-                [s appendString:@"\n"];
-            }
-            sx = 0;
-        }
-        if (eol) {
-            [s appendString:@"\n"];
-        }
-    }];
-    return s;
-}
-
 - (BOOL)screenAllowTitleSetting {
     return YES;
 }
@@ -466,15 +621,239 @@
     [self screenPrintString:@"(screen dump)"];
 }
 
-- (void)setSelectionRange:(VT100GridCoordRange)range {
-    [selection_ clearSelection];
-    VT100GridWindowedRange theRange =
-        VT100GridWindowedRangeMake(range, 0, 0);
-    iTermSubSelection *theSub =
-        [iTermSubSelection subSelectionWithRange:theRange
-                                            mode:kiTermSelectionModeCharacter];
-    [selection_ addSubSelection:theSub];
+- (BOOL)screenIsAppendingToPasteboard {
+    return pasteboard_ != nil && !pasted_;
 }
+
+- (void)screenSetPasteboard:(NSString *)pasteboard {
+    pasteboard_ = [[pasteboard copy] autorelease];
+}
+
+- (void)screenAppendDataToPasteboard:(NSData *)data {
+    [pbData_ appendData:data];
+}
+
+- (void)screenCopyBufferToPasteboard {
+    pasted_ = YES;
+}
+
+- (BOOL)screenShouldSendReport {
+    return YES;
+}
+
+- (void)screenWriteDataToTask:(NSData *)data {
+    [write_ appendData:data];
+}
+
+- (void)screenDidChangeNumberOfScrollbackLines {
+}
+
+- (int)screenSessionID {
+    return 0;
+}
+
+- (void)screenSetCursorBlinking:(BOOL)blink {
+}
+
+- (void)screenSetCursorType:(ITermCursorType)type {
+}
+
+- (NSString *)screenWindowTitle {
+    return windowTitle_;
+}
+
+- (NSString *)screenDefaultName {
+    return @"Default name";
+}
+
+- (NSString *)screenName {
+    return name_;
+}
+
+- (NSPoint)screenWindowTopLeftPixelCoordinate {
+    return NSZeroPoint;
+}
+
+- (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
+}
+
+- (void)screenMiniaturizeWindow:(BOOL)flag {
+}
+
+- (void)screenRaise:(BOOL)flag {
+}
+
+- (BOOL)screenWindowIsMiniaturized {
+    return NO;
+}
+
+- (NSSize)screenSize {
+    return NSMakeSize(100, 100);
+}
+
+- (void)screenPushCurrentTitleForWindow:(BOOL)flag {
+}
+
+- (void)screenPopCurrentTitleForWindow:(BOOL)flag {
+}
+
+- (int)screenNumber {
+    return 0;
+}
+
+- (int)screenTabIndex {
+    return 0;
+}
+
+- (int)screenViewIndex {
+    return 0;
+}
+
+- (int)screenWindowIndex {
+    return 0;
+}
+
+- (void)screenStartTmuxMode {
+}
+
+- (void)screenHandleTmuxInput:(VT100Token *)token {
+}
+
+- (void)screenModifiersDidChangeTo:(NSArray *)modifiers {
+}
+
+- (void)screenShowBellIndicator {
+}
+
+- (void)screenSuggestShellIntegrationUpgrade {
+}
+
+- (NSSize)screenCellSize {
+    return NSMakeSize(10, 10);
+}
+
+- (void)screenMouseModeDidChange {
+}
+
+- (void)screenFlashImage:(NSString *)identifier {
+}
+
+- (void)screenIncrementBadge {
+}
+
+- (void)screenSetHighlightCursorLine:(BOOL)highlight {
+}
+
+- (void)screenCursorDidMoveToLine:(int)line {
+}
+
+- (void)screenSaveScrollPosition {
+}
+
+- (void)screenAddMarkOnLine:(int)line {
+}
+
+- (void)screenActivateWindow {
+}
+
+- (void)screenSetProfileToProfileNamed:(NSString *)value {
+}
+
+- (void)screenDidAddNote:(PTYNoteViewController *)note {
+}
+
+- (void)screenDidEndEditingNote {
+}
+
+- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(int)size {
+}
+
+- (void)screenDidFinishReceivingFile {
+}
+
+- (void)screenDidReceiveBase64FileData:(NSString *)data {
+}
+
+- (void)screenFileReceiptEndedUnexpectedly {
+}
+
+- (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical {
+}
+
+- (iTermColorMap *)screenColorMap {
+    return nil;
+}
+
+- (void)screenSetCurrentTabColor:(NSColor *)color {
+}
+
+- (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
+}
+
+- (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
+}
+
+- (void)screenSetTabColorRedComponentTo:(CGFloat)color {
+}
+
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+}
+
+- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
+}
+
+- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
+}
+
+- (int)selectionViewportWidth {
+    return 80;
+}
+
+- (BOOL)screenShouldPostTerminalGeneratedAlert {
+    return NO;
+}
+
+- (BOOL)screenShouldIgnoreBell {
+    return NO;
+}
+
+- (void)screenPromptDidStartAtLine:(int)line {
+}
+
+#pragma mark - iTermSelectionDelegate
+
+- (void)selectionDidChange:(iTermSelection *)selection {
+}
+
+- (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridWindowedRange)selectionRangeForWordAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridWindowedRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridWindowedRange)selectionRangeForLineAt:(VT100GridCoord)coord {
+    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
+}
+
+- (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {
+    return VT100GridRangeMake(INT_MAX, 0);
+}
+
+- (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord {
+    assert(false);
+}
+
+#pragma mark - Tests
 
 - (void)testResizeWidthRespectsContinuations {
     VT100Screen *screen;
@@ -1127,75 +1506,6 @@
             @"......"]);
 }
 
-- (VT100Screen *)screenFromCompactLines:(NSString *)compactLines {
-    NSArray *lines = [compactLines componentsSeparatedByString:@"\n"];
-    VT100Screen *screen = [self screenWithWidth:[[lines objectAtIndex:0] length]
-                                         height:[lines count]];
-    int i = 0;
-    for (NSString *line in lines) {
-        screen_char_t *s = [screen getLineAtScreenIndex:i++];
-        for (int j = 0; j < [line length]; j++) {
-            unichar c = [line characterAtIndex:j];;
-            if (c == '.') c = 0;
-            if (c == '-') c = DWC_RIGHT;
-            if (j == [line length] - 1) {
-                if (c == '>') {
-                    c = DWC_SKIP;
-                    s[j+1].code = EOL_DWC;
-                } else {
-                    s[j+1].code = EOL_HARD;
-                }
-            }
-            s[j].code = c;
-        }
-    }
-    return screen;
-}
-
-- (VT100Screen *)screenFromCompactLinesWithContinuationMarks:(NSString *)compactLines {
-    NSArray *lines = [compactLines componentsSeparatedByString:@"\n"];
-    VT100Screen *screen = [self screenWithWidth:[[lines objectAtIndex:0] length] - 1
-                                         height:[lines count]];
-    int i = 0;
-    for (NSString *line in lines) {
-        screen_char_t *s = [screen getLineAtScreenIndex:i++];
-        for (int j = 0; j < [line length] - 1; j++) {
-            unichar c = [line characterAtIndex:j];;
-            if (c == '.') c = 0;
-            if (c == '-') {
-                c = DWC_RIGHT;
-                [screen setMayHaveDoubleWidthCharacters:YES];
-            }
-            if (j == [line length] - 1) {
-                if (c == '>') {
-                    [screen setMayHaveDoubleWidthCharacters:YES];
-                    c = DWC_SKIP;
-                }
-            }
-            s[j].code = c;
-        }
-        int j = [line length] - 1;
-        switch ([line characterAtIndex:j]) {
-            case '!':
-                s[j].code = EOL_HARD;
-                break;
-                
-            case '+':
-                s[j].code = EOL_SOFT;
-                break;
-                
-            case '>':
-                [screen setMayHaveDoubleWidthCharacters:YES];
-                s[j].code = EOL_DWC;
-                break;
-                
-            default:
-                assert(false);  // bogus continution mark
-        }
-    }
-    return screen;
-}
-
 - (void)testRunByTrimmingNullsFromRun {
     // Basic test
     VT100Screen *screen = [self screenFromCompactLines:
@@ -1297,16 +1607,6 @@
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 }
 
-- (void)sendDataToTerminal:(NSData *)data {
-    [terminal_.parser putStreamData:data.bytes length:data.length];
-    CVector vector;
-    CVectorCreate(&vector, 1);
-    [terminal_.parser addParsedTokensToVector:&vector];
-    assert(CVectorCount(&vector) == 1);
-    [terminal_ executeToken:CVectorGetObject(&vector, 0)];
-    CVectorDestroy(&vector);
-}
-
 - (void)testAllCharacterSetPropertiesHaveDefaultValues {
     VT100Screen *screen = [self screenWithWidth:5 height:3];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
@@ -1405,24 +1705,6 @@
     assert(highlightsCleared_);
     assert(![selection_ hasSelection]);
     assert([screen isAllDirty]);
-}
-
-- (void)sendEscapeCodes:(NSString *)codes {
-    NSString *esc = [NSString stringWithFormat:@"%c", 27];
-    NSString *bel = [NSString stringWithFormat:@"%c", 7];
-    codes = [codes stringByReplacingOccurrencesOfString:@"^[" withString:esc];
-    codes = [codes stringByReplacingOccurrencesOfString:@"^G" withString:bel];
-    NSData *data = [codes dataUsingEncoding:NSUTF8StringEncoding];
-    [terminal_.parser putStreamData:data.bytes length:data.length];
-
-    CVector vector;
-    CVectorCreate(&vector, 1);
-    [terminal_.parser addParsedTokensToVector:&vector];
-    for (int i = 0; i < CVectorCount(&vector); i++) {
-        VT100Token *token = CVectorGetObject(&vector, i);
-        [terminal_ executeToken:token];
-    }
-    CVectorDestroy(&vector);
 }
 
 // Most of the work is done by VT100Grid's appendCharsAtCursor, which is heavily tested already.
@@ -1652,21 +1934,6 @@
     assert([screen totalScrollbackOverflow] == 1);
 }
 
-- (NSData *)screenCharLineForString:(NSString *)s {
-    NSMutableData *data = [NSMutableData dataWithLength:s.length * sizeof(screen_char_t)];
-    int len;
-    StringToScreenChars(s,
-                        (screen_char_t *)[data mutableBytes],
-                        [terminal_ foregroundColorCode],
-                        [terminal_ backgroundColorCode],
-                        &len,
-                        NO,
-                        NULL,
-                        NULL,
-                        NO);
-    return data;
-}
-
 - (void)testSetHistory {
     NSArray *lines = @[[self screenCharLineForString:@"abcdefghijkl"],
                        [self screenCharLineForString:@"mnop"],
@@ -1740,34 +2007,6 @@
     assert(screen.cursorX == 5);
     [screen terminalAppendTabAtCursor];
     assert(screen.cursorX == 9);
-}
-
-- (void)assertScreen:(VT100Screen *)screen
-   matchesHighlights:(NSArray *)expectedHighlights
-         highlightFg:(int)hfg
-     highlightFgMode:(ColorMode)hfm
-         highlightBg:(int)hbg
-     highlightBgMode:(ColorMode)hbm {
-    int defaultFg = [terminal_ foregroundColorCode].foregroundColor;
-    int defaultBg = [terminal_ foregroundColorCode].backgroundColor;
-    for (int i = 0; i < screen.height; i++) {
-        screen_char_t *line = [screen getLineAtScreenIndex:i];
-        NSString *expected = expectedHighlights[i];
-        for (int j = 0; j < screen.width; j++) {
-            if ([expected characterAtIndex:j] == 'h') {
-                assert(line[j].foregroundColor == hfg &&
-                       line[j].foregroundColorMode ==  hfm&&
-                       line[j].backgroundColor == hbg &&
-                       line[j].backgroundColorMode == hbm);
-            } else {
-                assert(line[j].foregroundColor == defaultFg &&
-                       line[j].foregroundColorMode == ColorModeAlternate &&
-                       line[j].backgroundColor == defaultBg &&
-                       line[j].backgroundColorMode == ColorModeAlternate);
-            }
-        }
-    }
-    
 }
 
 - (void)testHighlightTextMatchingRegex {
@@ -3636,190 +3875,6 @@
 
 #pragma mark - Regression tests
 
-- (BOOL)screenIsAppendingToPasteboard {
-    return pasteboard_ != nil && !pasted_;
-}
-
-- (void)screenSetPasteboard:(NSString *)pasteboard {
-    pasteboard_ = [[pasteboard copy] autorelease];
-}
-
-- (void)screenAppendDataToPasteboard:(NSData *)data {
-    [pbData_ appendData:data];
-}
-
-- (void)screenCopyBufferToPasteboard {
-    pasted_ = YES;
-}
-
-- (BOOL)screenShouldSendReport {
-    return YES;
-}
-
-- (void)screenWriteDataToTask:(NSData *)data {
-    [write_ appendData:data];
-}
-
-- (void)screenDidChangeNumberOfScrollbackLines {
-}
-
-- (int)screenSessionID {
-    return 0;
-}
-
-- (void)screenSetCursorBlinking:(BOOL)blink {
-}
-
-- (void)screenSetCursorType:(ITermCursorType)type {
-}
-
-- (NSString *)screenWindowTitle {
-    return windowTitle_;
-}
-
-- (NSString *)screenDefaultName {
-    return @"Default name";
-}
-
-- (NSString *)screenName {
-    return name_;
-}
-
-- (NSPoint)screenWindowTopLeftPixelCoordinate {
-    return NSZeroPoint;
-}
-
-- (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
-}
-
-- (void)screenMiniaturizeWindow:(BOOL)flag {
-}
-
-- (void)screenRaise:(BOOL)flag {
-}
-
-- (BOOL)screenWindowIsMiniaturized {
-    return NO;
-}
-
-- (NSSize)screenSize {
-    return NSMakeSize(100, 100);
-}
-
-- (void)screenPushCurrentTitleForWindow:(BOOL)flag {
-}
-
-- (void)screenPopCurrentTitleForWindow:(BOOL)flag {
-}
-
-- (int)screenNumber {
-    return 0;
-}
-
-- (int)screenTabIndex {
-    return 0;
-}
-
-- (int)screenViewIndex {
-    return 0;
-}
-
-- (int)screenWindowIndex {
-    return 0;
-}
-
-- (void)screenStartTmuxMode {
-}
-
-- (void)screenHandleTmuxInput:(VT100Token *)token {
-}
-
-- (void)screenModifiersDidChangeTo:(NSArray *)modifiers {
-}
-
-- (void)screenShowBellIndicator {
-}
-
-- (void)screenSuggestShellIntegrationUpgrade {
-}
-
-- (NSSize)screenCellSize {
-    return NSMakeSize(10, 10);
-}
-
-- (void)screenMouseModeDidChange {
-}
-
-- (void)screenFlashImage:(NSString *)identifier {
-}
-
-- (void)screenIncrementBadge {
-}
-
-- (void)screenSetHighlightCursorLine:(BOOL)highlight {
-}
-
-- (void)screenCursorDidMoveToLine:(int)line {
-}
-
-- (void)screenSaveScrollPosition {
-}
-
-- (void)screenAddMarkOnLine:(int)line {
-}
-
-- (void)screenActivateWindow {
-}
-
-- (void)screenSetProfileToProfileNamed:(NSString *)value {
-}
-
-- (void)screenDidAddNote:(PTYNoteViewController *)note {
-}
-
-- (void)screenDidEndEditingNote {
-}
-
-- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(int)size {
-}
-
-- (void)screenDidFinishReceivingFile {
-}
-
-- (void)screenDidReceiveBase64FileData:(NSString *)data {
-}
-
-- (void)screenFileReceiptEndedUnexpectedly {
-}
-
-- (void)screenRequestAttention:(BOOL)request isCritical:(BOOL)isCritical {
-}
-
-- (iTermColorMap *)screenColorMap {
-    return nil;
-}
-
-- (void)screenSetCurrentTabColor:(NSColor *)color {
-}
-
-- (void)screenSetTabColorGreenComponentTo:(CGFloat)color {
-}
-
-- (void)screenSetTabColorBlueComponentTo:(CGFloat)color {
-}
-
-- (void)screenSetTabColorRedComponentTo:(CGFloat)color {
-}
-
-- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
-}
-
-- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
-}
-
-- (void)screenCommandDidEndWithRange:(VT100GridCoordRange)range {
-}
-
 - (void)testPasting {
     VT100Screen *screen = [self screen];
     screen.delegate = (id<VT100ScreenDelegate>)self;
@@ -4086,39 +4141,6 @@
     assert(buffer[0].backgroundColor == 5);
     assert(buffer[1].backgroundColor == 5);
     assert(buffer[2].backgroundColor == 5);
-}
-
-#pragma mark - iTermSelectionDelegate
-
-- (void)selectionDidChange:(iTermSelection *)selection {
-}
-
-- (VT100GridWindowedRange)selectionRangeForParentheticalAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
-}
-
-- (VT100GridWindowedRange)selectionRangeForWordAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
-}
-
-- (VT100GridWindowedRange)selectionRangeForSmartSelectionAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
-}
-
-- (VT100GridWindowedRange)selectionRangeForWrappedLineAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
-}
-
-- (VT100GridWindowedRange)selectionRangeForLineAt:(VT100GridCoord)coord {
-    return VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 0, 0), 0, 0);
-}
-
-- (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {
-    return VT100GridRangeMake(INT_MAX, 0);
-}
-
-- (VT100GridCoord)selectionPredecessorOfCoord:(VT100GridCoord)coord {
-    assert(false);
 }
 
 @end
