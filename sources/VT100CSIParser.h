@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "CVector.h"
+#import "iTermParser.h"
 #import "VT100Token.h"
 
 typedef enum {
@@ -20,19 +21,14 @@ typedef enum {
 } VT100CSIIncidentalType;
 
 NS_INLINE BOOL isCSI(unsigned char *code, int len) {
-    if (len >= 2 && code[0] == ESC && (code[1] == '[')) {
-        return YES;
-    }
-    return NO;
+    return (len >= 2 && code[0] == VT100CC_ESC && (code[1] == '['));
 }
 
 @interface VT100CSIParser : NSObject
 
-+ (void)decodeBytes:(unsigned char *)datap
-             length:(int)datalen
-          bytesUsed:(int *)rmlen
-        incidentals:(CVector *)incidentals
-              token:(VT100Token *)result;
++ (void)decodeFromContext:(iTermParserContext *)context
+              incidentals:(CVector *)incidentals
+                    token:(VT100Token *)result;
 
 @end
 

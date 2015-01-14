@@ -458,6 +458,16 @@
 
 }
 
+- (void)sendStringToTerminalWithFormat:(NSString *)formatString, ... {
+    va_list args;
+    va_start(args, formatString);
+    NSString *string = [[[NSString alloc] initWithFormat:formatString arguments:args] autorelease];
+    va_end(args);
+
+    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+    [self sendDataToTerminal:data];
+}
+
 #pragma mark - VT100ScreenDelegate
 
 - (void)screenSetColor:(NSColor *)color forKey:(int)key {
@@ -4142,5 +4152,191 @@
     assert(buffer[1].backgroundColor == 5);
     assert(buffer[2].backgroundColor == 5);
 }
+
+#pragma mark - CSI Tests
+
+- (void)testCSI_CUD {
+    // Cursor Down Ps Times (default = 1) (CUD)
+    // This control function moves the cursor down a specified number of lines in the same column. The
+    // cursor stops at the bottom margin. If the cursor is already below the bottom margin, then the
+    // cursor stops at the bottom line.
+
+    // Test basic usage, default parameter.
+    VT100Screen *screen = [self screenWithWidth:3 height:5];
+    [screen.currentGrid setCursorX:1];
+    [screen.currentGrid setCursorY:1];
+    [self sendStringToTerminalWithFormat:@"\033[B"];
+    assert(screen.currentGrid.cursorX == 1);
+    assert(screen.currentGrid.cursorY == 2);
+
+    // Basic usage, explicit parameter.
+    screen = [self screenWithWidth:3 height:5];
+    [screen.currentGrid setCursorX:1];
+    [screen.currentGrid setCursorY:1];
+    [self sendStringToTerminalWithFormat:@"\033[2B"];
+    assert(screen.currentGrid.cursorX == 1);
+    assert(screen.currentGrid.cursorY == 3);
+
+    // Start inside scroll region - should stop at bottom margin
+    screen = [self screenWithWidth:3 height:5];
+    [screen terminalSetScrollRegionTop:2 bottom:4];
+    [screen.currentGrid setCursorX:1];
+    [screen.currentGrid setCursorY:2];
+    [self sendStringToTerminalWithFormat:@"\033[99B"];
+    assert(screen.currentGrid.cursorX == 1);
+    assert(screen.currentGrid.cursorY == 4);
+
+    // Start above scroll region - should stop at bottom margin
+    screen = [self screenWithWidth:3 height:5];
+    [screen terminalSetScrollRegionTop:2 bottom:3];
+    [screen.currentGrid setCursorX:1];
+    [screen.currentGrid setCursorY:0];
+    [self sendStringToTerminalWithFormat:@"\033[99B"];
+    assert(screen.currentGrid.cursorX == 1);
+    assert(screen.currentGrid.cursorY == 3);
+
+    // Start below bottom margin - should stop at bottom of screen.
+    screen = [self screenWithWidth:3 height:5];
+    [screen terminalSetScrollRegionTop:1 bottom:2];
+    [screen.currentGrid setCursorX:1];
+    [screen.currentGrid setCursorY:3];
+    [self sendStringToTerminalWithFormat:@"\033[99B"];
+    assert(screen.currentGrid.cursorX == 1);
+    assert(screen.currentGrid.cursorY == 4);
+}
+
+- (void)testCSI_CUF {
+    // Cursor Forward Ps Times (default = 1) (CUF)
+    // This control function moves the cursor to the right by a specified number of columns. The
+    // cursor stops at the right border of the page.
+
+    // Test basic usage, default parameter.
+    VT100Screen *screen = [self screenWithWidth:5 height:5];
+    [screen.currentGrid setCursorX:1];
+    [screen.currentGrid setCursorY:1];
+    [self sendStringToTerminalWithFormat:@"\033[C"];
+    assert(screen.currentGrid.cursorX == 2);
+    assert(screen.currentGrid.cursorY == 1);
+
+    // Test basic usage, explicit parameter.
+    screen = [self screenWithWidth:5 height:5];
+    [screen.currentGrid setCursorX:1];
+    [screen.currentGrid setCursorY:1];
+    [self sendStringToTerminalWithFormat:@"\033[2C"];
+    assert(screen.currentGrid.cursorX == 3);
+    assert(screen.currentGrid.cursorY == 1);
+
+    // Test stops on right border.
+    screen = [self screenWithWidth:5 height:5];
+    [screen.currentGrid setCursorX:1];
+    [screen.currentGrid setCursorY:1];
+    [self sendStringToTerminalWithFormat:@"\033[99C"];
+    assert(screen.currentGrid.cursorX == 4);
+    assert(screen.currentGrid.cursorY == 1);
+
+    // Test respects region when starting inside it
+    screen = [self screenWithWidth:5 height:5];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:1 rightMargin:3];
+    [screen.currentGrid setCursorX:2];
+    [screen.currentGrid setCursorY:1];
+    [self sendStringToTerminalWithFormat:@"\033[99C"];
+    assert(screen.currentGrid.cursorX == 3);
+    assert(screen.currentGrid.cursorY == 1);
+
+    // Test does not respect region when starting outside it
+    screen = [self screenWithWidth:5 height:5];
+    [screen terminalSetUseColumnScrollRegion:YES];
+    [screen terminalSetLeftMargin:1 rightMargin:2];
+    [screen.currentGrid setCursorX:3];
+    [screen.currentGrid setCursorY:1];
+    [self sendStringToTerminalWithFormat:@"\033[99C"];
+    assert(screen.currentGrid.cursorX == 4);
+    assert(screen.currentGrid.cursorY == 1);
+}
+
+/*
+
+{ 0, 0, 'C', VT100CSI_CUF, 1, -1 },
+{ 0, 0, 'D', VT100CSI_CUB, 1, -1 },
+{ 0, 0, 'E', VT100CSI_CNL, 1, -1 },
+{ 0, 0, 'F', VT100CSI_CPL, 1, -1 },
+{ 0, 0, 'G', ANSICSI_CHA, 1, -1 },
+{ 0, 0, 'H', VT100CSI_CUP, 1, 1 },
+// I not supported (Cursor Forward Tabulation P s tab stops (default = 1) (CHT))
+{ 0, 0, 'J', VT100CSI_ED, 0, -1 },
+// ?J not supported (Erase in Display (DECSED))
+{ 0, 0, 'K', VT100CSI_EL, 0, -1 },
+// ?K not supported ((Erase in Line (DECSEL))
+{ 0, 0, 'L', XTERMCC_INSLN, 1, -1 },
+{ 0, 0, 'M', XTERMCC_DELLN, 1, -1 },
+{ 0, 0, 'P', XTERMCC_DELCH, 1, -1 },
+{ 0, 0, 'S', XTERMCC_SU, 1, -1 },
+// ?Pi;Pa;PvS not supported (Sixel/ReGIS)
+{ 0, 0, 'T', XTERMCC_SD, 1, -1 },
+// Ps;Ps;Ps;Ps;PsT not supported (Initiate highlight mouse tracking)
+{ 0, 0, 'X', ANSICSI_ECH, 1, -1 },
+{ 0, 0, 'Z', ANSICSI_CBT, 1, -1 },
+// ` not supported (Character Position Absolute [column] (default = [row,1]) (HPA))
+// a not supported (Character Position Relative [columns] (default = [row,col+1]) (HPR))
+// b not supported (Repeat the preceding graphic character P s times (REP))
+{ 0, 0, 'c', VT100CSI_DA, 0, -1 },
+{ '>', 0, 'c', VT100CSI_DA2, 0, -1 },
+{ 0, 0, 'd', ANSICSI_VPA, 1, -1 },
+{ 0, 0, 'e', ANSICSI_VPR, 1, -1 },
+{ 0, 0, 'f', VT100CSI_HVP, 1, 1 },
+{ 0, 0, 'g', VT100CSI_TBC, 0, -1 },
+{ 0, 0, 'h', VT100CSI_SM, -1, -1 },
+{ '?', 0, 'h', VT100CSI_DECSET, -1, -1 },
+{ 0, 0, 'i', ANSICSI_PRINT, 0, -1 },
+// ?i not supported (Media Copy (MC, DEC-specific))
+{ 0, 0, 'l', VT100CSI_RM, -1, -1 },
+{ '?', 0, 'l', VT100CSI_DECRST, -1, -1 },
+{ 0, 0, 'm', VT100CSI_SGR, 0, -1 },
+{ '>', 0, 'm', VT100CSI_SET_MODIFIERS, -1, -1 },
+{ 0, 0, 'n', VT100CSI_DSR, 0, -1 },
+{ '>', 0, 'n', VT100CSI_RESET_MODIFIERS, -1, -1 },
+{ '?', 0, 'n', VT100CSI_DECDSR, 0, -1 },
+// >p not supported (Set resource value pointerMode. This is used by xterm to decide whether
+// to hide the pointer cursor as the user types.)
+{ '!', 0, 'p', VT100CSI_DECSTR, -1, -1 },
+// $p not supported (Request ANSI mode (DECRQM))
+// ?$p not supported (Request DEC private mode (DECRQM))
+// "p not supported (Set conformance level (DECSCL))
+// q not supported (Load LEDs (DECLL))
+{ 0, ' ', 'q', VT100CSI_DECSCUSR, 0, -1 },
+// "q not supported (Select character protection attribute (DECSCA))
+{ 0, 0, 'r', VT100CSI_DECSTBM, -1, -1 },
+// $r not supported (Change Attributes in Rectangular Area (DECCARA))
+{ 0, 0, 's', VT100CSI_DECSLRM_OR_ANSICSI_SCP, -1, -1 },
+// ?s not supported (Save DEC Private Mode Values)
+// t tested in -testWindowManipulationCodes
+// $t not supported (Reverse Attributes in Rectangular Area (DECRARA))
+// >t not supported (Set one or more features of the title modes)
+// SP t not supported (Set warning-bell volume (DECSWBV, VT520))
+{ 0, 0, 'u', ANSICSI_RCP, -1, -1 },
+
+{ 1, XTERMCC_DEICONIFY },
+{ 2, XTERMCC_ICONIFY },
+{ 3, XTERMCC_WINDOWPOS },
+{ 4, XTERMCC_WINDOWSIZE_PIXEL },
+{ 5, XTERMCC_RAISE },
+{ 6, XTERMCC_LOWER },
+// 7 is not supported (Refresh the window)
+{ 8, XTERMCC_WINDOWSIZE },
+// 9 is not supported (Various maximize window actions)
+// 10 is not supported (Various full-screen actions)
+{ 11, XTERMCC_REPORT_WIN_STATE },
+// 12 is not defined
+{ 13, XTERMCC_REPORT_WIN_POS },
+{ 14, XTERMCC_REPORT_WIN_PIX_SIZE },
+// 15, 16, and 17 are not defined
+{ 18, XTERMCC_REPORT_WIN_SIZE },
+{ 19, XTERMCC_REPORT_SCREEN_SIZE },
+{ 20, XTERMCC_REPORT_ICON_TITLE },
+{ 21, XTERMCC_REPORT_WIN_TITLE },
+{ 22, XTERMCC_PUSH_TITLE },
+{ 23, XTERMCC_POP_TITLE },
+*/
 
 @end

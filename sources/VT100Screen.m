@@ -2497,6 +2497,12 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
+    if (rows == -1) {
+        rows = self.height;
+    }
+    if (columns == -1) {
+        columns = self.width;
+    }
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {
         [delegate_ screenResizeToWidth:columns
@@ -2604,6 +2610,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (NSString *)terminalIconTitle {
     if (allowTitleReporting_) {
+        // TODO: Should be something like screenRawName (which doesn't exist yet but would return
+        // [self rawName]), not screenWindowTitle, right?
         return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : [delegate_ screenDefaultName];
     } else {
         return @"";
@@ -3332,6 +3340,29 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (NSString *)terminalProfileName {
     return [delegate_ screenProfileName];
+}
+
+- (VT100GridRect)terminalScrollRegion {
+    return currentGrid_.scrollRegionRect;
+}
+
+- (int)terminalChecksumInRectangle:(VT100GridRect)rect {
+    int result = 0;
+    for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
+        screen_char_t *theLine = [self getLineAtScreenIndex:y];
+        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width; x++) {
+            unichar code = theLine[x].code;
+            BOOL isPrivate = (code < ITERM2_PRIVATE_BEGIN &&
+                              code > ITERM2_PRIVATE_END);
+            if (code && !isPrivate) {
+                NSString *s = ScreenCharToStr(&theLine[x]);
+                for (int i = 0; i < s.length; i++) {
+                    result += (int)[s characterAtIndex:i];
+                }
+            }
+        }
+    }
+    return result;
 }
 
 #pragma mark - Private

@@ -32,6 +32,15 @@ NS_INLINE unsigned char iTermParserPeek(iTermParserContext *context) {
     return context->datap[0];
 }
 
+NS_INLINE BOOL iTermParserTryPeek(iTermParserContext *context, unsigned char *c) {
+    if (iTermParserCanAdvance(context)) {
+        *c = iTermParserPeek(context);
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
 NS_INLINE void iTermParserAdvance(iTermParserContext *context) {
     context->datap++;
     context->datalen--;
@@ -106,4 +115,37 @@ NS_INLINE BOOL iTermParserConsumeInteger(iTermParserContext *context, int *n) {
     }
 
     return numDigits > 0;
+}
+
+#pragma mark - CSI
+
+#define VT100CSIPARAM_MAX 16  // Maximum number of CSI parameters in VT100Token.csi->p.
+#define VT100CSISUBPARAM_MAX 16  // Maximum number of CSI sub-parameters in VT100Token.csi->p.
+
+typedef struct {
+    // Integer parameters. The first |count| elements are valid. -1 means the value is unset; set
+    // values are always nonnegative.
+    int p[VT100CSIPARAM_MAX];
+
+    // Number of defined values in |p|.
+    int count;
+
+    // An integer that holds a packed representation of the prefix byte, intermediate byte, and
+    // final byte.
+    int32_t cmd;
+
+    // Sub-parameters.
+    int sub[VT100CSIPARAM_MAX][VT100CSISUBPARAM_MAX];
+
+    // Number of subparameters for each parameter.
+    int subCount[VT100CSIPARAM_MAX];
+} CSIParam;
+
+// If the n'th parameter has a negative (default) value, replace it with |value|.
+// CSI parameter values are all initialized to -1 before parsing, so this has the effect of setting
+// a value iff it hasn't already been set.
+// If there aren't yet n+1 parameters, increase the count to n+1.
+NS_INLINE void iTermParserSetCSIParameterIfDefault(CSIParam *csiParam, int n, int value) {
+    csiParam->p[n] = csiParam->p[n] < 0 ? value : csiParam->p[n];
+    csiParam->count = MAX(csiParam->count, n + 1);
 }
