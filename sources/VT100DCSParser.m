@@ -26,7 +26,7 @@
             datap += 2;
             datalen -= 2;
             *rmlen += 2;
-            char st[3] = { ESC, '\\', '\0' };
+            char st[3] = { VT100CC_ESC, '\\', '\0' };
             char *positionOfST = strnstr((const char *)datap, st, datalen);
             if (!positionOfST) {
                 return;
@@ -61,7 +61,7 @@
             *rmlen += 5;
         } else if (datalen >= 6 &&
                    !strncmp((char *)datap, "tmux;", 5) &&
-                   datap[5] == ESC) {
+                   datap[5] == VT100CC_ESC) {
             result->type = DCS_BEGIN_TMUX_CODE_WRAP;
             *rmlen += 6;
         } else {

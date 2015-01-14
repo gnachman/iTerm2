@@ -27,6 +27,7 @@ DECLARE_TEST(PTYSessionTest)
 DECLARE_TEST(iTermPasteHelperTest)
 DECLARE_TEST(SemanticHistoryTest)
 DECLARE_TEST(VT100XtermParserTest);
+DECLARE_TEST(VT100CSIParserTest);
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -61,7 +62,8 @@ NSArray *AllTestClasses() {
               [PTYSessionTest class],
               [iTermPasteHelperTest class],
               [SemanticHistoryTest class],
-              [VT100XtermParserTest class] ];
+              [VT100XtermParserTest class],
+              [VT100CSIParserTest class] ];
 }
 
 NSArray *TestClassesToRun(NSArray *include, NSArray *exclude) {
@@ -92,7 +94,7 @@ int main(int argc, const char * argv[]) {
     // Up to one of |include| or |exclude| may be non-nil. Set it to an array of test Class objects.
     // If include is set, exactly the listed tests will be run. If exclude is set, all but the
     // listed tests will run.
-    NSArray *include = nil;
+    NSArray *include = @[ [VT100CSIParserTest class], [VT100ScreenTest class] ];
     NSArray *exclude = nil;
 
     NSArray *testClassesToRun = TestClassesToRun(include, exclude);

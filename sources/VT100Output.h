@@ -51,6 +51,7 @@ typedef enum {
 - (NSData *)reportDeviceAttribute;
 - (NSData *)reportSecondaryDeviceAttribute;
 - (NSData *)reportColor:(NSColor *)color atIndex:(int)index;
+- (NSData *)reportChecksum:(int)checksum withIdentifier:(int)identifier;
 
 - (void)setTermTypeIsValid:(BOOL)termTypeIsValid;
 

@@ -89,8 +89,14 @@ typedef enum {
 // Returns the cursor's position relative to the scroll region's origin. 1-based.
 - (int)terminalRelativeCursorY;
 
-// Set the top/bottom scrollr egion.
+// Set the top/bottom scroll region.
 - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom;
+
+// Returns the scroll region, or the whole screen if none is set.
+- (VT100GridRect)terminalScrollRegion;
+
+// Sums the visible characters in the given rectangle onscreen.
+- (int)terminalChecksumInRectangle:(VT100GridRect)rect;
 
 // Erase all characters before the cursor and/or after the cursor.
 - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after;

@@ -17,7 +17,7 @@
            encoding:(NSStringEncoding)encoding {
     int c1, c2;
     
-    NSCParameterAssert(datap[0] == ESC);
+    NSCParameterAssert(datap[0] == VT100CC_ESC);
     NSCParameterAssert(datalen > 1);
     
     c1 = (datalen >= 2 ? datap[1]: -1);
@@ -160,9 +160,9 @@
                 for (i = 2; i < datalen; i++) {
                     BOOL isTerminator = NO;
                     int length = i - 2;
-                    if (datap[i] == ESC && i + 1 == datalen) {
+                    if (datap[i] == VT100CC_ESC && i + 1 == datalen) {
                         break;
-                    } else if (datap[i] == ESC && datap[i + 1] == '\\') {
+                    } else if (datap[i] == VT100CC_ESC && datap[i + 1] == '\\') {
                         i++;  // cause the backslash to be consumed below
                         isTerminator = YES;
                     } else if (datap[i] == '\n' || datap[i] == '\r') {

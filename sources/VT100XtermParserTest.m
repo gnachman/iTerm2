@@ -45,91 +45,91 @@
 }
 
 - (void)testNoModeYet {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
 
     // In case saved state gets used, verify it can continue from there.
-    token = [self tokenForDataWithFormat:@"%c]0;title%c", ESC, VT100CC_BEL];
+    token = [self tokenForDataWithFormat:@"%c]0;title%c", VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_WINICON_TITLE);
     assert([token.string isEqualToString:@"title"]);
 }
 
 - (void)testWellFormedSetWindowTitleTerminatedByBell {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;title%c", ESC, VT100CC_BEL];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;title%c", VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_WINICON_TITLE);
     assert([token.string isEqualToString:@"title"]);
 }
 
 - (void)testWellFormedSetWindowTitleTerminatedByST {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;title%c\\", ESC, ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;title%c\\", VT100CC_ESC, VT100CC_ESC];
     assert(token->type == XTERMCC_WINICON_TITLE);
     assert([token.string isEqualToString:@"title"]);
 }
 
 - (void)testIgnoreEmbeddedOSC {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%c]tle%c", ESC, ESC, VT100CC_BEL];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%c]tle%c", VT100CC_ESC, VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_WINICON_TITLE);
     assert([token.string isEqualToString:@"title"]);
 }
 
 - (void)testIgnoreEmbeddedOSCTwoPart_OutOfDataAfterBracket {
     // Running out of data just after an embedded ESC ] hits a special path.
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%c]", ESC, ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%c]", VT100CC_ESC, VT100CC_ESC];
     assert(token->type == VT100_WAIT);
 
-    token = [self tokenForDataWithFormat:@"%c]0;ti%c]tle%c", ESC, ESC, VT100CC_BEL];
+    token = [self tokenForDataWithFormat:@"%c]0;ti%c]tle%c", VT100CC_ESC, VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_WINICON_TITLE);
     assert([token.string isEqualToString:@"title"]);
 }
 
 - (void)testIgnoreEmbeddedOSCTwoPart_OutOfDataAfterEsc {
     // Running out of data just after an embedded ESC hits a special path.
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%c", ESC, ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%c", VT100CC_ESC, VT100CC_ESC];
     assert(token->type == VT100_WAIT);
 
-    token = [self tokenForDataWithFormat:@"%c]0;ti%c]tle%c", ESC, ESC, VT100CC_BEL];
+    token = [self tokenForDataWithFormat:@"%c]0;ti%c]tle%c", VT100CC_ESC, VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_WINICON_TITLE);
     assert([token.string isEqualToString:@"title"]);
 }
 
 - (void)testFailOnEmbddedEscapePlusCharacter {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%cc", ESC, ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;ti%cc", VT100CC_ESC, VT100CC_ESC];
     assert(token->type == VT100_NOTSUPPORT);
 }
 
 - (void)testNonstandardLinuxSetPalette {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]Pa123456", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]Pa123456", VT100CC_ESC];
     assert(token->type == XTERMCC_SET_PALETTE);
     assert([token.string isEqualToString:@"a123456"]);
 }
 
 - (void)testUnsupportedFirstParameterNoTerminator {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]x", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]x", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
 }
 
 - (void)testUnsupportedFirstParameter {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]x%c", ESC, VT100CC_BEL];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]x%c", VT100CC_ESC, VT100CC_BEL];
     assert(token->type == VT100_NOTSUPPORT);
 }
 
 - (void)testPartialNonstandardLinuxSetPalette {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]Pa12345", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]Pa12345", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
 }
 
 - (void)testCancelAbortsOSC {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0%c", ESC, VT100CC_CAN];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0%c", VT100CC_ESC, VT100CC_CAN];
     assert(token->type == VT100_NOTSUPPORT);
 }
 
 - (void)testSubstituteAbortsOSC {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0%c", ESC, VT100CC_SUB];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0%c", VT100CC_ESC, VT100CC_SUB];
     assert(token->type == VT100_NOTSUPPORT);
 }
 
 - (void)testUnfinishedMultitoken {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 2);
 
@@ -145,7 +145,7 @@
 
 - (void)testCompleteMultitoken {
     VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c",
-                         ESC, VT100CC_BEL];
+                         VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_MULTITOKEN_END);
     assert(CVectorCount(&_incidentals) == 2);
 
@@ -160,17 +160,17 @@
 }
 
 - (void)testCompleteMultitokenInMultiplePasses {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 0);
 
     // Give it some more header
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar", ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 0);
 
     // Give it the final colon so the header can be parsed
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:", ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 1);
 
@@ -180,7 +180,7 @@
     assert([header.kvpValue isEqualToString:@"blah;foo=bar"]);
 
     // Give it some body.
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:a", ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:a", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 2);
 
@@ -189,7 +189,7 @@
     assert([body.string isEqualToString:@"a"]);
 
     // More body
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 3);
 
@@ -198,28 +198,28 @@
     assert([body.string isEqualToString:@"bc"]);
 
     // Start finishing up
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c", ESC, ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c", VT100CC_ESC, VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 3);
 
     // And, done.
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c\\", ESC, ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c\\", VT100CC_ESC, VT100CC_ESC];
     assert(token->type == XTERMCC_MULTITOKEN_END);
     assert(CVectorCount(&_incidentals) == 3);
 }
 
 - (void)testLateFailureMultitokenInMultiplePasses {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]1337;File=blah;", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 0);
 
     // Give it some more header
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar", ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 0);
 
     // Give it the final colon so the header can be parsed
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:", ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 1);
 
@@ -229,7 +229,7 @@
     assert([header.kvpValue isEqualToString:@"blah;foo=bar"]);
 
     // Give it some body.
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:a", ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:a", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 2);
 
@@ -238,7 +238,7 @@
     assert([body.string isEqualToString:@"a"]);
 
     // More body
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", ESC];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 3);
 
@@ -247,12 +247,12 @@
     assert([body.string isEqualToString:@"bc"]);
 
     // Now a bogus character.
-    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c", ESC, VT100CC_SUB];
+    token = [self tokenForDataWithFormat:@"%c]1337;File=blah;foo=bar:abc%c", VT100CC_ESC, VT100CC_SUB];
     assert(token->type == VT100_NOTSUPPORT);
 }
 
 - (void)testUnfinishedMultitokenWithDeprecatedMode {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]50;File=blah;foo=bar:abc", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]50;File=blah;foo=bar:abc", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(CVectorCount(&_incidentals) == 2);
 
@@ -267,53 +267,53 @@
 }
 
 - (void)testUnterminatedOSCWaits {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;foo", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;foo", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
 }
 
 - (void)testUnterminateOSCWaits_2 {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
 }
 
 - (void)testMultiPartOSC {
     // Pass in a partial escape code. The already-parsed data should be saved in the saved-state
     // dictionary.
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;foo", ESC];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]0;foo", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(_savedState.allKeys.count > 0);
 
     // Give it a more-formed code. The first three characters have changed. Normally they would be
     // the same, but it's done here to ensure that they are ignored.
-    token = [self tokenForDataWithFormat:@"%c]0;XXXbar", ESC];
+    token = [self tokenForDataWithFormat:@"%c]0;XXXbar", VT100CC_ESC];
     assert(token->type == VT100_WAIT);
     assert(_savedState.allKeys.count > 0);
 
     // Now a fully-formed code. The entire string value must come from saved state.
-    token = [self tokenForDataWithFormat:@"%c]0;XXXXXX%c", ESC, VT100CC_BEL];
+    token = [self tokenForDataWithFormat:@"%c]0;XXXXXX%c", VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_WINICON_TITLE);
     assert([token.string isEqualToString:@"foobar"]);
 }
 
 - (void)testEmbeddedColon {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]1;foo:bar%c", ESC, VT100CC_BEL];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]1;foo:bar%c", VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_ICON_TITLE);
     assert([token.string isEqualToString:@"foo:bar"]);
 }
 
 - (void)testUnsupportedMode {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]999;foo%c", ESC, VT100CC_BEL];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]999;foo%c", VT100CC_ESC, VT100CC_BEL];
     assert(token->type == VT100_NOTSUPPORT);
 }
 
 - (void)testBelAfterEmbeddedOSC {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]1;%c]%c", ESC, ESC, VT100CC_BEL];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]1;%c]%c", VT100CC_ESC, VT100CC_ESC, VT100CC_BEL];
     assert(token->type == XTERMCC_ICON_TITLE);
     assert([token.string isEqualToString:@""]);
 }
 
 - (void)testIgnoreEmbeddedOSCWhenFailing {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c]x%c]%c", ESC, ESC, VT100CC_BEL];
+    VT100Token *token = [self tokenForDataWithFormat:@"%c]x%c]%c", VT100CC_ESC, VT100CC_ESC, VT100CC_BEL];
     assert(token->type == VT100_NOTSUPPORT);
     assert(iTermParserNumberOfBytesConsumed(&_context) == 6);
 }

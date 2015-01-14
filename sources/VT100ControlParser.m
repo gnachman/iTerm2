@@ -23,17 +23,17 @@ void ParseControl(unsigned char *datap,
                   NSStringEncoding encoding,
                   int tmuxCodeWrapCount,
                   NSMutableDictionary *savedState) {
-    if (tmuxCodeWrapCount && datalen >= 2 && datap[0] == ESC && datap[1] == '\\') {
+    if (tmuxCodeWrapCount && datalen >= 2 && datap[0] == VT100CC_ESC && datap[1] == '\\') {
         token->type = DCS_END_TMUX_CODE_WRAP;
         *rmlen = 2;
         return;
     }
     if (isCSI(datap, datalen)) {
-        [VT100CSIParser decodeBytes:datap
-                             length:datalen
-                          bytesUsed:rmlen
-                        incidentals:incidentals
-                              token:token];
+        iTermParserContext context = iTermParserContextMake(datap, datalen);
+        [VT100CSIParser decodeFromContext:&context
+                              incidentals:incidentals
+                                    token:token];
+        *rmlen = context.rmlen;
     } else if (isXTERM(datap, datalen)) {
         iTermParserContext context = iTermParserContextMake(datap, datalen);
         [VT100XtermParser decodeFromContext:&context

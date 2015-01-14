@@ -17,7 +17,7 @@ typedef enum {
 } DcsTermcapTerminfoRequestName;
 
 NS_INLINE BOOL isDCS(unsigned char *code, int len) {
-    return (len >= 2 && code[0] == ESC && code[1] == 'P');
+    return (len >= 2 && code[0] == VT100CC_ESC && code[1] == 'P');
 }
 
 

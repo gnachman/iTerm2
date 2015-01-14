@@ -917,6 +917,85 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
+- (VT100GridRect)rectangleInToken:(VT100Token *)token
+                  startingAtIndex:(int)index
+                 defaultRectangle:(VT100GridRect)defaultRectangle {
+    CSIParam *csi = token.csi;
+    VT100GridCoord defaultMax = VT100GridRectMax(defaultRectangle);
+
+    // First, construct a coord range from the passed-in parameters. They may be -1 for default
+    // values.
+    int top = csi->p[index];
+    int left = csi->p[index + 1];
+    int bottom = csi->p[index + 2];
+    int right = csi->p[index + 3];
+    VT100GridCoordRange coordRange = VT100GridCoordRangeMake(left, top, right, bottom);
+
+    // If in origin mode, offset non-default coordinates by the origin of the scroll region.
+    if (self.originMode) {
+        VT100GridRect region = [delegate_ terminalScrollRegion];
+        if (coordRange.start.x >= 0) {
+            coordRange.start.x -= region.origin.x + 1;
+        }
+        if (coordRange.start.y >= 0) {
+            coordRange.start.y -= region.origin.y + 1;
+        }
+        if (coordRange.end.x >= 0) {
+            coordRange.end.x -= region.origin.x + 1;
+        }
+        if (coordRange.end.y >= 0) {
+            coordRange.end.y -= region.origin.y + 1;
+        }
+    }
+
+    // Replace default values with the passed-in defaults.
+    if (coordRange.start.x < 0) {
+        coordRange.start.x = defaultRectangle.origin.x + 1;
+    }
+    if (coordRange.start.y < 0) {
+        coordRange.start.y = defaultRectangle.origin.y + 1;
+    }
+    if (coordRange.end.x < 0) {
+        coordRange.end.x = defaultMax.x + 1;
+    }
+    if (coordRange.end.y < 0) {
+        coordRange.end.y = defaultMax.y + 1;
+    }
+
+    // Convert the coordRange to a 0-based rect (all coords are 1-based so far) and return it.
+    return VT100GridRectMake(coordRange.start.x - 1,
+                             coordRange.start.y - 1,
+                             coordRange.end.x - coordRange.start.x + 1,
+                             coordRange.end.y - coordRange.start.y + 1);
+}
+
+- (BOOL)rectangleIsValid:(VT100GridRect)rect {
+    VT100GridRect scrollRegion = [delegate_ terminalScrollRegion];
+    return (rect.origin.y >= scrollRegion.origin.y &&
+            rect.origin.x >= scrollRegion.origin.x &&
+            VT100GridRectMax(rect).y <= VT100GridRectMax(scrollRegion).y &&
+            VT100GridRectMax(rect).x <= VT100GridRectMax(scrollRegion).x &&
+            rect.size.width >= 0 &&
+            rect.size.height >= 0);
+}
+
+- (void)sendChecksumReportWithId:(int)identifier
+                       rectangle:(VT100GridRect)rect {
+    if (![delegate_ terminalShouldSendReport]) {
+        return;
+    }
+    if (identifier < 0) {
+        return;
+    }
+    if (![self rectangleIsValid:rect]) {
+        return;
+    }
+    // TODO: Respect origin mode
+    int checksum = [delegate_ terminalChecksumInRectangle:rect];
+    // DCS Pid ! ~ D..D ST
+    [delegate_ terminalSendReport:[self.output reportChecksum:checksum withIdentifier:identifier]];
+}
+
 - (NSString *)decodedBase64PasteCommand:(NSString *)commandString {
     //
     // - write access
@@ -1031,11 +1110,11 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECSLRM_OR_ANSICSI_SCP:
             if ([delegate_ terminalUseColumnScrollRegion]) {
                 token->type = VT100CSI_DECSLRM;
-                SET_PARAM_DEFAULT(token.csi, 0, 1);
-                SET_PARAM_DEFAULT(token.csi, 1, 1);
+                iTermParserSetCSIParameterIfDefault(token.csi, 0, 1);
+                iTermParserSetCSIParameterIfDefault(token.csi, 1, 1);
             } else {
                 token->type = ANSICSI_SCP;
-                SET_PARAM_DEFAULT(token.csi, 0, 0);
+                iTermParserSetCSIParameterIfDefault(token.csi, 0, 0);
             }
             break;
 
@@ -1062,8 +1141,9 @@ static const int kMaxScreenRows = 4096;
         case VT100_NOTSUPPORT:
             break;
 
-            //  VT100 CC
+        //  VT100 CC
         case VT100CC_ENQ:
+            // TODO: Add support for an answerback string here.
             break;
         case VT100CC_BEL:
             [delegate_ terminalRingBell];
@@ -1139,15 +1219,11 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECID:
         case VT100CSI_DECKPAM:
         case VT100CSI_DECKPNM:
-        case VT100CSI_DECLL:
             break;
         case VT100CSI_DECRC:
             [self restoreTextAttributes];
             [delegate_ terminalRestoreCursor];
             [delegate_ terminalRestoreCharsetFlags];
-            break;
-        case VT100CSI_DECREPTPARM:
-        case VT100CSI_DECREQTPARM:
             break;
         case VT100CSI_DECSC:
             [self saveTextAttributes];
@@ -1155,15 +1231,26 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalSaveCharsetFlags];
             break;
         case VT100CSI_DECSTBM:
-            [delegate_ terminalSetScrollRegionTop:token.csi->p[0] == 0 ? 0 : token.csi->p[0] - 1
-                                           bottom:token.csi->p[1] == 0 ? [delegate_ terminalHeight] - 1 : token.csi->p[1] - 1];
-            break;
-        case VT100CSI_DECSWL:
-        case VT100CSI_DECTST:
+            // TODO: Test default.
+            [delegate_ terminalSetScrollRegionTop:token.csi->p[0] == -1 ? 0 : token.csi->p[0] - 1
+                                           bottom:token.csi->p[1] == -1 ? [delegate_ terminalHeight] - 1 : token.csi->p[1] - 1];
             break;
         case VT100CSI_DSR:
             [self handleDeviceStatusReportWithToken:token withQuestion:NO];
             break;
+        case VT100CSI_DECRQCRA: {
+            VT100GridRect defaultRectangle = VT100GridRectMake(0,
+                                                               0,
+                                                               [delegate_ terminalWidth],
+                                                               [delegate_ terminalHeight]);
+            // xterm incorrectly uses the second parameter for the Pid. Since I use this mostly to
+            // test xterm compatibility, it's handy to be bugwards-compatible.
+            [self sendChecksumReportWithId:token.csi->p[1]
+                                 rectangle:[self rectangleInToken:token
+                                                  startingAtIndex:2
+                                                 defaultRectangle:defaultRectangle]];
+            break;
+        }
         case VT100CSI_DECDSR:
             [self handleDeviceStatusReportWithToken:token withQuestion:YES];
             break;
@@ -1420,7 +1507,7 @@ static const int kMaxScreenRows = 4096;
         case XTERMCC_ICON_TITLE:
             [delegate_ terminalSetIconTitle:[token.string stringByReplacingControlCharsWithQuestionMark]];
             break;
-        case XTERMCC_INSBLNK:
+        case VT100CSI_ICH:
             [delegate_ terminalInsertEmptyCharsAtCursor:token.csi->p[0]];
             break;
         case XTERMCC_INSLN:
@@ -1442,7 +1529,10 @@ static const int kMaxScreenRows = 4096;
 
             break;
         case XTERMCC_WINDOWPOS:
-            [delegate_ terminalMoveWindowTopLeftPointTo:NSMakePoint(token.csi->p[1], token.csi->p[2])];
+            // TODO: Test restriction on number of params.
+            if (token.csi->count >= 3) {
+                [delegate_ terminalMoveWindowTopLeftPointTo:NSMakePoint(token.csi->p[1], token.csi->p[2])];
+            }
             break;
         case XTERMCC_ICONIFY:
             [delegate_ terminalMiniaturize:YES];
@@ -1460,7 +1550,9 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalScrollUp:token.csi->p[0]];
             break;
         case XTERMCC_SD:
-            [delegate_ terminalScrollDown:token.csi->p[0]];
+            if (token.csi->count == 1) {
+                [delegate_ terminalScrollDown:token.csi->p[0]];
+            }
             break;
         case XTERMCC_REPORT_WIN_STATE: {
             NSString *s = [NSString stringWithFormat:@"\033[%dt",
@@ -1521,6 +1613,7 @@ static const int kMaxScreenRows = 4096;
                 case 2:
                     [delegate_ terminalPushCurrentTitleForWindow:YES];
                     break;
+                // TODO: Support 3 (UTF-8)
             }
             break;
         }
