@@ -17,7 +17,6 @@ def init():
   global logfile
   global log
 
-  escio.Init()
   newline = "\r\n"
 
   parser = argparse.ArgumentParser()
@@ -49,6 +48,8 @@ def init():
 
   logfile = open(args.logfile, "w")
   log = ""
+
+  escio.Init()
 
 def shutdown():
   escio.Shutdown()
