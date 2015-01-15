@@ -6,6 +6,7 @@ import tty
 
 stdin_fd = None
 stdout_fd = None
+gSideChannel = None
 
 def Init():
   global stdout_fd
@@ -18,15 +19,27 @@ def Init():
 def Shutdown():
   tty.setcbreak(stdin_fd)
 
-def Write(s):
+def Write(s, sideChannelOk=True):
+  global gSideChannel
+  if sideChannelOk and gSideChannel is not None:
+    gSideChannel.write(s)
   stdout_fd.write(s)
 
-def WriteCSI(prefix="", params=[], intermediate="", final=""):
+def SetSideChannel(filename):
+  global gSideChannel
+  if filename is None:
+    if gSideChannel:
+      gSideChannel.close()
+      gSideChannel = None
+  else:
+    gSideChannel = open(filename, "w")
+
+def WriteCSI(prefix="", params=[], intermediate="", final="", requestsReport=False):
   str_params = map(str, params)
   joined_params = ";".join(str_params)
   sequence = ESC + "[" + prefix + joined_params + intermediate + final
   LogDebug("Send sequence: " + sequence.replace(ESC, "<ESC>"))
-  Write(sequence)
+  Write(sequence, sideChannelOk=not requestsReport)
 
 def ReadCSI(expected_final):
   """ Read a CSI code ending with |expected_final| and returns an array of parameters. """

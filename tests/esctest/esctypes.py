@@ -18,6 +18,14 @@ class InternalError(Exception):
   def __init__(self, message):
     super(InternalError, self).__init__(message)
 
+class KnownBug(Exception):
+  def __init__(self, reason):
+    super(KnownBug, self).__init__(reason)
+
+class BrokenTest(Exception):
+  def __init__(self, reason):
+    super(BrokenTest, self).__init__(reason)
+
 class Point(object):
   def __init__(self, x, y):
     self._x = x

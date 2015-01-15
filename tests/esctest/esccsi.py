@@ -75,12 +75,20 @@ def CSI_CUU(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="A")
 
+def CSI_DCH(Ps=None):
+  """Delete Ps characters at cursor."""
+  if Ps is None:
+    params = []
+  else:
+    params = [ Ps ]
+  escio.WriteCSI(params=params, final="P")
+
 def CSI_DECRQCRA(Pid, Pp=None, rect=None):
   """Compute the checksum (16-bit sum of ordinals) in a rectangle."""
   # xterm versions 314 and earlier incorrectly expect the Pid in the second
   # argument and ignore Pp.
   # For the time being, iTerm2 is compatible with the bug.
-  if args.enable_xterm_checksum_bug:
+  if not args.disable_xterm_checksum_bug:
     Pid, Pp = Pp, Pid
 
   params = [ Pid ]
@@ -93,7 +101,7 @@ def CSI_DECRQCRA(Pid, Pp=None, rect=None):
   if rect is not None:
     params.extend(rect.params())
 
-  escio.WriteCSI(params=params, intermediate='*', final='y')
+  escio.WriteCSI(params=params, intermediate='*', final='y', requestsReport=True)
 
 def CSI_DECRESET(Pm):
   """Reset the parameter |Pm|."""
@@ -141,6 +149,14 @@ def CSI_DECSTBM(top=None, bottom=None):
 
   escio.WriteCSI(params=params, final="r")
 
+def CSI_DL(Pn=None):
+  """Delete |Pn| lines at the cursor. Default value is 1."""
+  if Pn is None:
+    params = []
+  else:
+    params = [ Pn ]
+  escio.WriteCSI(params=params, final="M")
+
 def CSI_ED(Ps=None):
   """Erase characters, clearing display attributes. Works in or out of scrolling regions.
 
@@ -183,5 +199,21 @@ def CSI_IL(Pn=None):
   else:
     params = [ Pn ]
   escio.WriteCSI(params=params, final="L")
+
+def CSI_SD(Ps=None):
+  """Scroll down by |Ps| lines. Default value is 1."""
+  if Ps is None:
+    params = []
+  else:
+    params = [ Ps ]
+  escio.WriteCSI(params=params, final="T")
+
+def CSI_SU(Ps=None):
+  """Scroll up by |Ps| lines. Default value is 1."""
+  if Ps is None:
+    params = []
+  else:
+    params = [ Ps ]
+  escio.WriteCSI(params=params, final="S")
 
 

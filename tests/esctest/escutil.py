@@ -6,23 +6,28 @@ from esctypes import Point, Size, Rect
 import functools
 import traceback
 
-global gNextId
 gNextId = 1
+gHaveAsserted = False
+
 
 def AssertEQ(actual, expected):
+  global gHaveAsserted
+  gHaveAsserted = True
   if actual != expected:
     raise esctypes.TestFailure(actual, expected)
 
 def AssertTrue(value):
+  global gHaveAsserted
+  gHaveAsserted = True
   assert value == True
 
 def GetCursorPosition():
-  escio.WriteCSI(params = [ 6 ], final="n")
+  escio.WriteCSI(params = [ 6 ], final="n", requestsReport=True)
   params = escio.ReadCSI("R")
   return Point(int(params[1]), int(params[0]))
 
 def GetScreenSize():
-  escio.WriteCSI(params = [ 18 ], final="t")
+  escio.WriteCSI(params = [ 18 ], final="t", requestsReport=True)
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 
@@ -33,6 +38,8 @@ def Checksum(s):
   return checksum
 
 def AssertScreenCharsInRectEqual(rect, expected_lines):
+  global gHaveAsserted
+  gHaveAsserted = True
   expected_checksum = 0
   area = 0
   if rect.height() != len(expected_lines):
@@ -92,13 +99,15 @@ def knownBug(terminal, reason):
           func(self, *args, **kwargs)
           raise esctypes.InternalError("Should have failed")
         except:
-          LogInfo("Fails as expected - " + terminal + " bug: " + reason)
-          tb = traceback.format_exc()
-          lines = tb.split("\n")
-          lines = map(lambda x: "KNOWN BUG: " + x, lines)
-          LogInfo("\r\n".join(lines))
-          return
+          raise esctypes.KnownBug(reason)
       else:
         func(self, *args, **kwargs)
     return func_wrapper
   return decorator
+
+def AssertAssertionAsserted():
+  global gHaveAsserted
+  ok = gHaveAsserted
+  gHaveAsserted = False
+  if not ok:
+    raise esctypes.BrokenTest("No assertion attempted.")
