@@ -49,8 +49,8 @@ class ILTests(object):
     esccsi.CSI_IL()
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 4),
                                  [ "abcde",
-                                   NUL * 5,
                                    "fghij",
+                                   NUL * 5,
                                    "klmno" ])
 
   def test_IL_ExplicitParam(self):
@@ -59,9 +59,9 @@ class ILTests(object):
     esccsi.CSI_IL(2)
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5),
                                  [ "abcde",
-                                   NUL * 5,
-                                   NUL * 5,
                                    "fghij",
+                                   NUL * 5,
+                                   NUL * 5,
                                    "klmno" ])
 
   def test_IL_ScrollsOffBottom(self):
@@ -94,8 +94,8 @@ class ILTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5),
                                  [ "abcde",
-                                   "fGHIj",
-                                   "k" + NUL * 3 + "o",
+                                   "f" + NUL * 3 + "j",
+                                   "kGHIo",
                                    "pLMNt",
                                    "uvwxy" ])
 

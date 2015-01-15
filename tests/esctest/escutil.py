@@ -8,15 +8,21 @@ import traceback
 
 gNextId = 1
 gHaveAsserted = False
+force = False
 
+def Raise(e):
+  if not force:
+    raise e
 
 def AssertEQ(actual, expected):
   global gHaveAsserted
   gHaveAsserted = True
   if actual != expected:
-    raise esctypes.TestFailure(actual, expected)
+    Raise(esctypes.TestFailure(actual, expected))
 
 def AssertTrue(value):
+  if force:
+    return
   global gHaveAsserted
   gHaveAsserted = True
   assert value == True
@@ -49,27 +55,26 @@ def AssertScreenCharsInRectEqual(rect, expected_lines):
   for line in expected_lines:
     expected_checksum += Checksum(line)
 
-  expected_checksum = expected_checksum & 0xffff
-  actual_checksum = GetChecksumOfRect(rect)
-  if expected_checksum != actual_checksum:
-    LogError("Checksums did not match for rect %s. Expected=%s, actual=%s" %
-        (str(rect), str(expected_checksum), str(actual_checksum)))
-    for point in rect.points():
-      y = point.y() - rect.top()
-      x = point.x() - rect.left()
-      expected_checksum = ord(expected_lines[y][x])
-      actual_checksum = GetChecksumOfRect(Rect(left=point.x(),
-                                               top=point.y(),
-                                               right=point.x(),
-                                               bottom=point.y()))
-      LogError("  At %s: expected=%d actual=%d" % (str(point), expected_checksum, actual_checksum))
-      if expected_checksum != actual_checksum:
-        raise esctypes.ChecksumException(point, actual_checksum, expected_checksum)
-
-    # Shouldn't get here: if the rectangles' checksum don't match then some
-    # character should differ.
-    LogError("** Somehow, all individual characters matched but checksums did not.")
-    assert False
+  # Check each point individually. The dumb checksum algorithm can't distinguish
+  # "ab" from "ba", so equivalence of multiple characters means nothing.
+  actual = list(expected_lines)
+  errorLocations = []
+  for point in rect.points():
+    y = point.y() - rect.top()
+    x = point.x() - rect.left()
+    expected_checksum = ord(expected_lines[y][x])
+    actual_checksum = GetChecksumOfRect(Rect(left=point.x(),
+                                             top=point.y(),
+                                             right=point.x(),
+                                             bottom=point.y()))
+    s = actual[y]
+    c = chr(actual_checksum)
+    s = s[:x] + c + s[x + 1:]
+    actual[y] = s
+    if expected_checksum != actual_checksum:
+      errorLocations.append(point)
+  if len(errorLocations) > 0:
+    Raise(esctypes.ChecksumException(errorLocations, actual, expected_lines))
 
 def GetChecksumOfRect(rect):
   global gNextId
@@ -80,7 +85,7 @@ def GetChecksumOfRect(rect):
 
   str_pid = str(Pid)
   if not params.startswith(str_pid):
-    raise esctypes.BadResponse(params, "Prefix of " + str_pid)
+    Raise(esctypes.BadResponse(params, "Prefix of " + str_pid))
 
   i = len(str_pid)
 
@@ -90,24 +95,34 @@ def GetChecksumOfRect(rect):
   hex_checksum = params[i:]
   return int(hex_checksum, 16)
 
-def knownBug(terminal, reason):
+def knownBug(terminal, reason, noop=False):
+  """Decorator for a method indicating that it should fail and explaining why.
+  If the method is intended to succeed when nothing happens (that is, the
+  sequence being tested is a no-op) then the caller should set noop=True.
+  Otherwise, successes will raise an InternalError exception."""
   def decorator(func):
     @functools.wraps(func)
     def func_wrapper(self, *args, **kwargs):
       if self._args.expected_terminal == terminal:
         try:
           func(self, *args, **kwargs)
-          raise esctypes.InternalError("Should have failed")
-        except:
+        except Exception, e:
           raise esctypes.KnownBug(reason)
+
+        # Shouldn't get here because the test should have failed. If 'force' is on then
+        # tests always pass, though.
+        if not force and not noop:
+          raise esctypes.InternalError("Should have failed")
       else:
         func(self, *args, **kwargs)
     return func_wrapper
   return decorator
 
 def AssertAssertionAsserted():
+  if force:
+    return
   global gHaveAsserted
   ok = gHaveAsserted
   gHaveAsserted = False
-  if not ok:
+  if not ok and not force:
     raise esctypes.BrokenTest("No assertion attempted.")

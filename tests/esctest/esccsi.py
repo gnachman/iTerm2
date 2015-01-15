@@ -4,6 +4,14 @@ args = None
 DECOM = 6
 DECLRMM = 69
 
+def CSI_CBT(Pn=None):
+  """Move cursor back by Pn tab stops or to left margin. Default is 1."""
+  if Pn is None:
+    params = []
+  else:
+    params = [ Pn ]
+  escio.WriteCSI(params=params, final="Z")
+
 def CSI_CHA(Pn=None):
   """Move cursor to Pn column, or first column by default."""
   if Pn is None:
@@ -157,6 +165,14 @@ def CSI_DL(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="M")
 
+def CSI_ECH(Pn=None):
+  """Erase |Pn| characters starting at the cursor. Default value is 1."""
+  if Pn is None:
+    params = []
+  else:
+    params = [ Pn ]
+  escio.WriteCSI(params=params, final="X")
+
 def CSI_ED(Ps=None):
   """Erase characters, clearing display attributes. Works in or out of scrolling regions.
 
@@ -183,6 +199,23 @@ def CSI_EL(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="K")
 
+
+def CSI_HPA(Pn=None):
+  """Position the cursor at the Pn'th column. Default value is 1."""
+  if Pn is None:
+    params = []
+  else:
+    params = [ Pn ]
+  escio.WriteCSI(params=params, final="`")
+
+def CSI_HPR(Pn=None):
+  """Position the cursor at the Pn'th column relative to its current position.
+  Default value is 1."""
+  if Pn is None:
+    params = []
+  else:
+    params = [ Pn ]
+  escio.WriteCSI(params=params, final="a")
 
 def CSI_ICH(Pn=None):
   """ Insert |Pn| blanks at cursor. Cursor does not move. """

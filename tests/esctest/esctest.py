@@ -39,12 +39,16 @@ def init():
   parser.add_argument("--stop-on-failure",
                       help="Stop running tests after a failure.",
                       action="store_true")
+  parser.add_argument("--force",
+                      help="If set, assertions won't stop execution",
+                      action="store_true")
 
   esclog.AddArguments(parser)
   args = parser.parse_args()
   esclog.v = args.v
   esclog.logfile = args.logfile
   esccsi.args = args
+  escutil.force = args.force
 
   logfile = open(args.logfile, "w")
   log = ""
@@ -80,6 +84,7 @@ def RunTest(name, method):
     escutil.AssertAssertionAsserted()
     esclog.LogInfo("Passed.")
   except esctypes.KnownBug, e:
+    RemoveSideChannel()
     esclog.LogInfo("Fails as expected: " + str(e))
     tb = traceback.format_exc()
     lines = tb.split("\n")
@@ -87,6 +92,7 @@ def RunTest(name, method):
     esclog.LogInfo("\r\n".join(lines))
     ok = None
   except Exception, e:
+    RemoveSideChannel()
     tb = traceback.format_exc()
     ok = False
     esclog.LogError("*** TEST %s FAILED:" % name)

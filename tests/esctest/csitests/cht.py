@@ -19,7 +19,8 @@ class CHTTests(object):
     AssertEQ(position.x(), 17)
 
   @knownBug(terminal="iTerm2", reason="iTerm2 doesn't support CHT")
-  def test_CHT_StaysWithinWindow(self):
+  @knownBug(terminal="xterm", reason="xterm respects scrolling regions for CHT")
+  def test_CHT_IgnoresScrollingRegion(self):
     # Set a scroll region.
     esccsi.CSI_DECSET(esccsi.DECLRMM)
     esccsi.CSI_DECSLRM(5, 30)
@@ -32,13 +33,13 @@ class CHTTests(object):
     position = GetCursorPosition()
     AssertEQ(position.x(), 17)
 
-    # Ensure we stop at the right margin
+    # Ensure that we can tab out of the region
     esccsi.CSI_CHT(2)
     position = GetCursorPosition()
-    AssertEQ(position.x(), 30)
+    AssertEQ(position.x(), 33)
 
-    # Try again, starting before the region. Should still stop at the right edge.
+    # Try again, starting before the region.
     esccsi.CSI_CUP(Point(1, 9))
     esccsi.CSI_CHT(9)
     position = GetCursorPosition()
-    AssertEQ(position.x(), 30)
+    AssertEQ(position.x(), 73)

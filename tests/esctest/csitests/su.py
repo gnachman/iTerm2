@@ -2,7 +2,7 @@ from esc import NUL
 import esccsi
 import escio
 from esctypes import Point, Rect
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertScreenCharsInRectEqual, GetScreenSize
 
 class SUTests(object):
   def __init__(self, args):
