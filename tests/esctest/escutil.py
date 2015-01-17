@@ -14,6 +14,12 @@ def Raise(e):
   if not force:
     raise e
 
+def AssertGE(actual, minimum):
+  global gHaveAsserted
+  gHaveAsserted = True
+  if actual < minimum:
+    Raise(esctypes.TestFailure(actual, expected))
+
 def AssertEQ(actual, expected):
   global gHaveAsserted
   gHaveAsserted = True
@@ -37,44 +43,67 @@ def GetScreenSize():
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 
-def Checksum(s):
-  checksum = 0
-  for c in s:
-    checksum += ord(c)
-  return checksum
-
 def AssertScreenCharsInRectEqual(rect, expected_lines):
   global gHaveAsserted
   gHaveAsserted = True
-  expected_checksum = 0
-  area = 0
+
   if rect.height() != len(expected_lines):
-    raise esctypes.InternalError("Height of rect (%d) does not match number of expected lines (%d)" % (rect.height(), len(expected_lines)))
-  if rect.width() != len(expected_lines[0]):
-    raise esctypes.InternalError("Width of rect (%d) does not match number of characters in first of expected lines (%d)" % (rect.width(), len(expected_lines[0])))
-  for line in expected_lines:
-    expected_checksum += Checksum(line)
+    raise esctypes.InternalError(
+        "Height of rect (%d) does not match number of expected lines (%d)" % (
+          rect.height(),
+          len(expected_lines)))
 
   # Check each point individually. The dumb checksum algorithm can't distinguish
-  # "ab" from "ba", so equivalence of multiple characters means nothing.
-  actual = list(expected_lines)
+  # "ab" from "ba", so equivalence of two multiple-character rects means nothing.
+
+  # |actual| and |expected| will form human-readable arrays of lines
+  actual = []
+  expected = []
+  # Additional information about mismatches.
   errorLocations = []
   for point in rect.points():
     y = point.y() - rect.top()
     x = point.x() - rect.left()
-    expected_checksum = ord(expected_lines[y][x])
+    expected_line = expected_lines[y]
+    if rect.width() != len(expected_line):
+      fmt = ("Width of rect (%d) does not match number of characters in expected line " +
+          "index %d, coordinate %d (its length is %d)")
+      raise esctypes.InternalError(
+          fmt % (rect.width(),
+                 y,
+                 point.y(),
+                 len(expected_lines[y])))
+
+    expected_checksum = ord(expected_line[x])
+
     actual_checksum = GetChecksumOfRect(Rect(left=point.x(),
                                              top=point.y(),
                                              right=point.x(),
                                              bottom=point.y()))
-    s = actual[y]
-    c = chr(actual_checksum)
-    s = s[:x] + c + s[x + 1:]
-    actual[y] = s
+    if len(actual) <= y:
+      actual.append("")
+    if actual_checksum == 0:
+      actual[y] += '.'
+    else:
+      actual[y] += chr(actual_checksum)
+
+    if len(expected) <= y:
+      expected.append("")
+    if expected_checksum == 0:
+      expected[y] += '.'
+    else:
+      expected[y] += chr(expected_checksum)
+
     if expected_checksum != actual_checksum:
-      errorLocations.append(point)
+      errorLocations.append("At %s expected '%c' (0x%02x) but got '%c' (0x%02x)" % (
+        str(point),
+        chr(expected_checksum),
+        expected_checksum,
+        chr(actual_checksum),
+        actual_checksum))
+
   if len(errorLocations) > 0:
-    Raise(esctypes.ChecksumException(errorLocations, actual, expected_lines))
+    Raise(esctypes.ChecksumException(errorLocations, actual, expected))
 
 def GetChecksumOfRect(rect):
   global gNextId
@@ -107,7 +136,10 @@ def knownBug(terminal, reason, noop=False):
         try:
           func(self, *args, **kwargs)
         except Exception, e:
-          raise esctypes.KnownBug(reason)
+          tb = traceback.format_exc()
+          lines = tb.split("\n")
+          lines = map(lambda x: "KNOWN BUG: " + x, lines)
+          raise esctypes.KnownBug(reason + "\n" + "\n".join(lines))
 
         # Shouldn't get here because the test should have failed. If 'force' is on then
         # tests always pass, though.

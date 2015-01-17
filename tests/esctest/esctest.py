@@ -1,9 +1,10 @@
 #!/usr/bin/python2.7
 import argparse
-import esccsi
 import csitests
-import esclog
+import esc
+import esccsi
 import escio
+import esclog
 import esctypes
 import escutil
 import inspect
@@ -59,11 +60,28 @@ def shutdown():
   escio.Shutdown()
 
 def reset():
-  esccsi.CSI_DECRESET(esccsi.DECLRMM)
-  esccsi.CSI_DECSTBM()
-  esccsi.CSI_DECRESET(esccsi.DECOM)
-  esccsi.CSI_DECSCA(0)
+  esccsi.CSI_DECSTR()
+  esccsi.CSI_RM(esccsi.IRM)
+  # Technically, autowrap should be off by default (this is what the spec calls for).
+  # However, xterm and iTerm2 turn it on by default. xterm has a comment that says:
+  #   There are a couple of differences from real DEC VTxxx terminals (to avoid
+  #   breaking applications which have come to rely on xterm doing
+  #   this)...autowrap mode should be reset (instead it's reset to the resource
+  #   default).
+  esccsi.CSI_DECSET(esccsi.DECAWM)
+  esccsi.CSI_DECRESET(esccsi.MoreFix)
   esccsi.CSI_ED(2)
+
+  # Clear tab stops and reset them at 1, 9, ...
+  esccsi.CSI_TBC(3)
+  width = escutil.GetScreenSize().width()
+  x = 1
+  while x <= width:
+    esccsi.CSI_CUP(esctypes.Point(x, 1))
+    escio.Write(esc.ESC + "H")
+    x += 8
+
+  esccsi.CSI_CUP(esctypes.Point(1, 1))
 
 def AttachSideChannel(name):
   if args.test_case_dir:
@@ -86,10 +104,6 @@ def RunTest(name, method):
   except esctypes.KnownBug, e:
     RemoveSideChannel()
     esclog.LogInfo("Fails as expected: " + str(e))
-    tb = traceback.format_exc()
-    lines = tb.split("\n")
-    lines = map(lambda x: "KNOWN BUG: " + x, lines)
-    esclog.LogInfo("\r\n".join(lines))
     ok = None
   except Exception, e:
     RemoveSideChannel()

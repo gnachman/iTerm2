@@ -16,19 +16,28 @@ import cud
 import cup
 import cuf
 import cuu
+import da
+import da2
 import dch
 import decsed
 import decsel
+import decset
 import dl
 import ech
 import ed
 import el
 import hpa
 import hpr
+import hvp
 import ich
 import il
+import rep
 import sd
+import sm
 import su
+import tbc
+import vpa
+import vpr
 
 tests = [ cbt.CBTTests,
           cha.CHATests,
@@ -40,16 +49,25 @@ tests = [ cbt.CBTTests,
           cuf.CUFTests,
           cup.CUPTests,
           cuu.CUUTests,
+          da.DATests,
+          da2.DA2Tests,
           dch.DCHTests,
           decsed.DECSEDTests,
           decsel.DECSELTests,
+          decset.DECSETTests,
           ech.ECHTests,
           ed.EDTests,
           el.ELTests,
           dl.DLTests,
           hpa.HPATests,
           hpr.HPRTests,
+          hvp.HVPTests,
           ich.ICHTests,
           il.ILTests,
+          rep.REPTests,
           sd.SDTests,
-          su.SUTests ]
+          sm.SMTests,
+          su.SUTests,
+          tbc.TBCTests,
+          vpa.VPATests,
+          vpr.VPRTests ]
