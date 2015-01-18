@@ -22,6 +22,7 @@ from esctypes import Point, Rect
 # DECTEK - Tektronix is out of scope for now (and probably not introspectable, I guess).
 # DECNRCM - Can't introspect character sets
 # Margin Bell (44) - Can't tell if bell is ringing
+# Allow Logging (46) - Not on by default
 
 # TODO: test DECANM. It sets the font to USASCII and sets VT100 mode
 class DECSETTests(object):
@@ -219,6 +220,7 @@ class DECSETTests(object):
       escio.Write("x")
     escio.Write(TAB)
 
+  @knownBug(terminal="iTerm2", reason="iTerm2 wraps tabs")
   def test_DECSET_DECAWM_TabDoesNotWrapAround(self):
     """In auto-wrap mode, tabs to not wrap to the next line."""
     esccsi.CSI_DECSET(esccsi.DECAWM)
@@ -309,3 +311,75 @@ class DECSETTests(object):
     escio.Write(BS * 5)
     AssertEQ(GetCursorPosition().x(), 1)
 
+  def doAltBuftest(self, code, altGetsClearedBeforeToMain, cursorSaved):
+    """|code| is the code to test with, either 47 or 1047."""
+    # Scribble in main screen
+    escio.Write("abc" + CR + LF + "abc")
+
+    # Switch from main to alt. Cursor should not move. If |cursorSaved| is set,
+    # record the position first to verify that it's restored after DECRESET.
+    if cursorSaved:
+      mainCursorPosition = GetCursorPosition()
+
+    before = GetCursorPosition()
+    esccsi.CSI_DECSET(code)
+    after = GetCursorPosition()
+    AssertEQ(before.x(), after.x())
+    AssertEQ(before.y(), after.y())
+
+    # Scribble in alt screen, clearing it first since who knows what might have
+    # been there.
+    esccsi.CSI_ED(2)
+    esccsi.CSI_CUP(Point(1, 2))
+    escio.Write("def" + CR +LF + "def")
+
+    # Make sure abc is gone
+    AssertScreenCharsInRectEqual(Rect(1, 1, 3, 3), [ NUL * 3, "def", "def" ])
+
+    # Switch to main. Cursor should not move.
+    before = GetCursorPosition()
+    esccsi.CSI_DECRESET(code)
+    after = GetCursorPosition()
+    if cursorSaved:
+      AssertEQ(mainCursorPosition.x(), after.x())
+      AssertEQ(mainCursorPosition.y(), after.y())
+    else:
+      AssertEQ(before.x(), after.x())
+      AssertEQ(before.y(), after.y())
+
+    # def should be gone, abc should be back.
+    AssertScreenCharsInRectEqual(Rect(1, 1, 3, 3), [ "abc", "abc", NUL * 3 ])
+
+    # Switch to alt
+    before = GetCursorPosition()
+    esccsi.CSI_DECSET(code)
+    after = GetCursorPosition()
+    AssertEQ(before.x(), after.x())
+    AssertEQ(before.y(), after.y())
+
+    if altGetsClearedBeforeToMain:
+      AssertScreenCharsInRectEqual(Rect(1, 1, 3, 3), [ NUL * 3, NUL * 3, NUL * 3 ])
+    else:
+      AssertScreenCharsInRectEqual(Rect(1, 1, 3, 3), [ NUL * 3, "def", "def" ])
+
+  @knownBug(terminal="iTerm2", reason="DECSET 1047 (OPT_ALTBUF) not implemented.")
+  def test_DECSET_OPT_ALTBUF(self):
+    """DECSET 47 and DECSET 1047 do the same thing: If not in alt screen,
+    switch to it. Its contents are NOT erased.
+
+    DECRESET 1047 If on alt screen, clear the alt screen and then switch to the
+    main screen."""
+    self.doAltBuftest(esccsi.OPT_ALTBUF, True, False)
+
+  def test_DECSET_ALTBUF(self):
+    """DECSET 47 and DECSET 1047 do the same thing: If not in alt screen,
+    switch to it. Its contents are NOT erased.
+
+    DECRESET 47 switches to the main screen (without first clearing the alt
+    screen)."""
+    self.doAltBuftest(esccsi.ALTBUF, False, False)
+
+  def test_DECSET_OPT_ALTBUF_CURSOR(self):
+    """DECSET 1049 is like 1047 but it also saves the cursor position before
+    entering alt and restores it after returning to main."""
+    self.doAltBuftest(esccsi.OPT_ALTBUF_CURSOR, True, True)

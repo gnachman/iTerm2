@@ -9,7 +9,10 @@ DECCOLM = 3  # 132-column mode
 Allow80To132 = 40  # Allow 80->132 Mode
 MoreFix = 41  # Work around bug in more(1) (see details in test_DECSET_MoreFix)
 ReverseWraparound = 45  # Reverse-wraparound mode (only works on conjunction with DECAWM)
+ALTBUF = 47  # Switch to alt buf
 DECLRMM = 69  # Left/right margin enabled
+OPT_ALTBUF = 1047  # Switch to alt buf. DECRESET first clears the alt buf.
+OPT_ALTBUF_CURSOR = 1049  # Like 1047 but saves/restores main screen's cursor position.
 
 # SM/RM
 IRM = 4  # Insert mode

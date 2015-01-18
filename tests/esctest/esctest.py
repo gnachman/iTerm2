@@ -61,6 +61,10 @@ def shutdown():
 
 def reset():
   esccsi.CSI_DECSTR()
+  esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF)  # Is this needed?
+  esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF_CURSOR)  # Is this needed?
+  esccsi.CSI_DECRESET(esccsi.ALTBUF)  # Is this needed?
+  esccsi.CSI_DECRESET(esccsi.DECLRMM)  # Should this be handled by DECSTR?
   esccsi.CSI_RM(esccsi.IRM)
   # Technically, autowrap should be off by default (this is what the spec calls for).
   # However, xterm and iTerm2 turn it on by default. xterm has a comment that says:
