@@ -34,7 +34,7 @@ def AssertTrue(value):
   assert value == True
 
 def GetCursorPosition():
-  escio.WriteCSI(params = [ 6 ], final="n", requestsReport=True)
+  esccsi.CSI_DECDSR(esccsi.DECXCPR, suppressSideChannel=True)
   params = escio.ReadCSI("R")
   return Point(int(params[1]), int(params[0]))
 

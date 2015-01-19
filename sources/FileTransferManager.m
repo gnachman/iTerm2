@@ -54,21 +54,19 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)cleanUpMenus {
-    for (NSMenu *menu in @[ [self downloadsMenu], [self uploadsMenu] ]) {
-        NSMutableArray *controllersToRemove = [NSMutableArray array];
-        for (TransferrableFileMenuItemViewController *controller in _viewControllers) {
-            if ([controller timeSinceLastStatusChange] > kMaximumTimeToKeepFinishedDownload &&
-                controller.transferrableFile.status != kTransferrableFileStatusStarting &&
-                controller.transferrableFile.status != kTransferrableFileStatusTransferring &&
-                controller.transferrableFile.status != kTransferrableFileStatusCancelling) {
-                [menu removeItem:controller.view.enclosingMenuItem];
-                [controllersToRemove addObject:controller];
-            }
+    NSMutableArray *controllersToRemove = [NSMutableArray array];
+    for (TransferrableFileMenuItemViewController *controller in _viewControllers) {
+        if ([controller timeSinceLastStatusChange] > kMaximumTimeToKeepFinishedDownload &&
+            controller.transferrableFile.status != kTransferrableFileStatusStarting &&
+            controller.transferrableFile.status != kTransferrableFileStatusTransferring &&
+            controller.transferrableFile.status != kTransferrableFileStatusCancelling) {
+            [controller.view.enclosingMenuItem.menu removeItem:controller.view.enclosingMenuItem];
+            [controllersToRemove addObject:controller];
         }
-        
-        for (TransferrableFileMenuItemViewController *controller in controllersToRemove) {
-            [_viewControllers removeObject:controller];
-        }
+    }
+    
+    for (TransferrableFileMenuItemViewController *controller in controllersToRemove) {
+        [_viewControllers removeObject:controller];
     }
 }
 

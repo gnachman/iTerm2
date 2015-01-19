@@ -5,6 +5,7 @@ import escio
 import esclog
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
 from esctypes import Point, Rect
+# Note: There is no test for DECRESET; that is handled here.
 
 # Can't test the following:
 # DECCKM - requires user action at the keyboard
@@ -23,6 +24,28 @@ from esctypes import Point, Rect
 # DECNRCM - Can't introspect character sets
 # Margin Bell (44) - Can't tell if bell is ringing
 # Allow Logging (46) - Not on by default
+# DECNKM - Requires user interaction to detect app keypad
+# DECBKM - Requires user interaction to see what back arrow key sends
+# Mouse tracking (1000, 1001, 1002, 1003, 1005, 1006, 1007, 1015) - Requires user interaction with mouse
+# Focus In/Out (1004) - Requires user interaction
+# Scroll to bottom on tty output (1010) - Can't introspect scroll position
+# Scroll to bottom on tty output (1011) - Can't introspect scroll position and requires user interaction with keyboard
+# Interpret meta key sets 8th bit - Requires user interaction with keyboard
+# Enable special modifiers for Alt and NumLock keys - Requires user interaction with keyboard
+# Send ESC when Meta modifies a key - Requires user interaction with keyboard
+# Send DEL from the editing-keypad Delete key - Requires user interaction with keyboard
+# Send ESC when Alt modifies a key - Requires user interaction with keyboard
+# Keep selection even if not highlighted - Can't set selection
+# Use the CLIPBOARD selection - Can't set selection
+# Enable Urgency window manager hint when Control-G is received - Can't introspect window manager
+# Enable raising of the window when Control-G is received - Can't introspect window raised status
+# Set terminfo/termcap function-key mode - Requires user interaction.
+# Set Sun function-key mode - Requires user interaction.
+# Set HP function-key mode - Requires user interaction.
+# Set SCO function-key mode - Requires user interaction.
+# Set legacy keyboard emulation (X11R6) - Requires user interaction.
+# Set VT220 keyboard emulation - Requires user interaction.
+# Set bracketed paste mode - Requires user interaction.
 
 # TODO: test DECANM. It sets the font to USASCII and sets VT100 mode
 class DECSETTests(object):
@@ -383,3 +406,90 @@ class DECSETTests(object):
     """DECSET 1049 is like 1047 but it also saves the cursor position before
     entering alt and restores it after returning to main."""
     self.doAltBuftest(esccsi.OPT_ALTBUF_CURSOR, True, True)
+
+  def test_DECSET_DECLRMM(self):
+    """Left-right margin. This is tested extensively in many other places as well."""
+    # Turn on margins and write.
+    esccsi.CSI_DECSET(esccsi.DECLRMM)
+    esccsi.CSI_DECSLRM(2, 4)
+    escio.Write("abcdefgh")
+    esccsi.CSI_DECRESET(esccsi.DECLRMM)
+
+    AssertScreenCharsInRectEqual(Rect(1, 1, 4, 3), [ "abcd", NUL + "efg", NUL + "h" + NUL * 2 ])
+
+    # Turn off margins.
+    esccsi.CSI_CUP(Point(1, 1))
+    escio.Write("ABCDEFGH")
+    AssertScreenCharsInRectEqual(Rect(1, 1, 8, 1), [ "ABCDEFGH" ])
+
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 fails to reset DECLRMM (it just sets the margins to the screen edges)")
+  def test_DECSET_DECLRMM_ResetByDECSTR(self):
+    """DECSTR should turn off DECLRMM."""
+    esccsi.CSI_DECSET(esccsi.DECLRMM)
+    esccsi.CSI_DECSTR()
+    esccsi.CSI_DECSET(esccsi.DECAWM)
+    esccsi.CSI_DECSET(esccsi.ReverseWraparound)
+    esccsi.CSI_CUP(Point(GetScreenSize().width() - 1, 1))
+    escio.Write("abc")
+    # Reverse wraparound is disabled (at least in iTerm2) when a scroll region is present.
+    escio.Write(BS * 3)
+    AssertEQ(GetCursorPosition().y(), 1)
+
+  @knownBug(terminal="xterm", reason="By default, xterm emulates a vt420 and this is a vt500 code.")
+  @knownBug(terminal="iTerm2", reason="DECNCSM not implemented")
+  def test_DECSET_DECNCSM(self):
+    """From the manual: When enabled, a column mode change (either through
+    Set-Up or by the escape sequence DECCOLM) does not clear the screen. When
+    disabled, the column mode change clears the screen as a side effect."""
+    # There are four tests:
+    #                    DECNCSM Set   DECNCSM Reset
+    # Column Mode Set    1             3
+    # Column Mode Reset  2             4
+
+    # 1: Set DECNCSM, Set column mode.
+    esccsi.CSI_DECRESET(esccsi.DECCOLM)
+    esccsi.CSI_DECSET(esccsi.DECNCSM)
+    esccsi.CSI_CUP(Point(1, 1))
+    escio.Write("1")
+    esccsi.CSI_DECSET(esccsi.DECCOLM)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "1" ])
+
+    # 2: Set DECNCSM, Reset column mode.
+    esccsi.CSI_DECSET(esccsi.DECCOLM)
+    esccsi.CSI_DECSET(esccsi.DECNCSM)
+    esccsi.CSI_CUP(Point(1, 1))
+    escio.Write("2")
+    esccsi.CSI_DECRESET(esccsi.DECCOLM)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "2" ])
+
+    # 3: Reset DECNCSM, Set column mode.
+    esccsi.CSI_DECRESET(esccsi.DECCOLM)
+    esccsi.CSI_DECRESET(esccsi.DECNCSM)
+    esccsi.CSI_CUP(Point(1, 1))
+    escio.Write("3")
+    esccsi.CSI_DECSET(esccsi.DECCOLM)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ NUL ])
+
+    # 4: Reset DECNCSM, Reset column mode.
+    esccsi.CSI_DECSET(esccsi.DECCOLM)
+    esccsi.CSI_DECRESET(esccsi.DECNCSM)
+    esccsi.CSI_CUP(Point(1, 1))
+    escio.Write("4")
+    esccsi.CSI_DECRESET(esccsi.DECCOLM)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ NUL ])
+
+  @knownBug(terminal="iTerm2", reason="Save/restore cursor not implemented")
+  def test_DECSET_SaveRestoreCursor(self):
+    """Set saves the cursor position. Reset restores it."""
+    esccsi.CSI_CUP(Point(2, 3))
+    esccsi.CSI_DECSET(esccsi.SaveRestoreCursor)
+    esccsi.CSI_CUP(Point(5, 5))
+    esccsi.CSI_DECRESET(esccsi.SaveRestoreCursor)
+    cursor = GetCursorPosition()
+    AssertEQ(cursor.x(), 2)
+    AssertEQ(cursor.y(), 3)
+
+
+
+

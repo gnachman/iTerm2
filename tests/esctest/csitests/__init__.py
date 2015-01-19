@@ -1,6 +1,10 @@
 # The following CSI codes supported by xcode are not tested.
 # Query ReGIS/Sixel attributes:  CSI ? Pi ; Pa ; P vS
 # Initiate highlight mouse tracking: CSI Ps ; Ps ; Ps ; Ps ; Ps T
+# Media Copy (MC): CSI Pm i
+# Media Copy (MC, DEC-specific): CSI ? Pm i
+# Character Attributes (SGR): CSI Pm m
+# Disable modifiers: CSI > Ps n
 
 # Notes for future tests:
 # CSI 21 t
@@ -19,6 +23,7 @@ import cuu
 import da
 import da2
 import dch
+import decdsr
 import decsed
 import decsel
 import decset
@@ -32,6 +37,7 @@ import hvp
 import ich
 import il
 import rep
+import rm
 import sd
 import sm
 import su
@@ -52,6 +58,7 @@ tests = [ cbt.CBTTests,
           da.DATests,
           da2.DA2Tests,
           dch.DCHTests,
+          decdsr.DECDSRTests,
           decsed.DECSEDTests,
           decsel.DECSELTests,
           decset.DECSETTests,
@@ -65,6 +72,7 @@ tests = [ cbt.CBTTests,
           ich.ICHTests,
           il.ILTests,
           rep.REPTests,
+          rm.RMTests,
           sd.SDTests,
           sm.SMTests,
           su.SUTests,

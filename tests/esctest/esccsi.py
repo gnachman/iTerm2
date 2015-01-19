@@ -11,8 +11,23 @@ MoreFix = 41  # Work around bug in more(1) (see details in test_DECSET_MoreFix)
 ReverseWraparound = 45  # Reverse-wraparound mode (only works on conjunction with DECAWM)
 ALTBUF = 47  # Switch to alt buf
 DECLRMM = 69  # Left/right margin enabled
+DECNCSM = 95  # Clear screen on enabling column mode
 OPT_ALTBUF = 1047  # Switch to alt buf. DECRESET first clears the alt buf.
+SaveRestoreCursor = 1048  # Save cursor as in DECSC.
 OPT_ALTBUF_CURSOR = 1049  # Like 1047 but saves/restores main screen's cursor position.
+
+# DECDSR
+DECXCPR = 6
+DSRPrinterPort = 15
+DSRUDKLocked = 25
+DSRKeyboard = 26
+DSRDECLocatorStatus = 55
+DSRXtermLocatorStatus = 55
+DSRLocatorId = 56
+DECMSR = 62
+DECCKSR = 63
+DSRIntegrityReport = 75
+DSRMultipleSessionStatus = 85
 
 # SM/RM
 IRM = 4  # Insert mode
@@ -126,6 +141,17 @@ def CSI_DCH(Ps=None):
   else:
     params = [ Ps ]
   escio.WriteCSI(params=params, final="P")
+
+def CSI_DECDSR(Ps, Pid=None, suppressSideChannel=False):
+  """Send device status request. Does not read response."""
+  if Ps is None:
+    params = []
+  else:
+    if Pid is None:
+      params = [ Ps ]
+    else:
+      params = [ Ps, Pid ]
+  escio.WriteCSI(params=params, prefix='?', requestsReport=suppressSideChannel, final='n')
 
 def CSI_DECRQCRA(Pid, Pp=None, rect=None):
   """Compute the checksum (16-bit sum of ordinals) in a rectangle."""

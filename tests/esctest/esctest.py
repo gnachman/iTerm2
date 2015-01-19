@@ -64,7 +64,7 @@ def reset():
   esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF)  # Is this needed?
   esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF_CURSOR)  # Is this needed?
   esccsi.CSI_DECRESET(esccsi.ALTBUF)  # Is this needed?
-  esccsi.CSI_DECRESET(esccsi.DECLRMM)  # Should this be handled by DECSTR?
+  esccsi.CSI_DECRESET(esccsi.DECLRMM)  # This can be removed when the bug revealed by test_DECSET_DECLRMM_ResetByDECSTR is fixed.
   esccsi.CSI_RM(esccsi.IRM)
   # Technically, autowrap should be off by default (this is what the spec calls for).
   # However, xterm and iTerm2 turn it on by default. xterm has a comment that says:
@@ -153,8 +153,14 @@ def main():
   try:
     RunTests()
   except Exception, e:
-    reset()
     tb = traceback.format_exc()
+    try:
+      reset()
+    except:
+      print "reset() failed with traceback:"
+      print traceback.format_exc().replace("\n", "\r\n")
+
+    print "RunTests failed:\r\n"
     print tb.replace("\n", "\r\n")
     esclog.LogError("Failed with traceback:")
     esclog.LogError(tb)
@@ -164,7 +170,12 @@ def main():
       esccsi.CSI_CUP(esctypes.Point(1, 1))
       esccsi.CSI_CUD(999)
     else:
-      reset()
+      try:
+        reset()
+      except:
+        print "reset() failed with traceback:"
+        print traceback.format_exc().replace("\n", "\r\n")
+
       print "\r\nLogs:\r\n"
       esclog.Print()
 

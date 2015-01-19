@@ -2,6 +2,7 @@ from esc import ESC, ST, NUL
 from esclog import LogDebug, LogInfo, LogError, Print
 import esctypes
 import os
+import select
 import sys
 import tty
 
@@ -73,7 +74,15 @@ def ReadCSI(expected_final, expected_prefix=None):
     elif c >= '0' and c <= '9':
       current_param += c
     else:
-      AssertCharsEqual(c, expected_final)
+      # Read all the final characters, asserting they match.
+      while True:
+        AssertCharsEqual(c, expected_final[0])
+        expected_final = expected_final[1:]
+        if len(expected_final) > 0:
+          c = read(1)
+        else:
+          break
+
       if current_param == "":
         params.append(None)
       else:
@@ -93,9 +102,15 @@ def ReadDCS():
   return result[:-2]
 
 def read(n):
+  """Try to read n bytes. Times out if it takes more than 1
+  second to read any given byte."""
   s = ""
+  f = sys.stdin.fileno()
   for i in xrange(n):
-    s += stdin_fd.read(1)
+    r, w, e = select.select([ f ], [], [], 1)
+    if f not in r:
+      raise esctypes.InternalError("Timeout waiting to read.")
+    s += os.read(f, 1)
   return s
 
 
