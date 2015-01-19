@@ -20,6 +20,10 @@ class DECDSRTests(object):
     else:
       return 4
 
+  # TODO: It looks like this code didn't exist until at least VT level 3 was
+  # introduced, so I'm not sure it makes sense to test it in a term that
+  # returns a lower VT level. I plan to go back and update all the tests for
+  # different VT level capabilities.
   def test_DECDSR_DECXCPR(self):
     """DECXCPR reports the cursor position. Response is:
     CSI ? Pl ; Pc ; Pr R
@@ -109,7 +113,6 @@ class DECDSRTests(object):
       # VT420+
       AssertEQ(len(params), 4)
     AssertEQ(params[0], 27)
-    esclog.LogInfo("params=" + str(params))
     if len(params) > 1:
       AssertTrue(params[1] in [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
         10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22, 28, 29, 30,
