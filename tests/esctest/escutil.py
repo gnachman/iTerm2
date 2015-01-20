@@ -34,7 +34,7 @@ def AssertTrue(value):
   assert value == True
 
 def GetCursorPosition():
-  esccsi.CSI_DECDSR(esccsi.DECXCPR, suppressSideChannel=True)
+  esccsi.CSI_DSR(esccsi.DSRCPR, suppressSideChannel=True)
   params = escio.ReadCSI("R")
   return Point(int(params[1]), int(params[0]))
 
@@ -123,6 +123,16 @@ def GetChecksumOfRect(rect):
 
   hex_checksum = params[i:]
   return int(hex_checksum, 16)
+
+def intentionalDeviationFromSpec(terminal, reason):
+  """Decorator for a method indicating that what it tests deviates from the
+  sepc and why."""
+  def decorator(func):
+    @functools.wraps(func)
+    def func_wrapper(self, *args, **kwargs):
+      func(self, *args, **kwargs)
+    return func_wrapper
+  return decorator
 
 def knownBug(terminal, reason, noop=False):
   """Decorator for a method indicating that it should fail and explaining why.

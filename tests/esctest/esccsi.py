@@ -6,6 +6,7 @@ args = None
 DECOM = 6  # Origin mode
 DECAWM = 7  # Autowrap
 DECCOLM = 3  # 132-column mode
+DECRLM = 34  # Right-to-left mode
 Allow80To132 = 40  # Allow 80->132 Mode
 MoreFix = 41  # Work around bug in more(1) (see details in test_DECSET_MoreFix)
 ReverseWraparound = 45  # Reverse-wraparound mode (only works on conjunction with DECAWM)
@@ -18,6 +19,7 @@ OPT_ALTBUF_CURSOR = 1049  # Like 1047 but saves/restores main screen's cursor po
 
 # DECDSR
 DECXCPR = 6
+DSRCPR = 6
 DSRPrinterPort = 15
 DSRUDKLocked = 25
 DSRKeyboard = 26
@@ -177,6 +179,14 @@ def CSI_DECRESET(Pm):
   """Reset the parameter |Pm|."""
   escio.WriteCSI(params=[ Pm ], prefix='?', final='l')
 
+def CSI_DECSASD(Ps=None):
+  """Direct output to status line if Ps is 1, to main display if 0."""
+  if Ps is None:
+    params = []
+  else:
+    params = [ Ps ]
+  escio.WriteCSI(params=params, intermediate='$', final="}")
+
 def CSI_DECSCA(Ps=None):
   """Turn on character protection if Ps is 1, off if 0."""
   if Ps is None:
@@ -230,6 +240,14 @@ def CSI_DL(Pn=None):
   else:
     params = [ Pn ]
   escio.WriteCSI(params=params, final="M")
+
+def CSI_DSR(Ps, suppressSideChannel=False):
+  """Send device status request. Does not read response."""
+  if Ps is None:
+    params = []
+  else:
+    params = [ Ps ]
+  escio.WriteCSI(params=params, requestsReport=suppressSideChannel, final='n')
 
 def CSI_ECH(Pn=None):
   """Erase |Pn| characters starting at the cursor. Default value is 1."""

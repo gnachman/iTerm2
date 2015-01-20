@@ -42,6 +42,15 @@ class Point(object):
   def y(self):
     return self._y
 
+  def __eq__(self, other):
+    if isinstance(other, self.__class__):
+      return self.__dict__ == other.__dict__
+    else:
+      return False
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
+
 
 class Size(object):
   def __init__(self, width, height):

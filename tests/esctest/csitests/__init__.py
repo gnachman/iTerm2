@@ -5,6 +5,7 @@
 # Media Copy (MC, DEC-specific): CSI ? Pm i
 # Character Attributes (SGR): CSI Pm m
 # Disable modifiers: CSI > Ps n
+# Set pointer mode: CSI > Ps p
 
 # Notes for future tests:
 # CSI 21 t
@@ -27,6 +28,7 @@ import decdsr
 import decsed
 import decsel
 import decset
+import decstr
 import dl
 import ech
 import ed
@@ -62,6 +64,7 @@ tests = [ cbt.CBTTests,
           decsed.DECSEDTests,
           decsel.DECSELTests,
           decset.DECSETTests,
+          decstr.DECSTRTests,
           ech.ECHTests,
           ed.EDTests,
           el.ELTests,
