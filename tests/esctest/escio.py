@@ -37,6 +37,8 @@ def SetSideChannel(filename):
     gSideChannel = open(filename, "w")
 
 def WriteCSI(prefix="", params=[], intermediate="", final="", requestsReport=False):
+  if len(final) == 0:
+    raise esctypes.InternalError("final must not be empty")
   str_params = map(str, params)
   joined_params = ";".join(str_params)
   sequence = ESC + "[" + prefix + joined_params + intermediate + final

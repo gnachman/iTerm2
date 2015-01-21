@@ -134,15 +134,18 @@ def intentionalDeviationFromSpec(terminal, reason):
     return func_wrapper
   return decorator
 
-def knownBug(terminal, reason, noop=False):
+def knownBug(terminal, reason, noop=False, shouldTry=True):
   """Decorator for a method indicating that it should fail and explaining why.
   If the method is intended to succeed when nothing happens (that is, the
   sequence being tested is a no-op) then the caller should set noop=True.
-  Otherwise, successes will raise an InternalError exception."""
+  Otherwise, successes will raise an InternalError exception. If shouldTry is
+  true then the test will be run to make sure it really does fail."""
   def decorator(func):
     @functools.wraps(func)
     def func_wrapper(self, *args, **kwargs):
       if self._args.expected_terminal == terminal:
+        if not shouldTry:
+          raise esctypes.KnownBug(reason + " (not trying)")
         try:
           func(self, *args, **kwargs)
         except Exception, e:

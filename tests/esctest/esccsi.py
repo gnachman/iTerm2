@@ -3,36 +3,83 @@ import escio
 args = None
 
 # DECSET/DECRESET
-DECOM = 6  # Origin mode
-DECAWM = 7  # Autowrap
-DECCOLM = 3  # 132-column mode
-DECRLM = 34  # Right-to-left mode
 Allow80To132 = 40  # Allow 80->132 Mode
-MoreFix = 41  # Work around bug in more(1) (see details in test_DECSET_MoreFix)
-ReverseWraparound = 45  # Reverse-wraparound mode (only works on conjunction with DECAWM)
 ALTBUF = 47  # Switch to alt buf
+DECAAM = 100
+DECANM = 2
+DECARM = 8
+DECARSM = 98
+DECAWM = 7  # Autowrap
+DECBKM = 67
+DECCANSM = 101
+DECCKM = 1
+DECCOLM = 3  # 132-column mode
+DECCRTSM = 97
+DECESKM = 104
+DECHCCM = 60
+DECHDPXM = 103
+DECHEBM = 35
+DECHEM = 36
+DECKBUM = 68
+DECKPM = 81
 DECLRMM = 69  # Left/right margin enabled
+DECMCM = 99
+DECNAKB = 57
+DECNCSM = 95
 DECNCSM = 95  # Clear screen on enabling column mode
+DECNKM = 66
+DECNRCM = 42
+DECNULM = 102
+DECOM = 6  # Origin mode
+DECOSCNM = 106
+DECPCCM = 64
+DECPEX = 19
+DECPFF = 18
+DECRLCM = 96
+DECRLM = 34  # Right-to-left mode
+DECSCLM = 4
+DECSCNM = 5
+DECTCEM = 25
+DECVCCM = 61
+DECVSSM = 69
+DECXRLM = 73
+MoreFix = 41  # Work around bug in more(1) (see details in test_DECSET_MoreFix)
 OPT_ALTBUF = 1047  # Switch to alt buf. DECRESET first clears the alt buf.
-SaveRestoreCursor = 1048  # Save cursor as in DECSC.
 OPT_ALTBUF_CURSOR = 1049  # Like 1047 but saves/restores main screen's cursor position.
+ReverseWraparound = 45  # Reverse-wraparound mode (only works on conjunction with DECAWM)
+SaveRestoreCursor = 1048  # Save cursor as in DECSC.
 
 # DECDSR
+DECCKSR = 63
+DECMSR = 62
 DECXCPR = 6
 DSRCPR = 6
+DSRDECLocatorStatus = 55
+DSRIntegrityReport = 75
+DSRKeyboard = 26
+DSRLocatorId = 56
+DSRMultipleSessionStatus = 85
 DSRPrinterPort = 15
 DSRUDKLocked = 25
-DSRKeyboard = 26
-DSRDECLocatorStatus = 55
 DSRXtermLocatorStatus = 55
-DSRLocatorId = 56
-DECMSR = 62
-DECCKSR = 63
-DSRIntegrityReport = 75
-DSRMultipleSessionStatus = 85
 
 # SM/RM
-IRM = 4  # Insert mode
+EBM = 19
+FEAM = 13
+FETM = 14
+GATM = 1
+HEM = 10
+IRM = 4
+KAM = 2
+LNM = 20
+MATM = 15
+PUM = 11
+SATM = 17
+SRM = 12
+SRTM = 5
+TSM = 18
+TTM = 16
+VEM = 7
 
 def CSI_CBT(Pn=None):
   """Move cursor back by Pn tab stops or to left margin. Default is 1."""
@@ -174,6 +221,13 @@ def CSI_DECRQCRA(Pid, Pp=None, rect=None):
     params.extend(rect.params())
 
   escio.WriteCSI(params=params, intermediate='*', final='y', requestsReport=True)
+
+def CSI_DECRQM(mode, DEC):
+  """Requests if a mode is set or not."""
+  if DEC:
+    escio.WriteCSI(params=[ mode ], intermediate='$', prefix='?', final='p')
+  else:
+    escio.WriteCSI(params=[ mode ], intermediate='$', final='p')
 
 def CSI_DECRESET(Pm):
   """Reset the parameter |Pm|."""
