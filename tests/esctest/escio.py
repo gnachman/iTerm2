@@ -9,6 +9,7 @@ import tty
 stdin_fd = None
 stdout_fd = None
 gSideChannel = None
+use8BitControls = False
 
 def Init():
   global stdout_fd
@@ -36,12 +37,18 @@ def SetSideChannel(filename):
   else:
     gSideChannel = open(filename, "w")
 
+def CSI():
+  if use8BitControls:
+    return chr(0x9b)
+  else:
+    return ESC + "["
+
 def WriteCSI(prefix="", params=[], intermediate="", final="", requestsReport=False):
   if len(final) == 0:
     raise esctypes.InternalError("final must not be empty")
   str_params = map(str, params)
   joined_params = ";".join(str_params)
-  sequence = ESC + "[" + prefix + joined_params + intermediate + final
+  sequence = CSI() + prefix + joined_params + intermediate + final
   LogDebug("Send sequence: " + sequence.replace(ESC, "<ESC>"))
   Write(sequence, sideChannelOk=not requestsReport)
 

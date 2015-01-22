@@ -41,8 +41,12 @@ def init():
                       help="Stop running tests after a failure.",
                       action="store_true")
   parser.add_argument("--force",
-                      help="If set, assertions won't stop execution",
+                      help="If set, assertions won't stop execution.",
                       action="store_true")
+  parser.add_argument("--max-vt-level",
+                      help="Do not run tests requiring a higher VT level than this.",
+                      type=int,
+                      default=5)
 
   esclog.AddArguments(parser)
   args = parser.parse_args()
@@ -54,12 +58,17 @@ def init():
   logfile = open(args.logfile, "w")
   log = ""
 
+  esc.vtLevel = args.max_vt_level
+
   escio.Init()
 
 def shutdown():
   escio.Shutdown()
 
 def reset():
+  esccsi.CSI_DECSCL(60 + esc.vtLevel, 1)
+
+  escio.use8BitControls = False
   esccsi.CSI_DECSTR()
   esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF)  # Is this needed?
   esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF_CURSOR)  # Is this needed?
@@ -108,6 +117,11 @@ def RunTest(name, method):
   except esctypes.KnownBug, e:
     RemoveSideChannel()
     esclog.LogInfo("Fails as expected: " + str(e))
+    ok = None
+  except esctypes.InsufficientVTLevel, e:
+    RemoveSideChannel()
+    esclog.LogInfo("Skipped because terminal lacks requisite capability: " +
+                   str(e))
     ok = None
   except Exception, e:
     RemoveSideChannel()

@@ -1,3 +1,4 @@
+import esc
 import esccsi
 import escio
 from esclog import LogDebug, LogInfo, LogError, Print
@@ -123,6 +124,18 @@ def GetChecksumOfRect(rect):
 
   hex_checksum = params[i:]
   return int(hex_checksum, 16)
+
+def vtLevel(minimum):
+  """Defines the minimum VT level the terminal must be capable of to succeed."""
+  def decorator(func):
+    @functools.wraps(func)
+    def func_wrapper(self, *args, **kwargs):
+      if esc.vtLevel >= minimum:
+        func(self, *args, **kwargs)
+      else:
+        raise esctypes.InsufficientVTLevel(esc.vtLevel, minimum)
+    return func_wrapper
+  return decorator
 
 def intentionalDeviationFromSpec(terminal, reason):
   """Decorator for a method indicating that what it tests deviates from the

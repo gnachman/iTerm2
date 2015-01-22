@@ -28,6 +28,12 @@ class BrokenTest(Exception):
   def __init__(self, reason):
     super(BrokenTest, self).__init__(reason)
 
+class InsufficientVTLevel(Exception):
+  def __init(self, actualLevel, minimumLevel):
+    reason = "Terminal implements VT level %d but %d is needed." % (
+        actualLevel, minimumLevel)
+    super(InsufficientVTLevel, self).__init__(reason)
+
 class Point(object):
   def __init__(self, x, y):
     self._x = x

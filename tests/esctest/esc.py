@@ -5,3 +5,6 @@ TAB = "%c" % 9
 CR = "%c" % 13
 LF = "%c" % 10
 BS = "%c" % 8
+
+# VT x00 level. vtLevel may be 1, 2, 3, 4, or 5.
+vtLevel = 1

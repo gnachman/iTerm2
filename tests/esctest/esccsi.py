@@ -249,6 +249,15 @@ def CSI_DECSCA(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, intermediate='"', final="q")
 
+def CSI_DECSCL(level, sevenBit=None):
+  """Level should be one of 61, 62, 63, or 64. sevenBit can be 0 or 1, or not
+  specified."""
+  if sevenBit is None:
+    params = [ level ]
+  else:
+    params = [ level, sevenBit ]
+  escio.WriteCSI(params=params, intermediate='"', final="p")
+
 def CSI_DECSED(Ps=None):
   """Like ED but respects character protection."""
   if Ps is None:

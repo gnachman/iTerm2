@@ -26,6 +26,7 @@ import da2
 import dch
 import decdsr
 import decrqm
+import decscl
 import decsed
 import decsel
 import decset
@@ -63,6 +64,7 @@ tests = [ cbt.CBTTests,
           dch.DCHTests,
           decdsr.DECDSRTests,
           decrqm.DECRQMTests,
+          decscl.DECSCLTests,
           decsed.DECSEDTests,
           decsel.DECSELTests,
           decset.DECSETTests,
