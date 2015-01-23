@@ -6,6 +6,9 @@
 # Character Attributes (SGR): CSI Pm m
 # Disable modifiers: CSI > Ps n
 # Set pointer mode: CSI > Ps p
+# Load LEDs (DECLL): CSI Ps q
+# Set cursor style (DECSCUSR): CIS Ps SP q
+# Select character protection attribute (DECSCA): CSI Ps " q   [This is already tested by DECSED and DECSEL]
 
 # Notes for future tests:
 # CSI 21 t
@@ -30,6 +33,7 @@ import decscl
 import decsed
 import decsel
 import decset
+import decstbm
 import decstr
 import dl
 import ech
@@ -68,6 +72,7 @@ tests = [ cbt.CBTTests,
           decsed.DECSEDTests,
           decsel.DECSELTests,
           decset.DECSETTests,
+          decstbm.DECSTBMTests,
           decstr.DECSTRTests,
           ech.ECHTests,
           ed.EDTests,

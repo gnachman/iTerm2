@@ -184,6 +184,26 @@ class DECSEDTests(object):
                                    "e" + NUL * 2 ])
 
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
+  def test_DECSED_DECSCA_2(self):
+    """DECSCA 2 should be the same as DECSCA 0."""
+    esccsi.CSI_DECSCA(1)
+    self.prepare()
+
+    # Write an X at 2,1 without protection
+    esccsi.CSI_DECSCA(2)
+    esccsi.CSI_CUP(Point(2, 5))
+    escio.Write("X")
+    esccsi.CSI_CUP(Point(2, 3))
+
+    esccsi.CSI_DECSED()
+    AssertScreenCharsInRectEqual(Rect(1, 1, 3, 5),
+                                 [ "a" + NUL * 2,
+                                   NUL * 3,
+                                   "bcd",
+                                   NUL * 3,
+                                   "e" + NUL * 2 ])
+
+  @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_0_Protection(self):
     """Erase after cursor."""
     esccsi.CSI_DECSCA(1)

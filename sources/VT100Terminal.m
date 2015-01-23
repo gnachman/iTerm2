@@ -970,12 +970,16 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (BOOL)rectangleIsValid:(VT100GridRect)rect {
-    VT100GridRect scrollRegion = [delegate_ terminalScrollRegion];
-    return (rect.origin.y >= scrollRegion.origin.y &&
-            rect.origin.x >= scrollRegion.origin.x &&
-            VT100GridRectMax(rect).y <= VT100GridRectMax(scrollRegion).y &&
-            VT100GridRectMax(rect).x <= VT100GridRectMax(scrollRegion).x &&
-            rect.size.width >= 0 &&
+    if (self.originMode) {
+        VT100GridRect scrollRegion = [delegate_ terminalScrollRegion];
+        if (rect.origin.y < scrollRegion.origin.y ||
+            rect.origin.x < scrollRegion.origin.x ||
+            VT100GridRectMax(rect).y > VT100GridRectMax(scrollRegion).y ||
+            VT100GridRectMax(rect).x > VT100GridRectMax(scrollRegion).x) {
+            return NO;
+        }
+    }
+    return (rect.size.width >= 0 &&
             rect.size.height >= 0);
 }
 
