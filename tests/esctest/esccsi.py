@@ -457,5 +457,7 @@ def CSI_VPR(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="e")
 
-
+def CSI_XTERM_SAVE(params=[]):
+  """Save given DEC private mode parameters."""
+  escio.WriteCSI(params=params, prefix="?", final="s")
 
