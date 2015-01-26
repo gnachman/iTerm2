@@ -76,11 +76,18 @@ typedef enum {
         // Failed to read an integer. Could be out of data, could be the nonstandard 'P' code, or
         // could be a malformed input.
         if (iTermParserCanAdvance(context)) {
-            if (iTermParserPeek(context) == 'P') {
+            unsigned char c = iTermParserPeek(context);
+            if (c == 'P') {
                 // Got a nonstandard P code.
                 iTermParserAdvance(context);
                 *mode = kLinuxSetPaletteMode;
                 return kXtermParserParsingPState;
+            } else if (c == ';') {
+                // This isn't documented AFAICT but if you leave out the mode then it defaults to 0.
+                // This is how xterm works and some users expect it (see bug 3371).
+                iTermParserAdvance(context);
+                *mode = 0;
+                return kXtermParserParsingStringState;
             } else {
                 // Malformed input.
                 return kXtermParserFailingState;

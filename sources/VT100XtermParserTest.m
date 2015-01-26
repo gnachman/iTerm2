@@ -318,4 +318,13 @@
     assert(iTermParserNumberOfBytesConsumed(&_context) == 6);
 }
 
+#pragma mark - Regression tests
+
+// Bug 3371
+- (void)testDefaultModeForDtermCodes {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c];Foo%c", VT100CC_ESC, VT100CC_BEL];
+    assert(token->type == XTERMCC_WINICON_TITLE);
+    assert([token.string isEqualToString:@"Foo"]);
+}
+
 @end
