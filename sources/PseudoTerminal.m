@@ -6973,7 +6973,7 @@ int aGlobalVariable;
     NSString *previousDirectory = nil;
     PTYSession* currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
     if (currentSession) {
-        previousDirectory = [[currentSession shell] getWorkingDirectory];
+        previousDirectory = [currentSession currentLocalWorkingDirectory];
     }
 
     // Initialize a new session

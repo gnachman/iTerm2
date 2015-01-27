@@ -278,6 +278,11 @@ typedef enum {
 // Has it been at least a second since isProcessing became false?
 @property(nonatomic, readonly) BOOL isIdle;
 
+// Tries to return the current local working directory without resolving symlinks (possible if
+// shell integration is on). If that can't be done then the current local working directory with
+// symlinks resolved is returned.
+@property(nonatomic, readonly) NSString *currentLocalWorkingDirectory;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
