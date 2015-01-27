@@ -2849,7 +2849,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
 
-    NSString* pwd = [_shell getWorkingDirectory];
+    NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     if (self.uniqueID) {
         result[SESSION_UNIQUE_ID] = self.uniqueID;  // TODO: This isn't really unique, it's just the tty number
