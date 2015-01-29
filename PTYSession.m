@@ -1952,18 +1952,23 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 }
 
 - (void)emptyEventQueue {
+    DLog(@"-[PTYSession emptyEventQueue] called.");
     int eventsSent = 0;
     for (NSEvent *event in eventQueue_) {
         ++eventsSent;
         if ([event isKindOfClass:[PasteEvent class]]) {
+            DLog(@"Found a pasteEvent. Calling pasteString:flags:.");
             PasteEvent *pasteEvent = (PasteEvent *)event;
             [self pasteString:pasteEvent.string flags:pasteEvent.flags];
             // Can't empty while pasting.
+            DLog(@"Returning from emptyEventQueue.");
             break;
         } else {
+            DLog(@"Found event %@, presuming it's a keydown.", event);
             [TEXTVIEW keyDown:event];
         }
     }
+    DLog(@"Event queue removing first %d events.", (int)eventsSent);
     [eventQueue_ removeObjectsInRange:NSMakeRange(0, eventsSent)];
 }
 
@@ -2039,23 +2044,30 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)_pasteStringImmediately:(NSString*)aString
 {
+    DLog(@"-[PTYSession _pasteStringImmediately:%@] called", aString);
     if ([aString length] > 0) {
+        DLog(@"String is not empty...");
         NSData *data = [aString dataUsingEncoding:[TERMINAL encoding]
                              allowLossyConversion:YES];
         NSData *safeData = [self dataByRemovingControlCodes:data];
+        DLog(@"Convert encoding and remove control codes and then write.");
         [self writeTask:safeData];
-
     }
 }
 
 - (void)pasteAgain {
+    DLog(@"-[PTYSession pasteAgain] called.");
     NSRange range;
     range.location = 0;
     range.length = MIN(pasteContext_.bytesPerCall, [slowPasteBuffer length]);
+
+    DLog(@"Calling _pasteStringImmediately...");
     [self _pasteStringImmediately:[slowPasteBuffer substringWithRange:range]];
+    DLog(@"Returned from _pasteStringImmediately...");
     [slowPasteBuffer deleteCharactersInRange:range];
     [self updatePasteUI];
     if ([slowPasteBuffer length] > 0) {
+        DLog(@"slowPasteBuffer is not empty. Scheduling another call to pasteAgain.");
         [pasteContext_ updateValues];
         slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:pasteContext_.delayBetweenCalls
                                                           target:self
@@ -2063,13 +2075,16 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                                         userInfo:nil
                                                          repeats:NO];
     } else {
+        DLog(@"Finished a slow paste.");
         if ([TERMINAL bracketedPasteMode]) {
+            DLog(@"Writing close bracket.");
             [self writeTask:[[NSString stringWithFormat:@"%c[201~", 27]
                              dataUsingEncoding:[TERMINAL encoding]
                              allowLossyConversion:YES]];
         }
         slowPasteTimer = nil;
         [self hidePasteUI];
+        DLog(@"niling out pasteContext.");
         [pasteContext_ release];
         pasteContext_ = nil;
         [self emptyEventQueue];
@@ -2081,6 +2096,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
                         defaultValue:(float)delayBetweenCallsDefault
 {
+    DLog(@"-[PTYSession _pasteWithBytePerCallPrefKey:defaultValue:delayBetweenCallsPrefKey:defaultValue: called.");
+
+    DLog(@"Create new paste context.");
     [pasteContext_ release];
     pasteContext_ = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
                                                          defaultValue:bytesPerCallDefault
@@ -2088,9 +2106,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                                          defaultValue:delayBetweenCallsDefault];
     const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
     if (pasteContext_.delayBetweenCalls * slowPasteBuffer.length / pasteContext_.bytesPerCall + slowPasteBuffer.length / kPasteBytesPerSecond > 3) {
+        DLog(@"Show paste UI");
         [self showPasteUI];
     }
 
+    DLog(@"Call pasteAgain.");
     [self pasteAgain];
 }
 
@@ -2106,6 +2126,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)_pasteStringMore
 {
+    DLog(@"-[PTYSession _pasteStringMore] called. Calling _patseWithBytePreCallPrefKey:defaultValue:delayBetweenCallsAPrefKey:defaultValue:");
     [self _pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
                           defaultValue:1024
               delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
@@ -2114,11 +2135,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)_pasteString:(NSString *)aString
 {
+    DLog(@"-[PTYSession _pasteString:%@] called", aString);
     if ([aString length] > 0) {
+        DLog(@"String is not empty.");
         // This is the "normal" way of pasting. It's fast but tends not to
         // outrun a shell's ability to read from its buffer. Why this crazy
         // thing? See bug 1031.
+        DLog(@"Append (with LF newlines) to slowPasteBuffer.");
         [slowPasteBuffer appendString:[aString stringWithLinefeedNewlines]];
+        DLog(@"Call _pasteStringMore.");
         [self _pasteStringMore];
     } else {
         NSBeep();
@@ -2127,34 +2152,46 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)pasteString:(NSString *)str flags:(int)flags
 {
+    DLog(@"-[PTYSession pasteString:%@ flags:] starting", str);
     if (flags & 1) {
+        DLog(@"  escape special characters");
         // paste escaping special characters
         str = [str stringWithEscapedShellCharacters];
     }
     if ([TERMINAL bracketedPasteMode]) {
+        DLog(@"  write open bracket");
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
                          dataUsingEncoding:[TERMINAL encoding]
                          allowLossyConversion:YES]];
     }
     if (flags & 2) {
+        DLog(@"  Slow flag is set. Append to slowPasteBuffer and call pasteSlowly.");
         [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
         [self pasteSlowly:nil];
     } else {
+        DLog(@"  Not pasting slowly. Calling _pasteString.");
         [self _pasteString:str];
     }
 }
 
 - (void)paste:(id)sender
 {
+    DLog(@"-[PTYSession paste:] starting.");
     NSString* pbStr = [PTYSession pasteboardString];
+    DLog(@"String to paste is %@", pbStr);
     if (pbStr) {
+        DLog(@"It's not null...");
         if ([self isPasting]) {
+            DLog(@"I'm already pasting.");
             if ([pbStr length] == 0) {
+                DLog(@"String is empty, beep and quit.");
                 NSBeep();
             } else {
+                DLog(@"Enqueue string.");
                 [eventQueue_ addObject:[PasteEvent pasteEventWithString:pbStr flags:[sender tag]]];
             }
         } else {
+            DLog(@"Call pasteString:flags");
             [self pasteString:pbStr flags:[sender tag]];
         }
     }

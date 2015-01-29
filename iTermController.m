@@ -1087,7 +1087,7 @@ static BOOL initDone = NO;
         [[ITAddressBookMgr bookmarkCommand:aDict
                             isLoginSession:&ignore
                              forObjectType:objectType] isEqualToString:@"$$"] ||
-        ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
+        ! [[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
         Profile* prototype = aDict;
         if (!prototype) {
             prototype = [[ProfileModel sharedInstance] defaultBookmark];

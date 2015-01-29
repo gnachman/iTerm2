@@ -4255,12 +4255,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)paste:(id)sender
 {
+    DLog(@"-[PTYTextView paste:] starting");
     NSString* info = [PTYSession pasteboardString];
+    DLog(@"String to paste is: %@", info);
     if (info) {
+        DLog(@"Saving to pasteboard history...");
         [[PasteboardHistory sharedInstance] save:info];
+        DLog(@"Done saving to pasteboard history.");
     }
 
+    DLog(@"Checking if delegate %@ responds to paste:", _delegate);
     if ([_delegate respondsToSelector:@selector(paste:)]) {
+        DLog(@"It does. Calling it.");
         [_delegate paste:sender];
     }
 }

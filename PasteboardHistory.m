@@ -27,6 +27,7 @@
  */
 
 #include <wctype.h>
+#import "iTermApplicationDelegate.h"
 #import "PasteboardHistory.h"
 #import "iTermController.h"
 #import "NSDateFormatterExtras.h"
@@ -161,19 +162,24 @@
 
 - (void)save:(NSString*)value
 {
+    DLog(@"-[PasteboardHistory save:%@] called", value);
     value = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if (![value length]) {
+        DLog(@"Value is empty, return early.");
         return;
     }
 
     // Remove existing duplicate value.
+    DLog(@"Search for duplicates to remove.");
     for (int i = 0; i < [entries_ count]; ++i) {
         PasteboardEntry* entry = [entries_ objectAtIndex:i];
         if ([[entry mainValue] isEqualToString:value]) {
+            DLog(@"Remove dup entry.");
             [entries_ removeObjectAtIndex:i];
             break;
         }
     }
+    DLog(@"Done looking for dups.");
 
     // If the last value is a prefix of this value then remove it. This prevents
     // pressing tab in the findbar from filling the history with various
@@ -182,20 +188,26 @@
     if ([entries_ count] > 0) {
         lastEntry = [entries_ objectAtIndex:[entries_ count] - 1];
         if ([value hasPrefix:[lastEntry mainValue]]) {
+            DLog(@"Remove preceding value which is a prefix of the new value.");
             [entries_ removeObjectAtIndex:[entries_ count] - 1];
         }
     }
 
     // Append this value.
+    DLog(@"Allocate a new entry.");
     PasteboardEntry* entry = [PasteboardEntry entryWithString:value score:[[NSDate date] timeIntervalSince1970]];
     entry->timestamp = [[NSDate alloc] init];
+    DLog(@"Add to entires...");
     [entries_ addObject:entry];
     if ([entries_ count] > maxEntries_) {
+        DLog(@"Remove oldest entry...");
         [entries_ removeObjectAtIndex:0];
     }
 
+    DLog(@"Write to disk...");
     [self _writeHistoryToDisk];
 
+    DLog(@"Post a notification...");
     [[NSNotificationCenter defaultCenter] postNotificationName:kPasteboardHistoryDidChange
                                                         object:self];
 }
