@@ -436,13 +436,35 @@ static BOOL initDone = NO;
     [WindowArrangements setArrangement:terminalArrangements withName:name];
 }
 
+- (void)tryOpenArrangement:(NSDictionary *)terminalArrangement {
+    BOOL shouldDelay = NO;
+    DLog(@"Try to open arrangement %p...", terminalArrangement);
+    if ([PseudoTerminal willAutoFullScreenNewWindow] &&
+        [PseudoTerminal anyWindowIsEnteringLionFullScreen]) {
+        DLog(@"Prevented by autofullscreen + a window entering.");
+        shouldDelay = YES;
+    }
+    if ([PseudoTerminal arrangementIsLionFullScreen:terminalArrangement] &&
+        [PseudoTerminal anyWindowIsEnteringLionFullScreen]) {
+        DLog(@"Prevented by fs arrangement + a window entering.");
+        shouldDelay = YES;
+    }
+    if (shouldDelay) {
+        DLog(@"Trying again in .25 sec");
+        [self performSelector:_cmd withObject:terminalArrangement afterDelay:0.25];
+    } else {
+        DLog(@"Opening it.");
+        PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
+        [self addInTerminals:term];
+    }
+}
+
 - (void)loadWindowArrangementWithName:(NSString *)theName
 {
     NSArray* terminalArrangements = [WindowArrangements arrangementWithName:theName];
     if (terminalArrangements) {
         for (NSDictionary* terminalArrangement in terminalArrangements) {
-            PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
-            [self addInTerminals:term];
+            [self tryOpenArrangement:terminalArrangement];
         }
     }
 }

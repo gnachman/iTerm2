@@ -266,6 +266,17 @@ NSWindowDelegate,
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
                   screenFrames:(NSArray *)frames;
 
+// If the key window is fullscreen (or is becoming fullscreen) then a new
+// normal window will automatically become fullscreen. This has to do with Lion
+// fullscreen only.
++ (BOOL)willAutoFullScreenNewWindow;
+
+// Is any window toggling or about to toggle lion fullscreen?
++ (BOOL)anyWindowIsEnteringLionFullScreen;
+
+// Will the arrangement open a Lion fullscreen window?
++ (BOOL)arrangementIsLionFullScreen:(NSDictionary *)arrangement;
+
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.

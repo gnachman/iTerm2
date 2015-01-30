@@ -224,7 +224,9 @@ NSString *sessionsKey = @"sessions";
 }
 
 @end
-@implementation PseudoTerminal
+@implementation PseudoTerminal {
+    BOOL _haveDelayedEnterFullScreenMode;
+}
 
 - (id)initWithSmartLayout:(BOOL)smartLayout
                windowType:(int)windowType
@@ -1347,6 +1349,25 @@ NSString *sessionsKey = @"sessions";
                                                                    rect.size.height - 11)];
 }
 
+// Indicates if a newly created window will automatically enter Lion full screen.
++ (BOOL)willAutoFullScreenNewWindow {
+    PseudoTerminal *keyWindow = [[iTermController sharedInstance] keyTerminalWindow];
+    return [keyWindow lionFullScreen] || (keyWindow && keyWindow->togglingLionFullScreen_);
+}
+
++ (BOOL)anyWindowIsEnteringLionFullScreen {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if (term->togglingLionFullScreen_ || term->_haveDelayedEnterFullScreenMode) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
++ (BOOL)arrangementIsLionFullScreen:(NSDictionary *)arrangement {
+    return [PseudoTerminal _windowTypeForArrangement:arrangement] == WINDOW_TYPE_LION_FULL_SCREEN;
+}
+
 + (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement
 {
     PseudoTerminal* term;
@@ -2255,6 +2276,7 @@ NSString *sessionsKey = @"sessions";
 // Save to call from a timer.
 - (void)enterFullScreenMode
 {
+    _haveDelayedEnterFullScreenMode = NO;
     if (!togglingFullScreen_ &&
         !togglingLionFullScreen_ &&
         ![self anyFullScreen]) {
@@ -2329,6 +2351,7 @@ NSString *sessionsKey = @"sessions";
             // call enter(Traditional)FullScreenMode instead of toggle... because
             // when doing a lion resume, the window may be toggled immediately
             // after creation by the window restorer.
+            _haveDelayedEnterFullScreenMode = YES;
             [self performSelector:@selector(enterFullScreenMode)
                        withObject:nil
                        afterDelay:0];
