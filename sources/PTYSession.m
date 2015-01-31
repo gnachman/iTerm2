@@ -775,7 +775,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // Allocate a text view
     NSSize aSize = [_scrollview contentSize];
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
-    [_wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    [_wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable | NSViewMaxYMargin];
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)
                                           colorMap:_colorMap];
