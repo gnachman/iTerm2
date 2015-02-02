@@ -4993,6 +4993,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
          fillColor, _badgeColor,
          NSStringFromSize(self.enclosingScrollView.documentVisibleRect.size),
          NSStringFromSize(_badgeDocumentVisibleRectSize));
+    DLog(@"Called from:\n%@", [NSThread callStackSymbols]);
     _badgeDocumentVisibleRectSize = self.enclosingScrollView.documentVisibleRect.size;
     [_badgeLabel autorelease];
     _badgeLabel = [badgeLabel copy];
