@@ -155,9 +155,6 @@ static BOOL hasBecomeActive = NO;
     // Fix up various user defaults settings.
     [iTermPreferences initializeUserDefaults];
 
-    // read preferences
-    [iTermPreferences migratePreferences];
-
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
 

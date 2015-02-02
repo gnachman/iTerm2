@@ -2233,114 +2233,104 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_colorMap setColor:theColor forKey:kColorMap8bitBase + i];
     }
 
-    BOOL useSmartCursorColor = NO;
-    if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
-        useSmartCursorColor = [[aDict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
-    }
-    [self setSmartCursorColor:useSmartCursorColor];
+    [self setSmartCursorColor:[iTermProfilePreferences boolForKey:KEY_SMART_CURSOR_COLOR
+                                                        inProfile:aDict]];
 
-    float minimumContrast = 0;
-    if ([aDict objectForKey:KEY_MINIMUM_CONTRAST]) {
-        minimumContrast = [[aDict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
-    }
-    [self setMinimumContrast:minimumContrast];
+    [self setMinimumContrast:[iTermProfilePreferences floatForKey:KEY_MINIMUM_CONTRAST
+                                                        inProfile:aDict]];
 
-    if (aDict[KEY_CURSOR_BOOST]) {
-        _colorMap.mutingAmount = [aDict[KEY_CURSOR_BOOST] doubleValue];
-    }
+    _colorMap.mutingAmount = [iTermProfilePreferences floatForKey:KEY_CURSOR_BOOST
+                                                        inProfile:aDict];
 
     // background image
-    [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
-    [self setBackgroundImageTiled:[[aDict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue]];
+    [self setBackgroundImagePath:aDict[KEY_BACKGROUND_IMAGE_LOCATION]];
+    [self setBackgroundImageTiled:[iTermProfilePreferences boolForKey:KEY_BACKGROUND_IMAGE_TILED
+                                                            inProfile:aDict]];
 
-    // colour scheme
-    [self setColorFgBgVariable:[self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
-                                                    andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR]
+    // Color scheme
+    // ansiColosMatchingForeground:andBackground:inBookmark does an equality comparison, so
+    // iTermProfilePreferences is not used here.
+    [self setColorFgBgVariable:[self ansiColorsMatchingForeground:aDict[KEY_FOREGROUND_COLOR]
+                                                    andBackground:aDict[KEY_BACKGROUND_COLOR]
                                                        inBookmark:aDict]];
 
     // transparency
-    [self setTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] floatValue]];
-    const float theBlend =
-        [aDict objectForKey:KEY_BLEND] ? [[aDict objectForKey:KEY_BLEND] floatValue] : 0.5;
-    [self setBlend:theBlend];
+    [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
+    [self setBlend:[iTermProfilePreferences floatForKey:KEY_BLEND inProfile:aDict]];
 
-    // bold
-    NSNumber* useBoldFontEntry = [aDict objectForKey:KEY_USE_BOLD_FONT];
-    NSNumber* disableBoldEntry = [aDict objectForKey:KEY_DISABLE_BOLD];
-    if (useBoldFontEntry) {
-        [self setUseBoldFont:[useBoldFontEntry boolValue]];
-    } else if (disableBoldEntry) {
-        // Only deprecated option is set.
-        [self setUseBoldFont:![disableBoldEntry boolValue]];
-    } else {
-        [self setUseBoldFont:YES];
-    }
-    [_textview setUseBrightBold:[aDict objectForKey:KEY_USE_BRIGHT_BOLD] ? [[aDict objectForKey:KEY_USE_BRIGHT_BOLD] boolValue] : YES];
+    // bold 
+    [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
+                                                   inProfile:aDict]];
+    [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
+                                                          inProfile:aDict]];
 
-    // italic
-    [self setUseItalicFont:[[aDict objectForKey:KEY_USE_ITALIC_FONT] boolValue]];
+    // Italic - this default has changed from NO to YES as of 1/30/15
+    [self setUseItalicFont:[iTermProfilePreferences boolForKey:KEY_USE_ITALIC_FONT inProfile:aDict]];
 
-    // set up the rest of the preferences
-    [_screen setAudibleBell:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
-    [_screen setShowBellIndicator:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
-    [_screen setFlashBell:[[aDict objectForKey:KEY_FLASHING_BELL] boolValue]];
-    [_screen setPostGrowlNotifications:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
-    [_screen setCursorBlinks:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
-    [_textview setBlinkAllowed:[[aDict objectForKey:KEY_BLINK_ALLOWED] boolValue]];
-    [_textview setBlinkingCursor:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
-    [_textview setCursorType:([aDict objectForKey:KEY_CURSOR_TYPE] ? [[aDict objectForKey:KEY_CURSOR_TYPE] intValue] : CURSOR_BOX)];
+    // Set up the rest of the preferences
+    [_screen setAudibleBell:![iTermProfilePreferences boolForKey:KEY_SILENCE_BELL inProfile:aDict]];
+    [_screen setShowBellIndicator:[iTermProfilePreferences boolForKey:KEY_VISUAL_BELL inProfile:aDict]];
+    [_screen setFlashBell:[iTermProfilePreferences boolForKey:KEY_FLASHING_BELL inProfile:aDict]];
+    [_screen setPostGrowlNotifications:[iTermProfilePreferences boolForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS inProfile:aDict]];
+    [_textview setBlinkAllowed:[iTermProfilePreferences boolForKey:KEY_BLINK_ALLOWED inProfile:aDict]];
+    [_screen setCursorBlinks:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
+    [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
+    [_textview setCursorType:[iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:aDict]];
 
     PTYTab* currentTab = [[[self tab] parentWindow] currentTab];
     if (currentTab == nil || currentTab == [self tab]) {
         [[self tab] recheckBlur];
     }
-    BOOL asciiAA;
-    BOOL nonasciiAA;
-    if ([aDict objectForKey:KEY_ASCII_ANTI_ALIASED]) {
-        asciiAA = [[aDict objectForKey:KEY_ASCII_ANTI_ALIASED] boolValue];
-    } else {
-        asciiAA = [[aDict objectForKey:KEY_ANTI_ALIASING] boolValue];
-    }
-    if ([aDict objectForKey:KEY_NONASCII_ANTI_ALIASED]) {
-        nonasciiAA = [[aDict objectForKey:KEY_NONASCII_ANTI_ALIASED] boolValue];
-    } else {
-        nonasciiAA = [[aDict objectForKey:KEY_ANTI_ALIASING] boolValue];
-    }
     [_triggers release];
     _triggers = [[NSMutableArray alloc] init];
-    for (NSDictionary *triggerDict in [aDict objectForKey:KEY_TRIGGERS]) {
+    for (NSDictionary *triggerDict in aDict[KEY_TRIGGERS]) {
         Trigger *trigger = [Trigger triggerFromDict:triggerDict];
         if (trigger) {
             [_triggers addObject:trigger];
         }
     }
-    [_textview setSmartSelectionRules:[aDict objectForKey:KEY_SMART_SELECTION_RULES]];
-    [_textview setSemanticHistoryPrefs:[aDict objectForKey:KEY_SEMANTIC_HISTORY]];
-    [_textview setUseNonAsciiFont:[[aDict objectForKey:KEY_USE_NONASCII_FONT] boolValue]];
-    [_textview setAntiAlias:asciiAA nonAscii:nonasciiAA];
-    [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
-    [self setTermVariable:[aDict objectForKey:KEY_TERMINAL_TYPE]];
-    [self setAntiIdleCode:[[aDict objectForKey:KEY_IDLE_CODE] intValue]];
-    [self setAntiIdle:[[aDict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue]];
-    [self setAutoClose:[[aDict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue]];
+    [_textview setSmartSelectionRules:aDict[KEY_SMART_SELECTION_RULES]];
+    [_textview setSemanticHistoryPrefs:aDict[KEY_SEMANTIC_HISTORY]];
+    [_textview setUseNonAsciiFont:[iTermProfilePreferences boolForKey:KEY_USE_NONASCII_FONT
+                                                            inProfile:aDict]];
+    // TODO: For users without KEY_ASCII_ANTI_ALIASED/KEY_NONASCII_ANTI_ALISED but with
+    // KEY_ANTI_ALIASING, migrate their profiles at startup.
+    [_textview setAntiAlias:[iTermProfilePreferences boolForKey:KEY_ASCII_ANTI_ALIASED
+                                                      inProfile:aDict]
+                   nonAscii:[iTermProfilePreferences boolForKey:KEY_NONASCII_ANTI_ALIASED
+                                                      inProfile:aDict]];
+    [self setEncoding:[iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
+    [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
+    [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
+    [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
+    [self setAutoClose:[iTermProfilePreferences boolForKey:KEY_CLOSE_SESSIONS_ON_END inProfile:aDict]];
     _screen.useHFSPlusMapping = [iTermProfilePreferences boolForKey:KEY_USE_HFS_PLUS_MAPPING
                                                           inProfile:aDict];
-    [self setTreatAmbiguousWidthAsDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
-    [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
-    [_terminal setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
-    [_screen setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
-    [_terminal setAllowKeypadMode:[aDict boolValueDefaultingToYesForKey:KEY_APPLICATION_KEYPAD_ALLOWED]];
-    [_screen setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
-    [_screen setMaxScrollbackLines:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [self setTreatAmbiguousWidthAsDoubleWidth:[iTermProfilePreferences boolForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH
+                                                                        inProfile:aDict]];
+    [self setXtermMouseReporting:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING
+                                                           inProfile:aDict]];
+    [_terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
+                                                              inProfile:aDict]];
+    [_screen setAllowTitleReporting:[iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
+                                                              inProfile:aDict]];
+    [_terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
+                                                            inProfile:aDict]];
+    [_screen setUnlimitedScrollback:[iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
+                                                              inProfile:aDict]];
+    [_screen setMaxScrollbackLines:[iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES
+                                                            inProfile:aDict]];
 
-    _screen.appendToScrollbackWithStatusBar = [[aDict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue];
-    self.badgeFormat = aDict[KEY_BADGE_FORMAT];
+    _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
+                                                                        inProfile:aDict];
+    self.badgeFormat = [iTermProfilePreferences stringForKey:KEY_BADGE_FORMAT inProfile:aDict];
     _textview.badgeLabel = [self badgeLabel];
-    [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
-        nonAsciiFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
-        horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-        verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
-    [_screen setSaveToScrollbackInAlternateScreen:[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? [[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] : YES];
+    [self setFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NORMAL_FONT]]
+        nonAsciiFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NON_ASCII_FONT]]
+        horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING inProfile:aDict]
+        verticalSpacing:[iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:aDict]];
+    [_screen setSaveToScrollbackInAlternateScreen:[iTermProfilePreferences boolForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
+                                                                            inProfile:aDict]];
     [[_tab realParentWindow] invalidateRestorableState];
 }
 

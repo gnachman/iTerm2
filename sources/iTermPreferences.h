@@ -165,10 +165,6 @@ extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;
 // value equality with isEqual:.
 + (void)addObserverForKey:(NSString *)key block:(void (^)(id before, id after))block;
 
-// Class method to copy old preferences file, iTerm.plist or net.sourceforge.iTerm.plist, to new
-// preferences file, com.googlecode.iterm2.plist
-+ (BOOL)migratePreferences;
-
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag;
 
 @end

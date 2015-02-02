@@ -205,6 +205,13 @@ int gMigrated;
     [self addBookmark:bookmark inSortedOrder:NO];
 }
 
++ (void)migrateDeprecatedKeysInMutableBookmark:(NSMutableDictionary *)dict {
+    // Migrate KEY_DISABLE_BOLD to KEY_USE_BOLD_FONT
+    if (dict[KEY_DISABLE_BOLD] && !dict[KEY_USE_BOLD_FONT]) {
+        dict[KEY_USE_BOLD_FONT] = @(![dict[KEY_DISABLE_BOLD] boolValue]);
+    }
+}
+
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict
 {
     // Migrate global "prompt on close" to per-profile prompt enum
@@ -274,7 +281,7 @@ int gMigrated;
         [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     }
     [ProfileModel migratePromptOnCloseInMutableBookmark:newBookmark];
-
+    [ProfileModel migrateDeprecatedKeysInMutableBookmark:newBookmark];
     bookmark = [[newBookmark copy] autorelease];
 
     int theIndex;
