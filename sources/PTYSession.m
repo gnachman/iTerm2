@@ -2293,8 +2293,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setSemanticHistoryPrefs:aDict[KEY_SEMANTIC_HISTORY]];
     [_textview setUseNonAsciiFont:[iTermProfilePreferences boolForKey:KEY_USE_NONASCII_FONT
                                                             inProfile:aDict]];
-    // TODO: For users without KEY_ASCII_ANTI_ALIASED/KEY_NONASCII_ANTI_ALISED but with
-    // KEY_ANTI_ALIASING, migrate their profiles at startup.
     [_textview setAntiAlias:[iTermProfilePreferences boolForKey:KEY_ASCII_ANTI_ALIASED
                                                       inProfile:aDict]
                    nonAscii:[iTermProfilePreferences boolForKey:KEY_NONASCII_ANTI_ALIASED
