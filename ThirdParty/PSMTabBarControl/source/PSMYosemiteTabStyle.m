@@ -502,10 +502,12 @@
             iconRect.origin.y -= (kPSMTabBarIconWidth - [icon size].height)/2.0;
         }
 
-        [icon drawAtPoint:iconRect.origin
-                 fromRect:NSZeroRect
-                operation:NSCompositeSourceOver
-                 fraction:1.0];
+        [icon drawInRect:iconRect
+                fromRect:NSZeroRect
+               operation:NSCompositeSourceOver
+                fraction:1.0
+          respectFlipped:YES
+                   hints:nil];
     }
 
     // object counter
