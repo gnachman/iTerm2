@@ -211,8 +211,6 @@
 	</dict>
         <key>Use Non-ASCII Font</key>
         <false/>
-        <key>Use Non-ASCII Font</key>
-        <false/>
 	<key>Non-ASCII Anti Aliased</key>
 	<true/>
 	<key>ASCII Anti Aliased</key>
