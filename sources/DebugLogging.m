@@ -95,7 +95,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         } else {
             lastSlash++;
         }
-        [gDebugLogStr appendFormat:@"%lld.%08lld %s:%d (%s): ",
+        [gDebugLogStr appendFormat:@"%lld.%06lld %s:%d (%s): ",
             (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
