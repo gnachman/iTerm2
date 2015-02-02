@@ -2866,6 +2866,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             snapWidth = NO;
         }
     }
+
+    // There's an advanced preference to turn off snapping globally.
+    if ([iTermAdvancedSettingsModel disableWindowSizeSnap]) {
+        snapWidth = snapHeight = NO;
+    }
+    
     // Compute proposed tab size (window minus decorations).
     NSSize decorationSize = [self windowDecorationSize];
     NSSize tabSize = NSMakeSize(proposedFrameSize.width - decorationSize.width,

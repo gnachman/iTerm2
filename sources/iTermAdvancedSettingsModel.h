@@ -91,4 +91,6 @@
 
 + (int)maximumBytesToProvideToServices;
 
++ (BOOL)disableWindowSizeSnap;
+
 @end
