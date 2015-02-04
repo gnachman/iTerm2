@@ -8284,7 +8284,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         _selectionTime = 0;
     }
     [_delegate refreshAndStartTimerIfNeeded];
-    DLog(@"Update selection time to %lf. selection=%@", (double)_selectionTime, selection);
+    DLog(@"Update selection time to %lf. selection=%@. stack=%@",
+         (double)_selectionTime, selection, [NSThread callStackSymbols]);
 }
 
 - (VT100GridRange)selectionRangeOfTerminalNullsOnLine:(int)lineNumber {

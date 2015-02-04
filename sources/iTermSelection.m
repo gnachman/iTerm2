@@ -385,8 +385,8 @@
 }
 
 - (void)clearSelection {
-    DLog(@"Clear selection");
     if (self.hasSelection) {
+        DLog(@"Clear selection");
         _range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
         [_subSelections removeAllObjects];
         [_delegate selectionDidChange:[[self retain] autorelease]];
