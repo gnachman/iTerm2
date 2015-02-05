@@ -7202,13 +7202,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return [self _randomColor];
     }
 
-    CGFloat alpha = [self transparencyAlpha];
     if (_useSmartCursorColor) {
         return [[self smartCursorColorForChar:screenChar
                                          column:column
-                                    lineOfChars:theLine] colorWithAlphaComponent:alpha];
+                                    lineOfChars:theLine] colorWithAlphaComponent:1.0];
     } else {
-        return [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:alpha];
+        return [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
     }
 }
 
