@@ -11,11 +11,13 @@
 # Select character protection attribute (DECSCA): CSI Ps " q   [This is already tested by DECSED and DECSEL]
 # Window manipulation: CSI Ps; Ps; Ps t
 # Reverse Attributes in Rectangular Area (DECRARA): CSI Pt ; Pl ; Pb ; Pr ; Ps $ t
+# Set warning bell volume (DECSWBV): CSI Ps SP t
 
 # Notes for future tests:
 # CSI 21 t
 #   Test the title modes settable and resttable by CSI > Ps ; Ps t and CSI > Ps ; Ps T
 
+import ansirc
 import cbt
 import cha
 import cht
@@ -30,6 +32,7 @@ import da
 import da2
 import dch
 import decdsr
+import decrc
 import decrqm
 import decscl
 import decsed
@@ -56,7 +59,8 @@ import tbc
 import vpa
 import vpr
 
-tests = [ cbt.CBTTests,
+tests = [ ansirc.ANSIRCTests,
+          cbt.CBTTests,
           cha.CHATests,
           cht.CHTTests,
           cnl.CNLTests,
@@ -70,6 +74,7 @@ tests = [ cbt.CBTTests,
           da2.DA2Tests,
           dch.DCHTests,
           decdsr.DECDSRTests,
+          decrc.DECRCTests,
           decrqm.DECRQMTests,
           decscl.DECSCLTests,
           decsed.DECSEDTests,

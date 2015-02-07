@@ -11,7 +11,7 @@ class DA2Tests(object):
     if self._args.expected_terminal == "xterm":
       AssertGE(params[0], 41)
       AssertGE(params[1], 314)
-      AssertEQ(len(params), 2)
+      AssertEQ(len(params), 3)
     elif self._args.expected_terminal == "iTerm2":
       AssertEQ(params[0], 0)
       AssertEQ(params[1], 95)

@@ -81,6 +81,14 @@ TSM = 18
 TTM = 16
 VEM = 7
 
+def CSI_ANSIRC():
+  """Restore cursor."""
+  escio.WriteCSI(final="u")
+
+def CSI_ANSISC():
+  """Save cursor."""
+  escio.WriteCSI(final="s")
+
 def CSI_CBT(Pn=None):
   """Move cursor back by Pn tab stops or to left margin. Default is 1."""
   if Pn is None:

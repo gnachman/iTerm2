@@ -75,7 +75,6 @@ class DECSEDTests(object):
                                    NUL * 3 ])
 
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
-  @knownBug(terminal="xterm", reason="DECSED clears whole screen with mode 1")
   def test_DECSED_1(self):
     """Erase before cursor."""
     self.prepare()
@@ -131,7 +130,6 @@ class DECSEDTests(object):
                                    NUL * 5 ])
 
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
-  @knownBug(terminal="xterm", reason="DECSED clears whole screen with mode 1")
   def test_DECSED_1_WithScrollRegion(self):
     """Erase before cursor with a scroll region present. The scroll region is ignored."""
     self.prepare_wide()
