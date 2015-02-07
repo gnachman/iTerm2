@@ -38,6 +38,7 @@ import decscl
 import decsed
 import decsel
 import decset
+import decset_tite_inhibit
 import decstbm
 import decstr
 import dl
@@ -80,6 +81,7 @@ tests = [ ansirc.ANSIRCTests,
           decsed.DECSEDTests,
           decsel.DECSELTests,
           decset.DECSETTests,
+          decset_tite_inhibit.DECSETTiteInhibitTests,
           decstbm.DECSTBMTests,
           decstr.DECSTRTests,
           ech.ECHTests,

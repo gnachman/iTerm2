@@ -45,6 +45,7 @@ class DECSCLTests(object):
 
   @vtLevel(3)
   @knownBug(terminal="xterm", reason="xterm always turns on 8-bit controls.", shouldTry=False)
+  @knownBug(terminal="iTerm2", reason="Not implemented", shouldTry=False)
   def test_DSCSCL_Level3_SupportsDECRQMDoesntSupportDECSLRM(self):
     # Set level 3 conformance
     esccsi.CSI_DECSCL(63, 1)
@@ -88,6 +89,7 @@ class DECSCLTests(object):
 
   @vtLevel(5)
   @knownBug(terminal="xterm", reason="xterm always turns on 8-bit controls.", shouldTry=False)
+  @knownBug(terminal="iTerm2", reason="Not implemented", shouldTry=False)
   def test_DECSCL_Level5_SupportsDECNCSM(self):
     # Set level 5 conformance
     esccsi.CSI_DECSCL(65, 1)

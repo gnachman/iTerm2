@@ -149,7 +149,7 @@ def RunTests():
         elif status:
           passed += 1
         else:
-          failures.append(name)
+          failures.append(testClass.__name__ + "." + name)
           failed += 1
       else:
         esclog.LogDebug("Skipping test %s in class %s" % (
