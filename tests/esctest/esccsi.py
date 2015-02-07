@@ -425,6 +425,13 @@ def CSI_SM(Pm=None):
     params = [ Pm ]
   escio.WriteCSI(params=params, final="h")
 
+def CSI_SM_Title(Ps1, Ps2=None):
+  """Set title mode."""
+  params = [ Ps1 ]
+  if Ps2 is not None:
+    params.append(Ps2)
+  escio.WriteCSI(params=params, prefix=">", final="t")
+
 def CSI_SU(Ps=None):
   """Scroll up by |Ps| lines. Default value is 1."""
   if Ps is None:
@@ -460,4 +467,7 @@ def CSI_VPR(Ps=None):
 def CSI_XTERM_SAVE(params=[]):
   """Save given DEC private mode parameters."""
   escio.WriteCSI(params=params, prefix="?", final="s")
+
+def CSI_XTERM_WINOPS(params=[]):
+  escio.WriteCSI(params=params, final="t")
 

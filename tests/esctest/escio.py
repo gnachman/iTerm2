@@ -37,11 +37,30 @@ def SetSideChannel(filename):
   else:
     gSideChannel = open(filename, "w")
 
+def OSC():
+  if use8BitControls:
+    return chr(0x9d)
+  else:
+    return ESC + "]"
+
 def CSI():
   if use8BitControls:
     return chr(0x9b)
   else:
     return ESC + "["
+
+def WriteOSC(params, bel=False, requestsReport=False):
+  str_params = map(str, params)
+  joined_params = ";".join(str_params)
+  ST = ESC + "\\"
+  BEL = chr(7)
+  if bel:
+    terminator = BEL
+  else:
+    terminator = ST
+  sequence = OSC() + joined_params + terminator
+  LogDebug("Send sequence: " + sequence.replace(ESC, "<ESC>"))
+  Write(sequence, sideChannelOk=not requestsReport)
 
 def WriteCSI(prefix="", params=[], intermediate="", final="", requestsReport=False):
   if len(final) == 0:
@@ -60,8 +79,19 @@ def AssertCharsEqual(c, e):
   if c != e:
     raise esctypes.InternalError("Read %c (0x%02x), expected %c (0x%02x)" % (c, ord(c), e, ord(e)))
 
+def ReadOSC(expected_prefix):
+  """Read an OSC code starting with |expected_prefix|."""
+  ReadOrDie(ESC)
+  ReadOrDie(']')
+  ReadOrDie(expected_prefix)
+  s = ""
+  while not s.endswith(ST):
+    c = read(1)
+    s += c
+  return s[:-2]
+
 def ReadCSI(expected_final, expected_prefix=None):
-  """ Read a CSI code ending with |expected_final| and returns an array of parameters. """
+  """Read a CSI code ending with |expected_final| and returns an array of parameters. """
 
   ReadOrDie(ESC)
   ReadOrDie('[')

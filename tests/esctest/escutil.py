@@ -34,6 +34,10 @@ def AssertTrue(value):
   gHaveAsserted = True
   assert value == True
 
+def GetWindowTitle():
+  esccsi.CSI_XTERM_WINOPS(params=[ "21" ])
+  return escio.ReadOSC("l")
+
 def GetCursorPosition():
   esccsi.CSI_DSR(esccsi.DSRCPR, suppressSideChannel=True)
   params = escio.ReadCSI("R")

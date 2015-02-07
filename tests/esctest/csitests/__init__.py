@@ -9,6 +9,8 @@
 # Load LEDs (DECLL): CSI Ps q
 # Set cursor style (DECSCUSR): CIS Ps SP q
 # Select character protection attribute (DECSCA): CSI Ps " q   [This is already tested by DECSED and DECSEL]
+# Window manipulation: CSI Ps; Ps; Ps t
+# Reverse Attributes in Rectangular Area (DECRARA): CSI Pt ; Pl ; Pb ; Pr ; Ps $ t
 
 # Notes for future tests:
 # CSI 21 t
@@ -48,6 +50,7 @@ import rep
 import rm
 import sd
 import sm
+import sm_title
 import su
 import tbc
 import vpa
@@ -87,6 +90,7 @@ tests = [ cbt.CBTTests,
           rm.RMTests,
           sd.SDTests,
           sm.SMTests,
+          sm_title.SMTitleTests,
           su.SUTests,
           tbc.TBCTests,
           vpa.VPATests,
