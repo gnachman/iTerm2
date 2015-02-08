@@ -72,4 +72,19 @@ class SaveRestoreCursorTests(object):
     # Ensure the X was placed at the true origin
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "X" ])
 
+  def test_SaveRestoreCursor_WorksInLRM(self, shouldWork=True):
+    """Subclasses may cause shouldWork to be set to false."""
+    esccsi.CSI_CUP(Point(2, 3))
+    self.saveCursor()
+    esccsi.CSI_DECSET(esccsi.DECLRMM)
+    esccsi.CSI_DECSLRM(1, 10)
+    esccsi.CSI_CUP(Point(5, 6))
+    self.saveCursor()
 
+    esccsi.CSI_CUP(Point(4, 5))
+    self.restoreCursor()
+
+    if shouldWork:
+      AssertEQ(GetCursorPosition(), Point(5, 6))
+    else:
+      AssertEQ(GetCursorPosition(), Point(2, 3))
