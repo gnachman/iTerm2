@@ -8,6 +8,7 @@ import time
 # 5 - Raise in stacking order
 # 6 - Lower in stacking order
 # 7 - Refresh
+# 9;0 - Restore maximized window
 
 class XtermWinopsTests(object):
   def __init__(self, args):
@@ -101,7 +102,7 @@ class XtermWinopsTests(object):
                             original_size.width())
 
   @knownBug(terminal="xterm",
-      reason="GetScreenSize reports an incorrect value, at least on Mac OS X")
+      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
   def test_XtermWinops_ResizePixels_ZeroWidth(self):
     """Resize the window to a pixel size, setting one parameter to 0. The
     window should maximize in the direction of the 0 parameter."""
@@ -131,7 +132,7 @@ class XtermWinopsTests(object):
                             original_size.width())
 
   @knownBug(terminal="xterm",
-      reason="GetScreenSize reports an incorrect value, at least on Mac OS X")
+      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
   def test_XtermWinops_ResizePixels_ZeroHeight(self):
     """Resize the window to a pixel size, setting one parameter to 0. The
     window should maximize in the direction of the 0 parameter."""
@@ -192,4 +193,33 @@ class XtermWinopsTests(object):
                             0,
                             desired_size.width())
     AssertEQ(GetScreenSize(), desired_size)
+
+  @knownBug(terminal="xterm",
+      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+  @knownBug(terminal="iTerm2", reason="Not implemented")
+  def test_XtermWinops_MaximizeWindow_HorizontallyAndVertically(self):
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_HV)
+    AssertEQ(GetScreenSize(), GetDisplaySize())
+
+  @knownBug(terminal="xterm",
+      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+  @knownBug(terminal="iTerm2", reason="Not implemented")
+  def test_XtermWinops_MaximizeWindow_Horizontally(self):
+    display_size = GetDisplaySize()
+    original_size = GetScreenSize()
+    expected_size = Size(width=display_size.width(),
+                         height=original_size.height())
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_H)
+    AssertEQ(GetScreenSize(), expected_terminal)
+
+  @knownBug(terminal="xterm",
+      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+  @knownBug(terminal="iTerm2", reason="Not implemented")
+  def test_XtermWinops_MaximizeWindow_Vertically(self):
+    display_size = GetDisplaySize()
+    original_size = GetScreenSize()
+    expected_size = Size(width=original_size.width(),
+                         height=display_size.height())
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_V)
+    AssertEQ(GetScreenSize(), expected_size)
 
