@@ -164,7 +164,7 @@ def RunTests():
 
   if failed > 0:
     esclog.LogInfo("*** %d tests passed, %d known bugs, %d TESTS FAILED ***" % (passed, knownBugs, failed))
-    esclog.LogInfo("Failing tests: " + ",".join(failures))
+    esclog.LogInfo("Failing tests:\n" + "\n".join(failures))
   else:
     esclog.LogInfo("%d tests passed, %d known bugs, %d tests failed." % (passed, knownBugs, failed))
 
