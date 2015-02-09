@@ -60,6 +60,7 @@ import tbc
 import vpa
 import vpr
 import xterm_save
+import xterm_winops
 
 tests = [ ansirc.ANSIRCTests,
           cbt.CBTTests,
@@ -103,4 +104,5 @@ tests = [ ansirc.ANSIRCTests,
           tbc.TBCTests,
           vpa.VPATests,
           vpr.VPRTests,
-          xterm_save.XtermSaveTests ]
+          xterm_save.XtermSaveTests,
+          xterm_winops.XtermWinopsTests ]

@@ -65,7 +65,12 @@ def WriteOSC(params, bel=False, requestsReport=False):
 def WriteCSI(prefix="", params=[], intermediate="", final="", requestsReport=False):
   if len(final) == 0:
     raise esctypes.InternalError("final must not be empty")
-  str_params = map(str, params)
+  def StringifyCSIParam(p):
+    if p is None:
+      return ""
+    else:
+      return str(p)
+  str_params = map(StringifyCSIParam, params)
   joined_params = ";".join(str_params)
   sequence = CSI() + prefix + joined_params + intermediate + final
   LogDebug("Send sequence: " + sequence.replace(ESC, "<ESC>"))

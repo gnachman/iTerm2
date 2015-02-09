@@ -49,6 +49,16 @@ OPT_ALTBUF_CURSOR = 1049  # Like 1047 but saves/restores main screen's cursor po
 ReverseWraparound = 45  # Reverse-wraparound mode (only works on conjunction with DECAWM)
 SaveRestoreCursor = 1048  # Save cursor as in DECSC.
 
+# Xterm Winops (CSI Ps t)
+WINOP_DEICONIFY = 1
+WINOP_ICONIFY = 2
+WINOP_MOVE = 3
+WINOP_RESIZE_PIXELS = 4
+WINOP_RESIZE_CHARS = 8
+WINOP_REPORT_WINDOW_STATE = 11
+WINOP_REPORT_WINDOW_POSITION = 13
+WINOP_REPORT_WINDOW_SIZE_PIXELS = 14
+
 # DECDSR
 DECCKSR = 63
 DECMSR = 62
@@ -472,7 +482,7 @@ def CSI_VPR(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="e")
 
-def CSI_XTERM_RESTORE(Ps=[]):
+def CSI_XTERM_RESTORE(Ps=None):
   """Restore given DEC private mode parameters."""
   if Ps is None:
     params = []
@@ -480,7 +490,7 @@ def CSI_XTERM_RESTORE(Ps=[]):
     params = [ Ps ]
   escio.WriteCSI(params=params, prefix="?", final="r")
 
-def CSI_XTERM_SAVE(Ps=[]):
+def CSI_XTERM_SAVE(Ps=None):
   """Save given DEC private mode parameters."""
   if Ps is None:
     params = []
@@ -488,6 +498,14 @@ def CSI_XTERM_SAVE(Ps=[]):
     params = [ Ps ]
   escio.WriteCSI(params=params, prefix="?", final="s")
 
-def CSI_XTERM_WINOPS(params=[]):
+def CSI_XTERM_WINOPS(Ps1=None, Ps2=None, Ps3=None):
+  if Ps3 is not None:
+    params = [ Ps1, Ps2, Ps3 ]
+  elif Ps2 is not None:
+    params = [ Ps1, Ps2 ]
+  elif Ps1 is not None:
+    params = [ Ps1 ]
+  else:
+    params = []
   escio.WriteCSI(params=params, final="t")
 

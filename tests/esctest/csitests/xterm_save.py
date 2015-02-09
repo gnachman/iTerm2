@@ -1,10 +1,7 @@
-from esc import ESC, TAB, NUL, CR, LF, BS
-import time
 import esccsi
 import escio
-import esclog
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
-from esctypes import Point, Rect
+from escutil import AssertEQ, GetCursorPosition, GetScreenSize, knownBug
+from esctypes import Point
 
 class XtermSaveTests(object):
   def __init__(self, args):

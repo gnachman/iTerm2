@@ -35,8 +35,33 @@ def AssertTrue(value):
   assert value == True
 
 def GetWindowTitle():
+  if args.expected_terminal == "iTerm2":
+    raise esctypes.InternalError(
+        "iTerm2 uses L instead of l as initial char for window title reports.")
   esccsi.CSI_XTERM_WINOPS(params=[ "21" ])
   return escio.ReadOSC("l")
+
+def GetWindowSizePixels():
+  """Returns a Size giving the window's size in pixels."""
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_SIZE_PIXELS)
+  params = escio.ReadCSI("t")
+  AssertTrue(params[0] == 4)
+  AssertTrue(len(params) >= 3)
+  return Size(params[2], params[1])
+
+def GetWindowPosition():
+  """Returns a Point giving the window's origin in screen pixels."""
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_POSITION)
+  params = escio.ReadCSI("t")
+  AssertTrue(params[0] == 3)
+  AssertTrue(len(params) >= 3)
+  return Point(params[1], params[2])
+
+def GetIsIconified():
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_STATE)
+  params = escio.ReadCSI("t")
+  AssertTrue(params[0] in [ 1, 2 ])
+  return params[0] == 2
 
 def GetCursorPosition():
   esccsi.CSI_DSR(esccsi.DSRCPR, suppressSideChannel=True)
@@ -45,6 +70,11 @@ def GetCursorPosition():
 
 def GetScreenSize():
   escio.WriteCSI(params = [ 18 ], final="t", requestsReport=True)
+  params = escio.ReadCSI("t")
+  return Size(params[2], params[1])
+
+def GetDisplaySize():
+  escio.WriteCSI(params = [ 19 ], final="t", requestsReport=True)
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 

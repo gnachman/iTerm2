@@ -54,6 +54,7 @@ def init():
   esclog.logfile = args.logfile
   esccsi.args = args
   escutil.force = args.force
+  escutil.args = args
 
   logfile = open(args.logfile, "w")
   log = ""
@@ -70,6 +71,7 @@ def reset():
 
   escio.use8BitControls = False
   esccsi.CSI_DECSTR()
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS, 25, 80)
   esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF)  # Is this needed?
   esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF_CURSOR)  # Is this needed?
   esccsi.CSI_DECRESET(esccsi.ALTBUF)  # Is this needed?
@@ -95,6 +97,7 @@ def reset():
     x += 8
 
   esccsi.CSI_CUP(esctypes.Point(1, 1))
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_DEICONIFY)
 
 def AttachSideChannel(name):
   if args.test_case_dir:
