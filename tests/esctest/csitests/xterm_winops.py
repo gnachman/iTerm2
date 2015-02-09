@@ -125,4 +125,32 @@ class XtermWinopsTests(object):
                             original_size.height(),
                             original_size.width())
 
-#  def test_XtermWinops_Resize_ZeroParameters(self):
+  @knownBug(terminal="xterm",
+      reason="GetScreenSize reports an incorrect value, at least on Mac OS X")
+  def test_XtermWinops_Resize_ZeroHeight(self):
+    """Resize the window to a pixel size, setting one parameter to 0. The
+    window should maximize in the direction of the 0 parameter."""
+    original_size = GetWindowSizePixels()
+
+    # Set height and maximize width.
+    desired_width = 400
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+                            0,
+                            desired_width)
+
+    # Make sure the height changed as requested.
+    max_error = 20
+    actual_size = GetWindowSizePixels()
+    AssertTrue(abs(actual_size.width() - desired_width) < max_error)
+
+    # See if the height is about as big as the display (only measurable in
+    # characters, not pixels).
+    display_size = GetDisplaySize()  # In characters
+    screen_size = GetScreenSize()  # In characters
+    max_error = 5
+    AssertTrue(abs(display_size.height() - screen_size.height()) < max_error)
+
+    # Restore to original size.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+                            original_size.height(),
+                            original_size.width())
