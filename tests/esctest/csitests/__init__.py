@@ -59,6 +59,7 @@ import su
 import tbc
 import vpa
 import vpr
+import xterm_save
 
 tests = [ ansirc.ANSIRCTests,
           cbt.CBTTests,
@@ -101,4 +102,5 @@ tests = [ ansirc.ANSIRCTests,
           su.SUTests,
           tbc.TBCTests,
           vpa.VPATests,
-          vpr.VPRTests ]
+          vpr.VPRTests,
+          xterm_save.XtermSaveTests ]
