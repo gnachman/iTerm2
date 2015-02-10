@@ -12,6 +12,7 @@
 # Window manipulation: CSI Ps; Ps; Ps t
 # Reverse Attributes in Rectangular Area (DECRARA): CSI Pt ; Pl ; Pb ; Pr ; Ps $ t
 # Set warning bell volume (DECSWBV): CSI Ps SP t
+# Set margin-bell volume (DECSMBV): CSI Ps SP u
 
 # Notes for future tests:
 # CSI 21 t
@@ -31,6 +32,7 @@ import cuu
 import da
 import da2
 import dch
+import deccra
 import decdsr
 import decrc
 import decrqm
