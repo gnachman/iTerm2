@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
-import argparse
 import csitests
 import esc
+import escargs
 import esccsi
 import escio
 import esclog
@@ -20,34 +20,7 @@ def init():
 
   newline = "\r\n"
 
-  parser = argparse.ArgumentParser()
-  parser.add_argument("--disable-xterm-checksum-bug",
-                      help="Don't use buggy parameter order for DECRQCRA",
-                      action="store_true")
-  parser.add_argument("--include",
-                      help="Regex for names of tests to run.",
-                      default=".*")
-  parser.add_argument("--expected-terminal",
-                      help="Terminal in use. Modifies tests for known differences.",
-                      choices=("iTerm2", "xterm"),
-                      default="iTerm2")
-  parser.add_argument("--no-print-logs",
-                      help="Print logs after finishing?",
-                      action="store_true")
-  parser.add_argument("--test-case-dir",
-                       help="Create files with test cases in the specified directory",
-                       default=None)
-  parser.add_argument("--stop-on-failure",
-                      help="Stop running tests after a failure.",
-                      action="store_true")
-  parser.add_argument("--force",
-                      help="If set, assertions won't stop execution.",
-                      action="store_true")
-  parser.add_argument("--max-vt-level",
-                      help="Do not run tests requiring a higher VT level than this.",
-                      type=int,
-                      default=5)
-
+  parser = escargs.parser
   esclog.AddArguments(parser)
   args = parser.parse_args()
   esclog.v = args.v
@@ -85,7 +58,15 @@ def reset():
   #   default).
   esccsi.CSI_DECSET(esccsi.DECAWM)
   esccsi.CSI_DECRESET(esccsi.MoreFix)
+  # Set and query title with utf-8
+  esccsi.CSI_RM_Title(0, 1)
+  esccsi.CSI_SM_Title(2, 3)
   esccsi.CSI_ED(2)
+
+  # Pop the title stack just in case something got left on there
+  for i in xrange(5):
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
 
   # Clear tab stops and reset them at 1, 9, ...
   esccsi.CSI_TBC(3)

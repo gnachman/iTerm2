@@ -27,18 +27,23 @@ def AssertEQ(actual, expected):
   if actual != expected:
     Raise(esctypes.TestFailure(actual, expected))
 
-def AssertTrue(value):
+def AssertTrue(value, details=None):
   if force:
     return
   global gHaveAsserted
   gHaveAsserted = True
-  assert value == True
+  if value != True:
+    Raise(esctypes.TestFailure(value, True, details))
+
+def GetIconTitle():
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_ICON_LABEL)
+  return escio.ReadOSC("L")
 
 def GetWindowTitle():
   if args.expected_terminal == "iTerm2":
     raise esctypes.InternalError(
         "iTerm2 uses L instead of l as initial char for window title reports.")
-  esccsi.CSI_XTERM_WINOPS(params=[ "21" ])
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_TITLE)
   return escio.ReadOSC("l")
 
 def GetWindowSizePixels():
@@ -60,7 +65,7 @@ def GetWindowPosition():
 def GetIsIconified():
   esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_STATE)
   params = escio.ReadCSI("t")
-  AssertTrue(params[0] in [ 1, 2 ])
+  AssertTrue(params[0] in [ 1, 2 ], "Params are " + str(params))
   return params[0] == 2
 
 def GetCursorPosition():
@@ -69,12 +74,12 @@ def GetCursorPosition():
   return Point(int(params[1]), int(params[0]))
 
 def GetScreenSize():
-  escio.WriteCSI(params = [ 18 ], final="t", requestsReport=True)
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_TEXT_AREA_CHARS)
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 
 def GetDisplaySize():
-  escio.WriteCSI(params = [ 19 ], final="t", requestsReport=True)
+  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_SCREEN_SIZE_CHARS)
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 
@@ -178,6 +183,36 @@ def intentionalDeviationFromSpec(terminal, reason):
     @functools.wraps(func)
     def func_wrapper(self, *args, **kwargs):
       func(self, *args, **kwargs)
+    return func_wrapper
+  return decorator
+
+def optionRequired(terminal, option):
+  """Decorator for a method indicating that it should fail unless an option is
+  present."""
+  reason = "Terminal \"" + terminal + "\" requires option \"" + option + "\" for this test to pass."
+  def decorator(func):
+    @functools.wraps(func)
+    def func_wrapper(self, *args, **kwargs):
+      hasOption = (self._args.options is not None and
+                   option in self._args.options)
+      if self._args.expected_terminal == terminal:
+        try:
+          func(self, *args, **kwargs)
+        except Exception, e:
+          if hasOption:
+            # Failed despite option being set. Re-raise.
+            raise
+          tb = traceback.format_exc()
+          lines = tb.split("\n")
+          lines = map(lambda x: "EXPECTED FAILURE (MISSING OPTION): " + x, lines)
+          raise esctypes.KnownBug(reason + "\n\n" + "\n".join(lines))
+
+        # Got here because test passed. If the option isn't set, that's
+        # unexpected so we raise an error.
+        if not force and not hasOption:
+          raise esctypes.InternalError("Should have failed: " + reason)
+      else:
+        func(self, *args, **kwargs)
     return func_wrapper
   return decorator
 

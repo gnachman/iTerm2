@@ -12,8 +12,10 @@ class BadResponse(Exception):
     super(BadResponse, self).__init__(message)
 
 class TestFailure(Exception):
-  def __init__(self, actual, expected):
+  def __init__(self, actual, expected, details=None):
     message = "Test failed: expected '%s' but got '%s'" % (str(expected), str(actual))
+    if details is not None:
+      message += ". " + details
     super(TestFailure, self).__init__(message)
 
 class InternalError(Exception):

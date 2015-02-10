@@ -1,6 +1,8 @@
+import escargs
 import esccsi
 import esclog
-from escutil import AssertEQ, AssertTrue, GetCursorPosition, GetDisplaySize, GetIsIconified, GetScreenSize, GetWindowPosition, GetWindowSizePixels, knownBug
+import escosc
+from escutil import AssertEQ, AssertTrue, GetCursorPosition, GetDisplaySize, GetIconTitle, GetIsIconified, GetScreenSize, GetWindowPosition, GetWindowSizePixels, GetWindowTitle, knownBug, optionRequired
 from esctypes import Point, Size
 import time
 
@@ -102,7 +104,7 @@ class XtermWinopsTests(object):
                             original_size.width())
 
   @knownBug(terminal="xterm",
-      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+      reason="GetDisplaySize reports an incorrect value")
   def test_XtermWinops_ResizePixels_ZeroWidth(self):
     """Resize the window to a pixel size, setting one parameter to 0. The
     window should maximize in the direction of the 0 parameter."""
@@ -132,7 +134,7 @@ class XtermWinopsTests(object):
                             original_size.width())
 
   @knownBug(terminal="xterm",
-      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+      reason="GetDisplaySize reports an incorrect value")
   def test_XtermWinops_ResizePixels_ZeroHeight(self):
     """Resize the window to a pixel size, setting one parameter to 0. The
     window should maximize in the direction of the 0 parameter."""
@@ -170,6 +172,8 @@ class XtermWinopsTests(object):
                             desired_size.width())
     AssertEQ(GetScreenSize(), desired_size)
 
+  @knownBug(terminal="xterm",
+      reason="GetDisplaySize reports an incorrect value")
   @knownBug(terminal="iTerm2", reason="Doesn't interpret 0 param to mean max")
   def test_XtermWinops_ResizeChars_ZeroWidth(self):
     """Resize the window to a character size, setting one param to 0 (max size
@@ -182,6 +186,8 @@ class XtermWinopsTests(object):
                             0)
     AssertEQ(GetScreenSize(), desired_size)
 
+  @knownBug(terminal="xterm",
+      reason="GetDisplaySize reports an incorrect value")
   @knownBug(terminal="iTerm2", reason="Doesn't interpret 0 param to mean max")
   def test_XtermWinops_ResizeChars_ZeroHeight(self):
     """Resize the window to a character size, setting one param to 0 (max size
@@ -195,14 +201,14 @@ class XtermWinopsTests(object):
     AssertEQ(GetScreenSize(), desired_size)
 
   @knownBug(terminal="xterm",
-      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+      reason="GetDisplaySize reports an incorrect value")
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermWinops_MaximizeWindow_HorizontallyAndVertically(self):
     esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_HV)
     AssertEQ(GetScreenSize(), GetDisplaySize())
 
   @knownBug(terminal="xterm",
-      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+      reason="GetDisplaySize reports an incorrect value")
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermWinops_MaximizeWindow_Horizontally(self):
     display_size = GetDisplaySize()
@@ -213,7 +219,7 @@ class XtermWinopsTests(object):
     AssertEQ(GetScreenSize(), expected_terminal)
 
   @knownBug(terminal="xterm",
-      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+      reason="GetDisplaySize reports an incorrect value")
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermWinops_MaximizeWindow_Vertically(self):
     display_size = GetDisplaySize()
@@ -224,7 +230,7 @@ class XtermWinopsTests(object):
     AssertEQ(GetScreenSize(), expected_size)
 
   @knownBug(terminal="xterm",
-      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+      reason="GetDisplaySize reports an incorrect value")
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermWinops_Fullscreen(self):
     original_size = GetScreenSize()
@@ -235,7 +241,6 @@ class XtermWinopsTests(object):
                             esccsi.WINOP_FULLSCREEN_ENTER)
     time.sleep(1)
     actual_size = GetScreenSize()
-    esclog.LogInfo("Actual size is " + str(actual_size) + ", display size is " + str(display_size))
     AssertTrue(actual_size.width() >= display_size.width())
     AssertTrue(actual_size.height() >= display_size.height())
 
@@ -261,3 +266,260 @@ class XtermWinopsTests(object):
                             esccsi.WINOP_FULLSCREEN_TOGGLE)
     AssertEQ(GetScreenSize(), original_size)
 
+  @optionRequired(terminal="xterm",
+                  option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 seems to report the window label instead of the icon label")
+  def test_XtermWinops_ReportIconLabel(self):
+    string = "test " + str(time.time())
+    escosc.ChangeIconTitle(string)
+    AssertEQ(GetIconTitle(), string)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  def test_XtermWinops_ReportWindowLabel(self):
+    string = "test " + str(time.time())
+    escosc.ChangeWindowTitle(string)
+    AssertEQ(GetWindowTitle(), string)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  def test_XtermWinops_PushIconAndWindow_PopIconAndWindow(self):
+    """Basic test: Push an icon & window title and restore it."""
+    # Generate a uniqueish string
+    string = str(time.time())
+
+    # Set the window and icon title, then push both.
+    escosc.ChangeWindowAndIconTitle(string)
+    AssertEQ(GetWindowTitle(), string)
+    AssertEQ(GetIconTitle(), string)
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                            esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
+
+    # Change to x, make sure it took.
+    escosc.ChangeWindowTitle("x")
+    escosc.ChangeIconTitle("x")
+    AssertEQ(GetWindowTitle(), "x")
+    AssertEQ(GetIconTitle(), "x")
+
+    # Pop both window and icon titles, ensure correct.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_ICON_AND_WINDOW)
+    AssertEQ(GetWindowTitle(), string)
+    AssertEQ(GetIconTitle(), string)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  def test_XtermWinops_PushIconAndWindow_PopIcon(self):
+    """Push an icon & window title and pop just the icon title."""
+    # Generate a uniqueish string
+    string = str(time.time())
+
+    # Set the window and icon title, then push both.
+    escosc.ChangeWindowAndIconTitle(string)
+    AssertEQ(GetWindowTitle(), string)
+    AssertEQ(GetIconTitle(), string)
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                            esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
+
+    # Change to x, make sure it took.
+    escosc.ChangeWindowTitle("x")
+    escosc.ChangeIconTitle("x")
+    AssertEQ(GetWindowTitle(), "x")
+    AssertEQ(GetIconTitle(), "x")
+
+    # Pop icon title, ensure correct.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_ICON)
+    AssertEQ(GetWindowTitle(), "x")
+    AssertEQ(GetIconTitle(), string)
+
+    # Try to pop the window title; should do nothing.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_WINDOW)
+    AssertEQ(GetWindowTitle(), "x")
+    AssertEQ(GetIconTitle(), string)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  def test_XtermWinops_PushIconAndWindow_PopWindow(self):
+    """Push an icon & window title and pop just the window title."""
+    # Generate a uniqueish string
+    string = str(time.time())
+
+    # Set the window and icon title, then push both.
+    escosc.ChangeWindowAndIconTitle(string)
+    AssertEQ(GetWindowTitle(), string)
+    AssertEQ(GetIconTitle(), string)
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                            esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
+
+    # Change to x, make sure it took.
+    escosc.ChangeWindowTitle("x")
+    escosc.ChangeIconTitle("x")
+    AssertEQ(GetWindowTitle(), "x")
+    AssertEQ(GetIconTitle(), "x")
+
+    # Pop icon title, ensure correct.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_WINDOW)
+    AssertEQ(GetWindowTitle(), string)
+    AssertEQ(GetIconTitle(), "x")
+
+    # Try to pop the icon title; should do nothing.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_ICON)
+    AssertEQ(GetWindowTitle(), string)
+    AssertEQ(GetIconTitle(), "x")
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  def test_XtermWinops_PushIcon_PopIcon(self):
+    """Push icon title and then pop it."""
+    # Generate a uniqueish string
+    string = str(time.time())
+
+    # Set the window and icon title, then push both.
+    escosc.ChangeWindowTitle("x")
+    escosc.ChangeIconTitle(string)
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                            esccsi.WINOP_PUSH_TITLE_ICON)
+
+    # Change to x.
+    escosc.ChangeIconTitle("y")
+
+    # Pop icon title, ensure correct.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_ICON)
+    AssertEQ(GetWindowTitle(), "x")
+    AssertEQ(GetIconTitle(), string)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  def test_XtermWinops_PushWindow_PopWindow(self):
+    """Push window title and then pop it."""
+    # Generate a uniqueish string
+    string = str(time.time())
+
+    # Set the window and icon title, then push both.
+    escosc.ChangeIconTitle("x")
+    escosc.ChangeWindowTitle(string)
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                            esccsi.WINOP_PUSH_TITLE_WINDOW)
+
+    # Change to x.
+    escosc.ChangeWindowTitle("y")
+
+    # Pop window title, ensure correct.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_WINDOW)
+    AssertEQ(GetIconTitle(), "x")
+    AssertEQ(GetWindowTitle(), string)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  def test_XtermWinops_PushIconThenWindowThenPopBoth(self):
+    """Push icon, then push window, then pop both."""
+    # Generate a uniqueish string
+    string1 = "a" + str(time.time())
+    string2 = "b" + str(time.time())
+
+    # Set titles
+    escosc.ChangeWindowTitle(string1)
+    escosc.ChangeIconTitle(string2)
+
+    # Push icon then window
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                            esccsi.WINOP_PUSH_TITLE_ICON)
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                            esccsi.WINOP_PUSH_TITLE_WINDOW)
+
+    # Change both to known values.
+    escosc.ChangeWindowTitle("y")
+    escosc.ChangeIconTitle("z")
+
+    # Pop both titles.
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_ICON_AND_WINDOW)
+    AssertEQ(GetWindowTitle(), string1)
+    AssertEQ(GetIconTitle(), string2)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  def test_XtermWinops_PushMultiplePopMultiple_Icon(self):
+    """Push two titles and pop twice."""
+    # Generate a uniqueish string
+    string1 = "a" + str(time.time())
+    string2 = "b" + str(time.time())
+
+    for title in [ string1, string2 ]:
+      # Set title
+      escosc.ChangeIconTitle(title)
+
+      # Push
+      esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                              esccsi.WINOP_PUSH_TITLE_ICON)
+
+    # Change to known values.
+    escosc.ChangeIconTitle("z")
+
+    # Pop
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_ICON)
+    AssertEQ(GetIconTitle(), string2)
+
+    # Pop
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_ICON)
+    AssertEQ(GetIconTitle(), string1)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  def test_XtermWinops_PushMultiplePopMultiple_Window(self):
+    """Push two titles and pop twice."""
+    # Generate a uniqueish string
+    string1 = "a" + str(time.time())
+    string2 = "b" + str(time.time())
+
+    for title in [ string1, string2 ]:
+      # Set title
+      escosc.ChangeWindowTitle(title)
+
+      # Push
+      esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+                              esccsi.WINOP_PUSH_TITLE_WINDOW)
+
+    # Change to known values.
+    escosc.ChangeWindowTitle("z")
+
+    # Pop
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_WINDOW)
+    AssertEQ(GetWindowTitle(), string2)
+
+    # Pop
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+                            esccsi.WINOP_POP_TITLE_WINDOW)
+    AssertEQ(GetWindowTitle(), string1)
+
+  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2", reason="Not implemented")
+  def test_XtermWinops_DECSLPP(self):
+    """Resize to n lines of height."""
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
+                            10,
+                            90)
+    AssertEQ(GetScreenSize(), Size(90, 10))
+
+    esccsi.CSI_XTERM_WINOPS(24)
+    AssertEQ(GetScreenSize(), Size(90, 24))
+
+    esccsi.CSI_XTERM_WINOPS(30)
+    AssertEQ(GetScreenSize(), Size(90, 30))

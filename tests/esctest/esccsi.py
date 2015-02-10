@@ -60,6 +60,12 @@ WINOP_FULLSCREEN = 10
 WINOP_REPORT_WINDOW_STATE = 11
 WINOP_REPORT_WINDOW_POSITION = 13
 WINOP_REPORT_WINDOW_SIZE_PIXELS = 14
+WINOP_REPORT_TEXT_AREA_CHARS = 18
+WINOP_REPORT_SCREEN_SIZE_CHARS = 19
+WINOP_REPORT_ICON_LABEL = 20
+WINOP_REPORT_WINDOW_TITLE = 21
+WINOP_PUSH_TITLE = 22
+WINOP_POP_TITLE = 23
 
 # WINOP_MAXIMIZE sub-commands
 WINOP_MAXIMIZE_HV = 1
@@ -70,6 +76,16 @@ WINOP_MAXIMIZE_H = 3
 WINOP_FULLSCREEN_EXIT = 0
 WINOP_FULLSCREEN_ENTER = 1
 WINOP_FULLSCREEN_TOGGLE = 2
+
+# WINOP_PUSH_TITLE sub-commands
+WINOP_PUSH_TITLE_ICON_AND_WINDOW = 0
+WINOP_PUSH_TITLE_ICON = 1
+WINOP_PUSH_TITLE_WINDOW = 2
+
+# WINOP_POP_TITLE sub-commands
+WINOP_POP_TITLE_ICON_AND_WINDOW = 0
+WINOP_POP_TITLE_ICON = 1
+WINOP_POP_TITLE_WINDOW = 2
 
 # DECDSR
 DECCKSR = 63
@@ -439,6 +455,13 @@ def CSI_RM(Pm=None):
     params = [ Pm ]
   escio.WriteCSI(params=params, final="l")
 
+def CSI_RM_Title(Ps1, Ps2=None):
+  """Reset title mode."""
+  params = [ Ps1 ]
+  if Ps2 is not None:
+    params.append(Ps2)
+  escio.WriteCSI(params=params, prefix=">", final="T")
+
 def CSI_SD(Ps=None):
   """Scroll down by |Ps| lines. Default value is 1."""
   if Ps is None:
@@ -519,5 +542,12 @@ def CSI_XTERM_WINOPS(Ps1=None, Ps2=None, Ps3=None):
     params = [ Ps1 ]
   else:
     params = []
-  escio.WriteCSI(params=params, final="t")
+  requestsReport = Ps1 in [ WINOP_REPORT_WINDOW_STATE,
+                            WINOP_REPORT_WINDOW_POSITION,
+                            WINOP_REPORT_WINDOW_SIZE_PIXELS,
+                            WINOP_REPORT_TEXT_AREA_CHARS,
+                            WINOP_REPORT_SCREEN_SIZE_CHARS,
+                            WINOP_REPORT_ICON_LABEL,
+                            WINOP_REPORT_WINDOW_TITLE ]
+  escio.WriteCSI(params=params, final="t", requestsReport=requestsReport)
 
