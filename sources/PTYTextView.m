@@ -2633,6 +2633,7 @@ NSMutableArray* screens=0;
 
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event {
+    DLog(@"mouseDownImpl: called");
     _mouseDownWasFirstMouse = ([event eventNumber] == _firstMouseEventNumber) || ![NSApp keyWindow];
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
     BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
@@ -2651,7 +2652,7 @@ NSMutableArray* screens=0;
         // Clicking in an inactive pane with focus follows mouse makes it active.
         // Becuase of how FFM works, this would only happen if another app were key.
         // See issue 3163.
-        DLog(@"Click on inactive pain with focus follow smouse");
+        DLog(@"Click on inactive pain with focus follows mouse");
         _mouseDownWasFirstMouse = YES;
         [[self window] makeFirstResponder:self];
         return NO;
@@ -2663,6 +2664,7 @@ NSMutableArray* screens=0;
         // to the fore and takes no additional action. If you enable alwaysAcceptFirstMouse then
         // it is treated like a normal click (issue 3236). Returning here prevents mouseDown=YES
         // which keeps -mouseUp from doing anything such as changing first responder.
+        DLog(@"returning because this was a first-mouse event.");
         return NO;
     }
     [pointer_ notifyLeftMouseDown];
@@ -2670,6 +2672,7 @@ NSMutableArray* screens=0;
     DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         [_delegate textViewBeginDrag];
+        DLog(@"Returning because of drag starting");
         return NO;
     }
     if (_numTouches == 3) {
@@ -2680,14 +2683,17 @@ NSMutableArray* screens=0;
             [pointer_ mouseDown:event
                     withTouches:_numTouches
                    ignoreOption:[_delegate xtermMouseReporting]];
+            DLog(@"Set mouseDown=YES because of 3 finger mouseDown (not emulating middle)");
             _mouseDown = YES;
         }
+        DLog(@"Returning because of 3-finger click.");
         return NO;
     }
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseDown:event
                 withTouches:_numTouches
                ignoreOption:[_delegate xtermMouseReporting]];
+        DLog(@"Returning because emulating right click.");
         return NO;
     }
 
@@ -2697,7 +2703,7 @@ NSMutableArray* screens=0;
             if ([NSApp keyWindow] == [self window]) {
                 // A cmd-click in an inactive pane in the active window behaves like a click that
                 // doesn't make the pane active.
-                DLog(@"Cmd-click in acitve pane in active window");
+                DLog(@"Cmd-click in acitve pane in active window. Set mouseDown=YES.");
                 _mouseDown = YES;
                 cmdPressed = NO;
                 _mouseDownWasFirstMouse = YES;
@@ -2706,6 +2712,7 @@ NSMutableArray* screens=0;
                 DLog(@"Cmd-click in inactive window");
                 _mouseDownWasFirstMouse = YES;
                 [[self window] makeFirstResponder:self];
+                DLog(@"Returning because of cmd-click in inactive window.");
                 return NO;
             }
         } else if ([NSApp keyWindow] != [self window]) {
@@ -2715,6 +2722,7 @@ NSMutableArray* screens=0;
         }
     }
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+        DLog(@"Returning because of drag modifiers.");
         return YES;
     }
 
@@ -2735,9 +2743,11 @@ NSMutableArray* screens=0;
         }
     }
 
+    DLog(@"Set mouseDown=YES.");
     _mouseDown = YES;
 
     if ([self reportMouseEvent:event]) {
+        DLog(@"Returning because mouse event reported.");
         return NO;
     }
 
@@ -2775,7 +2785,7 @@ NSMutableArray* screens=0;
         } else if ([_selection containsCoord:VT100GridCoordMake(x, y)]) {
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up (if a cmd-drag follows)
-            DLog(@"mouse down on selection");
+            DLog(@"mouse down on selection, returning");
             _mouseDownOnSelection = YES;
             _selection.appending = NO;
             return YES;
@@ -2812,6 +2822,7 @@ NSMutableArray* screens=0;
     DLog(@"Mouse down. selection set to %@", _selection);
     [_delegate refreshAndStartTimerIfNeeded];
 
+    DLog(@"Reached end of mouseDownImpl.");
     return NO;
 }
 
@@ -2848,24 +2859,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _firstMouseEventNumber = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (_mouseDownIsThreeFingerClick) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
+        DLog(@"Returning from mouseUp because mouse-down was a 3-finger click");
         return;
     } else if (_numTouches == 3 && mouseDown) {
         // Three finger tap is valid but not emulating middle button
         [pointer_ mouseUp:event withTouches:_numTouches];
         _mouseDown = NO;
+        DLog(@"Returning from mouseUp because there were 3 touches. Set mouseDown=NO");
         return;
     }
     dragOk_ = NO;
     _semanticHistoryDragged = NO;
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseUp:event withTouches:_numTouches];
+        DLog(@"Returning from mouseUp because we'e emulating a right click.");
         return;
     }
     const BOOL cmdActuallyPressed = (([event modifierFlags] & NSCommandKeyMask) != 0);
     const BOOL cmdPressed = cmdActuallyPressed && !_mouseDownWasFirstMouse;
     if (mouseDown == NO) {
+        DLog(@"Returning from mouseUp because the mouse was never down.");
         return;
     }
+    DLog(@"Set mouseDown=NO");
     _mouseDown = NO;
 
     [_selectionScrollHelper mouseUp];
@@ -2894,6 +2910,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // may not do anything if the pointer isn't over a clickable string.
             [self openTargetWithEvent:event];
         }
+        DLog(@"Returning from mouseUp because the mouse event was reported.");
         return;
     }
 
@@ -2974,8 +2991,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_findOnPageHelper resetFindCursor];
     }
 
+    DLog(@"Has selection=%@, delegate=%@", @([_selection hasSelection]), _delegate);
     if ([_selection hasSelection] && _delegate) {
         // if we want to copy our selection, do so
+        DLog(@"selection copies text=%@", @([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]));
         if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
             [self copySelectionAccordingToUserPreferences];
         }
@@ -3796,6 +3815,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)copySelectionAccordingToUserPreferences
 {
+    DLog(@"copySelectionAccordingToUserPreferences");
     if ([iTermAdvancedSettingsModel copyWithStylesByDefault]) {
         [self copyWithStyles:self];
     } else {
