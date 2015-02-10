@@ -223,3 +223,41 @@ class XtermWinopsTests(object):
     esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_V)
     AssertEQ(GetScreenSize(), expected_size)
 
+  @knownBug(terminal="xterm",
+      reason="GetDisplaySize reports an incorrect value, at least on Mac OS X")
+  @knownBug(terminal="iTerm2", reason="Not implemented")
+  def test_XtermWinops_Fullscreen(self):
+    original_size = GetScreenSize()
+    display_size = GetDisplaySize()
+
+    # Enter fullscreen
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
+                            esccsi.WINOP_FULLSCREEN_ENTER)
+    time.sleep(1)
+    actual_size = GetScreenSize()
+    esclog.LogInfo("Actual size is " + str(actual_size) + ", display size is " + str(display_size))
+    AssertTrue(actual_size.width() >= display_size.width())
+    AssertTrue(actual_size.height() >= display_size.height())
+
+    AssertTrue(actual_size.width() >= original_size.width())
+    AssertTrue(actual_size.height() >= original_size.height())
+
+    # Exit fullscreen
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
+                            esccsi.WINOP_FULLSCREEN_EXIT)
+    AssertEQ(GetScreenSize(), original_size)
+
+    # Toggle in
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
+                            esccsi.WINOP_FULLSCREEN_TOGGLE)
+    AssertTrue(actual_size.width() >= display_size.width())
+    AssertTrue(actual_size.height() >= display_size.height())
+
+    AssertTrue(actual_size.width() >= original_size.width())
+    AssertTrue(actual_size.height() >= original_size.height())
+
+    # Toggle out
+    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
+                            esccsi.WINOP_FULLSCREEN_TOGGLE)
+    AssertEQ(GetScreenSize(), original_size)
+
