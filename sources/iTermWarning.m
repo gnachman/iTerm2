@@ -3,6 +3,7 @@
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static NSString *const kCancel = @"Cancel";
 static id<iTermWarningHandler> gWarningHandler;
+static BOOL gShowingWarning;
 
 @implementation iTermWarning
 
@@ -73,7 +74,9 @@ static id<iTermWarningHandler> gWarningHandler;
     if (gWarningHandler) {
         result = [gWarningHandler warningWouldShowAlert:alert identifier:identifier];
     } else {
+        gShowingWarning = YES;
         result = [alert runModal];
+        gShowingWarning = NO;
     }
 
     BOOL remember = NO;
@@ -163,6 +166,10 @@ static id<iTermWarningHandler> gWarningHandler;
 + (iTermWarningSelection)savedSelectionForIdentifier:(NSString *)identifier {
     NSString *theKey = [self selectionKeyForIdentifier:identifier];
     return [[NSUserDefaults standardUserDefaults] integerForKey:theKey];
+}
+
++ (BOOL)showingWarning {
+    return gShowingWarning;
 }
 
 @end

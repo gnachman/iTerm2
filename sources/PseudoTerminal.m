@@ -2776,6 +2776,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             if (![[NSApp keyWindow] isKindOfClass:[PopupWindow class]] &&
                 ![[NSApp keyWindow] isKindOfClass:[iTermOpenQuicklyWindow class]] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
+                ![iTermWarning showingWarning] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
                 PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
                 if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
