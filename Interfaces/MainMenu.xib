@@ -615,7 +615,7 @@ DQ
                             <menuItem isSeparatorItem="YES" id="908">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Reset" keyEquivalent="r" id="907">
+                            <menuItem title="Reset" keyEquivalent="R" id="907">
                                 <connections>
                                     <action selector="reset:" target="-1" id="909"/>
                                 </connections>
