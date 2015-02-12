@@ -237,6 +237,20 @@ def CSI_DCH(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="P")
 
+def CSI_DECCRA(source_top=None, source_left=None, source_bottom=None,
+               source_right=None, source_page=None, dest_top=None,
+               dest_left=None, dest_page=None):
+  """Copy a region."""
+  params = [ source_top,
+             source_left,
+             source_bottom,
+             source_right,
+             source_page,
+             dest_top,
+             dest_left,
+             dest_page ]
+  escio.WriteCSI(params=params, intermediate="$", final="v")
+
 def CSI_DECDSR(Ps, Pid=None, suppressSideChannel=False):
   """Send device status request. Does not read response."""
   if Ps is None:

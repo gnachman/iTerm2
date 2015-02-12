@@ -240,6 +240,8 @@ def knownBug(terminal, reason, noop=False, shouldTry=True):
         # tests always pass, though.
         if not force and not noop:
           raise esctypes.InternalError("Should have failed")
+        elif noop:
+          raise esctypes.KnownBug(reason + " (test ran and passed, but is documented as a 'no-op'; the nature of the bug makes it untestable)")
       else:
         func(self, *args, **kwargs)
     return func_wrapper

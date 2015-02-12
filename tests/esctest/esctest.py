@@ -144,10 +144,28 @@ def RunTests():
       break
 
   if failed > 0:
-    esclog.LogInfo("*** %d tests passed, %d known bugs, %d TESTS FAILED ***" % (passed, knownBugs, failed))
+    esclog.LogInfo(
+        "*** %s passed, %s, %s FAILED ***" % (
+          plural("test", passed),
+          plural("known bug", knownBugs),
+          plural("TEST", failed, caps=True)))
     esclog.LogInfo("Failing tests:\n" + "\n".join(failures))
   else:
-    esclog.LogInfo("%d tests passed, %d known bugs, %d tests failed." % (passed, knownBugs, failed))
+    esclog.LogInfo(
+        "*** %s passed, %s, %s failed ***" % (
+          plural("test", passed),
+          plural("known bug", knownBugs),
+          plural("test", failed)))
+
+def plural(word, count, caps=False):
+  if count == 1:
+    suffix = ""
+  elif caps:
+    suffix = "S"
+  else:
+    suffix = "s"
+
+  return str(count) + " " + word + suffix
 
 def main():
   init()
