@@ -2612,6 +2612,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (NSString *)terminalIconTitle {
     if (allowTitleReporting_) {
+        // TODO: Should be something like screenRawName (which doesn't exist yet but would return
+        // [self rawName]), not screenWindowTitle, right?
         return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : [delegate_ screenDefaultName];
     } else {
         return @"";

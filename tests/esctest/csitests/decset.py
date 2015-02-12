@@ -52,7 +52,6 @@ class DECSETTests(object):
   def __init__(self, args):
     self._args = args
 
-  @knownBug(terminal="iTerm2", reason="iTerm2 fails to remove the scrolling region on DECSET DECCOLM.")
   def test_DECSET_DECCOLM(self):
     """Set 132 column mode."""
     # From the docs:
@@ -84,13 +83,14 @@ class DECSETTests(object):
     AssertEQ(position.y(), 1)
 
     # Write to make sure the scroll regions are gone
+    escio.Write(CR + LF)
     escio.Write("Hello")
     escio.Write(CR + LF)
     escio.Write("World")
 
     esccsi.CSI_DECSTBM()
     esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    AssertScreenCharsInRectEqual(Rect(1, 1, 5, 2), [ "Hello", "World" ])
+    AssertScreenCharsInRectEqual(Rect(1, 2, 5, 3), [ "Hello", "World" ])
     AssertScreenCharsInRectEqual(Rect(5, 5, 5, 5), [ NUL ])
 
   @knownBug(terminal="iTerm2", reason="iTerm2 has an off-by-one bug with origin mode.")

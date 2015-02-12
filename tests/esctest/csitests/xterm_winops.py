@@ -452,6 +452,8 @@ class XtermWinopsTests(object):
     AssertEQ(GetIconTitle(), string2)
 
   @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
+  @knownBug(terminal="iTerm2",
+            reason="iTerm2 incorrectly reports the window's title when the icon's title is requested.")
   def test_XtermWinops_PushMultiplePopMultiple_Icon(self):
     """Push two titles and pop twice."""
     # Generate a uniqueish string
