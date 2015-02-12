@@ -71,6 +71,11 @@ def WriteCSI(prefix="", params=[], intermediate="", final="", requestsReport=Fal
     else:
       return str(p)
   str_params = map(StringifyCSIParam, params)
+
+  # Remove trailing empty args
+  while len(str_params) > 0 and str_params[-1] == "":
+    str_params = str_params[:-1]
+
   joined_params = ";".join(str_params)
   sequence = CSI() + prefix + joined_params + intermediate + final
   LogDebug("Send sequence: " + sequence.replace(ESC, "<ESC>"))

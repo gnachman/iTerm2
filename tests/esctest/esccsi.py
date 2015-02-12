@@ -262,6 +262,14 @@ def CSI_DECDSR(Ps, Pid=None, suppressSideChannel=False):
       params = [ Ps, Pid ]
   escio.WriteCSI(params=params, prefix='?', requestsReport=suppressSideChannel, final='n')
 
+def CSI_DECERA(Pt, Pl, Pb, Pr):
+  """Erase rectangle."""
+  escio.WriteCSI(params=[ Pt, Pl, Pb, Pr ], intermediate="$", final="z")
+
+def CSI_DECFRA(Pch, Pt, Pl, Pb, Pr):
+  """Fill rectangle with Pch"""
+  escio.WriteCSI(params=[ Pch, Pt, Pl, Pb, Pr ], intermediate="$", final="x")
+
 def CSI_DECRQCRA(Pid, Pp=None, rect=None):
   """Compute the checksum (16-bit sum of ordinals) in a rectangle."""
   # xterm versions 314 and earlier incorrectly expect the Pid in the second

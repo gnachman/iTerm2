@@ -13,6 +13,10 @@
 # Reverse Attributes in Rectangular Area (DECRARA): CSI Pt ; Pl ; Pb ; Pr ; Ps $ t
 # Set warning bell volume (DECSWBV): CSI Ps SP t
 # Set margin-bell volume (DECSMBV): CSI Ps SP u
+# Enable Filter Rectangle (DECEFR): CSI Pt ; Pl ; Pb ; Pr ' w
+# Request Terminal Parameters (DECREQTPARM): CSI Ps x
+# Select Attribute Change Extent (DECSACE): CSI Ps * x
+# Request Checksum of Rectangular Area (DECRQCRA): CSI Pi ; Pg ; Pt ; Pl ; Pb ; Pr * y
 
 # Notes for future tests:
 # CSI 21 t
@@ -34,6 +38,8 @@ import da2
 import dch
 import deccra
 import decdsr
+import decera
+import decfra
 import decrc
 import decrqm
 import decscl
@@ -80,6 +86,8 @@ tests = [ ansirc.ANSIRCTests,
           dch.DCHTests,
           deccra.DECCRATests,
           decdsr.DECDSRTests,
+          decera.DECERATests,
+          decfra.DECFRATests,
           decrc.DECRCTests,
           decrqm.DECRQMTests,
           decscl.DECSCLTests,
