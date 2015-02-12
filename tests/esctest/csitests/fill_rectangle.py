@@ -8,24 +8,28 @@ class FillRectangleTests(object):
   def __init__(self, args):
     self._args = args
 
+  def data(self):
+    return [ "abcdefgh",
+             "ijklmnop",
+             "qrstuvwx",
+             "yz012345",
+             "ABCDEFGH",
+             "IJKLMNOP",
+             "QRSTUVWX",
+             "YZ6789!@" ]
+
   def prepare(self):
     esccsi.CSI_CUP(Point(1, 1))
-    escio.Write("abcdefgh" + CR + LF)
-    escio.Write("ijklmnop" + CR + LF)
-    escio.Write("qrstuvwx" + CR + LF)
-    escio.Write("yz012345" + CR + LF)
-    escio.Write("ABCDEFGH" + CR + LF)
-    escio.Write("IJKLMNOP" + CR + LF)
-    escio.Write("QRSTUVWX" + CR + LF)
-    escio.Write("YZ6789!@" + CR + LF)
+    for line in self.data():
+      escio.Write(line + CR + LF)
 
   def fill(self, top=None, left=None, bottom=None, right=None):
     """Subclasses should override this to do the appropriate fill action."""
     pass
 
-  def character(self):
-    """Subclasses should override this and return the character filled with."""
-    pass
+  def characters(self, point, count):
+    """Returns the filled characters starting at point, and count of them."""
+    return "!" * count
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
@@ -35,15 +39,14 @@ class FillRectangleTests(object):
               left=5,
               bottom=7,
               right=7)
-    c = self.character()
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 8),
                                  [ "abcdefgh",
                                    "ijklmnop",
                                    "qrstuvwx",
                                    "yz012345",
-                                   "ABCD" + c * 3 + "H",
-                                   "IJKL" + c * 3 + "P",
-                                   "QRST" + c * 3 + "X",
+                                   "ABCD" + self.characters(Point(5, 5), 3) + "H",
+                                   "IJKL" + self.characters(Point(5, 6), 3) + "P",
+                                   "QRST" + self.characters(Point(5, 7), 3) + "X",
                                    "YZ6789!@" ])
 
   @vtLevel(4)
@@ -85,7 +88,7 @@ class FillRectangleTests(object):
     for point in points:
       AssertScreenCharsInRectEqual(
           Rect(point.x(), point.y(), point.x(), point.y()),
-          [ self.character() ])
+          [ self.characters(point, 1) ])
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
@@ -112,12 +115,11 @@ class FillRectangleTests(object):
     esccsi.CSI_DECRESET(esccsi.DECOM)
 
     # See what happened.
-    c = self.character()
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 8),
                                  [ "abcdefgh",
-                                   "i" + c * 3 + "mnop",
-                                   "q" + c * 3 + "uvwx",
-                                   "y" + c * 3 + "2345",
+                                   "i" + self.characters(Point(2, 2), 3) + "mnop",
+                                   "q" + self.characters(Point(2, 3), 3) + "uvwx",
+                                   "y" + self.characters(Point(2, 4), 3) + "2345",
                                    "ABCDEFGH",
                                    "IJKLMNOP",
                                    "QRSTUVWX",
@@ -143,7 +145,8 @@ class FillRectangleTests(object):
                                       size.height() - 1,
                                       size.width(),
                                       size.height()),
-                                 [ "ab", "c" + self.character() ])
+                                 [ "ab",
+                                   "c" + self.characters(Point(size.width(), size.height()), 1) ])
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented", noop=True)
@@ -185,13 +188,12 @@ class FillRectangleTests(object):
     esccsi.CSI_DECSTBM()
 
     # Did it ignore the margins?
-    c = self.character()
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 8),
                                  [ "abcdefgh",
                                    "ijklmnop",
                                    "qrstuvwx",
                                    "yz012345",
-                                   "ABCD" + c * 3 + "H",
-                                   "IJKL" + c * 3 + "P",
-                                   "QRST" + c * 3 + "X",
+                                   "ABCD" + self.characters(Point(5, 5), 3) + "H",
+                                   "IJKL" + self.characters(Point(5, 6), 3) + "P",
+                                   "QRST" + self.characters(Point(5, 7), 3) + "X",
                                    "YZ6789!@" ])

@@ -17,6 +17,7 @@
 # Request Terminal Parameters (DECREQTPARM): CSI Ps x
 # Select Attribute Change Extent (DECSACE): CSI Ps * x
 # Request Checksum of Rectangular Area (DECRQCRA): CSI Pi ; Pg ; Pt ; Pl ; Pb ; Pr * y
+# Select Locator Events (DECSLE): CSI Pm ' {
 
 # Notes for future tests:
 # CSI 21 t
@@ -45,6 +46,7 @@ import decrqm
 import decscl
 import decsed
 import decsel
+import decsera
 import decset
 import decset_tite_inhibit
 import decstbm
@@ -93,6 +95,7 @@ tests = [ ansirc.ANSIRCTests,
           decscl.DECSCLTests,
           decsed.DECSEDTests,
           decsel.DECSELTests,
+          decsera.DECSERATests,
           decset.DECSETTests,
           decset_tite_inhibit.DECSETTiteInhibitTests,
           decstbm.DECSTBMTests,

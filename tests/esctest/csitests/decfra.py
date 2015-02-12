@@ -2,12 +2,14 @@ import csitests.fill_rectangle
 import esc
 import esccsi
 
+CHARACTER = "%"
+
 class DECFRATests(csitests.fill_rectangle.FillRectangleTests):
   def fill(self, top=None, left=None, bottom=None, right=None):
-    esccsi.CSI_DECFRA(str(ord(self.character())), top, left, bottom, right)
+    esccsi.CSI_DECFRA(str(ord(CHARACTER)), top, left, bottom, right)
 
-  def character(self):
-    return "%"
+  def characters(self, point, count):
+    return CHARACTER * count
 
   def test_DECFRA_basic(self):
     self.fillRectangle_basic()

@@ -13,8 +13,8 @@ class DECERATests(csitests.fill_rectangle.FillRectangleTests):
     else:
       return esc.NUL
 
-  def character(self):
-    return self.blank()
+  def characters(self, point, count):
+    return self.blank() * count
 
   def test_DECERA_basic(self):
     self.fillRectangle_basic()

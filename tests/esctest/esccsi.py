@@ -342,6 +342,10 @@ def CSI_DECSEL(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, prefix='?', final="K")
 
+def CSI_DECSERA(Pt, Pl, Pb, Pr):
+  """Selective erase rectangle."""
+  escio.WriteCSI(params=[ Pt, Pl, Pb, Pr ], intermediate="$", final="{")
+
 def CSI_DECSET(Pm):
   """Set the parameter |Pm|."""
   escio.WriteCSI(params=[ Pm ], prefix='?', final='h')
