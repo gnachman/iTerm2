@@ -2,7 +2,7 @@ from esc import NUL
 import esccsi
 import escio
 import esclog
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetScreenSize, knownBug, vtLevel
 from esctypes import Point, Rect
 
 class DECRQMTests(object):
@@ -12,26 +12,26 @@ class DECRQMTests(object):
     self._args = args
 
   def requestAnsiMode(self, mode):
-    esccsi.CSI_DECRQM(mode, DEC=False)
+    esccsi.DECRQM(mode, DEC=False)
     return escio.ReadCSI('$y')
 
   def requestDECMode(self, mode):
-    esccsi.CSI_DECRQM(mode, DEC=True)
+    esccsi.DECRQM(mode, DEC=True)
     return escio.ReadCSI('$y', '?')
 
   def doModifiableAnsiTest(self, mode):
       before = self.requestAnsiMode(mode)
       if before[1] == 2:
-        esccsi.CSI_SM(mode)
+        esccsi.SM(mode)
         AssertEQ(self.requestAnsiMode(mode), [ mode, 1 ])
 
-        esccsi.CSI_RM(mode)
+        esccsi.RM(mode)
         AssertEQ(self.requestAnsiMode(mode), [ mode, 2 ])
       else:
-        esccsi.CSI_RM(mode)
+        esccsi.RM(mode)
         AssertEQ(self.requestAnsiMode(mode), [ mode, 2 ])
 
-        esccsi.CSI_SM(mode)
+        esccsi.SM(mode)
         AssertEQ(self.requestAnsiMode(mode), [ mode, 1 ])
 
   def doPermanentlyResetAnsiTest(self, mode):
@@ -40,14 +40,14 @@ class DECRQMTests(object):
   def doModifiableDecTest(self, mode):
       before = self.requestDECMode(mode)
       if before[1] == 2:
-        esccsi.CSI_DECSET(mode)
+        esccsi.DECSET(mode)
         AssertEQ(self.requestDECMode(mode), [ mode, 1 ])
-        esccsi.CSI_DECRESET(mode)
+        esccsi.DECRESET(mode)
         AssertEQ(self.requestDECMode(mode), [ mode, 2 ])
       else:
-        esccsi.CSI_DECRESET(mode)
+        esccsi.DECRESET(mode)
         AssertEQ(self.requestDECMode(mode), [ mode, 2 ])
-        esccsi.CSI_DECSET(mode)
+        esccsi.DECSET(mode)
         AssertEQ(self.requestDECMode(mode), [ mode, 1 ])
 
   def doPermanentlyResetDecTest(self, mode):
@@ -142,10 +142,10 @@ class DECRQMTests(object):
   def test_DECRQM_DEC_DECCOLM(self):
     needsPermission = self._args.expected_terminal in [ "xterm", "iTerm2" ]
     if needsPermission:
-      esccsi.CSI_DECSET(esccsi.Allow80To132)
+      esccsi.DECSET(esccsi.Allow80To132)
     self.doModifiableDecTest(esccsi.DECCOLM)
     if needsPermission:
-      esccsi.CSI_DECRESET(esccsi.Allow80To132)
+      esccsi.DECRESET(esccsi.Allow80To132)
 
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECSCLM(self):
@@ -242,17 +242,16 @@ class DECRQMTests(object):
   def test_DECRQM_DEC_DECKPM(self):
     self.doModifiableDecTest(esccsi.DECKPM)
 
-  @knownBug(terminal="xterm",
-            reason="Only works in VT level 5, which is not the default.")
+  @vtLevel(5)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECNCSM(self):
     needsPermission = self._args.expected_terminal in [ "xterm", "iTerm2" ]
     if needsPermission:
-      esccsi.CSI_DECSET(esccsi.Allow80To132)
+      esccsi.DECSET(esccsi.Allow80To132)
     self.doModifiableDecTest(esccsi.DECNCSM)
     needsPermission = self._args.expected_terminal in [ "xterm", "iTerm2" ]
     if needsPermission:
-      esccsi.CSI_DECRESET(esccsi.Allow80To132)
+      esccsi.DECRESET(esccsi.Allow80To132)
 
   @knownBug(terminal="xterm", reason="Not supported")
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)

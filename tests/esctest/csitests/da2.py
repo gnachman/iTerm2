@@ -19,12 +19,12 @@ class DA2Tests(object):
 
   @knownBug(terminal="iTerm2", reason="Extra empty parameter at end of response")
   def test_DA2_NoParameter(self):
-    esccsi.CSI_DA2()
+    esccsi.DA2()
     self.handleDA2Response()
 
   @knownBug(terminal="iTerm2", reason="Extra empty parameter at end of response")
   def test_DA2_0(self):
-    esccsi.CSI_DA2(0)
+    esccsi.DA2(0)
     self.handleDA2Response()
 
 

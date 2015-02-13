@@ -4,7 +4,7 @@ George Nachman
 georgen@google.com
 
 esctest is a suite of unit tests that test a terminal emulator's similarity to a
-theoretical ideal.  The ideal is defined as "xterm, but without bugs in George's 
+theoretical ideal. That ideal is defined as "xterm, but without bugs in George's 
 opinion."
 
 The tested set of control sequences are documented somewhat tersely at this URL:

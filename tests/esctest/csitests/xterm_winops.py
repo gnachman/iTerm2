@@ -18,23 +18,23 @@ class XtermWinopsTests(object):
 
   def test_XtermWinops_IconifyDeiconfiy(self):
     needsSleep = self._args.expected_terminal in [ "xterm" ]
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_ICONIFY)
+    esccsi.XTERM_WINOPS(esccsi.WINOP_ICONIFY)
     if needsSleep:
       time.sleep(1)
     AssertEQ(GetIsIconified(), True)
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_DEICONIFY)
+    esccsi.XTERM_WINOPS(esccsi.WINOP_DEICONIFY)
     if needsSleep:
       time.sleep(1)
     AssertEQ(GetIsIconified(), False)
 
   def test_XtermWinops_MoveToXY(self):
     needsSleep = self._args.expected_terminal in [ "xterm" ]
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MOVE, 0, 0)
+    esccsi.XTERM_WINOPS(esccsi.WINOP_MOVE, 0, 0)
     if needsSleep:
       time.sleep(0.1)
     AssertEQ(GetWindowPosition(), Point(0, 0))
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MOVE, 1, 1)
+    esccsi.XTERM_WINOPS(esccsi.WINOP_MOVE, 1, 1)
     if needsSleep:
       time.sleep(0.1)
     AssertEQ(GetWindowPosition(), Point(1, 1))
@@ -44,7 +44,7 @@ class XtermWinopsTests(object):
     original_size = GetWindowSizePixels()
     desired_size = Size(400, 200)
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             desired_size.height(),
                             desired_size.width())
     # See if we're within 20px of the desired size on each dimension. It won't
@@ -56,7 +56,7 @@ class XtermWinopsTests(object):
     AssertTrue(error.width() <= max_error)
     AssertTrue(error.height() <= max_error)
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             original_size.height(),
                             original_size.width())
 
@@ -66,7 +66,7 @@ class XtermWinopsTests(object):
     original_size = GetWindowSizePixels()
     desired_size = Size(400, original_size.height())
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             None,
                             desired_size.width())
     # See if we're within 20px of the desired size. It won't be exact because
@@ -78,7 +78,7 @@ class XtermWinopsTests(object):
     AssertTrue(error.width() <= max_error)
     AssertTrue(error.height() <= max_error)
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             original_size.height(),
                             original_size.width())
 
@@ -88,7 +88,7 @@ class XtermWinopsTests(object):
     original_size = GetWindowSizePixels()
     desired_size = Size(original_size.width(), 200)
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             desired_size.height())
     # See if we're within 20px of the desired size. It won't be exact because
     # most terminals snap to grid.
@@ -99,7 +99,7 @@ class XtermWinopsTests(object):
     AssertTrue(error.width() <= max_error)
     AssertTrue(error.height() <= max_error)
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             original_size.height(),
                             original_size.width())
 
@@ -112,7 +112,7 @@ class XtermWinopsTests(object):
 
     # Set height and maximize width.
     desired_height = 200
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             desired_height,
                             0)
 
@@ -129,7 +129,7 @@ class XtermWinopsTests(object):
     AssertTrue(abs(display_size.width() - screen_size.width()) < max_error)
 
     # Restore to original size.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             original_size.height(),
                             original_size.width())
 
@@ -142,7 +142,7 @@ class XtermWinopsTests(object):
 
     # Set height and maximize width.
     desired_width = 400
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             0,
                             desired_width)
 
@@ -159,7 +159,7 @@ class XtermWinopsTests(object):
     AssertTrue(abs(display_size.height() - screen_size.height()) < max_error)
 
     # Restore to original size.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_PIXELS,
                             original_size.height(),
                             original_size.width())
 
@@ -167,7 +167,7 @@ class XtermWinopsTests(object):
     """Resize the window to a character size, giving both parameters."""
     desired_size = Size(20, 21)
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
                             desired_size.height(),
                             desired_size.width())
     AssertEQ(GetScreenSize(), desired_size)
@@ -181,7 +181,7 @@ class XtermWinopsTests(object):
     max_size = GetDisplaySize()
     desired_size = Size(max_size.width(), 21)
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
                             desired_size.height(),
                             0)
     AssertEQ(GetScreenSize(), desired_size)
@@ -195,7 +195,7 @@ class XtermWinopsTests(object):
     max_size = GetDisplaySize()
     desired_size = Size(20, max_size.height())
 
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
                             0,
                             desired_size.width())
     AssertEQ(GetScreenSize(), desired_size)
@@ -204,7 +204,7 @@ class XtermWinopsTests(object):
       reason="GetDisplaySize reports an incorrect value")
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermWinops_MaximizeWindow_HorizontallyAndVertically(self):
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_HV)
+    esccsi.XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_HV)
     AssertEQ(GetScreenSize(), GetDisplaySize())
 
   @knownBug(terminal="xterm",
@@ -215,7 +215,7 @@ class XtermWinopsTests(object):
     original_size = GetScreenSize()
     expected_size = Size(width=display_size.width(),
                          height=original_size.height())
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_H)
+    esccsi.XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_H)
     AssertEQ(GetScreenSize(), expected_terminal)
 
   @knownBug(terminal="xterm",
@@ -226,7 +226,7 @@ class XtermWinopsTests(object):
     original_size = GetScreenSize()
     expected_size = Size(width=original_size.width(),
                          height=display_size.height())
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_V)
+    esccsi.XTERM_WINOPS(esccsi.WINOP_MAXIMIZE, esccsi.WINOP_MAXIMIZE_V)
     AssertEQ(GetScreenSize(), expected_size)
 
   @knownBug(terminal="xterm",
@@ -237,7 +237,7 @@ class XtermWinopsTests(object):
     display_size = GetDisplaySize()
 
     # Enter fullscreen
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
                             esccsi.WINOP_FULLSCREEN_ENTER)
     time.sleep(1)
     actual_size = GetScreenSize()
@@ -248,12 +248,12 @@ class XtermWinopsTests(object):
     AssertTrue(actual_size.height() >= original_size.height())
 
     # Exit fullscreen
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
                             esccsi.WINOP_FULLSCREEN_EXIT)
     AssertEQ(GetScreenSize(), original_size)
 
     # Toggle in
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
                             esccsi.WINOP_FULLSCREEN_TOGGLE)
     AssertTrue(actual_size.width() >= display_size.width())
     AssertTrue(actual_size.height() >= display_size.height())
@@ -262,7 +262,7 @@ class XtermWinopsTests(object):
     AssertTrue(actual_size.height() >= original_size.height())
 
     # Toggle out
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_FULLSCREEN,
                             esccsi.WINOP_FULLSCREEN_TOGGLE)
     AssertEQ(GetScreenSize(), original_size)
 
@@ -295,7 +295,7 @@ class XtermWinopsTests(object):
     escosc.ChangeWindowAndIconTitle(string)
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), string)
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                             esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
 
     # Change to x, make sure it took.
@@ -305,7 +305,7 @@ class XtermWinopsTests(object):
     AssertEQ(GetIconTitle(), "x")
 
     # Pop both window and icon titles, ensure correct.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_ICON_AND_WINDOW)
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), string)
@@ -322,7 +322,7 @@ class XtermWinopsTests(object):
     escosc.ChangeWindowAndIconTitle(string)
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), string)
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                             esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
 
     # Change to x, make sure it took.
@@ -332,13 +332,13 @@ class XtermWinopsTests(object):
     AssertEQ(GetIconTitle(), "x")
 
     # Pop icon title, ensure correct.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_ICON)
     AssertEQ(GetWindowTitle(), "x")
     AssertEQ(GetIconTitle(), string)
 
     # Try to pop the window title; should do nothing.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_WINDOW)
     AssertEQ(GetWindowTitle(), "x")
     AssertEQ(GetIconTitle(), string)
@@ -355,7 +355,7 @@ class XtermWinopsTests(object):
     escosc.ChangeWindowAndIconTitle(string)
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), string)
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                             esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
 
     # Change to x, make sure it took.
@@ -365,13 +365,13 @@ class XtermWinopsTests(object):
     AssertEQ(GetIconTitle(), "x")
 
     # Pop icon title, ensure correct.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_WINDOW)
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), "x")
 
     # Try to pop the icon title; should do nothing.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_ICON)
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), "x")
@@ -387,14 +387,14 @@ class XtermWinopsTests(object):
     # Set the window and icon title, then push both.
     escosc.ChangeWindowTitle("x")
     escosc.ChangeIconTitle(string)
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                             esccsi.WINOP_PUSH_TITLE_ICON)
 
     # Change to x.
     escosc.ChangeIconTitle("y")
 
     # Pop icon title, ensure correct.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_ICON)
     AssertEQ(GetWindowTitle(), "x")
     AssertEQ(GetIconTitle(), string)
@@ -410,14 +410,14 @@ class XtermWinopsTests(object):
     # Set the window and icon title, then push both.
     escosc.ChangeIconTitle("x")
     escosc.ChangeWindowTitle(string)
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                             esccsi.WINOP_PUSH_TITLE_WINDOW)
 
     # Change to x.
     escosc.ChangeWindowTitle("y")
 
     # Pop window title, ensure correct.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_WINDOW)
     AssertEQ(GetIconTitle(), "x")
     AssertEQ(GetWindowTitle(), string)
@@ -436,9 +436,9 @@ class XtermWinopsTests(object):
     escosc.ChangeIconTitle(string2)
 
     # Push icon then window
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                             esccsi.WINOP_PUSH_TITLE_ICON)
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                             esccsi.WINOP_PUSH_TITLE_WINDOW)
 
     # Change both to known values.
@@ -446,7 +446,7 @@ class XtermWinopsTests(object):
     escosc.ChangeIconTitle("z")
 
     # Pop both titles.
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_ICON_AND_WINDOW)
     AssertEQ(GetWindowTitle(), string1)
     AssertEQ(GetIconTitle(), string2)
@@ -465,19 +465,19 @@ class XtermWinopsTests(object):
       escosc.ChangeIconTitle(title)
 
       # Push
-      esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+      esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                               esccsi.WINOP_PUSH_TITLE_ICON)
 
     # Change to known values.
     escosc.ChangeIconTitle("z")
 
     # Pop
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_ICON)
     AssertEQ(GetIconTitle(), string2)
 
     # Pop
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_ICON)
     AssertEQ(GetIconTitle(), string1)
 
@@ -495,19 +495,19 @@ class XtermWinopsTests(object):
       escosc.ChangeWindowTitle(title)
 
       # Push
-      esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
+      esccsi.XTERM_WINOPS(esccsi.WINOP_PUSH_TITLE,
                               esccsi.WINOP_PUSH_TITLE_WINDOW)
 
     # Change to known values.
     escosc.ChangeWindowTitle("z")
 
     # Pop
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_WINDOW)
     AssertEQ(GetWindowTitle(), string2)
 
     # Pop
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_POP_TITLE_WINDOW)
     AssertEQ(GetWindowTitle(), string1)
 
@@ -515,13 +515,13 @@ class XtermWinopsTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermWinops_DECSLPP(self):
     """Resize to n lines of height."""
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS,
                             10,
                             90)
     AssertEQ(GetScreenSize(), Size(90, 10))
 
-    esccsi.CSI_XTERM_WINOPS(24)
+    esccsi.XTERM_WINOPS(24)
     AssertEQ(GetScreenSize(), Size(90, 24))
 
-    esccsi.CSI_XTERM_WINOPS(30)
+    esccsi.XTERM_WINOPS(30)
     AssertEQ(GetScreenSize(), Size(90, 30))

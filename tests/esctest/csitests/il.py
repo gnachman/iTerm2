@@ -16,14 +16,14 @@ class ILTests(object):
 
     With the cursor on the 'h'.
     """
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     escio.Write("abcde")
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.CUP(Point(1, 2))
     escio.Write("fghij")
-    esccsi.CSI_CUP(Point(1, 3))
+    esccsi.CUP(Point(1, 3))
     escio.Write("klmno")
 
-    esccsi.CSI_CUP(Point(2, 3))
+    esccsi.CUP(Point(2, 3))
 
   def prepare_region(self):
     # The capital letters are in the scroll region
@@ -33,20 +33,20 @@ class ILTests(object):
               "pQRSt",
               "uvwxy" ]
     for i in xrange(len(lines)):
-      esccsi.CSI_CUP(Point(1, i + 1))
+      esccsi.CUP(Point(1, i + 1))
       escio.Write(lines[i])
 
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 4)
-    esccsi.CSI_DECSTBM(2, 4)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 4)
+    esccsi.DECSTBM(2, 4)
 
     # Place cursor on the 'H'
-    esccsi.CSI_CUP(Point(3, 2))
+    esccsi.CUP(Point(3, 2))
 
   def test_IL_DefaultParam(self):
     """Should insert a single line below the cursor."""
     self.prepare_wide();
-    esccsi.CSI_IL()
+    esccsi.IL()
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 4),
                                  [ "abcde",
                                    "fghij",
@@ -56,7 +56,7 @@ class ILTests(object):
   def test_IL_ExplicitParam(self):
     """Should insert two lines below the cursor."""
     self.prepare_wide();
-    esccsi.CSI_IL(2)
+    esccsi.IL(2)
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5),
                                  [ "abcde",
                                    "fghij",
@@ -68,10 +68,10 @@ class ILTests(object):
     """Lines should be scrolled off the bottom of the screen."""
     height = GetScreenSize().height()
     for i in xrange(height):
-      esccsi.CSI_CUP(Point(1, i + 1))
+      esccsi.CUP(Point(1, i + 1))
       escio.Write("%04d" % (i + 1))
-    esccsi.CSI_CUP(Point(1, 2))
-    esccsi.CSI_IL()
+    esccsi.CUP(Point(1, 2))
+    esccsi.IL()
 
     expected = 1
     for i in xrange(height):
@@ -87,10 +87,10 @@ class ILTests(object):
     within the scroll regions hould be scrolled down; lines within should
     remain unaffected."""
     self.prepare_region()
-    esccsi.CSI_IL()
+    esccsi.IL()
 
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5),
                                  [ "abcde",
@@ -102,10 +102,10 @@ class ILTests(object):
   def test_IL_RespectsScrollRegion_Over(self):
     """Scroll by more than the available space in a region."""
     self.prepare_region()
-    esccsi.CSI_IL(99)
+    esccsi.IL(99)
 
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5),
                                  [ "abcde",
@@ -117,11 +117,11 @@ class ILTests(object):
   def test_IL_AboveScrollRegion(self):
     """IL is a no-op outside the scroll region."""
     self.prepare_region()
-    esccsi.CSI_CUP(Point(1, 1))
-    esccsi.CSI_IL()
+    esccsi.CUP(Point(1, 1))
+    esccsi.IL()
 
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5),
                                  [ "abcde",

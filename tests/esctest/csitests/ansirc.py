@@ -7,10 +7,10 @@ class ANSIRCTests(SaveRestoreCursorTests):
     SaveRestoreCursorTests.__init__(self, args)
 
   def saveCursor(self):
-    esccsi.CSI_ANSISC()
+    esccsi.ANSISC()
 
   def restoreCursor(self):
-    esccsi.CSI_ANSIRC()
+    esccsi.ANSIRC()
 
   @knownBug(terminal="iTerm2", reason="Does not reset origin mode.")
   def test_SaveRestoreCursor_ResetsOriginMode(self):

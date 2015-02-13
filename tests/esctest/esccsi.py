@@ -119,15 +119,15 @@ TSM = 18
 TTM = 16
 VEM = 7
 
-def CSI_ANSIRC():
+def ANSIRC():
   """Restore cursor."""
   escio.WriteCSI(final="u")
 
-def CSI_ANSISC():
+def ANSISC():
   """Save cursor."""
   escio.WriteCSI(final="s")
 
-def CSI_CBT(Pn=None):
+def CBT(Pn=None):
   """Move cursor back by Pn tab stops or to left margin. Default is 1."""
   if Pn is None:
     params = []
@@ -135,7 +135,7 @@ def CSI_CBT(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="Z")
 
-def CSI_CHA(Pn=None):
+def CHA(Pn=None):
   """Move cursor to Pn column, or first column by default."""
   if Pn is None:
     params = []
@@ -143,7 +143,7 @@ def CSI_CHA(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="G")
 
-def CSI_CHT(Ps=None):
+def CHT(Ps=None):
   """Move cursor forward by Ps tab stops (default is 1)."""
   if Ps is None:
     params = []
@@ -151,7 +151,7 @@ def CSI_CHT(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="I")
 
-def CSI_CNL(Ps=None):
+def CNL(Ps=None):
   """Cursor down Ps times and to the left margin."""
   if Ps is None:
     params = []
@@ -159,7 +159,7 @@ def CSI_CNL(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="E")
 
-def CSI_CPL(Ps=None):
+def CPL(Ps=None):
   """Cursor up Ps times and to the left margin."""
   if Ps is None:
     params = []
@@ -167,7 +167,7 @@ def CSI_CPL(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="F")
 
-def CSI_CUB(Ps=None):
+def CUB(Ps=None):
   """Cursor left Ps times."""
   if Ps is None:
     params = []
@@ -175,7 +175,7 @@ def CSI_CUB(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="D")
 
-def CSI_CUD(Ps=None):
+def CUD(Ps=None):
   """Cursor down Ps times."""
   if Ps is None:
     params = []
@@ -183,7 +183,7 @@ def CSI_CUD(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="B")
 
-def CSI_CUF(Ps=None):
+def CUF(Ps=None):
   """Cursor right Ps times."""
   if Ps is None:
     params = []
@@ -191,7 +191,7 @@ def CSI_CUF(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="C")
 
-def CSI_CUP(point=None, row=None, col=None):
+def CUP(point=None, row=None, col=None):
   """ Move cursor to |point| """
   if point is None and row is None and col is None:
     escio.WriteCSI(params=[ ], final="H")
@@ -205,7 +205,7 @@ def CSI_CUP(point=None, row=None, col=None):
   else:
     escio.WriteCSI(params=[ point.y(), point.x() ], final="H")
 
-def CSI_CUU(Ps=None):
+def CUU(Ps=None):
   """Cursor up Ps times."""
   if Ps is None:
     params = []
@@ -213,7 +213,7 @@ def CSI_CUU(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="A")
 
-def CSI_DA(Ps=None):
+def DA(Ps=None):
   """Request primary device attributes."""
   if Ps is None:
     params = []
@@ -221,7 +221,7 @@ def CSI_DA(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="c")
 
-def CSI_DA2(Ps=None):
+def DA2(Ps=None):
   """Request secondary device attributes."""
   if Ps is None:
     params = []
@@ -229,7 +229,7 @@ def CSI_DA2(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, prefix='>', final="c")
 
-def CSI_DCH(Ps=None):
+def DCH(Ps=None):
   """Delete Ps characters at cursor."""
   if Ps is None:
     params = []
@@ -237,7 +237,7 @@ def CSI_DCH(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="P")
 
-def CSI_DECCRA(source_top=None, source_left=None, source_bottom=None,
+def DECCRA(source_top=None, source_left=None, source_bottom=None,
                source_right=None, source_page=None, dest_top=None,
                dest_left=None, dest_page=None):
   """Copy a region."""
@@ -251,7 +251,15 @@ def CSI_DECCRA(source_top=None, source_left=None, source_bottom=None,
              dest_page ]
   escio.WriteCSI(params=params, intermediate="$", final="v")
 
-def CSI_DECDSR(Ps, Pid=None, suppressSideChannel=False):
+def DECDC(Pn=None):
+  """Delete column at cursor."""
+  if Pn is not None:
+    params = [ Pn ]
+  else:
+    params = []
+  escio.WriteCSI(params=params, intermediate="'", final="~")
+
+def DECDSR(Ps, Pid=None, suppressSideChannel=False):
   """Send device status request. Does not read response."""
   if Ps is None:
     params = []
@@ -262,15 +270,23 @@ def CSI_DECDSR(Ps, Pid=None, suppressSideChannel=False):
       params = [ Ps, Pid ]
   escio.WriteCSI(params=params, prefix='?', requestsReport=suppressSideChannel, final='n')
 
-def CSI_DECERA(Pt, Pl, Pb, Pr):
+def DECERA(Pt, Pl, Pb, Pr):
   """Erase rectangle."""
   escio.WriteCSI(params=[ Pt, Pl, Pb, Pr ], intermediate="$", final="z")
 
-def CSI_DECFRA(Pch, Pt, Pl, Pb, Pr):
+def DECFRA(Pch, Pt, Pl, Pb, Pr):
   """Fill rectangle with Pch"""
   escio.WriteCSI(params=[ Pch, Pt, Pl, Pb, Pr ], intermediate="$", final="x")
 
-def CSI_DECRQCRA(Pid, Pp=None, rect=None):
+def DECIC(Pn=None):
+  """Insert column at cursor."""
+  if Pn is not None:
+    params = [ Pn ]
+  else:
+    params = []
+  escio.WriteCSI(params=params, intermediate="'", final="}")
+
+def DECRQCRA(Pid, Pp=None, rect=None):
   """Compute the checksum (16-bit sum of ordinals) in a rectangle."""
   # xterm versions 314 and earlier incorrectly expect the Pid in the second
   # argument and ignore Pp.
@@ -290,18 +306,18 @@ def CSI_DECRQCRA(Pid, Pp=None, rect=None):
 
   escio.WriteCSI(params=params, intermediate='*', final='y', requestsReport=True)
 
-def CSI_DECRQM(mode, DEC):
+def DECRQM(mode, DEC):
   """Requests if a mode is set or not."""
   if DEC:
     escio.WriteCSI(params=[ mode ], intermediate='$', prefix='?', final='p')
   else:
     escio.WriteCSI(params=[ mode ], intermediate='$', final='p')
 
-def CSI_DECRESET(Pm):
+def DECRESET(Pm):
   """Reset the parameter |Pm|."""
   escio.WriteCSI(params=[ Pm ], prefix='?', final='l')
 
-def CSI_DECSASD(Ps=None):
+def DECSASD(Ps=None):
   """Direct output to status line if Ps is 1, to main display if 0."""
   if Ps is None:
     params = []
@@ -309,7 +325,7 @@ def CSI_DECSASD(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, intermediate='$', final="}")
 
-def CSI_DECSCA(Ps=None):
+def DECSCA(Ps=None):
   """Turn on character protection if Ps is 1, off if 0."""
   if Ps is None:
     params = []
@@ -317,7 +333,7 @@ def CSI_DECSCA(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, intermediate='"', final="q")
 
-def CSI_DECSCL(level, sevenBit=None):
+def DECSCL(level, sevenBit=None):
   """Level should be one of 61, 62, 63, or 64. sevenBit can be 0 or 1, or not
   specified."""
   if sevenBit is None:
@@ -326,7 +342,7 @@ def CSI_DECSCL(level, sevenBit=None):
     params = [ level, sevenBit ]
   escio.WriteCSI(params=params, intermediate='"', final="p")
 
-def CSI_DECSED(Ps=None):
+def DECSED(Ps=None):
   """Like ED but respects character protection."""
   if Ps is None:
     params = []
@@ -334,7 +350,7 @@ def CSI_DECSED(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, prefix='?', final="J")
 
-def CSI_DECSEL(Ps=None):
+def DECSEL(Ps=None):
   """Like EL but respects character protection."""
   if Ps is None:
     params = []
@@ -342,19 +358,19 @@ def CSI_DECSEL(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, prefix='?', final="K")
 
-def CSI_DECSERA(Pt, Pl, Pb, Pr):
+def DECSERA(Pt, Pl, Pb, Pr):
   """Selective erase rectangle."""
   escio.WriteCSI(params=[ Pt, Pl, Pb, Pr ], intermediate="$", final="{")
 
-def CSI_DECSET(Pm):
+def DECSET(Pm):
   """Set the parameter |Pm|."""
   escio.WriteCSI(params=[ Pm ], prefix='?', final='h')
 
-def CSI_DECSLRM(Pl, Pr):
+def DECSLRM(Pl, Pr):
   """Set the left and right margins."""
   escio.WriteCSI(params=[ Pl, Pr ], final='s')
 
-def CSI_DECSTBM(top=None, bottom=None):
+def DECSTBM(top=None, bottom=None):
   """Set Scrolling Region [top;bottom] (default = full size of window)."""
   params = []
   if top is not None:
@@ -364,11 +380,11 @@ def CSI_DECSTBM(top=None, bottom=None):
 
   escio.WriteCSI(params=params, final="r")
 
-def CSI_DECSTR():
+def DECSTR():
   """Soft reset."""
   escio.WriteCSI(prefix='!', final='p')
 
-def CSI_DL(Pn=None):
+def DL(Pn=None):
   """Delete |Pn| lines at the cursor. Default value is 1."""
   if Pn is None:
     params = []
@@ -376,7 +392,7 @@ def CSI_DL(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="M")
 
-def CSI_DSR(Ps, suppressSideChannel=False):
+def DSR(Ps, suppressSideChannel=False):
   """Send device status request. Does not read response."""
   if Ps is None:
     params = []
@@ -384,7 +400,7 @@ def CSI_DSR(Ps, suppressSideChannel=False):
     params = [ Ps ]
   escio.WriteCSI(params=params, requestsReport=suppressSideChannel, final='n')
 
-def CSI_ECH(Pn=None):
+def ECH(Pn=None):
   """Erase |Pn| characters starting at the cursor. Default value is 1."""
   if Pn is None:
     params = []
@@ -392,7 +408,7 @@ def CSI_ECH(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="X")
 
-def CSI_ED(Ps=None):
+def ED(Ps=None):
   """Erase characters, clearing display attributes. Works in or out of scrolling regions.
 
   Ps = 0 (default): From the cursor through the end of the display
@@ -405,7 +421,7 @@ def CSI_ED(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="J")
 
-def CSI_EL(Ps=None):
+def EL(Ps=None):
   """Erase in the active line.
 
   Ps = 0 (default): Erase to right of cursor
@@ -418,7 +434,7 @@ def CSI_EL(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="K")
 
-def CSI_HPA(Pn=None):
+def HPA(Pn=None):
   """Position the cursor at the Pn'th column. Default value is 1."""
   if Pn is None:
     params = []
@@ -426,7 +442,7 @@ def CSI_HPA(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="`")
 
-def CSI_HPR(Pn=None):
+def HPR(Pn=None):
   """Position the cursor at the Pn'th column relative to its current position.
   Default value is 1."""
   if Pn is None:
@@ -435,7 +451,7 @@ def CSI_HPR(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="a")
 
-def CSI_HVP(point=None, row=None, col=None):
+def HVP(point=None, row=None, col=None):
   """ Move cursor to |point| """
   if point is None and row is None and col is None:
     escio.WriteCSI(params=[ ], final="H")
@@ -449,7 +465,7 @@ def CSI_HVP(point=None, row=None, col=None):
   else:
     escio.WriteCSI(params=[ point.y(), point.x() ], final="f")
 
-def CSI_ICH(Pn=None):
+def ICH(Pn=None):
   """ Insert |Pn| blanks at cursor. Cursor does not move. """
   if Pn is None:
     params = []
@@ -457,7 +473,7 @@ def CSI_ICH(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="@")
 
-def CSI_IL(Pn=None):
+def IL(Pn=None):
   """Insert |Pn| blank lines after the cursor. Default value is 1."""
   if Pn is None:
     params = []
@@ -465,7 +481,7 @@ def CSI_IL(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="L")
 
-def CSI_REP(Ps=None):
+def REP(Ps=None):
   """Repeat the preceding character |Ps| times. Undocumented default is 1."""
   if Ps is None:
     params = []
@@ -473,7 +489,7 @@ def CSI_REP(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="b")
 
-def CSI_RM(Pm=None):
+def RM(Pm=None):
   """Reset mode."""
   if Pm is None:
     params = []
@@ -481,14 +497,14 @@ def CSI_RM(Pm=None):
     params = [ Pm ]
   escio.WriteCSI(params=params, final="l")
 
-def CSI_RM_Title(Ps1, Ps2=None):
+def RM_Title(Ps1, Ps2=None):
   """Reset title mode."""
   params = [ Ps1 ]
   if Ps2 is not None:
     params.append(Ps2)
   escio.WriteCSI(params=params, prefix=">", final="T")
 
-def CSI_SD(Ps=None):
+def SD(Ps=None):
   """Scroll down by |Ps| lines. Default value is 1."""
   if Ps is None:
     params = []
@@ -496,7 +512,7 @@ def CSI_SD(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="T")
 
-def CSI_SM(Pm=None):
+def SM(Pm=None):
   """Set mode."""
   if Pm is None:
     params = []
@@ -504,14 +520,14 @@ def CSI_SM(Pm=None):
     params = [ Pm ]
   escio.WriteCSI(params=params, final="h")
 
-def CSI_SM_Title(Ps1, Ps2=None):
+def SM_Title(Ps1, Ps2=None):
   """Set title mode."""
   params = [ Ps1 ]
   if Ps2 is not None:
     params.append(Ps2)
   escio.WriteCSI(params=params, prefix=">", final="t")
 
-def CSI_SU(Ps=None):
+def SU(Ps=None):
   """Scroll up by |Ps| lines. Default value is 1."""
   if Ps is None:
     params = []
@@ -519,7 +535,7 @@ def CSI_SU(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="S")
 
-def CSI_TBC(Ps=None):
+def TBC(Ps=None):
   """Clear tab stop. Default arg is 0 (clear tabstop at cursor)."""
   if Ps is None:
     params = []
@@ -527,7 +543,7 @@ def CSI_TBC(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="g")
 
-def CSI_VPA(Ps=None):
+def VPA(Ps=None):
   """Move to line |Ps|. Default value is 1."""
   if Ps is None:
     params = []
@@ -535,7 +551,7 @@ def CSI_VPA(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="d")
 
-def CSI_VPR(Ps=None):
+def VPR(Ps=None):
   """Move down by |Ps| rows. Default value is 1."""
   if Ps is None:
     params = []
@@ -543,7 +559,7 @@ def CSI_VPR(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="e")
 
-def CSI_XTERM_RESTORE(Ps=None):
+def XTERM_RESTORE(Ps=None):
   """Restore given DEC private mode parameters."""
   if Ps is None:
     params = []
@@ -551,7 +567,7 @@ def CSI_XTERM_RESTORE(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, prefix="?", final="r")
 
-def CSI_XTERM_SAVE(Ps=None):
+def XTERM_SAVE(Ps=None):
   """Save given DEC private mode parameters."""
   if Ps is None:
     params = []
@@ -559,7 +575,7 @@ def CSI_XTERM_SAVE(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, prefix="?", final="s")
 
-def CSI_XTERM_WINOPS(Ps1=None, Ps2=None, Ps3=None):
+def XTERM_WINOPS(Ps1=None, Ps2=None, Ps3=None):
   if Ps3 is not None:
     params = [ Ps1, Ps2, Ps3 ]
   elif Ps2 is not None:

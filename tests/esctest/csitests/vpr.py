@@ -10,8 +10,8 @@ class VPRTests(object):
 
   def test_VPR_DefaultParams(self):
     """With no params, VPR moves right by 1."""
-    esccsi.CSI_CUP(Point(1, 6))
-    esccsi.CSI_VPR()
+    esccsi.CUP(Point(1, 6))
+    esccsi.VPR()
 
     position = GetCursorPosition()
     AssertEQ(position.y(), 7)
@@ -19,11 +19,11 @@ class VPRTests(object):
   def test_VPR_StopsAtBottomEdge(self):
     """VPR won't go past the bottom edge."""
     # Position on 5th column
-    esccsi.CSI_CUP(Point(5, 6))
+    esccsi.CUP(Point(5, 6))
 
     # Try to move 10 past the bottom edge
     size = GetScreenSize()
-    esccsi.CSI_VPR(size.height() + 10)
+    esccsi.VPR(size.height() + 10)
 
     # Ensure at the bottom edge on same column
     position = GetCursorPosition()
@@ -32,8 +32,8 @@ class VPRTests(object):
 
   def test_VPR_DoesNotChangeColumn(self):
     """VPR moves the specified row and does not change the column."""
-    esccsi.CSI_CUP(Point(5, 6))
-    esccsi.CSI_VPR(2)
+    esccsi.CUP(Point(5, 6))
+    esccsi.VPR(2)
 
     position = GetCursorPosition()
     AssertEQ(position.x(), 5)
@@ -42,27 +42,27 @@ class VPRTests(object):
   def test_VPR_IgnoresOriginMode(self):
     """VPR continues to work in origin mode."""
     # Set a scroll region.
-    esccsi.CSI_DECSTBM(6, 11)
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(5, 10)
+    esccsi.DECSTBM(6, 11)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(5, 10)
 
     # Enter origin mode
-    esccsi.CSI_DECSET(esccsi.DECOM)
+    esccsi.DECSET(esccsi.DECOM)
 
     # Move to center of region
-    esccsi.CSI_CUP(Point(2, 2))
+    esccsi.CUP(Point(2, 2))
     escio.Write('X')
 
     # Move down by 2
-    esccsi.CSI_VPR(2)
+    esccsi.VPR(2)
     escio.Write('Y')
 
     # Exit origin mode
-    esccsi.CSI_DECRESET(esccsi.DECOM)
+    esccsi.DECRESET(esccsi.DECOM)
 
     # Reset margins
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
 
     # See what happened
     AssertScreenCharsInRectEqual(Rect(6, 7, 7, 9), [ 'X' + NUL,

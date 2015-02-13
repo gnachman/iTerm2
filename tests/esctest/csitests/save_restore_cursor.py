@@ -31,57 +31,57 @@ class SaveRestoreCursorTests(object):
     self._args = args
 
   def test_SaveRestoreCursor_Basic(self):
-    esccsi.CSI_CUP(Point(5, 6))
+    esccsi.CUP(Point(5, 6))
     self.saveCursor()
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     self.restoreCursor()
     AssertEQ(GetCursorPosition(), Point(5, 6))
 
   def test_SaveRestoreCursor_MoveToHomeWhenNotSaved(self):
-    esccsi.CSI_DECSTR()
-    esccsi.CSI_CUP(Point(5, 6))
+    esccsi.DECSTR()
+    esccsi.CUP(Point(5, 6))
     self.restoreCursor()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
   def test_SaveRestoreCursor_ResetsOriginMode(self):
-    esccsi.CSI_CUP(Point(5, 6))
+    esccsi.CUP(Point(5, 6))
     self.saveCursor()
 
     # Set up margins.
-    esccsi.CSI_DECSTBM(5, 7)
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(5, 7)
+    esccsi.DECSTBM(5, 7)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(5, 7)
 
     # Enter origin mode.
-    esccsi.CSI_DECSET(esccsi.DECOM)
+    esccsi.DECSET(esccsi.DECOM)
 
     # Do DECRC, which should reset origin mode.
     self.restoreCursor()
 
     # Move home
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
 
     # Place an X at cursor, which should be at (1, 1) if DECOM was reset.
     escio.Write("X")
 
     # Remove margins and ensure origin mode is off for valid test.
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
-    esccsi.CSI_DECRESET(esccsi.DECOM)
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
+    esccsi.DECRESET(esccsi.DECOM)
 
     # Ensure the X was placed at the true origin
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "X" ])
 
   def test_SaveRestoreCursor_WorksInLRM(self, shouldWork=True):
     """Subclasses may cause shouldWork to be set to false."""
-    esccsi.CSI_CUP(Point(2, 3))
+    esccsi.CUP(Point(2, 3))
     self.saveCursor()
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(1, 10)
-    esccsi.CSI_CUP(Point(5, 6))
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(1, 10)
+    esccsi.CUP(Point(5, 6))
     self.saveCursor()
 
-    esccsi.CSI_CUP(Point(4, 5))
+    esccsi.CUP(Point(4, 5))
     self.restoreCursor()
 
     if shouldWork:

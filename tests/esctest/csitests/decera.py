@@ -5,7 +5,7 @@ from escutil import knownBug
 
 class DECERATests(csitests.fill_rectangle.FillRectangleTests):
   def fill(self, top=None, left=None, bottom=None, right=None):
-    esccsi.CSI_DECERA(top, left, bottom, right)
+    esccsi.DECERA(top, left, bottom, right)
 
   def blank(self):
     if self._args.expected_terminal == "xterm":

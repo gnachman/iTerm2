@@ -22,11 +22,11 @@ class DATests(object):
     AssertEQ(params, expected)
 
   def test_DA_NoParameter(self):
-    esccsi.CSI_DA()
+    esccsi.DA()
     self.handleDAResponse()
 
   def test_DA_0(self):
-    esccsi.CSI_DA(0)
+    esccsi.DA(0)
     self.handleDAResponse()
 
 

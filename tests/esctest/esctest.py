@@ -40,45 +40,45 @@ def shutdown():
   escio.Shutdown()
 
 def reset():
-  esccsi.CSI_DECSCL(60 + esc.vtLevel, 1)
+  esccsi.DECSCL(60 + esc.vtLevel, 1)
 
   escio.use8BitControls = False
-  esccsi.CSI_DECSTR()
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS, 25, 80)
-  esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF)  # Is this needed?
-  esccsi.CSI_DECRESET(esccsi.OPT_ALTBUF_CURSOR)  # Is this needed?
-  esccsi.CSI_DECRESET(esccsi.ALTBUF)  # Is this needed?
-  esccsi.CSI_DECRESET(esccsi.DECLRMM)  # This can be removed when the bug revealed by test_DECSET_DECLRMM_ResetByDECSTR is fixed.
-  esccsi.CSI_RM(esccsi.IRM)
+  esccsi.DECSTR()
+  esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS, 25, 80)
+  esccsi.DECRESET(esccsi.OPT_ALTBUF)  # Is this needed?
+  esccsi.DECRESET(esccsi.OPT_ALTBUF_CURSOR)  # Is this needed?
+  esccsi.DECRESET(esccsi.ALTBUF)  # Is this needed?
+  esccsi.DECRESET(esccsi.DECLRMM)  # This can be removed when the bug revealed by test_DECSET_DECLRMM_ResetByDECSTR is fixed.
+  esccsi.RM(esccsi.IRM)
   # Technically, autowrap should be off by default (this is what the spec calls for).
   # However, xterm and iTerm2 turn it on by default. xterm has a comment that says:
   #   There are a couple of differences from real DEC VTxxx terminals (to avoid
   #   breaking applications which have come to rely on xterm doing
   #   this)...autowrap mode should be reset (instead it's reset to the resource
   #   default).
-  esccsi.CSI_DECSET(esccsi.DECAWM)
-  esccsi.CSI_DECRESET(esccsi.MoreFix)
+  esccsi.DECSET(esccsi.DECAWM)
+  esccsi.DECRESET(esccsi.MoreFix)
   # Set and query title with utf-8
-  esccsi.CSI_RM_Title(0, 1)
-  esccsi.CSI_SM_Title(2, 3)
-  esccsi.CSI_ED(2)
+  esccsi.RM_Title(0, 1)
+  esccsi.SM_Title(2, 3)
+  esccsi.ED(2)
 
   # Pop the title stack just in case something got left on there
   for i in xrange(5):
-    esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
+    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
                             esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
 
   # Clear tab stops and reset them at 1, 9, ...
-  esccsi.CSI_TBC(3)
+  esccsi.TBC(3)
   width = escutil.GetScreenSize().width()
   x = 1
   while x <= width:
-    esccsi.CSI_CUP(esctypes.Point(x, 1))
+    esccsi.CUP(esctypes.Point(x, 1))
     escio.Write(esc.ESC + "H")
     x += 8
 
-  esccsi.CSI_CUP(esctypes.Point(1, 1))
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_DEICONIFY)
+  esccsi.CUP(esctypes.Point(1, 1))
+  esccsi.XTERM_WINOPS(esccsi.WINOP_DEICONIFY)
 
 def AttachSideChannel(name):
   if args.test_case_dir:
@@ -187,8 +187,8 @@ def main():
   finally:
     if args.no_print_logs:
       # Hackily move the cursor to the bottom of the screen.
-      esccsi.CSI_CUP(esctypes.Point(1, 1))
-      esccsi.CSI_CUD(999)
+      esccsi.CUP(esctypes.Point(1, 1))
+      esccsi.CUD(999)
     else:
       try:
         reset()

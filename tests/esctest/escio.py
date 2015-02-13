@@ -103,8 +103,11 @@ def ReadOSC(expected_prefix):
 def ReadCSI(expected_final, expected_prefix=None):
   """Read a CSI code ending with |expected_final| and returns an array of parameters. """
 
-  ReadOrDie(ESC)
-  ReadOrDie('[')
+  c = read(1)
+  if c == ESC:
+    ReadOrDie('[')
+  elif ord(c) != 0x9b:
+    raise esctypes.InternalError("Read %c (0x%02x), expected CSI" % (c, ord(c)))
 
   params = []
   current_param = ""
@@ -142,13 +145,20 @@ def ReadCSI(expected_final, expected_prefix=None):
 
 def ReadDCS():
   """ Read a DCS code. Returns the characters between DCS and ST. """
-  assert read(1) == ESC
-  assert read(1) == 'P'
+  c = read(1)
+  if c == ESC:
+    ReadOrDie("P")
+  elif ord(c) != 0x90:
+    raise esctypes.InternalError("Read %c (0x%02x), expected DCS" % (c, ord(c)))
 
   result = ""
-  while not result.endswith(ST):
-    result += read(1)
-  return result[:-2]
+  while not result.endswith(ST) and not result.endswith(chr(0x9c)):
+    c = read(1)
+    result += c
+  if result.endswith(ST):
+    return result[:-2]
+  else:
+    return result[:-1]
 
 def read(n):
   """Try to read n bytes. Times out if it takes more than 1

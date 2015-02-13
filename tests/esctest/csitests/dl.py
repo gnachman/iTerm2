@@ -14,10 +14,10 @@ class DLTests(object):
     height = GetScreenSize().height()
     for i in xrange(height):
       y = i + 1
-      esccsi.CSI_CUP(Point(1, y))
+      esccsi.CUP(Point(1, y))
       escio.Write("%04d" % y)
 
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.CUP(Point(1, 2))
 
   def prepareForRegion(self):
     """Sets the screen up as
@@ -36,9 +36,9 @@ class DLTests(object):
     for i in xrange(len(lines)):
       y = i + 1
       line = lines[i]
-      esccsi.CSI_CUP(Point(1, y))
+      esccsi.CUP(Point(1, y))
       escio.Write(line)
-    esccsi.CSI_CUP(Point(3, 2))
+    esccsi.CUP(Point(3, 2))
 
   def test_DL_DefaultParam(self):
     """DL with no parameter should delete a single line."""
@@ -46,7 +46,7 @@ class DLTests(object):
     self.prepare()
 
     # Delete the second line, moving subsequent lines up.
-    esccsi.CSI_DL()
+    esccsi.DL()
 
     # Build an array of 0001, 0003, 0004, ..., height
     height = GetScreenSize().height()
@@ -67,7 +67,7 @@ class DLTests(object):
     self.prepare()
 
     # Delete two lines starting at the second line, moving subsequent lines up.
-    esccsi.CSI_DL(2)
+    esccsi.DL(2)
 
     # Build an array of 0001, 0004, ..., height
     height = GetScreenSize().height()
@@ -91,7 +91,7 @@ class DLTests(object):
 
     # Delete more than the height of the screen.
     height = GetScreenSize().height()
-    esccsi.CSI_DL(height * 2)
+    esccsi.DL(height * 2)
 
     # Build an array of 0001 followed by height-1 empty lines.
     y = 1
@@ -105,10 +105,10 @@ class DLTests(object):
     """Test that DL does the right thing when the cursor is inside the scroll
     region."""
     self.prepareForRegion()
-    esccsi.CSI_DECSTBM(2, 4)
-    esccsi.CSI_CUP(Point(3, 2))
-    esccsi.CSI_DL()
-    esccsi.CSI_DECSTBM()
+    esccsi.DECSTBM(2, 4)
+    esccsi.CUP(Point(3, 2))
+    esccsi.DL()
+    esccsi.DECSTBM()
 
     expected_lines = [ "abcde",
                        "klmno",
@@ -121,10 +121,10 @@ class DLTests(object):
     """Test that DL does nothing when the cursor is outside the scroll
     region."""
     self.prepareForRegion()
-    esccsi.CSI_DECSTBM(2, 4)
-    esccsi.CSI_CUP(Point(3, 1))
-    esccsi.CSI_DL()
-    esccsi.CSI_DECSTBM()
+    esccsi.DECSTBM(2, 4)
+    esccsi.CUP(Point(3, 1))
+    esccsi.DL()
+    esccsi.DECSTBM()
 
     expected_lines = [ "abcde",
                        "fghij",
@@ -137,11 +137,11 @@ class DLTests(object):
   def test_DL_InLeftRightScrollRegion(self):
     """Test that DL respects left-right margins."""
     self.prepareForRegion()
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 4)
-    esccsi.CSI_CUP(Point(3, 2))
-    esccsi.CSI_DL()
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 4)
+    esccsi.CUP(Point(3, 2))
+    esccsi.DL()
+    esccsi.DECRESET(esccsi.DECLRMM)
 
     expected_lines = [ "abcde",
                        "flmnj",
@@ -156,11 +156,11 @@ class DLTests(object):
   def test_DL_OutsideLeftRightScrollRegion(self):
     """Test that DL does nothing outside a left-right margin."""
     self.prepareForRegion()
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 4)
-    esccsi.CSI_CUP(Point(1, 2))
-    esccsi.CSI_DL()
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 4)
+    esccsi.CUP(Point(1, 2))
+    esccsi.DL()
+    esccsi.DECRESET(esccsi.DECLRMM)
 
     expected_lines = [ "abcde",
                        "fghij",
@@ -173,13 +173,13 @@ class DLTests(object):
   def test_DL_InLeftRightAndTopBottomScrollRegion(self):
     """Test that DL respects left-right margins together with top-bottom."""
     self.prepareForRegion()
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 4)
-    esccsi.CSI_DECSTBM(2, 4)
-    esccsi.CSI_CUP(Point(3, 2))
-    esccsi.CSI_DL()
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 4)
+    esccsi.DECSTBM(2, 4)
+    esccsi.CUP(Point(3, 2))
+    esccsi.DL()
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
 
     expected_lines = [ "abcde",
                        "flmnj",
@@ -192,13 +192,13 @@ class DLTests(object):
   def test_DL_ClearOutLeftRightAndTopBottomScrollRegion(self):
     """Erase the whole scroll region with both kinds of margins."""
     self.prepareForRegion()
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 4)
-    esccsi.CSI_DECSTBM(2, 4)
-    esccsi.CSI_CUP(Point(3, 2))
-    esccsi.CSI_DL(99)
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 4)
+    esccsi.DECSTBM(2, 4)
+    esccsi.CUP(Point(3, 2))
+    esccsi.DL(99)
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
 
     expected_lines = [ "abcde",
                        "f" + NUL * 3 + "j",
@@ -211,13 +211,13 @@ class DLTests(object):
   def test_DL_OutsideLeftRightAndTopBottomScrollRegion(self):
     """Test that DL does nothing outside left-right margins together with top-bottom."""
     self.prepareForRegion()
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 4)
-    esccsi.CSI_DECSTBM(2, 4)
-    esccsi.CSI_CUP(Point(1, 1))
-    esccsi.CSI_DL()
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 4)
+    esccsi.DECSTBM(2, 4)
+    esccsi.CUP(Point(1, 1))
+    esccsi.DL()
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
 
     expected_lines = [ "abcde",
                        "fghij",

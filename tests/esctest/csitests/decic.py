@@ -20,12 +20,12 @@ class DECICTests(object):
   @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECIC")
   def test_DECIC_DefaultParam(self):
     """ Test DECIC with default parameter """
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     AssertEQ(GetCursorPosition().x(), 1)
     escio.Write("abcdefg" + CR + LF + "ABCDEFG")
-    esccsi.CSI_CUP(Point(2, 1))
+    esccsi.CUP(Point(2, 1))
     AssertEQ(GetCursorPosition().x(), 2)
-    esccsi.CSI_DECIC()
+    esccsi.DECIC()
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 2),
                                  [ "a" + self.blank() + "bcdefg",
@@ -37,12 +37,12 @@ class DECICTests(object):
   def test_DECIC_ExplicitParam(self):
     """Test DECIC with explicit parameter. Also verifies lines above and below
     the cursor are affected."""
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     AssertEQ(GetCursorPosition().x(), 1)
     escio.Write("abcdefg" + CR + LF + "ABCDEFG" + CR + LF + "zyxwvut")
-    esccsi.CSI_CUP(Point(2, 2))
+    esccsi.CUP(Point(2, 2))
     AssertEQ(GetCursorPosition().x(), 2)
-    esccsi.CSI_DECIC(2)
+    esccsi.DECIC(2)
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 9, 3),
                                  [ "a" + self.blank() * 2 + "bcdefg",
@@ -53,23 +53,23 @@ class DECICTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECIC_CursorWithinTopBottom(self):
     """DECIC should only affect rows inside region."""
-    esccsi.CSI_DECSTBM()
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(1, 20)
+    esccsi.DECSTBM()
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(1, 20)
     # Write four lines. The middle two will be in the scroll region.
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     escio.Write("abcdefg" + CR + LF +
                 "ABCDEFG" + CR + LF +
                 "zyxwvut" + CR + LF +
                 "ZYXWVUT")
     # Define a scroll region. Place the cursor in it. Insert a column.
-    esccsi.CSI_DECSTBM(2, 3)
-    esccsi.CSI_CUP(Point(2, 2))
-    esccsi.CSI_DECIC(2)
+    esccsi.DECSTBM(2, 3)
+    esccsi.CUP(Point(2, 2))
+    esccsi.DECIC(2)
 
     # Remove scroll region and see if it worked.
-    esccsi.CSI_DECSTBM()
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
+    esccsi.DECRESET(esccsi.DECLRMM)
     AssertScreenCharsInRectEqual(Rect(1, 1, 9, 4),
                                  [ "abcdefg" + NUL * 2,
                                    "A" + self.blank() * 2 + "BCDEFG",
@@ -84,21 +84,21 @@ class DECICTests(object):
   def test_DECIC_IsNoOpWhenCursorBeginsOutsideScrollRegion(self):
     """Ensure DECIC does nothing when the cursor starts out outside the scroll
     region."""
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     escio.Write("abcdefg" + CR + LF + "ABCDEFG")
 
     # Set margin: from columns 2 to 5
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 5)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 5)
 
     # Position cursor outside margins
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
 
     # Insert blanks
-    esccsi.CSI_DECIC(10)
+    esccsi.DECIC(10)
 
     # Ensure nothing happened.
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
+    esccsi.DECRESET(esccsi.DECLRMM)
     AssertScreenCharsInRectEqual(Rect(1, 1, 7, 2),
                                  [ "abcdefg",
                                    "ABCDEFG" ])
@@ -111,12 +111,12 @@ class DECICTests(object):
     width = GetScreenSize().width()
     s = "abcdefg"
     startX = width - len(s) + 1
-    esccsi.CSI_CUP(Point(startX, 1))
+    esccsi.CUP(Point(startX, 1))
     escio.Write(s)
-    esccsi.CSI_CUP(Point(startX, 2))
+    esccsi.CUP(Point(startX, 2))
     escio.Write(s.upper())
-    esccsi.CSI_CUP(Point(startX + 1, 1))
-    esccsi.CSI_DECIC()
+    esccsi.CUP(Point(startX + 1, 1))
+    esccsi.DECIC()
 
     AssertScreenCharsInRectEqual(Rect(startX, 1, width, 2),
                                  [ "a" + self.blank() + "bcdef",
@@ -130,12 +130,12 @@ class DECICTests(object):
   def test_DECIC_ScrollEntirelyOffRightEdge(self):
     """Test DECIC behavior when pushing text off the right edge. """
     width = GetScreenSize().width()
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     escio.Write("x" * width)
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.CUP(Point(1, 2))
     escio.Write("x" * width)
-    esccsi.CSI_CUP(Point(1, 1))
-    esccsi.CSI_DECIC(width)
+    esccsi.CUP(Point(1, 1))
+    esccsi.DECIC(width)
 
     expectedLine = self.blank() * width
 
@@ -149,24 +149,24 @@ class DECICTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECIC_ScrollOffRightMarginInScrollRegion(self):
     """Test DECIC when cursor is within the scroll region."""
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     s = "abcdefg"
     escio.Write(s)
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.CUP(Point(1, 2))
     escio.Write(s.upper())
 
     # Set margin: from columns 2 to 5
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 5)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 5)
 
     # Position cursor inside margins
-    esccsi.CSI_CUP(Point(3, 1))
+    esccsi.CUP(Point(3, 1))
 
     # Insert blank
-    esccsi.CSI_DECIC()
+    esccsi.DECIC()
 
     # Ensure the 'e' gets dropped.
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
+    esccsi.DECRESET(esccsi.DECLRMM)
     AssertScreenCharsInRectEqual(Rect(1, 1, len(s), 2),
                                  [ "ab" + self.blank() + "cdfg",
                                    "AB" + self.blank() + "CDFG" ])

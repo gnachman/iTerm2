@@ -12,15 +12,15 @@ class RMTests(object):
 
   def test_RM_IRM(self):
     # First turn on insert mode
-    esccsi.CSI_SM(esccsi.IRM)
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.SM(esccsi.IRM)
+    esccsi.CUP(Point(1, 1))
     escio.Write("X")
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     escio.Write("W")
 
     # Now turn on replace mode
-    esccsi.CSI_CUP(Point(1, 1))
-    esccsi.CSI_RM(esccsi.IRM)
+    esccsi.CUP(Point(1, 1))
+    esccsi.RM(esccsi.IRM)
     escio.Write("YZ")
     AssertScreenCharsInRectEqual(Rect(1, 1, 2, 1), [ "YZ" ])
 

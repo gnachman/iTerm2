@@ -6,7 +6,7 @@ CHARACTER = "%"
 
 class DECFRATests(csitests.fill_rectangle.FillRectangleTests):
   def fill(self, top=None, left=None, bottom=None, right=None):
-    esccsi.CSI_DECFRA(str(ord(CHARACTER)), top, left, bottom, right)
+    esccsi.DECFRA(str(ord(CHARACTER)), top, left, bottom, right)
 
   def characters(self, point, count):
     return CHARACTER * count

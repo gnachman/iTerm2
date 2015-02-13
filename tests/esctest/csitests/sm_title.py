@@ -18,8 +18,8 @@ class SMTitleTests(object):
   @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2", reason="SM_Title not implemented.")
   def test_SMTitle_SetHexQueryUTF8(self):
-    esccsi.CSI_RM_Title(SET_UTF8, QUERY_HEX)
-    esccsi.CSI_SM_Title(SET_HEX, QUERY_UTF8)
+    esccsi.RM_Title(SET_UTF8, QUERY_HEX)
+    esccsi.SM_Title(SET_HEX, QUERY_UTF8)
 
     escosc.ChangeWindowTitle("6162")
     AssertEQ(GetWindowTitle(), "ab")
@@ -34,8 +34,8 @@ class SMTitleTests(object):
   @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2", reason="SM_Title not implemented.")
   def test_SMTitle_SetUTF8QueryUTF8(self):
-    esccsi.CSI_RM_Title(SET_HEX, QUERY_HEX)
-    esccsi.CSI_SM_Title(SET_UTF8, QUERY_UTF8)
+    esccsi.RM_Title(SET_HEX, QUERY_HEX)
+    esccsi.SM_Title(SET_UTF8, QUERY_UTF8)
 
     escosc.ChangeWindowTitle("ab")
     AssertEQ(GetWindowTitle(), "ab")
@@ -50,8 +50,8 @@ class SMTitleTests(object):
   @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2", reason="SM_Title not implemented.")
   def test_SMTitle_SetUTF8QueryHex(self):
-    esccsi.CSI_RM_Title(SET_HEX, QUERY_UTF8)
-    esccsi.CSI_SM_Title(SET_UTF8, QUERY_HEX)
+    esccsi.RM_Title(SET_HEX, QUERY_UTF8)
+    esccsi.SM_Title(SET_UTF8, QUERY_HEX)
 
     escosc.ChangeWindowTitle("ab")
     AssertEQ(GetWindowTitle(), "6162")
@@ -66,8 +66,8 @@ class SMTitleTests(object):
   @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2", reason="SM_Title not implemented.")
   def test_SMTitle_SetHexQueryHex(self):
-    esccsi.CSI_RM_Title(SET_UTF8, QUERY_UTF8)
-    esccsi.CSI_SM_Title(SET_HEX, QUERY_HEX)
+    esccsi.RM_Title(SET_UTF8, QUERY_UTF8)
+    esccsi.SM_Title(SET_HEX, QUERY_HEX)
 
     escosc.ChangeWindowTitle("6162")
     AssertEQ(GetWindowTitle(), "6162")

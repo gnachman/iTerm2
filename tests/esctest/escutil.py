@@ -36,19 +36,19 @@ def AssertTrue(value, details=None):
     Raise(esctypes.TestFailure(value, True, details))
 
 def GetIconTitle():
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_ICON_LABEL)
+  esccsi.XTERM_WINOPS(esccsi.WINOP_REPORT_ICON_LABEL)
   return escio.ReadOSC("L")
 
 def GetWindowTitle():
   if args.expected_terminal == "iTerm2":
     raise esctypes.InternalError(
         "iTerm2 uses L instead of l as initial char for window title reports.")
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_TITLE)
+  esccsi.XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_TITLE)
   return escio.ReadOSC("l")
 
 def GetWindowSizePixels():
   """Returns a Size giving the window's size in pixels."""
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_SIZE_PIXELS)
+  esccsi.XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_SIZE_PIXELS)
   params = escio.ReadCSI("t")
   AssertTrue(params[0] == 4)
   AssertTrue(len(params) >= 3)
@@ -56,30 +56,30 @@ def GetWindowSizePixels():
 
 def GetWindowPosition():
   """Returns a Point giving the window's origin in screen pixels."""
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_POSITION)
+  esccsi.XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_POSITION)
   params = escio.ReadCSI("t")
   AssertTrue(params[0] == 3)
   AssertTrue(len(params) >= 3)
   return Point(params[1], params[2])
 
 def GetIsIconified():
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_STATE)
+  esccsi.XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_STATE)
   params = escio.ReadCSI("t")
   AssertTrue(params[0] in [ 1, 2 ], "Params are " + str(params))
   return params[0] == 2
 
 def GetCursorPosition():
-  esccsi.CSI_DSR(esccsi.DSRCPR, suppressSideChannel=True)
+  esccsi.DSR(esccsi.DSRCPR, suppressSideChannel=True)
   params = escio.ReadCSI("R")
   return Point(int(params[1]), int(params[0]))
 
 def GetScreenSize():
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_TEXT_AREA_CHARS)
+  esccsi.XTERM_WINOPS(esccsi.WINOP_REPORT_TEXT_AREA_CHARS)
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 
 def GetDisplaySize():
-  esccsi.CSI_XTERM_WINOPS(esccsi.WINOP_REPORT_SCREEN_SIZE_CHARS)
+  esccsi.XTERM_WINOPS(esccsi.WINOP_REPORT_SCREEN_SIZE_CHARS)
   params = escio.ReadCSI("t")
   return Size(params[2], params[1])
 
@@ -149,7 +149,7 @@ def GetChecksumOfRect(rect):
   global gNextId
   Pid = gNextId
   gNextId += 1
-  esccsi.CSI_DECRQCRA(Pid, 0, rect)
+  esccsi.DECRQCRA(Pid, 0, rect)
   params = escio.ReadDCS()
 
   str_pid = str(Pid)

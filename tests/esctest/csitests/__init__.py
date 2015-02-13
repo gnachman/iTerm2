@@ -18,6 +18,7 @@
 # Select Attribute Change Extent (DECSACE): CSI Ps * x
 # Request Checksum of Rectangular Area (DECRQCRA): CSI Pi ; Pg ; Pt ; Pl ; Pb ; Pr * y
 # Select Locator Events (DECSLE): CSI Pm ' {
+# Request Locator Position (DECRQLP): CSI PS ' |
 
 # Notes for future tests:
 # CSI 21 t
@@ -38,9 +39,11 @@ import da
 import da2
 import dch
 import deccra
+import decdc
 import decdsr
 import decera
 import decfra
+import decic
 import decrc
 import decrqm
 import decscl
@@ -87,9 +90,11 @@ tests = [ ansirc.ANSIRCTests,
           da2.DA2Tests,
           dch.DCHTests,
           deccra.DECCRATests,
+          decdc.DECDCTests,
           decdsr.DECDSRTests,
           decera.DECERATests,
           decfra.DECFRATests,
+          decic.DECICTests,
           decrc.DECRCTests,
           decrqm.DECRQMTests,
           decscl.DECSCLTests,

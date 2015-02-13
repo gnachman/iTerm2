@@ -11,7 +11,7 @@ class DECCRATests(object):
     self._args = args
 
   def prepare(self):
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     escio.Write("abcdefgh" + CR + LF)
     escio.Write("ijklmnop" + CR + LF)
     escio.Write("qrstuvwx" + CR + LF)
@@ -25,7 +25,7 @@ class DECCRATests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECCRA_nonOverlappingSourceAndDest(self):
     self.prepare()
-    esccsi.CSI_DECCRA(source_top=2,
+    esccsi.DECCRA(source_top=2,
                       source_left=2,
                       source_bottom=4,
                       source_right=4,
@@ -48,7 +48,7 @@ class DECCRATests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECCRA_overlappingSourceAndDest(self):
     self.prepare()
-    esccsi.CSI_DECCRA(source_top=2,
+    esccsi.DECCRA(source_top=2,
                       source_left=2,
                       source_bottom=4,
                       source_right=4,
@@ -74,7 +74,7 @@ class DECCRATests(object):
     self.prepare()
     size = GetScreenSize()
 
-    esccsi.CSI_DECCRA(source_top=2,
+    esccsi.DECCRA(source_top=2,
                       source_left=2,
                       source_bottom=4,
                       source_right=4,
@@ -93,7 +93,7 @@ class DECCRATests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECCRA_defaultValuesInSource(self):
     self.prepare()
-    esccsi.CSI_DECCRA(source_bottom=2,
+    esccsi.DECCRA(source_bottom=2,
                       source_right=2,
                       dest_top=5,
                       dest_left=5,
@@ -112,7 +112,7 @@ class DECCRATests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECCRA_defaultValuesInDest(self):
     self.prepare()
-    esccsi.CSI_DECCRA(source_top=2,
+    esccsi.DECCRA(source_top=2,
                       source_left=2,
                       source_bottom=4,
                       source_right=4,
@@ -131,7 +131,7 @@ class DECCRATests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented", noop=True)
   def test_DECCRA_invalidSourceRectDoesNothing(self):
     self.prepare()
-    esccsi.CSI_DECCRA(source_top=2,
+    esccsi.DECCRA(source_top=2,
                       source_left=2,
                       source_bottom=1,
                       source_right=1,
@@ -155,15 +155,15 @@ class DECCRATests(object):
     self.prepare()
 
     # Set margins at 2, 2
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(2, 9)
-    esccsi.CSI_DECSTBM(2, 9)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(2, 9)
+    esccsi.DECSTBM(2, 9)
 
     # Turn on origin mode
-    esccsi.CSI_DECSET(esccsi.DECOM)
+    esccsi.DECSET(esccsi.DECOM)
 
     # Copy from 1,1 to 4,4 - with origin mode, that's 2,2 to 5,5
-    esccsi.CSI_DECCRA(source_top=1,
+    esccsi.DECCRA(source_top=1,
                       source_left=1,
                       source_bottom=3,
                       source_right=3,
@@ -173,9 +173,9 @@ class DECCRATests(object):
                       dest_page=1)
 
     # Turn off margins and origin mode
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
-    esccsi.CSI_DECRESET(esccsi.DECOM)
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
+    esccsi.DECRESET(esccsi.DECOM)
 
     # See what happened.
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 8),
@@ -194,11 +194,11 @@ class DECCRATests(object):
     self.prepare()
 
     # Set margins
-    esccsi.CSI_DECSET(esccsi.DECLRMM)
-    esccsi.CSI_DECSLRM(3, 6)
-    esccsi.CSI_DECSTBM(3, 6)
+    esccsi.DECSET(esccsi.DECLRMM)
+    esccsi.DECSLRM(3, 6)
+    esccsi.DECSTBM(3, 6)
 
-    esccsi.CSI_DECCRA(source_top=2,
+    esccsi.DECCRA(source_top=2,
                       source_left=2,
                       source_bottom=4,
                       source_right=4,
@@ -208,8 +208,8 @@ class DECCRATests(object):
                       dest_page=1)
 
     # Remove margins
-    esccsi.CSI_DECRESET(esccsi.DECLRMM)
-    esccsi.CSI_DECSTBM()
+    esccsi.DECRESET(esccsi.DECLRMM)
+    esccsi.DECSTBM()
 
     # Did it ignore the margins?
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 8),
@@ -228,13 +228,13 @@ class DECCRATests(object):
     size = GetScreenSize()
 
     # Put ab, cX in the bottom right
-    esccsi.CSI_CUP(Point(size.width() - 1, size.height() - 1))
+    esccsi.CUP(Point(size.width() - 1, size.height() - 1))
     escio.Write("ab")
-    esccsi.CSI_CUP(Point(size.width() - 1, size.height()))
+    esccsi.CUP(Point(size.width() - 1, size.height()))
     escio.Write("cX")
 
     # Copy a 2x2 block starting at the X to the a
-    esccsi.CSI_DECCRA(source_top=size.height(),
+    esccsi.DECCRA(source_top=size.height(),
                       source_left=size.width(),
                       source_bottom=size.height() + 1,
                       source_right=size.width() + 1,
@@ -256,10 +256,10 @@ class DECCRATests(object):
 
     # Place the cursor
     position = Point(3, 4)
-    esccsi.CSI_CUP(position)
+    esccsi.CUP(position)
 
     # Copy a block
-    esccsi.CSI_DECCRA(source_top=2,
+    esccsi.DECCRA(source_top=2,
                       source_left=2,
                       source_bottom=4,
                       source_right=4,

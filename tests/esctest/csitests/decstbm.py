@@ -12,8 +12,8 @@ class DECSTBMTests(object):
 
   def test_DECSTBM_ScrollsOnNewline(self):
     """Define a top-bottom margin, put text in it, and have newline scroll it."""
-    esccsi.CSI_DECSTBM(2, 3)
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.DECSTBM(2, 3)
+    esccsi.CUP(Point(1, 2))
     escio.Write("1" + CR + LF)
     escio.Write("2")
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ "1", "2" ])
@@ -23,18 +23,18 @@ class DECSTBMTests(object):
 
   def test_DECSTBM_NewlineBelowRegion(self):
     """A newline below the region has no effect on the region."""
-    esccsi.CSI_DECSTBM(2, 3)
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.DECSTBM(2, 3)
+    esccsi.CUP(Point(1, 2))
     escio.Write("1" + CR + LF)
     escio.Write("2")
-    esccsi.CSI_CUP(Point(1, 4))
+    esccsi.CUP(Point(1, 4))
     escio.Write(CR + LF)
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ "1", "2" ])
 
   def test_DECSTBM_MovsCursorToOrigin(self):
     """DECSTBM moves the cursor to column 1, line 1 of the page."""
-    esccsi.CSI_CUP(Point(3, 2))
-    esccsi.CSI_DECSTBM(2, 3)
+    esccsi.CUP(Point(3, 2))
+    esccsi.DECSTBM(2, 3)
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
   @knownBug(terminal="iTerm2",
@@ -42,7 +42,7 @@ class DECSTBMTests(object):
   def test_DECSTBM_TopBelowBottom(self):
     """The value of the top margin (Pt) must be less than the bottom margin (Pb)."""
     size = GetScreenSize()
-    esccsi.CSI_DECSTBM(3, 3)
+    esccsi.DECSTBM(3, 3)
     for i in xrange(size.height()):
       escio.Write("%04d" % i)
       y = i + 1
@@ -51,7 +51,7 @@ class DECSTBMTests(object):
     for i in xrange(size.height()):
       y = i + 1
       AssertScreenCharsInRectEqual(Rect(1, y, 4, y), [ "%04d" % i ])
-    esccsi.CSI_CUP(Point(1, size.height()))
+    esccsi.CUP(Point(1, size.height()))
     escio.Write(LF)
     for i in xrange(size.height() - 1):
       y = i + 1
@@ -62,14 +62,14 @@ class DECSTBMTests(object):
 
   def test_DECSTBM_DefaultRestores(self):
     """Default args restore to full screen scrolling."""
-    esccsi.CSI_DECSTBM(2, 3)
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.DECSTBM(2, 3)
+    esccsi.CUP(Point(1, 2))
     escio.Write("1" + CR + LF)
     escio.Write("2")
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ "1", "2" ])
     position = GetCursorPosition()
-    esccsi.CSI_DECSTBM()
-    esccsi.CSI_CUP(position)
+    esccsi.DECSTBM()
+    esccsi.CUP(position)
     escio.Write(CR + LF)
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ "1", "2" ])
     AssertEQ(GetCursorPosition().y(), 4)
@@ -78,12 +78,12 @@ class DECSTBMTests(object):
             reason="iTerm2 incorretly scrolls the whole screen when there's a bottom margin above the bottom of the page, the cursor is at the bottom of the page, and a LF is received. No scrolling should occur outside the margins.")
   def test_DECSTBM_CursorBelowRegionAtBottomTriesToScroll(self):
     """You cannot perform scrolling outside the margins."""
-    esccsi.CSI_DECSTBM(2, 3)
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.DECSTBM(2, 3)
+    esccsi.CUP(Point(1, 2))
     escio.Write("1" + CR + LF)
     escio.Write("2")
     size = GetScreenSize()
-    esccsi.CSI_CUP(Point(1, size.height()))
+    esccsi.CUP(Point(1, size.height()))
     escio.Write("3" + CR + LF)
 
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ "1", "2" ])
@@ -93,15 +93,15 @@ class DECSTBMTests(object):
   def test_DECSTBM_MaxSizeOfRegionIsPageSize(self):
     """The maximum size of the scrolling region is the page size."""
     # Write "x" at line 2
-    esccsi.CSI_CUP(Point(1, 2))
+    esccsi.CUP(Point(1, 2))
     escio.Write("x")
 
     # Set the scroll bottom to below the screen.
     size = GetScreenSize()
-    esccsi.CSI_DECSTBM(1, GetScreenSize().height() + 10)
+    esccsi.DECSTBM(1, GetScreenSize().height() + 10)
 
     # Move the cursor to the last line and write a newline.
-    esccsi.CSI_CUP(Point(1, size.height()))
+    esccsi.CUP(Point(1, size.height()))
     escio.Write(CR + LF)
 
     # Verify that line 2 scrolled up to line 1.

@@ -10,7 +10,7 @@ class DECDSRTests(object):
     self._args = args
 
   def getVTLevel(self):
-    esccsi.CSI_DA2()
+    esccsi.DA2()
     params = escio.ReadCSI('c', expected_prefix='>')
     vtLevel = params[0]
     if vtLevel < 18:
@@ -33,8 +33,8 @@ class DECDSRTests(object):
     # First, get the VT level.
     vtLevel = self.getVTLevel()
 
-    esccsi.CSI_CUP(Point(5, 6))
-    esccsi.CSI_DECDSR(esccsi.DECXCPR)
+    esccsi.CUP(Point(5, 6))
+    esccsi.DECDSR(esccsi.DECXCPR)
     params = escio.ReadCSI('R', expected_prefix='?')
 
     if vtLevel >= 4:
@@ -58,7 +58,7 @@ class DECDSRTests(object):
         19 - Assigned to other session.
       There's no way for the test to know what the actual printer status is,
       but the response should be legal."""
-    esccsi.CSI_DECDSR(esccsi.DSRPrinterPort)
+    esccsi.DECDSR(esccsi.DSRPrinterPort)
     params = escio.ReadCSI('n', expected_prefix='?')
     AssertEQ(len(params), 1)
     AssertTrue(params[0] in [ 10, 11, 13, 18, 19 ])
@@ -74,7 +74,7 @@ class DECDSRTests(object):
     This test simply ensures the value is legal. It should be extended to
     ensure that when locked UDKs are not settable, and when unlocked that UDKs
     are settable."""
-    esccsi.CSI_DECDSR(esccsi.DSRUDKLocked)
+    esccsi.DECDSR(esccsi.DSRUDKLocked)
     params = escio.ReadCSI('n', expected_prefix='?')
     AssertEQ(len(params), 1)
     AssertTrue(params[0] in [ 20, 21 ])
@@ -101,7 +101,7 @@ class DECDSRTests(object):
         5 - PCXAL  # DEC 510"""
     # First get the VT level with a DA2
     vtLevel = self.getVTLevel()
-    esccsi.CSI_DECDSR(esccsi.DSRKeyboard)
+    esccsi.DECDSR(esccsi.DSRKeyboard)
     params = escio.ReadCSI('n', expected_prefix='?')
     if vtLevel <= 2:
       # VT240 or earlier
@@ -125,11 +125,11 @@ class DECDSRTests(object):
   def doLocatorStatusTest(self, code):
     """I couldn't find docs on these codes outside xterm. 53 and 55 seem to be
     the same. Returns 50 if no locator, 53 if available."""
-    esccsi.CSI_DECDSR(code)
+    esccsi.DECDSR(code)
     params = escio.ReadCSI('n', expected_prefix='?')
 
     AssertEQ(len(params), 1)
-    AssertEQ(params[0], 53)  # These days everyone has a locator so don't accept 50.
+    AssertTrue(params[0] in [ 50, 53, 55 ])
 
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DSRDECLocatorStatus(self):
@@ -145,7 +145,7 @@ class DECDSRTests(object):
     0 - unknown (not documented)
     1 - mouse
     2 - tablet"""
-    esccsi.CSI_DECDSR(esccsi.DSRLocatorId)
+    esccsi.DECDSR(esccsi.DSRLocatorId)
     params = escio.ReadCSI('n', expected_prefix='?')
 
     AssertEQ(params[0], 57)
@@ -155,7 +155,7 @@ class DECDSRTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DECMSR(self):
     """Get space available for macros. This test assumes it's always 0."""
-    esccsi.CSI_DECDSR(esccsi.DECMSR)
+    esccsi.DECDSR(esccsi.DECMSR)
     params = escio.ReadCSI('*{')
 
     # Assume the terminal being tested doesn't support macros. May need to add
@@ -166,14 +166,14 @@ class DECDSRTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DECCKSR(self):
     """Get checksum of macros. This test assumes it's always 0."""
-    esccsi.CSI_DECDSR(Ps=esccsi.DECCKSR, Pid=123)
+    esccsi.DECDSR(Ps=esccsi.DECCKSR, Pid=123)
     value = escio.ReadDCS()
     AssertEQ(value, "123!~0000")
 
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DSRDataIntegrity(self):
     """Check for link errors. Should always report OK."""
-    esccsi.CSI_DECDSR(esccsi.DSRIntegrityReport)
+    esccsi.DECDSR(esccsi.DSRIntegrityReport)
     params = escio.ReadCSI('n', expected_prefix='?')
     AssertEQ(len(params), 1)
     AssertEQ(params[0], 70)
@@ -200,7 +200,7 @@ class DECDSRTests(object):
     CSI ? 87 n
       Multiple sessions are operating using a separate physical line for each
       session, not SSU."""
-    esccsi.CSI_DECDSR(esccsi.DSRMultipleSessionStatus)
+    esccsi.DECDSR(esccsi.DSRMultipleSessionStatus)
     params = escio.ReadCSI('n', expected_prefix='?')
     AssertEQ(len(params), 1)
     # 83 and 87 both seem like reasonable responses for a terminal that

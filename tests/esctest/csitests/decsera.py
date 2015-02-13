@@ -10,17 +10,17 @@ class DECSERATests(csitests.fill_rectangle.FillRectangleTests):
     self._always_return_blank = False
 
   def prepare(self):
-    esccsi.CSI_CUP(Point(1, 1))
+    esccsi.CUP(Point(1, 1))
     i = 1
     for line in self.data():
       # Protect odd-numbered rows
-      esccsi.CSI_DECSCA(i)
+      esccsi.DECSCA(i)
       escio.Write(line + esc.CR + esc.LF)
       i = 1 - i
-    esccsi.CSI_DECSCA(0)
+    esccsi.DECSCA(0)
 
   def fill(self, top=None, left=None, bottom=None, right=None):
-    esccsi.CSI_DECSERA(top, left, bottom, right)
+    esccsi.DECSERA(top, left, bottom, right)
 
   def blank(self):
     if self._args.expected_terminal == "xterm":
