@@ -10,14 +10,15 @@ opinion."
 The tested set of control sequences are documented somewhat tersely at this URL:
 http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
-The official documentation is here:
+The official documentation for DEC-supported escape sequences is here:
 http://www.vt100.net/docs/vt510-rm/.
 
 All tests are automatic; no user interaction is required. As a consequence, some
 control sequences cannot be tested. For example, it is impossible to examine the
 color of a particular cell, so color-setting control sequences are not testable.
-The character value of a cell is testable. That along with cursor position forms
-the bulk of the tests.
+The character value of a cell is testable, as are various window attributes, and
+cursor position; these form the bulk of the tests.
+
 
 Usage
 -----
