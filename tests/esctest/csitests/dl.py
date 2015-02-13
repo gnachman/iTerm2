@@ -5,9 +5,6 @@ from esctypes import Point, Rect
 from escutil import AssertScreenCharsInRectEqual, GetScreenSize, knownBug
 
 class DLTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def prepare(self):
     """Fills the screen with 4-char line numbers (0001, 0002, ...) down to the
     last line and puts the cursor on the start of the second line."""

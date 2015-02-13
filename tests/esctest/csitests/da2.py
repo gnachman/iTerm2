@@ -1,18 +1,16 @@
+import escargs
 import esccsi
 import escio
 from escutil import AssertEQ, AssertGE, knownBug
 
 class DA2Tests(object):
-  def __init__(self, args):
-    self._args = args
-
   def handleDA2Response(self):
     params = escio.ReadCSI('c', expected_prefix='>')
-    if self._args.expected_terminal == "xterm":
+    if escargs.args.expected_terminal == "xterm":
       AssertGE(params[0], 41)
       AssertGE(params[1], 314)
       AssertEQ(len(params), 3)
-    elif self._args.expected_terminal == "iTerm2":
+    elif escargs.args.expected_terminal == "iTerm2":
       AssertEQ(params[0], 0)
       AssertEQ(params[1], 95)
       AssertEQ(len(params), 2)

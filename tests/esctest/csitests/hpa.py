@@ -4,9 +4,6 @@ from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, G
 from esctypes import Point, Rect
 
 class HPATests(object):
-  def __init__(self, args):
-    self._args = args
-
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_HPA_DefaultParams(self):
     """With no params, HPA moves to 1st column."""

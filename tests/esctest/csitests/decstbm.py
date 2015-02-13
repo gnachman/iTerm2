@@ -7,9 +7,6 @@ from esctypes import Point, Rect
 class DECSTBMTests(object):
   """DECSTBM is tested pretty well in various other tests; this is meant to
   cover the basics."""
-  def __init__(self, args):
-    self._args = args
-
   def test_DECSTBM_ScrollsOnNewline(self):
     """Define a top-bottom margin, put text in it, and have newline scroll it."""
     esccsi.DECSTBM(2, 3)

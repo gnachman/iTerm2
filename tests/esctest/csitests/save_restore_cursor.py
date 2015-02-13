@@ -27,9 +27,6 @@ from esctypes import Point
 class SaveRestoreCursorTests(object):
   """Base class for ANSI SC/RC, DECRC/DECSC, and DECSET/DECRESET TITE
   INHIBIT. Subclasses should implement saveCursor() and restoreCursor()."""
-  def __init__(self, args):
-    self._args = args
-
   def test_SaveRestoreCursor_Basic(self):
     esccsi.CUP(Point(5, 6))
     self.saveCursor()

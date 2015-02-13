@@ -5,9 +5,6 @@ from esctypes import Point, Rect
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
 
 class SDTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def prepare(self):
     """Sets the screen up as
     abcde

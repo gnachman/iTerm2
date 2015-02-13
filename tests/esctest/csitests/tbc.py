@@ -5,9 +5,6 @@ from escutil import AssertEQ, GetCursorPosition
 from esctypes import Point
 
 class TBCTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_TBC_Default(object):
     """No param clears the tab stop at the cursor."""
     escio.Write(TAB)

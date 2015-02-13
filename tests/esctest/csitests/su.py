@@ -5,9 +5,6 @@ from esctypes import Point, Rect
 from escutil import AssertScreenCharsInRectEqual, GetScreenSize
 
 class SUTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def prepare(self):
     """Sets the screen up as
     abcde

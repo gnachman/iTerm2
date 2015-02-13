@@ -3,9 +3,6 @@ from escutil import AssertEQ, GetCursorPosition, GetScreenSize
 from esctypes import Point
 
 class CPLTests(object):
-  def __init__(self, args):
-    pass
-
   def test_CPL_DefaultParam(self):
     """CPL moves the cursor up 1 with no parameter given."""
     esccsi.CUP(Point(5, 3))

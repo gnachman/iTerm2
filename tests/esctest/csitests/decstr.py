@@ -26,9 +26,6 @@ class DECSTRTests(object):
   DECKPM                    Character codes.
   DECRLM                    Reset (Left-to-right), regardless of NVR setting.
   DECPCTERM                 Always reset. """
-  def __init__(self, args):
-    self._args = args
-
   @knownBug(terminal="iTerm2", reason="iTerm2 fails to reset saved cursor position.")
   def test_DECSTR_DECSC(self):
     # Save cursor position

@@ -5,9 +5,6 @@ from esctypes import Point, Rect
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize
 
 class ILTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def prepare_wide(self):
     """Sets up the display as:
     abcde

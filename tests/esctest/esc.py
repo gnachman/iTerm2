@@ -1,3 +1,4 @@
+import escargs
 import escio
 
 ESC = "%c" % 27
@@ -18,3 +19,10 @@ def DECRC():
 def DECSC():
   """Saves the cursor."""
   escio.Write(ESC + "7")
+
+def blank():
+    if escargs.args.expected_terminal == "xterm":
+      return ' '
+    else:
+      return NUL
+

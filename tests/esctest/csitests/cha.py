@@ -4,9 +4,6 @@ from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, G
 from esctypes import Point, Rect
 
 class CHATests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_CHA_DefaultParam(self):
     """CHA moves to first column of active line by default."""
     esccsi.CUP(Point(5, 3))

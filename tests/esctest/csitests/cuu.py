@@ -3,9 +3,6 @@ from escutil import AssertEQ, GetCursorPosition
 from esctypes import Point
 
 class CUUTests(object):
-  def __init__(self, args):
-    pass
-
   def test_CUU_DefaultParam(self):
     """CUU moves the cursor up 1 with no parameter given."""
     esccsi.CUP(Point(5, 3))

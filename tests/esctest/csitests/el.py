@@ -1,19 +1,11 @@
-from esc import NUL
+from esc import NUL, blank
+import escargs
 import esccsi
 import escio
 from esctypes import Point, Rect
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition
 
 class ELTests(object):
-  def __init__(self, args):
-    self._args = args
-
-  def blank(self):
-    if self._args.expected_terminal == "xterm":
-      return ' '
-    else:
-      return NUL
-
   def prepare(self):
     """Initializes the screen to abcdefghij on the first line with the cursor
     on the 'e'."""
@@ -40,7 +32,7 @@ class ELTests(object):
     self.prepare()
     esccsi.EL(1)
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
-                                 [ 5 * self.blank() + "fghij" ])
+                                 [ 5 * blank() + "fghij" ])
 
   def test_EL_2(self):
     """Should erase whole line."""

@@ -3,9 +3,6 @@ from escutil import AssertEQ, GetCursorPosition, GetScreenSize
 from esctypes import Point
 
 class CUDTests(object):
-  def __init__(self, args):
-    pass
-
   def test_CUD_DefaultParam(self):
     """CUD moves the cursor down 1 with no parameter given."""
     esccsi.CUP(Point(5, 3))

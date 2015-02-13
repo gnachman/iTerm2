@@ -1,18 +1,11 @@
-from esc import NUL
+from esc import NUL, blank
+import escargs
 import esccsi
 import escio
 from esctypes import Point, Rect
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, knownBug
 
 class DECSELTests(object):
-  def __init__(self, args):
-    self._args = args
-
-  def blank(self):
-    if self._args.expected_terminal == "xterm":
-      return ' '
-    else:
-      return NUL
 
   def prepare(self):
     """Initializes the screen to abcdefghij on the first line with the cursor
@@ -43,7 +36,7 @@ class DECSELTests(object):
     self.prepare()
     esccsi.DECSEL(1)
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
-                                 [ 5 * self.blank() + "fghij" ])
+                                 [ 5 * blank() + "fghij" ])
 
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_2(self):
@@ -112,7 +105,7 @@ class DECSELTests(object):
     esccsi.CUP(Point(5, 1))
     esccsi.DECSEL(1)
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
-                                 [ self.blank() + "bcdefghij" ])
+                                 [ blank() + "bcdefghij" ])
 
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_2_Protection(self):
@@ -127,7 +120,7 @@ class DECSELTests(object):
 
     esccsi.DECSEL(2)
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
-                                 [ self.blank() + "bcdefghij" ])
+                                 [ blank() + "bcdefghij" ])
 
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_DECSEL_IgnoresScrollRegion_Protection(self):
@@ -146,5 +139,5 @@ class DECSELTests(object):
     esccsi.DECSEL(2)
     esccsi.DECRESET(esccsi.DECLRMM)
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
-                                 [ self.blank() + "bcdefghij" ])
+                                 [ blank() + "bcdefghij" ])
 

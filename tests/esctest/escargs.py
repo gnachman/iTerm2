@@ -36,5 +36,11 @@ parser.add_argument("--max-vt-level",
                     help="Do not run tests requiring a higher VT level than this.",
                     type=int,
                     default=5)
+parser.add_argument("--logfile",
+                    help="Log file to write output to",
+                    default="/tmp/esctest.log")
+parser.add_argument("--v",
+                    help="Verbosity level. 1=errors, 2=errors and info, 3=debug, errors, and info",
+                    default=2)
 
 

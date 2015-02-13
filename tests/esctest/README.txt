@@ -51,8 +51,7 @@ The legal values of "terminal" are "xterm" and "iTerm2".
 
 --no-print-logs
 Normally, the test logs are printed when the test finishes. Use this argument to
-see what the screen looked like at the time the last-run test finished. Logs are
-always written to /tmp/esctest.log.
+see what the screen looked like at the time the last-run test finished.
 
 --test-case-dir=path
 If set text files are created in "path" for each test run. They contain the data
@@ -78,6 +77,14 @@ Setting the xtermWinopsEnabled option causes the winops tests to be run.
 Tests are tagged with the VT level required for their execution. No test needing
 features from a higher VT level will be run. The default value is 5.
 
+--logfile=file
+The logs are written to "file", which defaults to "/tmp/esctest.log".
+
+--v=verbosity
+Verbosity level for logging.
+1: Errors only.
+2: Errors and informational messages (the default).
+3: Errors, informational messages, and debug messages.
 
 Examples
 --------

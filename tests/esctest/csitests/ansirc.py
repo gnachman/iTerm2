@@ -3,8 +3,8 @@ from escutil import knownBug
 from csitests.save_restore_cursor import SaveRestoreCursorTests
 
 class ANSIRCTests(SaveRestoreCursorTests):
-  def __init__(self, args):
-    SaveRestoreCursorTests.__init__(self, args)
+  def __init__(self):
+    SaveRestoreCursorTests.__init__(self)
 
   def saveCursor(self):
     esccsi.ANSISC()

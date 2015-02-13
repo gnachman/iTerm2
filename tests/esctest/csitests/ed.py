@@ -1,19 +1,11 @@
-from esc import NUL
+from esc import NUL, blank
+import escargs
 import esccsi
 import escio
 from esctypes import Point, Rect
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition
 
 class EDTests(object):
-  def __init__(self, args):
-    self._args = args
-
-  def blank(self):
-    if self._args.expected_terminal == "xterm":
-      return ' '
-    else:
-      return NUL
-
   def prepare(self):
     """Sets up the display as:
     a
@@ -79,7 +71,7 @@ class EDTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 3, 5),
                                  [ NUL * 3,
                                    NUL * 3,
-                                   self.blank() * 2 + "d",
+                                   blank() * 2 + "d",
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
@@ -134,7 +126,7 @@ class EDTests(object):
     esccsi.DECSTBM()
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 3),
                                  [ NUL * 5,
-                                   self.blank() * 3 + "ij",
+                                   blank() * 3 + "ij",
                                    "klmno" ])
 
   def test_ED_2_WithScrollRegion(self):

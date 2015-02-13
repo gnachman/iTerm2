@@ -1,6 +1,5 @@
+import escargs
 import escio
-
-args = None
 
 # DECSET/DECRESET
 Allow80To132 = 40  # Allow 80->132 Mode
@@ -291,7 +290,7 @@ def DECRQCRA(Pid, Pp=None, rect=None):
   # xterm versions 314 and earlier incorrectly expect the Pid in the second
   # argument and ignore Pp.
   # For the time being, iTerm2 is compatible with the bug.
-  if not args.disable_xterm_checksum_bug:
+  if not escargs.args.disable_xterm_checksum_bug:
     Pid, Pp = Pp, Pid
 
   params = [ Pid ]

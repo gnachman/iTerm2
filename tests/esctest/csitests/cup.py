@@ -4,9 +4,6 @@ from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, G
 from esctypes import Point, Rect
 
 class CUPTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_CUP_DefaultParams(self):
     """With no params, CUP moves to 1,1."""
     esccsi.CUP(Point(6, 3))

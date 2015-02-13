@@ -6,9 +6,6 @@ from escutil import AssertEQ, AssertScreenCharsInRectEqual, AssertTrue, GetScree
 from esctypes import Point, Rect
 
 class DECDSRTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def getVTLevel(self):
     esccsi.DA2()
     params = escio.ReadCSI('c', expected_prefix='>')

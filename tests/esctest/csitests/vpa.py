@@ -4,9 +4,6 @@ from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, G
 from esctypes import Point, Rect
 
 class VPATests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_VPA_DefaultParams(self):
     """With no params, VPA moves to 1st line."""
     esccsi.VPA(6)

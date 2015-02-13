@@ -49,9 +49,6 @@ from esctypes import Point, Rect
 
 # TODO: test DECANM. It sets the font to USASCII and sets VT100 mode
 class DECSETTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_DECSET_DECCOLM(self):
     """Set 132 column mode."""
     # From the docs:

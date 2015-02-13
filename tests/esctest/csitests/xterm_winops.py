@@ -13,11 +13,8 @@ import time
 # 9;0 - Restore maximized window
 
 class XtermWinopsTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_XtermWinops_IconifyDeiconfiy(self):
-    needsSleep = self._args.expected_terminal in [ "xterm" ]
+    needsSleep = escargs.args.expected_terminal in [ "xterm" ]
     esccsi.XTERM_WINOPS(esccsi.WINOP_ICONIFY)
     if needsSleep:
       time.sleep(1)
@@ -29,7 +26,7 @@ class XtermWinopsTests(object):
     AssertEQ(GetIsIconified(), False)
 
   def test_XtermWinops_MoveToXY(self):
-    needsSleep = self._args.expected_terminal in [ "xterm" ]
+    needsSleep = escargs.args.expected_terminal in [ "xterm" ]
     esccsi.XTERM_WINOPS(esccsi.WINOP_MOVE, 0, 0)
     if needsSleep:
       time.sleep(0.1)

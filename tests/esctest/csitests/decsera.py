@@ -5,8 +5,8 @@ import escio
 from escutil import Point, knownBug
 
 class DECSERATests(csitests.fill_rectangle.FillRectangleTests):
-  def __init__(self, args):
-    csitests.fill_rectangle.FillRectangleTests.__init__(self, args)
+  def __init__(self):
+    csitests.fill_rectangle.FillRectangleTests.__init__(self)
     self._always_return_blank = False
 
   def prepare(self):
@@ -22,30 +22,24 @@ class DECSERATests(csitests.fill_rectangle.FillRectangleTests):
   def fill(self, top=None, left=None, bottom=None, right=None):
     esccsi.DECSERA(top, left, bottom, right)
 
-  def blank(self):
-    if self._args.expected_terminal == "xterm":
-      return ' '
-    else:
-      return esc.NUL
-
   def characters(self, point, count):
     if self._always_return_blank:
-      return self.blank() * count
+      return esc.blank() * count
     s = ""
     data = self.data()
     for i in xrange(count):
       p = Point(point.x() + i, point.y())
       if p.y() >= len(data):
-        s += self.blank()
+        s += esc.blank()
         continue
       line = data[p.y() - 1]
       if p.x() >= len(line):
-        s += self.blank()
+        s += esc.blank()
         continue
       if point.y() % 2 == 1:
         s += line[p.x() - 1]
       else:
-        s += self.blank()
+        s += esc.blank()
     return s
 
   def test_DECSERA_basic(self):

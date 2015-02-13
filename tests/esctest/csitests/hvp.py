@@ -4,9 +4,6 @@ from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, G
 from esctypes import Point, Rect
 
 class HVPTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_HVP_DefaultParams(self):
     """With no params, HVP moves to 1,1."""
     esccsi.HVP(Point(6, 3))

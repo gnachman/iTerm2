@@ -1,5 +1,6 @@
 import csitests.fill_rectangle
 import esc
+import escargs
 import esccsi
 from escutil import knownBug
 
@@ -7,14 +8,8 @@ class DECERATests(csitests.fill_rectangle.FillRectangleTests):
   def fill(self, top=None, left=None, bottom=None, right=None):
     esccsi.DECERA(top, left, bottom, right)
 
-  def blank(self):
-    if self._args.expected_terminal == "xterm":
-      return ' '
-    else:
-      return esc.NUL
-
   def characters(self, point, count):
-    return self.blank() * count
+    return esc.blank() * count
 
   def test_DECERA_basic(self):
     self.fillRectangle_basic()

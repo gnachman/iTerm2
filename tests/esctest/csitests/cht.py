@@ -3,9 +3,6 @@ from esctypes import Point
 from escutil import AssertEQ, GetCursorPosition, knownBug
 
 class CHTTests(object):
-  def __init__(self, args):
-    self._args = args
-
   @knownBug(terminal="iTerm2", reason="iTerm2 doesn't support CHT")
   def test_CHT_OneTabStopByDefault(self):
     esccsi.CHT()

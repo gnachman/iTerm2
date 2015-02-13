@@ -1,4 +1,5 @@
-from esc import NUL, CR, LF
+from esc import NUL, CR, LF, blank
+import escargs
 import esccsi
 import escio
 from escutil import AssertEQ, GetCursorPosition, GetScreenSize, AssertScreenCharsInRectEqual, knownBug, vtLevel
@@ -6,14 +7,6 @@ from esctypes import Point, Rect
 import time
 
 class DECICTests(object):
-  def __init__(self, args):
-    self._args = args
-
-  def blank(self):
-    if self._args.expected_terminal == "xterm":
-      return ' '
-    else:
-      return NUL
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
@@ -28,8 +21,8 @@ class DECICTests(object):
     esccsi.DECIC()
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 2),
-                                 [ "a" + self.blank() + "bcdefg",
-                                   "A" + self.blank() + "BCDEFG" ])
+                                 [ "a" + blank() + "bcdefg",
+                                   "A" + blank() + "BCDEFG" ])
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
@@ -45,9 +38,9 @@ class DECICTests(object):
     esccsi.DECIC(2)
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 9, 3),
-                                 [ "a" + self.blank() * 2 + "bcdefg",
-                                   "A" + self.blank() * 2 + "BCDEFG",
-                                   "z" + self.blank() * 2 + "yxwvut" ])
+                                 [ "a" + blank() * 2 + "bcdefg",
+                                   "A" + blank() * 2 + "BCDEFG",
+                                   "z" + blank() * 2 + "yxwvut" ])
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
@@ -72,8 +65,8 @@ class DECICTests(object):
     esccsi.DECRESET(esccsi.DECLRMM)
     AssertScreenCharsInRectEqual(Rect(1, 1, 9, 4),
                                  [ "abcdefg" + NUL * 2,
-                                   "A" + self.blank() * 2 + "BCDEFG",
-                                   "z" + self.blank() * 2 + "yxwvut",
+                                   "A" + blank() * 2 + "BCDEFG",
+                                   "z" + blank() * 2 + "yxwvut",
                                    "ZYXWVUT" + NUL * 2 ])
 
   @vtLevel(4)
@@ -119,8 +112,8 @@ class DECICTests(object):
     esccsi.DECIC()
 
     AssertScreenCharsInRectEqual(Rect(startX, 1, width, 2),
-                                 [ "a" + self.blank() + "bcdef",
-                                   "A" + self.blank() + "BCDEF" ])
+                                 [ "a" + blank() + "bcdef",
+                                   "A" + blank() + "BCDEF" ])
     # Ensure there is no wrap-around.
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3), [ NUL, NUL ])
 
@@ -137,13 +130,13 @@ class DECICTests(object):
     esccsi.CUP(Point(1, 1))
     esccsi.DECIC(width)
 
-    expectedLine = self.blank() * width
+    expectedLine = blank() * width
 
     AssertScreenCharsInRectEqual(Rect(1, 1, width, 2),
                                  [ expectedLine, expectedLine ])
     # Ensure there is no wrap-around.
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 3),
-                                 [ self.blank(), self.blank() ])
+                                 [ blank(), blank() ])
 
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
@@ -168,7 +161,7 @@ class DECICTests(object):
     # Ensure the 'e' gets dropped.
     esccsi.DECRESET(esccsi.DECLRMM)
     AssertScreenCharsInRectEqual(Rect(1, 1, len(s), 2),
-                                 [ "ab" + self.blank() + "cdfg",
-                                   "AB" + self.blank() + "CDFG" ])
+                                 [ "ab" + blank() + "cdfg",
+                                   "AB" + blank() + "CDFG" ])
 
 

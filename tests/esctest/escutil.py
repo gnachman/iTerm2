@@ -1,4 +1,5 @@
 import esc
+import escargs
 import esccsi
 import escio
 from esclog import LogDebug, LogInfo, LogError, Print
@@ -9,10 +10,9 @@ import traceback
 
 gNextId = 1
 gHaveAsserted = False
-force = False
 
 def Raise(e):
-  if not force:
+  if not escargs.args.force:
     raise e
 
 def AssertGE(actual, minimum):
@@ -28,7 +28,7 @@ def AssertEQ(actual, expected):
     Raise(esctypes.TestFailure(actual, expected))
 
 def AssertTrue(value, details=None):
-  if force:
+  if escargs.args.force:
     return
   global gHaveAsserted
   gHaveAsserted = True
@@ -40,7 +40,7 @@ def GetIconTitle():
   return escio.ReadOSC("L")
 
 def GetWindowTitle():
-  if args.expected_terminal == "iTerm2":
+  if escargs.args.expected_terminal == "iTerm2":
     raise esctypes.InternalError(
         "iTerm2 uses L instead of l as initial char for window title reports.")
   esccsi.XTERM_WINOPS(esccsi.WINOP_REPORT_WINDOW_TITLE)
@@ -193,9 +193,9 @@ def optionRequired(terminal, option):
   def decorator(func):
     @functools.wraps(func)
     def func_wrapper(self, *args, **kwargs):
-      hasOption = (self._args.options is not None and
-                   option in self._args.options)
-      if self._args.expected_terminal == terminal:
+      hasOption = (escargs.args.options is not None and
+                   option in escargs.args.options)
+      if escargs.args.expected_terminal == terminal:
         try:
           func(self, *args, **kwargs)
         except Exception, e:
@@ -209,7 +209,7 @@ def optionRequired(terminal, option):
 
         # Got here because test passed. If the option isn't set, that's
         # unexpected so we raise an error.
-        if not force and not hasOption:
+        if not escargs.args.force and not hasOption:
           raise esctypes.InternalError("Should have failed: " + reason)
       else:
         func(self, *args, **kwargs)
@@ -225,7 +225,7 @@ def knownBug(terminal, reason, noop=False, shouldTry=True):
   def decorator(func):
     @functools.wraps(func)
     def func_wrapper(self, *args, **kwargs):
-      if self._args.expected_terminal == terminal:
+      if escargs.args.expected_terminal == terminal:
         if not shouldTry:
           raise esctypes.KnownBug(reason + " (not trying)")
         try:
@@ -238,7 +238,7 @@ def knownBug(terminal, reason, noop=False, shouldTry=True):
 
         # Shouldn't get here because the test should have failed. If 'force' is on then
         # tests always pass, though.
-        if not force and not noop:
+        if not escargs.args.force and not noop:
           raise esctypes.InternalError("Should have failed")
         elif noop:
           raise esctypes.KnownBug(reason + " (test ran and passed, but is documented as a 'no-op'; the nature of the bug makes it untestable)")
@@ -248,10 +248,10 @@ def knownBug(terminal, reason, noop=False, shouldTry=True):
   return decorator
 
 def AssertAssertionAsserted():
-  if force:
+  if escargs.args.force:
     return
   global gHaveAsserted
   ok = gHaveAsserted
   gHaveAsserted = False
-  if not ok and not force:
+  if not ok and not escargs.args.force:
     raise esctypes.BrokenTest("No assertion attempted.")

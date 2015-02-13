@@ -3,9 +3,6 @@ from esctypes import Point
 from escutil import AssertEQ, GetCursorPosition, knownBug
 
 class CBTTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_CBT_OneTabStopByDefault(self):
     esccsi.CUP(Point(17, 1))
     esccsi.CBT()

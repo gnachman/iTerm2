@@ -5,9 +5,6 @@ from esctypes import Point, Rect
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
 
 class DCHTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_DCH_DefaultParam(self):
     """DCH with no parameter should delete one character at the cursor."""
     escio.Write("abcd")

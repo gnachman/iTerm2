@@ -12,9 +12,6 @@ SET_UTF8 = 2
 QUERY_UTF8 = 3
 
 class SMTitleTests(object):
-  def __init__(self, args):
-    self._args = args
-
   @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2", reason="SM_Title not implemented.")
   def test_SMTitle_SetHexQueryUTF8(self):

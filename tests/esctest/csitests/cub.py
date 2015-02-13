@@ -3,9 +3,6 @@ from escutil import AssertEQ, GetCursorPosition, knownBug
 from esctypes import Point
 
 class CUBTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_CUB_DefaultParam(self):
     """CUB moves the cursor left 1 with no parameter given."""
     esccsi.CUP(Point(5, 3))

@@ -3,9 +3,6 @@ from escutil import AssertEQ, GetCursorPosition, GetScreenSize
 from esctypes import Point
 
 class CNLTests(object):
-  def __init__(self, args):
-    pass
-
   def test_CNL_DefaultParam(self):
     """CNL moves the cursor down 1 with no parameter given."""
     esccsi.CUP(Point(5, 3))

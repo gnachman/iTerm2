@@ -1,18 +1,11 @@
-from esc import NUL
+from esc import NUL, blank
+import escargs
 import esccsi
 import escio
 from escutil import AssertScreenCharsInRectEqual, knownBug
 from esctypes import Point, Rect
 
 class DECSEDTests(object):
-  def __init__(self, args):
-    self._args = args
-
-  def blank(self):
-    if self._args.expected_terminal == "xterm":
-      return ' '
-    else:
-      return NUL
 
   def prepare(self):
     """Sets up the display as:
@@ -82,7 +75,7 @@ class DECSEDTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 3, 5),
                                  [ NUL * 3,
                                    NUL * 3,
-                                   self.blank() * 2 + "d",
+                                   blank() * 2 + "d",
                                    NUL * 3,
                                    "e" + NUL * 2 ])
 
@@ -142,7 +135,7 @@ class DECSEDTests(object):
     esccsi.DECSTBM()
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 3),
                                  [ NUL * 5,
-                                   self.blank() * 3 + "ij",
+                                   blank() * 3 + "ij",
                                    "klmno" ])
 
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
@@ -311,7 +304,7 @@ class DECSEDTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 3),
                                  [ "abcde",
                                    "fghij",
-                                   self.blank() + "lmno" ])
+                                   blank() + "lmno" ])
 
   @knownBug(terminal="iTerm2", reason="DECSED not implemented")
   def test_DECSED_1_WithScrollRegion_Protection(self):
@@ -338,7 +331,7 @@ class DECSEDTests(object):
     esccsi.DECSTBM()
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 3),
-                                 [ self.blank() + "bcde",
+                                 [ blank() + "bcde",
                                    "fghij",
                                    "klmno" ])
 
@@ -361,6 +354,6 @@ class DECSEDTests(object):
     esccsi.DECRESET(esccsi.DECLRMM)
     esccsi.DECSTBM()
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 3),
-                                 [ self.blank() + "bcde",
+                                 [ blank() + "bcde",
                                    "fghij",
                                    "klmno" ])

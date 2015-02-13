@@ -5,9 +5,6 @@ from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, G
 from esctypes import Point
 
 class FillRectangleTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def data(self):
     return [ "abcdefgh",
              "ijklmnop",

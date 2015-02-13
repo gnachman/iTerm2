@@ -1,4 +1,5 @@
 from esc import NUL, CR, LF
+import escargs
 import esccsi
 import escio
 from escutil import AssertEQ, GetCursorPosition, GetScreenSize, AssertScreenCharsInRectEqual, knownBug, vtLevel
@@ -6,15 +7,6 @@ from esctypes import Point, Rect
 import time
 
 class DECDCTests(object):
-  def __init__(self, args):
-    self._args = args
-
-  def blank(self):
-    if self._args.expected_terminal == "xterm":
-      return ' '
-    else:
-      return NUL
-
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   @knownBug(terminal="xterm", reason="xterm requires left-right mode for DECDC")

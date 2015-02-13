@@ -5,9 +5,6 @@ from escutil import AssertScreenCharsInRectEqual, GetScreenSize, knownBug
 from esctypes import Point, Rect
 
 class REPTests(object):
-  def __init__(self, args):
-    self._args = args
-
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_REP_DefaultParam(self):
     escio.Write("a")

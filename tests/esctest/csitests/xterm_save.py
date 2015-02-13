@@ -4,9 +4,6 @@ from escutil import AssertEQ, GetCursorPosition, GetScreenSize, knownBug
 from esctypes import Point
 
 class XtermSaveTests(object):
-  def __init__(self, args):
-    self._args = args
-
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermSave_SaveSetState(self):
     # Turn on auto-wrap

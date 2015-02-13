@@ -13,9 +13,6 @@ RIS on change
 class DECSCLTests(object):
   """VT Level 1 doesn't have any distinguishing features that are testable that
   aren't also in level 2."""
-  def __init__(self, args):
-    self._args = args
-
   @vtLevel(2)
   @knownBug(terminal="xterm", reason="xterm always turns on 8-bit controls.", shouldTry=False)
   @knownBug(terminal="iTerm2", reason="iTerm2 doesn't implement DECSCL")

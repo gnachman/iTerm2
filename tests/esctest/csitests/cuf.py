@@ -3,9 +3,6 @@ from escutil import AssertEQ, GetCursorPosition, GetScreenSize, knownBug
 from esctypes import Point
 
 class CUFTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_CUF_DefaultParam(self):
     """CUF moves the cursor right 1 with no parameter given."""
     esccsi.CUP(Point(5, 3))

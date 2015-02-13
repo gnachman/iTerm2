@@ -14,25 +14,18 @@ import traceback
 
 def init():
   global newline
-  global args
   global logfile
   global log
 
   newline = "\r\n"
 
   parser = escargs.parser
-  esclog.AddArguments(parser)
-  args = parser.parse_args()
-  esclog.v = args.v
-  esclog.logfile = args.logfile
-  esccsi.args = args
-  escutil.force = args.force
-  escutil.args = args
+  escargs.args = parser.parse_args()
 
-  logfile = open(args.logfile, "w")
+  logfile = open(escargs.args.logfile, "w")
   log = ""
 
-  esc.vtLevel = args.max_vt_level
+  esc.vtLevel = escargs.args.max_vt_level
 
   escio.Init()
 
@@ -81,8 +74,8 @@ def reset():
   esccsi.XTERM_WINOPS(esccsi.WINOP_DEICONIFY)
 
 def AttachSideChannel(name):
-  if args.test_case_dir:
-    path = os.path.join(args.test_case_dir, name + ".txt")
+  if escargs.args.test_case_dir:
+    path = os.path.join(escargs.args.test_case_dir, name + ".txt")
     escio.SetSideChannel(path)
 
 def RemoveSideChannel():
@@ -122,11 +115,15 @@ def RunTests():
   knownBugs = 0
   failures = []
   for testClass in csitests.tests:
-    testObject = testClass(args)
+    try:
+      testObject = testClass()
+    except:
+      esclog.LogError("Failed to create test class " + testClass.__name__)
+      raise
     tests = inspect.getmembers(testObject, predicate=inspect.ismethod)
     for name, method in tests:
-      if name.startswith("test_") and (re.search(args.include, name) or
-                                       re.search(args.include, testClass.__name__)):
+      if name.startswith("test_") and (re.search(escargs.args.include, name) or
+                                       re.search(escargs.args.include, testClass.__name__)):
         status = RunTest(testClass.__name__, name, method)
         if status is None:
           knownBugs += 1
@@ -138,9 +135,9 @@ def RunTests():
       else:
         esclog.LogDebug("Skipping test %s in class %s" % (
           name, testClass.__name__))
-      if args.stop_on_failure and failed > 0:
+      if escargs.args.stop_on_failure and failed > 0:
         break
-    if args.stop_on_failure and failed > 0:
+    if escargs.args.stop_on_failure and failed > 0:
       break
 
   if failed > 0:
@@ -185,7 +182,7 @@ def main():
     esclog.LogError("Failed with traceback:")
     esclog.LogError(tb)
   finally:
-    if args.no_print_logs:
+    if escargs.args.no_print_logs:
       # Hackily move the cursor to the bottom of the screen.
       esccsi.CUP(esctypes.Point(1, 1))
       esccsi.CUD(999)

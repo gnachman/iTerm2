@@ -1,4 +1,5 @@
 from esc import NUL
+import escargs
 import esccsi
 import escio
 import esclog
@@ -8,9 +9,6 @@ from esctypes import Point, Rect
 class DECRQMTests(object):
   """DECANM is not tested because there doesn't seem to be any way to
   exit VT52 mode and subsequent tests are broken."""
-  def __init__(self, args):
-    self._args = args
-
   def requestAnsiMode(self, mode):
     esccsi.DECRQM(mode, DEC=False)
     return escio.ReadCSI('$y')
@@ -140,7 +138,7 @@ class DECRQMTests(object):
 
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECCOLM(self):
-    needsPermission = self._args.expected_terminal in [ "xterm", "iTerm2" ]
+    needsPermission = escargs.args.expected_terminal in [ "xterm", "iTerm2" ]
     if needsPermission:
       esccsi.DECSET(esccsi.Allow80To132)
     self.doModifiableDecTest(esccsi.DECCOLM)
@@ -245,11 +243,11 @@ class DECRQMTests(object):
   @vtLevel(5)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
   def test_DECRQM_DEC_DECNCSM(self):
-    needsPermission = self._args.expected_terminal in [ "xterm", "iTerm2" ]
+    needsPermission = escargs.args.expected_terminal in [ "xterm", "iTerm2" ]
     if needsPermission:
       esccsi.DECSET(esccsi.Allow80To132)
     self.doModifiableDecTest(esccsi.DECNCSM)
-    needsPermission = self._args.expected_terminal in [ "xterm", "iTerm2" ]
+    needsPermission = escargs.args.expected_terminal in [ "xterm", "iTerm2" ]
     if needsPermission:
       esccsi.DECRESET(esccsi.Allow80To132)
 

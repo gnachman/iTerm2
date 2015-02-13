@@ -7,9 +7,6 @@ from esctypes import Point, Rect
 # AM, SRM, and LNM should also be supported but are not currently testable
 # because they require user interaction.
 class SMTests(object):
-  def __init__(self, args):
-    self._args = args
-
   def test_SM_IRM(self):
     """Turn on insert mode."""
     escio.Write("abc")

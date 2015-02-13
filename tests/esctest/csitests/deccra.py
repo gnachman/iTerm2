@@ -7,9 +7,6 @@ from esctypes import Point, Rect
 
 class DECCRATests(object):
   """Copy rectangular area."""
-  def __init__(self, args):
-    self._args = args
-
   def prepare(self):
     esccsi.CUP(Point(1, 1))
     escio.Write("abcdefgh" + CR + LF)
