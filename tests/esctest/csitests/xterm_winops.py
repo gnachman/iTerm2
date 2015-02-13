@@ -263,8 +263,6 @@ class XtermWinopsTests(object):
                             esccsi.WINOP_FULLSCREEN_TOGGLE)
     AssertEQ(GetScreenSize(), original_size)
 
-  @optionRequired(terminal="xterm",
-                  option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 seems to report the window label instead of the icon label")
   def test_XtermWinops_ReportIconLabel(self):
@@ -272,7 +270,6 @@ class XtermWinopsTests(object):
     escosc.ChangeIconTitle(string)
     AssertEQ(GetIconTitle(), string)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_ReportWindowLabel(self):
@@ -280,7 +277,6 @@ class XtermWinopsTests(object):
     escosc.ChangeWindowTitle(string)
     AssertEQ(GetWindowTitle(), string)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushIconAndWindow_PopIconAndWindow(self):
@@ -307,7 +303,6 @@ class XtermWinopsTests(object):
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), string)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushIconAndWindow_PopIcon(self):
@@ -340,7 +335,6 @@ class XtermWinopsTests(object):
     AssertEQ(GetWindowTitle(), "x")
     AssertEQ(GetIconTitle(), string)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushIconAndWindow_PopWindow(self):
@@ -373,7 +367,6 @@ class XtermWinopsTests(object):
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), "x")
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushIcon_PopIcon(self):
@@ -396,7 +389,6 @@ class XtermWinopsTests(object):
     AssertEQ(GetWindowTitle(), "x")
     AssertEQ(GetIconTitle(), string)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushWindow_PopWindow(self):
@@ -419,7 +411,6 @@ class XtermWinopsTests(object):
     AssertEQ(GetIconTitle(), "x")
     AssertEQ(GetWindowTitle(), string)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushIconThenWindowThenPopBoth(self):
@@ -448,7 +439,6 @@ class XtermWinopsTests(object):
     AssertEQ(GetWindowTitle(), string1)
     AssertEQ(GetIconTitle(), string2)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 incorrectly reports the window's title when the icon's title is requested.")
   def test_XtermWinops_PushMultiplePopMultiple_Icon(self):
@@ -478,7 +468,6 @@ class XtermWinopsTests(object):
                             esccsi.WINOP_POP_TITLE_ICON)
     AssertEQ(GetIconTitle(), string1)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2",
             reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushMultiplePopMultiple_Window(self):
@@ -508,7 +497,6 @@ class XtermWinopsTests(object):
                             esccsi.WINOP_POP_TITLE_WINDOW)
     AssertEQ(GetWindowTitle(), string1)
 
-  @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermWinops_DECSLPP(self):
     """Resize to n lines of height."""

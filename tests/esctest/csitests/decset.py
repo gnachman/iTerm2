@@ -1,10 +1,11 @@
 from esc import ESC, TAB, NUL, CR, LF, BS
-import time
+from esctypes import Point, Rect
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, optionRequired, vtLevel
+import escargs
 import esccsi
 import escio
 import esclog
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, vtLevel
-from esctypes import Point, Rect
+import time
 # Note: There is no test for DECRESET; that is handled here.
 
 # Can't test the following:
@@ -435,6 +436,8 @@ class DECSETTests(object):
 
   @vtLevel(5)
   @knownBug(terminal="iTerm2", reason="DECNCSM not implemented")
+  @optionRequired(terminal="xterm",
+                  option=escargs.XTERM_WINOPS_ENABLED)
   def test_DECSET_DECNCSM(self):
     """From the manual: When enabled, a column mode change (either through
     Set-Up or by the escape sequence DECCOLM) does not clear the screen. When

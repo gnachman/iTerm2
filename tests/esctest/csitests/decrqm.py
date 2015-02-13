@@ -3,7 +3,7 @@ import escargs
 import esccsi
 import escio
 import esclog
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetScreenSize, knownBug, vtLevel
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetScreenSize, knownBug, optionRequired, vtLevel
 from esctypes import Point, Rect
 
 class DECRQMTests(object):
@@ -242,6 +242,8 @@ class DECRQMTests(object):
 
   @vtLevel(5)
   @knownBug(terminal="iTerm2", reason="DECRQM not supported.", shouldTry=False)
+  @optionRequired(terminal="xterm",
+                  option=escargs.XTERM_WINOPS_ENABLED)
   def test_DECRQM_DEC_DECNCSM(self):
     needsPermission = escargs.args.expected_terminal in [ "xterm", "iTerm2" ]
     if needsPermission:

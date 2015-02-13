@@ -186,7 +186,7 @@ def intentionalDeviationFromSpec(terminal, reason):
     return func_wrapper
   return decorator
 
-def optionRequired(terminal, option):
+def optionRequired(terminal, option, allowPassWithoutOption=False):
   """Decorator for a method indicating that it should fail unless an option is
   present."""
   reason = "Terminal \"" + terminal + "\" requires option \"" + option + "\" for this test to pass."
@@ -209,7 +209,7 @@ def optionRequired(terminal, option):
 
         # Got here because test passed. If the option isn't set, that's
         # unexpected so we raise an error.
-        if not escargs.args.force and not hasOption:
+        if not escargs.args.force and not hasOption and not allowPassWithoutOption:
           raise esctypes.InternalError("Should have failed: " + reason)
       else:
         func(self, *args, **kwargs)
