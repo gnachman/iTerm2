@@ -41,6 +41,7 @@ parser.add_argument("--logfile",
                     default="/tmp/esctest.log")
 parser.add_argument("--v",
                     help="Verbosity level. 1=errors, 2=errors and info, 3=debug, errors, and info",
-                    default=2)
+                    default=2,
+                    type=int)
 
 

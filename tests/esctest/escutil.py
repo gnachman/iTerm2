@@ -158,7 +158,7 @@ def GetChecksumOfRect(rect):
 
   i = len(str_pid)
 
-  assert params[i:].startswith("!~")
+  AssertTrue(params[i:].startswith("!~"))
   i += 2
 
   hex_checksum = params[i:]

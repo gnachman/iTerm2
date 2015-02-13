@@ -62,7 +62,7 @@ If set, tests stop running after the first failure encountered.
 
 --force
 If set, tests will run to completion even though an assertion may fail along the
-way.
+way. Failing tests will appear to pass. This can be useful for debugging.
 
 --options option1 option2 ...
 Defines which optional features are enabled in the terminal being tested.
@@ -75,7 +75,9 @@ Setting the xtermWinopsEnabled option causes the winops tests to be run.
 
 --max-vt-level=level
 Tests are tagged with the VT level required for their execution. No test needing
-features from a higher VT level will be run. The default value is 5.
+features from a higher VT level will be run. The default value is 5. In order to
+support VT level 5 in xterm, set the following resource:
+  xterm*decTerminalID: 520
 
 --logfile=file
 The logs are written to "file", which defaults to "/tmp/esctest.log".
@@ -86,12 +88,13 @@ Verbosity level for logging.
 2: Errors and informational messages (the default).
 3: Errors, informational messages, and debug messages.
 
+
 Examples
 --------
 To test a vanilla xterm:
-esctest.py --expected-terminal=xterm
+esctest.py --expected-terminal=xterm --max-vt-level=4
 
-To test xterm with winops enabled:
+To test xterm with winops enabled and emulating a VT 520:
 esctest.py --expected-terminal=xterm --options xtermWinopsEnabled
 
 To test iTerm2:
@@ -100,3 +103,53 @@ esctest.py --expected-terminal=iTerm2
 To debug a failing test:
 esctest.py --test-case-dir=/tmp --stop-on-failure --no-print-logs
 
+
+Writing Tests
+-------------
+Tests are divided into classes. There's one class per file. Each class has tests
+for one escape sequence, which may have multiple functions (for example, xterm's
+winops).
+
+Test methods must be of the form "test_" + escape sequence name + "_" + details.
+Methods not beginning with test_ will not be run.
+
+Every method should use one of the built-in assertion methods, or it will always
+fail. The assertion methods are defined in escutil and are:
+
+AssertGE(actual, minimum)
+  Asserts that the first value is at least as large as the second value.
+
+AssertEQ(actual, expected)
+  Asserts that both values are equal.
+
+AssertTrue(value, details)
+  Asserts the value is true. The optional detail will be logged on failure.
+
+AssertScreenCharsInRectEqual(rect, strings)
+  Asserts that the characters on the screen within a given rectangle equal those
+  passed in the second argument, which is a list of strings (one per row).
+
+Test methods may be decorated with the following decorators, defined in escutil:
+
+@vtLevel(minimum)
+  The test will be run only in the --max-vt-level is at least "minimum".
+
+@intentionalDeviationFromSpec(terminal, reason)
+  This is for documentation purposes only. The given terminal has some quirk but
+  it is intentional, as described in "reason".
+
+@optionRequired(terminal, option, allowPassWithoutOption)
+  If the given option is not provided for the given terminal, the test should be
+  expected to fail. If it passes anyway, that is an error. The optional argument
+  allowPassWithoutOption may be set to true to tolerate passage, which is useful
+  for "flaky" tests which might pass by accident. Its use should be avoided.
+
+@knownBug(terminal, reason, noop, shouldTry)
+  Indicates that a test is known to fail for a given terminal. The nature of the
+  problem should be described in reason. If the test passes when a terminal does
+  nothing at all, then noop should be set to True. If the test should be skipped
+  for this terminal then the optional shouldTry should be False (e.g., for crash
+  bugs).
+
+Currently, the test classes are in the csitests directory and are linked to from
+__init__.py.
