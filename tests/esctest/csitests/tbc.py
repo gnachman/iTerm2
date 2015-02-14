@@ -1,4 +1,5 @@
 from esc import ESC, TAB
+import escc1
 import esccsi
 import escio
 from escutil import AssertEQ, GetCursorPosition
@@ -30,7 +31,7 @@ class TBCTests(object):
 
     # Set a tab stop at 30
     esccsi.CUP(Point(30, 1))
-    escio.Write(ESC + "H")
+    escc1.HTS()
 
     # Move back to the start and then tab. Should go to 30.
     esccsi.CUP(Point(1, 1))

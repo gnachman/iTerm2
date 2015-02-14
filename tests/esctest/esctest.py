@@ -3,6 +3,7 @@ import c1tests
 import csitests
 import esc
 import escargs
+import escc1
 import esccsi
 import escio
 import esclog
@@ -68,7 +69,7 @@ def reset():
   x = 1
   while x <= width:
     esccsi.CUP(esctypes.Point(x, 1))
-    escio.Write(esc.ESC + "H")
+    escc1.HTS()
     x += 8
 
   esccsi.CUP(esctypes.Point(1, 1))

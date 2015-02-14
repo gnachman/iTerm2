@@ -1,6 +1,8 @@
+import hts
 import ind
 import nel
 
-tests = [ ind.INDTests,
+tests = [ hts.HTSTests,
+          ind.INDTests,
           nel.NELTests ]
 
