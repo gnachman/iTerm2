@@ -1,4 +1,6 @@
 import ind
+import nel
 
-tests = [ ind.INDTests ]
+tests = [ ind.INDTests,
+          nel.NELTests ]
 
