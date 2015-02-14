@@ -1,4 +1,5 @@
 #!/usr/bin/python2.7
+import c1tests
 import csitests
 import esc
 import escargs
@@ -114,7 +115,12 @@ def RunTests():
   passed = 0
   knownBugs = 0
   failures = []
-  for testClass in csitests.tests:
+  classes = []
+
+  for category in [ c1tests.tests, csitests.tests ]:
+    classes.extend(category)
+
+  for testClass in classes:
     try:
       testObject = testClass()
     except:

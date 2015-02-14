@@ -1,11 +1,11 @@
 import csitests.save_restore_cursor
-import esc
+import escc1
 import esccsi
 
 class DECRCTests(csitests.save_restore_cursor.SaveRestoreCursorTests):
   def saveCursor(self):
-    esc.DECSC()
+    escc1.DECSC()
 
   def restoreCursor(self):
-    esc.DECRC()
+    escc1.DECRC()
 

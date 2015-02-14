@@ -30,13 +30,13 @@ class DECSTRTests(object):
   def test_DECSTR_DECSC(self):
     # Save cursor position
     esccsi.CUP(Point(5, 6))
-    escio.Write(ESC + "7")  # DECSC
+    escc1.DECSC()
 
     # Perform soft reset
     esccsi.DECSTR()
 
     # Ensure saved cursor position is the origin
-    escio.Write(ESC + "8")  # DECRC
+    escc1.DECRC()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
   def test_DECSTR_IRM(self):

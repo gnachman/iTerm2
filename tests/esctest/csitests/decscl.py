@@ -1,4 +1,5 @@
 from esc import ESC, NUL
+import escc1
 import esccsi
 import escio
 import esclog
@@ -116,7 +117,7 @@ class DECSCLTests(object):
 
     # Set saved cursor position
     esccsi.CUP(Point(5, 6))
-    escio.Write(ESC + "7")  # DECSC
+    escc1.DECSC()
 
     # Turn on insert mode
     esccsi.SM(esccsi.IRM)
@@ -125,7 +126,7 @@ class DECSCLTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ NUL ])
 
     # Ensure saved cursor position is the origin
-    escio.Write(ESC + "8")  # DECRC
+    escc1.DECRC()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
     # Ensure replace mode is on

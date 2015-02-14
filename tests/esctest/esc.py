@@ -1,5 +1,4 @@
 import escargs
-import escio
 
 ESC = "%c" % 27
 ST = ESC + "\\"
@@ -11,14 +10,6 @@ BS = "%c" % 8
 
 # VT x00 level. vtLevel may be 1, 2, 3, 4, or 5.
 vtLevel = 1
-
-def DECRC():
-  """Restore the cursor and resets various attributes."""
-  escio.Write(ESC + "8")
-
-def DECSC():
-  """Saves the cursor."""
-  escio.Write(ESC + "7")
 
 def blank():
     if escargs.args.expected_terminal == "xterm":
