@@ -1,8 +1,10 @@
 import hts
 import ind
 import nel
+import ri
 
 tests = [ hts.HTSTests,
           ind.INDTests,
-          nel.NELTests ]
+          nel.NELTests,
+          ri.RITests ]
 
