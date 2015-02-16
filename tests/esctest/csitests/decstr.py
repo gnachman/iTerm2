@@ -1,4 +1,5 @@
 from esc import BS, CR, ESC, LF, NUL
+import escc1
 import esccsi
 import escio
 import esclog

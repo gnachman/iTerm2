@@ -1,5 +1,6 @@
 from esc import NUL, blank
 import escargs
+import escc1
 import esccsi
 import escio
 from esctypes import Point, Rect
@@ -140,4 +141,16 @@ class DECSELTests(object):
     esccsi.DECRESET(esccsi.DECLRMM)
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ blank() + "bcdefghij" ])
+
+  @knownBug(terminal="xterm",
+            reason="DECSEL respects ISO protection for backward compatibility reasons, per email from Thomas")
+  @knownBug(terminal="iTerm2", reason="DECSED not implemented")
+  def test_DECSEL_doesNotRespectISOProtect(self):
+    """DECSEL does not respect ISO protection."""
+    escio.Write("a")
+    escc1.SPA()
+    escio.Write("b")
+    escc1.EPA()
+    esccsi.DECSEL(2)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 2, 1), [ blank() * 2 ])
 

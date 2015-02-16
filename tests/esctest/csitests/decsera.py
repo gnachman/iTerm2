@@ -1,8 +1,9 @@
 import csitests.fill_rectangle
 import esc
+import escc1
 import esccsi
 import escio
-from escutil import Point, knownBug
+from escutil import AssertScreenCharsInRectEqual, Point, Rect, knownBug
 
 class DECSERATests(csitests.fill_rectangle.FillRectangleTests):
   def __init__(self):
@@ -69,4 +70,13 @@ class DECSERATests(csitests.fill_rectangle.FillRectangleTests):
   def test_DECSERA_ignoresMargins(self):
     self.fillRectangle_ignoresMargins()
 
+  @knownBug(terminal="iTerm2", reason="DECSED not implemented")
+  def test_DECSERA_doesNotRespectISOProtect(self):
+    """DECSERA does not respect ISO protection."""
+    escio.Write("a")
+    escc1.SPA()
+    escio.Write("b")
+    escc1.EPA()
+    esccsi.DECSERA(1, 1, 1, 2)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 2, 1), [ esc.blank() * 2 ])
 

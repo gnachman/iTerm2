@@ -1,4 +1,5 @@
 from esc import NUL, blank
+import escc1
 import escargs
 import esccsi
 import escio
@@ -357,3 +358,16 @@ class DECSEDTests(object):
                                  [ blank() + "bcde",
                                    "fghij",
                                    "klmno" ])
+
+  @knownBug(terminal="xterm",
+            reason="DECSED respects ISO protection for backward compatibility reasons, per email from Thomas")
+  @knownBug(terminal="iTerm2", reason="DECSED not implemented")
+  def test_DECSED_doesNotRespectISOProtect(self):
+    """DECSED does not respect ISO protection."""
+    escio.Write("a")
+    escc1.SPA()
+    escio.Write("b")
+    escc1.EPA()
+    esccsi.DECSED(2)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 2, 1), [ blank() * 2 ])
+

@@ -24,3 +24,16 @@ def NEL():
 def RI():
   """Move cursor up one line."""
   escio.Write(ESC + "M")
+
+def DCS():
+  """Device control string. Prefixes various commands."""
+  escio.Write(ESC + "P")
+
+def SPA():
+  """Start protected area."""
+  escio.Write(ESC + "V")
+
+def EPA():
+  """End protected area."""
+  escio.Write(ESC + "W")
+

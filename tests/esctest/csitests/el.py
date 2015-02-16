@@ -1,9 +1,10 @@
 from esc import NUL, blank
 import escargs
+import escc1
 import esccsi
 import escio
 from esctypes import Point, Rect
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, knownBug
 
 class ELTests(object):
   def prepare(self):
@@ -52,4 +53,29 @@ class ELTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 10, 1),
                                  [ 10 * NUL ])
 
+  def test_EL_doesNotRespectDECProtection(self):
+    """EL respects DECSCA."""
+    escio.Write("a")
+    escio.Write("b")
+    esccsi.DECSCA(1)
+    escio.Write("c")
+    esccsi.DECSCA(0)
+    esccsi.CUP(Point(1, 1))
+    esccsi.EL(2)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 3, 1),
+                                 [ NUL * 3 ])
+
+  @knownBug(terminal="iTerm2",
+            reason="Protection not implemented.")
+  def test_EL_respectsISOProtection(self):
+    """EL respects SPA/EPA."""
+    escio.Write("a")
+    escio.Write("b")
+    escc1.SPA()
+    escio.Write("c")
+    escc1.EPA()
+    esccsi.CUP(Point(1, 1))
+    esccsi.EL(2)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 3, 1),
+                                 [ blank() * 2 + "c" ])
 
