@@ -1,5 +1,10 @@
+# TODO: Add support for 8-bit controls
 from esc import ESC
 import escio
+
+def DCS():
+  """Device control string. Prefixes various commands."""
+  escio.Write(ESC + "P")
 
 def DECRC():
   """Restore the cursor and resets various attributes."""
@@ -8,6 +13,10 @@ def DECRC():
 def DECSC():
   """Saves the cursor."""
   escio.Write(ESC + "7")
+
+def EPA():
+  """End protected area."""
+  escio.Write(ESC + "W")
 
 def HTS():
   """Set a horizontal tab stop."""
@@ -25,15 +34,10 @@ def RI():
   """Move cursor up one line."""
   escio.Write(ESC + "M")
 
-def DCS():
-  """Device control string. Prefixes various commands."""
-  escio.Write(ESC + "P")
-
 def SPA():
   """Start protected area."""
   escio.Write(ESC + "V")
 
-def EPA():
-  """End protected area."""
-  escio.Write(ESC + "W")
-
+def SOS():
+  """Start of string."""
+  escio.Write(ESC + "X")
