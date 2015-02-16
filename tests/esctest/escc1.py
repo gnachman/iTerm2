@@ -2,9 +2,17 @@
 from esc import ESC
 import escio
 
+def APC():
+  """Application Program Command."""
+  escio.Write(ESC + "_")
+
 def DCS():
   """Device control string. Prefixes various commands."""
   escio.Write(ESC + "P")
+
+def DECID():
+  """Obsolete form of DA."""
+  escio.Write(ESC + "Z")
 
 def DECRC():
   """Restore the cursor and resets various attributes."""
@@ -29,6 +37,10 @@ def IND():
 def NEL():
   """Index plus carriage return."""
   escio.Write(ESC + "E")
+
+def PM():
+  """Privacy message."""
+  escio.Write(ESC + "^")
 
 def RI():
   """Move cursor up one line."""

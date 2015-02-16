@@ -12,6 +12,7 @@ import escutil
 import inspect
 import os
 import re
+import singlechartests
 import traceback
 
 def init():
@@ -118,7 +119,7 @@ def RunTests():
   failures = []
   classes = []
 
-  for category in [ c1tests.tests, csitests.tests ]:
+  for category in [ c1tests.tests, csitests.tests, singlechartests.tests ]:
     classes.extend(category)
 
   for testClass in classes:
