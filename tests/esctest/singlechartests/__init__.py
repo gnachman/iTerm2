@@ -1,3 +1,5 @@
 import bs
+import cr
 
-tests = [ bs.BSTests ]
+tests = [ bs.BSTests,
+          cr.CRTests ]
