@@ -7,6 +7,7 @@ import escc1
 import esccsi
 import escio
 import esclog
+import esctests
 import esctypes
 import escutil
 import inspect
@@ -120,7 +121,7 @@ def RunTests():
   failures = []
   classes = []
 
-  for category in [ c1tests.tests, csitests.tests, singlechartests.tests ]:
+  for category in [ c1tests.tests, csitests.tests, singlechartests.tests, esctests.tests ]:
     classes.extend(category)
 
   for testClass in classes:

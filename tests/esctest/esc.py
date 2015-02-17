@@ -9,6 +9,9 @@ CR = chr(13)
 FF = chr(12)
 ESC = chr(27)
 
+S7C1T = ESC + " F"
+S8C1T = ESC + " G"
+
 ST = ESC + "\\"
 
 # VT x00 level. vtLevel may be 1, 2, 3, 4, or 5.

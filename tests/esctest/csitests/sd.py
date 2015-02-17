@@ -48,6 +48,7 @@ class SDTests(object):
                        "klmno" ]
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 5), expected_lines);
 
+  @knownBug(terminal="xterm", reason="Asserts", shouldTry=False)
   def test_SD_CanClearScreen(self):
     """An SD equal to the height of the screen clears it."""
     # Fill the screen with 0001, 0002, ..., height. Fill expected_lines with empty rows.

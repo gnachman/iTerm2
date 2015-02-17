@@ -4,6 +4,7 @@ import argparse
 # xterm*disallowedWindowOps:
 # Then run "xrdb -merge ~/.Xresources" and restart xterm.
 XTERM_WINOPS_ENABLED = "xtermWinopsEnabled"
+DISABLE_WIDE_CHARS = "disableWideChars"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--disable-xterm-checksum-bug",
@@ -31,7 +32,7 @@ parser.add_argument("--force",
 parser.add_argument("--options",
                     help="Space-separated options that are enabled.",
                     nargs="+",
-                    choices=[ XTERM_WINOPS_ENABLED ])
+                    choices=[ XTERM_WINOPS_ENABLED, DISABLE_WIDE_CHARS ])
 parser.add_argument("--max-vt-level",
                     help="Do not run tests requiring a higher VT level than this.",
                     type=int,

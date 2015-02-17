@@ -53,6 +53,7 @@ class DCHTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 1), [ "abcde" ])
 
   @knownBug(terminal="xterm", reason="DCH operates on the current line when outside the scroll region in xterm.")
+  @knownBug(terminal="xterm", reason="Assertion fires", shouldTry=False)
   @knownBug(terminal="iTerm2", reason="DCH operates on the current line when outside the scroll region in iTerm2.")
   @knownBug(terminal="Terminal.app", reason="DCH operates on the current line when outside the scroll region in Terminal.app.")
   def test_DCH_DoesNothingOutsideTopBottomMargin(self):

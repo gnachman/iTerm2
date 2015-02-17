@@ -186,6 +186,35 @@ def intentionalDeviationFromSpec(terminal, reason):
     return func_wrapper
   return decorator
 
+def optionRejects(terminal, option):
+  """Decorator for a method indicating that it will fail if an option is present."""
+  reason = "Terminal \"" + terminal + "\" is known to fail this test with option \"" + option + "\" set."
+  def decorator(func):
+    @functools.wraps(func)
+    def func_wrapper(self, *args, **kwargs):
+      hasOption = (escargs.args.options is not None and
+                   option in escargs.args.options)
+      if escargs.args.expected_terminal == terminal:
+        try:
+          func(self, *args, **kwargs)
+        except Exception, e:
+          if not hasOption:
+            # Failed despite option being unset. Re-raise.
+            raise
+          tb = traceback.format_exc()
+          lines = tb.split("\n")
+          lines = map(lambda x: "EXPECTED FAILURE (MISSING OPTION): " + x, lines)
+          raise esctypes.KnownBug(reason + "\n\n" + "\n".join(lines))
+
+        # Got here because test passed. If the option is set, that's
+        # unexpected so we raise an error.
+        if not escargs.args.force and hasOption:
+          raise esctypes.InternalError("Should have failed: " + reason)
+      else:
+        func(self, *args, **kwargs)
+    return func_wrapper
+  return decorator
+
 def optionRequired(terminal, option, allowPassWithoutOption=False):
   """Decorator for a method indicating that it should fail unless an option is
   present."""

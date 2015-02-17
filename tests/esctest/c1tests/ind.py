@@ -1,8 +1,9 @@
-from esc import NUL
+from esc import NUL, S7C1T, S8C1T
+import escargs
 import escc1
 import esccsi
 import escio
-from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, optionRequired
 from esctypes import Point, Rect
 
 class INDTests(object):
@@ -119,3 +120,18 @@ class INDTests(object):
 
     # Ensure no scroll
     AssertScreenCharsInRectEqual(Rect(1, 6, 1, 6), [ "x" ])
+
+  @optionRequired(terminal="xterm", option=escargs.DISABLE_WIDE_CHARS)
+  @knownBug(terminal="iTerm2", reason="8-bit controls not implemented.")
+  def test_IND_8bit(self):
+    esccsi.CUP(Point(5, 3))
+
+    escio.use8BitControls = True
+    escio.Write(S8C1T)
+    escc1.IND()
+    escio.Write(S7C1T)
+    escio.use8BitControls = False
+
+    position = GetCursorPosition()
+    AssertEQ(position.x(), 5)
+    AssertEQ(position.y(), 4)

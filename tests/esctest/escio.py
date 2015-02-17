@@ -49,6 +49,12 @@ def CSI():
   else:
     return ESC + "["
 
+def DCS():
+  if use8BitControls:
+    return chr(0x90)
+  else:
+    return ESC + "P"
+
 def WriteOSC(params, bel=False, requestsReport=False):
   str_params = map(str, params)
   joined_params = ";".join(str_params)
@@ -61,6 +67,9 @@ def WriteOSC(params, bel=False, requestsReport=False):
   sequence = OSC() + joined_params + terminator
   LogDebug("Send sequence: " + sequence.replace(ESC, "<ESC>"))
   Write(sequence, sideChannelOk=not requestsReport)
+
+def WriteDCS(introducer, params):
+  Write(DCS() + introducer + params + ST)
 
 def WriteCSI(prefix="", params=[], intermediate="", final="", requestsReport=False):
   if len(final) == 0:

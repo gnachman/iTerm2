@@ -25,6 +25,7 @@ def Log(level, fmt):
       gLogFile = open(escargs.args.logfile, "w")
     s = fmt + "\n"
     gLogFile.write(s)
+    gLogFile.flush()
     log += s
 
 def Print():
