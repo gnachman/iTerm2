@@ -1,7 +1,7 @@
-from esc import NUL
+from esc import NUL, LF, VT, FF
 import esccsi
 import escio
-from escutil import AssertScreenCharsInRectEqual, GetScreenSize
+from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
 from esctypes import Point, Rect
 
 # AM, SRM, and LNM should also be supported but are not currently testable
@@ -45,3 +45,22 @@ class SMTests(object):
 
     AssertScreenCharsInRectEqual(Rect(5, 1, 11, 1), [ "abXcde" + NUL ])
 
+  def doLinefeedModeTest(self, code):
+    esccsi.RM(esccsi.LNM)
+    esccsi.CUP(Point(5, 1))
+    escio.Write(code)
+    AssertEQ(GetCursorPosition(), Point(5, 2))
+
+    esccsi.SM(esccsi.LNM)
+    esccsi.CUP(Point(5, 1))
+    escio.Write(code)
+    AssertEQ(GetCursorPosition(), Point(1, 2))
+
+  @knownBug(terminal="iTerm2", reason="LNN not implemented.")
+  def test_SM_LNM(self):
+    """In linefeed mode LF, VT, and FF perform a carriage return after doing
+    an index. Also any report with a CR gets a CR LF instead, but I'm not sure
+    when that would happen."""
+    self.doLinefeedModeTest(LF)
+    self.doLinefeedModeTest(VT)
+    self.doLinefeedModeTest(FF)

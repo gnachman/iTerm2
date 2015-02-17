@@ -46,6 +46,7 @@ def reset():
   esccsi.DECRESET(esccsi.ALTBUF)  # Is this needed?
   esccsi.DECRESET(esccsi.DECLRMM)  # This can be removed when the bug revealed by test_DECSET_DECLRMM_ResetByDECSTR is fixed.
   esccsi.RM(esccsi.IRM)
+  esccsi.RM(esccsi.LNM)
   # Technically, autowrap should be off by default (this is what the spec calls for).
   # However, xterm and iTerm2 turn it on by default. xterm has a comment that says:
   #   There are a couple of differences from real DEC VTxxx terminals (to avoid
