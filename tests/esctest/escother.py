@@ -10,3 +10,8 @@ def DECDHL(x):
 def DECALN():
   """Write test pattern."""
   escio.Write(esc.ESC + "#8")
+
+def DECBI():
+  """Index left, scrolling region right if cursor at margin."""
+  escio.Write(esc.ESC + "6")
+
