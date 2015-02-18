@@ -1,14 +1,11 @@
 from esc import NUL
 import escargs
 import esccmd
+from esccmd import SET_HEX, QUERY_HEX, SET_UTF8, QUERY_UTF8
 import escio
 from esctypes import Point, Rect
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetIconTitle, GetScreenSize, GetWindowTitle, knownBug, optionRequired
 
-SET_HEX = 0
-QUERY_HEX = 1
-SET_UTF8 = 2
-QUERY_UTF8 = 3
 
 class SMTitleTests(object):
   @optionRequired(terminal="xterm", option=escargs.XTERM_WINOPS_ENABLED,

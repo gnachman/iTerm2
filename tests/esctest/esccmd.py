@@ -119,6 +119,12 @@ TSM = 18
 TTM = 16
 VEM = 7
 
+# SMTitle
+SET_HEX = 0
+QUERY_HEX = 1
+SET_UTF8 = 2
+QUERY_UTF8 = 3
+
 def ANSIRC():
   """Restore cursor."""
   escio.WriteCSI(final="u")
@@ -593,6 +599,10 @@ def RI():
     escio.Write(chr(0x8d))
   else:
     escio.Write(ESC + "M")
+
+def RIS():
+  """Reset."""
+  escio.Write(ESC + "c")
 
 def RM(Pm=None):
   """Reset mode."""

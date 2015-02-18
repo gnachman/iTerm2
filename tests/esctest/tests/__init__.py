@@ -19,7 +19,6 @@
 # Request Checksum of Rectangular Area (DECRQCRA): CSI Pi ; Pg ; Pt ; Pl ; Pb ; Pr * y
 # Select Locator Events (DECSLE): CSI Pm ' {
 # Request Locator Position (DECRQLP): CSI PS ' |
-
 # ESC SP L  Set ANSI conformance level 1 (dpANS X3.134.1).
 # ESC SP M  Set ANSI conformance level 2 (dpANS X3.134.1).
 # ESC SP N  Set ANSI conformance level 3 (dpANS X3.134.1).
@@ -40,12 +39,22 @@
 # ESC . C   Designate G2 Character Set (VT300).
 # ESC / C   Designate G3 Character Set (VT300).
 #  Character set stuff is not introspectable.
-
 # Shift in (SI): ^O
 # Shift out (SO): ^N
 # Space (SP): 0x20
 # Tab (TAB): 0x09 [tested in HTS]
-
+# ESC =     Application Keypad (DECKPAM).
+# ESC >     Normal Keypad (DECKPNM).
+# ESC F     Cursor to lower left corner of screen.  This is enabled by the
+#           hpLowerleftBugCompat resource. (Not worth testing as it's off by
+#           default, and silly regardless)
+# ESC l     Memory Lock (per HP terminals).  Locks memory above the cursor.
+# ESC m     Memory Unlock (per HP terminals).
+# ESC n     Invoke the G2 Character Set as GL (LS2).
+# ESC o     Invoke the G3 Character Set as GL (LS3).
+# ESC |     Invoke the G3 Character Set as GR (LS3R).
+# ESC }     Invoke the G2 Character Set as GR (LS2R).
+# ESC ~     Invoke the G1 Character Set as GR (LS1R).
 # Notes for future tests:
 # CSI 21 t
 #   Test the title modes settable and resttable by CSI > Ps ; Ps t and CSI > Ps ; Ps T
@@ -104,6 +113,7 @@ import nel
 import pm
 import rep
 import ri
+import ris
 import rm
 import s8c1t
 import sd
@@ -173,6 +183,7 @@ tests = [
     pm.PMTests,
     rep.REPTests,
     ri.RITests,
+    ris.RISTests,
     rm.RMTests,
     s8c1t.S8C1TTests,
     sd.SDTests,
