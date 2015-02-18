@@ -315,6 +315,10 @@ def DECERA(Pt, Pl, Pb, Pr):
   """Erase rectangle."""
   escio.WriteCSI(params=[ Pt, Pl, Pb, Pr ], intermediate="$", final="z")
 
+def DECFI():
+  """Forward index."""
+  escio.Write(ESC + "9")
+
 def DECFRA(Pch, Pt, Pl, Pb, Pr):
   """Fill rectangle with Pch"""
   escio.WriteCSI(params=[ Pch, Pt, Pl, Pb, Pr ], intermediate="$", final="x")

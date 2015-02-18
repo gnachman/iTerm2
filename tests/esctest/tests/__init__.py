@@ -74,6 +74,7 @@ import decdc
 import decdsr
 import decera
 import decfra
+import decfi
 import decic
 import decid
 import decrc
@@ -142,6 +143,7 @@ tests = [
     decdsr.DECDSRTests,
     decera.DECERATests,
     decfra.DECFRATests,
+    decfi.DECFITests,
     decic.DECICTests,
     decid.DECIDTests,
     decrc.DECRCTests,
