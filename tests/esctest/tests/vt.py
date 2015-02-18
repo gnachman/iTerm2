@@ -1,5 +1,5 @@
 from esc import VT, NUL
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
 from esctypes import Point, Rect
@@ -9,7 +9,7 @@ class VTTests(object):
   the same as those for IND."""
   def test_VT_Basic(self):
     """VT moves the cursor down one line."""
-    esccsi.CUP(Point(5, 3))
+    esccmd.CUP(Point(5, 3))
     escio.Write(VT)
     position = GetCursorPosition()
     AssertEQ(position.x(), 5)
@@ -20,13 +20,13 @@ class VTTests(object):
     height = GetScreenSize().height()
 
     # Put a and b on the last two lines.
-    esccsi.CUP(Point(2, height - 1))
+    esccmd.CUP(Point(2, height - 1))
     escio.Write("a")
-    esccsi.CUP(Point(2, height))
+    esccmd.CUP(Point(2, height))
     escio.Write("b")
 
     # Move to penultimate line.
-    esccsi.CUP(Point(2, height - 1))
+    esccmd.CUP(Point(2, height - 1))
 
     # Move down, ensure no scroll yet.
     escio.Write(VT)
@@ -40,11 +40,11 @@ class VTTests(object):
 
   def test_VT_ScrollsInTopBottomRegionStartingAbove(self):
     """VT scrolls when it hits the bottom region (starting above top)."""
-    esccsi.DECSTBM(4, 5)
-    esccsi.CUP(Point(2, 5))
+    esccmd.DECSTBM(4, 5)
+    esccmd.CUP(Point(2, 5))
     escio.Write("x")
 
-    esccsi.CUP(Point(2, 3))
+    esccmd.CUP(Point(2, 3))
     escio.Write(VT)
     escio.Write(VT)
     escio.Write(VT)
@@ -53,11 +53,11 @@ class VTTests(object):
 
   def test_VT_ScrollsInTopBottomRegionStartingWithin(self):
     """VT scrolls when it hits the bottom region (starting within region)."""
-    esccsi.DECSTBM(4, 5)
-    esccsi.CUP(Point(2, 5))
+    esccmd.DECSTBM(4, 5)
+    esccmd.CUP(Point(2, 5))
     escio.Write("x")
 
-    esccsi.CUP(Point(2, 4))
+    esccmd.CUP(Point(2, 4))
     escio.Write(VT)
     escio.Write(VT)
     AssertEQ(GetCursorPosition(), Point(2, 5))
@@ -67,14 +67,14 @@ class VTTests(object):
             reason="iTerm2 improperly scrolls when the cursor is outside the left-right region.")
   def test_VT_MovesDoesNotScrollOutsideLeftRight(self):
     """Cursor moves down but won't scroll when outside left-right region."""
-    esccsi.DECSTBM(2, 5)
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 5)
-    esccsi.CUP(Point(3, 5))
+    esccmd.DECSTBM(2, 5)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 5)
+    esccmd.CUP(Point(3, 5))
     escio.Write("x")
 
     # Move past bottom margin but to the right of the left-right region
-    esccsi.CUP(Point(6, 5))
+    esccmd.CUP(Point(6, 5))
     escio.Write(VT)
     # Cursor won't pass bottom or scroll.
     AssertEQ(GetCursorPosition(), Point(6, 5))
@@ -82,20 +82,20 @@ class VTTests(object):
 
     # Try to move past the bottom of the screen but to the right of the left-right region
     height = GetScreenSize().height()
-    esccsi.CUP(Point(6, height))
+    esccmd.CUP(Point(6, height))
     escio.Write(VT)
     AssertEQ(GetCursorPosition(), Point(6, height))
     AssertScreenCharsInRectEqual(Rect(3, 5, 3, 5), [ "x" ])
 
     # Move past bottom margin but to the left of the left-right region
-    esccsi.CUP(Point(1, 5))
+    esccmd.CUP(Point(1, 5))
     escio.Write(VT)
     AssertEQ(GetCursorPosition(), Point(1, 5))
     AssertScreenCharsInRectEqual(Rect(3, 5, 3, 5), [ "x" ])
 
     # Try to move past the bottom of the screen but to the left of the left-right region
     height = GetScreenSize().height()
-    esccsi.CUP(Point(1, height))
+    esccmd.CUP(Point(1, height))
     escio.Write(VT)
     AssertEQ(GetCursorPosition(), Point(1, height))
     AssertScreenCharsInRectEqual(Rect(3, 5, 3, 5), [ "x" ])
@@ -104,10 +104,10 @@ class VTTests(object):
     """When the cursor starts below the scroll region, index moves it down to the
     bottom of the screen but won't scroll."""
     # Set a scroll region. This must be done first because DECSTBM moves the cursor to the origin.
-    esccsi.DECSTBM(4, 5)
+    esccmd.DECSTBM(4, 5)
 
     # Position the cursor below the scroll region
-    esccsi.CUP(Point(1, 6))
+    esccmd.CUP(Point(1, 6))
     escio.Write("x")
 
     # Move it down by a lot

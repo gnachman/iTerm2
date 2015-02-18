@@ -1,5 +1,5 @@
 import escargs
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, knownBug
 
@@ -20,11 +20,11 @@ class DATests(object):
     AssertEQ(params, expected)
 
   def test_DA_NoParameter(self):
-    esccsi.DA()
+    esccmd.DA()
     self.handleDAResponse()
 
   def test_DA_0(self):
-    esccsi.DA(0)
+    esccmd.DA(0)
     self.handleDAResponse()
 
 

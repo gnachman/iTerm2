@@ -1,4 +1,4 @@
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, Point, Rect, knownBug, optionRequired
 
@@ -7,7 +7,7 @@ class DECALNTests(object):
     """Makes sure DECALN fills the screen with the letter E (could be anything,
     but xterm uses E). Testing the whole screen would be slow so we just check
     the corners and center."""
-    esccsi.DECALN()
+    esccmd.DECALN()
     size = GetScreenSize()
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "E" ])
     AssertScreenCharsInRectEqual(Rect(size.width(), 1, size.width(), 1), [ "E" ])
@@ -21,32 +21,32 @@ class DECALNTests(object):
                                  [ "E" ])
 
   def test_DECALN_MovesCursorHome(self):
-    esccsi.CUP(Point(5, 5))
-    esccsi.DECALN()
+    esccmd.CUP(Point(5, 5))
+    esccmd.DECALN()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
   def test_DECALN_ClearsMargins(self):
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 3)
-    esccsi.DECSTBM(4, 5)
-    esccsi.DECALN()
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 3)
+    esccmd.DECSTBM(4, 5)
+    esccmd.DECALN()
 
     # Verify we can pass the top margin
-    esccsi.CUP(Point(2, 4))
-    esccsi.CUU()
+    esccmd.CUP(Point(2, 4))
+    esccmd.CUU()
     AssertEQ(GetCursorPosition(), Point(2, 3))
 
     # Verify we can pass the bottom margin
-    esccsi.CUP(Point(2, 5))
-    esccsi.CUD()
+    esccmd.CUP(Point(2, 5))
+    esccmd.CUD()
     AssertEQ(GetCursorPosition(), Point(2, 6))
 
     # Verify we can pass the left margin
-    esccsi.CUP(Point(2, 4))
-    esccsi.CUB()
+    esccmd.CUP(Point(2, 4))
+    esccmd.CUB()
     AssertEQ(GetCursorPosition(), Point(1, 4))
 
     # Verify we can pass the right margin
-    esccsi.CUP(Point(3, 4))
-    esccsi.CUF()
+    esccmd.CUP(Point(3, 4))
+    esccmd.CUF()
     AssertEQ(GetCursorPosition(), Point(4, 4))

@@ -1,5 +1,5 @@
 from esc import NUL, LF, VT, FF
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
 from esctypes import Point, Rect
@@ -10,8 +10,8 @@ class SMTests(object):
   def test_SM_IRM(self):
     """Turn on insert mode."""
     escio.Write("abc")
-    esccsi.CUP(Point(1, 1))
-    esccsi.SM(esccsi.IRM)
+    esccmd.CUP(Point(1, 1))
+    esccmd.SM(esccmd.IRM)
     escio.Write("X")
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, 1), [ "Xabc" ])
 
@@ -20,39 +20,39 @@ class SMTests(object):
     size = GetScreenSize()
     escio.Write("a" * (size.width() - 1))
     escio.Write("b")
-    esccsi.CUP(Point(1, 1))
-    esccsi.SM(esccsi.IRM)
+    esccmd.CUP(Point(1, 1))
+    esccmd.SM(esccmd.IRM)
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 2), [ NUL ])
     escio.Write("X")
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 2), [ NUL ])
-    esccsi.CUP(Point(size.width(), 1))
+    esccmd.CUP(Point(size.width(), 1))
     escio.Write("YZ")
     AssertScreenCharsInRectEqual(Rect(1, 2, 1, 2), [ "Z" ])
 
   def test_SM_IRM_TruncatesAtRightMargin(self):
     """When a left-right margin is set, insert truncates the line at the right margin."""
-    esccsi.CUP(Point(5, 1))
+    esccmd.CUP(Point(5, 1))
 
     escio.Write("abcdef")
 
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(5, 10)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(5, 10)
 
-    esccsi.CUP(Point(7, 1))
-    esccsi.SM(esccsi.IRM)
+    esccmd.CUP(Point(7, 1))
+    esccmd.SM(esccmd.IRM)
     escio.Write("X")
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     AssertScreenCharsInRectEqual(Rect(5, 1, 11, 1), [ "abXcde" + NUL ])
 
   def doLinefeedModeTest(self, code):
-    esccsi.RM(esccsi.LNM)
-    esccsi.CUP(Point(5, 1))
+    esccmd.RM(esccmd.LNM)
+    esccmd.CUP(Point(5, 1))
     escio.Write(code)
     AssertEQ(GetCursorPosition(), Point(5, 2))
 
-    esccsi.SM(esccsi.LNM)
-    esccsi.CUP(Point(5, 1))
+    esccmd.SM(esccmd.LNM)
+    esccmd.CUP(Point(5, 1))
     escio.Write(code)
     AssertEQ(GetCursorPosition(), Point(1, 2))
 

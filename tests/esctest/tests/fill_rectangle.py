@@ -1,5 +1,5 @@
 from esc import CR, LF
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, Rect, knownBug, vtLevel
 from esctypes import Point
@@ -16,7 +16,7 @@ class FillRectangleTests(object):
              "YZ6789!@" ]
 
   def prepare(self):
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     for line in self.data():
       escio.Write(line + CR + LF)
 
@@ -76,7 +76,7 @@ class FillRectangleTests(object):
                Point(1, size.height()) ]
     n = 1
     for point in points:
-      esccsi.CUP(point)
+      esccmd.CUP(point)
       escio.Write(str(n))
       n += 1
 
@@ -93,12 +93,12 @@ class FillRectangleTests(object):
     self.prepare()
 
     # Set margins starting at 2 and 2
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 9)
-    esccsi.DECSTBM(2, 9)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 9)
+    esccmd.DECSTBM(2, 9)
 
     # Turn on origin mode
-    esccsi.DECSET(esccsi.DECOM)
+    esccmd.DECSET(esccmd.DECOM)
 
     # Fill from 1,1 to 3,3 - with origin mode, that's 2,2 to 4,4
     self.fill(top=1,
@@ -107,9 +107,9 @@ class FillRectangleTests(object):
               right=3)
 
     # Turn off margins and origin mode
-    esccsi.DECRESET(esccsi.DECLRMM)
-    esccsi.DECSTBM()
-    esccsi.DECRESET(esccsi.DECOM)
+    esccmd.DECRESET(esccmd.DECLRMM)
+    esccmd.DECSTBM()
+    esccmd.DECRESET(esccmd.DECOM)
 
     # See what happened.
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 8),
@@ -128,9 +128,9 @@ class FillRectangleTests(object):
     size = GetScreenSize()
 
     # Put ab, cX in the bottom right
-    esccsi.CUP(Point(size.width() - 1, size.height() - 1))
+    esccmd.CUP(Point(size.width() - 1, size.height() - 1))
     escio.Write("ab")
-    esccsi.CUP(Point(size.width() - 1, size.height()))
+    esccmd.CUP(Point(size.width() - 1, size.height()))
     escio.Write("cd")
 
     # Fill a 2x2 block starting at the d.
@@ -153,7 +153,7 @@ class FillRectangleTests(object):
 
     # Place the cursor
     position = Point(3, 4)
-    esccsi.CUP(position)
+    esccmd.CUP(position)
 
     # Fill a block
     self.fill(top=2,
@@ -170,9 +170,9 @@ class FillRectangleTests(object):
     self.prepare()
 
     # Set margins
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(3, 6)
-    esccsi.DECSTBM(3, 6)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(3, 6)
+    esccmd.DECSTBM(3, 6)
 
     # Fill!
     self.fill(top=5,
@@ -181,8 +181,8 @@ class FillRectangleTests(object):
               right=7)
 
     # Remove margins
-    esccsi.DECRESET(esccsi.DECLRMM)
-    esccsi.DECSTBM()
+    esccmd.DECRESET(esccmd.DECLRMM)
+    esccmd.DECSTBM()
 
     # Did it ignore the margins?
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 8),

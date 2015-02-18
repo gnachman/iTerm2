@@ -1,12 +1,12 @@
 import tests.fill_rectangle
 import esc
 import escargs
-import esccsi
+import esccmd
 from escutil import knownBug
 
 class DECERATests(tests.fill_rectangle.FillRectangleTests):
   def fill(self, top=None, left=None, bottom=None, right=None):
-    esccsi.DECERA(top, left, bottom, right)
+    esccmd.DECERA(top, left, bottom, right)
 
   def characters(self, point, count):
     return esc.blank() * count

@@ -1,5 +1,5 @@
 from esc import NUL
-import esccsi
+import esccmd
 import escio
 import esclog
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, AssertTrue, GetScreenSize, knownBug
@@ -7,7 +7,7 @@ from esctypes import Point, Rect
 
 class DECDSRTests(object):
   def getVTLevel(self):
-    esccsi.DA2()
+    esccmd.DA2()
     params = escio.ReadCSI('c', expected_prefix='>')
     vtLevel = params[0]
     if vtLevel < 18:
@@ -30,8 +30,8 @@ class DECDSRTests(object):
     # First, get the VT level.
     vtLevel = self.getVTLevel()
 
-    esccsi.CUP(Point(5, 6))
-    esccsi.DECDSR(esccsi.DECXCPR)
+    esccmd.CUP(Point(5, 6))
+    esccmd.DECDSR(esccmd.DECXCPR)
     params = escio.ReadCSI('R', expected_prefix='?')
 
     if vtLevel >= 4:
@@ -55,7 +55,7 @@ class DECDSRTests(object):
         19 - Assigned to other session.
       There's no way for the test to know what the actual printer status is,
       but the response should be legal."""
-    esccsi.DECDSR(esccsi.DSRPrinterPort)
+    esccmd.DECDSR(esccmd.DSRPrinterPort)
     params = escio.ReadCSI('n', expected_prefix='?')
     AssertEQ(len(params), 1)
     AssertTrue(params[0] in [ 10, 11, 13, 18, 19 ])
@@ -71,7 +71,7 @@ class DECDSRTests(object):
     This test simply ensures the value is legal. It should be extended to
     ensure that when locked UDKs are not settable, and when unlocked that UDKs
     are settable."""
-    esccsi.DECDSR(esccsi.DSRUDKLocked)
+    esccmd.DECDSR(esccmd.DSRUDKLocked)
     params = escio.ReadCSI('n', expected_prefix='?')
     AssertEQ(len(params), 1)
     AssertTrue(params[0] in [ 20, 21 ])
@@ -98,7 +98,7 @@ class DECDSRTests(object):
         5 - PCXAL  # DEC 510"""
     # First get the VT level with a DA2
     vtLevel = self.getVTLevel()
-    esccsi.DECDSR(esccsi.DSRKeyboard)
+    esccmd.DECDSR(esccmd.DSRKeyboard)
     params = escio.ReadCSI('n', expected_prefix='?')
     if vtLevel <= 2:
       # VT240 or earlier
@@ -122,7 +122,7 @@ class DECDSRTests(object):
   def doLocatorStatusTest(self, code):
     """I couldn't find docs on these codes outside xterm. 53 and 55 seem to be
     the same. Returns 50 if no locator, 53 if available."""
-    esccsi.DECDSR(code)
+    esccmd.DECDSR(code)
     params = escio.ReadCSI('n', expected_prefix='?')
 
     AssertEQ(len(params), 1)
@@ -130,11 +130,11 @@ class DECDSRTests(object):
 
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DSRDECLocatorStatus(self):
-    self.doLocatorStatusTest(esccsi.DSRDECLocatorStatus)
+    self.doLocatorStatusTest(esccmd.DSRDECLocatorStatus)
 
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DSRXtermLocatorStatus(self):
-    self.doLocatorStatusTest(esccsi.DSRXtermLocatorStatus)
+    self.doLocatorStatusTest(esccmd.DSRXtermLocatorStatus)
 
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_LocatorType(self):
@@ -142,7 +142,7 @@ class DECDSRTests(object):
     0 - unknown (not documented)
     1 - mouse
     2 - tablet"""
-    esccsi.DECDSR(esccsi.DSRLocatorId)
+    esccmd.DECDSR(esccmd.DSRLocatorId)
     params = escio.ReadCSI('n', expected_prefix='?')
 
     AssertEQ(params[0], 57)
@@ -152,7 +152,7 @@ class DECDSRTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DECMSR(self):
     """Get space available for macros. This test assumes it's always 0."""
-    esccsi.DECDSR(esccsi.DECMSR)
+    esccmd.DECDSR(esccmd.DECMSR)
     params = escio.ReadCSI('*{')
 
     # Assume the terminal being tested doesn't support macros. May need to add
@@ -163,14 +163,14 @@ class DECDSRTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DECCKSR(self):
     """Get checksum of macros. This test assumes it's always 0."""
-    esccsi.DECDSR(Ps=esccsi.DECCKSR, Pid=123)
+    esccmd.DECDSR(Ps=esccmd.DECCKSR, Pid=123)
     value = escio.ReadDCS()
     AssertEQ(value, "123!~0000")
 
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECDSR_DSRDataIntegrity(self):
     """Check for link errors. Should always report OK."""
-    esccsi.DECDSR(esccsi.DSRIntegrityReport)
+    esccmd.DECDSR(esccmd.DSRIntegrityReport)
     params = escio.ReadCSI('n', expected_prefix='?')
     AssertEQ(len(params), 1)
     AssertEQ(params[0], 70)
@@ -197,7 +197,7 @@ class DECDSRTests(object):
     CSI ? 87 n
       Multiple sessions are operating using a separate physical line for each
       session, not SSU."""
-    esccsi.DECDSR(esccsi.DSRMultipleSessionStatus)
+    esccmd.DECDSR(esccmd.DSRMultipleSessionStatus)
     params = escio.ReadCSI('n', expected_prefix='?')
     AssertEQ(len(params), 1)
     # 83 and 87 both seem like reasonable responses for a terminal that

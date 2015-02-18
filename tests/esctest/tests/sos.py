@@ -1,6 +1,6 @@
 from esc import NUL, ST, S7C1T, S8C1T
 import escargs
-import esccsi
+import esccmd
 import escio
 from escutil import AssertScreenCharsInRectEqual, knownBug, optionRequired
 from esctypes import Rect
@@ -8,7 +8,7 @@ from esctypes import Rect
 class SOSTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_SOS_Basic(self):
-    esccsi.SOS()
+    esccmd.SOS()
     escio.Write("xyz")
     escio.Write(ST)
     escio.Write("A")
@@ -21,7 +21,7 @@ class SOSTests(object):
   def test_SOS_8bit(self):
     escio.use8BitControls = True
     escio.Write(S8C1T)
-    esccsi.SOS()
+    esccmd.SOS()
     escio.Write("xyz")
     escio.Write(ST)
     escio.Write("A")

@@ -1,5 +1,5 @@
 import escargs
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, AssertGE, knownBug
 
@@ -17,12 +17,12 @@ class DA2Tests(object):
 
   @knownBug(terminal="iTerm2", reason="Extra empty parameter at end of response")
   def test_DA2_NoParameter(self):
-    esccsi.DA2()
+    esccmd.DA2()
     self.handleDA2Response()
 
   @knownBug(terminal="iTerm2", reason="Extra empty parameter at end of response")
   def test_DA2_0(self):
-    esccsi.DA2(0)
+    esccmd.DA2(0)
     self.handleDA2Response()
 
 

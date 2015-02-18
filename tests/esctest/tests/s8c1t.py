@@ -1,6 +1,6 @@
 from esc import FF, NUL, S7C1T, S8C1T, blank
 import escargs
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug, optionRequired
 from esctypes import Point, Rect
@@ -13,7 +13,7 @@ class S8C1TTests(object):
   def test_S8C1T_CSI(self):
     escio.use8BitControls = True
     escio.Write(S8C1T)
-    esccsi.CUP(Point(1, 2))
+    esccmd.CUP(Point(1, 2))
     escio.Write(S7C1T)
     escio.use8BitControls = False
     AssertEQ(GetCursorPosition(), Point(1, 2))
@@ -21,10 +21,10 @@ class S8C1TTests(object):
   @knownBug(terminal="iTerm2", reason="8-bit controls not implemented.")
   @optionRequired(terminal="xterm", option=escargs.DISABLE_WIDE_CHARS)
   def test_S8C1T_DCS(self):
-    esccsi.DECSTBM(5, 6)
+    esccmd.DECSTBM(5, 6)
     escio.use8BitControls = True
     escio.Write(S8C1T)
-    esccsi.DECRQSS("r")
+    esccmd.DECRQSS("r")
     result = escio.ReadDCS()
     escio.Write(S7C1T)
     escio.use8BitControls = False
@@ -41,15 +41,15 @@ class S8C1TTests(object):
 
     escio.Write("a")
     escio.Write("b")
-    esccsi.SPA()
+    esccmd.SPA()
     escio.Write("c")
-    esccsi.EPA()
+    esccmd.EPA()
 
     escio.Write(S7C1T)
     escio.use8BitControls = False
 
-    esccsi.CUP(Point(1, 1))
-    esccsi.ECH(3)
+    esccmd.CUP(Point(1, 1))
+    esccmd.ECH(3)
     AssertScreenCharsInRectEqual(Rect(1, 1, 3, 1),
                                  [ blank() * 2 + "c" ])
 

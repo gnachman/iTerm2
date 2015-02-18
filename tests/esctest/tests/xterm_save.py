@@ -1,4 +1,4 @@
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, GetCursorPosition, GetScreenSize, knownBug
 from esctypes import Point
@@ -7,39 +7,39 @@ class XtermSaveTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermSave_SaveSetState(self):
     # Turn on auto-wrap
-    esccsi.DECSET(esccsi.DECAWM)
+    esccmd.DECSET(esccmd.DECAWM)
 
     # Save the setting
-    esccsi.XTERM_SAVE(esccsi.DECAWM)
+    esccmd.XTERM_SAVE(esccmd.DECAWM)
 
     # Turn off auto-wrap
-    esccsi.DECRESET(esccsi.DECAWM)
+    esccmd.DECRESET(esccmd.DECAWM)
 
     # Restore the setting
-    esccsi.XTERM_RESTORE(esccsi.DECAWM)
+    esccmd.XTERM_RESTORE(esccmd.DECAWM)
 
     # Verify that auto-wrap is on
     size = GetScreenSize()
-    esccsi.CUP(Point(size.width() - 1, 1))
+    esccmd.CUP(Point(size.width() - 1, 1))
     escio.Write("xxx")
     AssertEQ(GetCursorPosition().x(), 2)
 
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_XtermSave_SaveResetState(self):
     # Turn off auto-wrap
-    esccsi.DECRESET(esccsi.DECAWM)
+    esccmd.DECRESET(esccmd.DECAWM)
 
     # Save the setting
-    esccsi.XTERM_SAVE(esccsi.DECAWM)
+    esccmd.XTERM_SAVE(esccmd.DECAWM)
 
     # Turn on auto-wrap
-    esccsi.DECSET(esccsi.DECAWM)
+    esccmd.DECSET(esccmd.DECAWM)
 
     # Restore the setting
-    esccsi.XTERM_RESTORE(esccsi.DECAWM)
+    esccmd.XTERM_RESTORE(esccmd.DECAWM)
 
     # Verify that auto-wrap is of
     size = GetScreenSize()
-    esccsi.CUP(Point(size.width() - 1, 1))
+    esccmd.CUP(Point(size.width() - 1, 1))
     escio.Write("xxx")
     AssertEQ(GetCursorPosition().x(), size.width())

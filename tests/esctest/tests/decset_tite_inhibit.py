@@ -1,5 +1,5 @@
 from tests.save_restore_cursor import SaveRestoreCursorTests
-import esccsi
+import esccmd
 from escutil import knownBug
 
 class DECSETTiteInhibitTests(SaveRestoreCursorTests):
@@ -7,10 +7,10 @@ class DECSETTiteInhibitTests(SaveRestoreCursorTests):
     SaveRestoreCursorTests.__init__(self)
 
   def saveCursor(self):
-    esccsi.DECSET(esccsi.SaveRestoreCursor)
+    esccmd.DECSET(esccmd.SaveRestoreCursor)
 
   def restoreCursor(self):
-    esccsi.DECRESET(esccsi.SaveRestoreCursor)
+    esccmd.DECRESET(esccmd.SaveRestoreCursor)
 
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_SaveRestoreCursor_Basic(self):

@@ -1,5 +1,5 @@
 from esc import blank
-import esccsi
+import esccmd
 import escio
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, Point, Rect, intentionalDeviationFromSpec, knownBug, optionRequired, vtLevel
 
@@ -8,15 +8,15 @@ class DECBITests(object):
   @vtLevel(4)
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_DECBI_Basic(self):
-    esccsi.CUP(Point(5, 6))
-    esccsi.DECBI()
+    esccmd.CUP(Point(5, 6))
+    esccmd.DECBI()
     AssertEQ(GetCursorPosition(), Point(4, 6))
 
   @knownBug(terminal="iTerm2", reason="Not implemented.", noop=True)
   @vtLevel(4)
   def test_DECBI_NoWrapOnLeftEdge(self):
-    esccsi.CUP(Point(1, 2))
-    esccsi.DECBI()
+    esccmd.CUP(Point(1, 2))
+    esccmd.DECBI()
     AssertEQ(GetCursorPosition(), Point(1, 2))
 
   @knownBug(terminal="iTerm2", reason="Not implemented.")
@@ -29,16 +29,16 @@ class DECBITests(object):
                 "uvwxy" ]
     y = 3
     for s in strings:
-      esccsi.CUP(Point(2, y))
+      esccmd.CUP(Point(2, y))
       escio.Write(s)
       y += 1
 
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(3, 5)
-    esccsi.DECSTBM(4, 6)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(3, 5)
+    esccmd.DECSTBM(4, 6)
 
-    esccsi.CUP(Point(3, 5))
-    esccsi.DECBI()
+    esccmd.CUP(Point(3, 5))
+    esccmd.DECBI()
 
     AssertScreenCharsInRectEqual(Rect(2, 3, 6, 7),
                                  [ "abcde",
@@ -52,10 +52,10 @@ class DECBITests(object):
   @knownBug(terminal="xterm",
             reason="While the docs for DECBI are self-contradictory, I believe the cursor should move in this case. xterm does not move it.")
   def test_DECBI_LeftOfMargin(self):
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(3, 5)
-    esccsi.CUP(Point(2, 1))
-    esccsi.DECBI()
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(3, 5)
+    esccmd.CUP(Point(2, 1))
+    esccmd.DECBI()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
   @knownBug(terminal="iTerm2", reason="Not implemented.")
@@ -68,8 +68,8 @@ class DECBITests(object):
     to the right" and then says "DECBI is not affected by the margins." I don't
     know what they could mean by the second part."""
     escio.Write("x")
-    esccsi.CUP(Point(1, 1))
-    esccsi.DECBI()
+    esccmd.CUP(Point(1, 1))
+    esccmd.DECBI()
     AssertScreenCharsInRectEqual(Rect(1, 1, 2, 1), [ blank() + "x" ])
 
 

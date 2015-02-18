@@ -1,4 +1,4 @@
-import esccsi
+import esccmd
 from escutil import knownBug
 from tests.save_restore_cursor import SaveRestoreCursorTests
 
@@ -7,10 +7,10 @@ class ANSIRCTests(SaveRestoreCursorTests):
     SaveRestoreCursorTests.__init__(self)
 
   def saveCursor(self):
-    esccsi.ANSISC()
+    esccmd.ANSISC()
 
   def restoreCursor(self):
-    esccsi.ANSIRC()
+    esccmd.ANSIRC()
 
   @knownBug(terminal="iTerm2", reason="Does not reset origin mode.")
   def test_SaveRestoreCursor_ResetsOriginMode(self):

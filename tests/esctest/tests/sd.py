@@ -1,5 +1,5 @@
 from esc import NUL
-import esccsi
+import esccmd
 import escio
 from esctypes import Point, Rect
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, knownBug
@@ -22,14 +22,14 @@ class SDTests(object):
     for i in xrange(len(lines)):
       y = i + 1
       line = lines[i]
-      esccsi.CUP(Point(1, y))
+      esccmd.CUP(Point(1, y))
       escio.Write(line)
-    esccsi.CUP(Point(3, 2))
+    esccmd.CUP(Point(3, 2))
 
   def test_SD_DefaultParam(self):
     """SD with no parameter should scroll the screen contents down one line."""
     self.prepare()
-    esccsi.SD()
+    esccmd.SD()
     expected_lines = [ NUL * 5,
                        "abcde",
                        "fghij",
@@ -40,7 +40,7 @@ class SDTests(object):
   def test_SD_ExplicitParam(self):
     """SD should scroll the screen down by the number of lines given in the parameter."""
     self.prepare()
-    esccsi.SD(2)
+    esccmd.SD(2)
     expected_lines = [ NUL * 5,
                        NUL * 5,
                        "abcde",
@@ -56,12 +56,12 @@ class SDTests(object):
     expected_lines = []
     for i in xrange(height):
       y = i + 1
-      esccsi.CUP(Point(1, y))
+      esccmd.CUP(Point(1, y))
       escio.Write("%04d" % y)
       expected_lines.append(NUL * 4)
 
     # Scroll by |height|
-    esccsi.SD(height)
+    esccmd.SD(height)
 
     # Ensure the screen is empty
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, height), expected_lines);
@@ -70,10 +70,10 @@ class SDTests(object):
     """When the cursor is inside the scroll region, SD should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(3, 2))
-    esccsi.SD(2)
-    esccsi.DECSTBM()
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(3, 2))
+    esccmd.SD(2)
+    esccmd.DECSTBM()
 
     expected_lines = [ "abcde",
                        NUL * 5,
@@ -86,10 +86,10 @@ class SDTests(object):
     """When the cursor is outside the scroll region, SD should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(1, 1))
-    esccsi.SD(2)
-    esccsi.DECSTBM()
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(1, 1))
+    esccmd.SD(2)
+    esccmd.DECSTBM()
 
     expected_lines = [ "abcde",
                        NUL * 5,
@@ -102,11 +102,11 @@ class SDTests(object):
     """When the cursor is inside the scroll region, SD should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.CUP(Point(3, 2))
-    esccsi.SD(2)
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.CUP(Point(3, 2))
+    esccmd.SD(2)
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     expected_lines = [ "a" + NUL * 3 + "e",
                        "f" + NUL * 3 + "j",
@@ -119,12 +119,12 @@ class SDTests(object):
     """When the cursor is outside the scroll region, SD should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.CUP(Point(1, 2))
-    esccsi.SD(2)
-    esccsi.DECSTBM()
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.CUP(Point(1, 2))
+    esccmd.SD(2)
+    esccmd.DECSTBM()
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     expected_lines = [ "a" + NUL * 3 + "e",
                        "f" + NUL * 3 + "j",
@@ -139,13 +139,13 @@ class SDTests(object):
     """When the cursor is outside the scroll region, SD should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(1, 2))
-    esccsi.SD(2)
-    esccsi.DECSTBM()
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(1, 2))
+    esccmd.SD(2)
+    esccmd.DECSTBM()
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     expected_lines = [ "abcde",
                        "f" + NUL * 3 + "j",
@@ -157,13 +157,13 @@ class SDTests(object):
   def test_SD_BigScrollLeftRightAndTopBottomScrollRegion(self):
     """Scroll a lr and tb scroll region by more than its height."""
     self.prepare()
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(1, 2))
-    esccsi.SD(99)
-    esccsi.DECSTBM()
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(1, 2))
+    esccmd.SD(99)
+    esccmd.DECSTBM()
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     expected_lines = [ "abcde",
                        "f" + NUL * 3 + "j",

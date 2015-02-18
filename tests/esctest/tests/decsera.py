@@ -1,6 +1,6 @@
 import tests.fill_rectangle
 import esc
-import esccsi
+import esccmd
 import escio
 from escutil import AssertScreenCharsInRectEqual, Point, Rect, knownBug
 
@@ -10,17 +10,17 @@ class DECSERATests(tests.fill_rectangle.FillRectangleTests):
     self._always_return_blank = False
 
   def prepare(self):
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     i = 1
     for line in self.data():
       # Protect odd-numbered rows
-      esccsi.DECSCA(i)
+      esccmd.DECSCA(i)
       escio.Write(line + esc.CR + esc.LF)
       i = 1 - i
-    esccsi.DECSCA(0)
+    esccmd.DECSCA(0)
 
   def fill(self, top=None, left=None, bottom=None, right=None):
-    esccsi.DECSERA(top, left, bottom, right)
+    esccmd.DECSERA(top, left, bottom, right)
 
   def characters(self, point, count):
     if self._always_return_blank:
@@ -73,9 +73,9 @@ class DECSERATests(tests.fill_rectangle.FillRectangleTests):
   def test_DECSERA_doesNotRespectISOProtect(self):
     """DECSERA does not respect ISO protection."""
     escio.Write("a")
-    esccsi.SPA()
+    esccmd.SPA()
     escio.Write("b")
-    esccsi.EPA()
-    esccsi.DECSERA(1, 1, 1, 2)
+    esccmd.EPA()
+    esccmd.DECSERA(1, 1, 1, 2)
     AssertScreenCharsInRectEqual(Rect(1, 1, 2, 1), [ esc.blank() * 2 ])
 

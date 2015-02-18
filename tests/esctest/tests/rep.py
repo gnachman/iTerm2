@@ -1,6 +1,6 @@
 from esc import NUL
 import escargs
-import esccsi
+import esccmd
 import escio
 from escutil import AssertScreenCharsInRectEqual, GetScreenSize, knownBug, optionRejects
 from esctypes import Point, Rect
@@ -9,25 +9,25 @@ class REPTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_REP_DefaultParam(self):
     escio.Write("a")
-    esccsi.REP()
+    esccmd.REP()
     AssertScreenCharsInRectEqual(Rect(1, 1, 3, 1), [ "aa" + NUL ])
 
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_REP_ExplicitParam(self):
     escio.Write("a")
-    esccsi.REP(2)
+    esccmd.REP(2)
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, 1), [ "aaa" + NUL ])
 
   # xterm doesn't implement auto-wrap mode when wide characters are disabled.
   @optionRejects(terminal="xterm", option=escargs.DISABLE_WIDE_CHARS)
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_REP_RespectsLeftRightMargins(self):
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.CUP(Point(2, 1))
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.CUP(Point(2, 1))
     escio.Write("a")
-    esccsi.REP(3)
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.REP(3)
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 2),
         [ NUL + "aaa" + NUL ,
@@ -36,10 +36,10 @@ class REPTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented")
   def test_REP_RespectsTopBottomMargins(self):
     width = GetScreenSize().width()
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(width - 2, 4))
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(width - 2, 4))
     escio.Write("a")
-    esccsi.REP(3)
+    esccmd.REP(3)
 
     AssertScreenCharsInRectEqual(Rect(1, 3, width, 4),
         [ NUL * (width - 3) + "aaa",

@@ -1,5 +1,5 @@
 from esc import NUL
-import esccsi
+import esccmd
 import escio
 from escutil import AssertScreenCharsInRectEqual, GetScreenSize
 from esctypes import Point, Rect
@@ -9,15 +9,15 @@ from esctypes import Point, Rect
 class RMTests(object):
   def test_RM_IRM(self):
     # First turn on insert mode
-    esccsi.SM(esccsi.IRM)
-    esccsi.CUP(Point(1, 1))
+    esccmd.SM(esccmd.IRM)
+    esccmd.CUP(Point(1, 1))
     escio.Write("X")
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     escio.Write("W")
 
     # Now turn on replace mode
-    esccsi.CUP(Point(1, 1))
-    esccsi.RM(esccsi.IRM)
+    esccmd.CUP(Point(1, 1))
+    esccmd.RM(esccmd.IRM)
     escio.Write("YZ")
     AssertScreenCharsInRectEqual(Rect(1, 1, 2, 1), [ "YZ" ])
 

@@ -1,5 +1,5 @@
 from esc import NUL
-import esccsi
+import esccmd
 import escio
 from esctypes import Point, Rect
 from escutil import AssertScreenCharsInRectEqual, GetScreenSize
@@ -22,14 +22,14 @@ class SUTests(object):
     for i in xrange(len(lines)):
       y = i + 1
       line = lines[i]
-      esccsi.CUP(Point(1, y))
+      esccmd.CUP(Point(1, y))
       escio.Write(line)
-    esccsi.CUP(Point(3, 2))
+    esccmd.CUP(Point(3, 2))
 
   def test_SU_DefaultParam(self):
     """SU with no parameter should scroll the screen contents up one line."""
     self.prepare()
-    esccsi.SU()
+    esccmd.SU()
     expected_lines = [ "fghij",
                        "klmno",
                        "pqrst",
@@ -40,7 +40,7 @@ class SUTests(object):
   def test_SU_ExplicitParam(self):
     """SU should scroll the screen up by the number of lines given in the parameter."""
     self.prepare()
-    esccsi.SU(2)
+    esccmd.SU(2)
     expected_lines = [ "klmno",
                        "pqrst",
                        "uvwxy",
@@ -55,12 +55,12 @@ class SUTests(object):
     expected_lines = []
     for i in xrange(height):
       y = i + 1
-      esccsi.CUP(Point(1, y))
+      esccmd.CUP(Point(1, y))
       escio.Write("%04d" % y)
       expected_lines.append(NUL * 4)
 
     # Scroll by |height|
-    esccsi.SU(height)
+    esccmd.SU(height)
 
     # Ensure the screen is empty
     AssertScreenCharsInRectEqual(Rect(1, 1, 4, height), expected_lines);
@@ -69,10 +69,10 @@ class SUTests(object):
     """When the cursor is inside the scroll region, SU should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(3, 2))
-    esccsi.SU(2)
-    esccsi.DECSTBM()
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(3, 2))
+    esccmd.SU(2)
+    esccmd.DECSTBM()
 
     expected_lines = [ "abcde",
                        "pqrst",
@@ -85,10 +85,10 @@ class SUTests(object):
     """When the cursor is outside the scroll region, SU should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(1, 1))
-    esccsi.SU(2)
-    esccsi.DECSTBM()
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(1, 1))
+    esccmd.SU(2)
+    esccmd.DECSTBM()
 
     expected_lines = [ "abcde",
                        "pqrst",
@@ -101,11 +101,11 @@ class SUTests(object):
     """When the cursor is inside the scroll region, SU should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.CUP(Point(3, 2))
-    esccsi.SU(2)
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.CUP(Point(3, 2))
+    esccmd.SU(2)
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     expected_lines = [ "almne",
                        "fqrsj",
@@ -118,12 +118,12 @@ class SUTests(object):
     """When the cursor is outside the scroll region, SU should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.CUP(Point(1, 2))
-    esccsi.SU(2)
-    esccsi.DECSTBM()
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.CUP(Point(1, 2))
+    esccmd.SU(2)
+    esccmd.DECSTBM()
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     expected_lines = [ "almne",
                        "fqrsj",
@@ -136,13 +136,13 @@ class SUTests(object):
     """When the cursor is outside the scroll region, SU should scroll the
     contents of the scroll region only."""
     self.prepare()
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(1, 2))
-    esccsi.SU(2)
-    esccsi.DECSTBM()
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(1, 2))
+    esccmd.SU(2)
+    esccmd.DECSTBM()
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     expected_lines = [ "abcde",
                        "fqrsj",
@@ -154,13 +154,13 @@ class SUTests(object):
   def test_SU_BigScrollLeftRightAndTopBottomScrollRegion(self):
     """Scroll a lr and tb scroll region by more than its height."""
     self.prepare()
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(2, 4)
-    esccsi.DECSTBM(2, 4)
-    esccsi.CUP(Point(1, 2))
-    esccsi.SU(99)
-    esccsi.DECSTBM()
-    esccsi.DECRESET(esccsi.DECLRMM)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(2, 4)
+    esccmd.DECSTBM(2, 4)
+    esccmd.CUP(Point(1, 2))
+    esccmd.SU(99)
+    esccmd.DECSTBM()
+    esccmd.DECRESET(esccmd.DECLRMM)
 
     expected_lines = [ "abcde",
                        "f" + NUL * 3 + "j",

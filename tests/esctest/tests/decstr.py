@@ -1,5 +1,5 @@
 from esc import BS, CR, ESC, LF, NUL
-import esccsi
+import esccmd
 import escio
 import esclog
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, GetCursorPosition, GetScreenSize, intentionalDeviationFromSpec, knownBug
@@ -29,52 +29,52 @@ class DECSTRTests(object):
   @knownBug(terminal="iTerm2", reason="iTerm2 fails to reset saved cursor position.")
   def test_DECSTR_DECSC(self):
     # Save cursor position
-    esccsi.CUP(Point(5, 6))
-    esccsi.DECSC()
+    esccmd.CUP(Point(5, 6))
+    esccmd.DECSC()
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Ensure saved cursor position is the origin
-    esccsi.DECRC()
+    esccmd.DECRC()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
   def test_DECSTR_IRM(self):
     # Turn on insert mode
-    esccsi.SM(esccsi.IRM)
+    esccmd.SM(esccmd.IRM)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Ensure replace mode is on
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     escio.Write("a")
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     escio.Write("b")
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "b" ])
 
   def test_DECSTR_DECOM(self):
     # Define a scroll region
-    esccsi.DECSTBM(3, 4)
+    esccmd.DECSTBM(3, 4)
 
     # Turn on origin mode
-    esccsi.DECSET(esccsi.DECOM)
+    esccmd.DECSET(esccmd.DECOM)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Define scroll region again
-    esccsi.DECSTBM(3, 4)
+    esccmd.DECSTBM(3, 4)
 
     # Move to 1,1 (or 3,4 if origin mode is still on) and write an X
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     escio.Write("X")
 
     # Turn off origin mode
-    esccsi.DECRESET(esccsi.DECOM)
+    esccmd.DECRESET(esccmd.DECOM)
 
     # Make sure the X was at 1, 1, implying origin mode was off.
-    esccsi.DECSTBM()
+    esccmd.DECSTBM()
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "X" ])
 
   @intentionalDeviationFromSpec(terminal="iTerm2",
@@ -83,13 +83,13 @@ class DECSTRTests(object):
                                 reason="For compatibility purposes, xterm turns on DECAWM by default.")
   def test_DECSTR_DECAWM(self):
     # Turn on autowrap
-    esccsi.DECSET(esccsi.DECAWM)
+    esccmd.DECSET(esccmd.DECAWM)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Make sure autowrap is still on
-    esccsi.CUP(Point(GetScreenSize().width() - 1, 1))
+    esccmd.CUP(Point(GetScreenSize().width() - 1, 1))
     escio.Write("xxx")
     position = GetCursorPosition()
     AssertEQ(position.x(), 2)
@@ -97,48 +97,48 @@ class DECSTRTests(object):
   @knownBug(terminal="iTerm2", reason="Reverse wrap is always on in iTerm2")
   def test_DECSTR_ReverseWraparound(self):
     # Turn on reverse wraparound
-    esccsi.DECSET(esccsi.ReverseWraparound)
+    esccmd.DECSET(esccmd.ReverseWraparound)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Verify reverse wrap is off
-    esccsi.CUP(Point(GetScreenSize().width() - 1, 2))
+    esccmd.CUP(Point(GetScreenSize().width() - 1, 2))
     escio.Write("abc" + BS * 3)
     AssertEQ(GetCursorPosition().x(), 1)
 
   def test_DECSTR_STBM(self):
     # Set top and bottom margins
-    esccsi.DECSTBM(3, 4)
+    esccmd.DECSTBM(3, 4)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Ensure no margins
-    esccsi.CUP(Point(1, 4))
+    esccmd.CUP(Point(1, 4))
     escio.Write(CR + LF)
     AssertEQ(GetCursorPosition().y(), 5)
 
   @knownBug(terminal="iTerm2", reason="DECSCA not implemented")
   def test_DECSTR_DECSCA(self):
     # Turn on character protection
-    esccsi.DECSCA(1)
+    esccmd.DECSCA(1)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Ensure character protection is off
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     escio.Write("X")
-    esccsi.DECSED(2)
+    esccmd.DECSED(2)
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ NUL ])
 
   def test_DECSTR_DECSASD(self):
     # Direct output to status line
-    esccsi.DECSASD(1)
+    esccmd.DECSASD(1)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Ensure output goes to screen
     escio.Write("X")
@@ -146,13 +146,13 @@ class DECSTRTests(object):
 
   def test_DECSTR_DECRLM(self):
     # Set right-to-left mode
-    esccsi.DECSET(esccsi.DECRLM)
+    esccmd.DECSET(esccmd.DECRLM)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Ensure text goes left to right
-    esccsi.CUP(Point(2, 1))
+    esccmd.CUP(Point(2, 1))
     escio.Write("a")
     escio.Write("b")
     AssertScreenCharsInRectEqual(Rect(2, 1, 2, 1), [ "a" ])
@@ -160,20 +160,20 @@ class DECSTRTests(object):
 
   def test_DECSTR_DECLRMM(self):
     # This isn't in the vt 510 docs but xterm does it and it makes sense to do.
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(5, 6)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(5, 6)
 
     # Perform soft reset
-    esccsi.DECSTR()
+    esccmd.DECSTR()
 
     # Ensure margins are gone.
-    esccsi.CUP(Point(5, 5))
+    esccmd.CUP(Point(5, 5))
     escio.Write("ab")
     AssertEQ(GetCursorPosition().x(), 7)
 
   def test_DECSTR_CursorStaysPut(self):
-    esccsi.CUP(Point(5, 6))
-    esccsi.DECSTR()
+    esccmd.CUP(Point(5, 6))
+    esccmd.DECSTR()
     position = GetCursorPosition()
     AssertEQ(position.x(), 5)
     AssertEQ(position.y(), 6)

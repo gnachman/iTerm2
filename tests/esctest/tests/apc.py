@@ -1,6 +1,6 @@
 from esc import NUL, ST, S7C1T, S8C1T
 import escargs
-import esccsi
+import esccmd
 import escio
 from escutil import AssertScreenCharsInRectEqual, knownBug, optionRequired
 from esctypes import Rect
@@ -8,7 +8,7 @@ from esctypes import Rect
 class APCTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented.")
   def test_APC_Basic(self):
-    esccsi.APC()
+    esccmd.APC()
     escio.Write("xyz")
     escio.Write(ST)
     escio.Write("A")
@@ -22,7 +22,7 @@ class APCTests(object):
     escio.use8BitControls = True
     escio.Write(S8C1T)
 
-    esccsi.APC()
+    esccmd.APC()
     escio.Write("xyz")
     escio.Write(ST)
     escio.Write("A")

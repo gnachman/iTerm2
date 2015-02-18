@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 import esc
 import escargs
-import esccsi
+import esccmd
 import escio
 import esclog
 import esctypes
@@ -33,46 +33,46 @@ def shutdown():
   escio.Shutdown()
 
 def reset():
-  esccsi.DECSCL(60 + esc.vtLevel, 1)
+  esccmd.DECSCL(60 + esc.vtLevel, 1)
 
   escio.use8BitControls = False
-  esccsi.DECSTR()
-  esccsi.XTERM_WINOPS(esccsi.WINOP_RESIZE_CHARS, 25, 80)
-  esccsi.DECRESET(esccsi.OPT_ALTBUF)  # Is this needed?
-  esccsi.DECRESET(esccsi.OPT_ALTBUF_CURSOR)  # Is this needed?
-  esccsi.DECRESET(esccsi.ALTBUF)  # Is this needed?
-  esccsi.DECRESET(esccsi.DECLRMM)  # This can be removed when the bug revealed by test_DECSET_DECLRMM_ResetByDECSTR is fixed.
-  esccsi.RM(esccsi.IRM)
-  esccsi.RM(esccsi.LNM)
+  esccmd.DECSTR()
+  esccmd.XTERM_WINOPS(esccmd.WINOP_RESIZE_CHARS, 25, 80)
+  esccmd.DECRESET(esccmd.OPT_ALTBUF)  # Is this needed?
+  esccmd.DECRESET(esccmd.OPT_ALTBUF_CURSOR)  # Is this needed?
+  esccmd.DECRESET(esccmd.ALTBUF)  # Is this needed?
+  esccmd.DECRESET(esccmd.DECLRMM)  # This can be removed when the bug revealed by test_DECSET_DECLRMM_ResetByDECSTR is fixed.
+  esccmd.RM(esccmd.IRM)
+  esccmd.RM(esccmd.LNM)
   # Technically, autowrap should be off by default (this is what the spec calls for).
   # However, xterm and iTerm2 turn it on by default. xterm has a comment that says:
   #   There are a couple of differences from real DEC VTxxx terminals (to avoid
   #   breaking applications which have come to rely on xterm doing
   #   this)...autowrap mode should be reset (instead it's reset to the resource
   #   default).
-  esccsi.DECSET(esccsi.DECAWM)
-  esccsi.DECRESET(esccsi.MoreFix)
+  esccmd.DECSET(esccmd.DECAWM)
+  esccmd.DECRESET(esccmd.MoreFix)
   # Set and query title with utf-8
-  esccsi.RM_Title(0, 1)
-  esccsi.SM_Title(2, 3)
-  esccsi.ED(2)
+  esccmd.RM_Title(0, 1)
+  esccmd.SM_Title(2, 3)
+  esccmd.ED(2)
 
   # Pop the title stack just in case something got left on there
   for i in xrange(5):
-    esccsi.XTERM_WINOPS(esccsi.WINOP_POP_TITLE,
-                            esccsi.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
+    esccmd.XTERM_WINOPS(esccmd.WINOP_POP_TITLE,
+                            esccmd.WINOP_PUSH_TITLE_ICON_AND_WINDOW)
 
   # Clear tab stops and reset them at 1, 9, ...
-  esccsi.TBC(3)
+  esccmd.TBC(3)
   width = escutil.GetScreenSize().width()
   x = 1
   while x <= width:
-    esccsi.CUP(esctypes.Point(x, 1))
-    esccsi.HTS()
+    esccmd.CUP(esctypes.Point(x, 1))
+    esccmd.HTS()
     x += 8
 
-  esccsi.CUP(esctypes.Point(1, 1))
-  esccsi.XTERM_WINOPS(esccsi.WINOP_DEICONIFY)
+  esccmd.CUP(esctypes.Point(1, 1))
+  esccmd.XTERM_WINOPS(esccmd.WINOP_DEICONIFY)
 
 def AttachSideChannel(name):
   if escargs.args.test_case_dir:
@@ -190,8 +190,8 @@ def main():
   finally:
     if escargs.args.no_print_logs:
       # Hackily move the cursor to the bottom of the screen.
-      esccsi.CUP(esctypes.Point(1, 1))
-      esccsi.CUD(999)
+      esccmd.CUP(esctypes.Point(1, 1))
+      esccmd.CUD(999)
     else:
       try:
         reset()

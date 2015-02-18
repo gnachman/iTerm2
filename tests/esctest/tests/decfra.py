@@ -1,12 +1,12 @@
 import tests.fill_rectangle
 import esc
-import esccsi
+import esccmd
 
 CHARACTER = "%"
 
 class DECFRATests(tests.fill_rectangle.FillRectangleTests):
   def fill(self, top=None, left=None, bottom=None, right=None):
-    esccsi.DECFRA(str(ord(CHARACTER)), top, left, bottom, right)
+    esccmd.DECFRA(str(ord(CHARACTER)), top, left, bottom, right)
 
   def characters(self, point, count):
     return CHARACTER * count

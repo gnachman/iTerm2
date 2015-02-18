@@ -1,5 +1,5 @@
 from esc import ESC, NUL
-import esccsi
+import esccmd
 import escio
 import esclog
 from escutil import AssertEQ, AssertScreenCharsInRectEqual, AssertTrue, GetCursorPosition, GetScreenSize, knownBug, vtLevel
@@ -21,11 +21,11 @@ class DECSCLTests(object):
     """VT level 2 does not support DECRQM."""
     escio.Write("Hello world.")
     GetScreenSize()
-    esccsi.DECSCL(62, 1)
+    esccmd.DECSCL(62, 1)
     GetScreenSize()
     # Make sure DECRQM fails.
     try:
-      esccsi.DECRQM(esccsi.IRM, DEC=False)
+      esccmd.DECRQM(esccmd.IRM, DEC=False)
       escio.ReadCSI('$y')
       # Should not get here.
       AssertTrue(False)
@@ -36,8 +36,8 @@ class DECSCLTests(object):
   @vtLevel(2)
   @knownBug(terminal="xterm", reason="xterm always turns on 8-bit controls.", shouldTry=False)
   def test_DSCSCL_Level2Supports7BitControls(self):
-    esccsi.DECSCL(62, 1)
-    esccsi.CUP(Point(2, 2))
+    esccmd.DECSCL(62, 1)
+    esccmd.CUP(Point(2, 2))
     AssertEQ(GetCursorPosition(), Point(2, 2))
 
   @vtLevel(3)
@@ -45,16 +45,16 @@ class DECSCLTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented", shouldTry=False)
   def test_DSCSCL_Level3_SupportsDECRQMDoesntSupportDECSLRM(self):
     # Set level 3 conformance
-    esccsi.DECSCL(63, 1)
+    esccmd.DECSCL(63, 1)
 
     # Make sure DECRQM is ok.
-    esccsi.DECRQM(esccsi.IRM, DEC=False)
+    esccmd.DECRQM(esccmd.IRM, DEC=False)
     escio.ReadCSI('$y')
 
     # Make sure DECSLRM fails.
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(5, 6)
-    esccsi.CUP(Point(5, 1))
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(5, 6)
+    esccmd.CUP(Point(5, 1))
     escio.Write("abc")
     AssertEQ(GetCursorPosition().x(), 8)
 
@@ -64,23 +64,23 @@ class DECSCLTests(object):
   @knownBug(terminal="iTerm2", reason="iTerm2 doesn't implement DECNCSM", shouldTry=False)
   def test_DECSCL_Level4_SupportsDECSLRMDoesntSupportDECNCSM(self):
     # Set level 4 conformance
-    esccsi.DECSCL(64, 1)
+    esccmd.DECSCL(64, 1)
 
     # Enable DECCOLM.
-    esccsi.DECSET(esccsi.Allow80To132)
+    esccmd.DECSET(esccmd.Allow80To132)
 
     # Set DECNCSM, Set column mode. Screen should be cleared anyway.
-    esccsi.DECRESET(esccsi.DECCOLM)
-    esccsi.DECSET(esccsi.DECNCSM)
-    esccsi.CUP(Point(1, 1))
+    esccmd.DECRESET(esccmd.DECCOLM)
+    esccmd.DECSET(esccmd.DECNCSM)
+    esccmd.CUP(Point(1, 1))
     escio.Write("1")
-    esccsi.DECSET(esccsi.DECCOLM)
+    esccmd.DECSET(esccmd.DECCOLM)
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ NUL ])
 
     # Make sure DECSLRM succeeds.
-    esccsi.DECSET(esccsi.DECLRMM)
-    esccsi.DECSLRM(5, 6)
-    esccsi.CUP(Point(5, 1))
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(5, 6)
+    esccmd.CUP(Point(5, 1))
     escio.Write("abc")
     AssertEQ(GetCursorPosition().x(), 6)
 
@@ -89,14 +89,14 @@ class DECSCLTests(object):
   @knownBug(terminal="iTerm2", reason="Not implemented", shouldTry=False)
   def test_DECSCL_Level5_SupportsDECNCSM(self):
     # Set level 5 conformance
-    esccsi.DECSCL(65, 1)
+    esccmd.DECSCL(65, 1)
 
     # Set DECNCSM, Set column mode. Screen should not be cleared.
-    esccsi.DECRESET(esccsi.DECCOLM)
-    esccsi.DECSET(esccsi.DECNCSM)
-    esccsi.CUP(Point(1, 1))
+    esccmd.DECRESET(esccmd.DECCOLM)
+    esccmd.DECSET(esccmd.DECNCSM)
+    esccmd.CUP(Point(1, 1))
     escio.Write("1")
-    esccsi.DECSET(esccsi.DECCOLM)
+    esccmd.DECSET(esccmd.DECCOLM)
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "1" ])
 
   @vtLevel(3)
@@ -115,22 +115,22 @@ class DECSCLTests(object):
     escio.Write("x")
 
     # Set saved cursor position
-    esccsi.CUP(Point(5, 6))
-    esccsi.DECSC()
+    esccmd.CUP(Point(5, 6))
+    esccmd.DECSC()
 
     # Turn on insert mode
-    esccsi.SM(esccsi.IRM)
+    esccmd.SM(esccmd.IRM)
 
-    esccsi.DECSCL(61)
+    esccmd.DECSCL(61)
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ NUL ])
 
     # Ensure saved cursor position is the origin
-    esccsi.DECRC()
+    esccmd.DECRC()
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
     # Ensure replace mode is on
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     escio.Write("a")
-    esccsi.CUP(Point(1, 1))
+    esccmd.CUP(Point(1, 1))
     escio.Write("b")
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "b" ])
