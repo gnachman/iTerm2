@@ -151,5 +151,5 @@ Test methods may be decorated with the following decorators, defined in escutil:
   for this terminal then the optional shouldTry should be False (e.g., for crash
   bugs).
 
-Currently, the test classes are in the csitests directory and are linked to from
+All test classes are in the "tests" directory. Each is explicitly linked to from
 __init__.py.

@@ -1,19 +1,15 @@
 #!/usr/bin/python2.7
-import c1tests
-import csitests
 import esc
 import escargs
-import escc1
 import esccsi
 import escio
 import esclog
-import esctests
 import esctypes
 import escutil
 import inspect
 import os
 import re
-import singlechartests
+import tests
 import traceback
 
 def init():
@@ -72,7 +68,7 @@ def reset():
   x = 1
   while x <= width:
     esccsi.CUP(esctypes.Point(x, 1))
-    escc1.HTS()
+    esccsi.HTS()
     x += 8
 
   esccsi.CUP(esctypes.Point(1, 1))
@@ -121,7 +117,7 @@ def RunTests():
   failures = []
   classes = []
 
-  for category in [ c1tests.tests, csitests.tests, singlechartests.tests, esctests.tests ]:
+  for category in [ tests.tests ]:
     classes.extend(category)
 
   for testClass in classes:
@@ -130,8 +126,8 @@ def RunTests():
     except:
       esclog.LogError("Failed to create test class " + testClass.__name__)
       raise
-    tests = inspect.getmembers(testObject, predicate=inspect.ismethod)
-    for name, method in tests:
+    members = inspect.getmembers(testObject, predicate=inspect.ismethod)
+    for name, method in members:
       if name.startswith("test_") and (re.search(escargs.args.include, name) or
                                        re.search(escargs.args.include, testClass.__name__)):
         status = RunTest(testClass.__name__, name, method)

@@ -1,3 +1,4 @@
+from esc import ESC
 import escargs
 import escio
 
@@ -126,6 +127,13 @@ def ANSISC():
   """Save cursor."""
   escio.WriteCSI(final="s")
 
+def APC():
+  """Application Program Command."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x9f))
+  else:
+    escio.Write(ESC + "_")
+
 def CBT(Pn=None):
   """Move cursor back by Pn tab stops or to left margin. Default is 1."""
   if Pn is None:
@@ -134,6 +142,19 @@ def CBT(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="Z")
 
+def ChangeWindowTitle(title, bel=False, suppressSideChannel=False):
+  """Change the window title."""
+  escio.WriteOSC(params=[ "2", title ], bel=bel, requestsReport=suppressSideChannel)
+
+def ChangeIconTitle(title, bel=False, suppressSideChannel=False):
+  """Change the icon (tab) title."""
+  escio.WriteOSC(params=[ "1", title ], bel=bel, requestsReport=suppressSideChannel)
+
+def ChangeWindowAndIconTitle(title, bel=False, suppressSideChannel=False):
+  """Change the window and icon (tab) title."""
+  escio.WriteOSC(params=[ "0", title ],
+                 bel=bel,
+                 requestsReport=suppressSideChannel)
 def CHA(Pn=None):
   """Move cursor to Pn column, or first column by default."""
   if Pn is None:
@@ -236,6 +257,21 @@ def DCH(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="P")
 
+def DCS():
+  """Device control string. Prefixes various commands."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x90))
+  else:
+    escio.Write(ESC + "P")
+
+def DECALN():
+  """Write test pattern."""
+  escio.Write(ESC + "#8")
+
+def DECBI():
+  """Index left, scrolling region right if cursor at margin."""
+  escio.Write(ESC + "6")
+
 def DECCRA(source_top=None, source_left=None, source_bottom=None,
                source_right=None, source_page=None, dest_top=None,
                dest_left=None, dest_page=None):
@@ -257,6 +293,12 @@ def DECDC(Pn=None):
   else:
     params = []
   escio.WriteCSI(params=params, intermediate="'", final="~")
+
+def DECDHL(x):
+  """Double-width, double-height line.
+     x = 3: top half
+     x = 4: bottom half"""
+  escio.Write(ESC + "#" + str(x))
 
 def DECDSR(Ps, Pid=None, suppressSideChannel=False):
   """Send device status request. Does not read response."""
@@ -285,6 +327,17 @@ def DECIC(Pn=None):
     params = []
   escio.WriteCSI(params=params, intermediate="'", final="}")
 
+def DECID():
+  """Obsolete form of DA."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x9a))
+  else:
+    escio.Write(ESC + "Z")
+
+def DECRC():
+  """Restore the cursor and resets various attributes."""
+  escio.Write(ESC + "8")
+
 def DECRQCRA(Pid, Pp=None, rect=None):
   """Compute the checksum (16-bit sum of ordinals) in a rectangle."""
   # xterm versions 314 and earlier incorrectly expect the Pid in the second
@@ -312,6 +365,9 @@ def DECRQM(mode, DEC):
   else:
     escio.WriteCSI(params=[ mode ], intermediate='$', final='p')
 
+def DECRQSS(Pt):
+  escio.WriteDCS("$q", Pt)
+
 def DECRESET(Pm):
   """Reset the parameter |Pm|."""
   escio.WriteCSI(params=[ Pm ], prefix='?', final='l')
@@ -323,6 +379,10 @@ def DECSASD(Ps=None):
   else:
     params = [ Ps ]
   escio.WriteCSI(params=params, intermediate='$', final="}")
+
+def DECSC():
+  """Saves the cursor."""
+  escio.Write(ESC + "7")
 
 def DECSCA(Ps=None):
   """Turn on character protection if Ps is 1, off if 0."""
@@ -433,6 +493,13 @@ def EL(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="K")
 
+def EPA():
+  """End protected area."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x97))
+  else:
+    escio.Write(ESC + "W")
+
 def HPA(Pn=None):
   """Position the cursor at the Pn'th column. Default value is 1."""
   if Pn is None:
@@ -449,6 +516,13 @@ def HPR(Pn=None):
   else:
     params = [ Pn ]
   escio.WriteCSI(params=params, final="a")
+
+def HTS():
+  """Set a horizontal tab stop."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x88))
+  else:
+    escio.Write(ESC + "H")
 
 def HVP(point=None, row=None, col=None):
   """ Move cursor to |point| """
@@ -480,6 +554,27 @@ def IL(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="L")
 
+def IND():
+  """Move cursor down one line."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x84))
+  else:
+    escio.Write(ESC + "D")
+
+def NEL():
+  """Index plus carriage return."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x85))
+  else:
+    escio.Write(ESC + "E")
+
+def PM():
+  """Privacy message."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x9e))
+  else:
+    escio.Write(ESC + "^")
+
 def REP(Ps=None):
   """Repeat the preceding character |Ps| times. Undocumented default is 1."""
   if Ps is None:
@@ -487,6 +582,13 @@ def REP(Ps=None):
   else:
     params = [ Ps ]
   escio.WriteCSI(params=params, final="b")
+
+def RI():
+  """Move cursor up one line."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x8d))
+  else:
+    escio.Write(ESC + "M")
 
 def RM(Pm=None):
   """Reset mode."""
@@ -525,6 +627,20 @@ def SM_Title(Ps1, Ps2=None):
   if Ps2 is not None:
     params.append(Ps2)
   escio.WriteCSI(params=params, prefix=">", final="t")
+
+def SOS():
+  """Start of string."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x98))
+  else:
+    escio.Write(ESC + "X")
+
+def SPA():
+  """Start protected area."""
+  if escio.use8BitControls:
+    escio.Write(chr(0x96))
+  else:
+    escio.Write(ESC + "V")
 
 def SU(Ps=None):
   """Scroll up by |Ps| lines. Default value is 1."""
