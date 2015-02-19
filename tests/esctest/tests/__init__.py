@@ -55,9 +55,8 @@
 # ESC |     Invoke the G3 Character Set as GR (LS3R).
 # ESC }     Invoke the G2 Character Set as GR (LS2R).
 # ESC ~     Invoke the G1 Character Set as GR (LS1R).
-# Notes for future tests:
-# CSI 21 t
-#   Test the title modes settable and resttable by CSI > Ps ; Ps t and CSI > Ps ; Ps T
+# DCS + p Pt ST    Set Termcap/Terminfo Data
+# DCS + q Pt ST    Request Termcap/Terminfo String
 
 import ansirc
 import apc
