@@ -411,6 +411,14 @@ def DECSCL(level, sevenBit=None):
     params = [ level, sevenBit ]
   escio.WriteCSI(params=params, intermediate='"', final="p")
 
+def DECSCUSR(Ps=None):
+  """Set cursor style 0 through 6, or default of 1."""
+  if Ps is None:
+    params = [ ]
+  else:
+    params = [ Ps ]
+  escio.WriteCSI(params=params, intermediate=' ', final="q")
+
 def DECSED(Ps=None):
   """Like ED but respects character protection."""
   if Ps is None:
@@ -655,6 +663,10 @@ def SPA():
     escio.Write(chr(0x96))
   else:
     escio.Write(ESC + "V")
+
+def SGR(*args):
+  """Select graphic rendition. Params is an array of numbers."""
+  escio.WriteCSI(params=args, final="m")
 
 def SU(Ps=None):
   """Scroll up by |Ps| lines. Default value is 1."""

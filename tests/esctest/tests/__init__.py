@@ -88,6 +88,7 @@ import decic
 import decid
 import decrc
 import decrqm
+import decrqss
 import decscl
 import decsed
 import decsel
@@ -158,6 +159,7 @@ tests = [
     decid.DECIDTests,
     decrc.DECRCTests,
     decrqm.DECRQMTests,
+    decrqss.DECRQSSTests,
     decscl.DECSCLTests,
     decsed.DECSEDTests,
     decsel.DECSELTests,
