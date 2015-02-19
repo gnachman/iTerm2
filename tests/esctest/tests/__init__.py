@@ -76,6 +76,7 @@ import cuu
 import da
 import da2
 import dch
+import dcs
 import decaln
 import decbi
 import deccra
@@ -147,6 +148,7 @@ tests = [
     da.DATests,
     da2.DA2Tests,
     dch.DCHTests,
+    dcs.DCSTests,
     decaln.DECALNTests,
     decbi.DECBITests,
     deccra.DECCRATests,
