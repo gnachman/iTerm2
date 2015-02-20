@@ -65,6 +65,10 @@
 #           Ps = 3  -> Set X property on top-level window.  Pt should be
 #         in the form "prop=value", or just "prop" to delete the prop-
 #         erty
+# No introspection for whether special color are enabled/disabled:
+#           Ps = 6 ; c; f -> Enable/disable Special Color Number c.  The
+#         second parameter tells xterm to enable the corresponding color
+#         mode if nonzero, disable it if zero.
 
 
 import ansirc
@@ -74,6 +78,7 @@ import cbt
 import cha
 import change_color
 import change_special_color
+import change_dynamic_color
 import cht
 import cnl
 import cpl
@@ -148,6 +153,7 @@ tests = [
     cha.CHATests,
     change_color.ChangeColorTests,
     change_special_color.ChangeSpecialColorTests,
+    change_dynamic_color.ChangeDynamicColorTests,
     cht.CHTTests,
     cnl.CNLTests,
     cpl.CPLTests,

@@ -102,7 +102,8 @@ def ReadOSC(expected_prefix):
   """Read an OSC code starting with |expected_prefix|."""
   ReadOrDie(ESC)
   ReadOrDie(']')
-  ReadOrDie(expected_prefix)
+  for c in expected_prefix:
+    ReadOrDie(c)
   s = ""
   while not s.endswith(ST):
     c = read(1)

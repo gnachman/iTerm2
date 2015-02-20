@@ -158,6 +158,16 @@ def ChangeColor(*args):
   params.extend(args)
   escio.WriteOSC(params, requestsReport=isQuery)
 
+def ChangeDynamicColor(*args):
+  params = [ ]
+  isQuery = True
+  try:
+    params.index("?")
+  except:
+    isQuery = False
+  params.extend(args)
+  escio.WriteOSC(params, requestsReport=isQuery)
+
 def ChangeSpecialColor(*args):
   params = [ 5 ]
   isQuery = True

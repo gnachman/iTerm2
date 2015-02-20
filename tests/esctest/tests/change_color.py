@@ -36,32 +36,32 @@ class ChangeColorTests(object):
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeColor_RGB(self):
     self.doChangeColorTest("0", "rgb:f0f0/f0f0/f0f0", "f0f0/f0f0/f0f0")
-    self.doChangeColorTest("1", "rgb:8080/8080/8080", "8080/8080/8080")
+    self.doChangeColorTest("0", "rgb:8080/8080/8080", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeColor_Hash3(self):
     self.doChangeColorTest("0", "#fff", "f0f0/f0f0/f0f0")
-    self.doChangeColorTest("1", "#888", "8080/8080/8080")
+    self.doChangeColorTest("0", "#888", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeColor_Hash6(self):
     self.doChangeColorTest("0", "#f0f0f0", "f0f0/f0f0/f0f0")
-    self.doChangeColorTest("1", "#808080", "8080/8080/8080")
+    self.doChangeColorTest("0", "#808080", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeColor_Hash9(self):
     self.doChangeColorTest("0", "#f00f00f00", "f0f0/f0f0/f0f0")
-    self.doChangeColorTest("1", "#800800800", "8080/8080/8080")
+    self.doChangeColorTest("0", "#800800800", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeColor_Hash12(self):
     self.doChangeColorTest("0", "#f000f000f000", "f0f0/f0f0/f0f0")
-    self.doChangeColorTest("1", "#800080008000", "8080/8080/8080")
+    self.doChangeColorTest("0", "#800080008000", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeColor_RGBI(self):
     self.doChangeColorTest("0", "rgbi:1/1/1", "ffff/ffff/ffff")
-    self.doChangeColorTest("1", "rgbi:0.5/0.5/0.5", "c1c1/bbbb/bbbb")
+    self.doChangeColorTest("0", "rgbi:0.5/0.5/0.5", "c1c1/bbbb/bbbb")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeColor_CIEXYZ(self):

@@ -37,32 +37,32 @@ class ChangeSpecialColorTests(object):
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeSpecialColor_RGB(self):
     self.doChangeSpecialColorTest("0", "rgb:f0f0/f0f0/f0f0", "f0f0/f0f0/f0f0")
-    self.doChangeSpecialColorTest("1", "rgb:8080/8080/8080", "8080/8080/8080")
+    self.doChangeSpecialColorTest("0", "rgb:8080/8080/8080", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeSpecialColor_Hash3(self):
     self.doChangeSpecialColorTest("0", "#fff", "f0f0/f0f0/f0f0")
-    self.doChangeSpecialColorTest("1", "#888", "8080/8080/8080")
+    self.doChangeSpecialColorTest("0", "#888", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeSpecialColor_Hash6(self):
     self.doChangeSpecialColorTest("0", "#f0f0f0", "f0f0/f0f0/f0f0")
-    self.doChangeSpecialColorTest("1", "#808080", "8080/8080/8080")
+    self.doChangeSpecialColorTest("0", "#808080", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeSpecialColor_Hash9(self):
     self.doChangeSpecialColorTest("0", "#f00f00f00", "f0f0/f0f0/f0f0")
-    self.doChangeSpecialColorTest("1", "#800800800", "8080/8080/8080")
+    self.doChangeSpecialColorTest("0", "#800800800", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeSpecialColor_Hash12(self):
     self.doChangeSpecialColorTest("0", "#f000f000f000", "f0f0/f0f0/f0f0")
-    self.doChangeSpecialColorTest("1", "#800080008000", "8080/8080/8080")
+    self.doChangeSpecialColorTest("0", "#800080008000", "8080/8080/8080")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeSpecialColor_RGBI(self):
     self.doChangeSpecialColorTest("0", "rgbi:1/1/1", "ffff/ffff/ffff")
-    self.doChangeSpecialColorTest("1", "rgbi:0.5/0.5/0.5", "c1c1/bbbb/bbbb")
+    self.doChangeSpecialColorTest("0", "rgbi:0.5/0.5/0.5", "c1c1/bbbb/bbbb")
 
   @knownBug(terminal="iTerm2", reason="Color reporting not implemented.", shouldTry=False)
   def test_ChangeSpecialColor_CIEXYZ(self):
