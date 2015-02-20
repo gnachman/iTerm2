@@ -159,7 +159,7 @@ def ChangeColor(*args):
   escio.WriteOSC(params, requestsReport=isQuery)
 
 def ChangeDynamicColor(*args):
-  params = [ ]
+  params = [ 105 ]
   isQuery = True
   try:
     params.index("?")
@@ -169,7 +169,10 @@ def ChangeDynamicColor(*args):
   escio.WriteOSC(params, requestsReport=isQuery)
 
 def ChangeSpecialColor(*args):
-  params = [ 5 ]
+  if len(args) > 0 and int(args[0]) >= 10:
+    params = []
+  else:
+    params = [ 5 ]
   isQuery = True
   try:
     params.index("?")
@@ -637,8 +640,16 @@ def REP(Ps=None):
     params = [ Ps ]
   escio.WriteCSI(params=params, final="b")
 
+def ResetSpecialColor(*args):
+  params = [ "105" ]
+  params.extend(args)
+  escio.WriteOSC(params)
+
 def ResetColor(c=""):
   escio.WriteOSC([ "104", c ])
+
+def ResetDynamicColor(c):
+  escio.WriteOSC([ str(c) ])
 
 def RI():
   """Move cursor up one line."""

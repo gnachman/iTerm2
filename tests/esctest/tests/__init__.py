@@ -138,6 +138,7 @@ import nel
 import pm
 import rep
 import reset_color
+import reset_special_color
 import ri
 import ris
 import rm
@@ -215,6 +216,7 @@ tests = [
     pm.PMTests,
     rep.REPTests,
     reset_color.ResetColorTests,
+    reset_special_color.ResetSpecialColorTests,
     ri.RITests,
     ris.RISTests,
     rm.RMTests,
