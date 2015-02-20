@@ -57,12 +57,23 @@
 # ESC ~     Invoke the G1 Character Set as GR (LS1R).
 # DCS + p Pt ST    Set Termcap/Terminfo Data
 # DCS + q Pt ST    Request Termcap/Terminfo String
+# The following OSC commands are tested in xterm_winops and don't have their own test:
+#           Ps = 0  -> Change Icon Name and Window Title to Pt.
+#           Ps = 1  -> Change Icon Name to Pt.
+#           Ps = 2  -> Change Window Title to Pt.
+# This test is too ill-defined and X-specific, and is not tested:
+#           Ps = 3  -> Set X property on top-level window.  Pt should be
+#         in the form "prop=value", or just "prop" to delete the prop-
+#         erty
+
 
 import ansirc
 import apc
 import bs
 import cbt
 import cha
+import change_color
+import change_special_color
 import cht
 import cnl
 import cpl
@@ -135,6 +146,8 @@ tests = [
     bs.BSTests,
     cbt.CBTTests,
     cha.CHATests,
+    change_color.ChangeColorTests,
+    change_special_color.ChangeSpecialColorTests,
     cht.CHTTests,
     cnl.CNLTests,
     cpl.CPLTests,

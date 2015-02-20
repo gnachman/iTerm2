@@ -148,6 +148,26 @@ def CBT(Pn=None):
     params = [ Pn ]
   escio.WriteCSI(params=params, final="Z")
 
+def ChangeColor(*args):
+  params = [ 4 ]
+  isQuery = True
+  try:
+    params.index("?")
+  except:
+    isQuery = False
+  params.extend(args)
+  escio.WriteOSC(params, requestsReport=isQuery)
+
+def ChangeSpecialColor(*args):
+  params = [ 5 ]
+  isQuery = True
+  try:
+    params.index("?")
+  except:
+    isQuery = False
+  params.extend(args)
+  escio.WriteOSC(params, requestsReport=isQuery)
+
 def ChangeWindowTitle(title, bel=False, suppressSideChannel=False):
   """Change the window title."""
   escio.WriteOSC(params=[ "2", title ], bel=bel, requestsReport=suppressSideChannel)
