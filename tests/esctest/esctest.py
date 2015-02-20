@@ -73,8 +73,8 @@ def reset():
 
   esccmd.CUP(esctypes.Point(1, 1))
   esccmd.XTERM_WINOPS(esccmd.WINOP_DEICONIFY)
-  esccmd.ChangeDynamicColor("10", "#000000")
-  esccmd.ChangeDynamicColor("11", "#ffffff")
+  # Reset all colors.
+  esccmd.ResetColor()
 
 def AttachSideChannel(name):
   if escargs.args.test_case_dir:

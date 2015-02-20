@@ -69,6 +69,13 @@
 #           Ps = 6 ; c; f -> Enable/disable Special Color Number c.  The
 #         second parameter tells xterm to enable the corresponding color
 #         mode if nonzero, disable it if zero.
+# Off by default, obvious security issues:
+#           Ps = 4 6  -> Change Log File to Pt.  (This is normally dis-
+#         abled by a compile-time option).
+# No introspection for fonts:
+#           Ps = 5 0  -> Set Font to Pt.
+# No-op:
+#           Ps = 5 1  -> reserved for Emacs shell.
 
 
 import ansirc
@@ -126,9 +133,11 @@ import ich
 import il
 import ind
 import lf
+import manipulate_selection_data
 import nel
 import pm
 import rep
+import reset_color
 import ri
 import ris
 import rm
@@ -201,9 +210,11 @@ tests = [
     il.ILTests,
     ind.INDTests,
     lf.LFTests,
+    manipulate_selection_data.ManipulateSelectionDataTests,
     nel.NELTests,
     pm.PMTests,
     rep.REPTests,
+    reset_color.ResetColorTests,
     ri.RITests,
     ris.RISTests,
     rm.RMTests,

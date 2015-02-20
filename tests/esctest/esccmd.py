@@ -609,6 +609,12 @@ def IND():
   else:
     escio.Write(ESC + "D")
 
+def ManipulateSelectionData(Pc="", Pd=None):
+  params = [ "52", Pc ]
+  if Pd is not None:
+    params.append(Pd)
+  escio.WriteOSC(params)
+
 def NEL():
   """Index plus carriage return."""
   if escio.use8BitControls:
@@ -630,6 +636,9 @@ def REP(Ps=None):
   else:
     params = [ Ps ]
   escio.WriteCSI(params=params, final="b")
+
+def ResetColor(c=""):
+  escio.WriteOSC([ "104", c ])
 
 def RI():
   """Move cursor up one line."""
