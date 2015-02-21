@@ -455,7 +455,10 @@
 
 - (void)moveCursorRight:(int)n {
     int x = cursor_.x + n;
-    const int rightMargin = [self rightMargin];
+    int rightMargin = [self rightMargin];
+    if (cursor_.x > rightMargin) {
+        rightMargin = size_.width - 1;
+    }
 
     x = MIN(x, rightMargin);
     self.cursorX = x;
