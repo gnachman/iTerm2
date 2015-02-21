@@ -209,6 +209,31 @@ static void DecodeEUCKRBytes(unsigned char *datap,
     }
 }
 
+static void DecodeCP949Bytes(unsigned char *datap,
+                             int datalen,
+                             int *rmlen,
+                             VT100Token *token)
+{
+    unsigned char *p = datap;
+    int len = datalen;
+    
+    while (len > 0) {
+        if (iscp949(*p) && len > 1) {
+            p += 2;
+            len -= 2;
+        } else {
+            break;
+        }
+    }
+    if (len == datalen) {
+        *rmlen = 0;
+        token->type = VT100_WAIT;
+    } else {
+        *rmlen = datalen - len;
+        token->type = VT100_STRING;
+    }
+}
+
 static void DecodeOtherBytes(unsigned char *datap,
                              int datalen,
                              int *rmlen,
@@ -299,7 +324,7 @@ void ParseString(unsigned char *datap,
         encoding = NSASCIIStringEncoding;
     } else if (encoding == NSUTF8StringEncoding) {
         DecodeUTF8Bytes(datap, datalen, rmlen, result);
-    } else if (isGBEncoding(encoding)) {
+    } else if (isEUCCNEncoding(encoding)) {
         // Chinese-GB
         DecodeEUCCNBytes(datap, datalen, rmlen, result);
     } else if (isBig5Encoding(encoding)) {
@@ -308,9 +333,12 @@ void ParseString(unsigned char *datap,
         DecodeEUCJPBytes(datap, datalen, rmlen, result);
     } else if (isSJISEncoding(encoding)) {
         DecodeSJISBytes(datap, datalen, rmlen, result);
-    } else if (isKREncoding(encoding)) {
+    } else if (isEUCKREncoding(encoding)) {
         // korean
         DecodeEUCKRBytes(datap, datalen, rmlen, result);
+    } else if (isCP949Encoding(encoding)) {
+        // korean
+        DecodeCP949Bytes(datap, datalen, rmlen, result);
     } else {
         DecodeOtherBytes(datap, datalen, rmlen, result);
     }

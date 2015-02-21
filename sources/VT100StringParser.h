@@ -11,31 +11,62 @@
 
 // Code to detect if characters are properly encoded for each encoding.
 
-// Traditional Chinese (Big5)
-// 1st   0xa1-0xfe
-// 2nd   0x40-0x7e || 0xa1-0xfe
-//
-// Simplifed Chinese (EUC_CN)
-// 1st   0x81-0xfe
-// 2nd   0x40-0x7e || 0x80-0xfe
-#define iseuccn(c)   ((c) >= 0x81 && (c) <= 0xfe)
-#define isbig5(c)    ((c) >= 0xa1 && (c) <= 0xfe)
-#define issjiskanji(c)  (((c) >= 0x81 && (c) <= 0x9f) ||  \
-                         ((c) >= 0xe0 && (c) <= 0xef))
-#define iseuckr(c)   ((c) >= 0xa1 && (c) <= 0xfe)
+NS_INLINE BOOL iseuccn(unsigned char c) {
+    return (c >= 0x81 && c <= 0xfe);
+}
 
-// TODO: Do this less hackily! These encodings (I think) have constants defined in
-// CFStringEncodingExt along with functions that convert from NSStringEncoding.
-#define isGBEncoding(e)     ((e)==0x80000019 || (e)==0x80000421|| \
-                             (e)==0x80000631 || (e)==0x80000632|| \
-                             (e)==0x80000930)
-#define isBig5Encoding(e)   ((e)==0x80000002 || (e)==0x80000423|| \
-                             (e)==0x80000931 || (e)==0x80000a03|| \
-                             (e)==0x80000a06)
-#define isJPEncoding(e)     ((e)==0x80000001 || (e)==0x8||(e)==0x15)
-#define isSJISEncoding(e)   ((e)==0x80000628 || (e)==0x80000a01)
-#define isKREncoding(e)     ((e)==0x80000422 || (e)==0x80000003|| \
-                             (e)==0x80000840 || (e)==0x80000940)
+NS_INLINE BOOL isbig5(unsigned char c) {
+    return (c >= 0xa1 && c <= 0xfe);
+}
+
+NS_INLINE BOOL issjiskanji(unsigned char c) {
+    return ((c >= 0x81 && c <= 0x9f) ||
+            (c >= 0xe0 && c <= 0xef));
+}
+
+NS_INLINE BOOL iseuckr(unsigned char c) {
+    return (c >= 0xa1 && c <= 0xfe);
+}
+
+NS_INLINE BOOL iscp949(unsigned char c) {
+    return (c >= 0x81 && c <= 0xfe);
+}
+
+NS_INLINE BOOL isEUCCNEncoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingMacChineseSimp) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingDOSChineseSimplif) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingGBK_95) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingGB_18030_2000) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingEUC_CN));
+}
+
+NS_INLINE BOOL isBig5Encoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingMacChineseTrad) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingDOSChineseTrad) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingEUC_TW) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingBig5) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingBig5_HKSCS_1999));
+}
+
+NS_INLINE BOOL isJPEncoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingMacJapanese) ||
+            stringEncoding == NSShiftJISStringEncoding ||
+            stringEncoding == NSISO2022JPStringEncoding);
+}
+
+NS_INLINE BOOL isSJISEncoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingShiftJIS_X0213) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingShiftJIS));
+}
+
+NS_INLINE BOOL isEUCKREncoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingMacKorean) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingISO_2022_KR) ||
+            stringEncoding == (0x80000000 | kCFStringEncodingEUC_KR));
+}
+NS_INLINE BOOL isCP949Encoding(NSStringEncoding stringEncoding) {
+    return (stringEncoding == (0x80000000 | kCFStringEncodingDOSKorean));
+}
 
 NS_INLINE BOOL isAsciiString(unsigned char *code) {
     return *code >= 0x20 && *code <= 0x7f;
@@ -44,7 +75,7 @@ NS_INLINE BOOL isAsciiString(unsigned char *code) {
 NS_INLINE BOOL isString(unsigned char *code, NSStringEncoding encoding) {
     if (encoding == NSUTF8StringEncoding) {
         return (*code >= 0x80);
-    } else if (isGBEncoding(encoding)) {
+    } else if (isEUCCNEncoding(encoding)) {
         return iseuccn(*code);
     } else if (isBig5Encoding(encoding)) {
         return isbig5(*code);
@@ -52,8 +83,10 @@ NS_INLINE BOOL isString(unsigned char *code, NSStringEncoding encoding) {
         return (*code == 0x8e || *code == 0x8f || (*code >= 0xa1 && *code <= 0xfe));
     } else if (isSJISEncoding(encoding)) {
         return *code >= 0x80;
-    } else if (isKREncoding(encoding)) {
+    } else if (isEUCKREncoding(encoding)) {
         return iseuckr(*code);
+    } else if (isCP949Encoding(encoding)) {
+        return iscp949(*code);
     } else if (*code >= 0x20) {
         return YES;
     }
