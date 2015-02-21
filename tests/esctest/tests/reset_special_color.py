@@ -38,8 +38,10 @@ class ResetSpecialColorTests(object):
 
     esccmd.ResetSpecialColor(n1, n2)
     esccmd.ChangeSpecialColor(n1, "?", n2, "?")
-    AssertEQ(escio.ReadOSC("4"), original1)
-    AssertEQ(escio.ReadOSC("4"), original2)
+    actual1 = escio.ReadOSC("4")
+    actual2 = escio.ReadOSC("4")
+    AssertEQ(actual1, original1)
+    AssertEQ(actual2, original2)
 
   @knownBug(terminal="iTerm2", reason="Query not implemented.")
   def test_ResetSpecialColor_Dynamic(self):
