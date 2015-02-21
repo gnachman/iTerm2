@@ -19,6 +19,11 @@ color of a particular cell, so color-setting control sequences are not testable.
 The character value of a cell is testable, as are various window attributes, and
 cursor position; these form the bulk of the tests.
 
+Notes on xterm
+--------------
+You should build xterm yourself and configure it with --enable-dec-locator. Some
+tests will fail unless it is provided. Most other configuration settings are not
+tested and may or may not cause problems.
 
 Usage
 -----
