@@ -24,8 +24,6 @@ class CUFTests(object):
     esccmd.CUF(width)
     AssertEQ(GetCursorPosition().x(), width)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 snaps the cursor to the right edge.")
   def test_CUF_StopsAtRightEdgeWhenBegunRightOfScrollRegion(self):
     """When the cursor starts right of the scroll region, CUF moves it right to the
     edge of the screen."""
