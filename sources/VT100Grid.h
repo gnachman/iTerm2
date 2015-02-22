@@ -90,10 +90,12 @@
 
 // Advances the cursor down one line and scrolls the screen, or part of the screen, if necessary.
 // Returns the number of lines dropped from lineBuffer. lineBuffer may be nil. If a scroll region is
-// present, the lineBuffer is only added to if useScrollbackWithRegion is set.
+// present, the lineBuffer is only added to if useScrollbackWithRegion is set. willScroll is called
+// if the region will need to scroll up by one line.
 - (int)moveCursorDownOneLineScrollingIntoLineBuffer:(LineBuffer *)lineBuffer
                                 unlimitedScrollback:(BOOL)unlimitedScrollback
-                            useScrollbackWithRegion:(BOOL)useScrollbackWithRegion;
+                            useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                                         willScroll:(void (^)())willScroll;
 
 // Move cursor to the left by n steps. Does not wrap around when it hits the left margin.
 // If it starts left of the scroll region, clamp it to the left. If it starts right of the scroll

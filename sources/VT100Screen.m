@@ -938,21 +938,26 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)linefeed
 {
     LineBuffer *lineBufferToUse = linebuffer_;
-    if (currentGrid_ == altGrid_ && !saveToScrollbackInAlternateScreen_) {
+    const BOOL noScrollback = (currentGrid_ == altGrid_ && !saveToScrollbackInAlternateScreen_);
+    if (noScrollback) {
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
         lineBufferToUse = nil;
-        // This is a temporary hack. In this case, keeping the selection in the right place requires
-        // more cooperation between VT100Screen and PTYTextView than is currently in place because
-        // the selection could become truncated, and regardless, will need to move up a line in terms
-        // of absolute Y position (normally when the screen scrolls the absolute Y position of the
-        // selection stays the same and the viewport moves down, or else there is soem scrollback
-        // overflow and PTYTextView -refresh bumps the selection's Y position, but because in this
-        // case we don't append to the line buffer, scrollback overflow will not increment).
-        [delegate_ screenRemoveSelection];
     }
     [self incrementOverflowBy:[currentGrid_ moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
                                                                      unlimitedScrollback:unlimitedScrollback_
-                                                                 useScrollbackWithRegion:_appendToScrollbackWithStatusBar]];
+                                                                 useScrollbackWithRegion:_appendToScrollbackWithStatusBar
+                               willScroll:^{
+                                   if (noScrollback) {
+                                       // This is a temporary hack. In this case, keeping the selection in the right place requires
+                                       // more cooperation between VT100Screen and PTYTextView than is currently in place because
+                                       // the selection could become truncated, and regardless, will need to move up a line in terms
+                                       // of absolute Y position (normally when the screen scrolls the absolute Y position of the
+                                       // selection stays the same and the viewport moves down, or else there is soem scrollback
+                                       // overflow and PTYTextView -refresh bumps the selection's Y position, but because in this
+                                       // case we don't append to the line buffer, scrollback overflow will not increment).
+                                       [delegate_ screenRemoveSelection];
+                                   }
+                               }]];
 }
 
 - (void)cursorToX:(int)x

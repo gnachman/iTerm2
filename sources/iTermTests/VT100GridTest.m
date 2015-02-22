@@ -468,7 +468,10 @@ do { \
     grid.cursorY = 0;
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
-                               useScrollbackWithRegion:NO];
+                               useScrollbackWithRegion:NO
+                                            willScroll:^{
+                                                assert(false);
+                                            }];
     assert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
     assert([[lineBuffer debugString] isEqualToString:@""]);
     assert(grid.cursorX == 0);
@@ -482,7 +485,8 @@ do { \
     grid.cursorY = 1;
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
-                               useScrollbackWithRegion:NO];
+                               useScrollbackWithRegion:NO
+                                            willScroll:nil];
     assert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
     assert(grid.cursorX == 0);
     assert(grid.cursorY == 2);
@@ -492,9 +496,14 @@ do { \
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     grid.cursorX = 0;
     grid.cursorY = 3;
+    __block BOOL scrolled = NO;
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
-                               useScrollbackWithRegion:NO];
+                               useScrollbackWithRegion:NO
+                                            willScroll:^{
+                                                scrolled = YES;
+                                            }];
+    assert(scrolled);
     assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
     assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
     assert(grid.cursorX == 0);
@@ -507,7 +516,8 @@ do { \
     grid.cursorY = 3;
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
-                               useScrollbackWithRegion:NO];
+                               useScrollbackWithRegion:NO
+                                            willScroll:nil];
     assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
     assert([[lineBuffer debugString] isEqualToString:@"abcd+"]);
     assert(grid.cursorX == 0);
@@ -521,7 +531,8 @@ do { \
     grid.cursorY = 1;
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
-                               useScrollbackWithRegion:YES];
+                               useScrollbackWithRegion:YES
+                                            willScroll:nil];
     assert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
     assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
     assert(grid.cursorX == 0);
@@ -535,7 +546,8 @@ do { \
     grid.cursorY = 1;
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
-                               useScrollbackWithRegion:NO];
+                               useScrollbackWithRegion:NO
+                                            willScroll:nil];
     assert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
     assert([[lineBuffer debugString] isEqualToString:@""]);
     assert(grid.cursorX == 0);
@@ -551,7 +563,8 @@ do { \
     for (int i = 0; i < 3; i++) {
         dropped += [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                                   unlimitedScrollback:NO
-                                              useScrollbackWithRegion:NO];
+                                              useScrollbackWithRegion:NO
+                                                           willScroll:nil];
     }
     assert(dropped == 2);
     assert([[grid compactLineDump] isEqualToString:@"mnop\n....\n....\n...."]);
@@ -569,7 +582,8 @@ do { \
     grid.cursorY = 2;
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:NO
-                               useScrollbackWithRegion:YES];
+                               useScrollbackWithRegion:YES
+                                            willScroll:nil];
     assert([[grid compactLineDump] isEqualToString:@"abcd\nejkh\ni..l\nmnop"]);
     assert([[lineBuffer debugString] isEqualToString:@""]);
     assert(grid.cursorX == 1);
@@ -673,7 +687,8 @@ do { \
                        insert:NO];
     [grid moveCursorDownOneLineScrollingIntoLineBuffer:lineBuffer
                                    unlimitedScrollback:YES
-                               useScrollbackWithRegion:NO];
+                               useScrollbackWithRegion:NO
+                                            willScroll:nil];
     grid.cursorX = 0;
 
     string = @"d";
