@@ -435,9 +435,6 @@ static const int kMaxScreenRows = 4096;
 
             for (i = 0; i < token.csi->count; i++) {
                 switch (token.csi->p[i]) {
-                    case 20:
-                        self.lineMode = mode;
-                        break;
                     case 1:
                         self.cursorMode = mode;
                         break;
@@ -467,43 +464,15 @@ static const int kMaxScreenRows = 4096;
                     case 9:
                         // TODO: This should send mouse x&y on button press.
                         break;
+                    case 20:
+                        self.lineMode = mode;
+                        break;
                     case 25:
                         [delegate_ terminalSetCursorVisible:mode];
                         break;
                     case 40:
                         self.allowColumnMode = mode;
                         break;
-                    case 69:
-                        [delegate_ terminalSetUseColumnScrollRegion:mode];
-                        break;
-
-                    case 1049:
-                        // From the xterm release log:
-                        // Implement new escape sequence, private mode 1049, which combines
-                        // the switch to/from alternate screen mode with screen clearing and
-                        // cursor save/restore.  Unlike the existing escape sequence, this
-                        // clears the alternate screen when switching to it rather than when
-                        // switching to the normal screen, thus retaining the alternate screen
-                        // contents for select/paste operations.
-                        if (!self.disableSmcupRmcup) {
-                            if (mode) {
-                                [self saveTextAttributes];
-                                [delegate_ terminalSaveCharsetFlags];
-                                [delegate_ terminalShowAltBuffer];
-                                [delegate_ terminalClearScreen];
-                            } else {
-                                [delegate_ terminalShowPrimaryBufferRestoringCursor:YES];
-                                [self restoreTextAttributes];
-                                [delegate_ terminalRestoreCharsetFlags];
-                            }
-                        }
-                        break;
-
-                    case 2004:
-                        // Set bracketed paste mode
-                        self.bracketedPasteMode = mode;
-                        break;
-
                     case 47:
                         // alternate screen buffer mode
                         if (!self.disableSmcupRmcup) {
@@ -513,6 +482,10 @@ static const int kMaxScreenRows = 4096;
                                 [delegate_ terminalShowPrimaryBufferRestoringCursor:NO];
                             }
                         }
+                        break;
+
+                    case 69:
+                        [delegate_ terminalSetUseColumnScrollRegion:mode];
                         break;
 
                     case 1000:
@@ -555,6 +528,33 @@ static const int kMaxScreenRows = 4096;
                             self.mouseFormat = MOUSE_FORMAT_XTERM;
                         }
                         break;
+                    case 1049:
+                        // From the xterm release log:
+                        // Implement new escape sequence, private mode 1049, which combines
+                        // the switch to/from alternate screen mode with screen clearing and
+                        // cursor save/restore.  Unlike the existing escape sequence, this
+                        // clears the alternate screen when switching to it rather than when
+                        // switching to the normal screen, thus retaining the alternate screen
+                        // contents for select/paste operations.
+                        if (!self.disableSmcupRmcup) {
+                            if (mode) {
+                                [self saveTextAttributes];
+                                [delegate_ terminalSaveCharsetFlags];
+                                [delegate_ terminalShowAltBuffer];
+                                [delegate_ terminalClearScreen];
+                            } else {
+                                [delegate_ terminalShowPrimaryBufferRestoringCursor:YES];
+                                [self restoreTextAttributes];
+                                [delegate_ terminalRestoreCharsetFlags];
+                            }
+                        }
+                        break;
+
+                    case 2004:
+                        // Set bracketed paste mode
+                        self.bracketedPasteMode = mode;
+                        break;
+
                 }
             }
             break;
