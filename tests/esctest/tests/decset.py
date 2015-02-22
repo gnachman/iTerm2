@@ -91,7 +91,6 @@ class DECSETTests(object):
     AssertScreenCharsInRectEqual(Rect(1, 2, 5, 3), [ "Hello", "World" ])
     AssertScreenCharsInRectEqual(Rect(5, 5, 5, 5), [ NUL ])
 
-  @knownBug(terminal="iTerm2", reason="iTerm2 has an off-by-one bug with origin mode.")
   def test_DECSET_DECOM(self):
     """Set origin mode. Cursor positioning is relative to the scroll region's
     top left."""
@@ -108,6 +107,8 @@ class DECSETTests(object):
     esccmd.DECRESET(esccmd.DECLRMM)
     esccmd.DECSTBM()
 
+    # Still in origin mode but origin at 1,1. DECRQCRA respects origin
+    # mode, so this is an extra wrinkle in this test.
     AssertScreenCharsInRectEqual(Rect(5, 5, 5, 5), [ "X" ])
 
   def test_DECSET_DECOM_SoftReset(self):

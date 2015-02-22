@@ -935,16 +935,16 @@ static const int kMaxScreenRows = 4096;
     if (self.originMode) {
         VT100GridRect region = [delegate_ terminalScrollRegion];
         if (coordRange.start.x >= 0) {
-            coordRange.start.x -= region.origin.x + 1;
+            coordRange.start.x -= region.origin.x;
         }
         if (coordRange.start.y >= 0) {
-            coordRange.start.y -= region.origin.y + 1;
+            coordRange.start.y -= region.origin.y;
         }
         if (coordRange.end.x >= 0) {
-            coordRange.end.x -= region.origin.x + 1;
+            coordRange.end.x -= region.origin.x;
         }
         if (coordRange.end.y >= 0) {
-            coordRange.end.y -= region.origin.y + 1;
+            coordRange.end.y -= region.origin.y;
         }
     }
 

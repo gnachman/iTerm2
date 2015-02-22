@@ -63,8 +63,6 @@ class CUPTests(object):
     AssertEQ(position.x(), size.width())
     AssertEQ(position.y(), size.height())
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 has an off-by-one bug in origin mode. 1;1 should go to the origin, but instead it goes one right and one down of the origin.")
   def test_CUP_RespectsOriginMode(self):
     """CUP is relative to margins in origin mode."""
     # Set a scroll region.
@@ -92,7 +90,7 @@ class CUPTests(object):
     escio.Write("X")
 
     # Turn off origin mode. This moves the cursor.
-    esccmd.DECSET(esccmd.DECOM)
+    esccmd.DECRESET(esccmd.DECOM)
 
     # Turn off scroll regions so checksum can work.
     esccmd.DECSTBM()

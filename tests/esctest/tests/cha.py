@@ -48,8 +48,6 @@ class CHATests(object):
     AssertEQ(position.x(), 1)
     AssertEQ(position.y(), 3)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 has an off-by-one bug in origin mode. 1;1 should go to the origin, but instead it goes one right and one down of the origin.")
   def test_CHA_RespectsOriginMode(self):
     """CHA is relative to left margin in origin mode."""
     # Set a scroll region.
@@ -79,7 +77,7 @@ class CHATests(object):
     escio.Write("X")
 
     # Turn off origin mode. This moves the cursor.
-    esccmd.DECSET(esccmd.DECOM)
+    esccmd.DECRESET(esccmd.DECOM)
 
     # Turn off scroll regions so checksum can work.
     esccmd.DECSTBM()
