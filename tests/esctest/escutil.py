@@ -11,6 +11,8 @@ import traceback
 gNextId = 1
 gHaveAsserted = False
 
+KNOWN_BUG_TERMINALS = "known_bug_terminals"
+
 def Raise(e):
   if not escargs.args.force:
     raise e
@@ -273,8 +275,30 @@ def knownBug(terminal, reason, noop=False, shouldTry=True):
           raise esctypes.KnownBug(reason + " (test ran and passed, but is documented as a 'no-op'; the nature of the bug makes it untestable)")
       else:
         func(self, *args, **kwargs)
+
+    # Add the terminal name to the list of terminals in "func_wrapper"'s
+    # func_dict["known_bug_terminals"] so --action=list-known-bugs can work.
+    if KNOWN_BUG_TERMINALS in func_wrapper.func_dict:
+      kbt = func_wrapper.func_dict.get(KNOWN_BUG_TERMINALS)
+    else:
+      kbt = {}
+      func_wrapper.func_dict[KNOWN_BUG_TERMINALS] = kbt
+    kbt[terminal] = reason
+
     return func_wrapper
+
   return decorator
+
+def ReasonForKnownBugInMethod(method):
+  if KNOWN_BUG_TERMINALS in method.func_dict:
+    kbt = method.func_dict.get(KNOWN_BUG_TERMINALS)
+    term = escargs.args.expected_terminal
+    if term in kbt:
+      return kbt[term]
+    else:
+      return None
+  else:
+    return None
 
 def AssertAssertionAsserted():
   if escargs.args.force:

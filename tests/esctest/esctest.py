@@ -88,9 +88,12 @@ def AttachSideChannel(name):
 def RemoveSideChannel():
   escio.SetSideChannel(None)
 
-def RunTest(class_name, name, method):
+def CheckForKnownBug(name, method):
+  return escutil.ReasonForKnownBugInMethod(method)
+
+def RunTest(name, method):
   ok = True
-  esclog.LogInfo("Run test: " + class_name + "." + name)
+  esclog.LogInfo("Run test: " + name)
   try:
     reset()
     AttachSideChannel(name)
@@ -116,13 +119,8 @@ def RunTest(class_name, name, method):
   esclog.LogInfo("")
   return ok
 
-def RunTests():
-  failed = 0
-  passed = 0
-  knownBugs = 0
-  failures = []
+def MatchingNamesAndMethods():
   classes = []
-
   for category in [ tests.tests ]:
     classes.extend(category)
 
@@ -134,23 +132,42 @@ def RunTests():
       raise
     members = inspect.getmembers(testObject, predicate=inspect.ismethod)
     for name, method in members:
-      if name.startswith("test_") and (re.search(escargs.args.include, name) or
-                                       re.search(escargs.args.include, testClass.__name__)):
-        status = RunTest(testClass.__name__, name, method)
-        if status is None:
-          knownBugs += 1
-        elif status:
-          passed += 1
-        else:
-          failures.append(testClass.__name__ + "." + name)
-          failed += 1
+      full_name = testClass.__name__ + "." + name
+      if (name.startswith("test_") and
+          re.search(escargs.args.include, full_name)):
+        yield full_name, method
       else:
-        esclog.LogDebug("Skipping test %s in class %s" % (
-          name, testClass.__name__))
-      if escargs.args.stop_on_failure and failed > 0:
+        esclog.LogDebug("Skipping test %s" % full_name)
+
+def PerformAction():
+  if escargs.args.action == escargs.ACTION_RUN:
+    RunTests()
+  elif escargs.args.action == escargs.ACTION_LIST_KNOWN_BUGS:
+    ListKnownBugs()
+
+def ListKnownBugs():
+  for name, method in MatchingNamesAndMethods():
+    reason = CheckForKnownBug(name, method)
+    if reason is not None:
+      esclog.LogInfo("%s: %s" % (name, reason))
+
+def RunTests():
+  failed = 0
+  passed = 0
+  knownBugs = 0
+  failures = []
+
+  for name, method in MatchingNamesAndMethods():
+    status = RunTest(name, method)
+    if status is None:
+      knownBugs += 1
+    elif status:
+      passed += 1
+    else:
+      failures.append(name)
+      failed += 1
+      if escargs.args.stop_on_failure:
         break
-    if escargs.args.stop_on_failure and failed > 0:
-      break
 
   if failed > 0:
     esclog.LogInfo(
@@ -180,7 +197,7 @@ def main():
   init()
 
   try:
-    RunTests()
+    PerformAction()
   except Exception, e:
     tb = traceback.format_exc()
     try:

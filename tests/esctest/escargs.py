@@ -6,6 +6,9 @@ import argparse
 XTERM_WINOPS_ENABLED = "xtermWinopsEnabled"
 DISABLE_WIDE_CHARS = "disableWideChars"
 
+ACTION_RUN="run"
+ACTION_LIST_KNOWN_BUGS="list-known-bugs"
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--disable-xterm-checksum-bug",
                     help="Don't use buggy parameter order for DECRQCRA",
@@ -44,5 +47,8 @@ parser.add_argument("--v",
                     help="Verbosity level. 1=errors, 2=errors and info, 3=debug, errors, and info",
                     default=2,
                     type=int)
-
+parser.add_argument("--action",
+                    help="Action to perform.",
+                    default=ACTION_RUN,
+                    choices=[ ACTION_RUN, ACTION_LIST_KNOWN_BUGS ])
 

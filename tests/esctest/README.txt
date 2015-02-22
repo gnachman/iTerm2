@@ -32,6 +32,15 @@ esctest.py --expected-terminal={iTerm2,xterm}
 
 Flags are as follows:
 
+--action={run,list-known-bugs}
+Selects the action that the test framework performs.
+* run
+  Execute the tests. This is the default.
+* list-known-bugs
+  Do not run any tests; instead, print the list of matching tests (per --include
+  and --expected-terminal) that have known bugs. This is useful when looking for
+  looking for bugs to fix in your terminal.
+
 --disable-xterm-checksum-bug
 xterm's implementation of DECRQCRA (as of patch 314) contains a bug. DECRQCRA is
 essential to these tests. By default, a workaround for the bug is used. If it is
