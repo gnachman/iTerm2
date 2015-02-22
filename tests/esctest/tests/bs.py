@@ -44,7 +44,6 @@ class BSTests(object):
     esccmd.DECRESET(esccmd.DECLRMM)
     AssertEQ(GetCursorPosition(), Point(5, 1))
 
-  @knownBug(terminal="iTerm2", reason="Doesn't move left.")
   def test_BS_MovesLeftWhenLeftOfLeftMargin(self):
     esccmd.DECSET(esccmd.DECLRMM)
     esccmd.DECSLRM(5, 10)

@@ -1929,9 +1929,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     int cursorX = currentGrid_.cursorX;
     int cursorY = currentGrid_.cursorY;
 
-    if (cursorX > leftMargin) {
-        // Cursor can move back without hitting the left margin; easy and normal case.
+    if (cursorX > leftMargin ||  // Cursor can move back without hitting the left margin: normal case
+        (cursorX < leftMargin && cursorX > 0)) {  // Cursor left of left margin, right of left edge.
         if (cursorX >= currentGrid_.size.width) {
+            // Cursor right of right edge, move back twice.
             currentGrid_.cursorX = cursorX - 2;
         } else {
             currentGrid_.cursorX = cursorX - 1;
