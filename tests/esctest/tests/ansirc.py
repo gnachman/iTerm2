@@ -12,7 +12,6 @@ class ANSIRCTests(SaveRestoreCursorTests):
   def restoreCursor(self):
     esccmd.ANSIRC()
 
-  @knownBug(terminal="iTerm2", reason="Does not reset origin mode.")
   def test_SaveRestoreCursor_ResetsOriginMode(self):
     SaveRestoreCursorTests.test_SaveRestoreCursor_ResetsOriginMode(self)
 

@@ -1224,16 +1224,25 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECKPAM:
         case VT100CSI_DECKPNM:
             break;
+
+        case ANSICSI_RCP:
         case VT100CSI_DECRC:
             [self restoreTextAttributes];
             [delegate_ terminalRestoreCursor];
             [delegate_ terminalRestoreCharsetFlags];
             break;
+
+        case ANSICSI_SCP:
+            // ANSI SC is just like DECSC, but it's only available when left-right mode is off.
+            // There's code before the big switch statement that changes the token type for this
+            // case, so if we get here it's definitely the same as DECSC.
+            // Fall through.
         case VT100CSI_DECSC:
             [self saveTextAttributes];
             [delegate_ terminalSaveCursor];
             [delegate_ terminalSaveCharsetFlags];
             break;
+
         case VT100CSI_DECSTBM:
             [delegate_ terminalSetScrollRegionTop:token.csi->p[0] == -1 ? 0 : token.csi->p[0] - 1
                                            bottom:token.csi->p[1] == -1 ? [delegate_ terminalHeight] - 1 : token.csi->p[1] - 1];
@@ -1479,14 +1488,6 @@ static const int kMaxScreenRows = 4096;
                 default:
                     [delegate_ terminalPrintScreen];
             }
-            break;
-        case ANSICSI_SCP:
-            [delegate_ terminalSaveCursor];
-            [delegate_ terminalSaveCharsetFlags];
-            break;
-        case ANSICSI_RCP:
-            [delegate_ terminalRestoreCursor];
-            [delegate_ terminalRestoreCharsetFlags];
             break;
 
             // XTERM extensions
