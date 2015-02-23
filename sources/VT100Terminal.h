@@ -29,6 +29,7 @@
 @property(nonatomic, readonly) BOOL reverseVideo;
 @property(nonatomic, readonly) BOOL originMode;
 @property(nonatomic, assign) BOOL wraparoundMode;
+@property(nonatomic, assign) BOOL reverseWraparoundMode;
 @property(nonatomic, readonly) BOOL isAnsi;
 @property(nonatomic, readonly) BOOL autorepeatMode;
 @property(nonatomic, assign) BOOL insertMode;

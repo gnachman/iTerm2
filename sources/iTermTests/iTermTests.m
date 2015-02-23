@@ -96,9 +96,9 @@ int main(int argc, const char * argv[]) {
     // listed tests will run.
 
     NSArray *include = nil;
-    // This is what I often use because applescript tests are slow.
-    // NSArray *exclude = @[ [AppleScriptTest class] ];
-    NSArray *exclude = nil;
+    NSArray *exclude = @[
+                          // [AppleScriptTest class]      // I often exclude AppleScriptTest because it is slow.
+                        ];
 
     NSArray *testClassesToRun = TestClassesToRun(include, exclude);
     NSLog(@"Running tests: %@", testClassesToRun);

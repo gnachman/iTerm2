@@ -61,6 +61,7 @@
     ColorMode saveBgColorMode_;
     BOOL saveOriginMode_;
     BOOL saveWraparoundMode_;
+    BOOL saveReverseWraparoundMode_;
 
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
 }
@@ -141,6 +142,7 @@ static const int kMaxScreenRows = 4096;
         _parser.encoding = _encoding;
 
         _wraparoundMode = YES;
+        _reverseWraparoundMode = NO;
         _autorepeatMode = YES;
         xon_ = YES;
         fgColorCode_ = ALTSEM_DEFAULT;
@@ -222,6 +224,7 @@ static const int kMaxScreenRows = 4096;
     saveBgColorMode_ = bgColorMode_;
     saveOriginMode_ = self.originMode;
     saveWraparoundMode_ = self.wraparoundMode;
+    saveReverseWraparoundMode_ = self.reverseWraparoundMode;
 }
 
 - (void)restoreTextAttributes
@@ -243,6 +246,7 @@ static const int kMaxScreenRows = 4096;
     bgColorMode_ = saveBgColorMode_;
     self.originMode = saveOriginMode_;
     self.wraparoundMode = saveWraparoundMode_;
+    self.reverseWraparoundMode = saveReverseWraparoundMode_;
 }
 
 - (void)setForeground24BitColor:(NSColor *)color {
@@ -280,6 +284,7 @@ static const int kMaxScreenRows = 4096;
     _reverseVideo = NO;
     _originMode = NO;
     self.wraparoundMode = YES;
+    self.reverseWraparoundMode = NO;
     self.autorepeatMode = YES;
     self.keypadMode = NO;
     self.insertMode = NO;
@@ -310,8 +315,7 @@ static const int kMaxScreenRows = 4096;
     [delegate_ terminalResetPreservingPrompt:preservePrompt];
 }
 
-- (void)setWraparoundMode:(BOOL)mode
-{
+- (void)setWraparoundMode:(BOOL)mode {
     if (mode != _wraparoundMode) {
         _wraparoundMode = mode;
         [delegate_ terminalWraparoundModeDidChangeTo:mode];
@@ -473,6 +477,9 @@ static const int kMaxScreenRows = 4096;
                     case 40:
                         self.allowColumnMode = mode;
                         break;
+                    case 45:
+                        self.reverseWraparoundMode = mode;
+                        break;
                     case 47:
                         // alternate screen buffer mode
                         if (!self.disableSmcupRmcup) {
@@ -590,7 +597,8 @@ static const int kMaxScreenRows = 4096;
             break;
         case VT100CSI_DECSTR:
             self.wraparoundMode = YES;
-            self.originMode = NO;
+            self.reverseWraparoundMode = NO;
+            // resetSGR is performed prior to the switch, which takes care of various other flags.
             break;
         case VT100CSI_RESET_MODIFIERS:
             if (token.csi->count == 0) {
