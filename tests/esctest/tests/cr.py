@@ -19,8 +19,6 @@ class CRTests(object):
     esccmd.DECRESET(esccmd.DECLRMM)
     AssertEQ(GetCursorPosition(), Point(5, 1))
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 incorrectly moves to the left margin.")
   def test_CR_MovesToLeftOfScreenWhenLeftOfLeftMargin(self):
     """Move the cursor to the left edge of the screen when it starts of left the margin."""
     esccmd.DECSET(esccmd.DECLRMM)
@@ -29,6 +27,14 @@ class CRTests(object):
     escio.Write(esc.CR)
     esccmd.DECRESET(esccmd.DECLRMM)
     AssertEQ(GetCursorPosition(), Point(1, 1))
+
+  def test_CR_StaysPutWhenAtLeftMargin(self):
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(5, 10)
+    esccmd.CUP(Point(5, 1))
+    escio.Write(esc.CR)
+    esccmd.DECRESET(esccmd.DECLRMM)
+    AssertEQ(GetCursorPosition(), Point(5, 1))
 
   def test_CR_MovesToLeftMarginWhenLeftOfLeftMarginInOriginMode(self):
     """In origin mode, always go to the left margin, even if the cursor starts left of it."""

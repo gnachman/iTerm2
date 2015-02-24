@@ -2287,9 +2287,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalCarriageReturn {
-    if (currentGrid_.useScrollRegionCols && currentGrid_.cursorX == currentGrid_.leftMargin) {
-        // I observed that xterm will move the cursor to the first column when it gets a CR
-        // while the cursor is at the left margin of a vsplit. Not sure why.
+    if (currentGrid_.useScrollRegionCols && currentGrid_.cursorX < currentGrid_.leftMargin) {
         currentGrid_.cursorX = 0;
     } else {
         [currentGrid_ moveCursorToLeftMargin];
