@@ -88,7 +88,7 @@ typedef enum {
 // Device Attribute : VT100 with Advanced Video Option
 #define REPORT_WHATAREYOU    "\033[?1;2c"
 // Secondary Device Attribute: VT100
-#define REPORT_SDA           "\033[>0;95;c"
+#define REPORT_SDA           "\033[>0;95c"  // TODO: When xterm compatibility is reached, change 95 to 314 or later.
 #define REPORT_VT52          "\033/Z"
 
 #define STATIC_STRLEN(n)   ((sizeof(n)) - 1)
