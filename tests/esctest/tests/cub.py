@@ -23,8 +23,6 @@ class CUBTests(object):
     esccmd.CUB(99)
     AssertEQ(GetCursorPosition().x(), 1)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 should stop cursor at the left margin when doing CUB starting left of the region, but it jumps into the region instead.")
   def test_CUB_StopsAtLeftEdgeWhenBegunLeftOfScrollRegion(self):
     """When the cursor starts left of the scroll region, CUB moves it left to the
     left edge of the screen."""

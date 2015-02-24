@@ -418,11 +418,19 @@
 - (void)moveCursorLeft:(int)n {
     if ([self haveColumnScrollRegion]) {
         // Don't allow cursor to wrap around the left margin when there is a
-        // column scroll region.
+        // column scroll region. If the cursor begins at/right of the left margin, it stops at the
+        // left margin. If the cursor begins left of the left margin, it stops at the left edge.
         int x = cursor_.x - n;
         const int leftMargin = [self leftMargin];
 
-        x = MAX(leftMargin, x);
+        int limit;
+        if (cursor_.x < leftMargin) {
+            limit = 0;
+        } else {
+            limit = leftMargin;
+        }
+
+        x = MAX(limit, x);
         self.cursorX = x;
         return;
     }
