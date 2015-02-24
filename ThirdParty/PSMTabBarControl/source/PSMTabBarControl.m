@@ -1551,6 +1551,13 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     if (item && [[self delegate] respondsToSelector:@selector(tabView:menuForTabViewItem:)]) {
         menu = [[self delegate] tabView:tabView menuForTabViewItem:item];
     }
+    else if (!item) {
+        // when the "LSUIElement hack" (issue #954) is enabled, the menu bar is inaccessible,
+        // so show it as a context menu when right-clicking empty tabBar region
+        if ([[[NSBundle mainBundle] infoDictionary] objectForKey:@"LSUIElement"]) {
+            menu = [NSApp mainMenu];
+        }
+    }
     return menu;
 }
 
