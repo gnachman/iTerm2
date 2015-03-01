@@ -13,22 +13,69 @@
 #import "VT100DCSParser.h"
 #import "VT100OtherParser.h"
 
+@interface VT100ControlParser ()
+@property(nonatomic, retain) VT100DCSParser *dcsParser;
+@end
+
 @implementation VT100ControlParser
 
-void ParseControl(unsigned char *datap,
-                  int datalen,
-                  int *rmlen,
-                  CVector *incidentals,
-                  VT100Token *token,
-                  NSStringEncoding encoding,
-                  int tmuxCodeWrapCount,
-                  NSMutableDictionary *savedState) {
-    if (tmuxCodeWrapCount && datalen >= 2 && datap[0] == VT100CC_ESC && datap[1] == '\\') {
-        token->type = DCS_END_TMUX_CODE_WRAP;
-        *rmlen = 2;
-        return;
+- (id)init {
+    self = [super init];
+    if (self) {
+        _dcsParser = [[VT100DCSParser alloc] init];
     }
-    if (isCSI(datap, datalen)) {
+    return self;
+}
+
+- (void)dealloc {
+    [_dcsParser release];
+    [super dealloc];
+}
+
+- (void)unhookDCS {
+    [_dcsParser reset];
+}
+
+- (NSString *)hookDescription {
+    return _dcsParser.hookDescription;
+}
+
+- (void)parseDCSWithData:(unsigned char *)datap
+                 datalen:(int)datalen
+                   rmlen:(int *)rmlen
+                   token:(VT100Token *)token
+                encoding:(NSStringEncoding)encoding
+              savedState:(NSMutableDictionary *)savedState {
+    iTermParserContext context = iTermParserContextMake(datap, datalen);
+    [_dcsParser decodeFromContext:&context
+                            token:token
+                         encoding:encoding
+                       savedState:savedState];
+    *rmlen = context.rmlen;
+}
+
+- (BOOL)dcsHooked {
+    return _dcsParser.isHooked;
+}
+
+
+- (void)parseControlWithData:(unsigned char *)datap
+                     datalen:(int)datalen
+                       rmlen:(int *)rmlen
+                 incidentals:(CVector *)incidentals
+                       token:(VT100Token *)token
+                    encoding:(NSStringEncoding)encoding
+                  savedState:(NSMutableDictionary *)savedState
+                   dcsHooked:(BOOL *)dcsHooked {
+    if (_dcsParser.isHooked || isDCS(datap, datalen)) {
+        [self parseDCSWithData:datap
+                       datalen:datalen
+                         rmlen:rmlen
+                         token:token
+                      encoding:encoding
+                    savedState:savedState];
+        *dcsHooked = self.dcsParser.isHooked;
+    } else if (isCSI(datap, datalen)) {
         iTermParserContext context = iTermParserContextMake(datap, datalen);
         [VT100CSIParser decodeFromContext:&context
                               incidentals:incidentals
@@ -47,12 +94,6 @@ void ParseControl(unsigned char *datap,
                               length:datalen
                            bytesUsed:rmlen
                                token:token];
-    } else if (isDCS(datap, datalen)) {
-        [VT100DCSParser decodeBytes:datap
-                             length:datalen
-                          bytesUsed:rmlen
-                              token:token
-                           encoding:encoding];
     } else {
         NSCParameterAssert(datalen > 0);
         

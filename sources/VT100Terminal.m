@@ -1080,7 +1080,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)executeToken:(VT100Token *)token {
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
-    if (token->type == DCS_TMUX) {
+    if (token->type == DCS_TMUX_HOOK) {
         [delegate_ terminalStartTmuxMode];
         return;
     } else if (token->type == TMUX_EXIT || token->type == TMUX_LINE) {
@@ -1180,12 +1180,10 @@ static const int kMaxScreenRows = 4096;
         case VT100CC_DC3:
         case VT100CC_CAN:
         case VT100CC_SUB:
-            break;
         case VT100CC_DEL:
-            [delegate_ terminalDeleteCharactersAtCursor:1];
             break;
 
-            // VT100 CSI
+        // VT100 CSI
         case VT100CSI_CPR:
             break;
         case VT100CSI_CUB:
@@ -1698,9 +1696,8 @@ static const int kMaxScreenRows = 4096;
             [self executeXtermSetRgb:token];
             break;
 
-        case DCS_BEGIN_TMUX_CODE_WRAP:
-        case DCS_END_TMUX_CODE_WRAP:
-            // These are no-ops for us. They are expected to occur in tmux integration.
+        case DCS_TMUX_CODE_WRAP:
+            // This is a no-op and it shouldn't happen.
             break;
 
         case DCS_REQUEST_TERMCAP_TERMINFO: {

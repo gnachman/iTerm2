@@ -10,7 +10,6 @@
 #import "DebugLogging.h"
 #import "VT100ControlParser.h"
 #import "VT100StringParser.h"
-#import "VT100TmuxParser.h"
 
 #define kDefaultStreamSize 100000
 
@@ -21,7 +20,8 @@
     int _streamOffset;
     BOOL _saveData;
     NSMutableDictionary *_savedStateForPartialParse;
-    int _tmuxCodeWrap;  // How many levels deep we are in DCS tmux; ESC <escape code> ST. Incremented by DCS tmux ESC and decremented by ST.
+    VT100ControlParser *_controlParser;
+    BOOL _dcsHooked;
 }
 
 - (id)init {
@@ -30,15 +30,21 @@
         _totalStreamLength = kDefaultStreamSize;
         _stream = malloc(_totalStreamLength);
         _savedStateForPartialParse = [[NSMutableDictionary alloc] init];
+        _controlParser = [[VT100ControlParser alloc] init];
     }
     return self;
 }
 
 - (void)dealloc {
     free(_stream);
-    [_tmuxParser release];
     [_savedStateForPartialParse release];
+    [_controlParser release];
     [super dealloc];
+}
+
+- (void)forceUnhookDCS {
+    _dcsHooked = NO;
+    [_controlParser unhookDCS];
 }
 
 - (BOOL)addNextParsedTokensToVector:(CVector *)vector {
@@ -67,25 +73,18 @@
         }
     } else {
         int rmlen = 0;
-        VT100TmuxParser *tmuxParser = [self.tmuxParser retain];
-        if (tmuxParser) {
-            [tmuxParser decodeBytes:datap length:datalen bytesUsed:&rmlen token:token];
-            [tmuxParser release];
-            if (token->type == TMUX_EXIT) {
-                self.tmuxParser = nil;
-            }
-        } else if (isAsciiString(datap)) {
+        if (isAsciiString(datap) && !_dcsHooked) {
             ParseString(datap, datalen, &rmlen, token, self.encoding);
             position = datap;
-        } else if (iscontrol(datap[0])) {
-            ParseControl(datap,
-                         datalen,
-                         &rmlen,
-                         vector,
-                         token,
-                         self.encoding,
-                         _tmuxCodeWrap,
-                         _savedStateForPartialParse);
+        } else if (iscontrol(datap[0]) || _dcsHooked) {
+            [_controlParser parseControlWithData:datap
+                                         datalen:datalen
+                                           rmlen:&rmlen
+                                     incidentals:vector
+                                           token:token
+                                        encoding:_encoding
+                                      savedState:_savedStateForPartialParse
+                                       dcsHooked:&_dcsHooked];
             if (token->type != VT100_WAIT) {
                 [_savedStateForPartialParse removeAllObjects];
             }
@@ -99,19 +98,14 @@
                     }
                     break;
 
-                case DCS_TMUX:
-                    if (!_tmuxParser) {
-                        self.tmuxParser = [[[VT100TmuxParser alloc] init] autorelease];
-                    }
+                case DCS_TMUX_CODE_WRAP: {
+                    VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
+                    tempParser.encoding = self.encoding;
+                    NSData *data = [token.string dataUsingEncoding:self.encoding];
+                    [tempParser putStreamData:data.bytes length:data.length];
+                    [tempParser addParsedTokensToVector:vector];
                     break;
-
-                case DCS_BEGIN_TMUX_CODE_WRAP:
-                    ++_tmuxCodeWrap;
-                    break;
-
-                case DCS_END_TMUX_CODE_WRAP:
-                    _tmuxCodeWrap = MAX(0, _tmuxCodeWrap - 1);
-                    break;
+                }
 
                 case ISO2022_SELECT_LATIN_1:
                     _encoding = NSISOLatin1StringEncoding;
@@ -163,9 +157,11 @@
         }
         
         if (gDebugLogging) {
-            NSString *prefix = @"";
-            if (_tmuxParser) {
-                prefix = @"[TMUX GATEWAY] ";
+            NSString *prefix = _controlParser.hookDescription;
+            if (prefix) {
+                prefix = [prefix stringByAppendingString:@" "];
+            } else {
+                prefix = @"";
             }
             NSMutableString *loginfo = [NSMutableString string];
             NSMutableString *ascii = [NSMutableString string];
@@ -182,13 +178,16 @@
             }
             DLog(@"%@Parsed as %@", prefix, token);
         }
-
-        CVectorAppend(vector, token);
-        return YES;
-    } else {
-        [token recycleObject];
-        return NO;
+        // Don't append the outer wrapper to the output. Earlier, it was unwrapped and the inner
+        // tokens were already added.
+        if (token->type != DCS_TMUX_CODE_WRAP) {
+            CVectorAppend(vector, token);
+            return YES;
+        }
     }
+
+    [token recycleObject];
+    return NO;
 }
 
 - (void)putStreamData:(const char *)buffer length:(int)length {

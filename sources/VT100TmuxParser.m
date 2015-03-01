@@ -16,46 +16,68 @@
 
 @implementation VT100TmuxParser {
     BOOL _inResponseBlock;
+    NSMutableData *_line;
 }
 
 - (void)dealloc {
     [_currentCommandId release];
     [_currentCommandNumber release];
+    [_line release];
     [super dealloc];
 }
 
-- (void)decodeBytes:(unsigned char *)datap
-             length:(int)datalen
-          bytesUsed:(int *)rmlen
-              token:(VT100Token *)result {
-    if (datalen == 0) {
-        return;
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _line = [[NSMutableData alloc] init];
     }
-    
-    // Search for the end of the line.
-    unsigned char *endOfLine = memchr(datap, '\n', datalen);
-    if (!endOfLine) {
-        result->type = VT100_WAIT;
-        return;
-    }
-    
-    int length = endOfLine - datap + 1;
-    *rmlen = length;
-    
-    // Make a temp copy of the data, and remove linefeeds. Line drivers randomly add linefeeds.
-    NSMutableData *data = [NSMutableData dataWithCapacity:length - 1];
-    [data appendBytes:datap length:length - 1 excludingCharacter:'\r'];
+    return self;
+}
 
-    result.savedData = data;
-    NSString *command = [[[NSString alloc] initWithData:data
-                                               encoding:NSUTF8StringEncoding] autorelease];
+- (NSString *)hookDescription {
+    return @"[TMUX GATEWAY]";
+}
+
+- (BOOL)handleInput:(iTermParserContext *)context token:(VT100Token *)result {
+    int bytesTilNewline = iTermParserNumberOfBytesUntilCharacter(context, '\n');
+    if (bytesTilNewline == -1) {
+        // No newline to be found. Append everything that is available to |_line|.
+        int length = iTermParserLength(context);
+        [_line appendBytes:iTermParserPeekRawBytes(context, length)
+                    length:length
+            excludingCharacter:'\r'];
+        iTermParserAdvanceMultiple(context, length);
+        result->type = VT100_WAIT;
+    } else {
+        // Append bytes upt to the newline, stripping out linefeeds. Consume the newline.
+        [_line appendBytes:iTermParserPeekRawBytes(context, bytesTilNewline)
+                    length:bytesTilNewline
+            excludingCharacter:'\r'];
+        iTermParserAdvanceMultiple(context, bytesTilNewline + 1);
+
+        // Tokenize the line, returning if it is a terminator like %exit.
+        if ([self processLineIntoToken:result]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// Return YES if we should unhook.
+- (BOOL)processLineIntoToken:(VT100Token *)result {
+    result.savedData = [[_line copy] autorelease];
+    NSString *command =
+        [[[NSString alloc] initWithData:_line encoding:NSUTF8StringEncoding] autorelease];
+
     if (!command) {
         // The command was not UTF-8. Unfortunately, this can happen. If tmux has a non-UTF-8
         // character in a pane, it will just output it in capture-pane.
-        command = [[[NSString alloc] initWithUTF8DataIgnoringErrors:data] autorelease];
+        command = [[[NSString alloc] initWithUTF8DataIgnoringErrors:_line] autorelease];
     }
     result->type = TMUX_LINE;
+    [_line setLength:0];
 
+    BOOL unhook = NO;
     if (_inResponseBlock) {
         if ([command hasPrefix:@"%exit"]) {
             // Work around a bug in tmux 1.8: if unlink-window causes the current
@@ -66,6 +88,7 @@
             // TODO: test tmux 1.9 and make sure this code can be removed, then remove it.
             result->type = TMUX_EXIT;
             _inResponseBlock = NO;
+            unhook = YES;
         } else if ([command hasPrefix:@"%end "] ||
                    [command hasPrefix:@"%error "]) {
             NSArray *parts = [command componentsSeparatedByString:@" "];
@@ -85,9 +108,12 @@
             }
         } else if ([command hasPrefix:@"%exit"]) {
             result->type = TMUX_EXIT;
+            unhook = YES;
         }
     }
     result.string = command;
+
+    return unhook;
 }
 
 @end

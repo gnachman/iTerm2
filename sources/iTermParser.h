@@ -99,6 +99,27 @@ NS_INLINE void iTermParserBacktrack(iTermParserContext *context) {
     iTermParserBacktrackBy(context, context->rmlen);
 }
 
+NS_INLINE int iTermParserNumberOfBytesUntilCharacter(iTermParserContext *context, char c) {
+    unsigned char *pointer = memchr(context->datap, '\n', context->datalen);
+    if (!pointer) {
+        return -1;
+    } else {
+        return pointer - context->datap;
+    }
+}
+
+NS_INLINE int iTermParserLength(iTermParserContext *context) {
+    return context->datalen;
+}
+
+NS_INLINE unsigned char *iTermParserPeekRawBytes(iTermParserContext *context, int length) {
+    if (context->datalen < length) {
+        return NULL;
+    } else {
+        return context->datap;
+    }
+}
+
 // Returns YES if any digits were found, NO if the first character was not a digit. |n| must be a
 // valid pointer. It will be filled in with the integer at the start of the context and the context
 // will be advanced to the end of the integer.

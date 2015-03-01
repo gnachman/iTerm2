@@ -17,10 +17,10 @@
 @property(nonatomic, readonly) NSData *streamData;
 @property(atomic, assign) NSStringEncoding encoding;
 @property(nonatomic, readonly) int streamLength;
-@property(atomic, retain) VT100TmuxParser *tmuxParser;
 
 - (void)putStreamData:(const char *)buffer length:(int)length;
 - (void)clearStream;
+- (void)forceUnhookDCS;
 
 // CVector was created for this method. Because so many VT100Token*s are created and destroyed,
 // too much time is spent adjusting their retain counts. Since an iTermObjectPool is used to avoid

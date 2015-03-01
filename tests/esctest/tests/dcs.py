@@ -4,7 +4,6 @@ from escutil import AssertScreenCharsInRectEqual, knownBug
 from esctypes import Rect
 
 class DCSTests(object):
-  @knownBug(terminal="iTerm2", reason="DCS not parsed correctly.")
   def test_DCS_Unrecognized(self):
     """An unrecognized DCS code should be swallowed"""
     escio.WriteDCS("z", "0")

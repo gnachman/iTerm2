@@ -16,13 +16,20 @@ NS_INLINE BOOL iscontrol(int c) {
 
 @interface VT100ControlParser : NSObject
 
-void ParseControl(unsigned char *datap,
-                  int datalen,
-                  int *rmlen,
-                  CVector *incidentals,
-                  VT100Token *token,
-                  NSStringEncoding encoding,
-                  int tmuxCodeWrapCount,
-                  NSMutableDictionary *savedState);
+// If a DCS hook is present, returns a description of it for debug logging.
+@property(nonatomic, readonly) NSString *hookDescription;
+
+// Force the DCS parser to remove its hook (presently, that means terminating tmux integration).
+- (void)unhookDCS;
+
+- (void)parseControlWithData:(unsigned char *)datap
+                     datalen:(int)datalen
+                       rmlen:(int *)rmlen
+                 incidentals:(CVector *)incidentals
+                       token:(VT100Token *)token
+                    encoding:(NSStringEncoding)encoding
+                  savedState:(NSMutableDictionary *)savedState
+                   dcsHooked:(BOOL *)dcsHooked;
 
 @end
+

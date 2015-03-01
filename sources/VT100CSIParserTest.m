@@ -141,8 +141,8 @@
     assert(token->type == VT100CSI_SGR);
 }
 
-- (void)testGarbageSpaceCausesFailure {
-    VT100Token *token = [self tokenForDataWithFormat:@"%c[1%c m", VT100CC_ESC, 0x7f];
+- (void)testBadGarbageCausesFailure {
+    VT100Token *token = [self tokenForDataWithFormat:@"%c[1%c 2m", VT100CC_ESC, 0x7f];
     assert(token->type == VT100_UNKNOWNCHAR);
 }
 

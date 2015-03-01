@@ -358,7 +358,7 @@ typedef enum {
         key = argument;
         value = @"";
     }
-    
+
     token.kvpKey = key;
     token.kvpValue = value;
 }

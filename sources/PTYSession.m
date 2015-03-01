@@ -775,7 +775,18 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // Allocate a text view
     NSSize aSize = [_scrollview contentSize];
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
-    [_wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable | NSViewMaxYMargin];
+
+    // In commit f6dabc53024d13ec1bd7be92bf505f72f87ea779, the max-y margin was
+    // made flexible. The commit description there explains why. But then I
+    // found that it was causing unsatisfiable constraints that were more
+    // reproducible when maximizing a tmux window. It had a constraint like
+    // this:
+    //     "<NSAutoresizingMaskLayoutConstraint:0x60000068a230 h=-&- v=-&& TextViewWrapper:0x60800012b900.height == 3.0687*NSClipView:0x1009d6920.height - 6.1374>",
+    // Which is obviously wrong. This is a less-wrong answer, but still pretty
+    // obviously broken. Maybe I shouldn't use autoresizing masks for the
+    // wrapper at all. This is a big complicated mess that I need to
+    // disentangle.
+    [_wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
     _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)
                                           colorMap:_colorMap];
@@ -1165,7 +1176,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _tmuxGateway = nil;
     }
     BOOL undoable = ![self isTmuxClient] && !_shouldRestart;
-    _terminal.parser.tmuxParser = nil;
+    [_terminal.parser forceUnhookDCS];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
     _tmuxController = nil;
@@ -3798,7 +3809,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // There's a not-so-bad race condition here. It's possible that tmux would exit and a new
     // session would start right away and we'd wack the wrong tmux parser. However, it would be
     // very unusual for that to happen so quickly.
-    _terminal.parser.tmuxParser = nil;
+    [_terminal.parser forceUnhookDCS];
     self.tmuxMode = TMUX_NONE;
 
     if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&

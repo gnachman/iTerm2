@@ -8,12 +8,8 @@
 
 #import <Foundation/Foundation.h>
 #import "VT100Token.h"
+#import "iTermParser.h"
+#import "VT100DCSParser.h"
 
-@interface VT100TmuxParser : NSObject
-
-- (void)decodeBytes:(unsigned char *)datap
-             length:(int)datalen
-          bytesUsed:(int *)rmlen
-              token:(VT100Token *)result;
-
+@interface VT100TmuxParser : NSObject <VT100DCSParserHook>
 @end

@@ -205,9 +205,10 @@ static iTermObjectPool *gPool;
                           @(ANSI_RIS):                        @"ANSI_RIS",
                           @(STRICT_ANSI_MODE):                @"STRICT_ANSI_MODE",
                           @(ITERM_GROWL):                     @"ITERM_GROWL",
-                          @(DCS_TMUX):                        @"DCS_TMUX",
+                          @(DCS_TMUX_HOOK):                   @"DCS_TMUX_HOOK",
                           @(TMUX_LINE):                       @"TMUX_LINE",
                           @(TMUX_EXIT):                       @"TMUX_EXIT",
+                          @(DCS_TMUX_CODE_WRAP):              @"DCS_TMUX_CODE_WRAP",
                           @(VT100CSI_DECSLRM_OR_ANSICSI_SCP): @"VT100CSI_DECSLRM_OR_ANSICSI_SCP",
                           @(DCS_REQUEST_TERMCAP_TERMINFO):    @"DCS_REQUEST_TERMCAP_TERMINFO", };
     NSString *name = map[@(type)];
@@ -244,10 +245,6 @@ static iTermObjectPool *gPool;
         _csi = calloc(sizeof(*_csi), 1);
     }
     return _csi;
-}
-
-- (BOOL)startsTmuxMode {
-    return type == DCS_TMUX;
 }
 
 - (BOOL)isAscii {

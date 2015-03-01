@@ -38,7 +38,7 @@ typedef enum {
     VT100CC_GS = 29,   // Not used
     VT100CC_RS = 30,   // Not used
     VT100CC_US = 31,   // Not used
-    VT100CC_DEL = 255, // Ignored on input; not stored in buffer.
+    VT100CC_DEL = 127, // Backspaces
 
     VT100_WAIT = 1000,
     VT100_NOTSUPPORT,
@@ -161,12 +161,10 @@ typedef enum {
 
     // iTerm extension
     ITERM_GROWL,
-    DCS_TMUX,  // Enter tmux mode
+    DCS_TMUX_HOOK,  // Enter tmux mode
 
-    // Start wrapping an escape code for tmux. Enters a mode that ends with an ST that's not part
-    // of another code.
-    DCS_BEGIN_TMUX_CODE_WRAP,
-    DCS_END_TMUX_CODE_WRAP,  // End wrapping an escape code for tmux.
+    // Wraps an escape code. The escape code is in csi.string.
+    DCS_TMUX_CODE_WRAP,
 
     TMUX_LINE,  // A line of input from tmux
     TMUX_EXIT,  // Exit tmux mode
@@ -224,9 +222,6 @@ typedef struct {
 // For VT100CSI_ codes that take paramters.
 @property(nonatomic, readonly) CSIParam *csi;
 
-// Is this DCS_TMUX?
-@property(nonatomic, readonly) BOOL startsTmuxMode;
-
 // Is this an ascii string?
 @property(nonatomic, readonly) BOOL isAscii;
 
@@ -236,6 +231,7 @@ typedef struct {
 // For ascii strings (type==VT100_ASCIISTRING).
 @property(nonatomic, readonly) AsciiData *asciiData;
 
+// Warning: autoreleased VT100Token doesn't behave normally. Use -recycleObject.
 + (instancetype)token;
 + (instancetype)tokenForControlCharacter:(unsigned char)controlCharacter;
 

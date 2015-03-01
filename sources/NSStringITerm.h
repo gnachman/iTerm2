@@ -175,4 +175,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Puts backslashes before characters in shellEscapableCharacters.
 - (void)escapeShellCharacters;
 
+// Convenience method to append a single character.
+- (void)appendCharacter:(unichar)c;
+
 @end

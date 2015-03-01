@@ -1356,4 +1356,8 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (void)appendCharacter:(unichar)c {
+    [self appendString:[NSString stringWithCharacters:&c length:1]];
+}
+
 @end
