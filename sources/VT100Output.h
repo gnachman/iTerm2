@@ -12,10 +12,10 @@ typedef enum {
 } MouseButtonNumber;
 
 typedef enum {
-    MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode
-    MOUSE_FORMAT_XTERM_EXT = 1,   // UTF-8 1005 mode
-    MOUSE_FORMAT_URXVT = 2,       // rxvt's 1015 mode
-    MOUSE_FORMAT_SGR = 3          // SGR 1006 mode
+    MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode (limited to 223 rows/cols)
+    MOUSE_FORMAT_XTERM_EXT = 1,   // UTF-8 1005 mode (does not pass through luit unchanged)
+    MOUSE_FORMAT_URXVT = 2,       // rxvt's 1015 mode (outputs csi codes, that if echoed to the term, mess up the display)
+    MOUSE_FORMAT_SGR = 3          // SGR 1006 mode (preferred)
 } MouseFormat;
 
 // This class produces data to send for special keys (arrow keys, function keys, etc.)

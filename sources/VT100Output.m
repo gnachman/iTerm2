@@ -88,7 +88,13 @@ typedef enum {
 // Device Attribute : VT100 with Advanced Video Option
 #define REPORT_WHATAREYOU    "\033[?1;2c"
 // Secondary Device Attribute: VT100
-#define REPORT_SDA           "\033[>0;95c"  // TODO: When xterm compatibility is reached, change 95 to 314 or later.
+
+// TODO: When xterm compatibility is reached, change 95 to 314 or later. Even 277 would be an
+// improvement as it would let vim use ttym=sgr rather than xterm2, which passes through luit.
+// However, it must return three arguments (at the very least) to keep vim happy. For more, see
+// check_termcode() in vim's term.c.
+#define REPORT_SDA           "\033[>0;95;0c"
+
 #define REPORT_VT52          "\033/Z"
 
 #define STATIC_STRLEN(n)   ((sizeof(n)) - 1)

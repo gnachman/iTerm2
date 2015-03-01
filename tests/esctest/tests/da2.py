@@ -13,7 +13,7 @@ class DA2Tests(object):
     elif escargs.args.expected_terminal == "iTerm2":
       AssertEQ(params[0], 0)
       AssertEQ(params[1], 95)
-      AssertEQ(len(params), 2)
+      AssertEQ(len(params), 3)
 
   def test_DA2_NoParameter(self):
     esccmd.DA2()
