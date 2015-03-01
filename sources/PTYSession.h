@@ -332,7 +332,8 @@ typedef enum {
 - (void)resizeFromArrangement:(NSDictionary *)arrangement;
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
-               forObjectType:(iTermObjectType)objectType;
+               forObjectType:(iTermObjectType)objectType
+              forceUseOldCWD:(BOOL)forceUseOldCWD;
 
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv

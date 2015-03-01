@@ -7041,7 +7041,9 @@ int aGlobalVariable;
         } else {
             objectType = iTermTabObject;
         }
-        [aSession runCommandWithOldCwd:previousDirectory forObjectType:objectType];
+        [aSession runCommandWithOldCwd:previousDirectory
+                         forObjectType:objectType
+                        forceUseOldCWD:NO];
         if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
             [self setWindowTitle];
         }

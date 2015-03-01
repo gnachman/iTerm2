@@ -648,11 +648,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [aSession setTab:theTab];
     NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     if (!n) {
-        [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
-                         forObjectType:objectType];
-
         // |contents| will be non-nil when using system window restoration.
         NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
+
+        // When restoring a window arrangement with contents and a nonempty saved directory, always
+        // use the saved working directory, even if that contravenes the default setting for the
+        // profile.
+        NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+        [aSession runCommandWithOldCwd:oldCWD
+                         forObjectType:objectType
+                        forceUseOldCWD:contents != nil && oldCWD.length];
 
         // GUID will be set for new saved arrangements since late 2014.
         // Older versions won't be able to associate saved state with windows from a saved arrangement.
@@ -838,7 +843,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType
-{
+              forceUseOldCWD:(BOOL)forceUseOldCWD {
     NSMutableString *cmd;
     NSArray *arg;
     NSString *pwd;
@@ -846,7 +851,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Grab the addressbook command
     Profile* addressbookEntry = [self profile];
-    cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
+    Profile *profileForComputingCommand = addressbookEntry;
+    if (forceUseOldCWD) {
+        NSMutableDictionary *hackedProfile = [[addressbookEntry mutableCopy] autorelease];
+        hackedProfile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
+        profileForComputingCommand = hackedProfile;
+    }
+    cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:profileForComputingCommand
                                                                        forObjectType:objectType]] autorelease];
     NSMutableString* theName = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
     // Get session parameters
@@ -860,8 +871,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         arg = @[];
     }
 
-    pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
-                                       forObjectType:objectType];
+    if (forceUseOldCWD) {
+        pwd = oldCWD;
+    } else {
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
+                                           forObjectType:objectType];
+    }
     if ([pwd length] == 0) {
         if (oldCWD) {
             pwd = oldCWD;
