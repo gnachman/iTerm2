@@ -104,9 +104,9 @@
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
-    info = [self defineControl:_fsTabDelay
-                           key:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen
-                          type:kPreferenceInfoTypeSlider];
+    [self defineControl:_fsTabDelay
+                    key:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen
+                   type:kPreferenceInfoTypeSlider];
 
     info = [self defineControl:_showPaneTitles
                            key:kPreferenceKeyShowPaneTitles
@@ -118,9 +118,9 @@
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
-    info = [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
-                           key:kPreferenceKeyFlashTabBarInFullscreen
-                          type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
+                    key:kPreferenceKeyFlashTabBarInFullscreen
+                   type:kPreferenceInfoTypeCheckbox];
 
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber

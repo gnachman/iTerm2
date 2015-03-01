@@ -1607,10 +1607,6 @@ NSMutableArray* screens=0;
         NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
               self, drawRectDuration_.value, drawRectInterval_.value);
     }
-    CGFloat badgeWidth = 0;
-    if (_badgeImage) {
-        badgeWidth = _badgeImage.size.width + kBadgeMargin + kBadgeRightMargin;
-    }
 
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]];
@@ -2331,9 +2327,6 @@ NSMutableArray* screens=0;
 
 - (void)scrollWheel:(NSEvent *)event {
     DLog(@"scrollWheel:%@", event);
-    NSPoint locationInWindow, locationInTextView;
-    locationInWindow = [event locationInWindow];
-    locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
 
@@ -2726,13 +2719,9 @@ NSMutableArray* screens=0;
         return YES;
     }
 
-    NSPoint locationInWindow, locationInTextView;
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     int x = clickPoint.x;
     int y = clickPoint.y;
-
-    locationInWindow = [event locationInWindow];
-    locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     if (_numTouches <= 1) {
         for (NSView *view in [self subviews]) {
@@ -3894,7 +3883,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        isComplex:c.complexChar
                                       renderBold:&isBold
                                     renderItalic:&isItalic];
-    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
 
     return @{ NSForegroundColorAttributeName: fgColor,
@@ -5027,8 +5016,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         CGFloat min = 4, max = 100;
         int points = (min + max / 2);
         int prevPoints = -1;
-        NSSize sizeWithFont;
-        NSDictionary *attributes;
+        NSSize sizeWithFont = NSZeroSize;
+        NSDictionary *attributes = nil;
         NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
         NSFontManager *fontManager = [NSFontManager sharedFontManager];
         NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
@@ -5051,7 +5040,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             points = (min + max) / 2;
         }
         if (sizeWithFont.width > 0 && sizeWithFont.height > 0) {
-            NSImage *image = [[NSImage alloc] initWithSize:sizeWithFont];
+            NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
             [image lockFocus];
             NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
             temp[NSStrokeWidthAttributeName] = @-2;

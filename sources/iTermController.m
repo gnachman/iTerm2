@@ -1367,8 +1367,12 @@ static BOOL initDone = NO;
 }
 
 - (void)commitAndPopCurrentRestorableSession {
-    [_restorableSessions addObject:self.currentRestorableSession];
-    [_currentRestorableSessionsStack removeObjectAtIndex:0];
+    iTermRestorableSession *session = self.currentRestorableSession;
+    assert(session);
+    if (session) {
+        [_restorableSessions addObject:session];
+        [_currentRestorableSessionsStack removeObjectAtIndex:0];
+    }
 }
 
 - (iTermRestorableSession *)currentRestorableSession {

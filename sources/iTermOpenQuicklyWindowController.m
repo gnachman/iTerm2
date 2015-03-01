@@ -218,7 +218,7 @@
 }
 
 - (NSTableRowView *)tableView:(NSTableView *)tableView rowViewForRow:(NSInteger)row {
-    return [[iTermOpenQuicklyTableRowView alloc] init];
+    return [[[iTermOpenQuicklyTableRowView alloc] init] autorelease];
 }
 
 - (void)updateTextColorForAllRows {

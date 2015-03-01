@@ -393,9 +393,12 @@ static BOOL UserIsActive() {
         NSNumber *userIsActiveNumber = CFDictionaryGetValue(sessionInfoDict,
                                                             kCGSessionOnConsoleKey);
         if (!userIsActiveNumber) {
+            CFRelease(sessionInfoDict);
             return YES;
         } else {
-            return [userIsActiveNumber boolValue];
+            BOOL value = [userIsActiveNumber boolValue];
+            CFRelease(sessionInfoDict);
+            return value;
         }
     }
     return YES;

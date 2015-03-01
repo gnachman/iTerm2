@@ -40,6 +40,9 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize delegate = delegate_;
 
 - (BOOL)isTextFile:(NSString *)path {
+    if (!path) {
+        return NO;
+    }
     // TODO(chendo): link in the "magic" library from file instead of calling it.
     NSTask *task = [[[NSTask alloc] init] autorelease];
     NSPipe *myPipe = [NSPipe pipe];
@@ -158,6 +161,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (void)launchSublimeTextWithBundleIdentifier:(NSString *)bundleId path:(NSString *)path {
+    assert(path);
+    if (!path) {
+        // I don't expect this to ever happen.
+        return;
+    }
     NSString *bundlePath = [self absolutePathForAppBundleWithIdentifier:bundleId];
     if (bundlePath) {
         NSString *sublExecutable =

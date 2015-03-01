@@ -442,7 +442,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
 
-    NSScreen* screen;
+    NSScreen* screen = nil;
     if (screenNumber == -1 || screenNumber >= [[NSScreen screens] count])  {
         screen = [[self window] screen];
         DLog(@"Screen number %d is out of range [0,%d] so using 0",
@@ -701,7 +701,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
-    self.terminalGuid = [[NSString stringWithFormat:@"pty-%@", [NSString uuid]] retain];
+    self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
 
     if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
         _shortcutAccessoryViewController =
@@ -1740,7 +1740,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                  rect.size.width - 2,
                                  10);
     NSSize step = NSMakeSize(MIN(20, floor((rect.size.width - 2) / N)), 6);
-    NSSize tabSize;
+    NSSize tabSize = NSZeroSize;
     const CGFloat kLeftTabPreviewWidth = 20;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_BottomTab:
@@ -2080,7 +2080,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
-        self.terminalGuid = [[arrangement objectForKey:TERMINAL_GUID] retain];
+        self.terminalGuid = [arrangement objectForKey:TERMINAL_GUID];
     }
 
     [self fitTabsToWindow];

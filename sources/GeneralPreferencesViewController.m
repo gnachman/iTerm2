@@ -112,37 +112,37 @@ enum {
                     key:kPreferenceKeyOpenBookmark
                    type:kPreferenceInfoTypeCheckbox];
 
-    info = [self defineControl:_openWindowsAtStartup
-                           key:kPreferenceKeyOpenArrangementAtStartup
-                          type:kPreferenceInfoTypeCheckbox
-                settingChanged:^(id sender) {
-                    switch ([_openWindowsAtStartup selectedTag]) {
-                        case kUseSystemWindowRestorationSettingTag:
-                            [self setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
-                            [self setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
-                            break;
+    [self defineControl:_openWindowsAtStartup
+                    key:kPreferenceKeyOpenArrangementAtStartup
+                   type:kPreferenceInfoTypeCheckbox
+         settingChanged:^(id sender) {
+             switch ([_openWindowsAtStartup selectedTag]) {
+                 case kUseSystemWindowRestorationSettingTag:
+                     [self setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                     [self setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                     break;
 
-                        case kOpenDefaultWindowArrangementTag:
-                            [self setBool:YES forKey:kPreferenceKeyOpenArrangementAtStartup];
-                            [self setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
-                            break;
+                 case kOpenDefaultWindowArrangementTag:
+                     [self setBool:YES forKey:kPreferenceKeyOpenArrangementAtStartup];
+                     [self setBool:NO forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                     break;
 
-                        case kDontOpenAnyWindowsTag:
-                            [self setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
-                            [self setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
-                            break;
-                    }
-                } update:^BOOL{
-                    if ([self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
-                        [_openWindowsAtStartup selectItemWithTag:kDontOpenAnyWindowsTag];
-                    } else if ([WindowArrangements count] &&
-                               [self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-                        [_openWindowsAtStartup selectItemWithTag:kOpenDefaultWindowArrangementTag];
-                    } else {
-                        [_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
-                    }
-                    return YES;
-                }];
+                 case kDontOpenAnyWindowsTag:
+                     [self setBool:NO forKey:kPreferenceKeyOpenArrangementAtStartup];
+                     [self setBool:YES forKey:kPreferenceKeyOpenNoWindowsAtStartup];
+                     break;
+             }
+         } update:^BOOL{
+             if ([self boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+                 [_openWindowsAtStartup selectItemWithTag:kDontOpenAnyWindowsTag];
+             } else if ([WindowArrangements count] &&
+                        [self boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+                 [_openWindowsAtStartup selectItemWithTag:kOpenDefaultWindowArrangementTag];
+             } else {
+                 [_openWindowsAtStartup selectItemWithTag:kUseSystemWindowRestorationSettingTag];
+             }
+             return YES;
+         }];
     [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
     [self defineControl:_quitWhenAllWindowsClosed
                     key:kPreferenceKeyQuitWhenAllWindowsClosed

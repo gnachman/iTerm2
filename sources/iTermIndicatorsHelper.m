@@ -89,7 +89,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
 - (void)setIndicator:(NSString *)identifier visible:(BOOL)visible {
     if (visible && !_visibleIndicators[identifier]) {
-        iTermIndicator *indicator = [[iTermIndicator alloc] init];
+        iTermIndicator *indicator = [[[iTermIndicator alloc] init] autorelease];
         indicator.image = [[self class] indicatorImages][identifier];
         _visibleIndicators[identifier] = indicator;;
         [_delegate setNeedsDisplay:YES];

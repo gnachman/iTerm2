@@ -49,7 +49,7 @@
     return destination;
 }
 
-- (CGContextRef)bitmapContextWithStorage:(NSMutableData *)data {
+- (CGContextRef)newBitmapContextWithStorage:(NSMutableData *)data {
   NSSize size = self.size;
   NSInteger bytesPerRow = size.width * 4;
   NSUInteger storageNeeded = bytesPerRow * size.height;
@@ -63,11 +63,11 @@
                                                bytesPerRow,
                                                colorSpace,
                                                (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+  CGColorSpaceRelease(colorSpace);
   if (!context) {
     return NULL;
   }
 
-  CGColorSpaceRelease(colorSpace);
 
   return context;
 }
@@ -79,7 +79,7 @@
 
   // Create a bitmap context.
   NSMutableData *data = [NSMutableData data];
-  CGContextRef context = [self bitmapContextWithStorage:data];
+  CGContextRef context = [self newBitmapContextWithStorage:data];
 
   // Draw myself into that context.
   CGContextDrawImage(context, rect, [self CGImageForProposedRect:NULL context:nil hints:nil]);

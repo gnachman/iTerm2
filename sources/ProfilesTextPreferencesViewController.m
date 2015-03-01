@@ -141,8 +141,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
 - (void)updateFontsDescriptions {
     // Update the fonts.
-    self.normalFont = [[[self stringForKey:KEY_NORMAL_FONT] fontValue] retain];
-    self.nonAsciiFont = [[[self stringForKey:KEY_NON_ASCII_FONT] fontValue] retain];
+    self.normalFont = [[self stringForKey:KEY_NORMAL_FONT] fontValue];
+    self.nonAsciiFont = [[self stringForKey:KEY_NON_ASCII_FONT] fontValue];
     
     // Update the descriptions.
     NSString *fontName;

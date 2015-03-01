@@ -530,7 +530,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)updateVariables {
     if (_name) {
-        _variables[kVariableKeySessionName] = [_name copy];
+        _variables[kVariableKeySessionName] = [[_name copy] autorelease];
     } else {
         [_variables removeObjectForKey:kVariableKeySessionName];
     }

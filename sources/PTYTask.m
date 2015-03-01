@@ -296,6 +296,10 @@ static void HandleSigChld(int n)
                                 @"OK",
                                 nil,
                                 nil);
+        for (int j = 0; newEnviron[j]; j++) {
+            free(newEnviron[j]);
+        }
+        free(newEnviron);
         return;
     }
     for (int j = 0; newEnviron[j]; j++) {

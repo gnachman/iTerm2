@@ -406,7 +406,7 @@ static const int kNumCharsToSearchForDivider = 8;
     int left = _logicalWindow.length >= 0 ? _logicalWindow.location : 0;
     int right = [self xLimit];
     int span = right - left;
-    VT100GridCoord prevCoord = coord;
+    VT100GridCoord prevCoord;
 
     // Advance it by n.
     while (n) {

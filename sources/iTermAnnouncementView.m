@@ -214,7 +214,6 @@ static const CGFloat kMargin = 8;
             break;
         case kiTermAnnouncementViewStyleQuestion:
             return [NSImage imageNamed:@"QuestionMarkSign"];
-            break;
     }
 
     NSFont *emojiFont = [NSFont fontWithName:@"Apple Color Emoji" size:18];
@@ -223,7 +222,7 @@ static const CGFloat kMargin = 8;
     NSSize size = [iconString sizeWithAttributes:attributes];
     // This is a better estimate of the height. Maybe it doesn't include leading?
     size.height = [emojiFont ascender] - [emojiFont descender];
-    NSImage *iconImage = [[NSImage alloc] initWithSize:size];
+    NSImage *iconImage = [[[NSImage alloc] initWithSize:size] autorelease];
     [iconImage lockFocus];
     [iconString drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
     [iconImage unlockFocus];
@@ -235,6 +234,7 @@ static const CGFloat kMargin = 8;
     NSImage *iconImage = [self iconImage];
 
     CGFloat y = floor((_internalView.frame.size.height - iconImage.size.height) / 2);
+    [_icon autorelease];
     _icon = [[NSImageView alloc] initWithFrame:NSMakeRect(kMargin,
                                                           y,
                                                           iconImage.size.width,

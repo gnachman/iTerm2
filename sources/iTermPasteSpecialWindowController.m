@@ -155,12 +155,12 @@
                     }
                 }
             }
-            if (data) {
+            if (data && description) {
                 [values addObject:data];
                 [labels addObject:(NSString *)description];
-                if (description) {
-                    CFRelease(description);
-                }
+            }
+            if (description) {
+                CFRelease(description);
             }
         }
     }

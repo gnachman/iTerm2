@@ -13,7 +13,7 @@
 + (instancetype)infoForPreferenceWithKey:(NSString *)key
                                     type:(PreferenceInfoType)type
                                  control:(NSControl *)control {
-    PreferenceInfo *info = [[self alloc] init];
+    PreferenceInfo *info = [[[self alloc] init] autorelease];
     info.key = key;
     info.type = type;
     info.control = control;

@@ -127,11 +127,11 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
-    info = [self defineControl:_hotkeyBookmark
-                           key:kPreferenceKeyHotkeyProfileGuid
-                          type:kPreferenceInfoTypePopup
-                settingChanged:^(id sender) { [self hotkeyProfileDidChange]; }
-                        update:^BOOL { [self populateHotKeyProfilesMenu]; return YES; }];
+    [self defineControl:_hotkeyBookmark
+                    key:kPreferenceKeyHotkeyProfileGuid
+                   type:kPreferenceInfoTypePopup
+         settingChanged:^(id sender) { [self hotkeyProfileDidChange]; }
+                 update:^BOOL { [self populateHotKeyProfilesMenu]; return YES; }];
     [self populateHotKeyProfilesMenu];
 }
 

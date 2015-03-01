@@ -156,16 +156,18 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
         if (view.frame.size.height > kMaxHeight) {
             // If the view is too tall, wrap it in a scroll view.
             NSRect theFrame = NSMakeRect(0, 0, view.frame.size.width, kMaxHeight);
-            iTermSizeRememberingView *sizeRememberingView = [[iTermSizeRememberingView alloc] initWithFrame:theFrame];
+            iTermSizeRememberingView *sizeRememberingView =
+            [[[iTermSizeRememberingView alloc] initWithFrame:theFrame] autorelease];
             sizeRememberingView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             sizeRememberingView.autoresizesSubviews = YES;
-            NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:theFrame];
+            NSScrollView *scrollView = [[[NSScrollView alloc] initWithFrame:theFrame] autorelease];
             scrollView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
             scrollView.drawsBackground = NO;
             scrollView.hasVerticalScroller = YES;
             scrollView.hasHorizontalScroller = NO;
 
-            iTermFlippedView *flippedView = [[iTermFlippedView alloc] initWithFrame:view.bounds];
+            iTermFlippedView *flippedView =
+                [[[iTermFlippedView alloc] initWithFrame:view.bounds] autorelease];
             [flippedView addSubview:view];
             [flippedView flipSubviews];
 

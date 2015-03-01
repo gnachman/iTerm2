@@ -13,6 +13,7 @@
                                                    alpha:1];
     NSGradient *gradient = [[NSGradient alloc] initWithColors:@[ darkBlue, lightBlue ]];
     [gradient drawInRect:self.bounds angle:-90];
+    [gradient release];
 }
 
 @end

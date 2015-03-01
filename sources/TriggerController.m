@@ -36,7 +36,7 @@
     if (self) {
         NSMutableArray *triggers = [NSMutableArray array];
         for (Class class in [self triggerClasses]) {
-            [triggers addObject:[[class alloc] init]];
+            [triggers addObject:[[[class alloc] init] autorelease]];
         }
         _triggers = [triggers retain];
     }
@@ -45,6 +45,7 @@
 
 - (void)dealloc {
     [_guid release];
+    [_triggers release];
     [super dealloc];
 }
 

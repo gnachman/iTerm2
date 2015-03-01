@@ -1674,7 +1674,7 @@ static NSString* FormatRect(NSRect r) {
                 break;
         }
     }
-    BOOL horizontal;
+    BOOL horizontal = YES;
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_BottomTab:
         case PSMTab_TopTab:

@@ -43,7 +43,7 @@ static NSMutableDictionary *gLogoCache;
 
     const CGFloat width = 48;
     const CGFloat height = 48;
-    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
+    NSImage *image = [[[NSImage alloc] initWithSize:NSMakeSize(width, height)] autorelease];
     [image lockFocus];
 
     NSImage *frame = [NSImage imageNamed:@"LogoFrame.png"];

@@ -25,7 +25,7 @@
 }
 
 - (NSAttributedString *)attributedComponentsJoinedByAttributedString:(NSAttributedString *)joiner {
-    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+    NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
     for (NSAttributedString *element in self) {
         [result appendAttributedString:element];
         [result appendAttributedString:joiner];
