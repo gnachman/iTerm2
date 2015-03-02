@@ -195,8 +195,6 @@ class DECSETTests(object):
 
     AssertScreenCharsInRectEqual(Rect(5, 8, 9, 9), [ NUL * 3 + "ab", "cdef" + NUL ])
 
-  @knownBug(terminal="iTerm2",
-            reason="Upon reaching the right margin, iTerm2 incorrectly moves the cursor to the right edge of the screen.")
   def test_DECSET_DECAWM_OffRespectsLeftRightMargin(self):
     """Auto-wrap mode off respects left-right margins."""
     esccmd.DECSET(esccmd.DECLRMM)
