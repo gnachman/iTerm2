@@ -54,7 +54,6 @@ class DECSTRTests(object):
     escio.Write("b")
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "b" ])
 
-  @knownBug(terminal="iTerm2", reason="iTerm2 fails to reset DECOM on DECSTR.")
   def test_DECSTR_DECOM(self):
     # Define a scroll region
     esccmd.DECSTBM(3, 4)
