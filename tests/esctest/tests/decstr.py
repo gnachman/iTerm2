@@ -65,7 +65,9 @@ class DECSTRTests(object):
     esccmd.DECSTR()
 
     # Define scroll region again
-    esccmd.DECSTBM(3, 4)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(3, 4)
+    esccmd.DECSTBM(4, 5)
 
     # Move to 1,1 (or 3,4 if origin mode is still on) and write an X
     esccmd.CUP(Point(1, 1))
@@ -76,7 +78,11 @@ class DECSTRTests(object):
 
     # Make sure the X was at 1, 1, implying origin mode was off.
     esccmd.DECSTBM()
-    AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "X" ])
+    esccmd.DECRESET(esccmd.DECLRMM)
+    AssertScreenCharsInRectEqual(Rect(1, 1, 3, 4), [ "X" + NUL * 2,
+                                                     NUL * 3,
+                                                     NUL * 3,
+                                                     NUL * 3 ])
 
   @intentionalDeviationFromSpec(terminal="iTerm2",
                                 reason="For compatibility purposes, iTerm2 mimics xterm's behavior of turning on DECAWM by default.")
