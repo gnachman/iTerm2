@@ -289,8 +289,6 @@ class DECSETTests(object):
     escio.Write("2")
     AssertScreenCharsInRectEqual(Rect(1, 5, 1, 5), [ "2" ])
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 only reverse wraps-around if there's a soft newline at the preceding line.")
   def test_DECSET_ReverseWraparound_BS(self):
     """xerm supports DECSET 45 to toggle 'reverse wraparound'. Both DECAWM and
     45 must be set."""

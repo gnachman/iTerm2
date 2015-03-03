@@ -598,6 +598,7 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECSTR:
             self.wraparoundMode = YES;
             self.reverseWraparoundMode = NO;
+            self.originMode = NO;
             // resetSGR is performed prior to the switch, which takes care of various other flags.
             break;
         case VT100CSI_RESET_MODIFIERS:
