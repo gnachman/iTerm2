@@ -335,8 +335,6 @@ class DECSETTests(object):
     escio.Write(BS * 5)
     AssertEQ(GetCursorPosition().x(), 1)
 
-  @knownBug(terminal="iTerm2",
-             reason="iTerm2 does not require DECAWM for reverse wrap.")
   def test_DECSET_ReverseWraparound_RequiresDECAWM(self):
     """Reverse wraparound only works if DECAWM is set."""
     # iTerm2 turns reverse wraparound on by default, while xterm does not.
