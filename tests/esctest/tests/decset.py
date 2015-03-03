@@ -439,20 +439,6 @@ class DECSETTests(object):
     escio.Write("ABCDEFGH")
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 1), [ "ABCDEFGH" ])
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 fails to reset DECLRMM (it just sets the margins to the screen edges)")
-  def test_DECSET_DECLRMM_ResetByDECSTR(self):
-    """DECSTR should turn off DECLRMM."""
-    esccmd.DECSET(esccmd.DECLRMM)
-    esccmd.DECSTR()
-    esccmd.DECSET(esccmd.DECAWM)
-    esccmd.DECSET(esccmd.ReverseWraparound)
-    esccmd.CUP(Point(GetScreenSize().width() - 1, 1))
-    escio.Write("abc")
-    # Reverse wraparound is disabled (at least in iTerm2) when a scroll region is present.
-    escio.Write(BS * 3)
-    AssertEQ(GetCursorPosition().y(), 1)
-
   @vtLevel(5)
   @knownBug(terminal="iTerm2", reason="DECNCSM not implemented")
   @optionRequired(terminal="xterm",
