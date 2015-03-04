@@ -10,6 +10,7 @@
 @property(nonatomic, assign) BOOL reportFocus;
 @property(nonatomic, assign) BOOL reverseVideo;
 @property(nonatomic, assign) BOOL originMode;
+@property(nonatomic, assign) BOOL moreFix;
 @property(nonatomic, assign) BOOL isAnsi;
 @property(nonatomic, assign) BOOL autorepeatMode;
 @property(nonatomic, assign) int charset;
@@ -60,6 +61,7 @@
     int saveBgBlue_;
     ColorMode saveBgColorMode_;
     BOOL saveOriginMode_;
+    BOOL saveMoreFix_;
     BOOL saveWraparoundMode_;
     BOOL saveReverseWraparoundMode_;
 
@@ -223,6 +225,7 @@ static const int kMaxScreenRows = 4096;
     saveBgBlue_ = bgBlue_;
     saveBgColorMode_ = bgColorMode_;
     saveOriginMode_ = self.originMode;
+    saveMoreFix_ = self.moreFix;
     saveWraparoundMode_ = self.wraparoundMode;
     saveReverseWraparoundMode_ = self.reverseWraparoundMode;
 }
@@ -245,6 +248,7 @@ static const int kMaxScreenRows = 4096;
     bgBlue_ = saveBgBlue_;
     bgColorMode_ = saveBgColorMode_;
     self.originMode = saveOriginMode_;
+    self.moreFix = saveMoreFix_;
     self.wraparoundMode = saveWraparoundMode_;
     self.reverseWraparoundMode = saveReverseWraparoundMode_;
 }
@@ -283,6 +287,7 @@ static const int kMaxScreenRows = 4096;
     self.scrollMode = NO;
     _reverseVideo = NO;
     _originMode = NO;
+    _moreFix = NO;
     self.wraparoundMode = YES;
     self.reverseWraparoundMode = NO;
     self.autorepeatMode = YES;
@@ -477,6 +482,9 @@ static const int kMaxScreenRows = 4096;
                     case 40:
                         self.allowColumnMode = mode;
                         break;
+                    case 41:
+                        self.moreFix = mode;
+                        break;
                     case 45:
                         self.reverseWraparoundMode = mode;
                         break;
@@ -599,6 +607,7 @@ static const int kMaxScreenRows = 4096;
             self.wraparoundMode = YES;
             self.reverseWraparoundMode = NO;
             self.originMode = NO;
+            self.moreFix = NO;
             // resetSGR is performed prior to the switch, which takes care of various other flags.
             break;
         case VT100CSI_RESET_MODIFIERS:

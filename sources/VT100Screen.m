@@ -2019,6 +2019,12 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     } else {
         rightMargin = self.width - 1;
     }
+
+    if (terminal_.moreFix && self.cursorX > self.width && terminal_.wraparoundMode) {
+        [self terminalLineFeed];
+        [self terminalCarriageReturn];
+    }
+
     int nextTabStop = MIN(rightMargin, [self tabStopAfterColumn:currentGrid_.cursorX]);
     if (nextTabStop <= currentGrid_.cursorX) {
         // This would only happen if the cursor were at or past the right margin.

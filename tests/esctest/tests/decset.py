@@ -286,7 +286,6 @@ class DECSETTests(object):
     escio.Write(TAB)
     AssertEQ(GetCursorPosition(), Point(20, 1))
 
-  @knownBug(terminal="iTerm2", reason="iTerm2 doesn't implement DECSET 41 (MoreFix).")
   def test_DECSET_MoreFix(self):
     """xterm supports DECSET 41 to enable a fix for a bug in curses where it
     would draw to the end of a row and then insert a tab. When 41 is set, the
