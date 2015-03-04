@@ -2051,8 +2051,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.cursorX = nextTabStop;
 }
 
-- (void)terminalLineFeed
-{
+- (void)terminalLineFeed {
     if (collectInputForPrinting_) {
         [printBuffer_ appendString:@"\n"];
     } else {
@@ -3702,24 +3701,6 @@ static void SwapInt(int *a, int *b) {
         [self incrementOverflowBy:[linebuffer_ dropExcessLinesWithWidth:currentGrid_.size.width]];
     }
     [delegate_ screenDidChangeNumberOfScrollbackLines];
-}
-
-- (void)advanceCursor:(BOOL)canOccupyLastSpace
-{
-    // TODO: respect left-right margins
-    int cursorX = currentGrid_.cursorX + 1;
-    if (canOccupyLastSpace) {
-        if (cursorX > currentGrid_.size.width) {
-            screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
-            aLine[currentGrid_.size.width].code = EOL_SOFT;
-            [self linefeed];
-            cursorX = 0;
-        }
-    } else if (cursorX >= currentGrid_.size.width) {
-        [self linefeed];
-        cursorX = 0;
-    }
-    currentGrid_.cursorX = cursorX;
 }
 
 - (void)cursorToY:(int)y
