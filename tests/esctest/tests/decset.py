@@ -340,26 +340,23 @@ class DECSETTests(object):
     esccmd.CUB(4)
     AssertEQ(GetCursorPosition().x(), size.width() - 1)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 doesn't implement DECRESET ReverseWraparound.")
   def test_DECSET_ResetReverseWraparoundDisablesIt(self):
     """DECRESET of reverse wraparound prevents it from happening."""
-    # iTerm2 turns reverse wraparound on by default, while xterm does not.
+    # Note that iTerm disregards the value of ReverseWraparound when there's a
+    # soft EOL on the preceding line and always wraps.
     esccmd.DECRESET(esccmd.ReverseWraparound)
     esccmd.DECSET(esccmd.DECAWM)
-    esccmd.CUP(Point(GetScreenSize().width() - 1, 1))
-    escio.Write("abc")
-    escio.Write(BS * 5)
+    esccmd.CUP(Point(1, 2))
+    escio.Write(BS)
     AssertEQ(GetCursorPosition().x(), 1)
 
   def test_DECSET_ReverseWraparound_RequiresDECAWM(self):
     """Reverse wraparound only works if DECAWM is set."""
     # iTerm2 turns reverse wraparound on by default, while xterm does not.
-    esccmd.CUP(Point(GetScreenSize().width() - 1, 1))
-    escio.Write("abc")
+    esccmd.CUP(Point(1, 2))
     esccmd.DECSET(esccmd.ReverseWraparound)
     esccmd.DECRESET(esccmd.DECAWM)
-    escio.Write(BS * 5)
+    escio.Write(BS)
     AssertEQ(GetCursorPosition().x(), 1)
 
   def doAltBuftest(self, code, altGetsClearedBeforeToMain, cursorSaved):

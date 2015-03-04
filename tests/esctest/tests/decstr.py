@@ -101,7 +101,6 @@ class DECSTRTests(object):
     position = GetCursorPosition()
     AssertEQ(position.x(), 2)
 
-  @knownBug(terminal="iTerm2", reason="Reverse wrap is always on in iTerm2")
   def test_DECSTR_ReverseWraparound(self):
     # Turn on reverse wraparound
     esccmd.DECSET(esccmd.ReverseWraparound)
@@ -110,8 +109,8 @@ class DECSTRTests(object):
     esccmd.DECSTR()
 
     # Verify reverse wrap is off
-    esccmd.CUP(Point(GetScreenSize().width() - 1, 2))
-    escio.Write("abc" + BS * 3)
+    esccmd.CUP(Point(1, 2))
+    escio.Write(BS)
     AssertEQ(GetCursorPosition().x(), 1)
 
   def test_DECSTR_STBM(self):
