@@ -397,8 +397,7 @@
     // This doesn't call -bottomMargin because it was a hotspot in profiling.
     const int scrollBottom = VT100GridRangeMax(scrollRegionRows_);
 
-    if (cursor_.y < scrollBottom ||
-        (cursor_.y < (size_.height - 1) && cursor_.y > scrollBottom)) {
+    if (cursor_.y != scrollBottom) {
         // Do not scroll the screen; just move the cursor.
         self.cursorY = cursor_.y + 1;
         DLog(@"moved cursor down by 1 line");
