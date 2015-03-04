@@ -258,7 +258,6 @@ class DECSETTests(object):
       escio.Write("x")
     escio.Write(TAB)
 
-  @knownBug(terminal="iTerm2", reason="iTerm2 wraps tabs")
   def test_DECSET_DECAWM_TabDoesNotWrapAround(self):
     """In auto-wrap mode, tabs to not wrap to the next line."""
     esccmd.DECSET(esccmd.DECAWM)
@@ -267,6 +266,26 @@ class DECSETTests(object):
       escio.Write(TAB)
     AssertEQ(GetCursorPosition().x(), size.width())
     AssertEQ(GetCursorPosition().y(), 1)
+    escio.Write("X")
+
+  def test_DECSET_DECAWM_NoLineWrapOnTabWithLeftRightMargin(self):
+    esccmd.DECSET(esccmd.DECAWM)
+    esccmd.XTERM_WINOPS(esccmd.WINOP_RESIZE_CHARS,
+                            24,
+                            80)
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSLRM(10, 20)
+
+    # Move to origin and tab thrice. Should stop at right margin.
+    AssertEQ(GetCursorPosition(), Point(1, 1))
+    escio.Write(TAB)
+    AssertEQ(GetCursorPosition(), Point(9, 1))
+    escio.Write(TAB)
+    AssertEQ(GetCursorPosition(), Point(17, 1))
+    escio.Write(TAB)
+    AssertEQ(GetCursorPosition(), Point(20, 1))
+    escio.Write(TAB)
+    AssertEQ(GetCursorPosition(), Point(20, 1))
 
   @knownBug(terminal="iTerm2", reason="iTerm2 doesn't implement DECSET 41 (MoreFix).")
   def test_DECSET_MoreFix(self):

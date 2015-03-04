@@ -2871,6 +2871,7 @@
             return actual;
         }
         [actual addObject:@(screen.cursorX - 1)];
+        lastX = screen.cursorX;
     }
 }
 
@@ -2878,28 +2879,28 @@
     VT100Screen *screen = [self screenWithWidth:20 height:3];
     
     // Test default tab stops
-    NSArray *expected = @[ @(8), @(16)];
+    NSArray *expected = @[ @8, @16, @19];
     assert([expected isEqualToArray:[self tabStopsInScreen:screen]]);
     
     // Add a tab stop
     [screen terminalMoveCursorToX:10 y:1];
     [screen terminalSetTabStopAtCursor];
-    expected = @[ @(8), @(9), @(16)];
+    expected = @[ @8, @9, @16, @19];
     assert([expected isEqualToArray:[self tabStopsInScreen:screen]]);
     
     // Remove a tab stop
     [screen terminalMoveCursorToX:9 y:1];
     [screen terminalRemoveTabStopAtCursor];
-    expected = @[ @(9), @(16)];
+    expected = @[ @9, @16, @19];
     assert([expected isEqualToArray:[self tabStopsInScreen:screen]]);
     
-    // Appending a tab should respect vsplits. (currently not implemented)
+    // Appending a tab should respect vsplits.
     screen = [self screenWithWidth:20 height:3];
     [screen terminalMoveCursorToX:1 y:1];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:0 rightMargin:7];
     [screen terminalAppendTabAtCursor];
-    ITERM_TEST_KNOWN_BUG(screen.cursorX == 1, screen.cursorX == 9);
+    assert(screen.cursorX == 8);
     
     // Tabbing over text doesn't change it
     screen = [self screenWithWidth:20 height:3];
@@ -2928,16 +2929,14 @@
                                          screen.width) isEqualToString:@"x"]);
     assert(screen.cursorX == 9);
     
-    // Wrapping around to the next line converts eol_hard to eol_soft.
+    // No wrap-around
     screen = [self screenWithWidth:20 height:3];
     [screen terminalAppendTabAtCursor];  // 9
     [screen terminalAppendTabAtCursor];  // 15
-    [screen terminalAppendTabAtCursor];  // (newline) 1
-    assert(screen.cursorX == 1);
-    assert(screen.cursorY == 2);
-    line = [screen getLineAtScreenIndex:0];
-    assert(line[screen.width].code == EOL_SOFT);
-    
+    [screen terminalAppendTabAtCursor];  // 19
+    assert(screen.cursorX == 20);
+    assert(screen.cursorY == 1);
+
     // Test backtab (it's simple, no wraparound)
     screen = [self screenWithWidth:20 height:3];
     [screen terminalMoveCursorToX:1 y:2];
@@ -3287,8 +3286,8 @@
     
     // Tab stops get reset
     screen = [self screenWithWidth:20 height:4];
-    NSArray *defaultTabstops = @[ @(8), @(16) ];
-    NSArray *augmentedTabstops = @[ @(3), @(8), @(16) ];
+    NSArray *defaultTabstops = @[ @8, @16, @19 ];
+    NSArray *augmentedTabstops = @[ @3, @8, @16, @19 ];
     assert([[self tabStopsInScreen:screen] isEqualToArray:defaultTabstops]);
 
     [screen terminalMoveCursorToX:4 y:1];

@@ -2000,87 +2000,46 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 }
 
-- (void)terminalAppendTabAtCursor
-{
-    // TODO: respect left-right margins
-    BOOL simulateTabStopAtMargins = NO;
-    if (![self haveTabStopBefore:currentGrid_.size.width + 1]) {
-        // No legal tabstop so pretend there's one on first and last column.
-        simulateTabStopAtMargins = YES;
-        if (currentGrid_.cursor.x == currentGrid_.size.width) {
-            // Cursor in right margin, wrap it around and we're done.
-            [self linefeed];
-            currentGrid_.cursorX = 0;
-            return;
-        } else if (currentGrid_.cursor.x == currentGrid_.size.width - 1) {
-            // Cursor in last column. If there's already a tab there, do nothing.
-            screen_char_t *line = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
-            if (currentGrid_.cursorX > 0 &&
-                line[currentGrid_.cursorX].code == 0 &&
-                line[currentGrid_.cursorX - 1].code == '\t') {
-                return;
-            }
+- (int)tabStopAfterColumn:(int)lowerBound {
+    for (int i = lowerBound + 1; i < self.width - 1; i++) {
+        if ([tabStops_ containsObject:@(i)]) {
+            return i;
         }
+    }
+    return self.width - 1;
+}
+
+- (void)terminalAppendTabAtCursor {
+    int rightMargin;
+    if (currentGrid_.useScrollRegionCols) {
+        rightMargin = currentGrid_.rightMargin;
+        if (currentGrid_.cursorX > rightMargin) {
+            rightMargin = self.width - 1;
+        }
+    } else {
+        rightMargin = self.width - 1;
+    }
+    int nextTabStop = MIN(rightMargin, [self tabStopAfterColumn:currentGrid_.cursorX]);
+    if (nextTabStop <= currentGrid_.cursorX) {
+        // This would only happen if the cursor were at or past the right margin.
+        return;
     }
     screen_char_t* aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
-    int positions = 0;
     BOOL allNulls = YES;
-
-    // Advance cursor to next tab stop. Count the number of positions advanced
-    // and record whether they were all nulls.
-    if (aLine[currentGrid_.cursorX].code != 0) {
-        allNulls = NO;
-    }
-
-    ++positions;
-    // ensure we go to the next tab in case we are already on one
-    [self advanceCursor:YES];
-    aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
-    while (1) {
-        if (currentGrid_.cursorX == currentGrid_.size.width) {
-            // Wrap around to the next line.
-            if (aLine[currentGrid_.cursorX].code == EOL_HARD) {
-                aLine[currentGrid_.cursorX] = [currentGrid_ defaultChar];
-                aLine[currentGrid_.cursorX].code = EOL_SOFT;
-            }
-            [self linefeed];
-            currentGrid_.cursorX = 0;
-            aLine = [currentGrid_ screenCharsAtLineNumber:currentGrid_.cursorY];
-        }
-        BOOL isFirstOrLastColumn = (currentGrid_.cursorX == 0 ||
-                                    currentGrid_.cursorX == currentGrid_.size.width - 1);
-        if ((simulateTabStopAtMargins && isFirstOrLastColumn) ||
-            [self haveTabStopAt:currentGrid_.cursorX]) {
+    for (int i = currentGrid_.cursorX; i < nextTabStop; i++) {
+        if (aLine[i].code) {
+            allNulls = NO;
             break;
         }
-        if (aLine[currentGrid_.cursorX].code != 0) {
-            allNulls = NO;
-        }
-        [self advanceCursor:YES];
-        ++positions;
     }
     if (allNulls) {
-        // If only nulls were advanced over, convert them to tab fillers
-        // and place a tab character at the end of the run.
-        int x = currentGrid_.cursorX;
-        int y = currentGrid_.cursorY;
-        --x;
-        if (x < 0) {
-            x = currentGrid_.size.width - 1;
-            --y;
+        int i;
+        for (i = currentGrid_.cursorX; i < nextTabStop - 1; i++) {
+            aLine[i].code = TAB_FILLER;
         }
-        unichar replacement = '\t';
-        while (positions--) {
-            aLine = [currentGrid_ screenCharsAtLineNumber:y];
-            aLine[x].code = replacement;
-            replacement = TAB_FILLER;
-            --x;
-            if (x < 0) {
-                x = currentGrid_.size.width - 1;
-                --y;
-            }
-        }
+        aLine[i].code = '\t';
     }
+    currentGrid_.cursorX = nextTabStop;
 }
 
 - (void)terminalLineFeed
@@ -3752,15 +3711,6 @@ static void SwapInt(int *a, int *b) {
         cursorX = 0;
     }
     currentGrid_.cursorX = cursorX;
-}
-
-- (BOOL)haveTabStopBefore:(int)limit {
-    for (NSNumber *number in tabStops_) {
-        if ([number intValue] < limit) {
-            return YES;
-        }
-    }
-    return NO;
 }
 
 - (void)cursorToY:(int)y
