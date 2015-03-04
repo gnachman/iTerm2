@@ -1930,7 +1930,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     int cursorX = currentGrid_.cursorX;
     int cursorY = currentGrid_.cursorY;
 
-    if ([self shouldReverseWrap]) {
+    if (cursorX >= self.width && terminal_.reverseWraparoundMode && terminal_.wraparoundMode) {
+        // Reverse-wrap when past the screen edge is a special case.
+        currentGrid_.cursor = VT100GridCoordMake(rightMargin, cursorY);
+    } else if ([self shouldReverseWrap]) {
         currentGrid_.cursor = VT100GridCoordMake(rightMargin, cursorY - 1);
     } else if (cursorX > leftMargin ||  // Cursor can move back without hitting the left margin: normal case
                (cursorX < leftMargin && cursorX > 0)) {  // Cursor left of left margin, right of left edge.

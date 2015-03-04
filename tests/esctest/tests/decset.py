@@ -316,7 +316,6 @@ class DECSETTests(object):
     escio.Write(BS)
     AssertEQ(GetCursorPosition().x(), GetScreenSize().width())
 
-  @knownBug(terminal="iTerm2", reason="iTerm2 moves the cursor back an extra space.")
   def test_DECSET_ReverseWraparoundLastCol_BS(self):
     """If the cursor is in the last column and a character was just output and
     reverse-wraparound is on then backspace by 1 has no effect."""
