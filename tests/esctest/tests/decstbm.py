@@ -34,8 +34,6 @@ class DECSTBMTests(object):
     esccmd.DECSTBM(2, 3)
     AssertEQ(GetCursorPosition(), Point(1, 1))
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 sets a scroll region but should not.")
   def test_DECSTBM_TopBelowBottom(self):
     """The value of the top margin (Pt) must be less than the bottom margin (Pb)."""
     size = GetScreenSize()

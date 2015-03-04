@@ -2159,7 +2159,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         top < currentGrid_.size.height &&
         bottom >= 0 &&
         bottom < currentGrid_.size.height &&
-        bottom >= top) {
+        bottom > top) {
         currentGrid_.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
 
         if ([terminal_ originMode]) {
