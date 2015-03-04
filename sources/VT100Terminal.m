@@ -940,23 +940,6 @@ static const int kMaxScreenRows = 4096;
     int right = csi->p[index + 3];
     VT100GridCoordRange coordRange = VT100GridCoordRangeMake(left, top, right, bottom);
 
-    // If in origin mode, offset non-default coordinates by the origin of the scroll region.
-    if (self.originMode) {
-        VT100GridRect region = [delegate_ terminalScrollRegion];
-        if (coordRange.start.x >= 0) {
-            coordRange.start.x -= region.origin.x;
-        }
-        if (coordRange.start.y >= 0) {
-            coordRange.start.y -= region.origin.y;
-        }
-        if (coordRange.end.x >= 0) {
-            coordRange.end.x -= region.origin.x;
-        }
-        if (coordRange.end.y >= 0) {
-            coordRange.end.y -= region.origin.y;
-        }
-    }
-
     // Replace default values with the passed-in defaults.
     if (coordRange.start.x < 0) {
         coordRange.start.x = defaultRectangle.origin.x + 1;
@@ -969,6 +952,14 @@ static const int kMaxScreenRows = 4096;
     }
     if (coordRange.end.y < 0) {
         coordRange.end.y = defaultMax.y + 1;
+    }
+
+    if (self.originMode) {
+        VT100GridRect scrollRegion = [delegate_ terminalScrollRegion];
+        coordRange.start.x += scrollRegion.origin.x;
+        coordRange.start.y += scrollRegion.origin.y;
+        coordRange.end.x += scrollRegion.origin.x;
+        coordRange.end.y += scrollRegion.origin.y;
     }
 
     // Convert the coordRange to a 0-based rect (all coords are 1-based so far) and return it.
@@ -1001,6 +992,7 @@ static const int kMaxScreenRows = 4096;
         return;
     }
     if (![self rectangleIsValid:rect]) {
+        [delegate_ terminalSendReport:[self.output reportChecksum:0 withIdentifier:identifier]];
         return;
     }
     // TODO: Respect origin mode

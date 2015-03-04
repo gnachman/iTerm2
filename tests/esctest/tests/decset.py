@@ -124,7 +124,6 @@ class DECSETTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 1, 1), [ "X" ])
 
-  @knownBug(terminal="iTerm2", reason="DECRQCRA does not respect origin mode in iTerm2")
   def test_DECSET_DECOM_DECRQCRA(self):
     """DECRQCRA should be relative to the origin in origin mode. DECRQCRA
     doesn't have its own test so this is tested here instead."""
