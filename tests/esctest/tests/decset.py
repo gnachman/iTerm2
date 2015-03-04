@@ -454,6 +454,22 @@ class DECSETTests(object):
     escio.Write("ABCDEFGH")
     AssertScreenCharsInRectEqual(Rect(1, 1, 8, 1), [ "ABCDEFGH" ])
 
+  def test_DECSET_DECLRMM_MarginsResetByDECSTR(self):
+    esccmd.DECSLRM(2, 4)
+    esccmd.DECSTR()
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.CUP(Point(3, 3))
+    escio.Write("abc")
+    AssertEQ(GetCursorPosition().x(), 6)
+
+  def test_DECSET_DECLRMM_ModeNotResetByDECSTR(self):
+    esccmd.DECSET(esccmd.DECLRMM)
+    esccmd.DECSTR()
+    esccmd.DECSLRM(2, 4)
+    esccmd.CUP(Point(3, 3))
+    escio.Write("abc")
+    AssertEQ(GetCursorPosition().x(), 3)
+
   @vtLevel(5)
   @knownBug(terminal="iTerm2", reason="DECNCSM not implemented")
   @optionRequired(terminal="xterm",
