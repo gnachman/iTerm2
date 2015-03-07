@@ -403,220 +403,141 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)executeModeUpdates:(VT100Token *)token
-{
-    BOOL mode;
-    int i;
+- (void)executeDecSetReset:(VT100Token *)token {
+    int mode = (token->type == VT100CSI_DECSET);
 
-    switch (token->type) {
-        case VT100CSI_DECSET:
-        case VT100CSI_DECRST:
-            mode = (token->type == VT100CSI_DECSET);
-
-            for (i = 0; i < token.csi->count; i++) {
-                switch (token.csi->p[i]) {
-                    case 1:
-                        self.cursorMode = mode;
-                        break;
-                    case 2:
-                        ansiMode_ = mode;
-                        break;
-                    case 3:
-                        if (self.allowColumnMode) {
-                            self.columnMode = mode;
-                            [delegate_ terminalSetWidth:(self.columnMode ? 132 : 80)];
-                        }
-                        break;
-                    case 4:
-                        self.scrollMode = mode;
-                        break;
-                    case 5:
-                        self.reverseVideo = mode;
-                        [delegate_ terminalNeedsRedraw];
-                        break;
-                    case 6:
-                        self.originMode = mode;
-                        [delegate_ terminalMoveCursorToX:1 y:1];
-                        break;
-                    case 7:
-                        self.wraparoundMode = mode;
-                        break;
-                    case 8:
-                        self.autorepeatMode = mode;
-                        break;
-                    case 9:
-                        // TODO: This should send mouse x&y on button press.
-                        break;
-                    case 20:
-                        self.lineMode = mode;
-                        break;
-                    case 25:
-                        [delegate_ terminalSetCursorVisible:mode];
-                        break;
-                    case 40:
-                        self.allowColumnMode = mode;
-                        break;
-                    case 41:
-                        self.moreFix = mode;
-                        break;
-                    case 45:
-                        self.reverseWraparoundMode = mode;
-                        break;
-                    case 47:
-                        // alternate screen buffer mode
-                        if (!self.disableSmcupRmcup) {
-                            if (mode) {
-                                [delegate_ terminalShowAltBuffer];
-                            } else {
-                                [delegate_ terminalShowPrimaryBufferRestoringCursor:NO];
-                            }
-                        }
-                        break;
-
-                    case 69:
-                        [delegate_ terminalSetUseColumnScrollRegion:mode];
-                        break;
-
-                    case 1000:
-                    // case 1001:
-                        // TODO: MOUSE_REPORTING_HILITE not implemented.
-                    case 1002:
-                    case 1003:
-                        if (mode) {
-                            self.mouseMode = token.csi->p[i] - 1000;
-                        } else {
-                            self.mouseMode = MOUSE_REPORTING_NONE;
-                        }
-                        [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
-                        break;
-                    case 1004:
-                        self.reportFocus = mode;
-                        break;
-
-                    case 1005:
-                        if (mode) {
-                            self.mouseFormat = MOUSE_FORMAT_XTERM_EXT;
-                        } else {
-                            self.mouseFormat = MOUSE_FORMAT_XTERM;
-                        }
-                        break;
-
-
-                    case 1006:
-                        if (mode) {
-                            self.mouseFormat = MOUSE_FORMAT_SGR;
-                        } else {
-                            self.mouseFormat = MOUSE_FORMAT_XTERM;
-                        }
-                        break;
-
-                    case 1015:
-                        if (mode) {
-                            self.mouseFormat = MOUSE_FORMAT_URXVT;
-                        } else {
-                            self.mouseFormat = MOUSE_FORMAT_XTERM;
-                        }
-                        break;
-                    case 1049:
-                        // From the xterm release log:
-                        // Implement new escape sequence, private mode 1049, which combines
-                        // the switch to/from alternate screen mode with screen clearing and
-                        // cursor save/restore.  Unlike the existing escape sequence, this
-                        // clears the alternate screen when switching to it rather than when
-                        // switching to the normal screen, thus retaining the alternate screen
-                        // contents for select/paste operations.
-                        if (!self.disableSmcupRmcup) {
-                            if (mode) {
-                                [self saveTextAttributes];
-                                [delegate_ terminalSaveCharsetFlags];
-                                [delegate_ terminalShowAltBuffer];
-                                [delegate_ terminalClearScreen];
-                            } else {
-                                [delegate_ terminalShowPrimaryBufferRestoringCursor:YES];
-                                [self restoreTextAttributes];
-                                [delegate_ terminalRestoreCharsetFlags];
-                            }
-                        }
-                        break;
-
-                    case 2004:
-                        // Set bracketed paste mode
-                        self.bracketedPasteMode = mode;
-                        break;
-
+    for (int i = 0; i < token.csi->count; i++) {
+        switch (token.csi->p[i]) {
+            case 1:
+                self.cursorMode = mode;
+                break;
+            case 2:
+                ansiMode_ = mode;
+                break;
+            case 3:
+                if (self.allowColumnMode) {
+                    self.columnMode = mode;
+                    [delegate_ terminalSetWidth:(self.columnMode ? 132 : 80)];
                 }
-            }
-            break;
-        case VT100CSI_SM:
-        case VT100CSI_RM:
-            mode = (token->type == VT100CSI_SM);
+                break;
+            case 4:
+                self.scrollMode = mode;
+                break;
+            case 5:
+                self.reverseVideo = mode;
+                [delegate_ terminalNeedsRedraw];
+                break;
+            case 6:
+                self.originMode = mode;
+                [delegate_ terminalMoveCursorToX:1 y:1];
+                break;
+            case 7:
+                self.wraparoundMode = mode;
+                break;
+            case 8:
+                self.autorepeatMode = mode;
+                break;
+            case 9:
+                // TODO: This should send mouse x&y on button press.
+                break;
+            case 20:
+                self.lineMode = mode;
+                break;
+            case 25:
+                [delegate_ terminalSetCursorVisible:mode];
+                break;
+            case 40:
+                self.allowColumnMode = mode;
+                break;
+            case 41:
+                self.moreFix = mode;
+                break;
+            case 45:
+                self.reverseWraparoundMode = mode;
+                break;
+            case 47:
+                // alternate screen buffer mode
+                if (!self.disableSmcupRmcup) {
+                    if (mode) {
+                        [delegate_ terminalShowAltBuffer];
+                    } else {
+                        [delegate_ terminalShowPrimaryBufferRestoringCursor:NO];
+                    }
+                }
+                break;
 
-            for (i = 0; i < token.csi->count; i++) {
-                switch (token.csi->p[i]) {
-                    case 4:
-                        self.insertMode = mode;
-                        break;
-                }
-            }
-            break;
-        case VT100CSI_DECKPAM:
-            self.keypadMode = YES;
-            break;
-        case VT100CSI_DECKPNM:
-            self.keypadMode = NO;
-            break;
-        case VT100CC_SI:
-            _charset = 0;
-            break;
-        case VT100CC_SO:
-            _charset = 1;
-            break;
-        case VT100CC_DC1:
-            xon_ = YES;
-            break;
-        case VT100CC_DC3:
-            xon_ = NO;
-            break;
-        case VT100CSI_DECSTR:
-            self.wraparoundMode = YES;
-            self.reverseWraparoundMode = NO;
-            self.originMode = NO;
-            self.moreFix = NO;
-            // resetSGR is performed prior to the switch, which takes care of various other flags.
-            break;
-        case VT100CSI_RESET_MODIFIERS:
-            if (token.csi->count == 0) {
-                sendModifiers_[2] = -1;
-            } else {
-                int resource = token.csi->p[0];
-                if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
-                    sendModifiers_[resource] = -1;
-                }
-            }
-            break;
+            case 69:
+                [delegate_ terminalSetUseColumnScrollRegion:mode];
+                break;
 
-        case VT100CSI_SET_MODIFIERS: {
-            if (token.csi->count == 0) {
-                for (int j = 0; j < NUM_MODIFIABLE_RESOURCES; j++) {
-                    sendModifiers_[j] = 0;
-                }
-            } else {
-                int resource = token.csi->p[0];
-                int value;
-                if (token.csi->count == 1) {
-                    value = 0;
+            case 1000:
+                // case 1001:
+                // TODO: MOUSE_REPORTING_HILITE not implemented.
+            case 1002:
+            case 1003:
+                if (mode) {
+                    self.mouseMode = token.csi->p[i] - 1000;
                 } else {
-                    value = token.csi->p[1];
+                    self.mouseMode = MOUSE_REPORTING_NONE;
                 }
-                if (resource >= 0 && resource < NUM_MODIFIABLE_RESOURCES && value >= 0) {
-                    sendModifiers_[resource] = value;
-                }
-            }
-            break;
-        }
+                [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
+                break;
+            case 1004:
+                self.reportFocus = mode;
+                break;
 
-        default:
-            break;
+            case 1005:
+                if (mode) {
+                    self.mouseFormat = MOUSE_FORMAT_XTERM_EXT;
+                } else {
+                    self.mouseFormat = MOUSE_FORMAT_XTERM;
+                }
+                break;
+
+
+            case 1006:
+                if (mode) {
+                    self.mouseFormat = MOUSE_FORMAT_SGR;
+                } else {
+                    self.mouseFormat = MOUSE_FORMAT_XTERM;
+                }
+                break;
+
+            case 1015:
+                if (mode) {
+                    self.mouseFormat = MOUSE_FORMAT_URXVT;
+                } else {
+                    self.mouseFormat = MOUSE_FORMAT_XTERM;
+                }
+                break;
+            case 1049:
+                // From the xterm release log:
+                // Implement new escape sequence, private mode 1049, which combines
+                // the switch to/from alternate screen mode with screen clearing and
+                // cursor save/restore.  Unlike the existing escape sequence, this
+                // clears the alternate screen when switching to it rather than when
+                // switching to the normal screen, thus retaining the alternate screen
+                // contents for select/paste operations.
+                if (!self.disableSmcupRmcup) {
+                    if (mode) {
+                        [self saveTextAttributes];
+                        [delegate_ terminalSaveCharsetFlags];
+                        [delegate_ terminalShowAltBuffer];
+                        [delegate_ terminalClearScreen];
+                    } else {
+                        [delegate_ terminalShowPrimaryBufferRestoringCursor:YES];
+                        [self restoreTextAttributes];
+                        [delegate_ terminalRestoreCharsetFlags];
+                    }
+                }
+                break;
+
+            case 2004:
+                // Set bracketed paste mode
+                self.bracketedPasteMode = mode;
+                break;
+
+        }
     }
 }
 
@@ -1107,7 +1028,6 @@ static const int kMaxScreenRows = 4096;
     }
 
     // Update internal state.
-    [self executeModeUpdates:token];
     [self executeSGR:token];
 
     // Farm out work to the delegate.
@@ -1146,10 +1066,18 @@ static const int kMaxScreenRows = 4096;
         case VT100CC_CR:
             [delegate_ terminalCarriageReturn];
             break;
-        case VT100CC_SO:
         case VT100CC_SI:
+            _charset = 0;
+            break;
+        case VT100CC_SO:
+            _charset = 1;
+            break;
         case VT100CC_DC1:
+            xon_ = YES;
+            break;
         case VT100CC_DC3:
+            xon_ = NO;
+            break;
         case VT100CC_CAN:
         case VT100CC_SUB:
         case VT100CC_DEL:
@@ -1199,8 +1127,12 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECDHL:
         case VT100CSI_DECDWL:
         case VT100CSI_DECID:
-        case VT100CSI_DECKPAM:
+            break;
         case VT100CSI_DECKPNM:
+            self.keypadMode = NO;
+            break;
+        case VT100CSI_DECKPAM:
+            self.keypadMode = YES;
             break;
 
         case ANSICSI_RCP:
@@ -1300,9 +1232,25 @@ static const int kMaxScreenRows = 4096;
         case ANSI_RIS:
             [self resetPreservingPrompt:NO];
             break;
-        case VT100CSI_RM:
+        case VT100CSI_SM:
+        case VT100CSI_RM: {
+            int mode = (token->type == VT100CSI_SM);
+
+            for (int i = 0; i < token.csi->count; i++) {
+                switch (token.csi->p[i]) {
+                    case 4:
+                        self.insertMode = mode;
+                        break;
+                }
+            }
             break;
+        }
         case VT100CSI_DECSTR:
+            self.wraparoundMode = YES;
+            self.reverseWraparoundMode = NO;
+            self.originMode = NO;
+            self.moreFix = NO;
+            // resetSGR is performed prior to the switch, which takes care of various other flags.
             [delegate_ terminalSoftReset];
             break;
         case VT100CSI_DECSCUSR:
@@ -1412,7 +1360,6 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case VT100CSI_SGR:
-        case VT100CSI_SM:
             break;
         case VT100CSI_TBC:
             switch (token.csi->p[0]) {
@@ -1427,6 +1374,7 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_DECSET:
         case VT100CSI_DECRST:
+            [self executeDecSetReset:token];
             break;
 
             // ANSI CSI
@@ -1647,10 +1595,39 @@ static const int kMaxScreenRows = 4096;
         case VT100CC_STX:
         case VT100CC_SYN:
         case VT100CC_US:
-        case VT100CSI_RESET_MODIFIERS:
         case VT100CSI_SCS:
-        case VT100CSI_SET_MODIFIERS:
             break;
+
+        case VT100CSI_RESET_MODIFIERS:
+            if (token.csi->count == 0) {
+                sendModifiers_[2] = -1;
+            } else {
+                int resource = token.csi->p[0];
+                if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
+                    sendModifiers_[resource] = -1;
+                }
+            }
+            break;
+
+        case VT100CSI_SET_MODIFIERS: {
+            if (token.csi->count == 0) {
+                for (int j = 0; j < NUM_MODIFIABLE_RESOURCES; j++) {
+                    sendModifiers_[j] = 0;
+                }
+            } else {
+                int resource = token.csi->p[0];
+                int value;
+                if (token.csi->count == 1) {
+                    value = 0;
+                } else {
+                    value = token.csi->p[1];
+                }
+                if (resource >= 0 && resource < NUM_MODIFIABLE_RESOURCES && value >= 0) {
+                    sendModifiers_[resource] = value;
+                }
+            }
+            break;
+        }
 
         case XTERMCC_PROPRIETARY_ETERM_EXT:
             [self executeXtermProprietaryExtermExtension:token];

@@ -69,7 +69,6 @@
 - (void)executeToken:(VT100Token *)token;
 
 // If you just want to handle low level codes, you can use these methods instead of -executeToken:.
-- (void)executeModeUpdates:(VT100Token *)token;
 - (void)executeSGR:(VT100Token *)token;
 
 - (void)stopReceivingFile;
