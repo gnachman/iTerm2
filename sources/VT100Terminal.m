@@ -26,6 +26,26 @@
 
 @end
 
+typedef struct {
+    BOOL bold;
+    BOOL blink;
+    BOOL under;
+    BOOL reversed;
+    BOOL faint;
+    BOOL italic;
+    // TODO: Add invisible and protected
+
+    int fgColorCode;
+    int fgGreen;
+    int fgBlue;
+    ColorMode fgColorMode;
+
+    int bgColorCode;
+    int bgGreen;
+    int bgBlue;
+    ColorMode bgColorMode;
+} VT100GraphicRendition;
+
 @implementation VT100Terminal {
     // True if receiving a file in multitoken mode, or if between BeginFile and
     // EndFile codes (which are deprecated).
@@ -40,26 +60,10 @@
     BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
 
-    int fgColorCode_;
-    int fgGreen_;
-    int fgBlue_;
-    ColorMode fgColorMode_;
-    int bgColorCode_;
-    int bgGreen_;
-    int bgBlue_;
-    ColorMode bgColorMode_;
-    BOOL faint_, bold_, italic_, under_, blink_, reversed_;
+    VT100GraphicRendition graphicRendition_;
+    VT100GraphicRendition savedGraphicRendition_;
 
-    BOOL saveFaint_, saveBold_, saveItalic_, saveUnder_, saveBlink_, saveReversed_;
     int saveCharset_;
-    int saveForeground_;
-    int saveFgGreen_;
-    int saveFgBlue_;
-    ColorMode saveFgColorMode_;
-    int saveBackground_;
-    int saveBgGreen_;
-    int saveBgBlue_;
-    ColorMode saveBgColorMode_;
     BOOL saveOriginMode_;
     BOOL saveMoreFix_;
     BOOL saveWraparoundMode_;
@@ -135,8 +139,7 @@ static const int kMaxScreenRows = 4096;
 
 #pragma mark - Instance methods
 
-- (id)init
-{
+- (id)init {
     self = [super init];
     if (self) {
         _output = [[VT100Output alloc] init];
@@ -148,10 +151,10 @@ static const int kMaxScreenRows = 4096;
         _reverseWraparoundMode = NO;
         _autorepeatMode = YES;
         xon_ = YES;
-        fgColorCode_ = ALTSEM_DEFAULT;
-        fgColorMode_ = ColorModeAlternate;
-        bgColorCode_ = ALTSEM_DEFAULT;
-        bgColorMode_ = ColorModeAlternate;
+        graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
+        graphicRendition_.fgColorMode = ColorModeAlternate;
+        graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
+        graphicRendition_.bgColorMode = ColorModeAlternate;
         _mouseMode = MOUSE_REPORTING_NONE;
         _mouseFormat = MOUSE_FORMAT_XTERM;
 
@@ -210,21 +213,8 @@ static const int kMaxScreenRows = 4096;
 
 - (void)saveTextAttributes
 {
-    saveBold_ = bold_;
-    saveFaint_ = faint_;
-    saveItalic_ = italic_;
-    saveUnder_ = under_;
-    saveBlink_ = blink_;
-    saveReversed_ = reversed_;
+    savedGraphicRendition_ = graphicRendition_;
     saveCharset_ = _charset;
-    saveForeground_ = fgColorCode_;
-    saveFgGreen_ = fgGreen_;
-    saveFgBlue_ = fgBlue_;
-    saveFgColorMode_ = fgColorMode_;
-    saveBackground_ = bgColorCode_;
-    saveBgGreen_ = bgGreen_;
-    saveBgBlue_ = bgBlue_;
-    saveBgColorMode_ = bgColorMode_;
     saveOriginMode_ = self.originMode;
     saveMoreFix_ = self.moreFix;
     saveWraparoundMode_ = self.wraparoundMode;
@@ -233,21 +223,8 @@ static const int kMaxScreenRows = 4096;
 
 - (void)restoreTextAttributes
 {
-    bold_ = saveBold_;
-    faint_ = saveFaint_;
-    italic_ = saveItalic_;
-    under_ = saveUnder_;
-    blink_ = saveBlink_;
-    reversed_ = saveReversed_;
+    graphicRendition_ = savedGraphicRendition_;
     _charset = saveCharset_;
-    fgColorCode_ = saveForeground_;
-    fgGreen_ = saveFgGreen_;
-    fgBlue_ = saveFgBlue_;
-    fgColorMode_ = saveFgColorMode_;
-    bgColorCode_ = saveBackground_;
-    bgGreen_ = saveBgGreen_;
-    bgBlue_ = saveBgBlue_;
-    bgColorMode_ = saveBgColorMode_;
     self.originMode = saveOriginMode_;
     self.moreFix = saveMoreFix_;
     self.wraparoundMode = saveWraparoundMode_;
@@ -255,22 +232,22 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setForeground24BitColor:(NSColor *)color {
-    fgColorCode_ = color.redComponent * 255.0;
-    fgGreen_ = color.greenComponent * 255.0;
-    fgBlue_ = color.blueComponent * 255.0;
-    fgColorMode_ = ColorMode24bit;
+    graphicRendition_.fgColorCode = color.redComponent * 255.0;
+    graphicRendition_.fgGreen = color.greenComponent * 255.0;
+    graphicRendition_.fgBlue = color.blueComponent * 255.0;
+    graphicRendition_.fgColorMode = ColorMode24bit;
 }
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
 {
-    fgColorCode_ = fgColorCode;
-    fgColorMode_ = (altsem ? ColorModeAlternate : ColorModeNormal);
+    graphicRendition_.fgColorCode = fgColorCode;
+    graphicRendition_.fgColorMode = (altsem ? ColorModeAlternate : ColorModeNormal);
 }
 
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem
 {
-    bgColorCode_ = bgColorCode;
-    bgColorMode_ = (altsem ? ColorModeAlternate : ColorModeNormal);
+    graphicRendition_.bgColorCode = bgColorCode;
+    graphicRendition_.bgColorMode = (altsem ? ColorModeAlternate : ColorModeNormal);
 }
 
 - (void)resetCharset {
@@ -280,8 +257,7 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)resetPreservingPrompt:(BOOL)preservePrompt
-{
+- (void)resetPreservingPrompt:(BOOL)preservePrompt {
     self.lineMode = NO;
     self.cursorMode = NO;
     self.columnMode = NO;
@@ -297,15 +273,7 @@ static const int kMaxScreenRows = 4096;
     self.bracketedPasteMode = NO;
     _charset = 0;
     xon_ = YES;
-    faint_ = bold_ = italic_ = blink_ = reversed_ = under_ = NO;
-    fgColorCode_ = ALTSEM_DEFAULT;
-    fgGreen_ = 0;
-    fgBlue_ = 0;
-    fgColorMode_ = ColorModeAlternate;
-    bgColorCode_ = ALTSEM_DEFAULT;
-    bgGreen_ = 0;
-    bgBlue_ = 0;
-    bgColorMode_ = ColorModeAlternate;
+    [self resetSGR];
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
     [self saveTextAttributes];  // reset saved text attributes
@@ -355,26 +323,27 @@ static const int kMaxScreenRows = 4096;
 - (screen_char_t)foregroundColorCode
 {
     screen_char_t result = { 0 };
-    if (reversed_) {
-        if (bgColorMode_ == ColorModeAlternate && bgColorCode_ == ALTSEM_DEFAULT) {
+    if (graphicRendition_.reversed) {
+        if (graphicRendition_.bgColorMode == ColorModeAlternate &&
+            graphicRendition_.bgColorCode == ALTSEM_DEFAULT) {
             result.foregroundColor = ALTSEM_REVERSED_DEFAULT;
         } else {
-            result.foregroundColor = bgColorCode_;
+            result.foregroundColor = graphicRendition_.bgColorCode;
         }
-        result.fgGreen = bgGreen_;
-        result.fgBlue = bgBlue_;
-        result.foregroundColorMode = bgColorMode_;
+        result.fgGreen = graphicRendition_.bgGreen;
+        result.fgBlue = graphicRendition_.bgBlue;
+        result.foregroundColorMode = graphicRendition_.bgColorMode;
     } else {
-        result.foregroundColor = fgColorCode_;
-        result.fgGreen = fgGreen_;
-        result.fgBlue = fgBlue_;
-        result.foregroundColorMode = fgColorMode_;
+        result.foregroundColor = graphicRendition_.fgColorCode;
+        result.fgGreen = graphicRendition_.fgGreen;
+        result.fgBlue = graphicRendition_.fgBlue;
+        result.foregroundColorMode = graphicRendition_.fgColorMode;
     }
-    result.bold = bold_;
-    result.faint = faint_;
-    result.italic = italic_;
-    result.underline = under_;
-    result.blink = blink_;
+    result.bold = graphicRendition_.bold;
+    result.faint = graphicRendition_.faint;
+    result.italic = graphicRendition_.italic;
+    result.underline = graphicRendition_.under;
+    result.blink = graphicRendition_.blink;
     result.image = NO;
     return result;
 }
@@ -382,20 +351,21 @@ static const int kMaxScreenRows = 4096;
 - (screen_char_t)backgroundColorCode
 {
     screen_char_t result = { 0 };
-    if (reversed_) {
-        if (fgColorMode_ == ColorModeAlternate && fgColorCode_ == ALTSEM_DEFAULT) {
+    if (graphicRendition_.reversed) {
+        if (graphicRendition_.fgColorMode == ColorModeAlternate &&
+            graphicRendition_.fgColorCode == ALTSEM_DEFAULT) {
             result.backgroundColor = ALTSEM_REVERSED_DEFAULT;
         } else {
-            result.backgroundColor = fgColorCode_;
+            result.backgroundColor = graphicRendition_.fgColorCode;
         }
-        result.bgGreen = fgGreen_;
-        result.bgBlue = fgBlue_;
-        result.backgroundColorMode = fgColorMode_;
+        result.bgGreen = graphicRendition_.fgGreen;
+        result.bgBlue = graphicRendition_.fgBlue;
+        result.backgroundColorMode = graphicRendition_.fgColorMode;
     } else {
-        result.backgroundColor = bgColorCode_;
-        result.bgGreen = bgGreen_;
-        result.bgBlue = bgBlue_;
-        result.backgroundColorMode = bgColorMode_;
+        result.backgroundColor = graphicRendition_.bgColorCode;
+        result.bgGreen = graphicRendition_.bgGreen;
+        result.bgBlue = graphicRendition_.bgBlue;
+        result.backgroundColorMode = graphicRendition_.bgColorMode;
     }
     return result;
 }
@@ -403,25 +373,25 @@ static const int kMaxScreenRows = 4096;
 - (screen_char_t)foregroundColorCodeReal
 {
     screen_char_t result = { 0 };
-    result.foregroundColor = fgColorCode_;
-    result.fgGreen = fgGreen_;
-    result.fgBlue = fgBlue_;
-    result.foregroundColorMode = fgColorMode_;
-    result.bold = bold_;
-    result.faint = faint_;
-    result.italic = italic_;
-    result.underline = under_;
-    result.blink = blink_;
+    result.foregroundColor = graphicRendition_.fgColorCode;
+    result.fgGreen = graphicRendition_.fgGreen;
+    result.fgBlue = graphicRendition_.fgBlue;
+    result.foregroundColorMode = graphicRendition_.fgColorMode;
+    result.bold = graphicRendition_.bold;
+    result.faint = graphicRendition_.faint;
+    result.italic = graphicRendition_.italic;
+    result.underline = graphicRendition_.under;
+    result.blink = graphicRendition_.blink;
     return result;
 }
 
 - (screen_char_t)backgroundColorCodeReal
 {
     screen_char_t result = { 0 };
-    result.backgroundColor = bgColorCode_;
-    result.bgGreen = bgGreen_;
-    result.bgBlue = bgBlue_;
-    result.backgroundColorMode = bgColorMode_;
+    result.backgroundColor = graphicRendition_.bgColorCode;
+    result.bgGreen = graphicRendition_.bgGreen;
+    result.bgBlue = graphicRendition_.bgBlue;
+    result.backgroundColorMode = graphicRendition_.bgColorMode;
     return result;
 }
 
@@ -649,15 +619,15 @@ static const int kMaxScreenRows = 4096;
 
 - (void)resetSGR {
     // all attributes off
-    faint_ = bold_ = italic_ = under_ = blink_ = reversed_ = NO;
-    fgColorCode_ = ALTSEM_DEFAULT;
-    fgGreen_ = 0;
-    fgBlue_ = 0;
-    fgColorMode_ = ColorModeAlternate;
-    bgColorCode_ = ALTSEM_DEFAULT;
-    bgGreen_ = 0;
-    bgBlue_ = 0;
-    bgColorMode_ = ColorModeAlternate;
+    graphicRendition_.faint = graphicRendition_.bold = graphicRendition_.italic = graphicRendition_.under = graphicRendition_.blink = graphicRendition_.reversed = NO;
+    graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
+    graphicRendition_.fgGreen = 0;
+    graphicRendition_.fgBlue = 0;
+    graphicRendition_.fgColorMode = ColorModeAlternate;
+    graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
+    graphicRendition_.bgGreen = 0;
+    graphicRendition_.bgBlue = 0;
+    graphicRendition_.bgColorMode = ColorModeAlternate;
 }
 
 - (void)executeSGR:(VT100Token *)token
@@ -672,60 +642,60 @@ static const int kMaxScreenRows = 4096;
                 switch (n) {
                     case VT100CHARATTR_ALLOFF:
                         // all attribute off
-                        faint_ = bold_ = italic_ = under_ = blink_ = reversed_ = NO;
-                        fgColorCode_ = ALTSEM_DEFAULT;
-                        fgGreen_ = 0;
-                        fgBlue_ = 0;
-                        bgColorCode_ = ALTSEM_DEFAULT;
-                        bgGreen_ = 0;
-                        bgBlue_ = 0;
-                        fgColorMode_ = ColorModeAlternate;
-                        bgColorMode_ = ColorModeAlternate;
+                        graphicRendition_.faint = graphicRendition_.bold = graphicRendition_.italic = graphicRendition_.under = graphicRendition_.blink = graphicRendition_.reversed = NO;
+                        graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
+                        graphicRendition_.fgGreen = 0;
+                        graphicRendition_.fgBlue = 0;
+                        graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
+                        graphicRendition_.bgGreen = 0;
+                        graphicRendition_.bgBlue = 0;
+                        graphicRendition_.fgColorMode = ColorModeAlternate;
+                        graphicRendition_.bgColorMode = ColorModeAlternate;
                         break;
                     case VT100CHARATTR_BOLD:
-                        bold_ = YES;
+                        graphicRendition_.bold = YES;
                         break;
                     case VT100CHARATTR_FAINT:
-                        faint_ = YES;
+                        graphicRendition_.faint = YES;
                         break;
                     case VT100CHARATTR_NORMAL:
-                        faint_ = bold_ = NO;
+                        graphicRendition_.faint = graphicRendition_.bold = NO;
                         break;
                     case VT100CHARATTR_ITALIC:
-                        italic_ = YES;
+                        graphicRendition_.italic = YES;
                         break;
                     case VT100CHARATTR_NOT_ITALIC:
-                        italic_ = NO;
+                        graphicRendition_.italic = NO;
                         break;
                     case VT100CHARATTR_UNDER:
-                        under_ = YES;
+                        graphicRendition_.under = YES;
                         break;
                     case VT100CHARATTR_NOT_UNDER:
-                        under_ = NO;
+                        graphicRendition_.under = NO;
                         break;
                     case VT100CHARATTR_BLINK:
-                        blink_ = YES;
+                        graphicRendition_.blink = YES;
                         break;
                     case VT100CHARATTR_STEADY:
-                        blink_ = NO;
+                        graphicRendition_.blink = NO;
                         break;
                     case VT100CHARATTR_REVERSE:
-                        reversed_ = YES;
+                        graphicRendition_.reversed = YES;
                         break;
                     case VT100CHARATTR_POSITIVE:
-                        reversed_ = NO;
+                        graphicRendition_.reversed = NO;
                         break;
                     case VT100CHARATTR_FG_DEFAULT:
-                        fgColorCode_ = ALTSEM_DEFAULT;
-                        fgGreen_ = 0;
-                        fgBlue_ = 0;
-                        fgColorMode_ = ColorModeAlternate;
+                        graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
+                        graphicRendition_.fgGreen = 0;
+                        graphicRendition_.fgBlue = 0;
+                        graphicRendition_.fgColorMode = ColorModeAlternate;
                         break;
                     case VT100CHARATTR_BG_DEFAULT:
-                        bgColorCode_ = ALTSEM_DEFAULT;
-                        bgGreen_ = 0;
-                        bgBlue_ = 0;
-                        bgColorMode_ = ColorModeAlternate;
+                        graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
+                        graphicRendition_.bgGreen = 0;
+                        graphicRendition_.bgBlue = 0;
+                        graphicRendition_.bgColorMode = ColorModeAlternate;
                         break;
                     case VT100CHARATTR_FG_256:
                         /*
@@ -752,32 +722,32 @@ static const int kMaxScreenRows = 4096;
                             // Preferred syntax using colons to delimit subparameters
                             if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
                                 // CSI 38:5:P m
-                                fgColorCode_ = token.csi->sub[i][1];
-                                fgGreen_ = 0;
-                                fgBlue_ = 0;
-                                fgColorMode_ = ColorModeNormal;
+                                graphicRendition_.fgColorCode = token.csi->sub[i][1];
+                                graphicRendition_.fgGreen = 0;
+                                graphicRendition_.fgBlue = 0;
+                                graphicRendition_.fgColorMode = ColorModeNormal;
                             } else if (token.csi->subCount[i] >= 4 && token.csi->sub[i][0] == 2) {
                                 // CSI 38:2:R:G:B m
                                 // 24-bit color
-                                fgColorCode_ = token.csi->sub[i][1];
-                                fgGreen_ = token.csi->sub[i][2];
-                                fgBlue_ = token.csi->sub[i][3];
-                                fgColorMode_ = ColorMode24bit;
+                                graphicRendition_.fgColorCode = token.csi->sub[i][1];
+                                graphicRendition_.fgGreen = token.csi->sub[i][2];
+                                graphicRendition_.fgBlue = token.csi->sub[i][3];
+                                graphicRendition_.fgColorMode = ColorMode24bit;
                             }
                         } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
                             // CSI 38;5;P m
-                            fgColorCode_ = token.csi->p[i + 2];
-                            fgGreen_ = 0;
-                            fgBlue_ = 0;
-                            fgColorMode_ = ColorModeNormal;
+                            graphicRendition_.fgColorCode = token.csi->p[i + 2];
+                            graphicRendition_.fgGreen = 0;
+                            graphicRendition_.fgBlue = 0;
+                            graphicRendition_.fgColorMode = ColorModeNormal;
                             i += 2;
                         } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
                             // CSI 38;2;R;G;B m
                             // 24-bit color support
-                            fgColorCode_ = token.csi->p[i + 2];
-                            fgGreen_ = token.csi->p[i + 3];
-                            fgBlue_ = token.csi->p[i + 4];
-                            fgColorMode_ = ColorMode24bit;
+                            graphicRendition_.fgColorCode = token.csi->p[i + 2];
+                            graphicRendition_.fgGreen = token.csi->p[i + 3];
+                            graphicRendition_.fgBlue = token.csi->p[i + 4];
+                            graphicRendition_.fgColorMode = ColorMode24bit;
                             i += 4;
                         }
                         break;
@@ -786,32 +756,32 @@ static const int kMaxScreenRows = 4096;
                             // Preferred syntax using colons to delimit subparameters
                             if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
                                 // CSI 48:5:P m
-                                bgColorCode_ = token.csi->sub[i][1];
-                                bgGreen_ = 0;
-                                bgBlue_ = 0;
-                                bgColorMode_ = ColorModeNormal;
+                                graphicRendition_.bgColorCode = token.csi->sub[i][1];
+                                graphicRendition_.bgGreen = 0;
+                                graphicRendition_.bgBlue = 0;
+                                graphicRendition_.bgColorMode = ColorModeNormal;
                             } else if (token.csi->subCount[i] >= 4 && token.csi->sub[i][0] == 2) {
                                 // CSI 48:2:R:G:B m
                                 // 24-bit color
-                                bgColorCode_ = token.csi->sub[i][1];
-                                bgGreen_ = token.csi->sub[i][2];
-                                bgBlue_ = token.csi->sub[i][3];
-                                bgColorMode_ = ColorMode24bit;
+                                graphicRendition_.bgColorCode = token.csi->sub[i][1];
+                                graphicRendition_.bgGreen = token.csi->sub[i][2];
+                                graphicRendition_.bgBlue = token.csi->sub[i][3];
+                                graphicRendition_.bgColorMode = ColorMode24bit;
                             }
                         } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
                             // CSI 48;5;P m
-                            bgColorCode_ = token.csi->p[i + 2];
-                            bgGreen_ = 0;
-                            bgBlue_ = 0;
-                            bgColorMode_ = ColorModeNormal;
+                            graphicRendition_.bgColorCode = token.csi->p[i + 2];
+                            graphicRendition_.bgGreen = 0;
+                            graphicRendition_.bgBlue = 0;
+                            graphicRendition_.bgColorMode = ColorModeNormal;
                             i += 2;
                         } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
                             // CSI 48;2;R;G;B m
                             // 24-bit color
-                            bgColorCode_ = token.csi->p[i + 2];
-                            bgGreen_ = token.csi->p[i + 3];
-                            bgBlue_ = token.csi->p[i + 4];
-                            bgColorMode_ = ColorMode24bit;
+                            graphicRendition_.bgColorCode = token.csi->p[i + 2];
+                            graphicRendition_.bgGreen = token.csi->p[i + 3];
+                            graphicRendition_.bgBlue = token.csi->p[i + 4];
+                            graphicRendition_.bgColorMode = ColorMode24bit;
                             i += 4;
                         }
                         break;
@@ -819,30 +789,30 @@ static const int kMaxScreenRows = 4096;
                         // 8 color support
                         if (n >= VT100CHARATTR_FG_BLACK &&
                             n <= VT100CHARATTR_FG_WHITE) {
-                            fgColorCode_ = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
-                            fgGreen_ = 0;
-                            fgBlue_ = 0;
-                            fgColorMode_ = ColorModeNormal;
+                            graphicRendition_.fgColorCode = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
+                            graphicRendition_.fgGreen = 0;
+                            graphicRendition_.fgBlue = 0;
+                            graphicRendition_.fgColorMode = ColorModeNormal;
                         } else if (n >= VT100CHARATTR_BG_BLACK &&
                                    n <= VT100CHARATTR_BG_WHITE) {
-                            bgColorCode_ = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
-                            bgGreen_ = 0;
-                            bgBlue_ = 0;
-                            bgColorMode_ = ColorModeNormal;
+                            graphicRendition_.bgColorCode = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
+                            graphicRendition_.bgGreen = 0;
+                            graphicRendition_.bgBlue = 0;
+                            graphicRendition_.bgColorMode = ColorModeNormal;
                         }
                         // 16 color support
                         if (n >= VT100CHARATTR_FG_HI_BLACK &&
                             n <= VT100CHARATTR_FG_HI_WHITE) {
-                            fgColorCode_ = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
-                            fgGreen_ = 0;
-                            fgBlue_ = 0;
-                            fgColorMode_ = ColorModeNormal;
+                            graphicRendition_.fgColorCode = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
+                            graphicRendition_.fgGreen = 0;
+                            graphicRendition_.fgBlue = 0;
+                            graphicRendition_.fgColorMode = ColorModeNormal;
                         } else if (n >= VT100CHARATTR_BG_HI_BLACK &&
                                    n <= VT100CHARATTR_BG_HI_WHITE) {
-                            bgColorCode_ = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
-                            bgGreen_ = 0;
-                            bgBlue_ = 0;
-                            bgColorMode_ = ColorModeNormal;
+                            graphicRendition_.bgColorCode = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
+                            graphicRendition_.bgGreen = 0;
+                            graphicRendition_.bgBlue = 0;
+                            graphicRendition_.bgColorMode = ColorModeNormal;
                         }
                 }
             }
@@ -1139,7 +1109,7 @@ static const int kMaxScreenRows = 4096;
 
     // Farm out work to the delegate.
     switch (token->type) {
-            // our special code
+        // our special code
         case VT100_STRING:
             [delegate_ terminalAppendString:token.string];
             break;
