@@ -554,195 +554,190 @@ static const int kMaxScreenRows = 4096;
     graphicRendition_.bgColorMode = ColorModeAlternate;
 }
 
-- (void)executeSGR:(VT100Token *)token
-{
-    if (token->type == VT100CSI_SGR) {
-        if (token.csi->count == 0) {
-            [self resetSGR];
-        } else {
-            int i;
-            for (i = 0; i < token.csi->count; ++i) {
-                int n = token.csi->p[i];
-                switch (n) {
-                    case VT100CHARATTR_ALLOFF:
-                        // all attribute off
-                        graphicRendition_.faint = graphicRendition_.bold = graphicRendition_.italic = graphicRendition_.under = graphicRendition_.blink = graphicRendition_.reversed = NO;
-                        graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
-                        graphicRendition_.fgGreen = 0;
-                        graphicRendition_.fgBlue = 0;
-                        graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
-                        graphicRendition_.bgGreen = 0;
-                        graphicRendition_.bgBlue = 0;
-                        graphicRendition_.fgColorMode = ColorModeAlternate;
-                        graphicRendition_.bgColorMode = ColorModeAlternate;
-                        break;
-                    case VT100CHARATTR_BOLD:
-                        graphicRendition_.bold = YES;
-                        break;
-                    case VT100CHARATTR_FAINT:
-                        graphicRendition_.faint = YES;
-                        break;
-                    case VT100CHARATTR_NORMAL:
-                        graphicRendition_.faint = graphicRendition_.bold = NO;
-                        break;
-                    case VT100CHARATTR_ITALIC:
-                        graphicRendition_.italic = YES;
-                        break;
-                    case VT100CHARATTR_NOT_ITALIC:
-                        graphicRendition_.italic = NO;
-                        break;
-                    case VT100CHARATTR_UNDER:
-                        graphicRendition_.under = YES;
-                        break;
-                    case VT100CHARATTR_NOT_UNDER:
-                        graphicRendition_.under = NO;
-                        break;
-                    case VT100CHARATTR_BLINK:
-                        graphicRendition_.blink = YES;
-                        break;
-                    case VT100CHARATTR_STEADY:
-                        graphicRendition_.blink = NO;
-                        break;
-                    case VT100CHARATTR_REVERSE:
-                        graphicRendition_.reversed = YES;
-                        break;
-                    case VT100CHARATTR_POSITIVE:
-                        graphicRendition_.reversed = NO;
-                        break;
-                    case VT100CHARATTR_FG_DEFAULT:
-                        graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
-                        graphicRendition_.fgGreen = 0;
-                        graphicRendition_.fgBlue = 0;
-                        graphicRendition_.fgColorMode = ColorModeAlternate;
-                        break;
-                    case VT100CHARATTR_BG_DEFAULT:
-                        graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
-                        graphicRendition_.bgGreen = 0;
-                        graphicRendition_.bgBlue = 0;
-                        graphicRendition_.bgColorMode = ColorModeAlternate;
-                        break;
-                    case VT100CHARATTR_FG_256:
-                        /*
-                         First subparam means:   # additional subparams:  Accepts optional params:
-                         1: transparent          0                        NO
-                         2: RGB                  3                        YES
-                         3: CMY                  3                        YES
-                         4: CMYK                 4                        YES
-                         5: Indexed color        1                        NO
+- (void)executeSGR:(VT100Token *)token {
+    if (token.csi->count == 0) {
+        [self resetSGR];
+    } else {
+        int i;
+        for (i = 0; i < token.csi->count; ++i) {
+            int n = token.csi->p[i];
+            switch (n) {
+                case VT100CHARATTR_ALLOFF:
+                    // all attribute off
+                    graphicRendition_.faint = graphicRendition_.bold = graphicRendition_.italic = graphicRendition_.under = graphicRendition_.blink = graphicRendition_.reversed = NO;
+                    graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
+                    graphicRendition_.fgGreen = 0;
+                    graphicRendition_.fgBlue = 0;
+                    graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
+                    graphicRendition_.bgGreen = 0;
+                    graphicRendition_.bgBlue = 0;
+                    graphicRendition_.fgColorMode = ColorModeAlternate;
+                    graphicRendition_.bgColorMode = ColorModeAlternate;
+                    break;
+                case VT100CHARATTR_BOLD:
+                    graphicRendition_.bold = YES;
+                    break;
+                case VT100CHARATTR_FAINT:
+                    graphicRendition_.faint = YES;
+                    break;
+                case VT100CHARATTR_NORMAL:
+                    graphicRendition_.faint = graphicRendition_.bold = NO;
+                    break;
+                case VT100CHARATTR_ITALIC:
+                    graphicRendition_.italic = YES;
+                    break;
+                case VT100CHARATTR_NOT_ITALIC:
+                    graphicRendition_.italic = NO;
+                    break;
+                case VT100CHARATTR_UNDER:
+                    graphicRendition_.under = YES;
+                    break;
+                case VT100CHARATTR_NOT_UNDER:
+                    graphicRendition_.under = NO;
+                    break;
+                case VT100CHARATTR_BLINK:
+                    graphicRendition_.blink = YES;
+                    break;
+                case VT100CHARATTR_STEADY:
+                    graphicRendition_.blink = NO;
+                    break;
+                case VT100CHARATTR_REVERSE:
+                    graphicRendition_.reversed = YES;
+                    break;
+                case VT100CHARATTR_POSITIVE:
+                    graphicRendition_.reversed = NO;
+                    break;
+                case VT100CHARATTR_FG_DEFAULT:
+                    graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
+                    graphicRendition_.fgGreen = 0;
+                    graphicRendition_.fgBlue = 0;
+                    graphicRendition_.fgColorMode = ColorModeAlternate;
+                    break;
+                case VT100CHARATTR_BG_DEFAULT:
+                    graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
+                    graphicRendition_.bgGreen = 0;
+                    graphicRendition_.bgBlue = 0;
+                    graphicRendition_.bgColorMode = ColorModeAlternate;
+                    break;
+                case VT100CHARATTR_FG_256:
+                    /*
+                     First subparam means:   # additional subparams:  Accepts optional params:
+                     1: transparent          0                        NO
+                     2: RGB                  3                        YES
+                     3: CMY                  3                        YES
+                     4: CMYK                 4                        YES
+                     5: Indexed color        1                        NO
 
-                         Optional paramters go at position 7 and 8, and indicate toleranace as an
-                         integer; and color space (0=CIELUV, 1=CIELAB). Example:
+                     Optional paramters go at position 7 and 8, and indicate toleranace as an
+                     integer; and color space (0=CIELUV, 1=CIELAB). Example:
 
-                         CSI 38:2:255:128:64:0:5:1 m
+                     CSI 38:2:255:128:64:0:5:1 m
 
-                         Also accepted for xterm compatibility, but never with optional parameters:
-                         CSI 38;2;255;128;64 m
+                     Also accepted for xterm compatibility, but never with optional parameters:
+                     CSI 38;2;255;128;64 m
 
-                         Set the foreground color to red=255, green=128, blue=64 with a tolerance of
-                         5 in the CIELAB color space. The 0 at the 6th position has no meaning and
-                         is just a filler. */
+                     Set the foreground color to red=255, green=128, blue=64 with a tolerance of
+                     5 in the CIELAB color space. The 0 at the 6th position has no meaning and
+                     is just a filler. */
 
-                        if (token.csi->subCount[i] > 0) {
-                            // Preferred syntax using colons to delimit subparameters
-                            if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
-                                // CSI 38:5:P m
-                                graphicRendition_.fgColorCode = token.csi->sub[i][1];
-                                graphicRendition_.fgGreen = 0;
-                                graphicRendition_.fgBlue = 0;
-                                graphicRendition_.fgColorMode = ColorModeNormal;
-                            } else if (token.csi->subCount[i] >= 4 && token.csi->sub[i][0] == 2) {
-                                // CSI 38:2:R:G:B m
-                                // 24-bit color
-                                graphicRendition_.fgColorCode = token.csi->sub[i][1];
-                                graphicRendition_.fgGreen = token.csi->sub[i][2];
-                                graphicRendition_.fgBlue = token.csi->sub[i][3];
-                                graphicRendition_.fgColorMode = ColorMode24bit;
-                            }
-                        } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
-                            // CSI 38;5;P m
-                            graphicRendition_.fgColorCode = token.csi->p[i + 2];
+                    if (token.csi->subCount[i] > 0) {
+                        // Preferred syntax using colons to delimit subparameters
+                        if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
+                            // CSI 38:5:P m
+                            graphicRendition_.fgColorCode = token.csi->sub[i][1];
                             graphicRendition_.fgGreen = 0;
                             graphicRendition_.fgBlue = 0;
                             graphicRendition_.fgColorMode = ColorModeNormal;
-                            i += 2;
-                        } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
-                            // CSI 38;2;R;G;B m
-                            // 24-bit color support
-                            graphicRendition_.fgColorCode = token.csi->p[i + 2];
-                            graphicRendition_.fgGreen = token.csi->p[i + 3];
-                            graphicRendition_.fgBlue = token.csi->p[i + 4];
-                            graphicRendition_.fgColorMode = ColorMode24bit;
-                            i += 4;
-                        }
-                        break;
-                    case VT100CHARATTR_BG_256:
-                        if (token.csi->subCount[i] > 0) {
-                            // Preferred syntax using colons to delimit subparameters
-                            if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
-                                // CSI 48:5:P m
-                                graphicRendition_.bgColorCode = token.csi->sub[i][1];
-                                graphicRendition_.bgGreen = 0;
-                                graphicRendition_.bgBlue = 0;
-                                graphicRendition_.bgColorMode = ColorModeNormal;
-                            } else if (token.csi->subCount[i] >= 4 && token.csi->sub[i][0] == 2) {
-                                // CSI 48:2:R:G:B m
-                                // 24-bit color
-                                graphicRendition_.bgColorCode = token.csi->sub[i][1];
-                                graphicRendition_.bgGreen = token.csi->sub[i][2];
-                                graphicRendition_.bgBlue = token.csi->sub[i][3];
-                                graphicRendition_.bgColorMode = ColorMode24bit;
-                            }
-                        } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
-                            // CSI 48;5;P m
-                            graphicRendition_.bgColorCode = token.csi->p[i + 2];
-                            graphicRendition_.bgGreen = 0;
-                            graphicRendition_.bgBlue = 0;
-                            graphicRendition_.bgColorMode = ColorModeNormal;
-                            i += 2;
-                        } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
-                            // CSI 48;2;R;G;B m
+                        } else if (token.csi->subCount[i] >= 4 && token.csi->sub[i][0] == 2) {
+                            // CSI 38:2:R:G:B m
                             // 24-bit color
-                            graphicRendition_.bgColorCode = token.csi->p[i + 2];
-                            graphicRendition_.bgGreen = token.csi->p[i + 3];
-                            graphicRendition_.bgBlue = token.csi->p[i + 4];
+                            graphicRendition_.fgColorCode = token.csi->sub[i][1];
+                            graphicRendition_.fgGreen = token.csi->sub[i][2];
+                            graphicRendition_.fgBlue = token.csi->sub[i][3];
+                            graphicRendition_.fgColorMode = ColorMode24bit;
+                        }
+                    } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
+                        // CSI 38;5;P m
+                        graphicRendition_.fgColorCode = token.csi->p[i + 2];
+                        graphicRendition_.fgGreen = 0;
+                        graphicRendition_.fgBlue = 0;
+                        graphicRendition_.fgColorMode = ColorModeNormal;
+                        i += 2;
+                    } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
+                        // CSI 38;2;R;G;B m
+                        // 24-bit color support
+                        graphicRendition_.fgColorCode = token.csi->p[i + 2];
+                        graphicRendition_.fgGreen = token.csi->p[i + 3];
+                        graphicRendition_.fgBlue = token.csi->p[i + 4];
+                        graphicRendition_.fgColorMode = ColorMode24bit;
+                        i += 4;
+                    }
+                    break;
+                case VT100CHARATTR_BG_256:
+                    if (token.csi->subCount[i] > 0) {
+                        // Preferred syntax using colons to delimit subparameters
+                        if (token.csi->subCount[i] >= 2 && token.csi->sub[i][0] == 5) {
+                            // CSI 48:5:P m
+                            graphicRendition_.bgColorCode = token.csi->sub[i][1];
+                            graphicRendition_.bgGreen = 0;
+                            graphicRendition_.bgBlue = 0;
+                            graphicRendition_.bgColorMode = ColorModeNormal;
+                        } else if (token.csi->subCount[i] >= 4 && token.csi->sub[i][0] == 2) {
+                            // CSI 48:2:R:G:B m
+                            // 24-bit color
+                            graphicRendition_.bgColorCode = token.csi->sub[i][1];
+                            graphicRendition_.bgGreen = token.csi->sub[i][2];
+                            graphicRendition_.bgBlue = token.csi->sub[i][3];
                             graphicRendition_.bgColorMode = ColorMode24bit;
-                            i += 4;
                         }
-                        break;
-                    default:
-                        // 8 color support
-                        if (n >= VT100CHARATTR_FG_BLACK &&
-                            n <= VT100CHARATTR_FG_WHITE) {
-                            graphicRendition_.fgColorCode = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
-                            graphicRendition_.fgGreen = 0;
-                            graphicRendition_.fgBlue = 0;
-                            graphicRendition_.fgColorMode = ColorModeNormal;
-                        } else if (n >= VT100CHARATTR_BG_BLACK &&
-                                   n <= VT100CHARATTR_BG_WHITE) {
-                            graphicRendition_.bgColorCode = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
-                            graphicRendition_.bgGreen = 0;
-                            graphicRendition_.bgBlue = 0;
-                            graphicRendition_.bgColorMode = ColorModeNormal;
-                        }
-                        // 16 color support
-                        if (n >= VT100CHARATTR_FG_HI_BLACK &&
-                            n <= VT100CHARATTR_FG_HI_WHITE) {
-                            graphicRendition_.fgColorCode = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
-                            graphicRendition_.fgGreen = 0;
-                            graphicRendition_.fgBlue = 0;
-                            graphicRendition_.fgColorMode = ColorModeNormal;
-                        } else if (n >= VT100CHARATTR_BG_HI_BLACK &&
-                                   n <= VT100CHARATTR_BG_HI_WHITE) {
-                            graphicRendition_.bgColorCode = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
-                            graphicRendition_.bgGreen = 0;
-                            graphicRendition_.bgBlue = 0;
-                            graphicRendition_.bgColorMode = ColorModeNormal;
-                        }
-                }
+                    } else if (token.csi->count - i >= 3 && token.csi->p[i + 1] == 5) {
+                        // CSI 48;5;P m
+                        graphicRendition_.bgColorCode = token.csi->p[i + 2];
+                        graphicRendition_.bgGreen = 0;
+                        graphicRendition_.bgBlue = 0;
+                        graphicRendition_.bgColorMode = ColorModeNormal;
+                        i += 2;
+                    } else if (token.csi->count - i >= 5 && token.csi->p[i + 1] == 2) {
+                        // CSI 48;2;R;G;B m
+                        // 24-bit color
+                        graphicRendition_.bgColorCode = token.csi->p[i + 2];
+                        graphicRendition_.bgGreen = token.csi->p[i + 3];
+                        graphicRendition_.bgBlue = token.csi->p[i + 4];
+                        graphicRendition_.bgColorMode = ColorMode24bit;
+                        i += 4;
+                    }
+                    break;
+                default:
+                    // 8 color support
+                    if (n >= VT100CHARATTR_FG_BLACK &&
+                        n <= VT100CHARATTR_FG_WHITE) {
+                        graphicRendition_.fgColorCode = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
+                        graphicRendition_.fgGreen = 0;
+                        graphicRendition_.fgBlue = 0;
+                        graphicRendition_.fgColorMode = ColorModeNormal;
+                    } else if (n >= VT100CHARATTR_BG_BLACK &&
+                               n <= VT100CHARATTR_BG_WHITE) {
+                        graphicRendition_.bgColorCode = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
+                        graphicRendition_.bgGreen = 0;
+                        graphicRendition_.bgBlue = 0;
+                        graphicRendition_.bgColorMode = ColorModeNormal;
+                    }
+                    // 16 color support
+                    if (n >= VT100CHARATTR_FG_HI_BLACK &&
+                        n <= VT100CHARATTR_FG_HI_WHITE) {
+                        graphicRendition_.fgColorCode = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
+                        graphicRendition_.fgGreen = 0;
+                        graphicRendition_.fgBlue = 0;
+                        graphicRendition_.fgColorMode = ColorModeNormal;
+                    } else if (n >= VT100CHARATTR_BG_HI_BLACK &&
+                               n <= VT100CHARATTR_BG_HI_WHITE) {
+                        graphicRendition_.bgColorCode = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
+                        graphicRendition_.bgGreen = 0;
+                        graphicRendition_.bgBlue = 0;
+                        graphicRendition_.bgColorMode = ColorModeNormal;
+                    }
             }
         }
-    } else if (token->type == VT100CSI_DECSTR) {
-        [self resetSGR];
     }
 }
 
@@ -1027,9 +1022,6 @@ static const int kMaxScreenRows = 4096;
             break;
     }
 
-    // Update internal state.
-    [self executeSGR:token];
-
     // Farm out work to the delegate.
     switch (token->type) {
         // our special code
@@ -1246,11 +1238,11 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         case VT100CSI_DECSTR:
+            [self resetSGR];
             self.wraparoundMode = YES;
             self.reverseWraparoundMode = NO;
             self.originMode = NO;
             self.moreFix = NO;
-            // resetSGR is performed prior to the switch, which takes care of various other flags.
             [delegate_ terminalSoftReset];
             break;
         case VT100CSI_DECSCUSR:
@@ -1360,7 +1352,9 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case VT100CSI_SGR:
+            [self executeSGR:token];
             break;
+
         case VT100CSI_TBC:
             switch (token.csi->p[0]) {
                 case 3:
