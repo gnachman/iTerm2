@@ -729,9 +729,6 @@
 - (void)screenHandleTmuxInput:(VT100Token *)token {
 }
 
-- (void)screenModifiersDidChangeTo:(NSArray *)modifiers {
-}
-
 - (void)screenShowBellIndicator {
 }
 

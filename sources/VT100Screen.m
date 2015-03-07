@@ -2863,15 +2863,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                         toChar:[currentGrid_ defaultChar]];
 }
 
-- (void)terminalSendModifiersDidChangeTo:(int *)modifiers
-                               numValues:(int)numValues {
-    NSMutableArray *array = [NSMutableArray array];
-    for (int i = 0; i < numValues; i++) {
-        [array addObject:[NSNumber numberWithInt:modifiers[i]]];
-    }
-    [delegate_ screenModifiersDidChangeTo:array];
-}
-
 - (void)terminalSaveScrollPositionWithArgument:(NSString *)argument {
     // The difference between an argument of saveScrollPosition and saveCursorLine (the default) is
     // subtle. When saving the scroll position, the entire region of visible lines is recorded and

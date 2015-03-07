@@ -178,13 +178,6 @@ typedef enum {
 // Profile for this session
 @property(nonatomic, copy) Profile *profile;
 
-// TODO(georgen): Actually use this. It's not well documented and the xterm code is a crazy mess :(.
-// For future reference, in tmux commit 8df3ec612a8c496fc2c975b8241f4e95faef5715 the list of xterm
-// keys gives a hint about how this is supposed to work (e.g., control-! sends a long CSI code). See also
-// the xterm manual (look for modifyOtherKeys, etc.) for valid values, and ctlseqs.html on invisible-island
-// for the meaning of the indices (under CSI > Ps; Pm m).
-@property(nonatomic, retain) NSArray *sendModifiers;
-
 // Return the address book that the session was originally created with.
 @property(nonatomic, readonly) Profile *originalProfile;
 

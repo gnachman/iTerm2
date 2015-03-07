@@ -65,6 +65,7 @@
     BOOL saveWraparoundMode_;
     BOOL saveReverseWraparoundMode_;
 
+    // TODO: Actually use this.
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
 }
 
@@ -619,8 +620,6 @@ static const int kMaxScreenRows = 4096;
                     sendModifiers_[resource] = -1;
                 }
             }
-            [delegate_ terminalSendModifiersDidChangeTo:sendModifiers_
-                                              numValues:NUM_MODIFIABLE_RESOURCES];
             break;
 
         case VT100CSI_SET_MODIFIERS: {
@@ -640,8 +639,6 @@ static const int kMaxScreenRows = 4096;
                     sendModifiers_[resource] = value;
                 }
             }
-            [delegate_ terminalSendModifiersDidChangeTo:sendModifiers_
-                                              numValues:NUM_MODIFIABLE_RESOURCES];
             break;
         }
 

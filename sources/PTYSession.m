@@ -426,7 +426,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_liveSession release];
     [_tmuxGateway release];
     [_tmuxController release];
-    [_sendModifiers release];
     [_download stop];
     [_download endOfData];
     [_download release];
@@ -5503,10 +5502,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)screenHandleTmuxInput:(VT100Token *)token {
     [_tmuxGateway executeToken:token];
-}
-
-- (void)screenModifiersDidChangeTo:(NSArray *)modifiers {
-    [self setSendModifiers:modifiers];
 }
 
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {

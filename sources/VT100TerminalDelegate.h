@@ -264,10 +264,6 @@ typedef enum {
 // Erase scrollback history, leave screen alone.
 - (void)terminalClearScrollbackBuffer;
 
-// Not quite sure, kind of a mess right now. See comment in -[PTYSession setSendModifiers:].
-- (void)terminalSendModifiersDidChangeTo:(int *)modifiers
-                               numValues:(int)numValues;
-
 // Saves the current scroll position in the window.
 - (void)terminalSaveScrollPositionWithArgument:(NSString *)argument;
 
