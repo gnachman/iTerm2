@@ -5359,6 +5359,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)screenSetCursorType:(ITermCursorType)type {
+    if (type == CURSOR_DEFAULT) {
+        type = [iTermProfilePreferences intForKey:KEY_CURSOR_TYPE inProfile:_profile];
+    }
     [[self textview] setCursorType:type];
 }
 

@@ -7296,6 +7296,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         atPoint:cursorOrigin
                                           color:bgColor];
                 break;
+
+            case CURSOR_DEFAULT:
+                assert(false);
+                break;
         }
     }
 
