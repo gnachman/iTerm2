@@ -422,7 +422,10 @@ static const int kMaxScreenRows = 4096;
                         ansiMode_ = mode;
                         break;
                     case 3:
-                        self.columnMode = mode;
+                        if (self.allowColumnMode) {
+                            self.columnMode = mode;
+                            [delegate_ terminalSetWidth:(self.columnMode ? 132 : 80)];
+                        }
                         break;
                     case 4:
                         self.scrollMode = mode;
@@ -1424,10 +1427,6 @@ static const int kMaxScreenRows = 4096;
 
         case VT100CSI_DECSET:
         case VT100CSI_DECRST:
-            if (token.csi->p[0] == 3 && // DECCOLM
-                self.allowColumnMode) {
-                [delegate_ terminalSetWidth:(self.columnMode ? 132 : 80)];
-            }
             break;
 
             // ANSI CSI
