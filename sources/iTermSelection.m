@@ -8,6 +8,7 @@
 
 #import "iTermSelection.h"
 #import "DebugLogging.h"
+#import "ScreenChar.h"
 
 @implementation iTermSubSelection
 
@@ -503,11 +504,40 @@
 }
 
 - (void)moveUpByLines:(int)numLines {
-    _range.coordRange.start.y -= numLines;
-    _range.coordRange.end.y -= numLines;
+    BOOL notifyDelegateOfChange = _subSelections.count > 0 || [self haveLiveSelection];
+    if ([self haveLiveSelection]) {
+        _range.coordRange.start.y -= numLines;
+        _range.coordRange.end.y -= numLines;
+        if (_range.coordRange.start.y < 0) {
+           _range.coordRange.start.x = 0;
+           _range.coordRange.start.y = 0;
+        }
+       if (_range.coordRange.end.y < 0) {
+          [self clearSelection];
+        }
+    }
 
-    if (_range.coordRange.start.y < 0 || _range.coordRange.end.y < 0) {
-        [self clearSelection];
+    NSMutableArray *subsToRemove = [NSMutableArray array];
+    for (iTermSubSelection *sub in _subSelections) {
+        VT100GridWindowedRange range = sub.range;
+        range.coordRange.start.y -= numLines;
+        range.coordRange.end.y -= numLines;
+        if (range.coordRange.start.y < 0) {
+            range.coordRange.start.x = 0;
+            range.coordRange.start.y = 0;
+        }
+        sub.range = range;
+        if (range.coordRange.end.y < 0) {
+            [subsToRemove addObject:sub];
+        }
+    }
+
+    for (iTermSubSelection *sub in subsToRemove) {
+        [_subSelections removeObject:sub];
+    }
+
+    if (notifyDelegateOfChange) {
+        [_delegate selectionDidChange:self];
     }
 }
 
@@ -557,7 +587,9 @@
     theCopy->_initialRange = _initialRange;
     theCopy->_live = _live;
     theCopy->_extend = _extend;
-    [theCopy->_subSelections addObjectsFromArray:_subSelections];
+    for (iTermSubSelection *sub in _subSelections) {
+        [theCopy->_subSelections addObject:[[sub copy] autorelease]];
+    }
     theCopy->_resumable = _resumable;
 
     theCopy.delegate = _delegate;
@@ -835,6 +867,53 @@
         [indexes removeIndexes:indexesToRemove];
         [indexes addIndexes:indexesToAdd];
     }
+
+    return indexes;
+}
+
+// orphaned tab fillers are selected iff they are in the selection.
+// unorphaned tab fillers are selected iff their tab is selected.
+- (NSIndexSet *)selectedIndexesIncludingTabFillersInLine:(int)y {
+    NSIndexSet *basicIndexes = [self selectedIndexesOnLine:y];
+    if (!basicIndexes.count) {
+        return basicIndexes;
+    }
+
+    // Add in tab fillers preceding already-selected tabs.
+    NSMutableIndexSet *indexes = [[basicIndexes mutableCopy] autorelease];
+
+    NSRange range;
+    if (_range.columnWindow.length > 0) {
+        range = NSMakeRange(_range.columnWindow.location, _range.columnWindow.length);
+    } else {
+        range = NSMakeRange(0, [_delegate selectionViewportWidth]);
+    }
+    NSIndexSet *tabs = [_delegate selectionIndexesOnLine:y
+                                     containingCharacter:'\t'
+                                                 inRange:range];
+    NSIndexSet *tabFillers =
+        [_delegate selectionIndexesOnLine:y
+                      containingCharacter:TAB_FILLER
+                                  inRange:range];
+
+    [tabs enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        BOOL select = [basicIndexes containsIndex:idx];
+        // Found a tab. If selected, add all preceding consecutive TAB_FILLERS
+        // to |indexes|. If not selected, remove all preceding consecutive
+        // TAB_FILLERs.
+        int theIndex = idx;
+        for (int i = theIndex - 1; i >= range.location; i--) {
+            if ([tabFillers containsIndex:i]) {
+                if (select) {
+                    [indexes addIndex:i];
+                } else {
+                    [indexes removeIndex:i];
+                }
+            } else {
+                break;
+            }
+        }
+    }];
 
     return indexes;
 }

@@ -35,9 +35,7 @@ const int kColorMapAnsiWhite = kColorMap8bitBase + 7;
 const int kColorMapAnsiBrightModifier = 8;
 
 @interface iTermColorMap ()
-@property(nonatomic, retain) NSMutableDictionary *dimmedColorCache;
 @property(nonatomic, retain) NSMutableDictionary *map;
-@property(nonatomic, retain) NSMutableDictionary *mutedMap;
 @end
 
 @implementation iTermColorMap {
@@ -46,10 +44,12 @@ const int kColorMapAnsiBrightModifier = 8;
     CGFloat _backgroundGreen;
     CGFloat _backgroundBlue;
 
-    // Previous contrasting color returned
-    NSColor *memoizedContrastingColor_;
-    double memoizedMainRGB_[4];  // rgba for "main" color memoized.
-    double memoizedOtherRGB_[3];  // rgb for "other" color memoized.
+    // Memoized colors and components
+    CGFloat _lastTextComponents[3];
+    NSColor *_lastTextColor;
+
+    CGFloat _lastBackgroundComponents[3];
+    NSColor *_lastBackgroundColor;
 }
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
@@ -61,37 +61,25 @@ const int kColorMapAnsiBrightModifier = 8;
 - (id)init {
     self = [super init];
     if (self) {
-        _dimmedColorCache = [[NSMutableDictionary alloc] init];
         _map = [[NSMutableDictionary alloc] init];
-        _mutedMap = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
 
 - (void)dealloc {
-    [_dimmedColorCache release];
     [_map release];
-    [_mutedMap release];
-    [memoizedContrastingColor_ release];
+    [_lastTextColor release];
+    [_lastBackgroundColor release];
     [super dealloc];
-}
-
-- (void)setMinimumContrast:(double)value {
-    _minimumContrast = value;
-    [memoizedContrastingColor_ release];
-    memoizedContrastingColor_ = nil;
-    [self invalidateCache];
 }
 
 - (void)setDimmingAmount:(double)dimmingAmount {
     _dimmingAmount = dimmingAmount;
-    [self invalidateCache];
     [_delegate colorMap:self dimmingAmountDidChangeTo:dimmingAmount];
 }
 
 - (void)setMutingAmount:(double)mutingAmount {
     _mutingAmount = mutingAmount;
-    [_mutedMap removeAllObjects];
     [_delegate colorMap:self mutingAmountDidChangeTo:mutingAmount];
 }
 
@@ -106,9 +94,6 @@ const int kColorMapAnsiBrightModifier = 8;
     }
     theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     _map[@(theKey)] = theColor;
-    _mutedMap[@(theKey)] = [theColor colorMutedBy:_mutingAmount
-                                          towards:_map[@(kColorMapBackground)]];
-    [_dimmedColorCache removeAllObjects];
     if (theKey == kColorMapBackground) {
         _backgroundBrightness = [theColor perceivedBrightness];
     }
@@ -133,104 +118,191 @@ const int kColorMapAnsiBrightModifier = 8;
     }
 }
 
-- (NSColor *)mutedColorForKey:(iTermColorMapKey)theKey {
-    if (_mutingAmount == 0) {
-        return [self colorForKey:theKey];
-    } else {
-        if (theKey == kColorMapInvalid) {
-            return [NSColor redColor];
-        } else if (theKey >= kColorMap24bitBase) {
-            int n = theKey - kColorMap24bitBase;
-            int blue = (n & 0xff);
-            int green = (n >> 8) & 0xff;
-            int red = (n >> 16) & 0xff;
-            return [NSColor colorWith8BitRed:red
-                                       green:green
-                                        blue:blue
-                                      muting:_mutingAmount
-                               backgroundRed:_backgroundRed
-                             backgroundGreen:_backgroundGreen
-                              backgroundBlue:_backgroundBlue];
-        } else {
-            NSColor *result = _mutedMap[@(theKey)];
-            if (!result) {
-                result = [_map[@(theKey)] colorMutedBy:_mutingAmount
-                                               towards:_map[@(kColorMapBackground)]];
-              _mutedMap[@(theKey)] = result;
-            }
-            return result;
-        }
-    }
-}
-
-- (NSColor *)dimmedColorForKey:(iTermColorMapKey)theKey {
-    if (_dimmingAmount == 0) {
-        return [self mutedColorForKey:theKey];
-    }
-    NSColor *theColor = _dimmedColorCache[@(theKey)];
-    if (!theColor) {
-        theColor = [self dimmedColorForColor:[self colorForKey:theKey]];
-        if (theKey < kColorMap24bitBase) {
-            // We don't cache dimmed versions of 24 bit colors because it would get too big.
-            _dimmedColorCache[@(theKey)] = theColor;
-        }
-    }
-    return theColor;
-}
-
-- (void)invalidateCache {
-    [_dimmedColorCache removeAllObjects];
-}
-
-- (NSColor *)dimmedColorForColor:(NSColor *)theColor {
-    if (_dimOnlyText) {
-        return [theColor colorDimmedBy:_dimmingAmount towardsGrayLevel:_backgroundBrightness];
-    } else {
-        return [theColor colorDimmedBy:_dimmingAmount towardsGrayLevel:0.5];
-    }
-}
-
 - (void)setDimOnlyText:(BOOL)dimOnlyText {
     _dimOnlyText = dimOnlyText;
     [_delegate colorMap:self dimmingAmountDidChangeTo:_dimmingAmount];
 }
 
-- (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor
-{
-    double rgb[4];
-    rgb[0] = [mainColor redComponent];
-    rgb[1] = [mainColor greenComponent];
-    rgb[2] = [mainColor blueComponent];
-    rgb[3] = [mainColor alphaComponent];
-
-    double orgb[3];
-    orgb[0] = [otherColor redComponent];
-    orgb[1] = [otherColor greenComponent];
-    orgb[2] = [otherColor blueComponent];
-
-    if (!memoizedContrastingColor_ ||
-        memcmp(rgb, memoizedMainRGB_, sizeof(rgb)) ||
-        memcmp(orgb, memoizedOtherRGB_, sizeof(orgb))) {
-        // We memoize the last returned value not so much for performance as for
-        // consistency. It ensures that two consecutive calls for the same color
-        // will return the same pointer. See the note at the call site in
-        // _constructRuns:theLine:...matches:.
-        [memoizedContrastingColor_ autorelease];
-        CGFloat backgroundComponents[3] = { _backgroundRed, _backgroundGreen, _backgroundBlue };
-        NSColor *contrastingColor = [NSColor colorWithComponents:rgb
-                                   withContrastAgainstComponents:orgb
-                                                 minimumContrast:_minimumContrast
-                                                         mutedBy:_mutingAmount
-                                                towardComponents:backgroundComponents];
-        NSColor *dimmedContrastingColor = [self dimmedColorForColor:contrastingColor];
-        memoizedContrastingColor_ = [dimmedContrastingColor retain];
-        if (!memoizedContrastingColor_) {
-            memoizedContrastingColor_ = [mainColor retain];
-        }
-        memmove(memoizedMainRGB_, rgb, sizeof(rgb));
-        memmove(memoizedOtherRGB_, orgb, sizeof(orgb));
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
+- (void)getComponents:(CGFloat *)result
+    byAveragingComponents:(CGFloat *)rgb1
+       withComponents:(CGFloat *)rgb2
+                alpha:(CGFloat)alpha {
+    for (int i = 0; i < 3; i++) {
+        result[i] = rgb1[i] * (1 - alpha) + rgb2[i] * alpha;
     }
-    return memoizedContrastingColor_;
+    result[3] = rgb1[3];
+}
+
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
+- (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
+                        overBackgroundColor:(NSColor *)backgroundColor {
+    // Fist apply minimum contrast, then muting, then dimming (as needed).
+    CGFloat textRgb[4];
+    [textColor getComponents:textRgb];
+    CGFloat backgroundRgb[4];
+    [backgroundColor getComponents:backgroundRgb];
+
+    CGFloat contrastingRgb[4];
+    if (backgroundColor) {
+        [NSColor getComponents:contrastingRgb
+                 forComponents:textRgb
+            withContrastAgainstComponents:backgroundRgb
+                          minimumContrast:_minimumContrast];
+    } else {
+        memmove(contrastingRgb, textRgb, sizeof(textRgb));
+    }
+
+    CGFloat defaultBackgroundComponents[4];
+    [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
+
+    CGFloat mutedRgb[4];
+    [self getComponents:mutedRgb
+        byAveragingComponents:contrastingRgb
+               withComponents:defaultBackgroundComponents
+                        alpha:_mutingAmount];
+
+    CGFloat dimmedRgb[4];
+    CGFloat grayRgb[] = { _backgroundBrightness, _backgroundBrightness, _backgroundBrightness };
+    if (!_dimOnlyText) {
+        grayRgb[0] = grayRgb[1] = grayRgb[2] = 0.5;
+    }
+    [self getComponents:dimmedRgb
+        byAveragingComponents:mutedRgb
+               withComponents:grayRgb
+                        alpha:_dimmingAmount];
+
+    // Premultiply alpha
+    CGFloat alpha = textRgb[3];
+    for (int i = 0; i < 3; i++) {
+        dimmedRgb[i] = dimmedRgb[i] * alpha + backgroundRgb[i] * (1 - alpha);
+    }
+    dimmedRgb[3] = 1;
+
+    if (!memcmp(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 4)) {
+        return _lastTextColor;
+    } else {
+        [_lastTextColor autorelease];
+        memmove(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 4);
+        _lastTextColor = [[NSColor colorWithColorSpace:textColor.colorSpace
+                                            components:dimmedRgb
+                                                 count:4] retain];
+        return _lastTextColor;
+    }
+}
+
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
+- (NSColor *)colorByMutingColor:(NSColor *)color {
+    if (_mutingAmount < 0.01) {
+        return color;
+    }
+
+    CGFloat components[4];
+    [color getComponents:components];
+
+    CGFloat defaultBackgroundComponents[4];
+    [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
+
+    CGFloat mutedRgb[4];
+    [self getComponents:mutedRgb
+        byAveragingComponents:components
+               withComponents:defaultBackgroundComponents
+                        alpha:_mutingAmount];
+    mutedRgb[3] = components[3];
+
+    return [NSColor colorWithColorSpace:color.colorSpace
+                             components:mutedRgb
+                                  count:4];
+}
+
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
+- (NSColor *)colorByDimmingTextColor:(NSColor *)color {
+    if (_dimmingAmount < 0.01) {
+        return color;
+    }
+
+    CGFloat components[4];
+    [color getComponents:components];
+
+    CGFloat defaultBackgroundComponents[4];
+    [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
+
+    CGFloat dimmedRgb[4];
+    CGFloat grayRgb[] = { _backgroundBrightness, _backgroundBrightness, _backgroundBrightness };
+    if (!_dimOnlyText) {
+        grayRgb[0] = grayRgb[1] = grayRgb[2] = 0.5;
+    }
+    [self getComponents:dimmedRgb
+      byAveragingComponents:components
+             withComponents:grayRgb
+                      alpha:_dimmingAmount];
+    dimmedRgb[3] = components[3];
+
+    return [NSColor colorWithColorSpace:color.colorSpace
+                             components:dimmedRgb
+                                  count:4];
+}
+
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
+- (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)backgroundColor {
+    // Fist apply muting then dimming (as needed).
+    CGFloat backgroundRgb[4];
+    [backgroundColor getComponents:backgroundRgb];
+
+    CGFloat defaultBackgroundComponents[4];
+    [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
+
+    CGFloat mutedRgb[4];
+    [self getComponents:mutedRgb
+        byAveragingComponents:backgroundRgb
+               withComponents:defaultBackgroundComponents
+                        alpha:_mutingAmount];
+
+    CGFloat dimmedRgb[4];
+    CGFloat grayRgb[] = { 0.5, 0.5, 0.5 };
+    BOOL shouldDim = !_dimOnlyText && _dimmingAmount > 0;
+    // If dimOnlyText is set then text and non-default background colors get dimmed toward black.
+    if (_dimOnlyText) {
+        const BOOL isDefaultBackgroundColor =
+            (fabs(backgroundRgb[0] - defaultBackgroundComponents[0]) < 0.01 &&
+             fabs(backgroundRgb[1] - defaultBackgroundComponents[1]) < 0.01 &&
+             fabs(backgroundRgb[2] - defaultBackgroundComponents[2]) < 0.01);
+        if (!isDefaultBackgroundColor) {
+            grayRgb[0] = grayRgb[1] = grayRgb[2] = 0;
+            shouldDim = YES;
+        }
+    }
+
+    if (shouldDim) {
+        [self getComponents:dimmedRgb
+      byAveragingComponents:mutedRgb
+             withComponents:grayRgb
+                      alpha:_dimmingAmount];
+    } else {
+        memmove(dimmedRgb, mutedRgb, sizeof(CGFloat) * 3);
+    }
+    dimmedRgb[3] = backgroundRgb[3];
+
+    if (!memcmp(_lastBackgroundComponents, dimmedRgb, sizeof(CGFloat) * 4)) {
+        return _lastBackgroundColor;
+    } else {
+        [_lastBackgroundColor autorelease];
+        memmove(_lastBackgroundComponents, dimmedRgb, sizeof(CGFloat) * 4);
+        _lastBackgroundColor = [[NSColor colorWithColorSpace:backgroundColor.colorSpace
+                                                  components:dimmedRgb
+                                                       count:4] retain];
+        return _lastBackgroundColor;
+    }
 }
 
 - (NSString *)profileKeyForColorMapKey:(int)theKey {

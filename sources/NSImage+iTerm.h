@@ -16,4 +16,9 @@
 // Recolor the image with the given color but preserve its alpha channel.
 - (NSImage *)imageWithColor:(NSColor *)color;
 
+// e.g., NSPNGFileType
+- (NSData *)dataForFileOfType:(NSBitmapImageFileType)fileType;
+
+- (NSData *)rawPixelsInRGBColorSpace;
+
 @end

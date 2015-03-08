@@ -114,11 +114,7 @@ typedef enum {
       trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                 cappedAtSize:(int)maxBytes;
 
-- (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock;
-
-- (BOOL)isTabFillerOrphanAt:(VT100GridCoord)coord;
+- (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 
 - (int)lengthOfLine:(int)line;
 

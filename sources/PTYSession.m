@@ -1423,6 +1423,19 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     });
 }
 
+- (void)synchronousReadTask:(NSString *)string {
+    NSData *data = [string dataUsingEncoding:self.encoding];
+    [_terminal.parser putStreamData:data.bytes length:data.length];
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [_terminal.parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
+    }
+    [self executeTokens:&vector bytesHandled:data.length];
+}
+
 - (BOOL)shouldExecuteToken {
     return (!_exited &&
             _terminal &&
@@ -2643,8 +2656,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setNeedsDisplay:YES];
 }
 
-- (void)setSmartCursorColor:(BOOL)value
-{
+- (void)setSmartCursorColor:(BOOL)value {
     [[self textview] setUseSmartCursorColor:value];
 }
 
@@ -2669,13 +2681,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setTransparency:transparency];
 }
 
-- (float)blend
-{
+- (float)blend {
     return [_textview blend];
 }
 
-- (void)setBlend:(float)blendVal
-{
+- (void)setBlend:(float)blendVal {
     [_textview setBlend:blendVal];
 }
 
@@ -2906,6 +2916,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
+- (void)updateDisplayCaller {
+    dispatch_async(dispatch_get_current_queue(), ^{
+        [self updateDisplay];
+    });
+}
+
 - (void)updateDisplay {
     _timerRunning = YES;
     BOOL anotherUpdateNeeded = [NSApp isActive];
@@ -3009,7 +3025,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
                                                      target:self
-                                                   selector:@selector(updateDisplay)
+                                                   selector:@selector(updateDisplayCaller)
                                                    userInfo:[NSNumber numberWithFloat:(float)timeout]
                                                     repeats:NO] retain];
 }
@@ -4673,15 +4689,21 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
         if (blendDefaultBackground) {
             // Blend default background color over background image.
-            [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:1 - _textview.blend] set];
+            [[[self processedBackgroundColor] colorWithAlphaComponent:1 - _textview.blend] set];
             NSRectFillUsingOperation(rect, NSCompositeSourceOver);
         }
     } else if (blendDefaultBackground) {
         // No image, so just draw background color.
-        [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:alpha] set];
-        NSRectFill(rect);
+        [[[self processedBackgroundColor] colorWithAlphaComponent:alpha] set];
+        NSRectFillUsingOperation(rect, NSCompositeCopy);
     }
 }
+
+- (NSColor *)processedBackgroundColor {
+    NSColor *unprocessedColor = [_colorMap colorForKey:kColorMapBackground];
+    return [_colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];
+}
+
 
 - (void)textViewPostTabContentsChangedNotification
 {
@@ -4838,8 +4860,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [[self class] pasteboardFile] != nil;
 }
 
-- (BOOL)textViewWindowUsesTransparency
-{
+- (BOOL)textViewWindowUsesTransparency {
     return [[[self tab] realParentWindow] useTransparency];
 }
 
