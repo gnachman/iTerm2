@@ -453,9 +453,17 @@ static const int kMaxScreenRows = 4096;
                 // alternate screen buffer mode
                 if (!self.disableSmcupRmcup) {
                     if (mode) {
+                        int x = [delegate_ terminalCursorX];
+                        int y = [delegate_ terminalCursorY];
                         [delegate_ terminalShowAltBuffer];
+                        [delegate_ terminalSetCursorX:x];
+                        [delegate_ terminalSetCursorY:y];
                     } else {
+                        int x = [delegate_ terminalCursorX];
+                        int y = [delegate_ terminalCursorY];
                         [delegate_ terminalShowPrimaryBuffer];
+                        [delegate_ terminalSetCursorX:x];
+                        [delegate_ terminalSetCursorY:y];
                     }
                 }
                 break;
@@ -547,6 +555,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeSGR:(VT100Token *)token {
+    assert(token->type == VT100CSI_SGR);
     if (token.csi->count == 0) {
         [self resetGraphicRendition];
     } else {
