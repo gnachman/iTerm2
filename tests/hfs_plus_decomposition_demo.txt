@@ -1,2 +1,3 @@
-ÅÅ
-神神
+The difference hinges on whether characters have ambiguous widths, so remember to toggle that setting.
+ÅÅx
+神神x

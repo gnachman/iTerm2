@@ -33,18 +33,21 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
               backgroundGreen:(CGFloat)bgGreen
                backgroundBlue:(CGFloat)bgBlue;
 
-+ (NSColor *)calibratedColorWithRed:(double)r
-                              green:(double)g
-                               blue:(double)b
-                              alpha:(double)a
-                perceivedBrightness:(CGFloat)t
-                   towardComponents:(CGFloat *)baseColorComponents;
+// Modify r,g,b to have brightness t, placing the values in result which should hold 4 CGFloats.
++ (void)getComponents:(CGFloat *)result
+      forColorWithRed:(CGFloat)r
+                green:(CGFloat)g
+                 blue:(CGFloat)b
+                alpha:(CGFloat)a
+  perceivedBrightness:(CGFloat)t;
 
-+ (NSColor*)colorWithComponents:(double *)mainComponents
-    withContrastAgainstComponents:(double *)otherComponents
-                  minimumContrast:(CGFloat)minimumContrast
-                          mutedBy:(double)muting
-                 towardComponents:(CGFloat *)baseColorComponents;
+// Fill in result with four values by modifying mainComponents to have at least
+// minimumContrast against otherComponents. All arrays are
+// red,green,blue,alpha. Alpha is copied over from mainComponents to result.
++ (void)getComponents:(CGFloat *)result
+        forComponents:(CGFloat *)mainComponents
+  withContrastAgainstComponents:(CGFloat *)otherComponents
+                minimumContrast:(CGFloat)minimumContrast;
 
 - (int)nearestIndexIntoAnsi256ColorTable;
 
@@ -57,6 +60,8 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 - (BOOL)isDark;
 
 - (NSDictionary *)dictionaryValue;
-- (NSColor *)colorMutedBy:(double)muting towards:(NSColor *)baseColor;
+
+// Return the color you'd get by rendering self over background.
+- (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;
 
 @end

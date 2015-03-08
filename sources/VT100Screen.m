@@ -1493,15 +1493,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.allDirty = NO;
 }
 
-- (void)setLineDirtyAtY:(int)y
-{
-    [currentGrid_ markCharsDirty:YES
-                      inRectFrom:VT100GridCoordMake(0, y)
-                              to:VT100GridCoordMake(self.width - 1, y)];
+- (void)setLineDirtyAtY:(int)y {
+    if (y >= 0) {
+        [currentGrid_ markCharsDirty:YES
+                          inRectFrom:VT100GridCoordMake(0, y)
+                                  to:VT100GridCoordMake(self.width - 1, y)];
+    }
 }
 
-- (void)setCharDirtyAtCursorX:(int)x Y:(int)y
-{
+- (void)setCharDirtyAtCursorX:(int)x Y:(int)y {
+    if (y < 0) {
+        return;
+    }
     int xToMark = x;
     int yToMark = y;
     if (xToMark == currentGrid_.size.width && yToMark < currentGrid_.size.height - 1) {

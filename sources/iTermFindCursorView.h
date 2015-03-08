@@ -13,7 +13,6 @@ extern const double kFindCursorHoldTime;
 @protocol iTermFindCursorViewDelegate <NSObject>
 
 - (void)findCursorViewDismiss;
-- (void)findCursorBlink;
 
 @end
 
@@ -26,7 +25,5 @@ extern const double kFindCursorHoldTime;
 
 - (void)startTearDownTimer;
 - (void)stopTearDownTimer;
-- (void)startBlinkNotifications;
-- (void)stopBlinkNotifications;
 
 @end
