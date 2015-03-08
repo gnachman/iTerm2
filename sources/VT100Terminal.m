@@ -26,6 +26,8 @@
 
 @end
 
+#define NUM_CHARSETS 4
+
 typedef struct {
     BOOL bold;
     BOOL blink;
@@ -46,10 +48,10 @@ typedef struct {
     ColorMode bgColorMode;
 } VT100GraphicRendition;
 
-// TODO: Add flags.
 typedef struct {
     VT100GridCoord position;
     int charset;
+    BOOL lineDrawing[NUM_CHARSETS];
     VT100GraphicRendition graphicRendition;
     BOOL origin;
     BOOL wraparound;
@@ -216,28 +218,6 @@ static const int kMaxScreenRows = 4096;
     [delegate_ terminalTypeDidChange];
 }
 
-- (void)saveCursor {
-    VT100SavedCursor *savedCursor = [self savedCursor];
-
-    savedCursor->position = VT100GridCoordMake([delegate_ terminalCursorX] - 1,
-                                               [delegate_ terminalCursorY] - 1);
-    savedCursor->charset = _charset;
-    savedCursor->graphicRendition = graphicRendition_;
-    savedCursor->origin = self.originMode;
-    savedCursor->wraparound = self.wraparoundMode;
-}
-
-- (void)restoreCursor {
-    VT100SavedCursor *savedCursor = [self savedCursor];
-    [delegate_ terminalSetCursorX:savedCursor->position.x + 1];
-    [delegate_ terminalSetCursorY:savedCursor->position.y + 1];
-    _charset = savedCursor->charset;
-    graphicRendition_ = savedCursor->graphicRendition;
-
-    self.originMode = savedCursor->origin;
-    self.wraparoundMode = savedCursor->wraparound;
-}
-
 - (void)setForeground24BitColor:(NSColor *)color {
     graphicRendition_.fgColorCode = color.redComponent * 255.0;
     graphicRendition_.fgGreen = color.greenComponent * 255.0;
@@ -293,6 +273,10 @@ static const int kMaxScreenRows = 4096;
     receivingFile_ = NO;
     _encoding = _canonicalEncoding;
     _parser.encoding = _canonicalEncoding;
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        mainSavedCursor_.lineDrawing[i] = NO;
+        altSavedCursor_.lineDrawing[i] = NO;
+    }
     [self resetSavedCursorPositions];
     [delegate_ terminalResetPreservingPrompt:preservePrompt];
 }
@@ -531,13 +515,11 @@ static const int kMaxScreenRows = 4096;
                 if (!self.disableSmcupRmcup) {
                     if (mode) {
                         [self saveCursor];
-                        [delegate_ terminalSaveCharsetFlags];
                         [delegate_ terminalShowAltBuffer];
                         [delegate_ terminalClearScreen];
                     } else {
                         [delegate_ terminalShowPrimaryBuffer];
                         [self restoreCursor];
-                        [delegate_ terminalRestoreCharsetFlags];
                     }
                 }
                 break;
@@ -967,18 +949,6 @@ static const int kMaxScreenRows = 4096;
     return resultString;
 }
 
-- (void)resetSavedCursorPositions {
-    altSavedCursor_.position = VT100GridCoordMake(0, 0);
-    mainSavedCursor_.position = VT100GridCoordMake(0, 0);
-}
-
-- (void)clampSavedCursorToScreenSize:(VT100GridSize)newSize {
-    altSavedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, altSavedCursor_.position.x),
-                                                  MIN(newSize.height - 1, altSavedCursor_.position.y));
-    mainSavedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, mainSavedCursor_.position.x),
-                                                   MIN(newSize.height - 1, mainSavedCursor_.position.y));
-}
-
 // The main and alternate screens have different saved cursors. This returns the current one. In
 // tmux mode, only one is used to more closely approximate tmux's behavior.
 - (VT100SavedCursor *)savedCursor {
@@ -994,9 +964,136 @@ static const int kMaxScreenRows = 4096;
     return savedCursor;
 }
 
+- (void)saveCursor {
+    VT100SavedCursor *savedCursor = [self savedCursor];
+
+    savedCursor->position = VT100GridCoordMake([delegate_ terminalCursorX] - 1,
+                                               [delegate_ terminalCursorY] - 1);
+    savedCursor->charset = _charset;
+
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        savedCursor->lineDrawing[i] = [delegate_ terminalLineDrawingFlagForCharset:i];
+    }
+    savedCursor->graphicRendition = graphicRendition_;
+    savedCursor->origin = self.originMode;
+    savedCursor->wraparound = self.wraparoundMode;
+}
+
+- (void)resetSavedCursorPositions {
+    mainSavedCursor_.position = VT100GridCoordMake(0, 0);
+    altSavedCursor_.position = VT100GridCoordMake(0, 0);
+}
+
+- (void)clampSavedCursorToScreenSize:(VT100GridSize)newSize {
+    mainSavedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, mainSavedCursor_.position.x),
+                                                   MIN(newSize.height - 1, mainSavedCursor_.position.y));
+    altSavedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, altSavedCursor_.position.x),
+                                                  MIN(newSize.height - 1, altSavedCursor_.position.y));
+}
+
 - (void)setSavedCursorPosition:(VT100GridCoord)position {
     VT100SavedCursor *savedCursor = [self savedCursor];
     savedCursor->position = position;
+}
+
+- (void)restoreCursor {
+    VT100SavedCursor *savedCursor = [self savedCursor];
+    [delegate_ terminalSetCursorX:savedCursor->position.x + 1];
+    [delegate_ terminalSetCursorY:savedCursor->position.y + 1];
+    _charset = savedCursor->charset;
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [delegate_ terminalSetCharset:i toLineDrawingMode:savedCursor->lineDrawing[i]];
+    }
+
+    graphicRendition_ = savedCursor->graphicRendition;
+
+    self.originMode = savedCursor->origin;
+    self.wraparoundMode = savedCursor->wraparound;
+}
+
+// These steps are derived from xterm's source.
+- (void)softReset {
+    // The steps here are derived from xterm's implementation. The order is different but not in
+    // a significant way.
+    int x = [delegate_ terminalCursorX];
+    int y = [delegate_ terminalCursorY];
+
+    // Show cursor
+    [delegate_ terminalSetCursorVisible:YES];
+
+    // Reset cursor shape to default
+    [delegate_ terminalSetCursorType:CURSOR_DEFAULT];
+
+    // Remove tb and lr margins
+    [delegate_ terminalSetScrollRegionTop:0
+                                   bottom:[delegate_ terminalHeight] - 1];
+    [delegate_ terminalSetLeftMargin:0 rightMargin:[delegate_ terminalWidth] - 1];
+
+
+    // Turn off origin mode
+    self.originMode = NO;
+
+    // Reset colors
+    graphicRendition_.fgColorCode = 0;
+    graphicRendition_.fgGreen = 0;
+    graphicRendition_.fgBlue = 0;
+    graphicRendition_.fgColorMode = 0;
+
+    graphicRendition_.bgColorCode = 0;
+    graphicRendition_.bgGreen = 0;
+    graphicRendition_.bgBlue = 0;
+    graphicRendition_.bgColorMode = 0;
+
+    // Reset character-sets to initial state
+    _charset = 0;
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [delegate_ terminalSetCharset:i toLineDrawingMode:NO];
+    }
+
+    // (Not supported: Reset DECSCA)
+    // Reset DECCKM
+    self.cursorMode = NO;
+
+    // (Not supported: Reset KAM)
+
+    // Reset DECKPAM
+    self.keypadMode = NO;
+
+    // Set WRAPROUND to initial value
+    self.wraparoundMode = YES;
+
+    // Set REVERSEWRAP to initial value
+    self.reverseWraparoundMode = NO;
+
+    // Reset INSERT
+    self.insertMode = NO;
+
+    // Reset INVERSE
+    graphicRendition_.reversed = NO;
+
+    // Reset BOLD
+    graphicRendition_.bold = NO;
+
+    // Reset BLINK
+    graphicRendition_.blink = NO;
+
+    // Reset UNDERLINE
+    graphicRendition_.under = NO;
+
+    // (Not supported: Reset INVISIBLE)
+
+    // Save screen flags
+    // Save fg, bg colors
+    // Save charset flags
+    // Save current charset
+    [self saveCursor];
+
+    // Reset saved cursor position to 1,1.
+    VT100SavedCursor *savedCursor = [self savedCursor];
+    savedCursor->position = VT100GridCoordMake(0, 0);
+
+    [delegate_ terminalSetCursorX:x];
+    [delegate_ terminalSetCursorY:y];
 }
 
 - (VT100GridCoord)savedCursorPosition {
@@ -1168,7 +1265,6 @@ static const int kMaxScreenRows = 4096;
         case ANSICSI_RCP:
         case VT100CSI_DECRC:
             [self restoreCursor];
-            [delegate_ terminalRestoreCharsetFlags];
             break;
 
         case ANSICSI_SCP:
@@ -1178,7 +1274,6 @@ static const int kMaxScreenRows = 4096;
             // Fall through.
         case VT100CSI_DECSC:
             [self saveCursor];
-            [delegate_ terminalSaveCharsetFlags];
             break;
 
         case VT100CSI_DECSTBM:
@@ -1274,14 +1369,7 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         case VT100CSI_DECSTR:
-            [self resetGraphicRendition];
-            self.wraparoundMode = YES;
-            self.reverseWraparoundMode = NO;
-            self.originMode = NO;
-            self.moreFix = NO;
-            [delegate_ terminalSoftReset];
-            [self saveCursor];
-            [self resetSavedCursorPositions];
+            [self softReset];
             break;
         case VT100CSI_DECSCUSR:
             switch (token.csi->p[0]) {

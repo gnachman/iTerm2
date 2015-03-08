@@ -73,12 +73,6 @@ typedef enum {
 // Replaces the screen contents with a test pattern.
 - (void)terminalShowTestPattern;
 
-// Restores charset flags.
-- (void)terminalRestoreCharsetFlags;
-
-// Save line-drawing-mode flags.
-- (void)terminalSaveCharsetFlags;
-
 // Returns the cursor's position relative to the scroll region's origin. 1-based.
 - (int)terminalRelativeCursorX;
 
@@ -113,9 +107,6 @@ typedef enum {
 // Clear the screen, preserving the cursor's line.
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt;
 
-// Saves the cursor, resets the scroll region, and restores the cursor position and charset flags.
-- (void)terminalSoftReset;
-
 // Changes the cursor type.
 - (void)terminalSetCursorType:(ITermCursorType)cursorType;
 
@@ -127,6 +118,7 @@ typedef enum {
 
 // Sets whether one charset is in linedrawing mode.
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode;
+- (BOOL)terminalLineDrawingFlagForCharset:(int)index;
 
 // Remove all tab stops.
 - (void)terminalRemoveTabStops;

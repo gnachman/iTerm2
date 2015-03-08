@@ -27,7 +27,6 @@ class DECSTRTests(object):
   DECRLM                    Reset (Left-to-right), regardless of NVR setting.
   DECPCTERM                 Always reset."""
 
-  @knownBug(terminal="iTerm2", reason="iTerm2 fails to reset saved cursor position.")
   def test_DECSTR_DECSC(self):
     # Save cursor position
     esccmd.CUP(Point(5, 6))

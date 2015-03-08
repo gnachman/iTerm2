@@ -94,7 +94,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         for (int i = 0; i < NUM_CHARSETS; i++) {
             charsetUsesLineDrawingMode_[i] = NO;
-            savedCharsetUsesLineDrawingMode_[i] = NO;
         }
 
         findContext_ = [[FindContext alloc] init];
@@ -1230,12 +1229,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self popScrollbackLines:linesPushed];
 }
 
-- (void)resetCharset {
-    for (int i = 0; i < NUM_CHARSETS; i++) {
-        charsetUsesLineDrawingMode_[i] = NO;
-    }
-}
-
 - (void)setTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
     primaryGrid_.trackCursorLineMovement = trackCursorLineMovement;
     altGrid_.trackCursorLineMovement = trackCursorLineMovement;
@@ -2114,22 +2107,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.cursor = VT100GridCoordMake(0, 0);
 }
 
-- (void)terminalRestoreCharsetFlags
-{
-    memmove(charsetUsesLineDrawingMode_,
-            savedCharsetUsesLineDrawingMode_,
-            sizeof(savedCharsetUsesLineDrawingMode_));
-
-    [delegate_ screenTriggerableChangeDidOccur];
-}
-
-- (void)terminalSaveCharsetFlags
-{
-    memmove(savedCharsetUsesLineDrawingMode_,
-            charsetUsesLineDrawingMode_,
-            sizeof(charsetUsesLineDrawingMode_));
-}
-
 - (int)terminalRelativeCursorX {
     return currentGrid_.cursorX - currentGrid_.leftMargin + 1;
 }
@@ -2269,27 +2246,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self setInitialTabStops];
 
     for (int i = 0; i < NUM_CHARSETS; i++) {
-        savedCharsetUsesLineDrawingMode_[i] = NO;
         charsetUsesLineDrawingMode_[i] = NO;
     }
     [delegate_ screenDidReset];
     commandStartX_ = commandStartY_ = -1;
     [self showCursor:YES];
-}
-
-- (void)terminalSoftReset {
-    // See note in xterm-terminfo.txt (search for DECSTR).
-
-    [self terminalSaveCharsetFlags];
-
-    // reset scrolling margins
-    [currentGrid_ resetScrollRegions];
-
-    // reset SGR (done in VT100Terminal)
-    // reset wraparound mode (done in VT100Terminal)
-    // reset application cursor keys (done in VT100Terminal)
-    // reset origin mode (done in VT100Terminal)
-    [self terminalRestoreCharsetFlags];
 }
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
@@ -2311,6 +2272,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
     charsetUsesLineDrawingMode_[charset] = lineDrawingMode;
+}
+
+- (BOOL)terminalLineDrawingFlagForCharset:(int)charset {
+    return charsetUsesLineDrawingMode_[charset];
 }
 
 - (void)terminalRemoveTabStops {

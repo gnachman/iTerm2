@@ -34,7 +34,6 @@ extern int kVT100ScreenMinRows;
 
     // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
     BOOL charsetUsesLineDrawingMode_[4];
-    BOOL savedCharsetUsesLineDrawingMode_[4];
     BOOL audibleBell_;
     BOOL showBellIndicator_;
     BOOL flashBell_;
@@ -189,8 +188,6 @@ extern int kVT100ScreenMinRows;
 
 // This is provided for testing only.
 - (VT100Grid *)currentGrid;
-
-- (void)resetCharset;
 
 // Called when a bell is to be run. Applies rate limiting and kicks off the bell indicators
 // (notifications, flashing lights, sounds) per user preference.
