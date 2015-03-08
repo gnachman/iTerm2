@@ -88,6 +88,7 @@ The following options are supported:
   this option is used:
     xterm*disallowedWindowOps:
     xterm*allowWindowOps: true
+
 * disableWideChars
   This option indicates that wide character (that is, UTF-8) support is disabled.
   8-bit controls are tested when this option is enabled.
@@ -100,6 +101,9 @@ support VT level 5 in xterm, set the following resource:
 
 --logfile=file
 The logs are written to "file", which defaults to "/tmp/esctest.log".
+
+--timeout=timeout
+The number of seconds to wait for a response from the terminal. Defaults to 1.
 
 --v=verbosity
 Verbosity level for logging. The following levels are defined:

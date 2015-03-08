@@ -51,4 +51,8 @@ parser.add_argument("--action",
                     help="Action to perform.",
                     default=ACTION_RUN,
                     choices=[ ACTION_RUN, ACTION_LIST_KNOWN_BUGS ])
+parser.add_argument("--timeout",
+                    help="Timeout for reading reports from terminal.",
+                    default=1,
+                    type=float)
 

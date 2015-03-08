@@ -1,4 +1,5 @@
 from esc import ESC, ST, NUL
+import escargs
 from esclog import LogDebug, LogInfo, LogError, Print
 import esctypes
 import os
@@ -176,7 +177,7 @@ def read(n):
   s = ""
   f = sys.stdin.fileno()
   for i in xrange(n):
-    r, w, e = select.select([ f ], [], [], 1)
+    r, w, e = select.select([ f ], [], [], escargs.args.timeout)
     if f not in r:
       raise esctypes.InternalError("Timeout waiting to read.")
     s += os.read(f, 1)
