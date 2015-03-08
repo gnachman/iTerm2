@@ -68,9 +68,6 @@
 // Calls appropriate delegate methods to handle a token.
 - (void)executeToken:(VT100Token *)token;
 
-// If you just want to handle low level codes, you can use these methods instead of -executeToken:.
-- (void)executeSGR:(VT100Token *)token;
-
 - (void)stopReceivingFile;
 
 // Change saved cursor positions to the origin.

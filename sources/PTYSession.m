@@ -5506,6 +5506,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_tmuxGateway executeToken:token];
 }
 
+- (BOOL)screenInTmuxMode {
+    return [self isTmuxClient];
+}
+
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth {
     return [self treatAmbiguousWidthAsDoubleWidth];
 }

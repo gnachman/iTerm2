@@ -233,6 +233,9 @@ typedef enum {
 // Handles input during tmux mode. A single line of input will be in the token's string.
 - (void)terminalHandleTmuxInput:(VT100Token *)token;
 
+// Are we currently in tmux mode?
+- (BOOL)terminalInTmuxMode;
+
 // Returns the size of the terminal in cells.
 - (int)terminalWidth;
 - (int)terminalHeight;
@@ -249,6 +252,7 @@ typedef enum {
 
 // Switches the currently visible buffer.
 - (void)terminalShowAltBuffer;
+- (BOOL)terminalIsShowingAltBuffer;
 
 // Show main (primary) buffer. Does nothing if already on the alt grid.
 - (void)terminalShowPrimaryBuffer;

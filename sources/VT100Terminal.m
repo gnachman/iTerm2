@@ -70,7 +70,9 @@ typedef struct {
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
 
     VT100GraphicRendition graphicRendition_;
-    VT100SavedCursor savedCursor_;
+
+    VT100SavedCursor mainSavedCursor_;
+    VT100SavedCursor altSavedCursor_;
 
     // TODO: Actually use this.
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
@@ -216,6 +218,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)saveCursor {
     VT100SavedCursor *savedCursor = [self savedCursor];
+
     savedCursor->position = VT100GridCoordMake([delegate_ terminalCursorX] - 1,
                                                [delegate_ terminalCursorY] - 1);
     savedCursor->charset = _charset;
@@ -230,6 +233,7 @@ static const int kMaxScreenRows = 4096;
     [delegate_ terminalSetCursorY:savedCursor->position.y + 1];
     _charset = savedCursor->charset;
     graphicRendition_ = savedCursor->graphicRendition;
+
     self.originMode = savedCursor->origin;
     self.wraparoundMode = savedCursor->wraparound;
 }
@@ -276,7 +280,7 @@ static const int kMaxScreenRows = 4096;
     self.bracketedPasteMode = NO;
     _charset = 0;
     xon_ = YES;
-    [self resetSGR];
+    [self resetGraphicRendition];
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
     [self saveCursor];  // reset saved text attributes
@@ -408,7 +412,9 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeDecSetReset:(VT100Token *)token {
-    int mode = (token->type == VT100CSI_DECSET);
+    assert(token->type == VT100CSI_DECSET ||
+           token->type == VT100CSI_DECRST);
+    BOOL mode = (token->type == VT100CSI_DECSET);
 
     for (int i = 0; i < token.csi->count; i++) {
         switch (token.csi->p[i]) {
@@ -475,8 +481,8 @@ static const int kMaxScreenRows = 4096;
                 break;
 
             case 1000:
-                // case 1001:
-                // TODO: MOUSE_REPORTING_HILITE not implemented.
+            // case 1001:
+            // TODO: MOUSE_REPORTING_HILITE not implemented.
             case 1002:
             case 1003:
                 if (mode) {
@@ -545,7 +551,7 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)resetSGR {
+- (void)resetGraphicRendition {
     // all attributes off
     graphicRendition_.faint = graphicRendition_.bold = graphicRendition_.italic = graphicRendition_.under = graphicRendition_.blink = graphicRendition_.reversed = NO;
     graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
@@ -560,23 +566,14 @@ static const int kMaxScreenRows = 4096;
 
 - (void)executeSGR:(VT100Token *)token {
     if (token.csi->count == 0) {
-        [self resetSGR];
+        [self resetGraphicRendition];
     } else {
         int i;
         for (i = 0; i < token.csi->count; ++i) {
             int n = token.csi->p[i];
             switch (n) {
                 case VT100CHARATTR_ALLOFF:
-                    // all attribute off
-                    graphicRendition_.faint = graphicRendition_.bold = graphicRendition_.italic = graphicRendition_.under = graphicRendition_.blink = graphicRendition_.reversed = NO;
-                    graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
-                    graphicRendition_.fgGreen = 0;
-                    graphicRendition_.fgBlue = 0;
-                    graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
-                    graphicRendition_.bgGreen = 0;
-                    graphicRendition_.bgBlue = 0;
-                    graphicRendition_.fgColorMode = ColorModeAlternate;
-                    graphicRendition_.bgColorMode = ColorModeAlternate;
+                    [self resetGraphicRendition];
                     break;
                 case VT100CHARATTR_BOLD:
                     graphicRendition_.bold = YES;
@@ -971,16 +968,30 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetSavedCursorPositions {
-    savedCursor_.position = VT100GridCoordMake(0, 0);
+    altSavedCursor_.position = VT100GridCoordMake(0, 0);
+    mainSavedCursor_.position = VT100GridCoordMake(0, 0);
 }
 
 - (void)clampSavedCursorToScreenSize:(VT100GridSize)newSize {
-    savedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, savedCursor_.position.x),
-                                               MIN(newSize.height - 1, savedCursor_.position.y));
+    altSavedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, altSavedCursor_.position.x),
+                                                  MIN(newSize.height - 1, altSavedCursor_.position.y));
+    mainSavedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, mainSavedCursor_.position.x),
+                                                   MIN(newSize.height - 1, mainSavedCursor_.position.y));
 }
 
+// The main and alternate screens have different saved cursors. This returns the current one. In
+// tmux mode, only one is used to more closely approximate tmux's behavior.
 - (VT100SavedCursor *)savedCursor {
-    return &savedCursor_;
+    if ([delegate_ terminalInTmuxMode]) {
+        return &mainSavedCursor_;
+    }
+    VT100SavedCursor *savedCursor;
+    if ([delegate_ terminalIsShowingAltBuffer]) {
+        savedCursor = &altSavedCursor_;
+    } else {
+        savedCursor = &mainSavedCursor_;
+    }
+    return savedCursor;
 }
 
 - (void)setSavedCursorPosition:(VT100GridCoord)position {
@@ -1263,7 +1274,7 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         case VT100CSI_DECSTR:
-            [self resetSGR];
+            [self resetGraphicRendition];
             self.wraparoundMode = YES;
             self.reverseWraparoundMode = NO;
             self.originMode = NO;

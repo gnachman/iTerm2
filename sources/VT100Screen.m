@@ -2664,6 +2664,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenHandleTmuxInput:token];
 }
 
+- (BOOL)terminalInTmuxMode {
+    return [delegate_ screenInTmuxMode];
+}
+
 - (int)terminalWidth {
     return [self width];
 }
@@ -2758,6 +2762,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [currentGrid_ markAllCharsDirty:YES];
     [delegate_ screenNeedsRedraw];
     commandStartX_ = commandStartY_ = -1;
+}
+
+- (BOOL)terminalIsShowingAltBuffer {
+    return [self showingAlternateScreen];
 }
 
 - (BOOL)showingAlternateScreen {
