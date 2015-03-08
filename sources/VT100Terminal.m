@@ -215,7 +215,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)saveCursor {
-    VT100SavedCursor *savedCursor = &savedCursor_;
+    VT100SavedCursor *savedCursor = [self savedCursor];
     savedCursor->position = VT100GridCoordMake([delegate_ terminalCursorX] - 1,
                                                [delegate_ terminalCursorY] - 1);
     savedCursor->charset = _charset;
@@ -225,7 +225,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)restoreCursor {
-    VT100SavedCursor *savedCursor = &savedCursor_;
+    VT100SavedCursor *savedCursor = [self savedCursor];
     [delegate_ terminalSetCursorX:savedCursor->position.x + 1];
     [delegate_ terminalSetCursorY:savedCursor->position.y + 1];
     _charset = savedCursor->charset;
@@ -289,6 +289,7 @@ static const int kMaxScreenRows = 4096;
     receivingFile_ = NO;
     _encoding = _canonicalEncoding;
     _parser.encoding = _canonicalEncoding;
+    [self resetSavedCursorPositions];
     [delegate_ terminalResetPreservingPrompt:preservePrompt];
 }
 
@@ -464,7 +465,7 @@ static const int kMaxScreenRows = 4096;
                     if (mode) {
                         [delegate_ terminalShowAltBuffer];
                     } else {
-                        [delegate_ terminalShowPrimaryBufferRestoringCursor:NO];
+                        [delegate_ terminalShowPrimaryBuffer];
                     }
                 }
                 break;
@@ -528,7 +529,7 @@ static const int kMaxScreenRows = 4096;
                         [delegate_ terminalShowAltBuffer];
                         [delegate_ terminalClearScreen];
                     } else {
-                        [delegate_ terminalShowPrimaryBufferRestoringCursor:YES];
+                        [delegate_ terminalShowPrimaryBuffer];
                         [self restoreCursor];
                         [delegate_ terminalRestoreCharsetFlags];
                     }
@@ -969,6 +970,29 @@ static const int kMaxScreenRows = 4096;
     return resultString;
 }
 
+- (void)resetSavedCursorPositions {
+    savedCursor_.position = VT100GridCoordMake(0, 0);
+}
+
+- (void)clampSavedCursorToScreenSize:(VT100GridSize)newSize {
+    savedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, savedCursor_.position.x),
+                                               MIN(newSize.height - 1, savedCursor_.position.y));
+}
+
+- (VT100SavedCursor *)savedCursor {
+    return &savedCursor_;
+}
+
+- (void)setSavedCursorPosition:(VT100GridCoord)position {
+    VT100SavedCursor *savedCursor = [self savedCursor];
+    savedCursor->position = position;
+}
+
+- (VT100GridCoord)savedCursorPosition {
+    VT100SavedCursor *savedCursor = [self savedCursor];
+    return savedCursor->position;
+}
+
 - (void)executeToken:(VT100Token *)token {
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
@@ -1133,7 +1157,6 @@ static const int kMaxScreenRows = 4096;
         case ANSICSI_RCP:
         case VT100CSI_DECRC:
             [self restoreCursor];
-            [delegate_ terminalRestoreCursor];
             [delegate_ terminalRestoreCharsetFlags];
             break;
 
@@ -1144,7 +1167,6 @@ static const int kMaxScreenRows = 4096;
             // Fall through.
         case VT100CSI_DECSC:
             [self saveCursor];
-            [delegate_ terminalSaveCursor];
             [delegate_ terminalSaveCharsetFlags];
             break;
 
@@ -1247,6 +1269,8 @@ static const int kMaxScreenRows = 4096;
             self.originMode = NO;
             self.moreFix = NO;
             [delegate_ terminalSoftReset];
+            [self saveCursor];
+            [self resetSavedCursorPositions];
             break;
         case VT100CSI_DECSCUSR:
             switch (token.csi->p[0]) {

@@ -73,4 +73,22 @@
 
 - (void)stopReceivingFile;
 
+// Change saved cursor positions to the origin.
+- (void)resetSavedCursorPositions;
+
+// Ensure the saved cursor positions are valid for a new screen size.
+- (void)clampSavedCursorToScreenSize:(VT100GridSize)newSize;
+
+// Set the saved cursor position.
+- (void)setSavedCursorPosition:(VT100GridCoord)position;
+
+// Returns the saved cursor position.
+- (VT100GridCoord)savedCursorPosition;
+
+// Save the cursor position, graphic rendition, and various flags.
+- (void)saveCursor;
+
+// Restores values saved in -saveCursor.
+- (void)restoreCursor;
+
 @end

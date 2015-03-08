@@ -6479,9 +6479,8 @@ int aGlobalVariable;
     [[[self currentSession] terminal] resetCharset];
 }
 
-// Clear the buffer of the current session.
-- (void)clearBuffer:(id)sender
-{
+// Clear the buffer of the current session (Edit>Clear Buffer).
+- (void)clearBuffer:(id)sender {
     [[self currentSession] clearBuffer];
 }
 

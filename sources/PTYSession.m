@@ -2766,8 +2766,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_shell loggingStop];
 }
 
-- (void)clearBuffer
-{
+- (void)clearBuffer {
     [_screen clearBuffer];
 }
 

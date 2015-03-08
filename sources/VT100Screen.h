@@ -32,9 +32,6 @@ extern int kVT100ScreenMinRows;
     VT100Terminal *terminal_;
     id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
 
-    // Saved cursor position.
-    VT100GridCoord savedCursor_;
-
     // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
     BOOL charsetUsesLineDrawingMode_[4];
     BOOL savedCharsetUsesLineDrawingMode_[4];
@@ -118,7 +115,6 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, assign) BOOL useColumnScrollRegion;
 @property(nonatomic, assign) BOOL saveToScrollbackInAlternateScreen;
 @property(nonatomic, retain) DVR *dvr;
-@property(nonatomic, readonly) VT100GridCoord savedCursor;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
 @property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
 @property(nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;

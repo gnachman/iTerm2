@@ -70,7 +70,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 @synthesize saveToScrollbackInAlternateScreen = saveToScrollbackInAlternateScreen_;
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
-@synthesize savedCursor = savedCursor_;
 
 - (id)initWithTerminal:(VT100Terminal *)terminal
 {
@@ -147,8 +146,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     _insert = [terminal_ insertMode];
 }
 
-- (void)destructivelySetScreenWidth:(int)width height:(int)height
-{
+- (void)destructivelySetScreenWidth:(int)width height:(int)height {
     width = MAX(width, kVT100ScreenMinColumns);
     height = MAX(height, kVT100ScreenMinRows);
 
@@ -156,9 +154,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     altGrid_.size = VT100GridSizeMake(width, height);
     primaryGrid_.cursor = VT100GridCoordMake(0, 0);
     altGrid_.cursor = VT100GridCoordMake(0, 0);
-    savedCursor_ = VT100GridCoordMake(0, 0);
     [primaryGrid_ resetScrollRegions];
     [altGrid_ resetScrollRegions];
+    [terminal_ resetSavedCursorPositions];
 
     findContext_.substring = nil;
 
@@ -669,8 +667,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                             maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:currentGrid_.size.width]];
     }
 
-    savedCursor_.x = MIN(new_width - 1, savedCursor_.x);
-    savedCursor_.y = MIN(new_height - 1, savedCursor_.y);
+    [terminal_ clampSavedCursorToScreenSize:VT100GridSizeMake(new_width, new_height)];
 
     [primaryGrid_ resetScrollRegions];
     [altGrid_ resetScrollRegions];
@@ -736,8 +733,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenSetCursorVisible:show];
 }
 
-- (void)clearBuffer
-{
+- (void)clearBuffer {
     [self clearAndResetScreenPreservingCursorLine];
     [self clearScrollbackBuffer];
     [delegate_ screenUpdateDisplay];
@@ -1128,7 +1124,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     NSNumber *savedX = [state objectForKey:kStateDictSavedCX];
     NSNumber *savedY = [state objectForKey:kStateDictSavedCY];
     if (savedX && savedY) {
-        savedCursor_ = VT100GridCoordMake([savedX intValue], [savedY intValue]);
+        [terminal_ setSavedCursorPosition:VT100GridCoordMake([savedX intValue], [savedY intValue])];
     }
 
     currentGrid_.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
@@ -2118,11 +2114,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.cursor = VT100GridCoordMake(0, 0);
 }
 
-- (void)terminalRestoreCursor
-{
-    currentGrid_.cursor = savedCursor_;
-}
-
 - (void)terminalRestoreCharsetFlags
 {
     memmove(charsetUsesLineDrawingMode_,
@@ -2130,12 +2121,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             sizeof(savedCharsetUsesLineDrawingMode_));
 
     [delegate_ screenTriggerableChangeDidOccur];
-}
-
-- (void)terminalSaveCursor
-{
-    [currentGrid_ clampCursorPositionToValid];
-    savedCursor_ = currentGrid_.cursor;
 }
 
 - (void)terminalSaveCharsetFlags
@@ -2280,7 +2265,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                 unlimitedScrollback:unlimitedScrollback_
                                                  preserveCursorLine:NO]];
     }
-    savedCursor_ = VT100GridCoordMake(0, 0);
 
     [self setInitialTabStops];
 
@@ -2296,8 +2280,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)terminalSoftReset {
     // See note in xterm-terminfo.txt (search for DECSTR).
 
-    // save cursor (fixes origin-mode side-effect)
-    [self terminalSaveCursor];
     [self terminalSaveCharsetFlags];
 
     // reset scrolling margins
@@ -2307,8 +2289,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // reset wraparound mode (done in VT100Terminal)
     // reset application cursor keys (done in VT100Terminal)
     // reset origin mode (done in VT100Terminal)
-    // restore cursor
-    [self terminalRestoreCursor];
     [self terminalRestoreCharsetFlags];
 }
 
@@ -2758,8 +2738,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     savedIntervalTree_ = temp;
 }
 
-- (void)terminalShowAltBuffer
-{
+- (void)terminalShowAltBuffer {
     if (currentGrid_ == altGrid_) {
         return;
     }
@@ -2804,8 +2783,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         }
     }
 }
-- (void)terminalShowPrimaryBufferRestoringCursor:(BOOL)restore
-{
+- (void)terminalShowPrimaryBuffer {
     if (currentGrid_ == altGrid_) {
         [delegate_ screenRemoveSelection];
         [self hideOnScreenNotesAndTruncateSpanners];
@@ -2815,10 +2793,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         [self reloadMarkCache];
 
         [currentGrid_ markAllCharsDirty:YES];
-        if (!restore) {
-            // Don't restore the cursor; instead, continue using the cursor position of the alt grid.
-            currentGrid_.cursor = altGrid_.cursor;
-        }
         [delegate_ screenNeedsRedraw];
     }
 }
