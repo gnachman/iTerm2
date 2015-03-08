@@ -542,16 +542,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetGraphicRendition {
-    // all attributes off
-    graphicRendition_.faint = graphicRendition_.bold = graphicRendition_.italic = graphicRendition_.under = graphicRendition_.blink = graphicRendition_.reversed = NO;
-    graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
-    graphicRendition_.fgGreen = 0;
-    graphicRendition_.fgBlue = 0;
-    graphicRendition_.fgColorMode = ColorModeAlternate;
-    graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
-    graphicRendition_.bgGreen = 0;
-    graphicRendition_.bgBlue = 0;
-    graphicRendition_.bgColorMode = ColorModeAlternate;
+    memset(&graphicRendition_, 0, sizeof(graphicRendition_));
 }
 
 - (void)executeSGR:(VT100Token *)token {
