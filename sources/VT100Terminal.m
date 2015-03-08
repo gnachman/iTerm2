@@ -46,6 +46,15 @@ typedef struct {
     ColorMode bgColorMode;
 } VT100GraphicRendition;
 
+// TODO: Add flags.
+typedef struct {
+    VT100GridCoord position;
+    int charset;
+    VT100GraphicRendition graphicRendition;
+    BOOL origin;
+    BOOL wraparound;
+} VT100SavedCursor;
+
 @implementation VT100Terminal {
     // True if receiving a file in multitoken mode, or if between BeginFile and
     // EndFile codes (which are deprecated).
@@ -61,13 +70,7 @@ typedef struct {
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
 
     VT100GraphicRendition graphicRendition_;
-    VT100GraphicRendition savedGraphicRendition_;
-
-    int saveCharset_;
-    BOOL saveOriginMode_;
-    BOOL saveMoreFix_;
-    BOOL saveWraparoundMode_;
-    BOOL saveReverseWraparoundMode_;
+    VT100SavedCursor savedCursor_;
 
     // TODO: Actually use this.
     int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
@@ -161,7 +164,7 @@ static const int kMaxScreenRows = 4096;
         _allowKeypadMode = YES;
 
         numLock_ = YES;
-        [self saveTextAttributes];  // initialize save area
+        [self saveCursor];  // initialize save area
     }
     return self;
 }
@@ -211,24 +214,24 @@ static const int kMaxScreenRows = 4096;
     [delegate_ terminalTypeDidChange];
 }
 
-- (void)saveTextAttributes
-{
-    savedGraphicRendition_ = graphicRendition_;
-    saveCharset_ = _charset;
-    saveOriginMode_ = self.originMode;
-    saveMoreFix_ = self.moreFix;
-    saveWraparoundMode_ = self.wraparoundMode;
-    saveReverseWraparoundMode_ = self.reverseWraparoundMode;
+- (void)saveCursor {
+    VT100SavedCursor *savedCursor = &savedCursor_;
+    savedCursor->position = VT100GridCoordMake([delegate_ terminalCursorX] - 1,
+                                               [delegate_ terminalCursorY] - 1);
+    savedCursor->charset = _charset;
+    savedCursor->graphicRendition = graphicRendition_;
+    savedCursor->origin = self.originMode;
+    savedCursor->wraparound = self.wraparoundMode;
 }
 
-- (void)restoreTextAttributes
-{
-    graphicRendition_ = savedGraphicRendition_;
-    _charset = saveCharset_;
-    self.originMode = saveOriginMode_;
-    self.moreFix = saveMoreFix_;
-    self.wraparoundMode = saveWraparoundMode_;
-    self.reverseWraparoundMode = saveReverseWraparoundMode_;
+- (void)restoreCursor {
+    VT100SavedCursor *savedCursor = &savedCursor_;
+    [delegate_ terminalSetCursorX:savedCursor->position.x + 1];
+    [delegate_ terminalSetCursorY:savedCursor->position.y + 1];
+    _charset = savedCursor->charset;
+    graphicRendition_ = savedCursor->graphicRendition;
+    self.originMode = savedCursor->origin;
+    self.wraparoundMode = savedCursor->wraparound;
 }
 
 - (void)setForeground24BitColor:(NSColor *)color {
@@ -276,7 +279,7 @@ static const int kMaxScreenRows = 4096;
     [self resetSGR];
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
-    [self saveTextAttributes];  // reset saved text attributes
+    [self saveCursor];  // reset saved text attributes
     [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
     [delegate_ terminalSetUseColumnScrollRegion:NO];
     _reportFocus = NO;
@@ -520,13 +523,13 @@ static const int kMaxScreenRows = 4096;
                 // contents for select/paste operations.
                 if (!self.disableSmcupRmcup) {
                     if (mode) {
-                        [self saveTextAttributes];
+                        [self saveCursor];
                         [delegate_ terminalSaveCharsetFlags];
                         [delegate_ terminalShowAltBuffer];
                         [delegate_ terminalClearScreen];
                     } else {
                         [delegate_ terminalShowPrimaryBufferRestoringCursor:YES];
-                        [self restoreTextAttributes];
+                        [self restoreCursor];
                         [delegate_ terminalRestoreCharsetFlags];
                     }
                 }
@@ -1129,7 +1132,7 @@ static const int kMaxScreenRows = 4096;
 
         case ANSICSI_RCP:
         case VT100CSI_DECRC:
-            [self restoreTextAttributes];
+            [self restoreCursor];
             [delegate_ terminalRestoreCursor];
             [delegate_ terminalRestoreCharsetFlags];
             break;
@@ -1140,7 +1143,7 @@ static const int kMaxScreenRows = 4096;
             // case, so if we get here it's definitely the same as DECSC.
             // Fall through.
         case VT100CSI_DECSC:
-            [self saveTextAttributes];
+            [self saveCursor];
             [delegate_ terminalSaveCursor];
             [delegate_ terminalSaveCharsetFlags];
             break;
