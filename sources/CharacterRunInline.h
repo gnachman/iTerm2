@@ -1,6 +1,6 @@
 // Prevent inlining by changing to
 // #define CRUN_INLINE
-#define CRUN_INLINE static
+#define CRUN_INLINE NS_INLINE
 
 // Initialize the state of a new run, whether it is on the stack or malloc'ed.
 CRUN_INLINE void CRunInitialize(CRun *run,

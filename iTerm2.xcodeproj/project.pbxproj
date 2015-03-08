@@ -1289,6 +1289,11 @@
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A628C7A918764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
 		A628C7AA18764AA4009B0818 /* NSDictionary+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */; };
+		A62A1ADC1AAC99EC00B49F79 /* PTYTextView+Drawing.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1ADA1AAC99EC00B49F79 /* PTYTextView+Drawing.h */; };
+		A62A1ADD1AAC99EC00B49F79 /* PTYTextView+Drawing.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1ADA1AAC99EC00B49F79 /* PTYTextView+Drawing.h */; };
+		A62A1ADE1AAC99EC00B49F79 /* PTYTextView+Drawing.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1ADB1AAC99EC00B49F79 /* PTYTextView+Drawing.m */; };
+		A62A1ADF1AAC99EC00B49F79 /* PTYTextView+Drawing.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1ADB1AAC99EC00B49F79 /* PTYTextView+Drawing.m */; };
+		A62A1AE01AAC99EC00B49F79 /* PTYTextView+Drawing.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1ADB1AAC99EC00B49F79 /* PTYTextView+Drawing.m */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358647184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
 		A6358648184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
@@ -2304,6 +2309,8 @@
 		A624232519CF70DF00182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
+		A62A1ADA1AAC99EC00B49F79 /* PTYTextView+Drawing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYTextView+Drawing.h"; sourceTree = "<group>"; };
+		A62A1ADB1AAC99EC00B49F79 /* PTYTextView+Drawing.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYTextView+Drawing.m"; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -3665,6 +3672,8 @@
 				1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */,
 				A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
+				A62A1ADA1AAC99EC00B49F79 /* PTYTextView+Drawing.h */,
+				A62A1ADB1AAC99EC00B49F79 /* PTYTextView+Drawing.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -4124,6 +4133,7 @@
 				1D6ED90B19AEA20D005A7799 /* NSColor+Scripting.h in Headers */,
 				1D6ED90C19AEA20D005A7799 /* TransferrableFile.h in Headers */,
 				1D6ED90D19AEA20D005A7799 /* Coprocess.h in Headers */,
+				A62A1ADD1AAC99EC00B49F79 /* PTYTextView+Drawing.h in Headers */,
 				1D6ED90E19AEA20D005A7799 /* SendTextTrigger.h in Headers */,
 				A6E77F901A2449EF009B1CB6 /* NSEvent+iTerm.h in Headers */,
 				1D6ED90F19AEA20D005A7799 /* SmartSelectionController.h in Headers */,
@@ -4326,6 +4336,7 @@
 				1D5FDD711208E8F000C46BA3 /* CGSMisc.h in Headers */,
 				A6358649184BEA57009ED690 /* AATreeNode.h in Headers */,
 				A6358646184BEA57009ED690 /* AATree.h in Headers */,
+				A62A1ADC1AAC99EC00B49F79 /* PTYTextView+Drawing.h in Headers */,
 				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
 				A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */,
 				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
@@ -5147,6 +5158,7 @@
 				1D6EDA4519AEA20D005A7799 /* SmartMatch.m in Sources */,
 				1D6EDA4619AEA20D005A7799 /* ProfilesWindow.m in Sources */,
 				1D6EDA4719AEA20D005A7799 /* iTermTextExtractor.m in Sources */,
+				A62A1AE01AAC99EC00B49F79 /* PTYTextView+Drawing.m in Sources */,
 				1D6EDA4819AEA20D005A7799 /* DVR.m in Sources */,
 				1D6EDA4919AEA20D005A7799 /* PopupModel.m in Sources */,
 				1D6EDA4A19AEA20D005A7799 /* DVRDecoder.m in Sources */,
@@ -5633,6 +5645,7 @@
 				A60D85AB1A3A8105003AEE22 /* NSPasteboard+iTerm.m in Sources */,
 				1D9A554D180FA82E00B42CE9 /* TmuxSessionsTable.m in Sources */,
 				A6C537C01938374600A08C18 /* iTermTabBarControlView.m in Sources */,
+				A62A1ADF1AAC99EC00B49F79 /* PTYTextView+Drawing.m in Sources */,
 				A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */,
 				FB4CE4BB3E3E413B051DAFBC /* iTermRemotePreferences.m in Sources */,
 			);
@@ -5747,6 +5760,7 @@
 				A69B45B4197345C700F5444D /* iTermOpenQuicklyView.m in Sources */,
 				A68A30C7186D0F37007F550F /* SmartMatch.m in Sources */,
 				1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */,
+				A62A1ADE1AAC99EC00B49F79 /* PTYTextView+Drawing.m in Sources */,
 				A63BA3A018B27B92002BE075 /* iTermTextExtractor.m in Sources */,
 				1D93D33612695442007F741B /* DVR.m in Sources */,
 				A68A311A186E2F54007F550F /* PopupModel.m in Sources */,

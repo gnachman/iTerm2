@@ -15,6 +15,7 @@
 
 @class CRunStorage;
 @class iTermFindCursorView;
+@class iTermFindOnPageHelper;
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
 @class MovingAverage;
@@ -145,7 +146,67 @@ typedef enum {
   iTermSemanticHistoryControllerDelegate,
   NSDraggingDestination,
   NSTextInputClient,
-  PointerControllerDelegate>
+  PointerControllerDelegate> {
+
+  // Some iVars are needed by categories and so must be here.
+  @private
+    // geometry
+    double _lineHeight;
+    double _charWidth;
+    double _charWidthWithoutSpacing;
+    double _charHeightWithoutSpacing;
+
+    // This gives the number of lines added to the bottom of the frame that do
+    // not correspond to a line in the _dataSource. They are used solely for
+    // IME text.
+    int _numberOfIMELines;
+
+    // Current font. Only valid for the duration of a single drawing context.
+    NSFont *selectedFont_;
+
+    // Show a background indicator when in broadcast input mode
+    BOOL _showStripesWhenBroadcastingInput;
+
+    // Graphics for marks.
+    NSImage *_markImage;
+    NSImage *_markErrImage;
+
+    iTermFindOnPageHelper *_findOnPageHelper;
+
+    // NSTextInputClient support
+    NSAttributedString *_markedText;
+    NSRange _inputMethodSelectedRange;
+    NSPoint _imeCursorLastPos;
+
+    iTermFindCursorView *_findCursorView;
+
+    // Last position of blinking cursor
+    VT100GridCoord _oldCursorPosition;
+
+    // Currently showing blinking objects?
+    BOOL _blinkingItemsVisible;
+
+    // Used by drawCursor: to remember the last time the cursor moved to avoid drawing a blinked-out
+    // cursor while it's moving.
+    NSTimeInterval lastTimeCursorMoved_;
+
+    // anti-alias flags
+    BOOL _asciiAntiAlias;
+    BOOL _nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
+
+    // Underlined selection range (inclusive of all values), indicating clickable url.
+    VT100GridWindowedRange _underlineRange;
+
+    // Amount to shift anti-aliased text by horizontally to simulate bold
+    float _antiAliasedShift;
+
+    MovingAverage *drawRectDuration_, *drawRectInterval_;
+
+    iTermIndicatorsHelper *_indicatorsHelper;
+
+    // If set, the last-modified time of each line on the screen is shown on the right side of the display.
+    BOOL _showTimestamps;
+}
 
 // Current selection
 @property(nonatomic, readonly) iTermSelection *selection;
@@ -254,6 +315,9 @@ typedef enum {
 
 // A text badge shown in the top right of the window
 @property(nonatomic, copy) NSString *badgeLabel;
+
+// Is this view in the key window?
+@property(nonatomic, readonly) BOOL isInKeyWindow;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -418,6 +482,28 @@ typedef enum {
                workingDirectory:(NSString *)workingDirectory
                          prefix:(NSString *)prefix
                          suffix:(NSString *)suffix;
+
+- (PTYFontInfo*)getFontForChar:(UniChar)ch
+                     isComplex:(BOOL)complex
+                    renderBold:(BOOL*)renderBold
+                  renderItalic:(BOOL*)renderItalic;
+
+- (NSColor*)colorForCode:(int)theIndex
+                   green:(int)green
+                    blue:(int)blue
+               colorMode:(ColorMode)theMode
+                    bold:(BOOL)isBold
+                   faint:(BOOL)isFaint
+            isBackground:(BOOL)isBackground;
+
+- (BOOL)charBlinks:(screen_char_t)sct;
+
+- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
+                                 green:(int)green
+                                  blue:(int)blue
+                             colorMode:(ColorMode)theMode
+                                  bold:(BOOL)isBold
+                          isBackground:(BOOL)isBackground;
 
 @end
 
