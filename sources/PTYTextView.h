@@ -199,11 +199,15 @@ typedef enum {
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;
 
+// Transparency level. 0 to 1.
+@property(nonatomic, assign) double backgroundTransparency;
+
 // Blending level for background color over background image
 @property(nonatomic, assign) double blend;
 
 // Should transparency be used?
 @property(nonatomic, readonly) BOOL useTransparency;
+@property(nonatomic, readonly) BOOL useBackgroundTransparency;
 
 // Indicates if the last key pressed was a repeat.
 @property(nonatomic, readonly) BOOL keyIsARepeat;

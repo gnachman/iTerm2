@@ -1858,19 +1858,15 @@ static NSString* FormatRect(NSRect r) {
 // Blur the window if any session is blurred.
 - (bool)blur
 {
-    int n = 0;
-    int y = 0;
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
         if ([session transparency] > 0 &&
             [[session textview] useTransparency] &&
             [[[session profile] objectForKey:KEY_BLUR] boolValue]) {
-            ++y;
-        } else {
-            ++n;
+            return true;
         }
     }
-    return y > 0;
+    return false;
 }
 
 - (double)blurRadius
@@ -1891,16 +1887,57 @@ static NSString* FormatRect(NSRect r) {
         return 2.0;
     }
 }
+- (bool)backgroundBlur
+{
+    NSArray* sessions = [self sessions];
+    for (PTYSession* session in sessions) {
+        if ([session backgroundTransparency] > 0 &&
+            [[session textview] useTransparency] &&
+            [[[session profile] objectForKey:KEY_BACKGROUND_BLUR] boolValue]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+- (double)backgroundBlurRadius
+{
+    double sum = 0;
+    double count = 0;
+    NSArray* sessions = [self sessions];
+    for (PTYSession* session in sessions) {
+        if ([[[session profile] objectForKey:KEY_BACKGROUND_BLUR] boolValue]) {
+            sum += [[session profile] objectForKey:KEY_BACKGROUND_BLUR_RADIUS] ? [[[session profile] objectForKey:KEY_BACKGROUND_BLUR_RADIUS] floatValue] : 2.0;
+            ++count;
+        }
+    }
+    if (count > 0) {
+        return sum / count;
+    } else {
+        // This shouldn't actually happen, but better save than divide by zero.
+        return 2.0;
+    }
+}
 
 - (void)recheckBlur
 {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
-        if ([self blur]) {
-            [parentWindow_ enableBlur:[self blurRadius]];
+        if([[[self realParentWindow] window] isKeyWindow]){
+            if ([self blur]) {
+                [parentWindow_ enableBlur:[self blurRadius]];
+            } else {
+                [parentWindow_ disableBlur];
+            }
         } else {
-            [parentWindow_ disableBlur];
+            if ([self backgroundBlur]) {
+                [parentWindow_ enableBlur:[self backgroundBlurRadius]];
+            } else if ([self blur]) {
+                [parentWindow_ enableBlur:[self blurRadius]];
+            } else{
+                [parentWindow_ disableBlur];
+            }
         }
     }
 }

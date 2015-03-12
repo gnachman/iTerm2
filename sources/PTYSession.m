@@ -801,6 +801,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
      horizontalSpacing:[[_profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
        verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
+    [self setBackgroundTransparency:[[_profile objectForKey:KEY_BACKGROUND_TRANS] floatValue]];
+    [self setUseBackgroundTransparency:[[_profile objectForKey:KEY_USE_BACKGROUND_TRANS] boolValue]];
     const float theBlend =
         [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
@@ -2281,6 +2283,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // transparency
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
+    [self setUseBackgroundTransparency:[iTermProfilePreferences boolForKey:KEY_USE_BACKGROUND_TRANS inProfile:aDict]];
+    [self setBackgroundTransparency:[iTermProfilePreferences floatForKey:KEY_BACKGROUND_TRANS inProfile:aDict]];
     [self setBlend:[iTermProfilePreferences floatForKey:KEY_BLEND inProfile:aDict]];
 
     // bold 
@@ -2667,6 +2671,30 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         transparency = 0.9;
     }
     [_textview setTransparency:transparency];
+}
+
+- (float)backgroundTransparency
+{
+    return [_textview backgroundTransparency];
+}
+
+- (void)setBackgroundTransparency:(float)transparency
+{
+    // Limit transparency because fully transparent windows can't be clicked on.
+    if (transparency > 0.9) {
+        transparency = 0.9;
+    }
+    [_textview setBackgroundTransparency:transparency];
+}
+
+- (BOOL)useBackgroundTransparency
+{
+    return [_textview useBackgroundTransparency];
+}
+
+- (void)setUseBackgroundTransparency:(BOOL)value
+{
+    [_textview setUseBackgroundTransparency:value];
 }
 
 - (float)blend

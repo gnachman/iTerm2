@@ -24,6 +24,10 @@
     IBOutlet NSSlider *_transparency;
     IBOutlet NSButton *_useBlur;
     IBOutlet NSSlider *_blurRadius;
+    IBOutlet NSButton *_useBackgroundTransparency;
+    IBOutlet NSSlider *_backgroundTransparency;
+    IBOutlet NSButton *_useBackgroundBlur;
+    IBOutlet NSSlider *_bgBlurRadius;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet iTermImageWell *_backgroundImagePreview;
     IBOutlet NSButton *_backgroundImageTiled;
@@ -69,6 +73,31 @@
     [self defineControl:_blurRadius
                     key:KEY_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
+    
+    /////// Background transparency
+    
+    info = [self defineControl:_useBackgroundTransparency
+                           key:KEY_USE_BACKGROUND_TRANS
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        _backgroundTransparency.enabled = (_useBackgroundTransparency.state == NSOnState);
+        _useBackgroundBlur.enabled = (_useBackgroundTransparency.state == NSOnState);
+    };
+    
+    [self defineControl:_backgroundTransparency
+                    key:KEY_BACKGROUND_TRANS
+                   type:kPreferenceInfoTypeSlider];
+    
+    info = [self defineControl:_useBackgroundBlur
+                           key:KEY_BACKGROUND_BLUR
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { _bgBlurRadius.enabled = (_useBackgroundBlur.state == NSOnState); };
+    
+    [self defineControl:_bgBlurRadius
+                    key:KEY_BACKGROUND_BLUR_RADIUS
+                   type:kPreferenceInfoTypeSlider];
+    
+    /////// Background transparency
     
     [self defineControl:_backgroundImageTiled
                     key:KEY_BACKGROUND_IMAGE_TILED

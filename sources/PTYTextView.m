@@ -5221,6 +5221,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)setBackgroundTransparency:(double)fVal
+{
+    _backgroundTransparency = fVal;
+    [_colorMap invalidateCache];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setUseBackgroundTransparency:(BOOL)bVal
+{
+    _useBackgroundTransparency = bVal;
+    [_colorMap invalidateCache];
+    [self setNeedsDisplay:YES];
+}
+
 - (void)setBlend:(double)fVal
 {
     _blend = MIN(MAX(0.3, fVal), 1);
