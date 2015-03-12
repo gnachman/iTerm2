@@ -4,6 +4,7 @@
 #import "iTermColorMap.h"
 #import "iTermIndicatorsHelper.h"
 #import "iTermSemanticHistoryController.h"
+#import "iTermTextDrawingHelper.h"
 #import "LineBuffer.h"
 #import "PasteEvent.h"
 #import "PointerController.h"
@@ -29,12 +30,6 @@
 @class ThreeFingerTapGestureRecognizer;
 @class VT100Screen;
 @class VT100Terminal;
-
-// Number of pixels margin on left and right edge.
-#define MARGIN  5
-
-// Number of pixels margin on the top.
-#define VMARGIN 2
 
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
@@ -146,67 +141,7 @@ typedef enum {
   iTermSemanticHistoryControllerDelegate,
   NSDraggingDestination,
   NSTextInputClient,
-  PointerControllerDelegate> {
-
-  // Some iVars are needed by categories and so must be here.
-  @private
-    // geometry
-    double _lineHeight;
-    double _charWidth;
-    double _charWidthWithoutSpacing;
-    double _charHeightWithoutSpacing;
-
-    // This gives the number of lines added to the bottom of the frame that do
-    // not correspond to a line in the _dataSource. They are used solely for
-    // IME text.
-    int _numberOfIMELines;
-
-    // Current font. Only valid for the duration of a single drawing context.
-    NSFont *selectedFont_;
-
-    // Show a background indicator when in broadcast input mode
-    BOOL _showStripesWhenBroadcastingInput;
-
-    // Graphics for marks.
-    NSImage *_markImage;
-    NSImage *_markErrImage;
-
-    iTermFindOnPageHelper *_findOnPageHelper;
-
-    // NSTextInputClient support
-    NSAttributedString *_markedText;
-    NSRange _inputMethodSelectedRange;
-    NSPoint _imeCursorLastPos;
-
-    iTermFindCursorView *_findCursorView;
-
-    // Last position of blinking cursor
-    VT100GridCoord _oldCursorPosition;
-
-    // Currently showing blinking objects?
-    BOOL _blinkingItemsVisible;
-
-    // Used by drawCursor: to remember the last time the cursor moved to avoid drawing a blinked-out
-    // cursor while it's moving.
-    NSTimeInterval lastTimeCursorMoved_;
-
-    // anti-alias flags
-    BOOL _asciiAntiAlias;
-    BOOL _nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
-
-    // Underlined selection range (inclusive of all values), indicating clickable url.
-    VT100GridWindowedRange _underlineRange;
-
-    // Amount to shift anti-aliased text by horizontally to simulate bold
-    float _antiAliasedShift;
-
-    MovingAverage *drawRectDuration_, *drawRectInterval_;
-
-    iTermIndicatorsHelper *_indicatorsHelper;
-
-    // If set, the last-modified time of each line on the screen is shown on the right side of the display.
-    BOOL _showTimestamps;
-}
+  PointerControllerDelegate>
 
 // Current selection
 @property(nonatomic, readonly) iTermSelection *selection;
@@ -245,23 +180,14 @@ typedef enum {
 // Is blinking text drawn blinking?
 @property(nonatomic, assign) BOOL blinkAllowed;
 
-// Cursor type
-@property(nonatomic, assign) ITermCursorType cursorType;
-
 // When dimming inactive views, should only text be dimmed (not bg?)
 @property(nonatomic, assign) BOOL dimOnlyText;
 
 // Should smart cursor color be used.
 @property(nonatomic, assign) BOOL useSmartCursorColor;
 
-// Minimum contrast level. 0 to 1.
-@property(nonatomic, assign) double minimumContrast;
-
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;
-
-// Blending level for background color over background image
-@property(nonatomic, assign) double blend;
 
 // Should transparency be used?
 @property(nonatomic, readonly) BOOL useTransparency;
@@ -318,6 +244,9 @@ typedef enum {
 
 // Is this view in the key window?
 @property(nonatomic, readonly) BOOL isInKeyWindow;
+
+// Blending level for background color over background image
+@property(nonatomic, assign) float blend;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -504,6 +433,11 @@ typedef enum {
                              colorMode:(ColorMode)theMode
                                   bold:(BOOL)isBold
                           isBackground:(BOOL)isBackground;
+
+- (void)setCursorType:(ITermCursorType)value;
+
+// Minimum contrast level. 0 to 1.
+- (void)setMinimumContrast:(double)value;
 
 @end
 

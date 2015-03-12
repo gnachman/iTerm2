@@ -2669,13 +2669,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setTransparency:transparency];
 }
 
-- (float)blend
-{
+- (float)blend {
     return [_textview blend];
 }
 
-- (void)setBlend:(float)blendVal
-{
+- (void)setBlend:(float)blendVal {
     [_textview setBlend:blendVal];
 }
 
