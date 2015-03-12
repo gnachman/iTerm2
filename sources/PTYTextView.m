@@ -5235,6 +5235,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)setIsBackground:(BOOL)bVal
+{
+    _isBackground = bVal;
+    [_colorMap invalidateCache];
+    [self setNeedsDisplay:YES];
+}
+
 - (void)setBlend:(double)fVal
 {
     _blend = MIN(MAX(0.3, fVal), 1);
@@ -6390,7 +6397,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int WIDTH = [_dataSource width];
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
+    
     double selectedAlpha = 1.0 - _transparency;
+    if(_isBackground){
+        selectedAlpha = 1.0 - _backgroundTransparency;
+    }
     double alphaIfTransparencyInUse = [self transparencyAlpha];
     BOOL reversed = [[_dataSource terminal] reverseVideo];
     NSColor *aColor = nil;
@@ -7177,7 +7188,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (double)transparencyAlpha {
-    return [self useTransparency] ? 1.0 - _transparency : 1.0;
+    if([self useTransparency]){
+        if([self isBackground] && [self useBackgroundTransparency]){
+            return 1.0 - _backgroundTransparency;
+        }
+        return 1.0 - _transparency;
+    }
+    return 1.0;
 }
 
 - (screen_char_t)charForCursorAtColumn:(int)column

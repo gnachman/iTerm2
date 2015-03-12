@@ -2392,6 +2392,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [self hideMenuBar];
         }
     }
+    
+    for (PTYSession *aSession in [self allSessions]) {
+        [[aSession textview] setIsBackground:false];
+    }
+    
 
     // Note: there was a bug in the old iterm that setting fonts didn't work
     // properly if the font panel was left open in focus-follows-mouse mode.
@@ -2684,6 +2689,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [[aSession textview] endFindCursor];
         }
         [[aSession textview] removeUnderline];
+        [[aSession textview] setIsBackground:true];
     }
 
     PtyLog(@"PseudoTerminal windowDidResignKey");
@@ -2711,6 +2717,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         tabBarControl.flashing = NO;
         [self showMenuBar];
     }
+    
     // update the cursor
     [[[self currentSession] textview] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];

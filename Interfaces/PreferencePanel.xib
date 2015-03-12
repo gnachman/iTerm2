@@ -3058,7 +3058,7 @@ DQ
                 <slider verticalHuggingPriority="750" id="SEY-PV-vqK">
                     <rect key="frame" x="39" y="228" width="190" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <sliderCell key="cell" alignment="left" maxValue="100" tickMarkPosition="above" sliderType="linear" id="4Eh-UL-ghM"/>
+                    <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.90000000000000002" tickMarkPosition="below" sliderType="linear" id="4Eh-UL-ghM"/>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="oLT-Kz-H11"/>
                     </connections>

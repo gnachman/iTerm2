@@ -91,7 +91,7 @@
     info = [self defineControl:_useBackgroundBlur
                            key:KEY_BACKGROUND_BLUR
                           type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() { _bgBlurRadius.enabled = (_useBackgroundBlur.state == NSOnState); };
+    info.observer = ^() { _bgBlurRadius.enabled = (_useBackgroundTransparency.state == NSOnState && _useBackgroundBlur.state == NSOnState); };
     
     [self defineControl:_bgBlurRadius
                     key:KEY_BACKGROUND_BLUR_RADIUS

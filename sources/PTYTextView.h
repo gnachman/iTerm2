@@ -208,6 +208,7 @@ typedef enum {
 // Should transparency be used?
 @property(nonatomic, readonly) BOOL useTransparency;
 @property(nonatomic, readonly) BOOL useBackgroundTransparency;
+@property(nonatomic, readonly) BOOL isBackground;
 
 // Indicates if the last key pressed was a repeat.
 @property(nonatomic, readonly) BOOL keyIsARepeat;
@@ -320,6 +321,9 @@ typedef enum {
 
 // Updates the preferences for semantic history.
 - (void)setSemanticHistoryPrefs:(NSDictionary *)prefs;
+
+// Is the main window active?
+- (void)setIsBackground:(BOOL)bVal;
 
 // Various accessors (TODO: convert as many as possible into properties)
 - (void)setFont:(NSFont*)aFont
