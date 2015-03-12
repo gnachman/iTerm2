@@ -1887,12 +1887,24 @@ static NSString* FormatRect(NSRect r) {
         return 2.0;
     }
 }
+
+- (bool)useBackgroundTransparency
+{
+    NSArray* sessions = [self sessions];
+    for (PTYSession* session in sessions) {
+        if ([[session textview] useBackgroundTransparency]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 - (bool)backgroundBlur
 {
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
         if ([session backgroundTransparency] > 0 &&
-            [[session textview] useTransparency] &&
+            [[session textview] useBackgroundTransparency] &&
             [[[session profile] objectForKey:KEY_BACKGROUND_BLUR] boolValue]) {
             return true;
         }
@@ -1933,7 +1945,7 @@ static NSString* FormatRect(NSRect r) {
         } else {
             if ([self backgroundBlur]) {
                 [parentWindow_ enableBlur:[self backgroundBlurRadius]];
-            } else if ([self blur]) {
+            } else if (![self useBackgroundTransparency] && [self blur]) {
                 [parentWindow_ enableBlur:[self blurRadius]];
             } else{
                 [parentWindow_ disableBlur];

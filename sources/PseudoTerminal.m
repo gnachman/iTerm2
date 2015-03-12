@@ -5602,6 +5602,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // broadcasting to the current session.
         [[aSession view] setDimmed:YES];
     }
+    [[aSession tab] recheckBlur];
     [[aSession view] setNeedsDisplay:YES];
 }
 
