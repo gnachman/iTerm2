@@ -86,7 +86,7 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 // recognized as a drag.
 static const int kDragThreshold = 3;
 static const int kBadgeMargin = 4;
-static const int kBadgeRightMargin = 10;
+static const int kBadgeRightMargin = 5;
 
 @interface PTYTextView () <
     iTermFindCursorViewDelegate,
@@ -5010,11 +5010,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([_badgeLabel length]) {
         NSSize maxSize = self.enclosingScrollView.documentVisibleRect.size;
-        maxSize.width *= 0.5;  // Max size of image
+        maxSize.width *= 0.8;  // Max size of image
         maxSize.height *= 0.2;
         NSFont *font = nil;
         CGFloat min = 4, max = 100;
-        int points = (min + max / 2);
+        int points = (min + max / 4);
         int prevPoints = -1;
         NSSize sizeWithFont = NSZeroSize;
         NSDictionary *attributes = nil;
@@ -5037,7 +5037,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 min = points;
             }
             prevPoints = points;
-            points = (min + max) / 2;
+            points = (min + max) / 4;
         }
         if (sizeWithFont.width > 0 && sizeWithFont.height > 0) {
             NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
@@ -6216,7 +6216,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSSize visibleSize = [[self enclosingScrollView] documentVisibleRect].size;
     NSSize imageSize = image.size;
     NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - kBadgeRightMargin,
-                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight,
+                                    // textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight,
+                                    textViewSize.height - imageSize.height,
                                     imageSize.width,
                                     imageSize.height);
     NSRect intersection = NSIntersectionRect(rect, destination);
