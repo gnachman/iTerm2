@@ -2643,8 +2643,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setNeedsDisplay:YES];
 }
 
-- (void)setSmartCursorColor:(BOOL)value
-{
+- (void)setSmartCursorColor:(BOOL)value {
     [[self textview] setUseSmartCursorColor:value];
 }
 

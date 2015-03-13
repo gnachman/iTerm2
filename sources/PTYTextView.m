@@ -4797,9 +4797,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)setSmartCursorColor:(BOOL)value {
+- (void)setUseSmartCursorColor:(BOOL)value {
     _drawingHelper.useSmartCursorColor = value;
     [_colorMap invalidateCache];
+}
+
+- (BOOL)useSmartCursorColor {
+    return _drawingHelper.useSmartCursorColor;
 }
 
 - (void)setMinimumContrast:(double)value {
