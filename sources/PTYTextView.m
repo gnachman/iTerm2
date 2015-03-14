@@ -86,7 +86,7 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 // recognized as a drag.
 static const int kDragThreshold = 3;
 static const int kBadgeMargin = 4;
-static const int kBadgeRightMargin = 5;
+static const int kBadgeRightMargin = 8;
 
 @interface PTYTextView () <
     iTermFindCursorViewDelegate,
