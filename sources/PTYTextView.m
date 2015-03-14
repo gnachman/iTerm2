@@ -6418,7 +6418,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // preference.
             if (isBold &&
                 self.useBrightBold &&
-                (theIndex < 8)) { // Only colors 0-7 can be made "bright".
+                (theIndex < 8) &&
+                !isBackground) { // Only colors 0-7 can be made "bright".
                 theIndex |= 8;  // set "bright" bit.
             }
             return kColorMap8bitBase + (theIndex & 0xff);

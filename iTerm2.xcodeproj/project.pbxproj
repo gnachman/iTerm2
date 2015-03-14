@@ -1305,6 +1305,9 @@
 		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
 		A635864A184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
 		A635864B184BEA57009ED690 /* AATreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358645184BEA57009ED690 /* AATreeNode.m */; };
+		A635C4361AB38205008A2DEE /* iTermCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A635C4351AB38205008A2DEE /* iTermCursor.m */; };
+		A635C4371AB38205008A2DEE /* iTermCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A635C4351AB38205008A2DEE /* iTermCursor.m */; };
+		A635C4381AB38205008A2DEE /* iTermCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A635C4351AB38205008A2DEE /* iTermCursor.m */; };
 		A63679831A328E7E000DB943 /* SemanticHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A63679821A328E7D000DB943 /* SemanticHistoryTest.m */; };
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39618A9CB43002BE075 /* iTermSelection.m in Sources */ = {isa = PBXBuildFile; fileRef = A63BA39418A9CB43002BE075 /* iTermSelection.m */; };
@@ -2322,6 +2325,7 @@
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358645184BEA57009ED690 /* AATreeNode.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATreeNode.m; path = "objc-aatree-master/AATreeNode.m"; sourceTree = "<group>"; tabWidth = 4; };
+		A635C4351AB38205008A2DEE /* iTermCursor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCursor.m; sourceTree = "<group>"; };
 		A63679811A328E7D000DB943 /* SemanticHistoryTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemanticHistoryTest.h; path = iTermTests/SemanticHistoryTest.h; sourceTree = "<group>"; };
 		A63679821A328E7D000DB943 /* SemanticHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SemanticHistoryTest.m; path = iTermTests/SemanticHistoryTest.m; sourceTree = "<group>"; };
 		A63BA39318A9CB43002BE075 /* iTermSelection.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSelection.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3679,6 +3683,7 @@
 				1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */,
 				A63F409E183F3AF5003A6A6D /* VT100LineInfo.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
+				A635C4351AB38205008A2DEE /* iTermCursor.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -5103,6 +5108,7 @@
 				A60D85AC1A3A8105003AEE22 /* NSPasteboard+iTerm.m in Sources */,
 				1D6EDA0619AEA20D005A7799 /* PTYSession.m in Sources */,
 				1D6EDA0719AEA20D005A7799 /* IntervalTree.m in Sources */,
+				A635C4381AB38205008A2DEE /* iTermCursor.m in Sources */,
 				1D6EDA0819AEA20D005A7799 /* iTermAlphaColorWell.m in Sources */,
 				1D6EDA0919AEA20D005A7799 /* PTYTabView.m in Sources */,
 				1D6EDA0A19AEA20D005A7799 /* PTYWindow.m in Sources */,
@@ -5481,6 +5487,7 @@
 				1D9A5595180FA87000B42CE9 /* PTYSession.m in Sources */,
 				1D9A555E180FA83900B42CE9 /* PreferencePanel.m in Sources */,
 				A68A30C3186D0DC1007F550F /* iTermFindCursorView.m in Sources */,
+				A635C4371AB38205008A2DEE /* iTermCursor.m in Sources */,
 				1DFA9D6018F36DC3008ADC98 /* iTermKeyMappingViewController.m in Sources */,
 				1D9A558B180FA87000B42CE9 /* PasteEvent.m in Sources */,
 				A6E713A518F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.m in Sources */,
@@ -5707,6 +5714,7 @@
 				A60D85AA1A3A8105003AEE22 /* NSPasteboard+iTerm.m in Sources */,
 				A68A30D3186D1414007F550F /* NSObject+iTerm.m in Sources */,
 				1D5FDDAE1208E93600C46BA3 /* PTYSession.m in Sources */,
+				A635C4361AB38205008A2DEE /* iTermCursor.m in Sources */,
 				A6C4E8E01846E13800CFAA77 /* IntervalTree.m in Sources */,
 				A69B4580196B989D00F5444D /* iTermAlphaColorWell.m in Sources */,
 				1D5FDDAF1208E93600C46BA3 /* PTYTabView.m in Sources */,
