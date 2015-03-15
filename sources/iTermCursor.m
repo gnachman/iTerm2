@@ -148,7 +148,7 @@
                             rect:(NSRect)rect
                            coord:(VT100GridCoord)coord {
     NSColor *proposedForeground = [self.delegate cursorColorForCharacter:screenChar
-                                                              background:YES];
+                                                          wantBackground:YES];
     proposedForeground = [proposedForeground colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     NSColor *overrideColor = [self overrideColorForSmartCursorWithForegroundColor:proposedForeground
                                                                   backgroundColor:backgroundColor];
@@ -185,7 +185,8 @@
 
 - (NSColor *)smartCursorColorForChar:(screen_char_t)screenChar
                            neighbors:(iTermCursorNeighbors)neighbors {
-    NSColor *bgColor = [self.delegate cursorColorForCharacter:screenChar background:NO];  // TODO: Handle reverse video.
+    NSColor *bgColor = [self.delegate cursorColorForCharacter:screenChar
+                                               wantBackground:NO];  // TODO: Handle reverse video.
 
     NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
     for (int y = 0; y < 3; y++) {
@@ -258,7 +259,7 @@
 - (NSColor *)backgroundColorForChar:(screen_char_t)c {
     c.bold = NO;
     c.faint = NO;
-    return [self.delegate cursorColorForCharacter:c background:YES];
+    return [self.delegate cursorColorForCharacter:c wantBackground:YES];
     // TODO: Handle reverse video
 }
 

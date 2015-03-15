@@ -1879,7 +1879,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 }
 
 - (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
-                          background:(BOOL)wantBackgroundColor {
+                          wantBackground:(BOOL)wantBackgroundColor {
     if (wantBackgroundColor) {
         return [_delegate drawingHelperColorForCode:screenChar.backgroundColor
                                               green:screenChar.bgGreen

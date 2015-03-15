@@ -26,7 +26,8 @@ typedef struct {
                     context:(CGContextRef)ctx
             backgroundColor:(NSColor *)backgroundColor;
 
-- (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar background:(BOOL)wantBackgroundColor;
+- (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
+                      wantBackground:(BOOL)wantBackgroundColor;
 
 - (NSColor *)cursorWhiteColor;
 - (NSColor *)cursorBlackColor;
