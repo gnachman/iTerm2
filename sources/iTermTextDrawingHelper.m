@@ -268,14 +268,15 @@ static const int kBadgeRightMargin = 10;
 
 - (NSColor *)colorForBackgroundRun:(iTermBackgroundColorRun *)run {
     NSColor *color;
-    if (run->isMatch && !run->selected) {
-        color = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
-    } else if (run->selected) {
+    CGFloat alpha = _transparencyAlpha;
+    if (run->selected) {
         color = [self selectionColorForCurrentFocus];
+    } else if (run->isMatch) {
+        color = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
     } else {
-        if (_reverseVideo &&
-            run->bgColor == ALTSEM_DEFAULT &&
-            run->bgColorMode == ColorModeAlternate) {
+        const BOOL defaultBackground = (run->bgColor == ALTSEM_DEFAULT &&
+                                        run->bgColorMode == ColorModeAlternate);
+        if (_reverseVideo && defaultBackground) {
             // Reverse video is only applied to default background-
             // color chars.
             color = [_delegate drawingHelperColorForCode:ALTSEM_DEFAULT
@@ -295,8 +296,13 @@ static const int kBadgeRightMargin = 10;
                                                    faint:NO
                                             isBackground:YES];
         }
+
+        if (defaultBackground && _hasBackgroundImage) {
+            alpha = 1 - _blend;
+        }
     }
-    color = [color colorWithAlphaComponent:_transparencyAlpha];
+    color = [color colorWithAlphaComponent:alpha];
+
     return color;
 }
 
@@ -335,12 +341,12 @@ static const int kBadgeRightMargin = 10;
     }
 }
 
-- (NSRect)drawMarginsAtY:(double)curY widthInChars:(int)width {
-    NSRect leftMargin = NSMakeRect(0, curY, MARGIN, _cellSize.height);
+- (void)drawMarginsAndMarkForLine:(int)line y:(CGFloat)y {
+    NSRect leftMargin = NSMakeRect(0, y, MARGIN, _cellSize.height);
     NSRect rightMargin;
     NSRect visibleRect = _visibleRect;
-    rightMargin.origin.x = _cellSize.width * width + MARGIN;
-    rightMargin.origin.y = curY;
+    rightMargin.origin.x = _cellSize.width * _gridSize.width + MARGIN;
+    rightMargin.origin.y = y;
     rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
     rightMargin.size.height = _cellSize.height;
 
@@ -349,12 +355,7 @@ static const int kBadgeRightMargin = 10;
                                    blendDefaultBackground:YES];
     [self.delegate drawingHelperDrawBackgroundImageInRect:rightMargin
                                    blendDefaultBackground:YES];
-    return leftMargin;
-}
 
-- (void)drawMarginsAndMarkForLine:(int)line y:(CGFloat)y {
-    NSRect leftMargin = [self drawMarginsAtY:y
-                                widthInChars:_gridSize.width];
     [self drawMarkIfNeededOnLine:line leftMarginRect:leftMargin];
 }
 
