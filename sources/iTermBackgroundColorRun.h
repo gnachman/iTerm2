@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "ScreenChar.h"
 
+@class iTermTextExtractor;
+
 typedef struct {
     NSRange range;
     int bgColor;
@@ -32,9 +34,29 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 
 // A collection of color runs for a single line, along with info about the line itself.
 @interface iTermBackgroundColorRunsInLine : NSObject
+
+// y coordinate to draw at
 @property(nonatomic, assign) CGFloat y;
+
+// Line number to draw at (row - scrollbackOverflow)
 @property(nonatomic, assign) int line;
+
+// Array of iTermBoxedBackgroundColorRun objects.
 @property(nonatomic, retain) NSArray *array;
+
+// Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.
+// Fills in *anyBlinkPtr with YES if some character in the range is blinking.
++ (instancetype)backgroundRunsInLine:(screen_char_t *)theLine
+                          lineLength:(int)width
+                                 row:(int)row  // Row number in datasource
+                     selectedIndexes:(NSIndexSet *)selectedIndexes
+                         withinRange:(NSRange)charRange
+                             matches:(NSData *)matches
+                            anyBlink:(BOOL *)anyBlinkPtr
+                       textExtractor:(iTermTextExtractor *)extractor
+                                   y:(CGFloat)y  // Value for self.y
+                                line:(int)line;  // Value for self.line
+
 @end
 
 // An NSObject wrapper for a color run with an optional NSColor.

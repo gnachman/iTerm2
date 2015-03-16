@@ -8,6 +8,7 @@
 
 #import "iTermSelection.h"
 #import "DebugLogging.h"
+#import "ScreenChar.h"
 
 @implementation iTermSubSelection
 
@@ -835,6 +836,53 @@
         [indexes removeIndexes:indexesToRemove];
         [indexes addIndexes:indexesToAdd];
     }
+
+    return indexes;
+}
+
+// orphaned tab fillers are selected iff they are in the selection.
+// unorphaned tab fillers are selected iff their tab is selected.
+- (NSIndexSet *)selectedIndexesIncludingTabFillersInLine:(int)y {
+    NSIndexSet *basicIndexes = [self selectedIndexesOnLine:y];
+    if (!basicIndexes.count) {
+        return basicIndexes;
+    }
+
+    // Add in tab fillers preceding already-selected tabs.
+    NSMutableIndexSet *indexes = [[basicIndexes mutableCopy] autorelease];
+
+    NSRange range;
+    if (_range.columnWindow.length > 0) {
+        range = NSMakeRange(_range.columnWindow.location, _range.columnWindow.length);
+    } else {
+        range = NSMakeRange(0, [_delegate selectionViewportWidth]);
+    }
+    NSIndexSet *tabs = [_delegate selectionIndexesOnLine:y
+                                     containingCharacter:'\t'
+                                                 inRange:range];
+    NSIndexSet *tabFillers =
+        [_delegate selectionIndexesOnLine:y
+                      containingCharacter:TAB_FILLER
+                                  inRange:range];
+
+    [tabs enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        BOOL select = [basicIndexes containsIndex:idx];
+        // Found a tab. If selected, add all preceding consecutive TAB_FILLERS
+        // to |indexes|. If not selected, remove all preceding consecutive
+        // TAB_FILLERs.
+        int theIndex = idx;
+        for (int i = theIndex - 1; i >= range.location; i--) {
+            if ([tabFillers containsIndex:i]) {
+                if (select) {
+                    [indexes addIndex:i];
+                } else {
+                    [indexes removeIndex:i];
+                }
+            } else {
+                break;
+            }
+        }
+    }];
 
     return indexes;
 }

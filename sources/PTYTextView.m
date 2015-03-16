@@ -4420,11 +4420,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"setMarkedText%@ selectedRange%@ replacementRange:%@",
          aString, NSStringFromRange(selRange), NSStringFromRange(replacementRange));
     if ([aString isKindOfClass:[NSAttributedString class]]) {
-        _drawingHelper.markedText = [[NSAttributedString alloc] initWithString:[aString string]
-                                                                    attributes:[self markedTextAttributes]];
+        _drawingHelper.markedText = [[[NSAttributedString alloc] initWithString:[aString string]
+                                                                     attributes:[self markedTextAttributes]] autorelease];
     } else {
-        _drawingHelper.markedText = [[NSAttributedString alloc] initWithString:aString
-                                                                    attributes:[self markedTextAttributes]];
+        _drawingHelper.markedText = [[[NSAttributedString alloc] initWithString:aString
+                                                                     attributes:[self markedTextAttributes]] autorelease];
     }
     _drawingHelper.inputMethodMarkedRange = NSMakeRange(0, [_drawingHelper.markedText length]);
     _drawingHelper.inputMethodSelectedRange = selRange;
@@ -6225,6 +6225,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         theLine = [_dataSource getLineAtIndex:coord.y];
     } while (theLine[coord.x].code == DWC_RIGHT);
     return coord;
+}
+
+- (NSIndexSet *)selectionIndexesOnLine:(int)line
+                   containingCharacter:(unichar)c
+                               inRange:(NSRange)range {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    return [extractor indexesOnLine:line containingCharacter:c inRange:range];
 }
 
 #pragma mark - iTermColorMapDelegate

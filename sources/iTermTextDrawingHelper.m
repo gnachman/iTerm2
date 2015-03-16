@@ -28,33 +28,6 @@
 static const int kBadgeMargin = 4;
 static const int kBadgeRightMargin = 10;
 
-static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
-                                        screen_char_t *theLine,
-                                        VT100GridCoord coord,
-                                        iTermTextExtractor *extractor,
-                                        NSIndexSet *selectedIndexes,
-                                        NSData *matches,
-                                        int width) {
-    if (theLine[coord.x].code == DWC_SKIP && !theLine[coord.x].complexChar) {
-        run->selected = NO;
-    } else {
-        run->selected = [selectedIndexes containsIndex:coord.x];
-    }
-    if (matches) {
-        // Test if this char is a highlighted match from a Find.
-        const int theIndex = coord.x / 8;
-        const int bitMask = 1 << (coord.x & 7);
-        const char *matchBytes = (const char *)matches.bytes;
-        run->isMatch = theIndex < [matches length] && (matchBytes[theIndex] & bitMask);
-    } else {
-        run->isMatch = NO;
-    }
-    run->bgColor = theLine[coord.x].backgroundColor;
-    run->bgGreen = theLine[coord.x].bgGreen;
-    run->bgBlue = theLine[coord.x].bgBlue;
-    run->bgColorMode = theLine[coord.x].backgroundColorMode;
-}
-
 @interface iTermTextDrawingHelper() <iTermCursorDelegate>
 @end
 
@@ -211,17 +184,21 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
             [self drawMarginsAndMarkForLine:n y:y];
 
             NSData *matches = [_delegate drawingHelperMatchesOnLine:n];
-            NSArray *backgroundRuns = [self backgroundRunsInLine:n
-                                                     withinRange:charRange
-                                                         matches:matches
-                                                        anyBlink:&_blinkingFound
-                                                   textExtractor:extractor];
-            iTermBackgroundColorRunsInLine *runArray =
-                [[[iTermBackgroundColorRunsInLine alloc] init] autorelease];
-            runArray.array = backgroundRuns;
-            runArray.y = y;
-            runArray.line = n;
-            [backgroundRunArrays addObject:runArray];
+            screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
+            NSIndexSet *selectedIndexes =
+                [_selection selectedIndexesIncludingTabFillersInLine:line];
+            iTermBackgroundColorRunsInLine *runsInLine =
+                [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
+                                                          lineLength:_gridSize.width
+                                                                 row:line
+                                                     selectedIndexes:selectedIndexes
+                                                         withinRange:charRange
+                                                             matches:matches
+                                                            anyBlink:&_blinkingFound
+                                                       textExtractor:extractor
+                                                                   y:y
+                                                                line:n];
+            [backgroundRunArrays addObject:runsInLine];
         }
     }
 
@@ -1125,102 +1102,6 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     _oldCursorPosition = _cursorCoord;
     [_selectedFont release];
     _selectedFont = nil;
-}
-
-#pragma mark - Background Run Construction
-
-- (void)addBackgroundRun:(iTermBackgroundColorRun *)run
-                 toArray:(NSMutableArray *)runs
-                endingAt:(int)end {  // end is the location after the last location in the run
-    // Update the range's length.
-    NSRange range = run->range;
-    range.length = end - range.location;
-    run->range = range;
-
-    // Add it to the array.
-    iTermBoxedBackgroundColorRun *box = [[[iTermBoxedBackgroundColorRun alloc] init] autorelease];
-    memcpy(box.valuePointer, run, sizeof(*run));
-    [runs addObject:box];
-}
-
-- (NSArray *)backgroundRunsInLine:(int)line
-                      withinRange:(NSRange)charRange
-                          matches:(NSData *)matches
-                         anyBlink:(BOOL *)anyBlinkPtr
-                    textExtractor:(iTermTextExtractor *)extractor {
-    NSMutableArray *runs = [NSMutableArray array];
-    screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
-    NSIndexSet *selectedIndexes = [_selection selectedIndexesOnLine:line];
-    int width = _gridSize.width;
-    iTermBackgroundColorRun previous;
-    iTermBackgroundColorRun current;
-    BOOL first = YES;
-    int j;
-    for (j = charRange.location; j < charRange.location + charRange.length; j++) {
-        int x = j;
-        if (theLine[j].code == DWC_RIGHT) {
-            x = j - 1;
-        }
-        iTermMakeBackgroundColorRun(&current,
-                                    theLine,
-                                    VT100GridCoordMake(x, line),
-                                    extractor,
-                                    selectedIndexes,
-                                    matches,
-                                    width);
-        if (theLine[x].blink) {
-            *anyBlinkPtr = YES;
-        }
-        if (first) {
-            current.range = NSMakeRange(j, 0);
-            first = NO;
-        } else if (!iTermBackgroundColorRunsEqual(&current, &previous)) {
-            [self addBackgroundRun:&previous toArray:runs endingAt:j];
-
-            current.range = NSMakeRange(j, 0);
-        }
-
-        previous = current;
-    }
-    if (!first) {
-        [self addBackgroundRun:&current toArray:runs endingAt:j];
-    }
-    
-    return runs;
-}
-
-// Augments the "real" selection (as reported by iTermSelection) by adding TAB_FILLER characters
-// preceding a selected TAB.
-- (NSIndexSet *)selectedIndexesInLine:(int)y {
-    NSIndexSet *basicIndexes = [self.selection selectedIndexesOnLine:y];
-    if (!basicIndexes.count) {
-        return basicIndexes;
-    }
-
-    // Add in tab fillers preceding already-selected tabs.
-    NSMutableIndexSet *indexes = [[basicIndexes mutableCopy] autorelease];
-    const int width = _gridSize.width;
-    screen_char_t buffer[width + 1];
-    screen_char_t *theLine = [_delegate drawingHelperCopyLineAtIndex:y toBuffer:buffer];
-    BOOL active = NO;
-    for (int x = width - 1; x >= 0; x--) {
-        if (active) {
-            if (theLine[x].code == TAB_FILLER && !theLine[x].complexChar) {
-                // Found a tab filler preceding a selected tab. Mark it selected.
-                [indexes addIndex:x];
-            } else {
-                // Found something that isn't a tab filler preceding a selected tab. Stop looking for
-                // tab fillers.
-                active = NO;
-            }
-        } else if (theLine[x].code == '\t' &&
-                   !theLine[x].complexChar &&
-                   [indexes containsIndex:x]) {
-            // Found a selected tab. Begin adding tab fillers preceding it.
-            active = YES;
-        }
-    }
-    return indexes;
 }
 
 #pragma mark - Text Run Construction
