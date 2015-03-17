@@ -105,7 +105,6 @@ static const int kBadgeRightMargin = 10;
         NSRectFill(rect);
     }
     [self updateCachedMetrics];
-    numOptimizeDraws = numUnoptimizedDraws = 0;
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
     // and they're guaranteed to be disjoint. So draw each of them individually.
@@ -121,11 +120,6 @@ static const int kBadgeRightMargin = 10;
     if (_drawRectDuration) {
         [self stopTiming];
     }
-    if (_debug) {
-        NSLog(@"Drew %d for a savings of %d (%0.2f%%)", numOptimizeDraws, numUnoptimizedDraws-numOptimizeDraws,
-              100.0 * (1.0 - (double)numOptimizeDraws/(double)numUnoptimizedDraws));
-    }
-
 }
 
 - (void)clipAndDrawRect:(NSRect)rect {
@@ -213,8 +207,6 @@ static const int kBadgeRightMargin = 10;
         }
     }
 
-    [self coalesceBackgroundColorRuns:backgroundRunArrays];
-
     // If a background image is in use, draw the whole rect at once.
     if (_hasBackgroundImage) {
         [self.delegate drawingHelperDrawBackgroundImageInRect:rect
@@ -270,8 +262,6 @@ static const int kBadgeRightMargin = 10;
 
 #pragma mark - Drawing: Background
 
-int numOptimizeDraws = 0, numUnoptimizedDraws = 0;
-
 - (void)drawBackgroundForLine:(int)line
                           atY:(CGFloat)yOrigin
                          runs:(NSArray *)runs {
@@ -280,32 +270,20 @@ int numOptimizeDraws = 0, numUnoptimizedDraws = 0;
         NSRect rect = NSMakeRect(floor(MARGIN + run->range.location * _cellSize.width),
                                  yOrigin,
                                  ceil(run->range.length * _cellSize.width),
-                                 _cellSize.height * (1 + box.numberCoalesced));
-        numUnoptimizedDraws += (1 + box.numberCoalesced);
-        ++numOptimizeDraws;
-
+                                 _cellSize.height);
         box.backgroundColor = [self colorForBackgroundRun:run];
 
-        if (!box.hasBeenCoalesced) {
-            [box.backgroundColor set];
-            NSRectFillUsingOperation(rect,
-                                     _hasBackgroundImage ? NSCompositeSourceOver : NSCompositeCopy);
+        [box.backgroundColor set];
+        NSRectFillUsingOperation(rect,
+                                 _hasBackgroundImage ? NSCompositeSourceOver : NSCompositeCopy);
 
-            if (_debug) {
-                [[NSColor yellowColor] set];
-                NSBezierPath *path = [NSBezierPath bezierPath];
-                [path moveToPoint:rect.origin];
-                [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
-                [path stroke];
-            }
-        } else if (_debug) {
-            [[NSColor blueColor] set];
+        if (_debug) {
+            [[NSColor yellowColor] set];
             NSBezierPath *path = [NSBezierPath bezierPath];
             [path moveToPoint:rect.origin];
             [path lineToPoint:NSMakePoint(NSMaxX(rect), NSMaxY(rect))];
             [path stroke];
         }
-
     }
 }
 
@@ -1656,25 +1634,6 @@ int numOptimizeDraws = 0, numUnoptimizedDraws = 0;
 }
 
 #pragma mark - Background Utilities
-
-- (void)coalesceBackgroundColorRuns:(NSMutableArray *)lines {
-    // |lines| is an array of iTermBackgroundColorRunsInLine.
-    // If lines[i][j] == lines[i+1][j], then increment lines[i]j].numberCoalesced and delete
-    // lines[i+1][j].
-    for (int i = ((int) lines.count) - 2; i >= 0; i--) {
-        iTermBackgroundColorRunsInLine *runsInLine = lines[i];
-        iTermBackgroundColorRunsInLine *runsInNextLine = lines[i + 1];
-        int limit = MIN(runsInLine.array.count, runsInNextLine.array.count);
-        for (int j = 0; j < limit; j++) {
-            iTermBoxedBackgroundColorRun *runInLine = runsInLine.array[j];
-            iTermBoxedBackgroundColorRun *runInNextLine = runsInNextLine.array[j];
-            if ([runInLine isEqual:runInNextLine]) {
-                runInLine.numberCoalesced = runInNextLine.numberCoalesced + 1;
-                runInNextLine.hasBeenCoalesced = YES;
-            }
-        }
-    }
-}
 
 - (NSColor *)defaultBackgroundColor {
     NSColor *aColor = [_delegate drawingHelperColorForCode:ALTSEM_DEFAULT
