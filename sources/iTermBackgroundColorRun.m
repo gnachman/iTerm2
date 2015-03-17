@@ -125,5 +125,14 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     return &_value;
 }
 
+- (BOOL)isEqual:(id)object {
+    if (![object isKindOfClass:[self class]]) {
+        return NO;
+    }
+    iTermBoxedBackgroundColorRun *other = object;
+    return (iTermBackgroundColorRunsEqual(self.valuePointer, other.valuePointer) &&
+            NSEqualRanges(self.valuePointer->range, other.valuePointer->range));
+}
+
 @end
 

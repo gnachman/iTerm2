@@ -219,6 +219,9 @@
 // Reports the cursor height.
 @property(nonatomic, readonly) CGFloat cursorHeight;
 
+// Draw debug info?
+@property(nonatomic, assign) BOOL debug;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

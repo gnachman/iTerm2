@@ -42,7 +42,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 @property(nonatomic, assign) int line;
 
 // Array of iTermBoxedBackgroundColorRun objects.
-@property(nonatomic, retain) NSArray *array;
+@property(nonatomic, retain) NSMutableArray *array;
 
 // Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.
 // Fills in *anyBlinkPtr with YES if some character in the range is blinking.
@@ -63,5 +63,13 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 @interface iTermBoxedBackgroundColorRun : NSObject
 @property(nonatomic, readonly) iTermBackgroundColorRun *valuePointer;
 @property(nonatomic, retain) NSColor *backgroundColor;
+
+// If this run has been coalesced with any runs on succeeding line(s), this gives the number of
+// extra lines of height this run has.
+@property(nonatomic, assign) int numberCoalesced;
+
+// If set, this run should not be drawn because it has been coalesced.
+@property(nonatomic, assign) BOOL hasBeenCoalesced;
+
 @end
 
