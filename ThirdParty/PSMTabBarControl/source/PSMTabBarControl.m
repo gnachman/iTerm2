@@ -1213,28 +1213,34 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
             if ([cell hasCloseButton] &&
                 ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] ||
                  [self allowsBackgroundTabClosing])) {
-                NSPoint mousePoint =
+                    NSPoint mousePoint =
                     [self convertPoint:[[self window] pointFromScreenCoords:[NSEvent mouseLocation]]
                               fromView:nil];
-                NSRect closeRect = [cell closeButtonRectForFrame:cellRect];
+                    NSRect closeRect = [cell closeButtonRectForFrame:cellRect];
 
-                //add the tracking rect for the close button highlight
-                tag = [self addTrackingRect:closeRect owner:cell userData:nil assumeInside:NO];
-                [cell setCloseButtonTrackingTag:tag];
+                    // Add the tracking rect for the close button highlight.
+                    if ([cell closeButtonTrackingTag]) {
+                        [self removeTrackingRect:[cell closeButtonTrackingTag]];
+                    }
+                    tag = [self addTrackingRect:closeRect owner:cell userData:nil assumeInside:NO];
+                    [cell setCloseButtonTrackingTag:tag];
 
-                // highlight the close button if the currently selected tab has the mouse over it
-                // this will happen if the user clicks a close button in a tab and all the tabs are
-                // rearranged
-                if ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] &&
-                    [[NSApp currentEvent] type] != NSLeftMouseDown &&
-                    NSMouseInRect(mousePoint, closeRect, [self isFlipped])) {
-                    [cell setCloseButtonOver:YES];
+                    // highlight the close button if the currently selected tab has the mouse over it
+                    // this will happen if the user clicks a close button in a tab and all the tabs are
+                    // rearranged
+                    if ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] &&
+                        [[NSApp currentEvent] type] != NSLeftMouseDown &&
+                        NSMouseInRect(mousePoint, closeRect, [self isFlipped])) {
+                        [cell setCloseButtonOver:YES];
+                    }
+                } else {
+                    [cell setCloseButtonOver:NO];
                 }
-            } else {
-                [cell setCloseButtonOver:NO];
-            }
 
-            // entire tab tracking rect
+            // Add entire-tab tracking rect.
+            if ([cell cellTrackingTag]) {
+                [self removeTrackingRect:[cell cellTrackingTag]];
+            }
             tag = [self addTrackingRect:cellRect owner:cell userData:nil assumeInside:NO];
             [cell setCellTrackingTag:tag];
             [cell setEnabled:YES];
@@ -1306,12 +1312,12 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
             if ([cell count] > 0) {
                 [menuItem setTitle:[[menuItem title] stringByAppendingFormat:@" (%d)", [cell count]]];
             }
-
+            
             [overflowMenu addItem:menuItem];
             [menuItem release];
         }
     }
-
+    
     return overflowMenu;
 }
 
