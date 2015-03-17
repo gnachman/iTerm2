@@ -576,11 +576,11 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     // remove tracking
     [[NSNotificationCenter defaultCenter] removeObserver:cell];
 
-    if([cell closeButtonTrackingTag] != 0){
+    if ([cell closeButtonTrackingTag] != 0) {
         [self removeTrackingRect:[cell closeButtonTrackingTag]];
         [cell setCloseButtonTrackingTag:0];
     }
-    if([cell cellTrackingTag] != 0){
+    if ([cell cellTrackingTag] != 0) {
         [self removeTrackingRect:[cell cellTrackingTag]];
         [cell setCellTrackingTag:0];
     }
@@ -1187,8 +1187,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     }
 }
 
-- (NSMenu *)_setupCells:(NSArray *)newWidths
-{
+- (NSMenu *)_setupCells:(NSArray *)newWidths {
     NSRect cellRect = [self genericCellRect];
     int i, cellCount = [_cells count], numberOfVisibleCells = [newWidths count];
     NSMenu *overflowMenu = nil;
@@ -1211,7 +1210,9 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
             NSTrackingRectTag tag;
 
             // close button tracking rect
-            if ([cell hasCloseButton] && ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] || [self allowsBackgroundTabClosing])) {
+            if ([cell hasCloseButton] &&
+                ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] ||
+                 [self allowsBackgroundTabClosing])) {
                 NSPoint mousePoint =
                     [self convertPoint:[[self window] pointFromScreenCoords:[NSEvent mouseLocation]]
                               fromView:nil];
@@ -1221,8 +1222,9 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
                 tag = [self addTrackingRect:closeRect owner:cell userData:nil assumeInside:NO];
                 [cell setCloseButtonTrackingTag:tag];
 
-                //highlight the close button if the currently selected tab has the mouse over it
-                //this will happen if the user clicks a close button in a tab and all the tabs are rearranged
+                // highlight the close button if the currently selected tab has the mouse over it
+                // this will happen if the user clicks a close button in a tab and all the tabs are
+                // rearranged
                 if ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]] &&
                     [[NSApp currentEvent] type] != NSLeftMouseDown &&
                     NSMouseInRect(mousePoint, closeRect, [self isFlipped])) {

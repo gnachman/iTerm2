@@ -124,10 +124,18 @@
         return NSZeroRect;
     }
 
-    NSRect objectCounterRect = [self objectCounterRectForTabCell:cell];
+    CGFloat minX;
+    if ([cell count]) {
+        NSRect objectCounterRect = [self objectCounterRectForTabCell:cell];
+        minX = NSMinX(objectCounterRect);
+    } else if (![[cell indicator] isHidden]) {
+        minX = NSMinX([self indicatorRectForTabCell:cell]) - MARGIN_X;
+    } else {
+        minX = NSMaxX(cellFrame) - MARGIN_X;
+    }
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
-    result.origin.x = NSMinX(objectCounterRect) - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
+    result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
     result.origin.y = cellFrame.origin.y + MARGIN_Y;
 
     return result;
@@ -143,7 +151,7 @@
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIndicatorWidth, kPSMTabBarIndicatorWidth);
     result.origin.x = cellFrame.origin.x + cellFrame.size.width - MARGIN_X - kPSMTabBarIndicatorWidth;
-    result.origin.y = cellFrame.origin.y + MARGIN_Y;
+    result.origin.y = cellFrame.origin.y + MARGIN_Y - 0.5;
 
     return result;
 }
@@ -513,7 +521,6 @@
     // object counter
     if ([cell count] > 0){
         NSRect myRect = [self objectCounterRectForTabCell:cell];
-
         // draw attributed string centered in area
         NSRect counterStringRect;
         NSAttributedString *counterString = [self attributedObjectCountValueForTabCell:cell];
