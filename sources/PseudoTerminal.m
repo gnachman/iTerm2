@@ -3223,7 +3223,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
         }
         [self.window setFrame:oldFrame_ display:YES];
-        if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
+        if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
+            (self.window.styleMask & NSTitledWindowMask)) {
             [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
         }
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
