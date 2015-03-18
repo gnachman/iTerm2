@@ -12,6 +12,7 @@
 #import "PSMProgressIndicator.h"
 #import "PSMTabDragAssistant.h"
 #import "FutureMethods.h"
+#import "DebugLogging.h"
 
 @implementation PSMTabBarCell  {
     // sizing
@@ -90,11 +91,19 @@
 
 - (void)dealloc
 {
+    DLog(@"Cell %@ dealloced from %@", self, [NSThread callStackSymbols]);
+    assert(!_closeButtonTrackingTag);
+    assert(!_cellTrackingTag);
     [_modifierString release];
     [_indicator release];
     if (_tabColor)
         [_tabColor release];
     [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p closeButtonTrackingTag=%@ cellTrackingTag=%@>",
+               self.class, self, @(_closeButtonTrackingTag), @(_cellTrackingTag)];
 }
 
 // we don't want this to be the first responder in the chain
@@ -117,6 +126,8 @@
 
 - (void)setCloseButtonTrackingTag:(NSTrackingRectTag)tag
 {
+    DLog(@"Set close button tracking tag for %@ to %@ from %@", self, @(tag), [NSThread callStackSymbols]);
+    if (tag) assert(!_closeButtonTrackingTag);
     _closeButtonTrackingTag = tag;
 }
 
@@ -127,6 +138,7 @@
 
 - (void)setCellTrackingTag:(NSTrackingRectTag)tag
 {
+    if (tag) assert(!_cellTrackingTag);
     _cellTrackingTag = tag;
 }
 

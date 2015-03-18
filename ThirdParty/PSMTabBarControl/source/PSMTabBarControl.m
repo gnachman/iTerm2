@@ -15,6 +15,7 @@
 #import "PSMTabDragAssistant.h"
 #import "PTYTask.h"
 #import "NSWindow+PSM.h"
+#import "DebugLogging.h"
 
 NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotification";
 NSString *const kPSMTabModifierKey = @"TabModifier";
@@ -23,6 +24,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 @end
 
 @implementation PSMTabBarControl {
+    NSMutableSet *_tags;
 
     // control basics
     NSMutableArray              *_cells;                    // the cells that draw the tabs
@@ -135,7 +137,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     _cellOptimumWidth = 130;
     _tabLocation = PSMTab_TopTab;
     style = [[PSMYosemiteTabStyle alloc] init];
-
+    _tags = [[NSMutableSet alloc] init];
     // the overflow button/menu
     NSRect overflowButtonRect = NSMakeRect([self frame].size.width - [style rightMarginForTabBarControl] + 1, 0, [style rightMarginForTabBarControl] - 1, [self frame].size.height);
     _overflowPopUpButton = [[PSMOverflowPopUpButton alloc] initWithFrame:overflowButtonRect pullsDown:YES];
@@ -201,6 +203,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
 - (void)dealloc
 {
+    DLog(@"** Dealloc tab bar control with tags: %@", _tags);
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     //unbind all the items to prevent crashing
@@ -524,6 +527,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     [cell setModifierString:[self _modifierString]];
 
     // add to collection
+    DLog(@"Add new cell %@", cell);
     [_cells insertObject:cell atIndex:i];
 
     // bind it up
@@ -577,6 +581,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     [[NSNotificationCenter defaultCenter] removeObserver:cell];
 
     if ([cell closeButtonTrackingTag] != 0) {
+        DLog(@"Remove close button tracking rect with tag %@ to cell %@", @([cell closeButtonTrackingTag]), cell);
         [self removeTrackingRect:[cell closeButtonTrackingTag]];
         [cell setCloseButtonTrackingTag:0];
     }
@@ -587,6 +592,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     [self removeAllToolTips];
 
     // pull from collection
+    DLog(@"Remove cell %@", cell);
     [_cells removeObject:cell];
 
     //[self update];
@@ -870,6 +876,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
     id cell = [_cells objectAtIndex:sourceIndex];
     [cell retain];
+    DLog(@"Move cell %@ to a different index", cell);
     [_cells removeObjectAtIndex:sourceIndex];
     [_cells insertObject:cell atIndex:destIndex];
     [cell release];
@@ -1090,11 +1097,13 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 {
     // size all cells appropriately and create tracking rects
     // nuke old tracking rects
+    DLog(@"~~ Removing cell tracking rects for all known cells: %@", _cells);
     int i, cellCount = [_cells count];
     for (i = 0; i < cellCount; i++) {
         id cell = [_cells objectAtIndex:i];
         [[NSNotificationCenter defaultCenter] removeObserver:cell];
         if ([cell closeButtonTrackingTag] != 0) {
+            DLog(@"Remove close button tracking rect with tag %@ to cell %@", @([cell closeButtonTrackingTag]), cell);
             [self removeTrackingRect:[cell closeButtonTrackingTag]];
             [cell setCloseButtonTrackingTag:0];
         }
@@ -1107,6 +1116,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
     //remove all tooltip rects
     [self removeAllToolTips];
+    DLog(@"~~ Done removing cell tracking rects. Remaining tags are: %@", _tags);
 }
 
 - (void)_animateCells:(NSTimer *)timer
@@ -1187,6 +1197,19 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     }
 }
 
+- (NSTrackingRectTag)addTrackingRect:(NSRect)aRect owner:(id)anObject userData:(void *)data assumeInside:(BOOL)flag {
+    NSTrackingRectTag tag = [super addTrackingRect:aRect owner:anObject userData:data assumeInside:flag];
+    [_tags addObject:@(tag)];
+    DLog(@"Add tracking rect for cell %@ to %@ with tag %@. There are now %@ outstanding rects: %@\n%@", anObject, self, @(tag), @(_tags.count), _tags, [NSThread callStackSymbols]);
+    return tag;
+}
+
+- (void)removeTrackingRect:(NSTrackingRectTag)tag {
+    [_tags removeObject:@(tag)];
+    DLog(@"Remove tracking rect tag %@. There are now %@ outstanding rects: %@\n%@", @(tag), @(_tags.count), _tags, [NSThread callStackSymbols]);
+    [super removeTrackingRect:tag];
+}
+
 - (NSMenu *)_setupCells:(NSArray *)newWidths {
     NSRect cellRect = [self genericCellRect];
     int i, cellCount = [_cells count], numberOfVisibleCells = [newWidths count];
@@ -1220,9 +1243,12 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
                     // Add the tracking rect for the close button highlight.
                     if ([cell closeButtonTrackingTag]) {
+                        DLog(@"Remove close button tracking rect with tag %@ to cell %@", @([cell closeButtonTrackingTag]), cell);
                         [self removeTrackingRect:[cell closeButtonTrackingTag]];
+                        [cell setCloseButtonTrackingTag:0];
                     }
                     tag = [self addTrackingRect:closeRect owner:cell userData:nil assumeInside:NO];
+                    DLog(@"Add close button tracking rect with tag %@ to cell %@", @(tag), cell);
                     [cell setCloseButtonTrackingTag:tag];
 
                     // highlight the close button if the currently selected tab has the mouse over it
@@ -2072,6 +2098,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     self = [super initWithCoder:aDecoder];
     if (self) {
         if ([aDecoder allowsKeyedCoding]) {
+            DLog(@"Init with coder.");
             _cells = [[aDecoder decodeObjectForKey:@"PSMcells"] retain];
             tabView = [[aDecoder decodeObjectForKey:@"PSMtabView"] retain];
             _overflowPopUpButton = [[aDecoder decodeObjectForKey:@"PSMoverflowPopUpButton"] retain];
