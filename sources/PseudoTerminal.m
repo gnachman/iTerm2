@@ -208,8 +208,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     int nextSessionRows_;
     int nextSessionColumns_;
 
-    BOOL tempDisableProgressIndicators_;
-
     int windowType_;
     // Window type before entering fullscreen. Only relevant if in/entering fullscreen.
     int savedWindowType_;
@@ -3232,7 +3230,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
         }
         [self.window setFrame:oldFrame_ display:YES];
-        if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
+        if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
+            (self.window.styleMask & NSTitledWindowMask)) {
             [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
         }
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
@@ -5331,11 +5330,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return minWidth;
 }
 
-- (BOOL)disableProgressIndicators
-{
-    return tempDisableProgressIndicators_;
-}
-
 - (void)appendTab:(PTYTab*)aTab
 {
     [self insertTab:aTab atIndex:[TABVIEW numberOfTabViewItems]];
@@ -5653,8 +5647,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)_refreshTerminal:(NSNotification *)aNotification
-{
+- (void)_refreshTerminal:(NSNotification *)aNotification {
     PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
 
     [self updateTabBarStyle];
@@ -5695,6 +5688,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             needResize = YES;
         }
         [aTab setObjectCount:i+1];
+
+        // Update activity indicator.
+        [aTab setIsProcessing:[aTab realIsProcessing]];
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
         for (PTYSession* aSession in [aTab sessions]) {
@@ -5905,32 +5901,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
 }
 
-- (void)_setDisableProgressIndicators:(BOOL)value
-{
-    tempDisableProgressIndicators_ = value;
-    for (NSTabViewItem* anItem in [TABVIEW tabViewItems]) {
-        PTYTab* theTab = [anItem identifier];
-        [theTab setIsProcessing:[theTab realIsProcessing]];
-    }
-}
-
-void (^gDoomedBlock)(int);
-+ (void)callDoomedBlock:(int)value {
-    gDoomedBlock(value);
-}
-int aGlobalVariable;
-
 - (void)flagsChanged:(NSEvent *)theEvent
 {
-    aGlobalVariable = 1;
-    static int i;
-    if (i == 0) {
-
-        void (^doomedBlock)(int) = ^void(int value) {NSLog(@"%d", value); };
-        gDoomedBlock= doomedBlock;
-    }
-    i++;
-
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermFlagsChanged"
                                                         object:theEvent
                                                       userInfo:nil];

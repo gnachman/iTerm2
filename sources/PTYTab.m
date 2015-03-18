@@ -611,15 +611,14 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return isProcessing_;
 }
 
-- (BOOL)isProcessing
-{
-    return ![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
-        isProcessing_ &&
-        ![realParentWindow_ disableProgressIndicators];
+// This is KVO-observed by PSMTabBarControl and determines whether the activity indicator is visible.
+- (BOOL)isProcessing {
+    return (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
+            isProcessing_ &&
+            ![self isForegroundTab]);
 }
 
-- (void)setIsProcessing:(BOOL)aFlag
-{
+- (void)setIsProcessing:(BOOL)aFlag {
     isProcessing_ = aFlag;
 }
 
@@ -4173,7 +4172,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
     if ([self isProcessing]) {
-        [self setIsProcessing:NO];
+        [self setIsProcessing:NO];  // This triggers KVO in PSMTabBarCell
     }
 
     for (PTYSession* session in [self sessions]) {
@@ -4210,14 +4209,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
 }
 
-- (void)setLabelAttributesForActiveTab:(BOOL)notify
-{
+- (void)setLabelAttributesForActiveTab:(BOOL)notify {
     BOOL isBackgroundTab = [[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem];
-    const BOOL compactTab = ([iTermPreferences boolForKey:kPreferenceKeyHideTabNumber] &&
-                             [iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]);
-    if ([self isProcessing] == NO && !compactTab && ![self isForegroundTab]) {
-        [self setIsProcessing:YES];
-    }
+    [self setIsProcessing:YES];
 
     if (![[self activeSession] havePostedNewOutputNotification] &&
         [[self realParentWindow] broadcastMode] == BROADCAST_OFF &&
