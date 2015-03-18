@@ -179,7 +179,7 @@
 - (PTYSession*)sessionBelow:(PTYSession*)session;
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize;
 - (NSImage*)image:(BOOL)withSpaceForFrame;
-- (bool)blur;
+- (BOOL)blur;
 - (double)blurRadius;
 - (void)recheckBlur;
 

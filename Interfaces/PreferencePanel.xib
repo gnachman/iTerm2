@@ -1470,14 +1470,14 @@ DQ
             <connections>
                 <outlet property="_backgroundImagePreview" destination="4974" id="zoR-T3-lJq"/>
                 <outlet property="_backgroundImageTiled" destination="6395" id="yEm-Wg-cU2"/>
-                <outlet property="_backgroundTransparency" destination="SEY-PV-vqK" id="GMI-ZZ-EIv"/>
-                <outlet property="_bgBlurRadius" destination="6Tt-6d-bc2" id="ij2-db-meS"/>
                 <outlet property="_blendAmount" destination="6320" id="FUt-BP-aez"/>
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
                 <outlet property="_disableWindowResizing" destination="5004" id="ELk-qv-bSY"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
+                <outlet property="_inactiveBlurRadius" destination="6Tt-6d-bc2" id="ij2-db-meS"/>
+                <outlet property="_inactiveTransparency" destination="SEY-PV-vqK" id="GMI-ZZ-EIv"/>
                 <outlet property="_preventTab" destination="6416" id="eRg-47-Fqf"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
                 <outlet property="_rowsLabel" destination="4913" id="JG6-6Y-B6a"/>
@@ -1487,10 +1487,10 @@ DQ
                 <outlet property="_spaceLabel" destination="4920" id="hZ0-FW-sxK"/>
                 <outlet property="_syncTitle" destination="5008" id="4VH-Th-Xwf"/>
                 <outlet property="_transparency" destination="4978" id="uze-TU-NdW"/>
-                <outlet property="_useBackgroundBlur" destination="9fB-oz-2vb" id="big-1B-Gvg"/>
                 <outlet property="_useBackgroundImage" destination="4973" id="vZ6-QD-p27"/>
-                <outlet property="_useBackgroundTransparency" destination="3E0-si-zeA" id="bEA-fW-KAI"/>
                 <outlet property="_useBlur" destination="4976" id="ZfQ-et-Uge"/>
+                <outlet property="_useInactiveBlur" destination="9fB-oz-2vb" id="big-1B-Gvg"/>
+                <outlet property="_useInactiveTransparency" destination="3E0-si-zeA" id="BTe-8k-YT7"/>
                 <outlet property="_windowStyle" destination="4916" id="HIG-WO-wce"/>
                 <outlet property="_windowStyleLabel" destination="4918" id="65O-r4-WZw"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="7Ch-0z-mdS"/>
@@ -2949,7 +2949,6 @@ DQ
                     <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="30" doubleValue="0.10000000000000001" tickMarkPosition="below" sliderType="linear" id="5368"/>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="AJB-o1-kDf"/>
-                        <outlet property="nextKeyView" destination="4973" id="5373"/>
                     </connections>
                 </slider>
                 <textField verticalHuggingPriority="750" id="5364">
@@ -3035,15 +3034,6 @@ DQ
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="SPU-HF-C0e"/>
                     </connections>
                 </button>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="0gT-o5-hpx">
-                    <rect key="frame" x="18" y="255" width="142" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Inactive Transparency:" id="xxj-A3-fCf">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <button id="3E0-si-zeA">
                     <rect key="frame" x="18" y="278" width="160" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3053,18 +3043,20 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="o9P-6j-C3I"/>
+                        <outlet property="nextKeyView" destination="SEY-PV-vqK" id="GRd-aU-Jme"/>
                     </connections>
                 </button>
                 <slider verticalHuggingPriority="750" id="SEY-PV-vqK">
-                    <rect key="frame" x="39" y="228" width="190" height="21"/>
+                    <rect key="frame" x="39" y="247" width="190" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <sliderCell key="cell" continuous="YES" alignment="left" maxValue="0.90000000000000002" tickMarkPosition="below" sliderType="linear" id="4Eh-UL-ghM"/>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="oLT-Kz-H11"/>
+                        <outlet property="nextKeyView" destination="3E0-si-zeA" id="Kok-K1-0hb"/>
                     </connections>
                 </slider>
                 <textField verticalHuggingPriority="750" id="kH2-Z5-fA5">
-                    <rect key="frame" x="34" y="212" width="53" height="11"/>
+                    <rect key="frame" x="34" y="230" width="53" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Opaque" id="aIE-ae-cTa">
                         <font key="font" metaFont="miniSystem"/>
@@ -3073,7 +3065,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="2Ac-3w-28f">
-                    <rect key="frame" x="180" y="212" width="58" height="11"/>
+                    <rect key="frame" x="180" y="230" width="58" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Transparent" id="gPa-1q-rwf">
                         <font key="font" metaFont="miniSystem"/>
@@ -3082,7 +3074,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <slider verticalHuggingPriority="750" id="6Tt-6d-bc2">
-                    <rect key="frame" x="39" y="158" width="190" height="21"/>
+                    <rect key="frame" x="39" y="168" width="190" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.10000000000000001" maxValue="30" doubleValue="0.10000000000000001" tickMarkPosition="below" sliderType="linear" id="0BF-Cb-KHx"/>
                     <connections>
@@ -3091,7 +3083,7 @@ DQ
                     </connections>
                 </slider>
                 <textField verticalHuggingPriority="750" id="ccL-Lq-oQB">
-                    <rect key="frame" x="34" y="141" width="60" height="11"/>
+                    <rect key="frame" x="34" y="151" width="60" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Small Radius" id="b2Z-F3-clX">
                         <font key="font" metaFont="miniSystem"/>
@@ -3099,17 +3091,8 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField verticalHuggingPriority="750" id="eE1-Ox-zgA">
-                    <rect key="frame" x="177" y="141" width="61" height="11"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Large Radius" id="uSE-OA-azh">
-                        <font key="font" metaFont="miniSystem"/>
-                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
                 <button id="9fB-oz-2vb">
-                    <rect key="frame" x="18" y="183" width="103" height="18"/>
+                    <rect key="frame" x="19" y="193" width="103" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Inactive Blur:" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="V1I-2y-4ja">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3117,8 +3100,18 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="tTv-fm-gXO"/>
+                        <outlet property="nextKeyView" destination="6Tt-6d-bc2" id="WZZ-Ap-Sev"/>
                     </connections>
                 </button>
+                <textField verticalHuggingPriority="750" id="eE1-Ox-zgA">
+                    <rect key="frame" x="177" y="151" width="61" height="11"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Large Radius" id="uSE-OA-azh">
+                        <font key="font" metaFont="miniSystem"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
             <point key="canvasLocation" x="737.5" y="431"/>
         </customView>

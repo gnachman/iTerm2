@@ -24,10 +24,10 @@
     IBOutlet NSSlider *_transparency;
     IBOutlet NSButton *_useBlur;
     IBOutlet NSSlider *_blurRadius;
-    IBOutlet NSButton *_useBackgroundTransparency;
-    IBOutlet NSSlider *_backgroundTransparency;
-    IBOutlet NSButton *_useBackgroundBlur;
-    IBOutlet NSSlider *_bgBlurRadius;
+    IBOutlet NSButton *_useInactiveTransparency;
+    IBOutlet NSSlider *_inactiveTransparency;
+    IBOutlet NSButton *_useInactiveBlur;
+    IBOutlet NSSlider *_inactiveBlurRadius;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet iTermImageWell *_backgroundImagePreview;
     IBOutlet NSButton *_backgroundImageTiled;
@@ -74,31 +74,31 @@
                     key:KEY_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
     
-    /////// Background transparency
-    
-    info = [self defineControl:_useBackgroundTransparency
-                           key:KEY_USE_BACKGROUND_TRANS
+    info = [self defineControl:_useInactiveTransparency
+                           key:KEY_USE_INACTIVE_TRANSPARENCY
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
-        _backgroundTransparency.enabled = (_useBackgroundTransparency.state == NSOnState);
-        _useBackgroundBlur.enabled = (_useBackgroundTransparency.state == NSOnState);
+        _inactiveTransparency.enabled = (_useInactiveTransparency.state == NSOnState);
+        _useInactiveBlur.enabled = (_useInactiveTransparency.state == NSOnState);
     };
     
-    [self defineControl:_backgroundTransparency
-                    key:KEY_BACKGROUND_TRANS
+    [self defineControl:_inactiveTransparency
+                    key:KEY_INACTIVE_TRANSPARENCY
                    type:kPreferenceInfoTypeSlider];
     
-    info = [self defineControl:_useBackgroundBlur
-                           key:KEY_BACKGROUND_BLUR
+    info = [self defineControl:_useInactiveBlur
+                           key:KEY_INACTIVE_BLUR
                           type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() { _bgBlurRadius.enabled = (_useBackgroundTransparency.state == NSOnState && _useBackgroundBlur.state == NSOnState); };
+    info.observer = ^() {
+        _inactiveBlurRadius.enabled =
+        (_useInactiveTransparency.state == NSOnState
+         && _useInactiveBlur.state == NSOnState);
+    };
     
-    [self defineControl:_bgBlurRadius
-                    key:KEY_BACKGROUND_BLUR_RADIUS
+    [self defineControl:_inactiveBlurRadius
+                    key:KEY_INACTIVE_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
-    
-    /////// Background transparency
-    
+        
     [self defineControl:_backgroundImageTiled
                     key:KEY_BACKGROUND_IMAGE_TILED
                    type:kPreferenceInfoTypeCheckbox];

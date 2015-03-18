@@ -193,8 +193,8 @@ typedef enum {
 
 @property(nonatomic, retain) iTermColorMap *colorMap;
 @property(nonatomic, assign) float transparency;
-@property(nonatomic, assign) BOOL useBackgroundTransparency;
-@property(nonatomic, assign) float backgroundTransparency;
+@property(nonatomic, assign) BOOL useInactiveTransparency;
+@property(nonatomic, assign) float inactiveTransparency;
 @property(nonatomic, assign) float blend;
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) BOOL useItalicFont;

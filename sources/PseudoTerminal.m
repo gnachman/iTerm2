@@ -2392,7 +2392,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     
     for (PTYSession *aSession in [self allSessions]) {
-        [[aSession textview] setIsBackground:false];
+        [[aSession textview] setIsBackground:NO];
     }
     
 
@@ -2687,7 +2687,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [[aSession textview] endFindCursor];
         }
         [[aSession textview] removeUnderline];
-        [[aSession textview] setIsBackground:true];
+        [[aSession textview] setIsBackground:YES];
     }
 
     PtyLog(@"PseudoTerminal windowDidResignKey");

@@ -5221,23 +5221,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)setBackgroundTransparency:(double)fVal
+- (void)setInactiveTransparency:(double)inactiveTransparency
 {
-    _backgroundTransparency = fVal;
+    _inactiveTransparency = inactiveTransparency;
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
-- (void)setUseBackgroundTransparency:(BOOL)bVal
+- (void)setUseInactiveTransparency:(BOOL)useInactiveTransparency
 {
-    _useBackgroundTransparency = bVal;
+    _useInactiveTransparency = useInactiveTransparency;
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
-- (void)setIsBackground:(BOOL)bVal
+- (void)setIsBackground:(BOOL)isBackground
 {
-    _isBackground = bVal;
+    _isBackground = isBackground;
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
@@ -6400,7 +6400,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     
     double selectedAlpha = 1.0 - _transparency;
     if(_isBackground){
-        selectedAlpha = 1.0 - _backgroundTransparency;
+        selectedAlpha = 1.0 - _inactiveTransparency;
     }
     double alphaIfTransparencyInUse = [self transparencyAlpha];
     BOOL reversed = [[_dataSource terminal] reverseVideo];
@@ -7189,8 +7189,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (double)transparencyAlpha {
     if([self useTransparency]){
-        if([self isBackground] && [self useBackgroundTransparency]){
-            return 1.0 - _backgroundTransparency;
+        if([self isBackground] && [self useInactiveTransparency]){
+            return 1.0 - _inactiveTransparency;
         }
         return 1.0 - _transparency;
     }

@@ -1855,17 +1855,16 @@ static NSString* FormatRect(NSRect r) {
 }
 
 // Blur the window if any session is blurred.
-- (bool)blur
-{
+- (BOOL)blur {
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
         if ([session transparency] > 0 &&
             [[session textview] useTransparency] &&
             [[[session profile] objectForKey:KEY_BLUR] boolValue]) {
-            return true;
+            return YES;
         }
     }
-    return false;
+    return NO;
 }
 
 - (double)blurRadius
@@ -1887,38 +1886,37 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-- (bool)useBackgroundTransparency
-{
+- (BOOL)useInactiveTransparency {
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
-        if ([[session textview] useBackgroundTransparency]) {
-            return true;
+        if ([[session textview] useInactiveTransparency]) {
+            return YES;
         }
     }
-    return false;
+    return NO;
 }
 
-- (bool)backgroundBlur
-{
+- (BOOL)inactiveBlur {
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
-        if ([session backgroundTransparency] > 0 &&
-            [[session textview] useBackgroundTransparency] &&
-            [[[session profile] objectForKey:KEY_BACKGROUND_BLUR] boolValue]) {
-            return true;
+        if ([session inactiveTransparency] > 0 &&
+            [[session textview] useInactiveTransparency] &&
+            [[[session profile] objectForKey:KEY_INACTIVE_BLUR] boolValue]) {
+            return YES;
         }
     }
-    return false;
+    return NO;
 }
 
-- (double)backgroundBlurRadius
-{
+- (double)inactiveBlurRadius {
     double sum = 0;
     double count = 0;
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
-        if ([[[session profile] objectForKey:KEY_BACKGROUND_BLUR] boolValue]) {
-            sum += [[session profile] objectForKey:KEY_BACKGROUND_BLUR_RADIUS] ? [[[session profile] objectForKey:KEY_BACKGROUND_BLUR_RADIUS] floatValue] : 2.0;
+        if ([[[session profile] objectForKey:KEY_INACTIVE_BLUR] boolValue]) {
+            sum += [[session profile] objectForKey:KEY_INACTIVE_BLUR_RADIUS]
+                 ? [[[session profile] objectForKey:KEY_INACTIVE_BLUR_RADIUS] floatValue]
+                 : 2.0;
             ++count;
         }
     }
@@ -1930,23 +1928,22 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-- (void)recheckBlur
-{
+- (void)recheckBlur {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
-        if([[[self realParentWindow] window] isKeyWindow]){
+        if ([[[self realParentWindow] window] isKeyWindow]){
             if ([self blur]) {
                 [parentWindow_ enableBlur:[self blurRadius]];
             } else {
                 [parentWindow_ disableBlur];
             }
         } else {
-            if ([self backgroundBlur]) {
-                [parentWindow_ enableBlur:[self backgroundBlurRadius]];
-            } else if (![self useBackgroundTransparency] && [self blur]) {
+            if ([self inactiveBlur]) {
+                [parentWindow_ enableBlur:[self inactiveBlurRadius]];
+            } else if (![self useInactiveTransparency] && [self blur]) {
                 [parentWindow_ enableBlur:[self blurRadius]];
-            } else{
+            } else {
                 [parentWindow_ disableBlur];
             }
         }
