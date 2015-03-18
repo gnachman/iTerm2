@@ -16,6 +16,40 @@
 #import "PTYTask.h"
 #import "NSWindow+PSM.h"
 #import "DebugLogging.h"
+#import <objc/runtime.h>
+
+@interface NSTrackingArea (iterm)
++ (BOOL)_isTrackingAreaObject:(id)object;
+@end
+
+@interface iTermTrackingArea : NSTrackingArea
+@end
+
+@implementation iTermTrackingArea
+
+- (void)dealloc {
+    DLog(@"Dealloc %@ from %@", self, [NSThread callStackSymbols]);
+    [super dealloc];
+}
+
+- (instancetype)retain {
+    id result = [super retain];
+    DLog(@"rc<-%d: Retained %@ from %@", (int)[self retainCount], self, [NSThread callStackSymbols]);
+    return result;
+}
+- (oneway void)release {
+    DLog(@"rc<-%d: Released %@ from %@", (int)[self retainCount] - 1, self, [NSThread callStackSymbols]);
+    [super release];
+}
+
+- (instancetype)autorelease {
+    id result = [super autorelease];
+    DLog(@"rc<-%d: Autoreleased %@ from %@", (int)[self retainCount], self, [NSThread callStackSymbols]);
+    return result;
+}
+
+@end
+
 
 NSString *const kPSMModifierChangedNotification = @"kPSMModifierChangedNotification";
 NSString *const kPSMTabModifierKey = @"TabModifier";
@@ -1199,15 +1233,31 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
 - (NSTrackingRectTag)addTrackingRect:(NSRect)aRect owner:(id)anObject userData:(void *)data assumeInside:(BOOL)flag {
     NSTrackingRectTag tag = [super addTrackingRect:aRect owner:anObject userData:data assumeInside:flag];
+
+    object_setClass((id)tag, [iTermTrackingArea class]);
+
     [_tags addObject:@(tag)];
-    DLog(@"Add tracking rect for cell %@ to %@ with tag %@. There are now %@ outstanding rects: %@\n%@", anObject, self, @(tag), @(_tags.count), _tags, [NSThread callStackSymbols]);
+    DLog(@"Add tracking rect for cell %@ to %@ with tag %@. There are now %@ outstanding rects: %@\n%@", anObject, self, @(tag), @(_tags.count), [self trackingAreas], [NSThread callStackSymbols]);
     return tag;
 }
 
 - (void)removeTrackingRect:(NSTrackingRectTag)tag {
     [_tags removeObject:@(tag)];
-    DLog(@"Remove tracking rect tag %@. There are now %@ outstanding rects: %@\n%@", @(tag), @(_tags.count), _tags, [NSThread callStackSymbols]);
+    BOOL isTrackingAreaObject = [NSTrackingArea _isTrackingAreaObject:(id)tag];
+    DLog(@"About to remove tag %@. _isTrackingAreaObject=%@. As object: %@",
+         @(tag),
+         @(isTrackingAreaObject),
+         (id)tag);
+    [[(id)tag retain] autorelease];
+    DLog(@"Prior to removal, retain count is %d", (int)[(NSObject*)tag retainCount]);
+    DLog(@"Prior to removal I have these tracking areas: %@", [self trackingAreas]);
+    DLog(@"Calling removeTrackingRect:%p", (void*)tag);
     [super removeTrackingRect:tag];
+    DLog(@"Returned from removeTrackingRect:%p", (void*)tag);
+    DLog(@"Removed tracking rect description is now: %@", (id)tag);
+    DLog(@"After removal, retain count is %d", (int)[(NSObject*)tag retainCount]);
+    DLog(@"Removed tracking rect tag %@. There are now %@ outstanding tracking areas: %@\n%@",
+         @(tag), @(_tags.count), [self trackingAreas], [NSThread callStackSymbols]);
 }
 
 - (NSMenu *)_setupCells:(NSArray *)newWidths {
