@@ -801,8 +801,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
      horizontalSpacing:[[_profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
        verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
-    [self setInactiveTransparency:[[_profile objectForKey:KEY_INACTIVE_TRANSPARENCY] floatValue]];
-    [self setUseInactiveTransparency:[[_profile objectForKey:KEY_USE_INACTIVE_TRANSPARENCY] boolValue]];
+    [self setInactiveTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TRANSPARENCY inProfile:_profile]];
+    [self setUseInactiveTransparency:[iTermProfilePreferences boolForKey:KEY_USE_INACTIVE_TRANSPARENCY inProfile:_profile]];
     const float theBlend =
         [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
@@ -2691,6 +2691,22 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)setUseInactiveTransparency:(BOOL)useInactiveTransparency {
     [_textview setUseInactiveTransparency:useInactiveTransparency];
+}
+
+- (BOOL)inactiveBlur {
+    return [iTermProfilePreferences boolForKey:KEY_INACTIVE_BLUR inProfile:_profile];
+}
+
+- (BOOL)blur {
+    return [iTermProfilePreferences boolForKey:KEY_BLUR inProfile:_profile];
+}
+
+- (float)inactiveBlurRadius {
+    return [iTermProfilePreferences floatForKey:KEY_INACTIVE_BLUR_RADIUS inProfile:_profile];
+}
+
+- (float)blurRadius {
+    return [iTermProfilePreferences floatForKey:KEY_BLUR_RADIUS inProfile:_profile];
 }
 
 - (float)blend

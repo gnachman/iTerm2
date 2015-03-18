@@ -199,6 +199,11 @@ typedef enum {
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) BOOL useItalicFont;
 
+@property(nonatomic, readonly) BOOL inactiveBlur;
+@property(nonatomic, readonly) BOOL blur;
+@property(nonatomic, readonly) float inactiveBlurRadius;
+@property(nonatomic, readonly) float blurRadius;
+
 @property(nonatomic, readonly) BOOL logging;
 @property(nonatomic, readonly) BOOL exited;
 

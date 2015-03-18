@@ -318,6 +318,16 @@ static const int kBadgeRightMargin = 10;
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidBecomeKey:)
+                                                     name:NSWindowDidBecomeKeyNotification
+                                                   object:nil];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidResignKey:)
+                                                     name:NSWindowDidResignKeyNotification
+                                                   object:nil];
 
         _numberOfIMELines = 0;
 
@@ -6399,7 +6409,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
     
     double selectedAlpha = 1.0 - _transparency;
-    if(_isBackground){
+    if (_isBackground) {
         selectedAlpha = 1.0 - _inactiveTransparency;
     }
     double alphaIfTransparencyInUse = [self transparencyAlpha];
@@ -7188,8 +7198,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (double)transparencyAlpha {
-    if([self useTransparency]){
-        if([self isBackground] && [self useInactiveTransparency]){
+    if ([self useTransparency]) {
+        if ([self isBackground] && [self useInactiveTransparency]) {
             return 1.0 - _inactiveTransparency;
         }
         return 1.0 - _transparency;
@@ -8053,6 +8063,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     _makeFirstResponderWhenAppBecomesActive = NO;
+}
+
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    if ([notification object] == [self window]) {
+        [self setIsBackground:NO];
+    }
+}
+
+- (void)windowDidResignKey:(NSNotification *)notification {
+    if ([notification object] == [self window]) {
+        [self setIsBackground:YES];
+    }
 }
 
 - (void)_settingsChanged:(NSNotification *)notification

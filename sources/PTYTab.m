@@ -155,6 +155,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         activeSession_ = session;
         [session setActivityCounter:@(_activityCounter++)];
         [[session view] setDimmed:NO];
+        [[session tab] recheckBlur];
         [self setRoot:[[[PTYSplitView alloc] init] autorelease]];
         PTYTab *oldTab = [session tab];
         if (oldTab && [oldTab tmuxWindow] >= 0) {
@@ -1867,28 +1868,33 @@ static NSString* FormatRect(NSRect r) {
     return NO;
 }
 
-- (double)blurRadius
-{
+- (double)averageBlurRadiusForInactive:(BOOL)inactive {
     double sum = 0;
     double count = 0;
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
-        if ([[[session profile] objectForKey:KEY_BLUR] boolValue]) {
-            sum += [[session profile] objectForKey:KEY_BLUR_RADIUS] ? [[[session profile] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
+        BOOL useBlur = inactive ? [session inactiveBlur] : [session blur];
+        if (useBlur) {
+            double blurRadius = inactive ? [session inactiveBlurRadius] : [session blurRadius];
+            sum += blurRadius;
             ++count;
         }
     }
     if (count > 0) {
         return sum / count;
     } else {
-        // This shouldn't actually happen, but better save than divide by zero.
+        // This shouldn't actually happen, but better safe than divide by zero.
         return 2.0;
     }
 }
 
+- (double)blurRadius {
+    return [self averageBlurRadiusForInactive:NO];
+}
+
 - (BOOL)useInactiveTransparency {
-    NSArray* sessions = [self sessions];
-    for (PTYSession* session in sessions) {
+    NSArray *sessions = [self sessions];
+    for (PTYSession *session in sessions) {
         if ([[session textview] useInactiveTransparency]) {
             return YES;
         }
@@ -1900,8 +1906,8 @@ static NSString* FormatRect(NSRect r) {
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
         if ([session inactiveTransparency] > 0 &&
-            [[session textview] useInactiveTransparency] &&
-            [[[session profile] objectForKey:KEY_INACTIVE_BLUR] boolValue]) {
+            [session useInactiveTransparency] &&
+            [session inactiveBlur]) {
             return YES;
         }
     }
@@ -1909,23 +1915,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 - (double)inactiveBlurRadius {
-    double sum = 0;
-    double count = 0;
-    NSArray* sessions = [self sessions];
-    for (PTYSession* session in sessions) {
-        if ([[[session profile] objectForKey:KEY_INACTIVE_BLUR] boolValue]) {
-            sum += [[session profile] objectForKey:KEY_INACTIVE_BLUR_RADIUS]
-                 ? [[[session profile] objectForKey:KEY_INACTIVE_BLUR_RADIUS] floatValue]
-                 : 2.0;
-            ++count;
-        }
-    }
-    if (count > 0) {
-        return sum / count;
-    } else {
-        // This shouldn't actually happen, but better save than divide by zero.
-        return 2.0;
-    }
+    return [self averageBlurRadiusForInactive:YES];
 }
 
 - (void)recheckBlur {

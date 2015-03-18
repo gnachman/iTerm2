@@ -164,8 +164,6 @@ static NSDate* lastResizeDate_;
     } else {
         _dim = isDimmed;
     }
-    
-    [[[self session] tab] recheckBlur];
 }
 
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed {
@@ -178,8 +176,6 @@ static NSDate* lastResizeDate_;
     if (_backgroundDimmed != orig) {
         [self updateDim];
     }
-    
-    [[[self session] tab] recheckBlur];
 }
 
 // See comments in -[PTYTextView updateTrackingAreas] about why this is done.

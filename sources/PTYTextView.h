@@ -199,7 +199,7 @@ typedef enum {
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;
 
-// Transparency level. 0 to 1.
+// Inactive Window Transparency level. 0 to 1.
 @property(nonatomic, assign) double inactiveTransparency;
 
 // Blending level for background color over background image
@@ -322,9 +322,6 @@ typedef enum {
 // Updates the preferences for semantic history.
 - (void)setSemanticHistoryPrefs:(NSDictionary *)prefs;
 
-// Is the main window active?
-- (void)setIsBackground:(BOOL)isBackground;
-
 // Various accessors (TODO: convert as many as possible into properties)
 - (void)setFont:(NSFont*)aFont
     nonAsciiFont:(NSFont *)nonAsciiFont
@@ -427,7 +424,7 @@ typedef enum {
                          prefix:(NSString *)prefix
                          suffix:(NSString *)suffix;
 
-// Get the transparency value for foreground or background windows.
+// Get the transparency value for view based on if this window is key or not.
 - (double)transparencyAlpha;
 
 // Allow a special transparency for inactive windows.

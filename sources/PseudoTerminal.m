@@ -2001,7 +2001,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (PTYSession *aSession in [tab sessions]) {
         [tmuxController registerSession:aSession withPane:[aSession tmuxPane] inWindow:window];
         [aSession setTmuxController:tmuxController];
-        [self setDimmingForSession:aSession];
+        [self updateDimAndBlurForSession:aSession];
     }
     [self endTmuxOriginatedResize];
 }
@@ -2390,11 +2390,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [self hideMenuBar];
         }
     }
-    
-    for (PTYSession *aSession in [self allSessions]) {
-        [[aSession textview] setIsBackground:NO];
-    }
-    
 
     // Note: there was a bug in the old iterm that setting fonts didn't work
     // properly if the font panel was left open in focus-follows-mouse mode.
@@ -2687,7 +2682,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [[aSession textview] endFindCursor];
         }
         [[aSession textview] removeUnderline];
-        [[aSession textview] setIsBackground:YES];
     }
 
     PtyLog(@"PseudoTerminal windowDidResignKey");
@@ -3789,7 +3783,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[aSession textview] setNeedsDisplay:YES];
         [aSession updateDisplay];
         [aSession scheduleUpdateIn:kFastTimerIntervalSec];
-        [self setDimmingForSession:aSession];
+        [self updateDimAndBlurForSession:aSession];
         [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
     }
 
@@ -4914,7 +4908,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];
-    [self setDimmingForSession:targetSession];
+    [self updateDimAndBlurForSession:targetSession];
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];
     }
@@ -5584,7 +5578,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)setDimmingForSession:(PTYSession *)aSession
+- (void)updateDimAndBlurForSession:(PTYSession *)aSession
 {
     BOOL canDim = [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
     if (!canDim) {
@@ -5610,7 +5604,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)setDimmingForSessions
 {
     for (PTYSession *aSession in [self allSessions]) {
-        [self setDimmingForSession:aSession];
+        [self updateDimAndBlurForSession:aSession];
     }
 }
 
@@ -5694,11 +5688,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
         for (PTYSession* aSession in [aTab sessions]) {
-                        [self setDimmingForSession:aSession];
+                        [self updateDimAndBlurForSession:aSession];
             [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
 
             // In case dimming amount slider moved update the dimming amount.
             [[aSession view] updateDim];
+            
+            
+            [[aSession tab] recheckBlur];
         }
     }
 
