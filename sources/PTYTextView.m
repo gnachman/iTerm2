@@ -5233,22 +5233,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)setInactiveTransparency:(double)inactiveTransparency
-{
+- (void)setInactiveTransparency:(double)inactiveTransparency {
     _inactiveTransparency = inactiveTransparency;
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
-- (void)setUseInactiveTransparency:(BOOL)useInactiveTransparency
-{
+- (void)setUseInactiveTransparency:(BOOL)useInactiveTransparency {
     _useInactiveTransparency = useInactiveTransparency;
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
-- (void)setWindowInactive:(BOOL)windowInactive
-{
+- (void)setWindowInactive:(BOOL)windowInactive {
     _windowInactive = windowInactive;
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
