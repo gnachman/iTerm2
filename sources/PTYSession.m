@@ -4278,6 +4278,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 }
                 break;
             }
+                
+            case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING: {
+                [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]
+                                   forKey:kPreferenceKeyHotkeyAutoHides];
+                break;
+            }
 
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);

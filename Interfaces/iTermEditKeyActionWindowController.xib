@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6250" systemVersion="14A389" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14C109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6250"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6254"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermEditKeyActionWindowController">
@@ -149,6 +149,9 @@
                                             </menuItem>
                                             <menuItem isSeparatorItem="YES" id="2kX-33-g8o"/>
                                             <menuItem title="Toggle Fullscreen" tag="23" id="SzE-61-BL1"/>
+                                            <menuItem title="Toggle Hotkey Window Pinning" tag="43" id="foW-Ca-dgS">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
                                             <menuItem isSeparatorItem="YES" id="svX-cj-e8M"/>
                                             <menuItem title="Run Coprocess" tag="35" id="m6l-mc-bhF"/>
                                             <menuItem isSeparatorItem="YES" id="D8m-Tb-i1k"/>
