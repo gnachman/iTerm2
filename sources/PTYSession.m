@@ -2659,7 +2659,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 // Changes transparency
 
-- (float)transparency
+- (double)transparency
 {
     return [_textview transparency];
 }
@@ -2673,7 +2673,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setTransparency:transparency];
 }
 
-- (float)inactiveTransparency {
+- (double)inactiveTransparency {
     return [_textview inactiveTransparency];
 }
 
@@ -2701,21 +2701,20 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [iTermProfilePreferences boolForKey:KEY_BLUR inProfile:_profile];
 }
 
-- (float)inactiveBlurRadius {
+- (double)inactiveBlurRadius {
     return [iTermProfilePreferences floatForKey:KEY_INACTIVE_BLUR_RADIUS inProfile:_profile];
 }
 
-- (float)blurRadius {
+- (double)blurRadius {
     return [iTermProfilePreferences floatForKey:KEY_BLUR_RADIUS inProfile:_profile];
 }
 
-- (float)blend
+- (double)blend
 {
     return [_textview blend];
 }
 
-- (void)setBlend:(float)blendVal
-{
+- (void)setBlend:(double)blendVal {
     [_textview setBlend:blendVal];
 }
 

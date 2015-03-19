@@ -5458,7 +5458,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [[self currentTab] setBroadcasting:NO];
     }
     broadcastMode_ = mode;
-        [self setDimmingForSessions];
+    [self updateDimAndBlurForSessions];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
@@ -5601,7 +5601,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[aSession view] setNeedsDisplay:YES];
 }
 
-- (void)setDimmingForSessions
+- (void)updateDimAndBlurForSessions
 {
     for (PTYSession *aSession in [self allSessions]) {
         [self updateDimAndBlurForSession:aSession];
@@ -5688,13 +5688,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
         for (PTYSession* aSession in [aTab sessions]) {
-                        [self updateDimAndBlurForSession:aSession];
+            [self updateDimAndBlurForSession:aSession];
             [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
 
             // In case dimming amount slider moved update the dimming amount.
             [[aSession view] updateDim];
-            
-            
+
             [[aSession tab] recheckBlur];
         }
     }

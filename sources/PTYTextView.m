@@ -318,12 +318,12 @@ static const int kBadgeRightMargin = 10;
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowDidBecomeKey:)
                                                      name:NSWindowDidBecomeKeyNotification
                                                    object:nil];
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowDidResignKey:)
                                                      name:NSWindowDidResignKeyNotification
@@ -5245,9 +5245,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)setIsBackground:(BOOL)isBackground
+- (void)setWindowInactive:(BOOL)windowInactive
 {
-    _isBackground = isBackground;
+    _windowInactive = windowInactive;
     [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
@@ -6407,7 +6407,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int WIDTH = [_dataSource width];
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
-    
+
     double selectedAlpha = 1.0 - _transparency;
     if (_isBackground) {
         selectedAlpha = 1.0 - _inactiveTransparency;
@@ -7035,7 +7035,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             isBold = screenChar.bold;
             isFaint = screenChar.faint;
-            
+
             // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
             NSColor* proposedForeground = [[self colorForCode:fgColor
                                                         green:fgGreen
@@ -7064,7 +7064,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                              alpha:1]];
                 }
             }
-            
+
             BOOL saved = _useBrightBold;
             _useBrightBold = NO;
             [self _drawCharacter:screenChar
@@ -7174,7 +7174,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                faint:screenChar.faint
                         isBackground:NO];
     }
-    
+
     NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
     CGFloat bgBrightness = [bgColor perceivedBrightness];
     if (column > 0) {
@@ -8067,13 +8067,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
     if ([notification object] == [self window]) {
-        [self setIsBackground:NO];
+        [self setWindowInactive:NO];
     }
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
     if ([notification object] == [self window]) {
-        [self setIsBackground:YES];
+        [self setWindowInactive:YES];
     }
 }
 

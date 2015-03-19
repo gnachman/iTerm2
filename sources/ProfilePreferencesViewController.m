@@ -157,7 +157,8 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
             // If the view is too tall, wrap it in a scroll view.
             
             CGFloat widthWithScrollBar = view.frame.size.width +
-            [NSScroller scrollerWidthForControlSize:NSRegularControlSize scrollerStyle:NSScrollerStyleLegacy];
+                    [NSScroller scrollerWidthForControlSize:NSRegularControlSize
+                                              scrollerStyle:NSScrollerStyleLegacy];
             
             NSRect theFrame = NSMakeRect(0, 0, widthWithScrollBar, kMaxHeight);
             

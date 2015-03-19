@@ -208,7 +208,7 @@ typedef enum {
 // Should transparency be used?
 @property(nonatomic, readonly) BOOL useTransparency;
 @property(nonatomic, readonly) BOOL useInactiveTransparency;
-@property(nonatomic, readonly) BOOL isBackground;
+@property(nonatomic, readonly) BOOL windowInactive;
 
 // Indicates if the last key pressed was a repeat.
 @property(nonatomic, readonly) BOOL keyIsARepeat;

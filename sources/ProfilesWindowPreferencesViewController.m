@@ -91,8 +91,8 @@
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
         _inactiveBlurRadius.enabled =
-        (_useInactiveTransparency.state == NSOnState &&
-         _useInactiveBlur.state == NSOnState);
+                (_useInactiveTransparency.state == NSOnState &&
+                        _useInactiveBlur.state == NSOnState);
     };
     
     [self defineControl:_inactiveBlurRadius

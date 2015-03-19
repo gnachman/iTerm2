@@ -361,7 +361,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             // a invisible textview the first responder.
             [[realParentWindow_ window] makeFirstResponder:[session textview]];
         }
-        [realParentWindow_ setDimmingForSessions];
+        [realParentWindow_ updateDimAndBlurForSessions];
     }
     for (PTYSession* aSession in [self sessions]) {
         [[aSession textview] refresh];
@@ -1922,7 +1922,7 @@ static NSString* FormatRect(NSRect r) {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
-        if ([[[self realParentWindow] window] isKeyWindow]){
+        if ([[[self realParentWindow] window] isKeyWindow]) {
             if ([self blur]) {
                 [parentWindow_ enableBlur:[self blurRadius]];
             } else {
@@ -2307,7 +2307,7 @@ static NSString* FormatRect(NSRect r) {
     }
 
     [self numberOfSessionsDidChange];
-    [term setDimmingForSessions];
+    [term updateDimAndBlurForSessions];
     [term updateTabColors];
 }
 
@@ -3042,7 +3042,7 @@ static NSString* FormatRect(NSRect r) {
     [realParentWindow_ tmuxTabLayoutDidChange:YES];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
-        [realParentWindow_ setDimmingForSessions];
+    [realParentWindow_ updateDimAndBlurForSessions];
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
