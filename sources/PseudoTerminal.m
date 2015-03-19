@@ -653,6 +653,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                              selector:@selector(hideToolbelt)
                                                  name:kToolbeltShouldHide
                                                object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowDidBecomeKey:)
+                                                 name:NSWindowDidBecomeKeyNotification
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowDidResignKey:)
+                                                 name:NSWindowDidResignKeyNotification
+                                               object:nil];
     PtyLog(@"set window inited");
     self.windowInitialized = YES;
     useTransparency_ = YES;
@@ -2408,7 +2418,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (PTYSession* aSession in [self allSessions]) {
         [aSession updateDisplay];
         [[aSession view] setBackgroundDimmed:NO];
-        [aSession setFocused:aSession == [self currentSession]];
+        [aSession setFocused:aSession == [self currentSession]];        
+        [self updateDimAndBlurForSession:aSession];
     }
     // Some users report that the first responder isn't always set properly. Let's try to fix that.
     // This attempt (4/20/13) is to fix bug 2431.
@@ -2721,6 +2732,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     for (PTYSession* aSession in [self allSessions]) {
         [aSession setFocused:NO];
+        [self updateDimAndBlurForSession:aSession];
     }
 }
 
