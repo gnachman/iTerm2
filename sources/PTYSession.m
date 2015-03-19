@@ -2664,7 +2664,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_textview transparency];
 }
 
-- (void)setTransparency:(float)transparency
+- (void)setTransparency:(double)transparency
 {
     // Limit transparency because fully transparent windows can't be clicked on.
     if (transparency > 0.9) {
@@ -2677,7 +2677,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_textview inactiveTransparency];
 }
 
-- (void)setInactiveTransparency:(float)inactiveTransparency {
+- (void)setInactiveTransparency:(double)inactiveTransparency {
     // Limit transparency because fully transparent windows can't be clicked on.
     if (inactiveTransparency > 0.9) {
         inactiveTransparency = 0.9;

@@ -1871,8 +1871,8 @@ static NSString* FormatRect(NSRect r) {
 - (double)averageBlurRadiusForInactive:(BOOL)inactive {
     double sum = 0;
     double count = 0;
-    NSArray* sessions = [self sessions];
-    for (PTYSession* session in sessions) {
+    NSArray *sessions = [self sessions];
+    for (PTYSession *session in sessions) {
         BOOL useBlur = inactive ? [session inactiveBlur] : [session blur];
         if (useBlur) {
             double blurRadius = inactive ? [session inactiveBlurRadius] : [session blurRadius];
@@ -1895,7 +1895,7 @@ static NSString* FormatRect(NSRect r) {
 - (BOOL)useInactiveTransparency {
     NSArray *sessions = [self sessions];
     for (PTYSession *session in sessions) {
-        if ([[session textview] useInactiveTransparency]) {
+        if ([session useInactiveTransparency]) {
             return YES;
         }
     }

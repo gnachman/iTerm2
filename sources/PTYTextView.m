@@ -155,6 +155,8 @@ static const int kBadgeRightMargin = 10;
 
     // Dimmed background color with alpha.
     double _cachedBackgroundColorAlpha;  // cached alpha value (comparable to another double)
+    
+    BOOL _windowInactive;
 
     // Helps with "selection scroll"
     iTermSelectionScrollHelper *_selectionScrollHelper;
@@ -6409,7 +6411,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
 
     double selectedAlpha = 1.0 - _transparency;
-    if (_isBackground) {
+    if (_windowInactive) {
         selectedAlpha = 1.0 - _inactiveTransparency;
     }
     double alphaIfTransparencyInUse = [self transparencyAlpha];
@@ -7199,7 +7201,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (double)transparencyAlpha {
     if ([self useTransparency]) {
-        if ([self isBackground] && [self useInactiveTransparency]) {
+        if (_windowInactive && [self useInactiveTransparency]) {
             return 1.0 - _inactiveTransparency;
         }
         return 1.0 - _transparency;
