@@ -856,7 +856,19 @@ static const int kBadgeRightMargin = 10;
         CTRunRef run = CFArrayGetValueAtIndex(runs, j);
         size_t length = CTRunGetGlyphCount(run);
         const CGGlyph *buffer = CTRunGetGlyphsPtr(run);
+        if (!buffer) {
+            NSMutableData *tempBuffer =
+                [[[NSMutableData alloc] initWithLength:sizeof(CGGlyph) * length] autorelease];
+            CTRunGetGlyphs(run, CFRangeMake(0, length), (CGGlyph *)tempBuffer.mutableBytes);
+            buffer = tempBuffer.mutableBytes;
+        }
         const CGPoint *positions = CTRunGetPositionsPtr(run);
+        if (!positions) {
+            NSMutableData *tempBuffer =
+                [[[NSMutableData alloc] initWithLength:sizeof(CGPoint) * length] autorelease];
+            CTRunGetPositions(run, CFRangeMake(0, length), (CGPoint *)tempBuffer.mutableBytes);
+            positions = tempBuffer.mutableBytes;
+        }
         CTFontRef runFont = CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
         CTFontDrawGlyphs(runFont, buffer, (NSPoint *)positions, length, cgContext);
 
