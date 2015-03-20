@@ -802,6 +802,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
        verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
     [self setInactiveTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TRANSPARENCY inProfile:_profile]];
+    [self setInactiveTextTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TEXT_TRANSPARENCY inProfile:_profile]];
     [self setUseInactiveTransparency:[iTermProfilePreferences boolForKey:KEY_USE_INACTIVE_TRANSPARENCY inProfile:_profile]];
     const float theBlend =
         [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
@@ -2285,6 +2286,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
     [self setUseInactiveTransparency:[iTermProfilePreferences boolForKey:KEY_USE_INACTIVE_TRANSPARENCY inProfile:aDict]];
     [self setInactiveTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TRANSPARENCY inProfile:aDict]];
+    [self setInactiveTextTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TEXT_TRANSPARENCY inProfile:aDict]];
     [self setBlend:[iTermProfilePreferences floatForKey:KEY_BLEND inProfile:aDict]];
 
     // bold 
@@ -2677,12 +2679,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_textview inactiveTransparency];
 }
 
+- (double)inactiveTextTransparency {
+    return [_textview inactiveTextTransparency];
+}
+
 - (void)setInactiveTransparency:(double)inactiveTransparency {
     // Limit transparency because fully transparent windows can't be clicked on.
     if (inactiveTransparency > 0.9) {
         inactiveTransparency = 0.9;
     }
     [_textview setInactiveTransparency:inactiveTransparency];
+}
+
+- (void)setInactiveTextTransparency:(double)inactiveTextTransparency {
+    // Limit transparency because fully transparent windows can't be clicked on.
+    if (inactiveTextTransparency > 0.9) {
+        inactiveTextTransparency = 0.9;
+    }
+    [_textview setInactiveTextTransparency:inactiveTextTransparency];
 }
 
 - (BOOL)useInactiveTransparency {

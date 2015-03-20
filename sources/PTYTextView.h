@@ -202,6 +202,8 @@ typedef enum {
 // Inactive Window Transparency level. 0 to 1.
 @property(nonatomic, assign) double inactiveTransparency;
 
+@property(nonatomic, assign) double inactiveTextTransparency;
+
 // Blending level for background color over background image
 @property(nonatomic, assign) double blend;
 

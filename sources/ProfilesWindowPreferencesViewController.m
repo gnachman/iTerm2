@@ -26,6 +26,7 @@
     IBOutlet NSSlider *_blurRadius;
     IBOutlet NSButton *_useInactiveTransparency;
     IBOutlet NSSlider *_inactiveTransparency;
+    IBOutlet NSSlider *_inactiveTextTransparency;
     IBOutlet NSButton *_useInactiveBlur;
     IBOutlet NSSlider *_inactiveBlurRadius;
     IBOutlet NSButton *_useBackgroundImage;
@@ -79,11 +80,16 @@
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^() {
         _inactiveTransparency.enabled = (_useInactiveTransparency.state == NSOnState);
+        _inactiveTextTransparency.enabled = (_useInactiveTransparency.state == NSOnState);
         _useInactiveBlur.enabled = (_useInactiveTransparency.state == NSOnState);
     };
     
     [self defineControl:_inactiveTransparency
                     key:KEY_INACTIVE_TRANSPARENCY
+                   type:kPreferenceInfoTypeSlider];
+    
+    [self defineControl:_inactiveTextTransparency
+                    key:KEY_INACTIVE_TEXT_TRANSPARENCY
                    type:kPreferenceInfoTypeSlider];
     
     info = [self defineControl:_useInactiveBlur

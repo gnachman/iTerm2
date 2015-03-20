@@ -715,6 +715,9 @@ static const int kBadgeRightMargin = 10;
         color = [_colorMap mutedColorForKey:key];
     } else {
         color = [_colorMap dimmedColorForKey:key];
+        if (_windowInactive) {
+            color = [color colorWithAlphaComponent:[self textTransparencyAlpha]];
+        }
     }
     if (isFaint) {
         color = [color colorWithAlphaComponent:0.5];
@@ -5239,6 +5242,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)setInactiveTextTransparency:(double)inactiveTextTransparency {
+    _inactiveTextTransparency = inactiveTextTransparency;
+    [_colorMap invalidateCache];
+    [self setNeedsDisplay:YES];
+}
+
 - (void)setUseInactiveTransparency:(BOOL)useInactiveTransparency {
     _useInactiveTransparency = useInactiveTransparency;
     [_colorMap invalidateCache];
@@ -7202,6 +7211,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             return 1.0 - _inactiveTransparency;
         }
         return 1.0 - _transparency;
+    }
+    return 1.0;
+}
+
+- (double)textTransparencyAlpha {
+    if ([self useTransparency] && _windowInactive && [self useInactiveTransparency]) {
+        return 1.0 - _inactiveTextTransparency;
     }
     return 1.0;
 }

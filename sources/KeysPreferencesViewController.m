@@ -179,6 +179,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     [dict setObject:[NSNumber numberWithFloat:0.5] forKey:KEY_BLEND];
     [dict setObject:[NSNumber numberWithFloat:2.0] forKey:KEY_BLUR_RADIUS];
     [dict setObject:[NSNumber numberWithFloat:0.3] forKey:KEY_INACTIVE_TRANSPARENCY];
+    [dict setObject:[NSNumber numberWithFloat:0.0] forKey:KEY_INACTIVE_TEXT_TRANSPARENCY];
     [dict setObject:[NSNumber numberWithFloat:2.0] forKey:KEY_INACTIVE_BLUR_RADIUS];
     [dict setObject:[NSNumber numberWithBool:YES] forKey:KEY_BLUR];
     [dict setObject:[NSNumber numberWithBool:YES] forKey:KEY_INACTIVE_BLUR];

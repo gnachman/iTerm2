@@ -130,6 +130,7 @@
 #define KEY_BLUR_RADIUS            @"Blur Radius"
 #define KEY_USE_INACTIVE_TRANSPARENCY   @"Use Inactive Transparency Values"
 #define KEY_INACTIVE_TRANSPARENCY       @"Inactive Transparency"
+#define KEY_INACTIVE_TEXT_TRANSPARENCY       @"Inactive Text Transparency"
 #define KEY_INACTIVE_BLUR          @"Use Inactive Blur"
 #define KEY_INACTIVE_BLUR_RADIUS   @"Inactive Blur Radius"
 #define KEY_ANTI_ALIASING          @"Anti Aliasing"  // DEPRECATED

@@ -164,6 +164,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_BLUR_RADIUS: @2.0,
                   KEY_USE_INACTIVE_TRANSPARENCY: @NO,
                   KEY_INACTIVE_TRANSPARENCY: @0.0,
+                  KEY_INACTIVE_TEXT_TRANSPARENCY: @0.0,
                   KEY_INACTIVE_BLUR: @NO,
                   KEY_INACTIVE_BLUR_RADIUS: @2.0,
                   KEY_BACKGROUND_IMAGE_TILED: @NO,

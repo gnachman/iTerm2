@@ -195,6 +195,7 @@ typedef enum {
 @property(nonatomic, assign) double transparency;
 @property(nonatomic, assign) BOOL useInactiveTransparency;
 @property(nonatomic, assign) double inactiveTransparency;
+@property(nonatomic, assign) double inactiveTextTransparency;
 @property(nonatomic, assign) double blend;
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) BOOL useItalicFont;
