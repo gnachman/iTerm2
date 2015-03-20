@@ -116,6 +116,7 @@ static const int kBadgeRightMargin = 10;
         DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
         [self clipAndDrawRect:rectArray[i]];
     }
+    [self drawCursor];
 
     if (_drawRectDuration) {
         [self stopTiming];
@@ -253,7 +254,6 @@ static const int kBadgeRightMargin = 10;
                                height:_gridSize.height
                          cursorHeight:self.cursorHeight
                                   ctx:ctx];
-    [self drawCursor];
     _blinkingFound |= self.cursorBlinking;
     
     [_selectedFont release];
