@@ -623,12 +623,14 @@ static const int kNumCharsToSearchForDivider = 8;
         maxBytes = INT_MAX;
     }
     int width = [_dataSource width];
+    __block NSIndexSet *tabFillerOrphans =
+        [self tabFillerOrphansOnRow:windowedRange.coordRange.start.y];
     [self enumerateCharsInRange:windowedRange
                       charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
-                          if (theChar.code == TAB_FILLER) {
+                          if (theChar.code == TAB_FILLER && !theChar.complexChar) {
                               // Convert orphan tab fillers (those without a subsequent
                               // tab character) into spaces.
-                              if ([self isTabFillerOrphanAt:coord]) {
+                              if ([tabFillerOrphans containsIndex:coord.x]) {
                                   [result appendString:@" "];
                               }
                           } else if (theChar.code == 0 && !theChar.complexChar) {
@@ -664,35 +666,37 @@ static const int kNumCharsToSearchForDivider = 8;
                           return [result length] >= maxBytes;
                       }
                        eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
-                               // If there is no text after this, insert a hard line break.
-                               if (pad) {
-                                   for (int i = 0; i < numPreceedingNulls; i++) {
+                           tabFillerOrphans =
+                               [self tabFillerOrphansOnRow:line + 1];
+                           // If there is no text after this, insert a hard line break.
+                           if (pad) {
+                               for (int i = 0; i < numPreceedingNulls; i++) {
+                                   [result appendString:@" "];
+                               }
+                           } else if (numPreceedingNulls > 0) {
+                               switch (nullPolicy) {
+                                   case kiTermTextExtractorNullPolicyFromLastToEnd:
+                                       [result deleteCharactersInRange:NSMakeRange(0, result.length)];
+                                       break;
+                                   case kiTermTextExtractorNullPolicyFromStartToFirst:
+                                       return YES;
+                                   case kiTermTextExtractorNullPolicyTreatAsSpace:
                                        [result appendString:@" "];
-                                   }
-                               } else if (numPreceedingNulls > 0) {
-                                   switch (nullPolicy) {
-                                       case kiTermTextExtractorNullPolicyFromLastToEnd:
-                                           [result deleteCharactersInRange:NSMakeRange(0, result.length)];
-                                           break;
-                                       case kiTermTextExtractorNullPolicyFromStartToFirst:
-                                           return YES;
-                                       case kiTermTextExtractorNullPolicyTreatAsSpace:
-                                           [result appendString:@" "];
-                                           break;
-                                       case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
-                                           break;
-                                   }
+                                       break;
+                                   case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
+                                       break;
                                }
-                               if (code == EOL_HARD &&
-                                   (includeLastNewline || line < windowedRange.coordRange.end.y)) {
-                                   if (trimSelectionTrailingSpaces) {
-                                       [result trimTrailingWhitespace];
-                                   }
-                                   [result appendString:@"\n"];
+                           }
+                           if (code == EOL_HARD &&
+                               (includeLastNewline || line < windowedRange.coordRange.end.y)) {
+                               if (trimSelectionTrailingSpaces) {
+                                   [result trimTrailingWhitespace];
                                }
-                               return [result length] >= maxBytes;
+                               [result appendString:@"\n"];
+                           }
+                           return [result length] >= maxBytes;
                            }];
-    
+
     if (trimSelectionTrailingSpaces) {
         return [result stringByTrimmingTrailingWhitespace];
     } else {
@@ -706,14 +710,15 @@ static const int kNumCharsToSearchForDivider = 8;
                                attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
 {
     NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] init] autorelease];
+    __block NSIndexSet *tabFillerOrphans = [self tabFillerOrphansOnRow:range.coordRange.start.y];
     [self enumerateCharsInRange:range
                       charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
                           if (theChar.code == 0 && !theChar.complexChar) {
                               [result iterm_appendString:@" "];
-                          } else if (theChar.code == TAB_FILLER) {
+                          } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {
                               // Convert orphan tab fillers (those without a subsequent
                               // tab character) into spaces.
-                              if ([self isTabFillerOrphanAt:coord]) {
+                              if ([tabFillerOrphans containsIndex:coord.x]) {
                                   [result iterm_appendString:@" "
                                               withAttributes:attributeProvider(theChar)];
                               }
@@ -726,6 +731,7 @@ static const int kNumCharsToSearchForDivider = 8;
                           return NO;
                       }
                        eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
+                           tabFillerOrphans = [self tabFillerOrphansOnRow:line + 1];
                            if (pad) {
                                for (int i = 0; i < numPreceedingNulls; i++) {
                                    [result iterm_appendString:@" "
@@ -794,22 +800,27 @@ static const int kNumCharsToSearchForDivider = 8;
     }
 }
 
-- (BOOL)isTabFillerOrphanAt:(VT100GridCoord)start {
-    __block BOOL result = YES;
-    [self searchFrom:start
-             forward:YES
-        forCharacterMatchingFilter:^BOOL (screen_char_t theChar, VT100GridCoord coord) {
-            if (coord.y != start.y) {
-                result = YES;
-                return YES;
+// A tab filler orphan is a tab filler that is followed by a tab filler orphan or a
+// non-tab character.
+- (NSIndexSet *)tabFillerOrphansOnRow:(int)row {
+    NSMutableIndexSet *orphans = [NSMutableIndexSet indexSet];
+    screen_char_t *line = [_dataSource getLineAtIndex:row];
+    if (!line) {
+        return nil;
+    }
+    BOOL haveTab = NO;
+    for (int i = [self xLimit] - 1; i >= 0; i--) {
+        if (line[i].code == '\t' && !line[i].complexChar) {
+            haveTab = YES;
+        } else if (line[i].code == TAB_FILLER && !line[i].complexChar) {
+            if (!haveTab) {
+                [orphans addIndex:i];
             }
-            if (theChar.code != TAB_FILLER) {
-                result = (theChar.code != '\t');
-                return YES;
-            }
-            return NO;
-        }];
-    return result;
+        } else {
+            haveTab = NO;
+        }
+    }
+    return orphans;
 }
 
 - (NSString *)wrappedStringAt:(VT100GridCoord)coord

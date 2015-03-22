@@ -118,7 +118,11 @@ typedef enum {
                     charBlock:(BOOL (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
                      eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock;
 
-- (BOOL)isTabFillerOrphanAt:(VT100GridCoord)coord;
+// If a tab character is erased it may leave behind TAB_FILLER characters
+// before it, which are called tab-filler orphans. They are generally treated
+// as spaces, while tab fillers followed by more tab fillers or followed by a
+// tab are often ignored (e.g., for selection, or copying to pasteboard).
+- (NSIndexSet *)tabFillerOrphansOnRow:(int)row;
 
 - (int)lengthOfLine:(int)line;
 
