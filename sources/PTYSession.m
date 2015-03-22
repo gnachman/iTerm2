@@ -3514,14 +3514,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self launchCoprocessWithCommand:command mute:YES];
 }
 
-- (void)setFocused:(BOOL)focused
-{
+- (void)setFocused:(BOOL)focused {
     if (focused != _focused) {
         _focused = focused;
         if ([_terminal reportFocus]) {
-            char flag = focused ? 'I' : 'O';
-            NSString *message = [NSString stringWithFormat:@"%c[%c", 27, flag];
-            [self writeTask:[message dataUsingEncoding:[self encoding]]];
+            [self writeTask:[_terminal.output reportFocusGained:focused]];
         }
     }
 }
