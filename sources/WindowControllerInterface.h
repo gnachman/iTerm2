@@ -137,10 +137,6 @@ typedef enum {
 // For scripting.
 - (NSScriptObjectSpecifier *)objectSpecifier;
 
-// Indicates if progress indicators can be shown. They're turned off during
-// animation of the tabbar.
-- (BOOL)disableProgressIndicators;
-
 // Last time the window was resized.
 - (NSDate *)lastResizeTime;
 
