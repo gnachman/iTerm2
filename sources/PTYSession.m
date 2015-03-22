@@ -3386,6 +3386,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[[[self tab] realParentWindow] window] makeFirstResponder:_textview];
 }
 
+- (void)findViewControllerMakeDocumentFirstResponder {
+    [self takeFocus];
+}
+
 - (void)clearHighlights
 {
     [_textview clearHighlights];

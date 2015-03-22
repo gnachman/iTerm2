@@ -26,13 +26,16 @@
  */
 
 #import "FindViewController.h"
+#import "DebugLogging.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermProgressIndicator.h"
 #import "NSTextField+iTerm.h"
 
-static const float FINDVIEW_DURATION = 0.075;
+// This used to be absurdly fast (.075) for reasons neither I nor revision
+// history can recall. This looks nicer to my eyes.
+static const float kAnimationDuration = 0.2;
 static BOOL gDefaultIgnoresCase;
 static BOOL gDefaultRegex;
 static NSString *gSearchString;
@@ -420,19 +423,18 @@ const CGFloat kEdgeWidth = 3;
         timer_ = nil;
     }
 
-    [[NSAnimationContext currentContext] setDuration:FINDVIEW_DURATION];
+    DLog(@"Closing find view %@", self.view);
+    [NSAnimationContext beginGrouping];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        [[self view] setHidden:YES];
+        [[[[self view] window] contentView] setNeedsDisplay:YES];
+    }];
+    [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     [[[self view] animator] setFrame:[self collapsedFrame]];
-    [self performSelector:@selector(_hide)
-               withObject:nil
-               afterDelay:[[NSAnimationContext currentContext] duration]];
-    [delegate_ clearHighlights];
-    [delegate_ takeFocus];
-}
+    [NSAnimationContext endGrouping];
 
-- (void)_hide
-{
-    [[self view] setHidden:YES];
-    [[[[self view] window] contentView] setNeedsDisplay:YES];
+    [delegate_ clearHighlights];
+    [delegate_ findViewControllerMakeDocumentFirstResponder];
 }
 
 - (void)restoreState {
@@ -460,18 +462,23 @@ const CGFloat kEdgeWidth = 3;
     }
     [[self view] setFrame:[self collapsedFrame]];
     [[self view] setHidden:NO];
-    [[NSAnimationContext currentContext] setDuration:FINDVIEW_DURATION];
-    [[[self view] animator] setFrame:[self fullSizeFrame]];
-    [delegate_ takeFocus];
-    [self performSelector:@selector(_grabFocus)
-               withObject:nil
-               afterDelay:[[NSAnimationContext currentContext] duration]];
-}
+    [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
+    DLog(@"Animate find view %@ to full size frame: %@",
+         self.view, NSStringFromRect([self fullSizeFrame]));
 
-- (void)_grabFocus
-{
-    [[[self view] window] makeFirstResponder:findBarTextField_];
-    [[[[self view] window] contentView] setNeedsDisplay:YES];
+    [NSAnimationContext beginGrouping];
+
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        DLog(@"Grab focus for find view %@", self.view);
+        [[[self view] window] makeFirstResponder:findBarTextField_];
+        [[[[self view] window] contentView] setNeedsDisplay:YES];
+    }];
+
+    [[[self view] animator] setFrame:[self fullSizeFrame]];
+
+    [NSAnimationContext endGrouping];
+
+    [delegate_ findViewControllerMakeDocumentFirstResponder];
 }
 
 - (void)makeVisible {
@@ -898,7 +905,7 @@ const CGFloat kEdgeWidth = 3;
         [delegate_ copySelection];
         NSString* text = [delegate_ unpaddedSelectedText];
         [delegate_ pasteString:text];
-        [delegate_ takeFocus];
+        [delegate_ findViewControllerMakeDocumentFirstResponder];
         return YES;
     } else {
         return NO;
