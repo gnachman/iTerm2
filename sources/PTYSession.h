@@ -268,6 +268,10 @@ typedef enum {
 // Has output been received recently?
 @property(nonatomic, readonly) BOOL isProcessing;
 
+// Indicates if you're at the shell prompt and not running a command. Returns
+// NO if shell integration is not in use.
+@property(nonatomic, readonly) BOOL isAtShellPrompt;
+
 // Has it been at least a second since isProcessing became false?
 @property(nonatomic, readonly) BOOL isIdle;
 

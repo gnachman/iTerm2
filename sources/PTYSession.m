@@ -2361,6 +2361,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_badgeFormat stringByReplacingVariableReferencesWithVariables:_variables];
 }
 
+- (BOOL)isAtShellPrompt {
+    return _commandRange.start.x >= 0;
+}
+
 - (BOOL)isProcessing {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     return (now - _lastOutput) < [iTermAdvancedSettingsModel idleTimeSeconds];

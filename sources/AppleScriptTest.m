@@ -455,4 +455,25 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
     assert([newName isEqualToString:@"Testing"]);
 }
 
+- (void)testIsAtShellPrompt {
+    NSArray *commands = @[ @"create window with default profile",
+                           @"delay 0.5",
+                           @"tell current session of current window",
+                           @"  set beforeSleep to (is at shell prompt)",
+                           @"  write text \"cat\"",
+                           @"  delay 0.2",
+                           @"  set afterSleep to (is at shell prompt)",
+                           @"end tell" ];
+    NSArray *outputs = @[ @"beforeSleep", @"afterSleep" ];
+    NSString *script = [self scriptWithCommands:commands
+                                        outputs:outputs];
+    NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
+    BOOL beforeSleep = [[eventDescriptor descriptorAtIndex:1] booleanValue];
+    BOOL afterSleep = [[eventDescriptor descriptorAtIndex:2]ess booleanValue];
+
+    // This test will fail if shell integration is not installed
+    assert(beforeSleep);
+    assert(!afterSleep);
+}
+
 @end
