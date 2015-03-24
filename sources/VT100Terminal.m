@@ -1876,6 +1876,9 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeXtermSetKvp:(VT100Token *)token {
+    if (!token.string) {
+        return;
+    }
     NSArray *kvp = [self keyValuePairInToken:token];
     NSString *key = kvp[0];
     NSString *value = kvp[1];
