@@ -827,6 +827,10 @@
 - (void)screenPromptDidStartAtLine:(int)line {
 }
 
+- (BOOL)screenInTmuxMode {
+    return NO;
+}
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
@@ -1646,7 +1650,6 @@
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:1 rightMargin:2];
     [terminal_ setSavedCursorPosition:screen.currentGrid.cursor];
-    [screen terminalSaveCharsetFlags];
     [self appendLines:@[@"abcdefgh", @"ijkl", @"mnopqrstuvwxyz"] toScreen:screen];
     [screen clearBuffer];
     assert(updates_ == 1);
@@ -2003,7 +2006,6 @@
     assert(screen.cursorX == 5);
     assert(screen.cursorY == 6);
     [terminal_ restoreCursor];
-    [screen terminalRestoreCharsetFlags];
     assert(screen.cursorX == 3);
     assert(screen.cursorY == 4);
     assert([[screen currentGrid] topMargin] == 6);
@@ -2988,14 +2990,12 @@
     [screen terminalSetCharset:1 toLineDrawingMode:YES];
     [screen terminalSetCharset:3 toLineDrawingMode:YES];
     [terminal_ saveCursor];
-    [screen terminalSaveCharsetFlags];
     [screen terminalMoveCursorToX:1 y:1];
     [screen terminalSetCharset:1 toLineDrawingMode:NO];
     [screen terminalSetCharset:3 toLineDrawingMode:NO];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 
     [terminal_ restoreCursor];
-    [screen terminalRestoreCharsetFlags];
 
     assert(screen.cursorX == 4);
     assert(screen.cursorY == 5);
@@ -3013,12 +3013,14 @@
     }
     [screen terminalMoveCursorToX:5 y:5];
     [terminal_ restoreCursor];
-    [screen terminalRestoreCharsetFlags];
 
     assert(screen.cursorX == 1);
     assert(screen.cursorY == 1);
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+    [screen terminalSetCharset:1 toLineDrawingMode:NO];
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
+    [screen terminalSetCharset:3 toLineDrawingMode:NO];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
-
 }
 
 - (void)testSetTopBottomScrollRegion {
@@ -3297,12 +3299,10 @@
     // Saved cursor gets reset to origin
     screen = [self screenWithWidth:10 height:4];
     [terminal_ saveCursor];
-    [screen terminalSaveCharsetFlags];
 
     [screen terminalResetPreservingPrompt:YES];
 
     [terminal_ restoreCursor];
-    [screen terminalRestoreCharsetFlags];
 
     // Charset flags get reset
     screen = [self screenWithWidth:10 height:4];
@@ -3313,20 +3313,18 @@
     [screen terminalResetPreservingPrompt:YES];
     assert([screen allCharacterSetPropertiesHaveDefaultValues]);
     
-    // Saved charset flags get reset
+    // Saved charset flags get restored, not reset blindly
     screen = [self screenWithWidth:10 height:4];
     [screen terminalSetCharset:0 toLineDrawingMode:YES];
     [screen terminalSetCharset:1 toLineDrawingMode:YES];
     [screen terminalSetCharset:2 toLineDrawingMode:YES];
     [screen terminalSetCharset:3 toLineDrawingMode:YES];
     [terminal_ saveCursor];
-    [screen terminalSaveCharsetFlags];
 
     [screen terminalResetPreservingPrompt:YES];
     [terminal_ restoreCursor];
-    [screen terminalRestoreCharsetFlags];
 
-    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
+    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
 
     // Cursor is made visible
     screen = [self screenWithWidth:10 height:4];
@@ -3335,38 +3333,6 @@
     assert(!cursorVisible_);
     [screen terminalResetPreservingPrompt:YES];
     assert(cursorVisible_);
-}
-
-- (void)testTerminalSoftReset {
-    // I really don't think this is the same as what xterm does.
-    // TODO Go through xterm's code and figure out what's supposed to happen.
-    // Save cursor and charset flags
-    // Reset scroll region
-    // restore cursor and charset flags
-    VT100Screen *screen = [self screenWithWidth:10 height:4];
-    [screen terminalSetScrollRegionTop:1 bottom:2];
-    [screen terminalSetUseColumnScrollRegion:YES];
-    [screen terminalSetLeftMargin:2 rightMargin:5];
-    [screen terminalMoveCursorToX:2 y:3];
-    [screen terminalSetCharset:1 toLineDrawingMode:YES];
-    [screen terminalSoftReset];
-    
-    assert([screen currentGrid].topMargin == 0);
-    assert([screen currentGrid].bottomMargin == 3);
-    assert([screen currentGrid].leftMargin == 0);
-    assert([screen currentGrid].rightMargin == 9);
-    assert(screen.cursorX == 2);
-    assert(screen.cursorY == 3);
-    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
-    [screen terminalSetCharset:1 toLineDrawingMode:NO];
-    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
-    
-    [terminal_ restoreCursor];
-    [screen terminalRestoreCharsetFlags];
-
-    assert(![screen allCharacterSetPropertiesHaveDefaultValues]);
-    [screen terminalSetCharset:1 toLineDrawingMode:NO];
-    assert([screen allCharacterSetPropertiesHaveDefaultValues]);
 }
 
 - (void)testSetWidth {
