@@ -1423,6 +1423,19 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     });
 }
 
+- (void)synchronousReadTask:(NSString *)string {
+    NSData *data = [string dataUsingEncoding:self.encoding];
+    [_terminal.parser putStreamData:data.bytes length:data.length];
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [_terminal.parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
+    }
+    [self executeTokens:&vector bytesHandled:data.length];
+}
+
 - (BOOL)shouldExecuteToken {
     return (!_exited &&
             _terminal &&

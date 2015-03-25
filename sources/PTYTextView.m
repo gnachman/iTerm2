@@ -371,7 +371,8 @@ static const int kDragThreshold = 3;
     [_selectionScrollHelper release];
     _findOnPageHelper.delegate = nil;
     [_findOnPageHelper release];
-
+    [_drawingHook release];
+    
     [super dealloc];
 }
 
@@ -1474,6 +1475,11 @@ static const int kDragThreshold = 3;
     const NSRect *rectArray;
     NSInteger rectCount;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
+
+    if (_drawingHook) {
+        // This is used by tests to customize the draw helper.
+        _drawingHook(_drawingHelper);
+    }
 
     [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
 

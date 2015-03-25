@@ -1704,6 +1704,7 @@
 		A6DF401E1897607E00F05947 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
 		A6DF7B701A539B4200D96409 /* VT100XtermParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF7B6F1A539B4200D96409 /* VT100XtermParserTest.m */; };
 		A6DF7B741A5F581700D96409 /* VT100CSIParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF7B731A5F581700D96409 /* VT100CSIParserTest.m */; };
+		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E525D11A9C5725007B898E /* VT100StateTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CE1A9C5725007B898E /* VT100StateTransition.m */; };
 		A6E525D21A9C5725007B898E /* VT100StateTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CE1A9C5725007B898E /* VT100StateTransition.m */; };
 		A6E525D31A9C5725007B898E /* VT100StateTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525CE1A9C5725007B898E /* VT100StateTransition.m */; };
@@ -4881,6 +4882,7 @@
 				A67D0D721A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A67D0D7B1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				A67D0D6C1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
+				A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */,
 				A67D0D4E1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
 				A663010C19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				A67D0D3C1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,

@@ -248,6 +248,9 @@ typedef enum {
 // Blending level for background color over background image
 @property(nonatomic, assign) float blend;
 
+typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
+@property(nonatomic, copy) PTYTextViewDrawingHookBlock drawingHook;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont

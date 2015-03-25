@@ -492,6 +492,10 @@ typedef enum {
 // Kill the running command (if possible), print a banner, and rerun the profile's command.
 - (void)restartSession;
 
+#pragma mark - Testing utilities
+
+- (void)synchronousReadTask:(NSString *)string;
+
 #pragma mark - Private for use by Scripting category
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues;

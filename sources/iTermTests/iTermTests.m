@@ -97,10 +97,8 @@ int main(int argc, const char * argv[]) {
     // If include is set, exactly the listed tests will be run. If exclude is set, all but the
     // listed tests will run.
 
-    NSArray *include = nil;
-    NSArray *exclude = @[
-                          // [AppleScriptTest class]      // I often exclude AppleScriptTest because it is slow.
-                        ];
+    NSArray *include = @[ [PTYTextViewTest class] ];
+    NSArray *exclude = nil;
 
     NSArray *testClassesToRun = TestClassesToRun(include, exclude);
     NSLog(@"Running tests: %@", testClassesToRun);
