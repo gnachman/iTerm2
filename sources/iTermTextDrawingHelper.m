@@ -59,6 +59,9 @@ static const int kBadgeRightMargin = 10;
     
     NSSize _scrollViewContentSize;
     NSRect _scrollViewDocumentVisibleRect;
+
+    // Pattern for background stripes
+    NSImage *_backgroundStripesImage;
 }
 
 - (instancetype)init {
@@ -90,6 +93,8 @@ static const int kBadgeRightMargin = 10;
     [_markErrImage release];
     [_drawRectDuration release];
     [_drawRectInterval release];
+
+    [_backgroundStripesImage release];
 
     [super dealloc];
 }
@@ -381,31 +386,12 @@ static const int kBadgeRightMargin = 10;
 }
 
 - (void)drawStripesInRect:(NSRect)rect {
-    [NSGraphicsContext saveGraphicsState];
-    NSRectClip(rect);
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
-
-    const CGFloat kStripeWidth = 40;
-    const double kSlope = 1;
-
-    for (CGFloat x = kSlope * -fmod(rect.origin.y, kStripeWidth * 2) -2 * kStripeWidth ;
-         x < rect.origin.x + rect.size.width;
-         x += kStripeWidth * 2) {
-        if (x + 2 * kStripeWidth + rect.size.height * kSlope < rect.origin.x) {
-            continue;
-        }
-        NSBezierPath* thePath = [NSBezierPath bezierPath];
-
-        [thePath moveToPoint:NSMakePoint(x, rect.origin.y + rect.size.height)];
-        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height, rect.origin.y)];
-        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height + kStripeWidth, rect.origin.y)];
-        [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
-        [thePath closePath];
-
-        [[[NSColor redColor] colorWithAlphaComponent:0.15] set];
-        [thePath fill];
+    if (!_backgroundStripesImage) {
+        _backgroundStripesImage = [[NSImage imageNamed:@"BackgroundStripes"] retain];
     }
-    [NSGraphicsContext restoreGraphicsState];
+    NSColor *color = [NSColor colorWithPatternImage:_backgroundStripesImage];
+    [color set];
+    NSRectFill(rect);
 }
 
 #pragma mark - Drawing: Accessories

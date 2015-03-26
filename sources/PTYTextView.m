@@ -1255,6 +1255,7 @@ static const int kDragThreshold = 3;
         // Shift the old content upwards
         if (scrollbackOverflow < [_dataSource height] && !userScroll) {
             [self scrollRect:[self visibleRect] by:NSMakeSize(0, -amount)];
+            // TODO: Consider moving this into the else clause.
             NSRect topMargin = [self visibleRect];
             topMargin.size.height = VMARGIN;
             [self setNeedsDisplayInRect:topMargin];
