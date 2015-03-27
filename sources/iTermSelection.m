@@ -587,7 +587,9 @@
     theCopy->_initialRange = _initialRange;
     theCopy->_live = _live;
     theCopy->_extend = _extend;
-    [theCopy->_subSelections addObjectsFromArray:_subSelections];
+    for (iTermSubSelection *sub in _subSelections) {
+        [theCopy->_subSelections addObject:[[sub copy] autorelease]];
+    }
     theCopy->_resumable = _resumable;
 
     theCopy.delegate = _delegate;
