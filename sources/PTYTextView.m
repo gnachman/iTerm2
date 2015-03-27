@@ -110,6 +110,9 @@ static const int kDragThreshold = 3;
 
 
 @implementation PTYTextView {
+    // -refresh does not want to be reentrant.
+    BOOL _inRefresh;
+
     // geometry
     double _lineHeight;
     double _charWidth;
@@ -1201,103 +1204,71 @@ static const int kDragThreshold = 3;
     return [self isCursorBlinking] || (_blinkAllowed && [self _isTextBlinking]);
 }
 
-- (BOOL)refresh
-{
-    DebugLog(@"PTYTextView refresh called");
-    if (_dataSource == nil) {
-        return YES;
-    }
-
-    // number of lines that have disappeared if scrollback buffer is full
-    int scrollbackOverflow = [_dataSource scrollbackOverflow];
-    [_dataSource resetScrollbackOverflow];
-
-    // frame size changed?
-    int height = [_dataSource numberOfLines] * _lineHeight;
+// Grow or shrink the height of the frame if the number of lines in the data
+// source + IME has changed.
+- (void)resizeFrameIfNeeded {
+    // Check if the frame size needs to grow or shrink.
+    const int height = [_dataSource numberOfLines] * _lineHeight;
     NSRect frame = [self frame];
-
-    double excess = [self excess];
-
-    if ((int)(height + excess + _drawingHelper.numberOfIMELines * _lineHeight) != (int)frame.size.height) {
+    const double excess = [self excess];
+    const long long numberOfLinesAvailable =
+        height + excess + _drawingHelper.numberOfIMELines * _lineHeight;
+    if (numberOfLinesAvailable != (long long) frame.size.height) {
         // Grow the frame
         // Add VMARGIN to include top margin.
-        frame.size.height = height + excess + _drawingHelper.numberOfIMELines * _lineHeight + VMARGIN;
+        frame.size.height =
+            height + excess + _drawingHelper.numberOfIMELines * _lineHeight + VMARGIN;
         [[self superview] setFrame:frame];
-        frame.size.height -= VMARGIN;
-        NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
-    } else if (scrollbackOverflow > 0) {
-        // Some number of lines were lost from the head of the buffer.
+        NSAccessibilityPostNotification(self,
+                                        NSAccessibilityRowCountChangedNotification);
+    }
+}
 
-        NSScrollView* scrollView = [self enclosingScrollView];
+- (void)handleScrollbackOverflow:(int)scrollbackOverflow userScroll:(BOOL)userScroll {
+    // Keep correct selection highlighted
+    [_selection moveUpByLines:scrollbackOverflow];
+    [_oldSelection moveUpByLines:scrollbackOverflow];
+    
+    // Keep the user's current scroll position.
+    NSScrollView *scrollView = [self enclosingScrollView];
+    BOOL canSkipRedraw = NO;
+    if (userScroll) {
+        NSRect scrollRect = [self visibleRect];
         double amount = [scrollView verticalLineScroll] * scrollbackOverflow;
-        BOOL userScroll = [(PTYScroller*)([scrollView verticalScroller]) userScroll];
-
-        // Keep correct selection highlighted
-        [_selection moveUpByLines:scrollbackOverflow];
-        [_oldSelection moveUpByLines:scrollbackOverflow];
-
-        // Keep the user's current scroll position, nothing to redraw.
-        if (userScroll) {
-            BOOL redrawAll = NO;
-            NSRect scrollRect = [self visibleRect];
-            scrollRect.origin.y -= amount;
-            if (scrollRect.origin.y < 0) {
-                scrollRect.origin.y = 0;
-                redrawAll = YES;
-                [self setNeedsDisplay:YES];
-            }
-            [self scrollRectToVisible:scrollRect];
-            if (!redrawAll) {
-                return [self _isAnythingBlinking];
-            }
+        scrollRect.origin.y -= amount;
+        if (scrollRect.origin.y < 0) {
+            scrollRect.origin.y = 0;
+        } else {
+            // No need to redraw the whole screen because nothing is
+            // changing because of the scroll.
+            canSkipRedraw = YES;
         }
-
-        // Shift the old content upwards
-        if (scrollbackOverflow < [_dataSource height] && !userScroll) {
-            [self scrollRect:[self visibleRect] by:NSMakeSize(0, -amount)];
-            NSRect topMargin = [self visibleRect];
-            topMargin.size.height = VMARGIN;
-            [self setNeedsDisplayInRect:topMargin];
-
-#ifdef DEBUG_DRAWING
-            [self appendDebug:[NSString stringWithFormat:@"refresh: Scroll by %d", (int)amount]];
-#endif
-            if ([self needsDisplay]) {
-                // If any part of the view needed to be drawn prior to
-                // scrolling, mark the whole thing as needing to be redrawn.
-                // This avoids some race conditions between scrolling and
-                // drawing.  For example, if there was a region that needed to
-                // be displayed because the underlying data changed, but before
-                // drawRect is called we scroll with [self scrollRect], then
-                // the wrong region will be drawn. This could be optimized by
-                // storing the regions that need to be drawn and re-invaliding
-                // them in their new positions, but it should be somewhat rare
-                // that this branch of the if statement is taken.
-                [self setNeedsDisplay:YES];
-            } else {
-                // Invalidate the bottom of the screen that was revealed by
-                // scrolling.
-                NSRect dr = NSMakeRect(0, frame.size.height - amount, frame.size.width, amount);
-#ifdef DEBUG_DRAWING
-                [self appendDebug:[NSString stringWithFormat:@"refresh: setNeedsDisplayInRect:%d,%d %dx%d", (int)dr.origin.x, (int)dr.origin.y, (int)dr.size.width, (int)dr.size.height]];
-#endif
-                [self setNeedsDisplayInRect:dr];
-            }
-        }
-
-        // Move subviews up
-        [self updateNoteViewFrames];
-
-        NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
+        [self scrollRectToVisible:scrollRect];
     }
-
-    // Scroll to the bottom if needed.
-    BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
-    if (!userScroll) {
-        [self scrollEnd];
+    
+    // NOTE: I used to use scrollRect:by: here, and it is faster, but it is
+    // absolutely a lost cause as far as correctness goes. When drawRect
+    // gets called it needs to take that scrolling (which would happen
+    // immediately when scrollRect:by: gets called) into account. Good luck
+    // getting that right. I don't *think* it's a meaningful performance issue.
+    // Because of a bug, we were always drawing the whole screen anyway. And if
+    // the screen has scrolled by less than its height, input is coming in
+    // slowly anyway.    
+    if (!canSkipRedraw) {
+        [self setNeedsDisplay:YES];
     }
+    
+    // Move subviews up
+    [self updateNoteViewFrames];
+    
+    NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
+}
+
+// Update accessibility, to be called periodically.
+- (void)refreshAccessibility {
     NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
-    long long absCursorY = [_dataSource cursorY] + [_dataSource numberOfLines] + [_dataSource totalScrollbackOverflow] - [_dataSource height];
+    long long absCursorY = ([_dataSource cursorY] + [_dataSource numberOfLines] +
+                            [_dataSource totalScrollbackOverflow] - [_dataSource height]);
     if ([_dataSource cursorX] != _lastAccessibilityCursorX ||
         absCursorY != _lastAccessibiltyAbsoluteCursorY) {
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedTextChangedNotification);
@@ -1306,15 +1277,54 @@ static const int kDragThreshold = 3;
         _lastAccessibilityCursorX = [_dataSource cursorX];
         _lastAccessibiltyAbsoluteCursorY = absCursorY;
         if (UAZoomEnabled()) {
-            CGRect viewRect = NSRectToCGRect([self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
-            CGRect selectedRect = NSRectToCGRect([self.window convertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
-            viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
-            selectedRect.origin.y = [[NSScreen mainScreen] frame].size.height - (selectedRect.origin.y + selectedRect.size.height);
+            CGRect viewRect = NSRectToCGRect(
+                [self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
+            CGRect selectedRect = NSRectToCGRect(
+                [self.window convertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
+            viewRect.origin.y = ([[NSScreen mainScreen] frame].size.height -
+                                 (viewRect.origin.y + viewRect.size.height));
+            selectedRect.origin.y = ([[NSScreen mainScreen] frame].size.height -
+                                     (selectedRect.origin.y + selectedRect.size.height));
             UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
         }
     }
+}
+
+// This is called periodically. It updates the frame size, scrolls if needed, ensures selections
+// and subviews are positioned correctly in case things scrolled
+// Returns YES if blinking text or cursor was found.
+// TODO: This is a stupid micro-optimization and should be removed.
+- (BOOL)refresh {
+    DebugLog(@"PTYTextView refresh called");
+    if (_dataSource == nil || _inRefresh) {
+        return YES;
+    }
+
+    // Get the number of lines that have disappeared if scrollback buffer is full.
+    int scrollbackOverflow = [_dataSource scrollbackOverflow];
+    [_dataSource resetScrollbackOverflow];
+    [self resizeFrameIfNeeded];
+
+    // Perform adjustments if lines were lost from the head of the buffer.
+    BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
+    if (scrollbackOverflow > 0) {
+        // -selectionDidChange might get called here, which calls -refresh.
+        // Keeping this function safely reentrant is just too difficult.
+        _inRefresh = YES;
+        [self handleScrollbackOverflow:scrollbackOverflow userScroll:userScroll];
+        _inRefresh = NO;
+    }
+
+    // Scroll to the bottom if needed.
+    if (!userScroll) {
+        [self scrollEnd];
+    }
+
+    // Update accessibility.
+    [self refreshAccessibility];
 
     if ([[self subviews] count]) {
+        // TODO: Why update notes not in this textview?
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYNoteViewControllerShouldUpdatePosition
                                                             object:nil];
         // Not sure why this is needed, but for some reason this view draws over its subviews.
@@ -1323,6 +1333,8 @@ static const int kDragThreshold = 3;
         }
     }
 
+    // See if any characters are dirty and mark them as needing to be redrawn.
+    // Return if anything was found to be blinking.
     return [self updateDirtyRects] || [self isCursorBlinking];
 }
 
