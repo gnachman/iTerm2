@@ -504,11 +504,40 @@
 }
 
 - (void)moveUpByLines:(int)numLines {
-    _range.coordRange.start.y -= numLines;
-    _range.coordRange.end.y -= numLines;
+    BOOL notifyDelegateOfChange = _subSelections.count > 0 || [self haveLiveSelection];
+    if ([self haveLiveSelection]) {
+        _range.coordRange.start.y -= numLines;
+        _range.coordRange.end.y -= numLines;
+        if (_range.coordRange.start.y < 0) {
+           _range.coordRange.start.x = 0;
+           _range.coordRange.start.y = 0;
+        }
+       if (_range.coordRange.end.y < 0) {
+          [self clearSelection];
+        }
+    }
 
-    if (_range.coordRange.start.y < 0 || _range.coordRange.end.y < 0) {
-        [self clearSelection];
+    NSMutableArray *subsToRemove = [NSMutableArray array];
+    for (iTermSubSelection *sub in _subSelections) {
+        VT100GridWindowedRange range = sub.range;
+        range.coordRange.start.y -= numLines;
+        range.coordRange.end.y -= numLines;
+        if (range.coordRange.start.y < 0) {
+            range.coordRange.start.x = 0;
+            range.coordRange.start.y = 0;
+        }
+        sub.range = range;
+        if (range.coordRange.end.y < 0) {
+            [subsToRemove addObject:sub];
+        }
+    }
+
+    for (iTermSubSelection *sub in subsToRemove) {
+        [_subSelections removeObject:sub];
+    }
+
+    if (notifyDelegateOfChange) {
+        [_delegate selectionDidChange:self];
     }
 }
 
