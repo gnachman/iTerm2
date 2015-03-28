@@ -1088,7 +1088,7 @@ static const int kBadgeRightMargin = 10;
 - (void)drawCursor {
     DLog(@"drawCursor");
 
-    if (![self cursorInDocumentVisibleRect]) {
+    if (![self cursorInVisibleRow]) {
         return;
     }
 
@@ -1390,19 +1390,10 @@ static const int kBadgeRightMargin = 10;
     return [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
 }
 
-- (BOOL)cursorInDocumentVisibleRect {
-    NSRect docVisibleRect = _scrollViewDocumentVisibleRect;
-    int lastVisibleLine = docVisibleRect.origin.y / _cellSize.height + _gridSize.height;
-    // TODO: I think there used to be an off-by-1 error here (1 wasn't subtracted from cursorY).
-    int cursorLine = (_numberOfLines - _gridSize.height + _cursorCoord.y -
-                      _scrollbackOverflow);
-    if (cursorLine > lastVisibleLine) {
-        return NO;
-    }
-    if (cursorLine < 0) {
-        return NO;
-    }
-    return YES;
+- (BOOL)cursorInVisibleRow {
+    NSRange range = [self rangeOfVisibleRows];
+    int cursorLine = _numberOfLines - _gridSize.height + _cursorCoord.y;
+    return NSLocationInRange(cursorLine, range);
 }
 
 - (BOOL)shouldShowCursor {
@@ -1513,6 +1504,23 @@ static const int kBadgeRightMargin = 10;
     return charRange;
 }
 
+- (NSRange)rangeOfVisibleRows {
+    int visibleRows = floor(_scrollViewContentSize.height / _cellSize.height);
+    CGFloat top = _scrollViewDocumentVisibleRect.origin.y + _frame.origin.y;
+    int firstVisibleRow = floor(top / _cellSize.height);
+    if (firstVisibleRow < 0) {
+        // I'm pretty sure this will never happen, but safety first when
+        // dealing with unsigned integers.
+        visibleRows += firstVisibleRow;
+        firstVisibleRow = 0;
+    }
+    if (visibleRows >= 0) {
+        return NSMakeRange(firstVisibleRow, visibleRows);
+    } else {
+        return NSMakeRange(0, 0);
+    }
+}
+
 // Not inclusive of end.x or end.y. Range of coords clipped to visible area and addressable lines.
 - (VT100GridCoordRange)drawableCoordRangeForRect:(NSRect)rect {
     VT100GridCoordRange range;
@@ -1529,14 +1537,8 @@ static const int kBadgeRightMargin = 10;
     lineEnd = MIN(lineEnd, _numberOfLines);
 
     // Ensure lineEnd isn't beyond the bottom of the visible area.
-    int visibleRows = ceil(_scrollViewContentSize.height / _cellSize.height);
-    double hiddenAbove =
-        _scrollViewDocumentVisibleRect.origin.y + _frame.origin.y;
-    int firstVisibleRow = hiddenAbove / _cellSize.height;
-    lineEnd = MIN(lineEnd, firstVisibleRow + visibleRows);
-
     range.start.y = lineStart;
-    range.end.y = lineEnd;
+    range.end.y = MIN(lineEnd, NSMaxRange([self rangeOfVisibleRows]));
 
     return range;
 }
