@@ -1925,8 +1925,7 @@ static NSString* FormatRect(NSRect r) {
                               contents:(BOOL)contents {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     if (isMaximized) {
-        [result setObject:[NSNumber numberWithBool:YES]
-                   forKey:TAB_ARRANGEMENT_IS_MAXIMIZED];
+        result[TAB_ARRANGEMENT_IS_MAXIMIZED] = @YES;
     }
     isMaximized = NO;
     if ([view isKindOfClass:[NSSplitView class]]) {
@@ -2259,14 +2258,12 @@ static NSString* FormatRect(NSRect r) {
 // This can only be used in conjunction with
 // +[tabWithArrangement:inTerminal:hasFlexibleView:viewMap:].
  - (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
-       withArrangement:(NSDictionary *)arrangement
-{
+       withArrangement:(NSDictionary *)arrangement {
     // Add the existing tab, which is now fully populated, to the term.
     [term appendTab:self];
 
     NSDictionary* root = [arrangement objectForKey:TAB_ARRANGEMENT_ROOT];
-    if ([root objectForKey:TAB_ARRANGEMENT_IS_MAXIMIZED] &&
-        [[root objectForKey:TAB_ARRANGEMENT_IS_MAXIMIZED] boolValue]) {
+    if ([root[TAB_ARRANGEMENT_IS_MAXIMIZED] boolValue]) {
         [self maximize];
     }
 
@@ -2292,32 +2289,97 @@ static NSString* FormatRect(NSRect r) {
     return theTab;
 }
 
-- (NSDictionary *)arrangementWithMap:(NSMutableDictionary*)idMap
-                            contents:(BOOL)contents {
-    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:1];
-    BOOL temp = isMaximized_;
-    if (isMaximized_) {
-        [self unmaximize];
+// Uses idMap_ to reconstitute the TAB_ARRANGEMENT_SESSION elements of an arrangement including their
+// contents.
+- (NSDictionary *)arrangementNodeWithContentsFromArrangementNode:(NSDictionary *)node {
+    NSMutableDictionary *result = [[node mutableCopy] autorelease];
+    if ([node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SPLITTER]) {
+        NSMutableArray *subnodes = [[node[SUBVIEWS] mutableCopy] autorelease];
+        for (int i = 0; i < subnodes.count; i++) {
+            subnodes[i] = [self arrangementNodeWithContentsFromArrangementNode:subnodes[i]];
+        }
+        result[SUBVIEWS] = subnodes;
+    } else {
+        // If something should go wrong, it's better to do nothing than to
+        // assert. Bad inputs are always possible.
+        NSNumber *sessionId = result[TAB_ARRANGEMENT_ID];
+        if (sessionId) {
+            SessionView *sessionView = idMap_[sessionId];
+            if ([sessionView isKindOfClass:[SessionView class]] &&
+                sessionView &&
+                sessionView.session) {
+                result[TAB_ARRANGEMENT_SESSION] =
+                    [[sessionView session] arrangementWithContents:YES];
+            } else {
+                NSLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
+                DLog(@"Bogus value in idmap for key %@: %@", sessionId, sessionView);
+            }
+        } else {
+            NSLog(@"No session ID in arrangement node %@", node);
+            DLog(@"No session ID in arrangement node %@", node);
+        }
     }
-    result[TAB_ARRANGEMENT_ROOT] =
-        [self _recursiveArrangement:root_ idMap:idMap isMaximized:temp contents:contents];
-    NSColor *color = [[realParentWindow_ tabBarControl] tabColorForTabViewItem:tabViewItem_];
-    if (color) {
-        [result setObject:[[self class] htmlNameForColor:color] forKey:TAB_ARRANGEMENT_COLOR];
-    }
-    if (temp) {
-        [self maximize];
-    }
-
     return result;
 }
 
+// This method used to take a gross shortcut and call -unmaximize and
+// -maximize. Because we support 10.7 window restoration, it gets called
+// periodically. Issue 3389 calls out a "flash" that happens because of this.
+// In the future make sure this method doesn't do anything that could affect
+// the view's appearance, such as temporary resizing.
+- (NSDictionary *)arrangementConstructingIdMap:(BOOL)constructIdMap
+                                      contents:(BOOL)contents {
+    NSDictionary *rootNode = nil;
+
+    if (isMaximized_) {
+        // We never construct id map in this case because it must already exist.
+        assert(!constructIdMap);
+        assert(savedArrangement_);
+
+        // Add contents to savedArrangement_ and return that.
+        // When maximized, savedArrangement_  contains the unmaximized
+        // arrangement, including the maximized session. However, it is old
+        // (created when the session was maximized), and doesn't have contents.
+        // We need to return an updated version of it with the current
+        // contents.
+
+        // Set the maximized flag in the root.
+        NSMutableDictionary *mutableRootNode =
+            [[savedArrangement_[TAB_ARRANGEMENT_ROOT] mutableCopy] autorelease];
+        mutableRootNode[TAB_ARRANGEMENT_IS_MAXIMIZED] = @YES;
+
+        // Fill in the contents.
+        rootNode = [self arrangementNodeWithContentsFromArrangementNode:mutableRootNode];
+    } else {
+        // Build a new arrangement. If |constructIdMap| is set then pass in
+        // idMap_, and it will get filled in with number->SessionView entries.
+        if (constructIdMap) {
+            assert(idMap_);
+        }
+        rootNode = [self _recursiveArrangement:root_
+                                         idMap:constructIdMap ? idMap_ : nil
+                                   isMaximized:NO
+                                      contents:contents];
+    }
+
+    // Fill in the tab's color, which is unfortunately not stored in the root
+    // node of the arrangement.
+    NSColor *color = [[realParentWindow_ tabBarControl] tabColorForTabViewItem:tabViewItem_];
+    NSString *colorName = color ? [[self class] htmlNameForColor:color] : nil;
+    if (colorName) {
+        return @{ TAB_ARRANGEMENT_ROOT: rootNode,
+                  TAB_ARRANGEMENT_COLOR: colorName };
+    } else {
+        return @{ TAB_ARRANGEMENT_ROOT: rootNode };
+    }
+}
+
 - (NSDictionary*)arrangement {
-    return [self arrangementWithMap:nil contents:NO];
+    return [self arrangementConstructingIdMap:NO contents:NO];
 }
 
 - (NSDictionary*)arrangementWithContents:(BOOL)contents {
-    return [self arrangementWithMap:nil contents:contents];
+    return [self arrangementConstructingIdMap:NO contents:contents];
 }
 
 + (BOOL)_recursiveBuildViewMap:(NSMutableDictionary *)viewMap
@@ -3063,7 +3125,7 @@ static NSString* FormatRect(NSRect r) {
     savedSize_ = [temp frame].size;
 
     idMap_ = [[NSMutableDictionary alloc] init];
-    savedArrangement_ = [[self arrangementWithMap:idMap_ contents:NO] retain];
+    savedArrangement_ = [[self arrangementConstructingIdMap:YES contents:NO] retain];
     isMaximized_ = YES;
 
     NSRect oldRootFrame = [root_ frame];

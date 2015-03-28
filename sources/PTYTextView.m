@@ -3833,15 +3833,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
 
     DLog(@"-[PTYTextView copyWithStyles:] called");
-    NSString *copyString = [self selectedText];
     NSAttributedString *copyAttributedString = [self selectedAttributedTextWithPad:NO];
-    DLog(@"Have selected text of length %d. selection=%@", (int)[copyString length], _selection);
+    DLog(@"Have selected text of length %d. selection=%@", (int)[copyAttributedString length], _selection);
     NSMutableArray *types = [NSMutableArray array];
     if (copyAttributedString) {
         [types addObject:NSRTFPboardType];
-    }
-    if (copyString) {
-        [types addObject:NSStringPboardType];
     }
     [pboard declareTypes:types owner:self];
     if (copyAttributedString) {
@@ -3849,11 +3845,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                           documentAttributes:nil];
         [pboard setData:RTFData forType:NSRTFPboardType];
     }
-    if (copyString) {
-        [pboard setString:copyString forType:NSStringPboardType];
-    }
-
-    [[PasteboardHistory sharedInstance] save:copyString];
+    // I used to do
+    //   [pboard setString:[copyAttributedString string] forType:NSStringPboardType]
+    // but this seems to take precedence over the attributed version for
+    // pasting sometimes, for example in TextEdit.
+    [[PasteboardHistory sharedInstance] save:[copyAttributedString string]];
 }
 
 // Returns a dictionary to pass to NSAttributedString.
@@ -6445,6 +6441,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int limit = charRange.location + charRange.length;
     NSIndexSet *selectedIndexes = [_selection selectedIndexesOnLine:line];
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    NSIndexSet *orphanedTabFillers = [extractor tabFillerOrphansOnRow:line];
     while (j < limit) {
         if (theLine[j].code == DWC_RIGHT) {
             // Do not draw the right-hand side of double-width characters.
@@ -6458,8 +6455,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         BOOL selected;
         if (theLine[j].code == DWC_SKIP) {
             selected = NO;
-        } else if (theLine[j].code == TAB_FILLER) {
-            if ([extractor isTabFillerOrphanAt:VT100GridCoordMake(j, line)]) {
+        } else if (theLine[j].code == TAB_FILLER && !theLine[j].complexChar) {
+            if ([orphanedTabFillers containsIndex:j]) {
                 // Treat orphaned tab fillers like spaces.
                 selected = [selectedIndexes containsIndex:j];
             } else {

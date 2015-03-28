@@ -52,6 +52,11 @@
                  cursor:[NSCursor arrowCursor]];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ isHidden=%@ alpha=%@>",
+            [self class], self, NSStringFromRect(self.frame), @(self.hidden), @(self.alphaValue)];
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     NSRect frame = [self frame];
     [[NSGraphicsContext currentContext] saveGraphicsState];

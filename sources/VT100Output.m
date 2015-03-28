@@ -640,5 +640,11 @@ typedef enum {
     return data;
 }
 
+- (NSData *)reportFocusGained:(BOOL)gained {
+    char flag = gained ? 'I' : 'O';
+    NSString *message = [NSString stringWithFormat:@"%c[%c", 27, flag];
+    return [message dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 
 @end

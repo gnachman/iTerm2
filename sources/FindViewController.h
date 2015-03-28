@@ -61,8 +61,8 @@
 // call [[self currentSession] pasteString:text];
 - (void)pasteString:(NSString*)string;
 
-// call [[self window] makeFirstResponder:[[self currentSession] textview]];
-- (void)takeFocus;
+// Requests that the document (in practice, PTYTextView) become the first responder.
+- (void)findViewControllerMakeDocumentFirstResponder;
 
 // Remove highlighted matches
 - (void)clearHighlights;
