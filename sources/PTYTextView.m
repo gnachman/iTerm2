@@ -4898,26 +4898,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return self.frame.size.height - NSMaxY(self.enclosingScrollView.documentVisibleRect);
 }
 
-- (NSPoint)cursorLocationInScreenCoordinates {
-    NSRect cursorFrame = [self cursorFrame];
-    CGFloat x = cursorFrame.origin.x + cursorFrame.size.width / 2;
-    CGFloat y = cursorFrame.origin.y + cursorFrame.size.height / 2;
+- (NSPoint)cursorCenterInScreenCoords {
+    NSPoint cursorCenter;
     if ([self hasMarkedText]) {
-        x = _drawingHelper.imeCursorLastPos.x + 1;
-        y = _drawingHelper.imeCursorLastPos.y + _lineHeight / 2;
+        cursorCenter = _drawingHelper.imeCursorLastPos;
+    } else {
+        cursorCenter = [self cursorFrame].origin;
     }
-    NSPoint p = NSMakePoint(x, y);
-    p.y += [self verticalOffset];
-    p = [self convertPoint:p toView:nil];
-    p = [[self window] pointToScreenCoords:p];
-    return p;
+    cursorCenter.x += _charWidth / 2;
+    cursorCenter.y += _lineHeight / 2;
+    NSPoint cursorCenterInWindowCoords = [self convertPoint:cursorCenter toView:nil];
+    return  [[self window] pointToScreenCoords:cursorCenterInWindowCoords];
 }
 
 // Returns the location of the cursor relative to the origin of findCursorWindow_.
-- (NSPoint)globalCursorLocation {
-    NSPoint p = [self cursorLocationInScreenCoordinates];
-    p = [_findCursorWindow pointFromScreenCoords:p];
-    return p;
+- (NSPoint)cursorCenterInFindCursorWindowCoords {
+    NSPoint centerInScreenCoords = [self cursorCenterInScreenCoords];
+    return [_findCursorWindow pointFromScreenCoords:centerInScreenCoords];
 }
 
 // Returns the proper frame for findCursorWindow_, including every screen that the
@@ -4937,6 +4934,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)createFindCursorWindow {
+    [self scrollRectToVisible:[self cursorFrame]];
     _findCursorWindow = [[NSWindow alloc] initWithContentRect:NSZeroRect
                                                     styleMask:NSBorderlessWindowMask
                                                       backing:NSBackingStoreBuffered
@@ -4954,7 +4952,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                                 [[self window] frame].size.width,
                                                                                 [[self window] frame].size.height)];
     _findCursorView.delegate = self;
-    NSPoint p = [self globalCursorLocation];
+    NSPoint p = [self cursorCenterInFindCursorWindowCoords];
     _findCursorView.cursorPosition = p;
     [_findCursorWindow setContentView:_findCursorView];
     [_findCursorView release];
@@ -6451,7 +6449,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)drawingHelperUpdateFindCursorView {
     if ([self isFindingCursor]) {
-        NSPoint cp = [self globalCursorLocation];
+        NSPoint cp = [self cursorCenterInFindCursorWindowCoords];
         if (!NSEqualPoints(_findCursorView.cursorPosition, cp)) {
             _findCursorView.cursorPosition = cp;
             [_findCursorView setNeedsDisplay:YES];
