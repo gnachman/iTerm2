@@ -257,7 +257,7 @@ static const int kBadgeRightMargin = 10;
                                     y:_cursorCoord.y
                                 width:_gridSize.width
                                height:_gridSize.height
-                         cursorHeight:self.cursorHeight
+                         cursorHeight:_cellSize.height
                                   ctx:ctx];
     _blinkingFound |= self.cursorBlinking;
     
@@ -1077,6 +1077,14 @@ static const int kBadgeRightMargin = 10;
 
 #pragma mark - Drawing: Cursor
 
+- (NSRect)cursorFrame {
+    const int rowNumber = _cursorCoord.y + _numberOfLines - _gridSize.height;
+    return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + MARGIN),
+                      rowNumber * _cellSize.height,
+                      MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
+                      _cellSize.height);
+}
+
 - (void)drawCursor {
     DLog(@"drawCursor");
 
@@ -1104,9 +1112,7 @@ static const int kBadgeRightMargin = 10;
         // Get the color of the cursor.
         NSColor *cursorColor;
         cursorColor = [self backgroundColorForCursor];
-        NSRect rect;
-        rect.origin = [self cursorOrigin];
-        rect.size = [self cursorSize];
+        NSRect rect = [self cursorFrame];
         iTermCursor *cursor = [iTermCursor cursorOfType:_cursorType];
         cursor.delegate = self;
         [cursor drawWithRect:rect
@@ -1375,14 +1381,6 @@ static const int kBadgeRightMargin = 10;
 
 #pragma mark - Cursor Utilities
 
-- (CGFloat)cursorHeight {
-    return _cellSize.height;
-}
-
-- (NSSize)cursorSize {
-    return NSMakeSize(MIN(_cellSize.width, _cellSizeWithoutSpacing.width), self.cursorHeight);
-}
-
 - (NSColor *)backgroundColorForCursor {
     if (_isFindingCursor) {
         DLog(@"Use random cursor color");
@@ -1475,16 +1473,6 @@ static const int kBadgeRightMargin = 10;
          width, height, @(result));
     return result;
 }
-
-- (NSPoint)cursorOrigin {
-    NSSize cursorSize = [self cursorSize];
-    NSPoint cursorOrigin =
-    NSMakePoint(floor(_cursorCoord.x * _cellSize.width + MARGIN),
-                (_cursorCoord.y + _numberOfLines - _gridSize.height + 1) * _cellSize.height -
-                cursorSize.height);
-    return cursorOrigin;
-}
-
 
 #pragma mark - Coord/Rect Utilities
 

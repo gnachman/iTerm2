@@ -216,8 +216,8 @@
 // Origin in view coordinates of the cursor. Valid only if there is marked text.
 @property(nonatomic, readonly) NSPoint imeCursorLastPos;
 
-// Reports the cursor height.
-@property(nonatomic, readonly) CGFloat cursorHeight;
+// Where the cursor is drawn based on current cellSize and cursorCoord.
+@property(nonatomic, readonly) NSRect cursorFrame;
 
 // Draw debug info?
 @property(nonatomic, assign) BOOL debug;

@@ -73,8 +73,6 @@ static const int kMaxSemanticHistoryPrefixOrSuffix = 2000;
 //   `-----'  :      :
 static const double kCharWidthFractionOffset = 0.35;
 
-//#define DEBUG_DRAWING
-
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
 
 // Notifications posted when hostname lookups finish. Notifications are used to
@@ -572,15 +570,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)setCursorNeedsDisplay {
-    // TODO: Should get cursor rect from drawing helper.
-    int lineStart = [_dataSource numberOfLines] - [_dataSource height];
-    int cursorX = [_dataSource cursorX] - 1;
-    int cursorY = [_dataSource cursorY] - 1;
-    NSRect dirtyRect = NSMakeRect(MARGIN + cursorX * _charWidth,
-                                  (lineStart + cursorY) * _lineHeight,
-                                  _charWidth,
-                                  _lineHeight);
-    [self setNeedsDisplayInRect:dirtyRect];
+    [self setNeedsDisplayInRect:_drawingHelper.cursorFrame];
 }
 
 - (void)setCursorType:(ITermCursorType)value {
@@ -1280,7 +1270,7 @@ static const int kDragThreshold = 3;
             CGRect viewRect = NSRectToCGRect(
                 [self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
             CGRect selectedRect = NSRectToCGRect(
-                [self.window convertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
+                [self.window convertRectToScreen:[self convertRect:[self cursorFrame] toView:nil]]);
             viewRect.origin.y = ([[NSScreen mainScreen] frame].size.height -
                                  (viewRect.origin.y + viewRect.size.height));
             selectedRect.origin.y = ([[NSScreen mainScreen] frame].size.height -
@@ -4897,11 +4887,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - Find Cursor
 
-- (NSRect)cursorRect {
-    NSRect frame = [self visibleRect];
-    CGFloat x = MARGIN + _charWidth * ([_dataSource cursorX] - 1);
-    CGFloat y = frame.origin.y + _lineHeight * ([_dataSource cursorY] - 1);
-    return NSMakeRect(x, y, _charWidth, _lineHeight);
+- (NSRect)cursorFrame {
+    _drawingHelper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
+                                                    _dataSource.cursorY - 1);
+    _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
+    return _drawingHelper.cursorFrame;
 }
 
 - (CGFloat)verticalOffset {
@@ -4909,7 +4899,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSPoint)cursorLocationInScreenCoordinates {
-    NSRect cursorFrame = [self cursorRect];
+    NSRect cursorFrame = [self cursorFrame];
     CGFloat x = cursorFrame.origin.x + cursorFrame.size.width / 2;
     CGFloat y = cursorFrame.origin.y + cursorFrame.size.height / 2;
     if ([self hasMarkedText]) {
@@ -4972,12 +4962,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)findCursorBlink {
-    int HEIGHT = [_dataSource height];
-    NSRect rect = [self cursorRect];
-    int yStart = [_dataSource cursorY] - 1;
-    rect.origin.y = (yStart + [_dataSource numberOfLines] - HEIGHT + 1) * _lineHeight - _drawingHelper.cursorHeight;
-    rect.size.height = _drawingHelper.cursorHeight;
-    [self setNeedsDisplayInRect:rect];
+    [self setCursorNeedsDisplay];
 }
 
 - (void)beginFindCursor:(BOOL)hold {
@@ -5931,21 +5916,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // -[refresh] instead, as it ensures scrollback overflow
 // is dealt with so that this function can dereference
 // [_dataSource dirty] correctly.
-- (BOOL)updateDirtyRects
-{
+- (BOOL)updateDirtyRects {
     BOOL anythingIsBlinking = NO;
     BOOL foundDirty = NO;
-    if ([_dataSource scrollbackOverflow] != 0) {
-        NSAssert([_dataSource scrollbackOverflow] == 0, @"updateDirtyRects called with nonzero overflow");
-    }
-#ifdef DEBUG_DRAWING
-    [self appendDebug:[NSString stringWithFormat:@"updateDirtyRects called. Scrollback overflow is %d. Screen is: %@", [_dataSource scrollbackOverflow], [_dataSource debugString]]];
-    DebugLog(@"updateDirtyRects called");
-#endif
+    assert([_dataSource scrollbackOverflow] == 0);
 
     // Flip blink bit if enough time has passed. Mark blinking cursor dirty
     // when it blinks.
-    BOOL redrawBlink = [self _updateBlink];
+    BOOL redrawBlink = [self shouldRedrawBlinkingObjects];
+    if (redrawBlink) {
+        DebugLog(@"Time to redraw blinking objects");
+        if (_blinkingCursor && [self isInKeyWindow]) {
+            // Blink flag flipped and there is a blinking cursor. Make it redraw.
+            [self setCursorNeedsDisplay];
+        }
+    }
     int WIDTH = [_dataSource width];
 
     // Any characters that changed selection status since the last update or
@@ -5961,14 +5946,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lineEnd = [_dataSource numberOfLines];
     // lineStart to lineEnd is the region that is the screen when the scrollbar
     // is at the bottom of the frame.
-#ifdef DEBUG_DRAWING
-    if (gDebugLogging) {
-        DebugLog([NSString stringWithFormat:@"Search lines [%d, %d) for dirty", lineStart, lineEnd]);
-    }
 
-    NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
-    int screenindex=0;
-#endif
     long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
     [_dataSource resetAllDirty];
@@ -6000,9 +5978,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_findOnPageHelper removeHighlightsInRange:NSMakeRange(lineStart + totalScrollbackOverflow,
                                                                lineEnd - lineStart)];
         [self setNeedsDisplayInRect:[self gridRect]];
-#ifdef DEBUG_DRAWING
-        NSLog(@"allDirty is set, redraw the whole view");
-#endif
     } else {
         for (int y = lineStart; y < lineEnd; y++) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
@@ -6010,9 +5985,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 foundDirty = YES;
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [self setNeedsDisplayOnLine:y inRange:range];
-#ifdef DEBUG_DRAWING
-                NSLog(@"line %d has dirty characters", y);
-#endif
             }
         }
     }
@@ -6024,9 +5996,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Unset the dirty bit for all chars.
     DebugLog(@"updateDirtyRects resetDirty");
-#ifdef DEBUG_DRAWING
-    [self appendDebug:dirtyDebug];
-#endif
     [_dataSource resetDirty];
 
     if (foundDirty) {
@@ -6081,24 +6050,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (BOOL)_updateBlink {
+- (BOOL)shouldRedrawBlinkingObjects {
     // Time to redraw blinking text or cursor?
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    BOOL redrawBlink = NO;
     double timeDelta = now - _timeOfLastBlink;
     if (timeDelta >= [iTermAdvancedSettingsModel timeBetweenBlinks]) {
         _drawingHelper.blinkingItemsVisible = !_drawingHelper.blinkingItemsVisible;
         _timeOfLastBlink = now;
-        redrawBlink = YES;
-
-        if (_blinkingCursor &&
-            [self isInKeyWindow]) {
-            // Blink flag flipped and there is a blinking cursor. Make it redraw.
-            [self setCursorNeedsDisplay];
-        }
-        DebugLog(@"time to redraw blinking text");
+        return YES;
+    } else {
+        return NO;
     }
-  return redrawBlink;
 }
 
 - (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width
