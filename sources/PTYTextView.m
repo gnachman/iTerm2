@@ -726,6 +726,7 @@ static const int kDragThreshold = 3;
 }
 
 // Number of extra lines below the last line of text that are always the background color.
+// This is 2 except for just after the frame has changed and things are resizing.
 - (double)excess {
     NSRect visible = [self scrollViewContentSize];
     visible.size.height -= VMARGIN * 2;  // Height without top and bottom margins.
@@ -743,8 +744,7 @@ static const int kDragThreshold = 3;
 // triggers an autoresize of this view, which manually resizes the TextViewWrapper (self.superview),
 // which triggers an autoresize of THIS VIEW AGAIN. WTF.
 // I'm not sure if that horrible flow happens in real life but it does happen in the unit tests.
-- (void)setFrameSize:(NSSize)frameSize
-{
+- (void)setFrameSize:(NSSize)frameSize {
     // Force the height to always be correct
     frameSize.height = ([_dataSource numberOfLines] * _lineHeight +
                         [self excess] +
@@ -1204,9 +1204,9 @@ static const int kDragThreshold = 3;
 // source + IME has changed.
 - (void)resizeFrameIfNeeded {
     // Check if the frame size needs to grow or shrink.
-    const int height = [_dataSource numberOfLines] * _lineHeight;
+    const CGFloat height = [_dataSource numberOfLines] * _lineHeight;
     NSRect frame = [self frame];
-    const double excess = [self excess];
+    const CGFloat excess = [self excess];
     const long long numberOfLinesAvailable =
         height + excess + _drawingHelper.numberOfIMELines * _lineHeight;
     if (numberOfLinesAvailable != (long long) frame.size.height) {

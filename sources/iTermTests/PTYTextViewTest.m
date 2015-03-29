@@ -511,11 +511,7 @@ static const BOOL gCreateGoldens = YES;
     [session setBookmarkName:profile[KEY_NAME]];
     [session setName:profile[KEY_NAME]];
     [session setDefaultName:profile[KEY_NAME]];
-/*
-    session.textview.drawingHook = ^(iTermTextDrawingHelper *helper) {
-        helper.shouldDrawFilledInCursor = YES;
-    };
-*/
+
     [session synchronousReadTask:input];
     if (hook) {
         hook(session.textview);
@@ -944,7 +940,6 @@ static const BOOL gCreateGoldens = YES;
 }
 
 
-// Excess region
 // Transparency
 // IME with (without) Ambiguous is double width
 // IME with (without) HFS+ mapping
