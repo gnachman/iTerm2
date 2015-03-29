@@ -105,9 +105,6 @@
 // Total number of lines available (scrollback plus screen height).
 @property(nonatomic, assign) int numberOfLines;
 
-// How many lines the data source has moved up since our draw rect was chosen.
-@property(nonatomic, assign) int scrollbackOverflow;
-
 // Location of the cursor on the screen.
 @property(nonatomic, assign) VT100GridCoord cursorCoord;
 

@@ -1460,7 +1460,6 @@ static const int kDragThreshold = 3;
     _drawingHelper.cursorGuideColor = [_delegate textViewCursorGuideColor];
     _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
     _drawingHelper.numberOfLines = _dataSource.numberOfLines;
-    _drawingHelper.scrollbackOverflow = _dataSource.scrollbackOverflow;
     _drawingHelper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
                                                     _dataSource.cursorY - 1);
     _drawingHelper.totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];

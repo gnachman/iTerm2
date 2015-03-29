@@ -161,7 +161,6 @@ static const int kBadgeRightMargin = 10;
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
 
     iTermTextExtractor *extractor = [self.delegate drawingHelperTextExtractor];
-    int overflow = _scrollbackOverflow;
     _blinkingFound = NO;
 
     // We work hard to paint all the backgrounds first and then all the foregrounds. The reason this
@@ -182,35 +181,24 @@ static const int kBadgeRightMargin = 10;
     // An array of PTYTextViewBackgroundRunArray objects (one element per line).
     NSMutableArray *backgroundRunArrays = [NSMutableArray array];
     for (int line = coordRange.start.y; line < coordRange.end.y; line++, y += _cellSize.height) {
-        if (line >= overflow) {
-            // If overflow > 0 then the lines in the dataSource are not
-            // lined up in the normal way with the view. This happens when
-            // the dataSource has scrolled its contents up but -[refresh]
-            // has not been called yet, so the view's contents haven't been
-            // scrolled up yet. When that's the case, the first line of the
-            // view is what the first line of the dataSource was before
-            // it overflowed. Continue to draw text in this out-of-alignment
-            // manner until refresh is called and gets things in sync again.
-            int n = line - overflow;
-            [self drawMarginsAndMarkForLine:n y:y];
+        [self drawMarginsAndMarkForLine:line y:y];
 
-            NSData *matches = [_delegate drawingHelperMatchesOnLine:n];
-            screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
-            NSIndexSet *selectedIndexes =
-                [_selection selectedIndexesIncludingTabFillersInLine:line];
-            iTermBackgroundColorRunsInLine *runsInLine =
-                [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
-                                                          lineLength:_gridSize.width
-                                                                 row:line
-                                                     selectedIndexes:selectedIndexes
-                                                         withinRange:charRange
-                                                             matches:matches
-                                                            anyBlink:&_blinkingFound
-                                                       textExtractor:extractor
-                                                                   y:y
-                                                                line:n];
-            [backgroundRunArrays addObject:runsInLine];
-        }
+        NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
+        screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
+        NSIndexSet *selectedIndexes =
+            [_selection selectedIndexesIncludingTabFillersInLine:line];
+        iTermBackgroundColorRunsInLine *runsInLine =
+            [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
+                                                      lineLength:_gridSize.width
+                                                             row:line
+                                                 selectedIndexes:selectedIndexes
+                                                     withinRange:charRange
+                                                         matches:matches
+                                                        anyBlink:&_blinkingFound
+                                                   textExtractor:extractor
+                                                               y:y
+                                                            line:line];
+        [backgroundRunArrays addObject:runsInLine];
     }
 
     // If a background image is in use, draw the whole rect at once.
@@ -410,7 +398,7 @@ static const int kBadgeRightMargin = 10;
                                   cursorLine >= coordRange.start.y &&
                                   cursorLine < coordRange.end.y);
     if (drawCursorGuide) {
-        CGFloat y = (cursorLine - _scrollbackOverflow) * _cellSize.height;
+        CGFloat y = cursorLine * _cellSize.height;
         [self drawCursorGuideForColumns:NSMakeRange(coordRange.start.x,
                                                     coordRange.end.x - coordRange.start.x)
                                       y:y];
