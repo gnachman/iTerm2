@@ -505,7 +505,7 @@ static const BOOL gCreateGoldens = YES;
     NSRect theFrame = NSMakeRect(0,
                                  0,
                                  size.width * session.textview.charWidth + MARGIN * 2,
-                                 size.height * session.textview.lineHeight + VMARGIN);
+                                 size.height * session.textview.lineHeight + VMARGIN * 2);
     session.view.frame = theFrame;
     [session loadInitialColorTable];
     [session setBookmarkName:profile[KEY_NAME]];
@@ -926,40 +926,11 @@ static const BOOL gCreateGoldens = YES;
 }
 
 // Scrollback overflow
-// Something is rotten here.
-// We can get changes to the data source between calls to -refresh (which calls setNeedsDisplay:)
-// and calls to -drawRect:. I think what can go wrong is this:
-// Initial model and drawn view:
-//   a
-//   b
-//   c
-//
-// 0. A new line of input arrives causing a line at the top of scrollback history to be lost.
-//
-// 1. -refresh calls -scrollRect:by:, moving the visible pixels up a bit. It calls setNeedsDisplay:
-// The model at this point:   The view at this point:
-//   b                        b
-//   c                        c
-//   d                        [needs display]
-//
-// 2. Another line of input arrives, scrolling again. I don't know how this manages to happen
-//    between -setNeedsDisplay: and drawRect:, but there it is.
-// The model at this point:   The view at this point:
-//   c                        b
-//   d                        c
-//   e                        [needs display]
-//
-// 3. drawRect: is called to fill in the hole on the bottom. But since the data source changed in
-//    step 2, the drawing needs to happen as though that had not happened or else the hole will be
-//    filled in with "overly new" data.
-// The model at this point:   The view at this point:
-//   c                        b
-//   d                        c
-//   e                        d
-// We try to correct for this by subtracting VT100Screen's scrollbackOverflow from the line number
-// being drawn. But this is incomplete at best. For example, marks and the cursor don't benefit from
-// this treatment. If scrollbackOverflow is too large, then there's nothing to draw.
 - (void)testScrollbackOverflow {
+    // Tests receiving input between -refresh (which calls setNeedsDisplay) and -drawRect.
+    // The most up-to-date model should be drawn. This is a departure from how 2.0 worked,
+    // which tried to draw how things "were" at the time refresh was called (but didn't really
+    // succeed).
     [self doGoldenTestForInput:@"a\r\nb\r\n"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {

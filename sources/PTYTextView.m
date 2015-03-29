@@ -736,7 +736,13 @@ static const int kDragThreshold = 3;
 
 // We override this method since both refresh and window resize can conflict
 // resulting in this happening twice So we do not allow the size to be set
-// larger than what the data source can fill
+// larger than what the data source can fill.
+//
+// TODO: This is a freaking horror show.
+// When the session view's frame is set, that triggers an autoresize of the scrollview, which
+// triggers an autoresize of this view, which manually resizes the TextViewWrapper (self.superview),
+// which triggers an autoresize of THIS VIEW AGAIN. WTF.
+// I'm not sure if that horrible flow happens in real life but it does happen in the unit tests.
 - (void)setFrameSize:(NSSize)frameSize
 {
     // Force the height to always be correct
