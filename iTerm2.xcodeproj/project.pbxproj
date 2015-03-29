@@ -1672,6 +1672,11 @@
 		A6B3A73E1AC74E02008E8D4E /* FindCursorCell1.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */; };
 		A6B3A73F1AC74E02008E8D4E /* FindCursorCell1.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */; };
 		A6B3A7401AC74E02008E8D4E /* FindCursorCell1.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */; };
+		A6B3A7431AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */; };
+		A6B3A7441AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */; };
+		A6B3A7451AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */; };
+		A6B3A7461AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */; };
+		A6B3A7471AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */; };
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B5134B18E779BB00D249A5 /* iTermPasteHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */; };
 		A6B5134C18E779BB00D249A5 /* iTermPasteHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */; };
@@ -2543,6 +2548,8 @@
 		A6B3A7321AC74E02008E8D4E /* FindCursorCell3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FindCursorCell3.png; path = images/FindCursorCell3.png; sourceTree = "<group>"; };
 		A6B3A7331AC74E02008E8D4E /* FindCursorCell2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FindCursorCell2.png; path = images/FindCursorCell2.png; sourceTree = "<group>"; };
 		A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FindCursorCell1.png; path = images/FindCursorCell1.png; sourceTree = "<group>"; };
+		A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSCharacterSet+iTerm.h"; sourceTree = "<group>"; };
+		A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSCharacterSet+iTerm.m"; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6B70FB919830C37007A4284 /* dead.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = dead.png; path = images/dead.png; sourceTree = "<group>"; };
@@ -3569,6 +3576,8 @@
 				1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */,
 				A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */,
 				A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */,
+				A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */,
+				A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -4177,6 +4186,7 @@
 				1D6ED90919AEA20D005A7799 /* CoprocessTrigger.h in Headers */,
 				1D6ED90A19AEA20D005A7799 /* iTermRestorableSession.h in Headers */,
 				A663013019D0864C004AF81C /* SCEventListenerProtocol.h in Headers */,
+				A6B3A7441AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */,
 				1D6ED90B19AEA20D005A7799 /* NSColor+Scripting.h in Headers */,
 				1D6ED90C19AEA20D005A7799 /* TransferrableFile.h in Headers */,
 				1D6ED90D19AEA20D005A7799 /* Coprocess.h in Headers */,
@@ -4587,6 +4597,7 @@
 				1D03D420191419080049EB8F /* DirectoriesPopup.h in Headers */,
 				1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */,
 				1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */,
+				A6B3A7431AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */,
 				1D06E7D714BC04E20097C0ED /* ProfileModelWrapper.h in Headers */,
 				1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */,
 				1DA1C1F21A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */,
@@ -5312,6 +5323,7 @@
 				1D6EDA9419AEA20D005A7799 /* PTYSession+Scripting.m in Sources */,
 				1D6EDA9519AEA20D005A7799 /* VT100Grid.m in Sources */,
 				1D6EDA9619AEA20D005A7799 /* TriggerController.m in Sources */,
+				A6B3A7471AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */,
 				A6E77FBD1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */,
 				1D6EDA9719AEA20D005A7799 /* Trigger.m in Sources */,
 				A663011419CFE41A004AF81C /* iTermAboutWindow.m in Sources */,
@@ -5710,6 +5722,7 @@
 				1DB83954192E95EB0037E548 /* CaptureTrigger.m in Sources */,
 				1D9A5523180FA46100B42CE9 /* iTermTests.m in Sources */,
 				A6A13AB818C33FC500B241ED /* VT100Parser.m in Sources */,
+				A6B3A7461AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */,
 				1D9A559C180FA87000B42CE9 /* SessionTitleView.m in Sources */,
 				1D9A55B0180FA8B700B42CE9 /* PSMTabDragWindow.m in Sources */,
 				A6E77FBC1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */,
@@ -5918,6 +5931,7 @@
 				1DFA9D7118F3A30F008ADC98 /* PointerPreferencesViewController.m in Sources */,
 				A6B70FCE1986FB39007A4284 /* PTYSession+Scripting.m in Sources */,
 				1D8B8A151806038F00C2DC25 /* VT100Grid.m in Sources */,
+				A6B3A7451AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */,
 				1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */,
 				A6E77FBB1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */,
 				1D9DCBFF142D7BA60016228A /* Trigger.m in Sources */,
