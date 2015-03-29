@@ -4824,8 +4824,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_colorMap setMinimumContrast:value];
 }
 
-- (BOOL)useTransparency
-{
+- (BOOL)useTransparency {
     return [_delegate textViewWindowUsesTransparency];
 }
 

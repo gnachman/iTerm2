@@ -10,8 +10,20 @@
 #import "PTYTextView.h"
 #import "PTYTextViewTest.h"
 #import "SessionView.h"
+#import <objc/runtime.h>
 
 static const BOOL gCreateGoldens = YES;
+
+@interface iTermFakeSessionForPTYTextViewTest : PTYSession
+@end
+
+@implementation iTermFakeSessionForPTYTextViewTest
+
+- (BOOL)textViewWindowUsesTransparency {
+    return YES;
+}
+
+@end
 
 @interface PTYTextViewTest ()<PTYTextViewDelegate, PTYTextViewDataSource>
 @end
@@ -941,6 +953,25 @@ static const BOOL gCreateGoldens = YES;
 
 
 // Transparency
+- (void)testTransparency {
+    [self doGoldenTestForInput:@"a\r\nb\r\n"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              // Change the session's class to one that always returns YES for
+                              // use transparency.
+                              PTYSession *session = (PTYSession *)textView.delegate;
+                              object_setClass(session, [iTermFakeSessionForPTYTextViewTest class]);
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  // Draw a red background to ensure transparency.
+                                  [[NSColor redColor] set];
+                                  NSRectFill(textView.bounds);
+                              };
+                          }
+              profileOverrides:@{ KEY_TRANSPARENCY: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
 // IME with (without) Ambiguous is double width
 // IME with (without) HFS+ mapping
 // Background image low blending

@@ -4695,7 +4695,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     } else if (blendDefaultBackground) {
         // No image, so just draw background color.
         [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:alpha] set];
-        NSRectFill(rect);
+        NSRectFillUsingOperation(rect, NSCompositeCopy);
     }
 }
 
@@ -4854,8 +4854,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [[self class] pasteboardFile] != nil;
 }
 
-- (BOOL)textViewWindowUsesTransparency
-{
+- (BOOL)textViewWindowUsesTransparency {
     return [[[self tab] realParentWindow] useTransparency];
 }
 

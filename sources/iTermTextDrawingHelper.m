@@ -181,8 +181,6 @@ static const int kBadgeRightMargin = 10;
     // An array of PTYTextViewBackgroundRunArray objects (one element per line).
     NSMutableArray *backgroundRunArrays = [NSMutableArray array];
     for (int line = coordRange.start.y; line < coordRange.end.y; line++, y += _cellSize.height) {
-        [self drawMarginsAndMarkForLine:line y:y];
-
         NSData *matches = [_delegate drawingHelperMatchesOnLine:line];
         screen_char_t* theLine = [self.delegate drawingHelperLineAtIndex:line];
         NSIndexSet *selectedIndexes =
