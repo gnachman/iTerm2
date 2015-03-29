@@ -4939,14 +4939,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                     styleMask:NSBorderlessWindowMask
                                                       backing:NSBackingStoreBuffered
                                                         defer:YES];
-    [_findCursorWindow setOpaque:NO];
-    [_findCursorWindow makeKeyAndOrderFront:nil];
     [_findCursorWindow setLevel:NSFloatingWindowLevel];
-    [_findCursorWindow setAlphaValue:0];
     [_findCursorWindow setFrame:[self cursorScreenFrame] display:YES];
-    [[NSAnimationContext currentContext] setDuration:0.5];
-    [[_findCursorWindow animator] setAlphaValue:0.7];
-
+    _findCursorWindow.backgroundColor = [NSColor clearColor];
+    [_findCursorWindow setAlphaValue:0];
+    [[_findCursorWindow animator] setAlphaValue:1];
+    _findCursorWindow.opaque = NO;
+    [_findCursorWindow makeKeyAndOrderFront:nil];
     self.findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
                                                                                 0,
                                                                                 [[self window] frame].size.width,
@@ -4956,11 +4955,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     _findCursorView.cursorPosition = p;
     [_findCursorWindow setContentView:_findCursorView];
     [_findCursorView release];
-    [_findCursorView startBlinkNotifications];
-}
-
-- (void)findCursorBlink {
-    [self setCursorNeedsDisplay];
 }
 
 - (void)beginFindCursor:(BOOL)hold {
@@ -4998,9 +4992,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self performSelector:@selector(closeFindCursorWindow:)
                withObject:_findCursorWindow
                afterDelay:[[NSAnimationContext currentContext] duration]];
-    [_findCursorView performSelector:@selector(stopBlinkNotifications)
-                          withObject:nil
-                          afterDelay:[[NSAnimationContext currentContext] duration]];
     [_findCursorView stopTearDownTimer];
     _findCursorWindow = nil;
     _findCursorView.stopping = YES;
