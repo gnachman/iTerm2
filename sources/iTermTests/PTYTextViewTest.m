@@ -973,7 +973,62 @@ static const BOOL gCreateGoldens = YES;
 }
 
 // IME with (without) Ambiguous is double width
-// IME with (without) HFS+ mapping
+- (void)testIME {
+    [self doGoldenTestForInput:@"x"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              [textView setMarkedText:@"abc"
+                                        selectedRange:NSMakeRange(3, 0)
+                                     replacementRange:NSMakeRange(0, 0)];
+                          }
+              profileOverrides:@{ KEY_TRANSPARENCY: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testIMEWithAmbiguousIsDoubleWidth {
+    [self doGoldenTestForInput:@"x"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              [textView setMarkedText:@"Γ"  // U+0393 (hex), Greek capital gamma, is ambiguous width
+                                        selectedRange:NSMakeRange(1, 0)
+                                     replacementRange:NSMakeRange(0, 0)];
+                          }
+              profileOverrides:@{ KEY_TRANSPARENCY: @0.5,
+                                  KEY_AMBIGUOUS_DOUBLE_WIDTH: @YES }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(3, 2)];
+}
+
+- (void)testIMEWithAmbiguousIsNotDoubleWidth {
+    [self doGoldenTestForInput:@"x"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              [textView setMarkedText:@"Γ"  // U+0393 (hex), Greek capital gamma, is ambiguous width
+                                        selectedRange:NSMakeRange(1, 0)
+                                     replacementRange:NSMakeRange(0, 0)];
+                          }
+              profileOverrides:@{ KEY_TRANSPARENCY: @0.5,
+                                  KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(3, 2)];
+}
+
+- (void)testIMEWrapsDoubleWidthAtEndOfLine {
+    [self doGoldenTestForInput:@"x"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              // The DWC should be wrapped onto the second line
+                              [textView setMarkedText:@"aᄀ"  // U+1100 (hex), HANGUL CHOSEONG KIYEOK, is double width.
+                                        selectedRange:NSMakeRange(2, 0)
+                                     replacementRange:NSMakeRange(0, 0)];
+                          }
+              profileOverrides:@{ KEY_TRANSPARENCY: @0.5,
+                                  KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(3, 2)];
+}
+
 // Background image low blending
 // Background image high blending
 // Reverse video
