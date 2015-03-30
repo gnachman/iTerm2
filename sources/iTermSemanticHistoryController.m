@@ -40,6 +40,20 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
 
+static unsigned int oppositeDelimiter(unichar start) {
+    switch(start) {
+        case '(': return ')';
+        case '<': return '>';
+        case '[': return ']';
+        case '{': return '}';
+        case '\'':
+        case '"':
+            return start;
+        default:
+            return (unsigned int)-1; // unsigned int to prevent it from matching any unsigned short
+    }
+}
+
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber {
@@ -51,9 +65,13 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return nil;
     }
 
-    // If it's in parens, strip them.
-    if (path.length > 2 && [path characterAtIndex:0] == '(' && [path hasSuffix:@")"]) {
-        path = [path substringWithRange:NSMakeRange(1, path.length - 2)];
+    // If it's in any form of bracketed delimiters, strip them
+    int parens = 0;
+    while (oppositeDelimiter([path characterAtIndex:parens]) == [path characterAtIndex:(path.length - parens - 1)]) {
+        parens++;
+    }
+    if (parens > 0) {
+        path = [path substringWithRange:NSMakeRange(parens, path.length - parens - 1)];
         DLog(@" Strip parens, leaving %@", path);
     }
 
