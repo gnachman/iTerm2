@@ -1677,6 +1677,7 @@
 		A6B3A7451AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */; };
 		A6B3A7461AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */; };
 		A6B3A7471AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */; };
+		A6B3A7491AC8A9A3008E8D4E /* TestBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */; };
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B5134B18E779BB00D249A5 /* iTermPasteHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */; };
 		A6B5134C18E779BB00D249A5 /* iTermPasteHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */; };
@@ -2550,6 +2551,7 @@
 		A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = FindCursorCell1.png; path = images/FindCursorCell1.png; sourceTree = "<group>"; };
 		A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSCharacterSet+iTerm.h"; sourceTree = "<group>"; };
 		A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSCharacterSet+iTerm.m"; sourceTree = "<group>"; };
+		A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = TestBackground.png; path = images/TestBackground.png; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6B70FB919830C37007A4284 /* dead.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = dead.png; path = images/dead.png; sourceTree = "<group>"; };
@@ -3247,6 +3249,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */,
 				A6B3A7311AC74E02008E8D4E /* FindCursorCell4.png */,
 				A6B3A7321AC74E02008E8D4E /* FindCursorCell3.png */,
 				A6B3A7331AC74E02008E8D4E /* FindCursorCell2.png */,
@@ -4927,6 +4930,7 @@
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				1DD39AEF180B8118004E56D5 /* Images.xcassets in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
+				A6B3A7491AC8A9A3008E8D4E /* TestBackground.png in Resources */,
 				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
 				A67D0D391A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
 				A67D0D721A2EE12A003A8B35 /* MainMenu.xib in Resources */,

@@ -1029,10 +1029,54 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(3, 2)];
 }
 
-// Background image low blending
-// Background image high blending
-// Reverse video
-// Find cursor
+// Background image low blending - less of background shows through on default bg color
+- (void)testBackgroundImageLowBlending {
+    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    [self doGoldenTestForInput:@"a\e[31mb\e[41mc"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_BACKGROUND_IMAGE_LOCATION: pathToImage,
+                                  KEY_BLEND: @0.1 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(3, 1)];
+}
+
+// Background image high blending - more of background shows through on default bg color
+- (void)testBackgroundImageHighBlending {
+    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    [self doGoldenTestForInput:@"a\e[31mb\e[41mc"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_BACKGROUND_IMAGE_LOCATION: pathToImage,
+                                  KEY_BLEND: @0.9 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(3, 1)];
+}
+
+- (void)testBackgroundImageWithReverseVideo {
+    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    [self doGoldenTestForInput:@"\e[7ma\e[31mb\e[42mc\r\n\e[0ma\e[31mb\e[42mc"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_BACKGROUND_IMAGE_LOCATION: pathToImage,
+                                  KEY_BLEND: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testBackgroundImageWithGloballyInvertedColors {
+    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    [self doGoldenTestForInput:@"\e[7ma\e[31mb\e[42mc\r\n"  // reversed
+                               @"\e[0ma\e[31mb\e[42mc"  // regular
+                               @"\e[?5h"  // invert colors globally (affects just default fg/bg when together)
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_BACKGROUND_IMAGE_LOCATION: pathToImage,
+                                  KEY_BLEND: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
 // Smart cursor color
 // Non-filled in block cursor
 // Force filled in cursor
