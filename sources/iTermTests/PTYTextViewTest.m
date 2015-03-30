@@ -475,6 +475,8 @@ static const BOOL gCreateGoldens = YES;
 }
 
 - (void)testPaste {
+    [[NSPasteboard generalPasteboard] clearContents];
+    [[NSPasteboard generalPasteboard] setString:@"test" forType:NSPasteboardTypeString];
     [self invokeMenuItemWithSelector:@selector(paste:)];
     assert([_methodsCalled[@"paste:"] intValue] == 1);
 }
@@ -777,6 +779,16 @@ static const BOOL gCreateGoldens = YES;
 }
 #endif
 
+- (NSString *)sequenceForForegroundColorWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue {
+    return [NSString stringWithFormat:@"\e[38:2:%d:%d:%dm",
+               (int)(red * 255), (int)(green * 255), (int)(blue * 255)];
+}
+
+- (NSString *)sequenceForBackgroundColorWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue {
+    return [NSString stringWithFormat:@"\e[48:2:%d:%d:%dm",
+            (int)(red * 255), (int)(green * 255), (int)(blue * 255)];
+}
+
 - (void)test24BitColor {
     [self doGoldenTestForInput:@"\x1b[38:2:17:133:177mFg\x1b[48:2:177:133:17mBg"
                           name:NSStringFromSelector(_cmd)
@@ -1078,6 +1090,218 @@ static const BOOL gCreateGoldens = YES;
 }
 
 // Smart cursor color
+// All white neighbors->cursor will be black because text color is too close to white.
+- (void)testSmartCursorColor_allWhite {
+    NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       white, white, white,
+                       white, white, white,
+                       white, white, white];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// Dark red is distant from the default cursor color so the center cell should be white on dark red.
+- (void)testSmartCursorColor_allWhiteDarkRedFore {
+    NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
+    NSString *input = [NSString stringWithFormat:@"%@%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       [self sequenceForForegroundColorWithRed:0.5 green:0 blue:0],
+                       white, white, white,
+                       white, white, white,
+                       white, white, white];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// All neighbors are black so cursor will be black on white.
+- (void)testSmartCursorColor_allBlack {
+    NSString *black = [self sequenceForBackgroundColorWithRed:0 green:0 blue:0];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       black, black, black,
+                       black, black, black,
+                       black, black, black];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// All neighbors are dark gray (close to text color) so cursor will be black on white.
+- (void)testSmartCursorColor_allDarkGray {
+    NSString *darkGray = [self sequenceForBackgroundColorWithRed:0.4 green:0.4 blue:0.4];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       darkGray, darkGray, darkGray,
+                       darkGray, darkGray, darkGray,
+                       darkGray, darkGray, darkGray];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES,
+                                  KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:0.5 green:0.5 blue:0.5 alpha:1] dictionaryValue]
+                                }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// All neighbors are the same as the default text color. Cursor should be black on white or white on black.
+- (void)testSmartCursorColor_allCursorColor {
+    NSString *gray = [self sequenceForBackgroundColorWithRed:0.5 green:0.5 blue:0.5];
+    NSString *input = [NSString stringWithFormat:@"%@%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       [self sequenceForForegroundColorWithRed:0.5 green:0.5 blue:0.5],
+                       gray, gray, gray,
+                       gray, gray, gray,
+                       gray, gray, gray];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES,
+                                  }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// Cursor should be white on black. The gray corners are ignored.
+- (void)testSmartCursorColor_whiteCrossGrayCorners {
+    NSString *gray = [self sequenceForBackgroundColorWithRed:0.5 green:0.5 blue:0.5];
+    NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       gray, white, gray,
+                       white, white, white,
+                       gray, white, gray];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES,
+                                  KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:0.5 green:0.5 blue:0.5 alpha:1] dictionaryValue]
+                                  }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// With both gray and white neighbors the cursor should be white on black.
+- (void)testSmartCursorColor_manyGrayOneWhite {
+    NSString *gray = [self sequenceForBackgroundColorWithRed:0.5 green:0.5 blue:0.5];
+    NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       gray, gray, gray,
+                       white, gray, gray,
+                       gray, gray, gray];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES,
+                                  KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:0.5 green:0.5 blue:0.5 alpha:1] dictionaryValue]
+                                  }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// With gray, white, and black neighbors, the cursor should be black on light gray.
+- (void)testSmartCursorColor_manyGrayOneWhiteOneBlack {
+    NSString *black = [self sequenceForBackgroundColorWithRed:0 green:0 blue:0];
+    NSString *gray = [self sequenceForBackgroundColorWithRed:0.5 green:0.5 blue:0.5];
+    NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       gray, gray, gray,
+                       white, gray, gray,
+                       gray, black, gray];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES,
+                                  KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:0.5 green:0.5 blue:0.5 alpha:1] dictionaryValue]
+                                  }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// This one doesn't perform very well. The white on black cursor sort of disappears in the island of black.
+- (void)testSmartCursorColor_onIsland {
+    NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
+    NSString *black = [self sequenceForBackgroundColorWithRed:0 green:0 blue:0];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       white, white, white,
+                       white, black, white,
+                       white, white, white];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+// Cursor boost should dim everything but the cursor as compared to testSmartCursorColor_manyGrayOneWhiteOneBlack
+- (void)testSmartCursorColorWithCursorBoost {
+    NSString *black = [self sequenceForBackgroundColorWithRed:0 green:0 blue:0];
+    NSString *gray = [self sequenceForBackgroundColorWithRed:0.5 green:0.5 blue:0.5];
+    NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       gray, gray, gray,
+                       white, gray, gray,
+                       gray, black, gray];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES,
+                                  KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:0.5 green:0.5 blue:0.5 alpha:1] dictionaryValue],
+                                  KEY_CURSOR_BOOST: @0.5,
+                                }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+
 // Non-filled in block cursor
 // Force filled in cursor
 // Organically filled in block cursor
