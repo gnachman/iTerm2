@@ -6375,9 +6375,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case ColorModeAlternate:
             switch (theIndex) {
                 case ALTSEM_SELECTED:
-                    return kColorMapSelectedText;
+                    if (isBackground) {
+                        return kColorMapSelection;
+                    } else {
+                        return kColorMapSelectedText;
+                    }
                 case ALTSEM_CURSOR:
-                    return kColorMapCursorText;
+                    if (isBackground) {
+                        return kColorMapCursor;
+                    } else {
+                        return kColorMapCursorText;
+                    }
                 case ALTSEM_REVERSED_DEFAULT:
                     isBackgroundForDefault = !isBackgroundForDefault;
                     // Fall through.

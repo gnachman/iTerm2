@@ -993,7 +993,7 @@ static const BOOL gCreateGoldens = NO;
                                         selectedRange:NSMakeRange(3, 0)
                                      replacementRange:NSMakeRange(0, 0)];
                           }
-              profileOverrides:@{ KEY_TRANSPARENCY: @0.5 }
+              profileOverrides:nil
                   createGolden:gCreateGoldens
                           size:VT100GridSizeMake(2, 2)];
 }
@@ -1006,8 +1006,7 @@ static const BOOL gCreateGoldens = NO;
                                         selectedRange:NSMakeRange(1, 0)
                                      replacementRange:NSMakeRange(0, 0)];
                           }
-              profileOverrides:@{ KEY_TRANSPARENCY: @0.5,
-                                  KEY_AMBIGUOUS_DOUBLE_WIDTH: @YES }
+              profileOverrides:@{ KEY_AMBIGUOUS_DOUBLE_WIDTH: @YES }
                   createGolden:gCreateGoldens
                           size:VT100GridSizeMake(3, 2)];
 }
@@ -1020,8 +1019,7 @@ static const BOOL gCreateGoldens = NO;
                                         selectedRange:NSMakeRange(1, 0)
                                      replacementRange:NSMakeRange(0, 0)];
                           }
-              profileOverrides:@{ KEY_TRANSPARENCY: @0.5,
-                                  KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO }
+              profileOverrides:@{ KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO }
                   createGolden:gCreateGoldens
                           size:VT100GridSizeMake(3, 2)];
 }
@@ -1035,8 +1033,7 @@ static const BOOL gCreateGoldens = NO;
                                         selectedRange:NSMakeRange(2, 0)
                                      replacementRange:NSMakeRange(0, 0)];
                           }
-              profileOverrides:@{ KEY_TRANSPARENCY: @0.5,
-                                  KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO }
+              profileOverrides:@{ KEY_AMBIGUOUS_DOUBLE_WIDTH: @NO }
                   createGolden:gCreateGoldens
                           size:VT100GridSizeMake(3, 2)];
 }
@@ -1180,7 +1177,7 @@ static const BOOL gCreateGoldens = NO;
                               };
                           }
               profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 4)];
 }
 
@@ -1195,7 +1192,7 @@ static const BOOL gCreateGoldens = NO;
                               };
                           }
               profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 4)];
 }
 
@@ -1210,7 +1207,7 @@ static const BOOL gCreateGoldens = NO;
                               };
                           }
               profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 4)];
 }
 
@@ -1225,7 +1222,7 @@ static const BOOL gCreateGoldens = NO;
                               };
                           }
               profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 4)];
 }
 
@@ -1240,7 +1237,7 @@ static const BOOL gCreateGoldens = NO;
                               };
                           }
               profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 4)];
 }
 
@@ -1255,7 +1252,7 @@ static const BOOL gCreateGoldens = NO;
                               };
                           }
               profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 4)];
 }
 
@@ -1445,13 +1442,152 @@ static const BOOL gCreateGoldens = NO;
                           size:VT100GridSizeMake(4, 2)];
 }
 
-// Force filled in cursor
-// Organically filled in block cursor
-// Bright bold
-// Underlined host name
-// transparency alpha, whatever that is
-// hidden cursor
+- (void)testCursorFilledInBecauseKeyWindowAndActiveTextview {
+    [self doGoldenTestForInput:@""
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.isInKeyWindow = YES;
+                                  helper.textViewIsActiveSession = YES;
+                              };
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testCursorFilledInBecauseOfDelegateOverride {
+    [self doGoldenTestForInput:@""
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.isInKeyWindow = NO;
+                                  helper.textViewIsActiveSession = NO;
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testBrightBoldOn {
+    [self doGoldenTestForInput:@"x\e[1mx"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @YES }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testBrightBoldOff {
+    [self doGoldenTestForInput:@"x\e[1mx"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @NO }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testUnderlineHost {
+    [self doGoldenTestForInput:@"abcdefg"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(2, 0, 2, 1), 0, 5);
+                              };
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testHiddenCursor {
+    [self doGoldenTestForInput:@"\e[?25l"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
 // Each cursor type
+- (void)testBlockCursor {
+    [self doGoldenTestForInput:@"\e[1 qa\x08"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testUnderlineCursor {
+    [self doGoldenTestForInput:@"\e[4 qa\x08"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testBarCursor {
+    [self doGoldenTestForInput:@"\e[6 qa\x08"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+// Each cursor type with inverse video
+- (void)testBlockCursorReverseVideo {
+    [self doGoldenTestForInput:@"\e[1 qa\x08\e[?5h"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testBlockCursorDoublyReverseVideo {
+    [self doGoldenTestForInput:@"x\e[1 q\e[7mab\x08\e[?5h"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testUnderlineCursorReverseVideo {
+    [self doGoldenTestForInput:@"\e[4 qa\x08\e[?5h"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testBarCursorReverseVideo {
+    [self doGoldenTestForInput:@"\e[6 qa\x08\e[?5h"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
 // Min contrast
 // Non ascii font
 // Timestamps

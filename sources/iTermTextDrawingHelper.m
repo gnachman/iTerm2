@@ -1172,9 +1172,12 @@ static const int kBadgeRightMargin = 10;
         } else {
             // Not a selection.
             if (_reverseVideo &&
-                theLine[i].foregroundColor == ALTSEM_DEFAULT &&
-                theLine[i].foregroundColorMode == ColorModeAlternate) {
-                // Has default foreground color so use background color.
+                ((theLine[i].foregroundColor == ALTSEM_DEFAULT &&
+                  theLine[i].foregroundColorMode == ColorModeAlternate) ||
+                 (theLine[i].foregroundColor == ALTSEM_CURSOR &&
+                  theLine[i].foregroundColorMode == ColorModeAlternate))) {
+                // Reverse video is on. Either is cursor or has default foreground color. Use
+                // background color.
                 if (!dimOnlyText) {
                     CRunAttrsSetColor(&attrs, storage,
                                       [colorMap dimmedColorForKey:kColorMapBackground]);
@@ -1368,7 +1371,11 @@ static const int kBadgeRightMargin = 10;
 #pragma mark - Cursor Utilities
 
 - (NSColor *)backgroundColorForCursor {
-    return [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
+    if (_reverseVideo) {
+        return [[_colorMap colorForKey:kColorMapCursorText] colorWithAlphaComponent:1.0];
+    } else {
+        return [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
+    }
 }
 
 - (BOOL)cursorInVisibleRow {
@@ -1730,7 +1737,7 @@ static const int kBadgeRightMargin = 10;
                                         colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
                                              bold:screenChar.bold
                                             faint:screenChar.faint
-                                     isBackground:NO] set];
+                                     isBackground:_reverseVideo] set];
         }
 
         NSRectFill(NSMakeRect(point.x,
