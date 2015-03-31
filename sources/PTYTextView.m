@@ -197,7 +197,7 @@ static const int kDragThreshold = 3;
     // Position of cursor last time we looked. Since the cursor might move around a lot between
     // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
     // positions.
-    int prevCursorX, prevCursorY;
+    VT100GridAbsCoord _previousCursorCoord;
 
     // Point clicked, valid only during -validateMenuItem and calls made from
     // the context menu and if x and y are nonnegative.
@@ -1437,12 +1437,13 @@ static const int kDragThreshold = 3;
     }
 }
 
-- (void)markCursorDirty
-{
+- (void)markCursorDirty {
   int currentCursorX = [_dataSource cursorX] - 1;
   int currentCursorY = [_dataSource cursorY] - 1;
-  DLog(@"Mark cursor position %d,%d dirty", prevCursorX, prevCursorY);
-  [_dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
+  DLog(@"Mark cursor position %d,%lldld dirty",
+       _previousCursorCoord.x, _previousCursorCoord.y - [_dataSource totalScrollbackOverflow]);
+  [_dataSource setCharDirtyAtCursorX:currentCursorX
+                                   Y:currentCursorY - [_dataSource totalScrollbackOverflow]];
 }
 
 - (void)setCursorVisible:(BOOL)cursorVisible {
@@ -1472,7 +1473,6 @@ static const int kDragThreshold = 3;
     _drawingHelper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
     _drawingHelper.reverseVideo = [[_dataSource terminal] reverseVideo];
     _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
-    _drawingHelper.isFindingCursor = [self isFindingCursor];
     _drawingHelper.isInKeyWindow = [self isInKeyWindow];
     _drawingHelper.shouldDrawFilledInCursor = [self.delegate textViewShouldDrawFilledInCursor];
     _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
@@ -5944,25 +5944,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
     [_dataSource resetAllDirty];
 
-    int currentCursorX = [_dataSource cursorX] - 1;
-    int currentCursorY = [_dataSource cursorY] - 1;
-    if (prevCursorX != currentCursorX ||
-        prevCursorY != currentCursorY) {
+    VT100GridCoord cursorPosition = VT100GridCoordMake([_dataSource cursorX] - 1,
+                                                       [_dataSource cursorY] - 1);
+    if (_previousCursorCoord.x != cursorPosition.x ||
+        _previousCursorCoord.y - totalScrollbackOverflow != cursorPosition.y) {
         // Mark previous and current cursor position dirty
-        DLog(@"Mark previous cursor position %d,%d dirty", prevCursorX, prevCursorY);
+        DLog(@"Mark previous cursor position %d,%lldld dirty",
+             _previousCursorCoord.x, _previousCursorCoord.y - totalScrollbackOverflow);
         int maxX = [_dataSource width] - 1;
         if (_drawingHelper.highlightCursorLine) {
-            [_dataSource setLineDirtyAtY:prevCursorY];
-            DLog(@"Mark current cursor line %d dirty", currentCursorY);
-            [_dataSource setLineDirtyAtY:currentCursorY];
+            [_dataSource setLineDirtyAtY:_previousCursorCoord.y - totalScrollbackOverflow];
+            DLog(@"Mark current cursor line %d dirty", cursorPosition.y);
+            [_dataSource setLineDirtyAtY:cursorPosition.y];
         } else {
-            [_dataSource setCharDirtyAtCursorX:MIN(maxX, prevCursorX) Y:prevCursorY];
-            DLog(@"Mark current cursor position %d,%d dirty", currentCursorX, currentCursorY);
-            [_dataSource setCharDirtyAtCursorX:MIN(maxX, currentCursorX) Y:currentCursorY];
+            [_dataSource setCharDirtyAtCursorX:MIN(maxX, _previousCursorCoord.x)
+                                             Y:_previousCursorCoord.y - totalScrollbackOverflow];
+            DLog(@"Mark current cursor position %d,%lldld dirty", _previousCursorCoord.x,
+                 _previousCursorCoord.y - totalScrollbackOverflow);
+            [_dataSource setCharDirtyAtCursorX:MIN(maxX, cursorPosition.x) Y:cursorPosition.y];
         }
-        // Set prevCursor[XY] to new cursor position
-        prevCursorX = currentCursorX;
-        prevCursorY = currentCursorY;
+        // Set _previousCursorCoord to new cursor position
+        _previousCursorCoord = VT100GridAbsCoordMake(cursorPosition.x,
+                                                     cursorPosition.y + totalScrollbackOverflow);
     }
 
     // Remove results from dirty lines and mark parts of the view as needing display.

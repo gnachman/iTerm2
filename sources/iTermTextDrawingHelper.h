@@ -140,9 +140,6 @@
 // Is this view active (receiving user input)?
 @property(nonatomic, assign) BOOL textViewIsActiveSession;
 
-// Is "find cursor" active?
-@property(nonatomic, assign) BOOL isFindingCursor;
-
 // Is "smart cursor color" on?
 @property(nonatomic, assign) BOOL useSmartCursorColor;
 

@@ -1368,11 +1368,6 @@ static const int kBadgeRightMargin = 10;
 #pragma mark - Cursor Utilities
 
 - (NSColor *)backgroundColorForCursor {
-    if (_isFindingCursor) {
-        DLog(@"Use random cursor color");
-        return [self _randomColor];
-    }
-
     return [[_colorMap colorForKey:kColorMapCursor] colorWithAlphaComponent:1.0];
 }
 
@@ -1415,16 +1410,6 @@ static const int kBadgeRightMargin = 10;
         *doubleWidth = NO;
     }
     return screenChar;
-}
-
-- (NSColor *)_randomColor {
-    double r = arc4random() % 256;
-    double g = arc4random() % 256;
-    double b = arc4random() % 256;
-    return [NSColor colorWithDeviceRed:r/255.0
-                                 green:g/255.0
-                                  blue:b/255.0
-                                 alpha:1];
 }
 
 - (BOOL)shouldDrawCursor {
@@ -1757,6 +1742,19 @@ static const int kBadgeRightMargin = 10;
 
 - (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
                           wantBackground:(BOOL)wantBackgroundColor {
+    BOOL isBackground = wantBackgroundColor;
+
+    if (_reverseVideo) {
+        if (wantBackgroundColor &&
+            screenChar.backgroundColorMode == ColorModeAlternate &&
+            screenChar.backgroundColor == ALTSEM_DEFAULT) {
+            isBackground = NO;
+        } else if (!wantBackgroundColor &&
+                   screenChar.foregroundColorMode == ColorModeAlternate &&
+                   screenChar.foregroundColor == ALTSEM_DEFAULT) {
+            isBackground = YES;
+        }
+    }
     if (wantBackgroundColor) {
         return [_delegate drawingHelperColorForCode:screenChar.backgroundColor
                                               green:screenChar.bgGreen
@@ -1764,7 +1762,7 @@ static const int kBadgeRightMargin = 10;
                                           colorMode:screenChar.backgroundColorMode
                                                bold:screenChar.bold
                                               faint:screenChar.faint
-                                       isBackground:YES];
+                                       isBackground:isBackground];
     } else {
         return [_delegate drawingHelperColorForCode:screenChar.foregroundColor
                                               green:screenChar.fgGreen
@@ -1772,7 +1770,7 @@ static const int kBadgeRightMargin = 10;
                                           colorMode:screenChar.foregroundColorMode
                                                bold:screenChar.bold
                                               faint:screenChar.faint
-                                       isBackground:NO];
+                                       isBackground:isBackground];
     }
 }
 

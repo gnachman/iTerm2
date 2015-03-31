@@ -12,7 +12,7 @@
 #import "SessionView.h"
 #import <objc/runtime.h>
 
-static const BOOL gCreateGoldens = YES;
+static const BOOL gCreateGoldens = NO;
 
 @interface iTermFakeSessionForPTYTextViewTest : PTYSession
 @end
@@ -1169,6 +1169,97 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(4, 4)];
 }
 
+- (void)testSmartCursorColor_reverseVideo {
+    NSString *input = [NSString stringWithFormat:@"\e[?5hxxx\r\nxxx\r\nxxx\e[2;2H"];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:YES
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+- (void)testSmartCursorColor_reverseVideoNondefaultForeground {
+    NSString *input = [NSString stringWithFormat:@"\e[31m\e[?5hxxx\r\nxxx\r\nxxx\e[2;2H"];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:YES
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+- (void)testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor {
+    NSString *input = [NSString stringWithFormat:@"\e[?5hxxx\r\nx\e[31mx\e[mx\r\nxxx\e[2;2H"];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:YES
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+- (void)testSmartCursorColor_reverseVideoNondefaultBackground {
+    NSString *input = [NSString stringWithFormat:@"\e[41m\e[?5hxxx\r\nxxx\r\nxxx\e[2;2H"];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:YES
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+- (void)testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor {
+    NSString *input = [NSString stringWithFormat:@"\e[?5hxxx\r\nx\e[41mx\e[mx\r\nxxx\e[2;2H"];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:YES
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+- (void)testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor {
+    NSString *input = [NSString stringWithFormat:@"\e[?5hxxx\r\nx\e[47m\e[30mx\e[mx\r\nxxx\e[2;2H"];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
+                  createGolden:YES
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+
 // All neighbors are the same as the default text color. Cursor should be black on white or white on black.
 - (void)testSmartCursorColor_allCursorColor {
     NSString *gray = [self sequenceForBackgroundColorWithRed:0.5 green:0.5 blue:0.5];
@@ -1186,6 +1277,21 @@ static const BOOL gCreateGoldens = YES;
                           }
               profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES,
                                   }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+- (void)testSmartCursorColor_frameAllCursorColor {
+    NSString *gray = [self sequenceForBackgroundColorWithRed:0.5 green:0.5 blue:0.5];
+    NSString *input = [NSString stringWithFormat:@"%@%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       [self sequenceForForegroundColorWithRed:0.5 green:0.5 blue:0.5],
+                       gray, gray, gray,
+                       gray, gray, gray,
+                       gray, gray, gray];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES }
                   createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 4)];
 }
@@ -1257,6 +1363,24 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(4, 4)];
 }
 
+- (void)testSmartCursorColor_frameManyGrayOneWhiteOneBlack {
+    NSString *black = [self sequenceForBackgroundColorWithRed:0 green:0 blue:0];
+    NSString *gray = [self sequenceForBackgroundColorWithRed:0.5 green:0.5 blue:0.5];
+    NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
+    NSString *input = [NSString stringWithFormat:@"%@x%@x%@x\r\n%@x%@x%@x\r\n%@x%@x%@x\e[2;2H",
+                       gray, gray, gray,
+                       white, gray, gray,
+                       gray, black, gray];
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_SMART_CURSOR_COLOR: @YES,
+                                  KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:0.5 green:0.5 blue:0.5 alpha:1] dictionaryValue]
+                                  }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
 // This one doesn't perform very well. The white on black cursor sort of disappears in the island of black.
 - (void)testSmartCursorColor_onIsland {
     NSString *white = [self sequenceForBackgroundColorWithRed:1 green:1 blue:1];
@@ -1303,6 +1427,24 @@ static const BOOL gCreateGoldens = YES;
 
 
 // Non-filled in block cursor
+- (void)testFrameCursor {
+    [self doGoldenTestForInput:@"abc\e[1;2H"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testFrameCursorWithNondefaultColors {
+    [self doGoldenTestForInput:@"\e[41;32mabc\e[1;2H"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 2)];
+}
+
 // Force filled in cursor
 // Organically filled in block cursor
 // Bright bold

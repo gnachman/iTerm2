@@ -186,7 +186,7 @@
 - (NSColor *)smartCursorColorForChar:(screen_char_t)screenChar
                            neighbors:(iTermCursorNeighbors)neighbors {
     NSColor *bgColor = [self.delegate cursorColorForCharacter:screenChar
-                                               wantBackground:NO];  // TODO: Handle reverse video.
+                                               wantBackground:NO];
 
     NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
     for (int y = 0; y < 3; y++) {
@@ -260,7 +260,6 @@
     c.bold = NO;
     c.faint = NO;
     return [self.delegate cursorColorForCharacter:c wantBackground:YES];
-    // TODO: Handle reverse video
 }
 
 
