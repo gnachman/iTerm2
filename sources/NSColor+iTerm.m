@@ -55,12 +55,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                alpha:1];
 }
 
-+ (NSColor *)calibratedColorWithRed:(double)r
-                              green:(double)g
-                               blue:(double)b
-                              alpha:(double)a
-                perceivedBrightness:(CGFloat)t
-                   towardComponents:(CGFloat *)baseColorComponents {
++ (void)getComponents:(CGFloat *)result
+      forColorWithRed:(CGFloat)r
+                green:(CGFloat)g
+                 blue:(CGFloat)b
+                alpha:(CGFloat)a
+  perceivedBrightness:(CGFloat)t {
     /*
      Given:
      a vector c [c1, c2, c3] (the starting color)
@@ -119,11 +119,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // p can be out of range for e.g., division by 0.
     p = MIN(1, MAX(0, p));
 
-    const CGFloat x1 = p * e1 + (1 - p) * c1;
-    const CGFloat x2 = p * e2 + (1 - p) * c2;
-    const CGFloat x3 = p * e3 + (1 - p) * c3;
-
-    return [NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a];
+    result[0] = p * e1 + (1 - p) * c1;
+    result[1] = p * e2 + (1 - p) * c2;
+    result[2] = p * e3 + (1 - p) * c3;
+    result[3] = a;
 }
 
 + (NSColor *)colorForAnsi256ColorIndex:(int)index {
@@ -142,11 +141,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
-+ (NSColor*)colorWithComponents:(double *)mainComponents
-    withContrastAgainstComponents:(double *)otherComponents
-                  minimumContrast:(CGFloat)minimumContrast
-                          mutedBy:(double)muting
-                 towardComponents:(CGFloat *)baseColorComponents {
++ (void)getComponents:(CGFloat *)result
+        forComponents:(CGFloat *)mainComponents
+  withContrastAgainstComponents:(CGFloat *)otherComponents
+                minimumContrast:(CGFloat)minimumContrast {
     const double r = mainComponents[0];
     const double g = mainComponents[1];
     const double b = mainComponents[2];
@@ -161,50 +159,41 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
 
     if (brightnessDiff < minimumContrast) {
-        // Muting defines the range of possible brightnesses; with more muting, text colors converge
-        // towards the default background color (called otherComponents here). To pick an allowable
-        // target brightness, we limit it to the range of brightnesses permitted by the muting
-        // level.
-        double minBrightness = PerceivedBrightness(baseColorComponents[0] * muting,
-                                                   baseColorComponents[1] * muting,
-                                                   baseColorComponents[2] * muting);
-        double maxBrightness = PerceivedBrightness(1 - muting + baseColorComponents[0] * muting,
-                                                   1 - muting + baseColorComponents[1] * muting,
-                                                   1 - muting + baseColorComponents[2] * muting);
-
-
         CGFloat error = fabs(brightnessDiff - minimumContrast);
         CGFloat targetBrightness = mainBrightness;
         if (mainBrightness < otherBrightness) {
+            // To increase contrast, return a color that's dimmer than mainComponents
             targetBrightness -= error;
-            if (targetBrightness < minBrightness) {
+            if (targetBrightness < 0) {
                 const double alternative = otherBrightness + minimumContrast;
                 const double baseContrast = otherBrightness;
-                const double altContrast = MIN(alternative, maxBrightness) - otherBrightness;
+                const double altContrast = MIN(alternative, 1) - otherBrightness;
                 if (altContrast > baseContrast) {
                     targetBrightness = alternative;
                 }
             }
         } else {
+            // To increase contrast, return a color that's brighter than mainComponents
             targetBrightness += error;
-            if (targetBrightness > maxBrightness) {
+            if (targetBrightness > 1) {
                 const double alternative = otherBrightness - minimumContrast;
-                const double baseContrast = maxBrightness - otherBrightness;
-                const double altContrast = otherBrightness - MAX(alternative, minBrightness);
+                const double baseContrast = 1 - otherBrightness;
+                const double altContrast = otherBrightness - MAX(alternative, 0);
                 if (altContrast > baseContrast) {
                     targetBrightness = alternative;
                 }
             }
         }
-        targetBrightness = MIN(MAX(minBrightness, targetBrightness), maxBrightness);
-        return [NSColor calibratedColorWithRed:r
-                                         green:g
-                                          blue:b
-                                         alpha:a
-                           perceivedBrightness:targetBrightness
-                              towardComponents:baseColorComponents];
+        targetBrightness = MIN(MAX(0, targetBrightness), 1);
+
+        [self getComponents:result
+            forColorWithRed:r
+                      green:g
+                       blue:b
+                      alpha:a
+        perceivedBrightness:targetBrightness];
     } else {
-        return nil;
+        memmove(result, mainComponents, sizeof(CGFloat) * 4);
     }
 }
 

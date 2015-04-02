@@ -98,7 +98,6 @@ static const int kDragThreshold = 3;
 // up.
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
 @property(nonatomic, retain) iTermSelection *selection;
-@property(nonatomic, retain) NSColor *cachedBackgroundColor;
 @property(nonatomic, retain) iTermSemanticHistoryController *semanticHistoryController;
 @property(nonatomic, retain) NSColor *badgeColor;
 @property(nonatomic, copy) NSString *bagdgeLabel;
@@ -139,9 +138,6 @@ static const int kDragThreshold = 3;
 
     // Previous tracking rect to avoid expensive calls to addTrackingRect.
     NSRect _trackingRect;
-
-    // Dimmed background color with alpha.
-    double _cachedBackgroundColorAlpha;  // cached alpha value (comparable to another double)
 
     // Helps with "selection scroll"
     iTermSelectionScrollHelper *_selectionScrollHelper;
@@ -346,7 +342,6 @@ static const int kDragThreshold = 3;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     _colorMap.delegate = nil;
     [_colorMap release];
-    [_cachedBackgroundColor release];
 
     [_primaryFont release];
     [_secondaryFont release];
@@ -395,12 +390,32 @@ static const int kDragThreshold = 3;
     _drawingHelper.antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
 }
 
+- (NSColor *)defaultBackgroundColor {
+    CGFloat alpha = [self useTransparency] ? 1 - _transparency : 1;
+    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]] colorWithAlphaComponent:alpha];
+}
+
+- (NSColor *)defaultTextColor {
+    return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapForeground]
+                                 overBackgroundColor:[self defaultBackgroundColor]];
+}
+
+- (NSColor *)selectionBackgroundColor {
+    CGFloat alpha = [self useTransparency] ? 1 - _transparency : 1;
+    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]] colorWithAlphaComponent:alpha];
+}
+
+- (NSColor *)selectedTextColor {
+    return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapSelectedText]
+                                 overBackgroundColor:[self selectionBackgroundColor]];
+}
+
 - (void)updateMarkedTextAttributes {
     // During initialization, this may be called before the non-ascii font is set so we use a system
     // font as a placeholder.
     NSDictionary *theAttributes =
-        @{ NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapBackground],
-           NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapForeground],
+        @{ NSBackgroundColorAttributeName: [self defaultBackgroundColor],
+           NSForegroundColorAttributeName: [self defaultTextColor],
            NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
 
@@ -544,7 +559,6 @@ static const int kDragThreshold = 3;
 - (void)setUseBoldFont:(BOOL)boldFlag
 {
     _useBoldFont = boldFlag;
-    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
@@ -559,7 +573,6 @@ static const int kDragThreshold = 3;
 {
     _useBrightBold = flag;
     _drawingHelper.useBrightBold = flag;
-    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
@@ -3322,8 +3335,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate startDownloadOverSCP:scpPath];
 
     NSDictionary *attributes =
-        @{ NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapSelectedText],
-           NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapSelection],
+        @{ NSForegroundColorAttributeName: [self selectedTextColor],
+           NSBackgroundColorAttributeName: [self selectionBackgroundColor],
            NSFontAttributeName: _primaryFont.font };
     NSSize size = [selectedText sizeWithAttributes:attributes];
     size.height = _lineHeight;
@@ -3463,7 +3476,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      bold:NO
                                     faint:NO
                              isBackground:YES];
-
+    fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];  // TODO: Implement this method
+    
     int underlineStyle = c.underline ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
 
     BOOL isItalic = c.italic;
@@ -4391,6 +4405,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
         DLog(@"insertText: clear marked text");
+         [self invalidateInputMethodEditorRect];
         _drawingHelper.inputMethodMarkedRange = NSMakeRange(0, 0);
         _drawingHelper.markedText = nil;
         _drawingHelper.numberOfIMELines = 0;
@@ -4795,7 +4810,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setTransparency:(double)fVal {
     _transparency = fVal;
-    [_colorMap invalidateCache];
     _drawingHelper.transparency = fVal;
     [self setNeedsDisplay:YES];
 }
@@ -4806,13 +4820,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setBlend:(float)fVal {
     _drawingHelper.blend = MIN(MAX(0.3, fVal), 1);
-    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
 - (void)setUseSmartCursorColor:(BOOL)value {
     _drawingHelper.useSmartCursorColor = value;
-    [_colorMap invalidateCache];
 }
 
 - (BOOL)useSmartCursorColor {
@@ -5005,18 +5017,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setFindCursorView:(iTermFindCursorView *)view {
     [_findCursorView autorelease];
     _findCursorView = [view retain];
-}
-
-// The background color is cached separately from other dimmed colors because
-// it may be used with different alpha values than foreground colors.
-- (NSColor *)cachedDimmedBackgroundColorWithAlpha:(double)alpha
-{
-    if (!_cachedBackgroundColor || _cachedBackgroundColorAlpha != alpha) {
-        self.cachedBackgroundColor =
-            [[_colorMap dimmedColorForKey:kColorMapBackground] colorWithAlphaComponent:alpha];
-        _cachedBackgroundColorAlpha = alpha;
-    }
-    return _cachedBackgroundColor;
 }
 
 - (BOOL)getAndResetChangedSinceLastExpose
@@ -5869,7 +5869,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_settingsChanged:(NSNotification *)notification
 {
-    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
     _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
@@ -6215,7 +6214,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
     if (theKey == kColorMapBackground) {
         [self updateScrollerForBackgroundColor];
-        self.cachedBackgroundColor = nil;
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
         self.badgeLabel = _badgeLabel;
     } else if (theKey == kColorMapForeground) {
@@ -6229,7 +6227,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)colorMap:(iTermColorMap *)colorMap
     dimmingAmountDidChangeTo:(double)dimmingAmount {
-    self.cachedBackgroundColor = nil;
     [[self superview] setNeedsDisplay:YES];
 }
 
@@ -6241,7 +6238,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - iTermInidcatorsHelperDelegate
 
 - (NSColor *)indicatorFullScreenFlashColor {
-    return [_colorMap mutedColorForKey:kColorMapForeground];
+    return [self defaultTextColor];
 }
 
 #pragma mark - Mouse reporting
@@ -6349,13 +6346,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        isBackground:isBackground];
     NSColor *color;
     iTermColorMap *colorMap = self.colorMap;
-    if (isBackground && colorMap.dimOnlyText) {
-        color = [colorMap mutedColorForKey:key];
+    if (isBackground) {
+        color = [colorMap colorForKey:key];
     } else {
-        color = [colorMap dimmedColorForKey:key];
-    }
-    if (isFaint) {
-        color = [color colorWithAlphaComponent:0.5];
+        color = [self.colorMap colorForKey:key];
+        if (isFaint) {
+            color = [color colorWithAlphaComponent:0.5];
+        }
     }
     return color;
 }

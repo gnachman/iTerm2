@@ -262,7 +262,10 @@ static const int kBadgeRightMargin = 10;
                                  yOrigin,
                                  ceil(run->range.length * _cellSize.width),
                                  _cellSize.height);
-        box.backgroundColor = [self colorForBackgroundRun:run];
+        NSColor *color = [self unprocessedColorForBackgroundRun:run];
+        box.unprocessedBackgroundColor = color;
+        color = [_colorMap processedBackgroundColorForBackgroundColor:color];
+        box.backgroundColor = color;
 
         [box.backgroundColor set];
         NSRectFillUsingOperation(rect,
@@ -278,7 +281,7 @@ static const int kBadgeRightMargin = 10;
     }
 }
 
-- (NSColor *)colorForBackgroundRun:(iTermBackgroundColorRun *)run {
+- (NSColor *)unprocessedColorForBackgroundRun:(iTermBackgroundColorRun *)run {
     NSColor *color;
     CGFloat alpha = _transparencyAlpha;
     if (run->selected) {
@@ -313,9 +316,8 @@ static const int kBadgeRightMargin = 10;
             alpha = 1 - _blend;
         }
     }
-    color = [color colorWithAlphaComponent:alpha];
 
-    return color;
+    return [color colorWithAlphaComponent:alpha];
 }
 
 - (void)drawExcessAtLine:(int)line {
@@ -498,8 +500,8 @@ static const int kBadgeRightMargin = 10;
     int w = size.width + MARGIN;
     int x = MAX(0, _frame.size.width - w);
     CGFloat y = line * _cellSize.height;
-    NSColor *bgColor = [_colorMap colorForKey:kColorMapBackground];
-    NSColor *fgColor = [_colorMap mutedColorForKey:kColorMapForeground];
+    NSColor *bgColor = [self defaultBackgroundColor];
+    NSColor *fgColor = [self defaultTextColor];
     NSColor *shadowColor;
     if ([fgColor isDark]) {
         shadowColor = [NSColor whiteColor];
@@ -578,7 +580,7 @@ static const int kBadgeRightMargin = 10;
                                   inRange:run->range
                           startingAtPoint:textOrigin
                                bgselected:run->selected
-                                  bgColor:box.backgroundColor
+                                  bgColor:box.unprocessedBackgroundColor
                                   matches:matches
                                   context:ctx];
     }
@@ -731,7 +733,7 @@ static const int kBadgeRightMargin = 10;
     [transform scaleXBy:1.0 yBy:-1.0];
     [transform concat];
     
-    NSColor *backgroundColor = [_colorMap mutedColorForKey:kColorMapBackground];
+    NSColor *backgroundColor = [self defaultBackgroundColor];
     [backgroundColor set];
     NSRectFill(NSMakeRect(0, 0, _cellSize.width * run->numImageCells, _cellSize.height));
     
@@ -974,11 +976,8 @@ static const int kBadgeRightMargin = 10;
                                   y,
                                   charsInLine * _cellSize.width,
                                   _cellSize.height);
-            if (!colorMap.dimOnlyText) {
-                [[colorMap dimmedColorForKey:kColorMapBackground] set];
-            } else {
-                [[colorMap mutedColorForKey:kColorMapBackground] set];
-            }
+            [[self defaultBackgroundColor] set];
+
             NSRectFill(r);
 
             // Draw the characters.
@@ -996,7 +995,7 @@ static const int kBadgeRightMargin = 10;
             }
 
             // Draw an underline.
-            NSColor *foregroundColor = [colorMap mutedColorForKey:kColorMapForeground];
+            NSColor *foregroundColor = [self defaultTextColor];
             [foregroundColor set];
             NSRect s = NSMakeRect(x,
                                   y + _cellSize.height - 1,
@@ -1050,10 +1049,10 @@ static const int kBadgeRightMargin = 10;
                                         cursorHeight);
         _imeCursorLastPos = cursorFrame.origin;
         [self.delegate drawingHelperUpdateFindCursorView];
-        [[colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:1.0
-                                                                 green:1.0
-                                                                  blue:0
-                                                                 alpha:1.0]] set];
+        [[colorMap processedBackgroundColorForBackgroundColor:[NSColor colorWithCalibratedRed:1.0
+                                                                                        green:1.0
+                                                                                         blue:0
+                                                                                        alpha:1.0]] set];
         NSRectFill(cursorFrame);
 
         return TRUE;
@@ -1143,7 +1142,8 @@ static const int kBadgeRightMargin = 10;
     NSRange underlinedRange = [self underlinedRangeOnLine:row];
     const int underlineStartsAt = underlinedRange.location;
     const int underlineEndsAt = NSMaxRange(underlinedRange);
-    const BOOL dimOnlyText = colorMap.dimOnlyText;
+    const CGFloat dimmingAmount = colorMap.dimmingAmount;
+    const CGFloat mutingAmount = colorMap.mutingAmount;
     const double minimumContrast = _minimumContrast;
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
@@ -1168,7 +1168,7 @@ static const int kBadgeRightMargin = 10;
             // Is a selection.
             isSelection = YES;
             // NOTE: This could be optimized by caching the color.
-            CRunAttrsSetColor(&attrs, storage, [colorMap dimmedColorForKey:kColorMapSelectedText]);
+            CRunAttrsSetColor(&attrs, storage, [colorMap colorForKey:kColorMapSelectedText]);
         } else {
             // Not a selection.
             if (_reverseVideo &&
@@ -1178,14 +1178,8 @@ static const int kBadgeRightMargin = 10;
                   theLine[i].foregroundColorMode == ColorModeAlternate))) {
                 // Reverse video is on. Either is cursor or has default foreground color. Use
                 // background color.
-                if (!dimOnlyText) {
-                    CRunAttrsSetColor(&attrs, storage,
-                                      [colorMap dimmedColorForKey:kColorMapBackground]);
-                } else {
-                    CRunAttrsSetColor(&attrs,
-                                      storage,
-                                      [colorMap mutedColorForKey:kColorMapBackground]);
-                }
+                CRunAttrsSetColor(&attrs, storage,
+                                  [colorMap colorForKey:kColorMapBackground]);
             } else {
                 if (theLine[i].foregroundColor == lastForegroundColor &&
                     theLine[i].fgGreen == lastFgGreen &&
@@ -1230,11 +1224,14 @@ static const int kBadgeRightMargin = 10;
             }
         }
 
-        if (minimumContrast > 0.001 && bgColor) {
-            // TODO: Way too much time spent here. Use previous char's color if it is the same.
+        if (bgColor && (minimumContrast > 0.001 ||
+                        dimmingAmount > 0.001 ||
+                        mutingAmount > 0.001 ||
+                        theLine[i].faint)) {  // faint implies alpha<1 and is faster than getting the alpha component
             CRunAttrsSetColor(&attrs,
                               storage,
-                              [colorMap color:attrs.color withContrastAgainst:bgColor]);
+                              [colorMap processedTextColorForTextColor:attrs.color
+                                                   overBackgroundColor:bgColor]);
         }
         BOOL drawable;
         if (_blinkingItemsVisible || !(_blinkAllowed && theLine[i].blink)) {
@@ -1609,15 +1606,20 @@ static const int kBadgeRightMargin = 10;
                                                       bold:NO
                                                      faint:NO
                                               isBackground:YES];
+    aColor = [_colorMap processedBackgroundColorForBackgroundColor:aColor];
     double selectedAlpha = 1.0 - _transparency;
     aColor = [aColor colorWithAlphaComponent:selectedAlpha];
     return aColor;
 }
 
+- (NSColor *)defaultTextColor {
+    return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapForeground]
+                                 overBackgroundColor:[self defaultBackgroundColor]];
+}
 
 - (NSColor *)selectionColorForCurrentFocus {
     if (_isFrontTextView) {
-        return [_colorMap mutedColorForKey:kColorMapSelection];
+        return [_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]];
     } else {
         return _unfocusedSelectionColor;
     }
@@ -1782,17 +1784,19 @@ static const int kBadgeRightMargin = 10;
 }
 
 - (NSColor *)cursorWhiteColor {
-    return [_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:1
-                                                                    green:1
-                                                                     blue:1
-                                                                    alpha:1]];
+    NSColor *whiteColor = [NSColor colorWithCalibratedRed:1
+                                                    green:1
+                                                     blue:1
+                                                    alpha:1];
+    return [_colorMap processedTextColorForTextColor:whiteColor overBackgroundColor:nil];
 }
 
 - (NSColor *)cursorBlackColor {
-    return [_colorMap dimmedColorForColor:[NSColor colorWithCalibratedRed:0
-                                                                    green:0
-                                                                     blue:0
-                                                                    alpha:1]];
+    NSColor *blackColor = [NSColor colorWithCalibratedRed:0
+                                                    green:0
+                                                     blue:0
+                                                    alpha:1];
+    return [_colorMap processedTextColorForTextColor:blackColor overBackgroundColor:nil];
 }
 
 @end

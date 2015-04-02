@@ -12,7 +12,7 @@
 #import "SessionView.h"
 #import <objc/runtime.h>
 
-static const BOOL gCreateGoldens = NO;
+static const BOOL gCreateGoldens = YES;
 
 @interface iTermFakeSessionForPTYTextViewTest : PTYSession
 @end
@@ -1588,7 +1588,203 @@ static const BOOL gCreateGoldens = NO;
                           size:VT100GridSizeMake(2, 2)];
 }
 
-// Min contrast
+- (void)testDimmingTextAndBg {
+    [self doGoldenTestForInput:@"a\e[41mb"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.colorMap.dimmingAmount = 0.8;
+                              textView.colorMap.dimOnlyText = NO;
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testDimmingText {
+    [self doGoldenTestForInput:@"a\e[41mb"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.colorMap.dimmingAmount = 0.8;
+                              textView.colorMap.dimOnlyText = YES;
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testMinimumContrast {
+    NSString *input = [NSString stringWithFormat:@"%@%@x",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:@{ KEY_MINIMUM_CONTRAST: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+// Dimming text&bg + min contrast
+- (void)testDimmingTextAndBgAndMinimumContrast {
+    NSString *input = [NSString stringWithFormat:@"%@%@x",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.colorMap.dimmingAmount = 0.8;
+                              textView.colorMap.dimOnlyText = NO;
+                          }
+              profileOverrides:@{ KEY_MINIMUM_CONTRAST: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+// Dimming text + min contrast.
+// Unfortunately, min contrast is applied after dimming.
+// TODO: Apply min contrast before dimming.
+- (void)testDimmingTextAndMinimumContrast {
+    NSString *input = [NSString stringWithFormat:@"%@%@x",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.colorMap.dimmingAmount = 0.8;
+                              textView.colorMap.dimOnlyText = YES;
+                          }
+              profileOverrides:@{ KEY_MINIMUM_CONTRAST: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+// Cursor boost
+- (void)testCursorBoost {
+    NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{ KEY_CURSOR_BOOST: @0.5,
+                                  KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:.45
+                                                                               green:.64
+                                                                                blue:.39
+                                                                               alpha:1] dictionaryValue] }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(6, 2)];
+}
+
+// Dimming text&bg + cursor boost
+- (void)testDimmingTextAndBgAndCursorBoost {
+    NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.colorMap.dimmingAmount = 0.8;
+                              textView.colorMap.dimOnlyText = NO;
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{  KEY_CURSOR_BOOST: @0.5,
+                                   KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:.45
+                                                                                green:.64
+                                                                                 blue:.39
+                                                                                alpha:1] dictionaryValue],
+                                   KEY_MINIMUM_CONTRAST: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(6, 2)];
+}
+
+// Dimming text + cursor boost
+- (void)testDimmingTextAndCursorBoost {
+    NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.colorMap.dimmingAmount = 0.8;
+                              textView.colorMap.dimOnlyText = YES;
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{  KEY_CURSOR_BOOST: @0.5,
+                                   KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:.45
+                                                                                green:.64
+                                                                                 blue:.39
+                                                                                alpha:1] dictionaryValue],
+                                   KEY_MINIMUM_CONTRAST: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(6, 2)];
+}
+
+// Min contrast + cursor boost
+- (void)testMinimumContrastAndCursorBoost {
+    NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{  KEY_CURSOR_BOOST: @0.5,
+                                   KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:.45
+                                                                                green:.64
+                                                                                 blue:.39
+                                                                                alpha:1] dictionaryValue],
+                                   KEY_MINIMUM_CONTRAST: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(6, 2)];
+}
+
+// Dimming text&bg + cursor boost + min contrast
+// TODO: Dimming wipes out "a" and "b"; only "c" is visible. I'd expect better from minimum
+// contrast.
+- (void)testDimmingTextAndBgAndCursorBoostAndMinimumContrast {
+    NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.colorMap.dimmingAmount = 0.8;
+                              textView.colorMap.dimOnlyText = NO;
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{  KEY_CURSOR_BOOST: @0.5,
+                                   KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:.45
+                                                                                green:.64
+                                                                                 blue:.39
+                                                                                alpha:1] dictionaryValue],
+                                   KEY_MINIMUM_CONTRAST: @1 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(6, 2)];
+}
+
+// Dimming text + cursor boost + min contrast
+
 // Non ascii font
 // Timestamps
 // Retina vs nonretina fake bold
@@ -1596,9 +1792,6 @@ static const BOOL gCreateGoldens = NO;
 // Multi line IME
 // Mark
 // Notes
-// Dimming
-// Cursor boost
-// Dimming + cursor boost
 // Find matches
 // Oversize glyphs
 // Emoji
@@ -1607,6 +1800,7 @@ static const BOOL gCreateGoldens = NO;
 // Surrogate pair
 // DWC
 // Line drawing
+// Faint text
 
 - (void)testBasicDraw {
     [self doGoldenTestForInput:@"abc"

@@ -63,5 +63,6 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 @interface iTermBoxedBackgroundColorRun : NSObject
 @property(nonatomic, readonly) iTermBackgroundColorRun *valuePointer;
 @property(nonatomic, retain) NSColor *backgroundColor;
+@property(nonatomic, retain) NSColor *unprocessedBackgroundColor;
 @end
 
