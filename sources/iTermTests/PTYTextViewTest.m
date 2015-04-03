@@ -13,7 +13,7 @@
 #import "VT100LineInfo.h"
 #import <objc/runtime.h>
 
-static const BOOL gCreateGoldens = NO;
+static const BOOL gCreateGoldens = YES;
 
 @interface iTermFakeSessionForPTYTextViewTest : PTYSession
 @end
@@ -1836,11 +1836,58 @@ static const BOOL gCreateGoldens = NO;
 
 // Timestamps
 // Retina vs nonretina fake bold
-// IME
-// Multi line IME
+
 // Mark
-// Notes
+- (void)testMark {
+    [self doGoldenTestForInput:@"abc\r\ndef\r\nghi"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              PTYSession *session = (PTYSession *)textView.delegate;
+                              [session screenAddMarkOnLine:1];
+                              VT100ScreenMark *mark = [session markAddedAtCursorOfClass:[VT100ScreenMark class]];
+                              mark.code = 1;
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 4)];
+}
+
+- (void)testNote {
+    [self doGoldenTestForInput:@"abc\r\nd\e]1337;AddAnnotation=5|This is a note\x07 ef\r\nghi"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              for (NSView *view in textView.subviews) {
+                                  view.hidden = YES;
+                              }
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(5, 5)];
+}
+
 // Find matches
+- (void)testFindMatches {
+    [self doGoldenTestForInput:@"abxxfghxxxxl"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              // Need to call refresh to clear dirty flags, otherwise find matches
+                              // get reset when refresh gets called.
+                              [textView refresh];
+                              [textView findString:@"xx"
+                                  forwardDirection:NO
+                                      ignoringCase:NO
+                                             regex:NO
+                                        withOffset:0];
+                              double progress;
+                              while ([textView findInProgress]) {
+                                  [textView continueFind:&progress];
+                              }
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(5, 5)];
+}
+
 // Oversize glyphs
 // Emoji
 // Emoji exclamation point
@@ -1853,7 +1900,7 @@ static const BOOL gCreateGoldens = NO;
 
 - (void)testBasicDraw {
     [self doGoldenTestForInput:@"abc"
-                          name:@"basic"
+                          name:NSStringFromSelector(_cmd)
                           hook:nil
               profileOverrides:nil
                   createGolden:gCreateGoldens
