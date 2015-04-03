@@ -1811,7 +1811,7 @@ static const BOOL gCreateGoldens = NO;
 // For whatever reason, shadows don't render properly into a bitmap context.
 - (void)testTimestamps {
     [self doGoldenTestForInput:@"\e[41mabcdefghijklmn"
-                          name:@"basic"
+                          name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {
                               VT100Screen *screen = (VT100Screen *)textView.dataSource;
                               NSTimeInterval now = 449711536;
@@ -1830,12 +1830,37 @@ static const BOOL gCreateGoldens = NO;
                               };
                           }
               profileOverrides:nil
-                  createGolden:gCreateGoldens
+                  createGolden:YES
                           size:VT100GridSizeMake(20, 6)];
 }
 
-// Timestamps
-// Retina vs nonretina fake bold
+// Retina uses a shift because double-striking is imperceptible.
+- (void)testRetinaFakeBold {
+    [self doGoldenTestForInput:@"i\e[1mi"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.antiAliasedShift = 0.5;
+                              };
+                          }
+              profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @NO }
+                  createGolden:YES
+                          size:VT100GridSizeMake(4, 2)];
+}
+
+- (void)testNonretinaFakeBold {
+    [self doGoldenTestForInput:@"i\e[1mi"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.antiAliasedShift = 0;
+                              };
+                          }
+              profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @NO }
+                  createGolden:YES
+                          size:VT100GridSizeMake(4, 2)];
+}
+
 // IME
 // Multi line IME
 // Mark
