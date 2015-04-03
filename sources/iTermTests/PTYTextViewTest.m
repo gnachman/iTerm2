@@ -10,9 +10,10 @@
 #import "PTYTextView.h"
 #import "PTYTextViewTest.h"
 #import "SessionView.h"
+#import "VT100LineInfo.h"
 #import <objc/runtime.h>
 
-static const BOOL gCreateGoldens = YES;
+static const BOOL gCreateGoldens = NO;
 
 @interface iTermFakeSessionForPTYTextViewTest : PTYSession
 @end
@@ -1614,8 +1615,8 @@ static const BOOL gCreateGoldens = YES;
 
 - (void)testMinimumContrast {
     NSString *input = [NSString stringWithFormat:@"%@%@x",
-                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
-                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],  // Puke green (should render as same color)
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];  // Similar-brightness blue (should render black)
 
     [self doGoldenTestForInput:input
                           name:NSStringFromSelector(_cmd)
@@ -1643,8 +1644,6 @@ static const BOOL gCreateGoldens = YES;
 }
 
 // Dimming text + min contrast.
-// Unfortunately, min contrast is applied after dimming.
-// TODO: Apply min contrast before dimming.
 - (void)testDimmingTextAndMinimumContrast {
     NSString *input = [NSString stringWithFormat:@"%@%@x",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1757,8 +1756,9 @@ static const BOOL gCreateGoldens = YES;
 }
 
 // Dimming text&bg + cursor boost + min contrast
-// TODO: Dimming wipes out "a" and "b"; only "c" is visible. I'd expect better from minimum
-// contrast.
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle. The affects the "b", which seems to become invisble.
 - (void)testDimmingTextAndBgAndCursorBoostAndMinimumContrast {
     NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1784,8 +1784,56 @@ static const BOOL gCreateGoldens = YES;
 }
 
 // Dimming text + cursor boost + min contrast
+- (void)testDimmingTextAndCursorBoostAndMinimumContrast {
+    NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
+                       [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
+                       [self sequenceForBackgroundColorWithRed:.45 green:.64 blue:.39]];
 
-// Non ascii font
+    [self doGoldenTestForInput:input
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              textView.colorMap.dimmingAmount = 0.8;
+                              textView.colorMap.dimOnlyText = YES;
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.shouldDrawFilledInCursor = YES;
+                              };
+                          }
+              profileOverrides:@{  KEY_CURSOR_BOOST: @0.5,
+                                   KEY_CURSOR_COLOR: [[NSColor colorWithCalibratedRed:.45
+                                                                                green:.64
+                                                                                 blue:.39
+                                                                                alpha:1] dictionaryValue],
+                                   KEY_MINIMUM_CONTRAST: @1 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(6, 2)];
+}
+
+// For whatever reason, shadows don't render properly into a bitmap context.
+- (void)testTimestamps {
+    [self doGoldenTestForInput:@"\e[41mabcdefghijklmn"
+                          name:@"basic"
+                          hook:^(PTYTextView *textView) {
+                              VT100Screen *screen = (VT100Screen *)textView.dataSource;
+                              NSTimeInterval now = 449711536;
+                              const NSTimeInterval day = 86400;
+                              int line = 0;
+                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 1];  // HH:MM:SS
+                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - day - 1];  // DOW HH:MM:SS
+                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 6 * day];  // DOW HH:MM:SS
+                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 6 * day - 1];  // MM/DD HH:MM:SS
+                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 180 * day];  // MM/DD HH:MM:SS
+                              [[screen.currentGrid lineInfoAtLineNumber:line++] setTimestamp:now - 180 * day - 1];  // MM/DD/YYYY HH:MM:SS
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  helper.showTimestamps = YES;
+                                  helper.now = now;
+                                  helper.useTestingTimezone = YES;  // Use GMT so test can pass anywhere.
+                              };
+                          }
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(20, 6)];
+}
+
 // Timestamps
 // Retina vs nonretina fake bold
 // IME
@@ -1801,6 +1849,7 @@ static const BOOL gCreateGoldens = YES;
 // DWC
 // Line drawing
 // Faint text
+// faint text + transparency
 
 - (void)testBasicDraw {
     [self doGoldenTestForInput:@"abc"

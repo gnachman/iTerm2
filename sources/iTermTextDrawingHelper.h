@@ -206,6 +206,12 @@
 // IME text.
 @property(nonatomic, assign) int numberOfIMELines;
 
+// The current time since reference date. Exposed to facilitate testing timestamps.
+@property(nonatomic, assign) NSTimeInterval now;
+
+// If set, use GMT timezone for timestamps to make tests locale-independent.
+@property(nonatomic, assign) BOOL useTestingTimezone;
+
 // Is the cursor blinking because "Find Cursor" has been activated?
 @property(nonatomic, readonly) BOOL blinkingFound;
 

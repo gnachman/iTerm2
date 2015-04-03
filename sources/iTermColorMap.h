@@ -90,6 +90,8 @@ extern const int kColorMap24bitBase;
 - (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
                         overBackgroundColor:(NSColor*)backgroundColor;
 - (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)color;
+- (NSColor *)colorByMutingColor:(NSColor *)color;
+- (NSColor *)colorByDimmingTextColor:(NSColor *)color;
 
 // Returns non-nil profile key name for valid logical colors, ANSI colors, and bright ANSI colors.
 - (NSString *)profileKeyForColorMapKey:(int)theKey;

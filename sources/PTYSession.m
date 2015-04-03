@@ -4689,15 +4689,21 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
         if (blendDefaultBackground) {
             // Blend default background color over background image.
-            [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:1 - _textview.blend] set];
+            [[[self processedBackgroundColor] colorWithAlphaComponent:1 - _textview.blend] set];
             NSRectFillUsingOperation(rect, NSCompositeSourceOver);
         }
     } else if (blendDefaultBackground) {
         // No image, so just draw background color.
-        [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:alpha] set];
+        [[[self processedBackgroundColor] colorWithAlphaComponent:alpha] set];
         NSRectFillUsingOperation(rect, NSCompositeCopy);
     }
 }
+
+- (NSColor *)processedBackgroundColor {
+    NSColor *unprocessedColor = [_colorMap colorForKey:kColorMapBackground];
+    return [_colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];
+}
+
 
 - (void)textViewPostTabContentsChangedNotification
 {

@@ -261,4 +261,19 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                      alpha:1.0];
 }
 
+- (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background {
+    CGFloat a[4];
+    CGFloat b[4];
+    [self getComponents:a];
+    [background getComponents:b];
+    CGFloat x[4];
+    CGFloat alpha = a[3];
+    for (int i = 0; i < 3; i++) {
+        x[i] = a[i] * alpha + b[i] * (1 - alpha);
+    }
+    x[3] = b[4];
+    return [NSColor colorWithColorSpace:self.colorSpace components:x count:4];
+}
+
+
 @end

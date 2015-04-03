@@ -62,4 +62,7 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 - (NSDictionary *)dictionaryValue;
 - (NSColor *)colorMutedBy:(double)muting towards:(NSColor *)baseColor;
 
+// Return the color you'd get by rendering self over background.
+- (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;
+
 @end

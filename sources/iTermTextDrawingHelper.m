@@ -467,19 +467,20 @@ static const int kBadgeRightMargin = 10;
     NSDate *timestamp = [_delegate drawingHelperTimestampForLine:line];
     NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
     const NSTimeInterval day = -86400;
-    const NSTimeInterval timeDelta = [timestamp timeIntervalSinceNow];
-    if (timeDelta < day * 365) {
-        // More than a year ago: include year
+    const NSTimeInterval timeDelta = timestamp.timeIntervalSinceReferenceDate - self.now;
+    if (timeDelta < day * 180) {
+        // More than 180 days ago: include year
+        // I tried using 365 but it was pretty confusing to see tomorrow's date.
         [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"yyyyMMMd hh:mm:ss"
                                                            options:0
                                                             locale:[NSLocale currentLocale]]];
-    } else if (timeDelta < day * 7) {
-        // 1 week to 1 year ago: include date without year
+    } else if (timeDelta < day * 6) {
+        // 6 days to 180 days ago: include date without year
         [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"MMMd hh:mm:ss"
                                                            options:0
                                                             locale:[NSLocale currentLocale]]];
     } else if (timeDelta < day) {
-        // 1 day to 1 week ago: include day of week
+        // 1 day to 6 days ago: include day of week
         [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"EEE hh:mm:ss"
                                                            options:0
                                                             locale:[NSLocale currentLocale]]];
@@ -491,6 +492,9 @@ static const int kBadgeRightMargin = 10;
                                                             locale:[NSLocale currentLocale]]];
     }
 
+    if (self.useTestingTimezone) {
+        fmt.timeZone = [NSTimeZone timeZoneForSecondsFromGMT:0];
+    }
     NSString *s = [fmt stringFromDate:timestamp];
     if (!timestamp || ![timestamp timeIntervalSinceReferenceDate]) {
         s = @"";
@@ -1750,7 +1754,8 @@ static const int kBadgeRightMargin = 10;
 }
 
 - (NSColor *)cursorColorForCharacter:(screen_char_t)screenChar
-                          wantBackground:(BOOL)wantBackgroundColor {
+                      wantBackground:(BOOL)wantBackgroundColor
+                               muted:(BOOL)muted {
     BOOL isBackground = wantBackgroundColor;
 
     if (_reverseVideo) {
@@ -1764,23 +1769,28 @@ static const int kBadgeRightMargin = 10;
             isBackground = YES;
         }
     }
+    NSColor *color;
     if (wantBackgroundColor) {
-        return [_delegate drawingHelperColorForCode:screenChar.backgroundColor
-                                              green:screenChar.bgGreen
-                                               blue:screenChar.bgBlue
-                                          colorMode:screenChar.backgroundColorMode
-                                               bold:screenChar.bold
-                                              faint:screenChar.faint
-                                       isBackground:isBackground];
+        color = [_delegate drawingHelperColorForCode:screenChar.backgroundColor
+                                               green:screenChar.bgGreen
+                                                blue:screenChar.bgBlue
+                                           colorMode:screenChar.backgroundColorMode
+                                                bold:screenChar.bold
+                                               faint:screenChar.faint
+                                        isBackground:isBackground];
     } else {
-        return [_delegate drawingHelperColorForCode:screenChar.foregroundColor
-                                              green:screenChar.fgGreen
-                                               blue:screenChar.fgBlue
-                                          colorMode:screenChar.foregroundColorMode
-                                               bold:screenChar.bold
-                                              faint:screenChar.faint
-                                       isBackground:isBackground];
+        color = [_delegate drawingHelperColorForCode:screenChar.foregroundColor
+                                               green:screenChar.fgGreen
+                                                blue:screenChar.fgBlue
+                                           colorMode:screenChar.foregroundColorMode
+                                                bold:screenChar.bold
+                                               faint:screenChar.faint
+                                        isBackground:isBackground];
     }
+    if (muted) {
+        color = [_colorMap colorByMutingColor:color];
+    }
+    return color;
 }
 
 - (NSColor *)cursorWhiteColor {
@@ -1788,7 +1798,7 @@ static const int kBadgeRightMargin = 10;
                                                     green:1
                                                      blue:1
                                                     alpha:1];
-    return [_colorMap processedTextColorForTextColor:whiteColor overBackgroundColor:nil];
+    return [_colorMap colorByDimmingTextColor:whiteColor];
 }
 
 - (NSColor *)cursorBlackColor {
@@ -1796,7 +1806,7 @@ static const int kBadgeRightMargin = 10;
                                                     green:0
                                                      blue:0
                                                     alpha:1];
-    return [_colorMap processedTextColorForTextColor:blackColor overBackgroundColor:nil];
+    return [_colorMap colorByDimmingTextColor:blackColor];
 }
 
 @end

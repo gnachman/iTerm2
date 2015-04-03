@@ -123,6 +123,9 @@ const int kColorMapAnsiBrightModifier = 8;
     [_delegate colorMap:self dimmingAmountDidChangeTo:_dimmingAmount];
 }
 
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
 - (void)getComponents:(CGFloat *)result
     byAveragingComponents:(CGFloat *)rgb1
        withComponents:(CGFloat *)rgb2
@@ -133,6 +136,9 @@ const int kColorMapAnsiBrightModifier = 8;
     result[3] = rgb1[3];
 }
 
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
 - (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
                         overBackgroundColor:(NSColor *)backgroundColor {
     // Fist apply minimum contrast, then muting, then dimming (as needed).
@@ -148,7 +154,7 @@ const int kColorMapAnsiBrightModifier = 8;
             withContrastAgainstComponents:backgroundRgb
                           minimumContrast:_minimumContrast];
     } else {
-        memmove(contrastingRgb, backgroundRgb, sizeof(backgroundRgb));
+        memmove(contrastingRgb, textRgb, sizeof(textRgb));
     }
 
     CGFloat defaultBackgroundComponents[4];
@@ -182,14 +188,72 @@ const int kColorMapAnsiBrightModifier = 8;
     } else {
         [_lastTextColor autorelease];
         memmove(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 4);
-        _lastTextColor = [[NSColor colorWithCalibratedRed:dimmedRgb[0]
-                                                    green:dimmedRgb[1]
-                                                     blue:dimmedRgb[2]
-                                                    alpha:dimmedRgb[3]] retain];
+        _lastTextColor = [[NSColor colorWithColorSpace:textColor.colorSpace
+                                            components:dimmedRgb
+                                                 count:4] retain];
         return _lastTextColor;
     }
 }
 
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
+- (NSColor *)colorByMutingColor:(NSColor *)color {
+    if (_mutingAmount < 0.01) {
+        return color;
+    }
+
+    CGFloat components[4];
+    [color getComponents:components];
+
+    CGFloat defaultBackgroundComponents[4];
+    [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
+
+    CGFloat mutedRgb[4];
+    [self getComponents:mutedRgb
+        byAveragingComponents:components
+               withComponents:defaultBackgroundComponents
+                        alpha:_mutingAmount];
+    mutedRgb[3] = components[3];
+
+    return [NSColor colorWithColorSpace:color.colorSpace
+                             components:mutedRgb
+                                  count:4];
+}
+
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
+- (NSColor *)colorByDimmingTextColor:(NSColor *)color {
+    if (_dimmingAmount < 0.01) {
+        return color;
+    }
+
+    CGFloat components[4];
+    [color getComponents:components];
+
+    CGFloat defaultBackgroundComponents[4];
+    [_map[@(kColorMapBackground)] getComponents:defaultBackgroundComponents];
+
+    CGFloat dimmedRgb[4];
+    CGFloat grayRgb[] = { _backgroundBrightness, _backgroundBrightness, _backgroundBrightness };
+    if (!_dimOnlyText) {
+        grayRgb[0] = grayRgb[1] = grayRgb[2] = 0.5;
+    }
+    [self getComponents:dimmedRgb
+      byAveragingComponents:components
+             withComponents:grayRgb
+                      alpha:_dimmingAmount];
+    dimmedRgb[3] = components[3];
+
+    return [NSColor colorWithColorSpace:color.colorSpace
+                             components:dimmedRgb
+                                  count:4];
+}
+
+// There is an issue where where the passed-in color can be in a different color space than the
+// default background color. It doesn't make sense to combine RGB values from different color
+// spaces. The effects are generally subtle.
 - (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)backgroundColor {
     // Fist apply muting then dimming (as needed).
     CGFloat backgroundRgb[4];
@@ -206,13 +270,26 @@ const int kColorMapAnsiBrightModifier = 8;
 
     CGFloat dimmedRgb[4];
     CGFloat grayRgb[] = { 0.5, 0.5, 0.5 };
+    BOOL shouldDim = !_dimOnlyText && _dimmingAmount > 0;
+    // If dimOnlyText is set then text and non-default background colors get dimmed toward black.
     if (_dimOnlyText) {
-        memmove(dimmedRgb, mutedRgb, sizeof(CGFloat) * 3);
-    } else {
+        const BOOL isDefaultBackgroundColor =
+            (fabs(backgroundRgb[0] - defaultBackgroundComponents[0]) < 0.01 &&
+             fabs(backgroundRgb[1] - defaultBackgroundComponents[1]) < 0.01 &&
+             fabs(backgroundRgb[2] - defaultBackgroundComponents[2]) < 0.01);
+        if (!isDefaultBackgroundColor) {
+            grayRgb[0] = grayRgb[1] = grayRgb[2] = 0;
+            shouldDim = YES;
+        }
+    }
+
+    if (shouldDim) {
         [self getComponents:dimmedRgb
-            byAveragingComponents:mutedRgb
-                   withComponents:grayRgb
-                            alpha:_dimmingAmount];
+      byAveragingComponents:mutedRgb
+             withComponents:grayRgb
+                      alpha:_dimmingAmount];
+    } else {
+        memmove(dimmedRgb, mutedRgb, sizeof(CGFloat) * 3);
     }
     dimmedRgb[3] = backgroundRgb[3];
 
@@ -221,10 +298,9 @@ const int kColorMapAnsiBrightModifier = 8;
     } else {
         [_lastBackgroundColor autorelease];
         memmove(_lastBackgroundComponents, dimmedRgb, sizeof(CGFloat) * 4);
-        _lastBackgroundColor = [[NSColor colorWithCalibratedRed:dimmedRgb[0]
-                                                          green:dimmedRgb[1]
-                                                           blue:dimmedRgb[2]
-                                                          alpha:dimmedRgb[3]] retain];
+        _lastBackgroundColor = [[NSColor colorWithColorSpace:backgroundColor.colorSpace
+                                                  components:dimmedRgb
+                                                       count:4] retain];
         return _lastBackgroundColor;
     }
 }
