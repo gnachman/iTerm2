@@ -271,7 +271,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     for (int i = 0; i < 3; i++) {
         x[i] = a[i] * alpha + b[i] * (1 - alpha);
     }
-    x[3] = b[4];
+    x[3] = b[3];
     return [NSColor colorWithColorSpace:self.colorSpace components:x count:4];
 }
 
