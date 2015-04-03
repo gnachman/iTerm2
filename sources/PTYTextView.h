@@ -233,9 +233,6 @@ typedef enum {
 // Stores colors. This object is its delegate.
 @property(nonatomic, readonly) iTermColorMap *colorMap;
 
-// The default background color, dimmed if needed.
-@property(nonatomic, readonly) NSColor *dimmedDefaultBackgroundColor;
-
 // Semantic history. TODO: Move this into PTYSession.
 @property(nonatomic, readonly) iTermSemanticHistoryController *semanticHistoryController;
 

@@ -610,16 +610,6 @@ static const int kDragThreshold = 3;
         [backgroundColor isDark] ? NSScrollerKnobStyleLight : NSScrollerKnobStyleDefault;
 }
 
-- (NSColor *)dimmedDefaultBackgroundColor {
-    return [self colorForCode:ALTSEM_DEFAULT
-                        green:0
-                         blue:0
-                    colorMode:ColorModeAlternate
-                         bold:NO
-                        faint:NO
-                 isBackground:YES];
-}
-
 - (NSFont *)font {
     return _primaryFont.font;
 }
