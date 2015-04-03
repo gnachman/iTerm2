@@ -246,21 +246,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
               kEncodedColorDictionaryAlphaComponent: @(alpha) };
 }
 
-- (NSColor *)colorMutedBy:(double)muting towards:(NSColor *)baseColor {
-    CGFloat r = [self redComponent];
-    CGFloat g = [self greenComponent];
-    CGFloat b = [self blueComponent];
-
-    CGFloat baseR = [baseColor redComponent];
-    CGFloat baseG = [baseColor greenComponent];
-    CGFloat baseB = [baseColor blueComponent];
-
-    return [NSColor colorWithCalibratedRed:(1 - muting) * r + muting * baseR
-                                     green:(1 - muting) * g + muting * baseG
-                                      blue:(1 - muting) * b + muting * baseB
-                                     alpha:1.0];
-}
-
 - (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background {
     CGFloat a[4];
     CGFloat b[4];
