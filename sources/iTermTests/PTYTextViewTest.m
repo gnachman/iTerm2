@@ -1861,7 +1861,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(4, 2)];
 }
 
-// Mark
 - (void)testMark {
     [self doGoldenTestForInput:@"abc\r\ndef\r\nghi"
                           name:NSStringFromSelector(_cmd)
@@ -1889,7 +1888,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(5, 5)];
 }
 
-// Find matches
 - (void)testFindMatches {
     [self doGoldenTestForInput:@"abxxfghxxxxl"
                           name:NSStringFromSelector(_cmd)
@@ -1912,8 +1910,29 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(5, 5)];
 }
 
-// Oversize glyphs
-// Emoji
+- (void)testOversizeGlyphs {
+    // Combining accents that draw into line above and line below. The arrow glyph is single-width
+    // but occupies two cells. Although other text may draw over the out-of-range bits the background
+    // should not obscure any of it.
+    [self doGoldenTestForInput:@"\e[42mxyz\r\n\e[0;34m⏎\u0301\u0301\u0301\u0301\u0301\u0327\u0327\u0327\u0327\u0327\e[0;41mab\r\n\e[43m123"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(4, 3)];
+}
+
+- (void)testEmoji {
+    // The exclamation point tests the case where CTRunGetGlyphsPtr returns nil. It has a combining
+    // mark that colors it.
+    [self doGoldenTestForInput:@"😄 1️⃣ ❗ \r\n\e[41m🐶 🎅 🚀 "
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(10, 2)];
+}
+
 // Emoji exclamation point
 // Combining mark
 // Surrogate pair
