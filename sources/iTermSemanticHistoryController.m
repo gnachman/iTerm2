@@ -236,10 +236,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (BOOL)openFile:(NSString *)fullPath {
+    DLog(@"Open file %@", fullPath);
     return [[NSWorkspace sharedWorkspace] openFile:fullPath];
 }
 
 - (BOOL)openURL:(NSURL *)url {
+    DLog(@"Open URL %@", url);
     return [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
