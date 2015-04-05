@@ -1935,12 +1935,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         }
     }
 
-    // Make sure we didn't land on the right half of a double-width character
-    screen_char_t *aLine = [self getLineAtScreenIndex:currentGrid_.cursorY];
-    unichar c = aLine[currentGrid_.cursorX].code;
-    if ((c == DWC_RIGHT || c == DWC_SKIP) && !aLine[currentGrid_.cursorX].complexChar) {
-        [self doBackspace];
-    }
+    // It is OK to land on the right half of a double-width character (issue 3475).
 }
 
 // Reverse wrap is allowed when the cursor is on the left margin or left edge, wraparoundMode is
