@@ -653,6 +653,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                              selector:@selector(hideToolbelt)
                                                  name:kToolbeltShouldHide
                                                object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowDidBecomeKey:)
+                                                 name:NSWindowDidBecomeKeyNotification
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowDidResignKey:)
+                                                 name:NSWindowDidResignKeyNotification
+                                               object:nil];
     PtyLog(@"set window inited");
     self.windowInitialized = YES;
     useTransparency_ = YES;
@@ -2001,7 +2011,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (PTYSession *aSession in [tab sessions]) {
         [tmuxController registerSession:aSession withPane:[aSession tmuxPane] inWindow:window];
         [aSession setTmuxController:tmuxController];
-        [self setDimmingForSession:aSession];
+        [self updateDimAndBlurForSession:aSession];
     }
     [self endTmuxOriginatedResize];
 }
@@ -2408,7 +2418,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (PTYSession* aSession in [self allSessions]) {
         [aSession updateDisplay];
         [[aSession view] setBackgroundDimmed:NO];
-        [aSession setFocused:aSession == [self currentSession]];
+        [aSession setFocused:aSession == [self currentSession]];        
+        [self updateDimAndBlurForSession:aSession];
     }
     // Some users report that the first responder isn't always set properly. Let's try to fix that.
     // This attempt (4/20/13) is to fix bug 2431.
@@ -2709,6 +2720,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         tabBarControl.flashing = NO;
         [self showMenuBar];
     }
+    
     // update the cursor
     [[[self currentSession] textview] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
@@ -2720,6 +2732,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     for (PTYSession* aSession in [self allSessions]) {
         [aSession setFocused:NO];
+        [self updateDimAndBlurForSession:aSession];
     }
 }
 
@@ -3782,7 +3795,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[aSession textview] setNeedsDisplay:YES];
         [aSession updateDisplay];
         [aSession scheduleUpdateIn:kFastTimerIntervalSec];
-        [self setDimmingForSession:aSession];
+        [self updateDimAndBlurForSession:aSession];
         [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
     }
 
@@ -4907,7 +4920,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];
-    [self setDimmingForSession:targetSession];
+    [self updateDimAndBlurForSession:targetSession];
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];
     }
@@ -5457,7 +5470,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [[self currentTab] setBroadcasting:NO];
     }
     broadcastMode_ = mode;
-        [self setDimmingForSessions];
+    [self updateDimAndBlurForSessions];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
@@ -5577,7 +5590,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)setDimmingForSession:(PTYSession *)aSession
+- (void)updateDimAndBlurForSession:(PTYSession *)aSession
 {
     BOOL canDim = [iTermPreferences boolForKey:kPreferenceKeyDimInactiveSplitPanes];
     if (!canDim) {
@@ -5596,13 +5609,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // broadcasting to the current session.
         [[aSession view] setDimmed:YES];
     }
+    [[aSession tab] recheckBlur];
     [[aSession view] setNeedsDisplay:YES];
 }
 
-- (void)setDimmingForSessions
+- (void)updateDimAndBlurForSessions
 {
     for (PTYSession *aSession in [self allSessions]) {
-        [self setDimmingForSession:aSession];
+        [self updateDimAndBlurForSession:aSession];
     }
 }
 
@@ -5686,11 +5700,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
         for (PTYSession* aSession in [aTab sessions]) {
-                        [self setDimmingForSession:aSession];
+            [self updateDimAndBlurForSession:aSession];
             [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
 
             // In case dimming amount slider moved update the dimming amount.
             [[aSession view] updateDim];
+
+            [[aSession tab] recheckBlur];
         }
     }
 

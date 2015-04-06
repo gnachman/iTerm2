@@ -24,6 +24,11 @@
     IBOutlet NSSlider *_transparency;
     IBOutlet NSButton *_useBlur;
     IBOutlet NSSlider *_blurRadius;
+    IBOutlet NSButton *_useInactiveTransparency;
+    IBOutlet NSSlider *_inactiveTransparency;
+    IBOutlet NSSlider *_inactiveTextTransparency;
+    IBOutlet NSButton *_useInactiveBlur;
+    IBOutlet NSSlider *_inactiveBlurRadius;
     IBOutlet NSButton *_useBackgroundImage;
     IBOutlet iTermImageWell *_backgroundImagePreview;
     IBOutlet NSButton *_backgroundImageTiled;
@@ -70,6 +75,36 @@
                     key:KEY_BLUR_RADIUS
                    type:kPreferenceInfoTypeSlider];
     
+    info = [self defineControl:_useInactiveTransparency
+                           key:KEY_USE_INACTIVE_TRANSPARENCY
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        _inactiveTransparency.enabled = (_useInactiveTransparency.state == NSOnState);
+        _inactiveTextTransparency.enabled = (_useInactiveTransparency.state == NSOnState);
+        _useInactiveBlur.enabled = (_useInactiveTransparency.state == NSOnState);
+    };
+    
+    [self defineControl:_inactiveTransparency
+                    key:KEY_INACTIVE_TRANSPARENCY
+                   type:kPreferenceInfoTypeSlider];
+    
+    [self defineControl:_inactiveTextTransparency
+                    key:KEY_INACTIVE_TEXT_TRANSPARENCY
+                   type:kPreferenceInfoTypeSlider];
+    
+    info = [self defineControl:_useInactiveBlur
+                           key:KEY_INACTIVE_BLUR
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() {
+        _inactiveBlurRadius.enabled =
+                (_useInactiveTransparency.state == NSOnState &&
+                        _useInactiveBlur.state == NSOnState);
+    };
+    
+    [self defineControl:_inactiveBlurRadius
+                    key:KEY_INACTIVE_BLUR_RADIUS
+                   type:kPreferenceInfoTypeSlider];
+        
     [self defineControl:_backgroundImageTiled
                     key:KEY_BACKGROUND_IMAGE_TILED
                    type:kPreferenceInfoTypeCheckbox];

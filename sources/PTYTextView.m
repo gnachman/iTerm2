@@ -155,6 +155,8 @@ static const int kBadgeRightMargin = 10;
 
     // Dimmed background color with alpha.
     double _cachedBackgroundColorAlpha;  // cached alpha value (comparable to another double)
+    
+    BOOL _windowInactive;
 
     // Helps with "selection scroll"
     iTermSelectionScrollHelper *_selectionScrollHelper;
@@ -317,6 +319,16 @@ static const int kBadgeRightMargin = 10;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
+                                                   object:nil];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidBecomeKey:)
+                                                     name:NSWindowDidBecomeKeyNotification
+                                                   object:nil];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidResignKey:)
+                                                     name:NSWindowDidResignKeyNotification
                                                    object:nil];
 
         _numberOfIMELines = 0;
@@ -703,6 +715,9 @@ static const int kBadgeRightMargin = 10;
         color = [_colorMap mutedColorForKey:key];
     } else {
         color = [_colorMap dimmedColorForKey:key];
+        if (_windowInactive) {
+            color = [color colorWithAlphaComponent:[self textTransparencyAlpha]];
+        }
     }
     if (isFaint) {
         color = [color colorWithAlphaComponent:0.5];
@@ -5217,6 +5232,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)setInactiveTransparency:(double)inactiveTransparency {
+    _inactiveTransparency = inactiveTransparency;
+    [_colorMap invalidateCache];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setInactiveTextTransparency:(double)inactiveTextTransparency {
+    _inactiveTextTransparency = inactiveTextTransparency;
+    [_colorMap invalidateCache];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setUseInactiveTransparency:(BOOL)useInactiveTransparency {
+    _useInactiveTransparency = useInactiveTransparency;
+    [_colorMap invalidateCache];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setWindowInactive:(BOOL)windowInactive {
+    _windowInactive = windowInactive;
+    [_colorMap invalidateCache];
+    [self setNeedsDisplay:YES];
+}
+
 - (void)setBlend:(double)fVal
 {
     _blend = MIN(MAX(0.3, fVal), 1);
@@ -6382,7 +6421,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int WIDTH = [_dataSource width];
     screen_char_t* theLine = [_dataSource getLineAtIndex:line];
     BOOL hasBGImage = [_delegate textViewHasBackgroundImage];
+
     double selectedAlpha = 1.0 - _transparency;
+    if (_windowInactive) {
+        selectedAlpha = 1.0 - _inactiveTransparency;
+    }
     double alphaIfTransparencyInUse = [self transparencyAlpha];
     BOOL reversed = [[_dataSource terminal] reverseVideo];
     NSColor *aColor = nil;
@@ -7007,7 +7050,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             isBold = screenChar.bold;
             isFaint = screenChar.faint;
-            
+
             // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
             NSColor* proposedForeground = [[self colorForCode:fgColor
                                                         green:fgGreen
@@ -7036,7 +7079,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                              alpha:1]];
                 }
             }
-            
+
             BOOL saved = _useBrightBold;
             _useBrightBold = NO;
             [self _drawCharacter:screenChar
@@ -7146,7 +7189,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                faint:screenChar.faint
                         isBackground:NO];
     }
-    
+
     NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
     CGFloat bgBrightness = [bgColor perceivedBrightness];
     if (column > 0) {
@@ -7170,7 +7213,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (double)transparencyAlpha {
-    return [self useTransparency] ? 1.0 - _transparency : 1.0;
+    if ([self useTransparency]) {
+        if (_windowInactive && [self useInactiveTransparency]) {
+            return 1.0 - _inactiveTransparency;
+        }
+        return 1.0 - _transparency;
+    }
+    return 1.0;
+}
+
+- (double)textTransparencyAlpha {
+    if ([self useTransparency] && _windowInactive && [self useInactiveTransparency]) {
+        return 1.0 - _inactiveTextTransparency;
+    }
+    return 1.0;
 }
 
 - (screen_char_t)charForCursorAtColumn:(int)column
@@ -8029,6 +8085,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
     _makeFirstResponderWhenAppBecomesActive = NO;
+}
+
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    if ([notification object] == [self window]) {
+        [self setWindowInactive:NO];
+    }
+}
+
+- (void)windowDidResignKey:(NSNotification *)notification {
+    if ([notification object] == [self window]) {
+        [self setWindowInactive:YES];
+    }
 }
 
 - (void)_settingsChanged:(NSNotification *)notification

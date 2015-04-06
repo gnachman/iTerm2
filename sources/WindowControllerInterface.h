@@ -235,7 +235,7 @@ typedef enum {
 - (void)softCloseSession:(PTYSession *)aSession;
 
 // Update sessions' dimming status.
-- (void)setDimmingForSessions;
+- (void)updateDimAndBlurForSessions;
 
 // All sessions in this window.
 - (NSArray*)allSessions;

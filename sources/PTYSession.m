@@ -801,6 +801,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
      horizontalSpacing:[[_profile objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
        verticalSpacing:[[_profile objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
+    [self setInactiveTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TRANSPARENCY inProfile:_profile]];
+    [self setInactiveTextTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TEXT_TRANSPARENCY inProfile:_profile]];
+    [self setUseInactiveTransparency:[iTermProfilePreferences boolForKey:KEY_USE_INACTIVE_TRANSPARENCY inProfile:_profile]];
     const float theBlend =
         [_profile objectForKey:KEY_BLEND] ? [[_profile objectForKey:KEY_BLEND] floatValue] : 0.5;
     [self setBlend:theBlend];
@@ -2281,6 +2284,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // transparency
     [self setTransparency:[iTermProfilePreferences floatForKey:KEY_TRANSPARENCY inProfile:aDict]];
+    [self setUseInactiveTransparency:[iTermProfilePreferences boolForKey:KEY_USE_INACTIVE_TRANSPARENCY inProfile:aDict]];
+    [self setInactiveTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TRANSPARENCY inProfile:aDict]];
+    [self setInactiveTextTransparency:[iTermProfilePreferences floatForKey:KEY_INACTIVE_TEXT_TRANSPARENCY inProfile:aDict]];
     [self setBlend:[iTermProfilePreferences floatForKey:KEY_BLEND inProfile:aDict]];
 
     // bold 
@@ -2659,12 +2665,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 // Changes transparency
 
-- (float)transparency
+- (double)transparency
 {
     return [_textview transparency];
 }
 
-- (void)setTransparency:(float)transparency
+- (void)setTransparency:(double)transparency
 {
     // Limit transparency because fully transparent windows can't be clicked on.
     if (transparency > 0.9) {
@@ -2673,13 +2679,60 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setTransparency:transparency];
 }
 
-- (float)blend
+- (double)inactiveTransparency {
+    return [_textview inactiveTransparency];
+}
+
+- (double)inactiveTextTransparency {
+    return [_textview inactiveTextTransparency];
+}
+
+- (void)setInactiveTransparency:(double)inactiveTransparency {
+    // Limit transparency because fully transparent windows can't be clicked on.
+    if (inactiveTransparency > 0.9) {
+        inactiveTransparency = 0.9;
+    }
+    [_textview setInactiveTransparency:inactiveTransparency];
+}
+
+- (void)setInactiveTextTransparency:(double)inactiveTextTransparency {
+    // Limit transparency because fully transparent windows can't be clicked on.
+    if (inactiveTextTransparency > 0.9) {
+        inactiveTextTransparency = 0.9;
+    }
+    [_textview setInactiveTextTransparency:inactiveTextTransparency];
+}
+
+- (BOOL)useInactiveTransparency {
+    return [_textview useInactiveTransparency];
+}
+
+- (void)setUseInactiveTransparency:(BOOL)useInactiveTransparency {
+    [_textview setUseInactiveTransparency:useInactiveTransparency];
+}
+
+- (BOOL)inactiveBlur {
+    return [iTermProfilePreferences boolForKey:KEY_INACTIVE_BLUR inProfile:_profile];
+}
+
+- (BOOL)blur {
+    return [iTermProfilePreferences boolForKey:KEY_BLUR inProfile:_profile];
+}
+
+- (double)inactiveBlurRadius {
+    return [iTermProfilePreferences floatForKey:KEY_INACTIVE_BLUR_RADIUS inProfile:_profile];
+}
+
+- (double)blurRadius {
+    return [iTermProfilePreferences floatForKey:KEY_BLUR_RADIUS inProfile:_profile];
+}
+
+- (double)blend
 {
     return [_textview blend];
 }
 
-- (void)setBlend:(float)blendVal
-{
+- (void)setBlend:(double)blendVal {
     [_textview setBlend:blendVal];
 }
 
@@ -4659,7 +4712,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)textViewDrawBackgroundImageInView:(NSView *)view
                                  viewRect:(NSRect)rect
                    blendDefaultBackground:(BOOL)blendDefaultBackground {
-    const float alpha = _textview.useTransparency ? (1.0 - _textview.transparency) : 1.0;
+    float alpha = [_textview transparencyAlpha];
     if (_backgroundImage) {
         NSRect localRect = [_view convertRect:rect fromView:view];
         NSImage *image;

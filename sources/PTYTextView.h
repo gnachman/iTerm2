@@ -199,11 +199,17 @@ typedef enum {
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;
 
+// Inactive Window Transparency level. 0 to 1.
+@property(nonatomic, assign) double inactiveTransparency;
+
+@property(nonatomic, assign) double inactiveTextTransparency;
+
 // Blending level for background color over background image
 @property(nonatomic, assign) double blend;
 
 // Should transparency be used?
 @property(nonatomic, readonly) BOOL useTransparency;
+@property(nonatomic, readonly) BOOL useInactiveTransparency;
 
 // Indicates if the last key pressed was a repeat.
 @property(nonatomic, readonly) BOOL keyIsARepeat;
@@ -418,6 +424,12 @@ typedef enum {
                workingDirectory:(NSString *)workingDirectory
                          prefix:(NSString *)prefix
                          suffix:(NSString *)suffix;
+
+// Get the transparency value for view based on if this window is key or not.
+- (double)transparencyAlpha;
+
+// Allow a special transparency for inactive windows.
+- (void)setUseInactiveTransparency:(BOOL)useInactiveTransparency;
 
 @end
 

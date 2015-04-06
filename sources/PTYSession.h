@@ -192,10 +192,18 @@ typedef enum {
 @property(nonatomic, retain) NSImage *backgroundImage;
 
 @property(nonatomic, retain) iTermColorMap *colorMap;
-@property(nonatomic, assign) float transparency;
-@property(nonatomic, assign) float blend;
+@property(nonatomic, assign) double transparency;
+@property(nonatomic, assign) BOOL useInactiveTransparency;
+@property(nonatomic, assign) double inactiveTransparency;
+@property(nonatomic, assign) double inactiveTextTransparency;
+@property(nonatomic, assign) double blend;
 @property(nonatomic, assign) BOOL useBoldFont;
 @property(nonatomic, assign) BOOL useItalicFont;
+
+@property(nonatomic, readonly) BOOL inactiveBlur;
+@property(nonatomic, readonly) BOOL blur;
+@property(nonatomic, readonly) double inactiveBlurRadius;
+@property(nonatomic, readonly) double blurRadius;
 
 @property(nonatomic, readonly) BOOL logging;
 @property(nonatomic, readonly) BOOL exited;

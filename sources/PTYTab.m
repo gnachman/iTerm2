@@ -155,6 +155,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         activeSession_ = session;
         [session setActivityCounter:@(_activityCounter++)];
         [[session view] setDimmed:NO];
+        [[session tab] recheckBlur];
         [self setRoot:[[[PTYSplitView alloc] init] autorelease]];
         PTYTab *oldTab = [session tab];
         if (oldTab && [oldTab tmuxWindow] >= 0) {
@@ -360,7 +361,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             // a invisible textview the first responder.
             [[realParentWindow_ window] makeFirstResponder:[session textview]];
         }
-        [realParentWindow_ setDimmingForSessions];
+        [realParentWindow_ updateDimAndBlurForSessions];
     }
     for (PTYSession* aSession in [self sessions]) {
         [[aSession textview] refresh];
@@ -1855,51 +1856,86 @@ static NSString* FormatRect(NSRect r) {
 }
 
 // Blur the window if any session is blurred.
-- (bool)blur
-{
-    int n = 0;
-    int y = 0;
+- (BOOL)blur {
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
         if ([session transparency] > 0 &&
             [[session textview] useTransparency] &&
             [[[session profile] objectForKey:KEY_BLUR] boolValue]) {
-            ++y;
-        } else {
-            ++n;
+            return YES;
         }
     }
-    return y > 0;
+    return NO;
 }
 
-- (double)blurRadius
-{
+- (double)averageBlurRadiusForInactive:(BOOL)inactive {
     double sum = 0;
     double count = 0;
-    NSArray* sessions = [self sessions];
-    for (PTYSession* session in sessions) {
-        if ([[[session profile] objectForKey:KEY_BLUR] boolValue]) {
-            sum += [[session profile] objectForKey:KEY_BLUR_RADIUS] ? [[[session profile] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
+    NSArray *sessions = [self sessions];
+    for (PTYSession *session in sessions) {
+        BOOL useBlur = inactive ? [session inactiveBlur] : [session blur];
+        if (useBlur) {
+            double blurRadius = inactive ? [session inactiveBlurRadius] : [session blurRadius];
+            sum += blurRadius;
             ++count;
         }
     }
     if (count > 0) {
         return sum / count;
     } else {
-        // This shouldn't actually happen, but better save than divide by zero.
+        // This shouldn't actually happen, but better safe than divide by zero.
         return 2.0;
     }
 }
 
-- (void)recheckBlur
-{
+- (double)blurRadius {
+    return [self averageBlurRadiusForInactive:NO];
+}
+
+- (BOOL)useInactiveTransparency {
+    NSArray *sessions = [self sessions];
+    for (PTYSession *session in sessions) {
+        if ([session useInactiveTransparency]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)inactiveBlur {
+    NSArray* sessions = [self sessions];
+    for (PTYSession* session in sessions) {
+        if ([session inactiveTransparency] > 0 &&
+            [session useInactiveTransparency] &&
+            [session inactiveBlur]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (double)inactiveBlurRadius {
+    return [self averageBlurRadiusForInactive:YES];
+}
+
+- (void)recheckBlur {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
-        if ([self blur]) {
-            [parentWindow_ enableBlur:[self blurRadius]];
+        if ([[[self realParentWindow] window] isKeyWindow]) {
+            if ([self blur]) {
+                [parentWindow_ enableBlur:[self blurRadius]];
+            } else {
+                [parentWindow_ disableBlur];
+            }
         } else {
-            [parentWindow_ disableBlur];
+            if ([self inactiveBlur]) {
+                [parentWindow_ enableBlur:[self inactiveBlurRadius]];
+            } else if (![self useInactiveTransparency] && [self blur]) {
+                [parentWindow_ enableBlur:[self blurRadius]];
+            } else {
+                [parentWindow_ disableBlur];
+            }
         }
     }
 }
@@ -2268,7 +2304,7 @@ static NSString* FormatRect(NSRect r) {
     }
 
     [self numberOfSessionsDidChange];
-    [term setDimmingForSessions];
+    [term updateDimAndBlurForSessions];
     [term updateTabColors];
 }
 
@@ -3068,7 +3104,7 @@ static NSString* FormatRect(NSRect r) {
     [realParentWindow_ tmuxTabLayoutDidChange:YES];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
-        [realParentWindow_ setDimmingForSessions];
+    [realParentWindow_ updateDimAndBlurForSessions];
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
