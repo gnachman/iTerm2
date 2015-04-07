@@ -116,6 +116,7 @@ static const int kBadgeRightMargin = 10;
     BOOL _nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
 
     // NSTextInputClient support
+    NSEvent* _keydownEvent;
     BOOL _inputMethodIsInserting;
     NSRange _inputMethodSelectedRange;
     NSRange _inputMethodMarkedRange;
@@ -2208,7 +2209,8 @@ NSMutableArray* screens=0;
         // track the instance of PTYTextView that is currently handling a key event and rerouting
         // calls as needed in -insertText and -doCommandBySelector.
         gCurrentKeyEventTextView = [[self retain] autorelease];
-        [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+        _keydownEvent = event;
+        _inputMethodIsInserting = [self.inputContext handleEvent:event];
         gCurrentKeyEventTextView = nil;
 
         // If the IME didn't want it, pass it on to the delegate
@@ -4779,8 +4781,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // See comment in -keyDown:
         DLog(@"Rerouting doCommandBySelector from %@ to %@", self, gCurrentKeyEventTextView);
         [gCurrentKeyEventTextView doCommandBySelector:aSelector];
+        [self.delegate keyDown:_keydownEvent];
         return;
     }
+    [self.delegate keyDown:_keydownEvent];
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 }
 
