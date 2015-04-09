@@ -1087,6 +1087,28 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(4, 2)];
 }
 
+- (void)testBackgroundImageWithTransparency {
+    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    [self doGoldenTestForInput:@"a\e[31mb\e[41mc"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              // Change the session's class to one that always returns YES for
+                              // use transparency.
+                              PTYSession *session = (PTYSession *)textView.delegate;
+                              object_setClass(session, [iTermFakeSessionForPTYTextViewTest class]);
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  // Draw a red background to ensure transparency.
+                                  [[NSColor redColor] set];
+                                  NSRectFill(textView.bounds);
+                              };
+                          }
+              profileOverrides:@{ KEY_BACKGROUND_IMAGE_LOCATION: pathToImage,
+                                  KEY_BLEND: @0.1,
+                                  KEY_TRANSPARENCY: @0 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(3, 1)];
+}
+
 // Smart cursor color
 // All white neighbors->cursor will be black because text color is too close to white.
 - (void)testSmartCursorColor_allWhite {
@@ -1424,7 +1446,6 @@ static const BOOL gCreateGoldens = YES;
 }
 
 
-// Non-filled in block cursor
 - (void)testFrameCursor {
     [self doGoldenTestForInput:@"abc\e[1;2H"
                           name:NSStringFromSelector(_cmd)
@@ -1626,7 +1647,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(2, 2)];
 }
 
-// Dimming text&bg + min contrast
 - (void)testDimmingTextAndBgAndMinimumContrast {
     NSString *input = [NSString stringWithFormat:@"%@%@x",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1643,7 +1663,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(2, 2)];
 }
 
-// Dimming text + min contrast.
 - (void)testDimmingTextAndMinimumContrast {
     NSString *input = [NSString stringWithFormat:@"%@%@x",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1660,7 +1679,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(2, 2)];
 }
 
-// Cursor boost
 - (void)testCursorBoost {
     NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1682,7 +1700,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(6, 2)];
 }
 
-// Dimming text&bg + cursor boost
 - (void)testDimmingTextAndBgAndCursorBoost {
     NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1707,7 +1724,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(6, 2)];
 }
 
-// Dimming text + cursor boost
 - (void)testDimmingTextAndCursorBoost {
     NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1732,7 +1748,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(6, 2)];
 }
 
-// Min contrast + cursor boost
 - (void)testMinimumContrastAndCursorBoost {
     NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1755,7 +1770,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(6, 2)];
 }
 
-// Dimming text&bg + cursor boost + min contrast
 // There is an issue where where the passed-in color can be in a different color space than the
 // default background color. It doesn't make sense to combine RGB values from different color
 // spaces. The effects are generally subtle. The affects the "b", which seems to become invisble.
@@ -1783,7 +1797,6 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(6, 2)];
 }
 
-// Dimming text + cursor boost + min contrast
 - (void)testDimmingTextAndCursorBoostAndMinimumContrast {
     NSString *input = [NSString stringWithFormat:@"a%@b%@c\e[m ",
                        [self sequenceForForegroundColorWithRed:.51 green:.59 blue:.85],
@@ -1933,13 +1946,93 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(10, 2)];
 }
 
-// Emoji exclamation point
-// Combining mark
-// Surrogate pair
-// DWC
-// Line drawing
-// Faint text
-// faint text + transparency
+- (void)testCombiningMark {
+    [self doGoldenTestForInput:@"\r\nx\u0301\u0301\u0301"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testSurrogatePair {
+    [self doGoldenTestForInput:@"\xf0\x90\x90\xb7"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testSurrogatePairWithCombiningMark {
+    [self doGoldenTestForInput:@"\xf0\x90\x90\xb7\u0301\u0301"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(2, 2)];
+}
+
+- (void)testDoubleWidthCharacter {
+    [self doGoldenTestForInput:@"123456789Ｌｏｒ\e[43mｅ\e[31mｍ\e[42mｉ\e[mｐ\u0301ｓｕｍ"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(9, 3)];
+}
+
+- (void)testBoxDrawing {
+    [self doGoldenTestForInput:@"\e(0"
+                               @"lqqwqqk\r\n"
+                               @"\e[31m"
+                               @"x  x  x\r\n"
+                               @"\e[42m"
+                               @"tqqnqqu\r\n"
+                               @"\e[m"
+                               @"x  x  x\r\n"
+                               @"mqqvqqj"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(9, 5)];
+}
+
+- (void)testFaintText {
+    [self doGoldenTestForInput:@"Regular\r\n"
+                               @"\e[2mFaint\e[m\r\n"
+                               @"\e[1mBold\r\n"
+                               @"\e[2mFaint bold"
+                          name:NSStringFromSelector(_cmd)
+                          hook:nil
+              profileOverrides:nil
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(11, 5)];
+}
+
+- (void)testFaintTextWithTransparency {
+    [self doGoldenTestForInput:@"Regular\r\n"
+                               @"\e[2mFaint\e[m\r\n"
+                               @"\e[1mBold\r\n"
+                               @"\e[2mFaint bold"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              // Change the session's class to one that always returns YES for
+                              // use transparency.
+                              PTYSession *session = (PTYSession *)textView.delegate;
+                              object_setClass(session, [iTermFakeSessionForPTYTextViewTest class]);
+                              textView.drawingHook = ^(iTermTextDrawingHelper *helper) {
+                                  // Draw a red background to ensure transparency.
+                                  [[NSColor redColor] set];
+                                  NSRectFill(textView.bounds);
+                              };
+                          }
+              profileOverrides:@{ KEY_TRANSPARENCY: @0.5 }
+                  createGolden:gCreateGoldens
+                          size:VT100GridSizeMake(11, 5)];
+}
+
 
 - (void)testBasicDraw {
     [self doGoldenTestForInput:@"abc"
