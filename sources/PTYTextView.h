@@ -245,6 +245,7 @@ typedef enum {
 // Blending level for background color over background image
 @property(nonatomic, assign) float blend;
 
+// Used by tests to modify drawing helper. Called within -drawRect:.
 typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property(nonatomic, copy) PTYTextViewDrawingHookBlock drawingHook;
 

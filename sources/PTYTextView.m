@@ -368,6 +368,8 @@ static const int kDragThreshold = 3;
     _findOnPageHelper.delegate = nil;
     [_findOnPageHelper release];
     [_drawingHook release];
+    _drawingHelper.delegate = nil;
+    [_drawingHelper release];
     
     [super dealloc];
 }
@@ -583,7 +585,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)setCursorNeedsDisplay {
-    [self setNeedsDisplayInRect:_drawingHelper.cursorFrame];
+    [self setNeedsDisplayInRect:[self cursorFrame]];
 }
 
 - (void)setCursorType:(ITermCursorType)value {
@@ -1198,8 +1200,7 @@ static const int kDragThreshold = 3;
     return NO;
 }
 
-- (BOOL)_isAnythingBlinking
-{
+- (BOOL)_isAnythingBlinking {
     return [self isCursorBlinking] || (_blinkAllowed && [self _isTextBlinking]);
 }
 
@@ -1291,8 +1292,9 @@ static const int kDragThreshold = 3;
 
 // This is called periodically. It updates the frame size, scrolls if needed, ensures selections
 // and subviews are positioned correctly in case things scrolled
-// Returns YES if blinking text or cursor was found.
-// TODO: This is a stupid micro-optimization and should be removed.
+//
+// Returns YES if blinking text or cursor was found. TODO: This is a stupid
+// micro-optimization and should be removed.
 - (BOOL)refresh {
     DebugLog(@"PTYTextView refresh called");
     if (_dataSource == nil || _inRefresh) {
@@ -3467,7 +3469,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      bold:NO
                                     faint:NO
                              isBackground:YES];
-    fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];  // TODO: Implement this method
+    fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
     
     int underlineStyle = c.underline ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
 
@@ -4895,10 +4897,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - Find Cursor
 
 - (NSRect)cursorFrame {
-    _drawingHelper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
-                                                    _dataSource.cursorY - 1);
-    _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
-    return _drawingHelper.cursorFrame;
+    int lineStart = [_dataSource numberOfLines] - [_dataSource height];
+    int cursorX = [_dataSource cursorX] - 1;
+    int cursorY = [_dataSource cursorY] - 1;
+    return NSMakeRect(MARGIN + cursorX * _charWidth,
+                      (lineStart + cursorY) * _lineHeight,
+                      _charWidth,
+                      _lineHeight);
 }
 
 - (CGFloat)verticalOffset {
@@ -5939,7 +5944,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (_previousCursorCoord.x != cursorPosition.x ||
         _previousCursorCoord.y - totalScrollbackOverflow != cursorPosition.y) {
         // Mark previous and current cursor position dirty
-        DLog(@"Mark previous cursor position %d,%lldld dirty",
+        DLog(@"Mark previous cursor position %d,%lld dirty",
              _previousCursorCoord.x, _previousCursorCoord.y - totalScrollbackOverflow);
         int maxX = [_dataSource width] - 1;
         if (_drawingHelper.highlightCursorLine) {
@@ -5949,7 +5954,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             [_dataSource setCharDirtyAtCursorX:MIN(maxX, _previousCursorCoord.x)
                                              Y:_previousCursorCoord.y - totalScrollbackOverflow];
-            DLog(@"Mark current cursor position %d,%lldld dirty", _previousCursorCoord.x,
+            DLog(@"Mark current cursor position %d,%lld dirty", _previousCursorCoord.x,
                  _previousCursorCoord.y - totalScrollbackOverflow);
             [_dataSource setCharDirtyAtCursorX:MIN(maxX, cursorPosition.x) Y:cursorPosition.y];
         }

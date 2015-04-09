@@ -151,7 +151,7 @@ static const int kBadgeRightMargin = 10;
     // The range of chars in the line that need to be drawn.
     VT100GridCoordRange coordRange = [self drawableCoordRangeForRect:rect];
 
-    double curLineWidth = _gridSize.width * _cellSize.width;
+    const double curLineWidth = _gridSize.width * _cellSize.width;
     if (_cellSize.height <= 0 || curLineWidth <= 0) {
         DLog(@"height or width too small");
         return;
@@ -234,6 +234,7 @@ static const int kBadgeRightMargin = 10;
         }
     }
 
+    // Prevent oversize glyphs from drawing in the excess or top margin areas.
     [self drawExcessAtLine:coordRange.end.y];
     [self drawTopMargin];
 
@@ -263,6 +264,7 @@ static const int kBadgeRightMargin = 10;
                                  ceil(run->range.length * _cellSize.width),
                                  _cellSize.height);
         NSColor *color = [self unprocessedColorForBackgroundRun:run];
+        // The unprocessed color is needed for minimum contrast computation for text color.
         box.unprocessedBackgroundColor = color;
         color = [_colorMap processedBackgroundColorForBackgroundColor:color];
         box.backgroundColor = color;
@@ -515,8 +517,8 @@ static const int kBadgeRightMargin = 10;
 
     const CGFloat alpha = 0.75;
     NSGradient *gradient =
-    [[[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
-                                   endingColor:[bgColor colorWithAlphaComponent:alpha]] autorelease];
+        [[[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
+                                       endingColor:[bgColor colorWithAlphaComponent:alpha]] autorelease];
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
     [gradient drawInRect:NSMakeRect(x - 20, y, 20, _cellSize.height) angle:0];
 
@@ -877,6 +879,9 @@ static const int kBadgeRightMargin = 10;
     // Note that drawInRect doesn't use the right baseline, but drawWithRect
     // does.
     //
+    // This comment is mostly out-of-date, as this function is now used only
+    // for surrogate pairs, and is ripe for deletion.
+    //
     // This technique was picked because it can find glyphs that aren't in the
     // selected font (e.g., tests/radical.txt). It doesn't draw combining marks
     // as well as CTFontDrawGlyphs (though they are generally passable).  It
@@ -910,8 +915,8 @@ static const int kBadgeRightMargin = 10;
 }
 
 - (void)drawComplexRun:(CRun *)complexRun at:(NSPoint)pos {
-    // Handle cells that are part of an image.
     if (complexRun->attrs.imageCode > 0) {
+        // Handle cells that are part of an image.
         [self drawImageCellInRun:complexRun atPoint:pos];
     } else if ([self complexRunIsBoxDrawingCell:complexRun]) {
         // Special box-drawing cells don't use the font so they look prettier.
@@ -924,7 +929,6 @@ static const int kBadgeRightMargin = 10;
         // used for surrogate pairs, so it's a candidate for deletion.
         [self drawAttributedStringInRun:complexRun at:pos];
     }
-
 }
 
 - (BOOL)drawInputMethodEditorTextAt:(int)xStart

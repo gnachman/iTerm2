@@ -105,7 +105,6 @@
     [backgroundColor set];
     const BOOL frameOnly = !focused;
     if (frameOnly) {
-        // TODO: Cursor could disappear here.
         NSFrameRect(rect);
         return;
     } else {

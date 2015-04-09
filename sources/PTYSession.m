@@ -2916,12 +2916,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)updateDisplayCaller {
-    dispatch_async(dispatch_get_current_queue(), ^{
-        [self updateDisplay];
-    });
-}
-
 - (void)updateDisplay {
     _timerRunning = YES;
     BOOL anotherUpdateNeeded = [NSApp isActive];
@@ -3025,7 +3019,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
                                                      target:self
-                                                   selector:@selector(updateDisplayCaller)
+                                                   selector:@selector(updateDisplay)
                                                    userInfo:[NSNumber numberWithFloat:(float)timeout]
                                                     repeats:NO] retain];
 }
@@ -4703,7 +4697,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     NSColor *unprocessedColor = [_colorMap colorForKey:kColorMapBackground];
     return [_colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];
 }
-
 
 - (void)textViewPostTabContentsChangedNotification
 {

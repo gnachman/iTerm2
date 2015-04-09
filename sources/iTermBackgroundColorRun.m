@@ -118,6 +118,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 
 - (void)dealloc {
     [_backgroundColor release];
+    [_unprocessedBackgroundColor release];
     [super dealloc];
 }
 

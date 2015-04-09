@@ -110,7 +110,7 @@ const double kFindCursorHoleRadius = 30;
     _emitterLayer.emitterShape = kCAEmitterLayerPoint;
 
     // If the emitter layer has multiple emitterCells then it shows white boxes on 10.10.2. So instead
-    // we create an invisibel cell and give it multiple emitterCells.
+    // we create an invisible cell and give it multiple emitterCells.
     _emitterLayer.emitterCells = @[ [self rootEmitterCell] ];
     [self.layer addSublayer:_emitterLayer];
 }
