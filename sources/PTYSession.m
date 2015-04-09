@@ -753,11 +753,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     // Allocate a scrollview
-    _scrollview = [[PTYScrollView alloc] initWithFrame:NSMakeRect(0,
-                                                                  0,
-                                                                  aRect.size.width,
-                                                                  aRect.size.height)
-                                   hasVerticalScroller:[parent scrollbarShouldBeVisible]];
+    _scrollview = [[[PTYScrollView alloc] initWithFrame:NSMakeRect(0,
+                                                                   0,
+                                                                   aRect.size.width,
+                                                                   aRect.size.height)
+                                    hasVerticalScroller:[parent scrollbarShouldBeVisible]] autorelease];
     NSParameterAssert(_scrollview != nil);
     [_scrollview setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
 
