@@ -3406,8 +3406,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)copy:(id)sender
-{
+- (void)copy:(id)sender {
+    // TODO: iTermSelection should use absolute coordinates everywhere. Until that is done, we must
+    // call refresh here to take care of any scrollback overflow that would cause the selected range
+    // to not match reality.
+    [self refresh];
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     NSString *copyString;
 
