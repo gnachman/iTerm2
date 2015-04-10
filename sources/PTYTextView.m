@@ -343,7 +343,9 @@ static const int kBadgeRightMargin = 10;
         if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
             NSLog(@"** Drawing performance timing enabled **");
             drawRectDuration_ = [[MovingAverage alloc] init];
+            drawRectDuration_.alpha = 0.95;
             drawRectInterval_ = [[MovingAverage alloc] init];
+            drawRectInterval_.alpha = 0.95;
         }
         [self viewDidChangeBackingProperties];
         _markImage = [[NSImage imageNamed:@"mark"] retain];
