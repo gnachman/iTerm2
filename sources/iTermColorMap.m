@@ -45,10 +45,12 @@ const int kColorMapAnsiBrightModifier = 8;
     CGFloat _backgroundBlue;
 
     // Memoized colors and components
-    CGFloat _lastTextComponents[3];
+    // Only 3 components are used here, but I'm paranoid screwing up and overflowing.
+    CGFloat _lastTextComponents[4];
     NSColor *_lastTextColor;
 
-    CGFloat _lastBackgroundComponents[3];
+    // This one actually uses four components.
+    CGFloat _lastBackgroundComponents[4];
     NSColor *_lastBackgroundColor;
 }
 
@@ -183,11 +185,11 @@ const int kColorMapAnsiBrightModifier = 8;
     }
     dimmedRgb[3] = 1;
 
-    if (!memcmp(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 4)) {
+    if (!memcmp(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 3)) {
         return _lastTextColor;
     } else {
         [_lastTextColor autorelease];
-        memmove(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 4);
+        memmove(_lastTextComponents, dimmedRgb, sizeof(CGFloat) * 3);
         _lastTextColor = [[NSColor colorWithColorSpace:textColor.colorSpace
                                             components:dimmedRgb
                                                  count:4] retain];

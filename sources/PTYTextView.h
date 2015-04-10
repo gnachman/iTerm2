@@ -109,6 +109,7 @@ typedef enum {
 - (PTYScroller *)textViewVerticalScroller;
 - (BOOL)textViewHasCoprocess;
 - (void)textViewPostTabContentsChangedNotification;
+- (void)textViewInvalidateRestorableState;
 - (void)textViewBeginDrag;
 - (void)textViewMovePane;
 - (void)textViewSwapPane;

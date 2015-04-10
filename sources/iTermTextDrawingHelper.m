@@ -1153,6 +1153,9 @@ static const int kBadgeRightMargin = 10;
     const CGFloat dimmingAmount = colorMap.dimmingAmount;
     const CGFloat mutingAmount = colorMap.mutingAmount;
     const double minimumContrast = _minimumContrast;
+    NSColor *lastUnprocessedColor = nil;
+    NSColor *lastProcessedColor = nil;
+
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
         if (theLine[i].code == DWC_RIGHT) {
@@ -1236,11 +1239,21 @@ static const int kBadgeRightMargin = 10;
                         dimmingAmount > 0.001 ||
                         mutingAmount > 0.001 ||
                         theLine[i].faint)) {  // faint implies alpha<1 and is faster than getting the alpha component
+            NSColor *processedColor;
+            if (attrs.color == lastUnprocessedColor) {
+                processedColor = lastProcessedColor;
+            } else {
+                processedColor = [colorMap processedTextColorForTextColor:attrs.color
+                                                      overBackgroundColor:bgColor];
+                lastUnprocessedColor = attrs.color;
+                lastProcessedColor = processedColor;
+            }
+            
             CRunAttrsSetColor(&attrs,
                               storage,
-                              [colorMap processedTextColorForTextColor:attrs.color
-                                                   overBackgroundColor:bgColor]);
+                              processedColor);
         }
+
         BOOL drawable;
         if (_blinkingItemsVisible || !(_blinkAllowed && theLine[i].blink)) {
             // This char is either not blinking or during the "on" cycle of the

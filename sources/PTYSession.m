@@ -1493,9 +1493,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)finishedHandlingNewOutputOfLength:(int)length {
     _lastOutput = [NSDate timeIntervalSinceReferenceDate];
     _newOutput = YES;
-    if ([iTermAdvancedSettingsModel restoreWindowContents]) {
-        [self.tab.realParentWindow invalidateRestorableState];
-    }
 
     // Make sure the screen gets redrawn soonish
     _updateDisplayUntil = [NSDate timeIntervalSinceReferenceDate] + 10;
@@ -4703,6 +4700,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
                                                         object:self
                                                       userInfo:nil];
+}
+
+- (void)textViewInvalidateRestorableState {
+    if ([iTermAdvancedSettingsModel restoreWindowContents]) {
+        [self.tab.realParentWindow invalidateRestorableState];
+    }
 }
 
 - (void)textViewBeginDrag
