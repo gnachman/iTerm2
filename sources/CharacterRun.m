@@ -9,52 +9,6 @@
 #import "CharacterRun.h"
 #import "ScreenChar.h"
 
-// A mutable set that only uses pointer equality.
-@interface CRunSet : NSObject {
-    NSMutableDictionary *dict_;
-}
-
-- (void)addObject:(NSObject *)object;
-- (BOOL)containsObject:(NSObject *)object;
-- (NSArray *)values;
-
-@end
-
-@implementation CRunSet
-- (id)init {
-    self = [super init];
-    if (self) {
-        dict_ = [[NSMutableDictionary alloc] init];
-    }
-    return self;
-}
-
-- (void)dealloc {
-    [dict_ release];
-    [super dealloc];
-}
-
-- (NSNumber *)keyForObject:(NSObject *)object {
-    return [NSNumber numberWithLongLong:(long long)object];
-}
-
-- (void)addObject:(NSObject *)object {
-    NSNumber *key = [self keyForObject:object];
-    if (![dict_ objectForKey:key]) {
-        [dict_ setObject:object forKey:key];
-    }
-}
-
-- (BOOL)containsObject:(NSObject *)object {
-    return [dict_ objectForKey:[self keyForObject:object]] != nil;
-}
-
-- (NSArray *)values {
-    return [dict_ allValues];
-}
-
-@end
-
 @implementation CRunStorage : NSObject
 
 + (CRunStorage *)cRunStorageWithCapacity:(int)capacity {
@@ -69,7 +23,8 @@
         glyphs_ = malloc(sizeof(CGGlyph) * capacity);
         advances_ = malloc(sizeof(NSSize) * capacity);
         capacity_ = capacity;
-        colors_ = [[CRunSet alloc] init];
+        colors_ = [[NSHashTable alloc] initWithOptions:NSHashTableObjectPointerPersonality
+                                              capacity:2];
         used_ = 0;
     }
     return self;
@@ -79,6 +34,9 @@
     free(codes_);
     free(glyphs_);
     free(advances_);
+    for (NSColor *color in colors_.allObjects) {
+        [color release];
+    }
     [colors_ release];
     [super dealloc];
 }
@@ -118,7 +76,9 @@
 }
 
 - (void)addColor:(NSColor *)color {
-    [colors_ addObject:color];
+    if (![colors_ containsObject:color]) {
+        [colors_ addObject:[color retain]];
+    }
 }
 
 @end
