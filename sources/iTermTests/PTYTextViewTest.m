@@ -578,7 +578,7 @@ static const BOOL gCreateGoldens = YES;
 
 #pragma mark - Drawing Tests
 
-// Character selection
+// Background color should be selected but grayed because window is not focused.
 - (void)testCharacterSelection {
     [self doGoldenTestForInput:@"abcd"
                           name:NSStringFromSelector(_cmd)
@@ -596,7 +596,7 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(5, 2)];
 }
 
-// Box selection
+// A 2x2 box should be selected. The selection color is grayed because the window is unfocused.
 - (void)testBoxSelection {
     [self doGoldenTestForInput:@"abcd\r\nefgh\r\nijkl\r\nmnop"
                           name:NSStringFromSelector(_cmd)
@@ -614,7 +614,8 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(5, 5)];
 }
 
-// Multiple discontinuous selection
+// ab, fg, and jk should be selected. The selection color is grayed because the window is
+// unfocused.
 - (void)testMultipleDiscontinuousSelection {
     [self doGoldenTestForInput:@"abcd\r\nefgh\r\nijkl\r\nmnop"
                           name:NSStringFromSelector(_cmd)
@@ -639,7 +640,8 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(5, 5)];
 }
 
-// Windowed character selection
+// The middle two letters should be selected. The selection color is grayed because the window is
+// unfocused.
 - (void)testWindowedCharacterSelection {
     [self doGoldenTestForInput:@"abcd\r\nefgh\r\nijkl\r\nmnop"
                           name:NSStringFromSelector(_cmd)
@@ -657,7 +659,8 @@ static const BOOL gCreateGoldens = YES;
                           size:VT100GridSizeMake(5, 5)];
 }
 
-// Selected tab orphan
+// A cell cells after the a are selected. The selection color is grayed because the window is
+// unfocused.
 - (void)testSelectedTabOrphan {
     [self doGoldenTestForInput:@"a\t\x08q"
                               name:NSStringFromSelector(_cmd)
@@ -675,6 +678,8 @@ static const BOOL gCreateGoldens = YES;
                               size:VT100GridSizeMake(9, 2)];
 }
 
+// The area between a and b is selected, and so is b. The selection color is grayed because the window is
+// unfocused.
 - (void)testSelectedTab {
     [self doGoldenTestForInput:@"a\tb"
                               name:NSStringFromSelector(_cmd)
@@ -691,6 +696,9 @@ static const BOOL gCreateGoldens = YES;
                       createGolden:gCreateGoldens
                               size:VT100GridSizeMake(9, 2)];
 }
+
+// Although one of the tab fillers after a is selected, only a should appear selected.
+// The selection color is grayed because the window is unfocused.
 
 - (void)testSelectedTabFillerWithoutTab {
     [self doGoldenTestForInput:@"a\tb"
@@ -1843,7 +1851,7 @@ static const BOOL gCreateGoldens = YES;
                               };
                           }
               profileOverrides:nil
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(20, 6)];
 }
 
@@ -1857,7 +1865,7 @@ static const BOOL gCreateGoldens = YES;
                               };
                           }
               profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @NO }
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 2)];
 }
 
@@ -1870,7 +1878,7 @@ static const BOOL gCreateGoldens = YES;
                               };
                           }
               profileOverrides:@{ KEY_USE_BRIGHT_BOLD: @NO }
-                  createGolden:YES
+                  createGolden:gCreateGoldens
                           size:VT100GridSizeMake(4, 2)];
 }
 
