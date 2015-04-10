@@ -120,6 +120,8 @@ static const CGFloat kHelpMargin = 5;
     [tableView_ release];
     [scrollView_ release];
     [boldFont_ release];
+    [entries_ release];
+    [filteredEntries_ release];
     [super dealloc];
 }
 
