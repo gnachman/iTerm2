@@ -5680,11 +5680,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)screenPromptDidStartAtLine:(int)line {
     _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
-    [self screenAddMarkOnLine:line];
+    [[self screenAddMarkOnLine:line] setIsPrompt:YES];
 }
 
-- (void)screenAddMarkOnLine:(int)line {
-    [self markAddedAtLine:line ofClass:[VT100ScreenMark class]];
+- (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
+    return (VT100ScreenMark *)[self markAddedAtLine:line ofClass:[VT100ScreenMark class]];
 }
 
 // Save the current scroll position

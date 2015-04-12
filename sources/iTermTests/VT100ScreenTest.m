@@ -757,7 +757,8 @@
 - (void)screenSaveScrollPosition {
 }
 
-- (void)screenAddMarkOnLine:(int)line {
+- (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
+    return nil;
 }
 
 - (void)screenActivateWindow {

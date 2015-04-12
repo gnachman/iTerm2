@@ -1885,6 +1885,34 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:mark.entry.interval.limit];
+    NSArray *objects;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ [VT100ScreenMark class] ]];
+        for (VT100ScreenMark *nextMark in objects) {
+            if (nextMark.isPrompt) {
+                VT100GridCoordRange range;
+                range.start = [self coordRangeForInterval:mark.entry.interval].end;
+                range.start.x = 0;
+                range.start.y++;
+                range.end = [self coordRangeForInterval:nextMark.entry.interval].start;
+                return range;
+            }
+        }
+    } while (objects && !objects.count);
+
+    // Command must still be running with no subsequent prompt.
+    VT100GridCoordRange range;
+    range.start = [self coordRangeForInterval:mark.entry.interval].end;
+    range.start.x = 0;
+    range.start.y++;
+    range.end.x = 0;
+    range.end.y = self.numberOfLines - self.height + [currentGrid_ numberOfLinesUsed];
+    return range;
+}
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {

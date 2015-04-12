@@ -3591,6 +3591,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action] == @selector(reRunCommand:)) {
         return YES;
     }
+    if ([item action] == @selector(selectCommandOutput:)) {
+        return [_dataSource textViewRangeOfOutputForCommandMark:[item representedObject]].start.x != -1;
+    }
     if ([item action] == @selector(pasteBase64Encoded:)) {
         return [_delegate textViewCanPasteFile];
     }
@@ -3850,6 +3853,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate insertText:[command stringByAppendingString:@"\n"]];
 }
 
+- (void)selectCommandOutput:(id)sender {
+    VT100ScreenMark *mark = [sender representedObject];
+    VT100GridCoordRange range = [_dataSource textViewRangeOfOutputForCommandMark:mark];
+    if (range.start.x == -1) {
+        NSBeep();
+        return;
+    }
+    [_selection beginSelectionAt:range.start
+                            mode:kiTermSelectionModeCharacter
+                          resume:NO
+                          append:NO];
+    [_selection moveSelectionEndpointTo:range.end];
+    [_selection endLiveSelection];
+
+    if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
+        [self copySelectionAccordingToUserPreferences];
+    }
+}
+
 - (NSMenu *)menuForMark:(VT100ScreenMark *)mark directory:(NSString *)directory
 {
     NSMenu *theMenu;
@@ -3899,6 +3921,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                           action:@selector(reRunCommand:)
                                    keyEquivalent:@""] autorelease];
     [theItem setRepresentedObject:mark.command];
+    [theMenu addItem:theItem];
+
+    theItem = [[[NSMenuItem alloc] initWithTitle:@"Select Command Output"
+                                          action:@selector(selectCommandOutput:)
+                                   keyEquivalent:@""] autorelease];
+    [theItem setRepresentedObject:mark];
     [theMenu addItem:theItem];
 
     return theMenu;

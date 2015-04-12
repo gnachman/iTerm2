@@ -52,6 +52,7 @@
 
 // Visible marks that can be navigated.
 @interface VT100ScreenMark : iTermMark
+@property(nonatomic, assign) BOOL isPrompt;
 @end
 
 // Invisible marks used for keep track of the location of captured output.

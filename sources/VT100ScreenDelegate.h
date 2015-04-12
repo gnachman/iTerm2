@@ -186,7 +186,7 @@
 
 // Save the current scroll position
 - (void)screenSaveScrollPosition;
-- (void)screenAddMarkOnLine:(int)line;
+- (VT100ScreenMark *)screenAddMarkOnLine:(int)line;
 - (void)screenPromptDidStartAtLine:(int)line;
 
 - (void)screenActivateWindow;
