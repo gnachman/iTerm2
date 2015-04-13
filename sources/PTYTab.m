@@ -298,9 +298,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [self setIcon:gDeadImage];
     } else if (_state & kPTYTabBellState) {
         [self setIcon:warningImage];
-    } else if (_state & (kPTYTabNewOutputState)) {
+    } else if (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
+               (_state & (kPTYTabNewOutputState))) {
         [self setIcon:gNewOutputImage];
-    } else if (_state & kPTYTabIdleState) {
+    } else if (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
+               (_state & kPTYTabIdleState)) {
         [self setIcon:gIdleImage];
     } else {
         [self setIcon:nil];
