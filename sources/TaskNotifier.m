@@ -171,7 +171,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 }
                 int statLoc;
                 PtyTaskDebugLog(@"wait on %d", [pid intValue]);
-                int waitresult = waitpid([pid intValue], &statLoc, WNOHANG);
+                pid_t waitresult = waitpid([pid intValue], &statLoc, WNOHANG);
                 if (waitresult == 0) {
                     // the process is not yet dead, so put it back in the pool
                     [newDeadpool addObject:pid];

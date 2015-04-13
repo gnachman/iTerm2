@@ -26,7 +26,10 @@
     int used_;  // Number of elements in use.
 
     // Like an autorelease pool, but avoids multiple retain/release's per object.
-    CRunSet *colors_;
+    // Why? Who knows. Autoreleased colors were getting released prematurely and
+    // causing crashes. Looks like a bug in the runtime and this is a nasty
+    // workaround for it.
+    NSHashTable *colors_;
 }
 
 // Create a new CRunStorage with space preallocated for |capacity| characters.

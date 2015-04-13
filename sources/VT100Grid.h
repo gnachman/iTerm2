@@ -12,6 +12,7 @@
 #import "VT100GridTypes.h"
 
 @class LineBuffer;
+@class VT100LineInfo;
 @class VT100Terminal;
 
 @protocol VT100GridDelegate <NSObject>
@@ -241,5 +242,9 @@
 
 // Returns an array of NSData for lines in order (corresponding with lines on screen).
 - (NSArray *)orderedLines;
+
+#pragma mark - Testing use only
+
+- (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber;
 
 @end

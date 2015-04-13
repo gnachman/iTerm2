@@ -23,6 +23,7 @@
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
+#import "iTermTextDrawingHelper.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLSchemeController.h"
 #import "MovePaneController.h"
@@ -72,8 +73,6 @@ static const int kMaxSemanticHistoryPrefixOrSuffix = 2000;
 //   `-----'  :      :
 static const double kCharWidthFractionOffset = 0.35;
 
-//#define DEBUG_DRAWING
-
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
 
 // Notifications posted when hostname lookups finish. Notifications are used to
@@ -85,10 +84,14 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
 static const int kDragThreshold = 3;
+<<<<<<< HEAD
 static const int kBadgeMargin = 4;
 static const int kBadgeRightMargin = 8;
+=======
+>>>>>>> upstream-master
 
 @interface PTYTextView () <
+    iTermTextDrawingHelperDelegate,
     iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
     iTermIndicatorsHelperDelegate,
@@ -100,29 +103,17 @@ static const int kBadgeRightMargin = 8;
 // up.
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
 @property(nonatomic, retain) iTermSelection *selection;
-@property(nonatomic, retain) NSColor *cachedBackgroundColor;
-@property(nonatomic, retain) NSColor *unfocusedSelectionColor;
 @property(nonatomic, retain) iTermSemanticHistoryController *semanticHistoryController;
-@property(nonatomic, retain) NSImage *badgeImage;
 @property(nonatomic, retain) NSColor *badgeColor;
 @property(nonatomic, copy) NSString *bagdgeLabel;
+@property(nonatomic, retain) iTermFindCursorView *findCursorView;
 
 @end
 
 
 @implementation PTYTextView {
-    // anti-alias flags
-    BOOL _asciiAntiAlias;
-    BOOL _nonasciiAntiAlias;  // Only used if self.useNonAsciiFont is set.
-
-    // NSTextInputClient support
-    BOOL _inputMethodIsInserting;
-    NSRange _inputMethodSelectedRange;
-    NSRange _inputMethodMarkedRange;
-    NSDictionary *_markedTextAttributes;
-    NSAttributedString *_markedText;
-
-    BOOL _useSmartCursorColor;
+    // -refresh does not want to be reentrant.
+    BOOL _inRefresh;
 
     // geometry
     double _lineHeight;
@@ -130,11 +121,13 @@ static const int kBadgeRightMargin = 8;
     double _charWidthWithoutSpacing;
     double _charHeightWithoutSpacing;
 
+    // NSTextInputClient support
+    BOOL _inputMethodIsInserting;
+    NSDictionary *_markedTextAttributes;
+
     PTYFontInfo *_primaryFont;
     PTYFontInfo *_secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
 
-    // Underlined selection range (inclusive of all values), indicating clickable url.
-    VT100GridWindowedRange _underlineRange;
     BOOL _mouseDown;
     BOOL _mouseDragged;
     BOOL _mouseDownOnSelection;
@@ -143,9 +136,7 @@ static const int kBadgeRightMargin = 8;
     NSEvent *_mouseDownEvent;
 
     // blinking cursor
-    BOOL _blinkingItemsVisible;
     NSTimeInterval _timeOfLastBlink;
-    VT100GridCoord _oldCursorPosition;
 
     // Was the last pressed key a "repeat" where the key is held down?
     BOOL _keyIsARepeat;
@@ -153,24 +144,17 @@ static const int kBadgeRightMargin = 8;
     // Previous tracking rect to avoid expensive calls to addTrackingRect.
     NSRect _trackingRect;
 
-    // Dimmed background color with alpha.
-    double _cachedBackgroundColorAlpha;  // cached alpha value (comparable to another double)
-
     // Helps with "selection scroll"
     iTermSelectionScrollHelper *_selectionScrollHelper;
 
-    // This gives the number of lines added to the bottom of the frame that do
-    // not correspond to a line in the _dataSource. They are used solely for
-    // IME text.
-    int _numberOfIMELines;
+    // Helps drawing text and background.
+    iTermTextDrawingHelper *_drawingHelper;
 
     // Last position that accessibility was read up to.
     int _lastAccessibilityCursorX;
     int _lastAccessibiltyAbsoluteCursorY;
 
     BOOL _changedSinceLastExpose;
-
-    iTermFindOnPageHelper *_findOnPageHelper;
 
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
@@ -193,9 +177,6 @@ static const int kBadgeRightMargin = 8;
 
     // For find-cursor animation
     NSWindow *_findCursorWindow;
-    iTermFindCursorView *_findCursorView;
-
-    NSPoint _imeCursorLastPos;
 
     // Number of fingers currently down (only valid if three finger click
     // emulates middle button)
@@ -204,9 +185,6 @@ static const int kBadgeRightMargin = 8;
     // If true, ignore the next mouse up because it's due to a three finger
     // mouseDown.
     BOOL _mouseDownIsThreeFingerClick;
-
-    // Show a background indicator when in broadcast input mode
-    BOOL _showStripesWhenBroadcastingInput;
 
     PointerController *pointer_;
     NSCursor *cursor_;
@@ -220,21 +198,7 @@ static const int kBadgeRightMargin = 8;
     // Position of cursor last time we looked. Since the cursor might move around a lot between
     // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
     // positions.
-    int prevCursorX, prevCursorY;
-
-    MovingAverage *drawRectDuration_, *drawRectInterval_;
-    // Current font. Only valid for the duration of a single drawing context.
-    NSFont *selectedFont_;
-
-    // Used by drawCursor: to remember the last time the cursor moved to avoid drawing a blinked-out
-    // cursor while it's moving.
-    NSTimeInterval lastTimeCursorMoved_;
-
-    // If set, the last-modified time of each line on the screen is shown on the right side of the display.
-    BOOL _showTimestamps;
-    float _antiAliasedShift;  // Amount to shift anti-aliased text by horizontally to simulate bold
-    NSImage *_markImage;
-    NSImage *_markErrImage;
+    VT100GridAbsCoord _previousCursorCoord;
 
     // Point clicked, valid only during -validateMenuItem and calls made from
     // the context menu and if x and y are nonnegative.
@@ -252,7 +216,13 @@ static const int kBadgeRightMargin = 8;
     // was inactive. If it's set when the app becomes active, then make this view the first
     // responder.
     BOOL _makeFirstResponderWhenAppBecomesActive;
+
     iTermIndicatorsHelper *_indicatorsHelper;
+
+    // Show a background indicator when in broadcast input mode
+    BOOL _showStripesWhenBroadcastingInput;
+
+    iTermFindOnPageHelper *_findOnPageHelper;
 }
 
 
@@ -268,18 +238,23 @@ static const int kBadgeRightMargin = 8;
 - (id)initWithFrame:(NSRect)aRect colorMap:(iTermColorMap *)colorMap {
     self = [super initWithFrame:aRect];
     if (self) {
+        _drawingHelper = [[iTermTextDrawingHelper alloc] init];
+        _drawingHelper.delegate = self;
+
         _colorMap = [colorMap retain];
         _colorMap.delegate = self;
+
+        _drawingHelper.colorMap = colorMap;
 
         _firstMouseEventNumber = -1;
 
         [self updateMarkedTextAttributes];
-        _cursorVisible = YES;
+        _drawingHelper.cursorVisible = YES;
         _selection = [[iTermSelection alloc] init];
         _selection.delegate = self;
         _oldSelection = [_selection copy];
-        _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
-        _markedText = nil;
+        _drawingHelper.underlineRange =
+            VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
         _timeOfLastBlink = [NSDate timeIntervalSinceReferenceDate];
         [[self window] useOptimizedDrawing:YES];
 
@@ -319,8 +294,6 @@ static const int kBadgeRightMargin = 8;
                                                      name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
 
-        _numberOfIMELines = 0;
-
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
         _semanticHistoryController.delegate = self;
         _semanticHistoryDragged = NO;
@@ -340,14 +313,7 @@ static const int kBadgeRightMargin = 8;
                                                                    selector:@selector(threeFingerTap:)];
             }
         }
-        if ([iTermAdvancedSettingsModel logDrawingPerformance]) {
-            NSLog(@"** Drawing performance timing enabled **");
-            drawRectDuration_ = [[MovingAverage alloc] init];
-            drawRectInterval_ = [[MovingAverage alloc] init];
-        }
         [self viewDidChangeBackingProperties];
-        _markImage = [[NSImage imageNamed:@"mark"] retain];
-        _markErrImage = [[NSImage imageNamed:@"mark_err"] retain];
         _indicatorsHelper = [[iTermIndicatorsHelper alloc] init];
         _indicatorsHelper.delegate = self;
 
@@ -368,10 +334,6 @@ static const int kBadgeRightMargin = 8;
 
 - (void)dealloc {
     [_selection release];
-    [_markImage release];
-    [_markErrImage release];
-    [drawRectDuration_ release];
-    [drawRectInterval_ release];
     [_smartSelectionRules release];
 
     [_mouseDownEvent release];
@@ -385,14 +347,11 @@ static const int kBadgeRightMargin = 8;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     _colorMap.delegate = nil;
     [_colorMap release];
-    [_cachedBackgroundColor release];
-    [_unfocusedSelectionColor release];
 
     [_primaryFont release];
     [_secondaryFont release];
 
     [_markedTextAttributes release];
-    [_markedText release];
 
     [_semanticHistoryController release];
 
@@ -405,7 +364,6 @@ static const int kBadgeRightMargin = 8;
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
     [_currentUnderlineHostname release];
-    [_badgeImage release];
     [_badgeColor release];
     [_bagdgeLabel release];
     _indicatorsHelper.delegate = nil;
@@ -414,7 +372,10 @@ static const int kBadgeRightMargin = 8;
     [_selectionScrollHelper release];
     _findOnPageHelper.delegate = nil;
     [_findOnPageHelper release];
-
+    [_drawingHook release];
+    _drawingHelper.delegate = nil;
+    [_drawingHelper release];
+    
     [super dealloc];
 }
 
@@ -433,15 +394,35 @@ static const int kBadgeRightMargin = 8;
 }
 
 - (void)viewDidChangeBackingProperties {
-    _antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
+    _drawingHelper.antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
+}
+
+- (NSColor *)defaultBackgroundColor {
+    CGFloat alpha = [self useTransparency] ? 1 - _transparency : 1;
+    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapBackground]] colorWithAlphaComponent:alpha];
+}
+
+- (NSColor *)defaultTextColor {
+    return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapForeground]
+                                 overBackgroundColor:[self defaultBackgroundColor]];
+}
+
+- (NSColor *)selectionBackgroundColor {
+    CGFloat alpha = [self useTransparency] ? 1 - _transparency : 1;
+    return [[_colorMap processedBackgroundColorForBackgroundColor:[_colorMap colorForKey:kColorMapSelection]] colorWithAlphaComponent:alpha];
+}
+
+- (NSColor *)selectedTextColor {
+    return [_colorMap processedTextColorForTextColor:[_colorMap colorForKey:kColorMapSelectedText]
+                                 overBackgroundColor:[self selectionBackgroundColor]];
 }
 
 - (void)updateMarkedTextAttributes {
     // During initialization, this may be called before the non-ascii font is set so we use a system
     // font as a placeholder.
     NSDictionary *theAttributes =
-        @{ NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapBackground],
-           NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapForeground],
+        @{ NSBackgroundColorAttributeName: [self defaultBackgroundColor],
+           NSForegroundColorAttributeName: [self defaultTextColor],
            NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWordMask) };
 
@@ -561,22 +542,30 @@ static const int kBadgeRightMargin = 8;
     return YES;
 }
 
+- (void)setHighlightCursorLine:(BOOL)highlightCursorLine {
+    _drawingHelper.highlightCursorLine = highlightCursorLine;
+}
+
+- (BOOL)highlightCursorLine {
+    return _drawingHelper.highlightCursorLine;
+}
+
 - (void)setUseNonAsciiFont:(BOOL)useNonAsciiFont {
+    _drawingHelper.useNonAsciiFont = useNonAsciiFont;
     _useNonAsciiFont = useNonAsciiFont;
     [self setNeedsDisplay:YES];
     [self updateMarkedTextAttributes];
 }
 
 - (void)setAntiAlias:(BOOL)asciiAntiAlias nonAscii:(BOOL)nonAsciiAntiAlias {
-    _asciiAntiAlias = asciiAntiAlias;
-    _nonasciiAntiAlias = nonAsciiAntiAlias;
+    _drawingHelper.asciiAntiAlias = asciiAntiAlias;
+    _drawingHelper.nonAsciiAntiAlias = nonAsciiAntiAlias;
     [self setNeedsDisplay:YES];
 }
 
 - (void)setUseBoldFont:(BOOL)boldFlag
 {
     _useBoldFont = boldFlag;
-    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
 }
 
@@ -590,30 +579,22 @@ static const int kBadgeRightMargin = 8;
 - (void)setUseBrightBold:(BOOL)flag
 {
     _useBrightBold = flag;
-    [_colorMap invalidateCache];
+    _drawingHelper.useBrightBold = flag;
     [self setNeedsDisplay:YES];
 }
 
-- (void)setBlinkAllowed:(BOOL)value
-{
+- (void)setBlinkAllowed:(BOOL)value {
+    _drawingHelper.blinkAllowed = value;
     _blinkAllowed = value;
     [self setNeedsDisplay:YES];
 }
 
 - (void)setCursorNeedsDisplay {
-    int lineStart = [_dataSource numberOfLines] - [_dataSource height];
-    int cursorX = [_dataSource cursorX] - 1;
-    int cursorY = [_dataSource cursorY] - 1;
-    NSRect dirtyRect = NSMakeRect(MARGIN + cursorX * _charWidth,
-                                  (lineStart + cursorY) * _lineHeight,
-                                  _charWidth,
-                                  _lineHeight);
-    [self setNeedsDisplayInRect:dirtyRect];
+    [self setNeedsDisplayInRect:[self cursorFrame]];
 }
 
-- (void)setCursorType:(ITermCursorType)value
-{
-    _cursorType = value;
+- (void)setCursorType:(ITermCursorType)value {
+    _drawingHelper.cursorType = value;
     [self setCursorNeedsDisplay];
     [self refresh];
 }
@@ -634,100 +615,6 @@ static const int kBadgeRightMargin = 8;
     NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
     scroller.knobStyle =
         [backgroundColor isDark] ? NSScrollerKnobStyleLight : NSScrollerKnobStyleDefault;
-}
-
-- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
-                                 green:(int)green
-                                  blue:(int)blue
-                             colorMode:(ColorMode)theMode
-                                  bold:(BOOL)isBold
-                          isBackground:(BOOL)isBackground {
-    BOOL isBackgroundForDefault = isBackground;
-    switch (theMode) {
-        case ColorModeAlternate:
-            switch (theIndex) {
-                case ALTSEM_SELECTED:
-                    return kColorMapSelectedText;
-                case ALTSEM_CURSOR:
-                    return kColorMapCursorText;
-                case ALTSEM_REVERSED_DEFAULT:
-                    isBackgroundForDefault = !isBackgroundForDefault;
-                    // Fall through.
-                case ALTSEM_DEFAULT:
-                    if (isBackgroundForDefault) {
-                        return kColorMapBackground;
-                    } else {
-                        if (isBold && _useBrightBold) {
-                            return kColorMapBold;
-                        } else {
-                            return kColorMapForeground;
-                        }
-                    }
-            }
-            break;
-        case ColorMode24bit:
-            return [iTermColorMap keyFor8bitRed:theIndex green:green blue:blue];
-        case ColorModeNormal:
-            // Render bold text as bright. The spec (ECMA-48) describes the intense
-            // display setting (esc[1m) as "bold or bright". We make it a
-            // preference.
-            if (isBold &&
-                _useBrightBold &&
-                (theIndex < 8)) { // Only colors 0-7 can be made "bright".
-                theIndex |= 8;  // set "bright" bit.
-            }
-            return kColorMap8bitBase + (theIndex & 0xff);
-
-        case ColorModeInvalid:
-            return kColorMapInvalid;
-    }
-    NSAssert(ok, @"Bogus color mode %d", (int)theMode);
-    return kColorMapInvalid;
-}
-
-- (NSColor*)colorForCode:(int)theIndex
-                   green:(int)green
-                    blue:(int)blue
-               colorMode:(ColorMode)theMode
-                    bold:(BOOL)isBold
-                   faint:(BOOL)isFaint
-            isBackground:(BOOL)isBackground {
-    iTermColorMapKey key = [self colorMapKeyForCode:theIndex
-                                              green:green
-                                               blue:blue
-                                          colorMode:theMode
-                                               bold:isBold
-                                       isBackground:isBackground];
-    NSColor *color;
-    if (isBackground && _colorMap.dimOnlyText) {
-        color = [_colorMap mutedColorForKey:key];
-    } else {
-        color = [_colorMap dimmedColorForKey:key];
-    }
-    if (isFaint) {
-        color = [color colorWithAlphaComponent:0.5];
-    }
-    return color;
-}
-
-- (NSColor *)dimmedDefaultBackgroundColor {
-    return [self colorForCode:ALTSEM_DEFAULT
-                        green:0
-                         blue:0
-                    colorMode:ColorModeAlternate
-                         bold:NO
-                        faint:NO
-                 isBackground:YES];
-}
-
-- (NSColor *)selectionColorForCurrentFocus
-{
-    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if (self == frontTextView) {
-        return [_colorMap mutedColorForKey:kColorMapSelection];
-    } else {
-        return _unfocusedSelectionColor;
-    }
 }
 
 - (NSFont *)font {
@@ -774,8 +661,8 @@ static const int kBadgeRightMargin = 8;
     _charHeightWithoutSpacing = sz.height;
     _horizontalSpacing = horizontalSpacing;
     _verticalSpacing = verticalSpacing;
-    _charWidth = ceil(_charWidthWithoutSpacing * horizontalSpacing);
-    _lineHeight = ceil(_charHeightWithoutSpacing * verticalSpacing);
+    self.charWidth = ceil(_charWidthWithoutSpacing * horizontalSpacing);
+    self.lineHeight = ceil(_charHeightWithoutSpacing * verticalSpacing);
 
     _primaryFont.font = aFont;
     _primaryFont.baselineOffset = baseline;
@@ -825,51 +712,32 @@ static const int kBadgeRightMargin = 8;
     }
 }
 
-- (double)lineHeight {
-    return _lineHeight;
-}
-
 - (void)setLineHeight:(double)aLineHeight {
     _lineHeight = ceil(aLineHeight);
-}
-
-- (double)charWidth {
-    return _charWidth;
+    _drawingHelper.cellSize = NSMakeSize(_charWidth, _lineHeight);
+    _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
 }
 
 - (void)setCharWidth:(double)width {
     _charWidth = ceil(width);
+    _drawingHelper.cellSize = NSMakeSize(_charWidth, _lineHeight);
+    _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
 }
 
 - (void)toggleShowTimestamps {
-    _showTimestamps = !_showTimestamps;
+    _drawingHelper.showTimestamps = !_drawingHelper.showTimestamps;
     [self setNeedsDisplay:YES];
 }
 
-#ifdef DEBUG_DRAWING
-NSMutableArray* screens=0;
-- (void)appendDebug:(NSString*)str
-{
-    if (!screens) {
-        screens = [[NSMutableArray alloc] init];
-    }
-    [screens addObject:str];
-    if ([screens count] > 100) {
-        [screens removeObjectAtIndex:0];
-    }
-}
-#endif
-
-- (NSRect)scrollViewContentSize
-{
+- (NSRect)scrollViewContentSize {
     NSRect r = NSMakeRect(0, 0, 0, 0);
     r.size = [[self enclosingScrollView] contentSize];
     return r;
 }
 
 // Number of extra lines below the last line of text that are always the background color.
-- (double)excess
-{
+// This is 2 except for just after the frame has changed and things are resizing.
+- (double)excess {
     NSRect visible = [self scrollViewContentSize];
     visible.size.height -= VMARGIN * 2;  // Height without top and bottom margins.
     int rows = visible.size.height / _lineHeight;
@@ -879,11 +747,18 @@ NSMutableArray* screens=0;
 
 // We override this method since both refresh and window resize can conflict
 // resulting in this happening twice So we do not allow the size to be set
-// larger than what the data source can fill
-- (void)setFrameSize:(NSSize)frameSize
-{
+// larger than what the data source can fill.
+//
+// TODO: This is a freaking horror show.
+// When the session view's frame is set, that triggers an autoresize of the scrollview, which
+// triggers an autoresize of this view, which manually resizes the TextViewWrapper (self.superview),
+// which triggers an autoresize of THIS VIEW AGAIN. WTF.
+// I'm not sure if that horrible flow happens in real life but it does happen in the unit tests.
+- (void)setFrameSize:(NSSize)frameSize {
     // Force the height to always be correct
-    frameSize.height = [_dataSource numberOfLines] * _lineHeight + [self excess] + _numberOfIMELines * _lineHeight;
+    frameSize.height = ([_dataSource numberOfLines] * _lineHeight +
+                        [self excess] +
+                        _drawingHelper.numberOfIMELines * _lineHeight);
     [super setFrameSize:frameSize];
 
     frameSize.height += VMARGIN;  // This causes a margin to be left at the top
@@ -1297,8 +1172,7 @@ NSMutableArray* screens=0;
     return NO;
 }
 
-- (BOOL)_isCursorBlinking
-{
+- (BOOL)isCursorBlinking {
     if (_blinkingCursor &&
         [self isInKeyWindow] &&
         [_delegate textViewIsActiveSession]) {
@@ -1306,11 +1180,6 @@ NSMutableArray* screens=0;
     } else {
         return NO;
     }
-}
-
-- (BOOL)_charBlinks:(screen_char_t)sct
-{
-    return _blinkAllowed && sct.blink;
 }
 
 - (BOOL)_isTextBlinking
@@ -1336,108 +1205,75 @@ NSMutableArray* screens=0;
     return NO;
 }
 
-- (BOOL)_isAnythingBlinking
-{
-    return [self _isCursorBlinking] || (_blinkAllowed && [self _isTextBlinking]);
+- (BOOL)_isAnythingBlinking {
+    return [self isCursorBlinking] || (_blinkAllowed && [self _isTextBlinking]);
 }
 
-- (BOOL)refresh
-{
-    DebugLog(@"PTYTextView refresh called");
-    if (_dataSource == nil) {
-        return YES;
-    }
-
-    // number of lines that have disappeared if scrollback buffer is full
-    int scrollbackOverflow = [_dataSource scrollbackOverflow];
-    [_dataSource resetScrollbackOverflow];
-
-    // frame size changed?
-    int height = [_dataSource numberOfLines] * _lineHeight;
+// Grow or shrink the height of the frame if the number of lines in the data
+// source + IME has changed.
+- (void)resizeFrameIfNeeded {
+    // Check if the frame size needs to grow or shrink.
+    const CGFloat height = [_dataSource numberOfLines] * _lineHeight;
     NSRect frame = [self frame];
-
-    double excess = [self excess];
-
-    if ((int)(height + excess + _numberOfIMELines * _lineHeight) != (int)frame.size.height) {
+    const CGFloat excess = [self excess];
+    const long long numberOfLinesAvailable =
+        height + excess + _drawingHelper.numberOfIMELines * _lineHeight;
+    if (numberOfLinesAvailable != (long long) frame.size.height) {
         // Grow the frame
         // Add VMARGIN to include top margin.
-        frame.size.height = height + excess + _numberOfIMELines * _lineHeight + VMARGIN;
+        frame.size.height =
+            height + excess + _drawingHelper.numberOfIMELines * _lineHeight + VMARGIN;
         [[self superview] setFrame:frame];
-        frame.size.height -= VMARGIN;
-        NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
-    } else if (scrollbackOverflow > 0) {
-        // Some number of lines were lost from the head of the buffer.
+        NSAccessibilityPostNotification(self,
+                                        NSAccessibilityRowCountChangedNotification);
+    }
+}
 
-        NSScrollView* scrollView = [self enclosingScrollView];
+- (void)handleScrollbackOverflow:(int)scrollbackOverflow userScroll:(BOOL)userScroll {
+    // Keep correct selection highlighted
+    [_selection moveUpByLines:scrollbackOverflow];
+    [_oldSelection moveUpByLines:scrollbackOverflow];
+    
+    // Keep the user's current scroll position.
+    NSScrollView *scrollView = [self enclosingScrollView];
+    BOOL canSkipRedraw = NO;
+    if (userScroll) {
+        NSRect scrollRect = [self visibleRect];
         double amount = [scrollView verticalLineScroll] * scrollbackOverflow;
-        BOOL userScroll = [(PTYScroller*)([scrollView verticalScroller]) userScroll];
-
-        // Keep correct selection highlighted
-        [_selection moveUpByLines:scrollbackOverflow];
-        [_oldSelection moveUpByLines:scrollbackOverflow];
-
-        // Keep the user's current scroll position, nothing to redraw.
-        if (userScroll) {
-            BOOL redrawAll = NO;
-            NSRect scrollRect = [self visibleRect];
-            scrollRect.origin.y -= amount;
-            if (scrollRect.origin.y < 0) {
-                scrollRect.origin.y = 0;
-                redrawAll = YES;
-                [self setNeedsDisplay:YES];
-            }
-            [self scrollRectToVisible:scrollRect];
-            if (!redrawAll) {
-                return [self _isAnythingBlinking];
-            }
+        scrollRect.origin.y -= amount;
+        if (scrollRect.origin.y < 0) {
+            scrollRect.origin.y = 0;
+        } else {
+            // No need to redraw the whole screen because nothing is
+            // changing because of the scroll.
+            canSkipRedraw = YES;
         }
-
-        // Shift the old content upwards
-        if (scrollbackOverflow < [_dataSource height] && !userScroll) {
-            [self scrollRect:[self visibleRect] by:NSMakeSize(0, -amount)];
-            NSRect topMargin = [self visibleRect];
-            topMargin.size.height = VMARGIN;
-            [self setNeedsDisplayInRect:topMargin];
-
-#ifdef DEBUG_DRAWING
-            [self appendDebug:[NSString stringWithFormat:@"refresh: Scroll by %d", (int)amount]];
-#endif
-            if ([self needsDisplay]) {
-                // If any part of the view needed to be drawn prior to
-                // scrolling, mark the whole thing as needing to be redrawn.
-                // This avoids some race conditions between scrolling and
-                // drawing.  For example, if there was a region that needed to
-                // be displayed because the underlying data changed, but before
-                // drawRect is called we scroll with [self scrollRect], then
-                // the wrong region will be drawn. This could be optimized by
-                // storing the regions that need to be drawn and re-invaliding
-                // them in their new positions, but it should be somewhat rare
-                // that this branch of the if statement is taken.
-                [self setNeedsDisplay:YES];
-            } else {
-                // Invalidate the bottom of the screen that was revealed by
-                // scrolling.
-                NSRect dr = NSMakeRect(0, frame.size.height - amount, frame.size.width, amount);
-#ifdef DEBUG_DRAWING
-                [self appendDebug:[NSString stringWithFormat:@"refresh: setNeedsDisplayInRect:%d,%d %dx%d", (int)dr.origin.x, (int)dr.origin.y, (int)dr.size.width, (int)dr.size.height]];
-#endif
-                [self setNeedsDisplayInRect:dr];
-            }
-        }
-
-        // Move subviews up
-        [self updateNoteViewFrames];
-
-        NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
+        [self scrollRectToVisible:scrollRect];
     }
-
-    // Scroll to the bottom if needed.
-    BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
-    if (!userScroll) {
-        [self scrollEnd];
+    
+    // NOTE: I used to use scrollRect:by: here, and it is faster, but it is
+    // absolutely a lost cause as far as correctness goes. When drawRect
+    // gets called it needs to take that scrolling (which would happen
+    // immediately when scrollRect:by: gets called) into account. Good luck
+    // getting that right. I don't *think* it's a meaningful performance issue.
+    // Because of a bug, we were always drawing the whole screen anyway. And if
+    // the screen has scrolled by less than its height, input is coming in
+    // slowly anyway.    
+    if (!canSkipRedraw) {
+        [self setNeedsDisplay:YES];
     }
+    
+    // Move subviews up
+    [self updateNoteViewFrames];
+    
+    NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
+}
+
+// Update accessibility, to be called periodically.
+- (void)refreshAccessibility {
     NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
-    long long absCursorY = [_dataSource cursorY] + [_dataSource numberOfLines] + [_dataSource totalScrollbackOverflow] - [_dataSource height];
+    long long absCursorY = ([_dataSource cursorY] + [_dataSource numberOfLines] +
+                            [_dataSource totalScrollbackOverflow] - [_dataSource height]);
     if ([_dataSource cursorX] != _lastAccessibilityCursorX ||
         absCursorY != _lastAccessibiltyAbsoluteCursorY) {
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedTextChangedNotification);
@@ -1446,15 +1282,55 @@ NSMutableArray* screens=0;
         _lastAccessibilityCursorX = [_dataSource cursorX];
         _lastAccessibiltyAbsoluteCursorY = absCursorY;
         if (UAZoomEnabled()) {
-            CGRect viewRect = NSRectToCGRect([self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
-            CGRect selectedRect = NSRectToCGRect([self.window convertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
-            viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
-            selectedRect.origin.y = [[NSScreen mainScreen] frame].size.height - (selectedRect.origin.y + selectedRect.size.height);
+            CGRect viewRect = NSRectToCGRect(
+                [self.window convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
+            CGRect selectedRect = NSRectToCGRect(
+                [self.window convertRectToScreen:[self convertRect:[self cursorFrame] toView:nil]]);
+            viewRect.origin.y = ([[NSScreen mainScreen] frame].size.height -
+                                 (viewRect.origin.y + viewRect.size.height));
+            selectedRect.origin.y = ([[NSScreen mainScreen] frame].size.height -
+                                     (selectedRect.origin.y + selectedRect.size.height));
             UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
         }
     }
+}
+
+// This is called periodically. It updates the frame size, scrolls if needed, ensures selections
+// and subviews are positioned correctly in case things scrolled
+//
+// Returns YES if blinking text or cursor was found. TODO: This is a stupid
+// micro-optimization and should be removed.
+- (BOOL)refresh {
+    DebugLog(@"PTYTextView refresh called");
+    if (_dataSource == nil || _inRefresh) {
+        return YES;
+    }
+
+    // Get the number of lines that have disappeared if scrollback buffer is full.
+    int scrollbackOverflow = [_dataSource scrollbackOverflow];
+    [_dataSource resetScrollbackOverflow];
+    [self resizeFrameIfNeeded];
+
+    // Perform adjustments if lines were lost from the head of the buffer.
+    BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
+    if (scrollbackOverflow > 0) {
+        // -selectionDidChange might get called here, which calls -refresh.
+        // Keeping this function safely reentrant is just too difficult.
+        _inRefresh = YES;
+        [self handleScrollbackOverflow:scrollbackOverflow userScroll:userScroll];
+        _inRefresh = NO;
+    }
+
+    // Scroll to the bottom if needed.
+    if (!userScroll) {
+        [self scrollEnd];
+    }
+
+    // Update accessibility.
+    [self refreshAccessibility];
 
     if ([[self subviews] count]) {
+        // TODO: Why update notes not in this textview?
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYNoteViewControllerShouldUpdatePosition
                                                             object:nil];
         // Not sure why this is needed, but for some reason this view draws over its subviews.
@@ -1463,7 +1339,9 @@ NSMutableArray* screens=0;
         }
     }
 
-    return [self updateDirtyRects] || [self _isCursorBlinking];
+    // See if any characters are dirty and mark them as needing to be redrawn.
+    // Return if anything was found to be blinking.
+    return [self updateDirtyRects] || [self isCursorBlinking];
 }
 
 - (void)setNeedsDisplayOnLine:(int)line
@@ -1528,7 +1406,9 @@ NSMutableArray* screens=0;
       return;
     }
     NSRect lastLine = [self visibleRect];
-    lastLine.origin.y = ([_dataSource numberOfLines] - 1) * _lineHeight + [self excess] + _numberOfIMELines * _lineHeight;
+    lastLine.origin.y = (([_dataSource numberOfLines] - 1) * _lineHeight +
+                         [self excess] +
+                         _drawingHelper.numberOfIMELines * _lineHeight);
     lastLine.size.height = _lineHeight;
     if (!NSContainsRect(self.visibleRect, lastLine)) {
         [self scrollRectToVisible:lastLine];
@@ -1567,47 +1447,80 @@ NSMutableArray* screens=0;
     }
 }
 
-- (void)markCursorDirty
-{
+- (void)markCursorDirty {
   int currentCursorX = [_dataSource cursorX] - 1;
   int currentCursorY = [_dataSource cursorY] - 1;
-  DLog(@"Mark cursor position %d,%d dirty", prevCursorX, prevCursorY);
-  [_dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
+  DLog(@"Mark cursor position %d,%lldld dirty",
+       _previousCursorCoord.x, _previousCursorCoord.y - [_dataSource totalScrollbackOverflow]);
+  [_dataSource setCharDirtyAtCursorX:currentCursorX
+                                   Y:currentCursorY - [_dataSource totalScrollbackOverflow]];
 }
 
 - (void)setCursorVisible:(BOOL)cursorVisible {
     [self markCursorDirty];
-    _cursorVisible = cursorVisible;
+    _drawingHelper.cursorVisible = cursorVisible;
 }
 
-- (void)drawRect:(NSRect)rect
-{
-    DLog(@"drawRect:%@ in view %@", [NSValue valueWithRect:rect], self);
-    // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
-    // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
-    // and they're guaranteed to be disjoint. So draw each of them individually.
+- (BOOL)cursorVisible {
+    return _drawingHelper.cursorVisible;
+}
+
+- (void)drawRect:(NSRect)rect {
+    _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
+                                  [_delegate textViewSessionIsBroadcastingInput]);
+    _drawingHelper.cursorBlinking = [self isCursorBlinking];
+    _drawingHelper.excess = [self excess];
+    _drawingHelper.selection = _selection;
+    _drawingHelper.ambiguousIsDoubleWidth = [_delegate textViewAmbiguousWidthCharsAreDoubleWidth];
+    _drawingHelper.useHFSPlusMapping = [_delegate textViewUseHFSPlusMapping];
+    _drawingHelper.hasBackgroundImage = [_delegate textViewHasBackgroundImage];
+    _drawingHelper.cursorGuideColor = [_delegate textViewCursorGuideColor];
+    _drawingHelper.gridSize = VT100GridSizeMake(_dataSource.width, _dataSource.height);
+    _drawingHelper.numberOfLines = _dataSource.numberOfLines;
+    _drawingHelper.cursorCoord = VT100GridCoordMake(_dataSource.cursorX - 1,
+                                                    _dataSource.cursorY - 1);
+    _drawingHelper.totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
+    _drawingHelper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
+    _drawingHelper.reverseVideo = [[_dataSource terminal] reverseVideo];
+    _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
+    _drawingHelper.isInKeyWindow = [self isInKeyWindow];
+    _drawingHelper.shouldDrawFilledInCursor = [self.delegate textViewShouldDrawFilledInCursor];
+    _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
+    _drawingHelper.haveUnderlinedHostname = (self.currentUnderlineHostname != nil);
+    _drawingHelper.transparencyAlpha = [self transparencyAlpha];
+    _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
+
     const NSRect *rectArray;
     NSInteger rectCount;
-    if (drawRectDuration_) {
-        [drawRectDuration_ startTimer];
-        NSTimeInterval interval = [drawRectInterval_ timeSinceTimerStarted];
-        if ([drawRectInterval_ haveStartedTimer]) {
-            [drawRectInterval_ addValue:interval];
-        }
-        [drawRectInterval_ startTimer];
-    }
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
-    for (int i = 0; i < rectCount; i++) {
-        DLog(@"drawRect - draw sub rectangle %@", [NSValue valueWithRect:rectArray[i]]);
-        [self drawOneRect:rectArray[i]];
+
+    if (_drawingHook) {
+        // This is used by tests to customize the draw helper.
+        _drawingHook(_drawingHelper);
     }
 
-    if (drawRectDuration_) {
-        [drawRectDuration_ addValue:[drawRectDuration_ timeSinceTimerStarted]];
-        NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
-              self, drawRectDuration_.value, drawRectInterval_.value);
+    [_drawingHelper drawTextViewContentInRect:rect rectsPtr:rectArray rectCount:rectCount];
+
+    [self drawIndicators];
+
+    if (_drawingHelper.showTimestamps) {
+        [_drawingHelper drawTimestamps];
     }
 
+    // Not sure why this is needed, but for some reason this view draws over its subviews.
+    for (NSView *subview in [self subviews]) {
+        [subview setNeedsDisplay:YES];
+    }
+
+    if (_drawingHelper.blinkingFound) {
+        // The user might have used the scroll wheel to cause blinking text to become
+        // visible. Make sure the timer is running if anything onscreen is
+        // blinking.
+        [self.delegate textViewWillNeedUpdateForBlink];
+    }
+}
+
+- (void)drawIndicators {
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]];
     [_indicatorsHelper setIndicator:kItermIndicatorBroadcastInput
@@ -1619,321 +1532,6 @@ NSMutableArray* screens=0;
     [_indicatorsHelper setIndicator:kiTermIndicatorAllOutputSuppressed
                             visible:[_delegate textViewSuppressingAllOutput]];
     [_indicatorsHelper drawInFrame:self.visibleRect];
-
-    if (_showTimestamps) {
-        [self drawTimestamps];
-    }
-
-    // Not sure why this is needed, but for some reason this view draws over its subviews.
-    for (NSView *subview in [self subviews]) {
-        [subview setNeedsDisplay:YES];
-    }
-}
-
-- (void)drawTimestamps
-{
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-
-    for (int y = visibleRect.origin.y / _lineHeight;
-         y < (visibleRect.origin.y + visibleRect.size.height) / _lineHeight && y < [_dataSource numberOfLines];
-         y++) {
-        [self drawTimestampForLine:y];
-    }
-}
-
-- (void)drawTimestampForLine:(int)line
-{
-    NSDate *timestamp = [_dataSource timestampForLine:line];
-    NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
-    const NSTimeInterval day = -86400;
-    const NSTimeInterval timeDelta = [timestamp timeIntervalSinceNow];
-    if (timeDelta < day * 365) {
-        // More than a year ago: include year
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"yyyyMMMd hh:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    } else if (timeDelta < day * 7) {
-        // 1 week to 1 year ago: include date without year
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"MMMd hh:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    } else if (timeDelta < day) {
-        // 1 day to 1 week ago: include day of week
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"EEE hh:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-
-    } else {
-        // In last 24 hours, just show time
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"hh:mm:ss"
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-    }
-
-    NSString *s = [fmt stringFromDate:timestamp];
-    if (!timestamp || ![timestamp timeIntervalSinceReferenceDate]) {
-        s = @"";
-    }
-
-    NSSize size = [s sizeWithAttributes:@{ NSFontAttributeName: [NSFont systemFontOfSize:10] }];
-    int w = size.width + MARGIN;
-    int x = MAX(0, self.frame.size.width - w);
-    CGFloat y = line * _lineHeight;
-    NSColor *bgColor = [_colorMap colorForKey:kColorMapBackground];
-    NSColor *fgColor = [_colorMap mutedColorForKey:kColorMapForeground];
-    NSColor *shadowColor;
-    if ([fgColor isDark]) {
-        shadowColor = [NSColor whiteColor];
-    } else {
-        shadowColor = [NSColor blackColor];
-    }
-
-    const CGFloat alpha = 0.75;
-    NSGradient *gradient =
-        [[[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
-                                       endingColor:[bgColor colorWithAlphaComponent:alpha]] autorelease];
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
-    [gradient drawInRect:NSMakeRect(x - 20, y, 20, _lineHeight) angle:0];
-
-    [[bgColor colorWithAlphaComponent:alpha] set];
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
-    NSRectFillUsingOperation(NSMakeRect(x, y, w, _lineHeight), NSCompositeSourceOver);
-
-    NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
-    shadow.shadowColor = shadowColor;
-    shadow.shadowBlurRadius = 0.2f;
-    shadow.shadowOffset = CGSizeMake(0.5, -0.5);
-
-    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
-                                  NSForegroundColorAttributeName: fgColor,
-                                  NSShadowAttributeName: shadow };
-    CGFloat offset = (_lineHeight - size.height) / 2;
-    [s drawAtPoint:NSMakePoint(x, y + offset) withAttributes:attributes];
-}
-
-- (void)drawOneRect:(NSRect)rect
-{
-    // The range of chars in the line that need to be drawn.
-    NSRange charRange = NSMakeRange(MAX(0, (rect.origin.x - MARGIN) / _charWidth),
-                                    ceil((rect.origin.x + rect.size.width - MARGIN) / _charWidth));
-    charRange.length -= charRange.location;
-    if (charRange.location + charRange.length > [_dataSource width]) {
-        charRange.length = [_dataSource width] - charRange.location;
-    }
-#ifdef DEBUG_DRAWING
-    static int iteration=0;
-    static BOOL prevBad=NO;
-    ++iteration;
-    if (prevBad) {
-        NSLog(@"Last was bad.");
-        prevBad = NO;
-    }
-    DebugLog([NSString stringWithFormat:@"%s(%p): rect=(%f,%f,%f,%f) frameRect=(%f,%f,%f,%f)]",
-          __PRETTY_FUNCTION__, self,
-          rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
-          [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
-#endif
-    double curLineWidth = [_dataSource width] * _charWidth;
-    if (_lineHeight <= 0 || curLineWidth <= 0) {
-        DebugLog(@"height or width too small");
-        return;
-    }
-
-    // Configure graphics
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
-
-    // Where to start drawing?
-    int lineStart = rect.origin.y / _lineHeight;
-    int lineEnd = ceil((rect.origin.y + rect.size.height) / _lineHeight);
-
-    // Ensure valid line ranges
-    if (lineStart < 0) {
-        lineStart = 0;
-    }
-    if (lineEnd > [_dataSource numberOfLines]) {
-        lineEnd = [_dataSource numberOfLines];
-    }
-    NSRect visible = [self scrollViewContentSize];
-    int vh = visible.size.height;
-    int lh = _lineHeight;
-    int visibleRows = vh / lh;
-    NSRect docVisibleRect = [[self enclosingScrollView] documentVisibleRect];
-    double hiddenAbove = docVisibleRect.origin.y + [self frame].origin.y;
-    int firstVisibleRow = hiddenAbove / lh;
-    if (lineEnd > firstVisibleRow + visibleRows) {
-        lineEnd = firstVisibleRow + visibleRows;
-    }
-
-#ifdef DEBUG_DRAWING
-    DebugLog([NSString stringWithFormat:@"drawRect: Draw lines in range [%d, %d)", lineStart, lineEnd]);
-    // Draw each line
-    NSDictionary* dct =
-        [NSDictionary dictionaryWithObjectsAndKeys:
-            [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
-            [NSColor textColor], NSForegroundColorAttributeName,
-            [NSFont userFixedPitchFontOfSize: 0], NSFontAttributeName, NULL];
-#endif
-    int overflow = [_dataSource scrollbackOverflow];
-#ifdef DEBUG_DRAWING
-    NSMutableString* lineDebug = [NSMutableString stringWithFormat:@"drawRect:%d,%d %dx%d drawing these lines with scrollback overflow of %d, iteration=%d:\n", (int)rect.origin.x, (int)rect.origin.y, (int)rect.size.width, (int)rect.size.height, (int)[_dataSource scrollbackOverflow], iteration];
-#endif
-    double y = lineStart * _lineHeight;
-    BOOL anyBlinking = NO;
-
-    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-
-    for (int line = lineStart; line < lineEnd; line++) {
-        NSRect lineRect = [self visibleRect];
-        lineRect.origin.y = line * _lineHeight;
-        lineRect.size.height = _lineHeight;
-        if ([self needsToDrawRect:lineRect]) {
-            if (overflow <= line) {
-                // If overflow > 0 then the lines in the _dataSource are not
-                // lined up in the normal way with the view. This happens when
-                // the _dataSource has scrolled its contents up but -[refresh]
-                // has not been called yet, so the view's contents haven't been
-                // scrolled up yet. When that's the case, the first line of the
-                // view is what the first line of the _dataSource was before
-                // it overflowed. Continue to draw text in this out-of-alignment
-                // manner until refresh is called and gets things in sync again.
-                anyBlinking |= [self _drawLine:line-overflow
-                                           AtY:y
-                                     charRange:charRange
-                                       context:ctx];
-            }
-#ifdef DEBUG_DRAWING
-            // if overflow > line then the requested line cannot be drawn
-            // because it has been lost to the sands of time.
-            if (gDebugLogging) {
-                screen_char_t* theLine = [_dataSource getLineAtIndex:line-overflow];
-                int w = [_dataSource width];
-                char dl[w+1];
-                for (int i = 0; i < [_dataSource width]; ++i) {
-                    if (theLine[i].complexChar) {
-                        dl[i] = '#';
-                    } else {
-                        dl[i] = theLine[i].code;
-                    }
-                }
-                DebugLog([NSString stringWithUTF8String:dl]);
-            }
-
-            screen_char_t* theLine = [_dataSource getLineAtIndex:line-overflow];
-            for (int i = 0; i < [_dataSource width]; ++i) {
-                [lineDebug appendFormat:@"%@", ScreenCharToStr(&theLine[i])];
-            }
-            [lineDebug appendString:@"\n"];
-            [[NSString stringWithFormat:@"Iter %d, line %d, y=%d", iteration, line, (int)(y)]
-                 drawInRect:NSMakeRect(rect.size.width-200,
-                                       y,
-                                       200,
-                                       _lineHeight)
-                 withAttributes:dct];
-#endif
-        }
-        y += _lineHeight;
-    }
-#ifdef DEBUG_DRAWING
-    [self appendDebug:lineDebug];
-#endif
-    NSRect excessRect;
-    if (_numberOfIMELines) {
-        // Draw a default-color rectangle from below the last line of text to
-        // the bottom of the frame to make sure that IME offset lines are
-        // cleared when the screen is scrolled up.
-        excessRect.origin.x = 0;
-        excessRect.origin.y = lineEnd * _lineHeight;
-        excessRect.size.width = [[self enclosingScrollView] contentSize].width;
-        excessRect.size.height = [self frame].size.height - excessRect.origin.y;
-    } else  {
-        // Draw the excess bar at the bottom of the visible rect the in case
-        // that some other tab has a larger font and these lines don't fit
-        // evenly in the available space.
-        NSRect visibleRect = [self visibleRect];
-        excessRect.origin.x = 0;
-        excessRect.origin.y = visibleRect.origin.y + visibleRect.size.height - [self excess];
-        excessRect.size.width = [[self enclosingScrollView] contentSize].width;
-        excessRect.size.height = [self excess];
-    }
-#ifdef DEBUG_DRAWING
-    // Draws the excess bar in a different color each time
-    static int i;
-    i++;
-    double rc = ((double)((i + 0) % 100)) / 100;
-    double gc = ((double)((i + 33) % 100)) / 100;
-    double bc = ((double)((i + 66) % 100)) / 100;
-    [[NSColor colorWithCalibratedRed:rc green:gc blue:bc alpha:1] set];
-    NSRectFill(excessRect);
-#else
-    [_delegate textViewDrawBackgroundImageInView:self
-                                        viewRect:excessRect
-                          blendDefaultBackground:YES];
-#endif
-
-    // Draw a margin at the top of the visible area.
-    NSRect topMarginRect = [self visibleRect];
-    if (topMarginRect.origin.y > 0) {
-        topMarginRect.size.height = VMARGIN;
-        [_delegate textViewDrawBackgroundImageInView:self
-                                            viewRect:topMarginRect
-                              blendDefaultBackground:YES];
-    }
-
-#ifdef DEBUG_DRAWING
-    // Draws a different-colored rectangle around each drawn area. Useful for
-    // seeing which groups of lines were drawn in a batch.
-    static double it;
-    it += 3.14/4;
-    double red = sin(it);
-    double green = sin(it + 1*2*3.14/3);
-    double blue = sin(it + 2*2*3.14/3);
-    NSColor* c = [NSColor colorWithCalibratedRed:red green:green blue:blue alpha:1];
-    [c set];
-    NSRect r = rect;
-    r.origin.y++;
-    r.size.height -= 2;
-    NSFrameRect(rect);
-    if (overflow != 0) {
-        // Draw a diagonal line through blocks that were drawn when there
-        // [_dataSource scrollbackOverflow] > 0.
-        [NSBezierPath strokeLineFromPoint:NSMakePoint(r.origin.x, r.origin.y)
-                                  toPoint:NSMakePoint(r.origin.x + r.size.width, r.origin.y + r.size.height)];
-    }
-    NSString* debug;
-    if (overflow == 0) {
-        debug = [NSString stringWithFormat:@"origin=%d", (int)rect.origin.y];
-    } else {
-        debug = [NSString stringWithFormat:@"origin=%d, overflow=%d", (int)rect.origin.y, (int)overflow];
-    }
-    [debug drawInRect:rect withAttributes:dct];
-#endif
-    // If the IME is in use, draw its contents over top of the "real" screen
-    // contents.
-    [self drawInputMethodEditorTextAt:[_dataSource cursorX] - 1
-                                    y:[_dataSource cursorY] - 1
-                                width:[_dataSource width]
-                               height:[_dataSource height]
-                         cursorHeight:[self cursorHeight]
-                                  ctx:ctx];
-    [self drawCursor];
-    anyBlinking |= [self _isCursorBlinking];
-
-#ifdef DEBUG_DRAWING
-    if (overflow) {
-        // It's useful to put a breakpoint at the top of this function
-        // when prevBad == YES because then you can see the results of this
-        // draw function.
-        prevBad=YES;
-    }
-#endif
-    if (anyBlinking) {
-        // The user might have used the scroll wheel to cause blinking text to become
-        // visible. Make sure the timer is running if anything onscreen is
-        // blinking.
-        [_delegate textViewWillNeedUpdateForBlink];
-    }
-    [selectedFont_ release];
-    selectedFont_ = nil;
 }
 
 - (NSString*)_getTextInWindowAroundX:(int)x
@@ -2382,7 +1980,7 @@ NSMutableArray* screens=0;
 }
 
 - (BOOL)hasUnderline {
-    return _underlineRange.coordRange.start.x >= 0;
+    return _drawingHelper.underlineRange.coordRange.start.x >= 0;
 }
 
 // Reset underlined chars indicating cmd-clicakble url.
@@ -2390,7 +1988,8 @@ NSMutableArray* screens=0;
     if (![self hasUnderline]) {
         return;
     }
-    _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
+    _drawingHelper.underlineRange =
+        VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
     if (self.currentUnderlineHostname) {
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
@@ -2457,7 +2056,7 @@ NSMutableArray* screens=0;
                                                          y:y
                                     respectingHardNewlines:![iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]];
             if (action) {
-                _underlineRange = action.range;
+                _drawingHelper.underlineRange = action.range;
 
                 if (action.actionType == kURLActionOpenURL) {
                     NSURL *url = [NSURL URLWithString:action.string];
@@ -3734,8 +3333,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate startDownloadOverSCP:scpPath];
 
     NSDictionary *attributes =
-        @{ NSForegroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapSelectedText],
-           NSBackgroundColorAttributeName: [_colorMap mutedColorForKey:kColorMapSelection],
+        @{ NSForegroundColorAttributeName: [self selectedTextColor],
+           NSBackgroundColorAttributeName: [self selectionBackgroundColor],
            NSFontAttributeName: _primaryFont.font };
     NSSize size = [selectedText sizeWithAttributes:attributes];
     size.height = _lineHeight;
@@ -3812,8 +3411,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)copy:(id)sender
-{
+- (void)copy:(id)sender {
+    // TODO: iTermSelection should use absolute coordinates everywhere. Until that is done, we must
+    // call refresh here to take care of any scrollback overflow that would cause the selected range
+    // to not match reality.
+    [self refresh];
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     NSString *copyString;
 
@@ -3871,7 +3473,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      bold:NO
                                     faint:NO
                              isBackground:YES];
-
+    fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
+    
     int underlineStyle = c.underline ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
 
     BOOL isItalic = c.italic;
@@ -3992,6 +3595,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if ([item action] == @selector(reRunCommand:)) {
         return YES;
+    }
+    if ([item action] == @selector(selectCommandOutput:)) {
+        return [_dataSource textViewRangeOfOutputForCommandMark:[item representedObject]].start.x != -1;
     }
     if ([item action] == @selector(pasteBase64Encoded:)) {
         return [_delegate textViewCanPasteFile];
@@ -4252,6 +3858,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate insertText:[command stringByAppendingString:@"\n"]];
 }
 
+- (void)selectCommandOutput:(id)sender {
+    VT100ScreenMark *mark = [sender representedObject];
+    VT100GridCoordRange range = [_dataSource textViewRangeOfOutputForCommandMark:mark];
+    if (range.start.x == -1) {
+        NSBeep();
+        return;
+    }
+    [_selection beginSelectionAt:range.start
+                            mode:kiTermSelectionModeCharacter
+                          resume:NO
+                          append:NO];
+    [_selection moveSelectionEndpointTo:range.end];
+    [_selection endLiveSelection];
+
+    if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
+        [self copySelectionAccordingToUserPreferences];
+    }
+}
+
 - (NSMenu *)menuForMark:(VT100ScreenMark *)mark directory:(NSString *)directory
 {
     NSMenu *theMenu;
@@ -4301,6 +3926,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                           action:@selector(reRunCommand:)
                                    keyEquivalent:@""] autorelease];
     [theItem setRepresentedObject:mark.command];
+    [theMenu addItem:theItem];
+
+    theItem = [[[NSMenuItem alloc] initWithTitle:@"Select Command Output"
+                                          action:@selector(selectCommandOutput:)
+                                   keyEquivalent:@""] autorelease];
+    [theItem setRepresentedObject:mark];
     [theMenu addItem:theItem];
 
     return theMenu;
@@ -4799,10 +4430,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"PTYTextView insertText:%@", aString);
     if ([self hasMarkedText]) {
         DLog(@"insertText: clear marked text");
-        _inputMethodMarkedRange = NSMakeRange(0, 0);
-        [_markedText release];
-        _markedText = nil;
-        _numberOfIMELines = 0;
+         [self invalidateInputMethodEditorRect];
+        _drawingHelper.inputMethodMarkedRange = NSMakeRange(0, 0);
+        _drawingHelper.markedText = nil;
+        _drawingHelper.numberOfIMELines = 0;
     }
     if (![_selection hasSelection]) {
         [self resetFindCursor];
@@ -4826,7 +4457,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // Legacy NSTextInput method, probably not used.
 - (void)insertText:(id)aString {
-    [self insertText:aString replacementRange:NSMakeRange(0, [_markedText length])];
+    [self insertText:aString replacementRange:NSMakeRange(0, [_drawingHelper.markedText length])];
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
@@ -4841,32 +4472,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
      replacementRange:(NSRange)replacementRange {
     DLog(@"setMarkedText%@ selectedRange%@ replacementRange:%@",
          aString, NSStringFromRange(selRange), NSStringFromRange(replacementRange));
-    [_markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
-        _markedText = [[NSAttributedString alloc] initWithString:[aString string]
-                                                      attributes:[self markedTextAttributes]];
+        _drawingHelper.markedText = [[[NSAttributedString alloc] initWithString:[aString string]
+                                                                     attributes:[self markedTextAttributes]] autorelease];
     } else {
-        _markedText = [[NSAttributedString alloc] initWithString:aString
-                                                      attributes:[self markedTextAttributes]];
+        _drawingHelper.markedText = [[[NSAttributedString alloc] initWithString:aString
+                                                                     attributes:[self markedTextAttributes]] autorelease];
     }
-    _inputMethodMarkedRange = NSMakeRange(0, [_markedText length]);
-    _inputMethodSelectedRange = selRange;
+    _drawingHelper.inputMethodMarkedRange = NSMakeRange(0, [_drawingHelper.markedText length]);
+    _drawingHelper.inputMethodSelectedRange = selRange;
 
     // Compute the proper imeOffset.
     int dirtStart;
     int dirtEnd;
     int dirtMax;
-    _numberOfIMELines = 0;
+    _drawingHelper.numberOfIMELines = 0;
     do {
-        dirtStart = ([_dataSource cursorY] - 1 - _numberOfIMELines) * [_dataSource width] + [_dataSource cursorX] - 1;
+        dirtStart = ([_dataSource cursorY] - 1 - _drawingHelper.numberOfIMELines) * [_dataSource width] + [_dataSource cursorX] - 1;
         dirtEnd = dirtStart + [self inputMethodEditorLength];
         dirtMax = [_dataSource height] * [_dataSource width];
         if (dirtEnd > dirtMax) {
-            ++_numberOfIMELines;
+            _drawingHelper.numberOfIMELines = _drawingHelper.numberOfIMELines + 1;
         }
     } while (dirtEnd > dirtMax);
 
-    if (![_markedText length]) {
+    if (![_drawingHelper.markedText length]) {
         // The call to refresh won't invalidate the IME rect because
         // there is no IME any more. If the user backspaced over the only
         // char in the IME buffer then this causes it be erased.
@@ -4883,29 +4513,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)unmarkText {
     DLog(@"unmarkText");
     // As far as I can tell this is never called.
-    _inputMethodMarkedRange = NSMakeRange(0, 0);
-    _numberOfIMELines = 0;
+    _drawingHelper.inputMethodMarkedRange = NSMakeRange(0, 0);
+    _drawingHelper.numberOfIMELines = 0;
     [self invalidateInputMethodEditorRect];
     [_delegate refreshAndStartTimerIfNeeded];
     [self scrollEnd];
 }
 
 - (BOOL)hasMarkedText {
-    BOOL result;
-
-    if (_inputMethodMarkedRange.length > 0) {
-        result = YES;
-    } else {
-        result = NO;
-    }
-    DLog(@"hasMarkedText->%@", @(result));
-    return result;
+    return _drawingHelper.inputMethodMarkedRange.length > 0;
 }
 
 - (NSRange)markedRange {
     NSRange range;
-    if (_inputMethodMarkedRange.length > 0) {
-        range = NSMakeRange([_dataSource cursorX]-1, _inputMethodMarkedRange.length);
+    if (_drawingHelper.inputMethodMarkedRange.length > 0) {
+        range = NSMakeRange([_dataSource cursorX]-1, _drawingHelper.inputMethodMarkedRange.length);
     } else {
         range = NSMakeRange([_dataSource cursorX]-1, 0);
     }
@@ -4934,7 +4556,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSAttributedString *)attributedSubstringForProposedRange:(NSRange)proposedRange
                                                 actualRange:(NSRangePointer)actualRange {
     DLog(@"attributedSubstringForProposedRange:%@", NSStringFromRange(proposedRange));
-    NSRange aRange = NSIntersectionRange(proposedRange, NSMakeRange(0, _markedText.length));
+    NSRange aRange = NSIntersectionRange(proposedRange,
+                                         NSMakeRange(0, _drawingHelper.markedText.length));
     if (proposedRange.length > 0 && aRange.length == 0) {
         aRange.location = NSNotFound;
     }
@@ -4944,7 +4567,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (aRange.location == NSNotFound) {
         return nil;
     }
-    return [_markedText attributedSubstringFromRange:NSMakeRange(0, aRange.length)];
+    return [_drawingHelper.markedText attributedSubstringFromRange:NSMakeRange(0, aRange.length)];
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)thePoint {
@@ -5046,12 +4669,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           attributes:temp];
             [image unlockFocus];
 
-            self.badgeImage = image;
+            _drawingHelper.badgeImage = image;
         } else {
-            self.badgeImage = nil;
+            _drawingHelper.badgeImage = nil;
         }
     } else {
-        self.badgeImage = nil;
+        _drawingHelper.badgeImage = nil;
         if (oldLength == 0) {
             // Optimization - don't call setNeedsDisplay if nothing changed.
             return;
@@ -5210,34 +4833,35 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_findOnPageHelper resetCopiedFindContext];
 }
 
-- (void)setTransparency:(double)fVal
-{
+- (void)setTransparency:(double)fVal {
     _transparency = fVal;
-    [_colorMap invalidateCache];
+    _drawingHelper.transparency = fVal;
     [self setNeedsDisplay:YES];
 }
 
-- (void)setBlend:(double)fVal
-{
-    _blend = MIN(MAX(0.3, fVal), 1);
-    [_colorMap invalidateCache];
+- (float)blend {
+    return _drawingHelper.blend;
+}
+
+- (void)setBlend:(float)fVal {
+    _drawingHelper.blend = MIN(MAX(0.3, fVal), 1);
     [self setNeedsDisplay:YES];
 }
 
-- (void)setSmartCursorColor:(BOOL)value
-{
-    _useSmartCursorColor = value;
-    [_colorMap invalidateCache];
+- (void)setUseSmartCursorColor:(BOOL)value {
+    _drawingHelper.useSmartCursorColor = value;
 }
 
-- (void)setMinimumContrast:(double)value
-{
-    _minimumContrast = value;
+- (BOOL)useSmartCursorColor {
+    return _drawingHelper.useSmartCursorColor;
+}
+
+- (void)setMinimumContrast:(double)value {
+    _drawingHelper.minimumContrast = value;
     [_colorMap setMinimumContrast:value];
 }
 
-- (BOOL)useTransparency
-{
+- (BOOL)useTransparency {
     return [_delegate textViewWindowUsesTransparency];
 }
 
@@ -5304,37 +4928,37 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - Find Cursor
 
-- (NSRect)cursorRect {
-    NSRect frame = [self visibleRect];
-    CGFloat x = MARGIN + _charWidth * ([_dataSource cursorX] - 1);
-    CGFloat y = frame.origin.y + _lineHeight * ([_dataSource cursorY] - 1);
-    return NSMakeRect(x, y, _charWidth, _lineHeight);
+- (NSRect)cursorFrame {
+    int lineStart = [_dataSource numberOfLines] - [_dataSource height];
+    int cursorX = [_dataSource cursorX] - 1;
+    int cursorY = [_dataSource cursorY] - 1;
+    return NSMakeRect(MARGIN + cursorX * _charWidth,
+                      (lineStart + cursorY) * _lineHeight,
+                      _charWidth,
+                      _lineHeight);
 }
 
 - (CGFloat)verticalOffset {
     return self.frame.size.height - NSMaxY(self.enclosingScrollView.documentVisibleRect);
 }
 
-- (NSPoint)cursorLocationInScreenCoordinates {
-    NSRect cursorFrame = [self cursorRect];
-    CGFloat x = cursorFrame.origin.x + cursorFrame.size.width / 2;
-    CGFloat y = cursorFrame.origin.y + cursorFrame.size.height / 2;
+- (NSPoint)cursorCenterInScreenCoords {
+    NSPoint cursorCenter;
     if ([self hasMarkedText]) {
-        x = _imeCursorLastPos.x + 1;
-        y = _imeCursorLastPos.y + _lineHeight / 2;
+        cursorCenter = _drawingHelper.imeCursorLastPos;
+    } else {
+        cursorCenter = [self cursorFrame].origin;
     }
-    NSPoint p = NSMakePoint(x, y);
-    p.y += [self verticalOffset];
-    p = [self convertPoint:p toView:nil];
-    p = [[self window] pointToScreenCoords:p];
-    return p;
+    cursorCenter.x += _charWidth / 2;
+    cursorCenter.y += _lineHeight / 2;
+    NSPoint cursorCenterInWindowCoords = [self convertPoint:cursorCenter toView:nil];
+    return  [[self window] pointToScreenCoords:cursorCenterInWindowCoords];
 }
 
 // Returns the location of the cursor relative to the origin of findCursorWindow_.
-- (NSPoint)globalCursorLocation {
-    NSPoint p = [self cursorLocationInScreenCoordinates];
-    p = [_findCursorWindow pointFromScreenCoords:p];
-    return p;
+- (NSPoint)cursorCenterInFindCursorWindowCoords {
+    NSPoint centerInScreenCoords = [self cursorCenterInScreenCoords];
+    return [_findCursorWindow pointFromScreenCoords:centerInScreenCoords];
 }
 
 // Returns the proper frame for findCursorWindow_, including every screen that the
@@ -5354,42 +4978,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)createFindCursorWindow {
+    [self scrollRectToVisible:[self cursorFrame]];
     _findCursorWindow = [[NSWindow alloc] initWithContentRect:NSZeroRect
                                                     styleMask:NSBorderlessWindowMask
                                                       backing:NSBackingStoreBuffered
                                                         defer:YES];
-    [_findCursorWindow setOpaque:NO];
-    [_findCursorWindow makeKeyAndOrderFront:nil];
     [_findCursorWindow setLevel:NSFloatingWindowLevel];
-    [_findCursorWindow setAlphaValue:0];
     [_findCursorWindow setFrame:[self cursorScreenFrame] display:YES];
-    [[NSAnimationContext currentContext] setDuration:0.5];
-    [[_findCursorWindow animator] setAlphaValue:0.7];
-
-    _findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
-                                                                            0,
-                                                                            [[self window] frame].size.width,
-                                                                            [[self window] frame].size.height)];
+    _findCursorWindow.backgroundColor = [NSColor clearColor];
+    [_findCursorWindow setAlphaValue:0];
+    [[_findCursorWindow animator] setAlphaValue:1];
+    _findCursorWindow.opaque = NO;
+    [_findCursorWindow makeKeyAndOrderFront:nil];
+    self.findCursorView = [[iTermFindCursorView alloc] initWithFrame:NSMakeRect(0,
+                                                                                0,
+                                                                                [[self window] frame].size.width,
+                                                                                [[self window] frame].size.height)];
     _findCursorView.delegate = self;
-    NSPoint p = [self globalCursorLocation];
+    NSPoint p = [self cursorCenterInFindCursorWindowCoords];
     _findCursorView.cursorPosition = p;
     [_findCursorWindow setContentView:_findCursorView];
     [_findCursorView release];
-    [_findCursorView startBlinkNotifications];
 }
 
-- (void)findCursorBlink {
-    int HEIGHT = [_dataSource height];
-    NSRect rect = [self cursorRect];
-    int yStart = [_dataSource cursorY] - 1;
-    rect.origin.y = (yStart + [_dataSource numberOfLines] - HEIGHT + 1) * _lineHeight - [self cursorHeight];
-    rect.size.height = [self cursorHeight];
-    [self setNeedsDisplayInRect:rect];
-}
-
-- (void)beginFindCursor:(BOOL)hold
-{
-    self.cursorVisible = YES;
+- (void)beginFindCursor:(BOOL)hold {
+    _drawingHelper.cursorVisible = YES;
     if (!_findCursorView) {
         [self createFindCursorWindow];
     }
@@ -5423,25 +5036,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self performSelector:@selector(closeFindCursorWindow:)
                withObject:_findCursorWindow
                afterDelay:[[NSAnimationContext currentContext] duration]];
-    [_findCursorView performSelector:@selector(stopBlinkNotifications)
-                          withObject:nil
-                          afterDelay:[[NSAnimationContext currentContext] duration]];
     [_findCursorView stopTearDownTimer];
     _findCursorWindow = nil;
     _findCursorView.stopping = YES;
-    _findCursorView = nil;
+    self.findCursorView = nil;
 }
 
-// The background color is cached separately from other dimmed colors because
-// it may be used with different alpha values than foreground colors.
-- (NSColor *)cachedDimmedBackgroundColorWithAlpha:(double)alpha
-{
-    if (!_cachedBackgroundColor || _cachedBackgroundColorAlpha != alpha) {
-        self.cachedBackgroundColor =
-            [[_colorMap dimmedColorForKey:kColorMapBackground] colorWithAlphaComponent:alpha];
-        _cachedBackgroundColorAlpha = alpha;
-    }
-    return _cachedBackgroundColor;
+- (void)setFindCursorView:(iTermFindCursorView *)view {
+    [_findCursorView autorelease];
+    _findCursorView = [view retain];
 }
 
 - (BOOL)getAndResetChangedSinceLastExpose
@@ -5484,13 +5087,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate launchCoprocessWithCommand:command];
 }
 
-#pragma mark - Private methods
-
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
-                    renderBold:(BOOL*)renderBold
-                  renderItalic:(BOOL*)renderItalic
-{
+                    renderBold:(BOOL *)renderBold
+                  renderItalic:(BOOL *)renderItalic {
     BOOL isBold = *renderBold && _useBoldFont;
     BOOL isItalic = *renderItalic && _useItalicFont;
     *renderBold = NO;
@@ -5531,331 +5131,118 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return theFont;
 }
 
-// Returns true iff the tab character after a run of TAB_FILLERs starting at
-// (x,y) is selected.
-- (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y
+#pragma mark - Private methods
+
+// Compute the length, in _charWidth cells, of the input method text.
+- (int)inputMethodEditorLength
 {
-    const int realWidth = [_dataSource width] + 1;
-    screen_char_t buffer[realWidth];
-    screen_char_t* theLine = [_dataSource getLineAtIndex:y withBuffer:buffer];
-    while (x < [_dataSource width] && theLine[x].code == TAB_FILLER) {
-        ++x;
+    if (![self hasMarkedText]) {
+        return 0;
     }
-    if ([_selection containsCoord:VT100GridCoordMake(x, y)] &&
-        theLine[x].code == '\t') {
-        return YES;
+    NSString* str = [_drawingHelper.markedText string];
+
+    const int maxLen = [str length] * kMaxParts;
+    screen_char_t buf[maxLen];
+    screen_char_t fg, bg;
+    memset(&bg, 0, sizeof(bg));
+    memset(&fg, 0, sizeof(fg));
+    int len;
+    StringToScreenChars(str,
+                        buf,
+                        fg,
+                        bg,
+                        &len,
+                        [_delegate textViewAmbiguousWidthCharsAreDoubleWidth],
+                        NULL,
+                        NULL,
+                        [_delegate textViewUseHFSPlusMapping]);
+
+    // Count how many additional cells are needed due to double-width chars
+    // that span line breaks being wrapped to the next line.
+    int x = [_dataSource cursorX] - 1;  // cursorX is 1-based
+    int width = [_dataSource width];
+    int extra = 0;
+    int curX = x;
+    for (int i = 0; i < len; ++i) {
+        if (curX == 0 && buf[i].code == DWC_RIGHT) {
+            ++extra;
+            ++curX;
+        }
+        ++curX;
+        curX %= width;
+    }
+    return len + extra;
+}
+
+- (double)transparencyAlpha {
+    return [self useTransparency] ? 1.0 - _transparency : 1.0;
+}
+
+- (void)useBackgroundIndicatorChanged:(NSNotification *)notification {
+    _showStripesWhenBroadcastingInput =
+            [(iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate] useBackgroundPatternIndicator];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)_scrollToLine:(int)line
+{
+    NSRect aFrame;
+    aFrame.origin.x = 0;
+    aFrame.origin.y = line * _lineHeight;
+    aFrame.size.width = [self frame].size.width;
+    aFrame.size.height = _lineHeight;
+    [self scrollRectToVisible:aFrame];
+}
+
+- (void)_scrollToCenterLine:(int)line {
+    NSRect visible = [self visibleRect];
+    int visibleLines = (visible.size.height - VMARGIN * 2) / _lineHeight;
+    int lineMargin = (visibleLines - 1) / 2;
+    double margin = lineMargin * _lineHeight;
+
+    NSRect aFrame;
+    aFrame.origin.x = 0;
+    aFrame.origin.y = MAX(0, line * _lineHeight - margin);
+    aFrame.size.width = [self frame].size.width;
+    aFrame.size.height = margin * 2 + _lineHeight;
+    double end = aFrame.origin.y + aFrame.size.height;
+    NSRect total = [self frame];
+    if (end > total.size.height) {
+        double err = end - total.size.height;
+        aFrame.size.height -= err;
+    }
+    [self scrollRectToVisible:aFrame];
+}
+
+- (void)scrollBottomOfRectToBottomOfVisibleArea:(NSRect)rect {
+    NSPoint p = rect.origin;
+    p.y += rect.size.height;
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    visibleRect.size.height -= [self excess];
+    visibleRect.size.height -= VMARGIN;
+    p.y -= visibleRect.size.height;
+    p.y = MAX(0, p.y);
+    [[[self enclosingScrollView] contentView] scrollToPoint:p];
+}
+
+- (void)scrollLineNumberRangeIntoView:(VT100GridRange)range {
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    int firstVisibleLine = visibleRect.origin.y / _lineHeight;
+    int lastVisibleLine = firstVisibleLine + [_dataSource height];
+    if (range.location >= firstVisibleLine && range.location + range.length <= lastVisibleLine) {
+      // Already visible
+      return;
+    }
+    if (range.length < [_dataSource height]) {
+        [self _scrollToCenterLine:range.location + range.length / 2];
     } else {
-        return NO;
-    }
-}
+        NSRect aFrame;
+        aFrame.origin.x = 0;
+        aFrame.origin.y = range.location * _lineHeight;
+        aFrame.size.width = [self frame].size.width;
+        aFrame.size.height = range.length * _lineHeight;
 
-- (NSRange)underlinedRangeOnLine:(int)row {
-    if (_underlineRange.coordRange.start.x < 0) {
-        return NSMakeRange(0, 0);
-    }
-
-    if (row == _underlineRange.coordRange.start.y && row == _underlineRange.coordRange.end.y) {
-        // Whole underline is on one line.
-        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
-        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
-        return NSMakeRange(start, end - start);
-    } else if (row == _underlineRange.coordRange.start.y) {
-        // Underline spans multiple lines, starting at this one.
-        const int start = VT100GridWindowedRangeStart(_underlineRange).x;
-        const int end =
-            _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
-                                                    : [_dataSource width];
-        return NSMakeRange(start, end - start);
-    } else if (row == _underlineRange.coordRange.end.y) {
-        // Underline spans multiple lines, ending at this one.
-        const int start =
-            _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
-        const int end = VT100GridWindowedRangeEnd(_underlineRange).x;
-        return NSMakeRange(start, end - start);
-    } else if (row > _underlineRange.coordRange.start.y && row < _underlineRange.coordRange.end.y) {
-        // Underline spans multiple lines. This is not the first or last line, so all chars
-        // in it are underlined.
-        const int start =
-            _underlineRange.columnWindow.length > 0 ? _underlineRange.columnWindow.location : 0;
-        const int end =
-            _underlineRange.columnWindow.length > 0 ? VT100GridRangeMax(_underlineRange.columnWindow) + 1
-                                                    : [_dataSource width];
-        return NSMakeRange(start, end - start);
-    } else {
-        // No selection on this line.
-        return NSMakeRange(0, 0);
-    }
-}
-
-- (CRun *)_constructRuns:(NSPoint)initialPoint
-                 theLine:(screen_char_t *)theLine
-                     row:(int)row
-                reversed:(BOOL)reversed
-              bgselected:(BOOL)bgselected
-                   width:(const int)width
-              indexRange:(NSRange)indexRange
-                 bgColor:(NSColor*)bgColor
-                 matches:(NSData*)matches
-                 storage:(CRunStorage *)storage
-{
-    BOOL inUnderlinedRange = NO;
-    CRun *firstRun = NULL;
-    CAttrs attrs = { 0 };
-    CRun *currentRun = NULL;
-    const char* matchBytes = [matches bytes];
-    int lastForegroundColor = -1;
-    int lastFgGreen = -1;
-    int lastFgBlue = -1;
-    int lastForegroundColorMode = -1;
-    int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
-    int lastFaint = 2;  // Same for faint
-    NSColor *lastColor = nil;
-    CGFloat curX = 0;
-    NSRange underlinedRange = [self underlinedRangeOnLine:row];
-    const int underlineStartsAt = underlinedRange.location;
-    const int underlineEndsAt = NSMaxRange(underlinedRange);
-    const BOOL dimOnlyText = _colorMap.dimOnlyText;
-    for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
-        inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
-        if (theLine[i].code == DWC_RIGHT) {
-            continue;
-        }
-
-        BOOL doubleWidth = i < width - 1 && (theLine[i + 1].code == DWC_RIGHT);
-        unichar thisCharUnichar = 0;
-        NSString* thisCharString = nil;
-        CGFloat thisCharAdvance;
-
-        if (!_useNonAsciiFont || (theLine[i].code < 128 && !theLine[i].complexChar)) {
-            attrs.antiAlias = _asciiAntiAlias;
-        } else {
-            attrs.antiAlias = _nonasciiAntiAlias;
-        }
-        BOOL isSelection = NO;
-
-        // Figure out the color for this char.
-        if (bgselected) {
-            // Is a selection.
-            isSelection = YES;
-            // NOTE: This could be optimized by caching the color.
-            CRunAttrsSetColor(&attrs, storage, [_colorMap dimmedColorForKey:kColorMapSelectedText]);
-        } else {
-            // Not a selection.
-            if (reversed &&
-                theLine[i].foregroundColor == ALTSEM_DEFAULT &&
-                theLine[i].foregroundColorMode == ColorModeAlternate) {
-                // Has default foreground color so use background color.
-                if (!dimOnlyText) {
-                    CRunAttrsSetColor(&attrs, storage,
-                                      [_colorMap dimmedColorForKey:kColorMapBackground]);
-                } else {
-                    CRunAttrsSetColor(&attrs,
-                                      storage,
-                                      [_colorMap mutedColorForKey:kColorMapBackground]);
-                }
-            } else {
-                if (theLine[i].foregroundColor == lastForegroundColor &&
-                    theLine[i].fgGreen == lastFgGreen &&
-                    theLine[i].fgBlue == lastFgBlue &&
-                    theLine[i].foregroundColorMode == lastForegroundColorMode &&
-                    theLine[i].bold == lastBold &&
-                    theLine[i].faint == lastFaint) {
-                    // Looking up colors with -colorForCode:... is expensive and it's common to
-                    // have consecutive characters with the same color.
-                    CRunAttrsSetColor(&attrs, storage, lastColor);
-                } else {
-                    // Not reversed or not subject to reversing (only default
-                    // foreground color is drawn in reverse video).
-                    lastForegroundColor = theLine[i].foregroundColor;
-                    lastFgGreen = theLine[i].fgGreen;
-                    lastFgBlue = theLine[i].fgBlue;
-                    lastForegroundColorMode = theLine[i].foregroundColorMode;
-                    lastBold = theLine[i].bold;
-                    lastFaint = theLine[i].faint;
-                    CRunAttrsSetColor(&attrs,
-                                      storage,
-                                      [self colorForCode:theLine[i].foregroundColor
-                                                   green:theLine[i].fgGreen
-                                                    blue:theLine[i].fgBlue
-                                               colorMode:theLine[i].foregroundColorMode
-                                                    bold:theLine[i].bold
-                                                   faint:theLine[i].faint
-                                            isBackground:NO]);
-                    lastColor = attrs.color;
-                }
-            }
-        }
-
-        if (matches && !isSelection) {
-            // Test if this is a highlighted match from a find.
-            int theIndex = i / 8;
-            int mask = 1 << (i & 7);
-            if (theIndex < [matches length] && matchBytes[theIndex] & mask) {
-                CRunAttrsSetColor(&attrs,
-                                  storage,
-                                  [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]);
-            }
-        }
-
-        if (_minimumContrast > 0.001 && bgColor) {
-            // TODO: Way too much time spent here. Use previous char's color if it is the same.
-            CRunAttrsSetColor(&attrs,
-                              storage,
-                              [_colorMap color:attrs.color withContrastAgainst:bgColor]);
-        }
-        BOOL drawable;
-        if (_blinkingItemsVisible || ![self _charBlinks:theLine[i]]) {
-            // This char is either not blinking or during the "on" cycle of the
-            // blink. It should be drawn.
-
-            // Set the character type and its unichar/string.
-            if (theLine[i].complexChar) {
-                thisCharString = ComplexCharToStr(theLine[i].code);
-                if (!thisCharString) {
-                    // A bug that's happened more than once is that code gets
-                    // set to 0 but complexChar is left set to true.
-                    NSLog(@"No complex char for code %d", (int)theLine[i].code);
-                    thisCharString = @"";
-                    drawable = NO;
-                } else {
-                    drawable = YES;  // TODO: not all unicode is drawable
-                }
-            } else {
-                thisCharString = nil;
-                // Non-complex char
-                // TODO: There are other spaces in unicode that should be supported.
-                drawable = (theLine[i].code != 0 &&
-                            theLine[i].code != '\t' &&
-                            !(theLine[i].code >= ITERM2_PRIVATE_BEGIN &&
-                              theLine[i].code <= ITERM2_PRIVATE_END));
-
-                if (drawable) {
-                    thisCharUnichar = theLine[i].code;
-                }
-            }
-        } else {
-            // Chatacter hidden because of blinking.
-            drawable = NO;
-        }
-
-        if (theLine[i].underline || inUnderlinedRange) {
-            // This is not as fast as possible, but is nice and simple. Always draw underlined text
-            // even if it's just a blank.
-            drawable = YES;
-        }
-        // Set all other common attributes.
-        if (doubleWidth) {
-            thisCharAdvance = _charWidth * 2;
-        } else {
-            thisCharAdvance = _charWidth;
-        }
-
-        if (drawable) {
-            BOOL fakeBold = theLine[i].bold;
-            BOOL fakeItalic = theLine[i].italic;
-            attrs.fontInfo = [self getFontForChar:theLine[i].code
-                                        isComplex:theLine[i].complexChar
-                                       renderBold:&fakeBold
-                                     renderItalic:&fakeItalic];
-            attrs.fakeBold = fakeBold;
-            attrs.fakeItalic = fakeItalic;
-            attrs.underline = theLine[i].underline || inUnderlinedRange;
-            attrs.imageCode = theLine[i].image ? theLine[i].code : 0;
-            attrs.imageColumn = theLine[i].foregroundColor;
-            attrs.imageLine = theLine[i].backgroundColor;
-            if (theLine[i].image) {
-                thisCharString = @"I";
-            }
-            if (inUnderlinedRange && !self.currentUnderlineHostname) {
-                attrs.color = [_colorMap colorForKey:kColorMapLink];
-            }
-            if (!currentRun) {
-                firstRun = currentRun = malloc(sizeof(CRun));
-                CRunInitialize(currentRun, &attrs, storage, curX);
-            }
-            if (thisCharString) {
-                currentRun = CRunAppendString(currentRun,
-                                              &attrs,
-                                              thisCharString,
-                                              theLine[i].code,
-                                              thisCharAdvance,
-                                              curX);
-            } else {
-                currentRun = CRunAppend(currentRun, &attrs, thisCharUnichar, thisCharAdvance, curX);
-            }
-        } else {
-            if (currentRun) {
-                CRunTerminate(currentRun);
-            }
-            attrs.fakeBold = NO;
-            attrs.fakeItalic = NO;
-            attrs.fontInfo = nil;
-        }
-
-        curX += thisCharAdvance;
-    }
-    return firstRun;
-}
-
-- (void)selectFont:(NSFont *)font inContext:(CGContextRef)ctx
-{
-    if (font != selectedFont_) {
-        // This method is really slow so avoid doing it when it's not necessary
-        CGContextSelectFont(ctx,
-                            [[font fontName] UTF8String],
-                            [font pointSize],
-                            kCGEncodingMacRoman);
-        [selectedFont_ release];
-        selectedFont_ = [font retain];
-    }
-}
-
-// Note: caller must nil out selectedFont_ after the graphics context becomes invalid.
-- (int)_drawSimpleRun:(CRun *)currentRun
-                  ctx:(CGContextRef)ctx
-         initialPoint:(NSPoint)initialPoint
-{
-    int firstMissingGlyph;
-    CGGlyph *glyphs = CRunGetGlyphs(currentRun, &firstMissingGlyph);
-    if (!glyphs) {
-        return -1;
-    }
-
-    size_t numCodes = currentRun->length;
-    size_t length = numCodes;
-    if (firstMissingGlyph >= 0) {
-        length = firstMissingGlyph;
-    }
-    [self selectFont:currentRun->attrs.fontInfo.font inContext:ctx];
-    CGContextSetFillColorSpace(ctx, [[currentRun->attrs.color colorSpace] CGColorSpace]);
-    int componentCount = [currentRun->attrs.color numberOfComponents];
-
-    CGFloat components[componentCount];
-    [currentRun->attrs.color getComponents:components];
-    CGContextSetFillColor(ctx, components);
-
-    double y = initialPoint.y + _lineHeight + currentRun->attrs.fontInfo.baselineOffset;
-    int x = initialPoint.x + currentRun->x;
-    // Flip vertically and translate to (x, y).
-    CGFloat m21 = 0.0;
-    if (currentRun->attrs.fakeItalic) {
-        m21 = 0.2;
-    }
-    CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                      m21, -1.0,
-                                                      x, y));
-
-    void *advances = CRunGetAdvances(currentRun);
-    CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, length);
-
-    if (currentRun->attrs.fakeBold) {
-        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
-        // If not anti-alised, draw one pixel to the right.
-        CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                          m21, -1.0,
-                                                          x + (currentRun->attrs.antiAlias ? _antiAliasedShift : 1),
-                                                          y));
-
+<<<<<<< HEAD
         CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, length);
     }
     return firstMissingGlyph;
@@ -7380,6 +6767,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         aFrame.size.width = [self frame].size.width;
         aFrame.size.height = range.length * _lineHeight;
 
+=======
+>>>>>>> upstream-master
         [self scrollBottomOfRectToBottomOfVisibleArea:aFrame];
     }
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
@@ -7744,7 +7133,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([[notification object] isEqualToString:self.currentUnderlineHostname]) {
         self.currentUnderlineHostname = nil;
         [self removeUnderline];
-        _underlineRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
+        _drawingHelper.underlineRange =
+            VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), 0, 0);
         [self setNeedsDisplay:YES];
     }
 }
@@ -8034,7 +7424,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_settingsChanged:(NSNotification *)notification
 {
-    [_colorMap invalidateCache];
     [self setNeedsDisplay:YES];
     _colorMap.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
 }
@@ -8059,7 +7448,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     dirtyRect.size.width = (maxX - x + 1) * _charWidth;
     dirtyRect.size.height = _lineHeight;
 
-    if (_showTimestamps) {
+    if (_drawingHelper.showTimestamps) {
         dirtyRect.size.width = self.visibleRect.size.width - dirtyRect.origin.x;
     }
     // Add a character on either side for glyphs that render unexpectedly wide.
@@ -8074,21 +7463,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // -[refresh] instead, as it ensures scrollback overflow
 // is dealt with so that this function can dereference
 // [_dataSource dirty] correctly.
-- (BOOL)updateDirtyRects
-{
+- (BOOL)updateDirtyRects {
     BOOL anythingIsBlinking = NO;
     BOOL foundDirty = NO;
-    if ([_dataSource scrollbackOverflow] != 0) {
-        NSAssert([_dataSource scrollbackOverflow] == 0, @"updateDirtyRects called with nonzero overflow");
-    }
-#ifdef DEBUG_DRAWING
-    [self appendDebug:[NSString stringWithFormat:@"updateDirtyRects called. Scrollback overflow is %d. Screen is: %@", [_dataSource scrollbackOverflow], [_dataSource debugString]]];
-    DebugLog(@"updateDirtyRects called");
-#endif
+    assert([_dataSource scrollbackOverflow] == 0);
 
     // Flip blink bit if enough time has passed. Mark blinking cursor dirty
     // when it blinks.
-    BOOL redrawBlink = [self _updateBlink];
+    BOOL redrawBlink = [self shouldRedrawBlinkingObjects];
+    if (redrawBlink) {
+        DebugLog(@"Time to redraw blinking objects");
+        if (_blinkingCursor && [self isInKeyWindow]) {
+            // Blink flag flipped and there is a blinking cursor. Make it redraw.
+            [self setCursorNeedsDisplay];
+        }
+    }
     int WIDTH = [_dataSource width];
 
     // Any characters that changed selection status since the last update or
@@ -8104,37 +7493,33 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lineEnd = [_dataSource numberOfLines];
     // lineStart to lineEnd is the region that is the screen when the scrollbar
     // is at the bottom of the frame.
-#ifdef DEBUG_DRAWING
-    if (gDebugLogging) {
-        DebugLog([NSString stringWithFormat:@"Search lines [%d, %d) for dirty", lineStart, lineEnd]);
-    }
 
-    NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
-    int screenindex=0;
-#endif
     long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
     [_dataSource resetAllDirty];
 
-    int currentCursorX = [_dataSource cursorX] - 1;
-    int currentCursorY = [_dataSource cursorY] - 1;
-    if (prevCursorX != currentCursorX ||
-        prevCursorY != currentCursorY) {
+    VT100GridCoord cursorPosition = VT100GridCoordMake([_dataSource cursorX] - 1,
+                                                       [_dataSource cursorY] - 1);
+    if (_previousCursorCoord.x != cursorPosition.x ||
+        _previousCursorCoord.y - totalScrollbackOverflow != cursorPosition.y) {
         // Mark previous and current cursor position dirty
-        DLog(@"Mark previous cursor position %d,%d dirty", prevCursorX, prevCursorY);
+        DLog(@"Mark previous cursor position %d,%lld dirty",
+             _previousCursorCoord.x, _previousCursorCoord.y - totalScrollbackOverflow);
         int maxX = [_dataSource width] - 1;
-        if (_highlightCursorLine) {
-            [_dataSource setLineDirtyAtY:prevCursorY];
-            DLog(@"Mark current cursor line %d dirty", currentCursorY);
-            [_dataSource setLineDirtyAtY:currentCursorY];
+        if (_drawingHelper.highlightCursorLine) {
+            [_dataSource setLineDirtyAtY:_previousCursorCoord.y - totalScrollbackOverflow];
+            DLog(@"Mark current cursor line %d dirty", cursorPosition.y);
+            [_dataSource setLineDirtyAtY:cursorPosition.y];
         } else {
-            [_dataSource setCharDirtyAtCursorX:MIN(maxX, prevCursorX) Y:prevCursorY];
-            DLog(@"Mark current cursor position %d,%d dirty", currentCursorX, currentCursorY);
-            [_dataSource setCharDirtyAtCursorX:MIN(maxX, currentCursorX) Y:currentCursorY];
+            [_dataSource setCharDirtyAtCursorX:MIN(maxX, _previousCursorCoord.x)
+                                             Y:_previousCursorCoord.y - totalScrollbackOverflow];
+            DLog(@"Mark current cursor position %d,%lld dirty", _previousCursorCoord.x,
+                 _previousCursorCoord.y - totalScrollbackOverflow);
+            [_dataSource setCharDirtyAtCursorX:MIN(maxX, cursorPosition.x) Y:cursorPosition.y];
         }
-        // Set prevCursor[XY] to new cursor position
-        prevCursorX = currentCursorX;
-        prevCursorY = currentCursorY;
+        // Set _previousCursorCoord to new cursor position
+        _previousCursorCoord = VT100GridAbsCoordMake(cursorPosition.x,
+                                                     cursorPosition.y + totalScrollbackOverflow);
     }
 
     // Remove results from dirty lines and mark parts of the view as needing display.
@@ -8143,9 +7528,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_findOnPageHelper removeHighlightsInRange:NSMakeRange(lineStart + totalScrollbackOverflow,
                                                                lineEnd - lineStart)];
         [self setNeedsDisplayInRect:[self gridRect]];
-#ifdef DEBUG_DRAWING
-        NSLog(@"allDirty is set, redraw the whole view");
-#endif
     } else {
         for (int y = lineStart; y < lineEnd; y++) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
@@ -8153,9 +7535,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 foundDirty = YES;
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [self setNeedsDisplayOnLine:y inRange:range];
-#ifdef DEBUG_DRAWING
-                NSLog(@"line %d has dirty characters", y);
-#endif
             }
         }
     }
@@ -8167,13 +7546,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Unset the dirty bit for all chars.
     DebugLog(@"updateDirtyRects resetDirty");
-#ifdef DEBUG_DRAWING
-    [self appendDebug:dirtyDebug];
-#endif
     [_dataSource resetDirty];
 
     if (foundDirty) {
         [_dataSource saveToDvr];
+        [_delegate textViewInvalidateRestorableState];
     }
 
     if (foundDirty && [_dataSource shouldSendContentsChangedNotification]) {
@@ -8224,24 +7601,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (BOOL)_updateBlink {
+- (BOOL)shouldRedrawBlinkingObjects {
     // Time to redraw blinking text or cursor?
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    BOOL redrawBlink = NO;
     double timeDelta = now - _timeOfLastBlink;
     if (timeDelta >= [iTermAdvancedSettingsModel timeBetweenBlinks]) {
-        _blinkingItemsVisible = !_blinkingItemsVisible;
+        _drawingHelper.blinkingItemsVisible = !_drawingHelper.blinkingItemsVisible;
         _timeOfLastBlink = now;
-        redrawBlink = YES;
-
-        if (_blinkingCursor &&
-            [self isInKeyWindow]) {
-            // Blink flag flipped and there is a blinking cursor. Make it redraw.
-            [self setCursorNeedsDisplay];
-        }
-        DebugLog(@"time to redraw blinking text");
+        return YES;
+    } else {
+        return NO;
     }
-  return redrawBlink;
 }
 
 - (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width
@@ -8262,7 +7632,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // First, mark blinking chars as dirty.
             screen_char_t* theLine = [_dataSource getLineAtIndex:y];
             for (int x = 0; x < width; x++) {
-                BOOL charBlinks = [self _charBlinks:theLine[x]];
+                BOOL charBlinks = [self charBlinks:theLine[x]];
                 anyBlinkers |= charBlinks;
                 BOOL blinked = redrawBlink && charBlinks;
                 if (blinked) {
@@ -8388,26 +7758,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return coord;
 }
 
+- (NSIndexSet *)selectionIndexesOnLine:(int)line
+                   containingCharacter:(unichar)c
+                               inRange:(NSRange)range {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    return [extractor indexesOnLine:line containingCharacter:c inRange:range];
+}
+
 #pragma mark - iTermColorMapDelegate
 
 - (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
     if (theKey == kColorMapBackground) {
         [self updateScrollerForBackgroundColor];
-        self.cachedBackgroundColor = nil;
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
         self.badgeLabel = _badgeLabel;
     } else if (theKey == kColorMapForeground) {
         self.badgeLabel = _badgeLabel;
     } else if (theKey == kColorMapSelection) {
-        self.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
-                                                                    towardsGrayLevel:0.5];
+        _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
+                                                                              towardsGrayLevel:0.5];
     }
     [self setNeedsDisplay:YES];
 }
 
 - (void)colorMap:(iTermColorMap *)colorMap
     dimmingAmountDidChangeTo:(double)dimmingAmount {
-    self.cachedBackgroundColor = nil;
     [[self superview] setNeedsDisplay:YES];
 }
 
@@ -8419,7 +7794,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #pragma mark - iTermInidcatorsHelperDelegate
 
 - (NSColor *)indicatorFullScreenFlashColor {
-    return [_colorMap mutedColorForKey:kColorMapForeground];
+    return [self defaultTextColor];
 }
 
 #pragma mark - Mouse reporting
@@ -8508,6 +7883,171 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)selectionScrollWillStart {
     PTYScroller *scroller = (PTYScroller *)self.enclosingScrollView.verticalScroller;
     scroller.userScroll = YES;
+}
+
+#pragma mark - Color
+
+- (NSColor*)colorForCode:(int)theIndex
+                   green:(int)green
+                    blue:(int)blue
+               colorMode:(ColorMode)theMode
+                    bold:(BOOL)isBold
+                   faint:(BOOL)isFaint
+            isBackground:(BOOL)isBackground {
+    iTermColorMapKey key = [self colorMapKeyForCode:theIndex
+                                              green:green
+                                               blue:blue
+                                          colorMode:theMode
+                                               bold:isBold
+                                       isBackground:isBackground];
+    NSColor *color;
+    iTermColorMap *colorMap = self.colorMap;
+    if (isBackground) {
+        color = [colorMap colorForKey:key];
+    } else {
+        color = [self.colorMap colorForKey:key];
+        if (isFaint) {
+            color = [color colorWithAlphaComponent:0.5];
+        }
+    }
+    return color;
+}
+
+- (BOOL)charBlinks:(screen_char_t)sct {
+    return self.blinkAllowed && sct.blink;
+}
+
+- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
+                                 green:(int)green
+                                  blue:(int)blue
+                             colorMode:(ColorMode)theMode
+                                  bold:(BOOL)isBold
+                          isBackground:(BOOL)isBackground {
+    BOOL isBackgroundForDefault = isBackground;
+    switch (theMode) {
+        case ColorModeAlternate:
+            switch (theIndex) {
+                case ALTSEM_SELECTED:
+                    if (isBackground) {
+                        return kColorMapSelection;
+                    } else {
+                        return kColorMapSelectedText;
+                    }
+                case ALTSEM_CURSOR:
+                    if (isBackground) {
+                        return kColorMapCursor;
+                    } else {
+                        return kColorMapCursorText;
+                    }
+                case ALTSEM_REVERSED_DEFAULT:
+                    isBackgroundForDefault = !isBackgroundForDefault;
+                    // Fall through.
+                case ALTSEM_DEFAULT:
+                    if (isBackgroundForDefault) {
+                        return kColorMapBackground;
+                    } else {
+                        if (isBold && self.useBrightBold) {
+                            return kColorMapBold;
+                        } else {
+                            return kColorMapForeground;
+                        }
+                    }
+            }
+            break;
+        case ColorMode24bit:
+            return [iTermColorMap keyFor8bitRed:theIndex green:green blue:blue];
+        case ColorModeNormal:
+            // Render bold text as bright. The spec (ECMA-48) describes the intense
+            // display setting (esc[1m) as "bold or bright". We make it a
+            // preference.
+            if (isBold &&
+                self.useBrightBold &&
+                (theIndex < 8) &&
+                !isBackground) { // Only colors 0-7 can be made "bright".
+                theIndex |= 8;  // set "bright" bit.
+            }
+            return kColorMap8bitBase + (theIndex & 0xff);
+
+        case ColorModeInvalid:
+            return kColorMapInvalid;
+    }
+    NSAssert(ok, @"Bogus color mode %d", (int)theMode);
+    return kColorMapInvalid;
+}
+
+#pragma mark - iTermTextDrawingHelperDelegate
+
+- (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
+                        blendDefaultBackground:(BOOL)blend {
+    [_delegate textViewDrawBackgroundImageInView:self viewRect:rect blendDefaultBackground:blend];
+}
+
+- (VT100ScreenMark *)drawingHelperMarkOnLine:(int)line {
+    return [_dataSource markOnLine:line];
+}
+
+- (screen_char_t *)drawingHelperLineAtIndex:(int)line {
+    return [_dataSource getLineAtIndex:line];
+}
+
+- (screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
+    return [_dataSource getLineAtScreenIndex:line];
+}
+
+- (screen_char_t *)drawingHelperCopyLineAtIndex:(int)line toBuffer:(screen_char_t *)buffer {
+    return [_dataSource getLineAtIndex:line withBuffer:buffer];
+}
+
+- (iTermTextExtractor *)drawingHelperTextExtractor {
+    return [[[iTermTextExtractor alloc] initWithDataSource:_dataSource] autorelease];
+}
+
+- (NSArray *)drawingHelperCharactersWithNotesOnLine:(int)line {
+    return [_dataSource charactersWithNotesOnLine:line];
+}
+
+- (void)drawingHelperUpdateFindCursorView {
+    if ([self isFindingCursor]) {
+        NSPoint cp = [self cursorCenterInFindCursorWindowCoords];
+        if (!NSEqualPoints(_findCursorView.cursorPosition, cp)) {
+            _findCursorView.cursorPosition = cp;
+            [_findCursorView setNeedsDisplay:YES];
+        }
+    }
+}
+
+- (NSDate *)drawingHelperTimestampForLine:(int)line {
+    return [self.dataSource timestampForLine:line];
+}
+
+- (NSColor *)drawingHelperColorForCode:(int)theIndex
+                                 green:(int)green
+                                  blue:(int)blue
+                             colorMode:(ColorMode)theMode
+                                  bold:(BOOL)isBold
+                                 faint:(BOOL)isFaint
+                          isBackground:(BOOL)isBackground {
+    return [self colorForCode:theIndex
+                        green:green
+                         blue:blue
+                    colorMode:theMode
+                         bold:isBold
+                        faint:isFaint
+                 isBackground:isBackground];
+}
+
+- (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
+                                isComplex:(BOOL)complex
+                               renderBold:(BOOL *)renderBold
+                             renderItalic:(BOOL *)renderItalic {
+    return [self getFontForChar:ch
+                      isComplex:complex
+                     renderBold:renderBold
+                   renderItalic:renderItalic];
+}
+
+- (NSData *)drawingHelperMatchesOnLine:(int)line {
+    return _findOnPageHelper.highlightMap[@(line + _dataSource.totalScrollbackOverflow)];
 }
 
 @end

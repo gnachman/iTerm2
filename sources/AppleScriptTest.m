@@ -469,7 +469,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                                         outputs:outputs];
     NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
     BOOL beforeSleep = [[eventDescriptor descriptorAtIndex:1] booleanValue];
-    BOOL afterSleep = [[eventDescriptor descriptorAtIndex:2]ess booleanValue];
+    BOOL afterSleep = [[eventDescriptor descriptorAtIndex:2] booleanValue];
 
     // This test will fail if shell integration is not installed
     assert(beforeSleep);

@@ -1493,15 +1493,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.allDirty = NO;
 }
 
-- (void)setLineDirtyAtY:(int)y
-{
-    [currentGrid_ markCharsDirty:YES
-                      inRectFrom:VT100GridCoordMake(0, y)
-                              to:VT100GridCoordMake(self.width - 1, y)];
+- (void)setLineDirtyAtY:(int)y {
+    if (y >= 0) {
+        [currentGrid_ markCharsDirty:YES
+                          inRectFrom:VT100GridCoordMake(0, y)
+                                  to:VT100GridCoordMake(self.width - 1, y)];
+    }
 }
 
-- (void)setCharDirtyAtCursorX:(int)x Y:(int)y
-{
+- (void)setCharDirtyAtCursorX:(int)x Y:(int)y {
+    if (y < 0) {
+        return;
+    }
     int xToMark = x;
     int yToMark = y;
     if (xToMark == currentGrid_.size.width && yToMark < currentGrid_.size.height - 1) {
@@ -1882,6 +1885,34 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:mark.entry.interval.limit];
+    NSArray *objects;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ [VT100ScreenMark class] ]];
+        for (VT100ScreenMark *nextMark in objects) {
+            if (nextMark.isPrompt) {
+                VT100GridCoordRange range;
+                range.start = [self coordRangeForInterval:mark.entry.interval].end;
+                range.start.x = 0;
+                range.start.y++;
+                range.end = [self coordRangeForInterval:nextMark.entry.interval].start;
+                return range;
+            }
+        }
+    } while (objects && !objects.count);
+
+    // Command must still be running with no subsequent prompt.
+    VT100GridCoordRange range;
+    range.start = [self coordRangeForInterval:mark.entry.interval].end;
+    range.start.x = 0;
+    range.start.y++;
+    range.end.x = 0;
+    range.end.y = self.numberOfLines - self.height + [currentGrid_ numberOfLinesUsed];
+    return range;
+}
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {
@@ -1935,12 +1966,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         }
     }
 
-    // Make sure we didn't land on the right half of a double-width character
-    screen_char_t *aLine = [self getLineAtScreenIndex:currentGrid_.cursorY];
-    unichar c = aLine[currentGrid_.cursorX].code;
-    if ((c == DWC_RIGHT || c == DWC_SKIP) && !aLine[currentGrid_.cursorX].complexChar) {
-        [self doBackspace];
-    }
+    // It is OK to land on the right half of a double-width character (issue 3475).
 }
 
 // Reverse wrap is allowed when the cursor is on the left margin or left edge, wraparoundMode is

@@ -4,6 +4,7 @@
 #import "iTermColorMap.h"
 #import "iTermIndicatorsHelper.h"
 #import "iTermSemanticHistoryController.h"
+#import "iTermTextDrawingHelper.h"
 #import "LineBuffer.h"
 #import "PasteEvent.h"
 #import "PointerController.h"
@@ -15,6 +16,7 @@
 
 @class CRunStorage;
 @class iTermFindCursorView;
+@class iTermFindOnPageHelper;
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
 @class MovingAverage;
@@ -28,12 +30,6 @@
 @class ThreeFingerTapGestureRecognizer;
 @class VT100Screen;
 @class VT100Terminal;
-
-// Number of pixels margin on left and right edge.
-#define MARGIN  5
-
-// Number of pixels margin on the top.
-#define VMARGIN 2
 
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
@@ -113,6 +109,7 @@ typedef enum {
 - (PTYScroller *)textViewVerticalScroller;
 - (BOOL)textViewHasCoprocess;
 - (void)textViewPostTabContentsChangedNotification;
+- (void)textViewInvalidateRestorableState;
 - (void)textViewBeginDrag;
 - (void)textViewMovePane;
 - (void)textViewSwapPane;
@@ -184,23 +181,14 @@ typedef enum {
 // Is blinking text drawn blinking?
 @property(nonatomic, assign) BOOL blinkAllowed;
 
-// Cursor type
-@property(nonatomic, assign) ITermCursorType cursorType;
-
 // When dimming inactive views, should only text be dimmed (not bg?)
 @property(nonatomic, assign) BOOL dimOnlyText;
 
 // Should smart cursor color be used.
 @property(nonatomic, assign) BOOL useSmartCursorColor;
 
-// Minimum contrast level. 0 to 1.
-@property(nonatomic, assign) double minimumContrast;
-
 // Transparency level. 0 to 1.
 @property(nonatomic, assign) double transparency;
-
-// Blending level for background color over background image
-@property(nonatomic, assign) double blend;
 
 // Should transparency be used?
 @property(nonatomic, readonly) BOOL useTransparency;
@@ -246,14 +234,21 @@ typedef enum {
 // Stores colors. This object is its delegate.
 @property(nonatomic, readonly) iTermColorMap *colorMap;
 
-// The default background color, dimmed if needed.
-@property(nonatomic, readonly) NSColor *dimmedDefaultBackgroundColor;
-
 // Semantic history. TODO: Move this into PTYSession.
 @property(nonatomic, readonly) iTermSemanticHistoryController *semanticHistoryController;
 
 // A text badge shown in the top right of the window
 @property(nonatomic, copy) NSString *badgeLabel;
+
+// Is this view in the key window?
+@property(nonatomic, readonly) BOOL isInKeyWindow;
+
+// Blending level for background color over background image
+@property(nonatomic, assign) float blend;
+
+// Used by tests to modify drawing helper. Called within -drawRect:.
+typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
+@property(nonatomic, copy) PTYTextViewDrawingHookBlock drawingHook;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -418,6 +413,33 @@ typedef enum {
                workingDirectory:(NSString *)workingDirectory
                          prefix:(NSString *)prefix
                          suffix:(NSString *)suffix;
+
+- (PTYFontInfo*)getFontForChar:(UniChar)ch
+                     isComplex:(BOOL)complex
+                    renderBold:(BOOL*)renderBold
+                  renderItalic:(BOOL*)renderItalic;
+
+- (NSColor*)colorForCode:(int)theIndex
+                   green:(int)green
+                    blue:(int)blue
+               colorMode:(ColorMode)theMode
+                    bold:(BOOL)isBold
+                   faint:(BOOL)isFaint
+            isBackground:(BOOL)isBackground;
+
+- (BOOL)charBlinks:(screen_char_t)sct;
+
+- (iTermColorMapKey)colorMapKeyForCode:(int)theIndex
+                                 green:(int)green
+                                  blue:(int)blue
+                             colorMode:(ColorMode)theMode
+                                  bold:(BOOL)isBold
+                          isBackground:(BOOL)isBackground;
+
+- (void)setCursorType:(ITermCursorType)value;
+
+// Minimum contrast level. 0 to 1.
+- (void)setMinimumContrast:(double)value;
 
 @end
 

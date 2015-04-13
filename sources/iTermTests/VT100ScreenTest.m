@@ -757,7 +757,8 @@
 - (void)screenSaveScrollPosition {
 }
 
-- (void)screenAddMarkOnLine:(int)line {
+- (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
+    return nil;
 }
 
 - (void)screenActivateWindow {
@@ -2850,13 +2851,13 @@
     assert(screen.cursorX == 3);
     assert(screen.cursorY == 2);
     
-    // Over DWC_SKIP
+    // Cursor should be on DWC_SKIP
     screen = [self screenWithWidth:20 height:3];
     screen.delegate = (id<VT100ScreenDelegate>)self;
     [screen appendStringAtCursor:@"1234567890123456789Ｗ"];
     [screen terminalMoveCursorToX:1 y:2];
     [screen terminalBackspace];
-    assert(screen.cursorX == 19);
+    assert(screen.cursorX == 20);
     assert(screen.cursorY == 1);
 }
 

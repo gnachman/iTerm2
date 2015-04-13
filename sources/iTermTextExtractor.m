@@ -156,6 +156,18 @@ static const int kNumCharsToSearchForDivider = 8;
     return [NSString stringWithCharacters:temp length:length];
 }
 
+- (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range {
+    screen_char_t *theLine;
+    theLine = [_dataSource getLineAtIndex:line];
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    for (int i = range.location; i < range.location + range.length; i++) {
+        if (theLine[i].code == c && !theLine[i].complexChar) {
+            [indexes addIndex:i];
+        }
+    }
+    return indexes;
+}
+
 - (SmartMatch *)smartSelectionAt:(VT100GridCoord)location
                        withRules:(NSArray *)rules
                   actionRequired:(BOOL)actionRequired

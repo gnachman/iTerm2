@@ -102,4 +102,22 @@
   return coloredImage;
 }
 
+- (NSData *)dataForFileOfType:(NSBitmapImageFileType)fileType {
+    CGImageRef cgImage = [self CGImageForProposedRect:NULL
+                                              context:nil
+                                                hints:nil];
+    NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithCGImage:cgImage] autorelease];
+    [imageRep setSize:self.size];
+    return [imageRep representationUsingType:fileType properties:nil];
+}
+
+- (NSData *)rawPixelsInRGBColorSpace {
+    NSMutableData *storage = [NSMutableData data];
+    CGContextRef context = [self newBitmapContextWithStorage:storage];
+    CGContextDrawImage(context, NSMakeRect(0, 0, self.size.width, self.size.height),
+                       [self CGImageForProposedRect:NULL context:nil hints:nil]);
+    CGContextRelease(context);
+    return storage;
+}
+
 @end
