@@ -4624,11 +4624,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([_badgeLabel length]) {
         NSSize maxSize = self.enclosingScrollView.documentVisibleRect.size;
-        maxSize.width *= 0.5;  // Max size of image
+        maxSize.width *= 0.8;  // Max size of image
         maxSize.height *= 0.2;
         NSFont *font = nil;
         CGFloat min = 4, max = 100;
-        int points = (min + max / 2);
+        int points = (min + max / 4);
         int prevPoints = -1;
         NSSize sizeWithFont = NSZeroSize;
         NSDictionary *attributes = nil;
@@ -4651,7 +4651,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 min = points;
             }
             prevPoints = points;
-            points = (min + max) / 2;
+            points = (min + max) / 4;
         }
         if (sizeWithFont.width > 0 && sizeWithFont.height > 0) {
             NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
