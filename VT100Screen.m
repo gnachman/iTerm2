@@ -2036,10 +2036,14 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [SESSION clearTriggerLine];
         break;
     case VT100CSI_DA:
-        [self deviceAttribute:token];
+        if (![SESSION isTmuxClient]) {
+            [self deviceAttribute:token];
+        }
         break;
     case VT100CSI_DA2:
-        [self secondaryDeviceAttribute:token];
+        if (![SESSION isTmuxClient]) {
+            [self secondaryDeviceAttribute:token];
+        }
         break;
     case VT100CSI_DECALN:
         for (i = 0; i < HEIGHT; i++) {
@@ -4055,6 +4059,9 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)deviceReport:(VT100TCC)token withQuestion:(BOOL)question
 {
+    if ([SESSION isTmuxClient]) {
+        return;
+    }
     NSData *report = nil;
 
 #if DEBUG_METHOD_TRACE
