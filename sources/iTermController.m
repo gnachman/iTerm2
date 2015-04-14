@@ -329,27 +329,41 @@ static BOOL initDone = NO;
     }
 }
 
+- (NSArray *)terminalsSortedByNumber {
+    return [terminalWindows sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        return [@([obj1 number]) compare:@([obj2 number])];
+    }];
+}
+
 - (IBAction)previousTerminal:(id)sender {
-    NSUInteger index = [self indexOfTerminal:FRONT];
+    NSArray *windows = [self terminalsSortedByNumber];
+    if (windows.count < 2) {
+        return;
+    }
+    NSUInteger index = [windows indexOfObject:FRONT];
     if (index == NSNotFound) {
         DLog(@"Index of terminal not found, so cycle.");
         [NSApp _cycleWindowsReversed:YES];
     } else {
         int i = index;
         i += terminalWindows.count - 1;
-        [[terminalWindows[i % terminalWindows.count] window] makeKeyAndOrderFront:nil];
+        [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
     }
 }
 
 - (IBAction)nextTerminal:(id)sender {
-    NSUInteger index = [self indexOfTerminal:FRONT];
+    NSArray *windows = [self terminalsSortedByNumber];
+    if (windows.count < 2) {
+        return;
+    }
+    NSUInteger index = [windows indexOfObject:FRONT];
     if (index == NSNotFound) {
         DLog(@"Index of terminal not found, so cycle.");
         [NSApp _cycleWindowsReversed:NO];
     } else {
         int i = index;
         i++;
-        [[terminalWindows[i % terminalWindows.count] window] makeKeyAndOrderFront:nil];
+        [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
     }
 }
 
