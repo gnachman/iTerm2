@@ -38,7 +38,16 @@
     NSString *mods = [self modifiersString];
     if (_ordinal == 0 || !mods) {
         _label.stringValue = @"";
+    } else if (_ordinal >= 10) {
+        NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+        paragraphStyle.alignment = NSRightTextAlignment;
+        NSDictionary *attributes = @{ NSFontAttributeName: _label.font,
+                                      NSForegroundColorAttributeName: [NSColor lightGrayColor],
+                                      NSParagraphStyleAttributeName: paragraphStyle };
+        _label.attributedStringValue = [[[NSAttributedString alloc] initWithString:[@(_ordinal) stringValue]
+                                                                        attributes:attributes] autorelease];
     } else {
+        _label.attributedStringValue = nil;
         _label.stringValue = [NSString stringWithFormat:@"%@%d", mods, _ordinal];
     }
 }
