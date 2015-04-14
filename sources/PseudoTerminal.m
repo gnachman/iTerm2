@@ -40,7 +40,6 @@
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "ProfilesWindow.h"
-#import "PseudoTerminal+Scripting.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMDarkTabStyle.h"
 #import "PSMTabStyle.h"

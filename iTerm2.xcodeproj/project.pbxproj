@@ -318,7 +318,7 @@
 		1D6ED8B319AEA20D005A7799 /* WindowControllerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */; };
 		1D6ED8B419AEA20D005A7799 /* NSPopUpButton+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8006D18F34CAB00722B35 /* NSPopUpButton+iTerm.h */; };
 		1D6ED8B519AEA20D005A7799 /* iTermOpenQuicklyWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */; };
-		1D6ED8B619AEA20D005A7799 /* PseudoTerminal+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */; };
+		1D6ED8B619AEA20D005A7799 /* PTYWindow+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */; };
 		1D6ED8B719AEA20D005A7799 /* PasswordTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DABA03119253FEA00A228D8 /* PasswordTrigger.h */; };
 		1D6ED8B819AEA20D005A7799 /* AppearancePreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7138C18F26A91008D94DD /* AppearancePreferencesViewController.h */; };
 		1D6ED8B919AEA20D005A7799 /* iTermExposeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7475F188C679C005355CF /* iTermExposeView.h */; };
@@ -814,7 +814,7 @@
 		1D6EDAD319AEA20D005A7799 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
 		1D6EDAD419AEA20D005A7799 /* iTermFontPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */; };
 		1D6EDAD519AEA20D005A7799 /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
-		1D6EDAD619AEA20D005A7799 /* PseudoTerminal+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */; };
+		1D6EDAD619AEA20D005A7799 /* PTYWindow+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */; };
 		1D6EDAD719AEA20D005A7799 /* CharacterRun.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D48B378167E809D000046EE /* CharacterRun.m */; };
 		1D6EDAD819AEA20D005A7799 /* ProfilesTextPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2697D18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m */; };
 		1D6EDAD919AEA20D005A7799 /* PTYFontInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D70BA341680158700824B72 /* PTYFontInfo.m */; };
@@ -1798,9 +1798,9 @@
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
 		A6C537C41939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
 		A6C537C51939507100A08C18 /* iTermRestorableSession.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537C21939507100A08C18 /* iTermRestorableSession.m */; };
-		A6C7DE4F199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */; };
-		A6C7DE50199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */; };
-		A6C7DE52199F3087001E5C75 /* PseudoTerminal+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */; };
+		A6C7DE4F199F302C001E5C75 /* PTYWindow+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */; };
+		A6C7DE50199F302C001E5C75 /* PTYWindow+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */; };
+		A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */; };
 		A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */; };
 		A6C7DE5619A4591E001E5C75 /* iTermNewWindowCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */; };
 		A6C7DE5719A4591E001E5C75 /* iTermNewWindowCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */; };
@@ -2760,8 +2760,8 @@
 		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
-		A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PseudoTerminal+Scripting.m"; sourceTree = "<group>"; };
-		A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PseudoTerminal+Scripting.h"; sourceTree = "<group>"; };
+		A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYWindow+Scripting.m"; sourceTree = "<group>"; };
+		A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYWindow+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNewWindowCommand.h; sourceTree = "<group>"; };
 		A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNewWindowCommand.m; sourceTree = "<group>"; };
 		A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = iTerm2.sdef; sourceTree = "<group>"; };
@@ -3205,7 +3205,7 @@
 				1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */,
 				A6057C021878CD30004A60AF /* ProfileTagsView.h */,
 				1D407A2B14BABE8700BD5035 /* PseudoTerminal.h */,
-				A6C7DE51199F3087001E5C75 /* PseudoTerminal+Scripting.h */,
+				A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */,
 				5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */,
 				1D70BA331680158700824B72 /* PTYFontInfo.h */,
 				A63F4098183B3AA7003A6A6D /* PTYNoteView.h */,
@@ -3608,7 +3608,7 @@
 			children = (
 				1D5655CD19AD2B9B001C460B /* iTermApplication+Scripting.m */,
 				A6C7DE5419A4591E001E5C75 /* iTermNewWindowCommand.m */,
-				A6C7DE4E199F302C001E5C75 /* PseudoTerminal+Scripting.m */,
+				A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */,
 				A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */,
 				1D5655C819AD2B1A001C460B /* PTYTab+Scripting.m */,
 			);
@@ -4392,7 +4392,7 @@
 				1D6ED8B319AEA20D005A7799 /* WindowControllerInterface.h in Headers */,
 				1D6ED8B419AEA20D005A7799 /* NSPopUpButton+iTerm.h in Headers */,
 				1D6ED8B519AEA20D005A7799 /* iTermOpenQuicklyWindowController.h in Headers */,
-				1D6ED8B619AEA20D005A7799 /* PseudoTerminal+Scripting.h in Headers */,
+				1D6ED8B619AEA20D005A7799 /* PTYWindow+Scripting.h in Headers */,
 				1D6ED8B719AEA20D005A7799 /* PasswordTrigger.h in Headers */,
 				1D6ED8B819AEA20D005A7799 /* AppearancePreferencesViewController.h in Headers */,
 				1D6ED8B919AEA20D005A7799 /* iTermExposeView.h in Headers */,
@@ -4721,7 +4721,7 @@
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
 				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
 				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
-				A6C7DE52199F3087001E5C75 /* PseudoTerminal+Scripting.h in Headers */,
+				A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */,
 				A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */,
 				1DABA03319253FEA00A228D8 /* PasswordTrigger.h in Headers */,
 				A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */,
@@ -5791,7 +5791,7 @@
 				1D6EDAD319AEA20D005A7799 /* BackgroundThread.m in Sources */,
 				1D6EDAD419AEA20D005A7799 /* iTermFontPanel.m in Sources */,
 				1D6EDAD519AEA20D005A7799 /* PTYNoteView.m in Sources */,
-				1D6EDAD619AEA20D005A7799 /* PseudoTerminal+Scripting.m in Sources */,
+				1D6EDAD619AEA20D005A7799 /* PTYWindow+Scripting.m in Sources */,
 				1D6EDAD719AEA20D005A7799 /* CharacterRun.m in Sources */,
 				1D6EDAD819AEA20D005A7799 /* ProfilesTextPreferencesViewController.m in Sources */,
 				1D6EDAD919AEA20D005A7799 /* PTYFontInfo.m in Sources */,
@@ -6098,7 +6098,7 @@
 				A6A13AA418C2D23300B241ED /* iTermColorMap.m in Sources */,
 				A6AE1EDA1926F89B00780C19 /* iTermAnnouncementViewController.m in Sources */,
 				A6E77FC31A2ECDB6009B1CB6 /* PTYTextViewTest.m in Sources */,
-				A6C7DE50199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */,
+				A6C7DE50199F302C001E5C75 /* PTYWindow+Scripting.m in Sources */,
 				A635864B184BEA57009ED690 /* AATreeNode.m in Sources */,
 				A6A13AB318C33ED300B241ED /* VT100CSIParser.m in Sources */,
 				A61B66D118D51EAC009AC9D5 /* iTermInstantReplayWindowController.m in Sources */,
@@ -6399,7 +6399,7 @@
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
 				A63F409B183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
-				A6C7DE4F199F302C001E5C75 /* PseudoTerminal+Scripting.m in Sources */,
+				A6C7DE4F199F302C001E5C75 /* PTYWindow+Scripting.m in Sources */,
 				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
 				A6A2697F18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */,
 				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,
