@@ -329,14 +329,28 @@ static BOOL initDone = NO;
     }
 }
 
-// navigation
-- (IBAction)previousTerminal:(id)sender
-{
-    [NSApp _cycleWindowsReversed:YES];
+- (IBAction)previousTerminal:(id)sender {
+    NSUInteger index = [self indexOfTerminal:FRONT];
+    if (index == NSNotFound) {
+        DLog(@"Index of terminal not found, so cycle.");
+        [NSApp _cycleWindowsReversed:YES];
+    } else {
+        int i = index;
+        i += terminalWindows.count - 1;
+        [[terminalWindows[i % terminalWindows.count] window] makeKeyAndOrderFront:nil];
+    }
 }
-- (IBAction)nextTerminal:(id)sender
-{
-    [NSApp _cycleWindowsReversed:NO];
+
+- (IBAction)nextTerminal:(id)sender {
+    NSUInteger index = [self indexOfTerminal:FRONT];
+    if (index == NSNotFound) {
+        DLog(@"Index of terminal not found, so cycle.");
+        [NSApp _cycleWindowsReversed:NO];
+    } else {
+        int i = index;
+        i++;
+        [[terminalWindows[i % terminalWindows.count] window] makeKeyAndOrderFront:nil];
+    }
 }
 
 - (NSString *)_showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
