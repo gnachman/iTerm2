@@ -311,8 +311,6 @@ class XtermWinopsTests(object):
     esccmd.ChangeWindowTitle(string)
     AssertEQ(GetWindowTitle(), string)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushIconAndWindow_PopIconAndWindow(self):
     """Basic test: Push an icon & window title and restore it."""
     # Generate a uniqueish string

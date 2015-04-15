@@ -1649,7 +1649,10 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         case XTERMCC_REPORT_WIN_TITLE: {
-            NSString *s = [NSString stringWithFormat:@"\033]L%@\033\\",
+            // NOTE: In versions prior to 2.9.20150415, we used "L" as the leader here, not "l".
+            // That was wrong and may cause bug reports due to breaking bugward compatibility.
+            // (see xterm docs)
+            NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
                            [delegate_ terminalWindowTitle]];
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
