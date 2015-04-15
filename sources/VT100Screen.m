@@ -2503,9 +2503,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
     if (rows == -1) {
         rows = self.height;
+    } else if (rows == 0) {
+        rows = [self terminalScreenHeightInCells];
     }
     if (columns == -1) {
         columns = self.width;
+    } else if (columns == 0) {
+        columns = [self terminalScreenWidthInCells];
     }
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {

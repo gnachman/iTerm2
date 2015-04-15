@@ -188,7 +188,6 @@ class XtermWinopsTests(object):
 
   @knownBug(terminal="xterm",
       reason="GetDisplaySize reports an incorrect value")
-  @knownBug(terminal="iTerm2", reason="Doesn't interpret 0 param to mean max")
   def test_XtermWinops_ResizeChars_ZeroWidth(self):
     """Resize the window to a character size, setting one param to 0 (max size
     in that direction)."""
@@ -202,7 +201,6 @@ class XtermWinopsTests(object):
 
   @knownBug(terminal="xterm",
       reason="GetDisplaySize reports an incorrect value")
-  @knownBug(terminal="iTerm2", reason="Doesn't interpret 0 param to mean max")
   def test_XtermWinops_ResizeChars_ZeroHeight(self):
     """Resize the window to a character size, setting one param to 0 (max size
     in that direction)."""
@@ -304,8 +302,6 @@ class XtermWinopsTests(object):
     esccmd.ChangeIconTitle(string)
     AssertEQ(GetIconTitle(), string)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_ReportWindowLabel(self):
     string = "test " + str(time.time())
     esccmd.ChangeWindowTitle(string)
@@ -335,8 +331,7 @@ class XtermWinopsTests(object):
     AssertEQ(GetWindowTitle(), string)
     AssertEQ(GetIconTitle(), string)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  @knownBug(terminal="iTerm2", reason="The window title incorrectly changes when popping the icon title.")
   def test_XtermWinops_PushIconAndWindow_PopIcon(self):
     """Push an icon & window title and pop just the icon title."""
     # Generate a uniqueish string
@@ -357,7 +352,7 @@ class XtermWinopsTests(object):
 
     # Pop icon title, ensure correct.
     esccmd.XTERM_WINOPS(esccmd.WINOP_POP_TITLE,
-                            esccmd.WINOP_POP_TITLE_ICON)
+                        esccmd.WINOP_POP_TITLE_ICON)
     AssertEQ(GetWindowTitle(), "x")
     AssertEQ(GetIconTitle(), string)
 
@@ -367,8 +362,7 @@ class XtermWinopsTests(object):
     AssertEQ(GetWindowTitle(), "x")
     AssertEQ(GetIconTitle(), string)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+  @knownBug(terminal="iTerm2", reason="The window title incorrectly changes when popping the icon title.")
   def test_XtermWinops_PushIconAndWindow_PopWindow(self):
     """Push an icon & window title and pop just the window title."""
     # Generate a uniqueish string
@@ -400,7 +394,7 @@ class XtermWinopsTests(object):
     AssertEQ(GetIconTitle(), "x")
 
   @knownBug(terminal="iTerm2",
-            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+            reason="iTerm2 pops twice while xterm pops only once for POP_TITLE_ICON_AND_WINDOW")
   def test_XtermWinops_PushIcon_PopIcon(self):
     """Push icon title and then pop it."""
     # Generate a uniqueish string
@@ -422,7 +416,7 @@ class XtermWinopsTests(object):
     AssertEQ(GetIconTitle(), string)
 
   @knownBug(terminal="iTerm2",
-            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+            reason="POP_TITLE_WINDOW incorrectly changes the icon title.")
   def test_XtermWinops_PushWindow_PopWindow(self):
     """Push window title and then pop it."""
     # Generate a uniqueish string
@@ -432,19 +426,19 @@ class XtermWinopsTests(object):
     esccmd.ChangeIconTitle("x")
     esccmd.ChangeWindowTitle(string)
     esccmd.XTERM_WINOPS(esccmd.WINOP_PUSH_TITLE,
-                            esccmd.WINOP_PUSH_TITLE_WINDOW)
+                        esccmd.WINOP_PUSH_TITLE_WINDOW)
 
     # Change to x.
     esccmd.ChangeWindowTitle("y")
 
     # Pop window title, ensure correct.
     esccmd.XTERM_WINOPS(esccmd.WINOP_POP_TITLE,
-                            esccmd.WINOP_POP_TITLE_WINDOW)
+                        esccmd.WINOP_POP_TITLE_WINDOW)
     AssertEQ(GetIconTitle(), "x")
     AssertEQ(GetWindowTitle(), string)
 
   @knownBug(terminal="iTerm2",
-            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
+            reason="iTerm2 pops twice while xterm pops only once for POP_TITLE_ICON_AND_WINDOW")
   def test_XtermWinops_PushIconThenWindowThenPopBoth(self):
     """Push icon, then push window, then pop both."""
     # Generate a uniqueish string
@@ -500,8 +494,6 @@ class XtermWinopsTests(object):
                             esccmd.WINOP_POP_TITLE_ICON)
     AssertEQ(GetIconTitle(), string1)
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 responds with L (not l) as the leader for GetWindowTitle's report")
   def test_XtermWinops_PushMultiplePopMultiple_Window(self):
     """Push two titles and pop twice."""
     # Generate a uniqueish string
