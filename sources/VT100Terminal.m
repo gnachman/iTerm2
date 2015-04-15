@@ -1343,8 +1343,11 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
         case VT100CSI_NEL:
+            // We do the linefeed first because it's a no-op if the cursor is outside the left-
+            // right margin. Carriage return will move it to the left margin.
+            [delegate_ terminalLineFeed];
             [delegate_ terminalCarriageReturn];
-            // fall through
+            break;
         case VT100CSI_IND:
             [delegate_ terminalLineFeed];  // TODO Make sure this is kosher. How does xterm handle index with scroll regions?
             break;
