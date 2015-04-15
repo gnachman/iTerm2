@@ -32,7 +32,7 @@ class RISTests(object):
     escio.Write(TAB)
     AssertEQ(GetCursorPosition(), Point(9, 1))
 
-  @knownBug(terminal="iTerm2", reason="iTerm2's title reporting is broken.")
+  @knownBug(terminal="iTerm2", reason="RM_Title and SM_Title not implemented.")
   def test_RIS_ResetTitleMode(self):
     esccmd.RM_Title(esccmd.SET_UTF8, esccmd.QUERY_UTF8)
     esccmd.SM_Title(esccmd.SET_HEX, esccmd.QUERY_HEX)
