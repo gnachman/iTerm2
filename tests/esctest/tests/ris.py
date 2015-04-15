@@ -64,7 +64,6 @@ class RISTests(object):
 
   @knownBug(terminal="xterm",
             reason="xterm seems to check initflags rather than flags in ReallyReset() (bug reported)")
-  @knownBug(terminal="iTerm2", reason="iTerm2 doesn't reset DECCOLM")
   def test_RIS_ResetDECCOLM(self):
     esccmd.DECSET(esccmd.Allow80To132)
     esccmd.DECSET(esccmd.DECCOLM)

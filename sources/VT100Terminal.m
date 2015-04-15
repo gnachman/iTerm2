@@ -247,6 +247,9 @@ static const int kMaxScreenRows = 4096;
 - (void)resetPreservingPrompt:(BOOL)preservePrompt {
     self.lineMode = NO;
     self.cursorMode = NO;
+    if (_columnMode) {
+        [delegate_ terminalSetWidth:80];
+    }
     self.columnMode = NO;
     self.scrollMode = NO;
     _reverseVideo = NO;
