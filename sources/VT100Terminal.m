@@ -1349,7 +1349,7 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalCarriageReturn];
             break;
         case VT100CSI_IND:
-            [delegate_ terminalLineFeed];  // TODO Make sure this is kosher. How does xterm handle index with scroll regions?
+            [delegate_ terminalLineFeed];
             break;
         case VT100CSI_RI:
             [delegate_ terminalReverseIndex];
