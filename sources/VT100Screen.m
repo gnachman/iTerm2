@@ -2070,7 +2070,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (currentGrid_.useScrollRegionCols) {
         if (currentGrid_.cursorX < currentGrid_.leftMargin ||
             currentGrid_.cursorX > currentGrid_.rightMargin) {
-            DLog(@"Ignore linefeed/formfeed because cursor outside left-right margin.");
+            DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
             return;
         }
     }
