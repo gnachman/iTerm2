@@ -629,7 +629,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[self window] setDelegate: self];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_refreshTitle:)
+                                             selector:@selector(updateWindowNumberVisibility:)
                                                  name:kUpdateLabelsNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -707,6 +707,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     if ((self.window.styleMask & NSTitledWindowMask) && _shortcutAccessoryViewController) {
         [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+        [self updateWindowNumberVisibility:nil];
     }
     _shortcutAccessoryViewController.ordinal = number_ + 1;
 }
@@ -3225,6 +3226,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
             (self.window.styleMask & NSTitledWindowMask)) {
             [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+            [self updateWindowNumberVisibility:nil];
         }
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
@@ -5619,10 +5621,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return 0;
 }
 
-- (void)_refreshTitle:(NSNotification*)aNotification
-{
+- (void)updateWindowNumberVisibility:(NSNotification*)aNotification {
     // This is if displaying of window number was toggled in prefs.
-    [self setWindowTitle];
+    if (_shortcutAccessoryViewController) {
+        _shortcutAccessoryViewController.view.hidden = ![iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber];
+    } else {
+        // Pre-10.10 code path
+        [self setWindowTitle];
+    }
 }
 
 - (void)_scrollerStyleChanged:(id)sender
