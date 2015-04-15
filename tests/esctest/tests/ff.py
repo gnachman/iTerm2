@@ -63,8 +63,6 @@ class FFTests(object):
     AssertEQ(GetCursorPosition(), Point(2, 5))
     AssertScreenCharsInRectEqual(Rect(2, 4, 2, 5), [ "x", NUL ])
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 improperly scrolls when the cursor is outside the left-right region.")
   def test_FF_MovesDoesNotScrollOutsideLeftRight(self):
     """Cursor moves down but won't scroll when outside left-right region."""
     esccmd.DECSTBM(2, 5)
