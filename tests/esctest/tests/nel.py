@@ -77,6 +77,11 @@ class NELTests(object):
     AssertEQ(GetCursorPosition(), Point(2, 5))
     AssertScreenCharsInRectEqual(Rect(3, 5, 3, 5), [ "x" ])
 
+    # Cursor can move down a line without scrolling.
+    esccmd.CUP(Point(6, 4))
+    esccmd.NEL()
+    AssertEQ(GetCursorPosition(), Point(2, 5))
+
     # Try to move past the bottom of the screen but to the right of the left-right region
     height = GetScreenSize().height()
     esccmd.CUP(Point(6, height))

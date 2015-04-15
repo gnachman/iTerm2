@@ -2066,13 +2066,16 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.cursorX = nextTabStop;
 }
 
+- (BOOL)cursorOutsideLeftRightMargin {
+    return (currentGrid_.useScrollRegionCols && (currentGrid_.cursorX < currentGrid_.leftMargin ||
+                                                 currentGrid_.cursorX > currentGrid_.rightMargin));
+}
+
 - (void)terminalLineFeed {
-    if (currentGrid_.useScrollRegionCols) {
-        if (currentGrid_.cursorX < currentGrid_.leftMargin ||
-            currentGrid_.cursorX > currentGrid_.rightMargin) {
-            DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
-            return;
-        }
+    if (currentGrid_.cursor.y == VT100GridRangeMax(currentGrid_.scrollRegionRows) &&
+        [self cursorOutsideLeftRightMargin]) {
+        DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
+        return;
     }
 
     if (collectInputForPrinting_) {
@@ -2260,7 +2263,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalReverseIndex {
     if (currentGrid_.cursorY == currentGrid_.topMargin) {
-        [currentGrid_ scrollDown];
+        if ([self cursorOutsideLeftRightMargin]) {
+            return;
+        } else {
+            [currentGrid_ scrollDown];
+        }
     } else {
         currentGrid_.cursorY = MAX(0, currentGrid_.cursorY - 1);
     }
