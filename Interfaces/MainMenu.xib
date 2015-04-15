@@ -21,7 +21,7 @@
                                     <action selector="showAbout:" target="201" id="509"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Check For Update..." id="880">
+                            <menuItem title="Check For Updates..." id="880">
                                 <connections>
                                     <action selector="checkForUpdates:" target="879" id="881"/>
                                 </connections>
