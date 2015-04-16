@@ -653,6 +653,15 @@ DQ
                             <menuItem isSeparatorItem="YES" id="806">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Zoom In on Selection" keyEquivalent="z" id="Atu-fG-56G">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="zoomOnSelection:" target="-1" id="Yfw-BL-sPd"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="QEZ-2e-3zm">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Find Cursor" keyEquivalent="/" id="1286">
                                 <connections>
                                     <action selector="findCursor:" target="-1" id="1288"/>

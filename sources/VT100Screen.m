@@ -768,6 +768,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self reloadMarkCache];
 }
 
+- (void)appendScreenChars:(screen_char_t *)line
+                   length:(int)length
+             continuation:(screen_char_t)continuation {
+    [self appendScreenCharArrayAtCursor:line
+                                 length:length
+                             shouldFree:NO];
+    if (continuation.code == EOL_HARD) {
+        [self terminalCarriageReturn];
+        [self linefeed];
+    }
+}
+
 - (void)appendAsciiDataAtCursor:(AsciiData *)asciiData
 {
     int len = asciiData->length;

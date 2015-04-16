@@ -134,6 +134,7 @@ typedef enum {
 - (NSColor *)textViewBadgeColor;
 - (NSDictionary *)textViewVariables;
 - (BOOL)textViewSuppressingAllOutput;
+- (BOOL)textViewIsZoomedIn;
 
 @end
 

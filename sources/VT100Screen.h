@@ -144,6 +144,10 @@ extern int kVT100ScreenMinRows;
 // Clears the scrollback buffer, leaving screen contents alone.
 - (void)clearScrollbackBuffer;
 
+- (void)appendScreenChars:(screen_char_t *)line
+                   length:(int)length
+             continuation:(screen_char_t)continuation;
+
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
 // buffer may change.

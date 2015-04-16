@@ -102,6 +102,7 @@ static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name
 static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
 static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
+static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
@@ -303,6 +304,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Session should auto-restart after the pipe breaks.
     BOOL _shouldRestart;
+
+    // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
+    BOOL _synthetic;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -471,12 +475,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_antiIdleTimer invalidate];
 }
 
-- (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession
-{
+- (void)setLiveSession:(PTYSession *)liveSession {
     assert(liveSession != self);
-
+    if (liveSession) {
+        assert(!_liveSession);
+        _synthetic = YES;
+    }
     _liveSession = liveSession;
     [_liveSession retain];
+}
+
+- (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession {
     _screen.dvr = nil;
     _dvr = dvr;
     [_dvr retain];
@@ -525,6 +534,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     [self setDvrFrame];
     return [_dvrDecoder timestamp];
+}
+
+- (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
+    int width = source.screen.width;
+    for (NSUInteger i = 0; i < rangeOfLines.length; i++) {
+        int row = rangeOfLines.location + i;
+        screen_char_t *theLine = [source.screen getLineAtIndex:row];
+        [_screen appendScreenChars:theLine length:width continuation:theLine[width]];
+    }
 }
 
 - (void)updateVariables {
@@ -600,11 +618,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             height:[[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue]];
 }
 
-+ (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
-                               inView:(SessionView*)sessionView
-                                inTab:(PTYTab*)theTab
-                        forObjectType:(iTermObjectType)objectType
-{
++ (PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
+                               inView:(SessionView *)sessionView
+                                inTab:(PTYTab *)theTab
+                        forObjectType:(iTermObjectType)objectType {
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession.view = sessionView;
     [[sessionView findViewController] setDelegate:aSession];
@@ -732,6 +749,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [[aSession terminal] setMouseMode:MOUSE_REPORTING_NONE];
         }
         [[aSession terminal] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
+    }
+    NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
+    if (liveArrangement) {
+        aSession.liveSession = [self sessionFromArrangement:liveArrangement
+                                                     inView:[[SessionView alloc] initWithFrame:sessionView.frame]
+                                                      inTab:theTab
+                                              forObjectType:objectType];
     }
     return aSession;
 }
@@ -1189,7 +1213,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
-    BOOL undoable = ![self isTmuxClient] && !_shouldRestart;
+    BOOL undoable = ![self isTmuxClient] && !_shouldRestart && !_synthetic;
     [_terminal.parser forceUnhookDCS];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -2871,6 +2895,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_CONTENTS] = [_screen contentsDictionary];
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
+    if (_liveSession && includeContents && !_dvr) {
+        result[SESSION_ARRANGEMENT_LIVE_SESSION] =
+            [_liveSession arrangementWithContents:includeContents];
+    }
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
@@ -4005,7 +4033,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
     _lastInput = [NSDate timeIntervalSinceReferenceDate];
     [self resumeOutputIfNeeded];
-    if ([[[self tab] realParentWindow] inInstantReplay]) {
+    if ([self textViewIsZoomedIn]) {
+        [[[self tab] realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    } else if ([[[self tab] realParentWindow] inInstantReplay]) {
         DLog(@"PTYSession keyDown in IR");
 
         // Special key handling in IR mode, and keys never get sent to the live
@@ -5079,6 +5109,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)textViewSuppressingAllOutput {
     return _suppressAllOutput;
+}
+
+- (BOOL)textViewIsZoomedIn {
+    return _liveSession && !_dvr;
 }
 
 - (void)sendEscapeSequence:(NSString *)text

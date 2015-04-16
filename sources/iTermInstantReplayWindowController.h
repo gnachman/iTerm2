@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @protocol iTermInstantReplayDelegate
-- (void)instantReplayClose;
+- (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded;
 - (void)instantReplaySeekTo:(float)position;
 - (void)instantReplayStep:(int)direction;
 

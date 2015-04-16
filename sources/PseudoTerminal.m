@@ -25,6 +25,7 @@
 #import "iTermInstantReplayWindowController.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPreferences.h"
+#import "iTermSelection.h"
 #import "iTermTabBarControlView.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
@@ -3825,7 +3826,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)showOrHideInstantReplayBar
 {
     PTYSession* aSession = [self currentSession];
-    if ([aSession liveSession]) {
+    if ([aSession liveSession] && aSession.dvr) {
         [self setInstantReplayBarVisible:YES];
     } else {
         [self setInstantReplayBarVisible:NO];
@@ -4359,7 +4360,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)instantReplayClose {
+- (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
     if ([[self currentSession] liveSession]) {
         [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
     }
@@ -4444,21 +4445,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return [self broadcastMode] != BROADCAST_OFF;
 }
 
-- (void)replaySession:(PTYSession *)oldSession
-{
-    // NSLog(@"Enter instant replay. Live session is %@", oldSession);
-    NSTabViewItem* oldTabViewItem = [TABVIEW selectedTabViewItem];
-    if (!oldTabViewItem) {
-        return;
-    }
-    if ([[[oldSession screen] dvr] lastTimeStamp] == 0) {
-        // Nothing recorded (not enough memory for one frame, perhaps?).
-        return;
+- (PTYSession *)syntheticSessionForSession:(PTYSession *)oldSession {
+    NSTabViewItem *tabViewItem = [TABVIEW selectedTabViewItem];
+    if (!tabViewItem) {
+        return nil;
     }
     PTYSession *newSession;
 
     // Initialize a new session
-    newSession = [[PTYSession alloc] init];
+    newSession = [[[PTYSession alloc] init] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
     // set our preferences
@@ -4468,17 +4463,45 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[newSession view] setViewId:[[oldSession view] viewId]];
 
     // Add this session to our term and make it current
-    PTYTab* theTab = [oldTabViewItem identifier];
+    PTYTab *theTab = [tabViewItem identifier];
     [newSession setTab:theTab];
-    [theTab setDvrInSession:newSession];
-    [newSession release];
+
+    return newSession;
+}
+
+- (void)replaySession:(PTYSession *)oldSession {
+    if ([[[oldSession screen] dvr] lastTimeStamp] == 0) {
+        // Nothing recorded (not enough memory for one frame, perhaps?).
+        return;
+    }
+
+    PTYSession *newSession = [self syntheticSessionForSession:oldSession];
+
+    [oldSession.tab setDvrInSession:newSession];
     if (![self inInstantReplay]) {
         [self showHideInstantReplay];
     }
 }
 
-- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
-{
+- (IBAction)zoomOnSelection:(id)sender {
+    PTYSession *session = [self currentSession];
+    iTermSelection *selection = session.textview.selection;
+    iTermSubSelection *sub = [selection.allSubSelections lastObject];
+    if (sub) {
+        [self showRangeOfLines:NSMakeRange(sub.range.coordRange.start.y,
+                                           sub.range.coordRange.end.y - sub.range.coordRange.start.y)
+                     inSession:session];
+    }
+}
+
+- (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
+    PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
+    syntheticSession.textview.cursorVisible = NO;
+    [syntheticSession appendLinesInRange:rangeOfLines fromSession:oldSession];
+    [oldSession.tab replaceActiveSessionWithSyntheticSession:syntheticSession];
+}
+
+- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {
     PTYTab* theTab = [replaySession tab];
     [_instantReplayWindowController updateInstantReplayView];
 
@@ -4492,6 +4515,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [replaySession release];
     [theTab setParentWindow:self];
     [[self window] makeFirstResponder:[[theTab activeSession] textview]];
+    [[self ptyWindow] turnOffVibrancyInTitleBar];
 }
 
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point
@@ -6532,7 +6556,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else if ([item action] == @selector(logStop:)) {
         result = logging == NO ? NO : YES;
     } else if ([item action] == @selector(irPrev:)) {
-        result = [[self currentSession] canInstantReplayPrev];
+        result = ![[self currentSession] liveSession] && [[self currentSession] canInstantReplayPrev];
     } else if ([item action] == @selector(irNext:)) {
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleShowTimestamps:)) {
@@ -6606,6 +6630,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                     horizontally:YES];
     } else if ([item action] == @selector(duplicateTab:)) {
         return ![[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(zoomOnSelection:)) {
+        return ![self inInstantReplay] && [[self currentSession] hasSelection];
     } else if ([item action] == @selector(showFindPanel:) ||
                [item action] == @selector(findPrevious:) ||
                [item action] == @selector(findNext:) ||

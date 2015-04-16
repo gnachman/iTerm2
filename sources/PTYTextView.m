@@ -1526,6 +1526,8 @@ static const int kDragThreshold = 3;
                             visible:[_delegate alertOnNextMark]];
     [_indicatorsHelper setIndicator:kiTermIndicatorAllOutputSuppressed
                             visible:[_delegate textViewSuppressingAllOutput]];
+    [_indicatorsHelper setIndicator:kiTermIndicatorZoomedIn
+                            visible:[_delegate textViewIsZoomedIn]];
     [_indicatorsHelper drawInFrame:self.visibleRect];
 }
 

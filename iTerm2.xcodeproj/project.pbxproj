@@ -1603,6 +1603,12 @@
 		A686C1901ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabOrphan.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1301ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabOrphan.png */; };
 		A686C1911ADA38EE00906FAE /* PTYTextViewTest-golden-testVerticalSpacing.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1311ADA38EE00906FAE /* PTYTextViewTest-golden-testVerticalSpacing.png */; };
 		A686C1921ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1321ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png */; };
+		A686C1951ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
+		A686C1961ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
+		A686C1971ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
+		A686C1981ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
+		A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
+		A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1941ADF62F200906FAE /* Zoomed@2x.png */; };
 		A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
 		A68A30C2186D0DC1007F550F /* iTermFindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */; };
 		A68A30C3186D0DC1007F550F /* iTermFindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */; };
@@ -2636,6 +2642,8 @@
 		A686C1301ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabOrphan.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testSelectedTabOrphan.png"; path = "tests/Goldens/PTYTextViewTest-golden-testSelectedTabOrphan.png"; sourceTree = "<group>"; };
 		A686C1311ADA38EE00906FAE /* PTYTextViewTest-golden-testVerticalSpacing.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testVerticalSpacing.png"; path = "tests/Goldens/PTYTextViewTest-golden-testVerticalSpacing.png"; sourceTree = "<group>"; };
 		A686C1321ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PTYTextViewTest-golden-testWindowedCharacterSelection.png"; path = "tests/Goldens/PTYTextViewTest-golden-testWindowedCharacterSelection.png"; sourceTree = "<group>"; };
+		A686C1931ADF62F200906FAE /* Zoomed.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Zoomed.png; path = images/Zoomed.png; sourceTree = "<group>"; };
+		A686C1941ADF62F200906FAE /* Zoomed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Zoomed@2x.png"; path = "images/Zoomed@2x.png"; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFindCursorView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindCursorView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C4186D0F36007F550F /* SmartMatch.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SmartMatch.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3442,11 +3450,6 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */,
-				A6B3A7311AC74E02008E8D4E /* FindCursorCell4.png */,
-				A6B3A7321AC74E02008E8D4E /* FindCursorCell3.png */,
-				A6B3A7331AC74E02008E8D4E /* FindCursorCell2.png */,
-				A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */,
 				1DEF5E6B185F889600300319 /* Alert.png */,
 				1DEF5E6C185F889600300319 /* Alert@2x.png */,
 				1DE922E51AC3709200965876 /* BackgroundStripes.png */,
@@ -3462,6 +3465,10 @@
 				1D9DDE9D142E855D00275650 /* Coprocess.png */,
 				A6B70FB919830C37007A4284 /* dead.png */,
 				A6B70FBA19830C37007A4284 /* dead@2x.png */,
+				A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */,
+				A6B3A7331AC74E02008E8D4E /* FindCursorCell2.png */,
+				A6B3A7321AC74E02008E8D4E /* FindCursorCell3.png */,
+				A6B3A7311AC74E02008E8D4E /* FindCursorCell4.png */,
 				1DC7429F127C96F90069594C /* IBarCursor.png */,
 				1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */,
 				1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */,
@@ -3500,8 +3507,11 @@
 				A69B458A19710CC400F5444D /* SoftDivider.png */,
 				A663010619CFCE74004AF81C /* SuppressAllOutput.png */,
 				A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */,
+				A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */,
 				1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */,
 				1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */,
+				A686C1931ADF62F200906FAE /* Zoomed.png */,
+				A686C1941ADF62F200906FAE /* Zoomed@2x.png */,
 			);
 			name = Images;
 			sourceTree = "<group>";
@@ -5077,6 +5087,7 @@
 				1D6ED98019AEA20D005A7799 /* QuestionMarkSign@2x.png in Resources */,
 				1D6ED98719AEA20D005A7799 /* Maximized.png in Resources */,
 				1D6ED98A19AEA20D005A7799 /* LogoFrame.png in Resources */,
+				A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A67D0D4C1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				1D6ED98C19AEA20D005A7799 /* overflowImage.tiff in Resources */,
@@ -5135,6 +5146,7 @@
 				1DE922E81AC3709200965876 /* BackgroundStripes.png in Resources */,
 				1D6ED9C019AEA20D005A7799 /* IBarCursorXMR.png in Resources */,
 				1D6ED9C119AEA20D005A7799 /* Coprocess.png in Resources */,
+				A686C1971ADF62F200906FAE /* Zoomed.png in Resources */,
 				A67D0D3D1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,
 				1D6ED9C219AEA20D005A7799 /* Growl Registration Ticket.growlRegDict in Resources */,
 				A67D0D7F1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
@@ -5256,6 +5268,7 @@
 				A686C1831ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundStripes.png in Resources */,
 				A686C1571ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithReverseVideo.png in Resources */,
 				A686C1561ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithGloballyInvertedColors.png in Resources */,
+				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				1DE922EB1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A6B70FC219830F0D007A4284 /* NewOutput.png in Resources */,
 				A686C17F1ADA38EE00906FAE /* PTYTextViewTest-golden-testUseNonAsciiFont.png in Resources */,
@@ -5301,6 +5314,7 @@
 				A686C1491ADA38EE00906FAE /* PTYTextViewTest-golden-testMark.png in Resources */,
 				A686C1821ADA38EE00906FAE /* PTYTextViewTest-golden-testAsciiAntiAliasOnly.png in Resources */,
 				A686C1721ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */,
+				A686C1961ADF62F200906FAE /* Zoomed.png in Resources */,
 				A686C16E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */,
 				A6B3A73C1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
 				A686C1811ADA38EE00906FAE /* PTYTextViewTest-golden-test256Colors.png in Resources */,
@@ -5412,6 +5426,7 @@
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 				A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */,
+				A686C1951ADF62F200906FAE /* Zoomed.png in Resources */,
 				1D94EAAD12D64022008225A9 /* UKCrashReporter Readme.txt in Resources */,
 				1D94EAB012D64022008225A9 /* UKCrashReporter.nib in Resources */,
 				1D94EAB112D64022008225A9 /* UKCrashReporter.strings in Resources */,
@@ -5431,6 +5446,7 @@
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				A67D0D501A2EE12A003A8B35 /* FindView.xib in Resources */,
 				A66A1FAE1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
+				A686C1981ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
