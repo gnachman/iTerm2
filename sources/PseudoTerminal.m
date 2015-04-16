@@ -2365,7 +2365,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
-    [self.ptyWindow turnOffVibrancyInTitleBar];
     _shortcutAccessoryViewController.isMain = YES;
     if (!_isHotKeyWindow) {
         [self maybeHideHotkeyWindow];
@@ -3330,7 +3329,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     togglingFullScreen_ = false;
 
     [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
-    [self.ptyWindow turnOffVibrancyInTitleBar];
     [self.window makeFirstResponder:[[self currentSession] textview]];
     [self refreshTools];
     [self updateTabColors];
@@ -4515,7 +4513,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [replaySession release];
     [theTab setParentWindow:self];
     [[self window] makeFirstResponder:[[theTab activeSession] textview]];
-    [[self ptyWindow] turnOffVibrancyInTitleBar];
 }
 
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point
@@ -5953,7 +5950,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     PtyLog(@"repositionWidgets");
 
-    [self.ptyWindow turnOffVibrancyInTitleBar];
     BOOL showToolbeltInline = [self shouldShowToolbelt];
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSWindow *thisWindow = [self window];
