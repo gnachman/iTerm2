@@ -11,10 +11,11 @@
 #include <sys/param.h>
 #include <unistd.h>
 #include <util.h>
+#include <stdio.h>
 
 int launch_shell(void)
 {
-	const char *shell = getenv("SHELL");
+    const char *shell = getenv("SHELL");
     if (!shell) {
         err(1, "SHELL environment variable not set");
     }

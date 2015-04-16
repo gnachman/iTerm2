@@ -25,6 +25,7 @@
 #import "iTermInstantReplayWindowController.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPreferences.h"
+#import "iTermSelection.h"
 #import "iTermTabBarControlView.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
@@ -40,7 +41,6 @@
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "ProfilesWindow.h"
-#import "PseudoTerminal+Scripting.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMDarkTabStyle.h"
 #import "PSMTabStyle.h"
@@ -630,7 +630,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[self window] setDelegate: self];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_refreshTitle:)
+                                             selector:@selector(updateWindowNumberVisibility:)
                                                  name:kUpdateLabelsNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -708,6 +708,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     if ((self.window.styleMask & NSTitledWindowMask) && _shortcutAccessoryViewController) {
         [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+        [self updateWindowNumberVisibility:nil];
     }
     _shortcutAccessoryViewController.ordinal = number_ + 1;
 }
@@ -2364,7 +2365,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
-    [self.ptyWindow turnOffVibrancyInTitleBar];
     _shortcutAccessoryViewController.isMain = YES;
     if (!_isHotKeyWindow) {
         [self maybeHideHotkeyWindow];
@@ -3226,6 +3226,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
             (self.window.styleMask & NSTitledWindowMask)) {
             [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
+            [self updateWindowNumberVisibility:nil];
         }
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
@@ -3328,7 +3329,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     togglingFullScreen_ = false;
 
     [self.window performSelector:@selector(makeKeyAndOrderFront:) withObject:nil afterDelay:0];
-    [self.ptyWindow turnOffVibrancyInTitleBar];
     [self.window makeFirstResponder:[[self currentSession] textview]];
     [self refreshTools];
     [self updateTabColors];
@@ -3824,7 +3824,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)showOrHideInstantReplayBar
 {
     PTYSession* aSession = [self currentSession];
-    if ([aSession liveSession]) {
+    if ([aSession liveSession] && aSession.dvr) {
         [self setInstantReplayBarVisible:YES];
     } else {
         [self setInstantReplayBarVisible:NO];
@@ -4358,7 +4358,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)instantReplayClose {
+- (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded {
     if ([[self currentSession] liveSession]) {
         [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
     }
@@ -4443,21 +4443,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return [self broadcastMode] != BROADCAST_OFF;
 }
 
-- (void)replaySession:(PTYSession *)oldSession
-{
-    // NSLog(@"Enter instant replay. Live session is %@", oldSession);
-    NSTabViewItem* oldTabViewItem = [TABVIEW selectedTabViewItem];
-    if (!oldTabViewItem) {
-        return;
-    }
-    if ([[[oldSession screen] dvr] lastTimeStamp] == 0) {
-        // Nothing recorded (not enough memory for one frame, perhaps?).
-        return;
+- (PTYSession *)syntheticSessionForSession:(PTYSession *)oldSession {
+    NSTabViewItem *tabViewItem = [TABVIEW selectedTabViewItem];
+    if (!tabViewItem) {
+        return nil;
     }
     PTYSession *newSession;
 
     // Initialize a new session
-    newSession = [[PTYSession alloc] init];
+    newSession = [[[PTYSession alloc] init] autorelease];
     // NSLog(@"New session for IR view is at %p", newSession);
 
     // set our preferences
@@ -4467,17 +4461,45 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[newSession view] setViewId:[[oldSession view] viewId]];
 
     // Add this session to our term and make it current
-    PTYTab* theTab = [oldTabViewItem identifier];
+    PTYTab *theTab = [tabViewItem identifier];
     [newSession setTab:theTab];
-    [theTab setDvrInSession:newSession];
-    [newSession release];
+
+    return newSession;
+}
+
+- (void)replaySession:(PTYSession *)oldSession {
+    if ([[[oldSession screen] dvr] lastTimeStamp] == 0) {
+        // Nothing recorded (not enough memory for one frame, perhaps?).
+        return;
+    }
+
+    PTYSession *newSession = [self syntheticSessionForSession:oldSession];
+
+    [oldSession.tab setDvrInSession:newSession];
     if (![self inInstantReplay]) {
         [self showHideInstantReplay];
     }
 }
 
-- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
-{
+- (IBAction)zoomOnSelection:(id)sender {
+    PTYSession *session = [self currentSession];
+    iTermSelection *selection = session.textview.selection;
+    iTermSubSelection *sub = [selection.allSubSelections lastObject];
+    if (sub) {
+        [self showRangeOfLines:NSMakeRange(sub.range.coordRange.start.y,
+                                           sub.range.coordRange.end.y - sub.range.coordRange.start.y)
+                     inSession:session];
+    }
+}
+
+- (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
+    PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
+    syntheticSession.textview.cursorVisible = NO;
+    [syntheticSession appendLinesInRange:rangeOfLines fromSession:oldSession];
+    [oldSession.tab replaceActiveSessionWithSyntheticSession:syntheticSession];
+}
+
+- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {
     PTYTab* theTab = [replaySession tab];
     [_instantReplayWindowController updateInstantReplayView];
 
@@ -5620,10 +5642,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return 0;
 }
 
-- (void)_refreshTitle:(NSNotification*)aNotification
-{
+- (void)updateWindowNumberVisibility:(NSNotification*)aNotification {
     // This is if displaying of window number was toggled in prefs.
-    [self setWindowTitle];
+    if (_shortcutAccessoryViewController) {
+        _shortcutAccessoryViewController.view.hidden = ![iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber];
+    } else {
+        // Pre-10.10 code path
+        [self setWindowTitle];
+    }
 }
 
 - (void)_scrollerStyleChanged:(id)sender
@@ -5924,7 +5950,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     PtyLog(@"repositionWidgets");
 
-    [self.ptyWindow turnOffVibrancyInTitleBar];
     BOOL showToolbeltInline = [self shouldShowToolbelt];
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSWindow *thisWindow = [self window];
@@ -6527,7 +6552,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else if ([item action] == @selector(logStop:)) {
         result = logging == NO ? NO : YES;
     } else if ([item action] == @selector(irPrev:)) {
-        result = [[self currentSession] canInstantReplayPrev];
+        result = ![[self currentSession] liveSession] && [[self currentSession] canInstantReplayPrev];
     } else if ([item action] == @selector(irNext:)) {
         result = [[self currentSession] canInstantReplayNext];
     } else if ([item action] == @selector(toggleShowTimestamps:)) {
@@ -6601,6 +6626,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                     horizontally:YES];
     } else if ([item action] == @selector(duplicateTab:)) {
         return ![[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(zoomOnSelection:)) {
+        return ![self inInstantReplay] && [[self currentSession] hasSelection];
     } else if ([item action] == @selector(showFindPanel:) ||
                [item action] == @selector(findPrevious:) ||
                [item action] == @selector(findNext:) ||

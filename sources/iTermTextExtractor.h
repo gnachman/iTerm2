@@ -114,15 +114,7 @@ typedef enum {
       trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                 cappedAtSize:(int)maxBytes;
 
-- (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^)(screen_char_t theChar, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^)(unichar code, int numPreceedingNulls, int line))eolBlock;
-
-// If a tab character is erased it may leave behind TAB_FILLER characters
-// before it, which are called tab-filler orphans. They are generally treated
-// as spaces, while tab fillers followed by more tab fillers or followed by a
-// tab are often ignored (e.g., for selection, or copying to pasteboard).
-- (NSIndexSet *)tabFillerOrphansOnRow:(int)row;
+- (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 
 - (int)lengthOfLine:(int)line;
 

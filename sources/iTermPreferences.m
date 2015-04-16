@@ -16,7 +16,7 @@
 #import "iTermRemotePreferences.h"
 #import "WindowArrangements.h"
 
-#define BLOCK(x) [^id() { return [self x]; } copy]
+#define BLOCK(x) [[^id() { return [self x]; } copy] autorelease]
 
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
@@ -375,7 +375,7 @@ static NSMutableDictionary *gObservers;
         observersForKey = [NSMutableArray array];
         gObservers[key] = observersForKey;
     }
-    [observersForKey addObject:[block copy]];
+    [observersForKey addObject:[[block copy] autorelease]];
 }
 
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag {

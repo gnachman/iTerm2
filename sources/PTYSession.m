@@ -102,6 +102,7 @@ static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name
 static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
 static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
+static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
@@ -303,6 +304,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Session should auto-restart after the pipe breaks.
     BOOL _shouldRestart;
+
+    // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
+    BOOL _synthetic;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -471,12 +475,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_antiIdleTimer invalidate];
 }
 
-- (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession
-{
+- (void)setLiveSession:(PTYSession *)liveSession {
     assert(liveSession != self);
-
+    if (liveSession) {
+        assert(!_liveSession);
+        _synthetic = YES;
+    }
     _liveSession = liveSession;
     [_liveSession retain];
+}
+
+- (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession {
     _screen.dvr = nil;
     _dvr = dvr;
     [_dvr retain];
@@ -525,6 +534,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     [self setDvrFrame];
     return [_dvrDecoder timestamp];
+}
+
+- (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
+    int width = source.screen.width;
+    for (NSUInteger i = 0; i < rangeOfLines.length; i++) {
+        int row = rangeOfLines.location + i;
+        screen_char_t *theLine = [source.screen getLineAtIndex:row];
+        [_screen appendScreenChars:theLine length:width continuation:theLine[width]];
+    }
 }
 
 - (void)updateVariables {
@@ -600,11 +618,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             height:[[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue]];
 }
 
-+ (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
-                               inView:(SessionView*)sessionView
-                                inTab:(PTYTab*)theTab
-                        forObjectType:(iTermObjectType)objectType
-{
++ (PTYSession*)sessionFromArrangement:(NSDictionary *)arrangement
+                               inView:(SessionView *)sessionView
+                                inTab:(PTYTab *)theTab
+                        forObjectType:(iTermObjectType)objectType {
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession.view = sessionView;
     [[sessionView findViewController] setDelegate:aSession];
@@ -733,6 +750,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
         [[aSession terminal] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
     }
+    NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
+    if (liveArrangement) {
+        aSession.liveSession = [self sessionFromArrangement:liveArrangement
+                                                     inView:[[SessionView alloc] initWithFrame:sessionView.frame]
+                                                      inTab:theTab
+                                              forObjectType:objectType];
+    }
     return aSession;
 }
 
@@ -753,11 +777,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     // Allocate a scrollview
-    _scrollview = [[PTYScrollView alloc] initWithFrame:NSMakeRect(0,
-                                                                  0,
-                                                                  aRect.size.width,
-                                                                  aRect.size.height)
-                                   hasVerticalScroller:[parent scrollbarShouldBeVisible]];
+    _scrollview = [[[PTYScrollView alloc] initWithFrame:NSMakeRect(0,
+                                                                   0,
+                                                                   aRect.size.width,
+                                                                   aRect.size.height)
+                                    hasVerticalScroller:[parent scrollbarShouldBeVisible]] autorelease];
     NSParameterAssert(_scrollview != nil);
     [_scrollview setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
 
@@ -1189,7 +1213,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
-    BOOL undoable = ![self isTmuxClient] && !_shouldRestart;
+    BOOL undoable = ![self isTmuxClient] && !_shouldRestart && !_synthetic;
     [_terminal.parser forceUnhookDCS];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -1423,6 +1447,19 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     });
 }
 
+- (void)synchronousReadTask:(NSString *)string {
+    NSData *data = [string dataUsingEncoding:self.encoding];
+    [_terminal.parser putStreamData:data.bytes length:data.length];
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [_terminal.parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
+    }
+    [self executeTokens:&vector bytesHandled:data.length];
+}
+
 - (BOOL)shouldExecuteToken {
     return (!_exited &&
             _terminal &&
@@ -1480,9 +1517,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)finishedHandlingNewOutputOfLength:(int)length {
     _lastOutput = [NSDate timeIntervalSinceReferenceDate];
     _newOutput = YES;
-    if ([iTermAdvancedSettingsModel restoreWindowContents]) {
-        [self.tab.realParentWindow invalidateRestorableState];
-    }
 
     // Make sure the screen gets redrawn soonish
     _updateDisplayUntil = [NSDate timeIntervalSinceReferenceDate] + 10;
@@ -2647,8 +2681,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setNeedsDisplay:YES];
 }
 
-- (void)setSmartCursorColor:(BOOL)value
-{
+- (void)setSmartCursorColor:(BOOL)value {
     [[self textview] setUseSmartCursorColor:value];
 }
 
@@ -2673,13 +2706,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setTransparency:transparency];
 }
 
-- (float)blend
-{
+- (float)blend {
     return [_textview blend];
 }
 
-- (void)setBlend:(float)blendVal
-{
+- (void)setBlend:(float)blendVal {
     [_textview setBlend:blendVal];
 }
 
@@ -2864,6 +2895,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_CONTENTS] = [_screen contentsDictionary];
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
+    if (_liveSession && includeContents && !_dvr) {
+        result[SESSION_ARRANGEMENT_LIVE_SESSION] =
+            [_liveSession arrangementWithContents:includeContents];
+    }
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
@@ -3998,7 +4033,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
     _lastInput = [NSDate timeIntervalSinceReferenceDate];
     [self resumeOutputIfNeeded];
-    if ([[[self tab] realParentWindow] inInstantReplay]) {
+    if ([self textViewIsZoomedIn]) {
+        [[[self tab] realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+    } else if ([[[self tab] realParentWindow] inInstantReplay]) {
         DLog(@"PTYSession keyDown in IR");
 
         // Special key handling in IR mode, and keys never get sent to the live
@@ -4684,14 +4721,19 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
         if (blendDefaultBackground) {
             // Blend default background color over background image.
-            [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:1 - _textview.blend] set];
+            [[[self processedBackgroundColor] colorWithAlphaComponent:1 - _textview.blend] set];
             NSRectFillUsingOperation(rect, NSCompositeSourceOver);
         }
     } else if (blendDefaultBackground) {
         // No image, so just draw background color.
-        [[_textview.dimmedDefaultBackgroundColor colorWithAlphaComponent:alpha] set];
-        NSRectFill(rect);
+        [[[self processedBackgroundColor] colorWithAlphaComponent:alpha] set];
+        NSRectFillUsingOperation(rect, NSCompositeCopy);
     }
+}
+
+- (NSColor *)processedBackgroundColor {
+    NSColor *unprocessedColor = [_colorMap colorForKey:kColorMapBackground];
+    return [_colorMap processedBackgroundColorForBackgroundColor:unprocessedColor];
 }
 
 - (void)textViewPostTabContentsChangedNotification
@@ -4699,6 +4741,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
                                                         object:self
                                                       userInfo:nil];
+}
+
+- (void)textViewInvalidateRestorableState {
+    if ([iTermAdvancedSettingsModel restoreWindowContents]) {
+        [self.tab.realParentWindow invalidateRestorableState];
+    }
 }
 
 - (void)textViewBeginDrag
@@ -4849,8 +4897,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [[self class] pasteboardFile] != nil;
 }
 
-- (BOOL)textViewWindowUsesTransparency
-{
+- (BOOL)textViewWindowUsesTransparency {
     return [[[self tab] realParentWindow] useTransparency];
 }
 
@@ -5062,6 +5109,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)textViewSuppressingAllOutput {
     return _suppressAllOutput;
+}
+
+- (BOOL)textViewIsZoomedIn {
+    return _liveSession && !_dvr;
 }
 
 - (void)sendEscapeSequence:(NSString *)text
@@ -5663,11 +5714,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)screenPromptDidStartAtLine:(int)line {
     _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
-    [self screenAddMarkOnLine:line];
+    [[self screenAddMarkOnLine:line] setIsPrompt:YES];
 }
 
-- (void)screenAddMarkOnLine:(int)line {
-    [self markAddedAtLine:line ofClass:[VT100ScreenMark class]];
+- (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
+    return (VT100ScreenMark *)[self markAddedAtLine:line ofClass:[VT100ScreenMark class]];
 }
 
 // Save the current scroll position

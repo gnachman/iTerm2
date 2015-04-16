@@ -43,14 +43,25 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
     [self killTestApp];
 }
 
-- (void)killTestApp {
-    // Kill all running instances of iTerm2ForApplescriptTesting
-    pid_t thePid = 0;
+- (NSArray *)processIdsForTestApp {
+    NSMutableArray *array = [NSMutableArray array];
     for (NSRunningApplication *app in [[NSWorkspace sharedWorkspace] runningApplications]) {
         if ([app.bundleIdentifier isEqualToString:kTestBundleId]) {
-            thePid = app.processIdentifier;
-            kill(app.processIdentifier, SIGKILL);
+            [array addObject:@(app.processIdentifier)];
         }
+    }
+    return array;
+}
+
+- (void)killTestApp {
+    // Find all running instances of iTerm2ForApplescriptTesting
+    NSArray *pids = [self processIdsForTestApp];
+
+    // Kill them.
+    pid_t thePid = 0;
+    for (NSNumber *n in pids) {
+        kill([n intValue], SIGKILL);
+        thePid = [n intValue];
     }
 
     // Wait for it to die
@@ -102,7 +113,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
     iTerm2Application *iterm = [SBApplication applicationWithBundleIdentifier:kTestBundleId];
     [iterm activate];
     [iterm createWindowWithDefaultProfileCommand:nil];
-    iTerm2TerminalWindow *terminal = [iterm currentWindow];
+    iTerm2Window *terminal = [iterm currentWindow];
     [terminal.currentSession writeContentsOfFile:nil text:@"echo Testing123"];
     for (int i = 0; i < 10; i++) {
         NSString *contents = [terminal.currentSession contents];
@@ -115,9 +126,9 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 }
 
 - (void)testCreateWindowWithDefaultProfile {
-    NSArray *commands = @[ @"set oldWindowCount to (count of terminal windows)",
+    NSArray *commands = @[ @"set oldWindowCount to (count of windows)",
                            @"create window with default profile",
-                           @"set newWindowCount to (count of terminal windows)" ];
+                           @"set newWindowCount to (count of windows)" ];
     NSArray *outputs = @[ @"oldWindowCount", @"newWindowCount" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -128,9 +139,9 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 }
 
 - (void)testCreateWindowWithNamedProfile {
-    NSArray *commands = @[ @"set oldWindowCount to (count of terminal windows)",
+    NSArray *commands = @[ @"set oldWindowCount to (count of windows)",
                            @"create window with profile \"Default\"",
-                           @"set newWindowCount to (count of terminal windows)" ];
+                           @"set newWindowCount to (count of windows)" ];
     NSArray *outputs = @[ @"oldWindowCount", @"newWindowCount" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -160,6 +171,9 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 }
 
 - (void)testSelectWindow {
+    // Beccause windows are ordered by their z-position, the first window is
+    // the most recently created one. In the past, there was a "terminal
+    // windows" property that was ordered by creation time.
     NSArray *commands = @[ @"create window with default profile",
                            @"tell current session of current window",
                            @"  write text \"echo NUMBER ONE\"",
@@ -170,7 +184,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                            @"end tell",
                            @"delay 0.2",  // Give write text time to echo result back
                            @"set secondWindowContents to (contents of current session of current window)",
-                           @"select first terminal window",
+                           @"select second window",
                            @"set firstWindowContents to (contents of current session of current window)" ];
     NSArray *outputs = @[ @"firstWindowContents", @"secondWindowContents" ];
     NSString *script = [self scriptWithCommands:commands
@@ -241,11 +255,11 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 
 - (void)testSplitHorizontallyWithDefaultProfile {
     NSArray *commands = @[ @"create window with profile \"Default\"",
-                           @"set oldSessionCount to (count of sessions in first tab in first terminal window)",
+                           @"set oldSessionCount to (count of sessions in first tab in first window)",
                            @"tell current session of current window",
                            @"  split horizontally with default profile",
                            @"end tell",
-                           @"set newSessionCount to (count of sessions in first tab in first terminal window)" ];
+                           @"set newSessionCount to (count of sessions in first tab in first window)" ];
     NSArray *outputs = @[ @"oldSessionCount", @"newSessionCount" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -258,11 +272,11 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 
 - (void)testSplitVerticallyWithDefaultProfile {
     NSArray *commands = @[ @"create window with profile \"Default\"",
-                           @"set oldSessionCount to (count of sessions in first tab in first terminal window)",
+                           @"set oldSessionCount to (count of sessions in first tab in first window)",
                            @"tell current session of current window",
                            @"  split vertically with default profile",
                            @"end tell",
-                           @"set newSessionCount to (count of sessions in first tab in first terminal window)" ];
+                           @"set newSessionCount to (count of sessions in first tab in first window)" ];
     NSArray *outputs = @[ @"oldSessionCount", @"newSessionCount" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -275,11 +289,11 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 
 - (void)testCreateTabWithDefaultProfile {
     NSArray *commands = @[ @"create window with default profile",
-                           @"set oldTabCount to (count of tabs in first terminal window)",
+                           @"set oldTabCount to (count of tabs in first window)",
                            @"tell current window",
                            @"  create tab with default profile",
                            @"end tell",
-                           @"set newTabCount to (count of tabs in first terminal window)" ];
+                           @"set newTabCount to (count of tabs in first window)" ];
     NSArray *outputs = @[ @"oldTabCount", @"newTabCount" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -292,11 +306,11 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 
 - (void)testCreateTabWithNamedProfile {
     NSArray *commands = @[ @"create window with default profile",
-                           @"set oldTabCount to (count of tabs in first terminal window)",
+                           @"set oldTabCount to (count of tabs in first window)",
                            @"tell current window",
                            @"  create tab with profile \"Default\"",
                            @"end tell",
-                           @"set newTabCount to (count of tabs in first terminal window)" ];
+                           @"set newTabCount to (count of tabs in first window)" ];
     NSArray *outputs = @[ @"oldTabCount", @"newTabCount" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -369,8 +383,8 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
 - (void)testUniqueId {
     NSArray *commands = @[ @"create window with default profile",
                            @"create window with default profile",
-                           @"set firstUniqueId to (unique ID of current session of first terminal window)",
-                           @"set secondUniqueId to (unique ID of current session of second terminal window)" ];
+                           @"set firstUniqueId to (unique ID of current session of first window)",
+                           @"set secondUniqueId to (unique ID of current session of second window)" ];
     NSArray *outputs = @[ @"firstUniqueId", @"secondUniqueId" ];
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
@@ -469,7 +483,7 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
                                         outputs:outputs];
     NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
     BOOL beforeSleep = [[eventDescriptor descriptorAtIndex:1] booleanValue];
-    BOOL afterSleep = [[eventDescriptor descriptorAtIndex:2]ess booleanValue];
+    BOOL afterSleep = [[eventDescriptor descriptorAtIndex:2] booleanValue];
 
     // This test will fail if shell integration is not installed
     assert(beforeSleep);

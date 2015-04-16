@@ -247,6 +247,9 @@ static const int kMaxScreenRows = 4096;
 - (void)resetPreservingPrompt:(BOOL)preservePrompt {
     self.lineMode = NO;
     self.cursorMode = NO;
+    if (_columnMode) {
+        [delegate_ terminalSetWidth:80];
+    }
     self.columnMode = NO;
     self.scrollMode = NO;
     _reverseVideo = NO;
@@ -603,25 +606,29 @@ static const int kMaxScreenRows = 4096;
                     graphicRendition_.bgColorMode = ColorModeAlternate;
                     break;
                 case VT100CHARATTR_FG_256:
-                    /*
-                     First subparam means:   # additional subparams:  Accepts optional params:
-                     1: transparent          0                        NO
-                     2: RGB                  3                        YES
-                     3: CMY                  3                        YES
-                     4: CMYK                 4                        YES
-                     5: Indexed color        1                        NO
-
-                     Optional paramters go at position 7 and 8, and indicate toleranace as an
-                     integer; and color space (0=CIELUV, 1=CIELAB). Example:
-
-                     CSI 38:2:255:128:64:0:5:1 m
-
-                     Also accepted for xterm compatibility, but never with optional parameters:
-                     CSI 38;2;255;128;64 m
-
-                     Set the foreground color to red=255, green=128, blue=64 with a tolerance of
-                     5 in the CIELAB color space. The 0 at the 6th position has no meaning and
-                     is just a filler. */
+                    // First subparam means:   # additional subparams:  Accepts optional params:
+                    // 1: transparent          0                        NO
+                    // 2: RGB                  3                        YES
+                    // 3: CMY                  3                        YES
+                    // 4: CMYK                 4                        YES
+                    // 5: Indexed color        1                        NO
+                    //
+                    // Optional paramters go at position 7 and 8, and indicate toleranace as an
+                    // integer; and color space (0=CIELUV, 1=CIELAB). Example:
+                    //
+                    // CSI 38:2:255:128:64:0:5:1 m
+                    //
+                    // Also accepted for xterm compatibility, but never with optional parameters:
+                    // CSI 38;2;255;128;64 m
+                    //
+                    // Set the foreground color to red=255, green=128, blue=64 with a tolerance of
+                    // 5 in the CIELAB color space. The 0 at the 6th position has no meaning and
+                    // is just a filler.
+                    // 
+                    // For 256-color mode (indexed) use this for the foreground:
+                    // CSI 38;5;N m
+                    // where N is a value between 0 and 255. See the colors described in screen_char_t
+                    // in the comments for fgColorCode.
 
                     if (token.csi->subCount[i] > 0) {
                         // Preferred syntax using colons to delimit subparameters
@@ -1339,10 +1346,13 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
         case VT100CSI_NEL:
+            // We do the linefeed first because it's a no-op if the cursor is outside the left-
+            // right margin. Carriage return will move it to the left margin.
+            [delegate_ terminalLineFeed];
             [delegate_ terminalCarriageReturn];
-            // fall through
+            break;
         case VT100CSI_IND:
-            [delegate_ terminalLineFeed];  // TODO Make sure this is kosher. How does xterm handle index with scroll regions?
+            [delegate_ terminalLineFeed];
             break;
         case VT100CSI_RI:
             [delegate_ terminalReverseIndex];
@@ -1639,7 +1649,10 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         case XTERMCC_REPORT_WIN_TITLE: {
-            NSString *s = [NSString stringWithFormat:@"\033]L%@\033\\",
+            // NOTE: In versions prior to 2.9.20150415, we used "L" as the leader here, not "l".
+            // That was wrong and may cause bug reports due to breaking bugward compatibility.
+            // (see xterm docs)
+            NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
                            [delegate_ terminalWindowTitle]];
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;

@@ -82,7 +82,9 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
 
         // Load new-style bookmarks.
         id newBookmarks = [prefs objectForKey:KEY_NEW_BOOKMARKS];
+        NSString *originalDefaultGuid = nil;
         if ([newBookmarks isKindOfClass:[NSArray class]]) {
+            originalDefaultGuid = [[[prefs objectForKey:KEY_DEFAULT_GUID] copy] autorelease];
             [self setBookmarks:newBookmarks
                    defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
         } else if ([newBookmarks isKindOfClass:[NSString class]]) {
@@ -131,7 +133,15 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
         _events = [[SCEvents alloc] init];
         _events.delegate = self;
         [_events startWatchingPaths:@[ [self dynamicProfilesPath] ]];
+
+        BOOL bookmarkWithDefaultGuidExisted =
+            ([[ProfileModel sharedInstance] bookmarkWithGuid:originalDefaultGuid] != nil);
         [self reloadDynamicProfiles];
+        if (!bookmarkWithDefaultGuidExisted &&
+            [[ProfileModel sharedInstance] bookmarkWithGuid:originalDefaultGuid] != nil) {
+            // One of the dynamic profiles has the default guid.
+            [[ProfileModel sharedInstance] setDefaultByGuid:originalDefaultGuid];
+        }
     }
     
     return self;

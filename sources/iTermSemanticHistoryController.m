@@ -205,10 +205,18 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
         } else {
             path = [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-            NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
-                                               @"%@://open?url=file://%@&line=%@",
-                                               [iTermSemanticHistoryPrefsController schemeForEditor:[self editor]],
-                                               path, lineNumber, nil]];
+            NSURL *url = nil;
+            if (lineNumber) {
+                url = [NSURL URLWithString:[NSString stringWithFormat:
+                                                   @"%@://open?url=file://%@&line=%@",
+                                                   [iTermSemanticHistoryPrefsController schemeForEditor:[self editor]],
+                                                   path, lineNumber]];
+            } else {
+                url = [NSURL URLWithString:[NSString stringWithFormat:
+                                            @"%@://open?url=file://%@",
+                                            [iTermSemanticHistoryPrefsController schemeForEditor:[self editor]],
+                                            path]];
+            }
             DLog(@"Open url %@", url);
             [self openURL:url];
 
@@ -236,10 +244,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (BOOL)openFile:(NSString *)fullPath {
+    DLog(@"Open file %@", fullPath);
     return [[NSWorkspace sharedWorkspace] openFile:fullPath];
 }
 
 - (BOOL)openURL:(NSURL *)url {
+    DLog(@"Open URL %@", url);
     return [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
@@ -312,8 +322,23 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return YES;
     }
 
+    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction] &&
+        [self editor]) {
+        // Action is to open in a specific editor, so open it in the editor.
+        return [self openFileInEditor:path lineNumber:lineNumber];
+    }
+
     if ([self editor] && [self isTextFile:path]) {
-        if (![self defaultAppForFileIsEditor:path]) {
+        // This is a text file and there's a baked-in-preferred editor and we're using the default action.
+        // If a specific editor was chosen, that was handled by the preceding if statement.
+        if (lineNumber && [[self bundleIdForDefaultAppForFile:path] isEqualTo:[self editor]]) {
+            DLog(@"Default app is the preferred editor (%@) and a line number is present (%@). Open in editor.",
+                 [self editor], lineNumber);
+            return [self openFileInEditor:path lineNumber:lineNumber];
+        } else if (![self defaultAppForFileIsEditor:path]) {
+            // I regret this code path. We use our arbitrarily chosen editor in
+            // favor of the registered app for this file type, simply because
+            // it's not an editor (by our definition) and this is a text file.
             DLog(@"Default app for %@ is NOT an editor, so open it in an editor", path);
             return [self openFileInEditor:path lineNumber:lineNumber];
         } else {
@@ -325,7 +350,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return YES;
 }
 
-- (BOOL)defaultAppForFileIsEditor:(NSString *)file {
+- (NSString *)bundleIdForDefaultAppForFile:(NSString *)file {
     NSURL *fileUrl = [NSURL fileURLWithPath:file];
     NSURL *appUrl = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:fileUrl];
     if (!appUrl) {
@@ -336,8 +361,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if (!appBundle) {
         return NO;
     }
-    NSString *bundleId = [appBundle bundleIdentifier];
-    return [iTermSemanticHistoryPrefsController bundleIdIsEditor:bundleId];
+    return [appBundle bundleIdentifier];
+}
+
+- (BOOL)defaultAppForFileIsEditor:(NSString *)file {
+    return [iTermSemanticHistoryPrefsController bundleIdIsEditor:[self bundleIdForDefaultAppForFile:file]];
 }
 
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn

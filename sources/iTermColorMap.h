@@ -80,11 +80,18 @@ extern const int kColorMap24bitBase;
 
 - (void)setColor:(NSColor *)theColor forKey:(iTermColorMapKey)theKey;
 - (NSColor *)colorForKey:(iTermColorMapKey)theKey;
-- (NSColor *)mutedColorForKey:(iTermColorMapKey)theKey;
-- (NSColor *)dimmedColorForKey:(iTermColorMapKey)theKey;
-- (NSColor *)dimmedColorForColor:(NSColor *)theColor;
-- (void)invalidateCache;
-- (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor;
+
+// Apply the following filters in order:
+// 1. Modify textColor to have at least self.minimumContrast against backgroundColor
+// 2. Average textColor proportionally with the background color by self.mutingAmount
+// 3. Dim textColor proportionally with either gray or background color (depending on
+//    self.dimOnlyText) by self.dimmingAmount.
+// 4. Premultiply textColor's alpha with backgroundColor.
+- (NSColor *)processedTextColorForTextColor:(NSColor *)textColor
+                        overBackgroundColor:(NSColor*)backgroundColor;
+- (NSColor *)processedBackgroundColorForBackgroundColor:(NSColor *)color;
+- (NSColor *)colorByMutingColor:(NSColor *)color;
+- (NSColor *)colorByDimmingTextColor:(NSColor *)color;
 
 // Returns non-nil profile key name for valid logical colors, ANSI colors, and bright ANSI colors.
 - (NSString *)profileKeyForColorMapKey:(int)theKey;

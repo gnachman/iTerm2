@@ -278,6 +278,9 @@ typedef enum {
 // Toggle the visibility of IR.
 - (void)showHideInstantReplay;
 
+// Exit a synthetic view (a generalized version of an IR session).
+- (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded;
+
 #pragma mark - Broadcast
 
 // Indicates if a session participates in input broadcasting.

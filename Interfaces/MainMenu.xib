@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6254"/>
     </dependencies>
@@ -653,6 +653,15 @@ DQ
                             <menuItem isSeparatorItem="YES" id="806">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Zoom In on Selection" keyEquivalent="z" id="Atu-fG-56G">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="zoomOnSelection:" target="-1" id="Yfw-BL-sPd"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="QEZ-2e-3zm">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Find Cursor" keyEquivalent="/" id="1286">
                                 <connections>
                                     <action selector="findCursor:" target="-1" id="1288"/>
@@ -791,19 +800,6 @@ DQ
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="performZoom:" target="-1" id="883"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="784">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                            </menuItem>
-                            <menuItem title="Previous Terminal" keyEquivalent="`" id="782">
-                                <connections>
-                                    <action selector="previousTerminal:" target="201" id="785"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Next Terminal" keyEquivalent="~" id="783">
-                                <connections>
-                                    <action selector="nextTerminal:" target="201" id="786"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="885">
@@ -991,8 +987,6 @@ DQ
                 <outlet property="logStart" destination="229" id="793"/>
                 <outlet property="logStop" destination="230" id="794"/>
                 <outlet property="maximizePane" destination="1233" id="1237"/>
-                <outlet property="nextTerminal" destination="783" id="788"/>
-                <outlet property="previousTerminal" destination="782" id="787"/>
                 <outlet property="secureInput" destination="1174" id="1177"/>
                 <outlet property="selectTab" destination="847" id="863"/>
                 <outlet property="sendInputNormally" destination="1268" id="1276"/>

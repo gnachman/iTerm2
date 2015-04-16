@@ -7,6 +7,7 @@
 //
 
 #import "iTermFindCursorView.h"
+#import <QuartzCore/QuartzCore.h>
 
 // Delay before teardown.
 const double kFindCursorHoldTime = 1;
@@ -19,38 +20,104 @@ const double kFindCursorHoleRadius = 30;
 @implementation iTermFindCursorView {
     NSTimer *_findCursorTeardownTimer;
     NSTimer *_findCursorBlinkTimer;
+    CAEmitterLayer *_emitterLayer;
 }
 
-- (void)drawRect:(NSRect)dirtyRect
-{
-    const double initialAlpha = 0.7;
-    NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]
-                                                     endingColor:[NSColor blackColor]];
-    NSPoint relativeCursorPosition = NSMakePoint(2 * (_cursorPosition.x / self.frame.size.width - 0.5),
-                                                 2 * (_cursorPosition.y / self.frame.size.height - 0.5));
-    [grad drawInRect:NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height)
-        relativeCenterPosition:relativeCursorPosition];
-    [grad release];
+- (id)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
 
-    NSPoint point = _cursorPosition;
+    if (self) {
+        [self setWantsLayer:YES];
 
-    const double numSteps = 1;
-    const double stepSize = 1;
-    const double initialRadius = kFindCursorHoleRadius + numSteps * stepSize;
-    double a = initialAlpha;
-    for (double focusRadius = initialRadius;
-         a > 0 && focusRadius >= initialRadius - numSteps * stepSize;
-         focusRadius -= stepSize) {
-        [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
-        NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(point.x - focusRadius,
-                                                                                 point.y - focusRadius,
-                                                                                 focusRadius * 2,
-                                                                                 focusRadius * 2)];
-        a -= initialAlpha / numSteps;
-        a = MAX(0, a);
-        [[NSColor colorWithDeviceWhite:0.5 alpha:a] set];
-        [circle fill];
+        [self createCells];
     }
+
+    return self;
+}
+
+- (void)dealloc {
+    [_emitterLayer release];
+    [super dealloc];
+}
+
+- (CAEmitterCell *)supercell {
+    CAEmitterCell *cell = [CAEmitterCell emitterCell];
+    [cell setBirthRate:4];
+    [cell setVelocity:0];
+    [cell setVelocityRange:0];
+    [cell setEmissionLongitude:M_PI_2];
+    [cell setEmissionRange:M_PI * 2];
+    [cell setScale:0];
+    [cell setScaleSpeed:0];
+    [cell setYAcceleration:0];
+    [cell setScaleRange:0];
+    [cell setAlphaSpeed:0];
+    [cell setLifetime:0.75];
+    [cell setLifetimeRange:0.25];
+    [cell setSpin:M_PI * 6];
+    [cell setSpinRange:M_PI * 2];
+
+    return cell;
+}
+
+
+- (CAEmitterCell *)subcellWithImageNumber:(int)imageNumber
+                                birthRate:(float)birthRate
+                                 velocity:(float)v
+                                    delay:(float)delay {
+    CAEmitterCell *cell = [CAEmitterCell emitterCell];
+    [cell setBirthRate:birthRate];
+    [cell setEmissionLongitude:M_PI_2];
+    [cell setEmissionRange:M_PI * 2];
+    [cell setScale:0];
+    [cell setVelocity:v];
+    [cell setVelocityRange:v * 0.1];
+    [cell setScaleSpeed:0.3];
+    [cell setScaleRange:0.1];
+    NSString *name = [NSString stringWithFormat:@"FindCursorCell%d", imageNumber];
+    NSImage *image = [NSImage imageNamed:name];
+    if (image) {
+        [cell setContents:(id)[image CGImageForProposedRect:nil context:nil hints:nil]];
+    }
+    float lifetime = 1;
+    [cell setAlphaSpeed:-1 / lifetime];
+    [cell setLifetime:lifetime];
+    [cell setLifetimeRange: lifetime * 0.3];
+    [cell setSpin:M_PI * 6];
+    [cell setSpinRange:M_PI * 2];
+    [cell setBeginTime:delay];
+    return cell;
+}
+
+- (CAEmitterCell *)rootEmitterCell {
+    CAEmitterCell *supercell = [self supercell];
+    float v = 1000;
+    float b = 100;
+    supercell.emitterCells = @[ [self subcellWithImageNumber:1 birthRate:b/5 velocity:v delay:0],
+                                [self subcellWithImageNumber:2 birthRate:b/5 velocity:v delay:0],
+                                [self subcellWithImageNumber:3 birthRate:b/5 velocity:v delay:0],
+                                [self subcellWithImageNumber:1 birthRate:b velocity:v/10 delay:0],
+                                [self subcellWithImageNumber:2 birthRate:b velocity:v/10 delay:0],
+                                [self subcellWithImageNumber:3 birthRate:b velocity:v/10 delay:0]];
+    return supercell;
+}
+
+
+- (void)createCells {
+    _emitterLayer = [[CAEmitterLayer layer] retain];
+    _emitterLayer.emitterPosition = CGPointMake(self.bounds.size.width/2, self.bounds.size.height*(.75));
+    _emitterLayer.renderMode = kCAEmitterLayerAdditive;
+    _emitterLayer.emitterShape = kCAEmitterLayerPoint;
+
+    // If the emitter layer has multiple emitterCells then it shows white boxes on 10.10.2. So instead
+    // we create an invisible cell and give it multiple emitterCells.
+    _emitterLayer.emitterCells = @[ [self rootEmitterCell] ];
+    [self.layer addSublayer:_emitterLayer];
+}
+
+- (void)setCursorPosition:(NSPoint)cursorPosition {
+    _emitterLayer.emitterPosition = cursorPosition;
+    _cursorPosition = cursorPosition;
 }
 
 - (void)startTearDownTimer {
@@ -72,24 +139,6 @@ const double kFindCursorHoleRadius = 30;
     if (_autohide && !_stopping) {
         [_delegate findCursorViewDismiss];
     }
-}
-
-- (void)startBlinkNotifications {
-    [_findCursorBlinkTimer invalidate];
-    _findCursorBlinkTimer = [NSTimer scheduledTimerWithTimeInterval:0.1
-                                                             target:self
-                                                           selector:@selector(blinkCursor)
-                                                           userInfo:nil
-                                                            repeats:YES];
-}
-
-- (void)stopBlinkNotifications {
-    [_findCursorBlinkTimer invalidate];
-    _findCursorBlinkTimer = nil;
-}
-
-- (void)blinkCursor {
-    [_delegate findCursorBlink];
 }
 
 @end

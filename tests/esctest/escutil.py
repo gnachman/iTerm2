@@ -42,9 +42,6 @@ def GetIconTitle():
   return escio.ReadOSC("L")
 
 def GetWindowTitle():
-  if escargs.args.expected_terminal == "iTerm2":
-    raise esctypes.InternalError(
-        "iTerm2 uses L instead of l as initial char for window title reports.")
   esccmd.XTERM_WINOPS(esccmd.WINOP_REPORT_WINDOW_TITLE)
   return escio.ReadOSC("l")
 

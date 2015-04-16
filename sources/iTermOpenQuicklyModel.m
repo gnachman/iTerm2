@@ -293,8 +293,11 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
 // The passed-in indexSet will be populated with indices into documentString
 // that were found to match query.
 // The current implementation returns:
-//   1.0 if query is a prefix of document.
-//   0.5 if query is a subsequence of document
+//   1.0 if query equals document.
+//   0.9 if query is a prefix of document.
+//   0.5 if query is a substring of document
+//   0 < score < 0.5 if query is a subsequence of a document. Each gap of non-matching characters
+//       increases the penalty.
 //   0.0 otherwise
 - (double)qualityOfMatchBetweenQuery:(unichar *)query
                            andString:(NSString *)documentString
@@ -304,21 +307,30 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     document[documentString.length] = 0;
     int q = 0;
     int d = 0;
+    BOOL match = NO;
+    int numGaps = 0;
     while (query[q] && document[d]) {
         if (document[d] == query[q]) {
             [indexSet addIndex:d];
             ++q;
+            match = YES;
+        } else if (match) {
+            match = NO;
+            ++numGaps;
         }
         ++d;
     }
     double score;
     if (query[q]) {
         score = 0;
+    } else if (q == d && !document[d]) {
+        // Exact equality
+        score = 1;
     } else if (q == d) {
         // Is a prefix
-        score = 1;
+        score = 0.9;
     } else {
-        score = 0.5;
+        score = 0.5 / (numGaps + 1);
     }
     free(document);
     return score;

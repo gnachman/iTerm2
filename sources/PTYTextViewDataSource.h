@@ -97,6 +97,7 @@
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark;
 
 // Indicates if we're in alternate screen mode.
 - (BOOL)showingAlternateScreen;

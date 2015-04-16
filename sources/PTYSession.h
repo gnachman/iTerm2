@@ -78,7 +78,7 @@ typedef enum {
 @property(nonatomic, readonly) DVR *dvr;
 @property(nonatomic, readonly) DVRDecoder *dvrDecoder;
 // Returns the "real" session while in instant replay, else nil if not in IR.
-@property(nonatomic, readonly) PTYSession *liveSession;
+@property(nonatomic, retain) PTYSession *liveSession;
 @property(nonatomic, readonly) BOOL canInstantReplayPrev;
 @property(nonatomic, readonly) BOOL canInstantReplayNext;
 
@@ -303,6 +303,10 @@ typedef enum {
 // Begin showing DVR frames from some live session.
 - (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession;
 
+// Append a bunch of lines from this (presumably synthetic) session from another (presumably live)
+// session.
+- (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source;
+
 // Go forward/back in time. Must call setDvr:liveSession: first.
 - (void)irAdvance:(int)dir;
 
@@ -496,8 +500,9 @@ typedef enum {
 // Kill the running command (if possible), print a banner, and rerun the profile's command.
 - (void)restartSession;
 
-// Make the text view the first responder.
-- (void)takeFocus;
+#pragma mark - Testing utilities
+
+- (void)synchronousReadTask:(NSString *)string;
 
 #pragma mark - Private for use by Scripting category
 

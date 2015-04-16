@@ -1,9 +1,10 @@
-#import "PseudoTerminal+Scripting.h"
+#import "PTYWindow+Scripting.h"
 #import "DebugLogging.h"
+#import "iTermApplication.h"
 #import "iTermController.h"
 #import "PTYTab.h"
 
-@implementation PseudoTerminal (Scripting)
+@implementation PTYWindow (Scripting)
 
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier {
@@ -12,16 +13,16 @@
 
     NSScriptObjectSpecifier *containerRef;
 
-    NSArray *terminals = [[iTermController sharedInstance] terminals];
-    anIndex = [terminals indexOfObjectIdenticalTo:self];
+    NSArray *windows = [[iTermApplication sharedApplication] orderedWindows];
+    anIndex = [windows indexOfObjectIdenticalTo:self];
     if (anIndex != NSNotFound) {
         containerRef = [NSApp objectSpecifier];
         classDescription = [NSClassDescription classDescriptionForClass:[NSApp class]];
-        //create and return the specifier
+        // Create and return the specifier
         return [[[NSIndexSpecifier alloc]
                    initWithContainerClassDescription:classDescription
                                   containerSpecifier:containerRef
-                                                 key:@"terminals"
+                                                 key:@"windows"
                                                index:anIndex] autorelease];
     } else {
         return nil;
@@ -31,7 +32,7 @@
 #pragma mark - Handlers for commands
 
 - (id)handleSelectCommand:(NSScriptCommand *)command {
-    [[iTermController sharedInstance] setCurrentTerminal:self];
+    [[iTermController sharedInstance] setCurrentTerminal:_delegate];
     return nil;
 }
 
@@ -52,11 +53,11 @@
         abEntry = aDict;
     }
 
-    return [[iTermController sharedInstance] launchBookmark:abEntry inTerminal:self];
+    return [[iTermController sharedInstance] launchBookmark:abEntry inTerminal:_delegate];
 }
 
-- (id)handleCloseCommand:(NSScriptCommand *)command {
-    [[self window] performClose:nil];
+- (id)handleCloseScriptCommand:(NSScriptCommand *)command {
+    [self performClose:nil];
     return nil;
 }
 
@@ -79,10 +80,9 @@
         abEntry = aDict;
     }
 
-    [self splitVertically:isVertical
-             withBookmark:abEntry
-            targetSession:[[self currentTab] activeSession]];
-
+    [_delegate splitVertically:isVertical
+                  withBookmark:abEntry
+                 targetSession:[[_delegate currentTab] activeSession]];
 }
 
 - (void)handleCreateTabWithDefaultProfileCommand:(NSScriptCommand *)scriptCommand {
@@ -90,7 +90,7 @@
     NSString *command = args[@"command"];
     Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
     [[iTermController sharedInstance] launchBookmark:profile
-                                          inTerminal:self
+                                          inTerminal:_delegate
                                              withURL:nil
                                             isHotkey:NO
                                              makeKey:YES
@@ -109,7 +109,7 @@
         return;
     }
     [[iTermController sharedInstance] launchBookmark:profile
-                                          inTerminal:self
+                                          inTerminal:_delegate
                                              withURL:nil
                                             isHotkey:NO
                                              makeKey:YES
@@ -118,7 +118,9 @@
 
 #pragma mark - Accessors
 
-// -tabs is defined in PseudoTerminal.m
+- (NSArray *)tabs {
+    return [_delegate tabs];
+}
 
 - (void)setTabs:(NSArray *)tabs {
 }
@@ -131,37 +133,34 @@
 }
 
 - (NSUInteger)countOfTabs {
-    return [[self tabs] count];
+    return [[_delegate tabs] count];
 }
 
 - (id)valueInTabsAtIndex:(unsigned)anIndex {
-    return [self tabs][anIndex];
+    return [_delegate tabs][anIndex];
 }
 
 - (void)replaceInTabs:(PTYTab *)replacementTab atIndex:(unsigned)anIndex {
-    [self insertInTabs:replacementTab atIndex:anIndex];
-    [self closeTab:[self tabs][anIndex + 1]];
+    [_delegate insertInTabs:replacementTab atIndex:anIndex];
+    [_delegate closeTab:[_delegate tabs][anIndex + 1]];
 }
 
 - (void)insertInTabs:(PTYTab *)tab atIndex:(unsigned)anIndex {
-    [self insertTab:tab atIndex:anIndex];
+    [_delegate insertTab:tab atIndex:anIndex];
 }
 
 - (void)removeFromTabsAtIndex:(unsigned)anIndex {
-    NSArray *tabs = [self tabs];
-    [self closeTab:tabs[anIndex]];
+    NSArray *tabs = [_delegate tabs];
+    [_delegate closeTab:tabs[anIndex]];
 }
 
-- (id)valueForKey:(NSString *)key {
-    if ([key isEqualToString:@"currentTab"]) {
-        return [self currentTab];
-    } else if ([key isEqualToString:@"currentSession"]) {
-        return [self currentSession];
-    } else if ([key isEqualToString:@"tabs"]) {
-        return [self tabs];
-    } else {
-        return nil;
-    }
+
+- (PTYTab *)currentTab {
+    return [_delegate currentTab];
+}
+
+- (PTYSession *)currentSession {
+    return [_delegate currentSession];
 }
 
 @end
