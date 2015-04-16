@@ -4984,6 +4984,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)setBadgeLabel:(NSString *)badgeLabel {
+    if (!_delegate) {
+        return;
+    }
     NSColor *fillColor = [_delegate textViewBadgeColor];
     // We compare pointer equality below to catch equal nil pointers, which isEqual: cannot.
     if (NSEqualSizes(_badgeDocumentVisibleRectSize, self.enclosingScrollView.documentVisibleRect.size) &&
