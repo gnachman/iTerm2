@@ -1276,6 +1276,11 @@
 		A60D85AB1A3A8105003AEE22 /* NSPasteboard+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */; };
 		A60D85AC1A3A8105003AEE22 /* NSPasteboard+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */; };
 		A61397731A2ED74D00B8BEFA /* PTYSessionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */; };
+		A61ABBB41AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB21AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h */; };
+		A61ABBB51AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB21AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h */; };
+		A61ABBB61AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */; };
+		A61ABBB71AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */; };
+		A61ABBB81AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */; };
 		A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */; };
 		A61B66CB18D4D855009AC9D5 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A61B66CC18D4D855009AC9D5 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
@@ -2436,6 +2441,8 @@
 		A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPasteboard+iTerm.m"; sourceTree = "<group>"; };
 		A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PTYSessionTest.h; path = iTermTests/PTYSessionTest.h; sourceTree = "<group>"; };
 		A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PTYSessionTest.m; path = iTermTests/PTYSessionTest.m; sourceTree = "<group>"; };
+		A61ABBB21AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
+		A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; };
 		A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermInstantReplayWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2995,6 +3002,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A61ABBB21AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h */,
+				A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */,
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -4342,6 +4351,7 @@
 				1D6ED87B19AEA20D005A7799 /* PSMTabStyle.h in Headers */,
 				1D6ED87C19AEA20D005A7799 /* AdvancedWorkingDirectoryWindowController.h in Headers */,
 				1D6ED87D19AEA20D005A7799 /* PSMTabDragAssistant.h in Headers */,
+				A61ABBB51AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h in Headers */,
 				1D6ED87E19AEA20D005A7799 /* VT100XtermParser.h in Headers */,
 				1D6ED87F19AEA20D005A7799 /* VT100StringParser.h in Headers */,
 				1D6ED88019AEA20D005A7799 /* PSMTabDragWindow.h in Headers */,
@@ -4665,6 +4675,7 @@
 				A68A3114186E2F14007F550F /* PopupWindow.h in Headers */,
 				A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */,
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
+				A61ABBB41AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h in Headers */,
 				1D49834B1912CD9E002E942D /* iTermDirectoriesModel.h in Headers */,
 				A68A30F7186D150B007F550F /* SCPFile.h in Headers */,
 				A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */,
@@ -5633,6 +5644,7 @@
 				1D6EDA3919AEA20D005A7799 /* iTermPasteHelper.m in Sources */,
 				1D6EDA3A19AEA20D005A7799 /* TerminalFile.m in Sources */,
 				A663013519D0864C004AF81C /* SCEvents.m in Sources */,
+				A61ABBB81AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */,
 				1D6EDA3B19AEA20D005A7799 /* LineBuffer.m in Sources */,
 				1D6EDA3C19AEA20D005A7799 /* iTermPasswordManagerWindowController.m in Sources */,
 				A6E77FA51A2A8A5A009B1CB6 /* NSData+iTerm.m in Sources */,
@@ -5901,6 +5913,7 @@
 				A63679831A328E7E000DB943 /* SemanticHistoryTest.m in Sources */,
 				A69B45921973193100F5444D /* iTermOpenQuicklyTableView.m in Sources */,
 				1DB9D8F4183FE9EF0029F0B5 /* HotkeyWindowController.m in Sources */,
+				A61ABBB71AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */,
 				1D9A556C180FA85900B42CE9 /* ToolbeltView.m in Sources */,
 				1D9A558E180FA87000B42CE9 /* PointerController.m in Sources */,
 				1D9A5596180FA87000B42CE9 /* PTYSplitView.m in Sources */,
@@ -6241,6 +6254,7 @@
 				1DD39ACF180B7884004E56D5 /* VT100GridTypes.m in Sources */,
 				A6B5134B18E779BB00D249A5 /* iTermPasteHelper.m in Sources */,
 				A6057C0A187A1809004A60AF /* TerminalFile.m in Sources */,
+				A61ABBB61AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */,
 				A663013319D0864C004AF81C /* SCEvents.m in Sources */,
 				1D5FDDC91208E93600C46BA3 /* LineBuffer.m in Sources */,
 				1DFA7C9B1923EDD900DF1410 /* iTermPasswordManagerWindowController.m in Sources */,
