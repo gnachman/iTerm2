@@ -178,7 +178,7 @@ static const CGFloat kMargin = 4;
     
     // Help button
     help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
-                             -1.5,
+                             1,
                              help_.frame.size.width,
                              help_.frame.size.height);
 
