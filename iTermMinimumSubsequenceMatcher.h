@@ -10,6 +10,8 @@
 
 @interface iTermMinimumSubsequenceMatcher : NSObject
 
+@property(nonatomic, readonly) NSString *query;
+
 - (instancetype)initWithQuery:(NSString *)query;
 - (NSIndexSet *)indexSetForDocument:(NSString *)document;
 

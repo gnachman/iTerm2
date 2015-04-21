@@ -9,6 +9,7 @@
 #import "iTermMinimumSubsequenceMatcher.h"
 
 @implementation iTermMinimumSubsequenceMatcher {
+    NSString *_query;  // The original query
     NSArray *_queryChars;  // NSNumbers, one for each character in the query.
     NSDictionary *_postingLists;  // Maps a character to an array of sorted document offsets.
     NSMutableArray *_indexes;  // 1:1 with _queryChars, gives indexes into matching posting list.
@@ -17,6 +18,7 @@
 - (instancetype)initWithQuery:(NSString *)query {
     self = [super init];
     if (self) {
+        _query = [query copy];
         NSMutableArray *temp = [NSMutableArray array];
         for (int i = 0; i < query.length; i++) {
             [temp addObject:@([query characterAtIndex:i])];
@@ -27,6 +29,7 @@
 }
 
 - (void)dealloc {
+    [_query release];
     [_postingLists release];
     [_indexes release];
     [_queryChars release];
