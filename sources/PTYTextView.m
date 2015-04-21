@@ -1829,21 +1829,31 @@ static const int kDragThreshold = 3;
     return (_keyIsARepeat);
 }
 
-- (BOOL)xtermMouseReporting
-{
+// WARNING: This indicates if mouse reporting is a possiblity. -terminalWantsMouseReports indicates
+// if the reporting mode would cause any action to be taken if this returns YES. They should be used
+// in conjunction most of the time.
+- (BOOL)xtermMouseReporting {
     NSEvent *event = [NSApp currentEvent];
     return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
             !([event modifierFlags] & NSAlternateKeyMask));   // Not holding Opt to disable mouse reporting
 }
 
+// If mouse reports are sent to the delegate, will it use them? Use with -xtermMouseReporting, which
+// understands Option to turn off reporting.
+- (BOOL)terminalWantsMouseReports {
+    MouseMode mouseMode = [[_dataSource terminal] mouseMode];
+    return ([_delegate xtermMouseReporting] &&
+            mouseMode != MOUSE_REPORTING_NONE &&
+            mouseMode != MOUSE_REPORTING_HILITE);
+}
+
 // TODO: disable other, right mouse for inactive panes
-- (void)otherMouseDown:(NSEvent *)event
-{
+- (void)otherMouseDown:(NSEvent *)event {
     [self reportMouseEvent:event];
 
     [pointer_ mouseDown:event
             withTouches:_numTouches
-           ignoreOption:[_delegate xtermMouseReporting]];
+           ignoreOption:[self terminalWantsMouseReports]];
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -1873,7 +1883,9 @@ static const int kDragThreshold = 3;
         DLog(@"Cancel right mouse down");
         return;
     }
-    if ([pointer_ mouseDown:event withTouches:_numTouches ignoreOption:[_delegate xtermMouseReporting]]) {
+    if ([pointer_ mouseDown:event
+                withTouches:_numTouches
+               ignoreOption:[self terminalWantsMouseReports]]) {
         return;
     }
     if ([self reportMouseEvent:event]) {
@@ -1973,8 +1985,7 @@ static const int kDragThreshold = 3;
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
     } else if ([self xtermMouseReporting] &&
-               mouseMode != MOUSE_REPORTING_NONE &&
-               mouseMode != MOUSE_REPORTING_HILITE) {
+               [self terminalWantsMouseReports]) {
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
     } else {
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
@@ -2279,7 +2290,7 @@ static const int kDragThreshold = 3;
             // Perform user-defined gesture action, if any
             [pointer_ mouseDown:event
                     withTouches:_numTouches
-                   ignoreOption:[_delegate xtermMouseReporting]];
+                   ignoreOption:[self terminalWantsMouseReports]];
             DLog(@"Set mouseDown=YES because of 3 finger mouseDown (not emulating middle)");
             _mouseDown = YES;
         }
@@ -2289,7 +2300,7 @@ static const int kDragThreshold = 3;
     if ([pointer_ eventEmulatesRightClick:event]) {
         [pointer_ mouseDown:event
                 withTouches:_numTouches
-               ignoreOption:[_delegate xtermMouseReporting]];
+               ignoreOption:[self terminalWantsMouseReports]];
         DLog(@"Returning because emulating right click.");
         return NO;
     }
