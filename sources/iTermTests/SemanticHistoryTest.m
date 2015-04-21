@@ -75,6 +75,7 @@
 @property(nonatomic, copy) NSArray *scriptArguments;
 @property(nonatomic, copy) NSString *openedFile;
 @property(nonatomic, copy) NSURL *openedURL;
+@property(nonatomic, copy) NSString *openedEditor;
 @property(nonatomic, assign) BOOL isTextFile;
 @property(nonatomic, assign) BOOL defaultAppIsEditor;
 @property(nonatomic, copy) NSString *launchedApp;
@@ -97,6 +98,7 @@
     [_scriptArguments release];
     [_openedFile release];
     [_openedURL release];
+    [_openedEditor release];
     [_launchedApp release];
     [_launchedAppArg release];
     [_bundleIdForDefaultApp release];
@@ -116,8 +118,9 @@
     return YES;
 }
 
-- (BOOL)openURL:(NSURL *)url {
+- (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {
     self.openedURL = url;
+    self.openedEditor = editorIdentifier;
     return YES;
 }
 
@@ -462,6 +465,7 @@
         [NSURL URLWithString:@"http://foo/The%20Path?line=1&prefix=The%20Prefix&suffix=The%20Suffix&dir=/&uservar=User%20Variable"];
     NSURL *actualURL = _semanticHistoryController.openedURL;
     assert([expectedURL isEqual:actualURL]);
+    assert(!_semanticHistoryController.openedEditor);
 }
 
 - (void)testOpenPathOpensTextFileInEditorWhenEditorIsDefaultApp {
@@ -481,6 +485,7 @@
     NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file://%@",
                                    kExistingFileAbsolutePath];
     assert([_semanticHistoryController.openedURL isEqualTo:[NSURL URLWithString:expectedUrlString]]);
+    assert(!_semanticHistoryController.openedEditor);
 }
 
 - (void)testOpenPathOpensTextFileInEditorWithLineNumberWhenEditorIsDefaultApp {
@@ -501,6 +506,7 @@
     NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file://%@&line=12",
                                    kExistingFileAbsolutePath];
     assert([_semanticHistoryController.openedURL isEqualTo:[NSURL URLWithString:expectedUrlString]]);
+    assert(!_semanticHistoryController.openedEditor);
 }
 
 - (void)testOpenPathOpensTextFileAtomEditor {
@@ -603,6 +609,11 @@
             expectedScheme, kExistingFileAbsolutePath, [kLineNumber substringFromIndex:1]];
     NSURL *expectedURL = [NSURL URLWithString:urlString];
     assert([_semanticHistoryController.openedURL isEqual:expectedURL]);
+    if ([editorId isEqualToString:kBBEditIdentifier]) {
+        assert([_semanticHistoryController.openedEditor isEqual:kBBEditIdentifier]);
+    } else {
+        assert(!_semanticHistoryController.openedEditor);
+    }
 }
 
 - (void)testOpenPathOpensTextFileInMacVim {
