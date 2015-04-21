@@ -187,7 +187,7 @@ static const int kDragThreshold = 3;
     // True while the context menu is being opened.
     BOOL openingContextMenu_;
 
-    // Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
+    // Detects three finger taps (as opposed to clicks).
     ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
 
     // Position of cursor last time we looked. Since the cursor might move around a lot between

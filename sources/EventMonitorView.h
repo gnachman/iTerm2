@@ -12,10 +12,6 @@
 
 @class PointerPrefsController;
 
-@interface EventMonitorView : NSView {
-    IBOutlet PointerPrefsController *pointerPrefs_;
-    IBOutlet NSTextField *label_;
-    int numTouches_;
-}
+@interface EventMonitorView : NSView
 
 @end

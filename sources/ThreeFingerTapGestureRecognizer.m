@@ -10,7 +10,14 @@
 #import "FutureMethods.h"
 #import "iTermApplicationDelegate.h"
 
-@implementation ThreeFingerTapGestureRecognizer
+@implementation ThreeFingerTapGestureRecognizer {
+    int numTouches_;
+    NSTimeInterval firstTouchTime_;  // Time since ref date of transition from 0 to >0 touches
+    NSTimeInterval threeTouchTime_;  // Time since ref date of transition from <3 to 3 touches
+    __weak NSView *target_;
+    SEL selector_;
+    BOOL fired_;  // True if we just faked a three-finger click and future mouse clicks should be ignored.
+}
 
 - (id)initWithTarget:(NSView *)target selector:(SEL)selector {
     self = [super init];
