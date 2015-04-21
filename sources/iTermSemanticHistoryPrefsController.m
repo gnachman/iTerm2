@@ -91,7 +91,7 @@ enum {
                                kSublimeText3Identifier: @"subl",
                                kMacVimIdentifier: @"mvim",
                                kTextmateIdentifier: @"txmt",
-                               kBBEditIdentifier: @"x-bbedit",
+                               kBBEditIdentifier: @"txmt",
                                kAtomIdentifier: @"atom" };
     return schemes[editor];
 }
