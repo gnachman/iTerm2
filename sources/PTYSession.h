@@ -500,6 +500,9 @@ typedef enum {
 // Kill the running command (if possible), print a banner, and rerun the profile's command.
 - (void)restartSession;
 
+// Make this session's textview the first responder.
+- (void)takeFocus;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

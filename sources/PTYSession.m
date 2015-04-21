@@ -3420,8 +3420,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_textview copySelectionAccordingToUserPreferences];
 }
 
-- (void)takeFocus
-{
+- (void)takeFocus {
     [[[[self tab] realParentWindow] window] makeFirstResponder:_textview];
 }
 
