@@ -1635,10 +1635,18 @@ static const int kDragThreshold = 3;
                                    actionRequired:NO
                                   respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
 
-    [_selection beginSelectionAt:VT100GridCoordMake(x, y)
-                            mode:kiTermSelectionModeSmart
+    [_selection beginSelectionAt:range.coordRange.start
+                            mode:kiTermSelectionModeCharacter
                           resume:NO
                           append:NO];
+    [_selection moveSelectionEndpointTo:range.coordRange.end];
+    if (!ignoringNewlines) {
+        // TODO(georgen): iTermSelection doesn't have a mode for smart selection ignoring newlines.
+        // If that flag is set, it's better to leave the selection in character mode because you can
+        // still extend a selection with shift-click. If we put it in smart mode, extending would
+        // get confused.
+        _selection.selectionMode = kiTermSelectionModeSmart;
+    }
     [_selection endLiveSelection];
     return smartMatch != nil;
 }
@@ -5619,8 +5627,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (URLAction *)urlActionForClickAtX:(int)x y:(int)y
-{
+- (URLAction *)urlActionForClickAtX:(int)x y:(int)y {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
     return [self urlActionForClickAtX:x
