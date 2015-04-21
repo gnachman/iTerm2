@@ -79,7 +79,7 @@ typedef enum {
 // Returns the cursor's position relative to the scroll region's origin. 1-based.
 - (int)terminalRelativeCursorY;
 
-// Set the top/bottom scroll region.
+// Set the top/bottom scroll region. 0-based. Inclusive.
 - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom;
 
 // Returns the scroll region, or the whole screen if none is set.
