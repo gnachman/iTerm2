@@ -1281,6 +1281,16 @@
 		A61ABBB61AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */; };
 		A61ABBB71AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */; };
 		A61ABBB81AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */; };
+		A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
+		A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
+		A61ABBBD1AE5F38C004656C2 /* NSDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */; };
+		A61ABBBE1AE5F38C004656C2 /* NSDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */; };
+		A61ABBBF1AE5F38C004656C2 /* NSDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */; };
+		A61ABBC21AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */; };
+		A61ABBC31AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */; };
+		A61ABBC41AE5F54A004656C2 /* NSMutableDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */; };
+		A61ABBC51AE5F54A004656C2 /* NSMutableDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */; };
+		A61ABBC61AE5F54A004656C2 /* NSMutableDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */; };
 		A61B66CA18D4D855009AC9D5 /* NSView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */; };
 		A61B66CB18D4D855009AC9D5 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A61B66CC18D4D855009AC9D5 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
@@ -2441,8 +2451,12 @@
 		A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPasteboard+iTerm.m"; sourceTree = "<group>"; };
 		A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PTYSessionTest.h; path = iTermTests/PTYSessionTest.h; sourceTree = "<group>"; };
 		A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PTYSessionTest.m; path = iTermTests/PTYSessionTest.m; sourceTree = "<group>"; };
-		A61ABBB21AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
-		A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; tabWidth = 4; };
+		A61ABBB21AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermMinimumSubsequenceMatcher.h; path = ../iTermMinimumSubsequenceMatcher.h; sourceTree = "<group>"; };
+		A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = iTermMinimumSubsequenceMatcher.m; path = ../iTermMinimumSubsequenceMatcher.m; sourceTree = "<group>"; tabWidth = 4; };
+		A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Profile.h"; sourceTree = "<group>"; };
+		A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Profile.m"; sourceTree = "<group>"; };
+		A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableDictionary+Profile.h"; sourceTree = "<group>"; };
+		A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableDictionary+Profile.m"; sourceTree = "<group>"; };
 		A61B66C818D4D855009AC9D5 /* NSView+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermInstantReplayWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3002,8 +3016,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A61ABBB21AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h */,
-				A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */,
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
@@ -3109,6 +3121,7 @@
 				DDF0FD63062916F70080EF74 /* iTermApplication.h */,
 				1D5655CC19AD2B9B001C460B /* iTermApplication+Scripting.h */,
 				20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */,
+				A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */,
 				A6A13AA018C2D23300B241ED /* iTermColorMap.h */,
 				1D407A2714BABE8700BD5035 /* iTermController.h */,
 				1D4F359F1813386600699FDF /* iTermCursor.h */,
@@ -3120,13 +3133,17 @@
 				A6E7475F188C679C005355CF /* iTermExposeView.h */,
 				A6E74750188C6692005355CF /* iTermExposeWindow.h */,
 				A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */,
+				A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */,
 				A682DE991915DB1F00BE8758 /* iTermFlippedView.h */,
 				1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */,
 				F69E78910AB7AC85001EC0FF /* iTermGrowlDelegate.h */,
 				A6E77F7A1A23D1A5009B1CB6 /* iTermIndicatorsHelper.h */,
 				A61B66CD18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h */,
+				A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */,
 				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
 				1DFA9D5C18F36DC3008ADC98 /* iTermKeyMappingViewController.h */,
+				1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */,
+				A61ABBB21AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h */,
 				A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */,
 				A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */,
 				A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */,
@@ -3158,6 +3175,7 @@
 				1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */,
 				1D373E4718F3613600773D3E /* iTermShortcutInputView.h */,
 				A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */,
+				A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */,
 				A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */,
 				A6E713B818FCCDD1008D94DD /* iTermURLSchemeController.h */,
 				A6099B0318D6B0FD00081FA9 /* iTermWarning.h */,
@@ -3222,7 +3240,6 @@
 				1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */,
 				A6057C021878CD30004A60AF /* ProfileTagsView.h */,
 				1D407A2B14BABE8700BD5035 /* PseudoTerminal.h */,
-				A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */,
 				5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */,
 				1D70BA331680158700824B72 /* PTYFontInfo.h */,
 				A63F4098183B3AA7003A6A6D /* PTYNoteView.h */,
@@ -3238,6 +3255,7 @@
 				1D407A3014BABE8700BD5035 /* PTYTextView.h */,
 				1DD39B7C180F68BF004E56D5 /* PTYTextViewDataSource.h */,
 				1D407A3114BABE8700BD5035 /* PTYWindow.h */,
+				A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */,
 				1D085F9C16F137D900B7FCE9 /* RoundedRectView.h */,
 				1D81F0C2183C3CCD00910838 /* SBSystemPreferences.h */,
 				A68A30ED186D150A007F550F /* SCPFile.h */,
@@ -3793,6 +3811,10 @@
 				A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */,
 				A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */,
 				A6B3A7421AC89DED008E8D4E /* NSCharacterSet+iTerm.m */,
+				A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */,
+				A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */,
+				A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */,
+				A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -4092,19 +4114,21 @@
 				1D53FD14181C4B4B00524D4F /* FindContext.m */,
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
 				A69B457E196B989D00F5444D /* iTermAlphaColorWell.m */,
+				A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */,
 				A6A13AA118C2D23300B241ED /* iTermColorMap.m */,
+				A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */,
 				A682DE9A1915DB1F00BE8758 /* iTermFlippedView.m */,
 				A6E77F721A23D195009B1CB6 /* iTermIndicatorsHelper.m */,
-				A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */,
 				A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */,
-				1DA3E2B81970ACBE00001E6E /* iTermLogoGenerator.h */,
 				1DA3E2B91970ACBE00001E6E /* iTermLogoGenerator.m */,
+				A61ABBB31AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.m */,
 				A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */,
 				A60014FA18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.m */,
 				A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */,
 				A6C537C21939507100A08C18 /* iTermRestorableSession.m */,
 				1D8CE03C195A143100FE1BEE /* iTermRule.m */,
 				A6E77F711A23D195009B1CB6 /* iTermSelectionScrollHelper.m */,
+				A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */,
 				A6E713B918FCCDD1008D94DD /* iTermURLSchemeController.m */,
 				A6099B0418D6B0FD00081FA9 /* iTermWarning.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
@@ -4119,12 +4143,6 @@
 				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
-				A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */,
-				A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */,
-				A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */,
-				A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */,
-				A61D16FA1AAFD5530013FCCA /* iTermBackgroundColorRun.h */,
-				A61D16FB1AAFD5530013FCCA /* iTermBackgroundColorRun.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -4547,6 +4565,7 @@
 				1D6ED92F19AEA20D005A7799 /* TmuxDashboardController.h in Headers */,
 				1D6ED93019AEA20D005A7799 /* PopupEntry.h in Headers */,
 				1D6ED93119AEA20D005A7799 /* CommandHistoryPopup.h in Headers */,
+				A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */,
 				1D6ED93219AEA20D005A7799 /* TmuxSessionsTable.h in Headers */,
 				1D6ED93319AEA20D005A7799 /* TmuxControllerRegistry.h in Headers */,
 				1D6ED93419AEA20D005A7799 /* TmuxWindowsTable.h in Headers */,
@@ -4557,6 +4576,7 @@
 				1D6ED93719AEA20D005A7799 /* ProfilesTextPreferencesViewController.h in Headers */,
 				1D6ED93819AEA20D005A7799 /* ProfileModel.h in Headers */,
 				1D6ED93919AEA20D005A7799 /* charmaps.h in Headers */,
+				A61ABBC31AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */,
 				1D6ED93A19AEA20D005A7799 /* iTerm.h in Headers */,
 				1D6ED93B19AEA20D005A7799 /* iTermController.h in Headers */,
 				1D6ED93C19AEA20D005A7799 /* iTermKeyBindingMgr.h in Headers */,
@@ -4819,6 +4839,7 @@
 				1D4097B91A2F947F00100892 /* iTermPasteHelperTest.h in Headers */,
 				1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */,
 				A6E713A318F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h in Headers */,
+				A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */,
 				1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */,
 				1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */,
 				1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */,
@@ -4911,6 +4932,7 @@
 				A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */,
 				A663012819D0864C004AF81C /* SCConstants.h in Headers */,
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
+				A61ABBC21AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */,
 				A6A13AB118C33ED300B241ED /* VT100CSIParser.h in Headers */,
 				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
 				1DB83952192E95EB0037E548 /* CaptureTrigger.h in Headers */,
@@ -5047,7 +5069,7 @@
 		0464AB0C006CD2EC7F000001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0610;
+				LastUpgradeCheck = 0630;
 			};
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm2" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -5629,6 +5651,7 @@
 				1D6EDA2A19AEA20D005A7799 /* VT100Token.m in Sources */,
 				1D6EDA2B19AEA20D005A7799 /* iTermURLSchemeController.m in Sources */,
 				1D6EDA2C19AEA20D005A7799 /* PasswordTrigger.m in Sources */,
+				A61ABBBF1AE5F38C004656C2 /* NSDictionary+Profile.m in Sources */,
 				1D6EDA2D19AEA20D005A7799 /* PSMTabDragAssistant.m in Sources */,
 				1D6EDA2E19AEA20D005A7799 /* CommandHistoryPopup.m in Sources */,
 				1D6EDA2F19AEA20D005A7799 /* LineBufferPosition.m in Sources */,
@@ -5810,6 +5833,7 @@
 				1D6EDACB19AEA20D005A7799 /* PopupWindow.m in Sources */,
 				1D6EDACC19AEA20D005A7799 /* AATree.m in Sources */,
 				1D6EDACD19AEA20D005A7799 /* ToolCommandHistoryView.m in Sources */,
+				A61ABBC61AE5F54A004656C2 /* NSMutableDictionary+Profile.m in Sources */,
 				1D6EDACE19AEA20D005A7799 /* ProfileTableRow.m in Sources */,
 				1D6EDACF19AEA20D005A7799 /* ProfileModelWrapper.m in Sources */,
 				1D6EDAD019AEA20D005A7799 /* ProfileTableView.m in Sources */,
@@ -5889,6 +5913,7 @@
 				A6A13ABD18C34F6400B241ED /* VT100XtermParser.m in Sources */,
 				A6E525D81A9C5725007B898E /* VT100StateMachine.m in Sources */,
 				A6E77FA41A2A8A5A009B1CB6 /* NSData+iTerm.m in Sources */,
+				A61ABBC51AE5F54A004656C2 /* NSMutableDictionary+Profile.m in Sources */,
 				1DABA03519253FEA00A228D8 /* PasswordTrigger.m in Sources */,
 				A66A1FAB1A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */,
 				A69B4581196B989D00F5444D /* iTermAlphaColorWell.m in Sources */,
@@ -5957,6 +5982,7 @@
 				A67E0AD2186E4B71009B2B68 /* TaskNotifier.m in Sources */,
 				1D9A5570180FA85900B42CE9 /* ToolPasteHistory.m in Sources */,
 				A69B45B5197345C700F5444D /* iTermOpenQuicklyView.m in Sources */,
+				A61ABBBE1AE5F38C004656C2 /* NSDictionary+Profile.m in Sources */,
 				A6E525D51A9C5725007B898E /* VT100State.m in Sources */,
 				A62A1AE61AAE290700B49F79 /* iTermTextDrawingHelper.m in Sources */,
 				1D9A552B180FA69200B42CE9 /* DVR.m in Sources */,
@@ -6239,6 +6265,7 @@
 				1D5FDDC11208E93600C46BA3 /* PSMTabBarControl.m in Sources */,
 				A647E3B318C36D0300450FA1 /* VT100Token.m in Sources */,
 				A6E713BB18FCCDD1008D94DD /* iTermURLSchemeController.m in Sources */,
+				A61ABBBD1AE5F38C004656C2 /* NSDictionary+Profile.m in Sources */,
 				1DABA03419253FEA00A228D8 /* PasswordTrigger.m in Sources */,
 				1D5FDDC31208E93600C46BA3 /* PSMTabDragAssistant.m in Sources */,
 				1DC13AC418864E2200034DAE /* CommandHistoryPopup.m in Sources */,
@@ -6420,6 +6447,7 @@
 				A68A3115186E2F14007F550F /* PopupWindow.m in Sources */,
 				A6358647184BEA57009ED690 /* AATree.m in Sources */,
 				A6A5991E1887C63700CB4209 /* ToolCommandHistoryView.m in Sources */,
+				A61ABBC41AE5F54A004656C2 /* NSMutableDictionary+Profile.m in Sources */,
 				1D06E7D414BC04510097C0ED /* ProfileTableRow.m in Sources */,
 				1D06E7D814BC04E20097C0ED /* ProfileModelWrapper.m in Sources */,
 				1D06E7DC14BC05DB0097C0ED /* ProfileTableView.m in Sources */,

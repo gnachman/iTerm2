@@ -34,7 +34,7 @@
 
 // Prefs-level keys
 #define KEY_DEFAULT_GUID                @"Default Bookmark Guid"  // use this instead (not in a bookmark)
-#define KEY_DEPRECATED_BOOKMARKS               @"Bookmarks"
+#define KEY_DEPRECATED_BOOKMARKS        @"Bookmarks"  // Deprecated
 #define KEY_NEW_BOOKMARKS               @"New Bookmarks"
 
 // Bookmark-level keys
@@ -138,6 +138,7 @@
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"
 #define KEY_PREVENT_TAB                       @"Prevent Opening in a Tab"
+#define KEY_OPEN_TOOLBELT                     @"Open Toolbelt"
 #define KEY_HIDE_AFTER_OPENING                @"Hide After Opening"
 #define KEY_SYNC_TITLE                        @"Sync Title"
 #define KEY_CLOSE_SESSIONS_ON_END             @"Close Sessions On End"
