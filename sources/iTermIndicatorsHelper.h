@@ -17,6 +17,7 @@ extern NSString *const kItermIndicatorBroadcastInput;
 extern NSString *const kiTermIndicatorCoprocess;
 extern NSString *const kiTermIndicatorAlert;
 extern NSString *const kiTermIndicatorAllOutputSuppressed;
+extern NSString *const kiTermIndicatorZoomedIn;
 
 extern CGFloat kiTermIndicatorStandardHeight;
 

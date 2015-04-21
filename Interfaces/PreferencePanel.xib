@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6254"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
@@ -636,7 +636,7 @@ Gw
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <textField verticalHuggingPriority="750" id="3088">
-                    <rect key="frame" x="308" y="22" width="40" height="11"/>
+                    <rect key="frame" x="308" y="20" width="40" height="13"/>
                     <autoresizingMask key="autoresizingMask"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="150%" id="3089">
                         <font key="font" metaFont="label"/>
@@ -753,7 +753,7 @@ Gw
                                     <rect key="frame" x="0.0" y="0.0" width="761" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
-                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
                                         <tableColumn width="350" minWidth="40" maxWidth="1000" id="5785">
@@ -914,7 +914,7 @@ DQ
                                     <rect key="frame" x="0.0" y="0.0" width="763" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
-                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
                                         <tableColumn width="198" minWidth="10" maxWidth="3.4028234663852886e+38" id="5901">
@@ -1129,7 +1129,7 @@ DQ
                                     <rect key="frame" x="0.0" y="0.0" width="533" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
-                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
                                         <tableColumn width="167.40625" minWidth="40" maxWidth="1000" id="6285">
@@ -1474,8 +1474,8 @@ DQ
                 <outlet property="_blurRadius" destination="5363" id="iUQ-8z-lyV"/>
                 <outlet property="_columnsField" destination="4911" id="X3h-Pu-qzV"/>
                 <outlet property="_columnsLabel" destination="4912" id="veJ-9B-Jrh"/>
-                <outlet property="_disableWindowResizing" destination="5004" id="ELk-qv-bSY"/>
                 <outlet property="_hideAfterOpening" destination="6354" id="ivO-Qa-O3r"/>
+                <outlet property="_openToolbelt" destination="hmf-ta-TMb" id="nOK-vG-n8c"/>
                 <outlet property="_preventTab" destination="6416" id="eRg-47-Fqf"/>
                 <outlet property="_rowsField" destination="4914" id="ByA-st-yaA"/>
                 <outlet property="_rowsLabel" destination="4913" id="JG6-6Y-B6a"/>
@@ -1502,6 +1502,7 @@ DQ
                 <outlet property="_characterEncoding" destination="2390" id="SiG-ub-R7K"/>
                 <outlet property="_disableAltScreen" destination="5081" id="DvY-uh-omh"/>
                 <outlet property="_disablePrinting" destination="5633" id="ehN-F7-zlE"/>
+                <outlet property="_disableWindowResizing" destination="5004" id="w7d-0W-f00"/>
                 <outlet property="_filterAlertsButton" destination="ZMH-MS-a4p" id="9Ff-Vd-vIk"/>
                 <outlet property="_filterAlertsPanel" destination="u39-OD-7hu" id="6Oy-CG-rDU"/>
                 <outlet property="_flashingBell" destination="3553" id="BDq-z6-C2f"/>
@@ -2966,18 +2967,6 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button id="5004">
-                    <rect key="frame" x="15" y="38" width="299" height="18"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="Disable session-initiated window resizing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5005">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <connections>
-                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="ykh-bM-pd7"/>
-                        <outlet property="nextKeyView" destination="4978" id="5264"/>
-                    </connections>
-                </button>
                 <button id="6416">
                     <rect key="frame" x="15" y="18" width="389" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2991,7 +2980,7 @@ DQ
                     </connections>
                 </button>
                 <button toolTip="Enable this to prevent title changes originated by an escape code from removing the profile name from the tab title." id="5008">
-                    <rect key="frame" x="15" y="58" width="458" height="18"/>
+                    <rect key="frame" x="15" y="40" width="458" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="If showing profile name in tab title, keep it when the title is changed" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5009">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2999,11 +2988,10 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="5jm-v3-jaw"/>
-                        <outlet property="nextKeyView" destination="5004" id="5263"/>
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="5012">
-                    <rect key="frame" x="15" y="82" width="105" height="20"/>
+                    <rect key="frame" x="15" y="64" width="105" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Miscellaneous" id="5013">
                         <font key="font" metaFont="systemBold"/>
@@ -3031,10 +3019,21 @@ DQ
                         <action selector="settingChanged:" target="BMA-OA-Kzc" id="SPU-HF-C0e"/>
                     </connections>
                 </button>
+                <button id="hmf-ta-TMb">
+                    <rect key="frame" x="86" y="100" width="140" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Open Toolbelt" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="hr1-3l-FQW">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="BMA-OA-Kzc" id="62v-xZ-hBc"/>
+                    </connections>
+                </button>
             </subviews>
         </customView>
         <customView id="0rQ-EK-tyN" userLabel="Prefs - Profiles - Terminal" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="556" height="486"/>
+            <rect key="frame" x="0.0" y="0.0" width="578" height="486"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <popUpButton verticalHuggingPriority="750" id="2390">
@@ -3345,7 +3344,20 @@ DQ
                         <action selector="showFilterAlertsPanel:" target="gMD-DK-gev" id="cTC-oU-rqv"/>
                     </connections>
                 </button>
+                <button id="5004">
+                    <rect key="frame" x="281" y="229" width="299" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="check" title="Disable session-initiated window resizing" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5005">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="gMD-DK-gev" id="57F-z1-mMv"/>
+                        <outlet property="nextKeyView" destination="4978" id="5264"/>
+                    </connections>
+                </button>
             </subviews>
+            <point key="canvasLocation" x="839" y="-179"/>
         </customView>
         <customView id="ayN-Cl-pQs" userLabel="Prefs - Profiles - Session" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="403"/>
@@ -3362,7 +3374,7 @@ DQ
                                 <rect key="frame" x="0.0" y="0.0" width="511" height="19"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
                                     <tableColumn width="508" minWidth="40" maxWidth="1000" id="5664">
@@ -3893,7 +3905,7 @@ DQ
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="19"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
                                     <tableColumn width="516" minWidth="40" maxWidth="1000" id="7MV-bw-rSc">
@@ -5261,7 +5273,7 @@ DQ
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="19"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
                                     <tableColumn editable="NO" width="47" minWidth="40" maxWidth="1000" id="5564">
@@ -5376,7 +5388,7 @@ DQ
                                 <rect key="frame" x="0.0" y="0.0" width="849" height="19"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
                                     <tableColumn width="284" minWidth="40" maxWidth="1000" id="6095">

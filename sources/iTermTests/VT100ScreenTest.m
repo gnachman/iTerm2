@@ -3204,7 +3204,7 @@
     [screen terminalSetScrollRegionTop:1 bottom:2];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:2 rightMargin:5];
-    [screen terminalMoveCursorToX:2 y:2];
+    [screen terminalMoveCursorToX:3 y:2];
     assert(screen.cursorY == 2);
     // top-left is c, bottom-right is p
     [screen terminalLineFeed];
@@ -3247,7 +3247,7 @@
     [screen terminalSetScrollRegionTop:1 bottom:2];
     [screen terminalSetUseColumnScrollRegion:YES];
     [screen terminalSetLeftMargin:2 rightMargin:5];
-    [screen terminalMoveCursorToX:2 y:3];
+    [screen terminalMoveCursorToX:3 y:3];
     // top-left is c, bottom-right is p
     assert(screen.cursorY == 3);
     [screen terminalReverseIndex];

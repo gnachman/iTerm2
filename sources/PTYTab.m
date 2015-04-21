@@ -897,8 +897,7 @@ static NSString* FormatRect(NSRect r) {
     return [[self activeSession] exited];
 }
 
-- (void)setDvrInSession:(PTYSession*)newSession
-{
+- (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession {
     PtyLog(@"PTYTab setDvrInSession:%p", newSession);
     PTYSession* oldSession = [self activeSession];
     assert(oldSession != newSession);
@@ -913,11 +912,7 @@ static NSString* FormatRect(NSRect r) {
     [newSession setName:[oldSession name]];
     [newSession setDefaultName:[oldSession defaultName]];
 
-    // Put the new session in DVR mode and pass it the old session, which it
-    // keeps a reference to.
-
-    [newSession setDvr:[[oldSession screen] dvr] liveSession:oldSession];
-
+    newSession.liveSession = oldSession;
     activeSession_ = newSession;
 
     // TODO(georgen): the hidden window can resize itself and the FakeWindow
@@ -929,6 +924,13 @@ static NSString* FormatRect(NSRect r) {
 
     // This starts the new session's update timer
     [newSession updateDisplay];
+    [realParentWindow_.window makeFirstResponder:newSession.textview];
+}
+
+- (void)setDvrInSession:(PTYSession*)newSession {
+    PTYSession *oldSession = [[activeSession_ retain] autorelease];
+    [self replaceActiveSessionWithSyntheticSession:newSession];
+    [newSession setDvr:[[oldSession screen] dvr] liveSession:oldSession];
 }
 
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {

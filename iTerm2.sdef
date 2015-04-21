@@ -2,16 +2,222 @@
 <!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
 
 <dictionary title="iTerm2 Terminology">
-  <suite name="Standard Suite" code="????" description="Common classes and commands for all applications.">
-    <command name="count" code="corecnte" description="Return the number of elements of a particular class within an object.">
-      <cocoa class="NSCountCommand"/>
-      <direct-parameter type="specifier" description="The objects to be counted."/>
-      <parameter name="each" code="kocl" type="type" optional="yes" description="The class of objects to be counted." hidden="yes">
-        <cocoa key="ObjectClass"/>
-      </parameter>
-      <result type="integer" description="The count."/>
-    </command>
-  </suite>
+  <suite name="Standard Suite" code="????" description="Common classes and commands for all applications."> 
+    <enumeration name="save options" code="savo"> 
+            <enumerator name="yes" code="yes " description="Save the file."/> 
+            <enumerator name="no" code="no  " description="Do not save the file."/> 
+            <enumerator name="ask" code="ask " 
+                    description="Ask the user whether or not to save the file."/> 
+    </enumeration> 
+    <command name="quit" code="aevtquit" description="Quit the application."> 
+      <cocoa class="NSQuitCommand"/> 
+      <parameter name="saving" code="savo" type="save options" optional="yes" 
+        description="Whether or not changed documents should be saved before closing."> 
+        <cocoa key="SaveOptions"/> 
+      </parameter> 
+    </command> 
+    <command name="count" code="corecnte" 
+      description="Return the number of elements of a particular class within an object."> 
+      <cocoa class="NSCountCommand"/> 
+      <direct-parameter type="specifier" 
+        description="the object whose elements are to be counted"/> 
+      <parameter name="each" code="kocl" type="type" optional="yes" 
+        description="The class of objects to be counted."> 
+        <cocoa key="ObjectClass"/> 
+      </parameter> 
+      <result type="integer" description="the number of elements"/> 
+    </command> 
+    <command name="delete" code="coredelo" description="Delete an object."> 
+      <cocoa class="NSDeleteCommand"/> 
+      <direct-parameter type="specifier" description="the object to delete"/> 
+    </command> 
+    <command name="duplicate" code="coreclon" 
+      description="Copy object(s) and put the copies at a new location."> 
+      <cocoa class="NSCloneCommand"/> 
+      <direct-parameter type="specifier" 
+        description="the object(s) to duplicate"/> 
+      <parameter name="to" code="insh" type="location specifier" 
+        description="The location for the new object(s)."> 
+        <cocoa key="ToLocation"/> 
+      </parameter> 
+      <parameter name="with properties" code="prdt" type="record" optional="yes"
+        description="Properties to be set in the new duplicated object(s)."> 
+        <cocoa key="WithProperties"/> 
+      </parameter> 
+    </command> 
+    <command name="exists" code="coredoex" description="Verify if an object exists."> 
+      <cocoa class="NSExistsCommand"/> 
+      <direct-parameter type="specifier" description="the object in question"/> 
+      <result type="boolean" description="true if it exists, false if not"/> 
+    </command> 
+    <command name="make" code="corecrel" description="Make a new object."> 
+      <cocoa class="NSCreateCommand"/> 
+      <parameter name="new" code="kocl" type="type" 
+        description="The class of the new object."> 
+        <cocoa key="ObjectClass"/> 
+      </parameter> 
+      <parameter name="at" code="insh" type="location specifier" optional="yes" 
+        description="The location at which to insert the object."> 
+        <cocoa key="Location"/> 
+      </parameter> 
+      <parameter name="with data" code="data" type="any" optional="yes" 
+        description="The initial contents of the object."> 
+        <cocoa key="ObjectData"/> 
+      </parameter> 
+      <parameter name="with properties" code="prdt" type="record" optional="yes" 
+        description="The initial values for properties of the object."> 
+        <cocoa key="KeyDictionary"/> 
+      </parameter> 
+      <result type="specifier" description="to the new object"/> 
+    </command> 
+    <command name="move" code="coremove" 
+      description="Move object(s) to a new location."> 
+      <cocoa class="NSMoveCommand"/> 
+      <direct-parameter type="specifier" description="the object(s) to move"/> 
+      <parameter name="to" code="insh" type="location specifier" 
+        description="The new location for the object(s)."> 
+        <cocoa key="ToLocation"/> 
+      </parameter> 
+    </command> 
+    <class name="application" code="capp"
+        description="The application's top-level scripting object.">
+      <cocoa class="iTermApplication"/>
+      <property name="current window" code="Crwn" type="window"
+        description="The frontmost window">
+        <cocoa key="currentWindow" />
+      </property>
+
+      <property name="name" code="pnam" type="text" access="r" 
+        description="The name of the application."/> 
+      <property name="frontmost" code="pisf" type="boolean" access="r" 
+        description="Is this the frontmost (active) application?"> 
+        <cocoa key="isActive"/> 
+      </property> 
+      <property name="version" code="vers" type="text" access="r" 
+        description="The version of the application."/> 
+      <element type="window" access="r"> 
+        <cocoa key="orderedWindows"/> 
+      </element> 
+    </class> 
+    <class name="window" code="cwin" description="A window."> 
+      <cocoa class="PTYWindow"/> 
+      <property name="name" code="pnam" type="text" access="r" 
+        description="The full title of the window."> 
+        <cocoa key="title"/> 
+      </property> 
+      <property name="index" code="pidx" type="integer" 
+        description="The index of the window, ordered front to back."> 
+        <cocoa key="orderedIndex"/> 
+      </property> 
+      <property name="bounds" code="pbnd" type="rectangle" 
+        description="The bounding rectangle of the window."> 
+        <cocoa key="boundsAsQDRect"/> 
+      </property> 
+      <property name="closeable" code="hclb" type="boolean" access="r" 
+        description="Whether the window has a close box."> 
+        <cocoa key="hasCloseBox"/> 
+      </property> 
+      <property name="miniaturizable" code="ismn" type="boolean" access="r" 
+        description="Whether the window can be minimized."> 
+        <cocoa key="isMiniaturizable"/> 
+      </property> 
+      <property name="miniaturized" code="pmnd" type="boolean" 
+        description="Whether the window is currently minimized."> 
+        <cocoa key="isMiniaturized"/> 
+      </property> 
+      <property name="resizable" code="prsz" type="boolean" access="r" 
+        description="Whether the window can be resized."> 
+        <cocoa key="isResizable"/> 
+      </property> 
+      <property name="visible" code="pvis" type="boolean" 
+        description="Whether the window is currently visible."> 
+        <cocoa key="isVisible"/> 
+      </property> 
+      <property name="zoomable" code="iszm" type="boolean" access="r" 
+        description="Whether the window can be zoomed."> 
+        <cocoa key="isZoomable"/> 
+      </property> 
+      <property name="zoomed" code="pzum" type="boolean" 
+        description="Whether the window is currently zoomed."> 
+        <cocoa key="isZoomed"/> 
+      </property>
+      <property name="frontmost" description="Whether the window is currently the frontmost window." code="pisf" type="boolean">
+        <cocoa key="scriptFrontmost"/>
+      </property>
+      <responds-to command="close"> 
+        <cocoa method="handleCloseScriptCommand:"/> 
+      </responds-to> 
+
+      <!-- iTerm2 -->
+      <responds-to command="select">
+        <cocoa method="handleSelectCommand:"/>
+      </responds-to>
+
+      <responds-to command="create tab with default profile">
+        <cocoa method="handleCreateTabWithDefaultProfileCommand:" />
+      </responds-to>
+
+      <responds-to command="create tab">
+        <cocoa method="handleCreateTabCommand:" />
+      </responds-to>
+
+      <element type="tab" access="r">
+        <cocoa key="tabs" />
+      </element>
+
+      <property name="current tab" code="Crtb" type="tab"
+          description="The currently selected tab">
+        <cocoa key="currentTab" />
+      </property>
+
+      <property name="current session" code="Wcsn" type="session"
+          description="The current session in a window">
+        <cocoa key="currentSession" />
+      </property>
+
+      <!-- compatibility -->
+      <property name="position" description="The position of the window, relative to the upper left corner of the screen." code="ppos" type="point">
+        <cocoa key="scriptPosition" />
+        <documentation>
+          <html>
+            <![CDATA[
+            <i>Deprecated; use bounds instead.</i>
+            ]]>
+          </html>
+        </documentation>
+      </property>
+      <property name="origin" description="The position of the window, relative to the lower left corner of the screen." code="pori" type="point">
+        <cocoa key="scriptOrigin" />
+        <documentation>
+          <html>
+            <![CDATA[
+            <i>Deprecated; use bounds instead.</i>
+            ]]>
+          </html>
+        </documentation>
+      </property>
+      <property name="size" description="The width and height of the window" code="psiz" type="point">
+        <cocoa key="scriptSize" />
+        <documentation>
+          <html>
+            <![CDATA[
+            <i>Deprecated; use bounds instead.</i>
+            ]]>
+          </html>
+        </documentation>
+      </property>
+      <property name="frame" description="The bounding rectangle, relative to the lower left corner of the screen." code="pfra" type="rectangle">
+        <cocoa key="scriptFrame" />
+        <documentation>
+          <html>
+            <![CDATA[
+            <i>Deprecated; use bounds instead.</i>
+            ]]>
+          </html>
+        </documentation>
+      </property>
+    </class> 
+  </suite> 
 
   <suite name="iTerm2 Suite" code="Itrm" description="Classes just for the iTerm2 application.">
     <command name="close" code="coreclos" description="Close a document.">
@@ -131,52 +337,6 @@
     <value-type name="RGB color" code="cRGB">
       <cocoa class="NSColor"/>
     </value-type>
-
-    <class name="application" code="capp"
-        description="The application's top-level scripting object.">
-      <cocoa class="iTermApplication"/>
-      <element type="terminal window" access="r">
-        <cocoa key="terminalWindows"/>
-      </element>
-
-      <property name="current window" code="Crwn" type="terminal window"
-        description="The frontmost window">
-        <cocoa key="currentWindow" />
-      </property>
-    </class>
-
-    <class name="terminal window" code="Trmw" description="A terminal window">
-      <cocoa class="PseudoTerminal"/>
-      <responds-to command="close">
-        <cocoa method="handleCloseCommand:"/>
-      </responds-to>
-
-      <responds-to command="select">
-        <cocoa method="handleSelectCommand:"/>
-      </responds-to>
-
-      <responds-to command="create tab with default profile">
-        <cocoa method="handleCreateTabWithDefaultProfileCommand:" />
-      </responds-to>
-
-      <responds-to command="create tab">
-        <cocoa method="handleCreateTabCommand:" />
-      </responds-to>
-
-      <element type="tab" access="r">
-        <cocoa key="tabs"/>
-      </element>
-
-      <property name="current tab" code="Crtb" type="tab"
-          description="The currently selected tab">
-        <cocoa key="currentTab" />
-      </property>
-
-      <property name="current session" code="Wcsn" type="session"
-          description="The current session in a window">
-        <cocoa key="currentSession" />
-      </property>
-    </class>
 
     <class name="tab" code="Trmt" description="A terminal tab">
       <cocoa class="PTYTab"/>
@@ -327,7 +487,7 @@
         <cocoa key="backgroundImagePath" />
       </property>
 
-      <property name="name" code="Name" type="text">
+      <property name="name" code="pnam" type="text">
         <cocoa key="name" />
       </property>
 

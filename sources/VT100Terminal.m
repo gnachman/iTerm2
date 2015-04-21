@@ -247,6 +247,9 @@ static const int kMaxScreenRows = 4096;
 - (void)resetPreservingPrompt:(BOOL)preservePrompt {
     self.lineMode = NO;
     self.cursorMode = NO;
+    if (_columnMode) {
+        [delegate_ terminalSetWidth:80];
+    }
     self.columnMode = NO;
     self.scrollMode = NO;
     _reverseVideo = NO;
@@ -1343,10 +1346,13 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalMoveCursorToX:token.csi->p[1] y:token.csi->p[0]];
             break;
         case VT100CSI_NEL:
+            // We do the linefeed first because it's a no-op if the cursor is outside the left-
+            // right margin. Carriage return will move it to the left margin.
+            [delegate_ terminalLineFeed];
             [delegate_ terminalCarriageReturn];
-            // fall through
+            break;
         case VT100CSI_IND:
-            [delegate_ terminalLineFeed];  // TODO Make sure this is kosher. How does xterm handle index with scroll regions?
+            [delegate_ terminalLineFeed];
             break;
         case VT100CSI_RI:
             [delegate_ terminalReverseIndex];
@@ -1643,7 +1649,10 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         case XTERMCC_REPORT_WIN_TITLE: {
-            NSString *s = [NSString stringWithFormat:@"\033]L%@\033\\",
+            // NOTE: In versions prior to 2.9.20150415, we used "L" as the leader here, not "l".
+            // That was wrong and may cause bug reports due to breaking bugward compatibility.
+            // (see xterm docs)
+            NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
                            [delegate_ terminalWindowTitle]];
             [delegate_ terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;

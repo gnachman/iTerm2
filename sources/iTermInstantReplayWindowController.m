@@ -68,7 +68,7 @@ static const float kAlphaValue = 0.9;
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
-    [_delegate instantReplayClose];
+    [_delegate replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
 }
 
 - (IBAction)sliderMoved:(id)sender {
@@ -93,7 +93,7 @@ static const float kAlphaValue = 0.9;
                 [self updateInstantReplayView];
                 break;
             case 27:
-                [_delegate instantReplayClose];
+                [_delegate replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
                 break;
         }
     }

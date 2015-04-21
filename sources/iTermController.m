@@ -329,14 +329,42 @@ static BOOL initDone = NO;
     }
 }
 
-// navigation
-- (IBAction)previousTerminal:(id)sender
-{
-    [NSApp _cycleWindowsReversed:YES];
+- (NSArray *)terminalsSortedByNumber {
+    return [terminalWindows sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        return [@([obj1 number]) compare:@([obj2 number])];
+    }];
 }
-- (IBAction)nextTerminal:(id)sender
-{
-    [NSApp _cycleWindowsReversed:NO];
+
+- (IBAction)previousTerminal:(id)sender {
+    NSArray *windows = [self terminalsSortedByNumber];
+    if (windows.count < 2) {
+        return;
+    }
+    NSUInteger index = [windows indexOfObject:FRONT];
+    if (index == NSNotFound) {
+        DLog(@"Index of terminal not found, so cycle.");
+        [NSApp _cycleWindowsReversed:YES];
+    } else {
+        int i = index;
+        i += terminalWindows.count - 1;
+        [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
+    }
+}
+
+- (IBAction)nextTerminal:(id)sender {
+    NSArray *windows = [self terminalsSortedByNumber];
+    if (windows.count < 2) {
+        return;
+    }
+    NSUInteger index = [windows indexOfObject:FRONT];
+    if (index == NSNotFound) {
+        DLog(@"Index of terminal not found, so cycle.");
+        [NSApp _cycleWindowsReversed:NO];
+    } else {
+        int i = index;
+        i++;
+        [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
+    }
 }
 
 - (NSString *)_showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {

@@ -128,7 +128,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return nil;
 }
 
-- (NSString *)editor {
+- (NSString *)preferredEditorIdentifier {
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryBestEditorAction]) {
         return [iTermSemanticHistoryPrefsController bestEditor];
     } else if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction]) {
@@ -183,20 +183,20 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (BOOL)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
-    if ([self editor]) {
-        DLog(@"openFileInEditor. editor=%@", [self editor]);
-        if ([[self editor] isEqualToString:kAtomIdentifier]) {
+    if ([self preferredEditorIdentifier]) {
+        DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
+        if ([[self preferredEditorIdentifier] isEqualToString:kAtomIdentifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
             [self launchAtomWithPath:path];
-        } else if ([[self editor] isEqualToString:kSublimeText2Identifier] ||
-                   [[self editor] isEqualToString:kSublimeText3Identifier]) {
+        } else if ([[self preferredEditorIdentifier] isEqualToString:kSublimeText2Identifier] ||
+                   [[self preferredEditorIdentifier] isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
             NSString *bundleId;
-            if ([[self editor] isEqualToString:kSublimeText3Identifier]) {
+            if ([[self preferredEditorIdentifier] isEqualToString:kSublimeText3Identifier]) {
                 bundleId = @"com.sublimetext.3";
             } else {
                 bundleId = @"com.sublimetext.2";
@@ -206,20 +206,24 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         } else {
             path = [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
             NSURL *url = nil;
+            NSString *editorIdentifier = [self preferredEditorIdentifier];
             if (lineNumber) {
                 url = [NSURL URLWithString:[NSString stringWithFormat:
                                                    @"%@://open?url=file://%@&line=%@",
-                                                   [iTermSemanticHistoryPrefsController schemeForEditor:[self editor]],
+                                                   [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
                                                    path, lineNumber]];
             } else {
                 url = [NSURL URLWithString:[NSString stringWithFormat:
                                             @"%@://open?url=file://%@",
-                                            [iTermSemanticHistoryPrefsController schemeForEditor:[self editor]],
+                                            [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
                                             path]];
             }
             DLog(@"Open url %@", url);
-            [self openURL:url];
-
+            if ([editorIdentifier isEqualToString:kBBEditIdentifier]) {
+                [self openURL:url editorIdentifier:editorIdentifier];
+            } else {
+                [self openURL:url];
+            }
         }
     }
     return YES;
@@ -248,9 +252,21 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return [[NSWorkspace sharedWorkspace] openFile:fullPath];
 }
 
-- (BOOL)openURL:(NSURL *)url {
+- (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {
     DLog(@"Open URL %@", url);
-    return [[NSWorkspace sharedWorkspace] openURL:url];
+    if (editorIdentifier) {
+        return [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
+                               withAppBundleIdentifier:editorIdentifier
+                                               options:NSWorkspaceLaunchDefault
+                        additionalEventParamDescriptor:nil
+                                     launchIdentifiers:NULL];
+    } else {
+        return [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
+
+- (BOOL)openURL:(NSURL *)url {
+    return [self openURL:url editorIdentifier:nil];
 }
 
 - (BOOL)openPath:(NSString *)path
@@ -323,17 +339,17 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction] &&
-        [self editor]) {
+        [self preferredEditorIdentifier]) {
         // Action is to open in a specific editor, so open it in the editor.
         return [self openFileInEditor:path lineNumber:lineNumber];
     }
 
-    if ([self editor] && [self isTextFile:path]) {
+    if ([self preferredEditorIdentifier] && [self isTextFile:path]) {
         // This is a text file and there's a baked-in-preferred editor and we're using the default action.
         // If a specific editor was chosen, that was handled by the preceding if statement.
-        if (lineNumber && [[self bundleIdForDefaultAppForFile:path] isEqualTo:[self editor]]) {
+        if (lineNumber && [[self bundleIdForDefaultAppForFile:path] isEqualTo:[self preferredEditorIdentifier]]) {
             DLog(@"Default app is the preferred editor (%@) and a line number is present (%@). Open in editor.",
-                 [self editor], lineNumber);
+                 [self preferredEditorIdentifier], lineNumber);
             return [self openFileInEditor:path lineNumber:lineNumber];
         } else if (![self defaultAppForFileIsEditor:path]) {
             // I regret this code path. We use our arbitrarily chosen editor in

@@ -795,7 +795,7 @@ static const int kNumCharsToSearchForDivider = 8;
     int width = [_dataSource width];
     int xLimit = [self xLimit];
 
-    if (_logicalWindow.length != 0) {
+    if ([self hasLogicalWindow]) {
         // If there are soft boundaries, it's impossible to detect soft line wraps so just
         // stop at whitespace.
         if (theLine[xLimit - 1].complexChar) {

@@ -768,6 +768,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self reloadMarkCache];
 }
 
+- (void)appendScreenChars:(screen_char_t *)line
+                   length:(int)length
+             continuation:(screen_char_t)continuation {
+    [self appendScreenCharArrayAtCursor:line
+                                 length:length
+                             shouldFree:NO];
+    if (continuation.code == EOL_HARD) {
+        [self terminalCarriageReturn];
+        [self linefeed];
+    }
+}
+
 - (void)appendAsciiDataAtCursor:(AsciiData *)asciiData
 {
     int len = asciiData->length;
@@ -2066,7 +2078,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.cursorX = nextTabStop;
 }
 
+- (BOOL)cursorOutsideLeftRightMargin {
+    return (currentGrid_.useScrollRegionCols && (currentGrid_.cursorX < currentGrid_.leftMargin ||
+                                                 currentGrid_.cursorX > currentGrid_.rightMargin));
+}
+
 - (void)terminalLineFeed {
+    if (currentGrid_.cursor.y == VT100GridRangeMax(currentGrid_.scrollRegionRows) &&
+        [self cursorOutsideLeftRightMargin]) {
+        DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
+        return;
+    }
+
     if (collectInputForPrinting_) {
         [printBuffer_ appendString:@"\n"];
     } else {
@@ -2252,7 +2275,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalReverseIndex {
     if (currentGrid_.cursorY == currentGrid_.topMargin) {
-        [currentGrid_ scrollDown];
+        if ([self cursorOutsideLeftRightMargin]) {
+            return;
+        } else {
+            [currentGrid_ scrollDown];
+        }
     } else {
         currentGrid_.cursorY = MAX(0, currentGrid_.cursorY - 1);
     }
@@ -2488,9 +2515,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
     if (rows == -1) {
         rows = self.height;
+    } else if (rows == 0) {
+        rows = [self terminalScreenHeightInCells];
     }
     if (columns == -1) {
         columns = self.width;
+    } else if (columns == 0) {
+        columns = [self terminalScreenWidthInCells];
     }
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {

@@ -165,6 +165,7 @@
 - (NSArray *)windowPanes;
 - (NSArray*)sessionViews;
 - (BOOL)allSessionsExited;
+- (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
 - (BOOL)hasMultipleSessions;

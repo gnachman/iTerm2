@@ -63,8 +63,6 @@ class VTTests(object):
     AssertEQ(GetCursorPosition(), Point(2, 5))
     AssertScreenCharsInRectEqual(Rect(2, 4, 2, 5), [ "x", NUL ])
 
-  @knownBug(terminal="iTerm2",
-            reason="iTerm2 improperly scrolls when the cursor is outside the left-right region.")
   def test_VT_MovesDoesNotScrollOutsideLeftRight(self):
     """Cursor moves down but won't scroll when outside left-right region."""
     esccmd.DECSTBM(2, 5)
@@ -86,6 +84,11 @@ class VTTests(object):
     escio.Write(VT)
     AssertEQ(GetCursorPosition(), Point(6, height))
     AssertScreenCharsInRectEqual(Rect(3, 5, 3, 5), [ "x" ])
+
+    # Moves down
+    esccmd.CUP(Point(6, 4))
+    escio.Write(VT)
+    AssertEQ(GetCursorPosition(), Point(6, 5))
 
     # Move past bottom margin but to the left of the left-right region
     esccmd.CUP(Point(1, 5))

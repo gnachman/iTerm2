@@ -8,14 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface ThreeFingerTapGestureRecognizer : NSObject {
-    int numTouches_;
-    NSTimeInterval firstTouchTime_;  // Time since ref date of transition from 0 to >0 touches
-    NSTimeInterval threeTouchTime_;  // Time since ref date of transition from <3 to 3 touches
-    __weak NSView *target_;
-    SEL selector_;
-    BOOL fired_;  // True if we just faked a three-finger click and future mouse clicks should be ignored.
-}
+@interface ThreeFingerTapGestureRecognizer : NSObject 
 
 // This is the designated initializer. On a three-finger tap, the selector will be performed on
 // target. The target is not retained. The selector will take one argument, an NSEvent corresponding
