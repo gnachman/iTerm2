@@ -2927,14 +2927,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // different font size).
     NSSize senderSize = [sender frame].size;
     if (snapWidth) {
-      int deltaX = abs(senderSize.width - proposedFrameSize.width);
-      if (deltaX < (int)(charWidth / 2)) {
+      CGFloat deltaX = floor(abs(senderSize.width - proposedFrameSize.width));
+      if (deltaX < floor(charWidth / 2)) {
         proposedFrameSize.width = senderSize.width;
       }
     }
     if (snapHeight) {
-      int deltaY = abs(senderSize.height - proposedFrameSize.height);
-      if (deltaY < (int)(charHeight / 2)) {
+      int deltaY = floor(abs(senderSize.height - proposedFrameSize.height));
+      if (deltaY < floor(charHeight / 2)) {
         proposedFrameSize.height = senderSize.height;
       }
     }
