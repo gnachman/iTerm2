@@ -295,7 +295,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryCoprocessAction]) {
-        DLog(@"Launch coprocess with script %@", script);
+        DLog(@"Launch coproress with script %@", script);
         assert(delegate_);
         [delegate_ semanticHistoryLaunchCoprocessWithCommand:script];
         return YES;
