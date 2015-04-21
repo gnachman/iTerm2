@@ -81,9 +81,8 @@
 
         // Load new-style bookmarks.
         id newBookmarks = [prefs objectForKey:KEY_NEW_BOOKMARKS];
-        NSString *originalDefaultGuid = nil;
+        NSString *originalDefaultGuid = [[[prefs objectForKey:KEY_DEFAULT_GUID] copy] autorelease];
         if ([newBookmarks isKindOfClass:[NSArray class]]) {
-            originalDefaultGuid = [[[prefs objectForKey:KEY_DEFAULT_GUID] copy] autorelease];
             [self setBookmarks:newBookmarks
                    defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
         } else if ([newBookmarks isKindOfClass:[NSString class]]) {

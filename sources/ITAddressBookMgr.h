@@ -34,7 +34,7 @@
 
 // Prefs-level keys
 #define KEY_DEFAULT_GUID                @"Default Bookmark Guid"  // use this instead (not in a bookmark)
-#define KEY_DEPRECATED_BOOKMARKS               @"Bookmarks"
+#define KEY_DEPRECATED_BOOKMARKS        @"Bookmarks"  // Deprecated
 #define KEY_NEW_BOOKMARKS               @"New Bookmarks"
 
 // Bookmark-level keys
