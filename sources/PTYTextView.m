@@ -3165,22 +3165,33 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (IBAction)selectOutputOfLastCommand:(id)sender {
+    DLog(@"selectOutputOfLastCommand:");
     VT100GridAbsCoordRange range = [_delegate textViewRangeOfLastCommandOutput];
+    DLog(@"The range is %@", VT100GridAbsCoordRangeDescription(range));
+
     if (range.start.x < 0) {
+        DLog(@"Aborting");
         return;
     }
+
+    DLog(@"Total scrollback overflow is %lld", [_dataSource totalScrollbackOverflow]);
+
     VT100GridCoord relativeStart =
         VT100GridCoordMake(range.start.x,
                            range.start.y - [_dataSource totalScrollbackOverflow]);
     VT100GridCoord relativeEnd =
         VT100GridCoordMake(range.end.x,
                            range.end.y - [_dataSource totalScrollbackOverflow]);
+
+    DLog(@"The relative range is %@ to %@",
+         VT100GridCoordDescription(relativeStart), VT100GridCoordDescription(relativeEnd));
     [_selection beginSelectionAt:relativeStart
                             mode:kiTermSelectionModeCharacter
                           resume:NO
                           append:NO];
     [_selection moveSelectionEndpointTo:relativeEnd];
     [_selection endLiveSelection];
+    DLog(@"Done selecting output of last command.");
 
     if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
         [self copySelectionAccordingToUserPreferences];

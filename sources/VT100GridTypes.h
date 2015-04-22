@@ -76,6 +76,7 @@ typedef struct {
 
 NSString *VT100GridCoordRangeDescription(VT100GridCoordRange range);
 NSString *VT100GridWindowedRangeDescription(VT100GridWindowedRange range);
+NSString *VT100GridAbsCoordRangeDescription(VT100GridAbsCoordRange range);
 
 NS_INLINE VT100GridCoord VT100GridCoordMake(int x, int y) {
     VT100GridCoord coord;
