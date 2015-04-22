@@ -48,7 +48,11 @@ DebugLog([NSString stringWithFormat:args]); \
 @property(nonatomic, retain) NSString *truncatedValue;
 @end
 
-@implementation PopupEntry
+@implementation PopupEntry {
+  NSString *_truncatedValue;
+}
+
+@synthesize truncatedValue = _truncatedValue;
 
 - (void)_setDefaultValues
 {
