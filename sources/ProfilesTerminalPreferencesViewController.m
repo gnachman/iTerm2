@@ -23,6 +23,7 @@
     IBOutlet NSButton *_allowTitleSetting;
     IBOutlet NSButton *_disablePrinting;
     IBOutlet NSButton *_disableAltScreen;
+    IBOutlet NSButton *_disableWindowResizing;
     IBOutlet NSButton *_silenceBell;
     IBOutlet NSButton *_postNotifications;
     IBOutlet NSButton *_filterAlertsButton;
@@ -97,6 +98,10 @@
                     key:KEY_DISABLE_SMCUP_RMCUP
                    type:kPreferenceInfoTypeCheckbox];
     
+    [self defineControl:_disableWindowResizing
+                    key:KEY_DISABLE_WINDOW_RESIZING
+                   type:kPreferenceInfoTypeCheckbox];
+
     [self defineControl:_silenceBell
                     key:KEY_SILENCE_BELL
                    type:kPreferenceInfoTypeCheckbox];

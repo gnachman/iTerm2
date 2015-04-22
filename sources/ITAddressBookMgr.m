@@ -33,6 +33,8 @@
 #import "iTermKeyBindingMgr.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSDictionary+Profile.h"
+#import "NSMutableDictionary+Profile.h"
 #import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSStringIterm.h"
@@ -41,9 +43,6 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <pwd.h>
-
-static NSString *const kDynamicTag = @"Dynamic";
-static NSString *const kLegacyDynamicTag = @"dynamic";
 
 @interface ITAddressBookMgr () <SCEventListenerProtocol>
 @end
@@ -82,9 +81,8 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
 
         // Load new-style bookmarks.
         id newBookmarks = [prefs objectForKey:KEY_NEW_BOOKMARKS];
-        NSString *originalDefaultGuid = nil;
+        NSString *originalDefaultGuid = [[[prefs objectForKey:KEY_DEFAULT_GUID] copy] autorelease];
         if ([newBookmarks isKindOfClass:[NSArray class]]) {
-            originalDefaultGuid = [[[prefs objectForKey:KEY_DEFAULT_GUID] copy] autorelease];
             [self setBookmarks:newBookmarks
                    defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
         } else if ([newBookmarks isKindOfClass:[NSString class]]) {
@@ -777,16 +775,14 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
     if (!profile) {
         return NO;
     }
-    return (![profile[KEY_TAGS] containsObject:kDynamicTag] &&
-            ![profile[KEY_TAGS] containsObject:kLegacyDynamicTag]);
+    return !profile.profileIsDynamic;
 }
 
 // Returns the current dynamic profiles.
 - (NSArray *)dynamicProfiles {
     NSMutableArray *array = [NSMutableArray array];
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-        NSArray *tags = profile[KEY_TAGS];
-        if ([tags containsObject:kDynamicTag] || [tags containsObject:kLegacyDynamicTag]) {
+        if (profile.profileIsDynamic) {
             [array addObject:profile];
         }
     }
@@ -808,7 +804,7 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
     Profile *prototype = [self prototypeForDynamicProfile:newProfile];
     NSMutableDictionary *merged = [self profileByMergingProfile:newProfile
                                                     intoProfile:prototype];
-    [self ensureMutableProfileHasDynamicTag:merged];
+    [merged profileAddDynamicTagIfNeeded];
     [[ProfileModel sharedInstance] setBookmark:merged
                                       withGuid:merged[KEY_GUID]];
 }
@@ -826,17 +822,6 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
         }
     }
     return merged;
-}
-
-// Sets the "Dynamic" tag in the mutable profile.
-- (void)ensureMutableProfileHasDynamicTag:(NSMutableDictionary *)profile {
-    NSArray *tags = profile[KEY_TAGS];
-    if (!tags) {
-        tags = @[ kDynamicTag ];
-    } else if (![tags containsObject:kDynamicTag] && ![tags containsObject:kLegacyDynamicTag]) {
-        tags = [tags arrayByAddingObject:kDynamicTag];
-    }
-    profile[KEY_TAGS] = tags;
 }
 
 - (Profile *)prototypeForDynamicProfile:(Profile *)profile {
@@ -860,7 +845,7 @@ static NSString *const kLegacyDynamicTag = @"dynamic";
     Profile *prototype = [self prototypeForDynamicProfile:profile];
     NSMutableDictionary *merged = [self profileByMergingProfile:profile
                                                     intoProfile:prototype];
-    [self ensureMutableProfileHasDynamicTag:merged];
+    [merged profileAddDynamicTagIfNeeded];
 
     [[ProfileModel sharedInstance] addBookmark:merged];
 }

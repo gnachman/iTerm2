@@ -40,8 +40,8 @@
     IBOutlet NSTextField *_windowStyleLabel;
     IBOutlet NSTextField *_spaceLabel;
     IBOutlet NSButton *_syncTitle;
-    IBOutlet NSButton *_disableWindowResizing;
     IBOutlet NSButton *_preventTab;
+    IBOutlet NSButton *_openToolbelt;
 }
 
 - (void)dealloc {
@@ -115,12 +115,12 @@
                     key:KEY_SYNC_TITLE
                    type:kPreferenceInfoTypeCheckbox];
     
-    [self defineControl:_disableWindowResizing
-                    key:KEY_DISABLE_WINDOW_RESIZING
-                   type:kPreferenceInfoTypeCheckbox];
-    
     [self defineControl:_preventTab
                     key:KEY_PREVENT_TAB
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_openToolbelt
+                    key:KEY_OPEN_TOOLBELT
                    type:kPreferenceInfoTypeCheckbox];
 }
 
@@ -128,6 +128,7 @@
     NSArray *viewsToDisable = @[ _columnsField,
                                  _rowsField,
                                  _hideAfterOpening,
+                                 _openToolbelt,
                                  _windowStyle,
                                  _screen,
                                  _space ];

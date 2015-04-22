@@ -25,6 +25,7 @@
 #import "iTermInstantReplayWindowController.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "iTermSelection.h"
 #import "iTermTabBarControlView.h"
 #import "iTermURLSchemeController.h"
@@ -7205,6 +7206,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
         } else {
             [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];
+        }
+        if ([self numberOfTabs] == 1 &&
+            [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT
+                                      inProfile:object.profile] &&
+            !self.shouldShowToolbelt) {
+            [self toggleToolbeltVisibility:self];
         }
     }
     [[self currentTab] numberOfSessionsDidChange];

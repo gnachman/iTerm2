@@ -10,27 +10,49 @@
 #import "PointerPrefsController.h"
 #import "FutureMethods.h"
 #import "iTermApplicationDelegate.h"
+#import "ThreeFingerTapGestureRecognizer.h"
 
-@implementation EventMonitorView
+@implementation EventMonitorView {
+    IBOutlet PointerPrefsController *pointerPrefs_;
+    IBOutlet NSTextField *label_;
+    int numTouches_;
 
-- (void)awakeFromNib
-{
-    [self setAcceptsTouchEvents:YES];
-    [self setWantsRestingTouches:YES];
+    ThreeFingerTapGestureRecognizer *_threeFingerTapGestureRecognizer;
 }
 
-- (void)touchesBeganWithEvent:(NSEvent *)ev
-{
+- (void)awakeFromNib {
+    [self setAcceptsTouchEvents:YES];
+    [self setWantsRestingTouches:YES];
+    _threeFingerTapGestureRecognizer =
+        [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                       selector:@selector(threeFingerTap:)];
+
+}
+
+- (void)dealloc {
+    [_threeFingerTapGestureRecognizer disconnectTarget];
+    [_threeFingerTapGestureRecognizer release];
+    [super dealloc];
+}
+
+- (void)touchesBeganWithEvent:(NSEvent *)ev {
     numTouches_ = [[ev touchesMatchingPhase:(NSTouchPhaseBegan | NSTouchPhaseStationary)
                                      inView:self] count];
+    [_threeFingerTapGestureRecognizer touchesBeganWithEvent:ev];
     DLog(@"EventMonitorView touchesBeganWithEvent:%@; numTouches=%d", ev, numTouches_);
 }
 
-- (void)touchesEndedWithEvent:(NSEvent *)ev
-{
+- (void)touchesEndedWithEvent:(NSEvent *)ev {
     numTouches_ = [[ev touchesMatchingPhase:NSTouchPhaseStationary
                                      inView:self] count];
+    [_threeFingerTapGestureRecognizer touchesEndedWithEvent:ev];
     DLog(@"EventMonitorView touchesEndedWithEvent:%@; numTouches=%d", ev, numTouches_);
+}
+
+- (void)touchesCancelledWithEvent:(NSEvent *)ev {
+    numTouches_ = 0;
+    [_threeFingerTapGestureRecognizer touchesCancelledWithEvent:ev];
+    DLog(@"EventMonitorView touchesCancelledWithEvent:%@; numTouches=%d", ev, numTouches_);
 }
 
 - (void)showNotSupported
@@ -39,8 +61,12 @@
     [label_ performSelector:@selector(setStringValue:) withObject:@"Click or Tap Here to Set Input Fields" afterDelay:1];
 }
 
-- (void)mouseUp:(NSEvent *)theEvent
-{
+- (void)mouseUp:(NSEvent *)theEvent {
+    if ([_threeFingerTapGestureRecognizer mouseUp:theEvent]) {
+        DLog(@"Three finger trap gesture recognizer cancels mouseUp");
+        return;
+    }
+
     DLog(@"EventMonitorView mouseUp:%@", theEvent);
     if (numTouches_ == 3) {
         [pointerPrefs_ setGesture:kThreeFingerClickGesture
@@ -50,8 +76,30 @@
     }
 }
 
-- (void)rightMouseUp:(NSEvent *)theEvent
-{
+- (void)mouseDown:(NSEvent *)event {
+    if ([_threeFingerTapGestureRecognizer mouseDown:event]) {
+        DLog(@"Three finger trap gesture recognizer cancels mouseDown");
+        return;
+    } else {
+        [super mouseDown:event];
+    }
+}
+
+- (void)rightMouseDown:(NSEvent*)event {
+    if ([_threeFingerTapGestureRecognizer rightMouseDown:event]) {
+        DLog(@"Three finger trap gesture recognizer cancels rightMouseDown");
+        return;
+    } else {
+        [super rightMouseDown:event];
+    }
+}
+
+- (void)rightMouseUp:(NSEvent *)theEvent {
+    if ([_threeFingerTapGestureRecognizer rightMouseUp:theEvent]) {
+        DLog(@"Three finger trap gesture recognizer cancels rightMouseUp");
+        return;
+    }
+
     DLog(@"EventMonitorView rightMouseUp:%@", theEvent);
     int buttonNumber = 1;
     int clickCount = [theEvent clickCount];
@@ -79,4 +127,9 @@
 
     [super drawRect:dirtyRect];
 }
+
+- (void)threeFingerTap:(NSEvent *)event {
+    [pointerPrefs_ setGesture:kThreeFingerClickGesture modifiers:[event modifierFlags]];
+}
+
 @end

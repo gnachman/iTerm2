@@ -173,6 +173,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SYNC_TITLE: @NO,
                   KEY_DISABLE_WINDOW_RESIZING: @NO,
                   KEY_PREVENT_TAB: @NO,
+                  KEY_OPEN_TOOLBELT: @NO,
                   KEY_ASCII_ANTI_ALIASED: @NO,
                   KEY_NONASCII_ANTI_ALIASED: @NO,
                   KEY_SCROLLBACK_LINES: @1000,

@@ -108,6 +108,7 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier path:(NSString *)path;
 - (BOOL)openFile:(NSString *)fullPath;
 - (BOOL)openURL:(NSURL *)url;
+- (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier;
 - (BOOL)isTextFile:(NSString *)path;
 - (BOOL)defaultAppForFileIsEditor:(NSString *)file;
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId;

@@ -1167,6 +1167,12 @@ static const int kBadgeRightMargin = 10;
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         inUnderlinedRange = (i >= underlineStartsAt && i < underlineEndsAt);
         if (theLine[i].code == DWC_RIGHT) {
+            if (i == indexRange.location) {
+                // If the run begins with a DWC_RIGHT then we must advance curX since it won't have
+                // been advanced by the drawable part of the character. This can happen because
+                // the drawable rect can begin at any cell.
+                curX += _cellSize.width;
+            }
             continue;
         }
 
