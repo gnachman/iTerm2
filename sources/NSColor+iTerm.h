@@ -21,6 +21,8 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 
 @interface NSColor (iTerm)
 
+CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
+
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
                          blue:(int)blue;
