@@ -538,6 +538,26 @@
     return [resourcePath stringByAppendingPathComponent:filename];
 }
 
+// Minor differences in anti-aliasing cause false failures with golden images, so we'll ignore tiny
+// differences in brightness (less than 5%).
+- (BOOL)image:(NSData *)image1 approximatelyEqualToImage:(NSData *)image2 {
+    if (image1.length != image2.length) {
+        return NO;
+    }
+    unsigned char *bytes1 = (unsigned char *)image1.bytes;
+    unsigned char *bytes2 = (unsigned char *)image2.bytes;
+    CGFloat threshold = 0.05;
+    for (int i = 0; i < image1.length; i+= 4) {
+        CGFloat brightness1 = PerceivedBrightness(bytes1[0] / 255.0, bytes1[1] / 255.0, bytes1[2] / 255.0);
+        CGFloat brightness2 = PerceivedBrightness(bytes2[0] / 255.0, bytes2[1] / 255.0, bytes2[2] / 255.0);
+        if (fabs(brightness1 - brightness2) > threshold) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+
 - (void)doGoldenTestForInput:(NSString *)input
                         name:(NSString *)name
                         hook:(void (^)(PTYTextView *))hook
@@ -554,7 +574,7 @@
         NSImage *golden = [[NSImage alloc] initWithContentsOfFile:goldenName];
         NSData *goldenData = [golden rawPixelsInRGBColorSpace];
         NSData *actualData = [actual rawPixelsInRGBColorSpace];
-        BOOL ok = [goldenData isEqual:actualData];
+        BOOL ok = [self image:goldenData approximatelyEqualToImage:actualData];
         if (!ok) {
             NSString *failPath = @"/tmp/failed-test.png";
             [[actual dataForFileOfType:NSPNGFileType] writeToFile:failPath atomically:NO];
@@ -2148,6 +2168,26 @@
               profileOverrides:nil
                   createGolden:NO
                           size:VT100GridSizeMake(4, 2)];
+}
+
+// It can happen that a line like [double-width character][dwc-right]["a"] will be drawn starting
+// with the dwc-right. There was a bug where no advance was given for the dwc-right because it was
+// assumed that the DWC itself was always drawn. That ceased to be the case when the "draw an extra
+// ring of glyphs" algorithm was implemented (it accommodates oversize glyphs outside the drawing
+// rect).
+//
+// In this test, the first column should be empty and the second column should hold an "a".
+- (void)testRegionStartingWithDWCRight {
+    [self doGoldenTestForInput:@" a\r\n01"
+                          name:NSStringFromSelector(_cmd)
+                          hook:^(PTYTextView *textView) {
+                              VT100Screen *screen = (VT100Screen *)textView.dataSource;
+                              screen_char_t *line = [screen getLineAtScreenIndex:0];
+                              line[0].code = DWC_RIGHT;
+                          }
+              profileOverrides:nil
+                  createGolden:YES
+                          size:VT100GridSizeMake(5, 3)];
 }
 
 // A 16x16 grid of the ansi colors with columns having similar bg's and rows having similar fg's.

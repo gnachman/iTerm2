@@ -2731,7 +2731,7 @@
 		A69B45B1197345C700F5444D /* iTermOpenQuicklyView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOpenQuicklyView.h; sourceTree = "<group>"; };
 		A69B45B2197345C700F5444D /* iTermOpenQuicklyView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOpenQuicklyView.m; sourceTree = "<group>"; };
 		A69B45B6197C60FB00F5444D /* NSImage+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+iTerm.h"; sourceTree = "<group>"; };
-		A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+iTerm.m"; sourceTree = "<group>"; };
+		A69B45B7197C60FB00F5444D /* NSImage+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A69B45BB197CB78B00F5444D /* iTermDragHandleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDragHandleView.h; sourceTree = "<group>"; };
 		A69B45BC197CB78B00F5444D /* iTermDragHandleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDragHandleView.m; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };

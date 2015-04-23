@@ -21,7 +21,7 @@ NSString *const kEncodedColorDictionaryColorSpace = @"Color Space";
 NSString *const kEncodedColorDictionarySRGBColorSpace = @"sRGB";
 NSString *const kEncodedColorDictionaryCalibratedColorSpace = @"Calibrated";
 
-static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
+CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (kRedComponentBrightness * r +
             kGreenComponentBrightness * g +
             kBlueComponentBrightness * b);
