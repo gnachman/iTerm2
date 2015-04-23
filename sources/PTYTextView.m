@@ -1461,6 +1461,16 @@ static const int kDragThreshold = 3;
 }
 
 - (void)drawRect:(NSRect)rect {
+    BOOL savedCursorVisible = _drawingHelper.cursorVisible;
+
+    // Try to use a saved grid if one is available. If it suceeds, that implies that the cursor was
+    // recently hidden and what we're drawing is how the screen looked just before the cursor was
+    // hidden. Therefore, we'll temporarily show the cursor, but we'll need to restore cursorVisible's
+    // value when we're done.
+    if ([_dataSource setUseSavedGridIfAvailable:YES]) {
+        _drawingHelper.cursorVisible = YES;
+    }
+
     _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
                                   [_delegate textViewSessionIsBroadcastingInput]);
     _drawingHelper.cursorBlinking = [self isCursorBlinking];
@@ -1513,6 +1523,9 @@ static const int kDragThreshold = 3;
         // blinking.
         [self.delegate textViewWillNeedUpdateForBlink];
     }
+
+    [_dataSource setUseSavedGridIfAvailable:NO];
+    _drawingHelper.cursorVisible = savedCursorVisible;
 }
 
 - (void)drawIndicators {
@@ -5996,6 +6009,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // lineStart to lineEnd is the region that is the screen when the scrollbar
     // is at the bottom of the frame.
 
+    [_dataSource setUseSavedGridIfAvailable:YES];
     long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
     [_dataSource resetAllDirty];
@@ -6064,6 +6078,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Dump the screen contents
         DebugLog([_dataSource debugString]);
     }
+    [_dataSource setUseSavedGridIfAvailable:NO];
 
     return _blinkAllowed && anythingIsBlinking;
 }

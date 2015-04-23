@@ -104,4 +104,10 @@
 
 - (void)clearBuffer;
 
+// When the cursor is about to be hidden, a copy of the grid is saved. This
+// method is used to temporarily swap in the saved grid if one is available. It
+// returns YES if the saved grid was swapped in (only possible if useSavedGrid
+// is YES, of course).
+- (BOOL)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
+
 @end

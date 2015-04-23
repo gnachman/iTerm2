@@ -92,5 +92,6 @@
 + (int)maximumBytesToProvideToServices;
 
 + (BOOL)disableWindowSizeSnap;
++ (BOOL)useDoubleBufferedGrid;
 
 @end
