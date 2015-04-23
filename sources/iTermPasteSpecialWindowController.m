@@ -381,7 +381,7 @@
         // We already base64 encoded the data, so don't set the flag or else it gets double encoded.
         flags &= ~kPasteFlagsBase64Encode;
     }
-    return [PasteEvent pasteEventWithString:_rawString
+    return [PasteEvent pasteEventWithString:_preview.textStorage.string
                                       flags:flags
                            defaultChunkSize:self.chunkSize
                                    chunkKey:nil

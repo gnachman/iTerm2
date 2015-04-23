@@ -20,7 +20,6 @@
 - (screen_char_t)gridBackgroundColorCode;
 - (BOOL)gridUseHFSPlusMapping;
 
-// Only called if trackCursorLineMovement is set.
 - (void)gridCursorDidChangeLine;
 @end
 
@@ -55,7 +54,6 @@
 @property(nonatomic, readonly) int bottomMargin;
 @property(nonatomic, assign) screen_char_t savedDefaultChar;
 @property(nonatomic, assign) id<VT100GridDelegate> delegate;
-@property(nonatomic, assign) BOOL trackCursorLineMovement;
 
 - (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate;
 

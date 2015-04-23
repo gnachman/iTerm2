@@ -71,6 +71,11 @@
 		1D29732814082676004C5DBE /* MovePaneController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732614082676004C5DBE /* MovePaneController.m */; };
 		1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732914082A52004C5DBE /* SplitSelectionView.h */; };
 		1D29732C14082A52004C5DBE /* SplitSelectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732A14082A52004C5DBE /* SplitSelectionView.m */; };
+		1D2C65491AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2C65471AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.h */; };
+		1D2C654A1AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2C65471AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.h */; };
+		1D2C654B1AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2C65481AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m */; };
+		1D2C654C1AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2C65481AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m */; };
+		1D2C654D1AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2C65481AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m */; };
 		1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E802C129DA45A00F3D71E /* PTYTab.h */; };
 		1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E802D129DA45A00F3D71E /* PTYTab.m */; };
 		1D2E813112A18F7500F3D71E /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
@@ -2099,6 +2104,8 @@
 		1D29732614082676004C5DBE /* MovePaneController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = MovePaneController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D29732914082A52004C5DBE /* SplitSelectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SplitSelectionView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D29732A14082A52004C5DBE /* SplitSelectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SplitSelectionView.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D2C65471AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFullScreenUpdateDetector.h; sourceTree = "<group>"; };
+		1D2C65481AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFullScreenUpdateDetector.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D2E802C129DA45A00F3D71E /* PTYTab.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYTab.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D2E802D129DA45A00F3D71E /* PTYTab.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTab.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D2E812F12A18F7500F3D71E /* SessionView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SessionView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -4143,6 +4150,8 @@
 				A68A3104186D2973007F550F /* TemporaryNumberAllocator.m */,
 				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
+				1D2C65471AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.h */,
+				1D2C65481AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -4478,6 +4487,7 @@
 				1D6ED8DE19AEA20D005A7799 /* iTermSelection.h in Headers */,
 				1D6ED8DF19AEA20D005A7799 /* CVector.h in Headers */,
 				1D6ED8E019AEA20D005A7799 /* GTMObjectSingleton.h in Headers */,
+				1D2C654A1AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.h in Headers */,
 				1D6ED8E119AEA20D005A7799 /* GTMDebugSelectorValidation.h in Headers */,
 				1D6ED8E219AEA20D005A7799 /* iTermObjectPool.h in Headers */,
 				1D6ED8E319AEA20D005A7799 /* iTermOpenQuicklyTableRowView.h in Headers */,
@@ -4874,6 +4884,7 @@
 				A6E7138418F263BC008D94DD /* PreferenceInfo.h in Headers */,
 				A68A30F6186D150B007F550F /* NSObject+iTerm.h in Headers */,
 				1D825600146881EC007CAE78 /* PointerController.h in Headers */,
+				1D2C65491AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.h in Headers */,
 				1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */,
 				1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */,
 				A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */,
@@ -5840,6 +5851,7 @@
 				1D6EDAD119AEA20D005A7799 /* PreferenceInfo.m in Sources */,
 				A6E525D61A9C5725007B898E /* VT100State.m in Sources */,
 				1D6EDAD219AEA20D005A7799 /* ColorsMenuItemView.m in Sources */,
+				1D2C654D1AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m in Sources */,
 				1D6EDAD319AEA20D005A7799 /* BackgroundThread.m in Sources */,
 				1D6EDAD419AEA20D005A7799 /* iTermFontPanel.m in Sources */,
 				1D6EDAD519AEA20D005A7799 /* PTYNoteView.m in Sources */,
@@ -6022,6 +6034,7 @@
 				1D9A5564180FA84700B42CE9 /* NSDateFormatterExtras.m in Sources */,
 				A69B45BF197CB78B00F5444D /* iTermDragHandleView.m in Sources */,
 				A6A2698A18FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */,
+				1D2C654C1AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m in Sources */,
 				1D9A5529180FA61700B42CE9 /* VT100ScreenTest.m in Sources */,
 				A63F40A6183F3B78003A6A6D /* LineBlock.m in Sources */,
 				A60014F818550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
@@ -6454,6 +6467,7 @@
 				A6E7138518F263BC008D94DD /* PreferenceInfo.m in Sources */,
 				A6E525D41A9C5725007B898E /* VT100State.m in Sources */,
 				A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */,
+				1D2C654B1AE9A2C900142CF5 /* iTermFullScreenUpdateDetector.m in Sources */,
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
 				A63F409B183B3AA7003A6A6D /* PTYNoteView.m in Sources */,

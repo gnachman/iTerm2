@@ -1461,6 +1461,8 @@ static const int kDragThreshold = 3;
 }
 
 - (void)drawRect:(NSRect)rect {
+    [_dataSource setUseSavedGridIfAvailable:YES];
+
     _drawingHelper.showStripes = (_showStripesWhenBroadcastingInput &&
                                   [_delegate textViewSessionIsBroadcastingInput]);
     _drawingHelper.cursorBlinking = [self isCursorBlinking];
@@ -1513,6 +1515,8 @@ static const int kDragThreshold = 3;
         // blinking.
         [self.delegate textViewWillNeedUpdateForBlink];
     }
+
+    [_dataSource setUseSavedGridIfAvailable:NO];
 }
 
 - (void)drawIndicators {
@@ -5996,6 +6000,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // lineStart to lineEnd is the region that is the screen when the scrollbar
     // is at the bottom of the frame.
 
+    [_dataSource setUseSavedGridIfAvailable:YES];
     long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
     [_dataSource resetAllDirty];
@@ -6064,6 +6069,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Dump the screen contents
         DebugLog([_dataSource debugString]);
     }
+    [_dataSource setUseSavedGridIfAvailable:YES];
 
     return _blinkAllowed && anythingIsBlinking;
 }

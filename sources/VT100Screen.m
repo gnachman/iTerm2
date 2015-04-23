@@ -3,6 +3,7 @@
 #import "DebugLogging.h"
 #import "DVR.h"
 #import "IntervalTree.h"
+#import "iTermFullScreenUpdateDetector.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "PTYNoteViewController.h"
@@ -39,15 +40,89 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
-@interface VT100Screen () <iTermMarkDelegate>
+@interface VT100Screen () <iTermFullScreenUpdateDetectorDelegate, iTermMarkDelegate>
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
 @end
 
 @implementation VT100Screen {
+    NSMutableSet* tabStops_;
+    VT100Terminal *terminal_;
+    id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
+
+    // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
+    BOOL charsetUsesLineDrawingMode_[4];
+    BOOL audibleBell_;
+    BOOL showBellIndicator_;
+    BOOL flashBell_;
+    BOOL postGrowlNotifications_;
+    BOOL cursorBlinks_;
+    VT100Grid *primaryGrid_;
+    VT100Grid *altGrid_;  // may be nil
+    VT100Grid *currentGrid_;  // Weak reference. Points to either primaryGrid or altGrid.
+    VT100Grid *realCurrentGrid_;  // When a saved grid is swapped in, this is the live current grid.
+
+    // Max size of scrollback buffer
+    unsigned int maxScrollbackLines_;
+    // This flag overrides maxScrollbackLines_:
+    BOOL unlimitedScrollback_;
+
+    // How many scrollback lines have been lost due to overflow. Periodically reset with
+    // -resetScrollbackOverflow.
+    int scrollbackOverflow_;
+
+    // A rarely reset count of the number of lines lost to scrollback overflow. Adding this to a
+    // line number gives a unique line number that won't be reused when the linebuffer overflows.
+    long long cumulativeScrollbackOverflow_;
+
+    // When set, strings, newlines, and linefeeds are appened to printBuffer_. When ANSICSI_PRINT
+    // with code 4 is received, it's sent for printing.
+    BOOL collectInputForPrinting_;
+    NSMutableString *printBuffer_;
+
+    // Scrollback buffer
+    LineBuffer* linebuffer_;
+
+    // Current find context.
+    FindContext *findContext_;
+
+    // Where we left off searching.
+    long long savedFindContextAbsPos_;
+
+    // Used for recording instant replay.
+    DVR* dvr_;
+    BOOL saveToScrollbackInAlternateScreen_;
+
+    // OK to report window title?
+    BOOL allowTitleReporting_;
+
+    // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
+    // grid.
+    IntervalTree *savedIntervalTree_;
+
+    // All currently visible marks and notes. Maps an interval of
+    //   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
+    // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
+    IntervalTree *intervalTree_;
+
+    NSMutableDictionary *markCache_;  // Maps an absolute line number to a VT100ScreenMark.
+    VT100GridCoordRange markCacheRange_;
+
+    // Location of the start of the current command, or -1 for none. Y is absolute.
+    int commandStartX_;
+    long long commandStartY_;
+
+    // Cached copies of terminal attributes
+    BOOL _wraparoundMode;
+    BOOL _ansi;
+    BOOL _insert;
+    
+    BOOL _shellIntegrationInstalled;
+
     NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
     NSMutableArray *inlineFileCodes_;
     VT100GridAbsCoord nextCommandOutputStart_;
     NSTimeInterval lastBell_;
+    iTermFullScreenUpdateDetector *_fullScreenUpdateDetector;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -71,8 +146,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
 
-- (id)initWithTerminal:(VT100Terminal *)terminal
-{
+- (id)initWithTerminal:(VT100Terminal *)terminal {
     self = [super init];
     if (self) {
         assert(terminal);
@@ -81,7 +155,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                                          kDefaultScreenRows)
                                               delegate:self];
         currentGrid_ = primaryGrid_;
-
+        _fullScreenUpdateDetector = [[iTermFullScreenUpdateDetector alloc] init];
+        _fullScreenUpdateDetector.delegate = self;
         maxScrollbackLines_ = kDefaultMaxScrollbackLines;
         tabStops_ = [[NSMutableSet alloc] init];
         [self setInitialTabStops];
@@ -104,6 +179,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         nextCommandOutputStart_ = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+        _fullScreenUpdateDetector = [[iTermFullScreenUpdateDetector alloc] init];
+        _fullScreenUpdateDetector.delegate = self;
     }
     return self;
 }
@@ -127,6 +204,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         ReleaseImage([code intValue]);
     }
     [inlineFileCodes_ release];
+    [_fullScreenUpdateDetector release];
     [super dealloc];
 }
 
@@ -308,8 +386,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return result;
 }
 
-- (void)resizeWidth:(int)new_width height:(int)new_height
-{
+- (void)resizeWidth:(int)new_width height:(int)new_height {
+    [_fullScreenUpdateDetector reset];
+
     DLog(@"Resize session to %d height", new_height);
 
     if (commandStartX_ != -1) {
@@ -916,6 +995,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)appendScreenCharArrayAtCursor:(screen_char_t *)buffer
                                length:(int)len
                            shouldFree:(BOOL)shouldFree {
+    [_fullScreenUpdateDetector willAppendCharacters:len];
+
     if (len >= 1) {
         [self incrementOverflowBy:[currentGrid_ appendCharsAtCursor:buffer
                                                              length:len
@@ -1239,15 +1320,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                              inContext:context];
 
     [self popScrollbackLines:linesPushed];
-}
-
-- (void)setTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
-    primaryGrid_.trackCursorLineMovement = trackCursorLineMovement;
-    altGrid_.trackCursorLineMovement = trackCursorLineMovement;
-}
-
-- (BOOL)trackCursorLineMovement {
-    return currentGrid_.trackCursorLineMovement;
 }
 
 #pragma mark - PTYTextViewDataSource
@@ -1923,6 +1995,19 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     range.end.x = 0;
     range.end.y = self.numberOfLines - self.height + [currentGrid_ numberOfLinesUsed];
     return range;
+}
+
+- (void)setUseSavedGridIfAvailable:(BOOL)useSavedGrid {
+    if (useSavedGrid && !realCurrentGrid_ && _fullScreenUpdateDetector.savedGrid) {
+        realCurrentGrid_ = [currentGrid_ retain];
+        [currentGrid_ release];
+        currentGrid_ = [_fullScreenUpdateDetector.savedGrid retain];
+    } else if (!useSavedGrid && realCurrentGrid_) {
+        [currentGrid_ release];
+        currentGrid_ = [realCurrentGrid_ retain];
+        [realCurrentGrid_ release];
+        realCurrentGrid_ = nil;
+    }
 }
 
 #pragma mark - VT100TerminalDelegate
@@ -2773,6 +2858,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         altGrid_ = [[VT100Grid alloc] initWithSize:primaryGrid_.size delegate:self];
     }
 
+    [_fullScreenUpdateDetector reset];
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
     [self hideOnScreenNotesAndTruncateSpanners];
     currentGrid_ = altGrid_;
@@ -2815,6 +2901,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 - (void)terminalShowPrimaryBuffer {
     if (currentGrid_ == altGrid_) {
+        [_fullScreenUpdateDetector reset];
         [delegate_ screenRemoveSelection];
         [self hideOnScreenNotesAndTruncateSpanners];
         currentGrid_ = primaryGrid_;
@@ -3986,7 +4073,11 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (void)gridCursorDidChangeLine {
-    [delegate_ screenCursorDidMoveToLine:currentGrid_.cursorY + [self numberOfScrollbackLines]];
+    if (_trackCursorLineMovement) {
+        [delegate_ screenCursorDidMoveToLine:currentGrid_.cursorY + [self numberOfScrollbackLines]];
+    }
+
+    [_fullScreenUpdateDetector cursorMovedToRow:currentGrid_.cursorY];
 }
 
 - (BOOL)gridUseHFSPlusMapping {
@@ -4020,6 +4111,19 @@ static void SwapInt(int *a, int *b) {
                             maxLinesToRestore:linesRestored];
     currentGrid_.cursorY = linesRestored + 1;
     currentGrid_.cursorX = 0;
+}
+
+#pragma mark - iTermFullScreenUpdateDetectorDelegate
+
+- (VT100GridSize)fullScreenSize {
+    return currentGrid_.size;
+}
+
+- (VT100Grid *)fullScreenUpdateDidComplete {
+    NSLog(@"Full screen update detected!");
+    VT100Grid *copy = [currentGrid_ copy];
+    copy.delegate = nil;
+    return copy;
 }
 
 @end

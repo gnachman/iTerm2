@@ -103,5 +103,6 @@
 - (BOOL)showingAlternateScreen;
 
 - (void)clearBuffer;
+- (void)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 
 @end
