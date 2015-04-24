@@ -143,7 +143,7 @@ static const CGFloat kHelpMargin = 5;
     NSRect frame = self.frame;
     searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
     help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
-                             frame.size.height - help_.frame.size.height - ceil((clear_.frame.size.height - help_.frame.size.height) / 2),
+                             frame.size.height - help_.frame.size.height - ceil((clear_.frame.size.height - help_.frame.size.height) / 2) + 2,
                              help_.frame.size.width,
                              help_.frame.size.height);
     [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width - help_.frame.size.width - kHelpMargin, kButtonHeight)];

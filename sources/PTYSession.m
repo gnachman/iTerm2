@@ -3420,8 +3420,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_textview copySelectionAccordingToUserPreferences];
 }
 
-- (void)takeFocus
-{
+- (void)takeFocus {
     [[[[self tab] realParentWindow] window] makeFirstResponder:_textview];
 }
 
@@ -4033,7 +4032,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     DLog(@"PTYSession keyDown modflag=%d keystr=%@ unmodkeystr=%@ unicode=%d unmodunicode=%d", (int)modflag, keystr, unmodkeystr, (int)unicode, (int)unmodunicode);
     _lastInput = [NSDate timeIntervalSinceReferenceDate];
     [self resumeOutputIfNeeded];
-    if ([self textViewIsZoomedIn]) {
+    if ([self textViewIsZoomedIn] && unicode == 27) {
+        // Escape exits zoom (pops out one level, since you can zoom repeatedly)
         [[[self tab] realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
     } else if ([[[self tab] realParentWindow] inInstantReplay]) {
         DLog(@"PTYSession keyDown in IR");

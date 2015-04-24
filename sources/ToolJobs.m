@@ -190,7 +190,7 @@ static const CGFloat kMargin = 4;
         [kill_ release];
         [kill_ bind:@"enabled" toObject:self withKeyPath:@"killable" options:nil];
         signal_ = [[SignalPicker alloc] initWithFrame:NSMakeRect(kill_.frame.size.width + kMargin,
-                                                                 frame.size.height - kButtonHeight,
+                                                                 frame.size.height - kButtonHeight + 1,
                                                                  frame.size.width - kill_.frame.size.width - 2*kMargin,
                                                                  kButtonHeight)];
         signal_.delegate = self;
@@ -260,7 +260,7 @@ static const CGFloat kMargin = 4;
     kill_.frame = NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight);
     [kill_ sizeToFit];
     signal_.frame = NSMakeRect(kill_.frame.size.width + kMargin,
-                               frame.size.height - kButtonHeight,
+                               frame.size.height - kButtonHeight + 1,
                                signal_.frame.size.width,
                                kButtonHeight);
     [signal_ sizeToFit];
