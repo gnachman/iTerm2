@@ -15,7 +15,7 @@
 @protocol iTermFullScreenUpdateDetectorDelegate<NSObject>
 
 - (VT100Grid *)fullScreenUpdateDidComplete;
-- (VT100GridSize)fullScreenSize;
+- (void)fullScreenDidExpire;
 
 @end
 
@@ -23,6 +23,7 @@
 
 @property(nonatomic, assign) id<iTermFullScreenUpdateDetectorDelegate> delegate;
 @property(nonatomic, readonly) VT100Grid *savedGrid;
+@property(nonatomic, assign) BOOL drewSavedGrid;
 
 - (void)cursorMovedToRow:(int)row;
 - (void)willAppendCharacters:(int)count;

@@ -6069,7 +6069,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Dump the screen contents
         DebugLog([_dataSource debugString]);
     }
-    [_dataSource setUseSavedGridIfAvailable:YES];
+    [_dataSource setUseSavedGridIfAvailable:NO];
 
     return _blinkAllowed && anythingIsBlinking;
 }

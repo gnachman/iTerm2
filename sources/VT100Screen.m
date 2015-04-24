@@ -2002,6 +2002,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         realCurrentGrid_ = [currentGrid_ retain];
         [currentGrid_ release];
         currentGrid_ = [_fullScreenUpdateDetector.savedGrid retain];
+        _fullScreenUpdateDetector.drewSavedGrid = YES;
     } else if (!useSavedGrid && realCurrentGrid_) {
         [currentGrid_ release];
         currentGrid_ = [realCurrentGrid_ retain];
@@ -4115,15 +4116,14 @@ static void SwapInt(int *a, int *b) {
 
 #pragma mark - iTermFullScreenUpdateDetectorDelegate
 
-- (VT100GridSize)fullScreenSize {
-    return currentGrid_.size;
-}
-
 - (VT100Grid *)fullScreenUpdateDidComplete {
-    NSLog(@"Full screen update detected!");
     VT100Grid *copy = [currentGrid_ copy];
     copy.delegate = nil;
     return copy;
+}
+
+- (void)fullScreenDidExpire {
+    [delegate_ screenNeedsRedraw];
 }
 
 @end

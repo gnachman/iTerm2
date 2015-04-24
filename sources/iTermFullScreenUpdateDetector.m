@@ -14,12 +14,11 @@
 @end
 
 @implementation iTermFullScreenUpdateDetector {
-    int _firstRow;
     int _previousRow;
-    int _numberOfRowsVisited;
-    int _numberOfCharactersAppended;
     NSTimeInterval _lastUpdateTime;
+    BOOL _updateInProgress;
     NSTimer *_timer;
+    VT100Grid *_savedGrid;
 }
 
 - (void)dealloc {
@@ -36,77 +35,70 @@
     [self checkForTimeout];
 
     if (row < _previousRow) {
-        // Check if a fullscreen update has just finished.
-        [self cursorMovedUp];
-        _firstRow = row;
-    } else {
-        // Just update stats.
-        ++_numberOfRowsVisited;
+        // Cursor's moving up. Next time it moves down, it's ok to take a snapshot even if there's
+        // already a saved grid.
+        _updateInProgress = NO;
+    } else if (!_updateInProgress) {
+        // Cursor is moving down, and no update was in progress.
+        [self snapshot];
     }
+
     _previousRow = row;
 }
 
 - (void)willAppendCharacters:(int)count {
-    _numberOfCharactersAppended += count;
 }
 
 - (void)reset {
+    BOOL hadSavedGrid = _savedGrid != nil;
+    _updateInProgress = NO;
     self.savedGrid = nil;
-    [self resetStatistics];
+    [_timer invalidate];
+    _timer = nil;
+    if (hadSavedGrid && _drewSavedGrid) {
+        [_delegate fullScreenDidExpire];
+    }
 }
 
 #pragma mark - Private
 
-- (void)cursorMovedUp {
+- (void)snapshot {
     static const NSTimeInterval kTimeToKeepSavedGrid = 0.1;
-    if ([self hasFullScreenUpdateOccurred]) {
-        NSLog(@"**UPDATE DETECTED**  %d rows visited in range [%d, %d], with %d chars appended",
-              _numberOfRowsVisited, _firstRow, _previousRow, _numberOfCharactersAppended);
-        self.savedGrid = [[_delegate fullScreenUpdateDidComplete] retain];
-        [_timer invalidate];
-        _timer = [NSTimer scheduledTimerWithTimeInterval:kTimeToKeepSavedGrid
-                                                  target:self
-                                                selector:@selector(savedGridExpirationTimer:)
-                                                userInfo:nil
-                                                 repeats:NO];
-    } else {
-        NSLog(@"[no update]  %d rows visited in range [%d, %d], with %d chars appended",
-              _numberOfRowsVisited, _firstRow, _previousRow, _numberOfCharactersAppended);
+    BOOL hadSavedGrid = self.savedGrid != nil;
+    self.savedGrid = [[_delegate fullScreenUpdateDidComplete] retain];
+    if (hadSavedGrid) {
+        [_delegate fullScreenDidExpire];
     }
-    [self reset];
+    [_timer invalidate];
+    _timer = [NSTimer scheduledTimerWithTimeInterval:kTimeToKeepSavedGrid
+                                              target:self
+                                            selector:@selector(savedGridExpirationTimer:)
+                                            userInfo:nil
+                                             repeats:NO];
+    _updateInProgress = YES;
+    _drewSavedGrid = NO;
 }
 
-- (BOOL)hasFullScreenUpdateOccurred {
-    VT100GridSize size = [_delegate fullScreenSize];
-    static const int kSkippableRowsOnTop = 3;
-    static const int kSkippableRowsOnBottom = 4;
-    static const int kSkippableVisitedRows = 3;
-    int span = _previousRow - _firstRow + 1;
-    return (_firstRow < kSkippableRowsOnTop &&
-            _previousRow > size.height - kSkippableRowsOnBottom &&
-            _numberOfRowsVisited > span - kSkippableVisitedRows &&
-            _numberOfCharactersAppended >= _numberOfRowsVisited);
+- (void)setSavedGrid:(VT100Grid *)savedGrid {
+    [_savedGrid autorelease];
+    _savedGrid = [savedGrid retain];
+}
+
+- (VT100Grid *)savedGrid {
+    return _savedGrid;
 }
 
 - (void)savedGridExpirationTimer:(NSTimer *)timer {
-    NSLog(@"Expire saved grid");
-    self.savedGrid = nil;
     _timer = nil;
-}
-
-- (void)resetStatistics {
-    _previousRow = -1;
-    _numberOfRowsVisited = 0;
-    _numberOfCharactersAppended = 0;
+    [self reset];
 }
 
 - (void)checkForTimeout {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval elapsed = now - _lastUpdateTime;
-    static const NSTimeInterval kIdleTime = 10;//0.05;
+    static const NSTimeInterval kIdleTime = 0.05;
     if (elapsed > kIdleTime) {
-        NSLog(@"Detector timeout");
-        [self resetStatistics];
+        [self reset];
     }
     _lastUpdateTime = now;
 }
