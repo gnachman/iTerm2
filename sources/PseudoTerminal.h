@@ -243,7 +243,6 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
 
-- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry withURL:(NSString *)url;
 - (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
                                  withURL:(NSString *)url
                            forObjectType:(iTermObjectType)objectType;

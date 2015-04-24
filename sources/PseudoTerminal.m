@@ -295,6 +295,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // Is there a pending delayed-perform of enterFullScreen:? Used to figure
     // out if it's safe to toggle Lion full screen since only one can go at a time.
     BOOL _haveDelayedEnterFullScreenMode;
+
+    BOOL _parameterPanelCanceled;
 }
 
 @synthesize shouldShowToolbelt = shouldShowToolbelt_;
@@ -336,24 +338,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         _autoCommandHistorySessionId = -1;
     }
     return self;
-}
-
-- (id)init {
-    // This is invoked by Applescript's "make new terminal" and must be followed by a command like
-    // launch session "Profile Name"
-    // which invokes handleLaunchScriptCommand, which in turn calls initWithSmartLayotu:windowType:screen:isHotkey:
-    // Alternatively, a script like this:
-    //
-    // tell application "iTerm"
-    //   activate
-    //   set myterm to (make new terminal)
-    //   tell myterm
-    //     set mysession to (make new session at the end of sessions)
-    //
-    // Causes insertInSessions:atIndex: to be called.
-    // A followup call to finishInitializationWithSmartLayout:windowType:screen:isHotkey:
-    // finishes intialization. -windowInitialized will return NO until that is done.
-    return [self initWithWindowNibName:@"PseudoTerminal"];
 }
 
 - (id)initWithSmartLayout:(BOOL)smartLayout
@@ -1076,20 +1060,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)newSessionsInManyTabsAtIndex:(id)sender
-{
-    NSMenu* parent = [sender representedObject];
-    for (NSMenuItem* item in [parent itemArray]) {
-        if (![item isSeparatorItem] && ![item submenu]) {
-            NSString* guid = [item representedObject];
-            Profile* profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-            if (profile) {
-                [self createTabWithProfile:profile withCommand:nil];
-            }
-        }
-    }
-}
-
 - (void)closeSession:(PTYSession *)aSession soft:(BOOL)soft
 {
     if (!soft &&
@@ -1237,6 +1207,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         return okToClose;
     }
     return YES;
+}
+
+- (void)performClose:(id)sender {
+    [self close];
 }
 
 - (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft
@@ -4943,8 +4917,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)splitVertically:(BOOL)isVertical
            withBookmark:(Profile*)theBookmark
-          targetSession:(PTYSession*)targetSession
-{
+          targetSession:(PTYSession*)targetSession {
     if ([targetSession isTmuxClient]) {
         [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
         return;
@@ -4968,7 +4941,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             targetSession:targetSession
              performSetup:YES];
 
-    [self runCommandInSession:newSession inCwd:oldCWD forObjectType:iTermPaneObject];
+    if (![self runCommandInSession:newSession inCwd:oldCWD forObjectType:iTermPaneObject]) {
+        [newSession terminate];
+        [newSession.tab removeSession:newSession];
+    }
 }
 
 - (Profile*)_bookmarkToSplit
@@ -5351,83 +5327,56 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self insertTab:aTab atIndex:[TABVIEW numberOfTabViewItems]];
 }
 
-- (void)getSessionParameters:(NSMutableString *)command withName:(NSMutableString *)name
-{
-    NSRange r1, r2, currentRange;
-
-    while (1) {
-        currentRange = NSMakeRange(0,[command length]);
-        r1 = [command rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
-        if (r1.location == NSNotFound) {
-            break;
-        }
-        currentRange.location = r1.location + 2;
-        currentRange.length -= r1.location + 2;
-        r2 = [command rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
-        if (r2.location == NSNotFound) {
-            break;
-        }
-
-        [parameterName setStringValue:[command substringWithRange:NSMakeRange(r1.location+2,
-                                                                              r2.location - r1.location-2)]];
-        [parameterValue setStringValue:@""];
-        [NSApp beginSheet:parameterPanel
-           modalForWindow:[self window]
-            modalDelegate:self
-           didEndSelector:nil
-              contextInfo:nil];
-
-        [NSApp runModalForWindow:parameterPanel];
-
-        [NSApp endSheet:parameterPanel];
-        [parameterPanel orderOut:self];
-
-        [name replaceOccurrencesOfString:[command substringWithRange:NSMakeRange(r1.location,
-                                                                                 r2.location - r1.location+2)]
-                              withString:[parameterValue stringValue]
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [name length])];
-        [command replaceOccurrencesOfString:[command substringWithRange:NSMakeRange(r1.location,
-                                                                                    r2.location - r1.location+2)]
-                                 withString:[parameterValue stringValue]
-                                    options:NSLiteralSearch
-                                      range:NSMakeRange(0,[command length])];
+- (NSString *)promptForParameter:(NSString *)name {
+    // Make the name pretty.
+    name = [name stringByReplacingOccurrencesOfString:@"$$" withString:@""];
+    name = [name stringByReplacingOccurrencesOfString:@"_" withString:@" "];
+    name = [name lowercaseString];
+    if (name.length) {
+        NSString *firstLetter = [name substringWithRange:NSMakeRange(0, 1)];
+        NSString *lastLetters = [name substringFromIndex:1];
+        name = [[firstLetter uppercaseString] stringByAppendingString:lastLetters];
     }
+    [parameterName setStringValue:[NSString stringWithFormat:@"“%@”:", name]];
+    [parameterValue setStringValue:@""];
 
-    while (1) {
-        currentRange = NSMakeRange(0,[name length]);
-        r1 = [name rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
-        if (r1.location == NSNotFound) {
-            break;
-        }
-        currentRange.location = r1.location + 2;
-        currentRange.length -= r1.location + 2;
-        r2 = [name rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
-        if (r2.location == NSNotFound) {
-            break;
-        }
+    [NSApp beginSheet:parameterPanel
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:nil
+          contextInfo:nil];
 
-        [parameterName setStringValue:[name substringWithRange:NSMakeRange(r1.location+2,
-                                                                           r2.location - r1.location-2)]];
-        [parameterValue setStringValue:@""];
-        [NSApp beginSheet:parameterPanel
-           modalForWindow:[self window]
-            modalDelegate:self
-           didEndSelector:nil
-              contextInfo:nil];
+    [NSApp runModalForWindow:parameterPanel];
 
-        [NSApp runModalForWindow:parameterPanel];
+    [NSApp endSheet:parameterPanel];
+    [parameterPanel orderOut:self];
 
-        [NSApp endSheet:parameterPanel];
-        [parameterPanel orderOut:self];
-
-        [name replaceOccurrencesOfString:[name substringWithRange:NSMakeRange(r1.location,
-                                                                              r2.location - r1.location+2)]
-                              withString:[parameterValue stringValue]
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0,[name length])];
+    if (_parameterPanelCanceled) {
+        return nil;
+    } else {
+        return [[parameterValue.stringValue copy] autorelease];
     }
+}
 
+// Returns nil if the user pressed cancel, otherwise returns a dictionary that's a supeset of |substitutions|.
+- (NSDictionary *)substitutionsForCommand:(NSString *)command
+                              sessionName:(NSString *)name
+                        baseSubstitutions:(NSDictionary *)substitutions {
+    NSSet *cmdVars = [command doubleDollarVariables];
+    NSSet *nameVars = [name doubleDollarVariables];
+    NSMutableSet *allVars = [[cmdVars mutableCopy] autorelease];
+    [allVars unionSet:nameVars];
+    NSMutableDictionary *allSubstitutions = [[substitutions mutableCopy] autorelease];
+    for (NSString *var in allVars) {
+        if (!substitutions[var]) {
+            NSString *value = [self promptForParameter:var];
+            if (!value) {
+                return nil;
+            }
+            allSubstitutions[var] = value;
+        }
+    }
+    return allSubstitutions;
 }
 
 - (NSArray*)tabs
@@ -6449,18 +6398,17 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 // Execute the given program and set the window title if it is uninitialized.
-- (void)startProgram:(NSString *)program
-           arguments:(NSArray *)prog_argv
+- (void)startProgram:(NSString *)command
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
            inSession:(PTYSession*)theSession
-{
-    [theSession startProgram:program
-                   arguments:prog_argv
+        substitutions:(NSDictionary *)substitutions {
+    [theSession startProgram:command
                  environment:prog_env
-                      isUTF8:isUTF8];
+                      isUTF8:isUTF8
+               substitutions:substitutions];
 
-    if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
+    if ([[[self window] title] isEqualToString:@"Window"]) {
         [self setWindowTitle];
     }
 }
@@ -6839,8 +6787,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 // Called when the parameter panel should close.
-- (IBAction)parameterPanelEnd:(id)sender
-{
+- (IBAction)parameterPanelEnd:(id)sender {
+    _parameterPanelCanceled = ([sender tag] == 0);
     [NSApp stopModal];
 }
 
@@ -6882,33 +6830,28 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 // Execute the bookmark command in this session.
 // Used when adding a split pane.
 // Execute the bookmark command in this session.
-- (void)runCommandInSession:(PTYSession*)aSession
+- (BOOL)runCommandInSession:(PTYSession*)aSession
                       inCwd:(NSString*)oldCWD
-              forObjectType:(iTermObjectType)objectType
-{
+              forObjectType:(iTermObjectType)objectType {
     if ([aSession screen]) {
-        NSMutableString *cmd, *name;
-        NSArray *arg;
-        NSString *pwd;
         BOOL isUTF8;
         // Grab the addressbook command
-        Profile* addressbookEntry = [aSession profile];
-        cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-                                                                           forObjectType:objectType]] autorelease];
-        name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
-        // Get session parameters
-        [self getSessionParameters:cmd withName:name];
+        Profile *profile = [aSession profile];
+        NSString *cmd = [ITAddressBookMgr bookmarkCommand:profile
+                                            forObjectType:objectType];
+        NSString *name = profile[KEY_NAME];
 
-        NSArray *components = [cmd componentsInShellCommand];
-        if (components.count > 0) {
-            cmd = components[0];
-            arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
-        } else {
-            arg = @[];
+        // Get session parameters
+        NSDictionary *substitutions = [self substitutionsForCommand:cmd
+                                                        sessionName:name
+                                                  baseSubstitutions:@{}];
+        if (!substitutions) {
+            return NO;
         }
 
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
-                                           forObjectType:objectType];
+        name = [name stringByPerformingSubstitutions:substitutions];
+        NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile
+                                                     forObjectType:objectType];
         if ([pwd length] == 0) {
             if (oldCWD) {
                 pwd = oldCWD;
@@ -6917,11 +6860,17 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             }
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        isUTF8 = ([profile[KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
         [self setName:name forSession:aSession];
         // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
+        [self startProgram:cmd
+               environment:env
+                    isUTF8:isUTF8
+                 inSession:aSession
+             substitutions:substitutions];
+        return YES;
     }
+    return NO;
 }
 
 - (void)_loadFindStringFromSharedPasteboard
@@ -7007,26 +6956,40 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     // Initialize a new session
-    PTYSession *aSession = [[PTYSession alloc] init];
+    PTYSession *aSession = [[[PTYSession alloc] init] autorelease];
     [[aSession screen] setUnlimitedScrollback:[[profile objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[[profile objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     // If a command was provided, create a temporary copy of the profile dictionary that runs
     // the user-supplied command in lieu of the profile's command.
     NSString *preferredName = nil;
+
+    iTermObjectType objectType;
+    if ([TABVIEW numberOfTabViewItems] == 1) {
+        objectType = iTermWindowObject;
+    } else {
+        objectType = iTermTabObject;
+    }
+    NSString *commandForSubs = command;
+    if (!command) {
+        commandForSubs = [ITAddressBookMgr bookmarkCommand:profile
+                                             forObjectType:objectType];
+    }
+    NSDictionary *substitutions = [self substitutionsForCommand:commandForSubs ?: @""
+                                                    sessionName:profile[KEY_NAME] ?: @""
+                                              baseSubstitutions:@{}];
+    if (!substitutions) {
+        return nil;
+    }
     if (command) {
         // Create a modified profile to run "command".
         NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
         temp[KEY_CUSTOM_COMMAND] = @"Yes";
-
-        // Prompt user for variable values if needed and perform substitutions.
-        NSMutableString *name = [[profile[KEY_NAME] mutableCopy] autorelease];
-        NSMutableString *tempCommand = [[command mutableCopy] autorelease];
-        [self getSessionParameters:tempCommand withName:name];
-        preferredName = name;
         temp[KEY_COMMAND] = command;
         profile = temp;
 
+    } else if (substitutions.count && profile[KEY_NAME]) {
+        preferredName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
 
     // set our preferences
@@ -7034,15 +6997,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // Add this session to our term and make it current
     [self addSessionInNewTab:aSession];
     if ([aSession screen]) {
-        iTermObjectType objectType;
-        if ([TABVIEW numberOfTabViewItems] == 1) {
-            objectType = iTermWindowObject;
-        } else {
-            objectType = iTermTabObject;
-        }
         [aSession runCommandWithOldCwd:previousDirectory
                          forObjectType:objectType
-                        forceUseOldCWD:NO];
+                        forceUseOldCWD:NO
+                         substitutions:substitutions];
         if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
             [self setWindowTitle];
         }
@@ -7058,7 +7016,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
 
-    [aSession release];
     return aSession;
 }
 
@@ -7118,80 +7075,63 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return proposedOptions | NSApplicationPresentationAutoHideToolbar;
 }
 
-- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
-                                 withURL:(NSString *)url
+- (PTYSession *)createSessionWithProfile:(NSDictionary *)profile
+                                 withURL:(NSString *)urlString
                            forObjectType:(iTermObjectType)objectType {
-    PtyLog(@"PseudoTerminal: -addNewSession");
+    PtyLog(@"PseudoTerminal: -createSessionWithProfile:withURL:forObjectType:");
     PTYSession *aSession;
 
     // Initialize a new session
-    aSession = [[PTYSession alloc] init];
-    [[aSession screen] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
-    [[aSession screen] setMaxScrollbackLines:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    aSession = [[[PTYSession alloc] init] autorelease];
+    [[aSession screen] setUnlimitedScrollback:[profile[KEY_UNLIMITED_SCROLLBACK] boolValue]];
+    [[aSession screen] setMaxScrollbackLines:[profile[KEY_SCROLLBACK_LINES] intValue]];
     // set our preferences
-    [aSession setProfile: addressbookEntry];
+    [aSession setProfile:profile];
     // Add this session to our term and make it current
     [self addSessionInNewTab: aSession];
     if ([aSession screen]) {
         // We process the cmd to insert URL parts
-        NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-                                                                                            forObjectType:objectType]] autorelease];
-        NSMutableString *name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_NAME]] autorelease];
-        NSURL *urlRep = [NSURL URLWithString: url];
-
+        NSString *cmd = [ITAddressBookMgr bookmarkCommand:profile
+                                            forObjectType:objectType];
+        NSString *name = profile[KEY_NAME];
+        NSURL *url = [NSURL URLWithString:urlString];
 
         // Grab the addressbook command
-        [cmd replaceOccurrencesOfString:@"$$URL$$" withString:url options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
-        [cmd replaceOccurrencesOfString:@"$$HOST$$" withString:[urlRep host]?[urlRep host]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
-        [cmd replaceOccurrencesOfString:@"$$USER$$" withString:[urlRep user]?[urlRep user]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
-        [cmd replaceOccurrencesOfString:@"$$PASSWORD$$" withString:[urlRep password]?[urlRep password]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
-        [cmd replaceOccurrencesOfString:@"$$PORT$$" withString:[urlRep port]?[[urlRep port] stringValue]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
-        [cmd replaceOccurrencesOfString:@"$$PATH$$" withString:[urlRep path]?[urlRep path]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
-        [cmd replaceOccurrencesOfString:@"$$RES$$" withString:[urlRep resourceSpecifier]?[urlRep resourceSpecifier]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
+        NSDictionary *substitutions = @{ @"$$URL$$": urlString,
+                                         @"$$HOST$$": [url host] ?: @"",
+                                         @"$$USER$$": [url user] ?: @"",
+                                         @"$$PASSWORD$$": [url password] ?: @"",
+                                         @"$$PORT$$": [url port] ? [[url port] stringValue] : @"",
+                                         @"$$PATH$$": [url path] ?: @"",
+                                         @"$$RES$$": [url resourceSpecifier] ?: @"" };
 
-        // Update the addressbook title
-        [name replaceOccurrencesOfString:@"$$URL$$" withString:url options:NSLiteralSearch range:NSMakeRange(0, [name length])];
-        [name replaceOccurrencesOfString:@"$$HOST$$" withString:[urlRep host]?[urlRep host]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
-        [name replaceOccurrencesOfString:@"$$USER$$" withString:[urlRep user]?[urlRep user]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
-        [name replaceOccurrencesOfString:@"$$PASSWORD$$" withString:[urlRep password]?[urlRep password]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
-        [name replaceOccurrencesOfString:@"$$PORT$$" withString:[urlRep port]?[[urlRep port] stringValue]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
-        [name replaceOccurrencesOfString:@"$$PATH$$" withString:[urlRep path]?[urlRep path]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
-        [name replaceOccurrencesOfString:@"$$RES$$" withString:[urlRep resourceSpecifier]?[urlRep resourceSpecifier]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
-
-        // Get remaining session parameters
-        [self getSessionParameters:cmd withName:name];
-
-        NSArray *arg;
-        NSString *pwd;
-        BOOL isUTF8;
-        NSArray *components = [cmd componentsInShellCommand];
-        if (components.count > 0) {
-            cmd = components[0];
-            arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
-        } else {
-            arg = @[];
+        // If the command or name have any $$VARS$$ not accounted for above, prompt the user for
+        // substitutions.
+        substitutions = [self substitutionsForCommand:cmd
+                                          sessionName:name
+                                    baseSubstitutions:substitutions];
+        if (!substitutions) {
+            return nil;
         }
 
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry forObjectType:objectType];
+        NSString *pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile forObjectType:objectType];
         if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        BOOL isUTF8 = ([profile[KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
 
-        [self setName:name forSession:aSession];
+        [self setName:[name stringByPerformingSubstitutions:substitutions]
+           forSession:aSession];
 
         // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
+        [self startProgram:cmd
+               environment:env
+                    isUTF8:isUTF8
+                 inSession:aSession
+             substitutions:substitutions];
     }
-    [aSession release];
     return aSession;
-}
-
-- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry withURL:(NSString *)url {
-    return [self createSessionWithProfile:addressbookEntry
-                                  withURL:url
-                            forObjectType:iTermWindowObject];
 }
 
 - (void)addSessionInNewTab:(PTYSession *)object {

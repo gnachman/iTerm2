@@ -1554,11 +1554,6 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] saveWindowArrangement:NO];
 }
 
-- (IBAction)loadWindowArrangement:(id)sender
-{
-    [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
-}
-
 // TODO(georgen): Disable "Edit Current Session..." when there are no current sessions.
 - (IBAction)editCurrentSession:(id)sender
 {
@@ -1626,11 +1621,6 @@ static BOOL hasBecomeActive = NO;
 @end
 
 @implementation iTermApplicationDelegate (MoreActions)
-
-- (void)newSessionInTabAtIndex:(id)sender
-{
-    [[iTermController sharedInstance] newSessionInTabAtIndex:sender];
-}
 
 - (void)newSessionInWindowAtIndex: (id) sender
 {

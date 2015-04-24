@@ -162,6 +162,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSArray *)keyValuePair;
 
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
+- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substituions;
 
 // Does self contain |substring|?
 - (BOOL)containsString:(NSString *)substring;
@@ -183,6 +184,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Characters in [0, 31] and 127 get replaced with ?
 - (NSString *)stringByReplacingControlCharsWithQuestionMark;
+
+// Returns the set of $$VARIABLES$$ in the string.
+- (NSSet *)doubleDollarVariables;
 
 @end
 

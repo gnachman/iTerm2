@@ -72,7 +72,7 @@
 // actions are forwarded from application
 - (IBAction)newWindow:(id)sender;
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux;
-- (IBAction)newSessionWithSameProfile:(id)sender;
+- (void)newSessionWithSameProfile:(id)sender;
 - (IBAction)newSession:(id)sender;
 - (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux;
 - (IBAction) previousTerminal:(id)sender;
@@ -102,7 +102,6 @@
 
 - (PseudoTerminal *)currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
-- (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector

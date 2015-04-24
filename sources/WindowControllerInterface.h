@@ -213,12 +213,6 @@ typedef enum {
 // or "Finish" if it's closed.
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession;
 
-// For each instance of a substring like $$foo$$ in command and name,
-// prompt the user for a value and replace $$foo$$ with the user-entered
-// value in both command and name.
-- (void)getSessionParameters:(NSMutableString *)command
-                    withName:(NSMutableString *)name;
-
 // Return the name of the foreground session.
 - (NSString *)currentSessionName;
 

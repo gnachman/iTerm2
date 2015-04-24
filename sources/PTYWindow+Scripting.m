@@ -36,53 +36,9 @@
     return nil;
 }
 
-- (id)handleLaunchScriptCommand:(NSScriptCommand *)command {
-    // Get the command's arguments:
-    NSDictionary *args = [command evaluatedArguments];
-    NSString *session = [args objectForKey:@"session"];
-    NSDictionary *abEntry;
-
-    abEntry = [[ProfileModel sharedInstance] bookmarkWithName:session];
-    if (abEntry == nil) {
-        abEntry = [[ProfileModel sharedInstance] defaultBookmark];
-    }
-    if (abEntry == nil) {
-        NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-        abEntry = aDict;
-    }
-
-    return [[iTermController sharedInstance] launchBookmark:abEntry inTerminal:_delegate];
-}
-
 - (id)handleCloseScriptCommand:(NSScriptCommand *)command {
     [self performClose:nil];
     return nil;
-}
-
-- (void)handleSplitScriptCommand:(NSScriptCommand *)command {
-    // Get the command's arguments:
-    NSDictionary *args = [command evaluatedArguments];
-    NSString *direction = args[@"direction"];
-    BOOL isVertical = [direction isEqualToString:@"vertical"];
-    NSString *profileName = args[@"profile"];
-    NSDictionary *abEntry;
-
-    abEntry = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
-    if (abEntry == nil) {
-        abEntry = [[ProfileModel sharedInstance] defaultBookmark];
-    }
-    if (abEntry == nil) {
-        NSMutableDictionary* aDict = [NSMutableDictionary dictionary];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-        abEntry = aDict;
-    }
-
-    [_delegate splitVertically:isVertical
-                  withBookmark:abEntry
-                 targetSession:[[_delegate currentTab] activeSession]];
 }
 
 - (void)handleCreateTabWithDefaultProfileCommand:(NSScriptCommand *)scriptCommand {
