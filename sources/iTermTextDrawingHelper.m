@@ -26,7 +26,7 @@
 #import "VT100Terminal.h"  // TODO: Remove this dependency
 
 static const int kBadgeMargin = 4;
-static const int kBadgeRightMargin = 10;
+static const int kBadgeRightMargin = 8;
 
 @interface iTermTextDrawingHelper() <iTermCursorDelegate>
 @end
@@ -555,7 +555,8 @@ static const int kBadgeRightMargin = 10;
     NSSize visibleSize = _scrollViewDocumentVisibleRect.size;
     NSSize imageSize = image.size;
     NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - kBadgeRightMargin,
-                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight,
+                                    // textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight,
+                                    textViewSize.height - imageSize.height,
                                     imageSize.width,
                                     imageSize.height);
     NSRect intersection = NSIntersectionRect(rect, destination);
