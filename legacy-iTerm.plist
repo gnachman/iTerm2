@@ -23,7 +23,7 @@
 			<key>CFBundleTypeName</key>
 			<string>Terminal scripts</string>
 			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
+			<string>Shell</string>
 		</dict>
 		<dict>
 			<key>CFBundleTypeOSTypes</key>
