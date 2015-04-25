@@ -145,6 +145,15 @@ static const int kBadgeRightMargin = 10;
     [self drawOneRect:outerRect];
 
     [context restoreGraphicsState];
+
+    if (_debug) {
+      NSColor *c = [NSColor colorWithCalibratedRed:(rand() % 255) / 255.0
+                                             green:(rand() % 255) / 255.0
+                                              blue:(rand() % 255) / 255.0
+                                             alpha:1];
+      [c set];
+      NSFrameRect(rect);
+    }
 }
 
 - (void)drawOneRect:(NSRect)rect {
@@ -416,6 +425,9 @@ static const int kBadgeRightMargin = 10;
 }
 
 - (void)drawCursorGuideForColumns:(NSRange)range y:(CGFloat)yOrigin {
+    if (!_cursorVisible) {
+        return;
+    }
     [_cursorGuideColor set];
     NSPoint textOrigin = NSMakePoint(MARGIN + range.location * _cellSize.width, yOrigin);
     NSRect rect = NSMakeRect(textOrigin.x,

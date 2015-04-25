@@ -28,6 +28,14 @@ NSString *VT100GridWindowedRangeDescription(VT100GridWindowedRange range) {
             range.columnWindow.location + range.columnWindow.length - 1];
 }
 
+NSString *VT100GridAbsCoordRangeDescription(VT100GridAbsCoordRange range) {
+    return [NSString stringWithFormat:@"<(%d, %lld) to (%d, %lld)>",
+            range.start.x,
+            range.start.y,
+            range.end.x,
+            range.end.y];
+}
+
 @implementation NSValue (VT100Grid)
 
 + (NSValue *)valueWithGridCoord:(VT100GridCoord)coord {

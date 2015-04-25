@@ -5076,10 +5076,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
+    DLog(@"Fetching range of last command output...");
     if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        DLog(@"Command history has never been used.");
         [CommandHistory showInformationalMessage];
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
+        DLog(@"Returning cached range.");
         return _screen.lastCommandOutputRange;
     }
 }

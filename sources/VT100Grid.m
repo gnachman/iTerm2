@@ -30,7 +30,6 @@
 @synthesize savedDefaultChar = savedDefaultChar_;
 @synthesize cursor = cursor_;
 @synthesize delegate = delegate_;
-@synthesize trackCursorLineMovement = trackCursorLineMovement_;
 
 - (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate {
     self = [super init];
@@ -153,14 +152,19 @@
 }
 
 - (void)setCursorX:(int)cursorX {
-    cursor_.x = MIN(size_.width, MAX(0, cursorX));
+    int newX = MIN(size_.width, MAX(0, cursorX));
+    if (newX != cursor_.x) {
+        cursor_.x = newX;
+        [delegate_ gridCursorDidMove];
+    }
 }
 
 - (void)setCursorY:(int)cursorY {
     int prev = cursor_.y;
     cursor_.y = MIN(size_.height - 1, MAX(0, cursorY));
-    if (trackCursorLineMovement_ && cursorY != prev) {
+    if (cursorY != prev) {
         [delegate_ gridCursorDidChangeLine];
+        [delegate_ gridCursorDidMove];
     }
 }
 
@@ -1980,12 +1984,11 @@ static void DumpBuf(screen_char_t* p, int n) {
         [theCopy->lineInfos_ addObject:[[line copy] autorelease]];
     }
     theCopy->screenTop_ = screenTop_;
-    theCopy.cursor = cursor_;
+    theCopy->cursor_ = cursor_;  // Don't use property to avoid delegate call
     theCopy.scrollRegionRows = scrollRegionRows_;
     theCopy.scrollRegionCols = scrollRegionCols_;
     theCopy.useScrollRegionCols = useScrollRegionCols_;
     theCopy.savedDefaultChar = savedDefaultChar_;
-    theCopy.trackCursorLineMovement = trackCursorLineMovement_;
 
     return theCopy;
 }
