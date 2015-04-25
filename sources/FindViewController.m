@@ -476,12 +476,8 @@ const CGFloat kEdgeWidth = 3;
 
     [NSAnimationContext endGrouping];
 
-    dispatch_async(dispatch_get_main_queue(), ^{
-        DLog(@"Grab focus for find view %@", self.view);
-        [[[self view] window] makeFirstResponder:findBarTextField_];
-    });
-
-    [delegate_ findViewControllerMakeDocumentFirstResponder];
+    DLog(@"Grab focus for find view %@", self.view);
+    [[[self view] window] makeFirstResponder:findBarTextField_];
 }
 
 - (void)makeVisible {
