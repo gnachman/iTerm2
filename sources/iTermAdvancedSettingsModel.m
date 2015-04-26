@@ -74,7 +74,7 @@ DEFINE_FLOAT(echoProbeDuration, 0.5, @"Terminal: Amount of time to wait while te
 DEFINE_BOOL(optionIsMetaForSpecialChars, YES, @"Terminal: Treat Option as Meta in escape codes send by typing arrow keys");
 DEFINE_BOOL(noSyncSilenceAnnoyingBellAutomatically, NO, @"Terminal: Automatically silence bell when it rings too much");
 DEFINE_BOOL(restoreWindowContents, YES, @"Terminal: Restore window contents at startup");
-DEFINE_BOOL(useDoubleBufferedGrid, NO, @"Terminal: Avoid repainting the screen when the cursor is hidden");
+DEFINE_BOOL(useDoubleBufferedGrid, YES, @"Terminal: Avoid repainting the screen when the cursor is hidden");
 
 #pragma mark Hotkey
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of the hotkey window animation")
