@@ -44,9 +44,7 @@ DebugLog([NSString stringWithFormat:args]); \
 } while (0)
 #endif
 
-@implementation PopupEntry {
-  NSString *_truncatedValue;
-}
+@implementation PopupEntry
 
 - (void)setTruncatedValue:(NSString *)truncatedValue {
     [_truncatedValue autorelease];

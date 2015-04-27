@@ -30,6 +30,7 @@
     NSString* prefix_;
     double score_;
     double hitMultiplier_;
+    NSString *_truncatedValue;
 }
 
 @property(nonatomic, readonly) NSString *truncatedValue;
