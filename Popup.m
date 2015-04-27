@@ -48,8 +48,6 @@ DebugLog([NSString stringWithFormat:args]); \
   NSString *_truncatedValue;
 }
 
-@synthesize truncatedValue = _truncatedValue;
-
 - (void)setTruncatedValue:(NSString *)truncatedValue {
     [_truncatedValue autorelease];
     _truncatedValue = [truncatedValue retain];
