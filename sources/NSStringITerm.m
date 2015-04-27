@@ -585,88 +585,87 @@ int decode_utf8_char(const unsigned char *datap,
     return [self substringWithRange:NSMakeRange(start, end - start)];
 }
 
-// This handles a few kinds of URLs, after trimming whitespace from the beginning and end:
-// 1. Well formed strings like:
-//    "http://example.com/foo?query#fragment"
-// 2. URLs in parens:
-//    "(http://example.com/foo?query#fragment)" -> http://example.com/foo?query#fragment
-// 3. URLs at the end of a sentence:
-//    "http://example.com/foo?query#fragment." -> http://example.com/foo?query#fragment
-// 4. Case 2 & 3 combined:
-//    "(http://example.com/foo?query#fragment)." -> http://example.com/foo?query#fragment
-// 5. Strings without a scheme (http is assumed, previous cases do not apply)
-//    "example.com/foo?query#fragment" -> http://example.com/foo?query#fragment
-// *offset will be set to the number of characters at the start of self that were skipped past.
-// offset may be nil. If |length| is not nil, then *length will be set to the number of chars matched
-// in self.
-- (NSString *)URLInStringWithOffset:(int *)offset length:(int *)length
-{
-    NSString* trimmedURLString;
-    
+// Transforms a string like "(abc)def" into "abc".
+- (NSString *)stringByRemovingEnclosingPunctuationMarks {
+    if (self.length == 0) {
+        return self;
+    }
+    NSDictionary *wrappers = @{ @('('): @")",
+                                @('[') : @"]",
+                                @('"'): @"\"",
+                                @('\''): @"'" };
+    unichar c = [self characterAtIndex:0];
+    NSString *closingString = wrappers[@(c)];
+    if (closingString) {
+        self = [self substringFromIndex:1];
+        NSRange range = [self rangeOfString:closingString];
+        if (range.location != NSNotFound) {
+            return [self substringToIndex:range.location];
+        }
+    }
+
+    return self;
+}
+
+- (NSRange)rangeOfURLInString {
+    NSString *trimmedURLString;
+
+    // Trim whitespace
     trimmedURLString = [self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    
+
     if (![trimmedURLString length]) {
-        return nil;
+        return NSMakeRange(NSNotFound, 0);
     }
-    if (offset) {
-        *offset = 0;
-    }
-    
+
     NSRange range = [trimmedURLString rangeOfString:@":"];
-    if (range.location == NSNotFound) {
-        if (length) {
-            *length = trimmedURLString.length;
-        }
-        trimmedURLString = [NSString stringWithFormat:@"http://%@", trimmedURLString];
-    } else {
-        if (length) {
-            *length = trimmedURLString.length;
-        }
-        // Search backwards for the start of the scheme.
-        for (int i = range.location - 1; 0 <= i; i--) {
-            unichar c = [trimmedURLString characterAtIndex:i];
-            if (!isalnum(c)) {
-                // Remove garbage before the scheme part
-                trimmedURLString = [trimmedURLString substringFromIndex:i + 1];
-                if (offset) {
-                    *offset = i + 1;
-                }
-                if (length) {
-                    *length = trimmedURLString.length;
-                }
-                if (c == '(') {
-                    // If an open parenthesis is right before the
-                    // scheme part, remove the closing parenthesis
-                    NSRange closer = [trimmedURLString rangeOfString:@")"];
-                    if (closer.location != NSNotFound) {
-                        trimmedURLString = [trimmedURLString substringToIndex:closer.location];
-                        if (length) {
-                            *length = trimmedURLString.length;
-                        }
-                    }
+    if (range.location != NSNotFound) {
+        // Search backward to find the start of the scheme.
+        NSCharacterSet *alphaNumericCharset = [NSCharacterSet alphanumericCharacterSet];
+        for (NSInteger i = ((NSInteger)range.location) - 1; i >= 0; i--) {
+            if (![alphaNumericCharset characterIsMember:[trimmedURLString characterAtIndex:i]]) {
+                trimmedURLString = [trimmedURLString substringFromIndex:i];
+
+                // Handle URLs like *(http://example.com)
+                NSInteger lengthBefore = trimmedURLString.length;
+                trimmedURLString = [trimmedURLString stringByRemovingEnclosingPunctuationMarks];
+
+                if (trimmedURLString.length == lengthBefore) {
+                    // Handle URLs like *http://example.com
+                    trimmedURLString = [trimmedURLString substringFromIndex:1];
                 }
                 break;
             }
         }
+    } else {
+        // If the string begins with an opening brace or quote, return just the bracketed string.
+        trimmedURLString = [trimmedURLString stringByRemovingEnclosingPunctuationMarks];
     }
-    
+    if (![trimmedURLString length]) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+
+
     // Remove trailing punctuation.
-    NSArray *punctuation = @[ @".", @",", @";", @":", @"!" ];
+    trimmedURLString = [trimmedURLString stringByRemovingTerminatingPunctuation];
+
+    return [self rangeOfString:trimmedURLString];
+}
+
+- (NSString *)stringByRemovingTerminatingPunctuation {
+    NSString *s = self;
+    NSArray *punctuationMarks = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];
     BOOL found;
     do {
         found = NO;
-        for (NSString *pchar in punctuation) {
-            if ([trimmedURLString hasSuffix:pchar]) {
-                trimmedURLString = [trimmedURLString substringToIndex:trimmedURLString.length - 1];
+        for (NSString *punctuationString in punctuationMarks) {
+            if ([s hasSuffix:punctuationString]) {
+                s = [s substringToIndex:s.length - 1];
                 found = YES;
-                if (length) {
-                    (*length)--;
-                }
             }
         }
     } while (found);
     
-    return trimmedURLString;
+    return s;
 }
 
 - (NSString *)stringByEscapingForURL {

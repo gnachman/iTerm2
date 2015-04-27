@@ -27,7 +27,12 @@ extern int kVT100ScreenMinRows;
     PTYNoteViewControllerDelegate,
     PTYTextViewDataSource,
     VT100GridDelegate,
-    VT100TerminalDelegate>
+    VT100TerminalDelegate> {
+@private
+    // This is here because the unit test needs to manipulate it.
+    // Scrollback buffer
+    LineBuffer* linebuffer_;
+}
 
 @property(nonatomic, retain) VT100Terminal *terminal;
 @property(nonatomic, assign) BOOL audibleBell;

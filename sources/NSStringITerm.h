@@ -108,7 +108,25 @@ int decode_utf8_char(const unsigned char * restrict datap,
                       fromCharacterSet:(NSCharacterSet *)charSet
                   charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr;
 
-- (NSString *)URLInStringWithOffset:(int *)offset length:(int *)length;
+// This handles a few kinds of URLs, after trimming whitespace from the beginning and end:
+// 1. Well formed strings like:
+//    "http://example.com/foo?query#fragment"
+// 2. URLs in parens:
+//    "(http://example.com/foo?query#fragment)" -> http://example.com/foo?query#fragment
+// 3. URLs at the end of a sentence:
+//    "http://example.com/foo?query#fragment." -> http://example.com/foo?query#fragment
+// 4. Case 2 & 3 combined:
+//    "(http://example.com/foo?query#fragment)." -> http://example.com/foo?query#fragment
+//    "(http://example.com/foo?query#fragment.)" -> http://example.com/foo?query#fragment
+// 5. Strings wrapped by parens, square brackets, double quotes, or single quotes.
+//    "'example.com/foo'" -> http://example.com/foo
+//    "(example.com/foo)" -> http://example.com/foo
+//    "[example.com/foo]" -> http://example.com/foo
+//    "\"example.com/foo\"" -> http://example.com/foo
+//    "(example.com/foo.)" -> http://example.com/foo
+// 6. URLs with cruft before the scheme
+//    "*http://example.com" -> "http://example.com"
+- (NSRange)rangeOfURLInString;
 
 - (NSString *)stringByEscapingForURL;
 - (NSString *)stringByCapitalizingFirstLetter;

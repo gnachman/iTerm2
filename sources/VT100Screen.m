@@ -80,9 +80,6 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL collectInputForPrinting_;
     NSMutableString *printBuffer_;
 
-    // Scrollback buffer
-    LineBuffer* linebuffer_;
-
     // Current find context.
     FindContext *findContext_;
 

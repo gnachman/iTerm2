@@ -164,4 +164,29 @@
     assert([[@"abc 🔥" stringByTrimmingTrailingWhitespace] isEqualToString:@"abc 🔥"]);
 }
 
+- (void)testRangeOfURLInString {
+    NSArray *strings = @[ @"http://example.com",
+                          @"(http://example.com)",
+                          @"*http://example.com",
+                          @"http://example.com.",
+                          @"(http://example.com).",
+                          @"(http://example.com.)",
+                          @"*(http://example.com.)" ];
+    for (NSString *string in strings) {
+        NSRange range = [string rangeOfURLInString];
+        assert([[string substringWithRange:range] isEqualToString:@"http://example.com"]);
+    }
+
+    strings = @[ @"example.com",
+                 @"(example.com)",
+                 @"example.com.",
+                 @"(example.com).",
+                 @"(example.com.)" ];
+    for (NSString *string in strings) {
+        NSRange range = [string rangeOfURLInString];
+        assert([[string substringWithRange:range] isEqualToString:@"example.com"]);
+    }
+
+}
+
 @end

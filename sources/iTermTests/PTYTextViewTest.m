@@ -134,6 +134,21 @@
     return nil;
 }
 
+- (BOOL)setUseSavedGridIfAvailable:(BOOL)use {
+    return NO;
+}
+
+- (void)textViewInvalidateRestorableState {
+}
+
+- (BOOL)textViewIsZoomedIn {
+    return NO;
+}
+
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+    return VT100GridCoordRangeMake(0, 0, 0, 0);
+}
+
 - (void)textViewToggleBroadcastingInput {
 }
 

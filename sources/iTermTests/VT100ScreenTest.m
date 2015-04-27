@@ -832,6 +832,12 @@
     return NO;
 }
 
+- (NSIndexSet *)selectionIndexesOnLine:(int)line
+                   containingCharacter:(unichar)c
+                               inRange:(NSRange)range {
+    return nil;
+}
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {

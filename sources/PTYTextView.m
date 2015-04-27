@@ -1988,8 +1988,6 @@ static const int kDragThreshold = 3;
 }
 
 - (void)updateCursor:(NSEvent *)event {
-    MouseMode mouseMode = [[_dataSource terminal] mouseMode];
-
     BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         changed = [self setCursor:[NSCursor openHandCursor]];
@@ -2057,7 +2055,7 @@ static const int kDragThreshold = 3;
     }
 
     // If it has a slash and is limited to the URL character set, it could be a URL.
-    return [self _stringLooksLikeURL:aURLString];
+    return [self stringLooksLikeURL:aURLString];
 }
 
 // Update range of underlined chars indicating cmd-clicakble url.
@@ -5377,8 +5375,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return filenameChars;
 }
 
-- (BOOL)_stringLooksLikeURL:(NSString*)s
-{
+- (BOOL)stringLooksLikeURL:(NSString*)s {
     // This is much harder than it sounds.
     // [NSURL URLWithString] is supposed to do this, but it doesn't accept IDN-encoded domains like
     // http://例子.测试
@@ -5608,39 +5605,43 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         charsTakenFromPrefix:&prefixChars];
     DLog(@"String of just permissible chars is %@", possibleUrl);
     NSString *originalMatch = possibleUrl;
-    int offset, length;
-    possibleUrl = [possibleUrl URLInStringWithOffset:&offset length:&length];
-    DLog(@"URL in string is %@", possibleUrl);
-    if (!possibleUrl) {
+
+    NSRange urlRange = [possibleUrl rangeOfURLInString];
+    if (urlRange.location == NSNotFound) {
+        DLog(@"No URL found");
         return nil;
     }
-    // If possibleUrl contains a :, make sure something can handle that scheme.
-    BOOL ruledOutBasedOnScheme = NO;
-    if ([possibleUrl rangeOfString:@":"].length > 0) {
-        NSURL *url = [NSURL URLWithString:possibleUrl];
-        ruledOutBasedOnScheme = (!url || [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] == nil);
-        DLog(@"There seems to be a scheme. ruledOut=%d", (int)ruledOutBasedOnScheme);
+    NSString *subUrl = [possibleUrl substringWithRange:urlRange];
+    if ([subUrl rangeOfString:@":"].location == NSNotFound) {
+        NSString *defaultScheme = @"http://";
+        subUrl = [defaultScheme stringByAppendingString:subUrl];
     }
+    DLog(@"URL in string is %@", subUrl);
 
-    if ([self _stringLooksLikeURL:[originalMatch substringWithRange:NSMakeRange(offset, length)]] &&
-         !ruledOutBasedOnScheme) {
+    // If subUrl contains a :, make sure something can handle that scheme.
+    NSURL *url = [NSURL URLWithString:subUrl];
+    BOOL openable = (url && [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil);
+    DLog(@"There seems to be a scheme. ruledOut=%d", (int)openable);
+
+    if ([self stringLooksLikeURL:[originalMatch substringWithRange:urlRange]] &&
+         openable) {
         DLog(@"%@ looks like a URL and it's not ruled out based on scheme. Go for it.",
-             [originalMatch substringWithRange:NSMakeRange(offset, length)]);
-        URLAction *action = [URLAction urlActionToOpenURL:possibleUrl];
+             [originalMatch substringWithRange:urlRange]);
+        URLAction *action = [URLAction urlActionToOpenURL:subUrl];
 
         VT100GridWindowedRange range;
         range.coordRange.start = [extractor coord:coord
-                                             plus:-(prefixChars - offset)
+                                             plus:-(prefixChars - urlRange.location)
                                    skippingCoords:continuationCharsCoords];
         range.coordRange.end = [extractor coord:range.coordRange.start
-                                           plus:length
+                                           plus:urlRange.length
                                  skippingCoords:continuationCharsCoords];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
         return action;
     } else {
         DLog(@"%@ is either not plausibly a URL or was ruled out based on scheme. Fail.",
-             [originalMatch substringWithRange:NSMakeRange(offset, length)]);
+             [originalMatch substringWithRange:urlRange]);
         return nil;
     }
 }
@@ -5781,7 +5782,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // Otherwise it's passed to the OS to launch.
 - (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background {
     DLog(@"findUrlInString:%@", aURLString);
-    NSString *trimmedURLString = [aURLString URLInStringWithOffset:NULL length:NULL];
+    NSRange range = [aURLString rangeOfURLInString];
+    if (range.location == NSNotFound) {
+        DLog(@"No URL found");
+        return;
+    }
+    NSString *trimmedURLString = [aURLString substringWithRange:range];
     if (!trimmedURLString) {
         DLog(@"string is empty");
         return;

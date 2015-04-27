@@ -350,6 +350,9 @@ do { \
     assert([[grid compactDirtyDump] isEqualToString:@"cc\ncc"]);
 }
 
+- (void)gridCursorDidMove {
+}
+
 - (VT100Grid *)gridFromCompactLines:(NSString *)compact {
     NSArray *lines = [compact componentsSeparatedByString:@"\n"];
     VT100Grid *grid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake([[lines objectAtIndex:0] length],
