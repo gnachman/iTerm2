@@ -43,7 +43,9 @@ function Build {
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  codesign $6 -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm.app"
+  codesign --verbose --force --sign 'Developer ID Application: GEORGE NACHMAN' "build/$BUILDTYPE/iTerm.app/Contents/Frameworks/Sparkle.framework" || die Signing
+  codesign --verbose --force --sign 'Developer ID Application: GEORGE NACHMAN' "build/$BUILDTYPE/iTerm.app/Contents/Frameworks/Growl.framework" || die Signing
+  codesign --verbose --force --sign 'Developer ID Application: GEORGE NACHMAN' "build/$BUILDTYPE/iTerm.app" || die Signing
   # Commented out because it crashes on 10.10
   #codesign --verify --verbose "build/$BUILDTYPE/iTerm.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
