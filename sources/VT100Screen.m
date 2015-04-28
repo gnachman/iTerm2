@@ -41,6 +41,24 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
+@interface iTermLine : NSObject
+
+@property(nonatomic, retain) NSData *line;
+@property(nonatomic, assign) BOOL partial;
+@property(nonatomic, assign) NSTimeInterval timestamp;
+@property(nonatomic, assign) screen_char_t continuation;
+
+@end
+
+@implementation iTermLine
+
+- (void)dealloc  {
+    [_line release];
+    [super dealloc];
+}
+
+@end
+
 @interface VT100Screen () <iTermTemporaryDoubleBufferedGridControllerDelegate, iTermMarkDelegate>
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
 @end
@@ -1968,7 +1986,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
-- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+- (VT100ScreenMark *)promptMarkAfterMark:(VT100ScreenMark *)mark {
     NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:mark.entry.interval.limit];
     NSArray *objects;
     do {
@@ -1976,16 +1994,25 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         objects = [objects objectsOfClasses:@[ [VT100ScreenMark class] ]];
         for (VT100ScreenMark *nextMark in objects) {
             if (nextMark.isPrompt) {
-                VT100GridCoordRange range;
-                range.start = [self coordRangeForInterval:mark.entry.interval].end;
-                range.start.x = 0;
-                range.start.y++;
-                range.end = [self coordRangeForInterval:nextMark.entry.interval].start;
-                return range;
+                return nextMark;
             }
         }
     } while (objects && !objects.count);
 
+    return nil;
+}
+
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+    VT100ScreenMark *nextMark = [self promptMarkAfterMark:mark];
+    if (nextMark) {
+        VT100GridCoordRange range;
+        range.start = [self coordRangeForInterval:mark.entry.interval].end;
+        range.start.x = 0;
+        range.start.y++;
+        range.end = [self coordRangeForInterval:nextMark.entry.interval].start;
+        return range;
+    }
+    
     // Command must still be running with no subsequent prompt.
     VT100GridCoordRange range;
     range.start = [self coordRangeForInterval:mark.entry.interval].end;
@@ -2010,6 +2037,119 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         realCurrentGrid_ = nil;
     }
     return NO;
+}
+
+// Returns an array of iTermLine objects from the "start"th line to the end of the line buffer.
+- (NSArray *)poppedLinesFromLineNumber:(int)start {
+    NSMutableArray *lines = [NSMutableArray array];
+
+    // Pop all the lines until we get to the mark.
+    screen_char_t buffer[self.width + 1];
+    int numLines = [self numberOfScrollbackLines];
+    for (int i = start; i < numLines; i++) {
+        int eol;
+        NSTimeInterval timestamp;
+        screen_char_t continuation;
+        [linebuffer_ popAndCopyLastLineInto:buffer
+                                      width:self.width
+                          includesEndOfLine:&eol
+                                  timestamp:&timestamp
+                               continuation:&continuation];
+        iTermLine *line = [[[iTermLine alloc] init] autorelease];
+        line.line = [NSData dataWithBytes:buffer length:sizeof(buffer)];
+        line.partial = (eol != EOL_HARD);
+        line.timestamp = timestamp;
+        line.continuation = continuation;
+        [lines insertObject:line atIndex:0];
+    }
+    return lines;
+}
+
+- (void)textViewFoldLines:(int)numberOfLinesToFold intoMark:(VT100ScreenMark *)mark {
+    // TODO: Any marks that begin above the range and end within it should be truncated.
+    // Marks that begin above it and end below it should have their limits adjusted
+    // Marks that begin in it should be archived in |mark|
+    // Marks that begin after it should have their intervals adjusted
+    // Selections need to be truncated/adjusted too (or just nuke the selection)
+    VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
+    range.start.y++;
+    if (range.start.y <= range.end.y) {
+        return;
+    }
+
+    // Push the screen contents.
+    [self appendScreen:currentGrid_
+          toScrollback:linebuffer_
+        withUsedHeight:self.height
+             newHeight:self.height];
+
+    NSArray *lines = [self poppedLinesFromLineNumber:range.start.y];
+
+    // Append the first "numberOfLinesToFold" lines to "folded" and the rest back into "lineBuffer".
+    LineBuffer *folded = [[LineBuffer alloc] init];
+    mark.foldedText = folded;
+    int n = numberOfLinesToFold;
+    for (int i = 0; i < lines.count; i++, n--) {
+        iTermLine *line = lines[i];
+        LineBuffer *destination = (n >= 0) ? folded : linebuffer_;
+        [destination appendLine:(screen_char_t *)line.line.bytes
+                         length:[currentGrid_ lengthOfLine:(screen_char_t *)line.line.bytes]
+                        partial:line.partial
+                          width:self.width
+                      timestamp:line.timestamp
+                   continuation:line.continuation];
+    }
+
+    // Pop the remainder back onto the screen.
+    [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
+                              withDefaultChar:[currentGrid_ defaultChar]
+                            maxLinesToRestore:self.height];
+
+}
+
+- (void)textViewUnfoldLinesInMark:(VT100ScreenMark *)mark {
+    // TODO: restore marks, adjust mark intervals, etc., and nuke selection.
+    if (!mark.foldedText) {
+        NSLog(@"Mark has no folded lines");
+        return;
+    }
+
+    // Push the screen contents.
+    [self appendScreen:currentGrid_
+          toScrollback:linebuffer_
+        withUsedHeight:self.height
+             newHeight:self.height];
+
+    // Pop everything up to the mark
+    VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
+    NSArray *lines = [self poppedLinesFromLineNumber:range.start.y];
+
+    // Append folded lines
+    int n = [mark.foldedText numLinesWithWidth:self.width];
+    for (int i = 0; i < n; i++) {
+        ScreenCharArray *chars = [mark.foldedText wrappedLineAtIndex:i width:self.width];
+        [linebuffer_ appendLine:chars.line
+                         length:chars.length
+                        partial:chars.eol != EOL_HARD
+                          width:self.width
+                      timestamp:[mark.foldedText timestampForLineNumber:i width:self.width]
+                   continuation:[mark.foldedText continuationForLineNumber:i width:self.width]];
+    }
+
+    // Append the rest of the lines to the line buffer.
+    for (iTermLine *line in lines) {
+        [linebuffer_ appendLine:(screen_char_t *)line.line.bytes
+                         length:[currentGrid_ lengthOfLine:(screen_char_t *)line.line.bytes]
+                        partial:line.partial
+                          width:self.width
+                      timestamp:line.timestamp
+                   continuation:line.continuation];
+    }
+
+    // Repopulate the screen.
+    [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
+                              withDefaultChar:[currentGrid_ defaultChar]
+                            maxLinesToRestore:self.height];
 }
 
 #pragma mark - VT100TerminalDelegate

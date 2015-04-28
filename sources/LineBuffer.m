@@ -355,8 +355,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width
-{
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width {
     int line = lineNum;
     int i;
     for (i = 0; i < [blocks count]; ++i) {
@@ -375,6 +374,29 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         return [block timestampForLineNumber:line width:width];
     }
     return 0;
+}
+
+- (screen_char_t)continuationForLineNumber:(int)lineNum width:(int)width {
+    int line = lineNum;
+    int i;
+    for (i = 0; i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        NSAssert(block, @"Null block");
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines <= line) {
+            line -= block_lines;
+            continue;
+        }
+
+        return [block continuationForLineNumber:line width:width];
+    }
+
+    screen_char_t sct = { 0 };
+    return sct;
 }
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only

@@ -11,6 +11,7 @@
 
 @class CapturedOutput;
 @protocol iTermMark;
+@class LineBuffer;
 
 @protocol iTermMarkDelegate
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark;
@@ -53,6 +54,10 @@
 // Visible marks that can be navigated.
 @interface VT100ScreenMark : iTermMark
 @property(nonatomic, assign) BOOL isPrompt;
+
+// If a chunk of code was hidden into this mark, this stores it.
+@property(nonatomic, retain) LineBuffer *foldedText;
+
 @end
 
 // Invisible marks used for keep track of the location of captured output.

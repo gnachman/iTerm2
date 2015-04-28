@@ -86,6 +86,7 @@
 
 // Number of used chars in line at lineNumber.
 - (int)lengthOfLineNumber:(int)lineNumber;
+- (int)lengthOfLine:(screen_char_t *)line;
 
 // Advances the cursor down one line and scrolls the screen, or part of the screen, if necessary.
 // Returns the number of lines dropped from lineBuffer. lineBuffer may be nil. If a scroll region is

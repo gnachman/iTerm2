@@ -110,4 +110,7 @@
 // is YES, of course).
 - (BOOL)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 
+- (void)textViewFoldLines:(int)numberOfLines intoMark:(VT100ScreenMark *)mark;
+- (void)textViewUnfoldLinesInMark:(VT100ScreenMark *)mark;
+
 @end

@@ -3634,7 +3634,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action] == @selector(reRunCommand:)) {
         return YES;
     }
-    if ([item action] == @selector(selectCommandOutput:)) {
+    if ([item action] == @selector(selectCommandOutput:) ||
+        [item action] == @selector(toggleHideCommandOutput:)) {
         return [_dataSource textViewRangeOfOutputForCommandMark:[item representedObject]].start.x != -1;
     }
     if ([item action] == @selector(pasteBase64Encoded:)) {
@@ -3915,6 +3916,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (void)toggleHideCommandOutput:(id)sender {
+    VT100ScreenMark *mark = [sender representedObject];
+    if (mark.foldedText) {
+        [_dataSource textViewUnfoldLinesInMark:mark];
+    } else {
+        VT100GridCoordRange range = [_dataSource textViewRangeOfOutputForCommandMark:mark];
+        if (range.start.x == -1) {
+            NSBeep();
+            return;
+        }
+        // Subtract one because this doesn't fold the first line in the range.
+        // TODO: Handle multi-line prompts more nicely.
+        [_dataSource textViewFoldLines:range.end.y - range.start.y - 1 intoMark:mark];
+    }
+}
+
 - (NSMenu *)menuForMark:(VT100ScreenMark *)mark directory:(NSString *)directory
 {
     NSMenu *theMenu;
@@ -3968,6 +3985,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     theItem = [[[NSMenuItem alloc] initWithTitle:@"Select Command Output"
                                           action:@selector(selectCommandOutput:)
+                                   keyEquivalent:@""] autorelease];
+    [theItem setRepresentedObject:mark];
+    [theMenu addItem:theItem];
+
+    NSString *title = mark.foldedText ? @"Show Command Output" : @"Hide Command Output";
+    theItem = [[[NSMenuItem alloc] initWithTitle:title
+                                          action:@selector(toggleHideCommandOutput:)
                                    keyEquivalent:@""] autorelease];
     [theItem setRepresentedObject:mark];
     [theMenu addItem:theItem];

@@ -365,8 +365,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
     }
 }
 
-- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width
-{
+- (LineBlockMetadata *)metadataForLineNumber:(int)lineNum width:(int)width {
     int prev = 0;
     int length;
     int i;
@@ -382,11 +381,30 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             int consume = spans + 1;
             lineNum -= consume;
         } else {  // *lineNum <= spans
-            return metadata_[i].timestamp;
+            return &metadata_[i];
         }
         prev = cll;
     }
-    return 0;
+    return nil;
+}
+
+- (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width {
+    LineBlockMetadata *metadata = [self metadataForLineNumber:lineNum width:width];
+    if (metadata) {
+        return metadata->timestamp;
+    } else {
+        return 0;
+    }
+}
+
+- (screen_char_t)continuationForLineNumber:(int)lineNum width:(int)width {
+    LineBlockMetadata *metadata = [self metadataForLineNumber:lineNum width:width];
+    if (metadata) {
+        return metadata->continuation;
+    } else {
+        screen_char_t sct = { 0 };
+        return sct;
+    }
 }
 
 - (screen_char_t*)getWrappedLineWithWrapWidth:(int)width

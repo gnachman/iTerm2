@@ -57,6 +57,12 @@
 @end
 
 @implementation VT100ScreenMark
+
+- (void)dealloc {
+    [_foldedText release];
+    [super dealloc];
+}
+
 @end
 
 @implementation iTermCapturedOutputMark
