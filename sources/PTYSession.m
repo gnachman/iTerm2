@@ -6092,6 +6092,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (range.start.x == -1) {
         return nil;
     }
+    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
+    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
+    // without bound. We'll limit the length of a command to avoid performance problems.
+    const int kMaxLines = 50;
+    if (range.end.y - range.start.y > kMaxLines) {
+        range.end.y = range.start.y + kMaxLines;
+    }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
     NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
                                        nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
