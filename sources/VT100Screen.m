@@ -3483,7 +3483,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         return VT100GridCoordRangeMake(-1, -1, -1, -1);
     } else {
         return VT100GridCoordRangeMake(commandStartX_,
-                                       commandStartY_ - offset,
+                                       MAX(0, commandStartY_ - offset),
                                        currentGrid_.cursorX,
                                        currentGrid_.cursorY + [self numberOfScrollbackLines]);
     }

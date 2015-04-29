@@ -815,6 +815,9 @@ static const int kNumCharsToSearchForDivider = 8;
 // A tab filler orphan is a tab filler that is followed by a tab filler orphan or a
 // non-tab character.
 - (NSIndexSet *)tabFillerOrphansOnRow:(int)row {
+    if (row < 0) {
+        return nil;
+    }
     NSMutableIndexSet *orphans = [NSMutableIndexSet indexSet];
     screen_char_t *line = [_dataSource getLineAtIndex:row];
     if (!line) {
