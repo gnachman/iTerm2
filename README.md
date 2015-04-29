@@ -1,2 +1,4 @@
-This site hosts code for <a href="http://iterm2.com">iTerm2</a>. Issues are still on <a href="http://iterm2.com/bugs">Google Code</a> because Github doesn't support attachments.
+This site hosts code for <a href="https://iterm2.com">iTerm2</a>.
+
+<a href="https://iterm2.com/bugs">File a bug report here!</a> Issues are on <a href="https://gitlab.com/gnachman/iterm2/issues">Gitlab</a> because Github doesn't support issue attachments.
 

@@ -2025,22 +2025,6 @@ static const int kDragThreshold = 3;
     [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
-- (BOOL)reportingMouseClicks {
-    if ([self xtermMouseReporting]) {
-        VT100Terminal *terminal = [_dataSource terminal];
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_NORMAL:
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                return YES;
-
-            default:
-                break;
-        }
-    }
-    return NO;
-}
-
 - (BOOL)canOpenURL:(NSString *)aURLString onLine:(int)line {
     // A URL is openable if Semantic History can handle it or if it looks enough like a web URL to
     // pass muster.
@@ -4168,8 +4152,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
-- (void)browse:(id)sender
-{
+- (void)browse:(id)sender {
     [self _findUrlInString:[self selectedText]
           andOpenInBackground:NO];
 }
@@ -5738,28 +5721,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // No luck.
         return NSDragOperationNone;
     }
-}
-
-- (void)_openSemanticHistoryForUrl:(NSString *)aURLString
-                            atLine:(long long)line
-                      inBackground:(BOOL)background
-                            prefix:(NSString *)prefix
-                            suffix:(NSString *)suffix
-{
-    NSString* trimmedURLString;
-
-    trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-
-    NSString *workingDirectory = [_dataSource workingDirectoryOnLine:line];
-    if (![self openSemanticHistoryPath:trimmedURLString
-                      workingDirectory:workingDirectory
-                                prefix:prefix
-                                suffix:suffix]) {
-        [self _findUrlInString:aURLString
-              andOpenInBackground:background];
-    }
-
-    return;
 }
 
 // Opens a URL in the default browser in background or foreground

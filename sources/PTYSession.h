@@ -334,12 +334,13 @@ typedef enum {
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType
-              forceUseOldCWD:(BOOL)forceUseOldCWD;
+              forceUseOldCWD:(BOOL)forceUseOldCWD
+               substitutions:(NSDictionary *)substituions;
 
 - (void)startProgram:(NSString *)program
-           arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
-              isUTF8:(BOOL)isUTF8;
+              isUTF8:(BOOL)isUTF8
+       substitutions:(NSDictionary *)substitutions;
 
 - (void)softTerminate;
 - (void)terminate;

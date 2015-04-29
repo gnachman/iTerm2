@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6206.8" systemVersion="13E28" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1050" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6206.8"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PseudoTerminal">
@@ -22,55 +22,38 @@
         <window title="Session Parameter" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="351" userLabel="Session Parameter" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="491" y="651" width="347" height="122"/>
+            <rect key="contentRect" x="491" y="651" width="347" height="116"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1280" height="832"/>
             <value key="minSize" type="size" width="213" height="107"/>
             <view key="contentView" id="352">
-                <rect key="frame" x="0.0" y="0.0" width="347" height="122"/>
+                <rect key="frame" x="0.0" y="5" width="347" height="116"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField verticalHuggingPriority="750" id="354">
-                        <rect key="frame" x="107" y="48" width="220" height="22"/>
+                        <rect key="frame" x="107" y="49" width="220" height="22"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="372">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
-                        <connections>
-                            <outlet property="nextKeyView" destination="356" id="530"/>
-                        </connections>
                     </textField>
-                    <button verticalHuggingPriority="750" id="356">
-                        <rect key="frame" x="110" y="12" width="117" height="32"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="374">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                            <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                        </buttonCell>
-                        <connections>
-                            <action selector="parameterPanelEnd:" target="-2" id="359"/>
-                        </connections>
-                    </button>
                     <textField verticalHuggingPriority="750" id="355">
-                        <rect key="frame" x="104" y="98" width="247" height="17"/>
+                        <rect key="frame" x="104" y="79" width="119" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="This session requires you to enter:" id="373">
+                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Enter the value for " id="373">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
                     <imageView id="357">
-                        <rect key="frame" x="20" y="38" width="79" height="77"/>
+                        <rect key="frame" x="20" y="32" width="79" height="77"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="iTerm2" id="375"/>
                     </imageView>
                     <textField verticalHuggingPriority="750" id="353">
-                        <rect key="frame" x="104" y="78" width="226" height="19"/>
+                        <rect key="frame" x="220" y="79" width="109" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Name" id="371">
                             <font key="font" metaFont="system"/>
@@ -78,11 +61,40 @@ DQ
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
+                    <button verticalHuggingPriority="750" id="EmK-eB-jqr">
+                        <rect key="frame" x="167" y="13" width="83" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Psw-4i-Kfp">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="parameterPanelEnd:" target="-2" id="MZU-S8-RjZ"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" tag="1" id="gZv-eU-Fkp">
+                        <rect key="frame" x="250" y="13" width="83" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="i9z-HT-tqx">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="parameterPanelEnd:" target="-2" id="fuU-px-Qy1"/>
+                        </connections>
+                    </button>
                 </subviews>
             </view>
             <connections>
                 <outlet property="initialFirstResponder" destination="354" id="531"/>
             </connections>
+            <point key="canvasLocation" x="305.5" y="280"/>
         </window>
         <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" visibleAtLaunch="NO" appearanceType="aqua" animationBehavior="default" id="514">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>

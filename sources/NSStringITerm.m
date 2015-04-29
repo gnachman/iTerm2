@@ -1070,6 +1070,18 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substituions {
+    NSMutableString *temp = [[self mutableCopy] autorelease];
+    for (NSString *original in substituions) {
+        NSString *replacement = substituions[original];
+        [temp replaceOccurrencesOfString:original
+                              withString:replacement
+                                 options:NSLiteralSearch
+                                   range:NSMakeRange(0, temp.length)];
+    }
+    return temp;
+}
+
 // Replace substrings like \(foo) or \1...\9 with the value of vars[@"foo"] or vars[@"1"].
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars {
     unichar *chars = (unichar *)malloc(self.length * sizeof(unichar));
@@ -1201,6 +1213,19 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 - (NSString *)stringByReplacingControlCharsWithQuestionMark {
     return [self stringByReplacingOccurrencesOfRegex:@"[\x00-\x1f\x7f]" withString:@"?"];
+}
+
+- (NSSet *)doubleDollarVariables {
+    NSMutableSet *set = [NSMutableSet set];
+    [self enumerateStringsMatchedByRegex:@"\\$\\$(.*?)\\$\\$"
+                                 options:RKLNoOptions
+                                 inRange:NSMakeRange(0, self.length)
+                                   error:nil
+                      enumerationOptions:RKLRegexEnumerationNoOptions
+                              usingBlock:^(NSInteger captureCount, NSString *const *capturedStrings, const NSRange *capturedRanges, volatile BOOL *const stop) {
+                                  [set addObject:[[capturedStrings[0] copy] autorelease]];
+                              }];
+    return set;
 }
 
 @end

@@ -43,21 +43,11 @@
 
     // Get the command's arguments:
     NSDictionary *args = [aCommand evaluatedArguments];
-    NSString *command = [args objectForKey:@"command"];
-    BOOL isUTF8 = [[args objectForKey:@"isUTF8"] boolValue];
 
-    NSString *cmd;
-    NSArray *arg;
-
-    NSArray *components = [command componentsInShellCommand];
-    if (components.count > 0) {
-        cmd = components[0];
-        arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
-    } else {
-        cmd = command;
-        arg = @[];
-    }
-    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8];
+    [self startProgram:args[@"command"]
+           environment:@{}
+                isUTF8:[args[@"isUTF8"] boolValue]
+         substitutions:nil];
 
     return;
 }

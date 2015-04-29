@@ -103,6 +103,7 @@ static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title
 static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
+static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
@@ -143,9 +144,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // Info about what happens when the program is run so it can be restarted after
 // a broken pipe if the user so chooses.
 @property(nonatomic, copy) NSString *program;
-@property(nonatomic, copy) NSArray *arguments;
 @property(nonatomic, copy) NSDictionary *environment;
 @property(nonatomic, assign) BOOL isUTF8;
+@property(nonatomic, copy) NSDictionary *substitutions;
 @property(nonatomic, copy) NSString *guid;
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
@@ -446,7 +447,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_badgeFormat release];
     [_variables release];
     [_program release];
-    [_arguments release];
     [_environment release];
     [_commands release];
     [_directories release];
@@ -454,6 +454,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_bellRate release];
     [_guid release];
     [_lastCommand release];
+    [_substitutions release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -673,7 +674,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
         [aSession runCommandWithOldCwd:oldCWD
                          forObjectType:objectType
-                        forceUseOldCWD:contents != nil && oldCWD.length];
+                        forceUseOldCWD:contents != nil && oldCWD.length
+                         substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
 
         // GUID will be set for new saved arrangements since late 2014.
         // Older versions won't be able to associate saved state with windows from a saved arrangement.
@@ -866,38 +868,27 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType
-              forceUseOldCWD:(BOOL)forceUseOldCWD {
-    NSMutableString *cmd;
-    NSArray *arg;
+              forceUseOldCWD:(BOOL)forceUseOldCWD
+               substitutions:(NSDictionary *)substitutions {
     NSString *pwd;
     BOOL isUTF8;
 
     // Grab the addressbook command
-    Profile* addressbookEntry = [self profile];
-    Profile *profileForComputingCommand = addressbookEntry;
+    Profile* profile = [self profile];
+    Profile *profileForComputingCommand = profile;
     if (forceUseOldCWD) {
-        NSMutableDictionary *hackedProfile = [[addressbookEntry mutableCopy] autorelease];
-        hackedProfile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
-        profileForComputingCommand = hackedProfile;
+        NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
+        temp[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
+        profileForComputingCommand = temp;
     }
-    cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:profileForComputingCommand
-                                                                       forObjectType:objectType]] autorelease];
-    NSMutableString* theName = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
-    // Get session parameters
-    [[[self tab] realParentWindow] getSessionParameters:cmd withName:theName];
-
-    NSArray *components = [cmd componentsInShellCommand];
-    if (components.count > 0) {
-        cmd = components[0];
-        arg = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
-    } else {
-        arg = @[];
-    }
+    NSString *cmd = [ITAddressBookMgr bookmarkCommand:profileForComputingCommand
+                                        forObjectType:objectType];
+    NSString *theName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
 
     if (forceUseOldCWD) {
         pwd = oldCWD;
     } else {
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile
                                            forObjectType:objectType];
     }
     if ([pwd length] == 0) {
@@ -907,13 +898,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             pwd = NSHomeDirectory();
         }
     }
-    NSDictionary *env = [NSDictionary dictionaryWithObject:pwd forKey:@"PWD"];
-    isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+    isUTF8 = ([profile[KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
 
     [[[self tab] realParentWindow] setName:theName forSession:self];
 
     // Start the command
-    [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
+    [self startProgram:cmd
+           environment:@{ @"PWD": pwd }
+                isUTF8:isUTF8
+         substitutions:substitutions];
 }
 
 - (void)setWidth:(int)width height:(int)height
@@ -1022,14 +1015,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return ![iTermAdvancedSettingsModel doNotSetCtype];
 }
 
-- (void)startProgram:(NSString *)program
-           arguments:(NSArray *)arguments
+- (void)startProgram:(NSString *)command
          environment:(NSDictionary *)environment
-              isUTF8:(BOOL)isUTF8 {
-    self.program = program;
-    self.arguments = arguments;
+              isUTF8:(BOOL)isUTF8
+       substitutions:(NSDictionary *)substitutions {
+    self.program = command;
     self.environment = environment;
     self.isUTF8 = isUTF8;
+    self.substitutions = substitutions;
+
+    NSString *program = [command stringByPerformingSubstitutions:substitutions];
+    NSArray *components = [program componentsInShellCommand];
+    NSArray *arguments;
+    if (components.count > 0) {
+        program = components[0];
+        arguments = [components subarrayWithRange:NSMakeRange(1, components.count - 1)];
+    } else {
+        arguments = @[];
+    }
 
     NSMutableDictionary *env = [NSMutableDictionary dictionaryWithDictionary:environment];
 
@@ -1072,13 +1075,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                          [_tab indexOfSessionView:[self view]]];
     env[@"ITERM_SESSION_ID"] = itermId;
     if (_profile[KEY_NAME]) {
-        env[@"ITERM_PROFILE"] = _profile[KEY_NAME];
+        env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
         [_shell loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
     }
-    [_shell launchWithPath:_program
-                 arguments:_arguments
+    [_shell launchWithPath:program
+                 arguments:arguments
                environment:env
                      width:[_screen width]
                     height:[_screen height]
@@ -1676,9 +1679,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_shell setWidth:_screen.width
               height:_screen.height];
     [self startProgram:_program
-             arguments:_arguments
            environment:_environment
-                isUTF8:_isUTF8];
+                isUTF8:_isUTF8
+         substitutions:_substitutions];
 }
 
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle
@@ -2882,6 +2885,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
+    if (_substitutions) {
+        result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
+    }
     if (_name) {
         result[SESSION_ARRANGEMENT_NAME] = _name;
     }

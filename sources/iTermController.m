@@ -287,7 +287,7 @@ static BOOL initDone = NO;
     keyWindowIndexMemo_ = i;
 }
 
-- (void)newSessionInWindowAtIndex:(id) sender
+- (void)newSessionInWindowAtIndex:(id)sender
 {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
@@ -300,8 +300,7 @@ static BOOL initDone = NO;
 {
 }
 
-- (IBAction)newSessionWithSameProfile:(id)sender
-{
+- (void)newSessionWithSameProfile:(id)sender {
     Profile *bookmark = nil;
     if (FRONT) {
         bookmark = [[FRONT currentSession] profile];
@@ -309,17 +308,11 @@ static BOOL initDone = NO;
     [self launchBookmark:bookmark inTerminal:FRONT];
 }
 
-- (IBAction)newSession:(id)sender
-{
-    DLog(@"iTermController newSession:");
-    [self newSession:sender possiblyTmux:NO];
-}
-
 // Launch a new session using the default profile. If the current session is
 // tmux and possiblyTmux is true, open a new tmux session.
-- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux
-{
-    DLog(@"newSession:%@ possiblyTmux:%d from %@", sender, (int)possiblyTmux, [NSThread callStackSymbols]);
+- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux {
+    DLog(@"newSession:%@ possiblyTmux:%d from %@",
+         sender, (int)possiblyTmux, [NSThread callStackSymbols]);
     if (possiblyTmux &&
         FRONT &&
         [[FRONT currentSession] isTmuxClient]) {
@@ -835,26 +828,6 @@ static BOOL initDone = NO;
     }
 }
 
-- (void)_newSessionsInManyWindowsInMenu:(NSMenu*)parent
-{
-    for (NSMenuItem* item in [parent itemArray]) {
-        if (![item isSeparatorItem] && ![item submenu]) {
-            NSString* guid = [item representedObject];
-            Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-            if (bookmark) {
-                [self launchBookmark:bookmark inTerminal:nil];
-            }
-        } else if (![item isSeparatorItem] && [item submenu]) {
-            [self _newSessionsInManyWindowsInMenu:[item submenu]];
-        }
-    }
-}
-
-- (void)newSessionsInManyWindows:(id)sender
-{
-    [self _newSessionsInManyWindowsInMenu:[sender menu]];
-}
-
 - (PseudoTerminal *)terminalWithTab:(PTYTab *)tab
 {
     for (PseudoTerminal *term in [self terminals]) {
@@ -908,7 +881,9 @@ static BOOL initDone = NO;
     for (Profile* bookmark in bookmarks) {
         if (!term) {
             PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
-            term = [self terminalWithSession:session];
+            if (session) {
+                term = [self terminalWithSession:session];
+            }
         } else {
             [self launchBookmark:bookmark inTerminal:term];
         }
@@ -979,14 +954,6 @@ static BOOL initDone = NO;
                  params:&params
                   atPos:i];
     }
-}
-
-- (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt
-{
-    [self addBookmarksToMenu:aMenu
-                withSelector:@selector(newSessionInTabAtIndex:)
-             openAllSelector:@selector(newSessionsInWindow:)
-                  startingAt:startingAt];
 }
 
 - (void)irAdvance:(int)dir
@@ -1208,6 +1175,11 @@ static BOOL initDone = NO;
     } else {
         session = [term createTabWithProfile:aDict withCommand:command];
     }
+    if (!session && term.numberOfTabs == 0) {
+        [[term window] close];
+        return nil;
+    }
+
     if (toggle) {
         [term delayedEnterFullscreen];
     }
