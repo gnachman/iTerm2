@@ -44,11 +44,16 @@ DebugLog([NSString stringWithFormat:args]); \
 } while (0)
 #endif
 
-@interface PopupEntry()
-@property(nonatomic, retain) NSString *truncatedValue;
-@end
-
 @implementation PopupEntry
+
+- (void)setTruncatedValue:(NSString *)truncatedValue {
+    [_truncatedValue autorelease];
+    _truncatedValue = [truncatedValue retain];
+}
+
+- (NSString *)truncatedValue {
+    return _truncatedValue;
+}
 
 - (void)_setDefaultValues
 {
@@ -72,7 +77,7 @@ DebugLog([NSString stringWithFormat:args]); \
 - (void)dealloc {
     [s_ release];
     [prefix_ release];
-    [self.truncatedValue release];
+    [_truncatedValue release];
     [super dealloc];
 }
 
