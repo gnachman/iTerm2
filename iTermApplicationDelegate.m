@@ -1232,9 +1232,9 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
     NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", [myDict objectForKey:@"CFBundleVersion"]];
 
-    NSAttributedString *webAString = [self _linkTo:@"http://iterm2.com/" title:@"Home Page\n"];
-    NSAttributedString *bugsAString = [self _linkTo:@"http://code.google.com/p/iterm2/issues/entry" title:@"Report a bug\n\n"];
-    NSAttributedString *creditsAString = [self _linkTo:@"http://code.google.com/p/iterm2/wiki/Credits" title:@"Credits"];
+    NSAttributedString *webAString = [self _linkTo:@"https://iterm2.com/" title:@"Home Page\n"];
+    NSAttributedString *bugsAString = [self _linkTo:@"https://iterm2.com/bugs" title:@"Report a bug\n\n"];
+    NSAttributedString *creditsAString = [self _linkTo:@"https://iterm2.com/credits" title:@"Credits"];
 
     NSDictionary *linkTextViewAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
         [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
