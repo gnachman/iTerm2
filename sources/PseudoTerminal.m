@@ -243,6 +243,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     BOOL lionFullScreen_;
 
     // Toolbelt view. Goes on the right side of the terminal window, if visible.
+    NSScrollView *toolbeltContainer_;
     ToolbeltView *toolbelt_;
 
     IBOutlet NSPanel *coprocesssPanel_;
@@ -669,10 +670,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                       0,
                                       floor(toolbeltWidth_),
                                       self.window.frame.size.height - kToolbeltMargin);
-    toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
-                                                term:self] autorelease];
-    toolbelt_.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
-    [[self.window contentView] addSubview:toolbelt_];
+    ToolbeltView *toolbeltView = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
+                                                                 term:self] autorelease];
+
+    toolbeltContainer_ = [[[NSScrollView alloc] initWithFrame:toolbeltFrame] autorelease];
+    toolbeltContainer_.documentView = toolbeltView;
+    toolbelt_ = toolbeltView;
+    toolbeltContainer_.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
+    [[self.window contentView] addSubview:toolbeltContainer_];
     [self updateToolbelt];
 
     hidingToolbeltShouldResizeWindow_ = NO;
@@ -843,7 +848,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     shouldShowToolbelt_ = !shouldShowToolbelt_;
     BOOL didResizeWindow = NO;
     if ([self shouldShowToolbelt]) {
-        [toolbelt_ setHidden:NO];
+        [toolbeltContainer_ setHidden:NO];
 
         if (![self anyFullScreen]) {
             [self constrainToolbeltWidth];
@@ -872,7 +877,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         [self refreshTools];
     } else {
-        [toolbelt_ setHidden:YES];
+        [toolbeltContainer_ setHidden:YES];
         if (![self anyFullScreen] && hidingToolbeltShouldResizeWindow_) {
             NSRect windowFrame = self.window.frame;
             windowFrame.size.width -= toolbeltWidth_;
@@ -2642,7 +2647,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             break;
     }
 
-    [toolbelt_ setFrame:[self toolbeltFrame]];
+    [toolbeltContainer_ setFrame:[self toolbeltFrame]];
 }
 
 - (void)screenParametersDidChange
@@ -3020,7 +3025,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self invalidateRestorableState];
 
     // If the toolbelt changed size by autoresizing, keep things in sync.
-    toolbeltWidth_ = toolbelt_.frame.size.width;
+    toolbeltWidth_ = toolbeltContainer_.frame.size.width;
 }
 
 - (void)updateUseTransparency {
@@ -3231,7 +3236,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [self hideMenuBar];
     }
 
-    [toolbelt_ setHidden:![self shouldShowToolbelt]];
+    [toolbeltContainer_ setHidden:![self shouldShowToolbelt]];
     // The toolbelt may try to become the first responder.
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 
@@ -3240,7 +3245,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // and fit the window to an imaginary session of that size.
         NSSize contentSize = [[[self window] contentView] frame].size;
         if ([self shouldShowToolbelt]) {
-            contentSize.width -= toolbelt_.frame.size.width;
+            contentSize.width -= toolbeltContainer_.frame.size.width;
         }
         if ([self tabBarShouldBeVisible]) {
             switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
@@ -6023,7 +6028,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     if (showToolbeltInline) {
         DLog(@"Set toolbelt frame to %@", NSStringFromRect([self toolbeltFrame]));
         [self constrainToolbeltWidth];
-        [toolbelt_ setFrame:[self toolbeltFrame]];
+        [toolbeltContainer_ setFrame:[self toolbeltFrame]];
+        [toolbelt_ update];
     }
 
     // Update the tab style.
@@ -6477,7 +6483,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
-        [item setState:toolbelt_.isHidden ? NSOffState : NSOnState];
+        [item setState:toolbeltContainer_.isHidden ? NSOffState : NSOnState];
         return [[ToolbeltView configuredTools] count] > 0;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
@@ -6881,8 +6887,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)updateToolbelt {
-    [toolbelt_ setFrame:[self toolbeltFrame]];
-    [toolbelt_ setHidden:![self shouldShowToolbelt]];
+    [toolbeltContainer_ setFrame:[self toolbeltFrame]];
+    [toolbeltContainer_ setHidden:![self shouldShowToolbelt]];
     [self repositionWidgets];
     [toolbelt_ relayoutAllTools];
 }

@@ -45,5 +45,6 @@ extern NSString *const kToolbeltShouldHide;
 - (ToolCapturedOutputView *)capturedOutputView;
 
 - (void)relayoutAllTools;
+- (void)update;
 
 @end

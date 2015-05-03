@@ -213,6 +213,47 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return [tools count];
 }
 
+- (void)update
+{
+    if (splitter_.frame.size.height > self.enclosingScrollView.documentVisibleRect.size.height) {
+        [self tryToShrinkSplitterToHeight:self.enclosingScrollView.documentVisibleRect.size.height];
+    }
+
+    NSRect frame = self.frame;
+    frame.size.height = 0;
+    for (ToolWrapper *tool in splitter_.subviews) {
+        frame.size.height += MAX(tool.minimumHeight, tool.frame.size.height);
+    }
+    frame.size.height = MAX(self.enclosingScrollView.frame.size.height,
+                            frame.size.height);
+    self.frame = frame;
+}
+
+- (void)tryToShrinkSplitterToHeight:(CGFloat)desiredHeight {
+    CGFloat totalHeight = 0;
+    CGFloat minimumHeight = 0;
+    for (ToolWrapper *tool in splitter_.subviews) {
+        totalHeight += tool.frame.size.height;
+        minimumHeight += tool.minimumHeight;
+    }
+    if (totalHeight > minimumHeight && totalHeight > desiredHeight) {
+        CGFloat shrinkageNeeded = totalHeight - desiredHeight;
+        for (ToolWrapper *tool in splitter_.subviews) {
+            CGFloat allowedShrinkage = tool.frame.size.height - tool.minimumHeight;
+            if (allowedShrinkage > 0) {
+                NSRect frame = tool.frame;
+                CGFloat shrinkage = MIN(allowedShrinkage, shrinkageNeeded);
+                frame.size.height -= shrinkage;
+                tool.frame = frame;
+                shrinkageNeeded -= shrinkage;
+            }
+            if (shrinkageNeeded == 0) {
+                break;
+            }
+        }
+    }
+}
+
 - (void)forceSplitterSubviewsToRespectSizeConstraints
 {
     NSArray *subviews = [splitter_ subviews];
@@ -249,6 +290,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
                 // errors.
                 frame.size.height = splitter_.frame.size.height - y;
             }
+            frame.size.height = MAX(wrapper.minimumHeight, frame.size.height);
             wrapper.frame = frame;
             y += frame.size.height + [splitter_ dividerThickness];
         }
@@ -266,7 +308,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     } else {
         [self addToolWithName:theName];
     }
-    [self forceSplitterSubviewsToRespectSizeConstraints];
+    [self update];
 }
 
 - (BOOL)showingToolWithName:(NSString *)theName
@@ -293,6 +335,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
     [wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [theTool setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    [self update];
     [splitter_ adjustSubviews];
     [tools_ setObject:wrapper forKey:[[wrapper.name copy] autorelease]];
 }
