@@ -290,7 +290,34 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // Should the toolbelt be visible?
     BOOL shouldShowToolbelt_;
 
+#if ENABLE_SHORTCUT_ACCESSORY
+    // This thing is a freaking horror show, and it's what people are talking about when they say
+    // that software quality has declined in OS X.
+    //
+    // OS 10.10 added a barely documented API to add an accessory view to the title bar (it's
+    // mentioned in the release notes and public header files and methods exist, but that's it).
+    // It creates auto layout constraints in the title bar. For some reason, that causes EVERYTHING
+    // to get auto layout. Autoresizing masks become constraints throughout the window. This does
+    // not work well, in particular with the toolbelt. The toolbelt is designed to allow the window
+    // to be too short to show all its contents, in which case some tools will get partially or
+    // completely clipped. When auto layout is used, the window is prevented from being shorter than
+    // the sum of the tools' minimum heights. This is especially bad when you create a tmux window,
+    // because then you get a gray bar on the bottom where the window's height exceeds the content's
+    // height, simply because you have a (possibly invisible!) toolbelt that can't shrink. But it
+    // gets worse. I wrote a replacement NSSplitView that collapses tools when they don't fit. Auto
+    // layout is so broken that it lags when the window or toolbelt is resized. Sometimes it catches
+    // up when the drag is done, and sometimes it just leaves things in a broken state. I tried
+    // removing auto layout from the toolbelt by setting translatesAutoresizingMaskIntoConstraints
+    // to NO, but it's not enough to set that on ToolbeltView. In fact, it's not enough to set it on
+    // every view that I create within the toolbelt. If any view anywhere in the view hierarchy in
+    // the toolbelt has a constraint, the whole thing gets broken and laggy on resize. For example,
+    // a table view will create various internal subviews. Those will end up with auto layout
+    // constraints. There's no (sane) way for me to set translatesAutoresizingMaskIntoConstraints on
+    // them to prevent the viral spread of auto layout garbage. So for now, the toolbelt hangs on to
+    // life because it remains possible to have no auto-layout as long as you don't use title bar
+    // accessories. To see the whole mess, check out the clusterfuck[123] branches.
     iTermWindowShortcutLabelTitlebarAccessoryViewController *_shortcutAccessoryViewController;
+#endif
 
     // Is there a pending delayed-perform of enterFullScreen:? Used to figure
     // out if it's safe to toggle Lion full screen since only one can go at a time.
@@ -686,6 +713,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
     self.terminalGuid = [NSString stringWithFormat:@"pty-%@", [NSString uuid]];
 
+#if ENABLE_SHORTCUT_ACCESSORY
     if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)]) {
         _shortcutAccessoryViewController =
             [[iTermWindowShortcutLabelTitlebarAccessoryViewController alloc] initWithNibName:@"iTermWindowShortcutAccessoryView"
@@ -696,6 +724,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [self updateWindowNumberVisibility:nil];
     }
     _shortcutAccessoryViewController.ordinal = number_ + 1;
+#endif
 }
 
 - (void)finishToolbeltInitialization {
@@ -754,7 +783,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [_terminalGuid release];
     [lastArrangement_ release];
     [_divisionView release];
+#if ENABLE_SHORTCUT_ACCESSORY
     [_shortcutAccessoryViewController release];
+#endif
     [super dealloc];
 }
 
@@ -1462,10 +1493,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                       [[[self currentSession] tmuxController] clientName]];
         }
         NSString *windowNumber = @"";
+#if ENABLE_SHORTCUT_ACCESSORY
         if (!_shortcutAccessoryViewController ||
             !(self.window.styleMask & NSTitledWindowMask)) {
             windowNumber = [NSString stringWithFormat:@"%d. ", number_ + 1];
         }
+#else
+        if (self.window.styleMask & NSTitledWindowMask) {
+            windowNumber = [NSString stringWithFormat:@"%d. ", number_ + 1];
+        }
+#endif
         title = [NSString stringWithFormat:@"%@%@%@", windowNumber, title, tmuxId];
     }
 
@@ -2340,7 +2377,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
+#if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
+#endif
     if (!_isHotKeyWindow) {
         [self maybeHideHotkeyWindow];
     }
@@ -2762,11 +2801,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)windowDidBecomeMain:(NSNotification *)notification {
+#if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
+#endif
 }
 
 - (void)windowDidResignMain:(NSNotification *)aNotification {
+#if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = NO;
+#endif
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
     [self maybeHideHotkeyWindow];
@@ -3177,9 +3220,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         oldFrame_ = self.window.frame;
         oldFrameSizeIsBogus_ = NO;
         savedWindowType_ = windowType_;
+#if ENABLE_SHORTCUT_ACCESSORY
         if ([_shortcutAccessoryViewController respondsToSelector:@selector(removeFromParentViewController)]) {
             [_shortcutAccessoryViewController removeFromParentViewController];
         }
+#endif
         windowType_ = WINDOW_TYPE_TRADITIONAL_FULL_SCREEN;
         [self.window setOpaque:NO];
         self.window.alphaValue = 0;
@@ -3198,11 +3243,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             oldFrame_.size = [self preferredWindowFrameToPerfectlyFitCurrentSessionInInitialConfiguration];
         }
         [self.window setFrame:oldFrame_ display:YES];
+#if ENABLE_SHORTCUT_ACCESSORY
         if ([self.window respondsToSelector:@selector(addTitlebarAccessoryViewController:)] &&
             (self.window.styleMask & NSTitledWindowMask)) {
             [self.window addTitlebarAccessoryViewController:_shortcutAccessoryViewController];
             [self updateWindowNumberVisibility:nil];
         }
+#endif
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
     }
     [self.window setHasShadow:(windowType_ == WINDOW_TYPE_NORMAL)];
@@ -5124,7 +5171,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // windowDidResize would get called twice, and you literally couldn't set
     // the window to certain heights. It was related to this bugfix view,
     // somehow. Better not to have it and live with screwed up title colors.
+#if ENABLE_SHORTCUT_ACCESSORY
     if (!_shortcutAccessoryViewController) {
+#endif
         // Ok, so some silly things are happening here. Issue 2096 reported that
         // when a session-initiated resize grows a window, the window's background
         // color becomes almost solid (it's actually a very gentle gradient between
@@ -5141,7 +5190,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[[self window] contentView] addSubview:bugFixView];
         savedMask = TABVIEW.autoresizingMask;
         TABVIEW.autoresizingMask = 0;
+#if ENABLE_SHORTCUT_ACCESSORY
     }
+#endif
     // Set the frame for X-of-screen windows. The size doesn't change
     // for _PARTIAL window types.
     switch (windowType_) {
@@ -5594,12 +5645,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)updateWindowNumberVisibility:(NSNotification*)aNotification {
     // This is if displaying of window number was toggled in prefs.
+#if ENABLE_SHORTCUT_ACCESSORY
     if (_shortcutAccessoryViewController) {
         _shortcutAccessoryViewController.view.hidden = ![iTermPreferences boolForKey:kPreferenceKeyShowWindowNumber];
     } else {
         // Pre-10.10 code path
         [self setWindowTitle];
     }
+#else
+    [self setWindowTitle];
+#endif
 }
 
 - (void)_scrollerStyleChanged:(id)sender
