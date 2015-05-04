@@ -35,4 +35,5 @@
                  animations:(void (^)(void))animations
                  completion:(void (^)(BOOL finished))completion;
 
+- (void) swizzleExample;
 @end

@@ -75,6 +75,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 {
     self = [super initWithFrame:frame];
     if (self) {
+        self.translatesAutoresizingMaskIntoConstraints = NO;
         term_ = term;
 
         NSArray *items = [ToolbeltView configuredTools];
@@ -99,7 +100,6 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
         dragHandle_ = [[[iTermDragHandleView alloc] initWithFrame:NSMakeRect(0, 0, 3, frame.size.height)]
                        autorelease];
         dragHandle_.delegate = self;
-        dragHandle_.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
         [self addSubview:dragHandle_];
     }
     return self;
@@ -303,8 +303,17 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 }
 
 - (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
-    [splitter_ updateForHeight:self.frame.size.height];
     splitter_.frame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
+    [splitter_ updateForHeight:self.frame.size.height];
+    dragHandle_.frame = NSMakeRect(0, 0, 3, self.frame.size.height);
 }
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    splitter_.frame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
+    [splitter_ updateForHeight:self.frame.size.height];
+    NSLog(@"%@", [splitter_ iterm_recursiveDescription]);
+    dragHandle_.frame = NSMakeRect(0, 0, 3, self.frame.size.height);
+}
+
 
 @end

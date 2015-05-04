@@ -15,6 +15,7 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
+        self.translatesAutoresizingMaskIntoConstraints = NO;
         _vertical = YES;
     }
     return self;

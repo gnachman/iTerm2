@@ -197,6 +197,7 @@ static const CGFloat kMargin = 4;
         [self addSubview:signal_];
 
         scrollView_ = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
+        scrollView_.translatesAutoresizingMaskIntoConstraints = NO;
         [scrollView_ setHasVerticalScroller:YES];
         [scrollView_ setHasHorizontalScroller:NO];
         [scrollView_ setBorderType:NSBezelBorder];
@@ -226,14 +227,14 @@ static const CGFloat kMargin = 4;
         [tableView_ setDataSource:self];
         [tableView_ setDelegate:self];
 
-        [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+//        [tableView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
 
         [scrollView_ setDocumentView:tableView_];
         [self addSubview:scrollView_];
 
         [tableView_ sizeToFit];
-        [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
+//        [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         timerInterval_ = 1;
 

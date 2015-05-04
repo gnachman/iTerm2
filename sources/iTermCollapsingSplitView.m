@@ -60,6 +60,7 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
+        self.translatesAutoresizingMaskIntoConstraints = NO;
         _items = [[NSMutableArray alloc] init];
     }
     return self;
@@ -119,7 +120,10 @@
     NSMutableArray *collapsedItems = [NSMutableArray array];
 
     for (NSView<iTermCollapsingSplitViewItem> *item in _items) {
-        item.tempFrame = item.frame;
+        NSRect frame = item.frame;
+        frame.size.width = self.frame.size.width;
+        item.tempFrame = frame;
+
     }
 
     CGFloat availableHeight = height;
@@ -131,11 +135,11 @@
         [openItems removeLastObject];
     }
 
+    CGFloat beforeSize = [self heightOfItems:openItems];
     CGFloat numberOfDividers = openItems.count - 1;
-    if (collapsedItems.count == 0) {
+    if (collapsedItems.count == 0 && beforeSize > 0) {
 //        NSLog(@"XXX no collapsed items");
         // Everything fits, so try to keep sizes in proportion to their current sizes.
-        CGFloat beforeSize = [self heightOfItems:openItems];
         CGFloat growthCoefficient = (availableHeight - numberOfDividers * self.dividerThickness) / beforeSize;
 
 //        NSLog(@"XXX begin rescaling");
@@ -274,7 +278,7 @@
         NSView *subview = subviews[i];
         if ([subview conformsToProtocol:@protocol(iTermCollapsingSplitViewItem)]) {
             NSView<iTermCollapsingSplitViewItem> *desiredItem = desiredViews[i];
-            NSLog(@"Set frame of %@ to y=%@ height=%@", desiredItem.name, @(desiredItem.tempFrame.origin.y), @(desiredItem.tempFrame.size.height));
+            NSLog(@"Set frame of %@ to %@", subview, NSStringFromRect(desiredItem.tempFrame));
             subview.frame = desiredItem.tempFrame;
         } else {
             subview.frame = [desiredViews[i] frame];
@@ -368,6 +372,13 @@
     succeedingItem.frame = frame;
 
     return allowed;
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    if (newSize.width == 0) {
+        NSLog(@"WTF");
+    }
+    [super setFrameSize:newSize];
 }
 
 @end

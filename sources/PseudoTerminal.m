@@ -106,6 +106,31 @@ static const CGFloat kToolbeltMargin = 8;
 static const CGFloat kLeftTabsWidth = 150;
 static const CGFloat kHorizontalTabBarHeight = 22;
 
+@protocol iTermRootViewDelegate <NSObject>
+
+- (void)repositionWidgets;
+
+@end
+@interface iTermRootView : SolidColorView
+@property(nonatomic, assign) id<iTermRootViewDelegate> delegate;
+@end
+
+@implementation iTermRootView
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [_delegate repositionWidgets];
+}
+
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
+    [_delegate repositionWidgets];
+}
+
+- (void)layoutSubtreeIfNeeded {
+    [_delegate repositionWidgets];
+}
+
+@end
+
 @interface NSWindow (private)
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
@@ -117,7 +142,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 @implementation PseudoTerminal {
     NSPoint preferredOrigin_;
 
-    SolidColorView* background_;
+    iTermRootView *background_;
     ////////////////////////////////////////////////////////////////////////////
     // Parameter Panel
     // A bookmark may have metasyntactic variables like $$FOO$$ in the command.
@@ -333,7 +358,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (id)initWithWindowNibName:(NSString *)windowNibName {
-    self = [super initWithWindowNibName:windowNibName];
+    self = [super initWithWindowNibName:nil];
     if (self) {
         _autoCommandHistorySessionId = -1;
     }
@@ -357,8 +382,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                    screen:(int)screenNumber
                  isHotkey:(BOOL)isHotkey
 {
-    self = [self initWithWindowNibName:@"PseudoTerminal"];
-    NSAssert(self, @"initWithWindowNibName returned nil");
+    self = [self initWithWindow:[[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100)
+                                                             styleMask:0
+                                                               backing:NSBackingStoreBuffered
+                                                                 defer:NO] autorelease]];
     if (self) {
         [self finishInitializationWithSmartLayout:smartLayout
                                        windowType:windowType
@@ -381,8 +408,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
          screenNumber,
          isHotkey ? @"YES" : @"NO");
 
-    // Force the nib to load
-    [self window];
     if ((windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN ||
          windowType == WINDOW_TYPE_LION_FULL_SCREEN) &&
         screenNumber == -1) {
@@ -420,8 +445,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // is NORMAL.
         [self showMenuBar];
     }
-    // Force the nib to load
-    [self window];
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
 
@@ -541,7 +564,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [myWindow release];
 
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
-    background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
+    background_ = [[iTermRootView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
+    [background_ swizzleExample];
+    background_.translatesAutoresizingMaskIntoConstraints = NO;
+    background_.delegate = self;
     [[self window] setAlphaValue:1];
     [[self window] setOpaque:NO];
 

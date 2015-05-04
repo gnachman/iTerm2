@@ -34,10 +34,13 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 {
     self = [super initWithFrame:frame];
     if (self) {
+        self.translatesAutoresizingMaskIntoConstraints = NO;
+        self.autoresizesSubviews = NO;
         title_ = [[NSTextField alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin + kButtonSize,
                                                                0,
                                                                frame.size.width - kButtonSize - kRightMargin - kCloseButtonLeftMargin,
                                                                kTitleHeight)];
+        title_.translatesAutoresizingMaskIntoConstraints = NO;
         [title_ setEditable:NO];
         [title_ bind:@"value" toObject:self withKeyPath:@"name" options:nil];
         title_.backgroundColor = [NSColor clearColor];
@@ -48,6 +51,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 
         NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
         closeButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin, 10, kButtonSize, kButtonSize)];
+        closeButton_.translatesAutoresizingMaskIntoConstraints = NO;
         [closeButton_ setButtonType:NSMomentaryPushInButton];
         [closeButton_ setImage:closeImage];
         [closeButton_ setTarget:self];
@@ -61,6 +65,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
                                                                kTitleHeight + kMargin,
                                                                frame.size.width - kLeftMargin - kRightMargin,
                                                                frame.size.height - kTitleHeight - kMargin - kBottomMargin)] autorelease];
+        container_.translatesAutoresizingMaskIntoConstraints = NO;
         [self addSubview:container_];
         [self relayout];
     }
@@ -85,13 +90,20 @@ static const CGFloat kCloseButtonLeftMargin = 5;
                               kTopMargin,
                               frame.size.width - kButtonSize - kRightMargin - kCloseButtonLeftMargin,
                               kTitleHeight - kTopMargin);
+    if ([self.name isEqualToString:@"Jobs"]) {
+        if (title_.frame.size.width < 0) {
+            NSLog(@"WTF");
+        }
+        NSLog(@"title frame is now %@", NSStringFromRect(title_.frame));
+    }
     closeButton_.frame = NSMakeRect(kCloseButtonLeftMargin, kTopMargin, kButtonSize, kButtonSize);
     container_.frame = NSMakeRect(kLeftMargin,
                                   kTitleHeight + kMargin,
                                   MAX(0, frame.size.width - kLeftMargin - kRightMargin),
                                   MAX(0, frame.size.height - kTitleHeight - kMargin - kBottomMargin));
 
-    NSObject<ToolbeltTool> *tool = [self tool];
+    NSView<ToolbeltTool> *tool = [self tool];
+    tool.frame = container_.bounds;
     if ([tool respondsToSelector:@selector(relayout)]) {
         [tool relayout];
     }
@@ -141,6 +153,10 @@ static const CGFloat kCloseButtonLeftMargin = 5;
     return (NSView<ToolbeltTool>*) [[container_ subviews] objectAtIndex:0];
 }
 
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
+    [self relayout];
+}
+
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     [self relayout];
     /*
@@ -159,6 +175,13 @@ static const CGFloat kCloseButtonLeftMargin = 5;
         [self.tool relayout];
     }
      */
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    if (newSize.width <= 0) {
+        NSLog(@"WTF");
+    }
+    [super setFrameSize:newSize];
 }
 
 @end

@@ -8,8 +8,55 @@
 
 #import "NSView+iTerm.h"
 #import "DebugLogging.h"
+#import <objc/runtime.h>
+
+
+static IMP __original_Method_Imp;
+static IMP __original_Method_Imp2;
+static void _replacement_Method(id self, SEL _cmd, NSSize size)
+{
+    static int i;
+    int j = i;
+    i++;
+    assert([NSStringFromSelector(_cmd) isEqualToString:@"resizeWithOldSuperviewSize:"]);
+
+    NSView *view = self;
+    NSLog(@"(%d) start Resize %@ to %@", j, self, NSStringFromSize(view.frame.size));
+    ((void(*)(id,SEL,NSSize))__original_Method_Imp)(self, _cmd, size);
+    NSLog(@"(%d) end", j);
+}
+
+static void _replacement_Method2(id self, SEL _cmd)
+{
+    static int i;
+    int j = i;
+    i++;
+    assert([NSStringFromSelector(_cmd) isEqualToString:@"layoutSubtreeIfNeeded"]);
+
+    NSLog(@"(%d) start layout subtree if neede for self=%@", j, self);
+    ((void(*)(id,SEL))__original_Method_Imp2)(self, _cmd);
+    NSLog(@"(%d) end", j);
+}
 
 @implementation NSView (iTerm)
+
+- (void)swizzleExample {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        {
+            Method m = class_getInstanceMethod([self class],
+                                               @selector(resizeWithOldSuperviewSize:));
+            __original_Method_Imp = method_setImplementation(m,
+                                                             (IMP)_replacement_Method);
+        }
+        {
+            Method m = class_getInstanceMethod([self class],
+                                               @selector(layoutSubtreeIfNeeded));
+            __original_Method_Imp2 = method_setImplementation(m,
+                                                              (IMP)_replacement_Method2);
+        }
+    });
+}
 
 - (NSImage *)snapshot {
     return [[[NSImage alloc] initWithData:[self dataWithPDFInsideRect:[self bounds]]] autorelease];

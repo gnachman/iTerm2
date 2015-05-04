@@ -10,10 +10,6 @@
 #import "ToolbeltView.h"
 #import "FutureMethods.h"
 
-@interface ToolNotes : NSView <ToolbeltTool, NSTextViewDelegate> {
-    NSTextView *textView_;
-    NSFileManager *filemanager_;
-    BOOL ignoreNotification_;
-}
+@interface ToolNotes : NSView <ToolbeltTool, NSTextViewDelegate> 
 
 @end
