@@ -1325,6 +1325,11 @@
 		A62A1AE51AAE290700B49F79 /* iTermTextDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */; };
 		A62A1AE61AAE290700B49F79 /* iTermTextDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */; };
 		A62A1AE71AAE290700B49F79 /* iTermTextDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */; };
+		A62A5E951AF5B3E400FADFC4 /* iTermCollapsingSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A5E931AF5B3E400FADFC4 /* iTermCollapsingSplitView.h */; };
+		A62A5E961AF5B3E400FADFC4 /* iTermCollapsingSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A5E931AF5B3E400FADFC4 /* iTermCollapsingSplitView.h */; };
+		A62A5E971AF5B3E400FADFC4 /* iTermCollapsingSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A5E941AF5B3E400FADFC4 /* iTermCollapsingSplitView.m */; };
+		A62A5E981AF5B3E400FADFC4 /* iTermCollapsingSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A5E941AF5B3E400FADFC4 /* iTermCollapsingSplitView.m */; };
+		A62A5E991AF5B3E400FADFC4 /* iTermCollapsingSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A5E941AF5B3E400FADFC4 /* iTermCollapsingSplitView.m */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358647184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
 		A6358648184BEA57009ED690 /* AATree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6358643184BEA57009ED690 /* AATree.m */; };
@@ -2478,6 +2483,8 @@
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelper.h; sourceTree = "<group>"; };
 		A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextDrawingHelper.m; sourceTree = "<group>"; tabWidth = 4; };
+		A62A5E931AF5B3E400FADFC4 /* iTermCollapsingSplitView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCollapsingSplitView.h; sourceTree = "<group>"; };
+		A62A5E941AF5B3E400FADFC4 /* iTermCollapsingSplitView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCollapsingSplitView.m; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -3625,6 +3632,8 @@
 				A663010F19CFE41A004AF81C /* iTermAboutWindow.m */,
 				1D0318261A42563A00932107 /* iTermImageWell.h */,
 				1D0318271A42563A00932107 /* iTermImageWell.m */,
+				A62A5E931AF5B3E400FADFC4 /* iTermCollapsingSplitView.h */,
+				A62A5E941AF5B3E400FADFC4 /* iTermCollapsingSplitView.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -4548,6 +4557,7 @@
 				1D6ED91519AEA20D005A7799 /* PseudoTerminalRestorer.h in Headers */,
 				1D6ED91619AEA20D005A7799 /* PointerPrefsController.h in Headers */,
 				1D6ED91719AEA20D005A7799 /* PreferenceInfo.h in Headers */,
+				A62A5E961AF5B3E400FADFC4 /* iTermCollapsingSplitView.h in Headers */,
 				1D6ED91819AEA20D005A7799 /* NSObject+iTerm.h in Headers */,
 				1D6ED91919AEA20D005A7799 /* PointerController.h in Headers */,
 				1D6ED91A19AEA20D005A7799 /* EventMonitorView.h in Headers */,
@@ -4933,6 +4943,7 @@
 				1D407A3C14BABE8700BD5035 /* PreferencePanel.h in Headers */,
 				1D407A3D14BABE8700BD5035 /* PseudoTerminal.h in Headers */,
 				1D407A3E14BABE8700BD5035 /* PTYScrollView.h in Headers */,
+				A62A5E951AF5B3E400FADFC4 /* iTermCollapsingSplitView.h in Headers */,
 				1D407A3F14BABE8700BD5035 /* PTYSession.h in Headers */,
 				A69B4577195F668500F5444D /* NSScreen+iTerm.h in Headers */,
 				1D407A4014BABE8700BD5035 /* PTYTabView.h in Headers */,
@@ -5671,6 +5682,7 @@
 				1D6EDA3219AEA20D005A7799 /* PSMTabDragWindow.m in Sources */,
 				1D6EDA3319AEA20D005A7799 /* iTermGrowlDelegate.m in Sources */,
 				1D6EDA3419AEA20D005A7799 /* iTermColorMap.m in Sources */,
+				A62A5E991AF5B3E400FADFC4 /* iTermCollapsingSplitView.m in Sources */,
 				1D6EDA3519AEA20D005A7799 /* AdvancedWorkingDirectoryWindowController.m in Sources */,
 				1D6EDA3619AEA20D005A7799 /* TaskNotifier.m in Sources */,
 				1D6EDA3719AEA20D005A7799 /* DirectoriesPopup.m in Sources */,
@@ -6058,6 +6070,7 @@
 				1D5655D019AD2B9B001C460B /* iTermApplication+Scripting.m in Sources */,
 				1D9A5548180FA82E00B42CE9 /* TmuxControllerRegistry.m in Sources */,
 				A628C7AA18764AA4009B0818 /* NSDictionary+iTerm.m in Sources */,
+				A62A5E981AF5B3E400FADFC4 /* iTermCollapsingSplitView.m in Sources */,
 				1D9A5541180FA81400B42CE9 /* ProfileListView.m in Sources */,
 				A6C537C51939507100A08C18 /* iTermRestorableSession.m in Sources */,
 				1D8CE03F195A143100FE1BEE /* iTermRule.m in Sources */,
@@ -6287,6 +6300,7 @@
 				A68A30D1186D1414007F550F /* NSArray+iTerm.m in Sources */,
 				1D5FDDC61208E93600C46BA3 /* PSMTabDragWindow.m in Sources */,
 				1D5FDDC71208E93600C46BA3 /* iTermGrowlDelegate.m in Sources */,
+				A62A5E971AF5B3E400FADFC4 /* iTermCollapsingSplitView.m in Sources */,
 				A6A13AA318C2D23300B241ED /* iTermColorMap.m in Sources */,
 				A6E713B418FCB559008D94DD /* AdvancedWorkingDirectoryWindowController.m in Sources */,
 				A67E0AD1186E4B71009B2B68 /* TaskNotifier.m in Sources */,

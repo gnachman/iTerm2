@@ -671,7 +671,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                       self.window.frame.size.height - kToolbeltMargin);
     toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
                                                 term:self] autorelease];
-    toolbelt_.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
     [[self.window contentView] addSubview:toolbelt_];
     [self updateToolbelt];
 

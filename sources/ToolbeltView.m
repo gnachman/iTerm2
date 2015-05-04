@@ -9,6 +9,7 @@
 #import "ToolNotes.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermApplication.h"
+#import "iTermCollapsingSplitView.h"
 #import "iTermDragHandleView.h"
 #import "FutureMethods.h"
 #import "PseudoTerminal.h"  // TODO: Use delegacy
@@ -18,38 +19,15 @@ NSString *kCommandHistoryToolName = @"Command History";
 
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
-@interface ToolbeltSplitView : NSSplitView {
-    NSColor *dividerColor_;
-}
-
-- (void)setDividerColor:(NSColor *)dividerColor;
-
-@end
-
-@implementation ToolbeltSplitView
-
-- (void)dealloc {
-    [dividerColor_ release];
-    [super dealloc];
-}
-
-- (void)setDividerColor:(NSColor *)dividerColor {
-    [dividerColor_ autorelease];
-    dividerColor_ = [dividerColor retain];
-    [self setNeedsDisplay:YES];
-}
-
-- (NSColor *)dividerColor {
-    return dividerColor_;
-}
-
-@end
-
 @interface ToolbeltView () <iTermDragHandleViewDelegate>
 @end
 
 @implementation ToolbeltView {
     iTermDragHandleView *dragHandle_;
+
+    iTermCollapsingSplitView *splitter_;
+    NSMutableDictionary *tools_;
+    PseudoTerminal *term_;   // weak
 }
 
 static NSMutableDictionary *gRegisteredTools;
@@ -105,15 +83,11 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
             [[NSUserDefaults standardUserDefaults] setObject:items forKey:kToolbeltPrefKey];
         }
 
-        splitter_ = [[ToolbeltSplitView alloc] initWithFrame:NSMakeRect(0,
-                                                                        0,
-                                                                        frame.size.width,
-                                                                        frame.size.height)];
-        [splitter_ setVertical:NO];
-        [splitter_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        [splitter_ setDividerStyle:NSSplitViewDividerStyleThin];
-        [splitter_ setDelegate:self];
-        [splitter_ setDividerColor:[NSColor colorWithCalibratedWhite:122/255.0 alpha:0.25]];
+        splitter_ = [[iTermCollapsingSplitView alloc] initWithFrame:NSMakeRect(0,
+                                                                               0,
+                                                                               frame.size.width,
+                                                                               frame.size.height)];
+        splitter_.dividerColor = [NSColor colorWithCalibratedWhite:122/255.0 alpha:1];
         [self addSubview:splitter_];
         tools_ = [[NSMutableDictionary alloc] init];
 
@@ -213,48 +187,6 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return [tools count];
 }
 
-- (void)forceSplitterSubviewsToRespectSizeConstraints
-{
-    NSArray *subviews = [splitter_ subviews];
-    CGFloat totalSlop = 0;
-    CGFloat totalDeficit = 0;
-    // Calculate the total amount of slop (height beyond the minimum) and deficit (height less than
-    // minimum) in all views.
-    for (int i = 0; i < subviews.count; i++) {
-        ToolWrapper *wrapper = subviews[i];
-        CGFloat excess = wrapper.frame.size.height - wrapper.minimumHeight;
-        if (excess < 0) {
-            totalDeficit -= excess;
-        } else {
-            totalSlop += excess;
-        }
-    }
-    if (totalDeficit > 0) {
-        // One or more views is under the minimum height. Steal a fraction from each view that is
-        // over the minimum.
-        double fractionOfSlopToRedistribute = MIN(1, totalDeficit / totalSlop);
-        CGFloat y = 0;
-        for (int i = 0; i < subviews.count; i++) {
-            ToolWrapper *wrapper = subviews[i];
-            NSRect frame = wrapper.frame;
-            CGFloat excess = wrapper.frame.size.height - wrapper.minimumHeight;
-            if (excess < 0) {
-                frame.size.height = wrapper.minimumHeight;
-            } else {
-                frame.size.height -= ceil(excess * fractionOfSlopToRedistribute);
-            }
-            frame.origin.y = y;
-            if (i == subviews.count - 1) {
-                // Last view always fills out the remainder. This takes care of accumulated rounding
-                // errors.
-                frame.size.height = splitter_.frame.size.height - y;
-            }
-            wrapper.frame = frame;
-            y += frame.size.height + [splitter_ dividerThickness];
-        }
-    }
-}
-
 - (void)toggleToolWithName:(NSString *)theName
 {
     ToolWrapper *wrapper = [tools_ objectForKey:theName];
@@ -266,7 +198,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     } else {
         [self addToolWithName:theName];
     }
-    [self forceSplitterSubviewsToRespectSizeConstraints];
+    [splitter_ update];
 }
 
 - (BOOL)showingToolWithName:(NSString *)theName
@@ -288,12 +220,11 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (void)addTool:(NSView<ToolbeltTool> *)theTool toWrapper:(ToolWrapper *)wrapper
 {
-    [splitter_ addSubview:wrapper];
+    [splitter_ addItem:wrapper];
+    theTool.frame = wrapper.container.bounds;
     [wrapper.container addSubview:theTool];
 
-    [wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-    [theTool setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-    [splitter_ adjustSubviews];
+    [splitter_ update];
     [tools_ setObject:wrapper forKey:[[wrapper.name copy] autorelease]];
 }
 
@@ -334,7 +265,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 - (void)relayoutAllTools
 {
     splitter_.frame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
-    for (ToolWrapper *wrapper in [splitter_ subviews]) {
+    for (ToolWrapper *wrapper in [splitter_ items]) {
         [wrapper relayout];
     }
 }
@@ -347,60 +278,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (BOOL)haveOnlyOneTool
 {
-    return [[splitter_ subviews] count] == 1;
-}
-
-#pragma mark - NSSplitViewDelegate
-
-- (void)splitViewDidResizeSubviews:(NSNotification *)aNotification
-{
-    [self relayoutAllTools];
-}
-
-- (CGFloat)splitView:(NSSplitView *)splitView
-    constrainMinCoordinate:(CGFloat)proposedMinimumPosition
-         ofSubviewAt:(NSInteger)dividerIndex
-{
-    CGFloat min = 0;
-    NSArray *subviews = [splitter_ subviews];
-    for (int i = 0; i <= dividerIndex; i++) {
-        ToolWrapper *wrapper = subviews[i];
-        if (i == dividerIndex) {
-            min += wrapper.minimumHeight;
-        } else {
-            min += wrapper.frame.size.height;
-        }
-        if (i > 0) {
-            min += [splitView dividerThickness];
-        }
-    }
-    return min;
-}
-
-- (CGFloat)splitView:(NSSplitView *)splitView
-    constrainMaxCoordinate:(CGFloat)proposedMaximumPosition
-         ofSubviewAt:(NSInteger)dividerIndex
-{
-    CGFloat height = splitView.frame.size.height;
-    NSArray *subviews = [splitter_ subviews];
-    for (int i = subviews.count - 1; i > dividerIndex; i--) {
-        ToolWrapper *wrapper = subviews[i];
-        if (i == dividerIndex + 1) {
-            height -= wrapper.minimumHeight;
-        } else {
-            height -= wrapper.frame.size.height;
-        }
-        if (i != subviews.count - 1) {
-            height -= [splitView dividerThickness];
-        }
-    }
-    return height;
-}
-
-- (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize
-{
-    [splitView adjustSubviews];
-    [self forceSplitterSubviewsToRespectSizeConstraints];
+    return [[splitter_ items] count] == 1;
 }
 
 - (ToolCommandHistoryView *)commandHistoryView {
@@ -422,6 +300,11 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
     return -[term_ growToolbeltBy:-delta];
+}
+
+- (void)resizeWithOldSuperviewSize:(NSSize)oldSize {
+    [splitter_ updateForHeight:self.frame.size.height];
+    splitter_.frame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
 }
 
 @end

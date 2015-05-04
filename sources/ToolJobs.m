@@ -185,7 +185,6 @@ static const CGFloat kMargin = 4;
         [kill_ setAction:@selector(kill:)];
         [kill_ setBezelStyle:NSSmallSquareBezelStyle];
         [kill_ sizeToFit];
-        [kill_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
         [self addSubview:kill_];
         [kill_ release];
         [kill_ bind:@"enabled" toObject:self withKeyPath:@"killable" options:nil];
@@ -194,7 +193,6 @@ static const CGFloat kMargin = 4;
                                                                  frame.size.width - kill_.frame.size.width - 2*kMargin,
                                                                  kButtonHeight)];
         signal_.delegate = self;
-        [signal_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
         [signal_ sizeToFit];
         [self addSubview:signal_];
 
@@ -203,7 +201,6 @@ static const CGFloat kMargin = 4;
         [scrollView_ setHasHorizontalScroller:NO];
         [scrollView_ setBorderType:NSBezelBorder];
         NSSize contentSize = [scrollView_ contentSize];
-        [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col;

@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermCollapsingSplitView.h"
 
 @class PseudoTerminal;
 
@@ -26,14 +27,7 @@
 - (void)shutdown;
 @end
 
-@interface ToolWrapper : NSView {
-    NSTextField *title_;
-    NSButton *closeButton_;
-    NSString *name;
-    NSView *container_;
-    PseudoTerminal *term;
-	id<ToolWrapperDelegate> delegate_;  // weak
-}
+@interface ToolWrapper : NSView<iTermCollapsingSplitViewItem> 
 
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, readonly) __weak NSView *container;
@@ -41,7 +35,7 @@
 @property (nonatomic, assign) id<ToolWrapperDelegate> delegate;
 
 - (void)relayout;
-- (NSObject<ToolbeltTool> *)tool;
+- (NSView<ToolbeltTool> *)tool;
 - (void)removeToolSubviews;
 - (CGFloat)minimumHeight;
 

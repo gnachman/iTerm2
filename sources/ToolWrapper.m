@@ -18,11 +18,16 @@ static const CGFloat kButtonSize = 17;
 static const CGFloat kTopMargin = 3;  // Margin above title bar and close button
 static const CGFloat kCloseButtonLeftMargin = 5;
 
-@implementation ToolWrapper
+@implementation ToolWrapper {
+    NSTextField *title_;
+    NSButton *closeButton_;
+    NSView *container_;
+    id<ToolWrapperDelegate> delegate_;  // weak
+}
 
-@synthesize name;
+@synthesize tempFrame;
+@synthesize collapsed;
 @synthesize container = container_;
-@synthesize term;
 @synthesize delegate = delegate_;
 
 - (id)initWithFrame:(NSRect)frame
@@ -36,7 +41,6 @@ static const CGFloat kCloseButtonLeftMargin = 5;
         [title_ setEditable:NO];
         [title_ bind:@"value" toObject:self withKeyPath:@"name" options:nil];
         title_.backgroundColor = [NSColor clearColor];
-        [title_ setAutoresizingMask:NSViewWidthSizable | NSViewMaxYMargin];
         [title_ setAlignment:NSCenterTextAlignment];
         [title_ setBezeled:NO];
         [self addSubview:title_];
@@ -57,7 +61,6 @@ static const CGFloat kCloseButtonLeftMargin = 5;
                                                                kTitleHeight + kMargin,
                                                                frame.size.width - kLeftMargin - kRightMargin,
                                                                frame.size.height - kTitleHeight - kMargin - kBottomMargin)] autorelease];
-        [container_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [self addSubview:container_];
         [self relayout];
     }
@@ -66,7 +69,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 
 - (void)dealloc
 {
-    [name release];
+    [_name release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
@@ -120,8 +123,8 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 
 - (void)setName:(NSString *)theName
 {
-    [name autorelease];
-    name = [theName copy];
+    [_name autorelease];
+    _name = [theName copy];
     [self performSelector:@selector(setTitleEditable) withObject:nil afterDelay:0];
 }
 
@@ -130,12 +133,32 @@ static const CGFloat kCloseButtonLeftMargin = 5;
     [title_ setEditable:NO];
 }
 
-- (NSObject<ToolbeltTool> *)tool
+- (NSView<ToolbeltTool> *)tool
 {
     if ([[container_ subviews] count] == 0) {
         return nil;
     }
-    return (NSObject<ToolbeltTool>*) [[container_ subviews] objectAtIndex:0];
+    return (NSView<ToolbeltTool>*) [[container_ subviews] objectAtIndex:0];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [self relayout];
+    /*
+    NSRect frame = self.frame;
+    title_.frame = NSMakeRect(kCloseButtonLeftMargin + kButtonSize,
+                              0,
+                              frame.size.width - kButtonSize - kRightMargin - kCloseButtonLeftMargin,
+                              kTitleHeight);
+    closeButton_.frame = NSMakeRect(kCloseButtonLeftMargin, 10, kButtonSize, kButtonSize);
+    container_.frame = NSMakeRect(kLeftMargin,
+                                  kTitleHeight + kMargin,
+                                  frame.size.width - kLeftMargin - kRightMargin,
+                                  frame.size.height - kTitleHeight - kMargin - kBottomMargin);
+    [self.tool setFrame:container_.bounds];
+    if ([self.tool respondsToSelector:@selector(relayout)]) {
+        [self.tool relayout];
+    }
+     */
 }
 
 @end
