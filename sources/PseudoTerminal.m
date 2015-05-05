@@ -610,7 +610,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     tabBarControl = [[iTermTabBarControlView alloc] initWithFrame:tabBarFrame];
     tabBarControl.itermTabBarDelegate = self;
 
-    [tabBarControl retain];
     [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
     switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
         case PSMTab_BottomTab:
@@ -629,7 +628,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             break;
     }
     [[[self window] contentView] addSubview:tabBarControl];
-    [tabBarControl autorelease];
 
     [tabBarControl setTabView:TABVIEW];
     [TABVIEW setDelegate:tabBarControl];
