@@ -30,7 +30,7 @@ static const int kPopupHeight = 26;
         [self addSubview:listView_];
         [listView_ release];
 
-        popup_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width, kPopupHeight)];
+        popup_ = [[[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width, kPopupHeight)] autorelease];
         [[popup_ cell] setControlSize:NSSmallControlSize];
         [[popup_ cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [[popup_ menu] addItemWithTitle:@"New Tab"
@@ -49,7 +49,6 @@ static const int kPopupHeight = 26;
             [i setTarget:self];
         }
         [self addSubview:popup_];
-        [popup_ release];
         [popup_ setAutoresizingMask:NSViewMinYMargin | NSViewWidthSizable];
 
         [popup_ bind:@"enabled" toObject:listView_ withKeyPath:@"hasSelection" options:nil];
