@@ -153,6 +153,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @end
 
 @implementation PTYSession {
+    // PTYTask has started a job, and a call to -taskWasDeregistered will be
+    // made when it dies. All access should be synchronized.
+    BOOL _registered;
+
     // name can be changed by the host.
     NSString *_name;
 
@@ -1084,6 +1088,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if ([_profile[KEY_AUTOLOG] boolValue]) {
         [_shell loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
     }
+    @synchronized(self) {
+      _registered = YES;
+    }
     [_shell launchWithPath:program
                  arguments:arguments
                environment:env
@@ -1279,15 +1286,23 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                withObject:nil
                afterDelay:[iTermProfilePreferences intForKey:KEY_UNDO_TIMEOUT
                                                    inProfile:_profile]];
+    // The analyzer complains that _view is leaked here, but the delayed perform to -hardStop above
+    // releases it. If it is canceled by -revive, then -revive autoreleases the view.
     [[iTermController sharedInstance] addRestorableSession:[self restorableSession]];
 }
 
 - (void)hardStop {
     [[iTermController sharedInstance] removeSessionFromRestorableSessions:self];
-    [_view release];
+    [_view release];  // This balances a retain in -terminate.
     // -taskWasDeregistered will perform the corresponding release.
     [self retain];
-    // -stop will cause -taskWasDeregistered to be called on a background thread.
+    // If we are registered, -stop will cause -taskWasDeregistered to be called on a background thread,
+    // which will release this object.
+    @synchronized(self) {
+      if (!_registered) {
+          [self autorelease];
+      }
+    }
     [_shell stop];
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
@@ -1310,7 +1325,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _screen.terminal = _terminal;
         _terminal.delegate = _screen;
         _shell.paused = NO;
-        [_view autorelease];
+        [_view autorelease];  // This balances a retain in -terminate prior to calling -makeTerminationUndoable
         return YES;
     } else {
         return NO;
@@ -1413,6 +1428,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)taskWasDeregistered {
     DLog(@"taskWasDeregistered");
+    @synchronized(self) {
+      _registered = NO;
+    }
     // This is called on the background thread. After this is called, we won't get any more calls
     // on the background thread and it is safe for us to be dealloc'ed. This pairs with the retain
     // in -hardStop. For sanity's sake, ensure dealloc gets called on the main thread.

@@ -950,6 +950,10 @@ static NSString* FormatRect(NSRect r) {
     activeSession_ = liveSession;
 
     [fakeParentWindow_ rejoin:realParentWindow_];
+    [fakeParentWindow_ autorelease];
+    replaySession.view.session = nil;
+    replaySession.liveSession = nil;
+    fakeParentWindow_ = nil;
 }
 
 - (void)_dumpView:(id)view withPrefix:(NSString*)prefix
