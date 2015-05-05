@@ -47,7 +47,7 @@
     DLog(@"Take a snapshot of the grid because cursor was hidden (delegate=%@)", _delegate);
     static const NSTimeInterval kTimeToKeepSavedGrid = 0.2;
     BOOL hadSavedGrid = self.savedGrid != nil;
-    self.savedGrid = [[_delegate temporaryDoubleBufferedGridCopy] retain];
+    self.savedGrid = [_delegate temporaryDoubleBufferedGridCopy];
     /*
     for (int y = 0; y < _savedGrid.size.height; y++) {
         [_savedGrid screenCharsAtLineNumber:y][0].code = '*';
