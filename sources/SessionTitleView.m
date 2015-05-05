@@ -48,7 +48,10 @@ static const CGFloat kButtonSize = 17;
         double x = kMargin;
 
         NSImage *closeImage = [NSImage imageNamed:@"closebutton"];
-        closeButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(x, (frame.size.height - kButtonSize) / 2, kButtonSize, kButtonSize)];
+        closeButton_ = [[[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(x,
+                                                                                 (frame.size.height - kButtonSize) / 2,
+                                                                                 kButtonSize,
+                                                                                 kButtonSize)] autorelease];
         [closeButton_ setButtonType:NSMomentaryPushInButton];
         [closeButton_ setImage:closeImage];
         [closeButton_ setTarget:self];
@@ -57,7 +60,6 @@ static const CGFloat kButtonSize = 17;
         [closeButton_ setTitle:@""];
         [[closeButton_ cell] setHighlightsBy:NSContentsCellMask];
         [self addSubview:closeButton_];
-        [closeButton_ release];
 
         x += closeButton_.frame.size.width + kMargin;
         // Popup buttons want to have huge margins on the sides. This one look best right up against
