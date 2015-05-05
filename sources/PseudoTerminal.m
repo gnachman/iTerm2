@@ -629,7 +629,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             break;
     }
     [[[self window] contentView] addSubview:tabBarControl];
-    [tabBarControl release];
+    [tabBarControl autorelease];
 
     [tabBarControl setTabView:TABVIEW];
     [TABVIEW setDelegate:tabBarControl];

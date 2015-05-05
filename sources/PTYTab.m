@@ -897,6 +897,10 @@ static NSString* FormatRect(NSRect r) {
     return [[self activeSession] exited];
 }
 
+- (void)addHiddenLiveView:(SessionView *)hiddenLiveView {
+    [hiddenLiveViews_ addObject:hiddenLiveView];
+}
+
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession {
     PtyLog(@"PTYTab setDvrInSession:%p", newSession);
     PTYSession* oldSession = [self activeSession];
@@ -2116,7 +2120,6 @@ static NSString* FormatRect(NSRect r) {
                                                   inView:(SessionView*)view
                                                    inTab:theTab
                                            forObjectType:objectType];
-            [sessionView setSession:session];
         }
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
             return session;

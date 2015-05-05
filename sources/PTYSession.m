@@ -625,6 +625,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                         forObjectType:(iTermObjectType)objectType {
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession.view = sessionView;
+    [sessionView setSession:aSession];
+
     [[sessionView findViewController] setDelegate:aSession];
     Profile* theBookmark =
         [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK]
@@ -754,8 +756,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     NSDictionary *liveArrangement = arrangement[SESSION_ARRANGEMENT_LIVE_SESSION];
     if (liveArrangement) {
+        SessionView *liveView = [[[SessionView alloc] initWithFrame:sessionView.frame] autorelease];
+        [theTab addHiddenLiveView:liveView];
         aSession.liveSession = [self sessionFromArrangement:liveArrangement
-                                                     inView:[[SessionView alloc] initWithFrame:sessionView.frame]
+                                                     inView:liveView
                                                       inTab:theTab
                                               forObjectType:objectType];
     }
