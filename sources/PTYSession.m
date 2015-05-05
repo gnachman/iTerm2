@@ -4062,6 +4062,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self resumeOutputIfNeeded];
     if ([self textViewIsZoomedIn] && unicode == 27) {
         // Escape exits zoom (pops out one level, since you can zoom repeatedly)
+        // The zoomOut: IBAction doesn't get performed by shortcut, I guess because Esc is not a
+        // valid shortcut. So we do it here.
         [[[self tab] realParentWindow] replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
     } else if ([[[self tab] realParentWindow] inInstantReplay]) {
         DLog(@"PTYSession keyDown in IR");
