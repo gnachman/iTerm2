@@ -102,6 +102,7 @@ static const int kDragThreshold = 3;
 @property(nonatomic, retain) NSColor *badgeColor;
 @property(nonatomic, copy) NSString *bagdgeLabel;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
+@property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
 
 @end
 
@@ -169,9 +170,6 @@ static const int kDragThreshold = 3;
     NSMutableArray *_lineBreakIndexOffsets;
     // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
     NSMutableArray *_lineBreakCharOffsets;
-
-    // For find-cursor animation
-    NSWindow *_findCursorWindow;
 
     // Number of fingers currently down (only valid if three finger click
     // emulates middle button)
@@ -336,8 +334,9 @@ static const int kDragThreshold = 3;
 
     [self removeAllTrackingAreas];
     if ([self isFindingCursor]) {
-        [_findCursorWindow close];
+        [self.findCursorWindow close];
     }
+    [_findCursorWindow release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     _colorMap.delegate = nil;
@@ -4979,13 +4978,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return  [[self window] pointToScreenCoords:cursorCenterInWindowCoords];
 }
 
-// Returns the location of the cursor relative to the origin of findCursorWindow_.
+// Returns the location of the cursor relative to the origin of self.findCursorWindow.
 - (NSPoint)cursorCenterInFindCursorWindowCoords {
     NSPoint centerInScreenCoords = [self cursorCenterInScreenCoords];
     return [_findCursorWindow pointFromScreenCoords:centerInScreenCoords];
 }
 
-// Returns the proper frame for findCursorWindow_, including every screen that the
+// Returns the proper frame for self.findCursorWindow, including every screen that the
 // "hole" will be in.
 - (NSRect)cursorScreenFrame {
     NSRect frame = NSZeroRect;
@@ -5003,10 +5002,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)createFindCursorWindow {
     [self scrollRectToVisible:[self cursorFrame]];
-    _findCursorWindow = [[NSWindow alloc] initWithContentRect:NSZeroRect
-                                                    styleMask:NSBorderlessWindowMask
-                                                      backing:NSBackingStoreBuffered
-                                                        defer:YES];
+    self.findCursorWindow = [[[NSWindow alloc] initWithContentRect:NSZeroRect
+                                                         styleMask:NSBorderlessWindowMask
+                                                           backing:NSBackingStoreBuffered
+                                                             defer:YES] autorelease];
     [_findCursorWindow setLevel:NSFloatingWindowLevel];
     [_findCursorWindow setFrame:[self cursorScreenFrame] display:YES];
     _findCursorWindow.backgroundColor = [NSColor clearColor];
@@ -5022,7 +5021,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint p = [self cursorCenterInFindCursorWindowCoords];
     _findCursorView.cursorPosition = p;
     [_findCursorWindow setContentView:_findCursorView];
-    [_findCursorView release];
 }
 
 - (void)beginFindCursor:(BOOL)hold {
@@ -5046,22 +5044,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return _findCursorView != nil;
 }
 
-- (void)closeFindCursorWindow:(NSWindow *)win {
-    [win close];
-}
-
 - (void)findCursorViewDismiss {
     [self endFindCursor];
 }
 
 - (void)endFindCursor {
+    [NSAnimationContext beginGrouping];
+    NSWindow *theWindow = [_findCursorWindow retain];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        [_findCursorWindow close];
+        [theWindow release];
+    }];
     [[_findCursorWindow animator] setAlphaValue:0];
+    [NSAnimationContext endGrouping];
+
     [_findCursorView stopTearDownTimer];
-    [self performSelector:@selector(closeFindCursorWindow:)
-               withObject:_findCursorWindow
-               afterDelay:[[NSAnimationContext currentContext] duration]];
-    [_findCursorView stopTearDownTimer];
-    _findCursorWindow = nil;
+    self.findCursorWindow = nil;
     _findCursorView.stopping = YES;
     self.findCursorView = nil;
 }
