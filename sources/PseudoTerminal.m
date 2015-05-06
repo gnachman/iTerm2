@@ -6060,7 +6060,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 if ([self _haveRightBorder]) {
                     widthAdjustment += 1;
                 }
-                NSRect tabViewFrame = NSMakeRect(NSMaxX(tabBarFrame),
+                CGFloat xOffset = 0;
+                if (tabBarControl.flashing) {
+                    xOffset = -NSMaxX(tabBarFrame);
+                    widthAdjustment -= NSWidth(tabBarFrame);
+                }
+                NSRect tabViewFrame = NSMakeRect(NSMaxX(tabBarFrame) + xOffset,
                                                  NSMinY(tabBarFrame),
                                                  [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
                                                  NSHeight(tabBarFrame));
