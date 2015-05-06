@@ -537,8 +537,12 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByTrimmingTrailingWhitespace {
-    NSCharacterSet *nonWhitespaceSet = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
-    NSRange rangeOfLastWantedCharacter = [self rangeOfCharacterFromSet:nonWhitespaceSet
+    return [self stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+- (NSString *)stringByTrimmingTrailingCharactersFromCharacterSet:(NSCharacterSet *)charset {
+    NSCharacterSet *invertedCharset = [charset invertedSet];
+    NSRange rangeOfLastWantedCharacter = [self rangeOfCharacterFromSet:invertedCharset
                                                                options:NSBackwardsSearch];
     if (rangeOfLastWantedCharacter.location == NSNotFound) {
         return self;

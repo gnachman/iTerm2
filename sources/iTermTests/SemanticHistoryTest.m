@@ -649,6 +649,23 @@
     assert(numCharsFromPrefix == [@"five six " length]);
 }
 
+// This test simulates what happens if you select a full line (including hard eol) and do Open Selection.
+// The prefix will end in whitespace (maybe) and a newline.
+- (void)testPathOfExistingFileIgnoringLeadingAndTrailingWhitespaceAndNewlines {
+  int numCharsFromPrefix;
+  NSString *kWorkingDirectory = @"/directory";
+  NSString *kRelativeFilename = @"five six seven eight";
+  NSString *kFilename = [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+  [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+  [_semanticHistoryController.fakeFileManager.directories addObject:kWorkingDirectory];
+  NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"five six seven eight \r\n"
+                                                                          suffix:@""
+                                                                workingDirectory:kWorkingDirectory
+                                                            charsTakenFromPrefix:&numCharsFromPrefix];
+  assert([kRelativeFilename isEqualToString:path]);
+  assert(numCharsFromPrefix == [@"five six seven eight" length]);
+}
+
 - (void)testPathOfExistingFileSupportsParens {
     int numCharsFromPrefix;
     NSString *kWorkingDirectory = @"/directory";
