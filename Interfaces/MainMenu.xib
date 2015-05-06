@@ -659,6 +659,15 @@ DQ
                                     <action selector="zoomOnSelection:" target="-1" id="Yfw-BL-sPd"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Zoom Out" id="0A4-80-ghh">
+                                <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="zoomOut:" target="-1" id="DDb-mL-4x6"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="QEZ-2e-3zm">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

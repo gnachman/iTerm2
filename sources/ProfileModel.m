@@ -460,17 +460,14 @@ int gMigrated;
     return bookmarks_;
 }
 
-- (void)load:(NSArray*)prefs
-{
+- (void)load:(NSArray *)prefs {
     [bookmarks_ removeAllObjects];
-    for (int i = 0; i < [prefs count]; ++i) {
-        Profile* bookmark = [prefs objectAtIndex:i];
-        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
+    for (Profile *profile in prefs) {
+        NSArray *tags = profile[KEY_TAGS];
         if (![tags containsObject:@"bonjour"]) {
-            [self addBookmark:bookmark];
+            [self addBookmark:profile];
         }
     }
-    [bookmarks_ retain];
 }
 
 + (NSString*)freshGuid {

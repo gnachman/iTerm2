@@ -91,7 +91,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)unmakeDefaultTerminal:(id)sender;
 
 - (IBAction)saveWindowArrangement:(id)sender;
-- (IBAction)loadWindowArrangement:(id)sender;
 
 - (IBAction)showPrefWindow:(id)sender;
 - (IBAction)showBookmarkWindow:(id)sender;

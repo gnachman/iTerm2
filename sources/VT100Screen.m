@@ -4127,7 +4127,7 @@ static void SwapInt(int *a, int *b) {
 #pragma mark - iTermFullScreenUpdateDetectorDelegate
 
 - (VT100Grid *)temporaryDoubleBufferedGridCopy {
-    VT100Grid *copy = [currentGrid_ copy];
+    VT100Grid *copy = [[currentGrid_ copy] autorelease];
     copy.delegate = nil;
     return copy;
 }

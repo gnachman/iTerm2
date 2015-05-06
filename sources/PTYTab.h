@@ -271,6 +271,8 @@
 
 - (NSDictionary*)arrangementWithContents:(BOOL)contents;
 
+- (void)addHiddenLiveView:(SessionView *)hiddenLiveView;
+
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
 // This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when
