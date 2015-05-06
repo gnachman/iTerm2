@@ -335,15 +335,14 @@
 
 - (NSColor *)topLineColorSelected:(BOOL)selected {
     if (selected) {
-        return [NSColor colorWithSRGBRed:195/255.0 green:191/255.0 blue:195/255.0 alpha:1];
+        return [tabBar.window backgroundColor];
     } else {
         return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
     }
 }
 
 - (NSColor *)verticalLineColor {
-    CGFloat value = 184/255.0;
-    return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
+    return [NSColor colorWithSRGBRed:182/255.0 green:179/255.0 blue:182/255.0 alpha:1];
 }
 
 - (NSColor *)bottomLineColorSelected:(BOOL)selected {
@@ -354,31 +353,18 @@
     }
 }
 
-- (NSGradient *)backgroundGradientSelected:(BOOL)selected {
-    // With adj=0, the colors are very close to those of Safari on Yosemite.
-    // That's not enough contrast, though. positive values of adj increase contrast.
-    CGFloat adj = 7;
+- (NSColor *)backgroundColorSelected:(BOOL)selected {
     if (selected) {
-        return [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithSRGBRed:(adj+222)/255.0
-                                                                              green:(adj+219)/255.0
-                                                                               blue:(adj+222)/255.0
-                                                                              alpha:1]
-                                              endingColor:[NSColor colorWithSRGBRed:(adj+214)/255.0
-                                                                              green:(adj+211)/255.0
-                                                                               blue:(adj+214)/255.0
-                                                                              alpha:1]]
-                   autorelease];
+        if (tabBar.window.backgroundColor) {
+            return tabBar.window.backgroundColor;
+        } else {
+            return [NSColor windowBackgroundColor];
+        }
     } else {
-        adj *= -1;
-        return [[[NSGradient alloc] initWithStartingColor:[NSColor colorWithSRGBRed:(adj+206)/255.0
-                                                                              green:(adj+204)/255.0
-                                                                               blue:(adj+206)/255.0
-                                                                              alpha:1]
-                                              endingColor:[NSColor colorWithSRGBRed:(adj+199)/255.0
-                                                                              green:(adj+196)/255.0
-                                                                               blue:(adj+199)/255.0
-                                                                              alpha:1]]
-                   autorelease];
+        return [NSColor colorWithSRGBRed:196/255.0
+                                   green:196/255.0
+                                    blue:196/255.0
+                                   alpha:1];
     }
 }
 
@@ -393,9 +379,10 @@
 - (void)drawCellBackgroundAndFrameHorizontallyOriented:(BOOL)horizontal
                                                 inRect:(NSRect)cellFrame
                                               selected:(BOOL)selected
-                                          withTabColor:(NSColor *)tabColor {
-    CGFloat angle = horizontal ? 90 : 0;
-    [[self backgroundGradientSelected:selected] drawInRect:cellFrame angle:angle];
+                                          withTabColor:(NSColor *)tabColor
+                                                isLast:(BOOL)isLast {
+    [[self backgroundColorSelected:selected] set];
+    NSRectFill(cellFrame);
 
     if (tabColor) {
         if (selected) {
@@ -420,20 +407,26 @@
             [[self verticalLineColor] set];
             [self drawVerticalLineInFrame:cellFrame x:NSMinX(cellFrame)];
         }
-
         // Right line
         CGFloat adjustment = 0;
         [[self verticalLineColor] set];
         [self drawVerticalLineInFrame:cellFrame x:NSMaxX(cellFrame) + adjustment];
-        
+
         // Top line
         [[self topLineColorSelected:selected] set];
-        [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
+        if (isLast) {
+            NSRect rect = cellFrame;
+            rect.size.width -= 1;
+            [self drawHorizontalLineInFrame:rect y:NSMinY(cellFrame)];
+        } else {
+            [self drawHorizontalLineInFrame:cellFrame y:NSMinY(cellFrame)];
+        }
 
         // Bottom line
         [[self bottomLineColorSelected:selected] set];
         [self drawHorizontalLineInFrame:cellFrame y:NSMaxY(cellFrame) - 1];
-    } else{
+
+    } else {
         // Bottom line
         [[self verticalLineColor] set];
         cellFrame.origin.x += 1;
@@ -460,7 +453,8 @@
     [self drawCellBackgroundAndFrameHorizontallyOriented:(orientation == PSMTabBarHorizontalOrientation)
                                                   inRect:cell.frame
                                                 selected:([cell state] == NSOnState)
-                                            withTabColor:[cell tabColor]];
+                                            withTabColor:[cell tabColor]
+                                                  isLast:cell == tabBar.cells.lastObject];
 
     [self drawInteriorWithTabCell:cell inView:[cell controlView]];
 }
