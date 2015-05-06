@@ -13,6 +13,8 @@
 #import "PSMTabDragAssistant.h"
 #import "FutureMethods.h"
 
+static NSTimeInterval kHighlightAnimationDuration = 0.5;
+
 @implementation PSMTabBarCell  {
     // sizing
     NSRect              _frame;
@@ -37,6 +39,7 @@
     NSString            *_modifierString;
 
     BOOL _isLast;
+    NSTimeInterval _highlightChangeTime;
 }
 
 @synthesize isLast = _isLast;
@@ -105,6 +108,10 @@
 
 #pragma mark -
 #pragma mark Accessors
+
+- (BOOL)closeButtonVisible {
+    return !_isCloseButtonSuppressed || [self highlightAmount] > 0;
+}
 
 - (NSView<PSMTabBarControlProtocol> *)psmTabControlView {
     return (NSView<PSMTabBarControlProtocol> *)[self controlView];
@@ -313,15 +320,25 @@
 #pragma mark -
 #pragma mark Drawing
 
-- (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView
-{
-    if(_isPlaceholder){
+- (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
+    if (_isPlaceholder){
         [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
         NSRectFillUsingOperation(cellFrame, NSCompositeSourceAtop);
         return;
     }
 
-    [[[self psmTabControlView] style] drawTabCell:self];
+    [[[self psmTabControlView] style] drawTabCell:self highlightAmount:[self highlightAmount]];
+}
+
+- (CGFloat)highlightAmount {
+    NSTimeInterval timeSinceChange = [NSDate timeIntervalSinceReferenceDate] - _highlightChangeTime;
+    CGFloat amount = self.highlighted ? 1 : 0;
+    if (timeSinceChange < kHighlightAnimationDuration) {
+        CGFloat alpha = timeSinceChange / kHighlightAnimationDuration;
+        return amount * alpha + (1 - amount) * (1 - alpha);
+    } else {
+        return amount;
+    }
 }
 
 #pragma mark -
@@ -553,6 +570,43 @@
 
 - (void)updateForStyle {
     _indicator.light = [self psmTabControlView].style.useLightControls;
+}
+
+- (void)updateHighlight {
+    if (self.isHighlighted) {
+        NSPoint mouseLocationInScreenCoords = [NSEvent mouseLocation];
+        NSRect rectInScreenCoords;
+        rectInScreenCoords.origin = mouseLocationInScreenCoords;
+        rectInScreenCoords.size = NSZeroSize;
+        NSPoint mouseLocationInWindowCoords = [self.controlView.window convertRectFromScreen:rectInScreenCoords].origin;
+        NSPoint mouseLocationInViewCoords = [self.controlView convertPoint:mouseLocationInWindowCoords
+                                                                  fromView:nil];
+        if (!NSPointInRect(mouseLocationInViewCoords, self.frame)) {
+            self.highlighted = NO;
+        }
+    }
+}
+
+- (void)setHighlighted:(BOOL)highlighted {
+    BOOL wasHighlighted = self.isHighlighted;
+    [super setHighlighted:highlighted];
+    if (highlighted != wasHighlighted) {
+        _highlightChangeTime = [NSDate timeIntervalSinceReferenceDate];
+        [self.controlView retain];
+        [NSTimer scheduledTimerWithTimeInterval:1/60.0
+                                         target:self
+                                       selector:@selector(redrawHighlight:)
+                                       userInfo:nil
+                                        repeats:YES];
+    }
+}
+
+- (void)redrawHighlight:(NSTimer *)timer {
+    [self.controlView setNeedsDisplayInRect:self.frame];
+    if ([NSDate timeIntervalSinceReferenceDate] - _highlightChangeTime > kHighlightAnimationDuration) {
+        [self.controlView release];
+        [timer invalidate];
+    }
 }
 
 @end

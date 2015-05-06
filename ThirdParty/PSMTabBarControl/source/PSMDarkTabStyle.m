@@ -37,8 +37,11 @@
     return [NSColor colorWithCalibratedWhite:0.08 alpha:1.00];
 }
 
-- (NSColor *)backgroundColorSelected:(BOOL)selected {
+- (NSColor *)backgroundColorSelected:(BOOL)selected highlightAmount:(CGFloat)highlightAmount {
     CGFloat value = selected ? 0.25 : 0.13;
+    if (!selected) {
+        value += highlightAmount * 0.05;
+    }
     return [NSColor colorWithCalibratedWhite:value alpha:1.00];
 }
 

@@ -27,6 +27,7 @@
 // Is this the last cell? Only valid while drawing.
 @property(nonatomic, assign) BOOL isLast;
 @property(nonatomic, assign) BOOL isCloseButtonSuppressed;
+@property(nonatomic, readonly) BOOL closeButtonVisible;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;
@@ -90,6 +91,7 @@
 - (NSColor *)tabColor;
 - (void)setTabColor:(NSColor *)aColor;
 - (void)updateForStyle;
+- (void)updateHighlight;
 
 @end
 

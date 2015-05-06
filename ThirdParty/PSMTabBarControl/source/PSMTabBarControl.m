@@ -1071,6 +1071,13 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
         }
     }
 
+    for (PSMTabBarCell *cell in _cells) {
+        // Remove highlight if cursor is no longer in cell. Could happen if
+        // cell moves because of added/removed tab. Tracking rects aren't smart
+        // enough to handle this.
+        [cell updateHighlight];
+    }
+
     if ((animate || _animationTimer != nil) && [self orientation] == PSMTabBarHorizontalOrientation && [_cells count] > 0) {
         //animate only on horizontal tab bars
         if (_animationTimer) {
@@ -1414,9 +1421,11 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
     NSRect cellFrame;
     PSMTabBarCell *cell = [self cellForPoint:mousePt cellFrame:&cellFrame];
-    if(cell){
+    if (cell) {
         BOOL overClose = NSMouseInRect(mousePt, [cell closeButtonRectForFrame:cellFrame], [self isFlipped]);
-        if (overClose && ![self disableTabClose] && ([self allowsBackgroundTabClosing] || [[cell representedObject] isEqualTo:[tabView selectedTabViewItem]])) {
+        if (overClose &&
+            cell.closeButtonVisible &&
+            ([self allowsBackgroundTabClosing] || [[cell representedObject] isEqualTo:[tabView selectedTabViewItem]])) {
             [cell setCloseButtonOver:NO];
             [cell setCloseButtonPressed:YES];
             _closeClicked = YES;
@@ -1525,11 +1534,13 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
         NSRect cellFrame, mouseDownCellFrame;
         PSMTabBarCell *cell = [self cellForPoint:mousePt cellFrame:&cellFrame];
         PSMTabBarCell *mouseDownCell = [self cellForPoint:[self convertPoint:[[self lastMouseDownEvent] locationInWindow] fromView:nil] cellFrame:&mouseDownCellFrame];
-        if(cell){
+        if (cell) {
             NSPoint trackingStartPoint = [self convertPoint:[[self lastMouseDownEvent] locationInWindow] fromView:nil];
             NSRect iconRect = [mouseDownCell closeButtonRectForFrame:mouseDownCellFrame];
 
-            if ((NSMouseInRect(mousePt, iconRect,[self isFlipped])) && ![self disableTabClose] && [mouseDownCell closeButtonPressed]) {
+            if ((NSMouseInRect(mousePt, iconRect,[self isFlipped])) &&
+                cell.closeButtonVisible &&
+                [mouseDownCell closeButtonPressed]) {
                 [self performSelector:@selector(closeTabClick:) withObject:cell];
             } else if (NSMouseInRect(mousePt, 
                                      mouseDownCellFrame,
