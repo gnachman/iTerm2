@@ -135,8 +135,8 @@
             // Is a non-file URL string. File URLs get special handling.
             [values addObject:string];
             CFStringRef description = UTTypeCopyDescription((CFStringRef)item.types[0]);
-            NSString *label = [NSString stringWithFormat:@"%@: %@",
-                               (NSString *)description,
+            NSString *label = [NSString stringWithFormat:@"%@: “%@”",
+                               [(NSString *)description stringByCapitalizingFirstLetter],
                                [string ellipsizedDescriptionNoLongerThan:100]];
             CFRelease(description);
             [labels addObject:label];
@@ -168,16 +168,21 @@
     // Now handle file references.
     NSArray *filenames = [pasteboard propertyListForType:NSFilenamesPboardType];
 
-    // Escape and join the filenames to add an item for the names themselves.
-    NSMutableArray *escapedFilenames = [NSMutableArray array];
-    for (NSString *filename in filenames) {
-        [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+    // Join the filenames to add an item for the names themselves.
+    NSMutableArray *modifiedFilenames = [NSMutableArray array];
+    if (filenames.count == 1) {
+        [modifiedFilenames addObject:filenames[0]];
+    } else {
+        for (NSString *filename in filenames) {
+            [modifiedFilenames addObject:[NSString stringWithFormat:@"\"%@\"", filename]];
+        }
     }
-    [values addObject:[escapedFilenames componentsJoinedByString:@" "]];
+
+    [values addObject:[modifiedFilenames componentsJoinedByString:@" "]];
     if (filenames.count > 1) {
-        [labels addObject:@"Filenames joined by spaces"];
+        [labels addObject:@"Multile file names"];
     } else if (filenames.count == 1) {
-        [labels addObject:@"Filename"];
+        [labels addObject:@"File name"];
     }
 
     // Add an item for each existing non-directory file.
@@ -220,6 +225,7 @@
     _index = index;
     [_rawString autorelease];
     _rawString = [string copy];
+    _preview.string = _rawString;
     BOOL containsTabs = [string containsString:@"\t"];
     NSInteger tabTransformTag = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialTabTransform];
     NSCharacterSet *theSet =
@@ -261,7 +267,7 @@
 }
 
 - (void)updatePreview {
-    PasteEvent *pasteEvent = [self pasteEvent];
+    PasteEvent *pasteEvent = [self pasteEventWithString:_rawString];
     [iTermPasteHelper sanitizePasteEvent:pasteEvent encoding:_encoding];
     _preview.string = pasteEvent.string;
     NSNumberFormatter *bytesFormatter = [[[NSNumberFormatter alloc] init] autorelease];
@@ -376,12 +382,16 @@
 }
 
 - (PasteEvent *)pasteEvent {
+    return [self pasteEventWithString:_preview.textStorage.string];
+}
+
+- (PasteEvent *)pasteEventWithString:(NSString *)string {
     iTermPasteFlags flags = _pasteSpecialViewController.flags;
     if (_base64only) {
         // We already base64 encoded the data, so don't set the flag or else it gets double encoded.
         flags &= ~kPasteFlagsBase64Encode;
     }
-    return [PasteEvent pasteEventWithString:_preview.textStorage.string
+    return [PasteEvent pasteEventWithString:string
                                       flags:flags
                            defaultChunkSize:self.chunkSize
                                    chunkKey:nil
