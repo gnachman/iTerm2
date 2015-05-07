@@ -108,22 +108,32 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     return 1;
 }
 
+static void StartDebugLogging() {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gDebugLogLock = [[NSRecursiveLock alloc] init];
+    });
+    [gDebugLogLock lock];
+    gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+    WriteDebugLogHeader();
+    gDebugLogStr = [[NSMutableString alloc] init];
+    gDebugLogStr2 = [[NSMutableString alloc] init];
+    gDebugLogging = !gDebugLogging;
+    [gDebugLogLock unlock];
+}
+
+void TurnOnDebugLoggingSilently(void) {
+    if (!gDebugLogging) {
+        StartDebugLogging();
+    }
+}
+
 void ToggleDebugLogging(void) {
     if (!gDebugLogging) {
         NSRunAlertPanel(@"Debug Logging Enabled",
                         @"Writing to /tmp/debuglog.txt",
                         @"OK", nil, nil);
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            gDebugLogLock = [[NSRecursiveLock alloc] init];
-        });
-        [gDebugLogLock lock];
-        gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
-        WriteDebugLogHeader();
-        gDebugLogStr = [[NSMutableString alloc] init];
-        gDebugLogStr2 = [[NSMutableString alloc] init];
-        gDebugLogging = !gDebugLogging;
-        [gDebugLogLock unlock];
+        StartDebugLogging();
     } else {
         [gDebugLogLock lock];
         gDebugLogging = !gDebugLogging;
