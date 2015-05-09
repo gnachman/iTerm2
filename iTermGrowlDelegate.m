@@ -135,14 +135,14 @@
 
     NSDictionary *context = nil;
     if (session) {
-      context = [[[NSDictionary alloc] initWithObjectsAndKeys:
-                     [NSNumber numberWithInt:[[iTermController sharedInstance] indexOfTerminal:[[session tab] realParentWindow]]],
-                     @"win",
-                     [NSNumber numberWithInt:[[session tab] number]],
-                     @"tab",
-                     [NSNumber numberWithInt:[[session view] viewId]],
-                     @"view",
-                     nil] autorelease];
+        context = [[[NSDictionary alloc] initWithObjectsAndKeys:
+                    [NSNumber numberWithInt:[[iTermController sharedInstance] indexOfTerminal:[[session tab] realParentWindow]]],
+                    @"win",
+                    [NSNumber numberWithInt:[[session tab] number]],
+                    @"tab",
+                    [NSNumber numberWithInt:[[session view] viewId]],
+                    @"view",
+                    nil] autorelease];
     }
 
     if ([[PreferencePanel sharedInstance] enableGrowl]) {
@@ -156,8 +156,37 @@
     }
 }
 
-- (void)growlNotificationWasClicked:(id)clickContext
-{
+- (void)growlNotify:(NSString *)title
+    withDescription:(NSString *)description
+    andNotification:(NSString *)notification
+         andURL:(NSString *)url {
+    if (![self isEnabled]) {
+        return;
+    }
+
+    NSDictionary *context = nil;
+    if (url) {
+        context = @{ @"url" : url };
+    }
+
+    if ([[PreferencePanel sharedInstance] enableGrowl]) {
+        [GrowlApplicationBridge notifyWithTitle:title
+                                    description:description
+                               notificationName:notification
+                                       iconData:nil
+                                       priority:0
+                                       isSticky:NO
+                                   clickContext:context];
+    }
+}
+
+- (void)growlNotificationWasClicked:(id)clickContext {
+    NSString *url = [clickContext objectForKey:@"url"];
+    if (url) {
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:url]];
+        return;
+    }
+    
     int win = [[clickContext objectForKey:@"win"] intValue];
     int tab = [[clickContext objectForKey:@"tab"] intValue];
     int view = [[clickContext objectForKey:@"view"] intValue];

@@ -78,6 +78,7 @@
 #import "ColorsMenuItemView.h"
 #import "iTermFontPanel.h"
 #import "FutureMethods.h"
+#import "iTermPromotionalMessageManager.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -4767,6 +4768,13 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW processMRUEvent:theEvent];
 
     NSUInteger modifierFlags = [theEvent modifierFlags];
+    if (!(modifierFlags & (NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask))) {
+        // Schedule a promotional message when the user has interacted lightly with the app. If a
+        // message is available to be shown, it'll pop up in a few seconds. This prevents headless
+        // machines from getting interrupted by a promo.
+        [[iTermPromotionalMessageManager sharedInstance] scheduleDisplayIfNeeded];
+    }
+
     if (!(modifierFlags & NSCommandKeyMask) &&
         [[[self currentSession] TEXTVIEW] isFindingCursor]) {
         // The cmd key was let up while finding the cursor
