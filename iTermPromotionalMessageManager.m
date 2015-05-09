@@ -7,6 +7,7 @@
 //
 
 #import "iTermPromotionalMessageManager.h"
+#import "NSStringITerm.h"
 
 static NSString *kPromotionsKey = @"promotions";
 static NSString *kPromoIdKey = @"id";
@@ -52,6 +53,13 @@ static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
     }
     self = [super init];
     if (self) {
+        // If there's no value for kTimeOfLastPromoKey set it to "now" to avoid showing a promo
+        // immediately after the first run of a new install.
+        NSTimeInterval lastShown = [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfLastPromoKey];
+        if (!lastShown) {
+            [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
+                                                      forKey:kTimeOfLastPromoKey];
+        }
 #if TEST_PROMOS
         const NSTimeInterval delay = 1;
 #else
