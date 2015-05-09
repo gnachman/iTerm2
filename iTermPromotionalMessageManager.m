@@ -18,6 +18,7 @@ static NSString *kPromoExpirationKey = @"expiration";
 static NSString *kPromoMinItermVersionKey = @"min_iterm_version";
 static NSString *kPromoMaxItermVersionKey = @"max_iterm_version";
 static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
+static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
 
 // Gently let the user know about upcoming releases that break backward compatibility.
 @interface iTermPromotionalMessageManager ()<NSURLDownloadDelegate>
@@ -48,7 +49,7 @@ static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
         // with an earlier deployment target anyway.
         return nil;
     }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DisablePromotions"]) {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kPromotionsDisabledKey]) {
         return nil;
     }
     self = [super init];
@@ -165,8 +166,14 @@ static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
                                        alternateButton:@"Dismiss"
                                            otherButton:nil
                              informativeTextWithFormat:@"%@", message];
+        alert.suppressionButton.title = @"Do not show promotions for new versions of iTerm2 again.";
+        alert.showsSuppressionButton = YES;
+
         if ([alert runModal] == NSAlertDefaultReturn) {
             [[NSWorkspace sharedWorkspace] openURL:url];
+        }
+        if (alert.suppressionButton.state == NSOnState) {
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPromotionsDisabledKey];
         }
     }
     _scheduled = NO;
