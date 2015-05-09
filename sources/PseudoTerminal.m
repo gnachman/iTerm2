@@ -4501,6 +4501,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
+- (IBAction)zoomOut:(id)sender {
+    [self replaceSyntheticActiveSessionWithLiveSessionIfNeeded];
+}
+
 - (IBAction)zoomOnSelection:(id)sender {
     PTYSession *session = [self currentSession];
     iTermSelection *selection = session.textview.selection;
@@ -6644,6 +6648,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         result = ([self currentSession] != nil);
     } else if ([item action] == @selector(openSelection:)) {
         result = [[self currentSession] hasSelection];
+    } else if ([item action] == @selector(zoomOut:)) {
+        return self.currentSession.textViewIsZoomedIn;
     }
     return result;
 }

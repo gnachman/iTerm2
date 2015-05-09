@@ -435,7 +435,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // We'll try versions with and without a questionable suffix. The version
     // with the suffix is always preferred if it exists.
     NSArray *questionableSuffixes = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];
-
+    NSCharacterSet *whitespaceCharset = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     for (int i = [beforeChunks count]; i >= 0; i--) {
         NSString *beforeChunk = @"";
         if (i < [beforeChunks count]) {
@@ -444,23 +444,31 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
         [left insertString:beforeChunk atIndex:0];
         NSMutableString *possiblePath = [NSMutableString stringWithString:left];
-        
+
         // Do not search more than 10 chunks forward to avoid starving leftward search.
         for (int j = 0; j < [afterChunks count] && j < 10; j++) {
-            [possiblePath appendString:[afterChunks objectAtIndex:j]];
-            if ([paths containsObject:[NSString stringWithString:possiblePath]]) {
+            [possiblePath appendString:afterChunks[j]];
+            NSString *trimmedPath = [possiblePath stringByTrimmingCharactersInSet:whitespaceCharset];
+            if ([paths containsObject:[NSString stringWithString:trimmedPath]]) {
                 continue;
             }
-            [paths addObject:[[possiblePath copy] autorelease]];
+            [paths addObject:[[trimmedPath copy] autorelease]];
 
-            for (NSString *modifiedPossiblePath in [self pathsFromPath:possiblePath byRemovingBadSuffixes:questionableSuffixes]) {
+            for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
                 BOOL exists = NO;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
                     exists = ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL] != nil);
                 }
                 if (exists) {
                     if (charsTakenFromPrefixPtr) {
-                        *charsTakenFromPrefixPtr = left.length;
+                        if ([afterChunks[j] length] == 0) {
+                            // trimmedPath is trim(left + afterChunks[j]). If afterChunks[j] is empty
+                            // then we don't want to count trailing whitespace from left in the chars
+                            // taken from prefix.
+                            *charsTakenFromPrefixPtr = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
+                        } else {
+                            *charsTakenFromPrefixPtr = left.length;
+                        }
                     }
                     DLog(@"Using path %@", modifiedPossiblePath);
                     return modifiedPossiblePath;

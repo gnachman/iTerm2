@@ -17,6 +17,11 @@
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ isHidden=%@ alphaValue=%@>",
+            [self class], self, NSStringFromRect(self.frame), @(self.isHidden), @(self.alphaValue)];
+}
+
 - (void)drawRect:(NSRect)dirtyRect
 {
     [color_ setFill];

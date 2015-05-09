@@ -2871,7 +2871,7 @@
 		A6E77F8D1A2449EF009B1CB6 /* NSEvent+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSEvent+iTerm.h"; sourceTree = "<group>"; };
 		A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSEvent+iTerm.m"; sourceTree = "<group>"; };
 		A6E77F981A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteSpecialWindowController.h; sourceTree = "<group>"; };
-		A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteSpecialWindowController.m; sourceTree = "<group>"; };
+		A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteSpecialWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E77F9F1A2A8A5A009B1CB6 /* NSData+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+iTerm.h"; sourceTree = "<group>"; };
 		A6E77FA01A2A8A5A009B1CB6 /* NSData+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+iTerm.m"; sourceTree = "<group>"; };
 		A6E77FAF1A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNumberOfSpacesAccessoryViewController.h; sourceTree = "<group>"; };

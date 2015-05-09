@@ -178,7 +178,10 @@ static const CGFloat kMargin = 4;
         names_ = [[NSMutableArray alloc] init];
         pids_ = [[NSArray alloc] init];
 
-        kill_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
+        kill_ = [[[NSButton alloc] initWithFrame:NSMakeRect(0,
+                                                            frame.size.height - kButtonHeight,
+                                                            frame.size.width,
+                                                            kButtonHeight)] autorelease];
         [kill_ setButtonType:NSMomentaryPushInButton];
         [kill_ setTitle:@"Send Signal"];
         [kill_ setTarget:self];
@@ -187,7 +190,6 @@ static const CGFloat kMargin = 4;
         [kill_ sizeToFit];
         [kill_ setAutoresizingMask:NSViewMinYMargin | NSViewMaxXMargin];
         [self addSubview:kill_];
-        [kill_ release];
         [kill_ bind:@"enabled" toObject:self withKeyPath:@"killable" options:nil];
         signal_ = [[SignalPicker alloc] initWithFrame:NSMakeRect(kill_.frame.size.width + kMargin,
                                                                  frame.size.height - kButtonHeight + 1,

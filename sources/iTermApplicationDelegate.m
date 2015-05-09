@@ -144,7 +144,7 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     // Start automatic debug logging if it's enabled.
     if ([iTermAdvancedSettingsModel startDebugLoggingAutomatically]) {
-        ToggleDebugLogging();
+        TurnOnDebugLoggingSilently();
     }
 
     // set the TERM_PROGRAM environment variable

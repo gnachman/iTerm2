@@ -100,6 +100,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByTrimmingLeadingWhitespace;
 - (NSString *)stringByTrimmingTrailingWhitespace;
 
+- (NSString *)stringByTrimmingTrailingCharactersFromCharacterSet:(NSCharacterSet *)charset;
+
 - (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding;
 
 // Returns a substring of contiguous characters only from a given character set
