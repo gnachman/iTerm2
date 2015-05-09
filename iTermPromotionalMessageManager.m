@@ -8,6 +8,16 @@
 
 #import "iTermPromotionalMessageManager.h"
 
+static NSString *kPromotionsKey = @"promotions";
+static NSString *kPromoIdKey = @"id";
+static NSString *kPromoTitleKey = @"title";
+static NSString *kPromoMessageKey = @"message";
+static NSString *kPromoUrlKey = @"url";
+static NSString *kPromoExpirationKey = @"expiration";
+static NSString *kPromoMinItermVersionKey = @"min_iterm_version";
+static NSString *kPromoMaxItermVersionKey = @"max_iterm_version";
+static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
+
 // Gently let the user know about upcoming releases that break backward compatibility.
 @interface iTermPromotionalMessageManager ()<NSURLDownloadDelegate>
 @property(nonatomic, retain) NSMutableData *data;
@@ -18,7 +28,7 @@
 
 @implementation iTermPromotionalMessageManager {
     NSURLDownload *_download;
-    NSArray *_promotion;
+    NSArray *_promotion;  // An array of [ promoId, message, title, url ]
     BOOL _scheduled;
 }
 
@@ -60,11 +70,11 @@
 }
 
 - (void)beginDownload {
-    // Try again in a week.
+    // Try again in a day.
 #if TEST_PROMOS
     const NSTimeInterval delay = 1;
 #else
-    const NSTimeInterval delay = 3600 * 24 * 7;
+    const NSTimeInterval delay = 3600 * 24;
 #endif
     [self performSelector:@selector(beginDownload) withObject:nil afterDelay:delay];
 
@@ -73,28 +83,28 @@
         return;
     }
 
-    _download = [[NSURLDownload alloc] initWithRequest:[self request] delegate:self];
+    NSURLRequest *request = [self request];
+    if (request) {
+        _download = [[NSURLDownload alloc] initWithRequest:[self request] delegate:self];
+    }
 }
 
 - (NSURLRequest *)request {
-    NSURL *url = [NSURL URLWithString:@"https://iterm2.com/appcasts/promo.json"];
+    NSString *baseUrl = @"https://iterm2.com/appcasts/promo.json";
+    NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    NSString *encodedVersion = [version stringWithPercentEscape];
+    NSString *urlString = [NSString stringWithFormat:@"%@?v=%@", baseUrl, encodedVersion];
+    NSURL *url = [NSURL URLWithString:urlString];
+    if (!url) {
+        return nil;
+    }
     NSMutableURLRequest *request =
-    [NSMutableURLRequest requestWithURL:url
-                            cachePolicy:NSURLRequestReloadIgnoringCacheData
-                        timeoutInterval:30.0];
+        [NSMutableURLRequest requestWithURL:url
+                                cachePolicy:NSURLRequestReloadIgnoringCacheData
+                            timeoutInterval:30.0];
     self.data = [NSMutableData data];
     return request;
 }
-
-static NSString *kPromotionsKey = @"promotions";
-static NSString *kPromoIdKey = @"id";
-static NSString *kPromoTitleKey = @"title";
-static NSString *kPromoMessageKey = @"message";
-static NSString *kPromoUrlKey = @"url";
-static NSString *kPromoExpirationKey = @"expiration";
-static NSString *kPromoMinItermVersionKey = @"min_iterm_version";
-static NSString *kPromoMaxItermVersionKey = @"max_iterm_version";
-static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
 
 - (NSString *)keyForPromoId:(NSString *)promoId {
     NSString *theKey = [NSString stringWithFormat:@"NoSyncHaveShownPromoWithId_%@", promoId];
@@ -119,13 +129,16 @@ static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
 }
 
 - (void)setPromotionFromDictionary:(NSDictionary *)promo {
+    NSString *promoId = promo[kPromoIdKey];
     NSString *message = promo[kPromoMessageKey];
     NSString *title = promo[kPromoTitleKey];
     NSString *urlString = promo[kPromoUrlKey];
     NSURL *url = [NSURL URLWithString:urlString];
-    if (title && message && url) {
-        [_promotion autorelease];
-        _promotion = [@[ promo[kPromoIdKey], message, title, url ] retain];
+    [_promotion autorelease];
+    if (promoId && title && message && url) {
+        _promotion = [@[ promoId, message, title, url ] retain];
+    } else {
+        _promotion = nil;
     }
 }
 
@@ -136,6 +149,9 @@ static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
         NSString *message = _promotion[2];
         NSURL *url = _promotion[3];
         [self setHaveShownPromoWithId:promoId];
+        [_promotion autorelease];
+        _promotion = nil;
+
         NSAlert *alert = [NSAlert alertWithMessageText:title
                                          defaultButton:@"Learn More"
                                        alternateButton:@"Dismiss"
@@ -144,8 +160,6 @@ static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
         if ([alert runModal] == NSAlertDefaultReturn) {
             [[NSWorkspace sharedWorkspace] openURL:url];
         }
-        [_promotion autorelease];
-        _promotion = nil;
     }
     _scheduled = NO;
 }
@@ -176,7 +190,7 @@ static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
     return YES;
 }
 
-- (void)handlePromoDictionary:(NSDictionary *)root {
+- (void)loadPromoFromDictionaryIfEligible:(NSDictionary *)root {
     NSArray *promotions = root[kPromotionsKey];
     for (NSDictionary *promo in promotions) {
 #if TEST_PROMOS
@@ -222,7 +236,7 @@ static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
             return;
         } else if ([object isKindOfClass:[NSDictionary class]]) {
             NSDictionary *root = object;
-            [self handlePromoDictionary:root];
+            [self loadPromoFromDictionaryIfEligible:root];
         } else {
             NSLog(@"Unexpected class for JSON root: %@", [object class]);
         }
