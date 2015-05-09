@@ -63,6 +63,7 @@ static BOOL ranAutoLaunchScript = NO;
 BOOL gDebugLogging = NO;
 int gDebugLogFile = -1;
 static BOOL hasBecomeActive = NO;
+static NSString *const kHaveShownV3PromoKey = @"HaveShownV3Promo_____";
 
 @interface iTermApplicationDelegate ()
 
@@ -336,6 +337,47 @@ static BOOL hasBecomeActive = NO;
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
                                                         object:nil];
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:kHaveShownV3PromoKey]) {
+        [self performSelectorInBackground:@selector(checkForV3Promo) withObject:nil];
+    }
+}
+
+// Run in background thread
+- (void)checkForV3Promo {
+    NSURL *url = [NSURL URLWithString:@"https://iterm2.com/appcasts/v3promo.txt"];
+    if (url) {
+        NSData *contents = [NSData dataWithContentsOfURL:url];
+        NSString *text = [[[NSString alloc] initWithData:contents encoding:NSUTF8StringEncoding] autorelease];
+        if (text) {
+            [self performSelectorOnMainThread:@selector(showPromoWithText:) withObject:text waitUntilDone:NO];
+        }
+    }
+}
+
+- (void)showPromoWithText:(NSString *)text {
+  if ([[NSUserDefaults standardUserDefaults] boolForKey:kHaveShownV3PromoKey]) {
+      return;
+  }
+  NSArray *parts = [text componentsSeparatedByString:@"\n"];
+  if (parts.count < 3) {
+    return;
+  }
+  NSString *title = parts[0];
+  NSString *message = parts[1];
+  NSString *urlString = parts[2];
+  NSURL *url = [NSURL URLWithString:urlString];
+  if (title && message && url) {
+      [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kHaveShownV3PromoKey];
+      NSAlert *alert = [NSAlert alertWithMessageText:title
+                                       defaultButton:@"Learn More"
+                                     alternateButton:@"Dismiss"
+                                         otherButton:nil
+                           informativeTextWithFormat:@"%@", message];
+      if ([alert runModal] == NSAlertDefaultReturn) {
+            [[NSWorkspace sharedWorkspace] openURL:url];
+      }
+  }
+
 }
 
 - (BOOL)applicationShouldTerminate:(NSNotification *)theNotification
