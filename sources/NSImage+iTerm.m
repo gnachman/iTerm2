@@ -10,6 +10,17 @@
 
 @implementation NSImage (iTerm)
 
++ (NSString *)extensionForUniformType:(NSString *)type {
+    NSDictionary *map = @{ (NSString *)kUTTypeBMP: @"bmp",
+                           (NSString *)kUTTypeGIF: @"gif",
+                           (NSString *)kUTTypeJPEG2000: @"jp2",
+                           (NSString *)kUTTypeJPEG: @"jpeg",
+                           (NSString *)kUTTypePNG: @"png",
+                           (NSString *)kUTTypeTIFF: @"tiff",
+                           (NSString *)kUTTypeICO: @"ico" };
+    return map[type];
+}
+
 - (NSImage *)blurredImageWithRadius:(int)radius {
     // Initially, this used a CIFilter but this doesn't work on some machines for mysterious reasons.
     // Instead, this algorithm implements a really simple box blur. It's quite fast--about 5ms on
@@ -102,6 +113,7 @@
   return coloredImage;
 }
 
+// TODO: Should this use -bitmapImageRep?
 - (NSData *)dataForFileOfType:(NSBitmapImageFileType)fileType {
     CGImageRef cgImage = [self CGImageForProposedRect:NULL
                                               context:nil
@@ -118,6 +130,38 @@
                        [self CGImageForProposedRect:NULL context:nil hints:nil]);
     CGContextRelease(context);
     return storage;
+}
+
+- (NSBitmapImageRep *)bitmapImageRep {
+    int width = [self size].width;
+    int height = [self size].height;
+
+    if (width < 1 || height < 1) {
+        return nil;
+    }
+
+    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+                                                                    pixelsWide:width
+                                                                    pixelsHigh:height
+                                                                 bitsPerSample:8
+                                                               samplesPerPixel:4
+                                                                      hasAlpha:YES
+                                                                      isPlanar:NO
+                                                                colorSpaceName:NSDeviceRGBColorSpace
+                                                                   bytesPerRow:width * 4
+                                                                  bitsPerPixel:32];
+
+    NSGraphicsContext *ctx = [NSGraphicsContext graphicsContextWithBitmapImageRep: rep];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:ctx];
+    [self drawAtPoint:NSZeroPoint
+             fromRect:NSZeroRect
+            operation:NSCompositeCopy
+             fraction:1.0];
+    [ctx flushGraphics];
+    [NSGraphicsContext restoreGraphicsState];
+    
+    return [rep autorelease];
 }
 
 @end

@@ -10,6 +10,9 @@
 
 @interface NSData (iTerm)
 
+  // Base-64 decodes string and returns data or nil.
++ (NSData *)dataWithBase64EncodedString:(NSString *)string;
+
 // returns a string the the data base-64 encoded into 77-column lines divided by lineBreak.
 - (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;
 
@@ -17,5 +20,9 @@
 - (BOOL)containsAsciiCharacterInSet:(NSCharacterSet *)asciiSet;
 
 - (BOOL)hasPrefixOfBytes:(char *)bytes length:(int)length;
+
+// Tries to guess, from the first bytes of data, what kind of image it is and
+// returns the corresponding UTI string constant. Not guaranteed to be correct.
+- (NSString *)uniformTypeIdentifierForImageData;
 
 @end

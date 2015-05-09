@@ -33,31 +33,7 @@
 #import "NSStringITerm.h"
 #import "VT100GridTypes.h"
 
-// Describes an image. A screen_char_t may be used to draw a part of an image.
-// The code in the screen_char_t can be used to look up this object which is
-// 1:1 with images.
-@interface ImageInfo : NSObject
-
-// Size in cells.
-@property(nonatomic, assign) NSSize size;
-
-// Full-size image.
-@property(nonatomic, retain) NSImage *image;
-
-// If set, the image won't be squished.
-@property(nonatomic, assign) BOOL preserveAspectRatio;
-
-// Original filename
-@property(nonatomic, copy) NSString *filename;
-
-// Image code
-@property(nonatomic, readonly) unichar code;
-
-// Returns an image of size |region| containing a scaled copy of |image| and
-// transparency around two edges if |region| != |image.size|.
-- (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region;
-
-@end
+@class iTermImageInfo;
 
 // This is used in the rightmost column when a double-width character would
 // have been split in half and was wrapped to the next line. It is nonprintable
@@ -407,14 +383,15 @@ screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL p
 // as specified in the preceding call to ImageCharForNewImage.
 void SetPositionInImageChar(screen_char_t *charPtr, int x, int y);
 
-// Assigns an image to a code allocated by ImageCharForNewImage.
-void SetDecodedImage(unichar code, NSImage *image);
+// Assigns an image to a code allocated by ImageCharForNewImage. data is optional and only used for
+// animated gifs.
+void SetDecodedImage(unichar code, NSImage *image, NSData *data);
 
 // Releases all memory associated with an image. The code comes from ImageCharForNewImage.
 void ReleaseImage(unichar code);
 
 // Returns image info for a code found in a screen_char_t with field image==1.
-ImageInfo *GetImageInfo(unichar code);
+iTermImageInfo *GetImageInfo(unichar code);
 
 // Returns the position of a character within an image in cells with the origin
 // at the top left.

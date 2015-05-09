@@ -52,6 +52,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;
 @property(nonatomic, assign) BOOL useHFSPlusMapping;
 @property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
+@property(nonatomic, readonly) NSIndexSet *animatedLines;
 
 // Designated initializer.
 - (id)initWithTerminal:(VT100Terminal *)terminal;
@@ -137,7 +138,10 @@ extern int kVT100ScreenMinRows;
                              height:(int)height
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
-                              image:(NSImage *)image;
+                              image:(NSImage *)image
+                               data:(NSData *)data;  // data is optional and only used by animated GIFs
+
+- (void)resetAnimatedLines;
 
 #pragma mark - Marks and notes
 
