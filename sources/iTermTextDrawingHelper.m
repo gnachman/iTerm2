@@ -762,7 +762,10 @@ static const int kBadgeRightMargin = 10;
     NSColor *backgroundColor = [self defaultBackgroundColor];
     [backgroundColor set];
     NSRectFill(NSMakeRect(0, 0, _cellSize.width * run->numImageCells, _cellSize.height));
-    
+    if (imageInfo.animated) {
+        [_delegate drawingHelperDidFindRunOfAnimatedCellsStartingAt:run->coord ofLength:run->numImageCells];
+        _animated = YES;
+    }
     [image drawInRect:NSMakeRect(0, 0, _cellSize.width * run->numImageCells, _cellSize.height)
              fromRect:NSMakeRect(chunkSize.width * run->attrs.imageColumn,
                                  image.size.height - _cellSize.height - chunkSize.height * run->attrs.imageLine,
@@ -1348,7 +1351,7 @@ static const int kBadgeRightMargin = 10;
             }
             if (!currentRun) {
                 firstRun = currentRun = malloc(sizeof(CRun));
-                CRunInitialize(currentRun, &attrs, storage, curX);
+                CRunInitialize(currentRun, &attrs, storage, VT100GridCoordMake(i, row), curX);
             }
             if (thisCharString) {
                 currentRun = CRunAppendString(currentRun,

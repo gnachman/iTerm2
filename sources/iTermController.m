@@ -62,6 +62,8 @@ static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
+static NSString *kHavePromptedAboutTestReleasesPrefsKey = @"NoSyncHavePromptedAboutTestReleases";
+
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 
@@ -1324,6 +1326,40 @@ static BOOL initDone = NO;
     return YES;
 }
 
+- (BOOL)havePromptedAboutTestReleases {
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:kHavePromptedAboutTestReleasesPrefsKey] boolValue];
+}
+
+- (void)setHavePromptedAboutTestReleases:(BOOL)value {
+    [[NSUserDefaults standardUserDefaults] setBool:value
+                                            forKey:kHavePromptedAboutTestReleasesPrefsKey];
+}
+
+- (void)confirmCheckForTestReleases {
+    [[NSAlert alertWithMessageText:@"iTerm2 3.0 is coming!"
+                     defaultButton:@"Test Releases"
+                   alternateButton:@"Final Releases"
+                       otherButton:nil
+         informativeTextWithFormat:@""] runModal];
+}
+
+- (BOOL)autoUpdateEnabled {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kPreferenceKeyCheckForUpdatesAutomatically];
+}
+
+- (void)promptAboutTestReleasesIfNeeded {
+    if ([self havePromptedAboutTestReleases]) {
+        return;
+    }
+    [self setHavePromptedAboutTestReleases:YES];
+    if (![self autoUpdateEnabled]) {
+        return;
+    }
+    if (self.checkForTestReleases) {
+        [self confirmCheckForTestReleases];
+    }
+}
+
 - (void)dumpViewHierarchy {
     for (PseudoTerminal *term in [self terminals]) {
         DebugLog([NSString stringWithFormat:@"Terminal %@ at %@", [term window], [NSValue valueWithRect:[[term window] frame]]]);
@@ -1331,9 +1367,12 @@ static BOOL initDone = NO;
     }
 }
 
+- (BOOL)checkForTestReleases {
+    return [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
+}
+
 - (void)refreshSoftwareUpdateUserDefaults {
-    BOOL checkForTestReleases = [iTermPreferences boolForKey:kPreferenceKeyCheckForTestReleases];
-    NSString *appCast = checkForTestReleases ?
+    NSString *appCast = self.checkForTestReleases ?
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
     [[NSUserDefaults standardUserDefaults] setObject:appCast forKey:@"SUFeedURL"];

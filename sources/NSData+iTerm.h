@@ -10,6 +10,8 @@
 
 @interface NSData (iTerm)
 
++ (NSData *)dataWithBase64EncodedString:(NSString *)string;
+
 // returns a string the the data base-64 encoded into 77-column lines divided by lineBreak.
 - (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;
 

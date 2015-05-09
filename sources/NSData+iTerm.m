@@ -11,6 +11,23 @@
 
 @implementation NSData (iTerm)
 
++ (NSData *)dataWithBase64EncodedString:(NSString *)string {
+    // TODO: Handle objects other than images.
+    const char *buffer = [string UTF8String];
+    int destLength = apr_base64_decode_len(buffer);
+    if (destLength <= 0) {
+        return nil;
+    }
+
+    NSMutableData *data = [NSMutableData dataWithLength:destLength];
+    char *decodedBuffer = [data mutableBytes];
+    int resultLength = apr_base64_decode(decodedBuffer, buffer);
+    if (resultLength <= 0) {
+        return nil;
+    }
+    return data;
+}
+
 - (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak {
     // Subtract because the result includes the trailing null. Take MAX in case it returns 0 for
     // some reason.

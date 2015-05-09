@@ -154,5 +154,7 @@
 
 void OnHotKeyEvent(void);
 
+- (void)promptAboutTestReleasesIfNeeded;
+
 @end
 

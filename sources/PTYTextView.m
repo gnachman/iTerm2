@@ -1527,6 +1527,12 @@ static const int kDragThreshold = 3;
     _drawingHelper.cursorVisible = savedCursorVisible;
 }
 
+- (BOOL)getAndResetDrawingAnimatedImageFlag {
+    BOOL result = _drawingHelper.animated;
+    _drawingHelper.animated = NO;
+    return result;
+}
+
 - (void)drawIndicators {
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]];
@@ -5773,6 +5779,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // get the pasteboard
     NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
+    // TODO: This fails on aniamted gifs.m
+    
     NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
 
     // tell our app not switch windows (currently not working)
@@ -6044,6 +6052,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DebugLog([_dataSource debugString]);
     }
     [_dataSource setUseSavedGridIfAvailable:NO];
+
+    // If you're viewing the scrollback area and it contains an animated gif it will need
+    // to be redrawn periodically. The set of animated lines is added to while drawing and then
+    // reset here.
+    NSIndexSet *animatedLines = [_dataSource animatedLines];
+    [animatedLines enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [self setNeedsDisplayOnLine:idx];
+    }];
+    [_dataSource resetAnimatedLines];
 
     return _blinkAllowed && anythingIsBlinking;
 }
@@ -6530,6 +6547,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSData *)drawingHelperMatchesOnLine:(int)line {
     return _findOnPageHelper.highlightMap[@(line + _dataSource.totalScrollbackOverflow)];
+}
+
+- (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord
+                                                ofLength:(int)length {
+    [_dataSource setRangeOfCharsAnimated:NSMakeRange(coord.x, length) onLine:coord.y];
 }
 
 @end

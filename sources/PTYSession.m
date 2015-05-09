@@ -1618,7 +1618,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                       height:1
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
-                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]];
+                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]
+                                        data:nil];
     }
     [_screen appendStringAtCursor:message];
     [_screen appendStringAtCursor:@" "];
@@ -1629,7 +1630,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                       height:1
                                        units:kVT100TerminalUnitsCells
                          preserveAspectRatio:NO
-                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]];
+                                       image:[NSImage imageNamed:@"BrokenPipeDivider"]
+                                        data:nil];
     }
     [_screen crlf];
     [_terminal setForegroundColor:savedFgColor.foregroundColor
@@ -3018,9 +3020,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     anotherUpdateNeeded |= [_textview refresh];
     anotherUpdateNeeded |= [[[self tab] parentWindow] tempTitle];
+    BOOL animating = _textview.getAndResetDrawingAnimatedImageFlag;
+    anotherUpdateNeeded |= animating;
 
     if (anotherUpdateNeeded) {
-        if ([[[self tab] parentWindow] currentTab] == [self tab]) {
+        if (animating) {
+            [self scheduleUpdateIn:kFastTimerIntervalSec];
+        } else if ([[[self tab] parentWindow] currentTab] == [self tab]) {
             [self scheduleUpdateIn:[iTermAdvancedSettingsModel timeBetweenBlinks]];
         } else {
             [self scheduleUpdateIn:kBackgroundSessionIntervalSec];

@@ -442,5 +442,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Minimum contrast level. 0 to 1.
 - (void)setMinimumContrast:(double)value;
 
+- (BOOL)getAndResetDrawingAnimatedImageFlag;
+
 @end
 

@@ -53,10 +53,12 @@
 // Image code
 @property(nonatomic, readonly) unichar code;
 
+@property(nonatomic, readonly) BOOL animated;
+
 // Returns an image of size |region| containing a scaled copy of |image| and
 // transparency around two edges if |region| != |image.size|.
 - (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region;
-
+- (void)setImageFromImage:(NSImage *)image data:(NSData *)data;  // Data is optional and only used for animated gifs
 @end
 
 // This is used in the rightmost column when a double-width character would
@@ -407,8 +409,9 @@ screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL p
 // as specified in the preceding call to ImageCharForNewImage.
 void SetPositionInImageChar(screen_char_t *charPtr, int x, int y);
 
-// Assigns an image to a code allocated by ImageCharForNewImage.
-void SetDecodedImage(unichar code, NSImage *image);
+// Assigns an image to a code allocated by ImageCharForNewImage. data is optional and only used for
+// animated gifs.
+void SetDecodedImage(unichar code, NSImage *image, NSData *data);
 
 // Releases all memory associated with an image. The code comes from ImageCharForNewImage.
 void ReleaseImage(unichar code);

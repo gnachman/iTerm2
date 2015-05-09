@@ -58,6 +58,9 @@
 - (NSString*)debugString;
 - (BOOL)isAllDirty;
 - (void)resetAllDirty;
+- (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line;
+- (NSIndexSet *)animatedLines;
+- (void)resetAnimatedLines;
 
 // Set the cursor dirty. Cursor coords are different because of how they handle
 // being in the WIDTH'th column (it wraps to the start of the next line)

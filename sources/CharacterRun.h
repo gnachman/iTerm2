@@ -81,6 +81,7 @@ struct CRun {
     BOOL terminated;          // No more appends allowed (will go into |next|)
     CRunStorage *storage;     // Backing store for codes, glyphs, and advances.
     int numImageCells;        // Number of consecutive image cells.
+    VT100GridCoord coord;     // Origin of run.
     CRun *next;               // Next run in linked list.
 };
 

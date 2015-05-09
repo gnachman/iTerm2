@@ -58,22 +58,122 @@ static NSString *const kImageInfoPreserveAspectRatioKey = @"Preserve Aspect Rati
 static NSString *const kImageInfoFilenameKey = @"Filename";
 static NSString *const kImageInfoCodeKey = @"Code";
 
+@interface iTermAnimatedImage : NSObject
+@property(nonatomic, readonly) int currentFrame;
+- (instancetype)initWithData:(NSData *)data;
+- (NSImage *)currentImage;
+- (NSImage *)imageForFrame:(int)frame;
+@end
+
+@implementation iTermAnimatedImage {
+    NSArray *_images;
+    NSArray *_delays;
+    NSTimeInterval _creationTime;
+    NSTimeInterval _maxDelay;
+}
+
+- (instancetype)initWithData:(NSData *)data {
+    self = [super init];
+    if (self) {
+        NSMutableArray *images = [NSMutableArray array];
+        NSMutableArray *delays = [NSMutableArray array];
+        CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)data,
+                                                              (CFDictionaryRef)@{});
+        [(id)source autorelease];
+        size_t const count = CGImageSourceGetCount(source);
+        if (count <= 1) {
+            return nil;
+        }
+        _maxDelay = 0;
+        for (size_t i = 0; i < count; ++i) {
+            CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, i, NULL);
+            NSImage *image = [[[NSImage alloc] initWithCGImage:imageRef
+                                                          size:NSMakeSize(CGImageGetWidth(imageRef),
+                                                                          CGImageGetHeight(imageRef))] autorelease];
+            [images addObject:image];
+            CFRelease(imageRef);
+            NSTimeInterval delay = [self delayForFrame:i inImageSource:source];
+            _maxDelay += delay;
+            [delays addObject:@(_maxDelay)];
+        }
+//        CFRelease(source);
+        _creationTime = [NSDate timeIntervalSinceReferenceDate];
+        _images = [images retain];
+        _delays = [delays retain];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_images release];
+    [_delays release];
+    [super dealloc];
+}
+
+- (int)currentFrame {
+    NSTimeInterval offset = [NSDate timeIntervalSinceReferenceDate] - _creationTime;
+    NSTimeInterval delay = fmod(offset, _maxDelay);
+    for (int i = 0; i < _delays.count; i++) {
+        if ([_delays[i] doubleValue] >= delay) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+- (NSImage *)currentImage {
+    return _images[self.currentFrame];
+}
+
+- (NSImage *)imageForFrame:(int)frame {
+    return _images[frame];
+}
+
+- (NSTimeInterval)delayForFrame:(int)i inImageSource:(CGImageSourceRef)source {
+    NSTimeInterval delay = 0.01;
+    CFDictionaryRef const properties = CGImageSourceCopyPropertiesAtIndex(source, i, NULL);
+    if (properties) {
+        CFDictionaryRef const gifProperties = CFDictionaryGetValue(properties,
+                                                                   kCGImagePropertyGIFDictionary);
+        if (gifProperties) {
+            NSNumber *number = (id)CFDictionaryGetValue(gifProperties,
+                                                        kCGImagePropertyGIFUnclampedDelayTime);
+            if (number == NULL || [number doubleValue] == 0) {
+                number = (id)CFDictionaryGetValue(gifProperties, kCGImagePropertyGIFDelayTime);
+            }
+            if ([number doubleValue] > 0) {
+                delay = number.doubleValue;
+            }
+        }
+        CFRelease(properties);
+    }
+    return delay;
+}
+
+
+@end
+
 @interface ImageInfo ()
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 
-@property(nonatomic, retain) NSImage *embeddedImage;
+@property(nonatomic, retain) NSMutableDictionary *embeddedImages;  // frame number->image
 @property(nonatomic, assign) unichar code;
 @property(nonatomic, retain) NSData *smallEncodedImageData;
-
+@property(nonatomic, assign) int frame;
+@property(nonatomic, retain) iTermAnimatedImage *animatedImage;  // Used for animation
 @end
 
 @implementation ImageInfo
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    NSLog(@"Create image");
     self = [super init];
     if (self) {
         _size = [dictionary[kImageInfoSizeKey] sizeValue];
-        _image = [[NSImage alloc] initWithData:dictionary[kImageInfoImageKey]];
+        _animatedImage = [[iTermAnimatedImage alloc] initWithData:dictionary[kImageInfoImageKey]];
+        if (!_animatedImage) {
+            _image = [[NSImage alloc] initWithData:dictionary[kImageInfoImageKey]];
+        }
         _preserveAspectRatio = [dictionary[kImageInfoPreserveAspectRatioKey] boolValue];
         _filename = [dictionary[kImageInfoFilenameKey] copy];
         _code = [dictionary[kImageInfoCodeKey] shortValue];
@@ -87,15 +187,21 @@ static NSString *const kImageInfoCodeKey = @"Code";
     return self;
 }
 
+- (void)setImageFromImage:(NSImage *)image data:(NSData *)data {
+    _animatedImage = [[iTermAnimatedImage alloc] initWithData:data];
+    _image = [image retain];
+}
+
 - (NSData *)smallEncodedImageData {
     if (_smallEncodedImageData) {
         return _smallEncodedImageData;
     }
 
-    NSBitmapImageRep *imgRep = [[_image representations] objectAtIndex:0];
+    NSImage *image = _image;
+    NSBitmapImageRep *imgRep = [[image representations] objectAtIndex:0];
     NSData *data;
     if ([imgRep isOpaque]) {
-        CGFloat pixels = (CGFloat)_image.size.width * (CGFloat)_image.size.height;
+        CGFloat pixels = (CGFloat)image.size.width * (CGFloat)image.size.height;
         CGFloat factor = MIN(0.8, MAX(0.1, 1000 / pixels));
         data = [imgRep representationUsingType:NSJPEGFileType
                                     properties:@{ NSImageCompressionFactor: @(factor) }];
@@ -117,16 +223,36 @@ static NSString *const kImageInfoCodeKey = @"Code";
 - (void)dealloc {
     [_filename release];
     [_image release];
-    [_embeddedImage release];
+    [_embeddedImages release];
     [_smallEncodedImageData release];
+    [_animatedImage release];
     [super dealloc];
+}
+
+
+- (BOOL)animated {
+    return _animatedImage != nil;
+}
+
+- (NSImage *)image {
+    if (_animatedImage) {
+        return [_animatedImage currentImage];
+    } else {
+        return _image;
+    }
 }
 
 - (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region {
     if (!_image) {
         return nil;
     }
-    if (!NSEqualSizes(_embeddedImage.size, region)) {
+    if (!_embeddedImages) {
+        _embeddedImages = [[NSMutableDictionary alloc] init];
+    }
+    int frame = _animatedImage.currentFrame;  // 0 if not animated
+    NSImage *embeddedImage = _embeddedImages[@(frame)];
+
+    if (!NSEqualSizes(embeddedImage.size, region)) {
         NSImage *canvas = [[[NSImage alloc] init] autorelease];
         NSSize size;
         if (!_preserveAspectRatio) {
@@ -144,15 +270,15 @@ static NSString *const kImageInfoCodeKey = @"Code";
         }
         [canvas setSize:region];
         [canvas lockFocus];
-        [_image drawInRect:NSMakeRect((region.width - size.width) / 2,
-                                      (region.height - size.height) / 2,
-                                      size.width,
-                                      size.height)];
+        [[_animatedImage imageForFrame:frame] drawInRect:NSMakeRect((region.width - size.width) / 2,
+                                                                    (region.height - size.height) / 2,
+                                                                    size.width,
+                                                                    size.height)];
         [canvas unlockFocus];
         
-        self.embeddedImage = canvas;
+        self.embeddedImages[@(frame)] = canvas;
     }
-    return _embeddedImage;
+    return _embeddedImages[@(frame)];
 }
 
 @end
@@ -288,10 +414,9 @@ void SetPositionInImageChar(screen_char_t *charPtr, int x, int y)
     charPtr->backgroundColor = y;
 }
 
-void SetDecodedImage(unichar code, NSImage *image)
-{
+void SetDecodedImage(unichar code, NSImage *image, NSData *data) {
     ImageInfo *imageInfo = gImages[@(code)];
-    imageInfo.image = image;
+    [imageInfo setImageFromImage:image data:data];
     gEncodableImageMap[@(code)] = [imageInfo dictionary];
 }
 
