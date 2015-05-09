@@ -104,9 +104,4 @@
     andNotification:(NSString *)notification
          andSession:(PTYSession *)session;
 
-- (void)growlNotify:(NSString *)title
-    withDescription:(NSString *)description
-    andNotification:(NSString *)notification
-             andURL:(NSString *)url;
-
 @end

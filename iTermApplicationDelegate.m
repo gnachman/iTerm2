@@ -42,7 +42,6 @@
 #import "iTermFontPanel.h"
 #import "NSView+RecursiveDescription.h"
 #import "PseudoTerminalRestorer.h"
-#import "iTermGrowlDelegate.h"
 #import "ToastWindowController.h"
 #include <unistd.h>
 #include <sys/stat.h>
@@ -80,11 +79,12 @@ static BOOL hasBecomeActive = NO;
 
 @end
 
+
 @implementation iTermApplicationDelegate
 
-
 // NSApplication delegate methods
-- (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+- (void)applicationWillFinishLaunching:(NSNotification *)aNotification
+{
     // Check the system version for minimum requirements.
     SInt32 gSystemVersion;
     Gestalt(gestaltSystemVersion, &gSystemVersion);
