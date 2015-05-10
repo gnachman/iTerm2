@@ -83,12 +83,23 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
 
 - (void)beginDownload {
     // Try again in a day.
+    static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hour
 #if TEST_PROMOS
     const NSTimeInterval delay = 1;
 #else
-    const NSTimeInterval delay = 3600 * 24;
+    const NSTimeInterval delay = kMinTimeBetweenDownloads + 1;
 #endif
     [self performSelector:@selector(beginDownload) withObject:nil afterDelay:delay];
+
+    // Don't download more than twice in 24 hours.
+    static NSString *const kTimeOfLastPromoDownloadKey = @"NoSyncTimeOfLastPromoDownload";
+    NSTimeInterval lastDownload =
+        [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfLastPromoDownloadKey];
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (now - lastDownload < kMinTimeBetweenDownloads) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setDouble:now forKey:kTimeOfLastPromoDownloadKey];
 
     if (_download) {
         // Still downloading (shouldn't happen).
