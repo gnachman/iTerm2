@@ -24,6 +24,7 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
 @interface iTermPromotionalMessageManager ()<NSURLDownloadDelegate>
 @property(nonatomic, retain) NSMutableData *data;
 @property(nonatomic, copy) NSString *downloadFilename;
+@property(nonatomic, retain) NSURLResponse *response;
 @end
 
 #define TEST_PROMOS 1
@@ -78,6 +79,7 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
     [_data release];
     [_downloadFilename release];
     [_download release];
+    [_response release];
     [super dealloc];
 }
 
@@ -250,12 +252,24 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
     self.downloadFilename = path;
 }
 
+- (void)download:(NSURLDownload *)download didReceiveResponse:(NSURLResponse *)response {
+    self.response = response;
+}
+
 - (void)downloadDidFinish:(NSURLDownload *)aDownload {
     if (self.downloadFilename) {
         NSData *data = [NSData dataWithContentsOfFile:self.downloadFilename];
         [[NSFileManager defaultManager] removeItemAtPath:self.downloadFilename error:nil];
         self.downloadFilename = nil;
         if (!data) {
+            return;
+        }
+
+        if (![_response isKindOfClass:[NSHTTPURLResponse class]]) {
+            return;
+        }
+        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)_response;
+        if (httpResponse.statusCode != 200) {
             return;
         }
         NSError *error = nil;
