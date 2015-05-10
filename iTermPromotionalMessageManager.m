@@ -52,6 +52,9 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kPromotionsDisabledKey]) {
         return nil;
     }
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"SUEnableAutomaticChecks"]) {
+        return nil;
+    }
     self = [super init];
     if (self) {
         // If there's no value for kTimeOfLastPromoKey set it to "now" to avoid showing a promo
