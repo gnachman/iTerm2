@@ -19,6 +19,9 @@ static NSString *kPromoMinItermVersionKey = @"min_iterm_version";
 static NSString *kPromoMaxItermVersionKey = @"max_iterm_version";
 static NSString *const kTimeOfLastPromoKey = @"NoSyncTimeOfLastPromo";
 static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
+static NSString *const kTimeOfLastPromoDownloadKey = @"NoSyncTimeOfLastPromoDownload";
+
+static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
 
 // Gently let the user know about upcoming releases that break backward compatibility.
 @interface iTermPromotionalMessageManager ()<NSURLDownloadDelegate>
@@ -27,13 +30,20 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
 @property(nonatomic, retain) NSURLResponse *response;
 @end
 
-#define TEST_PROMOS 1
+//#define TEST_PROMOS 1
 
 @implementation iTermPromotionalMessageManager {
     NSURLDownload *_download;
     NSArray *_promotion;  // An array of [ promoId, message, title, url ]
     BOOL _scheduled;
+    NSMutableData *_data;
+    NSString *_downloadFilename;
+    NSURLResponse *_response;
 }
+
+@synthesize data = _data;
+@synthesize downloadFilename = _downloadFilename;
+@synthesize response = _response;
 
 + (instancetype)sharedInstance {
     static id instance;
@@ -60,17 +70,11 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
     if (self) {
         // If there's no value for kTimeOfLastPromoKey set it to "now" to avoid showing a promo
         // immediately after the first run of a new install.
-        NSTimeInterval lastShown = [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfLastPromoKey];
-        if (!lastShown) {
+        if (![[NSUserDefaults standardUserDefaults] objectForKey:kTimeOfLastPromoKey]) {
             [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
                                                       forKey:kTimeOfLastPromoKey];
         }
-#if TEST_PROMOS
-        const NSTimeInterval delay = 1;
-#else
-        const NSTimeInterval delay = 3600 * 24;
-#endif
-        [self performSelector:@selector(beginDownload) withObject:nil afterDelay:delay];
+        [self beginDownload];
     }
     return self;
 }
@@ -84,22 +88,20 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
 }
 
 - (void)beginDownload {
-    // Try again in a day.
-    static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
 #if TEST_PROMOS
     const NSTimeInterval delay = 1;
 #else
+    // Try again in a day.
     const NSTimeInterval delay = kMinTimeBetweenDownloads;
 #endif
 
-    static NSString *const kTimeOfLastPromoDownloadKey = @"NoSyncTimeOfLastPromoDownload";
     NSTimeInterval lastDownload =
         [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfLastPromoDownloadKey];
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval elapsedTime = now - lastDownload;
     if (elapsedTime < delay) {
         // Did a download in the last 24 hours. Schedule another attempt at the right time.
-        // Add an extra second to avoid race conditions.
+        // Add an extra second to avoid any possible edge case.
         [self performSelector:@selector(beginDownload)
                    withObject:nil
                    afterDelay:delay - elapsedTime + 1];
@@ -157,7 +159,8 @@ static NSString *const kPromotionsDisabledKey = @"NoSyncDisablePromotions";
 }
 
 - (NSTimeInterval)timeSinceLastPromo {
-    NSTimeInterval lastShown = [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfLastPromoKey];
+    NSTimeInterval lastShown =
+        [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfLastPromoKey];
     return [NSDate timeIntervalSinceReferenceDate] - lastShown;
 }
 
