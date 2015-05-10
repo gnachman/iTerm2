@@ -7,6 +7,7 @@
 //
 
 #import "iTermPromotionalMessageManager.h"
+#import "iTermApplicationDelegate.h"
 #import "NSStringITerm.h"
 
 static NSString *kPromotionsKey = @"promotions";
@@ -55,15 +56,19 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
 }
 
 - (instancetype)init {
+    DLog(@"Initialize promo manager");
     if (!NSClassFromString(@"NSJSONSerialization")) {
+        DLog(@"JSON serialization not available, abort.");
         // This class is needed and is only available on 10.7. We're not going to promo anything
         // with an earlier deployment target anyway.
         return nil;
     }
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kPromotionsDisabledKey]) {
+        DLog(@"Promos disabled");
         return nil;
     }
     if (![[NSUserDefaults standardUserDefaults] boolForKey:@"SUEnableAutomaticChecks"]) {
+        DLog(@"Auto update disabled");
         return nil;
     }
     self = [super init];
@@ -71,6 +76,7 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
         // If there's no value for kTimeOfLastPromoKey set it to "now" to avoid showing a promo
         // immediately after the first run of a new install.
         if (![[NSUserDefaults standardUserDefaults] objectForKey:kTimeOfLastPromoKey]) {
+            DLog(@"Initialize last promo time to now because not set");
             [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
                                                       forKey:kTimeOfLastPromoKey];
         }
@@ -100,6 +106,7 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval elapsedTime = now - lastDownload;
     if (elapsedTime < delay) {
+        DLog(@"Schedule promo download for %f sec from now", (delay - elapsedTime + 1));
         // Did a download in the last 24 hours. Schedule another attempt at the right time.
         // Add an extra second to avoid any possible edge case.
         [self performSelector:@selector(beginDownload)
@@ -109,17 +116,21 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
         return;
     } else {
         // Schedule another download in 24 hours.
+        DLog(@"Schedule next download for %f seconds from now", delay);
         [self performSelector:@selector(beginDownload) withObject:nil afterDelay:delay];
     }
+    DLog(@"Update time of last promo download to %f", now);
     [[NSUserDefaults standardUserDefaults] setDouble:now forKey:kTimeOfLastPromoDownloadKey];
 
     if (_download) {
+        DLog(@"Still downloading (this shouldn't happen)");
         // Still downloading (shouldn't happen).
         return;
     }
 
     NSURLRequest *request = [self request];
     if (request) {
+        DLog(@"Create download.");
         _download = [[NSURLDownload alloc] initWithRequest:[self request] delegate:self];
     }
 }
@@ -131,6 +142,7 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
     NSString *urlString = [NSString stringWithFormat:@"%@?v=%@", baseUrl, encodedVersion];
     NSURL *url = [NSURL URLWithString:urlString];
     if (!url) {
+        DLog(@"%@ is not a valid url!", urlString);
         return nil;
     }
     NSMutableURLRequest *request =
@@ -143,15 +155,19 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
 
 - (NSString *)keyForPromoId:(NSString *)promoId {
     NSString *theKey = [NSString stringWithFormat:@"NoSyncHaveShownPromoWithId_%@", promoId];
+    DLog(@"Key for promo id %@ is %@", promoId, theKey);
     return theKey;
 }
 
 - (BOOL)haveShownPromoWithId:(NSString *)promoId {
     NSString *theKey = [self keyForPromoId:promoId];
-    return [[NSUserDefaults standardUserDefaults] boolForKey:theKey];
+    BOOL result = [[NSUserDefaults standardUserDefaults] boolForKey:theKey];
+    DLog(@"have shown promo: %@", @(result));
+    return result;
 }
 
 - (void)setHaveShownPromoWithId:(NSString *)promoId {
+    DLog(@"Set have shown promo %@", promoId);
     NSString *theKey = [self keyForPromoId:promoId];
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:theKey];
     [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
@@ -161,10 +177,14 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
 - (NSTimeInterval)timeSinceLastPromo {
     NSTimeInterval lastShown =
         [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfLastPromoKey];
-    return [NSDate timeIntervalSinceReferenceDate] - lastShown;
+    NSTimeInterval result = [NSDate timeIntervalSinceReferenceDate] - lastShown;
+    DLog(@"Time since last promo is %f", result);
+    return result;
 }
 
 - (void)setPromotionFromDictionary:(NSDictionary *)promo {
+    DLog(@"Set promo from dict %@", promo);
+
     NSString *promoId = promo[kPromoIdKey];
     NSString *message = promo[kPromoMessageKey];
     NSString *title = promo[kPromoTitleKey];
@@ -176,10 +196,13 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
     } else {
         _promotion = nil;
     }
+    DLog(@"Set promo to %@", _promotion);
 }
 
 - (void)showPromotion {
+    DLog(@"showPromotion");
     if (_promotion.count == 4) {
+        DLog(@"Promo is valid, here we go");
         NSString *promoId = _promotion[0];
         NSString *title = _promotion[1];
         NSString *message = _promotion[2];
@@ -197,12 +220,15 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
         alert.showsSuppressionButton = YES;
 
         if ([alert runModal] == NSAlertDefaultReturn) {
+            DLog(@"Open url %@", url);
             [[NSWorkspace sharedWorkspace] openURL:url];
         }
         if (alert.suppressionButton.state == NSOnState) {
+            DLog(@"Suppress");
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPromotionsDisabledKey];
         }
     }
+    DLog(@"Set scheduled=NO");
     _scheduled = NO;
 }
 
@@ -210,6 +236,7 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
     NSTimeInterval expiration = [promo[kPromoExpirationKey] doubleValue];
     if (expiration) {
         if (expiration < [NSDate timeIntervalSinceReferenceDate]) {
+            DLog(@"Promo ineligible because expiration is %f", expiration);
             return NO;
         }
     }
@@ -218,6 +245,8 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
     NSString *minVersion = promo[kPromoMinItermVersionKey];
     if (minVersion) {
         if ([minVersion compare:version] == NSOrderedDescending) {
+            DLog(@"Promo ineligible because minVersion is %@ but my version is %@",
+                 minVersion, version);
             return NO;
         }
     }
@@ -225,10 +254,13 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
     NSString *maxVersion = promo[kPromoMaxItermVersionKey];
     if (maxVersion) {
         if ([maxVersion compare:version] == NSOrderedAscending) {
+            DLog(@"Promo ineligible because maxVersion is %@ but my version is %@",
+                 maxVersion, version);
             return NO;
         }
     }
 
+    DLog(@"Promo eligible");
     return YES;
 }
 
@@ -243,6 +275,8 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
         if (![self haveShownPromoWithId:promo[kPromoIdKey]] &&
             [self timeSinceLastPromo] > minTime &&
             [self promotionIsEligible:promo]) {
+
+            DLog(@"Promo is ok, load it up.");
             [self setPromotionFromDictionary:promo];
             break;
         }
@@ -252,74 +286,88 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
 #pragma mark - NSURLDownloadDelegate
 
 - (void)download:(NSURLDownload *)aDownload decideDestinationWithSuggestedFilename:(NSString *)filename {
+    DLog(@"Download decide destination with suggested filename %@", filename);
     NSString *destinationFilename = NSTemporaryDirectory();
     if (destinationFilename) {
         destinationFilename = [destinationFilename stringByAppendingPathComponent:filename];
+        DLog(@"Destination filename is %@", destinationFilename);
         [aDownload setDestination:destinationFilename allowOverwrite:NO];
     }
 }
 
 - (void)download:(NSURLDownload *)aDownload didCreateDestination:(NSString *)path {
+    DLog(@"did create %@", path);
     self.downloadFilename = path;
 }
 
 - (void)download:(NSURLDownload *)download didReceiveResponse:(NSURLResponse *)response {
+    DLog(@"set response to %@", response);
     self.response = response;
 }
 
 - (void)downloadDidFinish:(NSURLDownload *)aDownload {
+    DLog(@"Download did finish");
     if (self.downloadFilename) {
+        DLog(@"Have filename %@", self.downloadFilename);
         NSData *data = [NSData dataWithContentsOfFile:self.downloadFilename];
         [[NSFileManager defaultManager] removeItemAtPath:self.downloadFilename error:nil];
         self.downloadFilename = nil;
         if (!data) {
+            DLog(@"No data");
             return;
         }
 
         if (![_response isKindOfClass:[NSHTTPURLResponse class]]) {
+            DLog(@"Response class is %@", _response.class);
             return;
         }
         NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)_response;
         if (httpResponse.statusCode != 200) {
+            DLog(@"Status code is %@", @(httpResponse.statusCode));
             return;
         }
         NSError *error = nil;
         id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
         if (error && !object) {
-            NSLog(@"JSON deserialization error: %@", error);
+            DLog(@"JSON deserialization error: %@", error);
             return;
         } else if ([object isKindOfClass:[NSDictionary class]]) {
+            DLog(@"Download got a dictionary from json");
             NSDictionary *root = object;
             [self loadPromoFromDictionaryIfEligible:root];
         } else {
-            NSLog(@"Unexpected class for JSON root: %@", [object class]);
+            DLog(@"Unexpected class for JSON root: %@", [object class]);
         }
     }
+    DLog(@"Nil out download");
     [_download release];
     _download = nil;
 }
 
 - (void)download:(NSURLDownload *)aDownload didFailWithError:(NSError *)error {
+    DLog(@"Download failed: %@", error);
     if (self.downloadFilename) {
         [[NSFileManager defaultManager] removeItemAtPath:self.downloadFilename error:nil];
     }
     self.downloadFilename = nil;
     [_download release];
     _download = nil;
-
-    NSLog(@"Download of promo json failed.");
 }
 
 - (NSURLRequest *)download:(NSURLDownload *)aDownload
            willSendRequest:(NSURLRequest *)request
           redirectResponse:(NSURLResponse *)redirectResponse {
+    DLog(@"Download will send request");
     return request;
 }
 
 - (void)scheduleDisplayIfNeeded {
+    DLog(@"Schedule display if needed...");
     if (_scheduled || !_promotion) {
+        DLog(@"Not needed. scheduled=%@", @(_scheduled));
         return;
     }
+    DLog(@"Call showPromotion in 5 seconds");
     _scheduled = YES;
     [self performSelector:@selector(showPromotion) withObject:nil afterDelay:5];
 }
