@@ -10,6 +10,17 @@
 
 @implementation NSImage (iTerm)
 
++ (NSString *)extensionForUniformType:(NSString *)type {
+    NSDictionary *map = @{ (NSString *)kUTTypeBMP: @"bmp",
+                           (NSString *)kUTTypeGIF: @"gif",
+                           (NSString *)kUTTypeJPEG2000: @"jp2",
+                           (NSString *)kUTTypeJPEG: @"jpeg",
+                           (NSString *)kUTTypePNG: @"png",
+                           (NSString *)kUTTypeTIFF: @"tiff",
+                           (NSString *)kUTTypeICO: @"ico" };
+    return map[type];
+}
+
 - (NSImage *)blurredImageWithRadius:(int)radius {
     // Initially, this used a CIFilter but this doesn't work on some machines for mysterious reasons.
     // Instead, this algorithm implements a really simple box blur. It's quite fast--about 5ms on

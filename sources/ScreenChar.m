@@ -33,6 +33,8 @@
 #import "charmaps.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSData+iTerm.h"
+#import "NSImage+iTerm.h"
+#import "NSWorkspace+iTerm.h"
 
 static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
 static NSString *const kScreenCharInverseComplexCharMapKey = @"Inverse Complex Char Map";
@@ -85,6 +87,15 @@ static NSString *const kImageInfoCodeKey = @"Code";
         if (count <= 1) {
             return nil;
         }
+        NSMutableArray *frameProperties = [NSMutableArray array];
+        for (size_t i = 0; i < count; ++i) {
+            NSDictionary *gifProperties = [self gifPropertiesForSource:source frame:i];
+            if (!gifProperties) {
+                // TIFF files may have multiple pages, so make sure it's an animated GIF.
+                return nil;
+            }
+            [frameProperties addObject:gifProperties];
+        }
         _maxDelay = 0;
         for (size_t i = 0; i < count; ++i) {
             CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, i, NULL);
@@ -93,7 +104,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
                                                                           CGImageGetHeight(imageRef))] autorelease];
             [images addObject:image];
             CFRelease(imageRef);
-            NSTimeInterval delay = [self delayForFrame:i inImageSource:source];
+            NSTimeInterval delay = [self delayInGifProperties:frameProperties[i]];
             _maxDelay += delay;
             [delays addObject:@(_maxDelay)];
         }
@@ -129,24 +140,32 @@ static NSString *const kImageInfoCodeKey = @"Code";
     return _images[frame];
 }
 
-- (NSTimeInterval)delayForFrame:(int)i inImageSource:(CGImageSourceRef)source {
-    NSTimeInterval delay = 0.01;
+- (NSDictionary *)gifPropertiesForSource:(CGImageSourceRef)source frame:(int)i {
     CFDictionaryRef const properties = CGImageSourceCopyPropertiesAtIndex(source, i, NULL);
+    [(id)properties autorelease];
     if (properties) {
         CFDictionaryRef const gifProperties = CFDictionaryGetValue(properties,
                                                                    kCGImagePropertyGIFDictionary);
-        if (gifProperties) {
-            NSNumber *number = (id)CFDictionaryGetValue(gifProperties,
-                                                        kCGImagePropertyGIFUnclampedDelayTime);
-            if (number == NULL || [number doubleValue] == 0) {
-                number = (id)CFDictionaryGetValue(gifProperties, kCGImagePropertyGIFDelayTime);
-            }
-            if ([number doubleValue] > 0) {
-                delay = number.doubleValue;
-            }
-        }
-        CFRelease(properties);
+        return (NSDictionary *)gifProperties;
+    } else {
+        return nil;
     }
+}
+
+- (NSTimeInterval)delayInGifProperties:(NSDictionary *)gifProperties {
+    NSTimeInterval delay = 0.01;
+    if (gifProperties) {
+        NSNumber *number = (id)CFDictionaryGetValue((CFDictionaryRef)gifProperties,
+                                                    kCGImagePropertyGIFUnclampedDelayTime);
+        if (number == NULL || [number doubleValue] == 0) {
+            number = (id)CFDictionaryGetValue((CFDictionaryRef)gifProperties,
+                                              kCGImagePropertyGIFDelayTime);
+        }
+        if ([number doubleValue] > 0) {
+            delay = number.doubleValue;
+        }
+    }
+
     return delay;
 }
 
@@ -197,7 +216,18 @@ static NSString *const kImageInfoCodeKey = @"Code";
 }
 
 - (NSString *)imageType {
-    return [_data uniformTypeIdentifierForImageData];
+    NSString *type = [_data uniformTypeIdentifierForImageData];
+    if (type) {
+        return type;
+    }
+
+    for (NSBitmapImageRep *rep in [self.image representations]) {
+        if ([rep respondsToSelector:@selector(representationUsingType:properties:)]) {
+            return (NSString *)kUTTypeTIFF;
+        }
+    }
+
+    return nil;
 }
 
 - (NSDictionary *)dictionary {
@@ -273,6 +303,57 @@ static NSString *const kImageInfoCodeKey = @"Code";
         self.embeddedImages[@(frame)] = canvas;
     }
     return _embeddedImages[@(frame)];
+}
+
+- (NSString *)nameForNewSavedTempFile {
+    NSString *tempFile = [[NSWorkspace sharedWorkspace] temporaryFileName];
+    NSString *extension = [NSImage extensionForUniformType:self.imageType];
+    if (extension) {
+        tempFile = [tempFile stringByAppendingString:@"."];
+        tempFile = [tempFile stringByAppendingString:extension];
+    }
+    [self.data writeToFile:tempFile atomically:NO];
+    return tempFile;
+}
+
+- (NSPasteboardItem *)pasteboardItem {
+    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
+    NSArray *types;
+    NSString *imageType = self.imageType;
+    if (imageType) {
+        types = @[ (NSString *)kUTTypeFileURL,
+                   (NSString *)imageType ];
+    } else {
+        types = @[ (NSString *)kUTTypeFileURL ];
+    }
+    [pbItem setDataProvider:self forTypes:types];
+
+    return pbItem;
+}
+
+#pragma mark - NSPasteboardItemDataProvider
+
+- (void)pasteboard:(NSPasteboard *)pasteboard item:(NSPasteboardItem *)item provideDataForType:(NSString *)type {
+    if ([type isEqualToString:(NSString *)kUTTypeFileURL]) {
+        // Write image to a temp file and provide its location.
+        [item setString:[[NSURL fileURLWithPath:self.nameForNewSavedTempFile] absoluteString]
+                forType:(NSString *)kUTTypeFileURL];
+    } else {
+        if ([type isEqualToString:(NSString *)kUTTypeTIFF] && ![_data uniformTypeIdentifierForImageData]) {
+            // Extract the TIFF repr from the image. Useful when the image is not one of the
+            // types we can infer ourselves from data. Not every image has a TIFF representation.
+            for (NSBitmapImageRep *rep in [self.image representations]) {
+                if ([rep respondsToSelector:@selector(representationUsingType:properties:)]) {
+                    NSData *tiffData = [rep representationUsingType:NSTIFFFileType properties:nil];
+                    [item setData:tiffData forType:type];
+                    return;
+                }
+            }
+        } else {
+            // Provide our data, which is already in the format requested by |type|.
+            [item setData:self.data forType:type];
+        }
+    }
 }
 
 @end

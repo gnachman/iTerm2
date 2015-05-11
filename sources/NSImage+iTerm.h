@@ -10,6 +10,9 @@
 
 @interface NSImage (iTerm)
 
+// Returns "gif", "jpg", etc., or nil.
++ (NSString *)extensionForUniformType:(NSString *)type;
+
 // Returns an image blurred by repeated box blurs with |radius| iterations.
 - (NSImage *)blurredImageWithRadius:(int)radius;
 

@@ -36,7 +36,7 @@
 // Describes an image. A screen_char_t may be used to draw a part of an image.
 // The code in the screen_char_t can be used to look up this object which is
 // 1:1 with images.
-@interface ImageInfo : NSObject
+@interface ImageInfo : NSObject<NSPasteboardItemDataProvider>
 
 // Size in cells.
 @property(nonatomic, assign) NSSize size;
@@ -57,6 +57,8 @@
 
 @property(nonatomic, readonly) NSData *data;
 @property(nonatomic, readonly) NSString *imageType;
+@property(nonatomic, readonly) NSString *nameForNewSavedTempFile;
+@property(nonatomic, readonly) NSPasteboardItem *pasteboardItem;
 
 // Returns an image of size |region| containing a scaled copy of |image| and
 // transparency around two edges if |region| != |image.size|.

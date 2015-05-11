@@ -34,7 +34,6 @@
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+PSM.h"
-#import "NSWorkspace+iTerm.h"
 #import "PasteboardHistory.h"
 #import "PointerController.h"
 #import "PointerPrefsController.h"
@@ -3825,24 +3824,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)copyImage:(id)sender {
     ImageInfo *imageInfo = [sender representedObject];
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    if (imageInfo.image) {
-        [pboard declareTypes:[NSArray arrayWithObject:NSTIFFPboardType] owner:self];
-        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
-        NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
-        [pboard setData:tiff forType:NSTIFFPboardType];
+    NSPasteboardItem *item = imageInfo.pasteboardItem;
+    if (item) {
+        [pboard clearContents];
+        [pboard writeObjects:@[ item ]];
     }
 }
 
 - (void)openImage:(id)sender {
     ImageInfo *imageInfo = [sender representedObject];
-    if (imageInfo.image) {
-        NSString *filename = [NSString stringWithFormat:@"iterm2TempImage.%@.tiff",
-                              [NSString uuid]];
-
-        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
-        NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
-        [tiff writeToFile:filename atomically:NO];
-        [[NSWorkspace sharedWorkspace] openFile:filename];
+    NSString *name = imageInfo.nameForNewSavedTempFile;
+    if (name) {
+        [[NSWorkspace sharedWorkspace] openFile:name];
     }
 }
 
@@ -5778,19 +5771,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                _lineHeight * imageInfo.size.height);
     NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
 
-    NSString *imageType = imageInfo.imageType;
     NSData *imageData = imageInfo.data;
-    if (!imageType) {
-        // Unrecognized type. Search for a bitmap representation we can get a TIFF from.
-        for (NSBitmapImageRep *rep in [imageInfo.image representations]) {
-            if ([rep respondsToSelector:@selector(representationUsingType:properties:)]) {
-                imageData = [rep representationUsingType:NSTIFFFileType properties:nil];
-                imageType = (NSString *)kUTTypeTIFF;
-                break;
-            }
-        }
-    }
-    if (!imageType || !imageData) {
+    if (!imageData) {
         return;
     }
 
@@ -5831,15 +5813,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // start the drag
-    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
-    [pbItem setData:imageData forType:imageType];
-
-    // Save it to a temp file to increase number of apps that can act as drop target.
-    NSString *tempFile = [[NSWorkspace sharedWorkspace] temporaryFileName];
-    [imageData writeToFile:tempFile atomically:NO];
-    [pbItem setData:[[[NSURL fileURLWithPath:tempFile] absoluteString] dataUsingEncoding:NSUTF8StringEncoding]
-            forType:(NSString *)kUTTypeFileURL];
-
+    NSPasteboardItem *pbItem = [imageInfo pasteboardItem];
     NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
     [dragItem setDraggingFrame:NSMakeRect(dragPoint.x, dragPoint.y, icon.size.width, icon.size.height)
                       contents:icon];
