@@ -34,6 +34,7 @@
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSWindow+PSM.h"
+#import "NSWorkspace+iTerm.h"
 #import "PasteboardHistory.h"
 #import "PointerController.h"
 #import "PointerPrefsController.h"
@@ -5777,10 +5778,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                _lineHeight * imageInfo.size.height);
     NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
 
+    NSString *imageType = imageInfo.imageType;
+    NSData *imageData = imageInfo.data;
+    if (!imageType) {
+        // Unrecognized type. Search for a bitmap representation we can get a TIFF from.
+        for (NSBitmapImageRep *rep in [imageInfo.image representations]) {
+            if ([rep respondsToSelector:@selector(representationUsingType:properties:)]) {
+                imageData = [rep representationUsingType:NSTIFFFileType properties:nil];
+                imageType = (NSString *)kUTTypeTIFF;
+                break;
+            }
+        }
+    }
+    if (!imageType || !imageData) {
+        return;
+    }
+
     // get the pasteboard
-    NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
     // TODO: This fails on aniamted gifs.
-    NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
 
     // tell our app not switch windows (currently not working)
     [NSApp preventWindowOrdering];
@@ -5817,7 +5832,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // start the drag
     NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
-    [pbItem setData:tiff forType:(NSString *)kUTTypeTIFF];
+    [pbItem setData:imageData forType:imageType];
+
+    // Save it to a temp file to increase number of apps that can act as drop target.
+    NSString *tempFile = [[NSWorkspace sharedWorkspace] temporaryFileName];
+    [imageData writeToFile:tempFile atomically:NO];
+    [pbItem setData:[[[NSURL fileURLWithPath:tempFile] absoluteString] dataUsingEncoding:NSUTF8StringEncoding]
+            forType:(NSString *)kUTTypeFileURL];
+
     NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
     [dragItem setDraggingFrame:NSMakeRect(dragPoint.x, dragPoint.y, icon.size.width, icon.size.height)
                       contents:icon];

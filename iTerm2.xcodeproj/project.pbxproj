@@ -1515,6 +1515,11 @@
 		A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */; };
 		A67F118218D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */; };
 		A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */; };
+		A67F57B01B012BD100B4F135 /* NSWorkspace+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57AE1B012BD100B4F135 /* NSWorkspace+iTerm.h */; };
+		A67F57B11B012BD100B4F135 /* NSWorkspace+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57AE1B012BD100B4F135 /* NSWorkspace+iTerm.h */; };
+		A67F57B21B012BD100B4F135 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
+		A67F57B31B012BD100B4F135 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
+		A67F57B41B012BD100B4F135 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
 		A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */; };
 		A680AA1418CEA1040034D4F8 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
 		A680AA1518CEA1040034D4F8 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
@@ -2566,6 +2571,8 @@
 		A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TaskNotifier.m; sourceTree = "<group>"; tabWidth = 4; };
 		A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PrefsAdvanced.png; path = images/PrefsAdvanced.png; sourceTree = "<group>"; };
 		A67F117F18D82B9500B23C7B /* PrefsAdvanced@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsAdvanced@2x.png"; path = "images/PrefsAdvanced@2x.png"; sourceTree = "<group>"; };
+		A67F57AE1B012BD100B4F135 /* NSWorkspace+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWorkspace+iTerm.h"; sourceTree = "<group>"; };
+		A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWorkspace+iTerm.m"; sourceTree = "<group>"; };
 		A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100TmuxParser.h; sourceTree = "<group>"; tabWidth = 4; };
 		A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TmuxParser.m; sourceTree = "<group>"; tabWidth = 4; };
 		A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableData+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -3822,6 +3829,8 @@
 				A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */,
 				A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */,
 				A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */,
+				A67F57AE1B012BD100B4F135 /* NSWorkspace+iTerm.h */,
+				A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -4651,6 +4660,7 @@
 				1D6ED97019AEA20D005A7799 /* ToastWindowController.h in Headers */,
 				1D6ED97119AEA20D005A7799 /* MovingAverage.h in Headers */,
 				1D6ED97219AEA20D005A7799 /* CharacterRunInline.h in Headers */,
+				A67F57B11B012BD100B4F135 /* NSWorkspace+iTerm.h in Headers */,
 				1D6ED97319AEA20D005A7799 /* iTermRemotePreferences.h in Headers */,
 				A663013219D0864C004AF81C /* SCEvents.h in Headers */,
 			);
@@ -4893,6 +4903,7 @@
 				A61D16FC1AAFD5530013FCCA /* iTermBackgroundColorRun.h in Headers */,
 				A63F40A4183F3B78003A6A6D /* LineBlock.h in Headers */,
 				1D3D21871482E0E500FAC8E7 /* TmuxGateway.h in Headers */,
+				A67F57B01B012BD100B4F135 /* NSWorkspace+iTerm.h in Headers */,
 				1D3D21901482F18A00FAC8E7 /* TmuxController.h in Headers */,
 				A61B66CF18D51EAC009AC9D5 /* iTermInstantReplayWindowController.h in Headers */,
 				1D3D21951483144600FAC8E7 /* TSVParser.h in Headers */,
@@ -5824,6 +5835,7 @@
 				1D6EDAB919AEA20D005A7799 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				1D6EDABA19AEA20D005A7799 /* VT100ScreenMark.m in Sources */,
 				1D6EDABB19AEA20D005A7799 /* TmuxHistoryParser.m in Sources */,
+				A67F57B41B012BD100B4F135 /* NSWorkspace+iTerm.m in Sources */,
 				1D6EDABC19AEA20D005A7799 /* TmuxStateParser.m in Sources */,
 				1D5937AE1A2D764A00F808EB /* PSMDarkTabStyle.m in Sources */,
 				1D6EDABD19AEA20D005A7799 /* SolidColorView.m in Sources */,
@@ -6193,6 +6205,7 @@
 				A60D85AB1A3A8105003AEE22 /* NSPasteboard+iTerm.m in Sources */,
 				1D9A554D180FA82E00B42CE9 /* TmuxSessionsTable.m in Sources */,
 				A6C537C01938374600A08C18 /* iTermTabBarControlView.m in Sources */,
+				A67F57B31B012BD100B4F135 /* NSWorkspace+iTerm.m in Sources */,
 				A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */,
 				FB4CE4BB3E3E413B051DAFBC /* iTermRemotePreferences.m in Sources */,
 			);
@@ -6440,6 +6453,7 @@
 				1D5655CF19AD2B9B001C460B /* iTermApplication+Scripting.m in Sources */,
 				1DBB4B381901F12400832B09 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A693395D1851A61D00EBEA20 /* VT100ScreenMark.m in Sources */,
+				A67F57B21B012BD100B4F135 /* NSWorkspace+iTerm.m in Sources */,
 				1DB67CF21485C578005849A1 /* TmuxHistoryParser.m in Sources */,
 				1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */,
 				1DC38819148E840700B89F7C /* SolidColorView.m in Sources */,

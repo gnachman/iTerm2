@@ -20,4 +20,6 @@
 
 - (BOOL)hasPrefixOfBytes:(char *)bytes length:(int)length;
 
+- (NSString *)uniformTypeIdentifierForImageData;
+
 @end

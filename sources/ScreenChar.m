@@ -32,6 +32,7 @@
 #import "ScreenChar.h"
 #import "charmaps.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSData+iTerm.h"
 
 static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
 static NSString *const kScreenCharInverseComplexCharMapKey = @"Inverse Complex Char Map";
@@ -157,17 +158,19 @@ static NSString *const kImageInfoCodeKey = @"Code";
 
 @property(nonatomic, retain) NSMutableDictionary *embeddedImages;  // frame number->downscaled image
 @property(nonatomic, assign) unichar code;
-@property(nonatomic, retain) NSData *smallEncodedImageData;
 @property(nonatomic, retain) iTermAnimatedImage *animatedImage;  // If animated GIF, this is nonnil
 @end
 
-@implementation ImageInfo
+@implementation ImageInfo {
+    NSData *_data;
+}
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
     self = [super init];
     if (self) {
         _size = [dictionary[kImageInfoSizeKey] sizeValue];
-        _animatedImage = [[iTermAnimatedImage alloc] initWithData:dictionary[kImageInfoImageKey]];
+        _data = [dictionary[kImageInfoImageKey] retain];
+        _animatedImage = [[iTermAnimatedImage alloc] initWithData:_data];
         if (!_animatedImage) {
             _image = [[NSImage alloc] initWithData:dictionary[kImageInfoImageKey]];
         }
@@ -176,7 +179,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
         _code = [dictionary[kImageInfoCodeKey] shortValue];
         if (!_size.width ||
             !_size.height ||
-            !_image) {
+            (!_image && !_animatedImage)) {
             [self release];
             return nil;
         }
@@ -185,33 +188,21 @@ static NSString *const kImageInfoCodeKey = @"Code";
 }
 
 - (void)setImageFromImage:(NSImage *)image data:(NSData *)data {
+    [_animatedImage autorelease];
     _animatedImage = [[iTermAnimatedImage alloc] initWithData:data];
+    [_data autorelease];
+    _data = [data retain];
+    [_image autorelease];
     _image = [image retain];
 }
 
-- (NSData *)smallEncodedImageData {
-    if (_smallEncodedImageData) {
-        return _smallEncodedImageData;
-    }
-
-    NSImage *image = _image;
-    NSBitmapImageRep *imgRep = [[image representations] objectAtIndex:0];
-    NSData *data;
-    if ([imgRep isOpaque]) {
-        CGFloat pixels = (CGFloat)image.size.width * (CGFloat)image.size.height;
-        CGFloat factor = MIN(0.8, MAX(0.1, 1000 / pixels));
-        data = [imgRep representationUsingType:NSJPEGFileType
-                                    properties:@{ NSImageCompressionFactor: @(factor) }];
-    } else {
-        data = [imgRep representationUsingType:NSPNGFileType properties:nil];
-    }
-    _smallEncodedImageData = [data retain];
-    return _smallEncodedImageData;
+- (NSString *)imageType {
+    return [_data uniformTypeIdentifierForImageData];
 }
 
 - (NSDictionary *)dictionary {
     return @{ kImageInfoSizeKey: [NSValue valueWithSize:_size],
-              kImageInfoImageKey: [self smallEncodedImageData],
+              kImageInfoImageKey: _data,
               kImageInfoPreserveAspectRatioKey: @(_preserveAspectRatio),
               kImageInfoFilenameKey: _filename,
               kImageInfoCodeKey: @(_code)};
@@ -221,8 +212,8 @@ static NSString *const kImageInfoCodeKey = @"Code";
     [_filename release];
     [_image release];
     [_embeddedImages release];
-    [_smallEncodedImageData release];
     [_animatedImage release];
+    [_data release];
     [super dealloc];
 }
 
@@ -240,7 +231,7 @@ static NSString *const kImageInfoCodeKey = @"Code";
 }
 
 - (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region {
-    if (!_image) {
+    if (!_image && !_animatedImage) {
         return nil;
     }
     if (!_embeddedImages) {
@@ -252,10 +243,16 @@ static NSString *const kImageInfoCodeKey = @"Code";
     if (!NSEqualSizes(embeddedImage.size, region)) {
         NSImage *canvas = [[[NSImage alloc] init] autorelease];
         NSSize size;
+        NSImage *theImage;
+        if (_animatedImage) {
+            theImage = [_animatedImage imageForFrame:frame];
+        } else {
+            theImage = _image;
+        }
         if (!_preserveAspectRatio) {
             size = region;
         } else {
-            double imageAR = _image.size.width / _image.size.height;
+            double imageAR = theImage.size.width / theImage.size.height;
             double canvasAR = region.width / region.height;
             if (imageAR > canvasAR) {
                 // image is wider than canvas, add black bars on top and bottom
@@ -267,12 +264,6 @@ static NSString *const kImageInfoCodeKey = @"Code";
         }
         [canvas setSize:region];
         [canvas lockFocus];
-        NSImage *theImage;
-        if (_animatedImage) {
-          theImage = [_animatedImage imageForFrame:frame];
-        } else {
-          theImage = _image;
-        }
         [theImage drawInRect:NSMakeRect((region.width - size.width) / 2,
                                         (region.height - size.height) / 2,
                                         size.width,
@@ -967,7 +958,10 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
     AllocateImageMapsIfNeeded();
     for (id key in imageMap) {
         gEncodableImageMap[key] = imageMap[key];
-        gImages[key] = [[[ImageInfo alloc] initWithDictionary:imageMap[key]] autorelease];
+        ImageInfo *info = [[[ImageInfo alloc] initWithDictionary:imageMap[key]] autorelease];
+        if (info) {
+            gImages[key] = info;
+        }
     }
     ccmNextKey = [state[kScreenCharCCMNextKeyKey] intValue];
     hasWrapped = [state[kScreenCharHasWrappedKey] boolValue];

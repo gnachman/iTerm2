@@ -55,6 +55,9 @@
 
 @property(nonatomic, readonly) BOOL animated;
 
+@property(nonatomic, readonly) NSData *data;
+@property(nonatomic, readonly) NSString *imageType;
+
 // Returns an image of size |region| containing a scaled copy of |image| and
 // transparency around two edges if |region| != |image.size|.
 - (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region;
