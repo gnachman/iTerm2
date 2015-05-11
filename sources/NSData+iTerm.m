@@ -12,7 +12,6 @@
 @implementation NSData (iTerm)
 
 + (NSData *)dataWithBase64EncodedString:(NSString *)string {
-    // TODO: Handle objects other than images.
     const char *buffer = [string UTF8String];
     int destLength = apr_base64_decode_len(buffer);
     if (destLength <= 0) {

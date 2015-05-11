@@ -315,7 +315,6 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    [[iTermController sharedInstance] promptAboutTestReleasesIfNeeded];
     if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
         [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
         [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];

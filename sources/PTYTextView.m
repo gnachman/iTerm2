@@ -5779,8 +5779,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // get the pasteboard
     NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
-    // TODO: This fails on aniamted gifs.m
-    
+    // TODO: This fails on aniamted gifs.
     NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
 
     // tell our app not switch windows (currently not working)
@@ -6056,6 +6055,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // If you're viewing the scrollback area and it contains an animated gif it will need
     // to be redrawn periodically. The set of animated lines is added to while drawing and then
     // reset here.
+    // TODO: Limit this to the columns that need to be redrawn.
     NSIndexSet *animatedLines = [_dataSource animatedLines];
     [animatedLines enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
         [self setNeedsDisplayOnLine:idx];

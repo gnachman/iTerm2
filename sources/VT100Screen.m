@@ -123,7 +123,7 @@ static const double kInterBellQuietPeriod = 0.1;
     NSTimeInterval lastBell_;
     iTermTemporaryDoubleBufferedGridController *_temporaryDoubleBuffer;
     BOOL _cursorVisible;
-
+    // Line numbers containing animated GIFs that need to be redrawn for the next frame.
     NSMutableIndexSet *_animatedLines;
 }
 
@@ -1590,6 +1590,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line {
+    // TODO: Store range
     [_animatedLines addIndex:line];
 }
 
@@ -3187,6 +3188,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
+      // TODO: Handle objects other than images.
         NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
         NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
         [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]

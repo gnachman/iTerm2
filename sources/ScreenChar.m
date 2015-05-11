@@ -96,7 +96,6 @@ static NSString *const kImageInfoCodeKey = @"Code";
             _maxDelay += delay;
             [delays addObject:@(_maxDelay)];
         }
-//        CFRelease(source);
         _creationTime = [NSDate timeIntervalSinceReferenceDate];
         _images = [images retain];
         _delays = [delays retain];
@@ -156,17 +155,15 @@ static NSString *const kImageInfoCodeKey = @"Code";
 @interface ImageInfo ()
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 
-@property(nonatomic, retain) NSMutableDictionary *embeddedImages;  // frame number->image
+@property(nonatomic, retain) NSMutableDictionary *embeddedImages;  // frame number->downscaled image
 @property(nonatomic, assign) unichar code;
 @property(nonatomic, retain) NSData *smallEncodedImageData;
-@property(nonatomic, assign) int frame;
-@property(nonatomic, retain) iTermAnimatedImage *animatedImage;  // Used for animation
+@property(nonatomic, retain) iTermAnimatedImage *animatedImage;  // If animated GIF, this is nonnil
 @end
 
 @implementation ImageInfo
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
-    NSLog(@"Create image");
     self = [super init];
     if (self) {
         _size = [dictionary[kImageInfoSizeKey] sizeValue];
@@ -270,10 +267,16 @@ static NSString *const kImageInfoCodeKey = @"Code";
         }
         [canvas setSize:region];
         [canvas lockFocus];
-        [[_animatedImage imageForFrame:frame] drawInRect:NSMakeRect((region.width - size.width) / 2,
-                                                                    (region.height - size.height) / 2,
-                                                                    size.width,
-                                                                    size.height)];
+        NSImage *theImage;
+        if (_animatedImage) {
+          theImage = [_animatedImage imageForFrame:frame];
+        } else {
+          theImage = _image;
+        }
+        [theImage drawInRect:NSMakeRect((region.width - size.width) / 2,
+                                        (region.height - size.height) / 2,
+                                        size.width,
+                                        size.height)];
         [canvas unlockFocus];
         
         self.embeddedImages[@(frame)] = canvas;
