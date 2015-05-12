@@ -18,6 +18,7 @@
 #import "iTermExpose.h"
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
+#import "iTermImageInfo.h"
 #import "iTermMouseCursor.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermPreferences.h"
@@ -30,6 +31,7 @@
 #import "MovingAverage.h"
 #import "NSColor+iTerm.h"
 #import "NSEvent+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSStringITerm.h"
@@ -128,7 +130,7 @@ static const int kDragThreshold = 3;
     BOOL _mouseDragged;
     BOOL _mouseDownOnSelection;
     BOOL _mouseDownOnImage;
-    ImageInfo *_imageBeingClickedOn;
+    iTermImageInfo *_imageBeingClickedOn;
     NSEvent *_mouseDownEvent;
 
     // blinking cursor
@@ -489,34 +491,31 @@ static const int kDragThreshold = 3;
     [self updateTrackingAreas];
 }
 
-- (void)updateTrackingAreas
-{
+- (void)updateTrackingAreas {
     if ([self window]) {
         // Do we want to track mouse motions?
-        // Enter and exit events are tracked by the superview and passed down
-        // to us because our frame changes all the time. When our frame
-        // changes, this method is called, which causes mouseExit's to be
-        // missed and spurious mouseEnter's to be called. See issue 3345.
-        BOOL shouldTrack = ([[_dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION ||
-                            ([NSEvent modifierFlags] & NSCommandKeyMask));
+        // Historical note:
+        //   Enter and exit events are tracked by the superview and passed down
+        //   to us because our frame changes all the time. When our frame
+        //   changes, this method is called, which causes mouseExit's to be
+        //   missed and spurious mouseEnter's to be called. See issue 3345.
+        // Now, we always track because we want the mouse to become an arrow when
+        // over an image.
         if (self.trackingAreas.count &&
-            shouldTrack &&
             NSEqualRects([self.trackingAreas[0] rect], self.visibleRect)) {
             // Nothing would change.
             return;
         }
         [self removeAllTrackingAreas];
-        if (shouldTrack) {
-            NSInteger trackingOptions = (NSTrackingInVisibleRect |
-                                         NSTrackingActiveAlways |
-                                         NSTrackingMouseMoved);
-            NSTrackingArea *trackingArea =
-                [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
-                                              options:trackingOptions
-                                                owner:self
-                                             userInfo:nil] autorelease];
-            [self addTrackingArea:trackingArea];
-        }
+        NSInteger trackingOptions = (NSTrackingInVisibleRect |
+                                     NSTrackingActiveAlways |
+                                     NSTrackingMouseMoved);
+        NSTrackingArea *trackingArea =
+            [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
+                                          options:trackingOptions
+                                            owner:self
+                                         userInfo:nil] autorelease];
+        [self addTrackingArea:trackingArea];
     }
 }
 
@@ -1527,6 +1526,12 @@ static const int kDragThreshold = 3;
     _drawingHelper.cursorVisible = savedCursorVisible;
 }
 
+- (BOOL)getAndResetDrawingAnimatedImageFlag {
+    BOOL result = _drawingHelper.animated;
+    _drawingHelper.animated = NO;
+    return result;
+}
+
 - (void)drawIndicators {
     [_indicatorsHelper setIndicator:kiTermIndicatorMaximized
                             visible:[_delegate textViewIsMaximized]];
@@ -1976,14 +1981,18 @@ static const int kDragThreshold = 3;
     }
 }
 
-- (BOOL)setCursor:(NSCursor *)cursor
-{
+- (BOOL)setCursor:(NSCursor *)cursor {
     if (cursor == cursor_) {
         return NO;
     }
     [cursor_ autorelease];
     cursor_ = [cursor retain];
     return YES;
+}
+
+- (BOOL)mouseIsOverImageInEvent:(NSEvent *)event {
+    NSPoint point = [self clickPoint:event allowRightMarginOverflow:NO];
+    return [self imageInfoAtCoord:VT100GridCoordMake(point.x, point.y)] != nil;
 }
 
 - (void)updateCursor:(NSEvent *)event {
@@ -1994,6 +2003,8 @@ static const int kDragThreshold = 3;
         changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
+    } else if ([self mouseIsOverImageInEvent:event]) {
+        changed = [self setCursor:[NSCursor arrowCursor]];
     } else if ([self xtermMouseReporting] &&
                [self terminalWantsMouseReports]) {
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
@@ -2108,15 +2119,13 @@ static const int kDragThreshold = 3;
     [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
-- (void)flagsChanged:(NSEvent *)theEvent
-{
+- (void)flagsChanged:(NSEvent *)theEvent {
     [self updateCursor:theEvent];
     [self updateUnderlinedURLs:theEvent];
     [super flagsChanged:theEvent];
 }
 
-- (void)flagsChangedNotification:(NSNotification *)notification
-{
+- (void)flagsChangedNotification:(NSNotification *)notification {
     [self updateCursor:(NSEvent *)[notification object]];
 }
 
@@ -2448,8 +2457,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return sqrt(Square(p1.x - p2.x) + Square(p1.y - p2.y));
 }
 
-- (void)mouseUp:(NSEvent *)event
-{
+- (void)mouseUp:(NSEvent *)event {
     if ([threeFingerTapGestureRecognizer_ mouseUp:event]) {
         return;
     }
@@ -2603,11 +2611,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate refreshAndStartTimerIfNeeded];
 }
 
-- (void)mouseMoved:(NSEvent *)event
-{
-    DLog(@"mouseMoved");
+- (void)mouseMoved:(NSEvent *)event {
     [self updateUnderlinedURLs:event];
     [self reportMouseEvent:event];
+    [self updateCursor:event];
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -2787,6 +2794,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 [self performSelector:action.selector withObject:action];
                 break;
             }
+
+            case kURLActionOpenImage: {
+                DLog(@"Open image");
+                [[NSWorkspace sharedWorkspace] openFile:[(iTermImageInfo *)action.identifier nameForNewSavedTempFile]];
+            }
         }
     }
 }
@@ -2885,7 +2897,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     VT100GridCoord coord = VT100GridCoordMake(x, y);
-    ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+    iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
 
     if (!imageInfo &&
         ![_selection containsCoord:VT100GridCoordMake(x, y)]) {
@@ -3772,7 +3784,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)saveImageAs:(id)sender {
-    ImageInfo *imageInfo = [sender representedObject];
+    iTermImageInfo *imageInfo = [sender representedObject];
     NSSavePanel* panel = [NSSavePanel savePanel];
 
     NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory,
@@ -3809,38 +3821,48 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             fileType = NSTIFFFileType;
         }
 
-        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
-        NSData *data = [rep representationUsingType:fileType properties:nil];
-        [data writeToFile:[panel legacyFilename] atomically:NO];
+        NSData *data = nil;
+        NSDictionary *universalTypeToCocoaMap = @{ (NSString *)kUTTypeBMP: @(NSBMPFileType),
+                                                   (NSString *)kUTTypeGIF: @(NSGIFFileType),
+                                                   (NSString *)kUTTypeJPEG2000: @(NSJPEG2000FileType),
+                                                   (NSString *)kUTTypeJPEG: @(NSJPEGFileType),
+                                                   (NSString *)kUTTypePNG: @(NSPNGFileType),
+                                                   (NSString *)kUTTypeTIFF: @(NSTIFFFileType) };
+        NSString *imageType = imageInfo.imageType;
+        if (imageType) {
+            NSNumber *nsTypeNumber = universalTypeToCocoaMap[imageType];
+            if (nsTypeNumber.integerValue == fileType) {
+                data = imageInfo.data;
+            }
+        }
+        if (!data) {
+            NSBitmapImageRep *rep = [imageInfo.image bitmapImageRep];
+            data = [rep representationUsingType:fileType properties:nil];
+        }
+        [data writeToFile:filename atomically:NO];
     }
 }
 
 - (void)copyImage:(id)sender {
-    ImageInfo *imageInfo = [sender representedObject];
+    iTermImageInfo *imageInfo = [sender representedObject];
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    if (imageInfo.image) {
-        [pboard declareTypes:[NSArray arrayWithObject:NSTIFFPboardType] owner:self];
-        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
-        NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
-        [pboard setData:tiff forType:NSTIFFPboardType];
+    NSPasteboardItem *item = imageInfo.pasteboardItem;
+    if (item) {
+        [pboard clearContents];
+        [pboard writeObjects:@[ item ]];
     }
 }
 
 - (void)openImage:(id)sender {
-    ImageInfo *imageInfo = [sender representedObject];
-    if (imageInfo.image) {
-        NSString *filename = [NSString stringWithFormat:@"iterm2TempImage.%@.tiff",
-                              [NSString uuid]];
-
-        NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
-        NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
-        [tiff writeToFile:filename atomically:NO];
-        [[NSWorkspace sharedWorkspace] openFile:filename];
+    iTermImageInfo *imageInfo = [sender representedObject];
+    NSString *name = imageInfo.nameForNewSavedTempFile;
+    if (name) {
+        [[NSWorkspace sharedWorkspace] openFile:name];
     }
 }
 
 - (void)inspectImage:(id)sender {
-    ImageInfo *imageInfo = [sender representedObject];
+    iTermImageInfo *imageInfo = [sender representedObject];
     if (imageInfo) {
         NSString *text = [NSString stringWithFormat:
                           @"Filename: %@\n"
@@ -3860,13 +3882,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (ImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord
-{
-    if (coord.x < 0) {
+- (iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord {
+    if (coord.x < 0 ||
+        coord.y < 0 ||
+        coord.x >= [_dataSource width] ||
+        coord.y >= [_dataSource numberOfLines]) {
         return nil;
     }
     screen_char_t* theLine = [_dataSource getLineAtIndex:coord.y];
-    if (theLine && coord.x < [_dataSource width] && theLine[coord.x].image) {
+    if (theLine && theLine[coord.x].image) {
         return GetImageInfo(theLine[coord.x].code);
     } else {
         return nil;
@@ -3964,7 +3988,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Allocate a menu
     theMenu = [[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
-    ImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+    iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
     if (imageInfo) {
         // Show context menu for an image.
         NSArray *entryDicts =
@@ -5454,9 +5478,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
          @(x), @(y), @(respectHardNewlines));
 
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
-    if ([self imageInfoAtCoord:coord]) {
-        // TODO(georgen): I guess we could do something if you cmd-click on an image?
-        return nil;
+    iTermImageInfo *imageInfo = [self imageInfoAtCoord:coord];
+    if (imageInfo) {
+        return [URLAction urlActionToOpenImage:imageInfo];
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     if ([extractor characterAt:coord].code == 0) {
@@ -5765,15 +5789,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 }
 
-- (void)_dragImage:(ImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
+- (void)_dragImage:(iTermImageInfo *)imageInfo forEvent:(NSEvent *)theEvent
 {
     NSSize region = NSMakeSize(_charWidth * imageInfo.size.width,
                                _lineHeight * imageInfo.size.height);
     NSImage *icon = [imageInfo imageEmbeddedInRegionOfSize:region];
 
-    // get the pasteboard
-    NSBitmapImageRep *rep = [[imageInfo.image representations] objectAtIndex:0];
-    NSData *tiff = [rep representationUsingType:NSTIFFFileType properties:nil];
+    NSData *imageData = imageInfo.data;
+    if (!imageData) {
+        return;
+    }
 
     // tell our app not switch windows (currently not working)
     [NSApp preventWindowOrdering];
@@ -5809,8 +5834,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // start the drag
-    NSPasteboardItem *pbItem = [[[NSPasteboardItem alloc] init] autorelease];
-    [pbItem setData:tiff forType:(NSString *)kUTTypeTIFF];
+    NSPasteboardItem *pbItem = [imageInfo pasteboardItem];
     NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
     [dragItem setDraggingFrame:NSMakeRect(dragPoint.x, dragPoint.y, icon.size.width, icon.size.height)
                       contents:icon];
@@ -6044,6 +6068,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DebugLog([_dataSource debugString]);
     }
     [_dataSource setUseSavedGridIfAvailable:NO];
+
+    // If you're viewing the scrollback area and it contains an animated gif it will need
+    // to be redrawn periodically. The set of animated lines is added to while drawing and then
+    // reset here.
+    // TODO: Limit this to the columns that need to be redrawn.
+    NSIndexSet *animatedLines = [_dataSource animatedLines];
+    [animatedLines enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [self setNeedsDisplayOnLine:idx];
+    }];
+    [_dataSource resetAnimatedLines];
 
     return _blinkAllowed && anythingIsBlinking;
 }
@@ -6530,6 +6564,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (NSData *)drawingHelperMatchesOnLine:(int)line {
     return _findOnPageHelper.highlightMap[@(line + _dataSource.totalScrollbackOverflow)];
+}
+
+- (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord
+                                                ofLength:(int)length {
+    [_dataSource setRangeOfCharsAnimated:NSMakeRange(coord.x, length) onLine:coord.y];
 }
 
 @end

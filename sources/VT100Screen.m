@@ -7,6 +7,7 @@
 #import "iTermTemporaryDoubleBufferedGridController.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
@@ -122,6 +123,8 @@ static const double kInterBellQuietPeriod = 0.1;
     NSTimeInterval lastBell_;
     iTermTemporaryDoubleBufferedGridController *_temporaryDoubleBuffer;
     BOOL _cursorVisible;
+    // Line numbers containing animated GIFs that need to be redrawn for the next frame.
+    NSMutableIndexSet *_animatedLines;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -180,6 +183,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         nextCommandOutputStart_ = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+        _animatedLines = [[NSMutableIndexSet alloc] init];
     }
     return self;
 }
@@ -206,6 +210,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
+    [_animatedLines release];
     [super dealloc];
 }
 
@@ -1582,6 +1587,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                           inRectFrom:VT100GridCoordMake(0, y)
                                   to:VT100GridCoordMake(self.width - 1, y)];
     }
+}
+
+- (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line {
+    // TODO: Store range
+    [_animatedLines addIndex:line];
+}
+
+- (void)resetAnimatedLines {
+    [_animatedLines removeAllIndexes];
 }
 
 - (void)setCharDirtyAtCursorX:(int)x Y:(int)y {
@@ -3074,7 +3088,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                              height:(int)height
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
-                              image:(NSImage *)image {
+                              image:(NSImage *)image
+                               data:(NSData *)data {
     if (!image) {
         image = [NSImage imageNamed:@"broken_image"];
     }
@@ -3166,21 +3181,24 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     currentGrid_.cursorX = currentGrid_.cursorX + width + 1;
 
-    SetDecodedImage(c.code, image);
+    SetDecodedImage(c.code, image, data);
     [inlineFileCodes_ addObject:@(c.code)];
     [delegate_ screenNeedsRedraw];
 }
 
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
-        NSImage *image = [self imageWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
+        // TODO: Handle objects other than images.
+        NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
+        NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
         [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
                                     width:[inlineFileInfo_[kInlineFileWidth] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                    image:image];
+                                    image:image
+                                     data:data];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
     } else {
@@ -4033,26 +4051,6 @@ static void SwapInt(int *a, int *b) {
     [self popScrollbackLines:linesPushed];
     return keepSearching;
 }
-
-- (NSImage *)imageWithBase64EncodedString:(NSString *)string {
-    // TODO: Handle objects other than images.
-    const char *buffer = [string UTF8String];
-    int destLength = apr_base64_decode_len(buffer);
-    if (destLength <= 0) {
-        return nil;
-    }
-
-    NSMutableData *data = [NSMutableData dataWithLength:destLength];
-    char *decodedBuffer = [data mutableBytes];
-    int resultLength = apr_base64_decode(decodedBuffer, buffer);
-    if (resultLength <= 0) {
-        return nil;
-    }
-
-    NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
-    return image;
-}
-
 
 #pragma mark - PTYNoteViewControllerDelegate
 

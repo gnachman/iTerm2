@@ -59,6 +59,8 @@
 
 - (NSData *)drawingHelperMatchesOnLine:(int)line;
 
+- (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord ofLength:(int)length;
+
 @end
 
 @interface iTermTextDrawingHelper : NSObject
@@ -223,6 +225,9 @@
 
 // Draw debug info?
 @property(nonatomic, assign) BOOL debug;
+
+// Set to YES if part of an animated image was drawn.
+@property(nonatomic, assign) BOOL animated;
 
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
