@@ -689,9 +689,9 @@ static const int kBadgeRightMargin = 10;
     if (currentRun->attrs.underline) {
         [currentRun->attrs.color set];
         NSRectFill(NSMakeRect(startPoint.x,
-                              startPoint.y + _cellSize.height - 2,
+                              startPoint.y + _cellSize.height + ceil(currentRun->attrs.fontInfo.font.underlinePosition),
                               runWidth,
-                              1));
+                              0.5));
     }
 }
 
