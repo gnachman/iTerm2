@@ -101,6 +101,7 @@ DEFINE_BOOL(disableWindowSizeSnap, NO, @"General: Allow window to resize smoothl
 
 #pragma mark tmux
 DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server");
+DEFINE_BOOL(newWindowNewTabCanOpenTmuxSession, NO, @"Tmux Integration: New Window/New Tab opens tmux window/tab when current session is tmux");
 
 #pragma mark Warnings
 DEFINE_BOOL(neverWarnAboutMeta, NO, @"Warnings: Suppress a warning when Option Key Acts as Meta is enabled");

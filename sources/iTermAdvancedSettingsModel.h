@@ -94,4 +94,6 @@
 + (BOOL)disableWindowSizeSnap;
 + (BOOL)useDoubleBufferedGrid;
 
++ (BOOL)newWindowNewTabCanOpenTmuxSession;
+
 @end
