@@ -33,14 +33,7 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
 
 //#define TEST_PROMOS 1
 
-@implementation iTermPromotionalMessageManager {
-    NSURLDownload *_download;
-    NSArray *_promotion;  // An array of [ promoId, message, title, url ]
-    BOOL _scheduled;
-    NSMutableData *_data;
-    NSString *_downloadFilename;
-    NSURLResponse *_response;
-}
+@implementation iTermPromotionalMessageManager
 
 @synthesize data = _data;
 @synthesize downloadFilename = _downloadFilename;
