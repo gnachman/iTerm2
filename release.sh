@@ -20,14 +20,14 @@ function SparkleSign {
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
     TEMPLATE=$2
-    cp $SVNDIR/appcasts/${TEMPLATE} /tmp
+    cp $SVNDIR/source/appcasts/${TEMPLATE} /tmp
     cat /tmp/${TEMPLATE} | \
     sed -e "s/%XML%/${XML}/" | \
     sed -e "s/%VER%/${VERSION}/" | \
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
     sed -e "s/%LENGTH%/$LENGTH/" |
-    sed -e "s,%SIG%,${SIG}," > $SVNDIR/appcasts/$1
+    sed -e "s,%SIG%,${SIG}," > $SVNDIR/source/appcasts/$1
     cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
 
@@ -54,7 +54,7 @@ function Build {
   zip -ry iTerm2-${NAME}.zip iTerm.app
 
   # Update the list of changes
-  vi $SVNDIR/appcasts/testing_changes.txt
+  vi $SVNDIR/source/appcasts/testing_changes.txt
 
   # Place files in website git.
   cp iTerm2-${NAME}.zip $SVNDIR/downloads/beta/
@@ -64,7 +64,7 @@ function Build {
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
   echo cd $SVNDIR
-  echo git add "downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip appcasts/testing.xml appcasts/testing_changes.txt"
+  echo git add "downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing.xml source/appcasts/testing_changes.txt"
 
   # Prepare the sparkle xml file
   SparkleSign ${SPARKLE_PREFIX}testing.xml ${SPARKLE_PREFIX}template.xml
