@@ -930,7 +930,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
             // Determine cell width
             if (_sizeCellsToFit) {
-                width = [cell desiredWidthOfCell];
+                width = MAX(_cellMinWidth, [cell desiredWidthOfCell]);
                 if (width > _cellMaxWidth) {
                     width = _cellMaxWidth;
                 }

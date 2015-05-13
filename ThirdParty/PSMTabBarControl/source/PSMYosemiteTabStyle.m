@@ -181,9 +181,8 @@
     return result;
 }
 
-
-- (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell {
-    float resultWidth = 0.0;
+- (CGFloat)widthOfLeftMatterInCell:(PSMTabBarCell *)cell {
+    CGFloat resultWidth = 0.0;
 
     // left margin
     resultWidth = MARGIN_X;
@@ -195,10 +194,11 @@
     if ([cell hasIcon]) {
         resultWidth += kPSMTabBarIconWidth + kPSMTabBarCellIconPadding;
     }
+    return resultWidth;
+}
 
-    // the label
-    resultWidth += kPSMMinimumTitleWidth;
-
+- (CGFloat)widthOfRightMatterInCell:(PSMTabBarCell *)cell {
+    CGFloat resultWidth = 0;
     // object counter?
     if ([cell count] > 0) {
         resultWidth += [self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding;
@@ -213,12 +213,19 @@
 
     // right margin
     resultWidth += MARGIN_X;
+    return resultWidth;
+}
 
-    return ceil(resultWidth);
+- (float)minimumWidthOfTabCell:(PSMTabBarCell *)cell {
+    return ceil([self widthOfLeftMatterInCell:cell] +
+                kPSMMinimumTitleWidth +
+                [self widthOfRightMatterInCell:cell]);
 }
 
 - (float)desiredWidthOfTabCell:(PSMTabBarCell *)cell {
-    return [self minimumWidthOfTabCell:cell];
+    return ceil([self widthOfLeftMatterInCell:cell] +
+                [[cell attributedStringValue] size].width +
+                [self widthOfRightMatterInCell:cell]);
 }
 
 #pragma mark - Cell Values
