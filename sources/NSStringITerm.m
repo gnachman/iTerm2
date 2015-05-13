@@ -574,7 +574,7 @@ int decode_utf8_char(const unsigned char *datap,
     int start = 0;
     int end = [self length];
     if (firstBadCharRange.location != NSNotFound) {
-        start = firstBadCharRange.location + 1;
+        start = NSMaxRange(firstBadCharRange);
         if (charsTakenFromPrefixPtr) {
             *charsTakenFromPrefixPtr = offset - start;
         }
