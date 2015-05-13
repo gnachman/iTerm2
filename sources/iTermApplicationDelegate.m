@@ -754,7 +754,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newWindow:(id)sender
 {
-    [[iTermController sharedInstance] newWindow:sender possiblyTmux:YES];
+    [[iTermController sharedInstance] newWindow:sender possiblyTmux:[iTermAdvancedSettingsModel newWindowNewTabCanOpenTmuxSession]];
 }
 
 - (IBAction)newSessionWithSameProfile:(id)sender
@@ -765,7 +765,7 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)newSession:(id)sender
 {
     DLog(@"iTermApplicationDelegate newSession:");
-    [[iTermController sharedInstance] newSession:sender possiblyTmux:YES];
+    [[iTermController sharedInstance] newSession:sender possiblyTmux:[iTermAdvancedSettingsModel newWindowNewTabCanOpenTmuxSession]];
 }
 
 // navigation
