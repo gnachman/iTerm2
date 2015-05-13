@@ -430,7 +430,17 @@ const CGFloat kDefaultTagsWidth = 80;
     NSRect constrainedBounds = NSMakeRect(0, 0, tableColumn_.width, CGFLOAT_MAX);
     NSSize naturalSize = [cell cellSizeForBounds:constrainedBounds];
 
-    return naturalSize.height;
+    // I have no idea why I need extraHeight but maybe cellSizeForBounds: doesn't center content
+    // properly with attributed strings.
+    return naturalSize.height + [self extraHeight];
+}
+
+- (CGFloat)extraHeight {
+    if (self.mainFont.pointSize <= [NSFont smallSystemFontSize]) {
+        return 1;
+    } else {
+        return 2;
+    }
 }
 
 - (NSFont *)mainFont {
@@ -438,7 +448,13 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (NSFont *)tagFont {
-    return [NSFont systemFontOfSize:self.mainFont.pointSize - 2];
+    CGFloat reduction = 0;
+    if (self.mainFont.pointSize <= [NSFont smallSystemFontSize]) {
+        reduction = 2;
+    } else {
+        reduction = 3;
+    }
+    return [NSFont systemFontOfSize:self.mainFont.pointSize - reduction];
 }
 
 - (NSAttributedString *)attributedStringForName:(NSString *)name
