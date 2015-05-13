@@ -320,7 +320,8 @@ static NSTimeInterval kMinTimeBetweenDownloads = 3600 * 24;  // 24 hours
             return;
         }
         NSError *error = nil;
-        id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+        Class jsonClass = NSClassFromString(@"NSJSONSerialization");
+        id object = [jsonClass JSONObjectWithData:data options:0 error:&error];
         if (error && !object) {
             DLog(@"JSON deserialization error: %@", error);
             return;
