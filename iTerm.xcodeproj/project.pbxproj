@@ -406,6 +406,8 @@
 		9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */ = {isa = PBXBuildFile; fileRef = A073973D14C768E400786414 /* ColorsMenuItemView.h */; };
 		A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */ = {isa = PBXBuildFile; fileRef = A073973F14C7694600786414 /* ColorsMenuItemView.m */; };
+		A6624F351AFC5EEE0040BA66 /* iTermPromotionalMessageManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A6624F331AFC5EEE0040BA66 /* iTermPromotionalMessageManager.h */; };
+		A6624F361AFC5EEE0040BA66 /* iTermPromotionalMessageManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6624F341AFC5EEE0040BA66 /* iTermPromotionalMessageManager.m */; };
 		A6AA395C18275EB800A19BD5 /* SBSystemPreferences.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AA395B18275EB800A19BD5 /* SBSystemPreferences.h */; };
 		A6AA395E18275EF200A19BD5 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6AA395D18275EF200A19BD5 /* ScriptingBridge.framework */; };
 		A6C537B9192DD54A00A08C18 /* OnlineHelp in Resources */ = {isa = PBXBuildFile; fileRef = A6C537B8192DD54A00A08C18 /* OnlineHelp */; };
@@ -750,6 +752,8 @@
 		9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsArrangements@2x.png"; path = "images/PrefsArrangements@2x.png"; sourceTree = "<group>"; };
 		A073973D14C768E400786414 /* ColorsMenuItemView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ColorsMenuItemView.h; sourceTree = "<group>"; };
 		A073973F14C7694600786414 /* ColorsMenuItemView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ColorsMenuItemView.m; sourceTree = "<group>"; };
+		A6624F331AFC5EEE0040BA66 /* iTermPromotionalMessageManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPromotionalMessageManager.h; sourceTree = "<group>"; };
+		A6624F341AFC5EEE0040BA66 /* iTermPromotionalMessageManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPromotionalMessageManager.m; sourceTree = "<group>"; };
 		A6AA395B18275EB800A19BD5 /* SBSystemPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SBSystemPreferences.h; sourceTree = "<group>"; };
 		A6AA395D18275EF200A19BD5 /* ScriptingBridge.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScriptingBridge.framework; path = System/Library/Frameworks/ScriptingBridge.framework; sourceTree = SDKROOT; };
 		A6C537B8192DD54A00A08C18 /* OnlineHelp */ = {isa = PBXFileReference; lastKnownFileType = folder; path = OnlineHelp; sourceTree = "<group>"; };
@@ -977,6 +981,8 @@
 				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
 				1D70BA331680158700824B72 /* PTYFontInfo.h */,
 				1D70BA341680158700824B72 /* PTYFontInfo.m */,
+				A6624F331AFC5EEE0040BA66 /* iTermPromotionalMessageManager.h */,
+				A6624F341AFC5EEE0040BA66 /* iTermPromotionalMessageManager.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1531,6 +1537,7 @@
 				1D5FDD5F1208E8F000C46BA3 /* PSMTabBarControl.h in Headers */,
 				1D5FDD601208E8F000C46BA3 /* PSMTabStyle.h in Headers */,
 				1D5FDD611208E8F000C46BA3 /* NSBezierPath_AMShading.h in Headers */,
+				A6624F351AFC5EEE0040BA66 /* iTermPromotionalMessageManager.h in Headers */,
 				1D5FDD621208E8F000C46BA3 /* PSMTabDragAssistant.h in Headers */,
 				1D5FDD631208E8F000C46BA3 /* PSMUnifiedTabStyle.h in Headers */,
 				1D5FDD641208E8F000C46BA3 /* PSMAdiumTabStyle.h in Headers */,
@@ -1974,6 +1981,7 @@
 				1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */,
 				1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */,
 				1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */,
+				A6624F361AFC5EEE0040BA66 /* iTermPromotionalMessageManager.m in Sources */,
 				1DB67CEE14850D53005849A1 /* TmuxWindowOpener.m in Sources */,
 				1DB67CF21485C578005849A1 /* TmuxHistoryParser.m in Sources */,
 				1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */,
