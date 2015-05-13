@@ -4115,10 +4115,11 @@ static void SwapInt(int *a, int *b) {
     linebuffer_ = lineBuffer;
     int linesRestored = MIN(MAX(0, currentGrid_.size.height - 1),
                             [lineBuffer numLinesWithWidth:self.width]);
-    DLog(@"Restored %d wrapped lines from dictionary", linesRestored);
     [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:linesRestored];
+    DLog(@"appendFromDictionary: Grid size is %dx%d", currentGrid_.size.width, currentGrid_.size.height);
+    DLog(@"Restored %d wrapped lines from dictionary", [self numberOfScrollbackLines] + linesRestored);
     currentGrid_.cursorY = linesRestored + 1;
     currentGrid_.cursorX = 0;
 }
