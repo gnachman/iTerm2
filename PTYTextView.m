@@ -4049,7 +4049,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (rangeOfLastWantedCharacter.location == NSNotFound) {
         [string deleteCharactersInRange:NSMakeRange(0, string.length)];
     } else if (rangeOfLastWantedCharacter.location < string.length - 1) {
-        NSUInteger i = rangeOfLastWantedCharacter.location + 1;
+        NSUInteger i = rangeOfLastWantedCharacter.location + rangeOfLastWantedCharacter.length;
         [string deleteCharactersInRange:NSMakeRange(i, string.length - i)];
     }
 }
