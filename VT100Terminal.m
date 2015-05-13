@@ -3268,97 +3268,99 @@ static VT100TCC decode_string(unsigned char *datap,
         case VT100CSI_DECRST:
             mode=(token.type == VT100CSI_DECSET);
 
-            switch (token.u.csi.p[0]) {
-                case 20: LINE_MODE = mode; break;
-                case 1:  [self setCursorMode:mode]; break;
-                case 2:  ANSI_MODE = mode; break;
-                case 3:  COLUMN_MODE = mode; break;
-                case 4:  SCROLL_MODE = mode; break;
-                case 5:  SCREEN_MODE = mode; [SCREEN setDirty]; break;
-                case 6:  ORIGIN_MODE = mode; break;
-                case 7:  WRAPAROUND_MODE = mode; break;
-                case 8:  AUTOREPEAT_MODE = mode; break;
-                case 9:  INTERLACE_MODE  = mode; break;
-                case 25: [SCREEN showCursor: mode]; break;
-                case 40: allowColumnMode = mode; break;
+            for (int j = 0; j < token.u.csi.count; j++) {
+                switch (token.u.csi.p[j]) {
+                    case 20: LINE_MODE = mode; break;
+                    case 1:  [self setCursorMode:mode]; break;
+                    case 2:  ANSI_MODE = mode; break;
+                    case 3:  COLUMN_MODE = mode; break;
+                    case 4:  SCROLL_MODE = mode; break;
+                    case 5:  SCREEN_MODE = mode; [SCREEN setDirty]; break;
+                    case 6:  ORIGIN_MODE = mode; break;
+                    case 7:  WRAPAROUND_MODE = mode; break;
+                    case 8:  AUTOREPEAT_MODE = mode; break;
+                    case 9:  INTERLACE_MODE  = mode; break;
+                    case 25: [SCREEN showCursor: mode]; break;
+                    case 40: allowColumnMode = mode; break;
 
-                case 1049:
-                    // From the xterm release log:
-                    // Implement new escape sequence, private mode 1049, which combines
-                    // the switch to/from alternate screen mode with screen clearing and
-                    // cursor save/restore.  Unlike the existing escape sequence, this
-                    // clears the alternate screen when switching to it rather than when
-                    // switching to the normal screen, thus retaining the alternate screen
-                    // contents for select/paste operations.
-                    if (!disableSmcupRmcup) {
-                        if (mode) {
-                            [self saveCursorAttributes];
-                            [SCREEN saveCursorPosition];
-                            [SCREEN saveBuffer];
-                            [SCREEN clearScreen];
-                        } else {
-                            [SCREEN restoreBuffer];
-                            [self restoreCursorAttributes];
-                            [SCREEN restoreCursorPosition];
+                    case 1049:
+                        // From the xterm release log:
+                        // Implement new escape sequence, private mode 1049, which combines
+                        // the switch to/from alternate screen mode with screen clearing and
+                        // cursor save/restore.  Unlike the existing escape sequence, this
+                        // clears the alternate screen when switching to it rather than when
+                        // switching to the normal screen, thus retaining the alternate screen
+                        // contents for select/paste operations.
+                        if (!disableSmcupRmcup) {
+                            if (mode) {
+                                [self saveCursorAttributes];
+                                [SCREEN saveCursorPosition];
+                                [SCREEN saveBuffer];
+                                [SCREEN clearScreen];
+                            } else {
+                                [SCREEN restoreBuffer];
+                                [self restoreCursorAttributes];
+                                [SCREEN restoreCursorPosition];
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case 2004:
-                    // Set bracketed paste mode
-                    bracketedPasteMode_ = mode;
-                    break;
+                    case 2004:
+                        // Set bracketed paste mode
+                        bracketedPasteMode_ = mode;
+                        break;
 
-                case 47:
-                    // alternate screen buffer mode
-                    if (!disableSmcupRmcup) {
-                        if (mode) {
-                            [SCREEN saveBuffer];
-                        } else {
-                            [SCREEN restoreBuffer];
+                    case 47:
+                        // alternate screen buffer mode
+                        if (!disableSmcupRmcup) {
+                            if (mode) {
+                                [SCREEN saveBuffer];
+                            } else {
+                                [SCREEN restoreBuffer];
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case 1000:
-                /* case 1001: */ /* MOUSE_REPORTING_HILITE not implemented yet */
-                case 1002:
-                case 1003:
-                    if (mode) {
-                        MOUSE_MODE = token.u.csi.p[0] - 1000;
-                    } else {
-                        MOUSE_MODE = MOUSE_REPORTING_NONE;
-                    }
-                    [SCREEN mouseModeDidChange:MOUSE_MODE];
-                    break;
-                case 1004:
-                    REPORT_FOCUS = mode;
-                    break;
+                    case 1000:
+                        /* case 1001: */ /* MOUSE_REPORTING_HILITE not implemented yet */
+                    case 1002:
+                    case 1003:
+                        if (mode) {
+                            MOUSE_MODE = token.u.csi.p[j] - 1000;
+                        } else {
+                            MOUSE_MODE = MOUSE_REPORTING_NONE;
+                        }
+                        [SCREEN mouseModeDidChange:MOUSE_MODE];
+                        break;
+                    case 1004:
+                        REPORT_FOCUS = mode;
+                        break;
 
-                case 1005:
-                    if (mode) {
-                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM_EXT;
-                    } else {
-                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
-                    }
-                    break;
-
-
-                case 1006:
-                    if (mode) {
-                        MOUSE_FORMAT = MOUSE_FORMAT_SGR;
-                    } else {
-                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
-                    }
-                    break;
-
-                case 1015:
-                    if (mode) {
-                        MOUSE_FORMAT = MOUSE_FORMAT_URXVT;
-                    } else {
-                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
-                    }
-                    break;
+                    case 1005:
+                        if (mode) {
+                            MOUSE_FORMAT = MOUSE_FORMAT_XTERM_EXT;
+                        } else {
+                            MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
+                        }
+                        break;
+                        
+                        
+                    case 1006:
+                        if (mode) {
+                            MOUSE_FORMAT = MOUSE_FORMAT_SGR;
+                        } else {
+                            MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
+                        }
+                        break;
+                        
+                    case 1015:
+                        if (mode) {
+                            MOUSE_FORMAT = MOUSE_FORMAT_URXVT;
+                        } else {
+                            MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
+                        }
+                        break;
+                }
             }
                 break;
         case VT100CSI_SM:

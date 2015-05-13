@@ -798,7 +798,7 @@
 		E8CF7560026DDA6303A80106 /* PTYTask.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PTYTask.m; sourceTree = "<group>"; };
 		E8CF7561026DDA6303A80106 /* PTYTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYTextView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		E8CF7562026DDA6303A80106 /* VT100Screen.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = VT100Screen.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		E8CF7563026DDA6303A80106 /* VT100Terminal.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = VT100Terminal.m; sourceTree = "<group>"; };
+		E8CF7563026DDA6303A80106 /* VT100Terminal.m */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Terminal.m; sourceTree = "<group>"; tabWidth = 4; };
 		E8CF757F026DDAD703A80106 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E8E901A202743CA303A80106 /* NSStringITerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringITerm.m; sourceTree = "<group>"; };
 		E8EDCE69015E0A5703000001 /* iTerm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = iTerm.icns; sourceTree = "<group>"; };
