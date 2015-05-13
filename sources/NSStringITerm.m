@@ -1242,9 +1242,9 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                                                                options:NSBackwardsSearch];
     if (rangeOfLastWantedCharacter.location == NSNotFound) {
         [self deleteCharactersInRange:NSMakeRange(0, self.length)];
-    } else if (rangeOfLastWantedCharacter.location < self.length - 1) {
-        NSUInteger i = rangeOfLastWantedCharacter.location + 1;
-        [self deleteCharactersInRange:NSMakeRange(i, self.length - i)];
+    } else if (NSMaxRange(rangeOfLastWantedCharacter) < self.length) {
+        [self deleteCharactersInRange:NSMakeRange(NSMaxRange(rangeOfLastWantedCharacter),
+                                                  self.length - NSMaxRange(rangeOfLastWantedCharacter))];
     }
 }
 
