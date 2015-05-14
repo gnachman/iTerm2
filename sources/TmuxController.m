@@ -121,12 +121,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [windowOpener openWindows:YES];
 }
 
-- (void)addAffinityBetweenPane:(int)windowPane
-                   andTerminal:(PseudoTerminal *)term {
-    [affinities_ setValue:[[NSNumber numberWithInt:windowPane] stringValue]
-             equalToValue:[term terminalGuid]];
-}
-
 - (void)setLayoutInTab:(PTYTab *)tab
               toLayout:(NSString *)layout
 {
@@ -884,8 +878,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)saveAffinities
-{
+- (void)saveAffinities {
     if (pendingWindowOpens_.count) {
         return;
     }
@@ -913,6 +906,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if ([command isEqualToString:lastSaveAffinityCommand_]) {
         return;
     }
+    [self setAffinitiesFromString:arg];
     [lastSaveAffinityCommand_ release];
     lastSaveAffinityCommand_ = [command retain];
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
@@ -1065,8 +1059,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)getAffinitiesResponse:(NSString *)result
-{
+- (void)getAffinitiesResponse:(NSString *)result {
+    [self setAffinitiesFromString:result];
+}
+
+- (void)setAffinitiesFromString:(NSString *)result {
     // Replace the existing equivalence classes with those defined by the
     // affinity response.
     // For example "1,2,3 4,5,6" has two equivalence classes.

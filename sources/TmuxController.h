@@ -138,8 +138,6 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 - (void)saveAffinities;
 - (void)saveWindowOrigins;
 - (void)saveHiddenWindows;
-- (void)addAffinityBetweenPane:(int)windowPane
-                   andTerminal:(PseudoTerminal *)term;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
 - (void)toggleZoomForPane:(int)pane;
