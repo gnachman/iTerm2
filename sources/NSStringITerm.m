@@ -124,7 +124,18 @@
                stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
 }
 
+- (NSArray *)componentsBySplittingProfileListQuery {
+    return [self componentsBySplittingStringWithQuotesAndBackslashEscaping:@{}];
+}
+
 - (NSArray *)componentsInShellCommand {
+    return [self componentsBySplittingStringWithQuotesAndBackslashEscaping:@{ @'n': @"\n",
+                                                                              @'a': @"\x07",
+                                                                              @'t': @"\t",
+                                                                              @'r': @"\r" } ];
+}
+
+- (NSArray *)componentsBySplittingStringWithQuotesAndBackslashEscaping:(NSDictionary *)escapes {
     NSMutableArray *result = [NSMutableArray array];
 
     int inQuotes = 0; // Are we inside double quotes?
@@ -154,14 +165,8 @@
         if (escape) {
             valueStarted = YES;
             escape = NO;
-            if (c == 'n') {
-                [currentValue appendString:@"\n"];
-            } else if (c == 'a') {
-                [currentValue appendFormat:@"%c", 7];
-            } else if (c == 't') {
-                [currentValue appendString:@"\t"];
-            } else if (c == 'r') {
-                [currentValue appendString:@"\r"];
+            if (escapes[@(c)]) {
+                [currentValue appendString:escapes[@(c)]];
             } else {
                 [currentValue appendFormat:@"%C", c];
             }
