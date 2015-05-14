@@ -587,7 +587,7 @@ error:
 
 - (void)sendCommandList:(NSArray *)commandDicts initial:(BOOL)initial
 {
-    if (detachSent_ || disconnected_) {
+    if (detachSent_ || disconnected_ || commandDicts.count == 0) {
         return;
     }
     NSMutableString *cmd = [NSMutableString string];

@@ -143,5 +143,5 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
 - (void)toggleZoomForPane:(int)pane;
-
+- (void)setPartialWindowIdOrder:(NSArray *)partialOrder;
 @end

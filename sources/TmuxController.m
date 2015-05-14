@@ -1238,4 +1238,61 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [self saveAffinities];
 }
 
+- (void)setPartialWindowIdOrder:(NSArray *)partialOrder {
+    [gateway_ sendCommand:@"list-windows -F \"#{window_id}\""
+           responseTarget:self
+         responseSelector:@selector(responseForListWindows:toSetPartialOrder:)
+           responseObject:partialOrder
+                    flags:0];
+}
+
+- (void)responseForListWindows:(NSString *)response toSetPartialOrder:(NSArray *)partialOrder {
+    NSArray *ids = [response componentsSeparatedByString:@"\n"];
+    NSMutableArray *currentOrder = [NSMutableArray array];
+    for (NSString *windowId in ids) {
+        if ([windowId hasPrefix:@"@"]) {
+            int i = [[windowId substringFromIndex:1] intValue];
+            NSNumber *n = @(i);
+            if ([partialOrder containsObject:n]) {
+                [currentOrder addObject:n];
+            }
+        }
+    }
+
+    NSMutableArray *desiredOrder = [NSMutableArray array];
+    for (NSNumber *n in partialOrder) {
+        if ([currentOrder containsObject:n]) {
+            [desiredOrder addObject:n];
+        }
+    }
+
+    // We have two lists, desiredOrder and currentOrder, that contain the same objects but
+    // in (possibly) a different order. For each out-of-place value, swap it with a later value,
+    // placing the later value in its correct location.
+    NSMutableArray *commands = [NSMutableArray array];
+    for (int i = 0; i < currentOrder.count; i++) {
+        if ([currentOrder[i] intValue] != [desiredOrder[i] intValue]) {
+            NSInteger swapIndex = [currentOrder indexOfObject:desiredOrder[i]];
+            assert(swapIndex != NSNotFound);
+
+            NSString *command = [NSString stringWithFormat:@"swap-window -s @%@ -t @%@",
+                                    currentOrder[i], currentOrder[swapIndex]];
+            NSDictionary *dict = [gateway_ dictionaryForCommand:command
+                                                 responseTarget:self
+                                               responseSelector:@selector(didSwapWindows:)
+                                                 responseObject:nil
+                                                          flags:0];
+            [commands addObject:dict];
+            NSNumber *temp = [[currentOrder[i] retain] autorelease];
+            currentOrder[i] = currentOrder[swapIndex];
+            currentOrder[swapIndex] = temp;
+        }
+    }
+
+    [gateway_ sendCommandList:commands];
+}
+
+- (void)didSwapWindows:(NSString *)response {
+}
+
 @end

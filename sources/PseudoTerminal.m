@@ -3967,6 +3967,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (PTYSession* aSession in [aTab sessions]) {
         [aSession setIgnoreResizeNotifications:NO];
     }
+    [self tabsDidReorder];
 }
 
 - (void)tabView:(NSTabView *)aTabView closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem
@@ -4314,6 +4315,20 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             }
         }
     }
+}
+
+- (void)tabsDidReorder {
+    TmuxController *controller = nil;
+    NSMutableArray *windowIds = [NSMutableArray array];
+
+    for (PTYTab *tab in [self tabs]) {
+        TmuxController *tmuxController = tab.tmuxController;
+        if (tmuxController) {
+            controller = tmuxController;
+            [windowIds addObject:@(tab.tmuxWindow)];
+        }
+    }
+    [controller setPartialWindowIdOrder:windowIds];
 }
 
 - (PTYTabView *)tabView
@@ -5575,6 +5590,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self _updateTabObjectCounts];
+    [self tabsDidReorder];
 }
 
 - (IBAction)moveTabRight:(id)sender
@@ -5586,6 +5602,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self _updateTabObjectCounts];
+    [self tabsDidReorder];
 }
 
 - (void)refreshTmuxLayoutsAndWindow
