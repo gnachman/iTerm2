@@ -792,7 +792,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // are cases in fullscreen (e.g., when entering Lion fullscreen) when the
     // window doesn't have a title bar but also isn't borderless we also check
     // if we're in fullscreen.
-    if (self.window.styleMask != NSBorderlessWindowMask &&
+    if ((self.window.styleMask & NSTitledWindowMask) &&
         ![self anyFullScreen] &&
         ![self tabBarShouldBeVisible]) {
         // A division is needed, but there might already be one.
