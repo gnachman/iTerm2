@@ -54,9 +54,6 @@
 // the selection.
 - (void)rowSelected:(id)sender;
 
-// Handle key presses.
-- (void)keyDown:(NSEvent*)event;
-
 // Window is closing. Call this method when subclass is done.
 - (void)onClose;
 
