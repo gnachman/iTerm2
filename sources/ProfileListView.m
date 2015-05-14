@@ -275,15 +275,14 @@ const CGFloat kDefaultTagsWidth = 80;
 
 // End Drag drop -------------------------------
 
-- (void)_addTag:(id)sender
-{
+- (void)_addTag:(id)sender {
     int itemTag = [sender tag];
     NSArray* allTags = [[[dataSource_ underlyingModel] allTags] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
     NSString* tag = [allTags objectAtIndex:itemTag];
 
-    [searchField_ setStringValue:[[NSString stringWithFormat:@"%@ %@",
-                                   [[searchField_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]],
-                                   tag] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
+    NSString *trimmedSearchString = [[searchField_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSString *searchStringPlusTag = [NSString stringWithFormat:@"%@ tag:%@", trimmedSearchString, tag];
+    [searchField_ setStringValue:[searchStringPlusTag stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
     [self controlTextDidChange:nil];
 }
 
@@ -310,8 +309,16 @@ const CGFloat kDefaultTagsWidth = 80;
         [cellMenu insertItem:item atIndex:i+1];
     }
 
+    [cellMenu insertItem:[NSMenuItem separatorItem] atIndex:cellMenu.numberOfItems];
+    [cellMenu addItemWithTitle:@"Search Syntax Help" action:@selector(openHowToSearchHelp:) keyEquivalent:@""];
+
     id searchCell = [searchField cell];
     [searchCell setSearchMenuTemplate:cellMenu];
+
+}
+
+- (void)openHowToSearchHelp:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/search_syntax.html"]];
 }
 
 - (void)setUnderlyingDatasource:(ProfileModel*)dataSource
