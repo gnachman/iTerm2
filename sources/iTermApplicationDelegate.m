@@ -736,7 +736,8 @@ static BOOL hasBecomeActive = NO;
                                                  withURL:urlStr
                                                 isHotkey:NO
                                                  makeKey:NO
-                                                 command:nil];
+                                                 command:nil
+                                                   block:nil];
     }
 }
 

@@ -3893,8 +3893,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
       [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-        [itad updateBroadcastMenuState];
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    [itad updateBroadcastMenuState];
 }
 
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
@@ -6734,13 +6734,44 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (IBAction)duplicateTab:(id)sender
-{
+- (IBAction)duplicateTab:(id)sender {
     PTYTab *theTab = (PTYTab *)[[sender representedObject] identifier];
     if (!theTab) {
         theTab = [self currentTab];
     }
-    [self appendTab:[[theTab copy] autorelease]];
+    PTYTab *copyOfTab = [[theTab copy] autorelease];
+    if ([iTermProfilePreferences boolForKey:KEY_PREVENT_TAB inProfile:self.currentSession.profile]) {
+        [[iTermController sharedInstance] launchBookmark:self.currentSession.profile
+                                              inTerminal:nil
+                                                 withURL:nil
+                                                isHotkey:NO
+                                                 makeKey:YES
+                                                 command:nil
+                                                   block:^PTYSession *(PseudoTerminal *term) {
+                                                       // Keep session size stable.
+                                                       for (PTYSession* aSession in [copyOfTab sessions]) {
+                                                           [aSession setIgnoreResizeNotifications:YES];
+                                                       }
+
+                                                       // This prevents the tab from getting resized to fit the window.
+                                                       [copyOfTab setReportIdealSizeAsCurrent:YES];
+
+                                                       // Add the tab to the empty window and resize the window.
+                                                       [term appendTab:copyOfTab];
+                                                       [term fitWindowToTabs];
+
+                                                       // Undo the prep work we've done.
+                                                       [copyOfTab setReportIdealSizeAsCurrent:NO];
+
+                                                       for (PTYSession* aSession in [copyOfTab sessions]) {
+                                                           [aSession setIgnoreResizeNotifications:NO];
+                                                       }
+
+                                                       return copyOfTab.activeSession;
+                                                   }];
+    } else {
+        [self appendTab:copyOfTab];
+    }
 }
 
 // These two methods are delecate because -closeTab: won't remove the tab from

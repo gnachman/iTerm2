@@ -50,7 +50,8 @@
                                              withURL:nil
                                             isHotkey:NO
                                              makeKey:YES
-                                             command:command];
+                                             command:command
+                                               block:nil];
 }
 
 - (void)handleCreateTabCommand:(NSScriptCommand *)scriptCommand {
@@ -69,7 +70,8 @@
                                              withURL:nil
                                             isHotkey:NO
                                              makeKey:YES
-                                             command:command];
+                                             command:command
+                                               block:nil];
 }
 
 #pragma mark - Accessors
