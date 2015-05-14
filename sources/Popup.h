@@ -21,7 +21,7 @@
 - (PTYTextView *)popupVT100TextView;
 - (void)popupInsertText:(NSString *)text;
 // Return YES if the delegate handles it, NO if Popup should handle it.
-- (BOOL)popupKeyDown:(NSEvent *)event currentValue:(NSString *)value;
+- (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue;
 - (void)popupWillClose:(Popup *)popup;
 
 @end
