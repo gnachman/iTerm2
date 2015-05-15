@@ -467,31 +467,44 @@ const CGFloat kDefaultTagsWidth = 80;
 - (NSAttributedString *)attributedStringForName:(NSString *)name
                                             tag:(NSString *)tags
                                        selected:(BOOL)selected
-                                      isDefault:(BOOL)isDefault {
+                                      isDefault:(BOOL)isDefault
+                                         filter:(NSString *)filter {
     NSColor *textColor;
     NSColor *tagColor;
+    NSColor *highlightedBackgroundColor;
     if (selected) {
         textColor = [NSColor whiteColor];
         tagColor = [NSColor whiteColor];
+        highlightedBackgroundColor = [NSColor colorWithCalibratedRed:0.8 green:0.8 blue:0.2 alpha:1];
     } else {
         textColor = [NSColor blackColor];
         tagColor = [NSColor colorWithCalibratedWhite:0.5 alpha:1];
+        highlightedBackgroundColor = [NSColor colorWithCalibratedRed:0.9 green:0.9 blue:0.5 alpha:1];
     }
     NSDictionary* plainAttributes = @{ NSForegroundColorAttributeName: textColor,
                                        NSFontAttributeName: self.mainFont };
+    NSDictionary* highlightedNameAttributes = @{ NSForegroundColorAttributeName: textColor,
+                                                 NSBackgroundColorAttributeName: highlightedBackgroundColor,
+                                                 NSFontAttributeName: self.mainFont };
     NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: tagColor,
                                        NSFontAttributeName: self.tagFont };
+    NSMutableAttributedString *theAttributedString =
+        [[[ProfileModel attributedStringForName:name
+                   highlightingMatchesForFilter:filter
+                              defaultAttributes:plainAttributes
+                          highlightedAttributes:highlightedNameAttributes] mutableCopy] autorelease];
 
     if (isDefault) {
-        name = [@"★ " stringByAppendingString:name];
+        NSAttributedString *star = [[[NSAttributedString alloc] initWithString:@"★ "
+                                                                    attributes:plainAttributes] autorelease];
+        [theAttributedString insertAttributedString:star atIndex:0];
     }
 
     if (tags.length) {
-        name = [name stringByAppendingString:@"\n"];
+        NSAttributedString *newline = [[[NSAttributedString alloc] initWithString:@"\n"
+                                                                       attributes:plainAttributes] autorelease];
+        [theAttributedString appendAttributedString:newline];
     }
-    NSMutableAttributedString *theAttributedString =
-        [[[NSMutableAttributedString alloc] initWithString:name
-                                                attributes:plainAttributes] autorelease];
     if (tags.length) {
         NSAttributedString *tagsAttributedString =
             [[[NSAttributedString alloc] initWithString:tags
@@ -511,7 +524,8 @@ const CGFloat kDefaultTagsWidth = 80;
         return [self attributedStringForName:bookmark[KEY_NAME]
                                          tag:[bookmark[KEY_TAGS] componentsJoinedByString:@", "]
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
-                                   isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]];
+                                   isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]
+                                      filter:[searchField_ stringValue]];
     } else if (aTableColumn == commandColumn_) {
         if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
             return @"Login shell";
