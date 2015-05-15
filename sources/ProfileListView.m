@@ -175,7 +175,8 @@ const CGFloat kDefaultTagsWidth = 80;
     return [[searchField_ stringValue] length] > 0;
 }
 
-// Drag drop -------------------------------
+#pragma mark -  Drag drop
+
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard
 {
     // Copy guid to pboard
@@ -194,8 +195,10 @@ const CGFloat kDefaultTagsWidth = 80;
     return YES;
 }
 
-- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation
-{
+- (NSDragOperation)tableView:(NSTableView *)aTableView
+                validateDrop:(id<NSDraggingInfo>)info
+                 proposedRow:(NSInteger)row
+       proposedDropOperation:(NSTableViewDropOperation)operation {
     if ([info draggingSource] != aTableView) {
         return NSDragOperationNone;
     }
@@ -216,8 +219,7 @@ const CGFloat kDefaultTagsWidth = 80;
 - (BOOL)tableView:(NSTableView *)aTableView
        acceptDrop:(id <NSDraggingInfo>)info
               row:(NSInteger)row
-    dropOperation:(NSTableViewDropOperation)operation
-{
+    dropOperation:(NSTableViewDropOperation)operation {
     [[self undoManager] registerUndoWithTarget:self
                                       selector:@selector(setRowOrder:)
                                         object:[self rowOrder]];

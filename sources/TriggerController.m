@@ -22,6 +22,8 @@
 #import "PasswordTrigger.h"
 #import "FutureMethods.h"
 
+static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerControllerPasteboardType";
+
 @implementation TriggerController {
     NSArray *_triggers;
     IBOutlet NSTableView *_tableView;
@@ -62,6 +64,10 @@
               [HighlightTrigger class],
               [MarkTrigger class],
               [PasswordTrigger class] ];
+}
+
+- (void)awakeFromNib {
+    [_tableView registerForDraggedTypes:@[ kiTermTriggerControllerPasteboardType ]];
 }
 
 - (void)windowWillOpen {
@@ -133,6 +139,20 @@
             [triggerDictionaries removeObjectAtIndex:rowIndex];
         }
     }
+    [_delegate triggerChanged:self newValue:triggerDictionaries];
+    [_tableView reloadData];
+}
+
+- (void)moveTriggerOnRow:(int)sourceRow toRow:(int)destinationRow {
+    // Stop editing. A reload while editing crashes.
+    [_tableView reloadData];
+    NSMutableArray *triggerDictionaries = [[[self triggerDictionariesForCurrentProfile] mutableCopy] autorelease];
+    if (destinationRow > sourceRow) {
+        --destinationRow;
+    }
+    NSDictionary *temp = [[triggerDictionaries[sourceRow] retain] autorelease];
+    [triggerDictionaries removeObjectAtIndex:sourceRow];
+    [triggerDictionaries insertObject:temp atIndex:destinationRow];
     [_delegate triggerChanged:self newValue:triggerDictionaries];
     [_tableView reloadData];
 }
@@ -244,7 +264,60 @@
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
 }
 
+#pragma mark Drag/Drop
+
+- (BOOL)tableView:(NSTableView *)tableView
+    writeRowsWithIndexes:(NSIndexSet *)rowIndexes
+     toPasteboard:(NSPasteboard*)pasteboard {
+    NSMutableArray *indexes = [NSMutableArray array];
+    [rowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [indexes addObject:@(idx)];
+    }];
+
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:indexes];
+    [pasteboard declareTypes:@[ kiTermTriggerControllerPasteboardType ] owner:self];
+    [pasteboard setData:data forType:kiTermTriggerControllerPasteboardType];
+    return YES;
+}
+
+- (NSDragOperation)tableView:(NSTableView *)aTableView
+                validateDrop:(id<NSDraggingInfo>)info
+                 proposedRow:(NSInteger)row
+       proposedDropOperation:(NSTableViewDropOperation)operation {
+    if ([info draggingSource] != aTableView) {
+        return NSDragOperationNone;
+    }
+
+    // Add code here to validate the drop
+    switch (operation) {
+        case NSTableViewDropOn:
+            return NSDragOperationNone;
+
+        case NSTableViewDropAbove:
+            return NSDragOperationMove;
+
+        default:
+            return NSDragOperationNone;
+    }
+}
+
+- (BOOL)tableView:(NSTableView *)aTableView
+       acceptDrop:(id <NSDraggingInfo>)info
+              row:(NSInteger)row
+    dropOperation:(NSTableViewDropOperation)operation {
+    NSPasteboard *pasteboard = [info draggingPasteboard];
+    NSData *rowData = [pasteboard dataForType:kiTermTriggerControllerPasteboardType];
+    NSArray *indexes = [NSKeyedUnarchiver unarchiveObjectWithData:rowData];
+
+    // This code assumes you can only select one trigger at a time.
+    int sourceRow = [indexes[0] intValue];
+    [self moveTriggerOnRow:sourceRow toRow:row];
+
+    return YES;
+}
+
 #pragma mark NSTableViewDelegate
+
 - (BOOL)tableView:(NSTableView *)aTableView
     shouldEditTableColumn:(NSTableColumn *)aTableColumn
                       row:(NSInteger)rowIndex {
