@@ -355,7 +355,7 @@
 #ifdef SUPPORT_SFTP
     NSString* sftpName = [NSString stringWithFormat:@"%@-sftp", [aNetService name]];
 #endif
-    for (NSNumber* n in [[ProfileModel sharedInstance] bookmarkIndicesMatchingFilter:@"bonjour"]) {
+    for (NSNumber* n in [[ProfileModel sharedInstance] bookmarkIndicesMatchingFilter:@"tag:^bonjour$"]) {
         int i = [n intValue];
         Profile* bookmark = [[ProfileModel sharedInstance] profileAtIndex:i];
         NSString* bookmarkName = [bookmark objectForKey:KEY_NAME];

@@ -11,6 +11,13 @@
 static NSString *const kTagRestrictionOperator = @"tag:";
 static NSString *const kTitleRestrictionOperator = @"name:";
 
+@interface iTermProfileSearchToken()
+@property(nonatomic, copy) NSArray *strings;
+@property(nonatomic, copy) NSString *operator;
+@property(nonatomic, assign) BOOL anchorStart;
+@property(nonatomic, assign) BOOL anchorEnd;
+@end
+
 @implementation iTermProfileSearchToken {
   NSRange _range;
 }
@@ -18,10 +25,16 @@ static NSString *const kTitleRestrictionOperator = @"name:";
 // Valid phrases look like
 //   word
 //   ^word
+//   word$
+//   ^word$
 //   operator:word
 //   "two words"
 //   ^"two words"
+//   "two words"$
+//   ^"two words"$
 //   operator:^"two words"
+//   operator:"two words"$
+//   operator:^"two words"$
 //
 // For backward compatibility, * may occur in place of ^, but it has no effect.
 - (instancetype)initWithPhrase:(NSString *)phrase {
@@ -46,11 +59,15 @@ static NSString *const kTitleRestrictionOperator = @"name:";
     // If the first letter of the string is ^, use an anchored search. If it is * do nothing
     // because that used to be the operator for non-anchored search.
     if ([string hasPrefix:@"^"]) {
-      self.anchor = YES;
+      self.anchorStart = YES;
       string = [string substringFromIndex:1];
     } else if ([string hasPrefix:@"*"]) {
       // Legacy query syntax
       string = [string substringFromIndex:1];
+    }
+    if ([string hasSuffix:@"$"]) {
+      self.anchorEnd = YES;
+      string = [string substringToIndex:string.length - 1];
     }
 
     self.strings = [string componentsSeparatedByString:@" "];
@@ -74,7 +91,7 @@ static NSString *const kTitleRestrictionOperator = @"name:";
 
 - (BOOL)matchesAnyWordInWords:(NSArray *)words {
   NSStringCompareOptions options = NSCaseInsensitiveSearch;
-  if (_anchor) {
+  if (_anchorStart) {
     options |= NSAnchoredSearch;
   }
   NSInteger offset = 0;
@@ -87,8 +104,12 @@ static NSString *const kTitleRestrictionOperator = @"name:";
     _range = [combinedWords rangeOfString:combinedString options:options];
 
     if (_range.location != NSNotFound) {
-      _range.location += offset;
-      return YES;
+      if (_anchorEnd && NSMaxRange(_range) != combinedWords.length) {
+        _range.location = NSNotFound;
+      } else {
+        _range.location += offset;
+        return YES;
+      }
     }
     offset += [words[i] length] + 1;
   }

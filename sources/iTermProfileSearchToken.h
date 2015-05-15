@@ -10,11 +10,11 @@
 
 @interface iTermProfileSearchToken : NSObject
 
-@property(nonatomic, copy) NSArray *strings;
-@property(nonatomic, copy) NSString *operator;
-@property(nonatomic, assign) BOOL anchor;
 @property(nonatomic, readonly) NSRange range;
 
 - (instancetype)initWithPhrase:(NSString *)phrase;
+
+- (BOOL)matchesAnyWordInNameWords:(NSArray *)nameWords;
+- (BOOL)matchesAnyWordInTagWords:(NSArray *)tagWords;
 
 @end
