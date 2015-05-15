@@ -118,7 +118,6 @@ const CGFloat kDefaultTagsWidth = 80;
         [tableView_ setAllowsTypeSelect:NO];
         [tableView_ setBackgroundColor:[NSColor whiteColor]];
 
-
         tableColumn_ =
             [[NSTableColumn alloc] initWithIdentifier:@"name"];
         [tableColumn_ setEditable:NO];
