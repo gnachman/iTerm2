@@ -99,13 +99,23 @@
 }
 
 - (IBAction)closeTriggersSheet:(id)sender {
+    [[_triggerWindowController.window undoManager] removeAllActionsWithTarget:self];
     [NSApp endSheet:[_triggerWindowController window]];
 }
 
 #pragma mark - TriggerDelegate
 
 - (void)triggerChanged:(TriggerController *)triggerController newValue:(NSArray *)value {
+    [[triggerController.window undoManager] registerUndoWithTarget:self
+                                                          selector:@selector(setTriggersValue:)
+                                                            object:[self objectForKey:KEY_TRIGGERS]];
+    [[triggerController.window undoManager] setActionName:@"Edit Triggers"];
     [self setObject:value forKey:KEY_TRIGGERS];
+}
+
+- (void)setTriggersValue:(NSArray *)value {
+    [self setObject:value forKey:KEY_TRIGGERS];
+    [_triggerWindowController.tableView reloadData];
 }
 
 #pragma mark - SmartSelectionDelegate

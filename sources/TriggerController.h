@@ -19,6 +19,7 @@
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic, assign) BOOL hasSelection;
 @property (nonatomic, assign) IBOutlet NSObject<TriggerDelegate> *delegate;
+@property (nonatomic, readonly) NSTableView *tableView;
 
 - (void)windowWillOpen;
 
