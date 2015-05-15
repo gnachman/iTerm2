@@ -57,7 +57,7 @@ enum {
 
 @implementation HighlightTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Highlight Text…";
 }

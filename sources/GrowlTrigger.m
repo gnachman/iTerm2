@@ -12,7 +12,7 @@
 
 @implementation GrowlTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Post Notification…";
 }

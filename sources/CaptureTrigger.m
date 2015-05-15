@@ -39,7 +39,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 
 @implementation CaptureTrigger
 
-- (NSString *)title {
++ (NSString *)title {
     return @"Capture Output";
 }
 

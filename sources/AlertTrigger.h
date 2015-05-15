@@ -12,7 +12,7 @@
     BOOL disabled_;
 }
 
-- (NSString *)title;
++ (NSString *)title;
 - (BOOL)takesParameter;
 
 @end

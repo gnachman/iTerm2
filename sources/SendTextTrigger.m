@@ -10,7 +10,7 @@
 
 @implementation SendTextTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Send Text…";
 }

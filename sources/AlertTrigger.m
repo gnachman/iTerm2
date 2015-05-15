@@ -12,7 +12,7 @@
 
 @implementation AlertTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Show Alert…";
 }

@@ -15,7 +15,7 @@ enum {
 
 @implementation BounceTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Bounce Dock Icon";
 }

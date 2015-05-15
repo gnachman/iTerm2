@@ -10,4 +10,6 @@
 
 @interface MarkTrigger : Trigger
 
++ (NSString *)title;
+
 @end

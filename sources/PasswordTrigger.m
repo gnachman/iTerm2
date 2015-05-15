@@ -16,6 +16,10 @@
 
 @implementation PasswordTrigger
 
++ (NSString *)title {
+    return @"Open Password Manager…";
+}
+
 - (id)init {
     self = [super init];
     if (self) {
@@ -35,10 +39,6 @@
     if (!_accountNames.count) {
         _accountNames = [@[ @"" ] copy];
     }
-}
-
-- (NSString *)title {
-  return @"Open Password Manager…";
 }
 
 - (NSString *)paramPlaceholder {

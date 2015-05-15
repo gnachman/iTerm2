@@ -13,7 +13,7 @@
 
 @implementation ScriptTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Run Command…";
 }

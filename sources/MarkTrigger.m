@@ -18,7 +18,7 @@ typedef enum {
 
 @implementation MarkTrigger
 
-- (NSString *)title {
++ (NSString *)title {
     return @"Set Mark";
 }
 

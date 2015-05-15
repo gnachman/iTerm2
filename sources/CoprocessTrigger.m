@@ -11,7 +11,7 @@
 
 @implementation CoprocessTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Run Coprocess…";
 }
@@ -44,7 +44,7 @@
 
 @implementation MuteCoprocessTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Run Silent Coprocess…";
 }
