@@ -27,8 +27,7 @@
     return YES;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
     if (disabled_) {
         return YES;
     }

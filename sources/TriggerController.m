@@ -19,6 +19,7 @@
 #import "Trigger.h"
 #import "CoprocessTrigger.h"
 #import "SendTextTrigger.h"
+#import "StopTrigger.h"
 #import "PasswordTrigger.h"
 #import "FutureMethods.h"
 
@@ -61,7 +62,8 @@
                              [MuteCoprocessTrigger class],
                              [HighlightTrigger class],
                              [MarkTrigger class],
-                             [PasswordTrigger class] ];
+                             [PasswordTrigger class],
+                             [StopTrigger class] ];
 
     return [allClasses sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
                   return [[obj1 title] compare:[obj2 title]];

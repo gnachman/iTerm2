@@ -67,7 +67,7 @@ typedef enum {
     return [self.param intValue] == kMarkTriggerParamTagStopScrolling;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
     [aSession.screen terminalSaveScrollPositionWithArgument:@"saveCursorLine"];
     if ([self shouldStopScrolling]) {
         [(PTYScroller *)[aSession.scrollview verticalScroller] setUserScroll:YES];

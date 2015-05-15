@@ -1560,10 +1560,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)checkTriggers
 {
     for (Trigger *trigger in _triggers) {
-        [trigger tryString:_triggerLine
-                 inSession:self
-               partialLine:NO
-                lineNumber:[_screen absoluteLineNumberOfCursor]];
+        BOOL stop = [trigger tryString:_triggerLine
+                             inSession:self
+                           partialLine:NO
+                            lineNumber:[_screen absoluteLineNumberOfCursor]];
+        if (stop) {
+            break;
+        }
     }
 }
 
@@ -1574,10 +1577,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     _lastPartialLineTriggerCheck = now;
     for (Trigger *trigger in _triggers) {
-        [trigger tryString:_triggerLine
-                 inSession:self
-               partialLine:YES
-                lineNumber:[_screen absoluteLineNumberOfCursor]];
+        BOOL stop = [trigger tryString:_triggerLine
+                             inSession:self
+                           partialLine:YES
+                            lineNumber:[_screen absoluteLineNumberOfCursor]];
+        if (stop) {
+            break;
+        }
     }
 }
 

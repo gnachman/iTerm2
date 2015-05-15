@@ -337,8 +337,7 @@ enum {
     return nil;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
     [[aSession screen] highlightTextMatchingRegex:self.regex
                                            colors:[self colors]];
     return YES;

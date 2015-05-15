@@ -82,7 +82,7 @@
     return result;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
     iTermApplicationDelegate *delegate =
         (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
     [delegate openPasswordManagerToAccountName:[self paramWithBackreferencesReplacedWithValues:values]];

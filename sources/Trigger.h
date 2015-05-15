@@ -52,13 +52,18 @@ extern NSString * const kTriggerPartialLineKey;
 - (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict;
 
 - (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values;
-- (void)tryString:(NSString *)s
+// Returns YES if no more triggers should be processed.
+- (BOOL)tryString:(NSString *)s
         inSession:(PTYSession *)aSession
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber;
 
 // Subclasses must override this. Return YES if it can fire again on this line.
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber;
+- (BOOL)performActionWithValues:(NSArray *)values
+                      inSession:(PTYSession *)aSession
+                       onString:(NSString *)string
+           atAbsoluteLineNumber:(long long)absoluteLineNumber
+                           stop:(BOOL *)stop;
 
 - (NSComparisonResult)compareTitle:(Trigger *)other;
 
