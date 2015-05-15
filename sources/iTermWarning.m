@@ -20,7 +20,12 @@ static BOOL gShowingWarning;
                                       actions:(NSArray *)actions
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType {
-    return [self showWarningWithTitle:title actions:actions accessory:nil identifier:identifier silenceable:warningType];
+    return [self showWarningWithTitle:title
+                              actions:actions
+                            accessory:nil
+                           identifier:identifier
+                          silenceable:warningType
+                              heading:nil];
 }
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
@@ -28,14 +33,27 @@ static BOOL gShowingWarning;
                                     accessory:(NSView *)accessory
                                identifier:(NSString *)identifier
                               silenceable:(iTermWarningType)warningType {
+    return [self showWarningWithTitle:title
+                              actions:actions
+                            accessory:accessory
+                           identifier:identifier
+                          silenceable:warningType
+                              heading:nil];
+}
 
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                    accessory:(NSView *)accessory
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString *)heading {
     if (!gWarningHandler &&
         warningType != kiTermWarningTypePersistent &&
         [self identifierIsSilenced:identifier]) {
         return [self savedSelectionForIdentifier:identifier];
     }
 
-    NSAlert *alert = [NSAlert alertWithMessageText:@"Warning"
+    NSAlert *alert = [NSAlert alertWithMessageText:heading ?: @"Warning"
                                      defaultButton:actions.count > 0 ? actions[0] : nil
                                    alternateButton:actions.count > 1 ? actions[1] : nil
                                        otherButton:actions.count > 2 ? actions[2] : nil
@@ -51,17 +69,17 @@ static BOOL gShowingWarning;
     if (warningType == kiTermWarningTypeTemporarilySilenceable) {
         assert(identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Suppress this warning temporarily";
+            alert.suppressionButton.title = @"Suppress this message temporarily";
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Suppress this warning temporarily and use my choice from now on";
+            alert.suppressionButton.title = @"Suppress this message temporarily and use my choice from now on";
         }
         alert.showsSuppressionButton = YES;
     } else if (warningType == kiTermWarningTypePermanentlySilenceable) {
         assert(identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Do not warn again";
+            alert.suppressionButton.title = @"Do not ask again";
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Do not warn again and use my choice from now on";
+            alert.suppressionButton.title = @"Do not ask again and use my choice from now on";
         }
         alert.showsSuppressionButton = YES;
     }
