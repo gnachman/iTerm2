@@ -465,7 +465,7 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 - (NSAttributedString *)attributedStringForName:(NSString *)name
-                                            tag:(NSString *)tags
+                                           tags:(NSArray *)tags
                                        selected:(BOOL)selected
                                       isDefault:(BOOL)isDefault
                                          filter:(NSString *)filter {
@@ -475,11 +475,11 @@ const CGFloat kDefaultTagsWidth = 80;
     if (selected) {
         textColor = [NSColor whiteColor];
         tagColor = [NSColor whiteColor];
-        highlightedBackgroundColor = [NSColor colorWithCalibratedRed:0.8 green:0.8 blue:0.2 alpha:1];
+        highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
     } else {
         textColor = [NSColor blackColor];
         tagColor = [NSColor colorWithCalibratedWhite:0.5 alpha:1];
-        highlightedBackgroundColor = [NSColor colorWithCalibratedRed:0.9 green:0.9 blue:0.5 alpha:1];
+        highlightedBackgroundColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:0.4];
     }
     NSDictionary* plainAttributes = @{ NSForegroundColorAttributeName: textColor,
                                        NSFontAttributeName: self.mainFont };
@@ -488,6 +488,9 @@ const CGFloat kDefaultTagsWidth = 80;
                                                  NSFontAttributeName: self.mainFont };
     NSDictionary* smallAttributes = @{ NSForegroundColorAttributeName: tagColor,
                                        NSFontAttributeName: self.tagFont };
+    NSDictionary* highlightedSmallAttributes = @{ NSForegroundColorAttributeName: tagColor,
+                                                  NSBackgroundColorAttributeName: highlightedBackgroundColor,
+                                                  NSFontAttributeName: self.tagFont };
     NSMutableAttributedString *theAttributedString =
         [[[ProfileModel attributedStringForName:name
                    highlightingMatchesForFilter:filter
@@ -500,16 +503,23 @@ const CGFloat kDefaultTagsWidth = 80;
         [theAttributedString insertAttributedString:star atIndex:0];
     }
 
-    if (tags.length) {
+    if (tags.count) {
         NSAttributedString *newline = [[[NSAttributedString alloc] initWithString:@"\n"
                                                                        attributes:plainAttributes] autorelease];
         [theAttributedString appendAttributedString:newline];
-    }
-    if (tags.length) {
-        NSAttributedString *tagsAttributedString =
-            [[[NSAttributedString alloc] initWithString:tags
-                                             attributes:smallAttributes] autorelease];
-        [theAttributedString appendAttributedString:tagsAttributedString];
+
+        NSArray *attributedTags = [ProfileModel attributedTagsForTags:tags
+                                         highlightingMatchesForFilter:filter
+                                                    defaultAttributes:smallAttributes
+                                                highlightedAttributes:highlightedSmallAttributes];
+        NSAttributedString *comma =
+            [[[NSAttributedString alloc] initWithString:@", " attributes:smallAttributes] autorelease];
+        for (NSAttributedString *attributedTag in attributedTags) {
+            [theAttributedString appendAttributedString:attributedTag];
+            if (attributedTag != attributedTags.lastObject) {
+                [theAttributedString appendAttributedString:comma];
+            }
+        }
     }
 
     return theAttributedString;
@@ -522,7 +532,7 @@ const CGFloat kDefaultTagsWidth = 80;
     if (aTableColumn == tableColumn_) {
         Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
         return [self attributedStringForName:bookmark[KEY_NAME]
-                                         tag:[bookmark[KEY_TAGS] componentsJoinedByString:@", "]
+                                        tags:bookmark[KEY_TAGS]
                                     selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]
                                    isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]
                                       filter:[searchField_ stringValue]];

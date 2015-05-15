@@ -59,6 +59,10 @@ typedef struct {
                    highlightingMatchesForFilter:(NSString *)filter
                               defaultAttributes:(NSDictionary *)defaultAttributes
                           highlightedAttributes:(NSDictionary *)highlightedAttributes;
++ (NSArray *)attributedTagsForTags:(NSArray *)tags
+      highlightingMatchesForFilter:(NSString *)filter
+                 defaultAttributes:(NSDictionary *)defaultAttributes
+             highlightedAttributes:(NSDictionary *)highlightedAttributes;
 - (int)numberOfBookmarks;
 - (int)numberOfBookmarksWithFilter:(NSString*)filter;
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter;

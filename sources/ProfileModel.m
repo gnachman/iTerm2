@@ -102,7 +102,7 @@ int gMigrated;
                           highlightedAttributes:(NSDictionary *)highlightedAttributes {
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     NSArray* tokens = [self parseFilter:filter];
-    [self doesProfileWithName:name tags:@[] matchFilter:tokens nameIndexSet:indexes];
+    [self doesProfileWithName:name tags:@[] matchFilter:tokens nameIndexSet:indexes tagIndexSets:nil];
     NSMutableAttributedString *result =
         [[[NSMutableAttributedString alloc] initWithString:name
                                                 attributes:defaultAttributes] autorelease];
@@ -112,17 +112,47 @@ int gMigrated;
     return result;
 }
 
++ (NSArray *)attributedTagsForTags:(NSArray *)tags
+                 highlightingMatchesForFilter:(NSString *)filter
+                            defaultAttributes:(NSDictionary *)defaultAttributes
+                        highlightedAttributes:(NSDictionary *)highlightedAttributes {
+    NSMutableArray *indexSets = [NSMutableArray array];
+    for (int i = 0; i < tags.count; i++) {
+        [indexSets addObject:[NSMutableIndexSet indexSet]];
+    }
+    NSArray* tokens = [self parseFilter:filter];
+    [self doesProfileWithName:nil
+                         tags:tags
+                  matchFilter:tokens
+                 nameIndexSet:nil
+                 tagIndexSets:indexSets];
+    NSMutableArray *result = [NSMutableArray array];
+    for (int i = 0; i < tags.count; i++) {
+        NSMutableAttributedString *attributedString =
+            [[[NSMutableAttributedString alloc] initWithString:tags[i]
+                                                    attributes:defaultAttributes] autorelease];
+        NSIndexSet *indexSet = indexSets[i];
+        [indexSet enumerateRangesUsingBlock:^(NSRange range, BOOL *stop) {
+            [attributedString setAttributes:highlightedAttributes range:range];
+        }];
+        [result addObject:attributedString];
+    }
+    return result;
+}
+
 + (BOOL)doesProfile:(Profile *)profile matchFilter:(NSArray *)tokens {
     return [self.class doesProfileWithName:profile[KEY_NAME]
                                       tags:profile[KEY_TAGS]
                                matchFilter:tokens
-                              nameIndexSet:nil];
+                              nameIndexSet:nil
+                              tagIndexSets:nil];
 }
 
 + (BOOL)doesProfileWithName:(NSString *)name
                        tags:(NSArray *)tags
                 matchFilter:(NSArray *)tokens
-               nameIndexSet:(NSMutableIndexSet *)nameIndexSet {
+               nameIndexSet:(NSMutableIndexSet *)nameIndexSet
+               tagIndexSets:(NSArray *)tagIndexSets {
     NSArray* nameWords = [name componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     for (int i = 0; i < [tokens count]; ++i) {
         iTermProfileSearchToken *token = [tokens objectAtIndex:i];
@@ -138,9 +168,14 @@ int gMigrated;
             // Expand the jth tag into an array of the words in the tag
             NSArray* tagWords = [[tags objectAtIndex:j] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
             found = [token matchesAnyWordInTagWords:tagWords];
+            if (found) {
+                NSMutableIndexSet *indexSet = tagIndexSets[j];
+                [indexSet addIndexesInRange:token.range];
+            }
         }
-        if (!found) {
-            // No tag had token i as a prefix.
+        if (!found && name != nil) {
+            // No tag had token i as a prefix. If name is nil then we don't really care about the
+            // answer and we just want index sets.
             return NO;
         }
     }
