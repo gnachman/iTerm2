@@ -1042,14 +1042,14 @@ static BOOL initDone = NO;
     return term;
 }
 
-- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
-{
+- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
     return [self launchBookmark:bookmarkData
                      inTerminal:theTerm
                         withURL:nil
                        isHotkey:NO
                         makeKey:YES
-                        command:nil];
+                        command:nil
+                          block:nil];
 }
 
 - (NSDictionary *)profile:(NSDictionary *)aDict
@@ -1114,7 +1114,8 @@ static BOOL initDone = NO;
              withURL:(NSString *)url
             isHotkey:(BOOL)isHotkey
              makeKey:(BOOL)makeKey
-             command:(NSString *)command {
+             command:(NSString *)command
+               block:(PTYSession *(^)(PseudoTerminal *))block {
     PseudoTerminal *term;
     NSDictionary *aDict;
     const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
@@ -1168,9 +1169,11 @@ static BOOL initDone = NO;
         term = theTerm;
     }
 
-    PTYSession* session;
+    PTYSession* session = nil;
 
-    if (url) {
+    if (block) {
+        session = block(term);
+    } else if (url) {
         session = [term createSessionWithProfile:aDict withURL:url forObjectType:objectType];
     } else {
         session = [term createTabWithProfile:aDict withCommand:command];

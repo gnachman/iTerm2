@@ -36,7 +36,8 @@
                                                  withURL:nil
                                                 isHotkey:NO
                                                  makeKey:YES
-                                                 command:command];
+                                                 command:command
+                                                   block:nil];
     }
     return nil;
 }

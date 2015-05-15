@@ -106,12 +106,17 @@
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt;
 - (PseudoTerminal *)openWindow;
+
+// Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
+// new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
+// URL.
 - (id)launchBookmark:(NSDictionary *)bookmarkData
           inTerminal:(PseudoTerminal *)theTerm
              withURL:(NSString *)url
             isHotkey:(BOOL)isHotkey
              makeKey:(BOOL)makeKey
-             command:(NSString *)command;
+             command:(NSString *)command
+               block:(PTYSession *(^)(PseudoTerminal *))block;
 - (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
 - (PTYTextView*)frontTextView;
 - (int)numberOfTerminals;

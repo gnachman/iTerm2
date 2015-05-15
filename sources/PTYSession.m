@@ -1120,7 +1120,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                              withURL:url
                                             isHotkey:NO
                                              makeKey:NO
-                                             command:nil];
+                                             command:nil
+                                               block:nil];
 }
 
 - (void)selectPaneLeftInCurrentTerminal
@@ -6499,24 +6500,41 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self insertText:string];
 }
 
-- (BOOL)popupKeyDown:(NSEvent *)event currentValue:(NSString *)value {
-    if ([[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self]) {
-        unichar c = [[event characters] characterAtIndex:0];
-        if (c == 27) {
-            [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+- (BOOL)popupHandleSelector:(SEL)selector
+                     string:(NSString *)string
+               currentValue:(NSString *)currentValue {
+    if (![[[self tab] realParentWindow] autoCommandHistoryIsOpenForSession:self]) {
+        return NO;
+    }
+    if (selector == @selector(cancel:)) {
+        [[[self tab] realParentWindow] hideAutoCommandHistoryForSession:self];
+        return YES;
+    }
+    if (selector == @selector(insertNewline:)) {
+        if ([currentValue isEqualToString:[self currentCommand]]) {
+            // Send the enter key on.
+            [self insertText:@"\n"];
             return YES;
-        } else if (c == '\r' && value) {
-            if ([value isEqualToString:[self currentCommand]]) {
-                // Send the enter key on.
-                [_textview keyDown:event];
-                return YES;
-            } else {
-                return NO;  // select the row
-            }
-        } else if (value) {
-            [_textview keyDown:event];
-            return YES;
+        } else {
+            return NO;  // select the row
         }
+    }
+    if (selector == @selector(deleteBackward:)) {
+        [_textview keyDown:[NSEvent keyEventWithType:NSKeyDown
+                                            location:NSZeroPoint
+                                       modifierFlags:[NSEvent modifierFlags]
+                                           timestamp:0
+                                        windowNumber:_textview.window.windowNumber
+                                             context:nil
+                                          characters:@"\x7f"
+                         charactersIgnoringModifiers:@"\x7f"
+                                           isARepeat:NO
+                                             keyCode:51]];  // 51 is the keycode for delete; not in any header file :(
+        return YES;
+    }
+    if (selector == @selector(insertText:)) {
+        [self insertText:string];
+        return YES;
     }
     return NO;
 }

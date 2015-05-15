@@ -121,12 +121,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [windowOpener openWindows:YES];
 }
 
-- (void)addAffinityBetweenPane:(int)windowPane
-                   andTerminal:(PseudoTerminal *)term {
-    [affinities_ setValue:[[NSNumber numberWithInt:windowPane] stringValue]
-             equalToValue:[term terminalGuid]];
-}
-
 - (void)setLayoutInTab:(PTYTab *)tab
               toLayout:(NSString *)layout
 {
@@ -884,8 +878,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)saveAffinities
-{
+- (void)saveAffinities {
     if (pendingWindowOpens_.count) {
         return;
     }
@@ -913,6 +906,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if ([command isEqualToString:lastSaveAffinityCommand_]) {
         return;
     }
+    [self setAffinitiesFromString:arg];
     [lastSaveAffinityCommand_ release];
     lastSaveAffinityCommand_ = [command retain];
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
@@ -1065,8 +1059,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)getAffinitiesResponse:(NSString *)result
-{
+- (void)getAffinitiesResponse:(NSString *)result {
+    [self setAffinitiesFromString:result];
+}
+
+- (void)setAffinitiesFromString:(NSString *)result {
     // Replace the existing equivalence classes with those defined by the
     // affinity response.
     // For example "1,2,3 4,5,6" has two equivalence classes.
@@ -1236,6 +1233,63 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [[term window] setFrameOrigin:[p pointValue]];
     }
     [self saveAffinities];
+}
+
+- (void)setPartialWindowIdOrder:(NSArray *)partialOrder {
+    [gateway_ sendCommand:@"list-windows -F \"#{window_id}\""
+           responseTarget:self
+         responseSelector:@selector(responseForListWindows:toSetPartialOrder:)
+           responseObject:partialOrder
+                    flags:0];
+}
+
+- (void)responseForListWindows:(NSString *)response toSetPartialOrder:(NSArray *)partialOrder {
+    NSArray *ids = [response componentsSeparatedByString:@"\n"];
+    NSMutableArray *currentOrder = [NSMutableArray array];
+    for (NSString *windowId in ids) {
+        if ([windowId hasPrefix:@"@"]) {
+            int i = [[windowId substringFromIndex:1] intValue];
+            NSNumber *n = @(i);
+            if ([partialOrder containsObject:n]) {
+                [currentOrder addObject:n];
+            }
+        }
+    }
+
+    NSMutableArray *desiredOrder = [NSMutableArray array];
+    for (NSNumber *n in partialOrder) {
+        if ([currentOrder containsObject:n]) {
+            [desiredOrder addObject:n];
+        }
+    }
+
+    // We have two lists, desiredOrder and currentOrder, that contain the same objects but
+    // in (possibly) a different order. For each out-of-place value, swap it with a later value,
+    // placing the later value in its correct location.
+    NSMutableArray *commands = [NSMutableArray array];
+    for (int i = 0; i < currentOrder.count; i++) {
+        if ([currentOrder[i] intValue] != [desiredOrder[i] intValue]) {
+            NSInteger swapIndex = [currentOrder indexOfObject:desiredOrder[i]];
+            assert(swapIndex != NSNotFound);
+
+            NSString *command = [NSString stringWithFormat:@"swap-window -s @%@ -t @%@",
+                                    currentOrder[i], currentOrder[swapIndex]];
+            NSDictionary *dict = [gateway_ dictionaryForCommand:command
+                                                 responseTarget:self
+                                               responseSelector:@selector(didSwapWindows:)
+                                                 responseObject:nil
+                                                          flags:0];
+            [commands addObject:dict];
+            NSNumber *temp = [[currentOrder[i] retain] autorelease];
+            currentOrder[i] = currentOrder[swapIndex];
+            currentOrder[swapIndex] = temp;
+        }
+    }
+
+    [gateway_ sendCommandList:commands];
+}
+
+- (void)didSwapWindows:(NSString *)response {
 }
 
 @end

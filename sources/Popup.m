@@ -233,51 +233,92 @@
     onTop_ = onTop;
 }
 
+- (void)moveDown:(id)sender {
+    if ([self passKeyEventToDelegateForSelector:_cmd string:nil]) {
+        return;
+    }
+    NSInteger row = tableView_.selectedRow;
+    if (row == -1) {
+        return;
+    }
+    if (row + 1 == tableView_.numberOfRows) {
+        return;
+    }
+    [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:row + 1] byExtendingSelection:NO];
+}
 
-- (void)keyDown:(NSEvent*)event
-{
-    if ([_delegate respondsToSelector:@selector(popupKeyDown:currentValue:)]) {
+- (void)moveUp:(id)sender {
+    if ([self passKeyEventToDelegateForSelector:_cmd string:nil]) {
+        return;
+    }
+    NSInteger row = tableView_.selectedRow;
+    if (row <= 0) {
+        return;
+    }
+    [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:row - 1] byExtendingSelection:NO];
+}
+
+- (void)deleteBackward:(id)sender {
+    if ([self passKeyEventToDelegateForSelector:_cmd string:nil]) {
+        return;
+    }
+    // backspace
+    if (timer_) {
+        [timer_ invalidate];
+        timer_ = nil;
+    }
+    clearFilterOnNextKeyDown_ = NO;
+    [substring_ setString:@""];
+    [self reloadData:NO];
+}
+
+- (void)cancel:(id)sender {
+    if ([self passKeyEventToDelegateForSelector:_cmd string:nil]) {
+        return;
+    }
+    // Escape
+    [[self window] close];
+    [self onClose];
+}
+
+- (void)insertNewline:(id)sender {
+    if ([self passKeyEventToDelegateForSelector:_cmd string:nil]) {
+        return;
+    }
+    [self rowSelected:self];
+}
+
+- (void)insertText:(NSString *)insertString {
+    if ([self passKeyEventToDelegateForSelector:_cmd string:insertString]) {
+        return;
+    }
+    if (clearFilterOnNextKeyDown_) {
+        [substring_ setString:@""];
+        clearFilterOnNextKeyDown_ = NO;
+    }
+    [substring_ appendString:insertString];
+    [self reloadData:NO];
+    if (timer_) {
+        [timer_ invalidate];
+    }
+    timer_ = [NSTimer scheduledTimerWithTimeInterval:4
+                                              target:self
+                                            selector:@selector(_setClearFilterOnNextKeyDownFlag:)
+                                            userInfo:nil
+                                             repeats:NO];
+}
+
+- (BOOL)passKeyEventToDelegateForSelector:(SEL)selector string:(NSString *)string {
+    if ([_delegate respondsToSelector:@selector(popupHandleSelector:string:currentValue:)]) {
         PopupEntry *entry = nil;
         if ([tableView_ selectedRow] >= 0) {
             entry = [[self model] objectAtIndex:[self convertIndex:[tableView_ selectedRow]]];
         }
-        if ([_delegate popupKeyDown:event currentValue:entry.mainValue]) {
-            return;
+        if ([_delegate popupHandleSelector:selector string:string currentValue:entry.mainValue]) {
+            return YES;
         }
     }
-
-    unichar c = [[event characters] characterAtIndex:0];
-    if (c == '\r') {
-        [self rowSelected:self];
-    } else if (c == 8 || c == 127) {
-        // backspace
-        if (timer_) {
-            [timer_ invalidate];
-            timer_ = nil;
-        }
-        clearFilterOnNextKeyDown_ = NO;
-        [substring_ setString:@""];
-        [self reloadData:NO];
-    } else if (!iswcntrl(c)) {
-        if (clearFilterOnNextKeyDown_) {
-            [substring_ setString:@""];
-            clearFilterOnNextKeyDown_ = NO;
-        }
-        [substring_ appendString:[event characters]];
-        [self reloadData:NO];
-        if (timer_) {
-            [timer_ invalidate];
-        }
-        timer_ = [NSTimer scheduledTimerWithTimeInterval:4
-                                                  target:self
-                                                selector:@selector(_setClearFilterOnNextKeyDownFlag:)
-                                                userInfo:nil
-                                                 repeats:NO];
-    } else if (c == 27) {
-        // Escape
-        [[self window] close];
-        [self onClose];
-    }
+    return NO;
 }
 
 - (void)rowSelected:(id)sender

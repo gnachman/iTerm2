@@ -792,7 +792,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // are cases in fullscreen (e.g., when entering Lion fullscreen) when the
     // window doesn't have a title bar but also isn't borderless we also check
     // if we're in fullscreen.
-    if (self.window.styleMask != NSBorderlessWindowMask &&
+    if ((self.window.styleMask & NSTitledWindowMask) &&
         ![self anyFullScreen] &&
         ![self tabBarShouldBeVisible]) {
         // A division is needed, but there might already be one.
@@ -3893,8 +3893,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
       [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-        [itad updateBroadcastMenuState];
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    [itad updateBroadcastMenuState];
 }
 
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
@@ -3967,6 +3967,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (PTYSession* aSession in [aTab sessions]) {
         [aSession setIgnoreResizeNotifications:NO];
     }
+    [self tabsDidReorder];
 }
 
 - (void)tabView:(NSTabView *)aTabView closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem
@@ -4314,6 +4315,20 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             }
         }
     }
+}
+
+- (void)tabsDidReorder {
+    TmuxController *controller = nil;
+    NSMutableArray *windowIds = [NSMutableArray array];
+
+    for (PTYTab *tab in [self tabs]) {
+        TmuxController *tmuxController = tab.tmuxController;
+        if (tmuxController) {
+            controller = tmuxController;
+            [windowIds addObject:@(tab.tmuxWindow)];
+        }
+    }
+    [controller setPartialWindowIdOrder:windowIds];
 }
 
 - (PTYTabView *)tabView
@@ -5575,6 +5590,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self _updateTabObjectCounts];
+    [self tabsDidReorder];
 }
 
 - (IBAction)moveTabRight:(id)sender
@@ -5586,6 +5602,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self _updateTabObjectCounts];
+    [self tabsDidReorder];
 }
 
 - (void)refreshTmuxLayoutsAndWindow
@@ -6734,13 +6751,44 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (IBAction)duplicateTab:(id)sender
-{
+- (IBAction)duplicateTab:(id)sender {
     PTYTab *theTab = (PTYTab *)[[sender representedObject] identifier];
     if (!theTab) {
         theTab = [self currentTab];
     }
-    [self appendTab:[[theTab copy] autorelease]];
+    PTYTab *copyOfTab = [[theTab copy] autorelease];
+    if ([iTermProfilePreferences boolForKey:KEY_PREVENT_TAB inProfile:self.currentSession.profile]) {
+        [[iTermController sharedInstance] launchBookmark:self.currentSession.profile
+                                              inTerminal:nil
+                                                 withURL:nil
+                                                isHotkey:NO
+                                                 makeKey:YES
+                                                 command:nil
+                                                   block:^PTYSession *(PseudoTerminal *term) {
+                                                       // Keep session size stable.
+                                                       for (PTYSession* aSession in [copyOfTab sessions]) {
+                                                           [aSession setIgnoreResizeNotifications:YES];
+                                                       }
+
+                                                       // This prevents the tab from getting resized to fit the window.
+                                                       [copyOfTab setReportIdealSizeAsCurrent:YES];
+
+                                                       // Add the tab to the empty window and resize the window.
+                                                       [term appendTab:copyOfTab];
+                                                       [term fitWindowToTabs];
+
+                                                       // Undo the prep work we've done.
+                                                       [copyOfTab setReportIdealSizeAsCurrent:NO];
+
+                                                       for (PTYSession* aSession in [copyOfTab sessions]) {
+                                                           [aSession setIgnoreResizeNotifications:NO];
+                                                       }
+
+                                                       return copyOfTab.activeSession;
+                                                   }];
+    } else {
+        [self appendTab:copyOfTab];
+    }
 }
 
 // These two methods are delecate because -closeTab: won't remove the tab from

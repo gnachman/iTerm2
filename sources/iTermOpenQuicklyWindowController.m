@@ -171,7 +171,8 @@
                                withURL:nil
                               isHotkey:NO
                                makeKey:YES
-                               command:nil];
+                               command:nil
+                                 block:nil];
         }
     }
 

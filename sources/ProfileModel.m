@@ -23,9 +23,10 @@
  */
 
 #import "ITAddressBookMgr.h"
+#import "iTermProfileSearchToken.h"
 #import "NSStringITerm.h"
-#import "ProfileModel.h"
 #import "PreferencePanel.h"
+#import "ProfileModel.h"
 
 NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
 
@@ -95,43 +96,23 @@ int gMigrated;
     return [bookmarks_ count];
 }
 
-- (BOOL)_document:(NSArray *)nameWords containsToken:(NSString *)token
-{
-    for (int k = 0; k < [nameWords count]; ++k) {
-        NSString* tagPart = [nameWords objectAtIndex:k];
-        NSRange range;
-        if ([token length] && [token characterAtIndex:0] == '*') {
-            range = [tagPart rangeOfString:[token substringFromIndex:1] options:NSCaseInsensitiveSearch];
-        } else {
-            range = [tagPart rangeOfString:token options:(NSCaseInsensitiveSearch | NSAnchoredSearch)];
-        }
-        if (range.location != NSNotFound) {
-            return YES;
-        }
-    }
-    return NO;
-}
-- (BOOL)doesBookmarkAtIndex:(int)theIndex matchFilter:(NSArray*)tokens
-{
+- (BOOL)doesBookmarkAtIndex:(int)theIndex matchFilter:(NSArray *)tokens {
     Profile* bookmark = [self profileAtIndex:theIndex];
     NSArray* tags = [bookmark objectForKey:KEY_TAGS];
     NSArray* nameWords = [[bookmark objectForKey:KEY_NAME] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     for (int i = 0; i < [tokens count]; ++i) {
-        NSString* token = [tokens objectAtIndex:i];
-        if (![token length]) {
-            continue;
-        }
+        iTermProfileSearchToken *token = [tokens objectAtIndex:i];
         // Search each word in tag until one has this token as a prefix.
         bool found;
 
         // First see if this token occurs in the title
-        found = [self _document:nameWords containsToken:token];
+        found = [token matchesAnyWordInNameWords:nameWords];
 
         // If not try each tag.
         for (int j = 0; !found && j < [tags count]; ++j) {
             // Expand the jth tag into an array of the words in the tag
             NSArray* tagWords = [[tags objectAtIndex:j] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-            found = [self _document:tagWords containsToken:token];
+            found = [token matchesAnyWordInTagWords:tagWords];
         }
         if (!found) {
             // No tag had token i as a prefix.
@@ -141,9 +122,14 @@ int gMigrated;
     return YES;
 }
 
-- (NSArray*)parseFilter:(NSString*)filter
-{
-    return [filter componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+- (NSArray *)parseFilter:(NSString*)filter {
+    NSArray *phrases = [filter componentsBySplittingProfileListQuery];
+    NSMutableArray *tokens = [NSMutableArray array];
+    for (NSString *phrase in phrases) {
+        iTermProfileSearchToken *token = [[[iTermProfileSearchToken alloc] initWithPhrase:phrase] autorelease];
+        [tokens addObject:token];
+    }
+    return tokens;
 }
 
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter orGuid:(NSString *)lockedGuid {

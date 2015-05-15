@@ -46,9 +46,9 @@
 
 #pragma mark Tabs
 DEFINE_BOOL(useUnevenTabs, NO, @"Tabs: Uneven tab widths allowed")
-DEFINE_INT(minTabWidth, 75, @"Tabs: Minimum tab width")
-DEFINE_INT(minCompactTabWidth, 60, @"Tabs: Minimum tab width for tabs without close button or number")
-DEFINE_INT(optimumTabWidth, 175, @"Tabs: Preferred tab width")
+DEFINE_INT(minTabWidth, 75, @"Tabs: Minimum tab width when using uneven tab widths")
+DEFINE_INT(minCompactTabWidth, 60, @"Tabs: Minimum tab width when using uneven tab widths for compact tabs")
+DEFINE_INT(optimumTabWidth, 175, @"Tabs: Preferred tab width when tabs are equally sized")
 DEFINE_BOOL(addNewTabAtEndOfTabs, YES, @"Tabs: New tabs are added at the end, not next to current tab")
 DEFINE_BOOL(navigatePanesInReadingOrder, YES, @"Tabs: Next/Previous pane uses reading order, not time of last use");
 
