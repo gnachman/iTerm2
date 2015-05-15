@@ -26,7 +26,7 @@
 // higlightSelectionInClipRect: do it instead.
 - (NSCell *)preparedCellAtColumn:(NSInteger)column row:(NSInteger)row {
     NSCell *cell = [super preparedCellAtColumn:column row:row];
-    if (cell.isHighlighted && self.window.isKeyWindow) {
+    if (cell.isHighlighted) {
         cell.backgroundStyle = NSBackgroundStyleDark;
         cell.highlighted = NO;
     }
