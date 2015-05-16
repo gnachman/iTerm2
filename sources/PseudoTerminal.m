@@ -2784,6 +2784,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
             ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
             DLog(@"windowDidResignKey: is hotkey and hotkey window auto-hides");
+
+            // The hotkey window can co-exist with these apps.
+            static NSString *kAlfredBundleId = @"com.runningwithcrayons.Alfred-2";
+            static NSString *kApptivateBundleId = @"se.cocoabeans.apptivate";
+            NSArray *bundleIdsToNotDismissFor = @[ kAlfredBundleId, kApptivateBundleId ];
+
             // We want to dismiss the hotkey window when some other window
             // becomes key. Note that if a popup closes this function shouldn't
             // be called at all because it makes us key before closing itself.
@@ -2793,7 +2799,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
                 ![iTermWarning showingWarning] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]] &&
-                ![self.window.sheets containsObject:[NSApp keyWindow]]) {
+                ![self.window.sheets containsObject:[NSApp keyWindow]] &&
+                ![bundleIdsToNotDismissFor containsObject:[[[NSWorkspace sharedWorkspace] frontmostApplication] bundleIdentifier]]) {
                 PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
                 if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
                     [[HotkeyWindowController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
