@@ -131,6 +131,11 @@
 		1D468BC21B056CD600226083 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
 		1D468BC31B056CD600226083 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
 		1D468BC41B056CD600226083 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
+		1D468F041B06A79000226083 /* StopTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468F021B06A79000226083 /* StopTrigger.h */; };
+		1D468F051B06A79000226083 /* StopTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468F021B06A79000226083 /* StopTrigger.h */; };
+		1D468F061B06A79000226083 /* StopTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468F031B06A79000226083 /* StopTrigger.m */; };
+		1D468F071B06A79000226083 /* StopTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468F031B06A79000226083 /* StopTrigger.m */; };
+		1D468F081B06A79000226083 /* StopTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468F031B06A79000226083 /* StopTrigger.m */; };
 		1D48B284165F362B000046EE /* TabClose_Front_Rollover@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */; };
 		1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */; };
 		1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B280165F362B000046EE /* TabClose_Front@2x.png */; };
@@ -2178,6 +2183,8 @@
 		1D468BB81B0543E300226083 /* iTermKeyboardNavigatableTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyboardNavigatableTableView.m; sourceTree = "<group>"; };
 		1D468BBE1B056CD600226083 /* iTermProfileSearchToken.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermProfileSearchToken.h; sourceTree = "<group>"; };
 		1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProfileSearchToken.m; sourceTree = "<group>"; };
+		1D468F021B06A79000226083 /* StopTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StopTrigger.h; sourceTree = "<group>"; };
+		1D468F031B06A79000226083 /* StopTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StopTrigger.m; sourceTree = "<group>"; };
 		1D48B27E165F362B000046EE /* TabClose_Front_Rollover@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TabClose_Front_Rollover@2x.png"; sourceTree = "<group>"; };
 		1D48B27F165F362B000046EE /* TabClose_Front_Pressed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TabClose_Front_Pressed@2x.png"; sourceTree = "<group>"; };
 		1D48B280165F362B000046EE /* TabClose_Front@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "TabClose_Front@2x.png"; sourceTree = "<group>"; };
@@ -3775,6 +3782,8 @@
 				1D24C283142EF334006B246F /* SendTextTrigger.m */,
 				1D891E42190724DB0053C4BB /* MarkTrigger.m */,
 				1DABA03219253FEA00A228D8 /* PasswordTrigger.m */,
+				1D468F021B06A79000226083 /* StopTrigger.h */,
+				1D468F031B06A79000226083 /* StopTrigger.m */,
 			);
 			name = Triggers;
 			sourceTree = "<group>";
@@ -4505,6 +4514,7 @@
 				A6E77F821A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
 				A6E525DE1A9C5730007B898E /* VT100StateMachine.h in Headers */,
 				1D6ED8C619AEA20D005A7799 /* UKNibOwner.h in Headers */,
+				1D468F051B06A79000226083 /* StopTrigger.h in Headers */,
 				1D6ED8C719AEA20D005A7799 /* VT100GridTest.h in Headers */,
 				1D6ED8C819AEA20D005A7799 /* CommandHistory.h in Headers */,
 				1D6ED8C919AEA20D005A7799 /* UKSystemInfo.h in Headers */,
@@ -4825,6 +4835,7 @@
 				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
 				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
 				A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */,
+				1D468F041B06A79000226083 /* StopTrigger.h in Headers */,
 				A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */,
 				1DABA03319253FEA00A228D8 /* PasswordTrigger.h in Headers */,
 				A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */,
@@ -5915,6 +5926,7 @@
 				1D6EDAD319AEA20D005A7799 /* BackgroundThread.m in Sources */,
 				1D6EDAD419AEA20D005A7799 /* iTermFontPanel.m in Sources */,
 				1D6EDAD519AEA20D005A7799 /* PTYNoteView.m in Sources */,
+				1D468F081B06A79000226083 /* StopTrigger.m in Sources */,
 				1D6EDAD619AEA20D005A7799 /* PTYWindow+Scripting.m in Sources */,
 				1D6EDAD719AEA20D005A7799 /* CharacterRun.m in Sources */,
 				1D6EDAD819AEA20D005A7799 /* ProfilesTextPreferencesViewController.m in Sources */,
@@ -6201,6 +6213,7 @@
 				1D9A5550180FA82E00B42CE9 /* TmuxWindowsTable.m in Sources */,
 				1DD39B1E180B8415004E56D5 /* LineBuffer.m in Sources */,
 				1D9A55AF180FA8B700B42CE9 /* PSMTabDragAssistant.m in Sources */,
+				1D468F071B06A79000226083 /* StopTrigger.m in Sources */,
 				1DF8007118F34CAB00722B35 /* NSPopUpButton+iTerm.m in Sources */,
 				1D9A559F180FA87000B42CE9 /* SplitPanel.m in Sources */,
 				1D9A5572180FA85D00B42CE9 /* HighlightTrigger.m in Sources */,
@@ -6541,6 +6554,7 @@
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
 				A63F409B183B3AA7003A6A6D /* PTYNoteView.m in Sources */,
+				1D468F061B06A79000226083 /* StopTrigger.m in Sources */,
 				A6C7DE4F199F302C001E5C75 /* PTYWindow+Scripting.m in Sources */,
 				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
 				A6A2697F18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m in Sources */,

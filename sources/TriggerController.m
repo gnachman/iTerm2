@@ -19,6 +19,7 @@
 #import "Trigger.h"
 #import "CoprocessTrigger.h"
 #import "SendTextTrigger.h"
+#import "StopTrigger.h"
 #import "PasswordTrigger.h"
 #import "FutureMethods.h"
 
@@ -52,18 +53,23 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
 }
 
 - (NSArray *)triggerClasses {
-    return @[ [AlertTrigger class],
-              [BellTrigger class],
-              [BounceTrigger class],
-              [CaptureTrigger class],
-              [GrowlTrigger class],
-              [SendTextTrigger class],
-              [ScriptTrigger class],
-              [CoprocessTrigger class],
-              [MuteCoprocessTrigger class],
-              [HighlightTrigger class],
-              [MarkTrigger class],
-              [PasswordTrigger class] ];
+    NSArray *allClasses = @[ [AlertTrigger class],
+                             [BellTrigger class],
+                             [BounceTrigger class],
+                             [CaptureTrigger class],
+                             [GrowlTrigger class],
+                             [SendTextTrigger class],
+                             [ScriptTrigger class],
+                             [CoprocessTrigger class],
+                             [MuteCoprocessTrigger class],
+                             [HighlightTrigger class],
+                             [MarkTrigger class],
+                             [PasswordTrigger class],
+                             [StopTrigger class] ];
+
+    return [allClasses sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+                  return [[obj1 title] compare:[obj2 title]];
+              }];
 }
 
 - (void)awakeFromNib {
@@ -337,9 +343,9 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
                   row:(NSInteger)row {
     if (tableColumn == _actionColumn) {
         NSPopUpButtonCell *cell =
-            [[[NSPopUpButtonCell alloc] initTextCell:[_triggers[0] title] pullsDown:NO] autorelease];
+            [[[NSPopUpButtonCell alloc] initTextCell:[[_triggers[0] class] title] pullsDown:NO] autorelease];
         for (int i = 0; i < [self numberOfTriggers]; i++) {
-            [cell addItemWithTitle:[_triggers[i] title]];
+            [cell addItemWithTitle:[[_triggers[i] class] title]];
         }
 
         [cell setBordered:NO];

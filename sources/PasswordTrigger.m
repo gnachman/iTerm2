@@ -16,6 +16,10 @@
 
 @implementation PasswordTrigger
 
++ (NSString *)title {
+    return @"Open Password Manager…";
+}
+
 - (id)init {
     self = [super init];
     if (self) {
@@ -35,10 +39,6 @@
     if (!_accountNames.count) {
         _accountNames = [@[ @"" ] copy];
     }
-}
-
-- (NSString *)title {
-  return @"Open Password Manager…";
 }
 
 - (NSString *)paramPlaceholder {
@@ -82,7 +82,7 @@
     return result;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
     iTermApplicationDelegate *delegate =
         (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
     [delegate openPasswordManagerToAccountName:[self paramWithBackreferencesReplacedWithValues:values]];

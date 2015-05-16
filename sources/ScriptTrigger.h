@@ -13,7 +13,7 @@
 
 }
 
-- (NSString *)title;
++ (NSString *)title;
 - (BOOL)takesParameter;
 
 @end

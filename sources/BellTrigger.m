@@ -11,7 +11,7 @@
 
 @implementation BellTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Ring Bell";
 }
@@ -21,8 +21,7 @@
     return NO;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
     [aSession.screen activateBell];
     return YES;
 }

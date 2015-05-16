@@ -11,7 +11,13 @@
 
 
 @interface CoprocessTrigger : Trigger
+
++ (NSString *)title;
+
 @end
 
 @interface MuteCoprocessTrigger : CoprocessTrigger
+
++ (NSString *)title;
+
 @end

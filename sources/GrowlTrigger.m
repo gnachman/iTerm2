@@ -12,7 +12,7 @@
 
 @implementation GrowlTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Post Notification…";
 }
@@ -27,8 +27,7 @@
     return @"Enter Message";
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
     iTermGrowlDelegate *gd = [iTermGrowlDelegate sharedInstance];
     [gd growlNotify:[self paramWithBackreferencesReplacedWithValues:values]
         withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",

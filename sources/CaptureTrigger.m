@@ -39,7 +39,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 
 @implementation CaptureTrigger
 
-- (NSString *)title {
++ (NSString *)title {
     return @"Capture Output";
 }
 
@@ -67,7 +67,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     }
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
+- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
     if (!aSession.screen.shellIntegrationInstalled) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
             [self showShellIntegrationRequiredAnnouncementInSession:aSession];

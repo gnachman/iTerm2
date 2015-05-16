@@ -94,13 +94,16 @@ NSString * const kTriggerPartialLineKey = @"partial";
     [super dealloc];
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
+- (BOOL)performActionWithValues:(NSArray *)values
+                      inSession:(PTYSession *)aSession
+                       onString:(NSString *)string
+           atAbsoluteLineNumber:(long long)absoluteLineNumber
+                           stop:(BOOL *)stop {
     assert(false);
     return NO;
 }
 
-- (void)tryString:(NSString *)s
+- (BOOL)tryString:(NSString *)s
         inSession:(PTYSession *)aSession
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber {
@@ -109,13 +112,14 @@ NSString * const kTriggerPartialLineKey = @"partial";
         if (!partialLine) {
             _lastLineNumber = -1;
         }
-        return;
+        return NO;
     }
     if (partialLine && !_partialLine) {
         // This trigger doesn't support partial lines.
-        return;
+        return NO;
     }
     NSRange range = [s rangeOfRegex:regex_];
+    BOOL stop = NO;
     if (range.location != NSNotFound) {
         NSArray *captures = [s arrayOfCaptureComponentsMatchedByRegex:regex_];
         if (captures.count) {
@@ -125,7 +129,8 @@ NSString * const kTriggerPartialLineKey = @"partial";
             if (![self performActionWithValues:matches
                                     inSession:aSession
                                      onString:s
-                          atAbsoluteLineNumber:lineNumber]) {
+                          atAbsoluteLineNumber:lineNumber
+                                          stop:&stop]) {
                 break;
             }
         }
@@ -133,6 +138,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     if (!partialLine) {
         _lastLineNumber = -1;
     }
+    return stop;
 }
 
 - (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values
