@@ -548,7 +548,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
-                                                defer:NO];
+                                                defer:isHotkey];
     if (windowType != WINDOW_TYPE_LION_FULL_SCREEN) {
         // For some reason, you don't always get the frame you requested. I saw
         // this on OS 10.10 when creating normal windows on a 2-screen display. The
@@ -569,7 +569,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
     background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
-    [[self window] setAlphaValue:1];
+    if (!isHotkey) {
+        [[self window] setAlphaValue:1];
+    } else {
+        [[self window] setAlphaValue:0];
+    }
     [[self window] setOpaque:NO];
 
     normalBackgroundColor = [background_ color];
