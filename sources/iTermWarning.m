@@ -69,17 +69,17 @@ static BOOL gShowingWarning;
     if (warningType == kiTermWarningTypeTemporarilySilenceable) {
         assert(identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Suppress this message temporarily";
+            alert.suppressionButton.title = @"Suppress this message for ten minutes";
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Suppress this message temporarily and use my choice from now on";
+            alert.suppressionButton.title = @"Remember my choice for ten minutes";
         }
         alert.showsSuppressionButton = YES;
     } else if (warningType == kiTermWarningTypePermanentlySilenceable) {
         assert(identifier);
         if (numNonCancelActions == 1) {
-            alert.suppressionButton.title = @"Do not ask again";
+            alert.suppressionButton.title = @"Suppress this message permanently";
         } else if (numNonCancelActions > 1) {
-            alert.suppressionButton.title = @"Do not ask again and use my choice from now on";
+            alert.suppressionButton.title = @"Remember my choice";
         }
         alert.showsSuppressionButton = YES;
     }
