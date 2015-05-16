@@ -27,6 +27,7 @@
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLSchemeController.h"
+#import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
 #import "NSColor+iTerm.h"
@@ -1039,6 +1040,20 @@ static const int kDragThreshold = 3;
 // amounts of text.
 - (NSString*)_allText
 {
+    if ([_dataSource numberOfLines] > 1000) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [iTermWarning showWarningWithTitle:@"Accessibilty is making iTerm2 slow! "
+                                                   @"Reduce the number of lines of scrollback to "
+                                                   @"under 1000 to mitigate the damage."
+                                           actions:@[ @"OK" ]
+                                        identifier:@"NoSyncSlowAccessibilityWarning"
+                                       silenceable:kiTermWarningTypePermanentlySilenceable];
+            });
+        });
+    }
+
     [_allText release];
     [_lineBreakCharOffsets release];
     [_lineBreakIndexOffsets release];
