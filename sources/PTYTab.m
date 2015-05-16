@@ -42,6 +42,7 @@ static const NSUInteger kPTYTabDeadState = (1 << 3);
     int _uniqueId;
     // See kPTYTab*State constants above.
     NSUInteger _state;
+    int _tabNumberForItermSessionId;
 }
 
 @synthesize broadcasting = broadcasting_;
@@ -151,6 +152,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     self = [super init];
     PtyLog(@"PTYTab initWithSession %p", self);
     if (self) {
+        _tabNumberForItermSessionId = -1;
         hiddenLiveViews_ = [[NSMutableArray alloc] init];
         activeSession_ = session;
         [session setActivityCounter:@(_activityCounter++)];
@@ -209,6 +211,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     self = [super init];
     PtyLog(@"PTYTab initWithRoot %p", self);
     if (self) {
+        _tabNumberForItermSessionId = -1;
         activeSession_ = nil;
         hiddenLiveViews_ = [[NSMutableArray alloc] init];
         [self setRoot:root];
@@ -930,6 +933,26 @@ static NSString* FormatRect(NSRect r) {
     [newSession updateDisplay];
     [realParentWindow_.window makeFirstResponder:newSession.textview];
 }
+
+- (int)tabNumberForItermSessionId {
+    if (_tabNumberForItermSessionId != -1) {
+        return _tabNumberForItermSessionId;
+    }
+
+    NSMutableSet *tabNumbersInUse = [NSMutableSet set];
+    for (PTYTab *tab in realParentWindow_.tabs) {
+        [tabNumbersInUse addObject:@(tab->_tabNumberForItermSessionId)];
+    }
+    int i = objectCount_ - 1;
+    int next = 0;
+    while ([tabNumbersInUse containsObject:@(i)]) {
+        i = next;
+        next++;
+    }
+    _tabNumberForItermSessionId = i;
+    return i;
+}
+
 
 - (void)setDvrInSession:(PTYSession*)newSession {
     PTYSession *oldSession = [[activeSession_ retain] autorelease];

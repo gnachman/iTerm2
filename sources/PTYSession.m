@@ -1086,7 +1086,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     NSWindowController<iTermWindowController> *pty = [_tab realParentWindow];
     NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%lu",
                          [pty number],
-                         [_tab realObjectCount] - 1,
+                         _tab.tabNumberForItermSessionId,
                          (unsigned long)_tab.sessions.count];
     env[@"ITERM_SESSION_ID"] = itermId;
     if (_profile[KEY_NAME]) {

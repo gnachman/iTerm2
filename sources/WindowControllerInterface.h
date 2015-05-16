@@ -100,6 +100,7 @@ typedef enum {
 
 // Is the toolbelt visible for this window?
 @property(nonatomic, readonly) BOOL shouldShowToolbelt;
+@property(nonatomic, readonly) NSArray *tabs;
 
 #pragma mark - Basics
 
