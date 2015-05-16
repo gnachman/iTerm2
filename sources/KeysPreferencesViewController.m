@@ -161,7 +161,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
         [_hotkeyBookmark selectItemWithTitle:kHotkeyWindowGeneratedProfileNameKey];
         [self hotkeyProfileDidChange];
         NSRunAlertPanel(@"Set Up Hotkey Window",
-                        @"A new profile called \"%@\" was created for you. It is tuned to work well"
+                        @"A new profile called \"%@\" was created for you. It is tuned to work well "
                         @"for the Hotkey Window feature and can be customized in the Profiles tab.",
                         @"OK",
                         nil,
