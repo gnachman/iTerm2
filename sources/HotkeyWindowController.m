@@ -317,8 +317,10 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     }
 }
 
-- (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm
-{
+- (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm {
+    for (NSWindow *sheet in hotkeyTerm.window.sheets) {
+        [NSApp endSheet:sheet];
+    }
     HKWLog(@"Hide hotkey window.");
     if ([[hotkeyTerm window] isVisible]) {
         HKWLog(@"key window is %@", [NSApp keyWindow]);

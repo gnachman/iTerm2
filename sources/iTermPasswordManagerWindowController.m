@@ -12,6 +12,7 @@
 #import <Security/Security.h>
 
 static NSString *const kServiceName = @"iTerm2";
+static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersShouldReloadData";
 
 @interface iTermPasswordManagerWindowController () <
     NSTableViewDataSource,
@@ -51,11 +52,19 @@ static NSString *const kServiceName = @"iTerm2";
 }
 
 - (id)init {
-    return [self initWithWindowNibName:@"iTermPasswordManager"];
+    self = [self initWithWindowNibName:@"iTermPasswordManager"];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(reloadAccounts)
+                                                     name:kPasswordManagersShouldReloadData
+                                                   object:nil];
+    }
+    return self;
 }
 
 - (void)dealloc {
     [_accounts release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
 
@@ -88,7 +97,15 @@ static NSString *const kServiceName = @"iTerm2";
 #pragma mark - Actions
 
 - (IBAction)closeCurrentSession:(id)sender {
-    [[self window] orderOut:sender];
+    [self orderOutOrEndSheet];
+}
+
+- (void)orderOutOrEndSheet {
+    if (self.window.isSheet) {
+        [NSApp endSheet:self.window];
+    } else {
+        [[self window] orderOut:nil];
+    }
 }
 
 - (void)doubleClickOnTableView:(id)sender {
@@ -107,6 +124,7 @@ static NSString *const kServiceName = @"iTerm2";
             [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
         }
     }
+    [self passwordsDidChange];
 }
 
 - (IBAction)remove:(id)sender {
@@ -114,13 +132,22 @@ static NSString *const kServiceName = @"iTerm2";
     NSString *selectedAccountName = [self accountNameForRow:selectedRow];
     [SSKeychain deletePasswordForService:kServiceName account:selectedAccountName];
     [self reloadAccounts];
+    [self passwordsDidChange];
 }
 
 - (IBAction)enterPassword:(id)sender {
     NSString *password = [self selectedPassword];
     if (password) {
         [_delegate iTermPasswordManagerEnterPassword:password];
-        [[self window] close];
+        [self closeOrEndSheet];
+    }
+}
+
+- (void)closeOrEndSheet {
+    if (self.window.isSheet) {
+        [NSApp endSheet:self.window];
+    } else {
+        [self.window close];
     }
 }
 
@@ -181,6 +208,11 @@ static NSString *const kServiceName = @"iTerm2";
     [_tableView reloadData];
 }
 
+- (void)passwordsDidChange {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPasswordManagersShouldReloadData object:nil];
+}
+
+
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
@@ -230,6 +262,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
         [self clearPasswordBeingShown];
         [SSKeychain setPassword:anObject forService:kServiceName account:accountName];
     }
+    [self passwordsDidChange];
 }
 
 #pragma mark - NSTableViewDelegate

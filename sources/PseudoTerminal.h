@@ -276,6 +276,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
             withSize:(NSSize *)size;
 
 - (NSColor *)accessoryTextColor;
+- (void)openPasswordManager;
 
 @end
 

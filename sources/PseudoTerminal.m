@@ -24,6 +24,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermInstantReplayWindowController.h"
 #import "iTermOpenQuicklyWindow.h"
+#import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSelection.h"
@@ -110,7 +111,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
 
-@interface PseudoTerminal () <iTermTabBarControlViewDelegate>
+@interface PseudoTerminal () <iTermTabBarControlViewDelegate, iTermPasswordManagerDelegate>
 @property(nonatomic, assign) BOOL windowInitialized;
 @end
 
@@ -2791,7 +2792,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 ![[NSApp keyWindow] isKindOfClass:[iTermOpenQuicklyWindow class]] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
                 ![iTermWarning showingWarning] &&
-                ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
+                ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]] &&
+                ![self.window.sheets containsObject:[NSApp keyWindow]]) {
                 PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
                 if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
                     [[HotkeyWindowController sharedInstance] doNotOrderOutWhenHidingHotkeyWindow];
@@ -4362,6 +4364,27 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else {
         return [tabBarControl accessoryTextColor];
     }
+}
+
+- (void)openPasswordManager {
+    if (self.window.sheets.count > 0) {
+        return;
+    }
+    iTermPasswordManagerWindowController *passwordManagerWindowController =
+        [[iTermPasswordManagerWindowController alloc] init];
+    passwordManagerWindowController.delegate = self;
+    [[NSApplication sharedApplication] beginSheet:[passwordManagerWindowController window]
+                                   modalForWindow:self.window
+                                    modalDelegate:self
+                                   didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+                                      contextInfo:passwordManagerWindowController];
+}
+
+- (void)genericCloseSheet:(NSWindow *)sheet
+               returnCode:(int)returnCode
+              contextInfo:(id)contextInfo {
+    [sheet close];
+    [sheet release];
 }
 
 #pragma mark - iTermInstantReplayDelegate
@@ -7329,6 +7352,17 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else {
         NSBeep();
     }
+}
+
+#pragma mark - iTermPasswordManagerDelegate
+
+- (BOOL)iTermPasswordManagerCanEnterPassword {
+    PTYSession *session = [self currentSession];
+    return session && ![session exited];
+}
+
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password {
+    [[self currentSession] enterPassword:password];
 }
 
 @end
