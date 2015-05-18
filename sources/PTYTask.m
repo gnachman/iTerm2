@@ -12,6 +12,7 @@
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "TaskNotifier.h"
+#include "shell_launcher.h"
 #include <dlfcn.h>
 #include <libproc.h>
 #include <stdio.h>
@@ -19,11 +20,13 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#include <sys/msg.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/user.h>
 #include <unistd.h>
 #include <util.h>
+#include "iTermFileDescriptorClient.h"
 
 #define CTRLKEY(c) ((c)-'A'+1)
 
@@ -80,7 +83,10 @@ setup_tty_param(struct termios* term,
 @implementation PTYTask
 {
     pid_t pid;
+    pid_t _restoredPid;  // -1 except when process is restored. _writeFd and _deathFd will also be set.
     int fd;
+    int _writeFd;  // Optional
+    int _deathFd;  // Optional
     int status;
     NSString* tty;
     NSString* path;
@@ -107,7 +113,9 @@ setup_tty_param(struct termios* term,
     if (self) {
         pid = (pid_t)-1;
         fd = -1;
-
+        _writeFd = -1;
+        _deathFd = -1;
+        _restoredPid = -1;
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
     }
@@ -122,11 +130,7 @@ setup_tty_param(struct termios* term,
         killpg(pid, SIGHUP);
     }
 
-    if (fd >= 0) {
-        PtyTaskDebugLog(@"dealloc: Close fd %d\n", fd);
-        close(fd);
-    }
-
+    [self closeFileDescriptors];
     [writeLock release];
     [writeBuffer release];
     [tty release];
@@ -213,12 +217,31 @@ static void HandleSigChld(int n)
     return environment;
 }
 
+- (BOOL)tryAttachToProcess:(pid_t)thePid {
+    int fds[3];
+    NSString *thePath = [NSString stringWithFormat:@"/tmp/iTerm2.socket.%d", thePid];
+    char *pathBytes = (char *)thePath.UTF8String;
+    int rc = FileDescriptorClientRun(pathBytes, fds, &_restoredPid);
+    if (rc != 3) {
+        return NO;
+    }
+    fd = fds[0];
+    _writeFd = fds[1];
+    _deathFd = fds[2];
+    [[TaskNotifier sharedInstance] registerTask:self];
+    return YES;
+}
+
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
                  width:(int)width
                 height:(int)height
                 isUTF8:(BOOL)isUTF8 {
+#if 1
+    [self tryAttachToProcess:95074];
+    return;
+#endif
     struct termios term;
     struct winsize win;
     char theTtyname[PATH_MAX];
@@ -447,8 +470,7 @@ static void HandleSigChld(int n)
     [writeLock unlock];
 }
 
-- (void)brokenPipe
-{
+- (void)brokenPipe {
     brokenPipe_ = YES;
     [[TaskNotifier sharedInstance] deregisterTask:self];
     [self.delegate threadedTaskBrokenPipe];
@@ -458,6 +480,8 @@ static void HandleSigChld(int n)
 {
     if (pid >= 0) {
         kill(pid, signo);
+    } else if (_deathFd != -1 && signo == SIGHUP) {
+        kill(_restoredPid, signo);
     }
 }
 
@@ -488,6 +512,18 @@ static void HandleSigChld(int n)
     return pid;
 }
 
+- (void)closeFileDescriptors {
+    if (fd != -1) {
+        close(fd);
+    }
+    if (_writeFd != -1) {
+        close(_writeFd);
+    }
+    if (_deathFd != -1) {
+        close(_deathFd);
+    }
+}
+
 - (void)stop
 {
     self.paused = NO;
@@ -495,7 +531,7 @@ static void HandleSigChld(int n)
     [self sendSignal:SIGHUP];
 
     if (fd >= 0) {
-        close(fd);
+        [self closeFileDescriptors];
         [[TaskNotifier sharedInstance] deregisterTask:self];
         // Require that it spin twice so we can be completely sure that the task won't get called
         // again. If we add the observer just before select() was going to be called, it wouldn't

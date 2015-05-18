@@ -25,6 +25,9 @@ extern NSString *kCoprocessStatusChangeNotification;
 // No reading or writing allowed for now.
 @property(atomic, assign) BOOL paused;
 
+@property(atomic, readonly) int writeFd;
+@property(atomic, readonly) int deathFd;
+
 - (id)init;
 - (void)dealloc;
 - (BOOL)hasBrokenPipe;

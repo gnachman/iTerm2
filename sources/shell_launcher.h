@@ -9,6 +9,9 @@
 #ifndef iTerm_shell_launcher_h
 #define iTerm_shell_launcher_h
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 // Replaces the current process with $SHELL as a login session. If successful, it does not return.
 int launch_shell(void);
 

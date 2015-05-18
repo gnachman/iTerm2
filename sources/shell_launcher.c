@@ -6,22 +6,28 @@
 
 #include "shell_launcher.h"
 #include <err.h>
+#include <errno.h>
+#include <sys/msg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
 #include <unistd.h>
 #include <util.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "iTermFileDescriptorServer.h"
+#include "iTermFileDescriptorClient.h"
 
-int launch_shell(void)
-{
+static void ExecCommand(void) {
     const char *shell = getenv("SHELL");
     if (!shell) {
         err(1, "SHELL environment variable not set");
     }
 
     char *slash = strrchr(shell, '/');
-	char *argv0;
+    char *argv0;
     int len;
     if (slash) {
         len = asprintf(&argv0, "-%s", slash + 1);
@@ -35,10 +41,24 @@ int launch_shell(void)
         err(1, "failed to format shell's argv[0]");
     }
     if (len >= MAXPATHLEN) {
-		errx(1, "shell path is too long");
-	}
+        errx(1, "shell path is too long");
+    }
 
     execlp(shell, argv0, (char*)0);
-	err(1, "Failed to exec %s with arg %s", shell, argv0);
+    err(1, "Failed to exec %s with arg %s", shell, argv0);
+}
+
+int launch_shell(void) {
+    pid_t pid = fork();
+    if (pid == 0) {
+        // Child process
+        ExecCommand();
+    } else if (pid > 0) {
+        setsid();
+        char path[256];
+        snprintf(path, sizeof(path), "/tmp/iTerm2.socket.%d", getpid());
+        return FileDescriptorServerRun(path, pid);
+    }
+
     return 1;
 }
