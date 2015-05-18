@@ -925,6 +925,26 @@ static const int kDragThreshold = 3;
     return result;
 }
 
+- (VT100GridCoordRange)coordRangeForAccessibilityRange:(NSRange)range {
+    VT100GridCoordRange coordRange;
+    coordRange.start.y = [self _lineNumberOfIndex:range.location];
+    coordRange.start.x = [self _columnOfChar:range.location inLine:coordRange.start.y];
+    if (range.length == 0) {
+        coordRange.end = coordRange.start;
+    } else {
+        range.length--;
+        coordRange.end.y = [self _lineNumberOfIndex:NSMaxRange(range)];
+        coordRange.end.x = [self _columnOfChar:NSMaxRange(range) inLine:coordRange.end.y];
+        ++coordRange.end.x;
+        if (coordRange.end.x == [_dataSource width]) {
+            coordRange.end.x = 0;
+            coordRange.end.y++;
+        }
+    }
+
+    return coordRange;
+}
+
 /*
  * The concepts used here are not defined, so I'm going to give it my best guess.
  *
@@ -1145,6 +1165,30 @@ static const int kDragThreshold = 3;
         return [NSValue valueWithRange:NSMakeRange(0, [[self _allText] length])];
     } else {
         return [super accessibilityAttributeValue:attribute];
+    }
+}
+
+- (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute {
+    if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
+        return YES;
+    } else {
+        return [super accessibilityIsAttributeSettable:attribute];
+    }
+}
+
+- (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute {
+    if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
+        NSRange range = [(NSValue *)value rangeValue];
+        VT100GridCoordRange coordRange = [self coordRangeForAccessibilityRange:range];
+        [_selection clearSelection];
+        [_selection beginSelectionAt:coordRange.start
+                                mode:kiTermSelectionModeCharacter
+                              resume:NO
+                              append:NO];
+        [_selection moveSelectionEndpointTo:coordRange.end];
+        [_selection endLiveSelection];
+    } else {
+        [super accessibilitySetValue:value forAttribute:attribute];
     }
 }
 
