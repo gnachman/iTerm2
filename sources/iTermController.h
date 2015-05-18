@@ -60,6 +60,7 @@
 @property(nonatomic, readonly) iTermRestorableSession *currentRestorableSession;
 @property(nonatomic, assign) BOOL selectionRespectsSoftBoundaries;
 @property(nonatomic, assign) BOOL startingUp;
+@property(nonatomic, assign) BOOL applicationIsQuitting;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
@@ -151,6 +152,7 @@
 - (void)commitAndPopCurrentRestorableSession;
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (BOOL)hasRestorableSession;
+- (void)killRestorableSessions;
 
 - (NSArray*)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;

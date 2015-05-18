@@ -30,6 +30,7 @@
 #import "FutureMethods.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PTYSession.h"
@@ -124,8 +125,7 @@ static BOOL initDone = NO;
     return shared;
 }
 
-+ (void)sharedInstanceRelease
-{
++ (void)sharedInstanceRelease {
     [shared release];
     shared = nil;
 }
@@ -1174,7 +1174,7 @@ static BOOL initDone = NO;
     if (block) {
         session = block(term);
     } else if (url) {
-        session = [term createSessionWithProfile:aDict withURL:url forObjectType:objectType];
+        session = [term createSessionWithProfile:aDict withURL:url forObjectType:objectType fileDescriptorClientResult:NULL];
     } else {
         session = [term createTabWithProfile:aDict withCommand:command];
     }
@@ -1409,6 +1409,15 @@ static BOOL initDone = NO;
 
 - (BOOL)hasRestorableSession {
     return _restorableSessions.count > 0;
+}
+
+- (void)killRestorableSessions {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    for (iTermRestorableSession *restorableSession in _restorableSessions) {
+        for (PTYSession *aSession in restorableSession.sessions) {
+            [aSession.shell sendSignal:SIGHUP];
+        }
+    }
 }
 
 // accessors for to-many relationships:

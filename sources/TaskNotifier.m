@@ -22,7 +22,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     BOOL tasksChanged;
     // Protects 'tasks' and 'tasksChanged'.
     NSRecursiveLock* tasksLock;
-    
+
     // A set of NSNumber*s holding pids of tasks that need to be wait()ed on
     NSMutableSet* deadpool;
     int unblockPipeR;
@@ -79,8 +79,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     [super dealloc];
 }
 
-- (void)registerTask:(PTYTask*)task
-{
+- (void)registerTask:(PTYTask*)task {
     PtyTaskDebugLog(@"registerTask: lock\n");
     [tasksLock lock];
     PtyTaskDebugLog(@"Add task at %p\n", (void*)task);
@@ -98,9 +97,16 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     [tasksLock lock];
     PtyTaskDebugLog(@"Begin remove task %p\n", (void*)task);
     PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
-    [deadpool addObject:[NSNumber numberWithInt:[task pid]]];
+    pid_t pid = task.pid;
+    if (pid != -1 && task.pidIsChild) {
+        // Not a restored task.
+        [deadpool addObject:@([task pid])];
+    } else if (task.serverPid != -1 && !task.pidIsChild) {
+        // Prevent server from becoming a zombie.
+        [deadpool addObject:@(task.serverPid)];
+    }
     if ([task hasCoprocess]) {
-        [deadpool addObject:[NSNumber numberWithInt:[[task coprocess] pid]]];
+        [deadpool addObject:@([[task coprocess] pid])];
     }
     [tasks removeObject:task];
     tasksChanged = YES;
@@ -111,10 +117,10 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     [self unblock];
 }
 
-- (void)waitForPid:(pid_t)pid
-{
+// NB: This is currently used for coprocesses.
+- (void)waitForPid:(pid_t)pid {
     [tasksLock lock];
-    [deadpool addObject:[NSNumber numberWithInt:pid]];
+    [deadpool addObject:@(pid)];
     [tasksLock unlock];
     [self unblock];
 }
@@ -127,6 +133,85 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     write(unblockPipeW, &dummy, 1);
 }
 
+- (BOOL)handleReadOnFileDescriptor:(int)fd task:(PTYTask *)task fdSet:(fd_set *)fdSet {
+    if (FD_ISSET(fd, fdSet)) {
+        PtyTaskDebugLog(@"run/processRead: unlock");
+        [tasksLock unlock];
+        [task processRead];
+        PtyTaskDebugLog(@"run/processRead: lock");
+        [tasksLock lock];
+        if (tasksChanged) {
+            PtyTaskDebugLog(@"Restart iteration\n");
+            tasksChanged = NO;
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)handleWriteOnFileDescriptor:(int)fd task:(PTYTask *)task fdSet:(fd_set *)fdSet {
+    if (FD_ISSET(fd, fdSet)) {
+        PtyTaskDebugLog(@"run/processWrite: unlock");
+        [tasksLock unlock];
+        [task processWrite];
+        PtyTaskDebugLog(@"run/processWrite: lock");
+        [tasksLock lock];
+        if (tasksChanged) {
+            PtyTaskDebugLog(@"Restart iteration\n");
+            tasksChanged = NO;
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (BOOL)handleErrorOnFileDescriptor:(int)fd task:(PTYTask *)task fdSet:(fd_set *)fdSet {
+    if (FD_ISSET(fd, fdSet)) {
+        PtyTaskDebugLog(@"run/brokenPipe: unlock");
+        [tasksLock unlock];
+        // brokenPipe will call deregisterTask and add the pid to
+        // deadpool.
+        [task brokenPipe];
+        PtyTaskDebugLog(@"run/brokenPipe: lock");
+        [tasksLock lock];
+        if (tasksChanged) {
+            PtyTaskDebugLog(@"Restart iteration\n");
+            tasksChanged = NO;
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)handleReadOnFileDescriptor:(int)fd
+                              task:(PTYTask *)task
+                     withCoprocess:(Coprocess *)coprocess
+                             fdSet:(fd_set *)fdSet {
+    if (![coprocess eof] && FD_ISSET(fd, fdSet)) {
+        [coprocess read];
+        [task writeTask:coprocess.inputBuffer];
+        [coprocess.inputBuffer setLength:0];
+    }
+}
+
+- (void)handleErrorOnFileDescriptor:(int)fd
+                      withCoprocess:(Coprocess *)coprocess
+                              fdSet:(fd_set *)fdSet {
+    if (FD_ISSET(fd, fdSet)) {
+        coprocess.eof = YES;
+    }
+}
+
+- (void)handleWriteOnFileDescriptor:(int)coprocessWriteFd
+                      withCoprocess:(Coprocess *)coprocess
+                              fdSet:(fd_set *)fdSet {
+    if (FD_ISSET(coprocessWriteFd, fdSet)) {
+        if (![coprocess eof]) {
+            [coprocess write];
+        }
+    }
+}
+
 - (void)run
 {
     fd_set rfds;
@@ -136,19 +221,19 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     NSEnumerator* iter;
     PTYTask* task;
     NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
-    
+
     // FIXME: replace this with something better...
     for(;;) {
-        
+
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
         FD_ZERO(&efds);
-        
+
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
         highfd = unblockPipeR;
         FD_SET(unblockPipeR, &rfds);
         NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:[tasks count]];
-        
+
         // Add all the PTYTask pipes
         PtyTaskDebugLog(@"run1: lock");
         [tasksLock lock];
@@ -161,7 +246,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 [self deregisterTask:theTask];
             }
         }
-        
+
         if ([deadpool count] > 0) {
             // waitpid() on pids that we think are dead or will be dead soon.
             NSMutableSet* newDeadpool = [NSMutableSet setWithCapacity:[deadpool count]];
@@ -187,7 +272,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
             [deadpool release];
             deadpool = [newDeadpool retain];
         }
-        
+
         PtyTaskDebugLog(@"Begin enumeration over %lu tasks\n", (unsigned long)[tasks count]);
         iter = [tasks objectEnumerator];
         int i = 0;
@@ -199,14 +284,18 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 PtyTaskDebugLog(@"Task has fd of %d\n", fd);
             } else {
                 // PtyTaskDebugLog(@"Select on fd %d\n", fd);
-                if (fd > highfd)
+                if (fd > highfd) {
                     highfd = fd;
-                if ([task wantsRead])
+                }
+                if ([task wantsRead]) {
                     FD_SET(fd, &rfds);
-                if ([task wantsWrite])
+                }
+                if ([task wantsWrite]) {
                     FD_SET(fd, &wfds);
+                }
                 FD_SET(fd, &efds);
             }
+
             @synchronized (task) {
                 Coprocess *coprocess = [task coprocess];
                 if (coprocess) {
@@ -251,7 +340,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                     // If the file descriptor is closed in the main thread there's a race where sometimes you'll get an EBADF.
             }
         }
-        
+
         // Interrupted?
         if (FD_ISSET(unblockPipeR, &rfds)) {
             char dummy[32];
@@ -259,7 +348,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 read(unblockPipeR, dummy, sizeof(dummy));
             } while (errno != EAGAIN);
         }
-        
+
         // Check for read events on PTYTask pipes
         PtyTaskDebugLog(@"run2: lock");
         [tasksLock lock];
@@ -267,97 +356,59 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         iter = [tasks objectEnumerator];
         i = 0;
         BOOL notifyOfCoprocessChange = NO;
-        
+
         while ((task = [iter nextObject])) {
             PtyTaskDebugLog(@"Got task %d\n", i);
             int fd = [task fd];
+
             if (fd >= 0) {
                 // This is mostly paranoia, but if two threads
                 // end up with the same fd (because one closed
                 // and there was a race condition) then trying
                 // to read twice would hang.
-                
-                if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
+
+                if ([handledFds containsObject:@(fd)]) {
                     PtyTaskDebugLog(@"Duplicate fd %d", fd);
                     continue;
                 }
                 [task retain];
-                [handledFds addObject:[NSNumber numberWithInt:fd]];
-                
-                if (FD_ISSET(fd, &rfds)) {
-                    PtyTaskDebugLog(@"run/processRead: unlock");
-                    [tasksLock unlock];
-                    [task processRead];
-                    PtyTaskDebugLog(@"run/processRead: lock");
-                    [tasksLock lock];
-                    if (tasksChanged) {
-                        PtyTaskDebugLog(@"Restart iteration\n");
-                        tasksChanged = NO;
-                        iter = [tasks objectEnumerator];
-                    }
-                }
-                if (FD_ISSET(fd, &wfds)) {
-                    PtyTaskDebugLog(@"run/processWrite: unlock");
-                    [tasksLock unlock];
-                    [task processWrite];
-                    PtyTaskDebugLog(@"run/processWrite: lock");
-                    [tasksLock lock];
-                    if (tasksChanged) {
-                        PtyTaskDebugLog(@"Restart iteration\n");
-                        tasksChanged = NO;
-                        iter = [tasks objectEnumerator];
-                    }
-                }
-                if (FD_ISSET(fd, &efds)) {
-                    PtyTaskDebugLog(@"run/brokenPipe: unlock");
-                    [tasksLock unlock];
-                    // brokenPipe will call deregisterTask and add the pid to
-                    // deadpool.
-                    [task brokenPipe];
-                    PtyTaskDebugLog(@"run/brokenPipe: lock");
-                    [tasksLock lock];
-                    if (tasksChanged) {
-                        PtyTaskDebugLog(@"Restart iteration\n");
-                        tasksChanged = NO;
-                        iter = [tasks objectEnumerator];
-                    }
-                }
+                [handledFds addObject:@(fd)];
 
+                if ([self handleReadOnFileDescriptor:fd task:task fdSet:&rfds]) {
+                    iter = [tasks objectEnumerator];
+                }
+                if ([self handleWriteOnFileDescriptor:fd task:task fdSet:&wfds]) {
+                    iter = [tasks objectEnumerator];
+                }
+                if ([self handleErrorOnFileDescriptor:fd task:task fdSet:&efds]) {
+                    iter = [tasks objectEnumerator];
+                }
                 // Move input around between coprocess and main process.
                 if ([task fd] >= 0 && ![task hasBrokenPipe]) {  // Make sure the pipe wasn't just broken.
                     @synchronized (task) {
                         Coprocess *coprocess = [task coprocess];
                         if (coprocess) {
                             fd = [coprocess readFileDescriptor];
-                            if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
+                            if ([handledFds containsObject:@(fd)]) {
                                 NSLog(@"Duplicate fd %d", fd);
                                 continue;
                             }
-                            [handledFds addObject:[NSNumber numberWithInt:fd]];
-                            if (![coprocess eof] && FD_ISSET(fd, &rfds)) {
-                                [coprocess read];
-                                [task writeTask:coprocess.inputBuffer];
-                                [coprocess.inputBuffer setLength:0];
-                            }
-                            if (FD_ISSET(fd, &efds)) {
-                                coprocess.eof = YES;
-                            }
+                            [handledFds addObject:@(fd)];
+
+                            [self handleReadOnFileDescriptor:fd task:task withCoprocess:coprocess fdSet:&rfds];
+                            [self handleErrorOnFileDescriptor:fd withCoprocess:coprocess fdSet:&efds];
 
                             // Handle writes
-                            fd = [coprocess writeFileDescriptor];
-                            if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
-                                NSLog(@"Duplicate fd %d", fd);
+                            int coprocessWriteFd = [coprocess writeFileDescriptor];
+                            if ([handledFds containsObject:@(coprocessWriteFd)]) {
+                                NSLog(@"Duplicate fd %d", coprocessWriteFd);
                                 continue;
                             }
-                            [handledFds addObject:[NSNumber numberWithInt:fd]];
-                            if (FD_ISSET(fd, &wfds)) {
-                                if (![coprocess eof]) {
-                                    [coprocess write];
-                                }
-                            }
+                            [handledFds addObject:@(coprocessWriteFd)];
+                            [self handleWriteOnFileDescriptor:coprocessWriteFd withCoprocess:coprocess fdSet:&wfds];
 
                             if ([coprocess eof]) {
-                                [deadpool addObject:[NSNumber numberWithInt:[coprocess pid]]];
+                                [deadpool addObject:@([coprocess pid])];
                                 [coprocess terminate];
                                 [task setCoprocess:nil];
                                 notifyOfCoprocessChange = YES;
@@ -377,7 +428,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                                    withObject:nil
                                 waitUntilDone:YES];
         }
-        
+
     breakloop:
         [handledFds release];
         [autoreleasePool drain];

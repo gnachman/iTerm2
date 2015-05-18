@@ -56,6 +56,7 @@
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
 #import <objc/runtime.h>
+#include "iTermFileDescriptorClient.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -364,17 +365,66 @@ static BOOL hasBecomeActive = NO;
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
                                                         object:nil];
-    
+
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(workspaceSessionDidBecomeActive:)
                                                                name:NSWorkspaceSessionDidBecomeActiveNotification
                                                              object:nil];
-    
+
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(workspaceSessionDidResignActive:)
                                                                name:NSWorkspaceSessionDidResignActiveNotification
                                                              object:nil];
 
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        [PseudoTerminalRestorer setRestorationCompletionBlock:^{
+            [self searchForOrphanServers];
+        }];
+    }
+}
+
+- (void)searchForOrphanServers {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    NSLog(@"--- Begin search for orphans ---");
+    NSString *dir = @"/tmp";
+    PseudoTerminal *term = nil;
+    for (NSString *filename in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil]) {
+        NSString *prefix = @"iTerm2.socket.";
+        if ([filename hasPrefix:prefix]) {
+            // TODO: This needs to be able to time out if a server is wedged, which happened somehow.
+            NSLog(@"Try to connect to server at %@", filename);
+            FileDescriptorClientResult result = FileDescriptorClientRun([[filename substringFromIndex:prefix.length] intValue]);
+            if (result.ok) {
+                NSLog(@"Restore it");
+                if (term) {
+                    [self openOrphanedSession:result inWindow:term];
+                } else {
+                    PTYSession *session = [self openOrphanedSession:result inWindow:nil];
+                    term = [[iTermController sharedInstance] terminalWithSession:session];
+                }
+            }
+        }
+    }
+}
+
+- (PTYSession *)openOrphanedSession:(FileDescriptorClientResult)result inWindow:(PseudoTerminal *)desiredWindow {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+    PTYSession *aSession =
+        [[iTermController sharedInstance] launchBookmark:nil
+                                              inTerminal:desiredWindow
+                                                 withURL:nil
+                                                isHotkey:NO
+                                                 makeKey:NO
+                                                 command:nil
+                                                   block:^PTYSession *(PseudoTerminal *term) {
+                                                       FileDescriptorClientResult theResult = result;
+                                                       return [term createSessionWithProfile:defaultProfile
+                                                                                     withURL:nil
+                                                                               forObjectType:iTermWindowObject
+                                                                  fileDescriptorClientResult:&theResult];
+                                                   }];
+    return aSession;
 }
 
 - (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {
@@ -410,7 +460,7 @@ static BOOL hasBecomeActive = NO;
         // closing multiple sessions
         shouldShowAlert = YES;
     }
-    
+
     if (shouldShowAlert) {
         DLog(@"Showing quit alert");
         BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
@@ -426,6 +476,16 @@ static BOOL hasBecomeActive = NO;
 
     // Ensure [iTermController dealloc] is called before prefs are saved
     [[HotkeyWindowController sharedInstance] stopEventTap];
+
+    // Prevent sessions from making their termination undoable since we're quitting.
+    [[iTermController sharedInstance] setApplicationIsQuitting:YES];
+
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        // Restorable sessions must be killed or they'll auto-restore as orphans on the next start.
+        [[iTermController sharedInstance] killRestorableSessions];
+    }
+
+    // This causes all windows to be closed and all sessions to be terminated.
     [iTermController sharedInstanceRelease];
 
     // save preferences
@@ -438,8 +498,7 @@ static BOOL hasBecomeActive = NO;
     return NSTerminateNow;
 }
 
-- (void)applicationWillTerminate:(NSNotification *)aNotification
-{
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
     DLog(@"applicationWillTerminate called");
     [[HotkeyWindowController sharedInstance] stopEventTap];
          DLog(@"applicationWillTerminate returning");
@@ -647,7 +706,7 @@ static BOOL hasBecomeActive = NO;
         launchTime_ = [[NSDate date] retain];
         _workspaceSessionActive = YES;
     }
-    
+
     return self;
 }
 
@@ -993,7 +1052,7 @@ static BOOL hasBecomeActive = NO;
     [defaults setFloat:delay forKey:delayKey];
     double rate = bytes;
     rate /= delay;
-    
+
     [ToastWindowController showToastWithMessage:[NSString stringWithFormat:@"Pasting at up to %@/sec", [self formatBytes:rate]]];
 }
 

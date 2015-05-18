@@ -95,4 +95,6 @@
 + (BOOL)useDoubleBufferedGrid;
 + (BOOL)eliminateCloseButtons;
 
++ (BOOL)runJobsInServers;
+
 @end

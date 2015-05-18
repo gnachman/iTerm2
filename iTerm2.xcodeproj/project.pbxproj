@@ -1557,6 +1557,16 @@
 		A67F57C01B01A08800B4F135 /* iTermAnimatedImageInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */; };
 		A67F57C11B01A08800B4F135 /* iTermAnimatedImageInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */; };
 		A67F57C21B01A08800B4F135 /* iTermAnimatedImageInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */; };
+		A67F57C81B0930CA00B4F135 /* iTermFileDescriptorServer.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */; };
+		A67F57C91B0930CA00B4F135 /* iTermFileDescriptorServer.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */; };
+		A67F57CA1B0930CA00B4F135 /* iTermFileDescriptorServer.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */; };
+		A67F57CB1B0930CA00B4F135 /* iTermFileDescriptorClient.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */; };
+		A67F57CC1B0930CA00B4F135 /* iTermFileDescriptorClient.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */; };
+		A67F57CD1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */; };
+		A67F57CE1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */; };
+		A67F57CF1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */; };
+		A67F57D01B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */; };
+		A67F57D11B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */; };
 		A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */; };
 		A680AA1418CEA1040034D4F8 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
 		A680AA1518CEA1040034D4F8 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
@@ -2624,6 +2634,10 @@
 		A67F57B61B01A01800B4F135 /* iTermImageInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageInfo.m; sourceTree = "<group>"; };
 		A67F57BC1B01A08800B4F135 /* iTermAnimatedImageInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAnimatedImageInfo.h; sourceTree = "<group>"; };
 		A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnimatedImageInfo.m; sourceTree = "<group>"; };
+		A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorServer.c; sourceTree = "<group>"; tabWidth = 4; };
+		A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorClient.h; sourceTree = "<group>"; };
+		A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorClient.c; sourceTree = "<group>"; tabWidth = 4; };
+		A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorServer.h; sourceTree = "<group>"; };
 		A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100TmuxParser.h; sourceTree = "<group>"; tabWidth = 4; };
 		A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TmuxParser.m; sourceTree = "<group>"; tabWidth = 4; };
 		A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableData+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -3097,6 +3111,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A67F57C31B0930AD00B4F135 /* Shell Launcher */,
 				1D5655C619AD2AF1001C460B /* Applescript */,
 				1D9DDE31142E73E300275650 /* Categories */,
 				A63F40AC1842988A003A6A6D /* Core */,
@@ -4027,7 +4042,6 @@
 				F56B230B03A1B36701A8A066 /* PTYWindow.m */,
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
-				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
 				A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */,
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
 				1D06A04F134CDBED00C414EF /* iTermSemanticHistoryController.m */,
@@ -4074,6 +4088,18 @@
 				A663012719D0864C004AF81C /* SCEvents.m */,
 			);
 			name = SCEvents;
+			sourceTree = "<group>";
+		};
+		A67F57C31B0930AD00B4F135 /* Shell Launcher */ = {
+			isa = PBXGroup;
+			children = (
+				A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */,
+				A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */,
+				A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */,
+				A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */,
+				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
+			);
+			name = "Shell Launcher";
 			sourceTree = "<group>";
 		};
 		A686C0D21ADA38CA00906FAE /* Golden Images for Tests */ = {
@@ -4573,6 +4599,7 @@
 				1D6ED8E719AEA20D005A7799 /* WindowArrangements.h in Headers */,
 				1D6ED8E819AEA20D005A7799 /* KeysPreferencesViewController.h in Headers */,
 				1D6ED8E919AEA20D005A7799 /* PTYNoteView.h in Headers */,
+				A67F57CC1B0930CA00B4F135 /* iTermFileDescriptorClient.h in Headers */,
 				1D6ED8EA19AEA20D005A7799 /* ArrangementPreviewView.h in Headers */,
 				A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */,
 				1D6ED8EB19AEA20D005A7799 /* SplitPanel.h in Headers */,
@@ -4630,6 +4657,7 @@
 				1D6ED91B19AEA20D005A7799 /* HighlightTrigger.h in Headers */,
 				1D6ED91C19AEA20D005A7799 /* VT100Output.h in Headers */,
 				1D6ED91D19AEA20D005A7799 /* ContextMenuActionPrefsController.h in Headers */,
+				A67F57D11B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */,
 				A67F57BF1B01A08800B4F135 /* iTermAnimatedImageInfo.h in Headers */,
 				1D6ED91E19AEA20D005A7799 /* iTermLogoGenerator.h in Headers */,
 				1D6ED91F19AEA20D005A7799 /* LineBlock.h in Headers */,
@@ -4860,6 +4888,7 @@
 				1DABA03319253FEA00A228D8 /* PasswordTrigger.h in Headers */,
 				A6E7138E18F26A91008D94DD /* AppearancePreferencesViewController.h in Headers */,
 				A6E74761188C679C005355CF /* iTermExposeView.h in Headers */,
+				A67F57CB1B0930CA00B4F135 /* iTermFileDescriptorClient.h in Headers */,
 				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
 				1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */,
 				1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */,
@@ -4957,6 +4986,7 @@
 				1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */,
 				A6E77F8F1A2449EF009B1CB6 /* NSEvent+iTerm.h in Headers */,
 				1D24C2C5142FEACF006B246F /* SmartSelectionController.h in Headers */,
+				A67F57D01B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */,
 				A6E525E11A9C5730007B898E /* VT100State.h in Headers */,
 				A60014F618550F3900CE38D8 /* NSMutableAttributedString+iTerm.h in Headers */,
 				A6E7475C188C6731005355CF /* iTermExposeGridView.h in Headers */,
@@ -5695,6 +5725,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D6ED9EE19AEA20D005A7799 /* main.m in Sources */,
+				A67F57CA1B0930CA00B4F135 /* iTermFileDescriptorServer.c in Sources */,
 				1D6ED9EF19AEA20D005A7799 /* AppearancePreferencesViewController.m in Sources */,
 				1D6ED9F019AEA20D005A7799 /* CommandUse.m in Sources */,
 				1D6ED9F119AEA20D005A7799 /* PseudoTerminal.m in Sources */,
@@ -5908,6 +5939,7 @@
 				1D6EDAAA19AEA20D005A7799 /* PointerPrefsController.m in Sources */,
 				A6E525D31A9C5725007B898E /* VT100StateTransition.m in Sources */,
 				1D6EDAAB19AEA20D005A7799 /* PointerController.m in Sources */,
+				A67F57CF1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */,
 				1D6EDAAC19AEA20D005A7799 /* EventMonitorView.m in Sources */,
 				1D6EDAAD19AEA20D005A7799 /* HighlightTrigger.m in Sources */,
 				1D6EDAAE19AEA20D005A7799 /* ContextMenuActionPrefsController.m in Sources */,
@@ -6061,6 +6093,7 @@
 				1D9A5596180FA87000B42CE9 /* PTYSplitView.m in Sources */,
 				1D5937AD1A2D764900F808EB /* PSMDarkTabStyle.m in Sources */,
 				A6E713BC18FCCDD1008D94DD /* iTermURLSchemeController.m in Sources */,
+				A67F57C91B0930CA00B4F135 /* iTermFileDescriptorServer.c in Sources */,
 				1D9A55A3180FA87000B42CE9 /* ToastWindowController.m in Sources */,
 				1D9A5575180FA85D00B42CE9 /* BellTrigger.m in Sources */,
 				1D9A559E180FA87000B42CE9 /* SolidColorView.m in Sources */,
@@ -6217,6 +6250,7 @@
 				1D9A55B2180FA8D400B42CE9 /* UKCrashReporter.m in Sources */,
 				1D9A55B4180FA8D400B42CE9 /* UKSystemInfo.m in Sources */,
 				1D9A5544180FA81400B42CE9 /* ProfileModelWrapper.m in Sources */,
+				A67F57CE1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */,
 				A6099B0718D6B0FD00081FA9 /* iTermWarning.m in Sources */,
 				1DD39B1C180B834A004E56D5 /* DebugLogging.m in Sources */,
 				1D9A5563180FA84700B42CE9 /* NSBezierPath+iTerm.m in Sources */,
@@ -6323,6 +6357,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8742064F0564169600CFC3F1 /* main.m in Sources */,
+				A67F57C81B0930CA00B4F135 /* iTermFileDescriptorServer.c in Sources */,
 				A6E7138F18F26A91008D94DD /* AppearancePreferencesViewController.m in Sources */,
 				A6E7474E188C6394005355CF /* CommandUse.m in Sources */,
 				1D5FDDA51208E93600C46BA3 /* PseudoTerminal.m in Sources */,
@@ -6536,6 +6571,7 @@
 				A6099B0618D6B0FD00081FA9 /* iTermWarning.m in Sources */,
 				A6E525D11A9C5725007B898E /* VT100StateTransition.m in Sources */,
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
+				A67F57CD1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */,
 				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,

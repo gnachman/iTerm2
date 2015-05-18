@@ -1,5 +1,3 @@
-
-
 // Debug option
 #define PtyTaskDebugLog(fmt, ...)
 // Use this instead to debug this module:
@@ -7,11 +5,14 @@
 
 #define MAXRW 1024
 
-#import "PTYTask.h"
 #import "Coprocess.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
+#import "PTYTask.h"
 #import "TaskNotifier.h"
+#import "iTermAdvancedSettingsModel.h"
+#include "iTermFileDescriptorClient.h"
+#include "shell_launcher.h"
 #include <dlfcn.h>
 #include <libproc.h>
 #include <stdio.h>
@@ -19,6 +20,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#include <sys/msg.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/user.h>
@@ -77,9 +79,10 @@ setup_tty_param(struct termios* term,
 @property(atomic, assign) BOOL hasMuteCoprocess;
 @end
 
-@implementation PTYTask
-{
-    pid_t pid;
+@implementation PTYTask {
+    pid_t _serverPid;  // -1 when servers are not in use.
+    pid_t _serverChildPid;  // -1 when servers are not in use.
+    pid_t _childPid;  // -1 when servers are in use; otherwise is pid of child.
     int fd;
     int status;
     NSString* tty;
@@ -95,38 +98,41 @@ setup_tty_param(struct termios* term,
     Coprocess *coprocess_;  // synchronized (self)
     BOOL brokenPipe_;
     NSString *command_;  // Command that was run if launchWithPath:arguments:etc was called
-    
+
     // Number of spins of the select loop left before we tell the delegate we were deregistered.
     int _spinsNeeded;
     BOOL _paused;
 }
 
-- (id)init
-{
+- (id)init {
     self = [super init];
     if (self) {
-        pid = (pid_t)-1;
+        _serverPid = (pid_t)-1;
+        _childPid = (pid_t)-1;
         fd = -1;
-
+        _serverChildPid = -1;
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
     }
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [[TaskNotifier sharedInstance] deregisterTask:self];
 
-    if (pid > 0) {
-        killpg(pid, SIGHUP);
+    // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
+    // pid_t. Are they guaranteed to always be the same for process group
+    // leaders?
+    if (_childPid > 0) {
+        // Terminate an owned child.
+        killpg(_childPid, SIGHUP);
+    } else if (_serverChildPid) {
+        // Kill a server-owned child.
+        // TODO: Don't want to do this when Sparkle is upgrading.
+        killpg(_serverChildPid, SIGHUP);
     }
 
-    if (fd >= 0) {
-        PtyTaskDebugLog(@"dealloc: Close fd %d\n", fd);
-        close(fd);
-    }
-
+    [self closeFileDescriptor];
     [writeLock release];
     [writeBuffer release];
     [tty release];
@@ -213,6 +219,104 @@ static void HandleSigChld(int n)
     return environment;
 }
 
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid
+                                 timeout:(NSTimeInterval)timeout {
+    if (![iTermAdvancedSettingsModel runJobsInServers]) {
+        return NO;
+    }
+    if (_serverChildPid != -1) {
+        return NO;
+    }
+
+    NSTimeInterval timeoutTime = [NSDate timeIntervalSinceReferenceDate] + timeout;
+    // TODO: Create the unix domain socket in the parent prior to forking to avoid the timeout silliness.
+    while (1) {
+        NSLog(@"tryToAttachToServerWithProcessId: Restore connection to pid %d", (int)thePid);
+        FileDescriptorClientResult result = FileDescriptorClientRun(thePid);
+        if (!result.ok) {
+            if (result.error && !strcmp(result.error, kFileDescriptorClientErrorCouldNotConnect)) {
+                // Waiting for child process to start.
+                if ([NSDate timeIntervalSinceReferenceDate] > timeoutTime) {
+                    return NO;
+                } else {
+                    NSLog(@"Timed out, try again in 100 ms");
+                    usleep(100000);  // Sleep for 100 ms
+                    continue;
+                }
+            } else {
+                return NO;
+            }
+        }
+        [self attachToServerWithFileDescriptor:result.ptyMasterFd
+                               serverProcessId:thePid
+                                childProcessId:result.childPid];
+        return YES;
+    }
+}
+
+- (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
+                         serverProcessId:(pid_t)serverPid
+                          childProcessId:(pid_t)childPid {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    fd = ptyMasterFd;
+    _serverPid = serverPid;
+    _serverChildPid = childPid;
+    [[TaskNotifier sharedInstance] registerTask:self];
+}
+
+// Like login_tty but makes fd 0 the master and fd 1 the slave.
+static void MyLoginTTY(int master, int slave) {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    setsid();
+    ioctl(slave, TIOCSCTTY, NULL);
+    if (slave == 0) {
+        dup2(slave, 2);
+        slave = 2;
+    }
+    dup2(master, 0);
+    dup2(slave, 1);
+    if (master > 1) {
+        close(master);
+    }
+    if (slave > 1) {
+        close(slave);
+    }
+}
+
+// Just like forkpty but fd 0 the master and fd 1 the slave.
+static int MyForkPty(int *amaster,
+                     char *name,
+                     struct termios *termp,
+                     struct winsize *winp) {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    int master;
+    int slave;
+
+    if (openpty(&master, &slave, name, termp, winp) == -1) {
+        NSLog(@"openpty failed: %s", strerror(errno));
+        return -1;
+    }
+
+    pid_t pid = fork();
+    switch (pid) {
+        case -1:
+            // error
+            NSLog(@"Fork failed: %s", strerror(errno));
+            return -1;
+
+        case 0:
+            // child
+            MyLoginTTY(master, slave);
+            return 0;
+
+        default:
+            // parent
+            *amaster = master;
+            close(slave);
+            return pid;
+    }
+}
+
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
@@ -258,7 +362,12 @@ static void HandleSigChld(int n)
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
-    pid = forkpty(&fd, theTtyname, &term, &win);
+    pid_t pid;
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win);
+    } else {
+        pid = _childPid = forkpty(&fd, theTtyname, &term, &win);
+    }
     if (pid == (pid_t)0) {
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
@@ -309,11 +418,18 @@ static void HandleSigChld(int n)
     // Make sure the master side of the pty is closed on future exec() calls.
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
-    tty = [[NSString stringWithUTF8String:theTtyname] retain];
-    NSParameterAssert(tty != nil);
-
-    fcntl(fd,F_SETFL,O_NONBLOCK);
-    [[TaskNotifier sharedInstance] registerTask:self];
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        if ([self tryToAttachToServerWithProcessId:_serverPid timeout:10]) {
+            tty = [[NSString stringWithUTF8String:theTtyname] retain];
+            fcntl(fd, F_SETFL, O_NONBLOCK);
+        } else {
+            close(fd);
+        }
+    } else {
+        tty = [[NSString stringWithUTF8String:theTtyname] retain];
+        fcntl(fd,F_SETFL,O_NONBLOCK);
+        [[TaskNotifier sharedInstance] registerTask:self];
+    }
 }
 
 - (BOOL)wantsRead {
@@ -447,25 +563,25 @@ static void HandleSigChld(int n)
     [writeLock unlock];
 }
 
-- (void)brokenPipe
-{
+- (void)brokenPipe {
     brokenPipe_ = YES;
     [[TaskNotifier sharedInstance] deregisterTask:self];
     [self.delegate threadedTaskBrokenPipe];
 }
 
-- (void)sendSignal:(int)signo
-{
-    if (pid >= 0) {
-        kill(pid, signo);
-    }
+- (void)sendSignal:(int)signo {
+    if (_serverChildPid != -1) {
+        kill(_serverChildPid, signo);
+     } else if (_childPid >= 0) {
+         kill(_childPid, signo);
+     }
 }
 
 - (void)setWidth:(int)width height:(int)height
 {
     PtyTaskDebugLog(@"Set terminal size to %dx%d", width, height);
     struct winsize winsize;
-    // TODO(georgen): Access to fd should be synchronoized or else it should not be allowed to call this function from the main thread.
+    // TODO(georgen): Access to fd should be synchronized or else it should not be allowed to call this function from the main thread.
     if (fd == -1) {
         return;
     }
@@ -483,9 +599,26 @@ static void HandleSigChld(int n)
     return fd;
 }
 
-- (pid_t)pid
-{
-    return pid;
+- (BOOL)pidIsChild {
+    return _serverChildPid == 1 && _childPid != -1;
+}
+
+- (pid_t)serverPid {
+    return _serverPid;
+}
+
+- (pid_t)pid {
+    if (_serverChildPid != -1) {
+        return _serverChildPid;
+    } else {
+        return _childPid;
+    }
+}
+
+- (void)closeFileDescriptor {
+    if (fd != -1) {
+        close(fd);
+    }
 }
 
 - (void)stop
@@ -495,7 +628,7 @@ static void HandleSigChld(int n)
     [self sendSignal:SIGHUP];
 
     if (fd >= 0) {
-        close(fd);
+        [self closeFileDescriptor];
         [[TaskNotifier sharedInstance] deregisterTask:self];
         // Require that it spin twice so we can be completely sure that the task won't get called
         // again. If we add the observer just before select() was going to be called, it wouldn't
@@ -593,24 +726,23 @@ static void HandleSigChld(int n)
     return rc;
 }
 
-- (NSString*)description
-{
-    return [NSString stringWithFormat:@"PTYTask(pid %d, fildes %d)", pid, fd];
+- (NSString*)description {
+    return [NSString stringWithFormat:@"PTYTask(child pid %d, server-child pid %d, fildes %d)",
+              _serverChildPid, _serverPid, fd];
 }
 
 // This is a stunningly brittle hack. Find the child of parentPid with the
 // oldest start time. This relies on undocumented APIs, but short of forking
 // ps, I can't see another way to do it.
 
-- (pid_t)getFirstChildOfPid:(pid_t)parentPid
-{
+- (pid_t)getFirstChildOfPid:(pid_t)parentPid {
     int numBytes;
     numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
     if (numBytes <= 0) {
         return -1;
     }
 
-    int* pids = (int*) malloc(numBytes+sizeof(int));
+    int* pids = (int*) malloc(numBytes + sizeof(int));
     // Save a magic int at the end to be sure that the buffer isn't overrun.
     const int PID_MAGIC = 0xdeadbeef;
     int magicIndex = numBytes/sizeof(int);
@@ -656,39 +788,39 @@ static void HandleSigChld(int n)
 // arbitrary tty-controller in the tty's pgid that has this task as an ancestor
 // may be chosen. This function also implements a chache to avoid doing the
 // potentially expensive system calls too often.
-- (NSString*)currentJob:(BOOL)forceRefresh
-{
-    return [[ProcessCache sharedInstance] jobNameWithPid:pid];
+- (NSString*)currentJob:(BOOL)forceRefresh {
+    return [[ProcessCache sharedInstance] jobNameWithPid:self.pid];
 }
 
-- (NSString*)getWorkingDirectory
-{
+- (NSString*)getWorkingDirectory {
     struct proc_vnodepathinfo vpi;
     int ret;
-    /* This only works if the child process is owned by our uid */
-    ret = proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
+
+    // This only works if the child process is owned by our uid
+    // Notably it seems to work (at least on 10.10) even if the process ID is
+    // not owned by us.
+    ret = proc_pidinfo(_serverPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
     if (ret <= 0) {
         // The child was probably owned by root (which is expected if it's
         // a login shell. Use the cwd of its oldest child instead.
-        pid_t childPid = [self getFirstChildOfPid:pid];
+        pid_t childPid = [self getFirstChildOfPid:self.pid];
         if (childPid > 0) {
             ret = proc_pidinfo(childPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
         }
     }
     if (ret <= 0) {
-        /* An error occured */
+        // An error occured
         return nil;
     } else if (ret != sizeof(vpi)) {
-        /* Now this is very bad... */
+        // Now this is very bad...
         return nil;
     } else {
-        /* All is good */
+        // All is good
         return [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
     }
 }
 
-- (void)stopCoprocess
-{
+- (void)stopCoprocess {
     pid_t thePid = 0;
     @synchronized (self) {
         if (coprocess_.pid > 0) {

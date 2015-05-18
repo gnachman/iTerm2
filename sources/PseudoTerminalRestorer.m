@@ -123,5 +123,13 @@ typedef void (^VoidBlock)(void);
     }
 }
 
++ (void)setRestorationCompletionBlock:(void(^)())completion {
+    if (queuedBlocks) {
+        [queuedBlocks addObject:[[completion copy] autorelease]];
+    } else {
+        completion();
+    }
+}
+
 @end
 

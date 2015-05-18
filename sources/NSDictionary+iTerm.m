@@ -11,6 +11,16 @@
 
 @implementation NSDictionary (iTerm)
 
++ (NSDictionary *)dictionaryWithGridCoord:(VT100GridCoord)coord {
+    return @{ @"x": @(coord.x),
+              @"y": @(coord.y) };
+}
+
+- (VT100GridCoord)gridCoord {
+    return VT100GridCoordMake([self[@"x"] intValue],
+                              [self[@"y"] intValue]);
+}
+
 - (BOOL)boolValueDefaultingToYesForKey:(id)key
 {
     id object = [self objectForKey:key];

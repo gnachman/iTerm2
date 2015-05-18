@@ -202,4 +202,7 @@
 // changed.
 - (NSDictionary *)dictionary;
 
+// Append text in reverse video to the end of the line buffer.
+- (void)appendMessage:(NSString *)message;
+
 @end

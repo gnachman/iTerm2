@@ -342,6 +342,13 @@ typedef enum {
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions;
 
+// This is an alternative to runCommandWithOldCwd and startProgram. It attaches
+// to an existing server. Use only if [iTermAdvancedSettingsModel runJobsInServers]
+// is YES.
+- (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
+                         serverProcessId:(pid_t)serverPid
+                          childProcessId:(pid_t)childPid;
+
 - (void)softTerminate;
 - (void)terminate;
 

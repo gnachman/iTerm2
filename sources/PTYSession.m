@@ -105,7 +105,8 @@ static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly u
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
-
+static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
+static NSString *const SESSION_ARRANGEMENT_CURSOR_POSITION = @"Cursor Position";  // NSDictionary with cursor position
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 static int gNextSessionID = 1;
@@ -675,14 +676,26 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         // |contents| will be non-nil when using system window restoration.
         NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
 
-        // When restoring a window arrangement with contents and a nonempty saved directory, always
-        // use the saved working directory, even if that contravenes the default setting for the
-        // profile.
-        NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
-        [aSession runCommandWithOldCwd:oldCWD
-                         forObjectType:objectType
-                        forceUseOldCWD:contents != nil && oldCWD.length
-                         substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
+        BOOL runCommand = YES;
+        if ([iTermAdvancedSettingsModel runJobsInServers]) {
+            if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
+                pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
+                if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
+                    runCommand = NO;
+                }
+            }
+        }
+
+        if (runCommand) {
+            // When restoring a window arrangement with contents and a nonempty saved directory, always
+            // use the saved working directory, even if that contravenes the default setting for the
+            // profile.
+            NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+            [aSession runCommandWithOldCwd:oldCWD
+                             forObjectType:objectType
+                            forceUseOldCWD:contents != nil && oldCWD.length
+                             substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
+        }
 
         // GUID will be set for new saved arrangements since late 2014.
         // Older versions won't be able to associate saved state with windows from a saved arrangement.
@@ -708,7 +721,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
         if (contents && [iTermAdvancedSettingsModel restoreWindowContents]) {
             DLog(@"Loading content from line buffer dictionary");
-            [aSession setContentsFromLineBufferDictionary:contents];
+            [aSession setContentsFromLineBufferDictionary:contents
+                                 includeRestorationBanner:runCommand];
+            if (!runCommand) {
+                NSDictionary *cursorPosition = arrangement[SESSION_ARRANGEMENT_CURSOR_POSITION];
+                if (cursorPosition) {
+                    VT100GridCoord coord = [cursorPosition gridCoord];
+                    if (coord.x < aSession.screen.width && coord.y < aSession.screen.height) {
+                        [aSession.screen setCursorPosition:coord];
+                    }
+                }
+            }
         }
     } else {
         NSString *title = [state objectForKey:@"title"];
@@ -776,8 +799,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return aSession;
 }
 
-- (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict {
-    [_screen appendFromDictionary:dict];
+- (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
+                   includeRestorationBanner:(BOOL)includeRestorationBanner {
+    [_screen appendFromDictionary:dict includeRestorationBanner:includeRestorationBanner];
 }
 
 // Session specific methods
@@ -878,6 +902,36 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_view updateScrollViewFrame];
 
     return YES;
+}
+
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)serverPid {
+    if (![iTermAdvancedSettingsModel runJobsInServers]) {
+        return NO;
+    }
+    if ([_shell tryToAttachToServerWithProcessId:serverPid timeout:0]) {
+        @synchronized(self) {
+            _registered = YES;
+        }
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+- (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
+                         serverProcessId:(pid_t)serverPid
+                          childProcessId:(pid_t)childPid {
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        [_shell attachToServerWithFileDescriptor:ptyMasterFd
+                                 serverProcessId:serverPid
+                                  childProcessId:childPid];
+        [_shell setWidth:_screen.width height:_screen.height];
+        @synchronized(self) {
+            _registered = YES;
+        }
+    } else {
+        NSLog(@"Can't attach to a server when runJobsInServers is off.");
+    }
 }
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
@@ -1181,6 +1235,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)restartSession {
+    assert(self.isRestartable);
     [self dismissAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
     if (_exited) {
         [self replaceTerminatedShellWithNewInstance];
@@ -1226,7 +1281,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
-    BOOL undoable = ![self isTmuxClient] && !_shouldRestart && !_synthetic;
+    BOOL undoable = (![self isTmuxClient] &&
+                     !_shouldRestart &&
+                     !_synthetic &&
+                     ![[iTermController sharedInstance] applicationIsQuitting]);
     [_terminal.parser forceUnhookDCS];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -1684,29 +1742,36 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     } else {
         // Offer to restart the session by rerunning its program.
         [self appendBrokenPipeMessage:@"Broken Pipe"];
-        iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
-                                                            style:kiTermAnnouncementViewStyleQuestion
-                                                      withActions:@[ @"Restart" ]
-                                                       completion:^(int selection) {
-                                                           switch (selection) {
-                                                               case -2:  // Dismiss programmatically
-                                                                   break;
+        if ([self isRestartable]) {
+            iTermAnnouncementViewController *announcement =
+                [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                                style:kiTermAnnouncementViewStyleQuestion
+                                                          withActions:@[ @"Restart" ]
+                                                           completion:^(int selection) {
+                                                               switch (selection) {
+                                                                   case -2:  // Dismiss programmatically
+                                                                       break;
 
-                                                               case -1: // No
-                                                                   break;
+                                                                   case -1: // No
+                                                                       break;
 
-                                                               case 0: // Yes
-                                                                   [self replaceTerminatedShellWithNewInstance];
-                                                                   break;
-                                                           }
-                                                       }];
-        [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+                                                                   case 0: // Yes
+                                                                       [self replaceTerminatedShellWithNewInstance];
+                                                                       break;
+                                                               }
+                                                           }];
+            [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+        }
         [self updateDisplay];
     }
 }
 
+- (BOOL)isRestartable {
+    return _program != nil;
+}
+
 - (void)replaceTerminatedShellWithNewInstance {
+    assert(self.isRestartable);
     assert(_exited);
     _shouldRestart = NO;
     _exited = NO;
@@ -2942,7 +3007,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_LIVE_SESSION] =
             [_liveSession arrangementWithContents:includeContents];
     }
-
+    if (!self.isTmuxClient) {
+        // These values are used for restoring sessions after a crash.
+        if ([iTermAdvancedSettingsModel runJobsInServers] && !_shell.pidIsChild) {
+            result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
+            VT100GridCoord cursor = VT100GridCoordMake(_screen.cursorX - 1,
+                                                       _screen.cursorY - 1);
+            result[SESSION_ARRANGEMENT_CURSOR_POSITION] = [NSDictionary dictionaryWithGridCoord:cursor];
+        }
+    }
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     if (self.uniqueID) {

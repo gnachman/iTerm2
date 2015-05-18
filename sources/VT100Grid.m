@@ -228,9 +228,10 @@
             [lineBuffer setCursor:currentLineLength];
         }
 
+        const BOOL isPartial = (continuation != EOL_HARD) || (i == size_.height - 1);
         [lineBuffer appendLine:line
                         length:currentLineLength
-                       partial:(continuation != EOL_HARD)
+                       partial:isPartial
                          width:size_.width
                      timestamp:[[self lineInfoAtLineNumber:i] timestamp]
                   continuation:line[size_.width]];
