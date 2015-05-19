@@ -8,6 +8,7 @@
 
 @class DVR;
 @class iTermGrowlDelegate;
+@class iTermStringLine;
 @class LineBuffer;
 @class IntervalTree;
 @class PTYTask;
@@ -17,7 +18,7 @@
 @protocol iTermMark;
 @class VT100Terminal;
 
-// Dictionary keys for -highlightTextMatchingRegex:
+// Dictionary keys for -highlightTextInRange:basedAtAbsoluteLineNumber:absoluteLineNumber:color:
 extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
 extern int kVT100ScreenMinColumns;
@@ -105,10 +106,11 @@ extern int kVT100ScreenMinRows;
 // Load state from tmux. The |state| dictionary has keys from the kStateDictXxx values.
 - (void)setTmuxState:(NSDictionary *)state;
 
-// Set the colors in the prototype char to all text on screen that matches the regex.
+// Set the colors in the range relative to the start of the given line number.
 // See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.
-- (void)highlightTextMatchingRegex:(NSString *)regex
-                            colors:(NSDictionary *)colors;
+- (void)highlightTextInRange:(NSRange)range
+   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                      colors:(NSDictionary *)colors;
 
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
@@ -142,6 +144,9 @@ extern int kVT100ScreenMinRows;
                                data:(NSData *)data;  // data is optional and only used by animated GIFs
 
 - (void)resetAnimatedLines;
+
+- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                   startPtr:(long long *)startAbsLineNumber;
 
 #pragma mark - Marks and notes
 

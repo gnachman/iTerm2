@@ -1286,15 +1286,16 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 }
 
-// Change color of text on screen that matches regex to the color of prototypechar.
-- (void)highlightTextMatchingRegex:(NSString *)regex
-                            colors:(NSDictionary *)colors
-{
-    NSArray *runs = [currentGrid_ runsMatchingRegex:regex];
-    for (NSValue *run in runs) {
-        [self highlightRun:[run gridRunValue]
-       withForegroundColor:[colors objectForKey:kHighlightForegroundColor]
-           backgroundColor:[colors objectForKey:kHighlightBackgroundColor]];
+- (void)highlightTextInRange:(NSRange)range
+   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                      colors:(NSDictionary *)colors {
+    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - self.numberOfScrollbackLines;
+
+    VT100GridRun gridRun = [currentGrid_ gridRunFromRange:range relativeToRow:lineNumber];
+    if (gridRun.length > 0) {
+        NSColor *foreground = colors[kHighlightForegroundColor];
+        NSColor *background = colors[kHighlightBackgroundColor];
+        [self highlightRun:gridRun withForegroundColor:foreground backgroundColor:background];
     }
 }
 
@@ -2024,6 +2025,48 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         realCurrentGrid_ = nil;
     }
     return NO;
+}
+
+- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                   startPtr:(long long *)startAbsLineNumber {
+    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow;
+    if (lineNumber < 0) {
+        return nil;
+    }
+    if (lineNumber >= self.numberOfLines) {
+        return nil;
+    }
+    // Search backward for start of line
+    int i;
+    NSMutableData *data = [NSMutableData data];
+    *startAbsLineNumber = self.totalScrollbackOverflow;
+    const int kMaxRadius = 3;  // Max radius of lines to search above and below absoluteLineNumber
+    for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
+        screen_char_t *line = [self getLineAtIndex:i];
+        if (line[self.width].code == EOL_HARD) {
+            *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
+            break;
+        }
+        [data replaceBytesInRange:NSMakeRange(0, 0)
+                        withBytes:line
+                           length:self.width * sizeof(screen_char_t)];
+    }
+    BOOL done = NO;
+    for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
+        screen_char_t *line = [self getLineAtIndex:i];
+        int length = self.width;
+        done = line[length].code == EOL_HARD;
+        if (done) {
+            // Remove trailing newlines
+            while (length > 0 && line[length - 1].code == 0 && !line[length - 1].complexChar) {
+                --length;
+            }
+        }
+        [data appendBytes:line length:length * sizeof(screen_char_t)];
+    }
+
+    return [[[iTermStringLine alloc] initWithScreenChars:data.mutableBytes
+                                                  length:data.length / sizeof(screen_char_t)] autorelease];
 }
 
 #pragma mark - VT100TerminalDelegate

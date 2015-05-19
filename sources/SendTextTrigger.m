@@ -26,8 +26,15 @@
 }
 
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
-    NSString *message = [self paramWithBackreferencesReplacedWithValues:values];
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
+    NSString *message = [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                                                  count:captureCount];
     [aSession writeTask:[message dataUsingEncoding:NSUTF8StringEncoding]];
     return YES;
 }

@@ -235,8 +235,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     NSString *_pasteboard;
     NSMutableData *_pbtext;
 
-    // The current line of text, for checking against triggers if any.
-    NSMutableString *_triggerLine;
+    // The absolute line number of the next line to apply triggers to.
+    long long _triggerLineNumber;
 
     // The current triggers.
     NSMutableArray *_triggers;
@@ -335,11 +335,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (id)init {
     self = [super init];
     if (self) {
+        _triggerLineNumber = -1;
         _sessionID = gNextSessionID++;
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
-        _triggerLine = [[NSMutableString alloc] init];
         _lastInput = [NSDate timeIntervalSinceReferenceDate];
 
         // Experimentally, this is enough to keep the queue primed but not overwhelmed.
@@ -408,7 +408,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
     [_colorMap release];
-    [_triggerLine release];
     [_triggers release];
     [_pasteboard release];
     [_pbtext release];
@@ -1557,13 +1556,18 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[ProcessCache sharedInstance] notifyNewOutput];
 }
 
-- (void)checkTriggers
-{
+- (void)checkTriggers {
+    if (_triggerLineNumber == -1) {
+        return;
+    }
+    long long startAbsLineNumber;
+    iTermStringLine *stringLine = [_screen stringLineAsStringAtAbsoluteLineNumber:_triggerLineNumber
+                                                                         startPtr:&startAbsLineNumber];
     for (Trigger *trigger in _triggers) {
-        BOOL stop = [trigger tryString:_triggerLine
+        BOOL stop = [trigger tryString:stringLine
                              inSession:self
                            partialLine:NO
-                            lineNumber:[_screen absoluteLineNumberOfCursor]];
+                            lineNumber:startAbsLineNumber];
         if (stop) {
             break;
         }
@@ -1571,35 +1575,38 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)checkPartialLineTriggers {
+    if (_triggerLineNumber == -1) {
+        return;
+    }
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (now - _lastPartialLineTriggerCheck < kMinimumPartialLineTriggerCheckInterval) {
         return;
     }
     _lastPartialLineTriggerCheck = now;
+    long long startAbsLineNumber;
+    iTermStringLine *stringLine = [_screen stringLineAsStringAtAbsoluteLineNumber:_triggerLineNumber
+                                                                         startPtr:&startAbsLineNumber];
     for (Trigger *trigger in _triggers) {
-        BOOL stop = [trigger tryString:_triggerLine
+        BOOL stop = [trigger tryString:stringLine
                              inSession:self
                            partialLine:YES
-                            lineNumber:[_screen absoluteLineNumberOfCursor]];
+                            lineNumber:startAbsLineNumber];
         if (stop) {
             break;
         }
     }
 }
 
-- (void)appendStringToTriggerLine:(NSString *)s
-{
-    const int kMaxTriggerLineLength = 1024;
-    if ([_triggers count] && [_triggerLine length] + [s length] < kMaxTriggerLineLength) {
-        [_triggerLine appendString:s];
+- (void)appendStringToTriggerLine:(NSString *)s {
+    if (_triggerLineNumber == -1) {
+        _triggerLineNumber = _screen.numberOfScrollbackLines + _screen.cursorY - 1 + _screen.totalScrollbackOverflow;
     }
 }
 
-- (void)clearTriggerLine
-{
+- (void)clearTriggerLine {
     if ([_triggers count]) {
         [self checkTriggers];
-        [_triggerLine setString:@""];
+        _triggerLineNumber = -1;
     }
 }
 

@@ -110,7 +110,7 @@ enum {
             @"Cyan Background",  [NSNumber numberWithInt:(int)kCyanBackgroundHighlight],
             @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
             @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
-            @"Gren Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
+            @"Green Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
             @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
             @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
             @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
@@ -157,7 +157,7 @@ enum {
                         @"Cyan Background",  [NSNumber numberWithInt:(int)kCyanBackgroundHighlight],
                         @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
                         @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
-                        @"Gren Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
+                        @"Green Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
                         @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
                         @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
                         @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
@@ -337,9 +337,21 @@ enum {
     return nil;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
-    [[aSession screen] highlightTextMatchingRegex:self.regex
-                                           colors:[self colors]];
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
+    for (NSInteger i = 0; i < captureCount; i++) {
+        NSRange rangeInString = capturedRanges[i];
+        NSRange rangeInScreenChars = [stringLine rangeOfScreenCharsForRangeInString:rangeInString];
+        [[aSession screen] highlightTextInRange:rangeInScreenChars
+                      basedAtAbsoluteLineNumber:lineNumber
+                                         colors:[self colors]];
+    }
+
     return YES;
 }
 

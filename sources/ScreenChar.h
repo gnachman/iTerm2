@@ -281,6 +281,20 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
             !s.underline);
 }
 
+// Represents an array of screen_char_t's as a string and facilitates mapping a
+// range in the string into a range in the screen chars. Useful for highlight
+// regex matches, for example. Generally a nicer interface than calling
+// ScreenCharArrayToString directly.
+@interface iTermStringLine : NSObject
+@property(nonatomic, readonly) NSString *stringValue;
+
+- (instancetype)initWithScreenChars:(screen_char_t *)screenChars
+                             length:(NSInteger)length;
+
+- (NSRange)rangeOfScreenCharsForRangeInString:(NSRange)rangeInString;
+
+@end
+
 // Look up the string associated with a complex char's key.
 NSString* ComplexCharToStr(int key);
 
@@ -327,7 +341,6 @@ BOOL IsHighSurrogate(unichar c);
 // the result string to indices in the original array.
 // In other words:
 // part or all of [result characterAtIndex:i] refers to all or part of screenChars[i - (*deltasPtr)[i]].
-
 NSString* ScreenCharArrayToString(screen_char_t* screenChars,
                                   int start,
                                   int end,

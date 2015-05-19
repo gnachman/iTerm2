@@ -52,6 +52,48 @@ static int ccmNextKey = 1;
 // strings before creating a new one with a recycled code.
 static BOOL hasWrapped = NO;
 
+@interface iTermStringLine()
+@property(nonatomic, retain) NSString *stringValue;
+@end
+
+@implementation iTermStringLine {
+    unichar *_backingStore;
+    int *_deltas;
+}
+
+- (instancetype)initWithScreenChars:(screen_char_t *)screenChars
+                             length:(NSInteger)length {
+    self = [super init];
+    if (self) {
+        _stringValue = [ScreenCharArrayToString(screenChars,
+                                                0,
+                                                length,
+                                                &_backingStore,
+                                                &_deltas) retain];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_stringValue release];
+    if (_backingStore) {
+        free(_backingStore);
+    }
+    if (_deltas) {
+        free(_deltas);
+    }
+    [super dealloc];
+}
+
+- (NSRange)rangeOfScreenCharsForRangeInString:(NSRange)rangeInString {
+    NSUInteger limit = NSMaxRange(rangeInString);
+    limit += _deltas[limit];
+    NSInteger location = rangeInString.location + _deltas[rangeInString.location];
+    return NSMakeRange(location, limit - location);
+}
+
+@end
+
 @implementation ScreenCharArray
 @synthesize line = _line;
 @synthesize length = _length;

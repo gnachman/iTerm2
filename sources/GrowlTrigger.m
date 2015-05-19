@@ -27,9 +27,15 @@
     return @"Enter Message";
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
     iTermGrowlDelegate *gd = [iTermGrowlDelegate sharedInstance];
-    [gd growlNotify:[self paramWithBackreferencesReplacedWithValues:values]
+    [gd growlNotify:[self paramWithBackreferencesReplacedWithValues:capturedStrings count:captureCount]
         withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
                          [aSession name],
                          [[aSession tab] realObjectCount]]

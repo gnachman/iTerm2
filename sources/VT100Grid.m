@@ -1225,62 +1225,21 @@
     return result;
 }
 
-- (NSArray *)runsMatchingRegex:(NSString *)regex {
-    NSMutableArray *runs = [NSMutableArray array];
+- (VT100GridRun)gridRunFromRange:(NSRange)range relativeToRow:(int)row {
+    NSInteger location = range.location;
+    NSInteger length = range.length;
+    if (row < 0) {
+        location += row * size_.width;
+        length += row * size_.width;
 
-    int y = 0;
-    while (y < size_.height) {
-        int numLines;
-        unichar *backingStore;
-        int *deltas;
-
-        NSString *joinedLine = [self joinedLineBeginningAtLineNumber:y
-                                                         numLinesPtr:&numLines
-                                                     backingStorePtr:&backingStore
-                                                           deltasPtr:&deltas];
-        NSRange searchRange = NSMakeRange(0, joinedLine.length);
-        NSRange range;
-        while (1) {
-            range = [joinedLine rangeOfRegex:regex
-                                     options:0
-                                     inRange:searchRange
-                                     capture:0
-                                       error:nil];
-            if (range.location == NSNotFound || range.length == 0) {
-                break;
-            }
-            assert(range.location != NSNotFound);
-            int start = (int)(range.location);
-            int end = (int)(range.location + range.length - 1);
-            start += deltas[start];
-            end += deltas[end];
-            int startY = y + start / size_.width;
-            int startX = start % size_.width;
-            int endY = y + end / size_.width;
-            int endX = end % size_.width;
-
-            if (endY >= size_.height) {
-                endY = size_.height - 1;
-                endX = size_.width;
-            }
-            if (startY < size_.height) {
-                int length = [self numCellsFrom:VT100GridCoordMake(startX, startY)
-                                             to:VT100GridCoordMake(endX, endY)];
-                NSValue *value = [NSValue valueWithGridRun:VT100GridRunMake(startX,
-                                                                            startY,
-                                                                            length)];
-                [runs addObject:value];
-            }
-
-            searchRange.location = range.location + range.length;
-            searchRange.length = joinedLine.length - searchRange.location;
+        if (location < 0 || length <= 0) {
+            return VT100GridRunMake(0, 0, 0);
         }
-        y += numLines;
-        free(backingStore);
-        free(deltas);
     }
 
-    return runs;
+    return VT100GridRunMake(location % size_.width,
+                            row + location / size_.width,
+                            length);
 }
 
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer

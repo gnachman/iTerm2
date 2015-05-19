@@ -82,10 +82,17 @@
     return result;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
     iTermApplicationDelegate *delegate =
         (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
-    [delegate openPasswordManagerToAccountName:[self paramWithBackreferencesReplacedWithValues:values]];
+    [delegate openPasswordManagerToAccountName:[self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                                                                         count:captureCount]];
     return YES;
 }
 

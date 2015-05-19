@@ -67,7 +67,13 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     }
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
     if (!aSession.screen.shellIntegrationInstalled) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
             [self showShellIntegrationRequiredAnnouncementInSession:aSession];
@@ -78,9 +84,9 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     }
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
-    output.line = string;
+    output.line = stringLine.stringValue;
     output.trigger = self;
-    output.values = values;
+    output.values = [NSArray arrayWithObjects:capturedStrings count:captureCount];
     output.mark = [aSession markAddedAtCursorOfClass:[iTermCapturedOutputMark class]];
     [aSession addCapturedOutput:output];
     return NO;

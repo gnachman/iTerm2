@@ -182,8 +182,9 @@
                 inRectFrom:(VT100GridCoord)from
                         to:(VT100GridCoord)to;
 
-// Returns runs (as NSValue*s with gridRunValue) on screen that match a regex.
-- (NSArray *)runsMatchingRegex:(NSString *)regex;
+// Converts a range relative to the start of a row into a grid run. If row is negative, a smaller-
+// than-range.length (but valid!) grid run will be returned.
+- (VT100GridRun)gridRunFromRange:(NSRange)range relativeToRow:(int)row;
 
 // Pop lines out of the line buffer and on to the screen. Up to maxLines will be restored. Before
 // popping, lines to be modified will first be filled with defaultChar.

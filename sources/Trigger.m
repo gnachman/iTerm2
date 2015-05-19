@@ -6,8 +6,9 @@
 //
 
 #import "Trigger.h"
-#import "RegexKitLite.h"
 #import "NSStringITerm.h"
+#import "RegexKitLite.h"
+#import "ScreenChar.h"
 
 NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
@@ -94,16 +95,18 @@ NSString * const kTriggerPartialLineKey = @"partial";
     [super dealloc];
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values
-                      inSession:(PTYSession *)aSession
-                       onString:(NSString *)string
-           atAbsoluteLineNumber:(long long)absoluteLineNumber
-                           stop:(BOOL *)stop {
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
     assert(false);
     return NO;
 }
 
-- (BOOL)tryString:(NSString *)s
+- (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(PTYSession *)aSession
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber {
@@ -118,36 +121,47 @@ NSString * const kTriggerPartialLineKey = @"partial";
         // This trigger doesn't support partial lines.
         return NO;
     }
-    NSRange range = [s rangeOfRegex:regex_];
-    BOOL stop = NO;
-    if (range.location != NSNotFound) {
-        NSArray *captures = [s arrayOfCaptureComponentsMatchedByRegex:regex_];
-        if (captures.count) {
-            _lastLineNumber = lineNumber;
-        }
-        for (NSArray *matches in captures) {
-            if (![self performActionWithValues:matches
-                                    inSession:aSession
-                                     onString:s
-                          atAbsoluteLineNumber:lineNumber
-                                          stop:&stop]) {
-                break;
-            }
-        }
-    }
+
+    __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
+    NSString *s = stringLine.stringValue;
+    [s enumerateStringsMatchedByRegex:regex_
+                           usingBlock:^(NSInteger captureCount,
+                                        NSString *const *capturedStrings,
+                                        const NSRange *capturedRanges,
+                                        volatile BOOL *const stopEnumerating) {
+                               _lastLineNumber = lineNumber;
+                               if (![self performActionWithCapturedStrings:capturedStrings
+                                                            capturedRanges:capturedRanges
+                                                              captureCount:captureCount
+                                                                 inSession:aSession
+                                                                  onString:stringLine
+                                                      atAbsoluteLineNumber:lineNumber
+                                                                      stop:&stopFutureTriggersFromRunningOnThisLine]) {
+                                   *stopEnumerating = YES;
+                               }
+                           }];
     if (!partialLine) {
         _lastLineNumber = -1;
     }
-    return stop;
+    return stopFutureTriggersFromRunningOnThisLine;
 }
 
-- (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values
-{
+- (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)strings {
+    NSString *temp[10];
+    int i;
+    for (i = 0; i < strings.count; i++) {
+        temp[i] = strings[i];
+    }
+    return [self paramWithBackreferencesReplacedWithValues:temp count:i];
+}
+
+- (NSString *)paramWithBackreferencesReplacedWithValues:(NSString * const*)strings
+                                                  count:(NSInteger)count {
     NSString *p = self.param;
     for (int i = 0; i < 9; i++) {
         NSString *rep = @"";
-        if (values.count > i) {
-            rep = [values objectAtIndex:i];
+        if (count > i) {
+            rep = strings[i];
         }
         p = [p stringByReplacingBackreference:i withString:rep];
     }

@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermStringLine;
 @class PTYSession;
 
 extern NSString * const kTriggerRegexKey;
@@ -51,19 +52,24 @@ extern NSString * const kTriggerPartialLineKey;
 // (i.e., an element of groupedMenuItemsForPopupButton)
 - (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict;
 
-- (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values;
+- (NSString *)paramWithBackreferencesReplacedWithValues:(NSString *const *)strings
+                                                  count:(NSInteger)count;
+- (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)strings;
+
 // Returns YES if no more triggers should be processed.
-- (BOOL)tryString:(NSString *)s
+- (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(PTYSession *)aSession
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber;
 
 // Subclasses must override this. Return YES if it can fire again on this line.
-- (BOOL)performActionWithValues:(NSArray *)values
-                      inSession:(PTYSession *)aSession
-                       onString:(NSString *)string
-           atAbsoluteLineNumber:(long long)absoluteLineNumber
-                           stop:(BOOL *)stop;
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)s
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop;
 
 - (NSComparisonResult)compareTitle:(Trigger *)other;
 
