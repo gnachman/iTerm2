@@ -147,23 +147,15 @@ int FileDescriptorServerRun(char *path, pid_t childPid) {
                 return 1;
             }
 
-            fprintf(f, "send fd 0\n"); fflush(f);
-            rc = SendMessageAndFileDescriptor(connectionFd, "0", 0);
+            fprintf(f, "send PTY fd\n"); fflush(f);
+            rc = SendMessageAndFileDescriptor(connectionFd, "m", 3);  // PTY master
             if (rc <= 0) {
                 fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);
                 close(connectionFd);
                 continue;
             }
 
-            fprintf(f, "send fd 1\n"); fflush(f);
-            rc = SendMessageAndFileDescriptor(connectionFd, "1", 1);
-            if (rc <= 0) {
-                fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);
-                close(connectionFd);
-                continue;
-            }
-
-            fprintf(f, "send fd 2\n"); fflush(f);
+            fprintf(f, "send read end of pipe fd\n"); fflush(f);
             rc = SendMessageAndFileDescriptor(connectionFd, "p", pipeFds[0]);
             if (rc <= 0) {
                 fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);

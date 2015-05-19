@@ -88,14 +88,11 @@ static int ReadOneFileDescriptor(int socketFd, int *fileDescriptors) {
     }
 
     printf("buf=%.*s, fd=%d\n", n, buf, fd);
-    if (buf[0] == '0' && fileDescriptors[0] == -1) {
+    if (buf[0] == 'm' && fileDescriptors[0] == -1) {
         fileDescriptors[0] = fd;
         return 0;
-    } else if (buf[0] == '1' && fileDescriptors[1] == -1) {
-        fileDescriptors[1] = fd;
-        return 0;
     } else if (buf[0] == 'p' && fileDescriptors[2] == -1) {
-        fileDescriptors[2] = fd;
+        fileDescriptors[1] = fd;
         return 0;
     }
 
@@ -127,25 +124,23 @@ int FileDescriptorClientRun(char *path, int *fileDescriptors, int *pidPtr) {
 
     fileDescriptors[0] = -1;
     fileDescriptors[1] = -1;
-    fileDescriptors[2] = -1;
+    int n = 0;
     if (ReadOneFileDescriptor(socketFd, fileDescriptors)) {
         close(socketFd);
         return 0;
     }
+    n++;
     if (ReadOneFileDescriptor(socketFd, fileDescriptors)) {
         close(socketFd);
         return 1;
     }
-    if (ReadOneFileDescriptor(socketFd, fileDescriptors)) {
-        close(socketFd);
-        return 1;
-    }
+    n++;
     if (ReadMessage(socketFd, pidPtr, sizeof(int)) < sizeof(int)) {
         close(socketFd);
         return 1;
     }
 
     close(socketFd);
-    return 3;
+    return n;
 }
 
