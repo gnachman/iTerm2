@@ -106,7 +106,7 @@ static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // I
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
 static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
-
+static NSString *const SESSION_ARRANGEMENT_CURSOR_POSITION = @"Cursor Position";  // NSDictionary with cursor position
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 static int gNextSessionID = 1;
@@ -720,7 +720,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
         if (contents && [iTermAdvancedSettingsModel restoreWindowContents]) {
             DLog(@"Loading content from line buffer dictionary");
-            [aSession setContentsFromLineBufferDictionary:contents];
+            [aSession setContentsFromLineBufferDictionary:contents
+                                 includeRestorationBanner:runCommand];
+            if (!runCommand) {
+                NSDictionary *cursorPosition = arrangement[SESSION_ARRANGEMENT_CURSOR_POSITION];
+                if (cursorPosition) {
+                    VT100GridCoord coord = [cursorPosition gridCoord];
+                    if (coord.x < aSession.screen.width && coord.y < aSession.screen.height) {
+                        [aSession.screen setCursorPosition:coord];
+                    }
+                }
+            }
         }
     } else {
         NSString *title = [state objectForKey:@"title"];
@@ -788,8 +798,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return aSession;
 }
 
-- (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict {
-    [_screen appendFromDictionary:dict];
+- (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
+                   includeRestorationBanner:(BOOL)includeRestorationBanner {
+    [_screen appendFromDictionary:dict includeRestorationBanner:includeRestorationBanner];
 }
 
 // Session specific methods
@@ -2961,7 +2972,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [_liveSession arrangementWithContents:includeContents];
     }
     if (!self.isTmuxClient) {
+        // These values are used for restoring sessions after a crash.
         result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.pid);
+        VT100GridCoord cursor = VT100GridCoordMake(_screen.cursorX - 1,
+                                                   _screen.cursorY - 1);
+        result[SESSION_ARRANGEMENT_CURSOR_POSITION] = [NSDictionary dictionaryWithGridCoord:cursor];
     }
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";

@@ -116,7 +116,6 @@ static const int kLineBufferVersion = 1;
             }
             [blocks addObject:block];
         }
-        [self appendMessage:@"Session Restored"];
     }
     return self;
 }

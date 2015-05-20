@@ -1359,6 +1359,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return currentGrid_.cursorY + 1;
 }
 
+- (void)setCursorPosition:(VT100GridCoord)coord {
+    currentGrid_.cursor = coord;
+}
+
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
 // This function is dangerous! It writes to an internal buffer and returns a
 // pointer to it. Better to use getLineAtIndex:withBuffer:.
@@ -4107,8 +4111,12 @@ static void SwapInt(int *a, int *b) {
     return [temp dictionary];
 }
 
-- (void)appendFromDictionary:(NSDictionary *)dictionary {
+- (void)appendFromDictionary:(NSDictionary *)dictionary
+    includeRestorationBanner:(BOOL)includeRestorationBanner {
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
+    if (includeRestorationBanner) {
+        [lineBuffer appendMessage:@"Session Restored"];
+    }
     [lineBuffer setMaxLines:maxScrollbackLines_];
     [lineBuffer dropExcessLinesWithWidth:self.width];
     [linebuffer_ release];

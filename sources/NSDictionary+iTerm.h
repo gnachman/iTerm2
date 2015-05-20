@@ -7,8 +7,12 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "VT100GridTypes.h"
 
 @interface NSDictionary (iTerm)
+
++ (NSDictionary *)dictionaryWithGridCoord:(VT100GridCoord)coord;
+- (VT100GridCoord)gridCoord;
 
 - (BOOL)boolValueDefaultingToYesForKey:(id)key;
 - (NSColor *)colorValue;
