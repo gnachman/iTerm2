@@ -24,6 +24,8 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 // No reading or writing allowed for now.
 @property(atomic, assign) BOOL paused;
+@property(nonatomic, readonly) BOOL pidIsChild;
+@property(nonatomic, readonly) pid_t serverPid;
 
 - (id)init;
 - (void)dealloc;
@@ -70,8 +72,16 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)stopCoprocess;
 
 - (void)logData:(const char *)buffer length:(int)length;
-- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid timeout:(NSTimeInterval)timeout;
 
+// If [iTermAdvancedSettingsModel runJobsInServers] is on, then try for up to
+// |timeout| seconds to connect to the server. Returns YES on success.
+// If successful, it will be wired up as the task's file descriptor and process.
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid
+                                 timeout:(NSTimeInterval)timeout;
+
+// Wire up the server as the task's file descriptor and process. The caller
+// will ahve connected to the server to get this info. Requires
+// [iTermAdvancedSettingsModel runJobsInServers].
 - (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
                          serverProcessId:(pid_t)serverPid
                           childProcessId:(pid_t)childPid;

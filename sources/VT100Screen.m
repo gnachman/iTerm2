@@ -4107,7 +4107,13 @@ static void SwapInt(int *a, int *b) {
 
 - (NSDictionary *)contentsDictionary {
     LineBuffer *temp = [[linebuffer_ newAppendOnlyCopy] autorelease];
-    [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed] toLineBuffer:temp];
+    int numLines;
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        numLines = currentGrid_.size.height;
+    } else {
+        numLines = [currentGrid_ numberOfLinesUsed];
+    }
+    [currentGrid_ appendLines:numLines toLineBuffer:temp];
     return [temp dictionary];
 }
 
@@ -4121,7 +4127,13 @@ static void SwapInt(int *a, int *b) {
     [lineBuffer dropExcessLinesWithWidth:self.width];
     [linebuffer_ release];
     linebuffer_ = lineBuffer;
-    int linesRestored = MIN(MAX(0, currentGrid_.size.height - 1),
+    int maxLinesToRestore;
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        maxLinesToRestore = currentGrid_.size.height;
+    } else {
+        maxLinesToRestore = currentGrid_.size.height - 1;
+    }
+    int linesRestored = MIN(MAX(0, maxLinesToRestore),
                             [lineBuffer numLinesWithWidth:self.width]);
     [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]

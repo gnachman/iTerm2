@@ -98,9 +98,12 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     PtyTaskDebugLog(@"Begin remove task %p\n", (void*)task);
     PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
     pid_t pid = task.pid;
-    if (pid != -1) {
+    if (pid != -1 && task.pidIsChild) {
         // Not a restored task.
         [deadpool addObject:@([task pid])];
+    } else if (task.serverPid != -1 && !task.pidIsChild) {
+        // Prevent server from becoming a zombie.
+        [deadpool addObject:@(task.serverPid)];
     }
     if ([task hasCoprocess]) {
         [deadpool addObject:@([[task coprocess] pid])];
@@ -114,8 +117,8 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     [self unblock];
 }
 
-- (void)waitForPid:(pid_t)pid
-{
+// NB: This is currently used for coprocesses.
+- (void)waitForPid:(pid_t)pid {
     [tasksLock lock];
     [deadpool addObject:@(pid)];
     [tasksLock unlock];

@@ -26,6 +26,7 @@
  */
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "ProfileModel.h"
@@ -599,9 +600,13 @@
 }
 
 + (NSString *)commandByPrefixingServerCommand:(NSString *)command {
-    NSString *iterm2Binary =
-        [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters];
-    return [NSString stringWithFormat:@"%@ --server %@", iterm2Binary, command];
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        NSString *iterm2Binary =
+            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters];
+        return [NSString stringWithFormat:@"%@ --server %@", iterm2Binary, command];
+    } else {
+        return command;
+    }
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark

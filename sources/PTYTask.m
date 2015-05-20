@@ -5,11 +5,13 @@
 
 #define MAXRW 1024
 
-#import "PTYTask.h"
 #import "Coprocess.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
+#import "PTYTask.h"
 #import "TaskNotifier.h"
+#import "iTermAdvancedSettingsModel.h"
+#include "iTermFileDescriptorClient.h"
 #include "shell_launcher.h"
 #include <dlfcn.h>
 #include <libproc.h>
@@ -24,7 +26,6 @@
 #include <sys/user.h>
 #include <unistd.h>
 #include <util.h>
-#include "iTermFileDescriptorClient.h"
 
 #define CTRLKEY(c) ((c)-'A'+1)
 
@@ -79,8 +80,9 @@ setup_tty_param(struct termios* term,
 @end
 
 @implementation PTYTask {
-    pid_t _serverPid;
-    pid_t _restoredPid;  // -1 except when process is restored. _deathFd will also be set.
+    pid_t _serverPid;  // -1 when servers are not in use.
+    pid_t _serverChildPid;  // -1 when servers are not in use.
+    pid_t _childPid;  // -1 when servers are in use; otherwise is pid of child.
     int fd;
     int status;
     NSString* tty;
@@ -96,7 +98,7 @@ setup_tty_param(struct termios* term,
     Coprocess *coprocess_;  // synchronized (self)
     BOOL brokenPipe_;
     NSString *command_;  // Command that was run if launchWithPath:arguments:etc was called
-    
+
     // Number of spins of the select loop left before we tell the delegate we were deregistered.
     int _spinsNeeded;
     BOOL _paused;
@@ -106,8 +108,9 @@ setup_tty_param(struct termios* term,
     self = [super init];
     if (self) {
         _serverPid = (pid_t)-1;
+        _childPid = (pid_t)-1;
         fd = -1;
-        _restoredPid = -1;
+        _serverChildPid = -1;
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
     }
@@ -117,11 +120,19 @@ setup_tty_param(struct termios* term,
 - (void)dealloc {
     [[TaskNotifier sharedInstance] deregisterTask:self];
 
-    if (_serverPid > 0) {
-        killpg(_serverPid, SIGHUP);
+    // TODO: The use of killpg seems pretty sketchy. It takes a pgid_t, not a
+    // pid_t. Are they guaranteed to always be the same for process group
+    // leaders?
+    if (_childPid > 0) {
+        // Terminate an owned child.
+        killpg(_childPid, SIGHUP);
+    } else if (_serverChildPid) {
+        // Kill a server-owned child.
+        // TODO: Don't want to do this when Sparkle is upgrading.
+        killpg(_serverChildPid, SIGHUP);
     }
 
-    [self closeFileDescriptors];
+    [self closeFileDescriptor];
     [writeLock release];
     [writeBuffer release];
     [tty release];
@@ -208,8 +219,12 @@ static void HandleSigChld(int n)
     return environment;
 }
 
-- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid timeout:(NSTimeInterval)timeout {
-    if (_restoredPid != -1) {
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid
+                                 timeout:(NSTimeInterval)timeout {
+    if (![iTermAdvancedSettingsModel runJobsInServers]) {
+        return NO;
+    }
+    if (_serverChildPid != -1) {
         return NO;
     }
 
@@ -242,14 +257,16 @@ static void HandleSigChld(int n)
 - (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
                          serverProcessId:(pid_t)serverPid
                           childProcessId:(pid_t)childPid {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
     fd = ptyMasterFd;
     _serverPid = serverPid;
-    _restoredPid = childPid;
+    _serverChildPid = childPid;
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
 // Like login_tty but makes fd 0 the master and fd 1 the slave.
 static void MyLoginTTY(int master, int slave) {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
     setsid();
     ioctl(slave, TIOCSCTTY, NULL);
     if (slave == 0) {
@@ -267,7 +284,11 @@ static void MyLoginTTY(int master, int slave) {
 }
 
 // Just like forkpty but fd 0 the master and fd 1 the slave.
-static int MyForkPty(int *amaster, char *name, struct termios *termp, struct winsize *winp) {
+static int MyForkPty(int *amaster,
+                     char *name,
+                     struct termios *termp,
+                     struct winsize *winp) {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
     int master;
     int slave;
 
@@ -341,9 +362,13 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
-    // TODO: The pid I get back is the server PID. I really want it to be the child's pid. Let's make the restore case the same as the "normal" case.
-    _serverPid = MyForkPty(&fd, theTtyname, &term, &win);
-    if (_serverPid == (pid_t)0) {
+    pid_t pid;
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win);
+    } else {
+        pid = _childPid = forkpty(&fd, theTtyname, &term, &win);
+    }
+    if (pid == (pid_t)0) {
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
         signal(SIGPIPE, SIG_DFL);
@@ -372,7 +397,7 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 
         sleep(1);
         _exit(-1);
-    } else if (_serverPid < (pid_t)0) {
+    } else if (pid < (pid_t)0) {
         PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
         NSRunCriticalAlertPanel(@"Unable to Fork!",
                                 @"iTerm cannot launch the program for this session.",
@@ -393,13 +418,17 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     // Make sure the master side of the pty is closed on future exec() calls.
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
-    if ([self tryToAttachToServerWithProcessId:_serverPid timeout:10]) {
-        tty = [[NSString stringWithUTF8String:theTtyname] retain];
-        NSParameterAssert(tty != nil);
-
-        fcntl(fd, F_SETFL, O_NONBLOCK);
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        if ([self tryToAttachToServerWithProcessId:_serverPid timeout:10]) {
+            tty = [[NSString stringWithUTF8String:theTtyname] retain];
+            fcntl(fd, F_SETFL, O_NONBLOCK);
+        } else {
+            close(fd);
+        }
     } else {
-        close(fd);
+        tty = [[NSString stringWithUTF8String:theTtyname] retain];
+        fcntl(fd,F_SETFL,O_NONBLOCK);
+        [[TaskNotifier sharedInstance] registerTask:self];
     }
 }
 
@@ -541,10 +570,10 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 }
 
 - (void)sendSignal:(int)signo {
-    if (_restoredPid != -1) {
-        kill(_restoredPid, signo);
-    } else if (_serverPid >= 0) {
-        kill(_serverPid, signo);
+    if (_serverChildPid != -1) {
+        kill(_serverChildPid, signo);
+     } else if (_childPid >= 0) {
+         kill(_childPid, signo);
      }
 }
 
@@ -570,11 +599,23 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     return fd;
 }
 
-- (pid_t)pid {
+- (BOOL)pidIsChild {
+    return _serverChildPid == 1 && _childPid != -1;
+}
+
+- (pid_t)serverPid {
     return _serverPid;
 }
 
-- (void)closeFileDescriptors {
+- (pid_t)pid {
+    if (_serverChildPid != -1) {
+        return _serverChildPid;
+    } else {
+        return _childPid;
+    }
+}
+
+- (void)closeFileDescriptor {
     if (fd != -1) {
         close(fd);
     }
@@ -587,7 +628,7 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     [self sendSignal:SIGHUP];
 
     if (fd >= 0) {
-        [self closeFileDescriptors];
+        [self closeFileDescriptor];
         [[TaskNotifier sharedInstance] deregisterTask:self];
         // Require that it spin twice so we can be completely sure that the task won't get called
         // again. If we add the observer just before select() was going to be called, it wouldn't
@@ -685,9 +726,9 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     return rc;
 }
 
-- (NSString*)description
-{
-    return [NSString stringWithFormat:@"PTYTask(pid %d, fildes %d)", _serverPid, fd];
+- (NSString*)description {
+    return [NSString stringWithFormat:@"PTYTask(child pid %d, server-child pid %d, fildes %d)",
+              _serverChildPid, _serverPid, fd];
 }
 
 // This is a stunningly brittle hack. Find the child of parentPid with the
@@ -748,7 +789,7 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 // may be chosen. This function also implements a chache to avoid doing the
 // potentially expensive system calls too often.
 - (NSString*)currentJob:(BOOL)forceRefresh {
-    return [[ProcessCache sharedInstance] jobNameWithPid:_serverPid];
+    return [[ProcessCache sharedInstance] jobNameWithPid:self.pid];
 }
 
 - (NSString*)getWorkingDirectory {
@@ -756,11 +797,13 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     int ret;
 
     // This only works if the child process is owned by our uid
+    // Notably it seems to work (at least on 10.10) even if the process ID is
+    // not owned by us.
     ret = proc_pidinfo(_serverPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
     if (ret <= 0) {
         // The child was probably owned by root (which is expected if it's
         // a login shell. Use the cwd of its oldest child instead.
-        pid_t childPid = [self getFirstChildOfPid:_serverPid];
+        pid_t childPid = [self getFirstChildOfPid:self.pid];
         if (childPid > 0) {
             ret = proc_pidinfo(childPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
         }

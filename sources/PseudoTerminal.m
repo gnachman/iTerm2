@@ -7275,6 +7275,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         // Start the command
         if (fdcResult) {
+            assert([iTermAdvancedSettingsModel runJobsInServers]);
             [aSession attachToServerWithFileDescriptor:fdcResult->ptyMasterFd
                                        serverProcessId:fdcResult->serverPid
                                         childProcessId:fdcResult->childPid];

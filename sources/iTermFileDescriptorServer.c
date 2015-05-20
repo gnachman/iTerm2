@@ -108,13 +108,11 @@ static pid_t Wait() {
 
 static void SigChildHandler(int arg) {
     if (Wait() == gChildPid) {
-        LOG("Marking child dead");
         gChildDied = 1;  // In case the server is currently connected, prevent SocketBindListen from running.
         // This will wake up PerformAcceptActivity and make the server exit.
         close(gSocketFd);
         close(gConnectionFd);
     } else {
-        LOG("Something weird happened");
         // Something weird happened.
         unlink(gPath);
         exit(1);

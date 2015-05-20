@@ -365,23 +365,26 @@ static BOOL hasBecomeActive = NO;
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
                                                         object:nil];
-    
+
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(workspaceSessionDidBecomeActive:)
                                                                name:NSWorkspaceSessionDidBecomeActiveNotification
                                                              object:nil];
-    
+
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(workspaceSessionDidResignActive:)
                                                                name:NSWorkspaceSessionDidResignActiveNotification
                                                              object:nil];
 
-    [PseudoTerminalRestorer setRestorationCompletionBlock:^{
-        [self searchForOrphanServers];
-    }];
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        [PseudoTerminalRestorer setRestorationCompletionBlock:^{
+            [self searchForOrphanServers];
+        }];
+    }
 }
 
 - (void)searchForOrphanServers {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
     NSLog(@"--- Begin search for orphans ---");
     NSString *dir = @"/tmp";
     PseudoTerminal *term = nil;
@@ -405,6 +408,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (PTYSession *)openOrphanedSession:(FileDescriptorClientResult)result inWindow:(PseudoTerminal *)desiredWindow {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
     Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
     PTYSession *aSession =
         [[iTermController sharedInstance] launchBookmark:nil
@@ -421,26 +425,6 @@ static BOOL hasBecomeActive = NO;
                                                                   fileDescriptorClientResult:&theResult];
                                                    }];
     return aSession;
-}
-
-- (NSDictionary *)dictionaryForFileDescriptorClientResult:(FileDescriptorClientResult)result {
-    return @{ @"ok": @(result.ok),
-              @"error": [NSString stringWithUTF8String:result.error ?: ""],
-              @"ptyMasterFd": @(result.ptyMasterFd),
-              @"childPid": @(result.childPid),
-              @"socketFd": @(result.socketFd),
-              @"serverPid": @(result.serverPid) };
-}
-
-- (FileDescriptorClientResult)fileDescriptorClientResultFromDictionary:(NSDictionary *)dict {
-    FileDescriptorClientResult result;
-    result.ok = [dict[@"ok"] intValue];
-    result.error = [dict[@"error"] UTF8String];
-    result.ptyMasterFd = [dict[@"ptyMasterFd"] intValue];
-    result.childPid = [dict[@"childPid"] intValue];
-    result.socketFd = [dict[@"socketFd"] intValue];
-    result.serverPid = [dict[@"serverPid"] intValue];
-    return result;
 }
 
 - (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {
@@ -475,7 +459,7 @@ static BOOL hasBecomeActive = NO;
         // closing multiple sessions
         shouldShowAlert = YES;
     }
-    
+
     if (shouldShowAlert) {
         BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
                                        @"All sessions will be closed.",
@@ -493,8 +477,10 @@ static BOOL hasBecomeActive = NO;
     // Prevent sessions from making their termination undoable since we're quitting.
     [[iTermController sharedInstance] setApplicationIsQuitting:YES];
 
-    // Restorable sessions must be killed or they'll auto-restore as orphans on the next start.
-    [[iTermController sharedInstance] killRestorableSessions];
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        // Restorable sessions must be killed or they'll auto-restore as orphans on the next start.
+        [[iTermController sharedInstance] killRestorableSessions];
+    }
 
     // This causes all windows to be closed and all sessions to be terminated.
     [iTermController sharedInstanceRelease];
@@ -509,8 +495,6 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
-    // If the app is quitting then kill its child processes.
-
     [[HotkeyWindowController sharedInstance] stopEventTap];
 }
 
@@ -712,7 +696,7 @@ static BOOL hasBecomeActive = NO;
         launchTime_ = [[NSDate date] retain];
         _workspaceSessionActive = YES;
     }
-    
+
     return self;
 }
 
@@ -1057,7 +1041,7 @@ static BOOL hasBecomeActive = NO;
     [defaults setFloat:delay forKey:delayKey];
     double rate = bytes;
     rate /= delay;
-    
+
     [ToastWindowController showToastWithMessage:[NSString stringWithFormat:@"Pasting at up to %@/sec", [self formatBytes:rate]]];
 }
 

@@ -50,7 +50,9 @@ int launch_shell(void) {
     err(1, "Failed to exec %s with arg %s", shell, argv0);
 }
 
-static void Die(int sig) {
+// Our child process died before the server got spun up. Wait for it to avoid a
+// zombie and then exit. The actual exit status doesn't matter.
+static void HandleEarlySigChild(int sig) {
     int status;
     pid_t pid;
     do {
@@ -59,6 +61,7 @@ static void Die(int sig) {
     _exit(status);
 }
 
+// Precondition: PTY Master on fd 0, PTY Slave on fd 1
 static void ExecChild(int argc, char *const *argv) {
     // Child process
     signal(SIGCHLD, SIG_DFL);
@@ -71,11 +74,11 @@ static void ExecChild(int argc, char *const *argv) {
     execvp(argv[0], argv);
 }
 
-// PTY Master on fd 0, PTY Slave on fd 1
+// Precondition: PTY Master on fd 0, PTY Slave on fd 1
 int iterm2_server(int argc, char *const *argv) {
     // Set up a signal handler that makes the server die with the child's status code if the child
     // dies before the server is done setting itself up.
-    signal(SIGCHLD, Die);
+    signal(SIGCHLD, HandleEarlySigChild);
 
     // Start the child.
     pid_t pid = fork();

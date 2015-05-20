@@ -678,10 +678,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
 
         BOOL runCommand = YES;
-        if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
-            pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
-            if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
-                runCommand = NO;
+        if ([iTermAdvancedSettingsModel runJobsInServers]) {
+            if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
+                pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
+                if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
+                    runCommand = NO;
+                }
             }
         }
 
@@ -904,6 +906,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (BOOL)tryToAttachToServerWithProcessId:(pid_t)serverPid {
+    if (![iTermAdvancedSettingsModel runJobsInServers]) {
+        return NO;
+    }
     if ([_shell tryToAttachToServerWithProcessId:serverPid timeout:0]) {
         @synchronized(self) {
             _registered = YES;
@@ -917,12 +922,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
                          serverProcessId:(pid_t)serverPid
                           childProcessId:(pid_t)childPid {
-    [_shell attachToServerWithFileDescriptor:ptyMasterFd
-                             serverProcessId:serverPid
-                              childProcessId:childPid];
-    [_shell setWidth:_screen.width height:_screen.height];
-    @synchronized(self) {
-        _registered = YES;
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        [_shell attachToServerWithFileDescriptor:ptyMasterFd
+                                 serverProcessId:serverPid
+                                  childProcessId:childPid];
+        [_shell setWidth:_screen.width height:_screen.height];
+        @synchronized(self) {
+            _registered = YES;
+        }
+    } else {
+        NSLog(@"Can't attach to a server when runJobsInServers is off.");
     }
 }
 
@@ -2993,10 +3002,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     if (!self.isTmuxClient) {
         // These values are used for restoring sessions after a crash.
-        result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.pid);
-        VT100GridCoord cursor = VT100GridCoordMake(_screen.cursorX - 1,
-                                                   _screen.cursorY - 1);
-        result[SESSION_ARRANGEMENT_CURSOR_POSITION] = [NSDictionary dictionaryWithGridCoord:cursor];
+        if ([iTermAdvancedSettingsModel runJobsInServers] && !_shell.pidIsChild) {
+            result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
+            VT100GridCoord cursor = VT100GridCoordMake(_screen.cursorX - 1,
+                                                       _screen.cursorY - 1);
+            result[SESSION_ARRANGEMENT_CURSOR_POSITION] = [NSDictionary dictionaryWithGridCoord:cursor];
+        }
     }
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";

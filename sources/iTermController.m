@@ -30,6 +30,7 @@
 #import "FutureMethods.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PTYSession.h"
@@ -1411,6 +1412,7 @@ static BOOL initDone = NO;
 }
 
 - (void)killRestorableSessions {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
     for (iTermRestorableSession *restorableSession in _restorableSessions) {
         for (PTYSession *aSession in restorableSession.sessions) {
             [aSession.shell sendSignal:SIGHUP];
