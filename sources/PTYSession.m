@@ -920,6 +920,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_shell attachToServerWithFileDescriptor:ptyMasterFd
                              serverProcessId:serverPid
                               childProcessId:childPid];
+    [_shell setWidth:_screen.width height:_screen.height];
     @synchronized(self) {
         _registered = YES;
     }

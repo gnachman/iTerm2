@@ -766,13 +766,13 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
         }
     }
     if (ret <= 0) {
-        /* An error occured */
+        // An error occured
         return nil;
     } else if (ret != sizeof(vpi)) {
-        /* Now this is very bad... */
+        // Now this is very bad...
         return nil;
     } else {
-        /* All is good */
+        // All is good
         return [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
     }
 }
