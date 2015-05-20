@@ -67,6 +67,7 @@
 #import "VT100Screen.h"
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
+#include "iTermFileDescriptorClient.h"
 #include <unistd.h>
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
@@ -7223,7 +7224,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (PTYSession *)createSessionWithProfile:(NSDictionary *)profile
                                  withURL:(NSString *)urlString
-                           forObjectType:(iTermObjectType)objectType {
+                           forObjectType:(iTermObjectType)objectType
+              fileDescriptorClientResult:(FileDescriptorClientResult *)fdcResult {
     PtyLog(@"PseudoTerminal: -createSessionWithProfile:withURL:forObjectType:");
     PTYSession *aSession;
 
@@ -7243,7 +7245,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         NSURL *url = [NSURL URLWithString:urlString];
 
         // Grab the addressbook command
-        NSDictionary *substitutions = @{ @"$$URL$$": urlString,
+        NSDictionary *substitutions = @{ @"$$URL$$": urlString ?: @"",
                                          @"$$HOST$$": [url host] ?: @"",
                                          @"$$USER$$": [url user] ?: @"",
                                          @"$$PASSWORD$$": [url password] ?: @"",
@@ -7271,11 +7273,17 @@ static const CGFloat kHorizontalTabBarHeight = 22;
            forSession:aSession];
 
         // Start the command
-        [self startProgram:cmd
-               environment:env
-                    isUTF8:isUTF8
-                 inSession:aSession
-             substitutions:substitutions];
+        if (fdcResult) {
+            [aSession attachToServerWithFileDescriptor:fdcResult->ptyMasterFd
+                                       serverProcessId:fdcResult->serverPid
+                                        childProcessId:fdcResult->childPid];
+        } else {
+            [self startProgram:cmd
+                   environment:env
+                        isUTF8:isUTF8
+                     inSession:aSession
+                 substitutions:substitutions];
+        }
     }
     return aSession;
 }

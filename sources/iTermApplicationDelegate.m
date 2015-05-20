@@ -56,6 +56,7 @@
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
 #import <objc/runtime.h>
+#include "iTermFileDescriptorClient.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -375,6 +376,76 @@ static BOOL hasBecomeActive = NO;
                                                                name:NSWorkspaceSessionDidResignActiveNotification
                                                              object:nil];
 
+    [PseudoTerminalRestorer setRestorationCompletionBlock:^{
+        [self searchForOrphanServers];
+    }];
+}
+
+- (void)searchForOrphanServers {
+    NSLog(@"--- Begin search for orphans ---");
+    NSString *dir = @"/tmp";
+    NSMutableArray *results = [NSMutableArray array];
+    for (NSString *filename in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil]) {
+        NSString *prefix = @"iTerm2.socket.";
+        if ([filename hasPrefix:prefix]) {
+            // TODO: This needs to be able to time out if a server is wedged, which happened somehow.
+            NSLog(@"Check out orphan %@", filename);
+            FileDescriptorClientResult result = FileDescriptorClientRun([[filename substringFromIndex:prefix.length] intValue]);
+            if (result.ok) {
+                [results addObject:[self dictionaryForFileDescriptorClientResult:result]];
+            }
+        }
+    }
+    NSLog(@"%@", results);
+    // TODO: I have a bug where I try to connect twice to the same path but I am not sure why.
+    if (results.count) {
+        NSAlert *alert = [NSAlert alertWithMessageText:@"Attach to orphaned servers?"
+                                         defaultButton:@"Yes"
+                                       alternateButton:@"No"
+                                           otherButton:nil
+                             informativeTextWithFormat:@"Found orphaned servers. Rescue them?"];
+        if ([alert runModal] == NSModalResponseOK) {
+            for (NSDictionary *dict in results) {
+                [self openWindowForOrphan:dict];
+            }
+        }
+    }
+}
+
+- (void)openWindowForOrphan:(NSDictionary *)dict {
+    __block FileDescriptorClientResult result = [self fileDescriptorClientResultFromDictionary:dict];
+    [[iTermController sharedInstance] launchBookmark:nil
+                                          inTerminal:nil
+                                             withURL:nil
+                                            isHotkey:NO
+                                             makeKey:NO
+                                             command:nil
+                                               block:^PTYSession *(PseudoTerminal *term) {
+                                                   return [term createSessionWithProfile:[[ProfileModel sharedInstance] defaultBookmark]
+                                                                                 withURL:nil
+                                                                           forObjectType:iTermWindowObject
+                                                              fileDescriptorClientResult:&result];
+                                               }];
+}
+
+- (NSDictionary *)dictionaryForFileDescriptorClientResult:(FileDescriptorClientResult)result {
+    return @{ @"ok": @(result.ok),
+              @"error": [NSString stringWithUTF8String:result.error ?: ""],
+              @"ptyMasterFd": @(result.ptyMasterFd),
+              @"childPid": @(result.childPid),
+              @"socketFd": @(result.socketFd),
+              @"serverPid": @(result.serverPid) };
+}
+
+- (FileDescriptorClientResult)fileDescriptorClientResultFromDictionary:(NSDictionary *)dict {
+    FileDescriptorClientResult result;
+    result.ok = [dict[@"ok"] intValue];
+    result.error = [dict[@"error"] UTF8String];
+    result.ptyMasterFd = [dict[@"ptyMasterFd"] intValue];
+    result.childPid = [dict[@"childPid"] intValue];
+    result.socketFd = [dict[@"socketFd"] intValue];
+    result.serverPid = [dict[@"serverPid"] intValue];
+    return result;
 }
 
 - (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {

@@ -92,7 +92,6 @@ int launch_shell(void) {
 
         // Run the server.
         int status = FileDescriptorServerRun(path, pid);
-        unlink(path);
         return status;
     } else {
         // Fork returned an error!

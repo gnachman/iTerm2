@@ -214,16 +214,17 @@ static void HandleSigChld(int n)
     }
 
     NSTimeInterval timeoutTime = [NSDate timeIntervalSinceReferenceDate] + timeout;
+    // TODO: Create the unix domain socket in the parent prior to forking to avoid the timeout silliness.
     while (1) {
-        NSString *thePath = [NSString stringWithFormat:@"/tmp/iTerm2.socket.%d", thePid];
-        char *pathBytes = (char *)thePath.UTF8String;
-        FileDescriptorClientResult result = FileDescriptorClientRun(pathBytes);
+        NSLog(@"tryToAttachToServerWithProcessId: Restore connection to pid %d", (int)thePid);
+        FileDescriptorClientResult result = FileDescriptorClientRun(thePid);
         if (!result.ok) {
             if (result.error && !strcmp(result.error, kFileDescriptorClientErrorCouldNotConnect)) {
                 // Waiting for child process to start.
                 if ([NSDate timeIntervalSinceReferenceDate] > timeoutTime) {
                     return NO;
                 } else {
+                    NSLog(@"Timed out, try again in 100 ms");
                     usleep(100000);  // Sleep for 100 ms
                     continue;
                 }
@@ -231,12 +232,20 @@ static void HandleSigChld(int n)
                 return NO;
             }
         }
-        fd = result.ptyMasterFd;
-        _serverPid = thePid;
-        _restoredPid = result.childPid;
-        [[TaskNotifier sharedInstance] registerTask:self];
+        [self attachToServerWithFileDescriptor:result.ptyMasterFd
+                               serverProcessId:thePid
+                                childProcessId:result.childPid];
         return YES;
     }
+}
+
+- (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
+                         serverProcessId:(pid_t)serverPid
+                          childProcessId:(pid_t)childPid {
+    fd = ptyMasterFd;
+    _serverPid = serverPid;
+    _restoredPid = childPid;
+    [[TaskNotifier sharedInstance] registerTask:self];
 }
 
 // Like login_tty but makes fd 0 the master and fd 1 the slave.

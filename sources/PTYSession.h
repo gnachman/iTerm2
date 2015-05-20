@@ -504,6 +504,10 @@ typedef enum {
 // Make this session's textview the first responder.
 - (void)takeFocus;
 
+- (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
+                         serverProcessId:(pid_t)serverPid
+                          childProcessId:(pid_t)childPid;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;

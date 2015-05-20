@@ -1173,7 +1173,7 @@ static BOOL initDone = NO;
     if (block) {
         session = block(term);
     } else if (url) {
-        session = [term createSessionWithProfile:aDict withURL:url forObjectType:objectType];
+        session = [term createSessionWithProfile:aDict withURL:url forObjectType:objectType fileDescriptorClientResult:NULL];
     } else {
         session = [term createTabWithProfile:aDict withCommand:command];
     }

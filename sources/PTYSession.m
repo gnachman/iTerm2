@@ -914,6 +914,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
+- (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
+                         serverProcessId:(pid_t)serverPid
+                          childProcessId:(pid_t)childPid {
+    [_shell attachToServerWithFileDescriptor:ptyMasterFd
+                             serverProcessId:serverPid
+                              childProcessId:childPid];
+    @synchronized(self) {
+        _registered = YES;
+    }
+}
+
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType
               forceUseOldCWD:(BOOL)forceUseOldCWD

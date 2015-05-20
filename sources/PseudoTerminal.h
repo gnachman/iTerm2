@@ -11,6 +11,7 @@
 #import "ToolbeltView.h"
 #import "WindowControllerInterface.h"
 #import "iTermInstantReplayWindowController.h"
+#include "iTermFileDescriptorClient.h"
 
 @class PTYSession;
 @class PSMTabBarControl;
@@ -245,7 +246,8 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 - (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
                                  withURL:(NSString *)url
-                           forObjectType:(iTermObjectType)objectType;
+                           forObjectType:(iTermObjectType)objectType
+              fileDescriptorClientResult:(FileDescriptorClientResult *)fdcResult;
 
 // Add a new session to this window with the given addressbook entry.
 // The optional command overrides the profile's settings.

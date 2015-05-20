@@ -1,6 +1,7 @@
 #include "iTermFileDescriptorClient.h"
 #include "iTermFileDescriptorServer.h"
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -97,6 +98,7 @@ static int ReadOneFileDescriptor(int socketFd, int *fileDescriptor) {
 static int FileDescriptorClientConnect(char *path) {
     int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socketFd == -1) {
+        printf("Failed to create socket: %s\n", strerror(errno));
         return -1;
     }
 
@@ -104,16 +106,29 @@ static int FileDescriptorClientConnect(char *path) {
     remote.sun_family = AF_UNIX;
     strcpy(remote.sun_path, path);
     int len = strlen(remote.sun_path) + sizeof(remote.sun_family) + 1;
+    int flags = fcntl(socketFd, F_GETFL, 0);
+
+    // Put the socket in nonblocking mode so connect can fail fast if another iTerm2 is connected
+    // to this server.
+    fcntl(socketFd, F_SETFL, flags | O_NONBLOCK);
     if (connect(socketFd, (struct sockaddr *)&remote, len) == -1) {
+        printf("Failed to connect: %s\n", strerror(errno));
+        close(socketFd);
         return -1;
     }
+
+    // Make socket block again.
+    fcntl(socketFd, F_SETFL, flags & ~O_NONBLOCK);
 
     return socketFd;
 }
 
-FileDescriptorClientResult FileDescriptorClientRun(char *path) {
+FileDescriptorClientResult FileDescriptorClientRun(pid_t pid) {
     FileDescriptorClientResult result = { 0 };
+    char path[256];
+    snprintf(path, sizeof(path), "/tmp/iTerm2.socket.%d", (int)pid);
 
+    printf("Connect to path %s\n", path);
     int socketFd = FileDescriptorClientConnect(path);
     if (socketFd < 0) {
         result.error = kFileDescriptorClientErrorCouldNotConnect;
@@ -127,11 +142,14 @@ FileDescriptorClientResult FileDescriptorClientRun(char *path) {
     }
     if (ReadMessage(socketFd, &result.childPid, sizeof(int)) < sizeof(int)) {
         result.error = "Failed to read PID";
+        close(socketFd);
         return result;
     }
 
-    close(socketFd);
+    result.serverPid = pid;
     result.ok = 1;
+    result.socketFd = socketFd;
+    printf("Done with process id %d\n\n", (int)pid);
     return result;
 }
 
