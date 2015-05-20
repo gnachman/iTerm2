@@ -680,7 +680,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         BOOL runCommand = YES;
         if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
             pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
-            if ([aSession.shell tryToAttachToServerWithProcessId:serverPid timeout:0]) {
+            if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
                 runCommand = NO;
             }
         }
@@ -890,6 +890,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_view updateScrollViewFrame];
 
     return YES;
+}
+
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)serverPid {
+    if ([_shell tryToAttachToServerWithProcessId:serverPid timeout:0]) {
+        @synchronized(self) {
+            _registered = YES;
+        }
+        return YES;
+    } else {
+        return NO;
+    }
 }
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
