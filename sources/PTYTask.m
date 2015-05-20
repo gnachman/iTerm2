@@ -78,9 +78,8 @@ setup_tty_param(struct termios* term,
 @property(atomic, assign) BOOL hasMuteCoprocess;
 @end
 
-@implementation PTYTask
-{
-    pid_t pid;
+@implementation PTYTask {
+    pid_t _serverPid;
     pid_t _restoredPid;  // -1 except when process is restored. _deathFd will also be set.
     int fd;
     int status;
@@ -103,11 +102,10 @@ setup_tty_param(struct termios* term,
     BOOL _paused;
 }
 
-- (id)init
-{
+- (id)init {
     self = [super init];
     if (self) {
-        pid = (pid_t)-1;
+        _serverPid = (pid_t)-1;
         fd = -1;
         _restoredPid = -1;
         writeBuffer = [[NSMutableData alloc] init];
@@ -116,12 +114,11 @@ setup_tty_param(struct termios* term,
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [[TaskNotifier sharedInstance] deregisterTask:self];
 
-    if (pid > 0) {
-        killpg(pid, SIGHUP);
+    if (_serverPid > 0) {
+        killpg(_serverPid, SIGHUP);
     }
 
     [self closeFileDescriptors];
@@ -322,8 +319,8 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     // TODO: The pid I get back is the server PID. I really want it to be the child's pid. Let's make the restore case the same as the "normal" case.
-    pid = MyForkPty(&fd, theTtyname, &term, &win);
-    if (pid == (pid_t)0) {
+    _serverPid = MyForkPty(&fd, theTtyname, &term, &win);
+    if (_serverPid == (pid_t)0) {
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
         signal(SIGPIPE, SIG_DFL);
@@ -352,7 +349,7 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 
         sleep(1);
         _exit(-1);
-    } else if (pid < (pid_t)0) {
+    } else if (_serverPid < (pid_t)0) {
         PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
         NSRunCriticalAlertPanel(@"Unable to Fork!",
                                 @"iTerm cannot launch the program for this session.",
@@ -521,8 +518,8 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 {
     if (_restoredPid != -1) {
         kill(_restoredPid, signo);
-    } else if (pid >= 0) {
-        kill(pid, signo);
+    } else if (_serverPid >= 0) {
+        kill(_serverPid, signo);
      }
 }
 
@@ -548,9 +545,8 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     return fd;
 }
 
-- (pid_t)pid
-{
-    return pid;
+- (pid_t)pid {
+    return _serverPid;
 }
 
 - (void)closeFileDescriptors {
@@ -666,22 +662,21 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 
 - (NSString*)description
 {
-    return [NSString stringWithFormat:@"PTYTask(pid %d, fildes %d)", pid, fd];
+    return [NSString stringWithFormat:@"PTYTask(pid %d, fildes %d)", _serverPid, fd];
 }
 
 // This is a stunningly brittle hack. Find the child of parentPid with the
 // oldest start time. This relies on undocumented APIs, but short of forking
 // ps, I can't see another way to do it.
 
-- (pid_t)getFirstChildOfPid:(pid_t)parentPid
-{
+- (pid_t)getFirstChildOfPid:(pid_t)parentPid {
     int numBytes;
     numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
     if (numBytes <= 0) {
         return -1;
     }
 
-    int* pids = (int*) malloc(numBytes+sizeof(int));
+    int* pids = (int*) malloc(numBytes + sizeof(int));
     // Save a magic int at the end to be sure that the buffer isn't overrun.
     const int PID_MAGIC = 0xdeadbeef;
     int magicIndex = numBytes/sizeof(int);
@@ -727,21 +722,20 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 // arbitrary tty-controller in the tty's pgid that has this task as an ancestor
 // may be chosen. This function also implements a chache to avoid doing the
 // potentially expensive system calls too often.
-- (NSString*)currentJob:(BOOL)forceRefresh
-{
-    return [[ProcessCache sharedInstance] jobNameWithPid:pid];
+- (NSString*)currentJob:(BOOL)forceRefresh {
+    return [[ProcessCache sharedInstance] jobNameWithPid:_serverPid];
 }
 
-- (NSString*)getWorkingDirectory
-{
+- (NSString*)getWorkingDirectory {
     struct proc_vnodepathinfo vpi;
     int ret;
-    /* This only works if the child process is owned by our uid */
-    ret = proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
+
+    // This only works if the child process is owned by our uid
+    ret = proc_pidinfo(_serverPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
     if (ret <= 0) {
         // The child was probably owned by root (which is expected if it's
         // a login shell. Use the cwd of its oldest child instead.
-        pid_t childPid = [self getFirstChildOfPid:pid];
+        pid_t childPid = [self getFirstChildOfPid:_serverPid];
         if (childPid > 0) {
             ret = proc_pidinfo(childPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
         }
@@ -758,8 +752,7 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     }
 }
 
-- (void)stopCoprocess
-{
+- (void)stopCoprocess {
     pid_t thePid = 0;
     @synchronized (self) {
         if (coprocess_.pid > 0) {
