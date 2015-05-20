@@ -208,17 +208,35 @@ static void HandleSigChld(int n)
     return environment;
 }
 
-- (BOOL)tryAttachToProcess:(pid_t)thePid {
-    NSString *thePath = [NSString stringWithFormat:@"/tmp/iTerm2.socket.%d", thePid];
-    char *pathBytes = (char *)thePath.UTF8String;
-    FileDescriptorClientResult result = FileDescriptorClientRun(pathBytes);
-    if (!result.ok) {
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid timeout:(NSTimeInterval)timeout {
+    if (_restoredPid != -1) {
         return NO;
     }
-    fd = result.ptyMasterFd;
-    _restoredPid = result.childPid;
-    [[TaskNotifier sharedInstance] registerTask:self];
-    return YES;
+
+    NSTimeInterval timeoutTime = [NSDate timeIntervalSinceReferenceDate] + timeout;
+    while (1) {
+        NSString *thePath = [NSString stringWithFormat:@"/tmp/iTerm2.socket.%d", thePid];
+        char *pathBytes = (char *)thePath.UTF8String;
+        FileDescriptorClientResult result = FileDescriptorClientRun(pathBytes);
+        if (!result.ok) {
+            if (result.error && !strcmp(result.error, kFileDescriptorClientErrorCouldNotConnect)) {
+                // Waiting for child process to start.
+                if ([NSDate timeIntervalSinceReferenceDate] > timeoutTime) {
+                    return NO;
+                } else {
+                    usleep(100000);  // Sleep for 100 ms
+                    continue;
+                }
+            } else {
+                return NO;
+            }
+        }
+        fd = result.ptyMasterFd;
+        _serverPid = thePid;
+        _restoredPid = result.childPid;
+        [[TaskNotifier sharedInstance] registerTask:self];
+        return YES;
+    }
 }
 
 // Like login_tty but makes fd 0 the master and fd 1 the slave.
@@ -275,10 +293,6 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
                  width:(int)width
                 height:(int)height
                 isUTF8:(BOOL)isUTF8 {
-#if 1
-    [self tryAttachToProcess:48454];
-    return;
-#endif
     struct termios term;
     struct winsize win;
     char theTtyname[PATH_MAX];
@@ -370,11 +384,14 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     // Make sure the master side of the pty is closed on future exec() calls.
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
-    tty = [[NSString stringWithUTF8String:theTtyname] retain];
-    NSParameterAssert(tty != nil);
+    if ([self tryToAttachToServerWithProcessId:_serverPid timeout:10]) {
+        tty = [[NSString stringWithUTF8String:theTtyname] retain];
+        NSParameterAssert(tty != nil);
 
-    fcntl(fd,F_SETFL,O_NONBLOCK);
-    [[TaskNotifier sharedInstance] registerTask:self];
+        fcntl(fd, F_SETFL, O_NONBLOCK);
+    } else {
+        close(fd);
+    }
 }
 
 - (BOOL)wantsRead {
@@ -514,8 +531,7 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
     [self.delegate threadedTaskBrokenPipe];
 }
 
-- (void)sendSignal:(int)signo
-{
+- (void)sendSignal:(int)signo {
     if (_restoredPid != -1) {
         kill(_restoredPid, signo);
     } else if (_serverPid >= 0) {
@@ -527,7 +543,7 @@ static int MyForkPty(int *amaster, char *name, struct termios *termp, struct win
 {
     PtyTaskDebugLog(@"Set terminal size to %dx%d", width, height);
     struct winsize winsize;
-    // TODO(georgen): Access to fd should be synchronoized or else it should not be allowed to call this function from the main thread.
+    // TODO(georgen): Access to fd should be synchronized or else it should not be allowed to call this function from the main thread.
     if (fd == -1) {
         return;
     }

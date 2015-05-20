@@ -9,6 +9,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+const char *kFileDescriptorClientErrorCouldNotConnect = "Couldn't connect";
+
 static ssize_t ReadMessage(int fd, void *buffer, size_t bufferCapacity) {
     struct msghdr message = { 0 };
     struct iovec ioVector[1];
@@ -114,7 +116,7 @@ FileDescriptorClientResult FileDescriptorClientRun(char *path) {
 
     int socketFd = FileDescriptorClientConnect(path);
     if (socketFd < 0) {
-        result.error = "Couldn't connect";
+        result.error = kFileDescriptorClientErrorCouldNotConnect;
         return result;
     }
 

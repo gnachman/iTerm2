@@ -3,9 +3,11 @@
 
 #include <unistd.h>
 
+extern const char *kFileDescriptorClientErrorCouldNotConnect;
+
 typedef struct {
   int ok;
-  char *error;
+  const char *error;
   int ptyMasterFd;
   pid_t childPid;
 } FileDescriptorClientResult;

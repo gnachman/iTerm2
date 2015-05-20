@@ -70,6 +70,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)stopCoprocess;
 
 - (void)logData:(const char *)buffer length:(int)length;
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid timeout:(NSTimeInterval)timeout;
 
 @end
 

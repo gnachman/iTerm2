@@ -385,8 +385,7 @@ static BOOL hasBecomeActive = NO;
     _workspaceSessionActive = NO;
 }
 
-- (BOOL)applicationShouldTerminate:(NSNotification *)theNotification
-{
+- (BOOL)applicationShouldTerminate:(NSNotification *)theNotification {
     NSArray *terminals;
 
     terminals = [[iTermController sharedInstance] terminals];
@@ -424,6 +423,11 @@ static BOOL hasBecomeActive = NO;
 
     // Ensure [iTermController dealloc] is called before prefs are saved
     [[HotkeyWindowController sharedInstance] stopEventTap];
+
+    // Prevent sessions from making their termination undoable since we're quitting.
+    [[iTermController sharedInstance] setApplicationIsQuitting:YES];
+
+    // This causes all windows to be closed and all sessions to be terminated.
     [iTermController sharedInstanceRelease];
 
     // save preferences
@@ -435,8 +439,9 @@ static BOOL hasBecomeActive = NO;
     return YES;
 }
 
-- (void)applicationWillTerminate:(NSNotification *)aNotification
-{
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
+    // If the app is quitting then kill its child processes.
+
     [[HotkeyWindowController sharedInstance] stopEventTap];
 }
 

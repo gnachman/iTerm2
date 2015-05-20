@@ -61,7 +61,7 @@ static void Die(int sig) {
 
 static void ExecChild() {
     // Child process
-    signal(SIGCHLD, SIG_IGN);
+    signal(SIGCHLD, SIG_DFL);
 
     // Dup slave to stdin and stderr. This closes the master (fd 0) in the process.
     dup2(kPtySlaveFileDescriptor, 0);
@@ -91,7 +91,9 @@ int launch_shell(void) {
         snprintf(path, sizeof(path), "/tmp/iTerm2.socket.%d", getpid());
 
         // Run the server.
-        return FileDescriptorServerRun(path, pid);
+        int status = FileDescriptorServerRun(path, pid);
+        unlink(path);
+        return status;
     } else {
         // Fork returned an error!
         printf("fork failed: %s", strerror(errno));

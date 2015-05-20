@@ -124,8 +124,7 @@ static BOOL initDone = NO;
     return shared;
 }
 
-+ (void)sharedInstanceRelease
-{
++ (void)sharedInstanceRelease {
     [shared release];
     shared = nil;
 }
@@ -1409,6 +1408,12 @@ static BOOL initDone = NO;
 
 - (BOOL)hasRestorableSession {
     return _restorableSessions.count > 0;
+}
+
+- (void)killRestorableSessions {
+    for (PTYSession *aSession in _restorableSessions) {
+        [aSession.shell sendSignal:SIGHUP];
+    }
 }
 
 // accessors for to-many relationships:

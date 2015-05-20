@@ -105,6 +105,7 @@ static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly u
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
+static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
@@ -676,14 +677,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         // |contents| will be non-nil when using system window restoration.
         NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
 
-        // When restoring a window arrangement with contents and a nonempty saved directory, always
-        // use the saved working directory, even if that contravenes the default setting for the
-        // profile.
-        NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
-        [aSession runCommandWithOldCwd:oldCWD
-                         forObjectType:objectType
-                        forceUseOldCWD:contents != nil && oldCWD.length
-                         substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
+        BOOL runCommand = YES;
+        if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
+            pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
+            if ([aSession.shell tryToAttachToServerWithProcessId:serverPid timeout:0]) {
+                runCommand = NO;
+            }
+        }
+
+        if (runCommand) {
+            // When restoring a window arrangement with contents and a nonempty saved directory, always
+            // use the saved working directory, even if that contravenes the default setting for the
+            // profile.
+            NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+            [aSession runCommandWithOldCwd:oldCWD
+                             forObjectType:objectType
+                            forceUseOldCWD:contents != nil && oldCWD.length
+                             substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
+        }
 
         // GUID will be set for new saved arrangements since late 2014.
         // Older versions won't be able to associate saved state with windows from a saved arrangement.
@@ -1227,7 +1238,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
-    BOOL undoable = ![self isTmuxClient] && !_shouldRestart && !_synthetic;
+    BOOL undoable = (![self isTmuxClient] &&
+                     !_shouldRestart &&
+                     !_synthetic &&
+                     ![[iTermController sharedInstance] applicationIsQuitting]);
     [_terminal.parser forceUnhookDCS];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -2935,7 +2949,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_LIVE_SESSION] =
             [_liveSession arrangementWithContents:includeContents];
     }
-
+    if (!self.isTmuxClient) {
+        result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.pid);
+    }
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     if (self.uniqueID) {
