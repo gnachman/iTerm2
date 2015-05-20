@@ -1226,6 +1226,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)restartSession {
+    assert(self.isRestartable);
     [self dismissAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
     if (_exited) {
         [self replaceTerminatedShellWithNewInstance];
@@ -1724,29 +1725,36 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     } else {
         // Offer to restart the session by rerunning its program.
         [self appendBrokenPipeMessage:@"Broken Pipe"];
-        iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
-                                                            style:kiTermAnnouncementViewStyleQuestion
-                                                      withActions:@[ @"Restart" ]
-                                                       completion:^(int selection) {
-                                                           switch (selection) {
-                                                               case -2:  // Dismiss programmatically
-                                                                   break;
+        if ([self isRestartable]) {
+            iTermAnnouncementViewController *announcement =
+                [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                                style:kiTermAnnouncementViewStyleQuestion
+                                                          withActions:@[ @"Restart" ]
+                                                           completion:^(int selection) {
+                                                               switch (selection) {
+                                                                   case -2:  // Dismiss programmatically
+                                                                       break;
 
-                                                               case -1: // No
-                                                                   break;
+                                                                   case -1: // No
+                                                                       break;
 
-                                                               case 0: // Yes
-                                                                   [self replaceTerminatedShellWithNewInstance];
-                                                                   break;
-                                                           }
-                                                       }];
-        [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+                                                                   case 0: // Yes
+                                                                       [self replaceTerminatedShellWithNewInstance];
+                                                                       break;
+                                                               }
+                                                           }];
+            [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+        }
         [self updateDisplay];
     }
 }
 
+- (BOOL)isRestartable {
+    return _program != nil;
+}
+
 - (void)replaceTerminatedShellWithNewInstance {
+    assert(self.isRestartable);
     assert(_exited);
     _shouldRestart = NO;
     _exited = NO;

@@ -1416,6 +1416,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)restartSessionWithConfirmation:(PTYSession *)aSession {
+    assert(aSession.isRestartable);
     [[self retain] autorelease];
     NSAlert *alert = [NSAlert alertWithMessageText:@"Restart session?"
                                      defaultButton:@"OK"
@@ -6658,7 +6659,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             result = NO;
         }
     } else if ([item action] == @selector(restartSession:)) {
-        return YES;
+        return [[self currentSession] isRestartable];
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] screen] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {

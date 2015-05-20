@@ -586,14 +586,22 @@
 
     if ([customDirectoryString isEqualToString:kProfilePreferenceInitialDirectoryHomeValue]) {
         // Run login without -l argument: this is a login session and will use the home dir.
-        return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
+        return [self commandByPrefixingServerCommand:[NSString stringWithFormat:@"login -fp \"%@\"", thisUser]];
     } else {
         // Not using the home directory. This requires some trickery.
         // Run iTerm2's executable with a special flag that makes it run the shell as a login shell
         // (with "-" inserted at the start of argv[0]). See shell_launcher.c for more details.
-        return [NSString stringWithFormat:@"%@ --launch_shell",
-                   [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
+        NSString *launchShellCommand =
+            [NSString stringWithFormat:@"%@ --launch_shell",
+                [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
+        return [self commandByPrefixingServerCommand:launchShellCommand];
     }
+}
+
++ (NSString *)commandByPrefixingServerCommand:(NSString *)command {
+    NSString *iterm2Binary =
+        [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters];
+    return [NSString stringWithFormat:@"%@ --server %@", iterm2Binary, command];
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark
@@ -601,7 +609,7 @@
 {
     BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
-        return [bookmark objectForKey:KEY_COMMAND];
+        return [self commandByPrefixingServerCommand:[bookmark objectForKey:KEY_COMMAND]];
     } else {
         return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
                                                 forObjectType:objectType];

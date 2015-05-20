@@ -3599,7 +3599,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                [item action]==@selector(clearTextViewBuffer:) ||
                [item action]==@selector(editTextViewSession:) ||
                [item action]==@selector(closeTextViewSession:) ||
-               [item action]==@selector(restartTextViewSession:) ||
                [item action]==@selector(movePane:) ||
                [item action]==@selector(swapSessions:) ||
                [item action]==@selector(installShellIntegration:) ||
@@ -3607,6 +3606,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // We always validate the above commands
         return YES;
     }
+    if ([item action]==@selector(restartTextViewSession:)) {
+        return [_delegate isRestartable];
+    }
+
     if ([item action]==@selector(mail:) ||
         [item action]==@selector(browse:) ||
         [item action]==@selector(searchInBrowser:) ||

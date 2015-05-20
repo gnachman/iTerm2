@@ -22,7 +22,7 @@
 
 static const int kPtySlaveFileDescriptor = 1;
 
-static void ExecCommand(void) {
+int launch_shell(void) {
     const char *shell = getenv("SHELL");
     if (!shell) {
         err(1, "SHELL environment variable not set");
@@ -59,7 +59,7 @@ static void Die(int sig) {
     _exit(status);
 }
 
-static void ExecChild() {
+static void ExecChild(int argc, char *argv[]) {
     // Child process
     signal(SIGCHLD, SIG_DFL);
 
@@ -67,11 +67,12 @@ static void ExecChild() {
     dup2(kPtySlaveFileDescriptor, 0);
     dup2(kPtySlaveFileDescriptor, 2);
 
-    ExecCommand();
+    // TODO: The first arg should be just the last path component.
+    execvp(argv[0], argv);
 }
 
 // PTY Master on fd 0, PTY Slave on fd 1
-int launch_shell(void) {
+int iterm2_server(int argc, const char **argv) {
     // Set up a signal handler that makes the server die with the child's status code if the child
     // dies before the server is done setting itself up.
     signal(SIGCHLD, Die);
@@ -79,7 +80,7 @@ int launch_shell(void) {
     // Start the child.
     pid_t pid = fork();
     if (pid == 0) {
-        ExecChild();
+        ExecChild(argc, argv);
         return -1;
     } else if (pid > 0) {
         // Prepare to run the server.
