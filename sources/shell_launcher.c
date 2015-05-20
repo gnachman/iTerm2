@@ -59,7 +59,7 @@ static void Die(int sig) {
     _exit(status);
 }
 
-static void ExecChild(int argc, char *argv[]) {
+static void ExecChild(int argc, char *const *argv) {
     // Child process
     signal(SIGCHLD, SIG_DFL);
 
@@ -72,7 +72,7 @@ static void ExecChild(int argc, char *argv[]) {
 }
 
 // PTY Master on fd 0, PTY Slave on fd 1
-int iterm2_server(int argc, const char **argv) {
+int iterm2_server(int argc, char *const *argv) {
     // Set up a signal handler that makes the server die with the child's status code if the child
     // dies before the server is done setting itself up.
     signal(SIGCHLD, Die);

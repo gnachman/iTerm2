@@ -20,7 +20,7 @@ int main(int argc, const char *argv[]){
         return launch_shell();
     } else if (argc > 1 && !strcmp(argv[1], "--server")) {
         // Run a server that spawns a job.
-        return iterm2_server(argc - 2, argv + 2);
+        return iterm2_server(argc - 2, (char *const *)argv + 2);
     }
 
     // Normal launch of GUI.
