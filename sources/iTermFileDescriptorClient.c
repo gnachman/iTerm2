@@ -75,7 +75,7 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
 }
 
 // Reads a file descriptor from a socket. Returns 0 on success, -1 on failure.
-static int ReadOneFileDescriptor(int socketFd, int *fileDescriptors) {
+static int ReadOneFileDescriptor(int socketFd, int *fileDescriptor) {
     printf("Read one file descriptor\n");
     char buf[1] = { 0 };
     int fd;
@@ -88,18 +88,8 @@ static int ReadOneFileDescriptor(int socketFd, int *fileDescriptors) {
     }
 
     printf("buf=%.*s, fd=%d\n", n, buf, fd);
-    if (buf[0] == '0' && fileDescriptors[0] == -1) {
-        fileDescriptors[0] = fd;
-        return 0;
-    } else if (buf[0] == '1' && fileDescriptors[1] == -1) {
-        fileDescriptors[1] = fd;
-        return 0;
-    } else if (buf[0] == 'p' && fileDescriptors[2] == -1) {
-        fileDescriptors[2] = fd;
-        return 0;
-    }
-
-    return -1;
+    *fileDescriptor = fd;
+    return 0;
 }
 
 static int FileDescriptorClientConnect(char *path) {
@@ -119,33 +109,27 @@ static int FileDescriptorClientConnect(char *path) {
     return socketFd;
 }
 
-int FileDescriptorClientRun(char *path, int *fileDescriptors, int *pidPtr) {
+FileDescriptorClientResult FileDescriptorClientRun(char *path) {
+    FileDescriptorClientResult result = { 0 };
+
     int socketFd = FileDescriptorClientConnect(path);
     if (socketFd < 0) {
-        return 0;
+        result.error = "Couldn't connect";
+        return result;
     }
 
-    fileDescriptors[0] = -1;
-    fileDescriptors[1] = -1;
-    fileDescriptors[2] = -1;
-    if (ReadOneFileDescriptor(socketFd, fileDescriptors)) {
+    if (ReadOneFileDescriptor(socketFd, &result.ptyMasterFd)) {
+        result.error = "Failed to read file descriptor";
         close(socketFd);
-        return 0;
+        return result;
     }
-    if (ReadOneFileDescriptor(socketFd, fileDescriptors)) {
-        close(socketFd);
-        return 1;
-    }
-    if (ReadOneFileDescriptor(socketFd, fileDescriptors)) {
-        close(socketFd);
-        return 1;
-    }
-    if (ReadMessage(socketFd, pidPtr, sizeof(int)) < sizeof(int)) {
-        close(socketFd);
-        return 1;
+    if (ReadMessage(socketFd, &result.childPid, sizeof(int)) < sizeof(int)) {
+        result.error = "Failed to read PID";
+        return result;
     }
 
     close(socketFd);
-    return 3;
+    result.ok = 1;
+    return result;
 }
 

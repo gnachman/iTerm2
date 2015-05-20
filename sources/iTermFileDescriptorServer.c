@@ -9,10 +9,8 @@
 #include <unistd.h>
 
 static const int kMaxConnections = 1;
-static int gChildDeathPipeFd;
 static int gSocketFd;
 static int gReturnCode;
-static int gChildIsDead;
 static pid_t gChildPid;
 static FILE *f;
 
@@ -57,27 +55,60 @@ static ssize_t SendMessageAndFileDescriptor(int connectionFd,
     return sendmsg(connectionFd, &message, 0);
 }
 
+static pid_t Wait() {
+    pid_t pid;
+    do {
+        pid = waitpid(gChildPid, &gReturnCode, 0);
+    } while (pid == -1 && errno == EINTR);
+    return pid;
+}
+
 static void SigChildHandler(int arg) {
-    if (wait(&gReturnCode) == gChildPid) {
-        // TODO: Does this need to be a nonblocking write?
-        write(gChildDeathPipeFd, &gReturnCode, sizeof(gReturnCode));
+    if (Wait() == gChildPid) {
+        // This will wake up PerformAcceptActivity and make the server exit.
         close(gSocketFd);
-        gChildIsDead = 1;
+    } else {
+        // Something weird happened.
+        exit(1);
     }
 }
 
-static void HandleSIGUSR1(int arg) {
-    kill(gChildPid, SIGHUP);
+static int PerformAcceptActivity() {
+    // incoming unix domain socket connection to get FDs
+    struct sockaddr_un remote;
+    socklen_t sizeOfRemote = sizeof(remote);
+    int connectionFd = accept(gSocketFd, (struct sockaddr *)&remote, &sizeOfRemote);
+    if (connectionFd == -1) {
+        fprintf(f, "accept failed %s\n", strerror(errno)); fflush(f);
+        return 1;
+    }
+
+    fprintf(f, "send master\n"); fflush(f);
+    int rc = SendMessageAndFileDescriptor(connectionFd, "m", 0);
+    if (rc <= 0) {
+        fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);
+        close(connectionFd);
+        return 0;
+    }
+
+    fprintf(f, "send pid\n"); fflush(f);
+    rc = SendMessage(connectionFd, &gChildPid, sizeof(gChildPid));
+    if (rc <= 0) {
+        fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);
+        close(connectionFd);
+        return 0;
+    }
+
+    fprintf(f, "All done!"); fflush(f);
+    close(connectionFd);
+
+    return 0;
 }
 
-int FileDescriptorServerRun(char *path, pid_t childPid) {
-    gChildPid = childPid;
-    // We get this when iTerm2 crashes. Ignore it.
-    signal(SIGHUP, SIG_IGN);
-    signal(SIGUSR1, HandleSIGUSR1);
-
+static int SocketBindListen(char *path) {
     gSocketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (gSocketFd == -1) {
+        fprintf(f, "socket() failed: %s", strerror(errno)); fflush(f);
         return 1;
     }
 
@@ -87,103 +118,44 @@ int FileDescriptorServerRun(char *path, pid_t childPid) {
     unlink(local.sun_path);
     int len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
     if (bind(gSocketFd, (struct sockaddr *)&local, len) == -1) {
+        fprintf(f, "bind() failed: %s", strerror(errno)); fflush(f);
         return 1;
     }
 
     if (listen(gSocketFd, kMaxConnections) == -1) {
+        fprintf(f, "listen() failed: %s", strerror(errno)); fflush(f);
+        return 1;
+    }
+    return 0;
+}
+
+int FileDescriptorServerRun(char *path, pid_t childPid) {
+    f = fopen("/tmp/log.txt", "w");
+
+    // We get this when iTerm2 crashes. Ignore it.
+    fprintf(f, "Installing SIGHUP handler.\n"); fflush(f);
+    signal(SIGHUP, SIG_IGN);
+
+    // Listen on a Unix Domain Socket.
+    fprintf(f, "Calling SocketBindListen.\n"); fflush(f);
+    if (SocketBindListen(path)) {
+        fprintf(f, "SocketBindListen failed\n"); fflush(f);
         return 1;
     }
 
-    int pipeFds[2];
-    int rc = pipe(pipeFds);
-    if (rc) {
-        return 1;
-    }
-
-    gChildDeathPipeFd = pipeFds[1];
-    // There's a race here; if the child dies before this point, we'll not know. Maybe try waiting
-    // after installing the handler?
+    // Handle CHLD signal when child dies so we can wake up select and terminate the server.
+    // This must be done after SocketBindListen succeeds. There should have been a preexisting
+    // handler to kill us if the child dies before this point.
+    fprintf(f, "Installing SIGCHLD handler.\n"); fflush(f);
+    gChildPid = childPid;
     signal(SIGCHLD, SigChildHandler);
 
-    f = fopen("/tmp/log.txt", "w");
-    while (!gChildIsDead) {
-        fd_set rfds;
-        fd_set wfds;
-        fd_set efds;
-        int highfd;
-
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
-        FD_ZERO(&efds);
-
-        FD_SET(pipeFds[0], &rfds);
-        FD_SET(gSocketFd, &rfds);
-        highfd = pipeFds[0];
-        if (gSocketFd > highfd) {
-            highfd = gSocketFd;
-        }
-
-        fprintf(f, "Calling select...\n"); fflush(f);
-        if (select(highfd + 1, &rfds, &wfds, &efds, NULL) < 0) {
-            fprintf(f, "Select returned error\n"); fflush(f);
-            continue;
-        }
-        fprintf(f, "Select returned nonnegative"); fflush(f);
-
-        if (FD_ISSET(pipeFds[0], &rfds)) {
-            // sigchild tickled the pipe so exit.
-            fprintf(f, "Pipe is readable, I guess my child is dead.\n"); fflush(f);
-            return gReturnCode;
-        }
-
-        if (FD_ISSET(gSocketFd, &rfds)) {
-            fprintf(f, "Socket is readable, call accept...\n"); fflush(f);
-            // incoming unix domain socket connection to get FDs
-            struct sockaddr_un remote;
-            socklen_t sizeOfRemote = sizeof(remote);
-            int connectionFd = accept(gSocketFd, (struct sockaddr *)&remote, &sizeOfRemote);
-            if (connectionFd == -1) {
-                fprintf(f, "accept failed %s\n", strerror(errno)); fflush(f);
-                return 1;
-            }
-
-            fprintf(f, "send fd 0\n"); fflush(f);
-            rc = SendMessageAndFileDescriptor(connectionFd, "0", 0);
-            if (rc <= 0) {
-                fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);
-                close(connectionFd);
-                continue;
-            }
-
-            fprintf(f, "send fd 1\n"); fflush(f);
-            rc = SendMessageAndFileDescriptor(connectionFd, "1", 1);
-            if (rc <= 0) {
-                fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);
-                close(connectionFd);
-                continue;
-            }
-
-            fprintf(f, "send fd 2\n"); fflush(f);
-            rc = SendMessageAndFileDescriptor(connectionFd, "p", pipeFds[0]);
-            if (rc <= 0) {
-                fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);
-                close(connectionFd);
-                continue;
-            }
-
-            fprintf(f, "send pid\n"); fflush(f);
-            rc = SendMessage(connectionFd, &gChildPid, sizeof(gChildPid));
-            if (rc <= 0) {
-                fprintf(f, "send failed %s\n", strerror(errno)); fflush(f);
-                close(connectionFd);
-                continue;
-            }
-
-            fprintf(f, "All done!"); fflush(f);
-            close(connectionFd);
-        }
+    // PerformAcceptActivity will return an error only if the child dies.
+    fprintf(f, "Entering main loop.\n"); fflush(f);
+    while (!PerformAcceptActivity()) {
+        fprintf(f, "Accept activity finished.\n"); fflush(f);
     }
-    fprintf(f, "Child is dead\n");
-    fflush(f);
-    return 1;
+
+    fprintf(f, "Child is presumed dead with return code %d\n", gReturnCode); fflush(f);
+    return gReturnCode;
 }

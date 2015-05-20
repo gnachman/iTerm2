@@ -85,8 +85,6 @@ setup_tty_param(struct termios* term,
     pid_t pid;
     pid_t _restoredPid;  // -1 except when process is restored. _writeFd and _deathFd will also be set.
     int fd;
-    int _writeFd;  // Optional
-    int _deathFd;  // Optional
     int status;
     NSString* tty;
     NSString* path;
@@ -113,8 +111,6 @@ setup_tty_param(struct termios* term,
     if (self) {
         pid = (pid_t)-1;
         fd = -1;
-        _writeFd = -1;
-        _deathFd = -1;
         _restoredPid = -1;
         writeBuffer = [[NSMutableData alloc] init];
         writeLock = [[NSLock alloc] init];
@@ -218,18 +214,64 @@ static void HandleSigChld(int n)
 }
 
 - (BOOL)tryAttachToProcess:(pid_t)thePid {
-    int fds[3];
     NSString *thePath = [NSString stringWithFormat:@"/tmp/iTerm2.socket.%d", thePid];
     char *pathBytes = (char *)thePath.UTF8String;
-    int rc = FileDescriptorClientRun(pathBytes, fds, &_restoredPid);
-    if (rc != 3) {
+    FileDescriptorClientResult result = FileDescriptorClientRun(pathBytes);
+    if (!result.ok) {
         return NO;
     }
-    fd = fds[0];
-    _writeFd = fds[1];
-    _deathFd = fds[2];
+    fd = result.ptyMasterFd;
+    _restoredPid = result.childPid;
     [[TaskNotifier sharedInstance] registerTask:self];
     return YES;
+}
+
+// Like login_tty but makes fd 0 the master and fd 1 the slave.
+static void MyLoginTTY(int master, int slave) {
+    setsid();
+    ioctl(slave, TIOCSCTTY, NULL);
+    if (slave == 0) {
+        dup2(slave, 2);
+        slave = 2;
+    }
+    dup2(master, 0);
+    dup2(slave, 1);
+    if (master > 1) {
+        close(master);
+    }
+    if (slave > 1) {
+        close(slave);
+    }
+}
+
+// Just like forkpty but fd 0 the master and fd 1 the slave.
+static int MyForkPty(int *amaster, char *name, struct termios *termp, struct winsize *winp) {
+    int master;
+    int slave;
+
+    if (openpty(&master, &slave, name, termp, winp) == -1) {
+        NSLog(@"openpty failed: %s", strerror(errno));
+        return -1;
+    }
+
+    pid_t pid = fork();
+    switch (pid) {
+        case -1:
+            // error
+            NSLog(@"Fork failed: %s", strerror(errno));
+            return -1;
+
+        case 0:
+            // child
+            MyLoginTTY(master, slave);
+            return 0;
+
+        default:
+            // parent
+            *amaster = master;
+            close(slave);
+            return pid;
+    }
 }
 
 - (void)launchWithPath:(NSString*)progpath
@@ -239,7 +281,7 @@ static void HandleSigChld(int n)
                 height:(int)height
                 isUTF8:(BOOL)isUTF8 {
 #if 1
-    [self tryAttachToProcess:95074];
+    [self tryAttachToProcess:48454];
     return;
 #endif
     struct termios term;
@@ -281,7 +323,8 @@ static void HandleSigChld(int n)
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
-    pid = forkpty(&fd, theTtyname, &term, &win);
+    // TODO: The pid I get back is the server PID. I really want it to be the child's pid. Let's make the restore case the same as the "normal" case.
+    pid = MyForkPty(&fd, theTtyname, &term, &win);
     if (pid == (pid_t)0) {
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
@@ -478,11 +521,11 @@ static void HandleSigChld(int n)
 
 - (void)sendSignal:(int)signo
 {
-    if (pid >= 0) {
-        kill(pid, signo);
-    } else if (_deathFd != -1 && signo == SIGHUP) {
+    if (_restoredPid != -1) {
         kill(_restoredPid, signo);
-    }
+    } else if (pid >= 0) {
+        kill(pid, signo);
+     }
 }
 
 - (void)setWidth:(int)width height:(int)height
@@ -515,12 +558,6 @@ static void HandleSigChld(int n)
 - (void)closeFileDescriptors {
     if (fd != -1) {
         close(fd);
-    }
-    if (_writeFd != -1) {
-        close(_writeFd);
-    }
-    if (_deathFd != -1) {
-        close(_deathFd);
     }
 }
 

@@ -288,22 +288,9 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                     FD_SET(fd, &rfds);
                 }
                 if ([task wantsWrite]) {
-                    int writeFd;
-                    int optionalWriteFd = task.writeFd;
-                    if (optionalWriteFd != -1) {
-                        writeFd = optionalWriteFd;
-                        highfd = MAX(highfd, writeFd);
-                    } else {
-                        writeFd = fd;
-                    }
-                    FD_SET(writeFd, &wfds);
+                    FD_SET(fd, &wfds);
                 }
                 FD_SET(fd, &efds);
-            }
-
-            int deathFd = task.deathFd;
-            if (deathFd != -1) {
-                FD_SET(deathFd, &rfds);
             }
 
             @synchronized (task) {
@@ -370,9 +357,6 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         while ((task = [iter nextObject])) {
             PtyTaskDebugLog(@"Got task %d\n", i);
             int fd = [task fd];
-            int optionalWriteFd = task.writeFd;
-            int optionalDeathFd = task.deathFd;
-            int writeFd = optionalWriteFd == -1 ? fd : optionalWriteFd;
 
             if (fd >= 0) {
                 // This is mostly paranoia, but if two threads
@@ -390,13 +374,10 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 if ([self handleReadOnFileDescriptor:fd task:task fdSet:&rfds]) {
                     iter = [tasks objectEnumerator];
                 }
-                if ([self handleWriteOnFileDescriptor:writeFd task:task fdSet:&wfds]) {
+                if ([self handleWriteOnFileDescriptor:fd task:task fdSet:&wfds]) {
                     iter = [tasks objectEnumerator];
                 }
                 if ([self handleErrorOnFileDescriptor:fd task:task fdSet:&efds]) {
-                    iter = [tasks objectEnumerator];
-                }
-                if (optionalDeathFd != -1 && [self handleErrorOnFileDescriptor:optionalDeathFd task:task fdSet:&rfds]) {
                     iter = [tasks objectEnumerator];
                 }
                 // Move input around between coprocess and main process.
