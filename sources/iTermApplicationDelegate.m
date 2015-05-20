@@ -384,48 +384,43 @@ static BOOL hasBecomeActive = NO;
 - (void)searchForOrphanServers {
     NSLog(@"--- Begin search for orphans ---");
     NSString *dir = @"/tmp";
-    NSMutableArray *results = [NSMutableArray array];
+    PseudoTerminal *term = nil;
     for (NSString *filename in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil]) {
         NSString *prefix = @"iTerm2.socket.";
         if ([filename hasPrefix:prefix]) {
             // TODO: This needs to be able to time out if a server is wedged, which happened somehow.
-            NSLog(@"Check out orphan %@", filename);
+            NSLog(@"Try to connect to server at %@", filename);
             FileDescriptorClientResult result = FileDescriptorClientRun([[filename substringFromIndex:prefix.length] intValue]);
             if (result.ok) {
-                [results addObject:[self dictionaryForFileDescriptorClientResult:result]];
-            }
-        }
-    }
-    NSLog(@"%@", results);
-    // TODO: I have a bug where I try to connect twice to the same path but I am not sure why.
-    if (results.count) {
-        NSAlert *alert = [NSAlert alertWithMessageText:@"Attach to orphaned servers?"
-                                         defaultButton:@"Yes"
-                                       alternateButton:@"No"
-                                           otherButton:nil
-                             informativeTextWithFormat:@"Found orphaned servers. Rescue them?"];
-        if ([alert runModal] == NSModalResponseOK) {
-            for (NSDictionary *dict in results) {
-                [self openWindowForOrphan:dict];
+                NSLog(@"Restore it");
+                if (term) {
+                    [self openOrphanedSession:result inWindow:term];
+                } else {
+                    PTYSession *session = [self openOrphanedSession:result inWindow:nil];
+                    term = [[iTermController sharedInstance] terminalWithSession:session];
+                }
             }
         }
     }
 }
 
-- (void)openWindowForOrphan:(NSDictionary *)dict {
-    __block FileDescriptorClientResult result = [self fileDescriptorClientResultFromDictionary:dict];
-    [[iTermController sharedInstance] launchBookmark:nil
-                                          inTerminal:nil
-                                             withURL:nil
-                                            isHotkey:NO
-                                             makeKey:NO
-                                             command:nil
-                                               block:^PTYSession *(PseudoTerminal *term) {
-                                                   return [term createSessionWithProfile:[[ProfileModel sharedInstance] defaultBookmark]
-                                                                                 withURL:nil
-                                                                           forObjectType:iTermWindowObject
-                                                              fileDescriptorClientResult:&result];
-                                               }];
+- (PTYSession *)openOrphanedSession:(FileDescriptorClientResult)result inWindow:(PseudoTerminal *)desiredWindow {
+    Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
+    PTYSession *aSession =
+        [[iTermController sharedInstance] launchBookmark:nil
+                                              inTerminal:desiredWindow
+                                                 withURL:nil
+                                                isHotkey:NO
+                                                 makeKey:NO
+                                                 command:nil
+                                                   block:^PTYSession *(PseudoTerminal *term) {
+                                                       FileDescriptorClientResult theResult = result;
+                                                       return [term createSessionWithProfile:defaultProfile
+                                                                                     withURL:nil
+                                                                               forObjectType:iTermWindowObject
+                                                                  fileDescriptorClientResult:&theResult];
+                                                   }];
+    return aSession;
 }
 
 - (NSDictionary *)dictionaryForFileDescriptorClientResult:(FileDescriptorClientResult)result {
@@ -497,6 +492,9 @@ static BOOL hasBecomeActive = NO;
 
     // Prevent sessions from making their termination undoable since we're quitting.
     [[iTermController sharedInstance] setApplicationIsQuitting:YES];
+
+    // Restorable sessions must be killed or they'll auto-restore as orphans on the next start.
+    [[iTermController sharedInstance] killRestorableSessions];
 
     // This causes all windows to be closed and all sessions to be terminated.
     [iTermController sharedInstanceRelease];

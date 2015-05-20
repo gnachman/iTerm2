@@ -1411,8 +1411,10 @@ static BOOL initDone = NO;
 }
 
 - (void)killRestorableSessions {
-    for (PTYSession *aSession in _restorableSessions) {
-        [aSession.shell sendSignal:SIGHUP];
+    for (iTermRestorableSession *restorableSession in _restorableSessions) {
+        for (PTYSession *aSession in restorableSession.sessions) {
+            [aSession.shell sendSignal:SIGHUP];
+        }
     }
 }
 
