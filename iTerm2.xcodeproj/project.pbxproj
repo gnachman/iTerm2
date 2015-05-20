@@ -2618,9 +2618,9 @@
 		A67F57B61B01A01800B4F135 /* iTermImageInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermImageInfo.m; sourceTree = "<group>"; };
 		A67F57BC1B01A08800B4F135 /* iTermAnimatedImageInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAnimatedImageInfo.h; sourceTree = "<group>"; };
 		A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAnimatedImageInfo.m; sourceTree = "<group>"; };
-		A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorServer.c; sourceTree = "<group>"; };
+		A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorServer.c; sourceTree = "<group>"; tabWidth = 4; };
 		A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorClient.h; sourceTree = "<group>"; };
-		A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorClient.c; sourceTree = "<group>"; };
+		A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorClient.c; sourceTree = "<group>"; tabWidth = 4; };
 		A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorServer.h; sourceTree = "<group>"; };
 		A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100TmuxParser.h; sourceTree = "<group>"; tabWidth = 4; };
 		A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TmuxParser.m; sourceTree = "<group>"; tabWidth = 4; };

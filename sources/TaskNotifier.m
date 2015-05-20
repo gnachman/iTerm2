@@ -22,7 +22,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     BOOL tasksChanged;
     // Protects 'tasks' and 'tasksChanged'.
     NSRecursiveLock* tasksLock;
-    
+
     // A set of NSNumber*s holding pids of tasks that need to be wait()ed on
     NSMutableSet* deadpool;
     int unblockPipeR;
@@ -218,19 +218,19 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     NSEnumerator* iter;
     PTYTask* task;
     NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
-    
+
     // FIXME: replace this with something better...
     for(;;) {
-        
+
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
         FD_ZERO(&efds);
-        
+
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
         highfd = unblockPipeR;
         FD_SET(unblockPipeR, &rfds);
         NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:[tasks count]];
-        
+
         // Add all the PTYTask pipes
         PtyTaskDebugLog(@"run1: lock");
         [tasksLock lock];
@@ -243,7 +243,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 [self deregisterTask:theTask];
             }
         }
-        
+
         if ([deadpool count] > 0) {
             // waitpid() on pids that we think are dead or will be dead soon.
             NSMutableSet* newDeadpool = [NSMutableSet setWithCapacity:[deadpool count]];
@@ -269,7 +269,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
             [deadpool release];
             deadpool = [newDeadpool retain];
         }
-        
+
         PtyTaskDebugLog(@"Begin enumeration over %lu tasks\n", (unsigned long)[tasks count]);
         iter = [tasks objectEnumerator];
         int i = 0;
@@ -291,11 +291,6 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                     FD_SET(fd, &wfds);
                 }
                 FD_SET(fd, &efds);
-            }
-
-            int deathFd = task.deathFd;
-            if (deathFd != -1) {
-                FD_SET(deathFd, &rfds);
             }
 
             @synchronized (task) {
@@ -342,7 +337,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                     // If the file descriptor is closed in the main thread there's a race where sometimes you'll get an EBADF.
             }
         }
-        
+
         // Interrupted?
         if (FD_ISSET(unblockPipeR, &rfds)) {
             char dummy[32];
@@ -350,7 +345,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 read(unblockPipeR, dummy, sizeof(dummy));
             } while (errno != EAGAIN);
         }
-        
+
         // Check for read events on PTYTask pipes
         PtyTaskDebugLog(@"run2: lock");
         [tasksLock lock];
@@ -358,18 +353,17 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         iter = [tasks objectEnumerator];
         i = 0;
         BOOL notifyOfCoprocessChange = NO;
-        
+
         while ((task = [iter nextObject])) {
             PtyTaskDebugLog(@"Got task %d\n", i);
             int fd = [task fd];
-            int optionalDeathFd = task.deathFd;
 
             if (fd >= 0) {
                 // This is mostly paranoia, but if two threads
                 // end up with the same fd (because one closed
                 // and there was a race condition) then trying
                 // to read twice would hang.
-                
+
                 if ([handledFds containsObject:@(fd)]) {
                     PtyTaskDebugLog(@"Duplicate fd %d", fd);
                     continue;
@@ -384,9 +378,6 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                     iter = [tasks objectEnumerator];
                 }
                 if ([self handleErrorOnFileDescriptor:fd task:task fdSet:&efds]) {
-                    iter = [tasks objectEnumerator];
-                }
-                if (optionalDeathFd != -1 && [self handleErrorOnFileDescriptor:optionalDeathFd task:task fdSet:&rfds]) {
                     iter = [tasks objectEnumerator];
                 }
                 // Move input around between coprocess and main process.
@@ -434,7 +425,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                                    withObject:nil
                                 waitUntilDone:YES];
         }
-        
+
     breakloop:
         [handledFds release];
         [autoreleasePool drain];

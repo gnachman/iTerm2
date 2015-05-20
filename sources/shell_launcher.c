@@ -20,6 +20,8 @@
 #include "iTermFileDescriptorServer.h"
 #include "iTermFileDescriptorClient.h"
 
+static const int kPtySlaveFileDescriptor = 1;
+
 static void ExecCommand(void) {
     const char *shell = getenv("SHELL");
     if (!shell) {
@@ -48,17 +50,51 @@ static void ExecCommand(void) {
     err(1, "Failed to exec %s with arg %s", shell, argv0);
 }
 
+static void Die(int sig) {
+    int status;
+    pid_t pid;
+    do {
+        pid = wait(&status);
+    } while (pid == -1 && errno == EINTR);
+    _exit(status);
+}
+
+static void ExecChild() {
+    // Child process
+    signal(SIGCHLD, SIG_IGN);
+
+    // Dup slave to stdin and stderr. This closes the master (fd 0) in the process.
+    dup2(kPtySlaveFileDescriptor, 0);
+    dup2(kPtySlaveFileDescriptor, 2);
+
+    ExecCommand();
+}
+
+// PTY Master on fd 0, PTY Slave on fd 1
 int launch_shell(void) {
+    // Set up a signal handler that makes the server die with the child's status code if the child
+    // dies before the server is done setting itself up.
+    signal(SIGCHLD, Die);
+
+    // Start the child.
     pid_t pid = fork();
     if (pid == 0) {
-        // Child process
-        ExecCommand();
+        ExecChild();
+        return -1;
     } else if (pid > 0) {
+        // Prepare to run the server.
+
+        // Don't need the slave here.
+        close(kPtySlaveFileDescriptor);
         setsid();
         char path[256];
         snprintf(path, sizeof(path), "/tmp/iTerm2.socket.%d", getpid());
-        return FileDescriptorServerRun(path, pid);
-    }
 
-    return 1;
+        // Run the server.
+        return FileDescriptorServerRun(path, pid);
+    } else {
+        // Fork returned an error!
+        printf("fork failed: %s", strerror(errno));
+        return 1;
+    }
 }
