@@ -170,17 +170,34 @@ static BOOL initDone = NO;
     return (self);
 }
 
-- (void)dealloc
-{
+- (BOOL)willRestoreWindowsAtNextLaunch {
+  return (![iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] &&
+          ![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
+          [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]);
+}
+
+- (void)dealloc {
     // Save hotkey window arrangement to user defaults before closing it.
     [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
 
-    // Close all terminal windows]
-    while ([terminalWindows count] > 0) {
-        [[terminalWindows objectAtIndex:0] close];
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    if ([iTermAdvancedSettingsModel runJobsInServers] &&
+        [iTermAdvancedSettingsModel restoreWindowContents] &&
+        itad.sparkleRestarting &&
+        self.willRestoreWindowsAtNextLaunch) {
+        // Sparkle is restarting the app. Because jobs are run in servers and window
+        // restoration is on, we don't want to close term windows because that will
+        // send SIGHUP to the job processes. Normally this path is taken during
+        // a user-initiated quit, so we want the jobs killed, but not in this case.
+        [terminalWindows autorelease];
+    } else {
+        // Close all terminal windows, killing jobs.
+        while ([terminalWindows count] > 0) {
+            [[terminalWindows objectAtIndex:0] close];
+        }
+        NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
+        [terminalWindows release];
     }
-    NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
-    [terminalWindows release];
 
     // Release the GrowlDelegate
     if (gd) {

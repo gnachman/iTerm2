@@ -50,6 +50,9 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 // Returns one of the kMarkAlertAction strings defined above.
 @property(nonatomic, readonly) NSString *markAlertAction;
 
+// Is Sparkle in the process of restarting us?
+@property(nonatomic, readonly) BOOL sparkleRestarting;
+
 - (void)awakeFromNib;
 
 // NSApplication Delegate methods

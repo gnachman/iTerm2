@@ -230,8 +230,9 @@ static void HandleSigChld(int n)
 
     NSTimeInterval timeoutTime = [NSDate timeIntervalSinceReferenceDate] + timeout;
     // TODO: Create the unix domain socket in the parent prior to forking to avoid the timeout silliness.
+    NSTimeInterval delay = 0.01;
     while (1) {
-        NSLog(@"tryToAttachToServerWithProcessId: Restore connection to pid %d", (int)thePid);
+        NSLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
         FileDescriptorClientResult result = FileDescriptorClientRun(thePid);
         if (!result.ok) {
             if (result.error && !strcmp(result.error, kFileDescriptorClientErrorCouldNotConnect)) {
@@ -239,8 +240,23 @@ static void HandleSigChld(int n)
                 if ([NSDate timeIntervalSinceReferenceDate] > timeoutTime) {
                     return NO;
                 } else {
-                    NSLog(@"Timed out, try again in 100 ms");
-                    usleep(100000);  // Sleep for 100 ms
+                    // Did the job die?
+                    int jobStatus;
+                    int rc = waitpid(thePid, &jobStatus, WNOHANG);
+                    if (rc == thePid) {
+                        // NOTE: jobStatus has various interesting tidbits in the low 8 bits and the
+                        // return code in the high 8 bits. See the man page for wait(2) for details.
+                        NSLog(@"Server died immediately with status %d", jobStatus);
+                        return NO;
+                    } else if (rc == -1) {
+                        NSLog(@"Waitpid failed for pid %d with error %s", (int)thePid, strerror(errno));
+                    }
+
+                    // Back off and retry. We just started the server so it'll need a sec to begin
+                    // listening.
+                    NSLog(@"Failed to connect. Try again in %0.2f seconds", delay);
+                    usleep(delay * 1000000);
+                    delay = MIN(0.1, delay * 2);
                     continue;
                 }
             } else {
@@ -266,7 +282,6 @@ static void HandleSigChld(int n)
 
 // Like login_tty but makes fd 0 the master and fd 1 the slave.
 static void MyLoginTTY(int master, int slave) {
-    assert([iTermAdvancedSettingsModel runJobsInServers]);
     setsid();
     ioctl(slave, TIOCSCTTY, NULL);
     if (slave == 0) {
@@ -419,11 +434,19 @@ static int MyForkPty(int *amaster,
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        // Unfortunately, we have to attach to the newly created server in order to get the child's
+        // process ID. Without it, we can't kill our children or get their working directories. It
+        // takes some unkown amount of time for the server to be ready to accept connections.
+        // I did try creating the connection before starting the server but it was way too complex
+        // to create a socket and connect to it in a single process/thread, and I'm afraid of the
+        // bugs I'd run into if I tried to do it with multiple threads.
         if ([self tryToAttachToServerWithProcessId:_serverPid timeout:10]) {
             tty = [[NSString stringWithUTF8String:theTtyname] retain];
             fcntl(fd, F_SETFL, O_NONBLOCK);
         } else {
             close(fd);
+            NSLog(@"Server died immediately!");
+            [_delegate brokenPipe];
         }
     } else {
         tty = [[NSString stringWithUTF8String:theTtyname] retain];
@@ -799,7 +822,7 @@ static int MyForkPty(int *amaster,
     // This only works if the child process is owned by our uid
     // Notably it seems to work (at least on 10.10) even if the process ID is
     // not owned by us.
-    ret = proc_pidinfo(_serverPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
+    ret = proc_pidinfo(self.pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
     if (ret <= 0) {
         // The child was probably owned by root (which is expected if it's
         // a login shell. Use the cwd of its oldest child instead.
