@@ -61,6 +61,7 @@
 @property(nonatomic, assign) BOOL selectionRespectsSoftBoundaries;
 @property(nonatomic, assign) BOOL startingUp;
 @property(nonatomic, assign) BOOL applicationIsQuitting;
+@property(nonatomic, readonly) BOOL willRestoreWindowsAtNextLaunch;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;

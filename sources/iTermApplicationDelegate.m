@@ -53,6 +53,7 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PTYWindow.h"
+#import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
 #import <objc/runtime.h>
@@ -139,6 +140,8 @@ static BOOL hasBecomeActive = NO;
     // If the advanced pref to turn off app nap is enabled, then we hold a reference to this
     // NSProcessInfo-provided object to make the system think we're doing something important.
     id<NSObject> _appNapStoppingActivity;
+
+    BOOL _sparkleRestarting;  // Is Sparkle about to restart the app?
 }
 
 // NSApplication delegate methods
@@ -375,6 +378,10 @@ static BOOL hasBecomeActive = NO;
                                                            selector:@selector(workspaceSessionDidResignActive:)
                                                                name:NSWorkspaceSessionDidResignActiveNotification
                                                              object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(sparkleWillRestartApp:)
+                                                 name:SUUpdaterWillRestartNotification
+                                               object:nil];
 
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
@@ -435,6 +442,10 @@ static BOOL hasBecomeActive = NO;
     _workspaceSessionActive = NO;
 }
 
+- (void)sparkleWillRestartApp:(NSNotification *)notification {
+    _sparkleRestarting = YES;
+}
+
 - (BOOL)applicationShouldTerminate:(NSNotification *)theNotification {
     NSArray *terminals;
 
@@ -459,6 +470,13 @@ static BOOL hasBecomeActive = NO;
         // closing multiple sessions
         shouldShowAlert = YES;
     }
+    if ([iTermAdvancedSettingsModel runJobsInServers] &&
+        self.sparkleRestarting &&
+        [iTermAdvancedSettingsModel restoreWindowContents] &&
+        [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
+        // Nothing will be lost so just restart without asking.
+        shouldShowAlert = NO;
+    }
 
     if (shouldShowAlert) {
         BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
@@ -479,6 +497,7 @@ static BOOL hasBecomeActive = NO;
 
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         // Restorable sessions must be killed or they'll auto-restore as orphans on the next start.
+        // If jobs aren't run in servers, they'll just die normally.
         [[iTermController sharedInstance] killRestorableSessions];
     }
 
