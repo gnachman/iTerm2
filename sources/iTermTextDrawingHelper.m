@@ -1767,6 +1767,7 @@ static const int kBadgeRightMargin = 10;
                                 matches:nil
                                 storage:storage];
     if (run) {
+        CGFloat underlineOffset = ceil(run->attrs.fontInfo.font.underlinePosition);
         CRun *head = run;
         // If an override color is given, change the runs' colors.
         if (overrideColor) {
@@ -1793,7 +1794,7 @@ static const int kBadgeRightMargin = 10;
             }
 
             NSRectFill(NSMakeRect(point.x,
-                                  point.y + _cellSize.height + ceil(run->attrs.fontInfo.font.underlinePosition),
+                                  point.y + _cellSize.height + underlineOffset,
                                   doubleWidth ? _cellSize.width * 2 : _cellSize.width,
                                   0.5));
         }
