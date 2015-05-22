@@ -814,7 +814,7 @@ static int MyForkPty(int *amaster,
     // This only works if the child process is owned by our uid
     // Notably it seems to work (at least on 10.10) even if the process ID is
     // not owned by us.
-    ret = proc_pidinfo(_serverPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
+    ret = proc_pidinfo(self.pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
     if (ret <= 0) {
         // The child was probably owned by root (which is expected if it's
         // a login shell. Use the cwd of its oldest child instead.
