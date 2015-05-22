@@ -266,7 +266,6 @@ static void HandleSigChld(int n)
 
 // Like login_tty but makes fd 0 the master and fd 1 the slave.
 static void MyLoginTTY(int master, int slave) {
-    assert([iTermAdvancedSettingsModel runJobsInServers]);
     setsid();
     ioctl(slave, TIOCSCTTY, NULL);
     if (slave == 0) {
