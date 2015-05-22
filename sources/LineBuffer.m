@@ -1105,6 +1105,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (!blocks.count) {
         [self _addBlockOfSize:message.length];
     }
+    screen_char_t defaultBg = { 0 };
     screen_char_t buffer[message.length];
     int len;
     screen_char_t fg = { 0 };
@@ -1115,11 +1116,25 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     bg.backgroundColorMode = ColorModeAlternate;
     StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO);
     [self appendLine:buffer
+              length:0
+             partial:NO
+               width:num_wrapped_lines_width > 0 ?: 80
+           timestamp:[NSDate timeIntervalSinceReferenceDate]
+        continuation:defaultBg];
+
+    [self appendLine:buffer
               length:len
              partial:NO
                width:num_wrapped_lines_width > 0 ?: 80
            timestamp:[NSDate timeIntervalSinceReferenceDate]
         continuation:bg];
+
+    [self appendLine:buffer
+              length:0
+             partial:NO
+               width:num_wrapped_lines_width > 0 ?: 80
+           timestamp:[NSDate timeIntervalSinceReferenceDate]
+        continuation:defaultBg];
 }
 
 @end
