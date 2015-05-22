@@ -244,6 +244,8 @@ static void HandleSigChld(int n)
                     int jobStatus;
                     int rc = waitpid(thePid, &jobStatus, WNOHANG);
                     if (rc == thePid) {
+                        // NOTE: jobStatus has various interesting tidbits in the low 8 bits and the
+                        // return code in the high 8 bits. See the man page for wait(2) for details.
                         NSLog(@"Server died immediately with status %d", jobStatus);
                         return NO;
                     } else if (rc == -1) {
@@ -432,6 +434,12 @@ static int MyForkPty(int *amaster,
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        // Unfortunately, we have to attach to the newly created server in order to get the child's
+        // process ID. Without it, we can't kill our children or get their working directories. It
+        // takes some unkown amount of time for the server to be ready to accept connections.
+        // I did try creating the connection before starting the server but it was way too complex
+        // to create a socket and connect to it in a single process/thread, and I'm afraid of the
+        // bugs I'd run into if I tried to do it with multiple threads.
         if ([self tryToAttachToServerWithProcessId:_serverPid timeout:10]) {
             tty = [[NSString stringWithUTF8String:theTtyname] retain];
             fcntl(fd, F_SETFL, O_NONBLOCK);
