@@ -527,6 +527,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     [_cells insertObject:cell atIndex:i];
 
     // bind it up
+    [self initializeStateForCell:cell];
     [self bindPropertiesForCell:cell andTabViewItem:item];
     [cell release];
 
@@ -538,36 +539,10 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     [self addTabViewItem:item atIndex:[_cells count]];
 }
 
-- (void)disconnectItem:(NSObjectController*)item fromCell:(PSMTabBarCell*)cell
-{
-    if ([item respondsToSelector:@selector(isProcessing)]) {
-        [item removeObserver:cell forKeyPath:@"isProcessing"];
-    }
-    if ([item respondsToSelector:@selector(icon)]) {
-        [item removeObserver:cell forKeyPath:@"icon"];
-    }
-    if ([item respondsToSelector:@selector(objectCount)]) {
-        [item removeObserver:cell forKeyPath:@"objectCount"];
-    }
-}
-
 - (void)removeTabForCell:(PSMTabBarCell *)cell
 {
-    NSObjectController *item = (NSObjectController *)[[cell representedObject] identifier];
-
     // unbind
-    [[cell indicator] unbind:@"animate"];
-    [[cell indicator] unbind:@"hidden"];
-    [cell unbind:@"hasIcon"];
     [cell unbind:@"title"];
-    [cell unbind:@"count"];
-
-    if (item != nil) {
-        [self disconnectItem:item fromCell:cell];
-    }
-
-    // stop watching identifier
-    [[cell representedObject] removeObserver:self forKeyPath:@"identifier"];
 
     // remove indicator
     if([[self subviews] containsObject:[cell indicator]]){
@@ -591,20 +566,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
     //[self update];
 
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-    // did the tab's identifier change?
-    if([keyPath isEqualToString:@"identifier"]){
-        NSEnumerator *e = [_cells objectEnumerator];
-        PSMTabBarCell *cell;
-        while ( (cell = [e nextObject]) ) {
-            if ([cell representedObject] == object) {
-                [self bindPropertiesForCell:cell andTabViewItem:object];
-            }
-        }
-    }
 }
 
 #pragma mark -
@@ -2142,10 +2103,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     NSEnumerator *e = [_cells objectEnumerator];
     while ( (cell = [e nextObject])) {
         if ([cell representedObject] == tabViewItem) {
-            [self disconnectItem:[tabViewItem identifier] fromCell:cell];
-            [[cell representedObject] removeObserver:self forKeyPath:@"identifier"];
             [tabViewItem setIdentifier:newIdentifier];
-            [self bindPropertiesForCell:cell andTabViewItem:tabViewItem];
             return;
         }
     }
@@ -2155,43 +2113,38 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 #pragma mark -
 #pragma mark Convenience
 
-- (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item
-{
-    // bind the indicator to the represented object's status (if it exists)
+- (PSMTabBarCell *)cellWithIdentifier:(id)identifier {
+    for (PSMTabBarCell *cell in _cells) {
+        if ([cell.representedObject identifier] == identifier) {
+            return cell;
+        }
+    }
+    return nil;
+}
+
+- (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier {
+    PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    cell.indicator.animate = isProcessing;
+    cell.indicator.hidden = !isProcessing;
+}
+
+- (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier {
+    PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    cell.hasIcon = (icon != nil);
+}
+
+- (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(id)identifier {
+    PSMTabBarCell *cell = [self cellWithIdentifier:identifier];
+    cell.count = objectCount;
+}
+
+- (void)initializeStateForCell:(PSMTabBarCell *)cell {
     [[cell indicator] setHidden:YES];
-    if ([item identifier] != nil) {
-        if ([[[cell representedObject] identifier] respondsToSelector:@selector(isProcessing)]) {
-            NSMutableDictionary *bindingOptions = [NSMutableDictionary dictionary];
-            [bindingOptions setObject:NSNegateBooleanTransformerName forKey:@"NSValueTransformerName"];
-            [[cell indicator] bind:@"animate" toObject:[item identifier] withKeyPath:@"isProcessing" options:nil];
-            [[cell indicator] bind:@"hidden" toObject:[item identifier] withKeyPath:@"isProcessing" options:bindingOptions];
-            [[item identifier] addObserver:cell forKeyPath:@"isProcessing" options:0 context:nil];
-        }
-    }
-
-    // bind for the existence of an icon
     [cell setHasIcon:NO];
-    if ([item identifier] != nil) {
-        if ([[[cell representedObject] identifier] respondsToSelector:@selector(icon)]) {
-            NSMutableDictionary *bindingOptions = [NSMutableDictionary dictionary];
-            [bindingOptions setObject:NSIsNotNilTransformerName forKey:@"NSValueTransformerName"];
-            [cell bind:@"hasIcon" toObject:[item identifier] withKeyPath:@"icon" options:bindingOptions];
-            [[item identifier] addObserver:cell forKeyPath:@"icon" options:0 context:nil];
-        }
-    }
-
-    // bind for the existence of a counter
     [cell setCount:0];
-    if ([item identifier] != nil) {
-        if ([[[cell representedObject] identifier] respondsToSelector:@selector(objectCount)]) {
-            [cell bind:@"count" toObject:[item identifier] withKeyPath:@"objectCount" options:nil];
-            [[item identifier] addObserver:cell forKeyPath:@"objectCount" options:0 context:nil];
-        }
-    }
+}
 
-    // watch for changes in the identifier
-    [item addObserver:self forKeyPath:@"identifier" options:0 context:nil];
-
+- (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item {
     // bind my string value to the label on the represented tab
     [cell bind:@"title" toObject:item withKeyPath:@"label" options:nil];
 }
