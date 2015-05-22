@@ -59,12 +59,14 @@ static BOOL hasWrapped = NO;
 @implementation iTermStringLine {
     unichar *_backingStore;
     int *_deltas;
+    int _length;
 }
 
 - (instancetype)initWithScreenChars:(screen_char_t *)screenChars
                              length:(NSInteger)length {
     self = [super init];
     if (self) {
+        _length = length;
         _stringValue = [ScreenCharArrayToString(screenChars,
                                                 0,
                                                 length,
@@ -86,10 +88,24 @@ static BOOL hasWrapped = NO;
 }
 
 - (NSRange)rangeOfScreenCharsForRangeInString:(NSRange)rangeInString {
-    NSUInteger limit = NSMaxRange(rangeInString);
-    limit += _deltas[limit];
-    NSInteger location = rangeInString.location + _deltas[rangeInString.location];
-    return NSMakeRange(location, limit - location);
+    if (_length == 0) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+
+    // Convert to signed types because subtraction is used later on.
+    const NSInteger location = rangeInString.location;
+    const NSInteger length = rangeInString.length;
+    NSInteger indexInScreenCharsOfFirstCharInRange = location + _deltas[MIN(_length - 1, location)];
+    if (length == 0) {
+        return NSMakeRange(indexInScreenCharsOfFirstCharInRange, 0);
+    }
+
+    const NSInteger indexInStringOfLastCharInRange = location + length - 1;
+    const NSInteger indexInScreenCharsOfLastCharInRange =
+        indexInStringOfLastCharInRange + _deltas[MIN(_length - 1, indexInStringOfLastCharInRange)];
+    const NSInteger numberOfScreenChars =
+        indexInScreenCharsOfLastCharInRange - indexInScreenCharsOfFirstCharInRange + 1;
+    return NSMakeRange(indexInScreenCharsOfFirstCharInRange, numberOfScreenChars);
 }
 
 @end
