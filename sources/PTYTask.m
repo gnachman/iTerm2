@@ -230,8 +230,9 @@ static void HandleSigChld(int n)
 
     NSTimeInterval timeoutTime = [NSDate timeIntervalSinceReferenceDate] + timeout;
     // TODO: Create the unix domain socket in the parent prior to forking to avoid the timeout silliness.
+    NSTimeInterval delay = 0.01;
     while (1) {
-        NSLog(@"tryToAttachToServerWithProcessId: Restore connection to pid %d", (int)thePid);
+        NSLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
         FileDescriptorClientResult result = FileDescriptorClientRun(thePid);
         if (!result.ok) {
             if (result.error && !strcmp(result.error, kFileDescriptorClientErrorCouldNotConnect)) {
@@ -239,8 +240,21 @@ static void HandleSigChld(int n)
                 if ([NSDate timeIntervalSinceReferenceDate] > timeoutTime) {
                     return NO;
                 } else {
-                    NSLog(@"Timed out, try again in 100 ms");
-                    usleep(100000);  // Sleep for 100 ms
+                    // Did the job die?
+                    int jobStatus;
+                    int rc = waitpid(thePid, &jobStatus, WNOHANG);
+                    if (rc == thePid) {
+                        NSLog(@"Server died immediately with status %d", jobStatus);
+                        return NO;
+                    } else if (rc == -1) {
+                        NSLog(@"Waitpid failed for pid %d with error %s", (int)thePid, strerror(errno));
+                    }
+
+                    // Back off and retry. We just started the server so it'll need a sec to begin
+                    // listening.
+                    NSLog(@"Failed to connect. Try again in %0.2f seconds", delay);
+                    usleep(delay * 1000000);
+                    delay = MIN(0.1, delay * 2);
                     continue;
                 }
             } else {
@@ -423,6 +437,8 @@ static int MyForkPty(int *amaster,
             fcntl(fd, F_SETFL, O_NONBLOCK);
         } else {
             close(fd);
+            NSLog(@"Server died immediately!");
+            [_delegate brokenPipe];
         }
     } else {
         tty = [[NSString stringWithUTF8String:theTtyname] retain];

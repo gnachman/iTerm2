@@ -14,6 +14,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 
 // Runs in the same background task as -threadedReadTask:length:.
 - (void)threadedTaskBrokenPipe;
+- (void)brokenPipe;  // Called in main thread
 - (void)taskWasDeregistered;
 @end
 
