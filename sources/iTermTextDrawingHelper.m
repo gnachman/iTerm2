@@ -1792,26 +1792,26 @@ static const int kBadgeRightMargin = 10;
         }
         [self drawRunsAt:point run:head storage:storage context:ctx];
         CRunFree(head);
-    }
 
-    // draw underline
-    if (screenChar.underline && screenChar.code) {
-        if (overrideColor) {
-            [overrideColor set];
-        } else {
-            [[_delegate drawingHelperColorForCode:screenChar.foregroundColor
-                                            green:screenChar.fgGreen
-                                             blue:screenChar.fgBlue
-                                        colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
-                                             bold:screenChar.bold
-                                            faint:screenChar.faint
-                                     isBackground:_reverseVideo] set];
+        // draw underline
+        if (screenChar.underline && screenChar.code) {
+            if (overrideColor) {
+                [overrideColor set];
+            } else {
+                [[_delegate drawingHelperColorForCode:screenChar.foregroundColor
+                                                green:screenChar.fgGreen
+                                                 blue:screenChar.fgBlue
+                                            colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
+                                                 bold:screenChar.bold
+                                                faint:screenChar.faint
+                                         isBackground:_reverseVideo] set];
+            }
+
+            NSRectFill(NSMakeRect(point.x,
+                                  point.y + _cellSize.height + ceil(run->attrs.fontInfo.font.underlinePosition),
+                                  doubleWidth ? _cellSize.width * 2 : _cellSize.width,
+                                  0.5));
         }
-
-        NSRectFill(NSMakeRect(point.x,
-                              point.y + _cellSize.height - 2,
-                              doubleWidth ? _cellSize.width * 2 : _cellSize.width,
-                              1));
     }
 }
 
