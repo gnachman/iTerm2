@@ -98,6 +98,9 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 static NSString *const SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
 static NSString *const SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
 static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
+static NSString *const SESSION_ARRANGEMENT_IS_TMUX_GATEWAY = @"Is Tmux Gateway";
+static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME = @"Tmux Gateway Session Name";
+static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID = @"Tmux Gateway Session ID";
 static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name";  // manually set name
 static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
 static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
@@ -667,17 +670,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     [aSession setTab:theTab];
     NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    BOOL shouldEnterTmuxMode = NO;
     if (!n) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
         NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
-
         BOOL runCommand = YES;
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
             if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
+                if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
+                    // Before attaching to the server we can put the parser into "tmux recovery mode".
+                    [aSession.terminal.parser startTmuxRecoveryMode];
+                }
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
                 if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
                     runCommand = NO;
+                    shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
+                                           arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
+                                           arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
                 }
             }
         }
@@ -800,6 +810,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                      inView:liveView
                                                       inTab:theTab
                                               forObjectType:objectType];
+    }
+    if (shouldEnterTmuxMode) {
+        [aSession startTmuxMode];
+        [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
+                                        sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
     }
     return aSession;
 }
@@ -3015,6 +3030,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             result[SESSION_ARRANGEMENT_CURSOR_POSITION] = [NSDictionary dictionaryWithGridCoord:cursor];
         }
     }
+    if (self.tmuxMode == TMUX_GATEWAY && self.tmuxController.sessionName) {
+        result[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] = @YES;
+        result[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] = @(self.tmuxController.sessionId);
+        result[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] = self.tmuxController.sessionName;
+    }
+
     result[SESSION_ARRANGEMENT_VARIABLES] = _variables;
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
