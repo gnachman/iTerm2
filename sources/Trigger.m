@@ -8,6 +8,7 @@
 #import "Trigger.h"
 #import "RegexKitLite.h"
 #import "NSStringITerm.h"
+#import <CommonCrypto/CommonDigest.h>
 
 NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
@@ -90,7 +91,6 @@ NSString * const kTriggerPartialLineKey = @"partial";
     [regex_ release];
     [action_ release];
     [param_ release];
-
     [super dealloc];
 }
 
@@ -204,6 +204,28 @@ NSString * const kTriggerPartialLineKey = @"partial";
 
 // Called before a trigger window opens.
 - (void)reloadData {
+}
+
+- (NSData *)digest {
+    NSDictionary *triggerDictionary = @{ kTriggerActionKey: NSStringFromClass(self.class),
+                                         kTriggerRegexKey: self.regex ?: @"",
+                                         kTriggerParameterKey: self.param ?: @"",
+                                         kTriggerPartialLineKey: @(self.partialLine) };
+
+    // Glom all the data together as key=value\nkey=value\n...
+    NSMutableString *temp = [NSMutableString string];
+    for (NSString *key in [[triggerDictionary allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+        [temp appendFormat:@"%@=%@\n", key, triggerDictionary[key]];
+    }
+
+    NSData *data = [temp dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char hash[CC_SHA1_DIGEST_LENGTH];
+    if (CC_SHA1([data bytes], [data length], hash) ) {
+        NSData *sha1 = [NSData dataWithBytes:hash length:CC_SHA1_DIGEST_LENGTH];
+        return sha1;
+    } else {
+        return data;
+    }
 }
 
 @end

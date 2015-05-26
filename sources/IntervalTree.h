@@ -15,10 +15,19 @@
 - (BOOL)intersects:(Interval *)other;
 - (BOOL)isEqualToInterval:(Interval *)interval;
 
+// Serialized value.
+- (NSDictionary *)dictionaryValue;
+
 @end
 
 @protocol IntervalTreeObject <NSObject>
+// Deserialize from dictionaryValue.
+- (instancetype)initWithDictionary:(NSDictionary *)dict;
+
 @property(nonatomic, assign) IntervalTreeEntry *entry;
+
+// Serialized value.
+- (NSDictionary *)dictionaryValue;
 @end
 
 // A node in the interval tree will contain one or more entries, each of which has an interval and an object. All intervals should have the same location.
@@ -46,6 +55,9 @@
     int _count;
 }
 
+// Deserialize
+- (instancetype)initWithDictionary:(NSDictionary *)dict;
+
 // |object| should implement -hash.
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval;
 - (void)removeObject:(id<IntervalTreeObject>)object;
@@ -70,5 +82,9 @@
 
 - (void)sanityCheck;
 - (NSString *)debugString;
+
+// Serialize, adding offset to interval locations (useful for taking the tail
+// of an interval tree).
+- (NSDictionary *)dictionaryValueWithOffset:(long long)offset;
 
 @end

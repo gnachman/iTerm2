@@ -7,6 +7,7 @@
 //
 
 #import "ToolCapturedOutputView.h"
+#import "CapturedOutput.h"
 #import "CaptureTrigger.h"
 #import "CommandHistoryEntry.h"
 #import "iTermSearchField.h"

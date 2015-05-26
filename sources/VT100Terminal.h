@@ -54,6 +54,10 @@
 @property(nonatomic, readonly) BOOL bracketedPasteMode;
 @property(nonatomic, readonly) VT100Output *output;
 
+@property(nonatomic, readonly) NSDictionary *stateDictionary;
+
+- (void)setStateFromDictionary:(NSDictionary *)dict;
+
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem;
 

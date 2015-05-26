@@ -7,6 +7,7 @@
 //
 
 #import "CaptureTrigger.h"
+#import "CapturedOutput.h"
 #import "CommandHistory.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
@@ -24,17 +25,6 @@ static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
     @"NoSyncSuppressCaptureOutputRequiresShellIntegrationWarning";
 static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     @"NoSyncSuppressCaptureOutputToolNotVisibleWarning";
-
-@implementation CapturedOutput
-
-- (void)dealloc {
-    [_values release];
-    [_trigger release];
-    [_mark release];
-    [super dealloc];
-}
-
-@end
 
 
 @implementation CaptureTrigger
@@ -67,7 +57,11 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     }
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber stop:(BOOL *)stop {
+- (BOOL)performActionWithValues:(NSArray *)values
+                      inSession:(PTYSession *)aSession
+                       onString:(NSString *)string
+           atAbsoluteLineNumber:(long long)absoluteLineNumber
+                           stop:(BOOL *)stop {
     if (!aSession.screen.shellIntegrationInstalled) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
             [self showShellIntegrationRequiredAnnouncementInSession:aSession];

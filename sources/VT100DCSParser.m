@@ -501,7 +501,6 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     return result;
 }
 
-
 @end
 
 @implementation VT100DCSParser (Testing)

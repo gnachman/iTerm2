@@ -1,10 +1,61 @@
 #import "VT100Terminal.h"
 #import "DebugLogging.h"
 #import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
 #include <term.h>
+
+NSString *const kGraphicRenditionBoldKey = @"Bold";
+NSString *const kGraphicRenditionBlinkKey = @"Blink";
+NSString *const kGraphicRenditionUnderKey = @"Underline";
+NSString *const kGraphicRenditionReversedKey = @"Reversed";
+NSString *const kGraphicRenditionFaintKey = @"Faint";
+NSString *const kGraphicRenditionItalicKey = @"Italic";
+NSString *const kGraphicRenditionForegroundColorCodeKey = @"FG Color/Red";
+NSString *const kGraphicRenditionForegroundGreenKey = @"FG Green";
+NSString *const kGraphicRenditionForegroundBlueKey = @"FG Blue";
+NSString *const kGraphicRenditionForegroundModeKey = @"FG Mode";
+NSString *const kGraphicRenditionBackgroundColorCodeKey = @"BG Color/Red";
+NSString *const kGraphicRenditionBackgroundGreenKey = @"BG Green";
+NSString *const kGraphicRenditionBackgroundBlueKey = @"BG Blue";
+NSString *const kGraphicRenditionBackgroundModeKey = @"BG Mode";
+
+NSString *const kSavedCursorPositionKey = @"Position";
+NSString *const kSavedCursorCharsetKey = @"Charset";
+NSString *const kSavedCursorLineDrawingArrayKey = @"Line Drawing Flags";
+NSString *const kSavedCursorGraphicRenditionKey = @"Graphic Rendition";
+NSString *const kSavedCursorOriginKey = @"Origin";
+NSString *const kSavedCursorWraparoundKey = @"Wraparound";
+
+NSString *const kTerminalStateTermTypeKey = @"Term Type";
+NSString *const kTerminalStateStringEncodingKey = @"String Encoding";
+NSString *const kTerminalStateCanonicalEncodingKey = @"Canonical String Encoding";
+NSString *const kTerminalStateReportFocusKey = @"Report Focus";
+NSString *const kTerminalStateReverseVideoKey = @"Reverse Video";
+NSString *const kTerminalStateOriginModeKey = @"Origin Mode";
+NSString *const kTerminalStateMoreFixKey = @"More-Fix";
+NSString *const kTerminalStateWraparoundModeKey = @"Wraparound Mode";
+NSString *const kTerminalStateReverseWraparoundModeKey = @"Reverse Wraparound Mode";
+NSString *const kTerminalStateIsAnsiKey = @"Is ANSI";
+NSString *const kTerminalStateAutorepeatModeKey = @"Autorepeat Mode";
+NSString *const kTerminalStateInsertModeKey = @"Insert Mode";
+NSString *const kTerminalStateCharsetKey = @"Charset";
+NSString *const kTerminalStateMouseModeKey = @"Mouse Mode";
+NSString *const kTerminalStateMouseFormatKey = @"Mouse Format";
+NSString *const kTerminalStateCursorModeKey = @"Cursor Mode";
+NSString *const kTerminalStateKeypadModeKey = @"Keypad Mode";
+NSString *const kTerminalStateAllowKeypadModeKey = @"Allow Keypad Mode";
+NSString *const kTerminalStateBracketedPasteModeKey = @"Bracketed Paste Mode";
+NSString *const kTerminalStateAnsiModeKey = @"ANSI Mode";
+NSString *const kTerminalStateNumLockKey = @"Numlock";
+NSString *const kTerminalStateGraphicRenditionKey = @"Graphic Rendition";
+NSString *const kTerminalStateMainSavedCursorKey = @"Main Saved Cursor";
+NSString *const kTerminalStateAltSavedCursorKey = @"Alt Saved Cursor";
+NSString *const kTerminalStateAllowColumnModeKey = @"Allow Column Mode";
+NSString *const kTerminalStateColumnMode = @"Column Mode";
+NSString *const kTerminalStateDisableSMCUPAndRMCUP = @"Disable Alt Screen";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reportFocus;
@@ -16,9 +67,7 @@
 @property(nonatomic, assign) int charset;
 @property(nonatomic, assign) BOOL bracketedPasteMode;
 @property(nonatomic, assign) BOOL allowColumnMode;
-@property(nonatomic, assign) BOOL lineMode;  // YES=Newline, NO=Line feed
 @property(nonatomic, assign) BOOL columnMode;  // YES=132 Column, NO=80 Column
-@property(nonatomic, assign) BOOL scrollMode;  // YES=Smooth, NO=Jump
 @property(nonatomic, assign) BOOL disableSmcupRmcup;
 
 // A write-only property, at the moment. TODO: What should this do?
@@ -68,7 +117,6 @@ typedef struct {
     id<VT100TerminalDelegate> delegate_;
 
     BOOL ansiMode_;         // YES=ANSI, NO=VT52
-    BOOL xon_;               // YES=XON, NO=XOFF. Not currently used.
     BOOL numLock_;           // YES=ON, NO=OFF, default=YES;
 
     VT100GraphicRendition graphicRendition_;
@@ -157,7 +205,6 @@ static const int kMaxScreenRows = 4096;
         _wraparoundMode = YES;
         _reverseWraparoundMode = NO;
         _autorepeatMode = YES;
-        xon_ = YES;
         graphicRendition_.fgColorCode = ALTSEM_DEFAULT;
         graphicRendition_.fgColorMode = ColorModeAlternate;
         graphicRendition_.bgColorCode = ALTSEM_DEFAULT;
@@ -245,13 +292,11 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetPreservingPrompt:(BOOL)preservePrompt {
-    self.lineMode = NO;
     self.cursorMode = NO;
     if (_columnMode) {
         [delegate_ terminalSetWidth:80];
     }
     self.columnMode = NO;
-    self.scrollMode = NO;
     _reverseVideo = NO;
     _originMode = NO;
     _moreFix = NO;
@@ -262,7 +307,6 @@ static const int kMaxScreenRows = 4096;
     self.insertMode = NO;
     self.bracketedPasteMode = NO;
     _charset = 0;
-    xon_ = YES;
     [self resetGraphicRendition];
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
@@ -418,7 +462,7 @@ static const int kMaxScreenRows = 4096;
                 }
                 break;
             case 4:
-                self.scrollMode = mode;
+                // Smooth vs jump scrolling. Not supported.
                 break;
             case 5:
                 self.reverseVideo = mode;
@@ -438,7 +482,8 @@ static const int kMaxScreenRows = 4096;
                 // TODO: This should send mouse x&y on button press.
                 break;
             case 20:
-                self.lineMode = mode;
+                // This used to be the setter for "line mode", but it wasn't used and it's not
+                // supported by xterm. Seemed to have somethign to do with CR vs LF.
                 break;
             case 25:
                 [delegate_ terminalSetCursorVisible:mode];
@@ -1207,10 +1252,8 @@ static const int kMaxScreenRows = 4096;
             _charset = 1;
             break;
         case VT100CC_DC1:
-            xon_ = YES;
-            break;
         case VT100CC_DC3:
-            xon_ = NO;
+            // Set XON/XOFF, but why would we want to support that?
             break;
         case VT100CC_CAN:
         case VT100CC_SUB:
@@ -2251,6 +2294,132 @@ static const int kMaxScreenRows = 4096;
             [delegate_ terminalFinalTermCommand:[args subarrayWithRange:NSMakeRange(1, args.count - 1)]];
             break;
     }
+}
+
+- (NSDictionary *)dictionaryForGraphicRendition:(VT100GraphicRendition)graphicRendition {
+    return @{ kGraphicRenditionBoldKey: @(graphicRendition.bold),
+              kGraphicRenditionBlinkKey: @(graphicRendition.blink),
+              kGraphicRenditionUnderKey: @(graphicRendition.under),
+              kGraphicRenditionReversedKey: @(graphicRendition.reversed),
+              kGraphicRenditionFaintKey: @(graphicRendition.faint),
+              kGraphicRenditionItalicKey: @(graphicRendition.italic),
+              kGraphicRenditionForegroundColorCodeKey: @(graphicRendition.fgColorCode),
+              kGraphicRenditionForegroundGreenKey: @(graphicRendition.fgGreen),
+              kGraphicRenditionForegroundBlueKey: @(graphicRendition.fgBlue),
+              kGraphicRenditionForegroundModeKey: @(graphicRendition.fgColorMode),
+              kGraphicRenditionBackgroundColorCodeKey: @(graphicRendition.bgColorCode),
+              kGraphicRenditionBackgroundGreenKey: @(graphicRendition.bgGreen),
+              kGraphicRenditionBackgroundBlueKey: @(graphicRendition.bgBlue),
+              kGraphicRenditionBackgroundModeKey: @(graphicRendition.bgColorMode) };
+}
+
+- (VT100GraphicRendition)graphicRenditionFromDictionary:(NSDictionary *)dict {
+    VT100GraphicRendition graphicRendition = { 0 };
+    graphicRendition.bold = [dict[kGraphicRenditionBoldKey] boolValue];
+    graphicRendition.blink = [dict[kGraphicRenditionBlinkKey] boolValue];
+    graphicRendition.under = [dict[kGraphicRenditionUnderKey] boolValue];
+    graphicRendition.reversed = [dict[kGraphicRenditionReversedKey] boolValue];
+    graphicRendition.faint = [dict[kGraphicRenditionFaintKey] boolValue];
+    graphicRendition.italic = [dict[kGraphicRenditionItalicKey] boolValue];
+
+    graphicRendition.fgColorCode = [dict[kGraphicRenditionForegroundColorCodeKey] intValue];
+    graphicRendition.fgGreen = [dict[kGraphicRenditionForegroundGreenKey] intValue];
+    graphicRendition.fgBlue = [dict[kGraphicRenditionForegroundBlueKey] intValue];
+    graphicRendition.fgColorMode = [dict[kGraphicRenditionForegroundModeKey] intValue];
+
+    graphicRendition.bgColorCode = [dict[kGraphicRenditionBackgroundColorCodeKey] intValue];
+    graphicRendition.bgGreen = [dict[kGraphicRenditionBackgroundGreenKey] intValue];
+    graphicRendition.bgBlue = [dict[kGraphicRenditionBackgroundBlueKey] intValue];
+    graphicRendition.bgColorMode = [dict[kGraphicRenditionBackgroundModeKey] intValue];
+
+    return graphicRendition;
+}
+
+- (NSDictionary *)dictionaryForSavedCursor:(VT100SavedCursor)savedCursor {
+    NSMutableArray *lineDrawingArray = [NSMutableArray array];
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [lineDrawingArray addObject:@(savedCursor.lineDrawing[i])];
+    }
+    return @{ kSavedCursorPositionKey: [NSDictionary dictionaryWithGridCoord:savedCursor.position],
+              kSavedCursorCharsetKey: @(savedCursor.charset),
+              kSavedCursorLineDrawingArrayKey: lineDrawingArray,
+              kSavedCursorGraphicRenditionKey: [self dictionaryForGraphicRendition:savedCursor.graphicRendition],
+              kSavedCursorOriginKey: @(savedCursor.origin),
+              kSavedCursorWraparoundKey: @(savedCursor.wraparound) };
+}
+
+- (VT100SavedCursor)savedCursorFromDictionary:(NSDictionary *)dict {
+    VT100SavedCursor savedCursor;
+    savedCursor.position = [dict[kSavedCursorPositionKey] gridCoord];
+    savedCursor.charset = [dict[kSavedCursorCharsetKey] intValue];
+    for (int i = 0; i < NUM_CHARSETS && i < [dict[kSavedCursorLineDrawingArrayKey] count]; i++) {
+        NSNumber *n = [dict[kSavedCursorLineDrawingArrayKey] objectAtIndex:i];
+        savedCursor.lineDrawing[i] = [n boolValue];
+    }
+    savedCursor.graphicRendition = [self graphicRenditionFromDictionary:dict[kSavedCursorGraphicRenditionKey]];
+    savedCursor.origin = [dict[kSavedCursorOriginKey] boolValue];
+    savedCursor.wraparound = [dict[kSavedCursorWraparoundKey] boolValue];
+    return savedCursor;
+}
+
+- (NSDictionary *)stateDictionary {
+    return @{ kTerminalStateTermTypeKey: self.termType,
+              kTerminalStateStringEncodingKey: @(self.encoding),
+              kTerminalStateCanonicalEncodingKey: @(self.canonicalEncoding),
+              kTerminalStateReportFocusKey: @(self.reportFocus),
+              kTerminalStateReverseVideoKey: @(self.reverseVideo),
+              kTerminalStateOriginModeKey: @(self.originMode),
+              kTerminalStateMoreFixKey: @(self.moreFix),
+              kTerminalStateWraparoundModeKey: @(self.wraparoundMode),
+              kTerminalStateReverseWraparoundModeKey: @(self.reverseWraparoundMode),
+              kTerminalStateIsAnsiKey: @(self.isAnsi),
+              kTerminalStateAutorepeatModeKey: @(self.autorepeatMode),
+              kTerminalStateInsertModeKey: @(self.insertMode),
+              kTerminalStateCharsetKey: @(self.charset),
+              kTerminalStateMouseModeKey: @(self.mouseMode),
+              kTerminalStateMouseFormatKey: @(self.mouseFormat),
+              kTerminalStateCursorModeKey: @(self.cursorMode),
+              kTerminalStateKeypadModeKey: @(self.keypadMode),
+              kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
+              kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
+              kTerminalStateAnsiModeKey: @(ansiMode_),
+              kTerminalStateNumLockKey: @(numLock_),
+              kTerminalStateGraphicRenditionKey: [self dictionaryForGraphicRendition:graphicRendition_],
+              kTerminalStateMainSavedCursorKey: [self dictionaryForSavedCursor:mainSavedCursor_],
+              kTerminalStateAltSavedCursorKey: [self dictionaryForSavedCursor:altSavedCursor_],
+              kTerminalStateAllowColumnModeKey: @(self.allowColumnMode),
+              kTerminalStateColumnMode: @(self.columnMode),
+              kTerminalStateDisableSMCUPAndRMCUP: @(self.disableSmcupRmcup) };
+}
+
+- (void)setStateFromDictionary:(NSDictionary *)dict {
+    self.termType = dict[kTerminalStateTermTypeKey];
+    self.encoding = [dict[kTerminalStateStringEncodingKey] unsignedIntegerValue];
+    self.canonicalEncoding = [dict[kTerminalStateCanonicalEncodingKey] unsignedIntegerValue];
+    self.reportFocus = [dict[kTerminalStateReportFocusKey] boolValue];
+    self.reverseVideo = [dict[kTerminalStateReverseVideoKey] boolValue];
+    self.originMode = [dict[kTerminalStateOriginModeKey] boolValue];
+    self.moreFix = [dict[kTerminalStateMoreFixKey] boolValue];
+    self.wraparoundMode = [dict[kTerminalStateWraparoundModeKey] boolValue];
+    self.reverseWraparoundMode = [dict[kTerminalStateReverseWraparoundModeKey] boolValue];
+    self.isAnsi = [dict[kTerminalStateIsAnsiKey] boolValue];
+    self.autorepeatMode = [dict[kTerminalStateAutorepeatModeKey] boolValue];
+    self.insertMode = [dict[kTerminalStateInsertModeKey] boolValue];
+    self.charset = [dict[kTerminalStateCharsetKey] intValue];
+    self.mouseMode = [dict[kTerminalStateMouseModeKey] intValue];
+    self.mouseFormat = [dict[kTerminalStateMouseFormatKey] intValue];
+    self.cursorMode = [dict[kTerminalStateCursorModeKey] boolValue];
+    self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
+    self.allowKeypadMode = [dict[kTerminalStateAllowKeypadModeKey] boolValue];
+    self.bracketedPasteMode = [dict[kTerminalStateBracketedPasteModeKey] boolValue];
+    ansiMode_ = [dict[kTerminalStateAnsiModeKey] boolValue];
+    numLock_ = [dict[kTerminalStateNumLockKey] boolValue];
+    graphicRendition_ = [self graphicRenditionFromDictionary:dict[kTerminalStateGraphicRenditionKey]];
+    mainSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateMainSavedCursorKey]];
+    altSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateAltSavedCursorKey]];
+    self.allowColumnMode = [dict[kTerminalStateAllowColumnModeKey] boolValue];
+    self.columnMode = [dict[kTerminalStateColumnMode] boolValue];
+    self.disableSmcupRmcup = [dict[kTerminalStateDisableSMCUPAndRMCUP] boolValue];
 }
 
 @end
