@@ -67,6 +67,22 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     id<VT100DCSParserHook> _hook;
 }
 
++ (NSDictionary *)termcapTerminfoNameDictionary {
+    return @{ @"TN": @(kDcsTermcapTerminfoRequestTerminalName),
+              @"name": @(kDcsTermcapTerminfoRequestTerminfoName),
+              @"iTerm2Profile": @(kDcsTermcapTerminfoRequestiTerm2ProfileName) };
+}
+
++ (NSDictionary *)termcapTerminfoInverseNameDictionary {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    NSDictionary *dict = [self termcapTerminfoNameDictionary];
+    for (NSString *key in dict) {
+        id value = dict[key];
+        result[value] = key;
+    }
+    return result;
+}
+
 - (id)init {
     self = [super init];
     if (self) {
@@ -380,7 +396,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     if ([self compactSequence] == MAKE_COMPACT_SEQUENCE(0, 0, 'p') &&
         [[self parameters] isEqual:@[ @"1000" ]]) {
         VT100Token *token = _stateMachine.userInfo[kVT100DCSUserInfoToken];
-        token->type = DCS_TMUX_HOOK;
+        if (token) {
+            token->type = DCS_TMUX_HOOK;
+        }
 
         [_hook release];
         _hook = [[VT100TmuxParser alloc] init];
@@ -485,20 +503,16 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 }
 
-+ (NSDictionary *)termcapTerminfoNameDictionary {
-    return @{ @"TN": @(kDcsTermcapTerminfoRequestTerminalName),
-              @"name": @(kDcsTermcapTerminfoRequestTerminfoName),
-              @"iTerm2Profile": @(kDcsTermcapTerminfoRequestiTerm2ProfileName) };
-}
-
-+ (NSDictionary *)termcapTerminfoInverseNameDictionary {
-    NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    NSDictionary *dict = [self termcapTerminfoNameDictionary];
-    for (NSString *key in dict) {
-        id value = dict[key];
-        result[value] = key;
+- (void)startTmuxRecoveryMode {
+    // Put the state machine in the passthrough mode.
+    char *fakeControlSequence = "\eP1000p";
+    for (int i = 0; fakeControlSequence[i]; i++) {
+        [_stateMachine handleCharacter:fakeControlSequence[i]];
     }
-    return result;
+
+    // Replace the hook with one in recovery mode.
+    [_hook release];
+    _hook = [[VT100TmuxParser alloc] initInRecoveryMode];
 }
 
 @end

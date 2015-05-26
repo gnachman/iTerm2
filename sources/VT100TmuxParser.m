@@ -16,7 +16,16 @@
 
 @implementation VT100TmuxParser {
     BOOL _inResponseBlock;
+    BOOL _recoveryMode;
     NSMutableData *_line;
+}
+
+- (instancetype)initInRecoveryMode {
+    self = [self init];
+    if (self) {
+        _recoveryMode = YES;
+    }
+    return self;
 }
 
 - (void)dealloc {
@@ -57,7 +66,25 @@
 
         // Tokenize the line, returning if it is a terminator like %exit.
         if ([self processLineIntoToken:result]) {
-            return YES;
+            if (_recoveryMode) {
+                // In recovery mode, we always ignore the first line unless it is a %begin.
+                // That's because we expect we came into an existing connection, but not one that
+                // is responding to a command. We could start reading in the middle of a notification,
+                // such as half the line of an %output. Notifications always fit on a single line
+                // so ignoring the first line is safe. If we came in to a silent connection then
+                // the first thing we'll get back from the server that we do expect to see is a
+                // response, so we don't want to ignore that.
+                if ([result.string hasPrefix:@"%begin"]) {
+                    return YES;
+                } else {
+                    result->type = VT100_WAIT;
+                    result.string = nil;
+                    _recoveryMode = NO;
+                    return NO;
+                }
+            } else {
+                return YES;
+            }
         }
     }
     return NO;
