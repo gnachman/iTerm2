@@ -46,7 +46,33 @@ static NSString *const kLineBufferMayHaveDWCKey = @"May Have Double Width Charac
 
 static const int kLineBufferVersion = 1;
 
-@implementation LineBuffer
+@implementation LineBuffer {
+    // An array of LineBlock*s.
+    NSMutableArray* blocks;
+
+    // The default storage for a LineBlock (some may be larger to accomodate very long lines).
+    int block_size;
+
+    // If a cursor size is saved, this gives its offset from the start of its line.
+    int cursor_x;
+
+    // The raw line number (in lines from the first block) of the cursor.
+    int cursor_rawline;
+
+    // The maximum number of lines to store. In truth, more lines will be stored, but no more
+    // than max_lines will be exposed by the interface.
+    int max_lines;
+
+    // The number of blocks at the head of the list that have been removed.
+    int num_dropped_blocks;
+
+    // Cache of the number of wrapped lines
+    int num_wrapped_lines_cache;
+    int num_wrapped_lines_width;
+
+    // Number of char that have been dropped
+    long long droppedChars;
+}
 
 // Append a block
 - (LineBlock*) _addBlockOfSize: (int) size
@@ -105,9 +131,6 @@ static const int kLineBufferVersion = 1;
         max_lines = [dictionary[kLineBufferMaxLinesKey] intValue];
         num_dropped_blocks = [dictionary[kLineBufferNumDroppedBlocksKey] intValue];
         droppedChars = [dictionary[kLineBufferDroppedCharsKey] longLongValue];
-        if ([dictionary[kLineBufferTruncatedKey] boolValue]) {
-            [self appendMessage:@"Restored Content Truncated"];
-        }
         for (NSDictionary *blockDictionary in dictionary[kLineBufferBlocksKey]) {
             LineBlock *block = [LineBlock blockWithDictionary:blockDictionary];
             if (!block) {
@@ -474,8 +497,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return nil;
 }
 
-- (int) numLinesWithWidth: (int) width
-{
+- (int)numLinesWithWidth:(int)width {
+    if (width == 0) {
+        return 0;
+    }
     return RawNumLines(self, width);
 }
 
@@ -1135,6 +1160,67 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                width:num_wrapped_lines_width > 0 ?: 80
            timestamp:[NSDate timeIntervalSinceReferenceDate]
         continuation:defaultBg];
+}
+
+#pragma mark - NSCopying
+
+- (id)copyWithZone:(NSZone *)zone {
+    LineBuffer *theCopy = [[LineBuffer alloc] initWithBlockSize:block_size];
+
+    for (LineBlock *block in blocks) {
+        [theCopy->blocks addObject:block];
+    }
+    theCopy->cursor_x = cursor_x;
+    theCopy->cursor_rawline = cursor_rawline;
+    theCopy->max_lines = max_lines;
+    theCopy->num_dropped_blocks = num_dropped_blocks;
+    theCopy->num_wrapped_lines_cache = num_wrapped_lines_cache;
+    theCopy->num_wrapped_lines_width = num_wrapped_lines_width;
+    theCopy->droppedChars = droppedChars;
+
+    return theCopy;
+}
+
+- (int)numBlocksAtEndToGetMinimumLines:(int)minLines width:(int)width {
+    int numBlocks = 0;
+    int lines = 0;
+    for (LineBlock *block in blocks.reverseObjectEnumerator) {
+        lines += [block getNumLinesWithWrapWidth:width];
+        ++numBlocks;
+        if (lines > minLines) {
+            break;
+        }
+    }
+    return numBlocks;
+}
+
+- (long long)numCharsInRangeOfBlocks:(NSRange)range {
+    long long n = 0;
+    for (int i = 0; i < range.length; i++) {
+        NSUInteger j = range.location + i;
+        n += [blocks[j] numberOfCharacters];
+    }
+    return n;
+}
+
+- (LineBuffer *)appendOnlyCopyWithMinimumLines:(int)minLines atWidth:(int)width {
+    // Calculate how many blocks to keep.
+    const int numBlocks = [self numBlocksAtEndToGetMinimumLines:minLines width:width];
+    const int totalBlocks = blocks.count;
+    const int numDroppedBlocks = totalBlocks - numBlocks;
+
+    // Make a copy of the whole thing (cheap)
+    LineBuffer *theCopy = [[self newAppendOnlyCopy] autorelease];
+
+    // Remove the blocks we don't need.
+    [theCopy->blocks removeObjectsInRange:NSMakeRange(0, numDroppedBlocks)];
+
+    // Update stats and nuke cache.
+    theCopy->num_dropped_blocks += numDroppedBlocks;
+    theCopy->num_wrapped_lines_width = -1;
+    theCopy->droppedChars += [self numCharsInRangeOfBlocks:NSMakeRange(0, numDroppedBlocks)];
+
+    return theCopy;
 }
 
 @end

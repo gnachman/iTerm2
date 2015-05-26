@@ -21,7 +21,39 @@ NSString *const kLineBlockIsPartialKey = @"Is Partial";
 NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 
-@implementation LineBlock
+@implementation LineBlock {
+    // The raw lines, end-to-end. There is no delimiter between each line.
+    screen_char_t* raw_buffer;
+    screen_char_t* buffer_start;  // usable start of buffer (stuff before this is dropped)
+
+    int start_offset;  // distance from raw_buffer to buffer_start
+    int first_entry;  // first valid cumulative_line_length
+
+    // The number of elements allocated for raw_buffer.
+    int buffer_size;
+
+    // There will be as many entries in this array as there are lines in raw_buffer.
+    // The ith value is the length of the ith line plus the value of
+    // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
+    int* cumulative_line_lengths;
+    LineBlockMetadata *metadata_;
+
+    // The number of elements allocated for cumulative_line_lengths.
+    int cll_capacity;
+
+    // The number of values in the cumulative_line_lengths array.
+    int cll_entries;
+
+    // If true, then the last raw line does not include a logical newline at its terminus.
+    BOOL is_partial;
+
+    // The number of wrapped lines if width==cached_numlines_width.
+    int cached_numlines;
+
+    // This is -1 if the cache is invalid; otherwise it specifies the width for which
+    // cached_numlines is correct.
+    int cached_numlines_width;
+}
 
 - (instancetype)init {
     self = [super init];
@@ -145,8 +177,7 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
     return theCopy;
 }
 
-- (int) rawSpaceUsed
-{
+- (int)rawSpaceUsed {
     if (cll_entries == 0) {
         return 0;
     } else {
@@ -1209,6 +1240,10 @@ static int Search(NSString* needle,
               kLineBlockIsPartialKey: @(is_partial),
               kLineBlockMetadataKey: [self metadataArray],
               kLineBlockMayHaveDWCKey: @(_mayHaveDoubleWidthCharacter) };
+}
+
+- (int)numberOfCharacters {
+    return self.rawSpaceUsed - start_offset;
 }
 
 @end

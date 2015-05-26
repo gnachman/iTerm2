@@ -104,12 +104,12 @@ static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-se
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
-static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
+static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
 static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
 static NSString *const SESSION_ARRANGEMENT_CURSOR_POSITION = @"Cursor Position";  // NSDictionary with cursor position
-static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
+static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
 
-static int gNextSessionID = 1;
+static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 // Keys into _variables.
 static NSString *const kVariableKeySessionName = @"session.name";
@@ -131,14 +131,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @interface PTYSession () <iTermPasteHelperDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
-@property(nonatomic, assign) int sessionID;
 @property(nonatomic, readwrite) NSTimeInterval lastOutput;
 @property(nonatomic, readwrite) BOOL isDivorced;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
-@property(nonatomic, copy) NSString *uniqueID;
 @property(nonatomic, copy) NSString *badgeFormat;
 @property(nonatomic, retain) NSMutableDictionary *variables;
 
@@ -337,7 +335,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     self = [super init];
     if (self) {
         _triggerLineNumber = -1;
-        _sessionID = gNextSessionID++;
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
@@ -447,7 +444,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_patternedImage release];
     [_announcements release];
     [_queuedTokens release];
-    [_uniqueID release];
     [_badgeFormat release];
     [_variables release];
     [_program release];
@@ -710,9 +706,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 aSession.guid = guid;
                 DLog(@"Assign guid %@ to session %@ which will have its contents restored from registered contents",
                      guid, aSession);
-            } else if ([[iTermController sharedInstance] startingUp]) {
-                // Use the arrangement's guid during startup because we assume the session is being
-                // restored from a saved arrangement.
+            } else if ([[iTermController sharedInstance] startingUp] ||
+                       arrangement[SESSION_ARRANGEMENT_CONTENTS]) {
+                // If startingUp is set, then the session is being restored from the default
+                // arrangement, per user preference.
+                // If contents are present, then system window restoration is bringing back a
+                // session.
                 aSession.guid = guid;
                 DLog(@"iTerm2 is starting up. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
             }
@@ -765,7 +764,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]) {
         [aSession setWindowTitle:arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]];
     }
-
+    if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
+        NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
+        for (id key in variables) {
+            aSession.variables[key] = variables[key];
+        }
+        aSession.textview.badgeLabel = aSession.badgeLabel;
+    }
     if (state) {
         [[aSession screen] setTmuxState:state];
         NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
@@ -801,7 +806,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
                    includeRestorationBanner:(BOOL)includeRestorationBanner {
-    [_screen appendFromDictionary:dict includeRestorationBanner:includeRestorationBanner];
+    [_screen appendFromDictionary:dict
+         includeRestorationBanner:includeRestorationBanner
+                    knownTriggers:_triggers];
 }
 
 // Session specific methods
@@ -2514,14 +2521,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return (now - _lastOutput) < ([iTermAdvancedSettingsModel idleTimeSeconds] + 1);
 }
 
-- (NSString *)uniqueID {
-    if (!_uniqueID) {
-        static int gNextUniqueId;
-        self.uniqueID = [NSString stringWithFormat:@"%d", ++gNextUniqueId];
-    }
-    return _uniqueID;
-}
-
 - (NSString*)formattedName:(NSString*)base
 {
     NSString *prefix = _tmuxController ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
@@ -3016,11 +3015,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             result[SESSION_ARRANGEMENT_CURSOR_POSITION] = [NSDictionary dictionaryWithGridCoord:cursor];
         }
     }
+    result[SESSION_ARRANGEMENT_VARIABLES] = _variables;
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
-    if (self.uniqueID) {
-        result[SESSION_UNIQUE_ID] = self.uniqueID;  // TODO: This isn't really unique, it's just the tty number
-    }
     return result;
 }
 
@@ -3050,12 +3047,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return result;
 }
 
-+ (NSString *)uniqueIdInArrangement:(NSDictionary *)arrangement {
-    return arrangement[SESSION_UNIQUE_ID];
++ (NSString *)guidInArrangement:(NSDictionary *)arrangement {
+    NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
+    if (guid) {
+        return guid;
+    } else {
+        return arrangement[SESSION_UNIQUE_ID];
+    }
 }
 
-- (void)updateScroll
-{
+- (void)updateScroll {
     if (![(PTYScroller*)([_scrollview verticalScroller]) userScroll]) {
         [_textview scrollEnd];
     }
@@ -5426,8 +5427,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self continueTailFind];
 }
 
-- (void)sessionContentsChanged:(NSNotification *)notification
-{
+- (void)sessionContentsChanged:(NSNotification *)notification {
     if (!_tailFindTimer &&
         [notification object] == self &&
         [[_tab realParentWindow] currentTab] == _tab) {
@@ -5492,8 +5492,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 #pragma mark - VT100ScreenDelegate
 
-- (int)screenSessionID {
-    return self.sessionID;
+- (NSString *)screenSessionGuid {
+    return self.guid;
 }
 
 - (void)screenNeedsRedraw {

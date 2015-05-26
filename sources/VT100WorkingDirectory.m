@@ -7,9 +7,20 @@
 //
 
 #import "VT100WorkingDirectory.h"
+#import "NSObject+iTerm.h"
+
+static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Directory";
 
 @implementation VT100WorkingDirectory
 @synthesize entry;
+
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+    self = [super init];
+    if (self) {
+        self.workingDirectory = [dict[kWorkingDirectoryStateWorkingDirectoryKey] nilIfNull];
+    }
+    return self;
+}
 
 - (void)dealloc {
     [_workingDirectory release];
@@ -19,6 +30,12 @@
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p workingDirectory=%@ interval=%@>",
             self.class, self, self.workingDirectory, self.entry.interval];
+}
+
+#pragma mark - IntervalTreeObject
+
+- (NSDictionary *)dictionaryValue {
+    return @{ kWorkingDirectoryStateWorkingDirectoryKey: self.workingDirectory ?: [NSNull null] };
 }
 
 @end

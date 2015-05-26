@@ -117,6 +117,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     iTermPasswordManagerDelegate,
     PTYTabDelegate>
 @property(nonatomic, assign) BOOL windowInitialized;
+
+// Session ID of session that currently has an auto-command history window open
+@property(nonatomic, copy) NSString *autoCommandHistorySessionGuid;
 @end
 
 @implementation PseudoTerminal {
@@ -278,9 +281,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // forever.
     int desiredRows_, desiredColumns_;
 
-    // Session ID of session that currently has an auto-command history window open
-    int _autoCommandHistorySessionId;
-
     // How wide the toolbelt should be. User may drag it to change.
     // ALWAYS USE THE FLOOR OF THIS VALUE!
     CGFloat toolbeltWidth_;
@@ -367,7 +367,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (id)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
     if (self) {
-        _autoCommandHistorySessionId = -1;
+        self.autoCommandHistorySessionGuid = nil;
     }
     return self;
 }
@@ -791,6 +791,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [_terminalGuid release];
     [lastArrangement_ release];
     [_divisionView release];
+    [_autoCommandHistorySessionGuid release];
 #if ENABLE_SHORTCUT_ACCESSORY
     [_shortcutAccessoryViewController release];
 #endif
@@ -3816,7 +3817,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     DLog(@"Did select tab view %@", tabViewItem);
     tabBarControl.flashing = YES;
 
-    if (_autoCommandHistorySessionId != -1) {
+    if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
     for (PTYSession* aSession in [[tabViewItem identifier] sessions]) {
@@ -4760,11 +4761,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)hideAutoCommandHistory {
     [commandHistoryPopup close];
-    _autoCommandHistorySessionId = -1;
+    self.autoCommandHistorySessionGuid = nil;
 }
 
 - (void)hideAutoCommandHistoryForSession:(PTYSession *)session {
-    if ([session sessionID] == _autoCommandHistorySessionId) {
+    if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         [self hideAutoCommandHistory];
         DLog(@"Cancel delayed perform of show ACH window");
         [NSObject cancelPreviousPerformRequestsWithTarget:self
@@ -4774,7 +4775,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)updateAutoCommandHistoryForPrefix:(NSString *)prefix inSession:(PTYSession *)session {
-    if ([session sessionID] == _autoCommandHistorySessionId) {
+    if ([session.guid isEqualToString:self.autoCommandHistorySessionGuid]) {
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
         }
@@ -4811,7 +4812,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)reallyShowAutoCommandHistoryForSession:(PTYSession *)session {
     if ([self currentSession] == session && [[self window] isKeyWindow]) {
-        _autoCommandHistorySessionId = [session sessionID];
+        self.autoCommandHistorySessionGuid = session.guid;
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
         }
@@ -4821,7 +4822,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (BOOL)autoCommandHistoryIsOpenForSession:(PTYSession *)session {
-    return [[commandHistoryPopup window] isVisible] && _autoCommandHistorySessionId == [session sessionID];
+    return [[commandHistoryPopup window] isVisible] && [self.autoCommandHistorySessionGuid isEqualToString:session.guid];
 }
 
 - (IBAction)openAutocomplete:(id)sender
@@ -5111,7 +5112,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)tabActiveSessionDidChange {
-    if (_autoCommandHistorySessionId != -1) {
+    if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
     [[toolbelt_ commandHistoryView] updateCommands];

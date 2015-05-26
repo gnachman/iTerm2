@@ -7,6 +7,7 @@
 //
 
 #import "CaptureTrigger.h"
+#import "CapturedOutput.h"
 #import "CommandHistory.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
@@ -24,17 +25,6 @@ static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
     @"NoSyncSuppressCaptureOutputRequiresShellIntegrationWarning";
 static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     @"NoSyncSuppressCaptureOutputToolNotVisibleWarning";
-
-@implementation CapturedOutput
-
-- (void)dealloc {
-    [_values release];
-    [_trigger release];
-    [_mark release];
-    [super dealloc];
-}
-
-@end
 
 
 @implementation CaptureTrigger

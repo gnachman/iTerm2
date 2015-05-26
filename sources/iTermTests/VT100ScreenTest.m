@@ -658,8 +658,8 @@
 - (void)screenDidChangeNumberOfScrollbackLines {
 }
 
-- (int)screenSessionID {
-    return 0;
+- (NSString)screenSessionGuid {
+    return @"fjdkslafjdsklfa";
 }
 
 - (void)screenSetCursorBlinking:(BOOL)blink {

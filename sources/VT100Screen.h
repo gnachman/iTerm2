@@ -171,7 +171,8 @@ extern int kVT100ScreenMinRows;
 
 - (NSDictionary *)contentsDictionary;
 - (void)appendFromDictionary:(NSDictionary *)dictionary
-    includeRestorationBanner:(BOOL)includeRestorationBanner;
+    includeRestorationBanner:(BOOL)includeRestorationBanner
+               knownTriggers:(NSArray *)triggers;
 
 // Zero-based (as VT100GridCoord always is), unlike -cursorX and -cursorY.
 - (void)setCursorPosition:(VT100GridCoord)coord;

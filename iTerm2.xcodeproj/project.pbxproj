@@ -1567,6 +1567,11 @@
 		A67F57CF1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */; };
 		A67F57D01B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */; };
 		A67F57D11B0930CA00B4F135 /* iTermFileDescriptorServer.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */; };
+		A67F57D41B11882900B4F135 /* CapturedOutput.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57D21B11882900B4F135 /* CapturedOutput.h */; };
+		A67F57D51B11882900B4F135 /* CapturedOutput.h in Headers */ = {isa = PBXBuildFile; fileRef = A67F57D21B11882900B4F135 /* CapturedOutput.h */; };
+		A67F57D61B11882900B4F135 /* CapturedOutput.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57D31B11882900B4F135 /* CapturedOutput.m */; };
+		A67F57D71B11882900B4F135 /* CapturedOutput.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57D31B11882900B4F135 /* CapturedOutput.m */; };
+		A67F57D81B11882900B4F135 /* CapturedOutput.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57D31B11882900B4F135 /* CapturedOutput.m */; };
 		A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */; };
 		A680AA1418CEA1040034D4F8 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
 		A680AA1518CEA1040034D4F8 /* VT100TmuxParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */; };
@@ -2638,6 +2643,8 @@
 		A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorClient.h; sourceTree = "<group>"; };
 		A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorClient.c; sourceTree = "<group>"; tabWidth = 4; };
 		A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorServer.h; sourceTree = "<group>"; };
+		A67F57D21B11882900B4F135 /* CapturedOutput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CapturedOutput.h; sourceTree = "<group>"; };
+		A67F57D31B11882900B4F135 /* CapturedOutput.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CapturedOutput.m; sourceTree = "<group>"; };
 		A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100TmuxParser.h; sourceTree = "<group>"; tabWidth = 4; };
 		A680AA1218CEA1040034D4F8 /* VT100TmuxParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100TmuxParser.m; sourceTree = "<group>"; tabWidth = 4; };
 		A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableData+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -4252,6 +4259,8 @@
 				A67F57BD1B01A08800B4F135 /* iTermAnimatedImageInfo.m */,
 				1D468BBE1B056CD600226083 /* iTermProfileSearchToken.h */,
 				1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */,
+				A67F57D21B11882900B4F135 /* CapturedOutput.h */,
+				A67F57D31B11882900B4F135 /* CapturedOutput.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -4517,6 +4526,7 @@
 				1D6ED89E19AEA20D005A7799 /* CGSSession.h in Headers */,
 				1D6ED89F19AEA20D005A7799 /* CGSTransitions.h in Headers */,
 				1D6ED8A019AEA20D005A7799 /* CGSWindow.h in Headers */,
+				A67F57D51B11882900B4F135 /* CapturedOutput.h in Headers */,
 				1D6ED8A119AEA20D005A7799 /* CGSWorkspace.h in Headers */,
 				1D6ED8A219AEA20D005A7799 /* iTermPasswordManagerWindowController.h in Headers */,
 				1D6ED8A319AEA20D005A7799 /* LineBuffer.h in Headers */,
@@ -4801,6 +4811,7 @@
 				A6A2698318FE48B200437DA9 /* NSFont+iTerm.h in Headers */,
 				A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */,
 				1DFA9D6418F37160008ADC98 /* iTermEditKeyActionWindowController.h in Headers */,
+				A67F57D41B11882900B4F135 /* CapturedOutput.h in Headers */,
 				A693395C1851A61D00EBEA20 /* VT100ScreenMark.h in Headers */,
 				1D5FDD5D1208E8F000C46BA3 /* PSMRolloverButton.h in Headers */,
 				1D5FDD5E1208E8F000C46BA3 /* PSMTabBarCell.h in Headers */,
@@ -5950,6 +5961,7 @@
 				1D6EDAB219AEA20D005A7799 /* TmuxController.m in Sources */,
 				1D6EDAB319AEA20D005A7799 /* NSStringCategoryTest.m in Sources */,
 				1D6EDAB419AEA20D005A7799 /* TSVParser.m in Sources */,
+				A67F57D81B11882900B4F135 /* CapturedOutput.m in Sources */,
 				1D6EDAB519AEA20D005A7799 /* TmuxLayoutParser.m in Sources */,
 				1D6EDAB619AEA20D005A7799 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				1D6EDAB719AEA20D005A7799 /* TmuxWindowOpener.m in Sources */,
@@ -6046,6 +6058,7 @@
 				A67F57C11B01A08800B4F135 /* iTermAnimatedImageInfo.m in Sources */,
 				A663012D19D0864C004AF81C /* SCEvent.m in Sources */,
 				A6A2699E190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
+				A67F57D71B11882900B4F135 /* CapturedOutput.m in Sources */,
 				1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */,
 				A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */,
 				1D9A5546180FA82E00B42CE9 /* EquivalenceClassSet.m in Sources */,
@@ -6582,6 +6595,7 @@
 				1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */,
 				1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */,
 				A671C068192981D000A7F796 /* NSStringCategoryTest.m in Sources */,
+				A67F57D61B11882900B4F135 /* CapturedOutput.m in Sources */,
 				1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */,
 				1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */,
 				A6A2698918FF70C600437DA9 /* ProfilesWindowPreferencesViewController.m in Sources */,

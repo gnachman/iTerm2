@@ -9,16 +9,43 @@
 #import "NSDictionary+iTerm.h"
 #import "NSColor+iTerm.h"
 
+static NSString *const kGridCoordXKey = @"x";
+static NSString *const kGridCoordYKey = @"y";
+static NSString *const kGridCoordAbsYKey = @"absY";
+static NSString *const kGridCoordStartKey = @"start";
+static NSString *const kGridCoordEndKey = @"end";
+
 @implementation NSDictionary (iTerm)
 
 + (NSDictionary *)dictionaryWithGridCoord:(VT100GridCoord)coord {
-    return @{ @"x": @(coord.x),
-              @"y": @(coord.y) };
+    return @{ kGridCoordXKey: @(coord.x),
+              kGridCoordYKey: @(coord.y) };
 }
 
 - (VT100GridCoord)gridCoord {
-    return VT100GridCoordMake([self[@"x"] intValue],
-                              [self[@"y"] intValue]);
+    return VT100GridCoordMake([self[kGridCoordXKey] intValue],
+                              [self[kGridCoordYKey] intValue]);
+}
+
++ (NSDictionary *)dictionaryWithGridAbsCoord:(VT100GridAbsCoord)coord {
+    return @{ kGridCoordXKey: @(coord.x),
+              kGridCoordAbsYKey: @(coord.y) };
+}
+
+- (VT100GridAbsCoord)gridAbsCoord {
+    return VT100GridAbsCoordMake([self[kGridCoordXKey] intValue],
+                                 [self[kGridCoordAbsYKey] longLongValue]);
+}
+
++ (NSDictionary *)dictionaryWithGridAbsCoordRange:(VT100GridAbsCoordRange)coordRange {
+    return @{ kGridCoordStartKey: [self dictionaryWithGridAbsCoord:coordRange.start],
+              kGridCoordEndKey: [self dictionaryWithGridAbsCoord:coordRange.end] };
+}
+
+- (VT100GridAbsCoordRange)gridAbsCoordRange {
+    VT100GridAbsCoord start = [self[kGridCoordStartKey] gridAbsCoord];
+    VT100GridAbsCoord end = [self[kGridCoordEndKey] gridAbsCoord];
+    return VT100GridAbsCoordRangeMake(start.x, start.y, end.x, end.y);
 }
 
 - (BOOL)boolValueDefaultingToYesForKey:(id)key

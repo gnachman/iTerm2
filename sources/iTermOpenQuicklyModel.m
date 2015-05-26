@@ -69,7 +69,7 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
                                                                   highlightedIndexes:nil];
             }
 
-            item.identifier = session.uniqueID;
+            item.identifier = session.guid;
             [items addObject:item];
         }
     }
@@ -349,9 +349,9 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     if ([item isKindOfClass:[iTermOpenQuicklyProfileItem class]]) {
         return [[ProfileModel sharedInstance] bookmarkWithGuid:item.identifier];
     } else if ([item isKindOfClass:[iTermOpenQuicklySessionItem class]]) {
-        NSString *sessionId = item.identifier;
+        NSString *guid = item.identifier;
         for (PTYSession *session in [self sessions]) {
-            if ([session.uniqueID isEqualTo:sessionId]) {
+            if ([session.guid isEqualTo:guid]) {
                 return session;
             }
         }

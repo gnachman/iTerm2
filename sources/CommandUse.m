@@ -7,17 +7,22 @@
 //
 
 #import "CommandUse.h"
+#import "NSObject+iTerm.h"
+#import "VT100ScreenMark.h"
 
 @implementation CommandUse
 
 - (void)dealloc {
     [_mark release];
     [_directory release];
+    [_markGuid release];
     [super dealloc];
 }
 
 - (NSArray *)serializedValue {
-    return @[ @(self.time), _directory ?: @"" ];
+    return @[ @(self.time),
+              _directory ?: @"",
+              _mark.guid ?: [NSNull null] ];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -31,6 +36,10 @@
         if ([serializedValue count] > 1) {
             commandUse.directory = serializedValue[1];
         }
+        if ([serializedValue count] > 2) {
+            commandUse.markGuid = [serializedValue[2] nilIfNull];
+        }
+
     } else if ([serializedValue isKindOfClass:[NSNumber class]]) {
         commandUse.time = [serializedValue doubleValue];
     }
