@@ -827,6 +827,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
         }
+        aSession->_lastMark = [aSession.screen.lastMark retain];
     }
 
     if (state) {
