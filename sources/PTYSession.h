@@ -515,6 +515,8 @@ typedef enum {
 // Make this session's textview the first responder.
 - (void)takeFocus;
 
+- (void)showOrphanAnnouncement;
+
 #pragma mark - Testing utilities
 
 - (void)synchronousReadTask:(NSString *)string;
