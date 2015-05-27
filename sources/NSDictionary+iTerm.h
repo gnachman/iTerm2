@@ -23,6 +23,12 @@
 + (NSDictionary *)dictionaryWithGridCoordRange:(VT100GridCoordRange)coordRange;
 - (VT100GridCoordRange)gridCoordRange;
 
++ (NSDictionary *)dictionaryWithGridWindowedRange:(VT100GridWindowedRange)range;
+- (VT100GridWindowedRange)gridWindowedRange;
+
++ (NSDictionary *)dictionaryWithGridRange:(VT100GridRange)range;
+- (VT100GridRange)gridRange;
+
 - (BOOL)boolValueDefaultingToYesForKey:(id)key;
 - (NSColor *)colorValue;
 
