@@ -119,9 +119,7 @@ static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next 
 static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
-/* TODO
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
-*/
 
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
@@ -826,14 +824,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 }
             }
         }
+        if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
+            aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
+        }
     }
 
-    /* TODO:
-SESSION_ARRANGEMENT_COMMANDS
-SESSION_ARRANGEMENT_DIRECTORIES
-SESSION_ARRANGEMENT_HOSTS
-SESSION_ARRANGEMENT_CURSOR_GUIDE
-*/
     if (state) {
         [[aSession screen] setTmuxState:state];
         NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
@@ -3106,6 +3101,7 @@ SESSION_ARRANGEMENT_CURSOR_GUIDE
     result[SESSION_ARRANGEMENT_HOSTS] = [_hosts mapWithBlock:^id(id anObject) {
         return [(VT100RemoteHost *)anObject dictionaryValue];
     }];
+    result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
