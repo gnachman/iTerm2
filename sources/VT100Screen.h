@@ -147,6 +147,7 @@ extern int kVT100ScreenMinRows;
 
 - (VT100ScreenMark *)lastMark;
 - (VT100ScreenMark *)lastPromptMark;
+- (VT100RemoteHost *)lastRemoteHost;
 - (BOOL)markIsValid:(VT100ScreenMark *)mark;
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine

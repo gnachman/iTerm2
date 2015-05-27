@@ -1930,24 +1930,27 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (VT100ScreenMark *)lastPromptMark {
-    return [self lastMarkMustBePrompt:YES];
+    return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
 }
 
 - (VT100ScreenMark *)lastMark {
-    return [self lastMarkMustBePrompt:NO];
+    return [self lastMarkMustBePrompt:NO class:[VT100ScreenMark class]];
 }
 
-- (VT100ScreenMark *)lastMarkMustBePrompt:(BOOL)wantPrompt {
+- (VT100RemoteHost *)lastRemoteHost {
+    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+}
+
+- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id obj in objects) {
-            if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
-                if (wantPrompt && mark.isPrompt) {
-                    return mark;
+            if ([obj isKindOfClass:theClass]) {
+                if (wantPrompt && [obj isPrompt]) {
+                    return obj;
                 } else if (!wantPrompt) {
-                    return mark;
+                    return obj;
                 }
             }
         }

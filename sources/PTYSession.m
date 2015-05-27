@@ -120,7 +120,7 @@ static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of 
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
-
+static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
@@ -828,6 +828,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
         }
         aSession->_lastMark = [aSession.screen.lastMark retain];
+        aSession.lastRemoteHost = [aSession.screen.lastRemoteHost retain];
+        if ([arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] nilIfNull]) {
+            [aSession->_lastDirectory autorelease];
+            aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
+        }
     }
 
     if (state) {
@@ -3103,7 +3108,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return [(VT100RemoteHost *)anObject dictionaryValue];
     }];
     result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
-
+    result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory ?: [NSNull null];
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     return result;
