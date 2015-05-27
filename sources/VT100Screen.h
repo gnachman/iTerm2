@@ -151,6 +151,7 @@ extern int kVT100ScreenMinRows;
 #pragma mark - Marks and notes
 
 - (VT100ScreenMark *)lastMark;
+- (VT100ScreenMark *)lastPromptMark;
 - (BOOL)markIsValid:(VT100ScreenMark *)mark;
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine

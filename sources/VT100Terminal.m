@@ -54,8 +54,9 @@ NSString *const kTerminalStateGraphicRenditionKey = @"Graphic Rendition";
 NSString *const kTerminalStateMainSavedCursorKey = @"Main Saved Cursor";
 NSString *const kTerminalStateAltSavedCursorKey = @"Alt Saved Cursor";
 NSString *const kTerminalStateAllowColumnModeKey = @"Allow Column Mode";
-NSString *const kTerminalStateColumnMode = @"Column Mode";
-NSString *const kTerminalStateDisableSMCUPAndRMCUP = @"Disable Alt Screen";
+NSString *const kTerminalStateColumnModeKey = @"Column Mode";
+NSString *const kTerminalStateDisableSMCUPAndRMCUPKey = @"Disable Alt Screen";
+NSString *const kTerminalStateInCommandKey = @"In Command";
 
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reportFocus;
@@ -2388,8 +2389,9 @@ static const int kMaxScreenRows = 4096;
               kTerminalStateMainSavedCursorKey: [self dictionaryForSavedCursor:mainSavedCursor_],
               kTerminalStateAltSavedCursorKey: [self dictionaryForSavedCursor:altSavedCursor_],
               kTerminalStateAllowColumnModeKey: @(self.allowColumnMode),
-              kTerminalStateColumnMode: @(self.columnMode),
-              kTerminalStateDisableSMCUPAndRMCUP: @(self.disableSmcupRmcup) };
+              kTerminalStateColumnModeKey: @(self.columnMode),
+              kTerminalStateDisableSMCUPAndRMCUPKey: @(self.disableSmcupRmcup),
+              kTerminalStateInCommandKey: @(inCommand_) };
 }
 
 - (void)setStateFromDictionary:(NSDictionary *)dict {
@@ -2418,8 +2420,9 @@ static const int kMaxScreenRows = 4096;
     mainSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateMainSavedCursorKey]];
     altSavedCursor_ = [self savedCursorFromDictionary:dict[kTerminalStateAltSavedCursorKey]];
     self.allowColumnMode = [dict[kTerminalStateAllowColumnModeKey] boolValue];
-    self.columnMode = [dict[kTerminalStateColumnMode] boolValue];
-    self.disableSmcupRmcup = [dict[kTerminalStateDisableSMCUPAndRMCUP] boolValue];
+    self.columnMode = [dict[kTerminalStateColumnModeKey] boolValue];
+    self.disableSmcupRmcup = [dict[kTerminalStateDisableSMCUPAndRMCUPKey] boolValue];
+    inCommand_ = [dict[kTerminalStateInCommandKey] boolValue];
 }
 
 @end

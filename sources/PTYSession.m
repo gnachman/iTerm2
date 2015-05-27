@@ -112,6 +112,17 @@ static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID f
 static NSString *const SESSION_ARRANGEMENT_CURSOR_POSITION = @"Cursor Position";  // NSDictionary with cursor position
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
 
+/* TODO
+static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
+static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell Integration Ever Used";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
+static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
+static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
+static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
+*/
+
+
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 // Keys into _variables.
@@ -671,6 +682,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [aSession setTab:theTab];
     NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     BOOL shouldEnterTmuxMode = NO;
+    BOOL didRestoreContents = NO;
     if (!n) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
@@ -732,6 +744,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             DLog(@"Loading content from line buffer dictionary");
             [aSession setContentsFromLineBufferDictionary:contents
                                  includeRestorationBanner:runCommand];
+            didRestoreContents = YES;
             if (!runCommand) {
                 NSDictionary *cursorPosition = arrangement[SESSION_ARRANGEMENT_CURSOR_POSITION];
                 if (cursorPosition) {
@@ -781,6 +794,23 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
         aSession.textview.badgeLabel = aSession.badgeLabel;
     }
+    if (didRestoreContents) {
+        Interval *interval = aSession.screen.lastPromptMark.entry.interval;
+        if (interval) {
+            VT100GridRange gridRange = [aSession.screen lineNumberRangeOfInterval:interval];
+            aSession->_lastPromptLine = gridRange.location + aSession.screen.totalScrollbackOverflow;
+        }
+    }
+
+    /* TODO:
+SESSION_ARRANGEMENT_COMMAND_RANGE
+SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED
+SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK
+SESSION_ARRANGEMENT_COMMANDS
+SESSION_ARRANGEMENT_DIRECTORIES
+SESSION_ARRANGEMENT_HOSTS
+SESSION_ARRANGEMENT_CURSOR_GUIDE
+*/
     if (state) {
         [[aSession screen] setTmuxState:state];
         NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
