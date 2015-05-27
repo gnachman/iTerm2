@@ -29,7 +29,13 @@ NSString *kSemanticHistoryCommandAction = @"command";
 NSString *kSemanticHistoryRawCommandAction = @"raw command";
 NSString *kSemanticHistoryCoprocessAction = @"coprocess";
 
-@implementation iTermSemanticHistoryPrefsController
+@implementation iTermSemanticHistoryPrefsController {
+    NSString *guid_;
+    IBOutlet NSPopUpButton *action_;
+    IBOutlet NSTextField *text_;
+    IBOutlet NSPopUpButton *editors_;
+    IBOutlet NSTextField *caveat_;
+}
 
 enum {
     kSublimeText2Tag = 1,
@@ -314,6 +320,13 @@ enum {
     if (tagNumber) {
         [editors_ selectItemWithTag:[tagNumber integerValue]];
     }
+}
+
+- (void)setEnabled:(BOOL)enabled {
+    action_.enabled = enabled;
+    text_.enabled = enabled;
+    editors_.enabled = enabled;
+    caveat_.enabled = enabled;
 }
 
 @end

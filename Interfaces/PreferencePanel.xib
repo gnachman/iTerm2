@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14C109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
@@ -1559,6 +1559,7 @@ DQ
                 <outlet property="_boundHostShellIntegrationWarning" destination="vOf-y1-Eeu" id="sb5-IK-Sfk"/>
                 <outlet property="_boundHostTitle" destination="rvX-rY-vYV" id="Mmn-KW-gOJ"/>
                 <outlet property="_boundHostsTableView" destination="69M-P0-mzb" id="ZAz-IG-Mss"/>
+                <outlet property="_disabledTip" destination="4Ri-qB-jBs" id="A05-nf-kOf"/>
                 <outlet property="_removeBoundHost" destination="gfT-wm-XMY" id="Z6O-cE-9Bh"/>
                 <outlet property="_removeHost" destination="gfT-wm-XMY" id="nhN-4I-zB3"/>
                 <outlet property="_semanticHistoryPrefController" destination="5949" id="VpU-Nh-h9R"/>
@@ -2789,7 +2790,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="4919">
-                    <rect key="frame" x="275" y="152" width="50" height="17"/>
+                    <rect key="frame" x="272" y="152" width="53" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Screen:" id="4937">
                         <font key="font" metaFont="system"/>
@@ -3981,6 +3982,15 @@ DQ
                         <action selector="help:" target="Qvt-kg-svI" id="sHe-fn-c5u"/>
                     </connections>
                 </button>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="4Ri-qB-jBs">
+                    <rect key="frame" x="206" y="341" width="334" height="11"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Disabled by “⌘-Click Opens Filename/URL” setting in Pointer preferences" id="fXe-U0-Ddw">
+                        <font key="font" metaFont="miniSystem"/>
+                        <color key="textColor" red="0.36963383838383834" green="0.36963383838383834" blue="0.36963383838383834" alpha="0.84999999999999998" colorSpace="calibratedRGB"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
         </customView>
         <customView id="zBG-6Q-502" userLabel="Prefs - General" customClass="iTermSizeRememberingView">
@@ -5474,9 +5484,9 @@ DQ
                     </connections>
                 </button>
                 <button id="6107">
-                    <rect key="frame" x="18" y="88" width="209" height="18"/>
+                    <rect key="frame" x="18" y="88" width="331" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="check" title="⌘-Click Opens Filename/URL" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6108">
+                    <buttonCell key="cell" type="check" title="⌘-Click Opens Filename/URL (Semantic History)" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6108">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>

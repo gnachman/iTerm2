@@ -9,7 +9,8 @@
 #import "PointerPreferencesViewController.h"
 #import "PreferencePanel.h"
 
-NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification";
+NSString *const kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification";
+NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification = @"kPointerPrefsSemanticHistoryEnabledChangedNotification";
 
 @implementation PointerPreferencesViewController {
     // Cmd-click to launch url.
@@ -37,9 +38,13 @@ NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification"
 - (void)awakeFromNib {
     PreferenceInfo *info;
 
-    [self defineControl:_cmdSelection
-                    key:kPreferenceKeyCmdClickOpensURLs
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_cmdSelection
+                           key:kPreferenceKeyCmdClickOpensURLs
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kPointerPrefsSemanticHistoryEnabledChangedNotification
+                                                            object:nil];
+    };
 
     [self defineControl:_controlLeftClickActsLikeRightClick
                     key:kPreferenceKeyControlLeftClickBypassesContextMenu
