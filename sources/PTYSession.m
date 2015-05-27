@@ -121,6 +121,7 @@ static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Arr
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
 static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
+static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
@@ -832,6 +833,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         if ([arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] nilIfNull]) {
             [aSession->_lastDirectory autorelease];
             aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
+        }
+        if ([arrangement[SESSION_ARRANGEMENT_SELECTION] nilIfNull]) {
+            [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
         }
     }
 
@@ -3109,6 +3113,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }];
     result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
     result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory ?: [NSNull null];
+    result[SESSION_ARRANGEMENT_SELECTION] = self.textview.selection.dictionaryValue;
+
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
     return result;

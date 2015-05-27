@@ -14,6 +14,10 @@ static NSString *const kGridCoordYKey = @"y";
 static NSString *const kGridCoordAbsYKey = @"absY";
 static NSString *const kGridCoordStartKey = @"start";
 static NSString *const kGridCoordEndKey = @"end";
+static NSString *const kGridCoordRange = @"Coord Range";
+static NSString *const kGridRange = @"Range";
+static NSString *const kGridRangeLocation = @"Location";
+static NSString *const kGridRangeLength = @"Length";
 
 @implementation NSDictionary (iTerm)
 
@@ -57,6 +61,28 @@ static NSString *const kGridCoordEndKey = @"end";
     VT100GridCoord start = [self[kGridCoordStartKey] gridCoord];
     VT100GridCoord end = [self[kGridCoordEndKey] gridCoord];
     return VT100GridCoordRangeMake(start.x, start.y, end.x, end.y);
+}
+
++ (NSDictionary *)dictionaryWithGridWindowedRange:(VT100GridWindowedRange)range {
+    return @{ kGridCoordRange: [NSDictionary dictionaryWithGridCoordRange:range.coordRange],
+              kGridRange: [NSDictionary dictionaryWithGridRange:range.columnWindow] };
+}
+
+- (VT100GridWindowedRange)gridWindowedRange {
+    VT100GridWindowedRange range;
+    range.coordRange = [self[kGridCoordRange] gridCoordRange];
+    range.columnWindow = [self[kGridRange] gridRange];
+    return range;
+}
+
++ (NSDictionary *)dictionaryWithGridRange:(VT100GridRange)range {
+    return @{ kGridRangeLocation: @(range.location),
+              kGridRangeLength: @(range.length) };
+}
+
+- (VT100GridRange)gridRange {
+    return VT100GridRangeMake([self[kGridRangeLocation] intValue],
+                              [self[kGridRangeLength] intValue]);
 }
 
 - (BOOL)boolValueDefaultingToYesForKey:(id)key

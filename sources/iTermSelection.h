@@ -109,6 +109,9 @@ typedef enum {
 // Was the append property used on the last selection?
 @property(nonatomic, assign) BOOL appending;
 
+// Serialized.
+@property(nonatomic, readonly) NSDictionary *dictionaryValue;
+
 // Returns the debugging name for a selection mode.
 + (NSString *)nameForMode:(iTermSelectionMode)mode;
 
@@ -170,5 +173,8 @@ typedef enum {
 // Augments the "real" selection by adding TAB_FILLER characters preceding a selected TAB. Used for
 // display purposes. Removes selected TAB_FILLERS that aren't followed by a selected TAB.
 - (NSIndexSet *)selectedIndexesIncludingTabFillersInLine:(int)y;
+
+// Load selection from serialized dict
+- (void)setFromDictionaryValue:(NSDictionary *)dict;
 
 @end
