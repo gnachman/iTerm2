@@ -48,6 +48,17 @@ static NSString *const kGridCoordEndKey = @"end";
     return VT100GridAbsCoordRangeMake(start.x, start.y, end.x, end.y);
 }
 
++ (NSDictionary *)dictionaryWithGridCoordRange:(VT100GridCoordRange)coordRange {
+    return @{ kGridCoordStartKey: [self dictionaryWithGridCoord:coordRange.start],
+              kGridCoordEndKey: [self dictionaryWithGridCoord:coordRange.end] };
+}
+
+- (VT100GridCoordRange)gridCoordRange {
+    VT100GridCoord start = [self[kGridCoordStartKey] gridCoord];
+    VT100GridCoord end = [self[kGridCoordEndKey] gridCoord];
+    return VT100GridCoordRangeMake(start.x, start.y, end.x, end.y);
+}
+
 - (BOOL)boolValueDefaultingToYesForKey:(id)key
 {
     id object = [self objectForKey:key];

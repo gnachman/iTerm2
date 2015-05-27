@@ -20,6 +20,9 @@
 + (NSDictionary *)dictionaryWithGridAbsCoordRange:(VT100GridAbsCoordRange)coordRange;
 - (VT100GridAbsCoordRange)gridAbsCoordRange;
 
++ (NSDictionary *)dictionaryWithGridCoordRange:(VT100GridCoordRange)coordRange;
+- (VT100GridCoordRange)gridCoordRange;
+
 - (BOOL)boolValueDefaultingToYesForKey:(id)key;
 - (NSColor *)colorValue;
 
