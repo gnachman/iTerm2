@@ -114,8 +114,8 @@ static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variab
 
 static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
 static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell Integration Ever Used";  // BOOL
-/* TODO
 static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
+/* TODO
 static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
 static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
@@ -807,6 +807,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
         if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED]) {
             aSession->_shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] boolValue];
+        }
+        if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
+            aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
         }
     }
 
@@ -3083,6 +3086,7 @@ SESSION_ARRANGEMENT_CURSOR_GUIDE
     result[SESSION_ARRANGEMENT_VARIABLES] = _variables;
     result[SESSION_ARRANGEMENT_COMMAND_RANGE] = [NSDictionary dictionaryWithGridCoordRange:_commandRange];
     result[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] = @(_shellIntegrationEverUsed);
+    result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
