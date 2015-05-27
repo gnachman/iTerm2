@@ -46,6 +46,7 @@ NSString *const kScreenStateCursorVisibleKey = @"Cursor Visible";
 NSString *const kScreenStateTrackCursorLineMovementKey = @"Track Cursor Line";
 NSString *const kScreenStateLastCommandOutputRangeKey = @"Last Command Output Range";
 NSString *const kScreenStateShellIntegrationInstalledKey = @"Shell Integration Installed";
+NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
 
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
@@ -1928,13 +1929,26 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return notes;
 }
 
+- (VT100ScreenMark *)lastPromptMark {
+    return [self lastMarkMustBePrompt:YES];
+}
+
 - (VT100ScreenMark *)lastMark {
+    return [self lastMarkMustBePrompt:NO];
+}
+
+- (VT100ScreenMark *)lastMarkMustBePrompt:(BOOL)wantPrompt {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id obj in objects) {
             if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                return obj;
+                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+                if (wantPrompt && mark.isPrompt) {
+                    return mark;
+                } else if (!wantPrompt) {
+                    return mark;
+                }
             }
         }
         objects = [enumerator nextObject];
@@ -4166,7 +4180,8 @@ static void SwapInt(int *a, int *b) {
            kScreenStateCursorVisibleKey: @(_cursorVisible),
            kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
            kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
-           kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled)
+           kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
+           kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null]
            };
     return dict;
 }
@@ -4238,13 +4253,21 @@ static void SwapInt(int *a, int *b) {
                            withDefaultChar:[altGrid_ defaultChar]
                          maxLinesToRestore:altGrid_.size.height];
 
+    NSString *guidOfLastCommandMark = [screenState[kScreenStateLastCommandMarkKey] nilIfNull];
+
     [intervalTree_ release];
     intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
-    [self fixUpDeserializedIntervalTree:intervalTree_ knownTriggers:triggers visible:YES];
+    [self fixUpDeserializedIntervalTree:intervalTree_
+                          knownTriggers:triggers
+                                visible:YES
+                  guidOfLastCommandMark:guidOfLastCommandMark];
 
     [savedIntervalTree_ release];
     savedIntervalTree_ = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] nilIfNull];
-    [self fixUpDeserializedIntervalTree:savedIntervalTree_ knownTriggers:triggers visible:NO];
+    [self fixUpDeserializedIntervalTree:savedIntervalTree_
+                          knownTriggers:triggers
+                                visible:NO
+                  guidOfLastCommandMark:guidOfLastCommandMark];
 
     [self reloadMarkCache];
     commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
@@ -4261,14 +4284,15 @@ static void SwapInt(int *a, int *b) {
 // Notify delegate of PTYNoteViewControllers so they get added as subviews, and set the delegate of not view controllers to self.
 - (void)fixUpDeserializedIntervalTree:(IntervalTree *)intervalTree
                         knownTriggers:(NSArray *)triggers
-                              visible:(BOOL)visible {
+                              visible:(BOOL)visible
+                guidOfLastCommandMark:(NSString *)guidOfLastCommandMark {
     VT100RemoteHost *lastRemoteHost = nil;
     NSMutableDictionary *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
     for (NSArray *objects in [intervalTree forwardLimitEnumerator]) {
         for (id<IntervalTreeObject> object in objects) {
             if ([object isKindOfClass:[iTermMark class]]) {
                 iTermMark *mark = (iTermMark *)object;
-
+                mark.delegate = self;
                 // If |capturedOutput| is not empty then this mark is a command, some of whose output
                 // was captured. The iTermCapturedOutputMarks will come later so save the GUIDs we need
                 // in markGuidToCapturedOutput and they'll get backfilled when found.
@@ -4288,6 +4312,9 @@ static void SwapInt(int *a, int *b) {
                     CommandUse *commandUse = [[CommandHistory sharedInstance] commandUseWithMarkGuid:screenMark.guid
                                                                                               onHost:lastRemoteHost];
                     commandUse.mark = screenMark;
+                }
+                if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {
+                    self.lastCommandMark = screenMark;
                 }
             } else if ([object isKindOfClass:[iTermCapturedOutputMark class]]) {
                 // This mark represents a line whose output was captured. Find the preceding command
