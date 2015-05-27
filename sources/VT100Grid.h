@@ -23,21 +23,7 @@
 - (void)gridCursorDidChangeLine;
 @end
 
-@interface VT100Grid : NSObject <NSCopying> {
-    VT100GridSize size_;
-    int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
-    NSMutableArray *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
-    NSMutableArray *lineInfos_;  // Array of VT100LineInfo.
-    id<VT100GridDelegate> delegate_;
-    VT100GridCoord cursor_;
-    VT100GridRange scrollRegionRows_;
-    VT100GridRange scrollRegionCols_;
-    BOOL useScrollRegionCols_;
-
-    NSMutableData *cachedDefaultLine_;
-    NSMutableData *resultLine_;
-    screen_char_t savedDefaultChar_;
-}
+@interface VT100Grid : NSObject<NSCopying>
 
 // Changing the size erases grid contents.
 @property(nonatomic, assign) VT100GridSize size;
@@ -54,6 +40,9 @@
 @property(nonatomic, readonly) int bottomMargin;
 @property(nonatomic, assign) screen_char_t savedDefaultChar;
 @property(nonatomic, assign) id<VT100GridDelegate> delegate;
+
+// Serialized state, but excludes screen contents.
+@property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
 - (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate;
 
@@ -240,6 +229,9 @@
 
 // Returns an array of NSData for lines in order (corresponding with lines on screen).
 - (NSArray *)orderedLines;
+
+// Restore saved state excluding screen contents.
+- (void)setStateFromDictionary:(NSDictionary *)dict;
 
 #pragma mark - Testing use only
 

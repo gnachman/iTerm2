@@ -47,6 +47,8 @@ NSString *const kScreenStateTrackCursorLineMovementKey = @"Track Cursor Line";
 NSString *const kScreenStateLastCommandOutputRangeKey = @"Last Command Output Range";
 NSString *const kScreenStateShellIntegrationInstalledKey = @"Shell Integration Installed";
 NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
+NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
+NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
 
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
@@ -4184,7 +4186,9 @@ static void SwapInt(int *a, int *b) {
            kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
            kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
            kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
-           kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null]
+           kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
+           kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue,
+           kScreenStateAlternateGridStateKey: primaryGrid_.dictionaryValue ?: [NSNull null],
            };
     return dict;
 }
@@ -4280,6 +4284,9 @@ static void SwapInt(int *a, int *b) {
     _trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
     _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
     _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
+
+    [primaryGrid_ setStateFromDictionary:[screenState[kScreenStatePrimaryGridStateKey] nilIfNull]];
+    [altGrid_ setStateFromDictionary:[screenState[kScreenStateAlternateGridStateKey] nilIfNull]];
 }
 
 // Link references to marks in CapturedOutput (for the lines where output was captured) to the deserialized mark.

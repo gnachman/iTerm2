@@ -29,6 +29,9 @@
 + (NSDictionary *)dictionaryWithGridRange:(VT100GridRange)range;
 - (VT100GridRange)gridRange;
 
++ (NSDictionary *)dictionaryWithGridSize:(VT100GridSize)size;
+- (VT100GridSize)gridSize;
+
 - (BOOL)boolValueDefaultingToYesForKey:(id)key;
 - (NSColor *)colorValue;
 

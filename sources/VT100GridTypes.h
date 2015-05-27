@@ -132,6 +132,10 @@ NS_INLINE BOOL VT100GridCoordEquals(VT100GridCoord a, VT100GridCoord b) {
     return a.x == b.x && a.y == b.y;
 }
 
+NS_INLINE BOOL VT100GridSizeEquals(VT100GridSize a, VT100GridSize b) {
+    return a.width == b.width && a.height == b.height;
+}
+
 NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeMake(VT100GridCoordRange range,
                                                             int windowStart,
                                                             int windowWidth) {

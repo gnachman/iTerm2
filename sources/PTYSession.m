@@ -110,7 +110,6 @@ static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // I
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
 static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
-static NSString *const SESSION_ARRANGEMENT_CURSOR_POSITION = @"Cursor Position";  // NSDictionary with cursor position
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
 
 static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
@@ -746,15 +745,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [aSession setContentsFromLineBufferDictionary:contents
                                  includeRestorationBanner:runCommand];
             didRestoreContents = YES;
-            if (!runCommand) {
-                NSDictionary *cursorPosition = arrangement[SESSION_ARRANGEMENT_CURSOR_POSITION];
-                if (cursorPosition) {
-                    VT100GridCoord coord = [cursorPosition gridCoord];
-                    if (coord.x < aSession.screen.width && coord.y < aSession.screen.height) {
-                        [aSession.screen setCursorPosition:coord];
-                    }
-                }
-            }
         }
     } else {
         NSString *title = [state objectForKey:@"title"];
@@ -3091,9 +3081,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         // These values are used for restoring sessions after a crash.
         if ([iTermAdvancedSettingsModel runJobsInServers] && !_shell.pidIsChild) {
             result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
-            VT100GridCoord cursor = VT100GridCoordMake(_screen.cursorX - 1,
-                                                       _screen.cursorY - 1);
-            result[SESSION_ARRANGEMENT_CURSOR_POSITION] = [NSDictionary dictionaryWithGridCoord:cursor];
         }
     }
     if (self.tmuxMode == TMUX_GATEWAY && self.tmuxController.sessionName) {
