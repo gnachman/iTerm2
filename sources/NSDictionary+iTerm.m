@@ -18,6 +18,8 @@ static NSString *const kGridCoordRange = @"Coord Range";
 static NSString *const kGridRange = @"Range";
 static NSString *const kGridRangeLocation = @"Location";
 static NSString *const kGridRangeLength = @"Length";
+static NSString *const kGridSizeWidth = @"Width";
+static NSString *const kGridSizeHeight = @"Height";
 
 @implementation NSDictionary (iTerm)
 
@@ -83,6 +85,15 @@ static NSString *const kGridRangeLength = @"Length";
 - (VT100GridRange)gridRange {
     return VT100GridRangeMake([self[kGridRangeLocation] intValue],
                               [self[kGridRangeLength] intValue]);
+}
+
++ (NSDictionary *)dictionaryWithGridSize:(VT100GridSize)size {
+    return @{ kGridSizeWidth: @(size.width),
+              kGridSizeHeight: @(size.height) };
+}
+
+- (VT100GridSize)gridSize {
+    return VT100GridSizeMake([self[kGridSizeWidth] intValue], [self[kGridSizeHeight] intValue]);
 }
 
 - (BOOL)boolValueDefaultingToYesForKey:(id)key
