@@ -827,6 +827,22 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                     knownTriggers:_triggers];
 }
 
+- (void)showOrphanAnnouncement {
+    NSString *notice = @"This already-running session was restored but its contents were not saved.";
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcemenWithTitle:notice
+                                                        style:kiTermAnnouncementViewStyleQuestion
+                                                  withActions:@[ @"Why?" ]
+                                                   completion:^(int selection) {
+                                                       if (selection == 0) {
+                                                           // Why?
+                                                           NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
+                                                           [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+                                                       }
+                                                   }];
+    [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+}
+
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent
 {
@@ -5458,8 +5474,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)printTmuxMessage:(NSString *)message
-{
+- (void)printTmuxMessage:(NSString *)message {
     if (_exited) {
         return;
     }

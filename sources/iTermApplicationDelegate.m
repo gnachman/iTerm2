@@ -431,6 +431,7 @@ static BOOL hasBecomeActive = NO;
                                                                                forObjectType:iTermWindowObject
                                                                   fileDescriptorClientResult:&theResult];
                                                    }];
+    [aSession showOrphanAnnouncement];
     return aSession;
 }
 
