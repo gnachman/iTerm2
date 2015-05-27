@@ -272,6 +272,24 @@ static const CGFloat kMargin = 8;
     [_internalView addSubview:textView];
 }
 
+- (void)updateTrackingAreas {
+    if (self.window) {
+        while (self.trackingAreas.count) {
+            [self removeTrackingArea:self.trackingAreas[0]];
+        }
+        NSTrackingArea *trackingArea =
+            [[[NSTrackingArea alloc] initWithRect:_internalView.frame
+                                          options:NSTrackingInVisibleRect | NSTrackingActiveInKeyWindow | NSTrackingCursorUpdate
+                                            owner:self
+                                         userInfo:nil] autorelease];
+        [self addTrackingArea:trackingArea];
+    }
+}
+
+- (void)cursorUpdate:(NSEvent *)event {
+    [[NSCursor arrowCursor] set];
+}
+
 - (void)buttonPressed:(id)sender {
     if (_block) {
         _block([sender tag]);
