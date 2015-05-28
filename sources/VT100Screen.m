@@ -49,6 +49,7 @@ NSString *const kScreenStateShellIntegrationInstalledKey = @"Shell Integration I
 NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
 NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
 NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
+NSString *const kScreenStateNumberOfLinesDroppedKey = @"Number of Lines Dropped";
 
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
@@ -4232,6 +4233,7 @@ static void SwapInt(int *a, int *b) {
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
            kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue,
            kScreenStateAlternateGridStateKey: primaryGrid_.dictionaryValue ?: [NSNull null],
+           kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity)
            };
     return dict;
 }

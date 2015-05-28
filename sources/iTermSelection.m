@@ -32,8 +32,11 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
                                   mode:[dict[kiTermSubSelectionMode] intValue]];
 }
 
-- (NSDictionary *)dictionaryValue {
-    return @{ kiTermSubSelectionRange: [NSDictionary dictionaryWithGridWindowedRange:_range],
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset {
+    VT100GridWindowedRange range = _range;
+    range.coordRange.start.y += yOffset;
+    range.coordRange.end.y += yOffset;
+    return @{ kiTermSubSelectionRange: [NSDictionary dictionaryWithGridWindowedRange:range],
               kiTermSubSelectionMode: @(_selectionMode) };
 }
 
@@ -1026,11 +1029,11 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
 
 #pragma mark - Serialization
 
-- (NSDictionary *)dictionaryValue {
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset {
     NSArray *subs = self.allSubSelections;
     subs = [subs mapWithBlock:^id(id anObject) {
         iTermSubSelection *sub = anObject;
-        return [sub dictionaryValue];
+        return [sub dictionaryValueWithYOffset:yOffset];
     }];
     return @{ kSelectionSubSelectionsKey: subs };
 }
