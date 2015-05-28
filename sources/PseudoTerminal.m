@@ -4380,7 +4380,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)openPasswordManager {
+- (void)openPasswordManagerToAccountName:(NSString *)name {
     if (self.window.sheets.count > 0) {
         return;
     }
@@ -4392,6 +4392,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                     modalDelegate:self
                                    didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
                                       contextInfo:passwordManagerWindowController];
+    [passwordManagerWindowController selectAccountName:name];
 }
 
 - (void)genericCloseSheet:(NSWindow *)sheet

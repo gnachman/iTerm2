@@ -672,16 +672,21 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)openPasswordManager:(id)sender {
+    [self openPasswordManagerToAccountName:nil];
+}
+
+- (void)openPasswordManagerToAccountName:(NSString *)name {
     PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
 
     if (term) {
-        [term openPasswordManager];
+        return [term openPasswordManagerToAccountName:name];
     } else {
         if (!_passwordManagerWindowController) {
             _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
             _passwordManagerWindowController.delegate = self;
         }
         [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
+        [_passwordManagerWindowController selectAccountName:name];
     }
 }
 
@@ -691,11 +696,6 @@ static BOOL hasBecomeActive = NO;
     [sheet close];
     [_passwordManagerWindowController release];
     _passwordManagerWindowController = nil;
-}
-
-- (void)openPasswordManagerToAccountName:(NSString *)name {
-    [self openPasswordManager:nil];
-    [_passwordManagerWindowController selectAccountName:name];
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem
