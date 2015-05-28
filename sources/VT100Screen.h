@@ -20,6 +20,14 @@
 // Dictionary keys for -highlightTextMatchingRegex:
 extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
+
+// Key into dictionaryValue to get screen state.
+extern NSString *const kScreenStateKey;
+
+// Key into dictionaryValue[kScreenStateKey] for the number of lines of scrollback history not saved.
+// Useful for converting row numbers into the context of the saved contents.
+extern NSString *const kScreenStateNumberOfLinesDroppedKey;
+
 extern int kVT100ScreenMinColumns;
 extern int kVT100ScreenMinRows;
 

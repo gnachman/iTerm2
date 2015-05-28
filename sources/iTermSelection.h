@@ -109,9 +109,6 @@ typedef enum {
 // Was the append property used on the last selection?
 @property(nonatomic, assign) BOOL appending;
 
-// Serialized.
-@property(nonatomic, readonly) NSDictionary *dictionaryValue;
-
 // Returns the debugging name for a selection mode.
 + (NSString *)nameForMode:(iTermSelectionMode)mode;
 
@@ -176,5 +173,8 @@ typedef enum {
 
 // Load selection from serialized dict
 - (void)setFromDictionaryValue:(NSDictionary *)dict;
+
+// Serialized.
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset;
 
 @end

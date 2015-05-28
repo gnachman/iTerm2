@@ -111,7 +111,6 @@ static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  //
 static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
 static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
-
 static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
 static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell Integration Ever Used";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
@@ -785,6 +784,26 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
         aSession.textview.badgeLabel = aSession.badgeLabel;
     }
+    if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED]) {
+        aSession->_shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] boolValue];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
+        [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_DIRECTORIES]) {
+        [aSession.directories addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_DIRECTORIES]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
+        for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
+            VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
+            if (remoteHost) {
+                [aSession.hosts addObject:remoteHost];
+            }
+        }
+    }
+    if ([arrangement[SESSION_ARRANGEMENT_SELECTION] nilIfNull]) {
+        [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
+    }
     if (didRestoreContents) {
         Interval *interval = aSession.screen.lastPromptMark.entry.interval;
         if (interval) {
@@ -795,25 +814,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         if (arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE]) {
             aSession->_commandRange = [arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE] gridCoordRange];
         }
-        if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED]) {
-            aSession->_shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] boolValue];
-        }
         if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
             aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
-        }
-        if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
-            [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
-        }
-        if (arrangement[SESSION_ARRANGEMENT_DIRECTORIES]) {
-            [aSession.directories addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_DIRECTORIES]];
-        }
-        if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
-            for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
-                VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
-                if (remoteHost) {
-                    [aSession.hosts addObject:remoteHost];
-                }
-            }
         }
         if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
             aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
@@ -823,9 +825,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         if ([arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] nilIfNull]) {
             [aSession->_lastDirectory autorelease];
             aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
-        }
-        if ([arrangement[SESSION_ARRANGEMENT_SELECTION] nilIfNull]) {
-            [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
         }
     }
 
@@ -3070,7 +3069,21 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_WINDOW_TITLE] = _windowTitle;
     }
     if (includeContents) {
-        result[SESSION_ARRANGEMENT_CONTENTS] = [_screen contentsDictionary];
+        NSDictionary *contentsDictionary = [_screen contentsDictionary];
+        result[SESSION_ARRANGEMENT_CONTENTS] = contentsDictionary;
+        int numberOfLinesDropped =
+            [contentsDictionary[kScreenStateKey][kScreenStateNumberOfLinesDroppedKey] intValue];
+        result[SESSION_ARRANGEMENT_VARIABLES] = _variables;
+        VT100GridCoordRange range = _commandRange;
+        range.start.y -= numberOfLinesDropped;
+        range.end.y -= numberOfLinesDropped;
+        result[SESSION_ARRANGEMENT_COMMAND_RANGE] =
+            [NSDictionary dictionaryWithGridCoordRange:range];
+        result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
+        result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
+        result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory ?: [NSNull null];
+        result[SESSION_ARRANGEMENT_SELECTION] =
+            [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
     if (_liveSession && includeContents && !_dvr) {
@@ -3089,18 +3102,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] = self.tmuxController.sessionName;
     }
 
-    result[SESSION_ARRANGEMENT_VARIABLES] = _variables;
-    result[SESSION_ARRANGEMENT_COMMAND_RANGE] = [NSDictionary dictionaryWithGridCoordRange:_commandRange];
     result[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] = @(_shellIntegrationEverUsed);
-    result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
     result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
     result[SESSION_ARRANGEMENT_DIRECTORIES] = _directories;
     result[SESSION_ARRANGEMENT_HOSTS] = [_hosts mapWithBlock:^id(id anObject) {
         return [(VT100RemoteHost *)anObject dictionaryValue];
     }];
-    result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
-    result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory ?: [NSNull null];
-    result[SESSION_ARRANGEMENT_SELECTION] = self.textview.selection.dictionaryValue;
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
