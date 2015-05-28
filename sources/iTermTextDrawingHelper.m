@@ -535,7 +535,9 @@ static const int kBadgeRightMargin = 10;
     int x = MAX(0, _frame.size.width - w);
     CGFloat y = line * _cellSize.height;
     NSColor *bgColor = [self defaultBackgroundColor];
-    NSColor *fgColor = [self defaultTextColor];
+    // I don't want to use the dimmed color for this because it's really ugly (esp on nonretina)
+    // so I can't use -defaultForegroundColor here.
+    NSColor *fgColor = [_colorMap colorForKey:kColorMapForeground];
     NSColor *shadowColor;
     if ([fgColor isDark]) {
         shadowColor = [NSColor whiteColor];
