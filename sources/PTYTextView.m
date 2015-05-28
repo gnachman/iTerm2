@@ -391,7 +391,10 @@ static const int kDragThreshold = 3;
 }
 
 - (void)viewDidChangeBackingProperties {
-    _drawingHelper.antiAliasedShift = [[[self window] screen] backingScaleFactor] > 1 ? 0.5 : 0;
+    CGFloat scale = [[[self window] screen] backingScaleFactor];
+    BOOL isRetina = scale > 1;
+    _drawingHelper.antiAliasedShift = isRetina ? 0.5 : 0;
+    _drawingHelper.isRetina = isRetina;
 }
 
 - (NSColor *)defaultBackgroundColor {
