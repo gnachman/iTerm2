@@ -4260,10 +4260,12 @@ static void SwapInt(int *a, int *b) {
         altGrid_ = [primaryGrid_ copy];
     }
     NSDictionary *screenState = dictionary[kScreenStateKey];
-    if ([screenState[kScreenStateCurrentGridIsPrimaryKey] boolValue]) {
-        currentGrid_ = primaryGrid_;
-    } else {
-        currentGrid_ = altGrid_;
+    if (screenState) {
+        if ([screenState[kScreenStateCurrentGridIsPrimaryKey] boolValue]) {
+            currentGrid_ = primaryGrid_;
+        } else {
+            currentGrid_ = altGrid_;
+        }
     }
 
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
@@ -4290,48 +4292,50 @@ static void SwapInt(int *a, int *b) {
     currentGrid_.cursorY = linesRestored + 1;
     currentGrid_.cursorX = 0;
 
-    [tabStops_ removeAllObjects];
-    [tabStops_ addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
+    if (screenState) {
+        [tabStops_ removeAllObjects];
+        [tabStops_ addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
 
-    [terminal_ setStateFromDictionary:screenState[kScreenStateTerminalKey]];
-    NSArray *array = screenState[kScreenStateLineDrawingModeKey];
-    for (int i = 0; i < sizeof(charsetUsesLineDrawingMode_) / sizeof(charsetUsesLineDrawingMode_[0]) && i < array.count; i++) {
-        charsetUsesLineDrawingMode_[i] = [array[i] boolValue];
+        [terminal_ setStateFromDictionary:screenState[kScreenStateTerminalKey]];
+        NSArray *array = screenState[kScreenStateLineDrawingModeKey];
+        for (int i = 0; i < sizeof(charsetUsesLineDrawingMode_) / sizeof(charsetUsesLineDrawingMode_[0]) && i < array.count; i++) {
+            charsetUsesLineDrawingMode_[i] = [array[i] boolValue];
+        }
+
+        VT100Grid *otherGrid = (currentGrid_ == primaryGrid_) ? altGrid_ : primaryGrid_;
+        LineBuffer *otherLineBuffer = [[[LineBuffer alloc] initWithDictionary:screenState[kScreenStateNonCurrentGridKey]] autorelease];
+        [otherGrid restoreScreenFromLineBuffer:otherLineBuffer
+                               withDefaultChar:[altGrid_ defaultChar]
+                             maxLinesToRestore:altGrid_.size.height];
+
+        NSString *guidOfLastCommandMark = [screenState[kScreenStateLastCommandMarkKey] nilIfNull];
+
+        [intervalTree_ release];
+        intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
+        [self fixUpDeserializedIntervalTree:intervalTree_
+                              knownTriggers:triggers
+                                    visible:YES
+                      guidOfLastCommandMark:guidOfLastCommandMark];
+
+        [savedIntervalTree_ release];
+        savedIntervalTree_ = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] nilIfNull];
+        [self fixUpDeserializedIntervalTree:savedIntervalTree_
+                              knownTriggers:triggers
+                                    visible:NO
+                      guidOfLastCommandMark:guidOfLastCommandMark];
+
+        [self reloadMarkCache];
+        commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
+        commandStartY_ = [screenState[kScreenStateCommandStartYKey] intValue];
+        nextCommandOutputStart_ = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
+        _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
+        _trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
+        _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
+        _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
+
+        [primaryGrid_ setStateFromDictionary:[screenState[kScreenStatePrimaryGridStateKey] nilIfNull]];
+        [altGrid_ setStateFromDictionary:[screenState[kScreenStateAlternateGridStateKey] nilIfNull]];
     }
-
-    VT100Grid *otherGrid = (currentGrid_ == primaryGrid_) ? altGrid_ : primaryGrid_;
-    LineBuffer *otherLineBuffer = [[[LineBuffer alloc] initWithDictionary:screenState[kScreenStateNonCurrentGridKey]] autorelease];
-    [otherGrid restoreScreenFromLineBuffer:otherLineBuffer
-                           withDefaultChar:[altGrid_ defaultChar]
-                         maxLinesToRestore:altGrid_.size.height];
-
-    NSString *guidOfLastCommandMark = [screenState[kScreenStateLastCommandMarkKey] nilIfNull];
-
-    [intervalTree_ release];
-    intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
-    [self fixUpDeserializedIntervalTree:intervalTree_
-                          knownTriggers:triggers
-                                visible:YES
-                  guidOfLastCommandMark:guidOfLastCommandMark];
-
-    [savedIntervalTree_ release];
-    savedIntervalTree_ = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] nilIfNull];
-    [self fixUpDeserializedIntervalTree:savedIntervalTree_
-                          knownTriggers:triggers
-                                visible:NO
-                  guidOfLastCommandMark:guidOfLastCommandMark];
-
-    [self reloadMarkCache];
-    commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
-    commandStartY_ = [screenState[kScreenStateCommandStartYKey] intValue];
-    nextCommandOutputStart_ = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
-    _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
-    _trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
-    _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
-    _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
-
-    [primaryGrid_ setStateFromDictionary:[screenState[kScreenStatePrimaryGridStateKey] nilIfNull]];
-    [altGrid_ setStateFromDictionary:[screenState[kScreenStateAlternateGridStateKey] nilIfNull]];
 }
 
 // Link references to marks in CapturedOutput (for the lines where output was captured) to the deserialized mark.

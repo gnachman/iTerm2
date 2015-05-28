@@ -2396,6 +2396,9 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setStateFromDictionary:(NSDictionary *)dict {
+    if (!dict) {
+        return;
+    }
     self.termType = [dict[kTerminalStateTermTypeKey] nilIfNull];
     self.encoding = [dict[kTerminalStateStringEncodingKey] unsignedIntegerValue];
     self.canonicalEncoding = [dict[kTerminalStateCanonicalEncodingKey] unsignedIntegerValue];
