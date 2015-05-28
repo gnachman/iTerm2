@@ -2,6 +2,7 @@
 #import "DebugLogging.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
 #import <apr-1/apr_base64.h>  // for xterm's base64 decoding (paste64)
@@ -2364,7 +2365,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (NSDictionary *)stateDictionary {
-    return @{ kTerminalStateTermTypeKey: self.termType,
+    return @{ kTerminalStateTermTypeKey: self.termType ?: [NSNull null],
               kTerminalStateStringEncodingKey: @(self.encoding),
               kTerminalStateCanonicalEncodingKey: @(self.canonicalEncoding),
               kTerminalStateReportFocusKey: @(self.reportFocus),
@@ -2395,7 +2396,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setStateFromDictionary:(NSDictionary *)dict {
-    self.termType = dict[kTerminalStateTermTypeKey];
+    self.termType = [dict[kTerminalStateTermTypeKey] nilIfNull];
     self.encoding = [dict[kTerminalStateStringEncodingKey] unsignedIntegerValue];
     self.canonicalEncoding = [dict[kTerminalStateCanonicalEncodingKey] unsignedIntegerValue];
     self.reportFocus = [dict[kTerminalStateReportFocusKey] boolValue];
