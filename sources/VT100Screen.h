@@ -180,9 +180,10 @@ extern int kVT100ScreenMinRows;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
 - (NSDictionary *)contentsDictionary;
-- (void)appendFromDictionary:(NSDictionary *)dictionary
-    includeRestorationBanner:(BOOL)includeRestorationBanner
-               knownTriggers:(NSArray *)triggers;
+- (void)restoreFromDictionary:(NSDictionary *)dictionary
+     includeRestorationBanner:(BOOL)includeRestorationBanner
+                knownTriggers:(NSArray *)triggers
+                   reattached:(BOOL)reattached;
 
 // Zero-based (as VT100GridCoord always is), unlike -cursorX and -cursorY.
 - (void)setCursorPosition:(VT100GridCoord)coord;
