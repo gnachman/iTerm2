@@ -682,6 +682,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     BOOL shouldEnterTmuxMode = NO;
     BOOL didRestoreContents = NO;
+    BOOL attachedToServer = NO;
     if (!n) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
@@ -696,6 +697,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
                 if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
                     runCommand = NO;
+                    attachedToServer = YES;
                     shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
                                            arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                            arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
@@ -742,7 +744,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         if (contents && [iTermAdvancedSettingsModel restoreWindowContents]) {
             DLog(@"Loading content from line buffer dictionary");
             [aSession setContentsFromLineBufferDictionary:contents
-                                 includeRestorationBanner:runCommand];
+                                 includeRestorationBanner:runCommand
+                                               reattached:attachedToServer];
             didRestoreContents = YES;
         }
     } else {
@@ -804,7 +807,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if ([arrangement[SESSION_ARRANGEMENT_SELECTION] nilIfNull]) {
         [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
     }
-    if (didRestoreContents) {
+    if (didRestoreContents && attachedToServer) {
         Interval *interval = aSession.screen.lastPromptMark.entry.interval;
         if (interval) {
             VT100GridRange gridRange = [aSession.screen lineNumberRangeOfInterval:interval];
@@ -867,10 +870,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
-                   includeRestorationBanner:(BOOL)includeRestorationBanner {
-    [_screen appendFromDictionary:dict
-         includeRestorationBanner:includeRestorationBanner
-                    knownTriggers:_triggers];
+                   includeRestorationBanner:(BOOL)includeRestorationBanner
+                                 reattached:(BOOL)reattached {
+    [_screen restoreFromDictionary:dict
+          includeRestorationBanner:includeRestorationBanner
+                     knownTriggers:_triggers
+                        reattached:reattached];
 }
 
 - (void)showOrphanAnnouncement {

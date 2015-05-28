@@ -4210,13 +4210,14 @@ static void SwapInt(int *a, int *b) {
     return [temp dictionary];
 }
 
-- (void)appendFromDictionary:(NSDictionary *)dictionary
-    includeRestorationBanner:(BOOL)includeRestorationBanner
-               knownTriggers:(NSArray *)triggers {
+- (void)restoreFromDictionary:(NSDictionary *)dictionary
+     includeRestorationBanner:(BOOL)includeRestorationBanner
+                knownTriggers:(NSArray *)triggers
+                   reattached:(BOOL)reattached {
     if (!altGrid_) {
         altGrid_ = [primaryGrid_ copy];
     }
-    NSDictionary *screenState = dictionary[kScreenStateKey];
+    NSDictionary *screenState = reattached ? dictionary[kScreenStateKey] : nil;
     if (screenState) {
         if ([screenState[kScreenStateCurrentGridIsPrimaryKey] boolValue]) {
             currentGrid_ = primaryGrid_;
@@ -4234,7 +4235,7 @@ static void SwapInt(int *a, int *b) {
     [linebuffer_ release];
     linebuffer_ = lineBuffer;
     int maxLinesToRestore;
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+    if ([iTermAdvancedSettingsModel runJobsInServers] && reattached) {
         maxLinesToRestore = currentGrid_.size.height;
     } else {
         maxLinesToRestore = currentGrid_.size.height - 1;
