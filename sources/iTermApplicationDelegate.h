@@ -53,18 +53,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (void)awakeFromNib;
 
 // NSApplication Delegate methods
-- (void)applicationWillFinishLaunching:(NSNotification *)aNotification;
-- (BOOL)applicationShouldTerminate: (NSNotification *) theNotification;
-- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
-- (BOOL)applicationOpenUntitledFile:(NSApplication *)app;
-- (NSMenu *)applicationDockMenu:(NSApplication *)sender;
 - (NSMenu*)bookmarksMenu;
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app;
-
-- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag;
-
-- (void)applicationDidBecomeActive:(NSNotification *)aNotification;
-- (void)applicationDidResignActive:(NSNotification *)aNotification;
 
 - (IBAction)undo:(id)sender;
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem;
@@ -103,10 +92,10 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)arrangeHorizontally:(id)sender;
 
 // Notifications
-- (void) reloadMenus: (NSNotification *) aNotification;
-- (void) buildSessionSubmenu: (NSNotification *) aNotification;
-- (void) reloadSessionMenus: (NSNotification *) aNotification;
-- (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification;
+- (void)reloadMenus: (NSNotification *) aNotification;
+- (void)buildSessionSubmenu: (NSNotification *) aNotification;
+- (void)reloadSessionMenus: (NSNotification *) aNotification;
+- (void)nonTerminalWindowBecameKey: (NSNotification *) aNotification;
 
 // font control
 - (IBAction) biggerFont: (id) sender;
