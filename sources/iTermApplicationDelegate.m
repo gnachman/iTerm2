@@ -824,6 +824,7 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)showPrefWindow:(id)sender
 {
     [[PreferencePanel sharedInstance] run];
+    [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:self];
 }
 
 - (IBAction)showBookmarkWindow:(id)sender

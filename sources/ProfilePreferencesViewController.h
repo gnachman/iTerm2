@@ -39,7 +39,7 @@ extern NSString *const kProfileSessionNameDidEndEditing;
 // Size of tab view.
 - (NSSize)size;
 
-- (void)openToProfileWithGuid:(NSString *)guid;
+- (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 

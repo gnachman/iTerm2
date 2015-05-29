@@ -72,7 +72,7 @@ void LoadPrefsFromCustomFolder(void);
 + (instancetype)sharedInstance;
 + (instancetype)sessionsInstance;
 
-- (void)openToProfileWithGuid:(NSString*)guid;
+- (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab;
 
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;

@@ -4895,9 +4895,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[self tab] previousSession];
 }
 
-- (void)textViewEditSession
-{
-    [[[self tab] realParentWindow] editSession:self];
+- (void)textViewEditSession {
+    [[[self tab] realParentWindow] editSession:self makeKey:YES];
 }
 
 - (void)textViewToggleBroadcastingInput

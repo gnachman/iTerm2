@@ -235,6 +235,7 @@ typedef enum {
         [self editSelectedBookmark:nil];
     } else {
         [[PreferencePanel sharedInstance] run];
+        [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:nil];
         [[PreferencePanel sharedInstance] selectProfilesTab];
     }
 }
@@ -243,7 +244,8 @@ typedef enum {
 {
     NSString* guid = [tableView_ selectedGuid];
     if (guid) {
-        [[PreferencePanel sharedInstance] openToProfileWithGuid:guid];
+        [[PreferencePanel sharedInstance] openToProfileWithGuid:guid selectGeneralTab:YES];
+        [[[PreferencePanel sharedInstance] window] makeKeyAndOrderFront:nil];
     }
 }
 
