@@ -108,7 +108,7 @@ enum {
             @"Blue Background",  [NSNumber numberWithInt:(int)kBlueBackgroundHighlight],
             @"Brown Background",  [NSNumber numberWithInt:(int)kBrownBackgroundHighlight],
             @"Cyan Background",  [NSNumber numberWithInt:(int)kCyanBackgroundHighlight],
-            @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
+            @"Dark Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
             @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
             @"Green Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
             @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],

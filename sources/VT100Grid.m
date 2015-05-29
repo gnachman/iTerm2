@@ -841,8 +841,8 @@
         if (aLine[cursor_.x].code == DWC_RIGHT) {
 #ifdef VERBOSE_STRING
             NSLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
-#endif
             NSAssert(cursor_.x > 0, @"DWC split");  // there should never be the second half of a DWC at x=0
+#endif
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
             aLine[cursor_.x-1].code = 0;

@@ -7,12 +7,13 @@
 //
 
 #import "NSData+iTerm.h"
+#import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 
 @implementation NSData (iTerm)
 
 + (NSData *)dataWithBase64EncodedString:(NSString *)string {
-    const char *buffer = [string UTF8String];
+    const char *buffer = [[string stringByReplacingOccurrencesOfRegex:@"[\x0a\x0d]" withString:@""] UTF8String];
     int destLength = apr_base64_decode_len(buffer);
     if (destLength <= 0) {
         return nil;

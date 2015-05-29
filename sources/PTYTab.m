@@ -43,6 +43,75 @@ static const NSUInteger kPTYTabDeadState = (1 << 3);
     // See kPTYTab*State constants above.
     NSUInteger _state;
     int _tabNumberForItermSessionId;
+
+    PTYSession* activeSession_;
+
+    // Owning tab view item
+    NSTabViewItem* tabViewItem_;
+
+    id<WindowControllerInterface> parentWindow_;  // Parent controller. Always set. Equals one of realParent or fakeParent.
+    NSWindowController<iTermWindowController> *realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
+    FakeWindow* fakeParentWindow_;  // non-nil only if parent is FakeWindow*
+
+    // The tab number that is observed by PSMTabBarControl.
+    int objectCount_;
+
+    // The icon to display in the tab. Observed by PSMTabBarControl.
+    NSImage* icon_;
+
+    // Whether the session is "busy". Observed by PSMTabBarControl.
+    BOOL isProcessing_;
+
+    // Does any session have new output?
+    BOOL newOutput_;
+
+    // The root view of this tab. May be a SolidColorView for tmux tabs or the
+    // same as root_ otherwise (the normal case).
+    NSView *tabView_;  // weak
+
+    // If there is a flexible root view, this is set and is the tabview's view.
+    // Otherwise it is nil.
+    SolidColorView *flexibleView_;
+
+    // The root of a tree of split views whose leaves are SessionViews. The root is the view of the
+    // NSTabViewItem.
+    //
+    // NSTabView -> NSTabViewItem -> NSSplitView (root) -> ... -> SessionView -> PTYScrollView -> etc.
+    NSSplitView* root_;
+
+    // If non-nil, this session may not change size.
+    PTYSession* lockedSession_;
+
+    // The active pane is maximized, meaning there are other panes that are hidden.
+    BOOL isMaximized_;
+    NSMutableDictionary* idMap_;  // maps saved session id to ptysession.
+    NSDictionary* savedArrangement_;  // layout of splitters pre-maximize
+    NSSize savedSize_;  // pre-maximize active session size.
+
+    // If true, report that the tab's ideal size is its currentSize.
+    BOOL reportIdeal_;
+
+    // If this window is a tmux client, this is the window number defined by
+    // the tmux server. -1 if not a tmux client.
+    int tmuxWindow_;
+
+    // If positive, then a tmux-originated resize is in progress and splitter
+    // delegates won't interfere.
+    int tmuxOriginatedResizeInProgress_;
+
+    // The tmux controller used by all sessions in this tab.
+    TmuxController *tmuxController_;
+
+    // The last tmux parse tree
+    NSMutableDictionary *parseTree_;
+
+    // Temporarily hidden live views (this is needed to hold a reference count).
+    NSMutableArray *hiddenLiveViews_;  // SessionView objects
+
+    NSString *tmuxWindowName_;
+
+	// This tab broadcasts to all its sessions?
+	BOOL broadcasting_;
 }
 
 @synthesize broadcasting = broadcasting_;
@@ -541,8 +610,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
-- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent
-{
+- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent {
     // Parent holds a reference to us (indirectly) so we mustn't reference it.
     parentWindow_ = realParentWindow_ = theParent;
     [self updateFlexibleViewColors];
@@ -595,9 +663,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber] ? 0 : objectCount_;
 }
 
-- (void)setObjectCount:(int)value
-{
+- (void)setObjectCount:(int)value {
     objectCount_ = value;
+    [_delegate tab:self didChangeObjectCount:self.objectCount];
 }
 
 - (NSImage *)icon
@@ -605,10 +673,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return icon_;
 }
 
-- (void)setIcon:(NSImage *)anIcon
-{
+- (void)setIcon:(NSImage *)anIcon {
     [icon_ autorelease];
     icon_ = [anIcon retain];
+    [_delegate tab:self didChangeIcon:anIcon];
 }
 
 - (BOOL)realIsProcessing
@@ -625,6 +693,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (void)setIsProcessing:(BOOL)aFlag {
     isProcessing_ = aFlag;
+    [_delegate tab:self didChangeProcessingStatus:self.isProcessing];
 }
 
 - (BOOL)isActiveSession
@@ -2271,6 +2340,7 @@ static NSString* FormatRect(NSRect r) {
         [theTab enableFlexibleView];
     }
     [theTab setParentWindow:term];
+    theTab.delegate = term;
     [theTab->tabViewItem_ setLabel:@"Restoring..."];
 
     [theTab setObjectCount:[term numberOfTabs] + 1];

@@ -479,10 +479,17 @@ static const int kBadgeRightMargin = 10;
 - (void)drawTimestamps {
     [self updateCachedMetrics];
 
+    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    if (!self.isRetina) {
+        CGContextSetShouldSmoothFonts(ctx, NO);
+    }
     for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
          y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
          y++) {
         [self drawTimestampForLine:y];
+    }
+    if (!self.isRetina) {
+        CGContextSetShouldSmoothFonts(ctx, YES);
     }
 }
 
@@ -528,7 +535,9 @@ static const int kBadgeRightMargin = 10;
     int x = MAX(0, _frame.size.width - w);
     CGFloat y = line * _cellSize.height;
     NSColor *bgColor = [self defaultBackgroundColor];
-    NSColor *fgColor = [self defaultTextColor];
+    // I don't want to use the dimmed color for this because it's really ugly (esp on nonretina)
+    // so I can't use -defaultForegroundColor here.
+    NSColor *fgColor = [_colorMap colorForKey:kColorMapForeground];
     NSColor *shadowColor;
     if ([fgColor isDark]) {
         shadowColor = [NSColor whiteColor];
@@ -536,7 +545,7 @@ static const int kBadgeRightMargin = 10;
         shadowColor = [NSColor blackColor];
     }
 
-    const CGFloat alpha = 0.75;
+    const CGFloat alpha = self.isRetina ? 0.75 : 0.9;
     NSGradient *gradient =
         [[[NSGradient alloc] initWithStartingColor:[bgColor colorWithAlphaComponent:0]
                                        endingColor:[bgColor colorWithAlphaComponent:alpha]] autorelease];
@@ -552,9 +561,15 @@ static const int kBadgeRightMargin = 10;
     shadow.shadowBlurRadius = 0.2f;
     shadow.shadowOffset = CGSizeMake(0.5, -0.5);
 
-    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
-                                  NSForegroundColorAttributeName: fgColor,
-                                  NSShadowAttributeName: shadow };
+    NSDictionary *attributes;
+    if (self.isRetina) {
+        attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
+                        NSForegroundColorAttributeName: fgColor,
+                        NSShadowAttributeName: shadow };
+    } else {
+        attributes = @{ NSFontAttributeName: [NSFont boldSystemFontOfSize:10],
+                        NSForegroundColorAttributeName: fgColor };
+    }
     CGFloat offset = (_cellSize.height - size.height) / 2;
     [s drawAtPoint:NSMakePoint(x, y + offset) withAttributes:attributes];
 }

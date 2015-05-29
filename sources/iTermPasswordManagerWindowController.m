@@ -87,6 +87,9 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 }
 
 - (void)selectAccountName:(NSString *)name {
+    if (!name) {
+        return;
+    }
     NSUInteger index = [_accounts indexOfObject:name];
     if (index != NSNotFound) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]

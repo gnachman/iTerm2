@@ -191,7 +191,6 @@ enum {
 
 // internal bindings methods also used by the tab drag assistant
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item;
-- (void)disconnectItem:(NSObjectController*)item fromCell:(PSMTabBarCell*)cell;
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
 
 // iTerm add-ons
@@ -203,5 +202,11 @@ enum {
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
 
 - (NSColor *)accessoryTextColor;
+
+- (void)initializeStateForCell:(PSMTabBarCell *)cell;
+
+- (void)setIsProcessing:(BOOL)isProcessing forTabWithIdentifier:(id)identifier;
+- (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier;
+- (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(id)identifier;
 
 @end

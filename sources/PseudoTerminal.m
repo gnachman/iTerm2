@@ -111,7 +111,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
 
-@interface PseudoTerminal () <iTermTabBarControlViewDelegate, iTermPasswordManagerDelegate>
+@interface PseudoTerminal () <
+    iTermTabBarControlViewDelegate,
+    iTermPasswordManagerDelegate,
+    PTYTabDelegate>
 @property(nonatomic, assign) BOOL windowInitialized;
 @end
 
@@ -764,6 +767,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[aTabViewItem identifier] terminateAllSessions];
         PTYTab* theTab = [aTabViewItem identifier];
         [theTab setParentWindow:nil];
+        theTab.delegate = nil;
         [TABVIEW removeTabViewItem:aTabViewItem];
     }
 
@@ -3896,10 +3900,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [itad updateBroadcastMenuState];
 }
 
-- (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)anIndex
-{
+- (void)tabView:(NSTabView *)tabView
+    willInsertTabViewItem:(NSTabViewItem *)tabViewItem
+        atIndex:(int)anIndex {
     PTYTab* theTab = [tabViewItem identifier];
     [theTab setParentWindow:self];
+    theTab.delegate = self;
     if ([theTab isTmuxTab]) {
       [theTab recompact];
       [theTab notifyWindowChanged];
@@ -4268,6 +4274,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     PTYTab *theTab = [[[PTYTab alloc] initWithSession:session] autorelease];
     [theTab setActiveSession:session];
     [theTab setParentWindow:self];
+    theTab.delegate = self;
     NSTabViewItem *tabViewItem = [[[NSTabViewItem alloc] initWithIdentifier:(id)theTab] autorelease];
     [theTab setTabViewItem:tabViewItem];
     [tabViewItem setLabel:[session name] ? [session name] : @""];
@@ -4373,7 +4380,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)openPasswordManager {
+- (void)openPasswordManagerToAccountName:(NSString *)name {
     if (self.window.sheets.count > 0) {
         return;
     }
@@ -4385,6 +4392,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                     modalDelegate:self
                                    didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
                                       contextInfo:passwordManagerWindowController];
+    [passwordManagerWindowController selectAccountName:name];
 }
 
 - (void)genericCloseSheet:(NSWindow *)sheet
@@ -7370,6 +7378,20 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)iTermPasswordManagerEnterPassword:(NSString *)password {
     [[self currentSession] enterPassword:password];
+}
+
+#pragma mark - PTYTabDelegate
+
+- (void)tab:(PTYTab *)tab didChangeProcessingStatus:(BOOL)isProcessing {
+    [tabBarControl setIsProcessing:isProcessing forTabWithIdentifier:tab];
+}
+
+- (void)tab:(PTYTab *)tab didChangeIcon:(NSImage *)icon {
+    [tabBarControl setIcon:icon forTabWithIdentifier:tab];
+}
+
+- (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount {
+    [tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
 }
 
 @end

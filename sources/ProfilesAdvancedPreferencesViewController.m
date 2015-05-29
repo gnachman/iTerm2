@@ -13,6 +13,7 @@
 #import "iTermSemanticHistoryPrefsController.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
+#import "PointerPreferencesViewController.h"
 #import "PreferencePanel.h"
 #import "SmartSelectionController.h"
 #import "TriggerController.h"
@@ -39,6 +40,8 @@
     IBOutlet NSControl *_boundHostShellIntegrationWarning;
     IBOutlet NSControl *_boundHostHelp;
 
+    IBOutlet NSTextField *_disabledTip;
+
     BOOL _addingBoundHost;  // Don't remove empty-named hosts while this is set
 }
 
@@ -46,6 +49,10 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles:)
                                                  name:kReloadAllProfiles
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateSemanticHistoryDisabledLabel:)
+                                                 name:kPointerPrefsSemanticHistoryEnabledChangedNotification
                                                object:nil];
 }
 
@@ -85,6 +92,11 @@
     _smartSelectionWindowController.guid = selectedGuid;
     _semanticHistoryPrefController.guid = selectedGuid;
     [_boundHostsTableView reloadData];
+}
+
+- (void)viewWillAppear {
+    [self updateSemanticHistoryDisabledLabel:nil];
+    [super viewWillAppear];
 }
 
 #pragma mark - Triggers
@@ -309,6 +321,11 @@
 
 - (void)reloadProfiles:(NSNotification *)notification {
     [_boundHostsTableView reloadData];
+}
+
+- (void)updateSemanticHistoryDisabledLabel:(NSNotification *)notification {
+    _disabledTip.hidden = [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs];
+    _semanticHistoryPrefController.enabled = _disabledTip.hidden;
 }
 
 @end

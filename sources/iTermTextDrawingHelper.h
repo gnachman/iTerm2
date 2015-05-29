@@ -229,6 +229,8 @@
 // Set to YES if part of an animated image was drawn.
 @property(nonatomic, assign) BOOL animated;
 
+@property(nonatomic, assign) BOOL isRetina;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

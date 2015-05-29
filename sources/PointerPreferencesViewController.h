@@ -7,7 +7,9 @@
 //
 
 #import "iTermPreferencesBaseViewController.h"
-extern NSString *kPointerPrefsChangedNotification;
+
+extern NSString *const kPointerPrefsChangedNotification;
+extern NSString *const kPointerPrefsSemanticHistoryEnabledChangedNotification;
 
 @interface PointerPreferencesViewController : iTermPreferencesBaseViewController
 
