@@ -2440,6 +2440,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
         [self editSession:self.currentSession makeKey:NO];
     }
+    [self notifyTmuxOfTabChange];
 }
 
 - (void)makeCurrentSessionFirstResponder
@@ -3860,8 +3861,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self refreshTools];
     [self updateTabColors];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    [self notifyTmuxOfTabChange];
     if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
         [self editSession:self.currentSession makeKey:NO];
+    }
+}
+
+- (void)notifyTmuxOfTabChange {
+    if (self.currentTab.isTmuxTab) {
+        [self.currentTab.tmuxController setCurrentWindow:self.currentTab.tmuxWindow];
     }
 }
 
@@ -7343,6 +7351,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [[[PreferencePanel sessionsInstance] window] close];
         }
     }
+    [self notifyTmuxOfTabChange];
 }
 
 - (IBAction)openSelection:(id)sender {
