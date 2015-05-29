@@ -227,7 +227,9 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 - (void)run {
     [_generalPreferencesViewController updateEnabledState];
     [_profilesViewController selectFirstProfileIfNecessary];
-    [self showWindow:self];
+    if (!self.window.isVisible) {
+        [self showWindow:self];
+    }
 }
 
 // Update the values in form fields to reflect the bookmark's state
