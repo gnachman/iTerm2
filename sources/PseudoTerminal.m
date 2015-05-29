@@ -2437,6 +2437,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                withObject:nil
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+        [self editSession:self.currentSession makeKey:NO];
+    }
 }
 
 - (void)makeCurrentSessionFirstResponder
@@ -5106,7 +5109,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [self hideAutoCommandHistory];
     }
     [[toolbelt_ commandHistoryView] updateCommands];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];}
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+        [self editSession:self.currentSession makeKey:NO];
+    }
+}
 
 
 - (void)fitWindowToTabs
@@ -7329,6 +7336,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         _directoriesPopupWindowController.delegate = nil;
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+        if (self.currentSession) {
+            [self editSession:self.currentSession makeKey:NO];
+        } else {
+            [[[PreferencePanel sessionsInstance] window] close];
+        }
+    }
 }
 
 - (IBAction)openSelection:(id)sender {
