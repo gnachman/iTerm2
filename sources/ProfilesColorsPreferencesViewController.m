@@ -284,6 +284,16 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
                                                         object:nil];
 }
 
+- (NSString *)nameOfPresetsEqualTo:(NSDictionary *)dict {
+    NSDictionary *presets = [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
+    for (NSString *name in presets) {
+        if ([presets[name] isEqualTo:dict]) {
+            return name;
+        }
+    }
+    return nil;
+}
+
 - (BOOL)importColorPresetFromFile:(NSString*)filename {
     NSDictionary* aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
     if (!aDict) {
@@ -294,6 +304,18 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
                         nil);
         return NO;
     } else {
+        NSString *dup = [self nameOfPresetsEqualTo:aDict];
+        if (dup) {
+            NSAlert *alert = [NSAlert alertWithMessageText:@"Add duplicate color preset?"
+                                             defaultButton:@"Cancel"
+                                           alternateButton:@"Add it anyway"
+                                               otherButton:nil
+                                 informativeTextWithFormat:@"The color preset “%@” is the same as the preset you're trying to add. Really add it?", dup];
+            if ([alert runModal] == NSAlertDefaultReturn) {
+                return NO;
+            }
+        }
+
         [self addColorPreset:[self presetNameFromFilename:filename]
                   withColors:aDict];
         return YES;
