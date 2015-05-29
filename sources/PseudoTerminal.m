@@ -4319,16 +4319,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self editCurrentSession:self];
 }
 
-- (void)tabViewDoubleClickTabBar:(NSTabView *)tabView
-{
-    Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
-    if (!prototype) {
-        NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-        prototype = aDict;
-    }
-    [self createTabWithProfile:prototype withCommand:nil];
+- (void)tabViewDoubleClickTabBar:(NSTabView *)tabView {
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    // Note: this assume that self is the front window (it should be!). It is smart enough to create
+    // a tmux tab if the user wants one (or ask if needed).
+    [itad newSession:nil];
 }
 
 - (void)updateTabColors
