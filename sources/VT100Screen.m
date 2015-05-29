@@ -4176,6 +4176,7 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (void)temporaryDoubleBufferedGridDidExpire {
+    [currentGrid_ setAllDirty:YES];
     [delegate_ screenUpdateDisplay];
 }
 

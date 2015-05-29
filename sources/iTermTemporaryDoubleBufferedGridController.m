@@ -48,11 +48,7 @@
     static const NSTimeInterval kTimeToKeepSavedGrid = 0.2;
     BOOL hadSavedGrid = self.savedGrid != nil;
     self.savedGrid = [_delegate temporaryDoubleBufferedGridCopy];
-    /*
-    for (int y = 0; y < _savedGrid.size.height; y++) {
-        [_savedGrid screenCharsAtLineNumber:y][0].code = '*';
-    }
-    */
+
     if (hadSavedGrid) {
         [_delegate temporaryDoubleBufferedGridDidExpire];
     }
