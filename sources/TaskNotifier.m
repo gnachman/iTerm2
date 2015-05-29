@@ -17,10 +17,11 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 
 @implementation TaskNotifier
 {
-    NSMutableArray* tasks;
-    // Set to true when an element of 'tasks' was modified
+    NSMutableArray *_tasks;
+    NSMutableArray *_coprocessOnlyTasks;
+    // Set to true when an element of '_tasks' was modified
     BOOL tasksChanged;
-    // Protects 'tasks' and 'tasksChanged'.
+    // Protects '_tasks', '_coprocessOnlyTasks', and 'tasksChanged'.
     NSRecursiveLock* tasksLock;
 
     // A set of NSNumber*s holding pids of tasks that need to be wait()ed on
@@ -47,7 +48,8 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     self = [super init];
     if (self) {
         deadpool = [[NSMutableSet alloc] init];
-        tasks = [[NSMutableArray alloc] init];
+        _tasks = [[NSMutableArray alloc] init];
+        _coprocessOnlyTasks = [[NSMutableArray alloc] init];
         tasksLock = [[NSRecursiveLock alloc] init];
         tasksChanged = NO;
 
@@ -71,7 +73,8 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 
 - (void)dealloc
 {
-    [tasks release];
+    [_tasks release];
+    [_coprocessOnlyTasks release];
     [tasksLock release];
     [deadpool release];
     close(unblockPipeR);
@@ -83,16 +86,19 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     PtyTaskDebugLog(@"registerTask: lock\n");
     [tasksLock lock];
     PtyTaskDebugLog(@"Add task at %p\n", (void*)task);
-    [tasks addObject:task];
-    PtyTaskDebugLog(@"There are now %lu tasks\n", (unsigned long)[tasks count]);
+    if (task.isCoprocessOnly) {
+        [_coprocessOnlyTasks addObject:task];
+    } else {
+        [_tasks addObject:task];
+    }
+    PtyTaskDebugLog(@"There are now %lu tasks\n", (unsigned long)_tasks.count);
     tasksChanged = YES;
     PtyTaskDebugLog(@"registerTask: unlock\n");
     [tasksLock unlock];
     [self unblock];
 }
 
-- (void)deregisterTask:(PTYTask *)task
-{
+- (void)deregisterTask:(PTYTask *)task {
     PtyTaskDebugLog(@"deregisterTask: lock\n");
     [tasksLock lock];
     PtyTaskDebugLog(@"Begin remove task %p\n", (void*)task);
@@ -108,10 +114,13 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     if ([task hasCoprocess]) {
         [deadpool addObject:@([[task coprocess] pid])];
     }
-    [tasks removeObject:task];
+    [_tasks removeObject:task];
+    [_coprocessOnlyTasks removeObject:task];
     tasksChanged = YES;
-    PtyTaskDebugLog(@"End remove task %p. There are now %lu tasks.\n",
-                    (void*)task, (unsigned long)[tasks count]);
+    PtyTaskDebugLog(@"End remove task %p. There are now %lu tasks and %ld coprocess-only tasks.\n",
+                    (void*)task,
+                    (unsigned long)[_tasks count],
+                    (unsigned long)_coprocessOnlyTasks.count);
     PtyTaskDebugLog(@"deregisterTask: unlock\n");
     [tasksLock unlock];
     [self unblock];
@@ -188,6 +197,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                      withCoprocess:(Coprocess *)coprocess
                              fdSet:(fd_set *)fdSet {
     if (![coprocess eof] && FD_ISSET(fd, fdSet)) {
+        PtyTaskDebugLog(@"Reading from coprocess");
         [coprocess read];
         [task writeTask:coprocess.inputBuffer];
         [coprocess.inputBuffer setLength:0];
@@ -198,6 +208,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                       withCoprocess:(Coprocess *)coprocess
                               fdSet:(fd_set *)fdSet {
     if (FD_ISSET(fd, fdSet)) {
+        PtyTaskDebugLog(@"EOF on coprocess %@", coprocess);
         coprocess.eof = YES;
     }
 }
@@ -207,6 +218,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                               fdSet:(fd_set *)fdSet {
     if (FD_ISSET(coprocessWriteFd, fdSet)) {
         if (![coprocess eof]) {
+            PtyTaskDebugLog(@"Write to coprocess %@", coprocess);
             [coprocess write];
         }
     }
@@ -219,7 +231,6 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     fd_set efds;
     int highfd;
     NSEnumerator* iter;
-    PTYTask* task;
     NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
 
     // FIXME: replace this with something better...
@@ -232,17 +243,20 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
         highfd = unblockPipeR;
         FD_SET(unblockPipeR, &rfds);
-        NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:[tasks count]];
+        NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:_tasks.count];
 
         // Add all the PTYTask pipes
         PtyTaskDebugLog(@"run1: lock");
         [tasksLock lock];
         PtyTaskDebugLog(@"Begin cleaning out dead tasks");
-        int j;
-        for (j = [tasks count] - 1; j >= 0; --j) {
-            PTYTask* theTask = [tasks objectAtIndex:j];
+        for (PTYTask *theTask in _tasks) {
             if ([theTask fd] < 0) {
-                PtyTaskDebugLog(@"Deregister dead task %d\n", j);
+                PtyTaskDebugLog(@"Deregister dead task %@\n", theTask);
+                [self deregisterTask:theTask];
+            }
+        }
+        for (PTYTask *theTask in _coprocessOnlyTasks) {
+            if ([theTask coprocessOnlyTaskIsDead]) {
                 [self deregisterTask:theTask];
             }
         }
@@ -273,57 +287,55 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
             deadpool = [newDeadpool retain];
         }
 
-        PtyTaskDebugLog(@"Begin enumeration over %lu tasks\n", (unsigned long)[tasks count]);
-        iter = [tasks objectEnumerator];
-        int i = 0;
-        // FIXME: this can be converted to ObjC 2.0.
-        while ((task = [iter nextObject])) {
-            PtyTaskDebugLog(@"Got task %d\n", i);
-            int fd = [task fd];
-            if (fd < 0) {
-                PtyTaskDebugLog(@"Task has fd of %d\n", fd);
-            } else {
-                // PtyTaskDebugLog(@"Select on fd %d\n", fd);
-                if (fd > highfd) {
-                    highfd = fd;
+        // Figure out the file descriptors to select on.
+        PtyTaskDebugLog(@"Begin enumeration over %lu tasks\n", (unsigned long)[_tasks count]);
+        for (NSArray *taskArray in @[ _tasks, _coprocessOnlyTasks ]) {
+            for (PTYTask *task in taskArray) {
+                PtyTaskDebugLog(@"Got task %@\n", task);
+                int fd = [task fd];
+                if (fd < 0) {
+                    PtyTaskDebugLog(@"Task has fd of %d\n", fd);
+                } else {
+                    // PtyTaskDebugLog(@"Select on fd %d\n", fd);
+                    if (fd > highfd) {
+                        highfd = fd;
+                    }
+                    if ([task wantsRead]) {
+                        FD_SET(fd, &rfds);
+                    }
+                    if ([task wantsWrite]) {
+                        FD_SET(fd, &wfds);
+                    }
+                    FD_SET(fd, &efds);
                 }
-                if ([task wantsRead]) {
-                    FD_SET(fd, &rfds);
-                }
-                if ([task wantsWrite]) {
-                    FD_SET(fd, &wfds);
-                }
-                FD_SET(fd, &efds);
-            }
 
-            @synchronized (task) {
-                Coprocess *coprocess = [task coprocess];
-                if (coprocess) {
-                    if ([coprocess wantToRead] && [task writeBufferHasRoom]) {
-                        int rfd = [coprocess readFileDescriptor];
-                        if (rfd > highfd) {
-                            highfd = rfd;
+                @synchronized (task) {
+                    Coprocess *coprocess = [task coprocess];
+                    if (coprocess) {
+                        if ([coprocess wantToRead] && [task writeBufferHasRoom]) {
+                            int rfd = [coprocess readFileDescriptor];
+                            if (rfd > highfd) {
+                                highfd = rfd;
+                            }
+                            FD_SET(rfd, &rfds);
                         }
-                        FD_SET(rfd, &rfds);
-                    }
-                    if ([coprocess wantToWrite]) {
-                        int wfd = [coprocess writeFileDescriptor];
-                        if (wfd > highfd) {
-                            highfd = wfd;
+                        if ([coprocess wantToWrite]) {
+                            int wfd = [coprocess writeFileDescriptor];
+                            if (wfd > highfd) {
+                                highfd = wfd;
+                            }
+                            FD_SET(wfd, &wfds);
                         }
-                        FD_SET(wfd, &wfds);
-                    }
-                    if (![coprocess eof]) {
-                        int rfd = [coprocess readFileDescriptor];
-                        if (rfd > highfd) {
-                            highfd = rfd;
+                        if (![coprocess eof]) {
+                            int rfd = [coprocess readFileDescriptor];
+                            if (rfd > highfd) {
+                                highfd = rfd;
+                            }
+                            FD_SET(rfd, &efds);
                         }
-                        FD_SET(rfd, &efds);
                     }
                 }
             }
-            ++i;
-            PtyTaskDebugLog(@"About to get task %d\n", i);
         }
         PtyTaskDebugLog(@"run1: unlock");
         [tasksLock unlock];
@@ -352,13 +364,13 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
         // Check for read events on PTYTask pipes
         PtyTaskDebugLog(@"run2: lock");
         [tasksLock lock];
-        PtyTaskDebugLog(@"Iterating over %lu tasks\n", (unsigned long)[tasks count]);
-        iter = [tasks objectEnumerator];
-        i = 0;
+        PtyTaskDebugLog(@"Iterating over %lu tasks\n", (unsigned long)_tasks.count);
+        iter = [_tasks objectEnumerator];
         BOOL notifyOfCoprocessChange = NO;
 
+        PTYTask *task;
         while ((task = [iter nextObject])) {
-            PtyTaskDebugLog(@"Got task %d\n", i);
+            PtyTaskDebugLog(@"Got task %@\n", task);
             int fd = [task fd];
 
             if (fd >= 0) {
@@ -375,13 +387,13 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 [handledFds addObject:@(fd)];
 
                 if ([self handleReadOnFileDescriptor:fd task:task fdSet:&rfds]) {
-                    iter = [tasks objectEnumerator];
+                    iter = [_tasks objectEnumerator];
                 }
                 if ([self handleWriteOnFileDescriptor:fd task:task fdSet:&wfds]) {
-                    iter = [tasks objectEnumerator];
+                    iter = [_tasks objectEnumerator];
                 }
                 if ([self handleErrorOnFileDescriptor:fd task:task fdSet:&efds]) {
-                    iter = [tasks objectEnumerator];
+                    iter = [_tasks objectEnumerator];
                 }
                 // Move input around between coprocess and main process.
                 if ([task fd] >= 0 && ![task hasBrokenPipe]) {  // Make sure the pipe wasn't just broken.
@@ -418,9 +430,44 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 }
                 [task release];
             }
-            ++i;
-            PtyTaskDebugLog(@"About to get task %d\n", i);
         }
+
+        // Handle coprocess reads, writes, and deaths for coprocess-only tasks.
+          PtyTaskDebugLog(@"Iterating over %lu coprocess-only tasks\n", (unsigned long)_coprocessOnlyTasks.count);
+          for (PTYTask *coprocessOnlyTask in _coprocessOnlyTasks) {
+            @synchronized (coprocessOnlyTask) {
+                PtyTaskDebugLog(@"Checking coprocess olnly task %@", coprocessOnlyTask);
+                Coprocess *coprocess = [coprocessOnlyTask coprocess];
+                if (coprocess) {
+                    int fd = [coprocess readFileDescriptor];
+                    if ([handledFds containsObject:@(fd)]) {
+                        NSLog(@"Duplicate fd %d", fd);
+                        continue;
+                    }
+                    [handledFds addObject:@(fd)];
+
+                    [self handleReadOnFileDescriptor:fd task:coprocessOnlyTask withCoprocess:coprocess fdSet:&rfds];
+                    [self handleErrorOnFileDescriptor:fd withCoprocess:coprocess fdSet:&efds];
+
+                    // Handle writes
+                    int coprocessWriteFd = [coprocess writeFileDescriptor];
+                    if ([handledFds containsObject:@(coprocessWriteFd)]) {
+                        NSLog(@"Duplicate fd %d", coprocessWriteFd);
+                        continue;
+                    }
+                    [handledFds addObject:@(coprocessWriteFd)];
+                    [self handleWriteOnFileDescriptor:coprocessWriteFd withCoprocess:coprocess fdSet:&wfds];
+
+                    if ([coprocess eof]) {
+                        [deadpool addObject:@([coprocess pid])];
+                        [coprocess terminate];
+                        [coprocessOnlyTask setCoprocess:nil];
+                        notifyOfCoprocessChange = YES;
+                    }
+                }
+            }
+        }
+
         PtyTaskDebugLog(@"run3: unlock");
         [tasksLock unlock];
         if (notifyOfCoprocessChange) {
@@ -442,6 +489,14 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:kCoprocessStatusChangeNotification
                                                         object:nil];
+}
+
+- (void)lock {
+    [tasksLock lock];
+}
+
+- (void)unlock {
+    [tasksLock unlock];
 }
 
 @end

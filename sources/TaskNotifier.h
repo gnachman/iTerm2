@@ -24,4 +24,7 @@ extern NSString *const kTaskNotifierDidSpin;
 
 - (void)notifyCoprocessChange;
 
+- (void)lock;
+- (void)unlock;
+
 @end

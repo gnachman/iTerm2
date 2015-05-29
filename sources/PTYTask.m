@@ -77,6 +77,7 @@ setup_tty_param(struct termios* term,
 
 @interface PTYTask ()
 @property(atomic, assign) BOOL hasMuteCoprocess;
+@property(atomic, assign) BOOL coprocessOnlyTaskIsDead;
 @end
 
 @implementation PTYTask {
@@ -455,6 +456,26 @@ static int MyForkPty(int *amaster,
     }
 }
 
+- (void)registerAsCoprocessOnlyTask {
+    self.isCoprocessOnly = YES;
+    [[TaskNotifier sharedInstance] registerTask:self];
+}
+
+- (void)writeToCoprocessOnlyTask:(NSData *)data {
+    if (self.coprocess) {
+        TaskNotifier *taskNotifier = [TaskNotifier sharedInstance];
+        [taskNotifier lock];
+        @synchronized (self) {
+            [self.coprocess.outputBuffer appendData:data];
+        }
+        [taskNotifier unlock];
+
+        // Wake up the task notifier so the coprocess's output buffer will be sent to its file
+        // descriptor.
+        [taskNotifier unblock];
+    }
+}
+
 - (BOOL)wantsRead {
     return !self.paused;
 }
@@ -578,12 +599,23 @@ static int MyForkPty(int *amaster,
 
 - (void)writeTask:(NSData*)data
 {
-    // Write as much as we can now through the non-blocking pipe
-    // Lock to protect the writeBuffer from the IO thread
-    [writeLock lock];
-    [writeBuffer appendData:data];
-    [[TaskNotifier sharedInstance] unblock];
-    [writeLock unlock];
+    if (self.isCoprocessOnly) {
+        // Send keypresses to tmux.
+        [_delegate retain];
+        NSData *copyOfData = [data copy];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [_delegate writeForCoprocessOnlyTask:copyOfData];
+            [_delegate release];
+            [copyOfData release];
+        });
+    } else {
+        // Write as much as we can now through the non-blocking pipe
+        // Lock to protect the writeBuffer from the IO thread
+        [writeLock lock];
+        [writeBuffer appendData:data];
+        [[TaskNotifier sharedInstance] unblock];
+        [writeLock unlock];
+    }
 }
 
 - (void)brokenPipe {
@@ -671,6 +703,9 @@ static int MyForkPty(int *amaster,
         // function returns, a new task may be created with this fd and then
         // the select thread wouldn't know which task a fd belongs to.
         fd = -1;
+    }
+    if (self.isCoprocessOnly) {
+        self.coprocessOnlyTaskIsDead = YES;
     }
 }
 
