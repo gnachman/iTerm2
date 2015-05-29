@@ -385,8 +385,7 @@ static BOOL hasBecomeActive = NO;
     _workspaceSessionActive = NO;
 }
 
-- (BOOL)applicationShouldTerminate:(NSNotification *)theNotification
-{
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
     NSArray *terminals;
 
     terminals = [[iTermController sharedInstance] terminals];
@@ -418,7 +417,7 @@ static BOOL hasBecomeActive = NO;
                                        @"Cancel",
                                        nil) != NSAlertDefaultReturn;
         if (stayput) {
-            return NO;
+            return NSTerminateCancel;
         }
     }
 
@@ -432,7 +431,7 @@ static BOOL hasBecomeActive = NO;
         [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
     }
 
-    return YES;
+    return NSTerminateNow;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
