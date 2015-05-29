@@ -1,6 +1,5 @@
 #import "PseudoTerminal.h"
 
-
 #import "ColorsMenuItemView.h"
 #import "CommandHistory.h"
 #import "CommandHistoryEntry.h"
@@ -14,6 +13,7 @@
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermAboutWindow.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
@@ -2804,6 +2804,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // If a popup is opening, though, we shouldn't close ourselves.
             if (![[NSApp keyWindow] isKindOfClass:[PopupWindow class]] &&
                 ![[NSApp keyWindow] isKindOfClass:[iTermOpenQuicklyWindow class]] &&
+                ![[NSApp keyWindow] isKindOfClass:[iTermAboutWindow class]] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
                 ![iTermWarning showingWarning] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]] &&
