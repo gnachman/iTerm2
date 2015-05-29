@@ -16,6 +16,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)threadedTaskBrokenPipe;
 - (void)brokenPipe;  // Called in main thread
 - (void)taskWasDeregistered;
+- (void)writeForCoprocessOnlyTask:(NSData *)data;
 @end
 
 @interface PTYTask : NSObject
@@ -27,6 +28,11 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, assign) BOOL paused;
 @property(nonatomic, readonly) BOOL pidIsChild;
 @property(nonatomic, readonly) pid_t serverPid;
+
+// Tmux sessions are coprocess-only tasks. They have no file descriptor or pid,
+// but they may have a coprocess that needs TaskNotifier to read, write, and wait on.
+@property(atomic, assign) BOOL isCoprocessOnly;
+@property(atomic, readonly) BOOL coprocessOnlyTaskIsDead;
 
 - (id)init;
 - (void)dealloc;
@@ -86,6 +92,9 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
                          serverProcessId:(pid_t)serverPid
                           childProcessId:(pid_t)childPid;
+
+- (void)registerAsCoprocessOnlyTask;
+- (void)writeToCoprocessOnlyTask:(NSData *)data;
 
 @end
 

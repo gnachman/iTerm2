@@ -1793,6 +1793,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
 }
 
+- (void)writeForCoprocessOnlyTask:(NSData *)data {
+    // The if statement is just a sanity check.
+    if (self.tmuxMode == TMUX_CLIENT) {
+        [self writeTask:data];
+    }
+}
+
 - (void)threadedTaskBrokenPipe
 {
     // Put the call to brokenPipe in the same queue as executeTokens:bytesHandled: to avoid a race.
@@ -3856,10 +3863,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_tmuxGateway detach];
 }
 
-- (void)setTmuxPane:(int)windowPane
-{
+- (void)setTmuxPane:(int)windowPane {
     _tmuxPane = windowPane;
     self.tmuxMode = TMUX_CLIENT;
+    [_shell registerAsCoprocessOnlyTask];
 }
 
 - (void)toggleTmuxZoom {
@@ -4094,8 +4101,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     _tmuxSecureLogging = secureLogging;
 }
 
-- (void)tmuxWriteData:(NSData *)data
-{
+- (void)tmuxWriteData:(NSData *)data {
     if (_exited) {
         return;
     }
@@ -4134,6 +4140,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [data release];
             [self release];
         });
+        if (_shell.coprocess) {
+            [_shell writeToCoprocessOnlyTask:data];
+        }
     }
 }
 
