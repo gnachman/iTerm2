@@ -1292,4 +1292,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)didSwapWindows:(NSString *)response {
 }
 
+- (void)setCurrentWindow:(int)windowId {
+    NSString *command = [NSString stringWithFormat:@"select-window -t @%d", windowId];
+    [gateway_ sendCommand:command
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 @end
