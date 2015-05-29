@@ -218,7 +218,7 @@ typedef enum {
 - (NSString *)currentSessionName;
 
 // Show the pref panel for the current session, divorcing it from its profile.
-- (void)editSession:(PTYSession*)session;
+- (void)editSession:(PTYSession*)session makeKey:(BOOL)makeKey;
 
 // Close a session if the user agrees to a modal alert.
 - (void)closeSessionWithConfirmation:(PTYSession *)aSession;

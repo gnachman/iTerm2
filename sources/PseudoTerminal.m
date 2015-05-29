@@ -2437,6 +2437,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                withObject:nil
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+        [self editSession:self.currentSession makeKey:NO];
+    }
 }
 
 - (void)makeCurrentSessionFirstResponder
@@ -3679,17 +3682,19 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     if (!session) {
         return;
     }
-    [self editSession:session];
+    [self editSession:session makeKey:YES];
 }
 
-- (void)editSession:(PTYSession*)session
-{
+- (void)editSession:(PTYSession *)session makeKey:(BOOL)makeKey {
     Profile* bookmark = [session profile];
     if (!bookmark) {
         return;
     }
-    NSString* newGuid = [session divorceAddressBookEntryFromPreferences];
-    [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid];
+    NSString *newGuid = [session divorceAddressBookEntryFromPreferences];
+    [[PreferencePanel sessionsInstance] openToProfileWithGuid:newGuid selectGeneralTab:makeKey];
+    if (makeKey) {
+        [[[PreferencePanel sessionsInstance] window] makeKeyAndOrderFront:nil];
+    }
 }
 
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
@@ -3803,8 +3808,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem
-{
+- (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     DLog(@"Did select tab view %@", tabViewItem);
     tabBarControl.flashing = YES;
 
@@ -3856,6 +3860,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self refreshTools];
     [self updateTabColors];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+        [self editSession:self.currentSession makeKey:NO];
+    }
 }
 
 - (void)showOrHideInstantReplayBar
@@ -5102,7 +5109,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [self hideAutoCommandHistory];
     }
     [[toolbelt_ commandHistoryView] updateCommands];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];}
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+        [self editSession:self.currentSession makeKey:NO];
+    }
+}
 
 
 - (void)fitWindowToTabs
@@ -7325,6 +7336,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         _directoriesPopupWindowController.delegate = nil;
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
+    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+        if (self.currentSession) {
+            [self editSession:self.currentSession makeKey:NO];
+        } else {
+            [[[PreferencePanel sessionsInstance] window] close];
+        }
+    }
 }
 
 - (IBAction)openSelection:(id)sender {
