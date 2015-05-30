@@ -56,7 +56,7 @@
 {
     NSString *folder = [self expandedCustomFolderOrURL];
     NSString *filename = [self prefsFilenameWithBaseDir:folder];
-    if ([folder stringIsUrlLike]) {
+    if (self.remoteLocationIsURL) {
         filename = folder;
     } else {
         filename = [filename stringByExpandingTildeInPath];
@@ -295,7 +295,7 @@
     if (!_savedRemotePrefs) {
         return NO;
     }
-    if ([[self customFolderOrURL] stringIsUrlLike]) {
+    if (self.remoteLocationIsURL) {
         return NO;
     }
     return ![[self freshCopyOfRemotePreferences] isEqual:_savedRemotePrefs];
@@ -303,8 +303,7 @@
 
 - (void)applicationWillTerminate {
     if ([self localPrefsDifferFromSavedRemotePrefs]) {
-        NSString *customFolderOrURL = [self expandedCustomFolderOrURL];
-        if ([customFolderOrURL stringIsUrlLike]) {
+        if (self.remoteLocationIsURL) {
             // If the setting is always copy, then ask. Copying isn't an option.
             NSString *theTitle = [NSString stringWithFormat:
                                   @"Changes made to preferences will be lost when iTerm2 is restarted "
@@ -329,6 +328,11 @@
             }
         }
     }
+}
+
+- (BOOL)remoteLocationIsURL {
+    NSString *customFolderOrURL = [self expandedCustomFolderOrURL];
+    return [customFolderOrURL stringIsUrlLike];
 }
 
 @end
