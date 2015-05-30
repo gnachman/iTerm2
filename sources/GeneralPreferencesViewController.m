@@ -14,6 +14,19 @@
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
 
+@interface iTermCustomFolderTextFieldCell : NSTextFieldCell
+@end
+
+@implementation iTermCustomFolderTextFieldCell
+
+- (NSRect)drawingRectForBounds:(NSRect)theRect {
+    NSRect rect = [super drawingRectForBounds:theRect];
+    rect.size.width -= 23;  // Width of warning icon
+    return rect;
+}
+
+@end
+
 enum {
     kUseSystemWindowRestorationSettingTag = 0,
     kOpenDefaultWindowArrangementTag = 1,
@@ -54,10 +67,12 @@ enum {
 
     // Load prefs from custom folder
     IBOutlet NSButton *_loadPrefsFromCustomFolder;  // Should load?
+    IBOutlet iTermCustomFolderTextFieldCell *_customFolderTextFieldCell;
     IBOutlet NSTextField *_prefsCustomFolder;  // Path or URL text field
     IBOutlet NSImageView *_prefsDirWarning;  // Image shown when path is not writable
     IBOutlet NSButton *_browseCustomFolder;  // Push button to open file browser
     IBOutlet NSButton *_pushToCustomFolder;  // Push button to copy local to remote
+    IBOutlet NSButton *_autoSaveOnQuit;  // Save settings to folder on quit
 
     // Copy to clipboard on selection
     IBOutlet NSButton *_selectionCopiesText;
@@ -190,6 +205,37 @@ enum {
     info.onChange = ^() { [self loadPrefsFromCustomFolderDidChange]; };
     info.observer = ^() { [self updateEnabledStateForCustomFolderButtons]; };
 
+    info = [self defineControl:_autoSaveOnQuit
+                           key:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"
+                          type:kPreferenceInfoTypeCheckbox];
+    // Called when user interacts with control
+    info.customSettingChangedHandler = ^(id sender) {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"NoSyncNeverRemindPrefsChangesLostForFile"];
+        NSNumber *value;
+        if ([_autoSaveOnQuit state] == NSOnState) {
+            value = @0;
+        } else {
+            value = @1;
+        }
+        [[NSUserDefaults standardUserDefaults] setObject:value
+                                                  forKey:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"];
+    };
+
+    // Called on programmatic change (e.g., selecting a different profile. Returns YES to avoid
+    // normal code path.
+    info.onUpdate = ^BOOL () {
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSCellStateValue state;
+        if ([userDefaults boolForKey:@"NoSyncNeverRemindPrefsChangesLostForFile"] &&
+            [userDefaults integerForKey:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"] == 0) {
+            state = NSOnState;
+        } else {
+            state = NSOffState;
+        }
+        _autoSaveOnQuit.state = state;
+        return YES;
+    };
+    info.onUpdate();
 
     // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_prefsCustomFolder
@@ -280,7 +326,10 @@ enum {
     }
 
     BOOL remoteLocationIsValid = [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
-    [_prefsDirWarning setHidden:remoteLocationIsValid];
+    _prefsDirWarning.image = remoteLocationIsValid ? [NSImage imageNamed:@"CheckMark"] : [NSImage imageNamed:@"WarningSign"];
+    [_autoSaveOnQuit setEnabled:(shouldLoadRemotePrefs &&
+                                 remoteLocationIsValid &&
+                                 ![[iTermRemotePreferences sharedInstance] remoteLocationIsURL])];
 }
 
 - (void)updateEnabledStateForCustomFolderButtons {
