@@ -203,7 +203,7 @@ enum {
                            key:kPreferenceKeyLoadPrefsFromCustomFolder
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self loadPrefsFromCustomFolderDidChange]; };
-    info.observer = ^() { [self updateEnabledStateForCustomFolderButtons]; };
+    info.observer = ^() { [self updateRemotePrefsViews]; };
 
     info = [self defineControl:_autoSaveOnQuit
                            key:@"NoSyncNeverRemindPrefsChangesLostForFile_selection"
@@ -246,9 +246,9 @@ enum {
     };
     info.onChange = ^() {
         [iTermRemotePreferences sharedInstance].customFolderChanged = YES;
-        [self updatePrefsDirWarning];
+        [self updateRemotePrefsViews];
     };
-    [self updatePrefsDirWarning];
+    [self updateRemotePrefsViews];
 
     // ---------------------------------------------------------------------------------------------
     [self defineControl:_selectionCopiesText
@@ -317,32 +317,30 @@ enum {
 
 #pragma mark - Remote Prefs
 
-- (void)updatePrefsDirWarning {
+- (void)updateRemotePrefsViews {
     BOOL shouldLoadRemotePrefs =
         [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
-    if (!shouldLoadRemotePrefs) {
-        [_prefsDirWarning setHidden:YES];
-        return;
+    [_browseCustomFolder setEnabled:shouldLoadRemotePrefs];
+    [_prefsCustomFolder setEnabled:shouldLoadRemotePrefs];
+
+    if (shouldLoadRemotePrefs) {
+        _prefsDirWarning.alphaValue = 1;
+    } else {
+        _prefsDirWarning.alphaValue = 0.5;
     }
 
     BOOL remoteLocationIsValid = [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];
     _prefsDirWarning.image = remoteLocationIsValid ? [NSImage imageNamed:@"CheckMark"] : [NSImage imageNamed:@"WarningSign"];
-    [_autoSaveOnQuit setEnabled:(shouldLoadRemotePrefs &&
-                                 remoteLocationIsValid &&
-                                 ![[iTermRemotePreferences sharedInstance] remoteLocationIsURL])];
-}
-
-- (void)updateEnabledStateForCustomFolderButtons {
-    BOOL shouldLoadRemotePrefs = [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
-    [_browseCustomFolder setEnabled:shouldLoadRemotePrefs];
-    [_pushToCustomFolder setEnabled:shouldLoadRemotePrefs];
-    [_prefsCustomFolder setEnabled:shouldLoadRemotePrefs];
-    [self updatePrefsDirWarning];
+    BOOL isValidFile = (shouldLoadRemotePrefs &&
+                        remoteLocationIsValid &&
+                        ![[iTermRemotePreferences sharedInstance] remoteLocationIsURL]);
+    [_autoSaveOnQuit setEnabled:isValidFile];
+    [_pushToCustomFolder setEnabled:isValidFile];
 }
 
 - (void)loadPrefsFromCustomFolderDidChange {
     BOOL shouldLoadRemotePrefs = [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
-    [self updateEnabledStateForCustomFolderButtons];
+    [self updateRemotePrefsViews];
     if (shouldLoadRemotePrefs) {
         // Just turned it on.
         if ([[_prefsCustomFolder stringValue] length] == 0) {
@@ -361,7 +359,7 @@ enum {
             }
         }
     }
-    [self updatePrefsDirWarning];
+    [self updateRemotePrefsViews];
 }
 
 - (BOOL)choosePrefsCustomFolder {
