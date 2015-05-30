@@ -25,59 +25,60 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 @implementation PSMTabBarControl {
 
     // control basics
-    NSMutableArray              *_cells;                    // the cells that draw the tabs
-    IBOutlet NSTabView          *tabView;                   // the tab view being navigated
-    PSMOverflowPopUpButton      *_overflowPopUpButton;      // for too many tabs
-    PSMRolloverButton           *_addTabButton;
+    NSMutableArray *_cells; // the cells that draw the tabs
+    IBOutlet NSTabView *tabView; // the tab view being navigated
+    PSMOverflowPopUpButton *_overflowPopUpButton; // for too many tabs
+    PSMRolloverButton *_addTabButton;
 
     // drawing style
-    id<PSMTabStyle>             style;
-    BOOL                        _disableTabClose;
-    BOOL                        _hideForSingleTab;
-    BOOL                        _showAddTabButton;
-    BOOL                        _sizeCellsToFit;
-    BOOL                        _useOverflowMenu;
-    int                         _resizeAreaCompensation;
-    PSMTabBarOrientation        _orientation;
-    BOOL                        _automaticallyAnimates;
-    NSTimer                     *_animationTimer;
-    float                       _animationDelta;
+    id<PSMTabStyle> style;
+    BOOL _disableTabClose;
+    BOOL _hideForSingleTab;
+    BOOL _showAddTabButton;
+    BOOL _sizeCellsToFit;
+    BOOL _useOverflowMenu;
+    int _resizeAreaCompensation;
+    PSMTabBarOrientation _orientation;
+    BOOL _automaticallyAnimates;
+    NSTimer *_animationTimer;
+    float _animationDelta;
 
     // behavior
-    BOOL                        _allowsBackgroundTabClosing;
-    BOOL                        _selectsTabsOnMouseDown;
+    BOOL _allowsBackgroundTabClosing;
+    BOOL _selectsTabsOnMouseDown;
 
     // vertical tab resizing
-    BOOL                        _allowsResizing;
-    BOOL                        _resizing;
+    BOOL _allowsResizing;
+    BOOL _resizing;
 
     // cell width
-    int                         _cellMinWidth;
-    int                         _cellMaxWidth;
-    int                         _cellOptimumWidth;
+    int _cellMinWidth;
+    int _cellMaxWidth;
+    int _cellOptimumWidth;
 
     // animation for hide/show
-    int                         _currentStep;
-    BOOL                        _isHidden;
-    BOOL                        _hideIndicators;
-    IBOutlet id                 partnerView;                // gets resized when hide/show
-    BOOL                        _awakenedFromNib;
-    int                         _tabBarWidth;
+    int _currentStep;
+    BOOL _isHidden;
+    BOOL _hideIndicators;
+    IBOutlet id partnerView; // gets resized when hide/show
+    BOOL _awakenedFromNib;
+    int _tabBarWidth;
 
     // drag and drop
-    NSEvent                     *_lastMouseDownEvent;      // keep this for dragging reference
-    NSEvent                     *_lastMiddleMouseDownEvent;
-    BOOL                        _didDrag;
-    BOOL                        _closeClicked;
+    NSEvent *_lastMouseDownEvent; // keep this for dragging reference
+    NSEvent *_lastMiddleMouseDownEvent;
+    BOOL _didDrag;
+    BOOL _closeClicked;
 
     // MVC help
     IBOutlet id<PSMTabBarControlDelegate> delegate;
 
     // orientation, top or bottom
-    int                         _tabLocation;
+    int _tabLocation;
 
     // iTerm2 additions
-    int                         _modifier;
+    int _modifier;
+    BOOL _hasCloseButton;
 }
 
 #pragma mark -
@@ -133,6 +134,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     _cellMinWidth = 100;
     _cellMaxWidth = 280;
     _cellOptimumWidth = 130;
+    _hasCloseButton = YES;
     _tabLocation = PSMTab_TopTab;
     style = [[PSMYosemiteTabStyle alloc] init];
 
@@ -882,6 +884,7 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
     for (i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
+        cell.hasCloseButton = _hasCloseButton;
         [cell updateForStyle];
         float width;
 
@@ -2350,6 +2353,14 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
 
 - (NSColor *)accessoryTextColor {
     return [style accessoryTextColor] ?: [NSColor blackColor];
+}
+
+- (void)setTabsHaveCloseButtons:(BOOL)tabsHaveCloseButtons {
+    _hasCloseButton = tabsHaveCloseButtons;
+
+    for (PSMTabBarCell *cell in _cells) {
+        [cell setHasCloseButton:tabsHaveCloseButtons];
+    }
 }
 
 #pragma mark - NSDraggingSource
