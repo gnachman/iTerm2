@@ -93,5 +93,6 @@
 
 + (BOOL)disableWindowSizeSnap;
 + (BOOL)useDoubleBufferedGrid;
++ (BOOL)eliminateCloseButtons;
 
 @end

@@ -209,4 +209,6 @@ enum {
 - (void)setIcon:(NSImage *)icon forTabWithIdentifier:(id)identifier;
 - (void)setObjectCount:(NSInteger)objectCount forTabWithIdentifier:(id)identifier;
 
+- (void)setTabsHaveCloseButtons:(BOOL)tabsHaveCloseButtons;
+
 @end
