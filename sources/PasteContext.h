@@ -8,17 +8,15 @@
 
 #import <Foundation/Foundation.h>
 
-@interface PasteContext : NSObject {
-    NSString *bytesPerCallKey_;
-    int bytesPerCall_;
-    NSString *delayBetweenCallsKey_;
-    float delayBetweenCalls_;
-}
+@interface PasteContext : NSObject
 
 - (id)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
                      defaultValue:(int)bytesPerCallDefault
          delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
                      defaultValue:(float)delayBetweenCallsDefault;
+
+@property(nonatomic, assign) BOOL blockAtNewline;
+@property(nonatomic, assign) BOOL isBlocked;
 
 - (int)bytesPerCall;
 - (void)setBytesPerCall:(int)newBytesPerCall;

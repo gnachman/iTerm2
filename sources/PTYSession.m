@@ -4678,6 +4678,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_pasteHelper pasteString:theString
                        slowly:!!(flags & kPTYSessionPasteSlowly)
              escapeShellChars:!!(flags & kPTYSessionPasteEscapingSpecialCharacters)
+                     commands:NO
                  tabTransform:tabTransform
                  spacesPerTab:spacesPerTab];
 }
@@ -4936,6 +4937,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_pasteHelper pasteString:[data stringWithBase64EncodingWithLineBreak:@"\r"]
                            slowly:NO
                  escapeShellChars:NO
+                         commands:NO
                      tabTransform:kTabTransformNone
                      spacesPerTab:0];
     }
@@ -5767,6 +5769,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     _lastPromptLine = (long long)line + [_screen totalScrollbackOverflow];
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     [[self screenAddMarkOnLine:line] setIsPrompt:YES];
+    [_pasteHelper unblock];
 }
 
 - (VT100ScreenMark *)screenAddMarkOnLine:(int)line {
@@ -6575,6 +6578,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)pasteHelperIsAtShellPrompt {
     return !_shellIntegrationEverUsed || [self currentCommand] != nil;
+}
+
+- (BOOL)pasteHelperCanWaitForPrompt {
+    return _shellIntegrationEverUsed;
 }
 
 @end

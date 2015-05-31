@@ -63,6 +63,12 @@
     // Terminal app expects bracketed data?
     BOOL _bracketingEnabled;
 
+    // Wait for prompt allowed?
+    BOOL _canWaitForPrompt;
+
+    // Is currently at shell prompt? Sets wait-for-prompt default value.
+    BOOL _isAtShellPrompt;
+
     // String to paste before transforms.
     NSArray *_originalValues;
     NSArray *_labels;
@@ -88,12 +94,15 @@
 - (instancetype)initWithChunkSize:(NSInteger)chunkSize
                delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
                 bracketingEnabled:(BOOL)bracketingEnabled
+                 canWaitForPrompt:(BOOL)canWaitForPrompt
+                  isAtShellPrompt:(BOOL)isAtShellPrompt
                    encoding:(NSStringEncoding)encoding {
     self = [super initWithWindowNibName:@"iTermPasteSpecialWindow"];
     if (self) {
         _index = -1;
         _bracketingEnabled = bracketingEnabled;
-
+        _canWaitForPrompt = canWaitForPrompt;
+        _isAtShellPrompt = isAtShellPrompt;
         NSMutableArray *values = [NSMutableArray array];
         NSMutableArray *labels = [NSMutableArray array];
         [self getLabels:labels andValues:values];
@@ -262,6 +271,8 @@
     _pasteSpecialViewController.shouldUseBracketedPasteMode = (_bracketingEnabled && shouldBracket);
     _pasteSpecialViewController.enableBase64 = !_base64only;
     _pasteSpecialViewController.shouldBase64Encode = _base64only;
+    _pasteSpecialViewController.enableWaitForPrompt = _canWaitForPrompt;
+    _pasteSpecialViewController.shouldWaitForPrompt = _isAtShellPrompt;
 
     [self updatePreview];
 }
@@ -316,11 +327,15 @@
          delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
           bracketingEnabled:(BOOL)bracketingEnabled
                    encoding:(NSStringEncoding)encoding
+           canWaitForPrompt:(BOOL)canWaitForPrompt
+            isAtShellPrompt:(BOOL)isAtShellPrompt
                  completion:(iTermPasteSpecialCompletionBlock)completion {
     iTermPasteSpecialWindowController *controller =
         [[[iTermPasteSpecialWindowController alloc] initWithChunkSize:chunkSize
                                                    delayBetweenChunks:delayBetweenChunks
                                                     bracketingEnabled:bracketingEnabled
+                                                     canWaitForPrompt:canWaitForPrompt
+                                                      isAtShellPrompt:isAtShellPrompt
                                                              encoding:encoding] autorelease];
     NSWindow *window = [controller window];
     [NSApp beginSheet:window

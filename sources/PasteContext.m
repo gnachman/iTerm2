@@ -9,7 +9,12 @@
 #import "PasteContext.h"
 #import "iTermAdvancedSettingsModel.h"
 
-@implementation PasteContext
+@implementation PasteContext {
+    NSString *bytesPerCallKey_;
+    int bytesPerCall_;
+    NSString *delayBetweenCallsKey_;
+    float delayBetweenCalls_;
+}
 
 - (id)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
                      defaultValue:(int)bytesPerCallDefault

@@ -40,6 +40,8 @@ extern NSString *const kPasteSpecialViewControllerUnicodeSingleQuotesRegularExpr
 @property(nonatomic, assign) BOOL shouldUseBracketedPasteMode;
 @property(nonatomic, assign, getter=isBase64Enabled) BOOL enableBase64;
 @property(nonatomic, assign) BOOL shouldBase64Encode;
+@property(nonatomic, assign, getter=isWaitForPromptEnabled) BOOL enableWaitForPrompt;
+@property(nonatomic, assign) BOOL shouldWaitForPrompt;
 @property(nonatomic, assign, getter=isConvertUnicodePunctuationEnabled) BOOL enableConvertUnicodePunctuation;
 @property(nonatomic, assign) BOOL shouldConvertUnicodePunctuation;
 
