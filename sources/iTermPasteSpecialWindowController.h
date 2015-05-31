@@ -18,6 +18,8 @@ typedef void (^iTermPasteSpecialCompletionBlock)(PasteEvent *pasteEvent);
          delayBetweenChunks:(NSTimeInterval)delayBetweenChunks
           bracketingEnabled:(BOOL)bracketingEnabled
                    encoding:(NSStringEncoding)encoding
+           canWaitForPrompt:(BOOL)canWaitForPrompt
+            isAtShellPrompt:(BOOL)isAtShellPrompt
                  completion:(iTermPasteSpecialCompletionBlock)completion;
 
 @end

@@ -72,6 +72,8 @@
                                         delayBetweenChunks:chunkDelay
                                          bracketingEnabled:bracketingEnabled
                                                   encoding:[_delegate pasteHelperEncoding]
+                                          canWaitForPrompt:[_delegate pasteHelperCanWaitForPrompt]
+                                           isAtShellPrompt:[_delegate pasteHelperIsAtShellPrompt]
                                                 completion:^(PasteEvent *event) {
                                                     [self tryToPasteEvent:event];
                                                     [iTermPreferences setInt:event.defaultChunkSize
@@ -91,7 +93,7 @@
 }
 
 - (BOOL)isPasting {
-    return _timer != nil;
+    return _timer != nil || _pasteContext.isBlocked;
 }
 
 + (void)sanitizePasteEvent:(PasteEvent *)pasteEvent encoding:(NSStringEncoding)encoding {
@@ -164,6 +166,7 @@
 - (void)pasteString:(NSString *)theString
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
+           commands:(BOOL)commands
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab {
     NSUInteger bracketFlag = [_delegate pasteHelperShouldBracket] ? kPasteFlagsBracket : 0;
@@ -208,9 +211,11 @@
         NSBeep();
         return;
     }
-    if (![self maybeWarnAboutMultiLinePaste:pasteEvent.string]) {
-        DLog(@"Multiline paste declined.");
-        return;
+    if (!(pasteEvent.flags & kPasteFlagsCommands)) {
+        if (![self maybeWarnAboutMultiLinePaste:pasteEvent.string]) {
+            DLog(@"Multiline paste declined.");
+            return;
+        }
     }
     if ([self isPasting]) {
         DLog(@"Already pasting. Enqueue event.");
@@ -256,7 +261,8 @@
     [self pasteWithBytePerCallPrefKey:pasteEvent.chunkKey
                          defaultValue:pasteEvent.defaultChunkSize
              delayBetweenCallsPrefKey:pasteEvent.delayKey
-                         defaultValue:pasteEvent.defaultDelay];
+                         defaultValue:pasteEvent.defaultDelay
+                       blockAtNewline:!!(pasteEvent.flags & kPasteFlagsCommands)];
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
@@ -267,11 +273,11 @@
     [self pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
                          defaultValue:16
              delayBetweenCallsPrefKey:@"SlowPasteDelayBetweenCalls"
-                         defaultValue:0.125];
+                         defaultValue:0.125
+                       blockAtNewline:NO];
 }
 
-- (void)pasteNormally:(NSString *)aString
-{
+- (void)pasteNormally:(NSString *)aString {
     DLog(@"pasteNormally length=%@", @(aString.length));
     // This is the "normal" way of pasting. It's fast but tends not to
     // outrun a shell's ability to read from its buffer. Why this crazy
@@ -280,7 +286,8 @@
     [self pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
                          defaultValue:1024
              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
-                         defaultValue:0.01];
+                         defaultValue:0.01
+                       blockAtNewline:NO];
 }
 
 - (NSInteger)normalChunkSize {
@@ -349,10 +356,25 @@
 
 - (void)pasteNextChunkAndScheduleTimer {
     DLog(@"pasteNextChunkAndScheduleTimer");
+    BOOL block = NO;
     NSRange range;
     range.location = 0;
     range.length = MIN(_pasteContext.bytesPerCall, [_buffer length]);
     if (range.length > 0) {
+        if (_pasteContext.blockAtNewline) {
+            // If there is a newline in the range about to be pasted, only paste up to and including
+            // it and the block to YES.
+            NSData *newlineData = [NSData dataWithBytes:"\n" length:1];
+            NSRange newlineRange = [_buffer rangeOfData:newlineData options:0 range:range];
+            if (newlineRange.location == NSNotFound) {
+                newlineData = [NSData dataWithBytes:"\r" length:1];
+                newlineRange = [_buffer rangeOfData:newlineData options:0 range:range];
+            }
+            if (newlineRange.location != NSNotFound) {
+                range.length = newlineRange.location + newlineRange.length;
+                block = YES;
+            }
+        }
         [_delegate pasteHelperWriteData:[_buffer subdataWithRange:range]];
     }
     [_buffer replaceBytesInRange:range withBytes:"" length:0];
@@ -361,11 +383,12 @@
     if ([_buffer length] > 0) {
         DLog(@"Schedule timer after %@", @(_pasteContext.delayBetweenCalls));
         [_pasteContext updateValues];
-        _timer = [self scheduledTimerWithTimeInterval:_pasteContext.delayBetweenCalls
-                                               target:self
-                                             selector:@selector(pasteNextChunkAndScheduleTimer)
-                                             userInfo:nil
-                                              repeats:NO];
+        if (!block) {
+            [self scheduleNextPasteForCurrentPasteContext];
+        } else {
+            _pasteContext.isBlocked = YES;
+            _timer = nil;
+        }
     } else {
         DLog(@"Done pasting");
         _timer = nil;
@@ -376,22 +399,48 @@
     }
 }
 
+- (void)scheduleNextPasteForCurrentPasteContext {
+    [_timer invalidate];
+    _timer = [self scheduledTimerWithTimeInterval:_pasteContext.delayBetweenCalls
+                                           target:self
+                                         selector:@selector(pasteNextChunkAndScheduleTimer)
+                                         userInfo:nil
+                                          repeats:NO];
+}
+
+- (void)unblock {
+    if (_pasteContext.isBlocked) {
+        _pasteContext.isBlocked = NO;
+        [self pasteNextChunkAndScheduleTimer];
+    }
+}
+
 - (void)pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
                        defaultValue:(int)bytesPerCallDefault
            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
-                       defaultValue:(float)delayBetweenCallsDefault {
+                       defaultValue:(float)delayBetweenCallsDefault
+                     blockAtNewline:(BOOL)blockAtNewline {
     [_pasteContext release];
     _pasteContext = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
                                                          defaultValue:bytesPerCallDefault
                                              delayBetweenCallsPrefKey:delayBetweenCallsKey
                                                          defaultValue:delayBetweenCallsDefault];
+    _pasteContext.blockAtNewline = blockAtNewline;
+
     const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
     const NSTimeInterval sumOfDelays =
         _pasteContext.delayBetweenCalls * _buffer.length / _pasteContext.bytesPerCall;
     const NSTimeInterval timeSpentWriting = _buffer.length / kPasteBytesPerSecond;
     const NSTimeInterval kMinEstimatedPasteTimeToShowIndicator = 3;
-    if (sumOfDelays + timeSpentWriting > kMinEstimatedPasteTimeToShowIndicator) {
+    if ((sumOfDelays + timeSpentWriting > kMinEstimatedPasteTimeToShowIndicator) ||
+        blockAtNewline) {
         [self showPasteIndicatorInView:[_delegate pasteHelperViewForIndicator]];
+    }
+
+    if (_pasteContext.blockAtNewline && ![_delegate pasteHelperIsAtShellPrompt]) {
+        DLog(@"Not at shell prompt at start of paste.");
+        _pasteContext.isBlocked = YES;
+        return;
     }
 
     [self pasteNextChunkAndScheduleTimer];
@@ -416,8 +465,12 @@
         ![_delegate pasteHelperIsAtShellPrompt]) {
         return YES;
     }
+    NSArray *lines = [string componentsSeparatedByString:@"\n"];
+    if (lines.count < 2) {
+        return YES;
+    }
     NSString *theTitle = [NSString stringWithFormat:@"OK to paste %d lines?",
-                             (int)[[string componentsSeparatedByString:@"\n"] count]];
+                             (int)[lines count]];
     iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:theTitle
                                    actions:@[ @"Paste", @"Cancel" ]
