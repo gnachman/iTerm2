@@ -7,6 +7,7 @@
 //
 
 #import "iTermTabBarControlView.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "DebugLogging.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
@@ -29,6 +30,14 @@ static const NSTimeInterval kFlashHoldTime = 1;
     BOOL _showingBecauseCmdHeld;
     iTermDelayedPerform *_flashDelayedPerform;  // weak
     iTermDelayedPerform *_cmdPressedDelayedPerform;  // weak
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        [self setTabsHaveCloseButtons:![iTermAdvancedSettingsModel eliminateCloseButtons]];
+    }
+    return self;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {

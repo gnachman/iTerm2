@@ -30,6 +30,16 @@ NSString *const kPreferenceKeyAddBonjourHostsToProfiles = @"EnableRendezvous";  
 NSString *const kPreferenceKeyCheckForUpdatesAutomatically = @"SUEnableAutomaticChecks";  // Key defined by Sparkle
 NSString *const kPreferenceKeyCheckForTestReleases = @"CheckTestRelease";
 NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomFolder";
+
+// This pref was originally a suppressable warning plus a user default, which is why it's in two
+// parts.
+
+// 0 = Save, 1 = Lose changes
+NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection = @"NoSyncNeverRemindPrefsChangesLostForFile_selection";
+
+// YES = apply preference from above key, NO = ask on exit if changes exist
+NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection = @"NoSyncNeverRemindPrefsChangesLostForFile";
+
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
@@ -176,6 +186,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,
                   kPreferenceKeyCheckForTestReleases: @YES,
                   kPreferenceKeyLoadPrefsFromCustomFolder: @NO,
+                  kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection: @NO,
+                  kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection: @0,
                   kPreferenceKeyCustomFolder: [NSNull null],
                   kPreferenceKeySelectionCopiesText: @YES,
                   kPreferenceKeyCopyLastNewline: @NO,

@@ -1391,6 +1391,18 @@
 		A647E3B718C5884600450FA1 /* iTermObjectPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3B518C5884600450FA1 /* iTermObjectPool.h */; };
 		A647E3B818C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
 		A647E3B918C5884600450FA1 /* iTermObjectPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E3B618C5884600450FA1 /* iTermObjectPool.m */; };
+		A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
+		A65B72531B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
+		A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
+		A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */; };
+		A65B72561B1A5D7500F947A7 /* WarningSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */; };
+		A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */; };
+		A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72581B1A630100F947A7 /* CheckMark.png */; };
+		A65B725B1B1A630100F947A7 /* CheckMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72581B1A630100F947A7 /* CheckMark.png */; };
+		A65B725C1B1A630100F947A7 /* CheckMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72581B1A630100F947A7 /* CheckMark.png */; };
+		A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
+		A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
+		A65B725F1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
 		A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
@@ -2550,6 +2562,10 @@
 		A647E3B518C5884600450FA1 /* iTermObjectPool.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermObjectPool.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E3B618C5884600450FA1 /* iTermObjectPool.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermObjectPool.m; sourceTree = "<group>"; tabWidth = 4; };
 		A64AB26219B97B670033DB9C /* iTerm2ForApplescriptTesting-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "iTerm2ForApplescriptTesting-Info.plist"; sourceTree = "<group>"; };
+		A65B72501B1A5D7500F947A7 /* WarningSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WarningSign.png; path = images/WarningSign.png; sourceTree = "<group>"; };
+		A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WarningSign@2x.png"; path = "images/WarningSign@2x.png"; sourceTree = "<group>"; };
+		A65B72581B1A630100F947A7 /* CheckMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = CheckMark.png; path = images/CheckMark.png; sourceTree = "<group>"; };
+		A65B72591B1A630100F947A7 /* CheckMark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "CheckMark@2x.png"; path = "images/CheckMark@2x.png"; sourceTree = "<group>"; };
 		A663010619CFCE74004AF81C /* SuppressAllOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SuppressAllOutput.png; path = images/SuppressAllOutput.png; sourceTree = "<group>"; };
 		A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "SuppressAllOutput@2x.png"; path = "images/SuppressAllOutput@2x.png"; sourceTree = "<group>"; };
 		A663010E19CFE41A004AF81C /* iTermAboutWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindow.h; sourceTree = "<group>"; };
@@ -3529,6 +3545,10 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A65B72581B1A630100F947A7 /* CheckMark.png */,
+				A65B72591B1A630100F947A7 /* CheckMark@2x.png */,
+				A65B72501B1A5D7500F947A7 /* WarningSign.png */,
+				A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */,
 				1DEF5E6B185F889600300319 /* Alert.png */,
 				1DEF5E6C185F889600300319 /* Alert@2x.png */,
 				1DE922E51AC3709200965876 /* BackgroundStripes.png */,
@@ -5219,6 +5239,7 @@
 				1D6ED99719AEA20D005A7799 /* Warning.png in Resources */,
 				A663010D19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				1D6ED99819AEA20D005A7799 /* dead@2x.png in Resources */,
+				A65B725C1B1A630100F947A7 /* CheckMark.png in Resources */,
 				A6B3A73A1AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A605D4B719CF79F800D40343 /* iTerm2.iconset in Resources */,
 				A67D0D5B1A2EE12A003A8B35 /* iTerm.strings in Resources */,
@@ -5226,6 +5247,7 @@
 				1D6ED99E19AEA20D005A7799 /* dsa_pub.pem in Resources */,
 				1D6ED9A119AEA20D005A7799 /* PresetKeyMappings.plist in Resources */,
 				A67D0D431A2EE12A003A8B35 /* BookmarksWindow.xib in Resources */,
+				A65B725F1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				1D6ED9A219AEA20D005A7799 /* ColorPresets.plist in Resources */,
 				1D6ED9A319AEA20D005A7799 /* DefaultBookmark.plist in Resources */,
 				1D6ED9A519AEA20D005A7799 /* MigrationMap.plist in Resources */,
@@ -5249,6 +5271,7 @@
 				A67D0D701A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
+				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D6ED9BC19AEA20D005A7799 /* closebutton.png in Resources */,
 				1D6ED9BD19AEA20D005A7799 /* BroadcastInput.png in Resources */,
 				A67D0D521A2EE12A003A8B35 /* FindView.xib in Resources */,
@@ -5287,6 +5310,7 @@
 				A67D0D6D1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				1D6ED9DE19AEA20D005A7799 /* PrefsAdvanced.png in Resources */,
 				1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */,
+				A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */,
 				1D6ED9E119AEA20D005A7799 /* broken_image.png in Resources */,
 				1D6ED9E219AEA20D005A7799 /* PrefsAppearance@2x.png in Resources */,
@@ -5388,6 +5412,7 @@
 				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
 				A686C13C1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingText.png in Resources */,
 				A67D0D781A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
+				A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
 				A686C1881ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorGuide.png in Resources */,
@@ -5401,6 +5426,7 @@
 				A686C1781ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
 				A686C1331ADA38EE00906FAE /* PTYTextViewTest-golden-testAnsiColors.png in Resources */,
 				A686C13A1ADA38EE00906FAE /* PTYTextViewTest-golden-testCombiningMark.png in Resources */,
+				A65B72561B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				A686C15F1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOn.png in Resources */,
 				A686C1361ADA38EE00906FAE /* PTYTextViewTest-golden-testBasicDraw.png in Resources */,
 				A686C1651ADA38EE00906FAE /* PTYTextViewTest-golden-testHiddenCursor.png in Resources */,
@@ -5452,7 +5478,9 @@
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
 				A686C1631ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursor.png in Resources */,
 				A686C18F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabFillerWithoutTab.png in Resources */,
+				A65B725B1B1A630100F947A7 /* CheckMark.png in Resources */,
 				A686C1671ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png in Resources */,
+				A65B72531B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				A686C13E1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoost.png in Resources */,
 				A686C1611ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseOfDelegateOverride.png in Resources */,
 				A67D0D901A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
@@ -5510,6 +5538,7 @@
 				1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */,
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
 				A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
+				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
@@ -5533,6 +5562,7 @@
 				1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */,
 				1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */,
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
+				A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 				A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */,
@@ -5563,11 +5593,13 @@
 				A67D0D3B1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				A67D0D7D1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
+				A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
 				A67D0D801A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A67D0D5F1A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A67D0D561A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
+				A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */,
 				A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */,
 				1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */,

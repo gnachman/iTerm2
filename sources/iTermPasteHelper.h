@@ -27,6 +27,9 @@
 
 - (BOOL)pasteHelperIsAtShellPrompt;
 
+// Is shell integration installed?
+- (BOOL)pasteHelperCanWaitForPrompt;
+
 @end
 
 @interface iTermPasteHelper : NSObject
@@ -44,6 +47,7 @@
 - (void)pasteString:(NSString *)theString
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
+           commands:(BOOL)commands
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab;
 
@@ -60,6 +64,10 @@
 
 // Convert tabs to spaces in source, perhaps asking the user questions in modal alerts.
 - (int)numberOfSpacesToConvertTabsTo:(NSString *)source;
+
+// Call this when a shell prompt begins. If pasting in "commands" mode this
+// allows one more line to be pasted.
+- (void)unblock;
 
 #pragma mark - Testing
 

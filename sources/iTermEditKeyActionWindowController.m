@@ -66,16 +66,16 @@
         [_menuToSelectPopup selectItemWithTitle:self.parameterValue];
     }
 
-    [self updateViews];
+    _pasteSpecialViewController = [[iTermPasteSpecialViewController alloc] init];
+    [_pasteSpecialViewController view];
+
+    [self updateViewsAnimated:NO];
     if (!_profilePopup.isHidden) {
         [_profilePopup populateWithProfilesSelectingGuid:self.parameterValue];
     }
     if (!_colorPresetsPopup.isHidden) {
         [_colorPresetsPopup loadColorPresetsSelecting:self.parameterValue];
     }
-
-    _pasteSpecialViewController = [[iTermPasteSpecialViewController alloc] init];
-    [_pasteSpecialViewController view];
 
     if (self.action == KEY_ACTION_PASTE_SPECIAL ||
         self.action == KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION) {
@@ -84,9 +84,15 @@
         // Set a few defaults; otherwise everything is reasonable.
         _pasteSpecialViewController.numberOfSpacesPerTab = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialSpacesPerTab];
         _pasteSpecialViewController.shouldBase64Encode = NO;
+        _pasteSpecialViewController.shouldWaitForPrompt = NO;
         _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash = NO;
     }
     _pasteSpecialViewController.view.frame = _pasteSpecialViewController.view.bounds;
+    NSRect theFrame = _pasteSpecialViewContainer.frame;
+    CGFloat originalHeight = theFrame.size.height;
+    theFrame.size = _pasteSpecialViewController.view.bounds.size;
+    theFrame.origin.y -= (theFrame.size.height - originalHeight);
+    _pasteSpecialViewContainer.frame = theFrame;
     [_pasteSpecialViewContainer addSubview:_pasteSpecialViewController.view];
 }
 
@@ -130,7 +136,7 @@
 
 #pragma mark - Private
 
-- (void)updateViews {
+- (void)updateViewsAnimated:(BOOL)animated {
     int tag = [[_actionPopup selectedItem] tag];
     switch (tag) {
         case KEY_ACTION_HEX_CODE:
@@ -282,17 +288,78 @@
             [self setPasteSpecialHidden:YES];
             break;
     }
+
+    [self updateFrameAnimated:animated];
+}
+
+- (BOOL)anyAccessoryVisible {
+    return (!_parameter.isHidden ||
+            !_profilePopup.isHidden ||
+            !_menuToSelectPopup.isHidden ||
+            !_colorPresetsPopup.isHidden ||
+            !_pasteSpecialViewContainer.isHidden ||
+            !_parameterLabel.isHidden);
+}
+
+- (void)updateFrameAnimated:(BOOL)animated {
+    NSRect rect = self.window.frame;
+    /*
+     *   Side margin                     Side margin
+     *   |                               |
+     *  |-|                             |-|
+     *  +---------------------------------+
+     *  |                                 |
+     *  |  Keyboard shortcut: [        ]  |
+     *  |             Action: [v Popup ]  |  _
+     *  |         Basic Accessory         |  _|-- Basic accessory height
+     *  |                                 |
+     *  |                  [Cancel] [OK]  |
+     *  +---------------------------------+
+     *     |---------------------------|
+     *     Normal width excluding margins
+     *
+     *  +---------------------------------+  -
+     *  |                                 |  |
+     *  |  Keyboard shortcut: [        ]  |  |
+     *  |             Action: [v Popup ]  |  |-- Height excluding accessory
+     *  |                                 |  |
+     *  |                   [Cancel] [OK] |  |
+     *  +---------------------------------+  -
+     *
+     */
+    const CGFloat heightExcludingAccessory = 126;
+    const CGFloat sideMarginWidth = 20;
+    const CGFloat basicAccessoryHeight = 31;
+    const CGFloat normalWidthExcludingMargins = 402;
+    if ([self anyAccessoryVisible]) {
+        if (!_pasteSpecialViewContainer.hidden) {
+            const CGFloat widthExcludingMargins = MAX(normalWidthExcludingMargins,
+                                                      _pasteSpecialViewController.view.frame.size.width);
+            rect.size = NSMakeSize(widthExcludingMargins + sideMarginWidth * 2,
+                                   _pasteSpecialViewController.view.frame.size.height + heightExcludingAccessory);
+        } else {
+            rect.size = NSMakeSize(normalWidthExcludingMargins + sideMarginWidth * 2,
+                                   heightExcludingAccessory + basicAccessoryHeight);
+        }
+    } else {
+        rect.size = NSMakeSize(normalWidthExcludingMargins + sideMarginWidth * 2,
+                               heightExcludingAccessory);
+    }
+    if (animated) {
+        [self retain];
+        [self.window retain];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.window setFrame:rect display:YES animate:YES];
+            [self autorelease];
+            [self.window autorelease];
+        });
+    } else {
+        [self.window setFrame:rect display:YES animate:NO];
+    }
 }
 
 - (void)setPasteSpecialHidden:(BOOL)hidden {
     _pasteSpecialViewContainer.hidden = hidden;
-    NSRect rect = self.window.frame;
-    if (hidden) {
-        rect.size = NSMakeSize(442, 157);
-    } else {
-        rect.size = NSMakeSize(484, 382);
-    }
-    [self.window setFrame:rect display:YES animate:YES];
 }
 
 + (void)populatePopUpButtonWithMenuItems:(NSPopUpButton *)button
@@ -344,7 +411,7 @@
     [_colorPresetsPopup loadColorPresetsSelecting:_colorPresetsPopup.selectedItem.representedObject];
     [[self class] populatePopUpButtonWithMenuItems:_menuToSelectPopup
                                      selectedValue:[[_menuToSelectPopup selectedItem] title]];
-    [self updateViews];
+    [self updateViewsAnimated:YES];
 }
 
 
