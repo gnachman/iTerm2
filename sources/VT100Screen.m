@@ -1737,10 +1737,33 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     if (workingDirectory.length) {
         workingDirectoryObj.workingDirectory = workingDirectory;
-        VT100GridCoordRange range;
-        range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
-        [intervalTree_ addObject:workingDirectoryObj
-                    withInterval:[self intervalForGridCoordRange:range]];
+
+        VT100WorkingDirectory *previousWorkingDirectory = [[[self objectOnOrBeforeLine:line
+                                                                               ofClass:[VT100WorkingDirectory class]] retain] autorelease];
+        if ([previousWorkingDirectory.workingDirectory isEqualTo:workingDirectory]) {
+            // Extend the previous working directory. We used to add a new VT100WorkingDirectory
+            // every time but if the window title gets changed a lot then they can pile up really
+            // quickly and you spend all your time searching through VT001WorkingDirectory marks
+            // just to find VT100RemoteHost or VT100ScreenMark objects.
+            //
+            // It's a little weird that a VT100WorkingDirectory can now represent the same path on
+            // two different hosts (e.g., you ssh from /Users/georgen to another host and you're in
+            // /Users/georgen over there, but you can share the same VT100WorkingDirectory between
+            // the two hosts because the path is the same). I can't see the harm in it besides being
+            // odd.
+            //
+            // Intervals aren't removed while part of them is on screen, so this works fine.
+            VT100GridCoordRange range = [self coordRangeForInterval:previousWorkingDirectory.entry.interval];
+            [intervalTree_ removeObject:previousWorkingDirectory];
+            range.end = VT100GridCoordMake(self.width, line);
+            Interval *interval = [self intervalForGridCoordRange:range];
+            [intervalTree_ addObject:previousWorkingDirectory withInterval:interval];
+        } else {
+            VT100GridCoordRange range;
+            range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
+            [intervalTree_ addObject:workingDirectoryObj
+                        withInterval:[self intervalForGridCoordRange:range]];
+        }
     }
     [delegate_ screenLogWorkingDirectoryAtLine:line withDirectory:workingDirectory];
 }
@@ -1759,8 +1782,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
                                                                             line + 1,
                                                                             0,
-                                                                            line + 1)].limit;
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:pos];
+                                                                            line + 1)].location;
+    NSEnumerator *enumerator = [intervalTree_ reverseEnumeratorAt:pos];
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
@@ -2577,6 +2600,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
     if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
+        // TODO: There's a bug here where remote host can scroll off the end of history, causing the
+        // working directory to come from PTYTask (which is what happens when nil is passed here).
         [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor]];
     }
 }
