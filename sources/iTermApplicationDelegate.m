@@ -386,6 +386,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
+    DLog(@"applicationShouldTerminate:");
     NSArray *terminals;
 
     terminals = [[iTermController sharedInstance] terminals];
@@ -411,12 +412,14 @@ static BOOL hasBecomeActive = NO;
     }
     
     if (shouldShowAlert) {
+        DLog(@"Showing quit alert");
         BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
                                        @"All sessions will be closed.",
                                        @"OK",
                                        @"Cancel",
                                        nil) != NSAlertDefaultReturn;
         if (stayput) {
+            DLog(@"User declined to quit");
             return NSTerminateCancel;
         }
     }
@@ -431,12 +434,15 @@ static BOOL hasBecomeActive = NO;
         [[iTermRemotePreferences sharedInstance] applicationWillTerminate];
     }
 
+    DLog(@"applicationShouldTerminate returning Now");
     return NSTerminateNow;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
 {
+    DLog(@"applicationWillTerminate called");
     [[HotkeyWindowController sharedInstance] stopEventTap];
+         DLog(@"applicationWillTerminate returning");
 }
 
 - (PseudoTerminal *)terminalToOpenFileIn
@@ -523,19 +529,23 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
+    DLog(@"applicationShouldTerminateAfterLastWindowClosed called");
     NSArray *terminals = [[iTermController sharedInstance] terminals];
     if (terminals.count == 1 && [terminals[0] isHotKeyWindow]) {
         // The last window wasn't really closed, it was just the hotkey window getting ordered out.
         return NO;
     }
     if (!userHasInteractedWithAnySession_) {
+        DLog(@"applicationShouldTerminateAfterLastWindowClosed - user has not interacted with any session");
         if ([[NSDate date] timeIntervalSinceDate:launchTime_] < [iTermAdvancedSettingsModel minRunningTime]) {
+            DLog(@"Returning NO");
             NSLog(@"Not quitting iTerm2 because it ran very briefly and had no user interaction. Set the MinRunningTime float preference to 0 to turn this feature off.");
             return NO;
         }
     }
     quittingBecauseLastWindowClosed_ =
         [iTermPreferences boolForKey:kPreferenceKeyQuitWhenAllWindowsClosed];
+    DLog(@"Returning %@ from pref", @(quittingBecauseLastWindowClosed_));
     return quittingBecauseLastWindowClosed_;
 }
 
