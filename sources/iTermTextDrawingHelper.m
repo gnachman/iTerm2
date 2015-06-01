@@ -1145,6 +1145,9 @@ static const int kBadgeRightMargin = 10;
         NSColor *cursorColor;
         cursorColor = [self backgroundColorForCursor];
         NSRect rect = [self cursorFrame];
+        if (isDoubleWidth) {
+            rect.size.width *= 2;
+        }
         iTermCursor *cursor = [iTermCursor cursorOfType:_cursorType];
         cursor.delegate = self;
         [cursor drawWithRect:rect
