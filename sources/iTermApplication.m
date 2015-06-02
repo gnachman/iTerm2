@@ -188,6 +188,7 @@
                 return;
             }
         }
+        NSLog(@"Passing on key event: %@", event);
     }
 
     [super sendEvent:event];

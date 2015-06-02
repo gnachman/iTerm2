@@ -465,7 +465,7 @@
         ![_delegate pasteHelperIsAtShellPrompt]) {
         return YES;
     }
-    NSArray *lines = [string componentsSeparatedByString:@"\n"];
+    NSArray *lines = [string componentsSeparatedByCharactersInSet:newlineCharacterSet];
     if (lines.count < 2) {
         return YES;
     }
