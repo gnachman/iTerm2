@@ -1590,6 +1590,20 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return string;
 }
 
+- (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
+    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]]];
+    if ([string length]) {
+        [string appendString:@"\n"];
+    }
+    [string appendString:[currentGrid_ compactLineDumpWithContinuationMarks]];
+
+    NSMutableArray *lines = [[[string componentsSeparatedByString:@"\n"] mutableCopy] autorelease];
+    for (int i = 0; i < lines.count; i++) {
+        lines[i] = [NSString stringWithFormat:@"%8lld: %@", self.totalScrollbackOverflow + i, lines[i]];
+    }
+    return [lines componentsJoinedByString:@"\n"];
+}
+
 - (NSString *)compactLineDump {
     return [currentGrid_ compactLineDump];
 }
@@ -1884,7 +1898,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                         self.width,
                                         limit);
     }
-    markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
+    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
+        markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
+    }
     [intervalTree_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [delegate_ screenNeedsRedraw];
     return mark;
