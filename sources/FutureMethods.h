@@ -27,3 +27,8 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
 - (NSString *)legacyFilename;
 - (NSString *)legacyDirectory;
 @end
+
+@interface NSFont (Future)
+// Does this font look bad without anti-aliasing? Relies on a private method.
+- (BOOL)futureShouldAntialias;
+@end
