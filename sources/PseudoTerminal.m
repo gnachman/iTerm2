@@ -5941,9 +5941,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
+    BOOL windowTypeCompatibleWithTopBorder = (windowType_ == WINDOW_TYPE_BOTTOM ||
+                                              windowType_ == WINDOW_TYPE_NO_TITLE_BAR ||
+                                              windowType_ == WINDOW_TYPE_BOTTOM_PARTIAL);
     return ([iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder] &&
             !visibleTopTabBar &&
-            (windowType_ == WINDOW_TYPE_BOTTOM || windowType_ == WINDOW_TYPE_NO_TITLE_BAR));
+            windowTypeCompatibleWithTopBorder);
 }
 
 - (BOOL)_haveRightBorder
