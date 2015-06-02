@@ -40,6 +40,9 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
     [_trigger release];
     [_mark release];
     [_markGuid release];
+    [_line release];
+    [_triggerDigest release];
+
     [super dealloc];
 }
 

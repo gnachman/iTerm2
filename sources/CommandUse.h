@@ -8,6 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
+// When a session wants references to its marks released it should post this notification with
+// the session GUID as the object.
+extern NSString *const kCommandUseReleaseMarksInSession;
+
 @class VT100ScreenMark;
 
 @interface CommandUse : NSObject <NSCopying>

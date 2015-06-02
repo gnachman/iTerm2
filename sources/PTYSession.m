@@ -1,6 +1,7 @@
 #import "PTYSession.h"
 
 #import "CommandHistory.h"
+#import "CommandUse.h"
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
@@ -1453,6 +1454,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandUseReleaseMarksInSession
+                                                        object:self.guid];
     _textview = nil;
 }
 
