@@ -97,7 +97,7 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
     if (function) {
         return function((CTFontRef)self);
     }
-    return YES;
+    return NO;
 }
 
 @end
