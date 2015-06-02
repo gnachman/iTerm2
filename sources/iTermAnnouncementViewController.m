@@ -46,6 +46,7 @@
                                                          actions:self.actions
                                                            block:^(int index) {
                                                                if (!_dismissing) {
+                                                                   [[self retain] autorelease];
                                                                    self.completion(index);
                                                                    [self dismiss];
                                                                }

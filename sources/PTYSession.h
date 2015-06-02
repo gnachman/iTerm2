@@ -515,6 +515,7 @@ typedef enum {
 // Make this session's textview the first responder.
 - (void)takeFocus;
 
+// Show an announcement explaining why a restored session is an orphan.
 - (void)showOrphanAnnouncement;
 
 #pragma mark - Testing utilities

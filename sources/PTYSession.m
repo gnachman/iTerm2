@@ -122,6 +122,10 @@ static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // B
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
 
+static NSString *const SESSION_ARRANGEMENT_PROGRAM = @"Program";  // Executable
+static NSString *const SESSION_ARRANGEMENT_ENVIRONMENT = @"Environment";  // Dictionary of environment vars program was run in
+static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in utf-8 mode
+
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 // Keys into _variables.
@@ -689,13 +693,21 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
         BOOL runCommand = YES;
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
+            DLog(@"Configured to run jobs in servers");
+            // iTerm2 is currently configured to run jobs in servers, but we
+            // have to check if the arrangement was saved with that setting on.
             if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
+                DLog(@"Have a server PID in the arrangement");
+                // The arrangement was save with a process ID so the server may still exist.
                 if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
+                    DLog(@"Was a tmux gateway. Start recovery mode in parser.");
                     // Before attaching to the server we can put the parser into "tmux recovery mode".
                     [aSession.terminal.parser startTmuxRecoveryMode];
                 }
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
+                DLog(@"Try to attach to pid %d", (int)serverPid);
                 if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
+                    DLog(@"Success!");
                     runCommand = NO;
                     attachedToServer = YES;
                     shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
@@ -706,14 +718,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
 
         if (runCommand) {
+            // This path is NOT taken when attaching to a running server.
+            //
             // When restoring a window arrangement with contents and a nonempty saved directory, always
             // use the saved working directory, even if that contravenes the default setting for the
             // profile.
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+            DLog(@"Running command...");
             [aSession runCommandWithOldCwd:oldCWD
                              forObjectType:objectType
                             forceUseOldCWD:contents != nil && oldCWD.length
-                             substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
+                             substitutions:[arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] nilIfNull]];
         }
 
         // GUID will be set for new saved arrangements since late 2014.
@@ -736,7 +751,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 // If contents are present, then system window restoration is bringing back a
                 // session.
                 aSession.guid = guid;
-                DLog(@"iTerm2 is starting up. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
+                DLog(@"iTerm2 is starting up or has contents. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
             }
         }
         DLog(@"Have contents=%@", @(contents != nil));
@@ -804,6 +819,19 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             }
         }
     }
+    if ([arrangement[SESSION_ARRANGEMENT_PROGRAM] nilIfNull]) {
+        aSession.program = arrangement[SESSION_ARRANGEMENT_PROGRAM];
+    }
+    if ([arrangement[SESSION_ARRANGEMENT_ENVIRONMENT] nilIfNull]) {
+        aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_IS_UTF_8]) {
+        aSession.isUTF8 = [arrangement[SESSION_ARRANGEMENT_IS_UTF_8] boolValue];
+    }
+    if ([arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] nilIfNull]) {
+        aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
+    }
+
     if ([arrangement[SESSION_ARRANGEMENT_SELECTION] nilIfNull]) {
         [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
     }
@@ -862,6 +890,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                               forObjectType:objectType];
     }
     if (shouldEnterTmuxMode) {
+        // Restored a tmux gateway session.
         [aSession startTmuxMode];
         [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
@@ -996,14 +1025,18 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)tryToAttachToServerWithProcessId:(pid_t)serverPid {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
+        DLog(@"Failing to attach because run jobs in servers is off");
         return NO;
     }
+    DLog(@"Try to attach...");
     if ([_shell tryToAttachToServerWithProcessId:serverPid timeout:0]) {
         @synchronized(self) {
             _registered = YES;
         }
+        DLog(@"Success, attached.");
         return YES;
     } else {
+        DLog(@"Failed to attach");
         return NO;
     }
 }
@@ -1012,6 +1045,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                          serverProcessId:(pid_t)serverPid
                           childProcessId:(pid_t)childPid {
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        DLog(@"Attaching to a server...");
         [_shell attachToServerWithFileDescriptor:ptyMasterFd
                                  serverProcessId:serverPid
                                   childProcessId:childPid];
@@ -1020,7 +1054,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             _registered = YES;
         }
     } else {
-        NSLog(@"Can't attach to a server when runJobsInServers is off.");
+        DLog(@"Can't attach to a server when runJobsInServers is off.");
     }
 }
 
@@ -1454,6 +1488,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
+    // Free refs to VT100ScreenMarks for this session in CommandUse objects.
     [[NSNotificationCenter defaultCenter] postNotificationName:kCommandUseReleaseMarksInSession
                                                         object:self.guid];
     _textview = nil;
@@ -1803,6 +1838,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
 }
 
+// This is called in the main thread when coprocesses write to a tmux client.
 - (void)writeForCoprocessOnlyTask:(NSData *)data {
     // The if statement is just a sanity check.
     if (self.tmuxMode == TMUX_CLIENT) {
@@ -3078,9 +3114,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
-    if (_substitutions) {
-        result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
-    }
+
+    result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions ?: [NSNull null];
+    result[SESSION_ARRANGEMENT_PROGRAM] = self.program ?: [NSNull null];
+    result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: [NSNull null];
+    result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
+
     if (_name) {
         result[SESSION_ARRANGEMENT_NAME] = _name;
     }

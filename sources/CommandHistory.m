@@ -251,7 +251,7 @@ static const int kMaxCommandsToSavePerHost = 200;
         return nil;
     }
     NSArray *entries = _hosts[[self keyForHost:host]];
-    // TODO: Create an index of markGuid's in command uses.
+    // TODO: Create an index of markGuid's in command uses if this becomes a performance problem during restore.
     for (CommandHistoryEntry *entry in entries) {
         for (CommandUse *use in entry.useTimes) {
             if ([use.markGuid isEqual:markGuid]) {

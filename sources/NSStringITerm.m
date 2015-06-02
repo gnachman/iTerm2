@@ -1079,10 +1079,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
-- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substituions {
+- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substitutions {
     NSMutableString *temp = [[self mutableCopy] autorelease];
-    for (NSString *original in substituions) {
-        NSString *replacement = substituions[original];
+    for (NSString *original in substitutions) {
+        NSString *replacement = substitutions[original];
         [temp replaceOccurrencesOfString:original
                               withString:replacement
                                  options:NSLiteralSearch
