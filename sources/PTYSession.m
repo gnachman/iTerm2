@@ -4671,6 +4671,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         spacesPerTab = [_pasteHelper numberOfSpacesToConvertTabsTo:theString];
         if (spacesPerTab >= 0) {
             tabTransform = kTabTransformConvertToSpaces;
+        } else if (spacesPerTab == kNumberOfSpacesPerTabCancel) {
+            return;
         }
     }
 
