@@ -3030,7 +3030,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)saveTmuxWindowOrigins
 {
     for (TmuxController *tc in [self uniqueTmuxControllers]) {
-            [tc saveWindowOrigins];
+        [tc saveWindowOrigins];
     }
 }
 
@@ -3060,6 +3060,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self repositionWidgets];
 
     [self notifyTmuxOfWindowResize];
+    // windowDidMove does not get called if the origin changes because of a resize.
+    [self saveTmuxWindowOrigins];
 
     for (PTYTab *aTab in [self tabs]) {
         if ([aTab isTmuxTab]) {
@@ -7347,7 +7349,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [[[PreferencePanel sessionsInstance] window] close];
         }
     }
-    [self notifyTmuxOfTabChange];
 }
 
 - (IBAction)openSelection:(id)sender {

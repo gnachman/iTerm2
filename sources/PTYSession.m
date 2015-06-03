@@ -3649,7 +3649,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
     theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
     [_tmuxController validateOptions];
-    [_tmuxController setClientSize:theSize];
 
     [self printTmuxMessage:@"** tmux mode started **"];
     [_screen crlf];

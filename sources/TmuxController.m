@@ -258,7 +258,27 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)openWindowsInitial {
-    NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
+    NSString *command = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_size", sessionId_];
+    [gateway_ sendCommand:command
+           responseTarget:self
+         responseSelector:@selector(handleShowSize:)];
+}
+
+- (void)handleShowSize:(NSString *)response {
+    NSScanner *scanner = [NSScanner scannerWithString:response ?: @""];
+    int width;
+    int height;
+    BOOL ok = ([scanner scanInt:&width] &&
+               [scanner scanString:@"," intoString:nil] &&
+               [scanner scanInt:&height]);
+    if (ok) {
+        [self openWindowsOfSize:NSMakeSize(width, height)];
+    } else {
+        [self openWindowsOfSize:[[gateway_ delegate] tmuxBookmarkSize]];
+    }
+}
+
+- (void)openWindowsOfSize:(NSSize)size {
     // There's a (hopefully) minor race condition here. When we initially connect to
     // a session we get its @iterm2_id. If one doesn't exist, it is assigned. This
     // lets us know if a single instance of iTerm2 is trying to attach to the same
@@ -446,12 +466,18 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [self setClientSize:minSize];
 }
 
-- (void)setClientSize:(NSSize)size
-{
+- (void)setClientSize:(NSSize)size {
     assert(size.width > 0 && size.height > 0);
     lastSize_ = size;
     NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
+    NSString *setSizeCommand = [NSString stringWithFormat:@"set -t $%d @iterm2_size %d,%d",
+                                sessionId_, (int)size.width, (int)size.height];
     NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:setSizeCommand
+                                         responseTarget:nil
+                                       responseSelector:nil
+                                         responseObject:nil
+                                                  flags:0],
                          [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"refresh-client -C %d,%d",
                                                          (int)size.width, (int)size.height]
                                          responseTarget:nil
