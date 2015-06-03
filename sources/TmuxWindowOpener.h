@@ -11,6 +11,9 @@
 
 extern NSString * const kTmuxWindowOpenerStatePendingOutput;
 
+extern NSString *const kTmuxWindowOpenerWindowFlagStyle;
+extern NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen;
+
 @class TmuxGateway;
 @class TmuxController;
 @class PTYTab;
@@ -46,6 +49,9 @@ extern NSString * const kTmuxWindowOpenerStatePendingOutput;
 // Selector is called even if the window is already open and nothing is done.
 @property (nonatomic, assign) SEL selector;
 @property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
+
+// Maps a window ID as a string to a dictionary of window flags (see WindowFlag constants above).
+@property (nonatomic, retain) NSDictionary *windowFlags;
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;
