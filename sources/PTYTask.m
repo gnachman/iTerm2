@@ -105,6 +105,16 @@ setup_tty_param(struct termios* term,
     BOOL _paused;
 }
 
++ (NSString *)commandByPrefixingServerCommand:(NSString *)command {
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        NSString *iterm2Binary =
+            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters];
+        return [NSString stringWithFormat:@"%@ --server %@", iterm2Binary, command];
+    } else {
+        return command;
+    }
+}
+
 - (id)init {
     self = [super init];
     if (self) {
@@ -333,15 +343,31 @@ static int MyForkPty(int *amaster,
     }
 }
 
-- (void)launchWithPath:(NSString*)progpath
-             arguments:(NSArray*)args
-           environment:(NSDictionary*)env
+- (void)launchWithPath:(NSString *)progpath
+             arguments:(NSArray *)args
+           environment:(NSDictionary *)env
                  width:(int)width
                 height:(int)height
                 isUTF8:(BOOL)isUTF8 {
     struct termios term;
     struct winsize win;
     char theTtyname[PATH_MAX];
+
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        // We want to run
+        //   iTerm2 --server progpath args
+        //  So create a new args array with [ --server, progpath, *args ]
+        NSMutableArray *temp = [NSMutableArray array];
+        [temp addObject:@"--server"];
+        [temp addObject:progpath];
+        [temp addObjectsFromArray:args];
+        args = temp;
+
+        // Now change progpath to run iTerm2.
+        NSString *iterm2Binary =
+            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters];
+        progpath = iterm2Binary;
+    }
 
     [command_ autorelease];
     command_ = [progpath copy];
