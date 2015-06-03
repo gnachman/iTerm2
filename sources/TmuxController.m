@@ -915,7 +915,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (NSString *)windowFlagsForTerminal:(PseudoTerminal *)term {
     if (term.anyFullScreen) {
         return [NSString stringWithFormat:@"%@=%@",
-                kTmuxControllerWindowFlagStyle, kTmuxControllerWindowFlagStyleValueFullScreen];
+                kTmuxWindowOpenerWindowFlagStyle, kTmuxWindowOpenerWindowFlagStyleValueFullScreen];
     } else {
         return @"";
     }

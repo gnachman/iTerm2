@@ -356,8 +356,8 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
                 // Check the window flags
                 NSString *windowId = [NSString stringWithFormat:@"%d", windowIndex_];
                 NSDictionary *flags = _windowFlags[windowId];
-                NSString *style = flags[kTmuxControllerWindowFlagStyle];
-                BOOL wantFullScreen = [style isEqual:kTmuxControllerWindowFlagStyleValueFullScreen];
+                NSString *style = flags[kTmuxWindowOpenerWindowFlagStyle];
+                BOOL wantFullScreen = [style isEqual:kTmuxWindowOpenerWindowFlagStyleValueFullScreen];
                 BOOL isFullScreen = [term anyFullScreen];
                 if (wantFullScreen && !isFullScreen) {
                     [term toggleFullScreenMode:nil];
