@@ -188,7 +188,7 @@ static int SocketBindListen(char *path) {
 }
 
 static int Initialize(char *path, pid_t childPid) {
-    f = fopen("/tmp/log.txt", "w");
+    f = fopen("/tmp/log.txt", "a");
     snprintf(gPath, sizeof(gPath), "%s", path);
     // We get this when iTerm2 crashes. Ignore it.
     LOG("Installing SIGHUP handler.");
