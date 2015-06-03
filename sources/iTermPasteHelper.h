@@ -9,6 +9,9 @@
 #import <Cocoa/Cocoa.h>
 #import "PasteEvent.h"
 
+extern const int kNumberOfSpacesPerTabCancel;
+extern const int kNumberOfSpacesPerTabNoConversion;
+
 @protocol iTermPasteHelperDelegate <NSObject>
 
 - (void)pasteHelperWriteData:(NSData *)data;
