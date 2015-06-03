@@ -122,9 +122,17 @@ static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // B
 static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
 static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
 
-static NSString *const SESSION_ARRANGEMENT_PROGRAM = @"Program";  // Executable
+static NSString *const SESSION_ARRANGEMENT_PROGRAM = @"Program";  // Dictionary. See kProgram constants below.
 static NSString *const SESSION_ARRANGEMENT_ENVIRONMENT = @"Environment";  // Dictionary of environment vars program was run in
 static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in utf-8 mode
+
+// Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
+static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
+static NSString *const kProgramCommand = @"Command";  // For kProgramTypeCommand: value is command to run.
+
+// Values for kProgramType
+static NSString *const kProgramTypeShellLauncher = @"Shell Launcher";  // Use iTerm2 --launch_shell
+static NSString *const kProgramTypeCommand = @"Command";  // Use command in kProgramCommand
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
@@ -683,6 +691,39 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [[theTab realParentWindow] setWindowTitle];
     }
     [aSession setTab:theTab];
+
+    BOOL haveSavedProgramData = YES;
+    if ([arrangement[SESSION_ARRANGEMENT_PROGRAM] isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dict = arrangement[SESSION_ARRANGEMENT_PROGRAM];
+        if ([dict[kProgramType] isEqualToString:kProgramTypeShellLauncher]) {
+            aSession.program = [ITAddressBookMgr shellLauncherCommand];
+        } else if ([dict[kProgramType] isEqualToString:kProgramTypeCommand]) {
+            aSession.program = dict[kProgramCommand];
+        } else {
+            haveSavedProgramData = NO;
+        }
+    } else {
+        haveSavedProgramData = NO;
+    }
+    if ([arrangement[SESSION_ARRANGEMENT_ENVIRONMENT] nilIfNull]) {
+        aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
+    } else {
+        haveSavedProgramData = NO;
+    }
+
+    if (arrangement[SESSION_ARRANGEMENT_IS_UTF_8]) {
+        aSession.isUTF8 = [arrangement[SESSION_ARRANGEMENT_IS_UTF_8] boolValue];
+    } else {
+        haveSavedProgramData = NO;
+    }
+
+    if ([arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] nilIfNull]) {
+        aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
+    } else {
+        haveSavedProgramData = NO;
+    }
+
+
     NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     BOOL shouldEnterTmuxMode = NO;
     BOOL didRestoreContents = NO;
@@ -725,10 +766,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             // profile.
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
             DLog(@"Running command...");
-            [aSession runCommandWithOldCwd:oldCWD
-                             forObjectType:objectType
-                            forceUseOldCWD:contents != nil && oldCWD.length
-                             substitutions:[arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] nilIfNull]];
+            if (haveSavedProgramData) {
+                [aSession startProgram:aSession.program
+                           environment:aSession.environment
+                                isUTF8:aSession.isUTF8
+                         substitutions:aSession.substitutions];
+            } else {
+                [aSession runCommandWithOldCwd:oldCWD
+                                 forObjectType:objectType
+                                forceUseOldCWD:contents != nil && oldCWD.length
+                                 substitutions:[arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] nilIfNull]];
+            }
         }
 
         // GUID will be set for new saved arrangements since late 2014.
@@ -818,18 +866,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 [aSession.hosts addObject:remoteHost];
             }
         }
-    }
-    if ([arrangement[SESSION_ARRANGEMENT_PROGRAM] nilIfNull]) {
-        aSession.program = arrangement[SESSION_ARRANGEMENT_PROGRAM];
-    }
-    if ([arrangement[SESSION_ARRANGEMENT_ENVIRONMENT] nilIfNull]) {
-        aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
-    }
-    if (arrangement[SESSION_ARRANGEMENT_IS_UTF_8]) {
-        aSession.isUTF8 = [arrangement[SESSION_ARRANGEMENT_IS_UTF_8] boolValue];
-    }
-    if ([arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] nilIfNull]) {
-        aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
     }
 
     if ([arrangement[SESSION_ARRANGEMENT_SELECTION] nilIfNull]) {
@@ -3116,7 +3152,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
 
     result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions ?: [NSNull null];
-    result[SESSION_ARRANGEMENT_PROGRAM] = self.program ?: [NSNull null];
+    if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommand]]) {
+        // The shell launcher command could change from run to run (e.g., if you move iTerm2).
+        // I don't want to use a magic string, so setting program to an empty dic
+        result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeShellLauncher };
+    } else if (self.program) {
+        result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
+                                                 kProgramCommand: self.program };
+    }
     result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: [NSNull null];
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
 

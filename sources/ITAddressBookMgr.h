@@ -247,6 +247,7 @@ typedef enum {
 + (NSDictionary*)encodeColor:(NSColor*)origColor;
 + (NSColor*)decodeColor:(NSDictionary*)plist;
 + (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict;
++ (NSString *)shellLauncherCommand;
 
 - (id)init;
 - (void)dealloc;
