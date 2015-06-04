@@ -2325,7 +2325,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
-                    inTerminal:(NSWindowController<iTermWindowController> *)term
+                    inTerminal:(NSWindowController<iTermWindowController, PTYTabDelegate> *)term
                hasFlexibleView:(BOOL)hasFlexible
                        viewMap:(NSDictionary *)viewMap
 {
