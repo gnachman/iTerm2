@@ -256,7 +256,6 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (IBAction)newTmuxTab:(id)sender;
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.
-- (IBAction)toggleFullScreenMode:(id)sender;
 - (IBAction)closeCurrentTab:(id)sender;
 
 - (void)changeTabColorToMenuAction:(id)sender;
