@@ -3604,18 +3604,30 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 // Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
 - (void)highlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
-        backgroundColor:(NSColor *)bgColor
-{
-    int fgColorCode = [fgColor nearestIndexIntoAnsi256ColorTable];
-    int bgColorCode = [bgColor nearestIndexIntoAnsi256ColorTable];
-
+        backgroundColor:(NSColor *)bgColor {
     screen_char_t fg = { 0 };
     screen_char_t bg = { 0 };
 
-    fg.foregroundColor = fgColorCode;
-    fg.foregroundColorMode = fgColor ? ColorModeNormal : ColorModeInvalid;
-    bg.backgroundColor = bgColorCode;
-    bg.backgroundColorMode = bgColor ? ColorModeNormal : ColorModeInvalid;
+    NSColor *genericFgColor = [fgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+    NSColor *genericBgColor = [bgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+
+    if (fgColor) {
+        fg.foregroundColor = genericFgColor.redComponent * 255;
+        fg.fgBlue = genericFgColor.blueComponent * 255;
+        fg.fgGreen = genericFgColor.greenComponent * 255;
+        fg.foregroundColorMode = ColorMode24bit;
+    } else {
+        fg.foregroundColorMode = ColorModeInvalid;
+    }
+
+    if (bgColor) {
+        bg.backgroundColor = genericBgColor.redComponent * 255;
+        bg.bgBlue = genericBgColor.blueComponent * 255;
+        bg.bgGreen = genericBgColor.greenComponent * 255;
+        bg.backgroundColorMode = ColorMode24bit;
+    } else {
+        bg.backgroundColorMode = ColorModeInvalid;
+    }
 
     for (NSValue *value in [currentGrid_ rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];

@@ -7,6 +7,7 @@
 //
 
 #import "NSColor+iTerm.h"
+#import "DebugLogging.h"
 
 // Constants for converting RGB to luma.
 static const double kRedComponentBrightness = 0.30;
@@ -28,6 +29,32 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 @implementation NSColor (iTerm)
+
++ (NSColor *)colorWithString:(NSString *)s {
+    NSData *data = [[[NSData alloc] initWithBase64Encoding:s] autorelease];
+    if (!data.length) {
+        return nil;
+    }
+    @try {
+        NSKeyedUnarchiver *decoder = [[[NSKeyedUnarchiver alloc] initForReadingWithData:data] autorelease];
+        NSColor *color = [[[NSColor alloc] initWithCoder:decoder] autorelease];
+        return color;
+    }
+    @catch (NSException *exception) {
+        NSLog(@"Failed to decode color from string %@", s);
+        DLog(@"Failed to decode color from string %@", s);
+        return nil;
+    }
+}
+
+- (NSString *)stringValue {
+    NSMutableData *data = [NSMutableData data];
+    NSKeyedArchiver *coder = [[[NSKeyedArchiver alloc] initForWritingWithMutableData:data] autorelease];
+    coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
+    [self encodeWithCoder:coder];
+    [coder finishEncoding];
+    return [data base64Encoding];
+}
 
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
