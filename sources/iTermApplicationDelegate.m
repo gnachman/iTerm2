@@ -426,6 +426,7 @@ static BOOL hasBecomeActive = NO;
                                                  command:nil
                                                    block:^PTYSession *(PseudoTerminal *term) {
                                                        FileDescriptorClientResult theResult = result;
+                                                       term.disablePromptForSubstitutions = YES;
                                                        return [term createSessionWithProfile:defaultProfile
                                                                                      withURL:nil
                                                                                forObjectType:iTermWindowObject

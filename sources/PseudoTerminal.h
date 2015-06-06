@@ -49,6 +49,10 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // Indicates if the window is fully initialized.
 @property(nonatomic, readonly) BOOL windowInitialized;
 
+// If set, all substitutions whose values are unknown will be taken to be empty string.
+// This is useful when attaching to an orphaned server.
+@property(nonatomic, assign) BOOL disablePromptForSubstitutions;
+
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
 // giving the screens' coordinates in the model.

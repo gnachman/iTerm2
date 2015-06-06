@@ -5456,6 +5456,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (NSString *)promptForParameter:(NSString *)name {
+    if (self.disablePromptForSubstitutions) {
+        return @"";
+    }
     // Make the name pretty.
     name = [name stringByReplacingOccurrencesOfString:@"$$" withString:@""];
     name = [name stringByReplacingOccurrencesOfString:@"_" withString:@" "];
