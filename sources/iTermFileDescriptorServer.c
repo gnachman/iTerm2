@@ -12,11 +12,9 @@
 
 static const int kMaxConnections = 1;
 
-// This is global so that signal handlers can use it.
+// These variables are global because signal handlers use them.
 static pid_t gChildPid;
-
 static char *gPath;
-static int gConnectionFd;
 static int gPipe[2];
 
 static ssize_t SendMessageAndFileDescriptor(int connectionFd,
@@ -109,29 +107,30 @@ static int PerformAcceptActivity(int socketFd) {
     // incoming unix domain socket connection to get FDs
     struct sockaddr_un remote;
     socklen_t sizeOfRemote = sizeof(remote);
+    int connectionFd = -1;
     do {
-        gConnectionFd = accept(socketFd, (struct sockaddr *)&remote, &sizeOfRemote);
-    } while (gConnectionFd == -1 && errno == EINTR);
-    if (gConnectionFd == -1) {
+        connectionFd = accept(socketFd, (struct sockaddr *)&remote, &sizeOfRemote);
+    } while (connectionFd == -1 && errno == EINTR);
+    if (connectionFd == -1) {
         syslog(LOG_NOTICE, "accept failed %s", strerror(errno));
         return 0;
     }
     close(socketFd);
 
     syslog(LOG_NOTICE, "send master fd and child pid %d", (int)gChildPid);
-    int rc = SendMessageAndFileDescriptor(gConnectionFd, &gChildPid, sizeof(gChildPid), 0);
+    int rc = SendMessageAndFileDescriptor(connectionFd, &gChildPid, sizeof(gChildPid), 0);
     if (rc <= 0) {
         syslog(LOG_NOTICE, "send failed %s", strerror(errno));
-        close(gConnectionFd);
+        close(connectionFd);
         return 0;
     }
 
     syslog(LOG_NOTICE, "All done. Waiting for client to disconnect or child to die.");
-    int fds[2] = { gPipe[0], gConnectionFd };
+    int fds[2] = { gPipe[0], connectionFd };
     int results[2];
     Select(fds, sizeof(fds) / sizeof(*fds), results);
     syslog(LOG_NOTICE, "select returned. child dead=%d, connection closed=%d", results[0], results[1]);
-    close(gConnectionFd);
+    close(connectionFd);
 
     syslog(LOG_NOTICE, "Connection closed.");
     // If the pipe has been written to then results[0] will be nonzero. That
