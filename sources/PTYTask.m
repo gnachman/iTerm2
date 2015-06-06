@@ -244,9 +244,13 @@ static void HandleSigChld(int n)
     // TODO: Create the unix domain socket in the parent prior to forking to avoid the timeout silliness.
     NSTimeInterval delay = 0.01;
     while (1) {
+        // TODO: This server code is super scary so I'm NSLog'ing it to make it easier to recover
+        // logs. These should eventually become DLog's and the log statements in the server should
+        // become LOG_DEBUG level.
         NSLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
         FileDescriptorClientResult result = FileDescriptorClientRun(thePid);
         if (!result.ok) {
+            NSLog(@"Failed with error %s", result.error);
             if (result.error && !strcmp(result.error, kFileDescriptorClientErrorCouldNotConnect)) {
                 // Waiting for child process to start.
                 if ([NSDate timeIntervalSinceReferenceDate] > timeoutTime) {
@@ -275,6 +279,7 @@ static void HandleSigChld(int n)
                 return NO;
             }
         }
+        NSLog(@"Succeeded.");
         [self attachToServerWithFileDescriptor:result.ptyMasterFd
                                serverProcessId:thePid
                                 childProcessId:result.childPid];

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
@@ -33,7 +34,7 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
                                                void *buffer,
                                                size_t bufferCapacity,
                                                int *receivedFileDescriptorPtr) {
-    printf("ReceiveMessageAndFileDescriptor\n");
+    syslog(LOG_NOTICE, "ReceiveMessageAndFileDescriptor\n");
     struct msghdr message;
     struct iovec ioVector[1];
     FileDescriptorControlMessage controlMessage;
@@ -51,35 +52,35 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
 
     ssize_t n = recvmsg(fd, &message, 0);
     if (n <= 0) {
-        printf("error from recvmsg %s\n", strerror(errno));
+        syslog(LOG_NOTICE, "error from recvmsg %s\n", strerror(errno));
         return n;
     }
-    printf("recvmsg returned %d\n", (int)n);
+    syslog(LOG_NOTICE, "recvmsg returned %d\n", (int)n);
 
     struct cmsghdr *messageHeader = CMSG_FIRSTHDR(&message);
     if (messageHeader != NULL && messageHeader->cmsg_len == CMSG_LEN(sizeof(int))) {
         if (messageHeader->cmsg_level != SOL_SOCKET) {
-            printf("Wrong cmsg level\n");
+            syslog(LOG_NOTICE, "Wrong cmsg level\n");
             return -1;
         }
         if (messageHeader->cmsg_type != SCM_RIGHTS) {
-            printf("Wrong cmsg type\n");
+            syslog(LOG_NOTICE, "Wrong cmsg type\n");
             return -1;
         }
-        printf("Got a fd\n");
+        syslog(LOG_NOTICE, "Got a fd\n");
         *receivedFileDescriptorPtr = *((int *)CMSG_DATA(messageHeader));
     } else {
-        printf("No descriptor passed\n");
+        syslog(LOG_NOTICE, "No descriptor passed\n");
         *receivedFileDescriptorPtr = -1;       // descriptor was not passed
     }
 
-    printf("Return %d\n", (int)n);
+    syslog(LOG_NOTICE, "Return %d\n", (int)n);
     return n;
 }
 
 // Reads a file descriptor from a socket. Returns 0 on success, -1 on failure.
 static int ReadOneFileDescriptor(int socketFd, int *fileDescriptor) {
-    printf("Read one file descriptor\n");
+    syslog(LOG_NOTICE, "Read one file descriptor\n");
     char buf[1] = { 0 };
     int fd;
     int n = ReceiveMessageAndFileDescriptor(socketFd, buf, sizeof(buf), &fd);
@@ -90,7 +91,7 @@ static int ReadOneFileDescriptor(int socketFd, int *fileDescriptor) {
         return -1;
     }
 
-    printf("buf=%.*s, fd=%d\n", n, buf, fd);
+    syslog(LOG_NOTICE, "buf=%.*s, fd=%d\n", n, buf, fd);
     *fileDescriptor = fd;
     return 0;
 }
@@ -98,7 +99,7 @@ static int ReadOneFileDescriptor(int socketFd, int *fileDescriptor) {
 static int FileDescriptorClientConnect(char *path) {
     int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socketFd == -1) {
-        printf("Failed to create socket: %s\n", strerror(errno));
+        syslog(LOG_NOTICE, "Failed to create socket: %s\n", strerror(errno));
         return -1;
     }
 
@@ -112,7 +113,7 @@ static int FileDescriptorClientConnect(char *path) {
     // to this server.
     fcntl(socketFd, F_SETFL, flags | O_NONBLOCK);
     if (connect(socketFd, (struct sockaddr *)&remote, len) == -1) {
-        printf("Failed to connect: %s\n", strerror(errno));
+        syslog(LOG_NOTICE, "Failed to connect: %s\n", strerror(errno));
         close(socketFd);
         return -1;
     }
@@ -128,7 +129,7 @@ FileDescriptorClientResult FileDescriptorClientRun(pid_t pid) {
     char path[256];
     snprintf(path, sizeof(path), "/tmp/iTerm2.socket.%d", (int)pid);
 
-    printf("Connect to path %s\n", path);
+    syslog(LOG_NOTICE, "Connect to path %s\n", path);
     int socketFd = FileDescriptorClientConnect(path);
     if (socketFd < 0) {
         result.error = kFileDescriptorClientErrorCouldNotConnect;
@@ -149,7 +150,7 @@ FileDescriptorClientResult FileDescriptorClientRun(pid_t pid) {
     result.serverPid = pid;
     result.ok = 1;
     result.socketFd = socketFd;
-    printf("Done with process id %d\n\n", (int)pid);
+    syslog(LOG_NOTICE, "Done with process id %d\n\n", (int)pid);
     return result;
 }
 

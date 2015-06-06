@@ -409,9 +409,12 @@ static BOOL hasBecomeActive = NO;
                     PTYSession *session = [self openOrphanedSession:result inWindow:nil];
                     term = [[iTermController sharedInstance] terminalWithSession:session];
                 }
+            } else {
+                NSLog(@"Failed: %s", result.error);
             }
         }
     }
+    NSLog(@"--- Finished search for orphans ---");
 }
 
 - (PTYSession *)openOrphanedSession:(FileDescriptorClientResult)result inWindow:(PseudoTerminal *)desiredWindow {
