@@ -1891,6 +1891,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)brokenPipe {
+    if (_exited) {
+        return;
+    }
     if ([self shouldPostGrowlNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Session Ended"
