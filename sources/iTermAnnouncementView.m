@@ -134,7 +134,8 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)willDismiss {
-    [_block release];
+    // Blocks might want to do something after calling -dismiss so autorelease.
+    [_block autorelease];
     _block = nil;
 }
 

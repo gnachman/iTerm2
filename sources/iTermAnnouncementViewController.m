@@ -41,15 +41,16 @@
 }
 
 - (void)loadView {
+    [self retain];
     self.view = [iTermAnnouncementView announcementViewWithTitle:self.title
                                                            style:_style
                                                          actions:self.actions
                                                            block:^(int index) {
                                                                if (!_dismissing) {
-                                                                   [[self retain] autorelease];
                                                                    self.completion(index);
                                                                    [self dismiss];
                                                                }
+                                                               [self release];
                                                            }];
 }
 
