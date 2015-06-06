@@ -1403,6 +1403,11 @@
 		A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
 		A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
 		A65B725F1B1A630100F947A7 /* CheckMark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72591B1A630100F947A7 /* CheckMark@2x.png */; };
+		A65B726A1B23559A00F947A7 /* iTermFileDescriptorSocketPath.c in Sources */ = {isa = PBXBuildFile; fileRef = A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */; };
+		A65B726B1B23559A00F947A7 /* iTermFileDescriptorSocketPath.c in Sources */ = {isa = PBXBuildFile; fileRef = A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */; };
+		A65B726C1B23559A00F947A7 /* iTermFileDescriptorSocketPath.c in Sources */ = {isa = PBXBuildFile; fileRef = A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */; };
+		A65B726D1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */; };
+		A65B726E1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */; };
 		A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
@@ -2581,6 +2586,8 @@
 		A65B72511B1A5D7500F947A7 /* WarningSign@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WarningSign@2x.png"; path = "images/WarningSign@2x.png"; sourceTree = "<group>"; };
 		A65B72581B1A630100F947A7 /* CheckMark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = CheckMark.png; path = images/CheckMark.png; sourceTree = "<group>"; };
 		A65B72591B1A630100F947A7 /* CheckMark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "CheckMark@2x.png"; path = "images/CheckMark@2x.png"; sourceTree = "<group>"; };
+		A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorSocketPath.c; sourceTree = "<group>"; };
+		A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorSocketPath.h; sourceTree = "<group>"; };
 		A663010619CFCE74004AF81C /* SuppressAllOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SuppressAllOutput.png; path = images/SuppressAllOutput.png; sourceTree = "<group>"; };
 		A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "SuppressAllOutput@2x.png"; path = "images/SuppressAllOutput@2x.png"; sourceTree = "<group>"; };
 		A663010E19CFE41A004AF81C /* iTermAboutWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindow.h; sourceTree = "<group>"; };
@@ -3118,7 +3125,6 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				A67F57C31B0930AD00B4F135 /* Shell Launcher */,
 				1D5655C619AD2AF1001C460B /* Applescript */,
 				1D9DDE31142E73E300275650 /* Categories */,
 				A63F40AC1842988A003A6A6D /* Core */,
@@ -3135,6 +3141,7 @@
 				1D24C37714303E00006B246F /* Preferences */,
 				1D06E7D014BC04110097C0ED /* Profiles */,
 				A6A2698C18FF85E600437DA9 /* Shell Integration */,
+				A67F57C31B0930AD00B4F135 /* Shell Launcher/FD Client/Server */,
 				1D3D21921483142800FAC8E7 /* tmux */,
 				1D9DDE2E142E733100275650 /* Toolbelt */,
 				1D9DDE2D142E730700275650 /* Triggers */,
@@ -3220,6 +3227,9 @@
 				A6E74755188C66CF005355CF /* iTermExposeTabView.h */,
 				A6E7475F188C679C005355CF /* iTermExposeView.h */,
 				A6E74750188C6692005355CF /* iTermExposeWindow.h */,
+				A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */,
+				A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */,
+				A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */,
 				A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */,
 				A6E77F7F1A23F484009B1CB6 /* iTermFindOnPageHelper.h */,
 				A682DE991915DB1F00BE8758 /* iTermFlippedView.h */,
@@ -4097,16 +4107,15 @@
 			name = SCEvents;
 			sourceTree = "<group>";
 		};
-		A67F57C31B0930AD00B4F135 /* Shell Launcher */ = {
+		A67F57C31B0930AD00B4F135 /* Shell Launcher/FD Client/Server */ = {
 			isa = PBXGroup;
 			children = (
 				A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */,
-				A67F57C51B0930CA00B4F135 /* iTermFileDescriptorClient.h */,
 				A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */,
-				A67F57C71B0930CA00B4F135 /* iTermFileDescriptorServer.h */,
 				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
+				A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */,
 			);
-			name = "Shell Launcher";
+			name = "Shell Launcher/FD Client/Server";
 			sourceTree = "<group>";
 		};
 		A686C0D21ADA38CA00906FAE /* Golden Images for Tests */ = {
@@ -4531,6 +4540,7 @@
 				1D6ED8A219AEA20D005A7799 /* iTermPasswordManagerWindowController.h in Headers */,
 				1D6ED8A319AEA20D005A7799 /* LineBuffer.h in Headers */,
 				1D6ED8A419AEA20D005A7799 /* iTermApplicationDelegate.h in Headers */,
+				A65B726E1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */,
 				1D6ED8A519AEA20D005A7799 /* iTermApplication.h in Headers */,
 				1D6ED8A619AEA20D005A7799 /* Compatability.h in Headers */,
 				1D6ED8A719AEA20D005A7799 /* ProfileListView.h in Headers */,
@@ -4935,6 +4945,7 @@
 				A6A269971902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h in Headers */,
 				1D06A052134CDBF800C414EF /* iTermSemanticHistoryController.h in Headers */,
 				1D988597135D23BD0072023F /* ProcessCache.h in Headers */,
+				A65B726D1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */,
 				A6E713A818F7C9F4008D94DD /* iTermProfilePreferences.h in Headers */,
 				1D624BD91386E0B600111319 /* GTMCarbonEvent.h in Headers */,
 				A6E74757188C66CF005355CF /* iTermExposeTabView.h in Headers */,
@@ -5951,6 +5962,7 @@
 				A6E525D31A9C5725007B898E /* VT100StateTransition.m in Sources */,
 				1D6EDAAB19AEA20D005A7799 /* PointerController.m in Sources */,
 				A67F57CF1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */,
+				A65B726C1B23559A00F947A7 /* iTermFileDescriptorSocketPath.c in Sources */,
 				1D6EDAAC19AEA20D005A7799 /* EventMonitorView.m in Sources */,
 				1D6EDAAD19AEA20D005A7799 /* HighlightTrigger.m in Sources */,
 				1D6EDAAE19AEA20D005A7799 /* ContextMenuActionPrefsController.m in Sources */,
@@ -6057,6 +6069,7 @@
 				1D9A55AB180FA8B700B42CE9 /* PSMProgressIndicator.m in Sources */,
 				A67F57C11B01A08800B4F135 /* iTermAnimatedImageInfo.m in Sources */,
 				A663012D19D0864C004AF81C /* SCEvent.m in Sources */,
+				A65B726B1B23559A00F947A7 /* iTermFileDescriptorSocketPath.c in Sources */,
 				A6A2699E190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				A67F57D71B11882900B4F135 /* CapturedOutput.m in Sources */,
 				1D9A5593180FA87000B42CE9 /* PTYFontInfo.m in Sources */,
@@ -6585,6 +6598,7 @@
 				A6E525D11A9C5725007B898E /* VT100StateTransition.m in Sources */,
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
 				A67F57CD1B0930CA00B4F135 /* iTermFileDescriptorClient.c in Sources */,
+				A65B726A1B23559A00F947A7 /* iTermFileDescriptorSocketPath.c in Sources */,
 				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,

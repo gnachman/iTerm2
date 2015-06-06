@@ -1,4 +1,5 @@
 #include "iTermFileDescriptorClient.h"
+#include "iTermFileDescriptorSocketPath.h"
 #include "iTermFileDescriptorServer.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -12,21 +13,6 @@
 #include <unistd.h>
 
 const char *kFileDescriptorClientErrorCouldNotConnect = "Couldn't connect";
-
-static ssize_t ReadMessage(int fd, void *buffer, size_t bufferCapacity) {
-    struct msghdr message = { 0 };
-    struct iovec ioVector[1];
-
-    message.msg_name = NULL;
-    message.msg_namelen = 0;
-
-    ioVector[0].iov_base = buffer;
-    ioVector[0].iov_len = bufferCapacity;
-    message.msg_iov = ioVector;
-    message.msg_iovlen = 1;
-
-    return recvmsg(fd, &message, 0);
-}
 
 // Reads a message on the socket, and fills in receivedFileDescriptorPtr with a
 // file descriptor if one was passed.
@@ -78,24 +64,6 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
     return n;
 }
 
-// Reads a file descriptor from a socket. Returns 0 on success, -1 on failure.
-static int ReadOneFileDescriptor(int socketFd, int *fileDescriptor) {
-    syslog(LOG_NOTICE, "Read one file descriptor\n");
-    char buf[1] = { 0 };
-    int fd;
-    int n = ReceiveMessageAndFileDescriptor(socketFd, buf, sizeof(buf), &fd);
-    if (n != 1) {
-        return -1;
-    }
-    if (fd == -1) {
-        return -1;
-    }
-
-    syslog(LOG_NOTICE, "buf=%.*s, fd=%d\n", n, buf, fd);
-    *fileDescriptor = fd;
-    return 0;
-}
-
 static int FileDescriptorClientConnect(char *path) {
     int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socketFd == -1) {
@@ -127,7 +95,7 @@ static int FileDescriptorClientConnect(char *path) {
 FileDescriptorClientResult FileDescriptorClientRun(pid_t pid) {
     FileDescriptorClientResult result = { 0 };
     char path[256];
-    snprintf(path, sizeof(path), "/tmp/iTerm2.socket.%d", (int)pid);
+    iTermFileDescriptorSocketPath(path, sizeof(path), pid);
 
     syslog(LOG_NOTICE, "Connect to path %s\n", path);
     int socketFd = FileDescriptorClientConnect(path);
@@ -136,13 +104,12 @@ FileDescriptorClientResult FileDescriptorClientRun(pid_t pid) {
         return result;
     }
 
-    if (ReadOneFileDescriptor(socketFd, &result.ptyMasterFd)) {
-        result.error = "Failed to read file descriptor";
-        close(socketFd);
-        return result;
-    }
-    if (ReadMessage(socketFd, &result.childPid, sizeof(int)) < sizeof(int)) {
-        result.error = "Failed to read PID";
+    int rc = ReceiveMessageAndFileDescriptor(socketFd,
+                                             &result.childPid,
+                                             sizeof(result.childPid),
+                                             &result.ptyMasterFd);
+    if (rc == -1 || result.ptyMasterFd == -1) {
+        result.error = "Failed to read message from server";
         close(socketFd);
         return result;
     }
@@ -150,7 +117,9 @@ FileDescriptorClientResult FileDescriptorClientRun(pid_t pid) {
     result.serverPid = pid;
     result.ok = 1;
     result.socketFd = socketFd;
-    syslog(LOG_NOTICE, "Done with process id %d\n\n", (int)pid);
+
+    syslog(LOG_NOTICE, "Success: process id is %d, pty master fd is %d\n\n",
+           (int)pid, result.ptyMasterFd);
     return result;
 }
 

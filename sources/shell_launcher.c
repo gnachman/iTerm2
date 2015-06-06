@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include "iTermFileDescriptorServer.h"
 #include "iTermFileDescriptorClient.h"
+#include "iTermFileDescriptorSocketPath.h"
 
 static const int kPtySlaveFileDescriptor = 1;
 
@@ -92,7 +93,7 @@ int iterm2_server(int argc, char *const *argv) {
         close(kPtySlaveFileDescriptor);
         setsid();
         char path[256];
-        snprintf(path, sizeof(path), "/tmp/iTerm2.socket.%d", getpid());
+        iTermFileDescriptorSocketPath(path, sizeof(path), getpid());
 
         // Run the server.
         int status = FileDescriptorServerRun(path, pid);

@@ -15,27 +15,13 @@ static const int kMaxConnections = 1;
 // This is global so that signal handlers can use it.
 static pid_t gChildPid;
 
-static char gPath[1024];
+static char *gPath;
 static int gConnectionFd;
 static int gPipe[2];
 
-static ssize_t SendMessage(int connectionFd, void *buffer, int length) {
-    struct msghdr message = { 0 };
-
-    message.msg_name = NULL;
-    message.msg_namelen = 0;
-
-    struct iovec iov[1];
-    iov[0].iov_base = buffer;
-    iov[0].iov_len = length;
-    message.msg_iov = iov;
-    message.msg_iovlen = 1;
-
-    return sendmsg(connectionFd, &message, 0);
-}
-
 static ssize_t SendMessageAndFileDescriptor(int connectionFd,
-                                            char *stringToSend,
+                                            void *buffer,
+                                            size_t bufferSize,
                                             int fdToSend) {
     FileDescriptorControlMessage controlMessage;
     struct msghdr message;
@@ -52,8 +38,8 @@ static ssize_t SendMessageAndFileDescriptor(int connectionFd,
     message.msg_namelen = 0;
 
     struct iovec iov[1];
-    iov[0].iov_base = stringToSend;
-    iov[0].iov_len = strlen(stringToSend);
+    iov[0].iov_base = buffer;
+    iov[0].iov_len = bufferSize;
     message.msg_iov = iov;
     message.msg_iovlen = 1;
 
@@ -132,16 +118,8 @@ static int PerformAcceptActivity(int socketFd) {
     }
     close(socketFd);
 
-    syslog(LOG_NOTICE, "send master");
-    int rc = SendMessageAndFileDescriptor(gConnectionFd, "m", 0);
-    if (rc <= 0) {
-        syslog(LOG_NOTICE, "send failed %s", strerror(errno));
-        close(gConnectionFd);
-        return 0;
-    }
-
-    syslog(LOG_NOTICE, "send pid");
-    rc = SendMessage(gConnectionFd, &gChildPid, sizeof(gChildPid));
+    syslog(LOG_NOTICE, "send master fd and child pid %d", (int)gChildPid);
+    int rc = SendMessageAndFileDescriptor(gConnectionFd, &gChildPid, sizeof(gChildPid), 0);
     if (rc <= 0) {
         syslog(LOG_NOTICE, "send failed %s", strerror(errno));
         close(gConnectionFd);
@@ -189,7 +167,7 @@ static int SocketBindListen(char *path) {
 static int Initialize(char *path, pid_t childPid) {
     openlog("iTerm2-Server", LOG_PID | LOG_NDELAY, LOG_USER);
     setlogmask(LOG_UPTO(LOG_DEBUG));
-    snprintf(gPath, sizeof(gPath), "%s", path);
+    gPath = strdup(path);
     // We get this when iTerm2 crashes. Ignore it.
     syslog(LOG_NOTICE, "Installing SIGHUP handler.");
     signal(SIGHUP, SIG_IGN);
