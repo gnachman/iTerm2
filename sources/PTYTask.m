@@ -6,6 +6,7 @@
 #define MAXRW 1024
 
 #import "Coprocess.h"
+#import "DebugLogging.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "PTYTask.h"
@@ -658,6 +659,23 @@ static int MyForkPty(int *amaster,
      }
 }
 
+// Sends a signal to the server. This breaks it out of accept()ing forever when iTerm2 quits.
+- (void)killServerIfRunning {
+    if (_serverPid >= 0) {
+        kill(_serverPid, SIGUSR1);
+        // It should die right away.
+        int rc;
+        int theError;
+        do {
+            DLog(@"waitpid on %d", _serverPid);
+            rc = waitpid(_serverPid, &status, 0);
+            theError = errno;
+            DLog(@"waitpid returned %d error=%s", rc, strerror(theError));
+        } while (rc == -1 && theError == EINTR);
+        NSLog(@"Server is dead");
+    }
+}
+
 - (void)setWidth:(int)width height:(int)height
 {
     PtyTaskDebugLog(@"Set terminal size to %dx%d", width, height);
@@ -707,6 +725,7 @@ static int MyForkPty(int *amaster,
     self.paused = NO;
     [self loggingStop];
     [self sendSignal:SIGHUP];
+    [self killServerIfRunning];
 
     if (fd >= 0) {
         [self closeFileDescriptor];

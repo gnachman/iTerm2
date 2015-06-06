@@ -7,27 +7,17 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <syslog.h>
 #include <unistd.h>
 
 static const int kMaxConnections = 1;
-static int gSocketFd;
-static int gReturnCode;
+
+// This is global so that signal handlers can use it.
 static pid_t gChildPid;
-static FILE *f;
-static int gChildDied;
+
 static char gPath[1024];
 static int gConnectionFd;
-
-static void LOG(char *format, ...) {
-    va_list varArgsList;
-    va_start(varArgsList, format);
-    char temp[1024];
-    vsnprintf(temp, sizeof(temp), format, varArgsList);
-    va_end(varArgsList);
-
-    fprintf(f, "%d: %s\n", (int)getpid(), temp);
-    fflush(f);
-}
+static int gPipe[2];
 
 static ssize_t SendMessage(int connectionFd, void *buffer, int length) {
     struct msghdr message = { 0 };
@@ -68,50 +58,25 @@ static ssize_t SendMessageAndFileDescriptor(int connectionFd,
     message.msg_iovlen = 1;
 
     int rc = sendmsg(connectionFd, &message, 0);
-    while (rc == -1 && errno == EINTR && !gChildDied) {
+    while (rc == -1 && errno == EINTR) {
         rc = sendmsg(connectionFd, &message, 0);
     }
     return rc;
 }
 
-static ssize_t ReadMessage(int fd, void *buffer, size_t bufferCapacity) {
-    struct msghdr message = { 0 };
-    struct iovec ioVector[1];
-
-    message.msg_name = NULL;
-    message.msg_namelen = 0;
-
-    ioVector[0].iov_base = buffer;
-    ioVector[0].iov_len = bufferCapacity;
-    message.msg_iov = ioVector;
-    message.msg_iovlen = 1;
-
-    LOG("Call recvmsg");
-    int rc = recvmsg(fd, &message, 0);
-    while (rc == -1 && errno == EINTR && !gChildDied) {
-        LOG("recvmsg got interrupted but the child is still alive");
-        rc = recvmsg(fd, &message, 0);
-    }
-    LOG("recvmsg returned %d %s", rc, strerror(errno));
-    return rc;
-}
-
 static pid_t Wait() {
-    LOG("Waiting...");
     pid_t pid;
     do {
-        pid = waitpid(gChildPid, &gReturnCode, 0);
+        int status;
+        pid = waitpid(gChildPid, &status, 0);
     } while (pid == -1 && errno == EINTR);
-    LOG("Wait returned %d %s", (int)pid, strerror(errno));
     return pid;
 }
 
 static void SigChildHandler(int arg) {
     if (Wait() == gChildPid) {
-        gChildDied = 1;  // In case the server is currently connected, prevent SocketBindListen from running.
-        // This will wake up PerformAcceptActivity and make the server exit.
-        close(gSocketFd);
-        close(gConnectionFd);
+        // Wake up the select loop and exit.
+        write(gPipe[1], "", 1);
     } else {
         // Something weird happened.
         unlink(gPath);
@@ -119,55 +84,89 @@ static void SigChildHandler(int arg) {
     }
 }
 
-static int PerformAcceptActivity() {
+static void SigUsr1Handler(int arg) {
+    unlink(gPath);
+    exit(1);
+}
+
+
+static int Select(int *fds, int count, int *results) {
+    int result;
+    int theError;
+    fd_set readset;
+    do {
+        FD_ZERO(&readset);
+        int max = 0;
+        for (int i = 0; i < count; i++) {
+            if (fds[i] > max) {
+                max = fds[i];
+            }
+            FD_SET(fds[i], &readset);
+        }
+        syslog(LOG_NOTICE, "Calling select...");
+        result = select(max + 1, &readset, NULL, NULL, NULL);
+        theError = errno;
+        syslog(LOG_NOTICE, "select returned %d, error = %s", result, strerror(theError));
+    } while (result == -1 && theError == EINTR);
+
+    int n = 0;
+    for (int i = 0; i < count; i++) {
+        results[i] = FD_ISSET(fds[i], &readset);
+        if (results[i]) {
+            n++;
+        }
+    }
+    return n;
+}
+
+static int PerformAcceptActivity(int socketFd) {
     // incoming unix domain socket connection to get FDs
     struct sockaddr_un remote;
     socklen_t sizeOfRemote = sizeof(remote);
-    gConnectionFd = accept(gSocketFd, (struct sockaddr *)&remote, &sizeOfRemote);
+    do {
+        gConnectionFd = accept(socketFd, (struct sockaddr *)&remote, &sizeOfRemote);
+    } while (gConnectionFd == -1 && errno == EINTR);
     if (gConnectionFd == -1) {
-        LOG("accept failed %s", strerror(errno));
-        return 1;
+        syslog(LOG_NOTICE, "accept failed %s", strerror(errno));
+        return 0;
     }
-    close(gSocketFd);
+    close(socketFd);
 
-    LOG("send master");
+    syslog(LOG_NOTICE, "send master");
     int rc = SendMessageAndFileDescriptor(gConnectionFd, "m", 0);
     if (rc <= 0) {
-        LOG("send failed %s", strerror(errno));
+        syslog(LOG_NOTICE, "send failed %s", strerror(errno));
         close(gConnectionFd);
         return 0;
     }
 
-    LOG("send pid");
+    syslog(LOG_NOTICE, "send pid");
     rc = SendMessage(gConnectionFd, &gChildPid, sizeof(gChildPid));
     if (rc <= 0) {
-        LOG("send failed %s", strerror(errno));
+        syslog(LOG_NOTICE, "send failed %s", strerror(errno));
         close(gConnectionFd);
         return 0;
     }
 
-    LOG("All done. Waiting for client to disconnect.");
-    char buffer[1];
-    ssize_t n = ReadMessage(gConnectionFd, buffer, sizeof(buffer));
-
-    LOG("Read returned %d (error: %s)", (int)n, strerror(errno));
+    syslog(LOG_NOTICE, "All done. Waiting for client to disconnect or child to die.");
+    int fds[2] = { gPipe[0], gConnectionFd };
+    int results[2];
+    Select(fds, sizeof(fds) / sizeof(*fds), results);
+    syslog(LOG_NOTICE, "select returned. child dead=%d, connection closed=%d", results[0], results[1]);
     close(gConnectionFd);
 
-    LOG("Connection closed.");
-
-    return 0;
+    syslog(LOG_NOTICE, "Connection closed.");
+    // If the pipe has been written to then results[0] will be nonzero. That
+    // means the child process has died and we can terminate. The server's
+    // termination signals the client that the child is dead.
+    return (results[0]);
 }
 
 static int SocketBindListen(char *path) {
-    if (gChildDied) {
-        LOG("SocketBindListen failing immediately because the child has died");
+    int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (socketFd == -1) {
+        syslog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
         return -1;
-    }
-
-    gSocketFd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (gSocketFd == -1) {
-        LOG("socket() failed: %s", strerror(errno));
-        return 1;
     }
 
     struct sockaddr_un local;
@@ -175,68 +174,61 @@ static int SocketBindListen(char *path) {
     strcpy(local.sun_path, path);
     unlink(local.sun_path);
     int len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
-    if (bind(gSocketFd, (struct sockaddr *)&local, len) == -1) {
-        LOG("bind() failed: %s", strerror(errno));
-        return 1;
+    if (bind(socketFd, (struct sockaddr *)&local, len) == -1) {
+        syslog(LOG_NOTICE, "bind() failed: %s", strerror(errno));
+        return -1;
     }
 
-    if (listen(gSocketFd, kMaxConnections) == -1) {
-        LOG("listen() failed: %s", strerror(errno));
-        return 1;
+    if (listen(socketFd, kMaxConnections) == -1) {
+        syslog(LOG_NOTICE, "listen() failed: %s", strerror(errno));
+        return -1;
     }
-    return 0;
+    return socketFd;
 }
 
 static int Initialize(char *path, pid_t childPid) {
-    f = fopen("/tmp/log.txt", "a");
+    openlog("iTerm2-Server", LOG_PID | LOG_NDELAY, LOG_USER);
+    setlogmask(LOG_UPTO(LOG_DEBUG));
     snprintf(gPath, sizeof(gPath), "%s", path);
     // We get this when iTerm2 crashes. Ignore it.
-    LOG("Installing SIGHUP handler.");
+    syslog(LOG_NOTICE, "Installing SIGHUP handler.");
     signal(SIGHUP, SIG_IGN);
 
-    // Listen on a Unix Domain Socket.
-    LOG("Calling SocketBindListen.");
-    if (SocketBindListen(path)) {
-        LOG("SocketBindListen failed");
-        return 1;
-    }
+    pipe(gPipe);
 
-    // Handle CHLD signal when child dies so we can wake up select and terminate the server.
-    // This must be done after SocketBindListen succeeds. There should have been a preexisting
-    // handler to kill us if the child dies before this point.
-    LOG("Installing SIGCHLD handler.");
+    syslog(LOG_NOTICE, "Installing SIGCHLD handler.");
     gChildPid = childPid;
     signal(SIGCHLD, SigChildHandler);
+    signal(SIGUSR1, SigUsr1Handler);
 
     return 0;
 }
 
-static int MainLoop(char *path) {
-    // PerformAcceptActivity will return an error only if the child dies.
-    LOG("Entering main loop.");
-    while (!PerformAcceptActivity()) {
-        LOG("Accept activity finished.");
-
-        if (SocketBindListen(path)) {
-            LOG("SocketBindListen failed");
-            return 1;
+static void MainLoop(char *path) {
+    // Listen on a Unix Domain Socket.
+    syslog(LOG_NOTICE, "Entering main loop.");
+    int socketFd;
+    do {
+        syslog(LOG_NOTICE, "Calling SocketBindListen.");
+        socketFd = SocketBindListen(path);
+        if (socketFd < 0) {
+            syslog(LOG_NOTICE, "SocketBindListen failed");
+            return;
         }
-    }
-
-    LOG("Child is presumed dead with return code %d", gReturnCode);
-    return gReturnCode;
+        syslog(LOG_NOTICE, "Calling PerformAcceptActivity");
+    } while (!PerformAcceptActivity(socketFd));
 }
 
 int FileDescriptorServerRun(char *path, pid_t childPid) {
     int rc = Initialize(path, childPid);
     if (rc) {
-        LOG("Initialize failed with code %d", rc);
+        syslog(LOG_NOTICE, "Initialize failed with code %d", rc);
     } else {
-        rc = MainLoop(path);
-        LOG("Server exited with code %d", rc);
+        MainLoop(path);
+        // MainLoop never returns, except by dying on a signal.
     }
-    LOG("Unlink %s", path);
+    syslog(LOG_NOTICE, "Unlink %s", path);
     unlink(path);
-    return rc;
+    return 1;
 }
 
