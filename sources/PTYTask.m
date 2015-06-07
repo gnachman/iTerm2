@@ -677,7 +677,7 @@ static int MyForkPty(int *amaster,
             theError = errno;
             DLog(@"waitpid returned %d error=%s", rc, strerror(theError));
         } while (rc == -1 && theError == EINTR);
-        NSLog(@"Server is dead");
+        NSLog(@"File descriptor server exited with status %d", status);
     }
 }
 

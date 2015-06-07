@@ -705,7 +705,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     } else {
         haveSavedProgramData = NO;
     }
-    if ([arrangement[SESSION_ARRANGEMENT_ENVIRONMENT] nilIfNull]) {
+    if (arrangement[SESSION_ARRANGEMENT_ENVIRONMENT]) {
         aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
     } else {
         haveSavedProgramData = NO;
@@ -717,7 +717,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         haveSavedProgramData = NO;
     }
 
-    if ([arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] nilIfNull]) {
+    if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
     } else {
         haveSavedProgramData = NO;
@@ -775,7 +775,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 [aSession runCommandWithOldCwd:oldCWD
                                  forObjectType:objectType
                                 forceUseOldCWD:contents != nil && oldCWD.length
-                                 substitutions:[arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS] nilIfNull]];
+                                 substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
             }
         }
 
@@ -868,7 +868,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
     }
 
-    if ([arrangement[SESSION_ARRANGEMENT_SELECTION] nilIfNull]) {
+    if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
         [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
     }
     if (didRestoreContents && attachedToServer) {
@@ -889,7 +889,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
         aSession->_lastMark = [aSession.screen.lastMark retain];
         aSession.lastRemoteHost = [aSession.screen.lastRemoteHost retain];
-        if ([arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] nilIfNull]) {
+        if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
             [aSession->_lastDirectory autorelease];
             aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
         }
@@ -1248,9 +1248,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions {
     self.program = command;
-    self.environment = environment;
+    self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
-    self.substitutions = substitutions;
+    self.substitutions = substitutions ?: @{};
 
     NSString *program = [command stringByPerformingSubstitutions:substitutions];
     NSArray *components = [program componentsInShellCommand];
@@ -3154,7 +3154,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
 
-    result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions ?: [NSNull null];
+    if (_substitutions) {
+        result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
+    }
     if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommand]]) {
         // The shell launcher command could change from run to run (e.g., if you move iTerm2).
         // I don't want to use a magic string, so setting program to an empty dic
@@ -3163,7 +3165,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
                                                  kProgramCommand: self.program };
     }
-    result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: [NSNull null];
+    if (self.environment) {
+        result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment;
+    }
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
 
     if (_name) {
@@ -3188,7 +3192,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [NSDictionary dictionaryWithGridCoordRange:range];
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
-        result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory ?: [NSNull null];
+        if (self.lastDirectory) {
+            result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
+        }
         result[SESSION_ARRANGEMENT_SELECTION] =
             [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
     }
