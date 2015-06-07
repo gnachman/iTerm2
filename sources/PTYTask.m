@@ -370,8 +370,7 @@ static int MyForkPty(int *amaster,
         args = temp;
 
         // Now change progpath to run iTerm2.
-        NSString *iterm2Binary =
-            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters];
+        NSString *iterm2Binary = [[NSBundle mainBundle] executablePath];
         progpath = iterm2Binary;
     }
 
