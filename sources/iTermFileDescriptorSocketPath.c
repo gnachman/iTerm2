@@ -47,6 +47,10 @@
 // /tmp and /var/folders are eliminated because they might delete the sockets.
 
 void iTermFileDescriptorSocketPath(char *buffer, size_t buffer_size, pid_t pid) {
-    char *tmp = P_tmpdir;
+    const char *tmp = iTermFileDescriptorDirectory();
     snprintf(buffer, buffer_size, "%s/iTerm2.socket.%d", tmp, (int)pid);
+}
+
+const char *iTermFileDescriptorDirectory(void) {
+    return P_tmpdir;
 }

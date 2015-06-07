@@ -33,6 +33,7 @@
 #import "iTermAboutWindowController.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
+#import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermIntegerNumberFormatter.h"
 #import "iTermPreferences.h"
@@ -393,7 +394,7 @@ static BOOL hasBecomeActive = NO;
 - (void)searchForOrphanServers {
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     NSLog(@"--- Begin search for orphans ---");
-    NSString *dir = @"/tmp";
+    NSString *dir = [NSString stringWithUTF8String:iTermFileDescriptorDirectory()];
     PseudoTerminal *term = nil;
     for (NSString *filename in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil]) {
         NSString *prefix = @"iTerm2.socket.";
