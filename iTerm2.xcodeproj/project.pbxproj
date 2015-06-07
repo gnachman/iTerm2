@@ -1408,6 +1408,11 @@
 		A65B726C1B23559A00F947A7 /* iTermFileDescriptorSocketPath.c in Sources */ = {isa = PBXBuildFile; fileRef = A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */; };
 		A65B726D1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */; };
 		A65B726E1B23559A00F947A7 /* iTermFileDescriptorSocketPath.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */; };
+		A65B72711B248F1800F947A7 /* iTermOrphanServerAdopter.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B726F1B248F1800F947A7 /* iTermOrphanServerAdopter.h */; };
+		A65B72721B248F1800F947A7 /* iTermOrphanServerAdopter.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B726F1B248F1800F947A7 /* iTermOrphanServerAdopter.h */; };
+		A65B72731B248F1800F947A7 /* iTermOrphanServerAdopter.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B72701B248F1800F947A7 /* iTermOrphanServerAdopter.m */; };
+		A65B72741B248F1800F947A7 /* iTermOrphanServerAdopter.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B72701B248F1800F947A7 /* iTermOrphanServerAdopter.m */; };
+		A65B72751B248F1800F947A7 /* iTermOrphanServerAdopter.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B72701B248F1800F947A7 /* iTermOrphanServerAdopter.m */; };
 		A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
 		A663010A19CFCE74004AF81C /* SuppressAllOutput.png in Resources */ = {isa = PBXBuildFile; fileRef = A663010619CFCE74004AF81C /* SuppressAllOutput.png */; };
@@ -2588,6 +2593,8 @@
 		A65B72591B1A630100F947A7 /* CheckMark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "CheckMark@2x.png"; path = "images/CheckMark@2x.png"; sourceTree = "<group>"; };
 		A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = iTermFileDescriptorSocketPath.c; sourceTree = "<group>"; };
 		A65B72691B23559A00F947A7 /* iTermFileDescriptorSocketPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorSocketPath.h; sourceTree = "<group>"; };
+		A65B726F1B248F1800F947A7 /* iTermOrphanServerAdopter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermOrphanServerAdopter.h; sourceTree = "<group>"; };
+		A65B72701B248F1800F947A7 /* iTermOrphanServerAdopter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermOrphanServerAdopter.m; sourceTree = "<group>"; };
 		A663010619CFCE74004AF81C /* SuppressAllOutput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SuppressAllOutput.png; path = images/SuppressAllOutput.png; sourceTree = "<group>"; };
 		A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "SuppressAllOutput@2x.png"; path = "images/SuppressAllOutput@2x.png"; sourceTree = "<group>"; };
 		A663010E19CFE41A004AF81C /* iTermAboutWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAboutWindow.h; sourceTree = "<group>"; };
@@ -4114,6 +4121,8 @@
 				A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */,
 				1D8FC67B17E67FA700A82402 /* shell_launcher.c */,
 				A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */,
+				A65B726F1B248F1800F947A7 /* iTermOrphanServerAdopter.h */,
+				A65B72701B248F1800F947A7 /* iTermOrphanServerAdopter.m */,
 			);
 			name = "Shell Launcher/FD Client/Server";
 			sourceTree = "<group>";
@@ -4464,6 +4473,7 @@
 				1D6ED85D19AEA20D005A7799 /* ITAddressBookMgr.h in Headers */,
 				1D6ED85E19AEA20D005A7799 /* PTYNoteViewController.h in Headers */,
 				1D6ED85F19AEA20D005A7799 /* PSMYosemiteTabStyle.h in Headers */,
+				A65B72721B248F1800F947A7 /* iTermOrphanServerAdopter.h in Headers */,
 				1D6ED86019AEA20D005A7799 /* iTermKeyMappingViewController.h in Headers */,
 				1D6ED86119AEA20D005A7799 /* iTermOpenQuicklyItem.h in Headers */,
 				A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */,
@@ -4852,6 +4862,7 @@
 				1D5FDD681208E8F000C46BA3 /* CarbonHelpers.h in Headers */,
 				1D5FDD691208E8F000C46BA3 /* CGSAccessibility.h in Headers */,
 				1D5FDD6A1208E8F000C46BA3 /* CGSCIFilter.h in Headers */,
+				A65B72711B248F1800F947A7 /* iTermOrphanServerAdopter.h in Headers */,
 				1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */,
 				A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */,
 				A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */,
@@ -5852,6 +5863,7 @@
 				1D6EDA4B19AEA20D005A7799 /* DVREncoder.m in Sources */,
 				1D6EDA4C19AEA20D005A7799 /* NSPopUpButton+iTerm.m in Sources */,
 				1D6EDA4D19AEA20D005A7799 /* DVRBuffer.m in Sources */,
+				A65B72751B248F1800F947A7 /* iTermOrphanServerAdopter.m in Sources */,
 				1D6EDA4E19AEA20D005A7799 /* iTermOpenQuicklyWindowController.m in Sources */,
 				1D6EDA4F19AEA20D005A7799 /* iTermExposeView.m in Sources */,
 				1D6EDA5019AEA20D005A7799 /* iTermSelection.m in Sources */,
@@ -6291,6 +6303,7 @@
 				1D9A552A180FA63500B42CE9 /* VT100Screen.m in Sources */,
 				A68A30D0186D1414007F550F /* FileTransferManager.m in Sources */,
 				A6B5134C18E779BB00D249A5 /* iTermPasteHelper.m in Sources */,
+				A65B72741B248F1800F947A7 /* iTermOrphanServerAdopter.m in Sources */,
 				1D9A5594180FA87000B42CE9 /* PTYScrollView.m in Sources */,
 				1D9A5540180FA7F600B42CE9 /* ProfileModel.m in Sources */,
 				1D4097BB1A2F948900100892 /* iTermPasteHelperTest.m in Sources */,
@@ -6488,6 +6501,7 @@
 				1D93D350126974BC007F741B /* DVRDecoder.m in Sources */,
 				1D93D35412697529007F741B /* DVREncoder.m in Sources */,
 				1DF8007018F34CAB00722B35 /* NSPopUpButton+iTerm.m in Sources */,
+				A65B72731B248F1800F947A7 /* iTermOrphanServerAdopter.m in Sources */,
 				1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */,
 				A69B4586196F8EA100F5444D /* iTermOpenQuicklyWindowController.m in Sources */,
 				A6E74762188C679C005355CF /* iTermExposeView.m in Sources */,

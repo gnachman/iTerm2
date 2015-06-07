@@ -9,6 +9,10 @@
 #include "iTermFileDescriptorSocketPath.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+const char *iTermFileDescriptorSocketNamePrefix = "iTerm2.socket.";
+
 
 // From http://apple.stackexchange.com/questions/22694/private-tmp-vs-private-var-tmp-vs-tmpdir
 //
@@ -48,9 +52,22 @@
 
 void iTermFileDescriptorSocketPath(char *buffer, size_t buffer_size, pid_t pid) {
     const char *tmp = iTermFileDescriptorDirectory();
-    snprintf(buffer, buffer_size, "%s/iTerm2.socket.%d", tmp, (int)pid);
+    snprintf(buffer, buffer_size, "%s/%s%d", tmp, iTermFileDescriptorSocketNamePrefix, (int)pid);
 }
 
 const char *iTermFileDescriptorDirectory(void) {
     return P_tmpdir;
+}
+
+pid_t iTermFileDescriptorProcessIdFromPath(const char *path) {
+    char *dotPtr = strrchr(path, '.');
+    if (!dotPtr) {
+        return -1;
+    }
+    char *endPtr;
+    long pid = strtol(dotPtr + 1, &endPtr, 10);
+    if (*endPtr) {
+        return -1;
+    }
+    return pid;
 }

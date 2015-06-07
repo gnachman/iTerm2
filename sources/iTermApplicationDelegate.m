@@ -40,6 +40,7 @@
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
+#import "iTermOrphanServerAdopter.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermRestorableSession.h"
 #import "iTermURLSchemeController.h"
@@ -210,18 +211,20 @@ static BOOL hasBecomeActive = NO;
         if ([iTermPreferences boolForKey:kPreferenceKeyOpenBookmark]) {
             // Open bookmarks window at startup.
             [self showBookmarkWindow:nil];
+        }
+
+        if (![[iTermOrphanServerAdopter sharedInstance] haveOrphanServers]) {
+            // We don't respect the startup preference if orphan servers are present.
+            // PseudoTerminalRestorer contains similar logic and will restore sessions.
             if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-                // Open both bookmark window and arrangement!
+                // Open the saved arrangement at startup.
                 [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
-            }
-        } else if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-            // Open the saved arrangement at startup.
-            [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
-        } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
-            if (![PseudoTerminalRestorer willOpenWindows]) {
-                if ([[[iTermController sharedInstance] terminals] count] == 0 &&
-                    ![self isApplescriptTestApp]) {
-                    [self newWindow:nil];
+            } else if (![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+                if (![PseudoTerminalRestorer willOpenWindows]) {
+                    if ([[[iTermController sharedInstance] terminals] count] == 0 &&
+                        ![self isApplescriptTestApp]) {
+                        [self newWindow:nil];
+                    }
                 }
             }
         }
@@ -386,58 +389,9 @@ static BOOL hasBecomeActive = NO;
 
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         [PseudoTerminalRestorer setRestorationCompletionBlock:^{
-            [self searchForOrphanServers];
+            [[iTermOrphanServerAdopter sharedInstance] openWindowWithOrphans];
         }];
     }
-}
-
-- (void)searchForOrphanServers {
-    assert([iTermAdvancedSettingsModel runJobsInServers]);
-    NSLog(@"--- Begin search for orphans ---");
-    NSString *dir = [NSString stringWithUTF8String:iTermFileDescriptorDirectory()];
-    PseudoTerminal *term = nil;
-    for (NSString *filename in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil]) {
-        NSString *prefix = @"iTerm2.socket.";
-        if ([filename hasPrefix:prefix]) {
-            // TODO: This needs to be able to time out if a server is wedged, which happened somehow.
-            NSLog(@"Try to connect to server at %@", filename);
-            FileDescriptorClientResult result = FileDescriptorClientRun([[filename substringFromIndex:prefix.length] intValue]);
-            if (result.ok) {
-                NSLog(@"Restore it");
-                if (term) {
-                    [self openOrphanedSession:result inWindow:term];
-                } else {
-                    PTYSession *session = [self openOrphanedSession:result inWindow:nil];
-                    term = [[iTermController sharedInstance] terminalWithSession:session];
-                }
-            } else {
-                NSLog(@"Failed: %s", result.error);
-            }
-        }
-    }
-    NSLog(@"--- Finished search for orphans ---");
-}
-
-- (PTYSession *)openOrphanedSession:(FileDescriptorClientResult)result inWindow:(PseudoTerminal *)desiredWindow {
-    assert([iTermAdvancedSettingsModel runJobsInServers]);
-    Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
-    PTYSession *aSession =
-        [[iTermController sharedInstance] launchBookmark:nil
-                                              inTerminal:desiredWindow
-                                                 withURL:nil
-                                                isHotkey:NO
-                                                 makeKey:NO
-                                                 command:nil
-                                                   block:^PTYSession *(PseudoTerminal *term) {
-                                                       FileDescriptorClientResult theResult = result;
-                                                       term.disablePromptForSubstitutions = YES;
-                                                       return [term createSessionWithProfile:defaultProfile
-                                                                                     withURL:nil
-                                                                               forObjectType:iTermWindowObject
-                                                                  fileDescriptorClientResult:&theResult];
-                                                   }];
-    [aSession showOrphanAnnouncement];
-    return aSession;
 }
 
 - (void)workspaceSessionDidBecomeActive:(NSNotification *)notification {
@@ -595,11 +549,12 @@ static BOOL hasBecomeActive = NO;
     }
     if (!finishedLaunching_ &&
         ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
-         [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup])) {
-        // This happens if the OS is pre 10.7 or restore windows is off in
-        // 10.7's prefs->general, and the window arrangement has no windows,
-        // and it's set to load the arrangement on startup. It also happens if
-        // kPreferenceKeyOpenNoWindowsAtStartup is set.
+         [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] )) {
+        // There are two ways this can happen:
+        // 1. System window restoration is off in System Prefs>General, the window arrangement has
+        //    no windows, and iTerm2 is configured to restore it at startup.
+        // 2. System window restoration is off in System Prefs>General and iTerm2 is configured to
+        //    open no windows at startup.
         return NO;
     }
     [self newWindow:nil];
@@ -1296,6 +1251,7 @@ static BOOL hasBecomeActive = NO;
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
     [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
 
+    [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
     NSDictionary *hotkeyWindowState = [[HotkeyWindowController sharedInstance] restorableState];
     if (hotkeyWindowState) {
         [coder encodeObject:hotkeyWindowState
@@ -1312,8 +1268,13 @@ static BOOL hasBecomeActive = NO;
     }
 
     NSDictionary *hotkeyWindowState = [coder decodeObjectForKey:kHotkeyWindowRestorableState];
-    if (hotkeyWindowState) {
+    if (hotkeyWindowState &&
+        [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]) {
         [[HotkeyWindowController sharedInstance] setRestorableState:hotkeyWindowState];
+
+        // We have to create the hotkey window now because we need to attach to servers before
+        // launch finishes; otherwise any running hotkey window jobs will be treated as orphans.
+        [[HotkeyWindowController sharedInstance] createHiddenHotkeyWindow];
     }
 }
 
