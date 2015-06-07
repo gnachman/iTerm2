@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #include <syslog.h>
@@ -145,6 +146,9 @@ static int SocketBindListen(char *path) {
         syslog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
         return -1;
     }
+
+    // Mask off all permissions for group and other. Only user can use this socket.
+    umask(S_IRWXG | S_IRWXO);
 
     struct sockaddr_un local;
     local.sun_family = AF_UNIX;
