@@ -7,6 +7,7 @@
 //
 
 #import "VT100RemoteHost.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 
 static NSString *const kRemoteHostHostNameKey = @"Host name";
@@ -24,7 +25,7 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc {   
     [_hostname release];
     [_username release];
     [super dealloc];

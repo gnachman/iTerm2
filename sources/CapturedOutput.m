@@ -8,6 +8,7 @@
 
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "VT100ScreenMark.h"
 
