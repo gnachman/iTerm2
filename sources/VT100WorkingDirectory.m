@@ -17,7 +17,7 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [super init];
     if (self) {
-        self.workingDirectory = [dict[kWorkingDirectoryStateWorkingDirectoryKey] nilIfNull];
+        self.workingDirectory = dict[kWorkingDirectoryStateWorkingDirectoryKey];
     }
     return self;
 }
@@ -35,7 +35,11 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
 #pragma mark - IntervalTreeObject
 
 - (NSDictionary *)dictionaryValue {
-    return @{ kWorkingDirectoryStateWorkingDirectoryKey: self.workingDirectory ?: [NSNull null] };
+    if (self.workingDirectory) {
+        return @{ kWorkingDirectoryStateWorkingDirectoryKey: self.workingDirectory };
+    } else {
+        return @{};
+    }
 }
 
 @end

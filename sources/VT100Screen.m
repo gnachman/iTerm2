@@ -4251,7 +4251,7 @@ static void SwapInt(int *a, int *b) {
            kScreenStateAlternateGridStateKey: primaryGrid_.dictionaryValue ?: [NSNull null],
            kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity)
            };
-    return dict;
+    return [dict dictionaryByRemovingNullValues];
 }
 
 - (NSDictionary *)contentsOfNonCurrentGrid {
@@ -4325,7 +4325,7 @@ static void SwapInt(int *a, int *b) {
                                withDefaultChar:[altGrid_ defaultChar]
                              maxLinesToRestore:altGrid_.size.height];
 
-        NSString *guidOfLastCommandMark = [screenState[kScreenStateLastCommandMarkKey] nilIfNull];
+        NSString *guidOfLastCommandMark = screenState[kScreenStateLastCommandMarkKey];
 
         [intervalTree_ release];
         intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
@@ -4335,7 +4335,7 @@ static void SwapInt(int *a, int *b) {
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
         [savedIntervalTree_ release];
-        savedIntervalTree_ = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] nilIfNull];
+        savedIntervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
         [self fixUpDeserializedIntervalTree:savedIntervalTree_
                               knownTriggers:triggers
                                     visible:NO
@@ -4350,8 +4350,8 @@ static void SwapInt(int *a, int *b) {
         _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
         _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
 
-        [primaryGrid_ setStateFromDictionary:[screenState[kScreenStatePrimaryGridStateKey] nilIfNull]];
-        [altGrid_ setStateFromDictionary:[screenState[kScreenStateAlternateGridStateKey] nilIfNull]];
+        [primaryGrid_ setStateFromDictionary:screenState[kScreenStatePrimaryGridStateKey]];
+        [altGrid_ setStateFromDictionary:screenState[kScreenStateAlternateGridStateKey]];
     }
 }
 

@@ -8,6 +8,7 @@
 
 #import "VT100ScreenMark.h"
 #import "CapturedOutput.h"
+#import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringiTerm.h"
 
@@ -38,7 +39,7 @@ NSString *const kMarkGuidKey = @"Guid";  // Not all kinds of marks have a guid
     self = [super init];
     if (self) {
         _code = [dict[kMarkCodeKey] intValue];
-        _sessionGuid = [[dict[kMarkSessionGuidKey] nilIfNull] copy];
+        _sessionGuid = [dict[kMarkSessionGuidKey] copy];
         NSTimeInterval start = [dict[kMarkStartDateKey] doubleValue];
         if (start > 0) {
             _startDate = [[NSDate dateWithTimeIntervalSinceReferenceDate:start] retain];
@@ -53,7 +54,7 @@ NSString *const kMarkGuidKey = @"Guid";  // Not all kinds of marks have a guid
         }
         _capturedOutput = [array retain];
         if (dict[kMarkCommandKey]) {
-            _command = [[dict[kMarkCommandKey] nilIfNull] copy];
+            _command = [dict[kMarkCommandKey] copy];
         }
     }
     return self;
@@ -104,13 +105,15 @@ NSString *const kMarkGuidKey = @"Guid";  // Not all kinds of marks have a guid
 #pragma mark - IntervalTreeObject
 
 - (NSDictionary *)dictionaryValue {
-    return @{ kMarkCodeKey: @(_code),
-              kMarkCommandKey: _command ?: [NSNull null],
-              kMarkSessionGuidKey: self.sessionGuid ?: [NSNull null],
-              kMarkStartDateKey: @([self.startDate timeIntervalSinceReferenceDate]),
-              kMarkEndDateKey: @([self.endDate timeIntervalSinceReferenceDate]),
-              kMarkCapturedOutputKey: [self capturedOutputDictionaries],
-              kMarkIsVisibleKey: @(self.isVisible) };
+    NSDictionary *dict =
+        @{ kMarkCodeKey: @(_code),
+           kMarkCommandKey: _command ?: [NSNull null],
+           kMarkSessionGuidKey: self.sessionGuid ?: [NSNull null],
+           kMarkStartDateKey: @([self.startDate timeIntervalSinceReferenceDate]),
+           kMarkEndDateKey: @([self.endDate timeIntervalSinceReferenceDate]),
+           kMarkCapturedOutputKey: [self capturedOutputDictionaries],
+           kMarkIsVisibleKey: @(self.isVisible) };
+    return [dict dictionaryByRemovingNullValues];
 }
 
 @end

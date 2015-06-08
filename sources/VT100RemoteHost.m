@@ -18,8 +18,8 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [super init];
     if (self) {
-        self.hostname = [dict[kRemoteHostHostNameKey] nilIfNull];
-        self.username = [dict[kRemoteHostUserNameKey] nilIfNull];
+        self.hostname = dict[kRemoteHostHostNameKey];
+        self.username = dict[kRemoteHostUserNameKey];
     }
     return self;
 }
@@ -47,8 +47,10 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 #pragma mark - IntervalTreeObject
 
 - (NSDictionary *)dictionaryValue {
-    return @{ kRemoteHostHostNameKey: _hostname ?: [NSNull null],
-              kRemoteHostUserNameKey: _username ?: [NSNull null] };
+    NSDictionary *dict =
+        @{ kRemoteHostHostNameKey: _hostname ?: [NSNull null],
+           kRemoteHostUserNameKey: _username ?: [NSNull null] };
+    return [dict dictionaryByRemovingNullValues];
 }
 
 @end

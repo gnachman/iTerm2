@@ -23,9 +23,14 @@ NSString *const kCommandUseReleaseMarksInSession = @"kCommandUseReleaseMarksInSe
 }
 
 - (NSArray *)serializedValue {
-    return @[ @(self.time),
-              _directory ?: @"",
-              _mark.guid ?: [NSNull null] ];
+    if (_mark.guid) {
+        return @[ @(self.time),
+                  _directory ?: @"",
+                  _mark.guid ];
+    } else {
+        return @[ @(self.time),
+                  _directory ?: @"" ];
+    }
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -60,7 +65,7 @@ NSString *const kCommandUseReleaseMarksInSession = @"kCommandUseReleaseMarksInSe
             commandUse.directory = serializedValue[1];
         }
         if ([serializedValue count] > 2) {
-            commandUse.markGuid = [serializedValue[2] nilIfNull];
+            commandUse.markGuid = serializedValue[2];
         }
 
     } else if ([serializedValue isKindOfClass:[NSNumber class]]) {

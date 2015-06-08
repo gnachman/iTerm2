@@ -2365,41 +2365,43 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (NSDictionary *)stateDictionary {
-    return @{ kTerminalStateTermTypeKey: self.termType ?: [NSNull null],
-              kTerminalStateStringEncodingKey: @(self.encoding),
-              kTerminalStateCanonicalEncodingKey: @(self.canonicalEncoding),
-              kTerminalStateReportFocusKey: @(self.reportFocus),
-              kTerminalStateReverseVideoKey: @(self.reverseVideo),
-              kTerminalStateOriginModeKey: @(self.originMode),
-              kTerminalStateMoreFixKey: @(self.moreFix),
-              kTerminalStateWraparoundModeKey: @(self.wraparoundMode),
-              kTerminalStateReverseWraparoundModeKey: @(self.reverseWraparoundMode),
-              kTerminalStateIsAnsiKey: @(self.isAnsi),
-              kTerminalStateAutorepeatModeKey: @(self.autorepeatMode),
-              kTerminalStateInsertModeKey: @(self.insertMode),
-              kTerminalStateCharsetKey: @(self.charset),
-              kTerminalStateMouseModeKey: @(self.mouseMode),
-              kTerminalStateMouseFormatKey: @(self.mouseFormat),
-              kTerminalStateCursorModeKey: @(self.cursorMode),
-              kTerminalStateKeypadModeKey: @(self.keypadMode),
-              kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
-              kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
-              kTerminalStateAnsiModeKey: @(ansiMode_),
-              kTerminalStateNumLockKey: @(numLock_),
-              kTerminalStateGraphicRenditionKey: [self dictionaryForGraphicRendition:graphicRendition_],
-              kTerminalStateMainSavedCursorKey: [self dictionaryForSavedCursor:mainSavedCursor_],
-              kTerminalStateAltSavedCursorKey: [self dictionaryForSavedCursor:altSavedCursor_],
-              kTerminalStateAllowColumnModeKey: @(self.allowColumnMode),
-              kTerminalStateColumnModeKey: @(self.columnMode),
-              kTerminalStateDisableSMCUPAndRMCUPKey: @(self.disableSmcupRmcup),
-              kTerminalStateInCommandKey: @(inCommand_) };
+    NSDictionary *dict =
+        @{ kTerminalStateTermTypeKey: self.termType ?: [NSNull null],
+           kTerminalStateStringEncodingKey: @(self.encoding),
+           kTerminalStateCanonicalEncodingKey: @(self.canonicalEncoding),
+           kTerminalStateReportFocusKey: @(self.reportFocus),
+           kTerminalStateReverseVideoKey: @(self.reverseVideo),
+           kTerminalStateOriginModeKey: @(self.originMode),
+           kTerminalStateMoreFixKey: @(self.moreFix),
+           kTerminalStateWraparoundModeKey: @(self.wraparoundMode),
+           kTerminalStateReverseWraparoundModeKey: @(self.reverseWraparoundMode),
+           kTerminalStateIsAnsiKey: @(self.isAnsi),
+           kTerminalStateAutorepeatModeKey: @(self.autorepeatMode),
+           kTerminalStateInsertModeKey: @(self.insertMode),
+           kTerminalStateCharsetKey: @(self.charset),
+           kTerminalStateMouseModeKey: @(self.mouseMode),
+           kTerminalStateMouseFormatKey: @(self.mouseFormat),
+           kTerminalStateCursorModeKey: @(self.cursorMode),
+           kTerminalStateKeypadModeKey: @(self.keypadMode),
+           kTerminalStateAllowKeypadModeKey: @(self.allowKeypadMode),
+           kTerminalStateBracketedPasteModeKey: @(self.bracketedPasteMode),
+           kTerminalStateAnsiModeKey: @(ansiMode_),
+           kTerminalStateNumLockKey: @(numLock_),
+           kTerminalStateGraphicRenditionKey: [self dictionaryForGraphicRendition:graphicRendition_],
+           kTerminalStateMainSavedCursorKey: [self dictionaryForSavedCursor:mainSavedCursor_],
+           kTerminalStateAltSavedCursorKey: [self dictionaryForSavedCursor:altSavedCursor_],
+           kTerminalStateAllowColumnModeKey: @(self.allowColumnMode),
+           kTerminalStateColumnModeKey: @(self.columnMode),
+           kTerminalStateDisableSMCUPAndRMCUPKey: @(self.disableSmcupRmcup),
+           kTerminalStateInCommandKey: @(inCommand_) };
+    return [dict dictionaryByRemovingNullValues];
 }
 
 - (void)setStateFromDictionary:(NSDictionary *)dict {
     if (!dict) {
         return;
     }
-    self.termType = [dict[kTerminalStateTermTypeKey] nilIfNull];
+    self.termType = dict[kTerminalStateTermTypeKey];
     self.encoding = [dict[kTerminalStateStringEncodingKey] unsignedIntegerValue];
     self.canonicalEncoding = [dict[kTerminalStateCanonicalEncodingKey] unsignedIntegerValue];
     self.reportFocus = [dict[kTerminalStateReportFocusKey] boolValue];

@@ -26,7 +26,7 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
 + (instancetype)capturedOutputWithDictionary:(NSDictionary *)dict {
     CapturedOutput *capturedOutput = [[[CapturedOutput alloc] init] autorelease];
     if (capturedOutput) {
-        capturedOutput.line = [dict[kCapturedOutputLineKey] nilIfNull];
+        capturedOutput.line = dict[kCapturedOutputLineKey];
         capturedOutput.values = dict[kCapturedOutputValuesKey];
         capturedOutput.triggerDigest = dict[kCapturedOutputTriggerHashKey];
         capturedOutput.state = [dict[kCapturedOutputStateKey] boolValue];
@@ -60,11 +60,14 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
 }
 
 - (NSDictionary *)dictionaryValue {
-    return @{ kCapturedOutputLineKey: _line ?: [NSNull null],
-              kCapturedOutputValuesKey: _values ?: @[],
-              kCapturedOutputTriggerHashKey: _trigger.digest ?: [NSData data],
-              kCapturedOutputStateKey: @(_state),
-              kCapturedOutputMarkGuidKey: _mark.guid };
+    NSDictionary *dict =
+        @{ kCapturedOutputLineKey: _line ?: [NSNull null],
+         kCapturedOutputValuesKey: _values ?: @[],
+    kCapturedOutputTriggerHashKey: _trigger.digest ?: [NSData data],
+          kCapturedOutputStateKey: @(_state),
+       kCapturedOutputMarkGuidKey: _mark.guid };
+
+    return [dict dictionaryByRemovingNullValues];
 }
 
 @end

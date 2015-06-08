@@ -45,7 +45,4 @@
 // }
 - (iTermDelayedPerform *)performBlock:(void (^)())block afterDelay:(NSTimeInterval)delay;
 
-// Returns nil if the object is NSNull
-- (id)nilIfNull;
-
 @end

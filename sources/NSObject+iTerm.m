@@ -52,12 +52,4 @@
     return delayedPerform;
 }
 
-- (id)nilIfNull {
-    if ([self isKindOfClass:[NSNull class]]) {
-        return nil;
-    } else {
-        return self;
-    }
-}
-
 @end

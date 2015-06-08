@@ -134,4 +134,15 @@ static NSString *const kGridSizeHeight = @"Height";
     }
 }
 
+- (NSDictionary *)dictionaryByRemovingNullValues {
+    NSMutableDictionary *temp = [NSMutableDictionary dictionary];
+    for (id key in self) {
+        id value = self[key];
+        if (![value isKindOfClass:[NSNull class]]) {
+            temp[key] = value;
+        }
+    }
+    return temp;
+}
+
 @end
