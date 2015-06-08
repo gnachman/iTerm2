@@ -8,6 +8,18 @@ typedef union {
     char control[CMSG_SPACE(sizeof(int))];
 } FileDescriptorControlMessage;
 
-int FileDescriptorServerRun(char *path, pid_t childPid);
+// Spin up a new server. |connectionFd| comes from FileDescriptorServerAccept(),
+// which should be run prior to fork()ing.
+int FileDescriptorServerRun(char *path, pid_t childPid, int connectionFd);
+
+// Create a socket and listen on it. Returns the socket's file descriptor.
+// This is used for connecting a client and server prior to fork.
+// Follow it with a call to FileDescriptorServerAccept().
+int FileDescriptorServerSocketBindListen(const char *path);
+
+// Wait for a client connection on |socketFd|, which comes from
+// FileDescriptorServerSocketBindListen(). Returns a connection file descriptor,
+// suitable to pass to FileDescriptorServerRun() in |connectionFd|.
+int FileDescriptorServerAccept(int socketFd);
 
 #endif  // __ITERM_FILE_DESCRIPTOR_SERVER_H

@@ -7253,7 +7253,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (PTYSession *)createSessionWithProfile:(NSDictionary *)profile
                                  withURL:(NSString *)urlString
                            forObjectType:(iTermObjectType)objectType
-              fileDescriptorClientResult:(FileDescriptorClientResult *)fdcResult {
+                        serverConnection:(iTermFileDescriptorServerConnection *)serverConnection {
     PtyLog(@"PseudoTerminal: -createSessionWithProfile:withURL:forObjectType:");
     PTYSession *aSession;
 
@@ -7301,11 +7301,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
            forSession:aSession];
 
         // Start the command
-        if (fdcResult) {
+        if (serverConnection) {
             assert([iTermAdvancedSettingsModel runJobsInServers]);
-            [aSession attachToServerWithFileDescriptor:fdcResult->ptyMasterFd
-                                       serverProcessId:fdcResult->serverPid
-                                        childProcessId:fdcResult->childPid];
+            [aSession attachToServer:*serverConnection];
         } else {
             [self startProgram:cmd
                    environment:env

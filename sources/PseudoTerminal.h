@@ -251,7 +251,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
                                  withURL:(NSString *)url
                            forObjectType:(iTermObjectType)objectType
-              fileDescriptorClientResult:(FileDescriptorClientResult *)fdcResult;
+                        serverConnection:(iTermFileDescriptorServerConnection *)serverConnection;
 
 // Add a new session to this window with the given addressbook entry.
 // The optional command overrides the profile's settings.

@@ -104,7 +104,7 @@ static int Select(int *fds, int count, int *results) {
     return n;
 }
 
-static int PerformAcceptActivity(int socketFd) {
+int FileDescriptorServerAccept(int socketFd) {
     // incoming unix domain socket connection to get FDs
     struct sockaddr_un remote;
     socklen_t sizeOfRemote = sizeof(remote);
@@ -112,12 +112,13 @@ static int PerformAcceptActivity(int socketFd) {
     do {
         connectionFd = accept(socketFd, (struct sockaddr *)&remote, &sizeOfRemote);
     } while (connectionFd == -1 && errno == EINTR);
-    if (connectionFd == -1) {
-        syslog(LOG_NOTICE, "accept failed %s", strerror(errno));
-        return 0;
+    if (connectionFd != -1) {
+        close(socketFd);
     }
-    close(socketFd);
+    return connectionFd;
+}
 
+static int SendFileDescriptorAndWait(int connectionFd) {
     syslog(LOG_NOTICE, "send master fd and child pid %d", (int)gChildPid);
     int rc = SendMessageAndFileDescriptor(connectionFd, &gChildPid, sizeof(gChildPid), 0);
     if (rc <= 0) {
@@ -140,7 +141,17 @@ static int PerformAcceptActivity(int socketFd) {
     return (results[0]);
 }
 
-static int SocketBindListen(char *path) {
+static int PerformAcceptActivity(int socketFd) {
+    int connectionFd = FileDescriptorServerAccept(socketFd);
+    if (connectionFd == -1) {
+        syslog(LOG_NOTICE, "accept failed %s", strerror(errno));
+        return 0;
+    }
+
+    return SendFileDescriptorAndWait(connectionFd);
+}
+
+int FileDescriptorServerSocketBindListen(const char *path) {
     int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socketFd == -1) {
         syslog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
@@ -190,22 +201,25 @@ static void MainLoop(char *path) {
     syslog(LOG_NOTICE, "Entering main loop.");
     int socketFd;
     do {
-        syslog(LOG_NOTICE, "Calling SocketBindListen.");
-        socketFd = SocketBindListen(path);
+        syslog(LOG_NOTICE, "Calling FileDescriptorServerSocketBindListen.");
+        socketFd = FileDescriptorServerSocketBindListen(path);
         if (socketFd < 0) {
-            syslog(LOG_NOTICE, "SocketBindListen failed");
+            syslog(LOG_NOTICE, "FileDescriptorServerSocketBindListen failed");
             return;
         }
         syslog(LOG_NOTICE, "Calling PerformAcceptActivity");
     } while (!PerformAcceptActivity(socketFd));
 }
 
-int FileDescriptorServerRun(char *path, pid_t childPid) {
+int FileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
     int rc = Initialize(path, childPid);
     if (rc) {
         syslog(LOG_NOTICE, "Initialize failed with code %d", rc);
     } else {
-        MainLoop(path);
+        syslog(LOG_NOTICE, "Sending file descriptor and waiting on initial connection");
+        if (!SendFileDescriptorAndWait(connectionFd)) {
+            MainLoop(path);
+        }
         // MainLoop never returns, except by dying on a signal.
     }
     syslog(LOG_NOTICE, "Unlink %s", path);

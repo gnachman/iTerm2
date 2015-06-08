@@ -22,6 +22,7 @@
 #include "iTermFileDescriptorSocketPath.h"
 
 static const int kPtySlaveFileDescriptor = 1;
+static const int kPtySocketFileDescriptor = 2;
 
 int launch_shell(void) {
     const char *shell = getenv("SHELL");
@@ -75,7 +76,7 @@ static void ExecChild(int argc, char *const *argv) {
     execvp(argv[0], argv);
 }
 
-// Precondition: PTY Master on fd 0, PTY Slave on fd 1
+// Precondition: PTY Master on fd 0, PTY Slave on fd 1, connected unix domain socket on fd 2
 int iterm2_server(int argc, char *const *argv) {
     // Set up a signal handler that makes the server die with the child's status code if the child
     // dies before the server is done setting itself up.
@@ -96,7 +97,7 @@ int iterm2_server(int argc, char *const *argv) {
         iTermFileDescriptorSocketPath(path, sizeof(path), getpid());
 
         // Run the server.
-        int status = FileDescriptorServerRun(path, pid);
+        int status = FileDescriptorServerRun(path, pid, kPtySocketFileDescriptor);
         return status;
     } else {
         // Fork returned an error!

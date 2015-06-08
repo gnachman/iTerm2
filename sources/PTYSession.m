@@ -1065,7 +1065,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return NO;
     }
     DLog(@"Try to attach...");
-    if ([_shell tryToAttachToServerWithProcessId:serverPid timeout:0]) {
+    if ([_shell tryToAttachToServerWithProcessId:serverPid]) {
         @synchronized(self) {
             _registered = YES;
         }
@@ -1077,14 +1077,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
-                         serverProcessId:(pid_t)serverPid
-                          childProcessId:(pid_t)childPid {
+- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection {
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
         DLog(@"Attaching to a server...");
-        [_shell attachToServerWithFileDescriptor:ptyMasterFd
-                                 serverProcessId:serverPid
-                                  childProcessId:childPid];
+        [_shell attachToServer:serverConnection];
         [_shell setWidth:_screen.width height:_screen.height];
         @synchronized(self) {
             _registered = YES;
@@ -1894,6 +1890,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (_exited) {
         return;
     }
+    [_shell killServerIfRunning];
     if ([self shouldPostGrowlNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Session Ended"

@@ -7,12 +7,14 @@
 
 #import "Coprocess.h"
 #import "DebugLogging.h"
+#import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
 #import "PTYTask.h"
 #import "TaskNotifier.h"
 #import "iTermAdvancedSettingsModel.h"
 #include "iTermFileDescriptorClient.h"
+#include "iTermFileDescriptorServer.h"
 #include "shell_launcher.h"
 #include <dlfcn.h>
 #include <libproc.h>
@@ -104,6 +106,8 @@ setup_tty_param(struct termios* term,
     // Number of spins of the select loop left before we tell the delegate we were deregistered.
     int _spinsNeeded;
     BOOL _paused;
+
+    int _socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 }
 
 + (NSString *)commandByPrefixingServerCommand:(NSString *)command {
@@ -120,6 +124,7 @@ setup_tty_param(struct termios* term,
     self = [super init];
     if (self) {
         _serverPid = (pid_t)-1;
+        _socketFd = -1;
         _childPid = (pid_t)-1;
         fd = -1;
         _serverChildPid = -1;
@@ -231,8 +236,7 @@ static void HandleSigChld(int n)
     return environment;
 }
 
-- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid
-                                 timeout:(NSTimeInterval)timeout {
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)thePid {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
         return NO;
     }
@@ -240,78 +244,77 @@ static void HandleSigChld(int n)
         return NO;
     }
 
-    NSTimeInterval timeoutTime = [NSDate timeIntervalSinceReferenceDate] + timeout;
-    // TODO: Create the unix domain socket in the parent prior to forking to avoid the timeout silliness.
-    NSTimeInterval delay = 0.01;
-    while (1) {
-        // TODO: This server code is super scary so I'm NSLog'ing it to make it easier to recover
-        // logs. These should eventually become DLog's and the log statements in the server should
-        // become LOG_DEBUG level.
-        NSLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
-        FileDescriptorClientResult result = FileDescriptorClientRun(thePid);
-        if (!result.ok) {
-            NSLog(@"Failed with error %s", result.error);
-            if (result.error && !strcmp(result.error, kFileDescriptorClientErrorCouldNotConnect)) {
-                // Waiting for child process to start.
-                if ([NSDate timeIntervalSinceReferenceDate] > timeoutTime) {
-                    return NO;
-                } else {
-                    // Did the job die?
-                    int jobStatus;
-                    int rc = waitpid(thePid, &jobStatus, WNOHANG);
-                    if (rc == thePid) {
-                        // NOTE: jobStatus has various interesting tidbits in the low 8 bits and the
-                        // return code in the high 8 bits. See the man page for wait(2) for details.
-                        NSLog(@"Server died immediately with status %d", jobStatus);
-                        return NO;
-                    } else if (rc == -1) {
-                        NSLog(@"Waitpid failed for pid %d with error %s", (int)thePid, strerror(errno));
-                    }
-
-                    // Back off and retry. We just started the server so it'll need a sec to begin
-                    // listening.
-                    NSLog(@"Failed to connect. Try again in %0.2f seconds", delay);
-                    usleep(delay * 1000000);
-                    delay = MIN(0.1, delay * 2);
-                    continue;
-                }
-            } else {
-                return NO;
-            }
-        }
+    // TODO: This server code is super scary so I'm NSLog'ing it to make it easier to recover
+    // logs. These should eventually become DLog's and the log statements in the server should
+    // become LOG_DEBUG level.
+    NSLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
+    iTermFileDescriptorServerConnection serverConnection = FileDescriptorClientRun(thePid);
+    if (!serverConnection.ok) {
+        NSLog(@"Failed with error %s", serverConnection.error);
+        return NO;
+    } else {
         NSLog(@"Succeeded.");
-        [self attachToServerWithFileDescriptor:result.ptyMasterFd
-                               serverProcessId:thePid
-                                childProcessId:result.childPid];
+        [self attachToServer:serverConnection];
         return YES;
     }
 }
 
-- (void)attachToServerWithFileDescriptor:(int)ptyMasterFd
-                         serverProcessId:(pid_t)serverPid
-                          childProcessId:(pid_t)childPid {
+- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection {
     assert([iTermAdvancedSettingsModel runJobsInServers]);
-    fd = ptyMasterFd;
-    _serverPid = serverPid;
-    _serverChildPid = childPid;
+    fd = serverConnection.ptyMasterFd;
+    _serverPid = serverConnection.serverPid;
+    _serverChildPid = serverConnection.childPid;
+    _socketFd = serverConnection.socketFd;
     [[TaskNotifier sharedInstance] registerTask:self];
 }
 
-// Like login_tty but makes fd 0 the master and fd 1 the slave.
-static void MyLoginTTY(int master, int slave) {
+// Like login_tty but makes fd 0 the master, fd 1 the slave, and fd 2 an open unix-domain socket
+// for transferring file descriptors.
+static void MyLoginTTY(int master, int slave, int serverSocketFd) {
     setsid();
     ioctl(slave, TIOCSCTTY, NULL);
-    if (slave == 0) {
-        dup2(slave, 2);
-        slave = 2;
+
+    // This array keeps track of which file descriptors are in use and should not be dup2()ed over.
+    // It has |inuseCount| valid elements.
+    int inuse[9] = { 0, 1, 2, master, slave, serverSocketFd, -1, -1, -1 };
+    int inuseCount = 6;
+
+    // File descriptors get dup2()ed to temporary numbers first to avoid stepping on each other or
+    // on any of the desired final values. Their temporary values go in here. The first is always
+    // master, then slave, then server socket.
+    int temp[3];
+
+    // The original file descriptors to renumber.
+    int orig[3] = { master, slave, serverSocketFd };
+
+    for (int o = 0; o < sizeof(orig) / sizeof(*orig); o++) {  // iterate over orig
+        int original = orig[o];
+
+        // Try to find a temp value that doesn't belong to inuse
+        for (int t = 0; t < sizeof(inuse) / sizeof(*inuse); t++) {
+            BOOL isInUse = NO;
+            for (int i = 0; i < sizeof(inuse) / sizeof(*inuse); i++) {
+                if (inuse[i] == t) {
+                    isInUse = YES;
+                    break;
+                }
+            }
+            if (!isInUse) {
+                // t is good. dup orig[o] to t and close orig[o]. Save t in temp[o].
+                inuse[inuseCount++] = t;
+                temp[o] = t;
+                dup2(original, t);
+                close(original);
+                break;
+            }
+        }
     }
-    dup2(master, 0);
-    dup2(slave, 1);
-    if (master > 1) {
-        close(master);
-    }
-    if (slave > 1) {
-        close(slave);
+
+    // Dup the temp values to their desired values (which happens to equal the index in temp).
+    // Close the temp file descriptors.
+    for (int i = 0; i < sizeof(orig) / sizeof(*orig); i++) {
+        dup2(temp[i], i);
+        close(temp[i]);
     }
 }
 
@@ -319,7 +322,8 @@ static void MyLoginTTY(int master, int slave) {
 static int MyForkPty(int *amaster,
                      char *name,
                      struct termios *termp,
-                     struct winsize *winp) {
+                     struct winsize *winp,
+                     int serverSocketFd) {
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     int master;
     int slave;
@@ -338,7 +342,7 @@ static int MyForkPty(int *amaster,
 
         case 0:
             // child
-            MyLoginTTY(master, slave);
+            MyLoginTTY(master, slave, serverSocketFd);
             return 0;
 
         default:
@@ -410,8 +414,46 @@ static int MyForkPty(int *amaster,
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     pid_t pid;
+    int connectionFd = -1;
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
-        pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win);
+        // Create a temporary filename for the unix domain socket. It'll only exist for a moment.
+        NSString *tempPath = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iTerm2-temp-socket."
+                                                                                 suffix:@""];
+
+        // Begin listening on that path as a unix domain socket.
+        int serverSocketFd = FileDescriptorServerSocketBindListen(tempPath.UTF8String);
+
+        // Get ready to run the server in a thread.
+        __block int serverConnectionFd = -1;
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+
+        // In another thread, accept on the unix domain socket. Since it's
+        // already listening, there's no race here. connect will block until
+        // accept is called if the main thread wins the race. accept will block
+        // til connect is called if the background thread wins the race. 
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            serverConnectionFd = FileDescriptorServerAccept(serverSocketFd);
+
+            // Let the main thread go. This is necessary to ensure that
+            // serverConnectionFd is written to before the main thread uses it.
+            dispatch_semaphore_signal(semaphore);
+        });
+
+        // Connect to the server running in a thread.
+        connectionFd = FileDescriptorClientConnect(tempPath.UTF8String);
+
+        // Wait for serverConnectionFd to be written to.
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+
+        // Remove the temporary file. The server will create a new socket file
+        // if the client dies. That file's name is dependent on its process ID,
+        // which we don't know yet, so that's why this temp file dance has to
+        // be done.
+        unlink(tempPath.UTF8String);
+
+        // Now fork. This variant of forkpty passes through the master, slave,
+        // and serverConnectionFd to the child job.
+        pid = _serverPid = MyForkPty(&fd, theTtyname, &term, &win, serverConnectionFd);
     } else {
         pid = _childPid = forkpty(&fd, theTtyname, &term, &win);
     }
@@ -465,14 +507,27 @@ static int MyForkPty(int *amaster,
     // Make sure the master side of the pty is closed on future exec() calls.
     fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
 
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
-        // Unfortunately, we have to attach to the newly created server in order to get the child's
-        // process ID. Without it, we can't kill our children or get their working directories. It
-        // takes some unkown amount of time for the server to be ready to accept connections.
-        // I did try creating the connection before starting the server but it was way too complex
-        // to create a socket and connect to it in a single process/thread, and I'm afraid of the
-        // bugs I'd run into if I tried to do it with multiple threads.
-        if ([self tryToAttachToServerWithProcessId:_serverPid timeout:10]) {
+    if (connectionFd > 0) {
+        // Jobs run in servers. The client and server connected to each other
+        // before forking. The server will send us the child pid now. We don't
+        // really need the rest of the stuff in serverConnection since we already know
+        // it, but that's ok.
+        iTermFileDescriptorServerConnection serverConnection = FileDescriptorClientRead(connectionFd);
+        if (serverConnection.ok) {
+            // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
+            // lets the server know it should call accept(). We now have two copies of the master PTY
+            // file descriptor. Let's close the original one because attachToServer: will use the
+            // copy in serverConnection.
+            close(fd);
+            fd = -1;
+            
+            // The serverConnection has the wrong server PID because the connection was made prior
+            // to fork(). Update serverConnection with the real server PID.
+            serverConnection.serverPid = pid;
+
+            // Connect this task to the server's PIDs and file descriptor.
+            [self attachToServer:serverConnection];
+
             tty = [[NSString stringWithUTF8String:theTtyname] retain];
             fcntl(fd, F_SETFL, O_NONBLOCK);
         } else {
@@ -481,8 +536,9 @@ static int MyForkPty(int *amaster,
             [_delegate brokenPipe];
         }
     } else {
+        // Jobs are direct children of iTerm2
         tty = [[NSString stringWithUTF8String:theTtyname] retain];
-        fcntl(fd,F_SETFL,O_NONBLOCK);
+        fcntl(fd, F_SETFL, O_NONBLOCK);
         [[TaskNotifier sharedInstance] registerTask:self];
     }
 }
@@ -676,6 +732,11 @@ static int MyForkPty(int *amaster,
             theError = errno;
             DLog(@"waitpid returned %d error=%s", rc, strerror(theError));
         } while (rc == -1 && theError == EINTR);
+
+        // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
+        // the server is dead it's not needed any more.
+        close(_socketFd);
+        _socketFd = -1;
         NSLog(@"File descriptor server exited with status %d", status);
     }
 }

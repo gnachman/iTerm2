@@ -70,37 +70,38 @@
         return;
     }
 
-    FileDescriptorClientResult result = FileDescriptorClientRun(pid);
-    if (result.ok) {
+    iTermFileDescriptorServerConnection serverConnection = FileDescriptorClientRun(pid);
+    if (serverConnection.ok) {
         NSLog(@"Restore it");
         if (_window) {
-            [self openOrphanedSession:result inWindow:_window];
+            [self openOrphanedSession:serverConnection inWindow:_window];
         } else {
-            PTYSession *session = [self openOrphanedSession:result inWindow:nil];
+            PTYSession *session = [self openOrphanedSession:serverConnection inWindow:nil];
             _window = [[iTermController sharedInstance] terminalWithSession:session];
         }
     }
 }
 
-- (PTYSession *)openOrphanedSession:(FileDescriptorClientResult)result
+- (PTYSession *)openOrphanedSession:(iTermFileDescriptorServerConnection)serverConnection
                            inWindow:(PseudoTerminal *)desiredWindow {
     assert([iTermAdvancedSettingsModel runJobsInServers]);
     Profile *defaultProfile = [[ProfileModel sharedInstance] defaultBookmark];
     PTYSession *aSession =
-    [[iTermController sharedInstance] launchBookmark:nil
-                                          inTerminal:desiredWindow
-                                             withURL:nil
-                                            isHotkey:NO
-                                             makeKey:NO
-                                             command:nil
-                                               block:^PTYSession *(PseudoTerminal *term) {
-                                                   FileDescriptorClientResult theResult = result;
-                                                   term.disablePromptForSubstitutions = YES;
-                                                   return [term createSessionWithProfile:defaultProfile
-                                                                                 withURL:nil
-                                                                           forObjectType:iTermWindowObject
-                                                              fileDescriptorClientResult:&theResult];
-                                               }];
+        [[iTermController sharedInstance] launchBookmark:nil
+                                              inTerminal:desiredWindow
+                                                 withURL:nil
+                                                isHotkey:NO
+                                                 makeKey:NO
+                                                 command:nil
+                                                   block:^PTYSession *(PseudoTerminal *term) {
+                                                       iTermFileDescriptorServerConnection theServerConnection = serverConnection;
+                                                       term.disablePromptForSubstitutions = YES;
+                                                       return [term createSessionWithProfile:defaultProfile
+                                                                                     withURL:nil
+                                                                               forObjectType:iTermWindowObject
+                                                                            serverConnection:&theServerConnection];
+                                                   }];
+    NSLog(@"restored an orphan");
     [aSession showOrphanAnnouncement];
     return aSession;
 }

@@ -64,7 +64,7 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
     return n;
 }
 
-static int FileDescriptorClientConnect(char *path) {
+int FileDescriptorClientConnect(const char *path) {
     int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socketFd == -1) {
         syslog(LOG_NOTICE, "Failed to create socket: %s\n", strerror(errno));
@@ -92,18 +92,32 @@ static int FileDescriptorClientConnect(char *path) {
     return socketFd;
 }
 
-FileDescriptorClientResult FileDescriptorClientRun(pid_t pid) {
-    FileDescriptorClientResult result = { 0 };
+static int FileDescriptorClientConnectPid(pid_t pid) {
     char path[256];
     iTermFileDescriptorSocketPath(path, sizeof(path), pid);
 
     syslog(LOG_NOTICE, "Connect to path %s\n", path);
-    int socketFd = FileDescriptorClientConnect(path);
+    return FileDescriptorClientConnect(path);
+}
+
+iTermFileDescriptorServerConnection FileDescriptorClientRun(pid_t pid) {
+    int socketFd = FileDescriptorClientConnectPid(pid);
     if (socketFd < 0) {
+        iTermFileDescriptorServerConnection result = { 0 };
         result.error = kFileDescriptorClientErrorCouldNotConnect;
         return result;
     }
 
+    iTermFileDescriptorServerConnection result = FileDescriptorClientRead(socketFd);
+    result.serverPid = pid;
+    syslog(LOG_NOTICE, "Success: process id is %d, pty master fd is %d\n\n",
+           (int)pid, result.ptyMasterFd);
+
+    return result;
+}
+
+iTermFileDescriptorServerConnection FileDescriptorClientRead(int socketFd) {
+    iTermFileDescriptorServerConnection result = { 0 };
     int rc = ReceiveMessageAndFileDescriptor(socketFd,
                                              &result.childPid,
                                              sizeof(result.childPid),
@@ -114,12 +128,9 @@ FileDescriptorClientResult FileDescriptorClientRun(pid_t pid) {
         return result;
     }
 
-    result.serverPid = pid;
     result.ok = 1;
     result.socketFd = socketFd;
 
-    syslog(LOG_NOTICE, "Success: process id is %d, pty master fd is %d\n\n",
-           (int)pid, result.ptyMasterFd);
     return result;
 }
 
