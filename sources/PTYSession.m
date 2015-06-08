@@ -3162,9 +3162,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
                                                  kProgramCommand: self.program };
     }
-    if (self.environment) {
-        result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment;
-    }
+    result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
 
     if (_name) {

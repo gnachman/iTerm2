@@ -658,7 +658,7 @@
 - (void)screenDidChangeNumberOfScrollbackLines {
 }
 
-- (NSString)screenSessionGuid {
+- (NSString *)screenSessionGuid {
     return @"fjdkslafjdsklfa";
 }
 

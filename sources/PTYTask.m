@@ -110,16 +110,6 @@ setup_tty_param(struct termios* term,
     int _socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 }
 
-+ (NSString *)commandByPrefixingServerCommand:(NSString *)command {
-    if ([iTermAdvancedSettingsModel runJobsInServers]) {
-        NSString *iterm2Binary =
-            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters];
-        return [NSString stringWithFormat:@"%@ --server %@", iterm2Binary, command];
-    } else {
-        return command;
-    }
-}
-
 - (id)init {
     self = [super init];
     if (self) {

@@ -62,7 +62,6 @@
 }
 
 - (void)adoptOrphanWithPath:(NSString *)filename {
-    // TODO: This needs to be able to time out if a server is wedged, which happened somehow.
     NSLog(@"Try to connect to server at %@", filename);
     pid_t pid = iTermFileDescriptorProcessIdFromPath(filename.UTF8String);
     if (pid < 0) {
