@@ -70,7 +70,7 @@
         return;
     }
 
-    iTermFileDescriptorServerConnection serverConnection = FileDescriptorClientRun(pid);
+    iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRun(pid);
     if (serverConnection.ok) {
         NSLog(@"Restore it");
         if (_window) {

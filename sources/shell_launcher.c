@@ -97,7 +97,7 @@ int iterm2_server(int argc, char *const *argv) {
         iTermFileDescriptorSocketPath(path, sizeof(path), getpid());
 
         // Run the server.
-        int status = FileDescriptorServerRun(path, pid, kPtySocketFileDescriptor);
+        int status = iTermFileDescriptorServerRun(path, pid, kPtySocketFileDescriptor);
         return status;
     } else {
         // Fork returned an error!

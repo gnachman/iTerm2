@@ -12,8 +12,6 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-const char *kFileDescriptorClientErrorCouldNotConnect = "Couldn't connect";
-
 // Reads a message on the socket, and fills in receivedFileDescriptorPtr with a
 // file descriptor if one was passed.
 static ssize_t ReceiveMessageAndFileDescriptor(int fd,
@@ -23,7 +21,7 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
     syslog(LOG_NOTICE, "ReceiveMessageAndFileDescriptor\n");
     struct msghdr message;
     struct iovec ioVector[1];
-    FileDescriptorControlMessage controlMessage;
+    iTermFileDescriptorControlMessage controlMessage;
 
     message.msg_control = controlMessage.control;
     message.msg_controllen = sizeof(controlMessage.control);
@@ -64,7 +62,7 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
     return n;
 }
 
-int FileDescriptorClientConnect(const char *path) {
+int iTermFileDescriptorClientConnect(const char *path) {
     int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socketFd == -1) {
         syslog(LOG_NOTICE, "Failed to create socket: %s\n", strerror(errno));
@@ -97,18 +95,18 @@ static int FileDescriptorClientConnectPid(pid_t pid) {
     iTermFileDescriptorSocketPath(path, sizeof(path), pid);
 
     syslog(LOG_NOTICE, "Connect to path %s\n", path);
-    return FileDescriptorClientConnect(path);
+    return iTermFileDescriptorClientConnect(path);
 }
 
-iTermFileDescriptorServerConnection FileDescriptorClientRun(pid_t pid) {
+iTermFileDescriptorServerConnection iTermFileDescriptorClientRun(pid_t pid) {
     int socketFd = FileDescriptorClientConnectPid(pid);
     if (socketFd < 0) {
         iTermFileDescriptorServerConnection result = { 0 };
-        result.error = kFileDescriptorClientErrorCouldNotConnect;
+        result.error = strerror(errno);
         return result;
     }
 
-    iTermFileDescriptorServerConnection result = FileDescriptorClientRead(socketFd);
+    iTermFileDescriptorServerConnection result = iTermFileDescriptorClientRead(socketFd);
     result.serverPid = pid;
     syslog(LOG_NOTICE, "Success: process id is %d, pty master fd is %d\n\n",
            (int)pid, result.ptyMasterFd);
@@ -116,7 +114,7 @@ iTermFileDescriptorServerConnection FileDescriptorClientRun(pid_t pid) {
     return result;
 }
 
-iTermFileDescriptorServerConnection FileDescriptorClientRead(int socketFd) {
+iTermFileDescriptorServerConnection iTermFileDescriptorClientRead(int socketFd) {
     iTermFileDescriptorServerConnection result = { 0 };
     int rc = ReceiveMessageAndFileDescriptor(socketFd,
                                              &result.childPid,

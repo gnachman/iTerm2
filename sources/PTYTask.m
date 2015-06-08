@@ -248,7 +248,7 @@ static void HandleSigChld(int n)
     // logs. These should eventually become DLog's and the log statements in the server should
     // become LOG_DEBUG level.
     NSLog(@"tryToAttachToServerWithProcessId: Attempt to connect to server for pid %d", (int)thePid);
-    iTermFileDescriptorServerConnection serverConnection = FileDescriptorClientRun(thePid);
+    iTermFileDescriptorServerConnection serverConnection = iTermFileDescriptorClientRun(thePid);
     if (!serverConnection.ok) {
         NSLog(@"Failed with error %s", serverConnection.error);
         return NO;
@@ -421,7 +421,7 @@ static int MyForkPty(int *amaster,
                                                                                  suffix:@""];
 
         // Begin listening on that path as a unix domain socket.
-        int serverSocketFd = FileDescriptorServerSocketBindListen(tempPath.UTF8String);
+        int serverSocketFd = iTermFileDescriptorServerSocketBindListen(tempPath.UTF8String);
 
         // Get ready to run the server in a thread.
         __block int serverConnectionFd = -1;
@@ -432,7 +432,7 @@ static int MyForkPty(int *amaster,
         // accept is called if the main thread wins the race. accept will block
         // til connect is called if the background thread wins the race. 
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            serverConnectionFd = FileDescriptorServerAccept(serverSocketFd);
+            serverConnectionFd = iTermFileDescriptorServerAccept(serverSocketFd);
 
             // Let the main thread go. This is necessary to ensure that
             // serverConnectionFd is written to before the main thread uses it.
@@ -440,7 +440,7 @@ static int MyForkPty(int *amaster,
         });
 
         // Connect to the server running in a thread.
-        connectionFd = FileDescriptorClientConnect(tempPath.UTF8String);
+        connectionFd = iTermFileDescriptorClientConnect(tempPath.UTF8String);
 
         // Wait for serverConnectionFd to be written to.
         dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
@@ -512,7 +512,8 @@ static int MyForkPty(int *amaster,
         // before forking. The server will send us the child pid now. We don't
         // really need the rest of the stuff in serverConnection since we already know
         // it, but that's ok.
-        iTermFileDescriptorServerConnection serverConnection = FileDescriptorClientRead(connectionFd);
+        iTermFileDescriptorServerConnection serverConnection =
+            iTermFileDescriptorClientRead(connectionFd);
         if (serverConnection.ok) {
             // We intentionally leave connectionFd open. If iTerm2 stops unexpectedly then its closure
             // lets the server know it should call accept(). We now have two copies of the master PTY

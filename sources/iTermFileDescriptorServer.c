@@ -22,7 +22,7 @@ static ssize_t SendMessageAndFileDescriptor(int connectionFd,
                                             void *buffer,
                                             size_t bufferSize,
                                             int fdToSend) {
-    FileDescriptorControlMessage controlMessage;
+    iTermFileDescriptorControlMessage controlMessage;
     struct msghdr message;
     message.msg_control = controlMessage.control;
     message.msg_controllen = sizeof(controlMessage.control);
@@ -104,7 +104,7 @@ static int Select(int *fds, int count, int *results) {
     return n;
 }
 
-int FileDescriptorServerAccept(int socketFd) {
+int iTermFileDescriptorServerAccept(int socketFd) {
     // incoming unix domain socket connection to get FDs
     struct sockaddr_un remote;
     socklen_t sizeOfRemote = sizeof(remote);
@@ -142,7 +142,7 @@ static int SendFileDescriptorAndWait(int connectionFd) {
 }
 
 static int PerformAcceptActivity(int socketFd) {
-    int connectionFd = FileDescriptorServerAccept(socketFd);
+    int connectionFd = iTermFileDescriptorServerAccept(socketFd);
     if (connectionFd == -1) {
         syslog(LOG_NOTICE, "accept failed %s", strerror(errno));
         return 0;
@@ -151,7 +151,7 @@ static int PerformAcceptActivity(int socketFd) {
     return SendFileDescriptorAndWait(connectionFd);
 }
 
-int FileDescriptorServerSocketBindListen(const char *path) {
+int iTermFileDescriptorServerSocketBindListen(const char *path) {
     int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (socketFd == -1) {
         syslog(LOG_NOTICE, "socket() failed: %s", strerror(errno));
@@ -201,17 +201,17 @@ static void MainLoop(char *path) {
     syslog(LOG_NOTICE, "Entering main loop.");
     int socketFd;
     do {
-        syslog(LOG_NOTICE, "Calling FileDescriptorServerSocketBindListen.");
-        socketFd = FileDescriptorServerSocketBindListen(path);
+        syslog(LOG_NOTICE, "Calling iTermFileDescriptorServerSocketBindListen.");
+        socketFd = iTermFileDescriptorServerSocketBindListen(path);
         if (socketFd < 0) {
-            syslog(LOG_NOTICE, "FileDescriptorServerSocketBindListen failed");
+            syslog(LOG_NOTICE, "iTermFileDescriptorServerSocketBindListen failed");
             return;
         }
         syslog(LOG_NOTICE, "Calling PerformAcceptActivity");
     } while (!PerformAcceptActivity(socketFd));
 }
 
-int FileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
+int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
     int rc = Initialize(path, childPid);
     if (rc) {
         syslog(LOG_NOTICE, "Initialize failed with code %d", rc);
