@@ -3033,7 +3033,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)saveTmuxWindowOrigins
 {
     for (TmuxController *tc in [self uniqueTmuxControllers]) {
-            [tc saveWindowOrigins];
+        [tc saveWindowOrigins];
     }
 }
 
@@ -3063,6 +3063,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self repositionWidgets];
 
     [self notifyTmuxOfWindowResize];
+    // windowDidMove does not get called if the origin changes because of a resize.
+    [self saveTmuxWindowOrigins];
 
     for (PTYTab *aTab in [self tabs]) {
         if ([aTab isTmuxTab]) {
@@ -3377,6 +3379,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self.window makeFirstResponder:[[self currentSession] textview]];
     [self refreshTools];
     [self updateTabColors];
+    [self saveTmuxWindowOrigins];
 }
 
 - (BOOL)fullScreen
@@ -3516,6 +3519,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     for (PTYTab *aTab in [self tabs]) {
         [aTab notifyWindowChanged];
     }
+    [self saveTmuxWindowOrigins];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -3548,6 +3552,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [aTab notifyWindowChanged];
     }
     [self notifyTmuxOfWindowResize];
+    [self saveTmuxWindowOrigins];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
@@ -5947,9 +5952,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
+    BOOL windowTypeCompatibleWithTopBorder = (windowType_ == WINDOW_TYPE_BOTTOM ||
+                                              windowType_ == WINDOW_TYPE_NO_TITLE_BAR ||
+                                              windowType_ == WINDOW_TYPE_BOTTOM_PARTIAL);
     return ([iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder] &&
             !visibleTopTabBar &&
-            (windowType_ == WINDOW_TYPE_BOTTOM || windowType_ == WINDOW_TYPE_NO_TITLE_BAR));
+            windowTypeCompatibleWithTopBorder);
 }
 
 - (BOOL)_haveRightBorder
@@ -7359,7 +7367,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             [[[PreferencePanel sessionsInstance] window] close];
         }
     }
-    [self notifyTmuxOfTabChange];
 }
 
 - (IBAction)openSelection:(id)sender {

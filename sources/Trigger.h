@@ -19,11 +19,13 @@ extern NSString * const kTriggerPartialLineKey;
 
 @property (nonatomic, copy) NSString *regex;
 @property (nonatomic, copy) NSString *action;
-@property (nonatomic, copy) NSString *param;
+@property (nonatomic, copy) id param;
 @property (nonatomic, assign) BOOL partialLine;
 // A non-cryptographic hash for content addressed triggers (helpful for letting serialized data
 // reference a trigger).
 @property (nonatomic, readonly) NSData *digest;
+@property (nonatomic, retain) NSColor *textColor;
+@property (nonatomic, retain) NSColor *backgroundColor;
 
 + (Trigger *)triggerFromDict:(NSDictionary *)dict;
 - (NSString *)action;
@@ -34,6 +36,7 @@ extern NSString * const kTriggerPartialLineKey;
 - (BOOL)takesParameter;
 // Returns true if the parameter this action takes is a popupbutton.
 - (BOOL)paramIsPopupButton;
+- (BOOL)paramIsTwoColorWells;
 // Returns a map from id(tag/represented object) -> NSString(title)
 - (NSDictionary *)menuItemsForPoupupButton;
 // Returns an array of NSDictionaries mapping NSNumber(tag) -> NSString(title)

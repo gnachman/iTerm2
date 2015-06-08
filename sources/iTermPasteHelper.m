@@ -22,6 +22,9 @@
 #import "PasteEvent.h"
 #import "PasteViewController.h"
 
+const int kNumberOfSpacesPerTabCancel = -2;
+const int kNumberOfSpacesPerTabNoConversion = -1;
+
 @interface iTermPasteHelper () <PasteViewControllerDelegate>
 @end
 
@@ -486,20 +489,23 @@
 
         iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:@"You're about to paste a string with tabs."
-                                       actions:@[ @"Paste with tabs", @"Convert tabs to spaces" ]
+                                       actions:@[ @"Paste with tabs", @"Cancel", @"Convert tabs to spaces" ]
                                      accessory:accessoryController.view
-                                    identifier:@"AboutToPasteTabs"
+                                    identifier:@"AboutToPasteTabsWithCancel"
                                    silenceable:kiTermWarningTypePermanentlySilenceable];
         switch (selection) {
-            case kiTermWarningSelection1:
+            case kiTermWarningSelection0:  // Paste with tabs
+                return kNumberOfSpacesPerTabNoConversion;
+            case kiTermWarningSelection1:  // Cancel
+                return kNumberOfSpacesPerTabCancel;
+            case kiTermWarningSelection2:  // Convert to spaces
                 [accessoryController saveToUserDefaults];
                 return accessoryController.numberOfSpaces;
-            case kiTermWarningSelection0:
             default:
-                return -1;
+                return kNumberOfSpacesPerTabNoConversion;
         }
     }
-    return -1;
+    return kNumberOfSpacesPerTabNoConversion;
 }
 
 #pragma mark - PasteViewControllerDelegate
