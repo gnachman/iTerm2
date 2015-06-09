@@ -359,8 +359,8 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
                 NSString *style = flags[kTmuxWindowOpenerWindowFlagStyle];
                 BOOL wantFullScreen = [style isEqual:kTmuxWindowOpenerWindowFlagStyleValueFullScreen];
                 BOOL isFullScreen = [term anyFullScreen];
-                if (wantFullScreen && !isFullScreen) {
-                    [term toggleFullScreenMode:nil];
+                if (wantFullScreen && !isFullScreen && [term isKindOfClass:[PseudoTerminal class]]) {
+                    [(PseudoTerminal *)term toggleFullScreenMode:nil];
                 }
             } else {
                 DLog(@"Not calling loadTmuxLayout");
