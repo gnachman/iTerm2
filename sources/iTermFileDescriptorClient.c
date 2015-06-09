@@ -34,7 +34,11 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
     message.msg_iov = ioVector;
     message.msg_iovlen = 1;
 
-    ssize_t n = recvmsg(fd, &message, 0);
+    ssize_t n;
+    do {
+        n = recvmsg(fd, &message, 0);
+    } while (n < 0 && errno == EINTR);
+
     if (n <= 0) {
         syslog(LOG_NOTICE, "error from recvmsg %s\n", strerror(errno));
         return n;
@@ -63,29 +67,42 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
 }
 
 int iTermFileDescriptorClientConnect(const char *path) {
-    int socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (socketFd == -1) {
-        syslog(LOG_NOTICE, "Failed to create socket: %s\n", strerror(errno));
-        return -1;
-    }
+    int interrupted = 0;
+    int socketFd;
+    int flags;
 
-    struct sockaddr_un remote;
-    remote.sun_family = AF_UNIX;
-    strcpy(remote.sun_path, path);
-    int len = strlen(remote.sun_path) + sizeof(remote.sun_family) + 1;
-    int flags = fcntl(socketFd, F_GETFL, 0);
+    do {
+        socketFd = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (socketFd == -1) {
+            syslog(LOG_NOTICE, "Failed to create socket: %s\n", strerror(errno));
+            return -1;
+        }
 
-    // Put the socket in nonblocking mode so connect can fail fast if another iTerm2 is connected
-    // to this server.
-    fcntl(socketFd, F_SETFL, flags | O_NONBLOCK);
-    if (connect(socketFd, (struct sockaddr *)&remote, len) == -1) {
-        syslog(LOG_NOTICE, "Failed to connect: %s\n", strerror(errno));
-        close(socketFd);
-        return -1;
-    }
+        struct sockaddr_un remote;
+        remote.sun_family = AF_UNIX;
+        strcpy(remote.sun_path, path);
+        int len = strlen(remote.sun_path) + sizeof(remote.sun_family) + 1;
+        flags = fcntl(socketFd, F_GETFL, 0);
 
-    // Make socket block again.
-    fcntl(socketFd, F_SETFL, flags & ~O_NONBLOCK);
+        // Put the socket in nonblocking mode so connect can fail fast if another iTerm2 is connected
+        // to this server.
+        fcntl(socketFd, F_SETFL, flags | O_NONBLOCK);
+
+        int rc = connect(socketFd, (struct sockaddr *)&remote, len);
+        if (rc == -1) {
+            interrupted = (errno == EINTR);
+            syslog(LOG_NOTICE, "Connect failed: %s\n", strerror(errno));
+            close(socketFd);
+            if (!interrupted) {
+                return -1;
+            }
+            syslog(LOG_NOTICE, "Trying again because connect returned EINTR.");
+        } else {
+            // Make socket block again.
+            interrupted = 0;
+            fcntl(socketFd, F_SETFL, flags & ~O_NONBLOCK);
+        }
+    } while (interrupted);
 
     return socketFd;
 }
