@@ -99,7 +99,8 @@ DEFINE_FLOAT(findDelaySeconds, 1, @"General: Time to wait before performing Find
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"General: Start debug logging automatically when iTerm2 is launched");
 DEFINE_INT(maximumBytesToProvideToServices, 100000, @"General: Maximum number of bytes of selection to provide to Services");
 DEFINE_BOOL(disableWindowSizeSnap, NO, @"General: Allow window to resize smoothly (disable snapping to character grid)")
-DEFINE_BOOL(runJobsInServers, NO, @"General: Allow jobs to survive iTerm2 crashing, force quitting, or upgrading");
+DEFINE_BOOL(runJobsInServers, NO, @"General: Enable session restoration (jobs to survive crashes, force quits, or upgrades)");
+DEFINE_BOOL(killJobsInServersOnQuit, YES, @"General: When quitting iTerm2 with session restoration on, kill all jobs");
 
 #pragma mark tmux
 DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server");
