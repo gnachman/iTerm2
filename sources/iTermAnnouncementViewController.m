@@ -22,10 +22,10 @@
     BOOL _didTimeout;
 }
 
-+ (instancetype)announcemenWithTitle:(NSString *)title
-                               style:(iTermAnnouncementViewStyle)style
-                         withActions:(NSArray *)actions
-                          completion:(void (^)(int))completion {
++ (instancetype)announcementWithTitle:(NSString *)title
+                                style:(iTermAnnouncementViewStyle)style
+                          withActions:(NSArray *)actions
+                           completion:(void (^)(int))completion {
     iTermAnnouncementViewController *announcement = [[[self alloc] init] autorelease];
     announcement.title = title;
     announcement.actions = actions;

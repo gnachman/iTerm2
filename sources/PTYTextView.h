@@ -135,6 +135,7 @@ typedef enum {
 - (NSDictionary *)textViewVariables;
 - (BOOL)textViewSuppressingAllOutput;
 - (BOOL)textViewIsZoomedIn;
+- (void)textViewWarnThatAccessibilityIsCausingSlowness;
 
 @end
 

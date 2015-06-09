@@ -82,6 +82,9 @@ static NSString *const kReopenSessionWarningIdentifier = @"ReopenSessionAfterBro
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
+static NSString *const kAccessibilitySlownessAnnouncementIdentifier =
+    @"kAccessibilitySlownessAnnouncementIdentifier";
+
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
 static NSString *PWD_ENVNAME = @"PWD";
@@ -1685,22 +1688,22 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         // Offer to restart the session by rerunning its program.
         [self appendBrokenPipeMessage:@"Broken Pipe"];
         iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
-                                                            style:kiTermAnnouncementViewStyleQuestion
-                                                      withActions:@[ @"Restart" ]
-                                                       completion:^(int selection) {
-                                                           switch (selection) {
-                                                               case -2:  // Dismiss programmatically
-                                                                   break;
+            [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                             style:kiTermAnnouncementViewStyleQuestion
+                                                       withActions:@[ @"Restart" ]
+                                                        completion:^(int selection) {
+                                                            switch (selection) {
+                                                                case -2:  // Dismiss programmatically
+                                                                    break;
 
-                                                               case -1: // No
-                                                                   break;
+                                                                case -1: // No
+                                                                    break;
 
-                                                               case 0: // Yes
-                                                                   [self replaceTerminatedShellWithNewInstance];
-                                                                   break;
-                                                           }
-                                                       }];
+                                                                case 0: // Yes
+                                                                    [self replaceTerminatedShellWithNewInstance];
+                                                                    break;
+                                                            }
+                                                        }];
         [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
         [self updateDisplay];
     }
@@ -5170,6 +5173,36 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return _liveSession && !_dvr;
 }
 
+- (void)textViewWarnThatAccessibilityIsCausingSlowness {
+    static NSString *const kSilenceKey = @"NoSyncSlowAccessibilityWarning";
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSilenceKey]) {
+        return;
+    }
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:@"Accessibilty is making iTerm2 slow! "
+                                                               @"Reduce the number of lines of scrollback to "
+                                                               @"under 1000 to mitigate the damage."
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"OK", @"Don't warn me again" ]
+                                                    completion:^(int selection) {
+                switch (selection) {
+                    case -2:  // Dismiss programmatically
+                        break;
+
+                    case -1: // Cancel button
+                        break;
+
+                    case 0: // OK
+                        break;
+
+                    case 1: // Don't warn again
+                        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kSilenceKey];
+                        break;
+                }
+            }];
+    [self queueAnnouncement:announcement identifier:kAccessibilitySlownessAnnouncementIdentifier];
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {
@@ -5940,10 +5973,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     NSString *title = [NSString stringWithFormat:@"Set background image to “%@”?", filename];
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcemenWithTitle:title
-                                                        style:kiTermAnnouncementViewStyleQuestion
-                                                  withActions:@[ @"Yes", @"Always", @"Never" ]
-                                                   completion:^(int selection) {
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                    completion:^(int selection) {
             switch (selection) {
                 case -2:  // Dismiss programmatically
                     break;
@@ -6304,43 +6337,43 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         (now - _annoyingBellOfferDeclinedAt > kTimeToWaitAfterDecline) &&
         ![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressAnnoyingBellOffer]) {
         iTermAnnouncementViewController *announcement =
-                [iTermAnnouncementViewController announcemenWithTitle:@"The bell is ringing a lot. Silence it?"
-                                                                style:kiTermAnnouncementViewStyleQuestion
-                                                          withActions:@[ @"Silence Bell Temporarily",
-                                                                         @"Suppress All Output",
-                                                                         @"Don't Offer Again",
-                                                                         @"Silence Automatically" ]
-                                                           completion:^(int selection) {
-                                                               // Release the moving average so the count will restart after the announcement goes away.
-                                                               [_bellRate release];
-                                                               _bellRate = nil;
-                                                               switch (selection) {
-                                                                   case -2:  // Dismiss programmatically
-                                                                       break;
+            [iTermAnnouncementViewController announcementWithTitle:@"The bell is ringing a lot. Silence it?"
+                                                             style:kiTermAnnouncementViewStyleQuestion
+                                                       withActions:@[ @"Silence Bell Temporarily",
+                                                                      @"Suppress All Output",
+                                                                      @"Don't Offer Again",
+                                                                      @"Silence Automatically" ]
+                                                        completion:^(int selection) {
+                    // Release the moving average so the count will restart after the announcement goes away.
+                    [_bellRate release];
+                    _bellRate = nil;
+                    switch (selection) {
+                        case -2:  // Dismiss programmatically
+                            break;
 
-                                                                   case -1: // No
-                                                                       _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
-                                                                       break;
+                        case -1: // No
+                            _annoyingBellOfferDeclinedAt = [NSDate timeIntervalSinceReferenceDate];
+                            break;
 
-                                                                   case 0: // Suppress bell temporarily
-                                                                       _ignoreBellUntil = now + 60;
-                                                                       break;
+                        case 0: // Suppress bell temporarily
+                            _ignoreBellUntil = now + 60;
+                            break;
 
-                                                                   case 1: // Suppress all output
-                                                                       _suppressAllOutput = YES;
-                                                                       break;
+                        case 1: // Suppress all output
+                            _suppressAllOutput = YES;
+                            break;
 
-                                                                   case 2: // Never offer again
-                                                                       [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                                                                               forKey:kSuppressAnnoyingBellOffer];
-                                                                       break;
+                        case 2: // Never offer again
+                            [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                    forKey:kSuppressAnnoyingBellOffer];
+                            break;
 
-                                                                   case 3:  // Silence automatically
-                                                                       [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                                                                               forKey:kSilenceAnnoyingBellAutomatically];
-                                                                       break;
-                                                               }
-                                                           }];
+                        case 3:  // Silence automatically
+                            [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                                    forKey:kSilenceAnnoyingBellAutomatically];
+                            break;
+                    }
+                }];
         // Set the auto-dismiss timeout.
         announcement.timeout = 10;
         [self queueAnnouncement:announcement identifier:identifier];
@@ -6445,26 +6478,26 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return;
     }
     iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcemenWithTitle:@"This account's Shell Integration scripts are out of date."
-                                                            style:kiTermAnnouncementViewStyleWarning
-                                                      withActions:@[ @"Upgrade", @"Silence Warning" ]
-                                                       completion:^(int selection) {
-                                                           switch (selection) {
-                                                               case -2:  // Dismiss programmatically
-                                                                   break;
+        [iTermAnnouncementViewController announcementWithTitle:@"This account's Shell Integration scripts are out of date."
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Upgrade", @"Silence Warning" ]
+                                                    completion:^(int selection) {
+                switch (selection) {
+                    case -2:  // Dismiss programmatically
+                        break;
 
-                                                               case -1: // No
-                                                                   break;
+                    case -1: // No
+                        break;
 
-                                                               case 0: // Yes
-                                                                   [self tryToRunShellIntegrationInstaller];
-                                                                   break;
+                    case 0: // Yes
+                        [self tryToRunShellIntegrationInstaller];
+                        break;
 
-                                                               case 1: // Never for this account
-                                                                   [userDefaults setBool:YES forKey:theKey];
-                                                                   break;
-                                                           }
-                                                       }];
+                    case 1: // Never for this account
+                        [userDefaults setBool:YES forKey:theKey];
+                        break;
+                }
+            }];
     [self queueAnnouncement:announcement identifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 }
 

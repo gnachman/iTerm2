@@ -20,10 +20,10 @@
 @property(nonatomic, assign) id<iTermAnnouncementDelegate> delegate;
 @property(nonatomic, copy) void (^completion)(int);
 
-+ (instancetype)announcemenWithTitle:(NSString *)title
-                               style:(iTermAnnouncementViewStyle)style
-                         withActions:(NSArray *)actions
-                          completion:(void (^)(int))completion;
++ (instancetype)announcementWithTitle:(NSString *)title
+                                style:(iTermAnnouncementViewStyle)style
+                          withActions:(NSArray *)actions
+                           completion:(void (^)(int))completion;
 
 - (void)dismiss;
 
