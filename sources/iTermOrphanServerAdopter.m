@@ -13,7 +13,7 @@
 #import "PseudoTerminal.h"
 
 @implementation iTermOrphanServerAdopter {
-    NSArray *_pathsToOrphanedServerSockets;
+    NSMutableArray *_pathsToOrphanedServerSockets;
     PseudoTerminal *_window;  // weak
 }
 
@@ -42,16 +42,20 @@
     [super dealloc];
 }
 
-- (NSArray *)findOrphanServers {
+- (NSMutableArray *)findOrphanServers {
     NSMutableArray *array = [NSMutableArray array];
     NSString *dir = [NSString stringWithUTF8String:iTermFileDescriptorDirectory()];
     for (NSString *filename in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil]) {
         NSString *prefix = [NSString stringWithUTF8String:iTermFileDescriptorSocketNamePrefix];
         if ([filename hasPrefix:prefix]) {
-            [array addObject:filename];
+            [array addObject:[dir stringByAppendingPathComponent:filename]];
         }
     }
     return array;
+}
+
+- (void)removePath:(NSString *)path {
+    [_pathsToOrphanedServerSockets removeObject:path];
 }
 
 - (void)openWindowWithOrphans {
@@ -62,7 +66,7 @@
 }
 
 - (void)adoptOrphanWithPath:(NSString *)filename {
-    NSLog(@"Try to connect to server at %@", filename);
+    NSLog(@"Try to connect to orphaned server at %@", filename);
     pid_t pid = iTermFileDescriptorProcessIdFromPath(filename.UTF8String);
     if (pid < 0) {
         NSLog(@"Invalid pid in filename %@", filename);
@@ -78,6 +82,8 @@
             PTYSession *session = [self openOrphanedSession:serverConnection inWindow:nil];
             _window = [[iTermController sharedInstance] terminalWithSession:session];
         }
+    } else {
+        NSLog(@"Failed: %s", serverConnection.error);
     }
 }
 

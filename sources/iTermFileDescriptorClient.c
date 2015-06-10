@@ -3,6 +3,7 @@
 #include "iTermFileDescriptorServer.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -108,7 +109,7 @@ int iTermFileDescriptorClientConnect(const char *path) {
 }
 
 static int FileDescriptorClientConnectPid(pid_t pid) {
-    char path[256];
+    char path[PATH_MAX + 1];
     iTermFileDescriptorSocketPath(path, sizeof(path), pid);
 
     syslog(LOG_NOTICE, "Connect to path %s\n", path);

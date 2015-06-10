@@ -52,9 +52,10 @@ const char *iTermFileDescriptorSocketNamePrefix = "iTerm2.socket.";
 
 void iTermFileDescriptorSocketPath(char *buffer, size_t buffer_size, pid_t pid) {
     const char *tmp = iTermFileDescriptorDirectory();
-    snprintf(buffer, buffer_size, "%s/%s%d", tmp, iTermFileDescriptorSocketNamePrefix, (int)pid);
+    snprintf(buffer, buffer_size, "%s%s%d", tmp, iTermFileDescriptorSocketNamePrefix, (int)pid);
 }
 
+// Note: this must end in /
 const char *iTermFileDescriptorDirectory(void) {
     return P_tmpdir;
 }

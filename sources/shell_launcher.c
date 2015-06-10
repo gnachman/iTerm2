@@ -93,7 +93,7 @@ int iterm2_server(int argc, char *const *argv) {
         // Don't need the slave here.
         close(kPtySlaveFileDescriptor);
         setsid();
-        char path[256];
+        char path[PATH_MAX + 1];
         iTermFileDescriptorSocketPath(path, sizeof(path), getpid());
 
         // Run the server.

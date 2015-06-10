@@ -13,8 +13,11 @@
 #import "PTYTask.h"
 #import "TaskNotifier.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermOrphanServerAdopter.h"
+
 #include "iTermFileDescriptorClient.h"
 #include "iTermFileDescriptorServer.h"
+#include "iTermFileDescriptorSocketPath.h"
 #include "shell_launcher.h"
 #include <dlfcn.h>
 #include <libproc.h>
@@ -245,6 +248,12 @@ static void HandleSigChld(int n)
     } else {
         NSLog(@"Succeeded.");
         [self attachToServer:serverConnection];
+
+        // Prevent any future attempt to connect to this server as an orphan.
+        char buffer[PATH_MAX + 1];
+        iTermFileDescriptorSocketPath(buffer, sizeof(buffer), thePid);
+        [[iTermOrphanServerAdopter sharedInstance] removePath:[NSString stringWithUTF8String:buffer]];
+
         return YES;
     }
 }

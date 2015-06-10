@@ -14,5 +14,6 @@
 
 + (instancetype)sharedInstance;
 - (void)openWindowWithOrphans;
+- (void)removePath:(NSString *)path;
 
 @end
