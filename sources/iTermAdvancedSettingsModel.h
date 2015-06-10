@@ -96,5 +96,6 @@
 + (BOOL)eliminateCloseButtons;
 
 + (BOOL)runJobsInServers;
++ (BOOL)killJobsInServersOnQuit;
 
 @end

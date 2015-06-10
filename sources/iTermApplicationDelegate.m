@@ -441,11 +441,18 @@ static BOOL hasBecomeActive = NO;
 
     if (shouldShowAlert) {
         DLog(@"Showing quit alert");
+        NSString *message;
+        if ([[iTermController sharedInstance] shouldLeaveSessionsRunningOnQuit]) {
+            message = @"Sessions will be restored automatically when iTerm2 is relaunched.";
+        } else {
+            message = @"All sessions will be closed.";
+        }
         BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
-                                       @"All sessions will be closed.",
+                                       @"%@",
                                        @"OK",
                                        @"Cancel",
-                                       nil) != NSAlertDefaultReturn;
+                                       nil,
+                                       message) != NSAlertDefaultReturn;
         if (stayput) {
             DLog(@"User declined to quit");
             return NSTerminateCancel;

@@ -44,24 +44,13 @@
 @class PTYTextView;
 
 @interface iTermController : NSObject
-{
-    // PseudoTerminal objects
-    NSMutableArray *terminalWindows;
-    id FRONT;
-    ItermGrowlDelegate *gd;
-
-    int keyWindowIndexMemo_;
-
-    // For restoring previously active app when exiting hotkey window
-    NSNumber *previouslyActiveAppPID_;
-    id runningApplicationClass_;
-}
 
 @property(nonatomic, readonly) iTermRestorableSession *currentRestorableSession;
 @property(nonatomic, assign) BOOL selectionRespectsSoftBoundaries;
 @property(nonatomic, assign) BOOL startingUp;
 @property(nonatomic, assign) BOOL applicationIsQuitting;
 @property(nonatomic, readonly) BOOL willRestoreWindowsAtNextLaunch;
+@property(nonatomic, readonly) BOOL shouldLeaveSessionsRunningOnQuit;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;

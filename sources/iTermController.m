@@ -110,6 +110,17 @@ BOOL IsYosemiteOrLater(void) {
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
     NSMutableArray *_currentRestorableSessionsStack;
+
+    // PseudoTerminal objects
+    NSMutableArray *terminalWindows;
+    id FRONT;
+    ItermGrowlDelegate *gd;
+
+    int keyWindowIndexMemo_;
+
+    // For restoring previously active app when exiting hotkey window
+    NSNumber *previouslyActiveAppPID_;
+    id runningApplicationClass_;
 }
 
 static iTermController* shared = nil;
@@ -176,19 +187,31 @@ static BOOL initDone = NO;
           [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]);
 }
 
+- (BOOL)shouldLeaveSessionsRunningOnQuit {
+    const BOOL sessionsWillRestore = ([iTermAdvancedSettingsModel runJobsInServers] &&
+                                      [iTermAdvancedSettingsModel restoreWindowContents] &&
+                                      self.willRestoreWindowsAtNextLaunch);
+    iTermApplicationDelegate *itad =
+        (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    return (sessionsWillRestore &&
+            (itad.sparkleRestarting || ![iTermAdvancedSettingsModel killJobsInServersOnQuit]));
+}
+
 - (void)dealloc {
     // Save hotkey window arrangement to user defaults before closing it.
     [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
 
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    if ([iTermAdvancedSettingsModel runJobsInServers] &&
-        [iTermAdvancedSettingsModel restoreWindowContents] &&
-        itad.sparkleRestarting &&
-        self.willRestoreWindowsAtNextLaunch) {
-        // Sparkle is restarting the app. Because jobs are run in servers and window
-        // restoration is on, we don't want to close term windows because that will
-        // send SIGHUP to the job processes. Normally this path is taken during
-        // a user-initiated quit, so we want the jobs killed, but not in this case.
+    if (self.shouldLeaveSessionsRunningOnQuit) {
+        // We don't want to kill running jobs. This can be for one of two reasons:
+        //
+        // 1. Sparkle is restarting the app. Because jobs are run in servers and window
+        //    restoration is on, we don't want to close term windows because that will
+        //    send SIGHUP to the job processes. Normally this path is taken during
+        //    a user-initiated quit, so we want the jobs killed, but not in this case.
+        // 2. The user has set a pref to not kill jobs on quit.
+        //
+        // In either case, we only get here if we're pretty sure everything will get restored
+        // nicely.
         [terminalWindows autorelease];
     } else {
         // Close all terminal windows, killing jobs.
