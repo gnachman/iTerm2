@@ -50,6 +50,20 @@
     return nil;
 }
 
+- (BOOL)isRestartable {
+    return NO;
+}
+
+- (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line {
+}
+
+- (NSIndexSet *)animatedLines {
+    return nil;
+}
+
+- (void)resetAnimatedLines {
+}
+
 - (void)resetDirty {
 }
 

@@ -11,7 +11,6 @@
 #import "DebugLogging.h"
 #import "LineBuffer.h"
 #import "NSDictionary+iTerm.h"
-#import "RegexKitLite.h"
 #import "VT100GridTypes.h"
 #import "VT100LineInfo.h"
 #import "VT100Terminal.h"
