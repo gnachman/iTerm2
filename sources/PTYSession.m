@@ -750,7 +750,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 }
                 pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
                 DLog(@"Try to attach to pid %d", (int)serverPid);
-                if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
+                // serverPid might be -1 if the user turned on session restoration and then quit.
+                if (serverPid != -1 && [aSession tryToAttachToServerWithProcessId:serverPid]) {
                     DLog(@"Success!");
                     runCommand = NO;
                     attachedToServer = YES;
@@ -949,16 +950,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)showOrphanAnnouncement {
     NSString *notice = @"This already-running session was restored but its contents were not saved.";
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcemenWithTitle:notice
-                                                        style:kiTermAnnouncementViewStyleQuestion
-                                                  withActions:@[ @"Why?" ]
-                                                   completion:^(int selection) {
-                                                       if (selection == 0) {
-                                                           // Why?
-                                                           NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
-                                                           [[NSWorkspace sharedWorkspace] openURL:whyUrl];
-                                                       }
-                                                   }];
+        [iTermAnnouncementViewController announcementWithTitle:notice
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Why?" ]
+                                                    completion:^(int selection) {
+                                                        if (selection == 0) {
+                                                            // Why?
+                                                            NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
+                                                            [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+                                                        }
+                                                    }];
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 }
 
@@ -1918,22 +1919,22 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [self appendBrokenPipeMessage:@"Broken Pipe"];
         if ([self isRestartable]) {
             iTermAnnouncementViewController *announcement =
-                [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
-                                                                style:kiTermAnnouncementViewStyleQuestion
-                                                          withActions:@[ @"Restart" ]
-                                                           completion:^(int selection) {
-                                                               switch (selection) {
-                                                                   case -2:  // Dismiss programmatically
-                                                                       break;
+                [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                                 style:kiTermAnnouncementViewStyleQuestion
+                                                           withActions:@[ @"Restart" ]
+                                                            completion:^(int selection) {
+                                                                switch (selection) {
+                                                                    case -2:  // Dismiss programmatically
+                                                                        break;
 
-                                                                   case -1: // No
-                                                                       break;
+                                                                    case -1: // No
+                                                                        break;
 
-                                                                   case 0: // Yes
-                                                                       [self replaceTerminatedShellWithNewInstance];
-                                                                       break;
-                                                               }
-                                                           }];
+                                                                    case 0: // Yes
+                                                                        [self replaceTerminatedShellWithNewInstance];
+                                                                        break;
+                                                                }
+                                                            }];
             [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
         }
         [self updateDisplay];
