@@ -98,4 +98,6 @@
 + (BOOL)runJobsInServers;
 + (BOOL)killJobsInServersOnQuit;
 
++ (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
+
 @end

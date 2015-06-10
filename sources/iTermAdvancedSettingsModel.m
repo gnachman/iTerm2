@@ -91,17 +91,20 @@ DEFINE_FLOAT(idleTimeSeconds, 2, @"General: Time in seconds before a session is 
 DEFINE_FLOAT(findDelaySeconds, 1, @"General: Time to wait before performing Find action on 1- or 2- character queries.");
 DEFINE_INT(maximumBytesToProvideToServices, 100000, @"General: Maximum number of bytes of selection to provide to Services.\nA large value here can cause performance issues when you have a big selection.");
 
+#pragma mark - Semantic History
 DEFINE_BOOL(ignoreHardNewlinesInURLs, NO, @"Semantic History: Ignore hard newlines for the purposes of locating URLs for Semantic History.\nIf a hard newline occurs at the end of a line then cmd-click will not see it all unless this setting is turned on. This is useful for some interactive applications.");
 // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
 DEFINE_STRING(URLCharacterSet, @".?\\/:;%=&_-,+~#@!*'()|[]", @"Semantic History: Non-alphanumeric characters considered part of a URL for Semantic History.\nLetters and numbers are always considered part of the URL. These non-alphanumeric characters are used in addition for the purposes of figuring out where a URL begins and ends.");
 
+#pragma mark - Debugging
 DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging automatically when iTerm2 is launched.");
 DEFINE_BOOL(logDrawingPerformance, NO, @"Debugging: Log stats about text drawing performance to console.\nUsed for performance testing.");
 
-
+#pragma mark - Session Restoration
 DEFINE_BOOL(runJobsInServers, NO, @"Session Restoration: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
 DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session Restoration: User-initiated Quit (⌘-Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
 
+#pragma mark - Window
 DEFINE_BOOL(openFileInNewWindows, NO, @"Windows: Open files in new windows, not new tabs.\nThis affects shell scripts opened from Finder, for example.");
 DEFINE_BOOL(rememberWindowPositions, YES, @"Windows: Remember window locations even after the windows are closed.\nWhen a new window is opened, one of the recorded locations is used.");
 DEFINE_BOOL(disableWindowSizeSnap, NO, @"Windows: Terminal windows resize smoothly.\nDisables snapping to character grid. Holding Control will temporarily disable snap-to-grid.");
@@ -129,6 +132,7 @@ DEFINE_BOOL(noSyncSuppressCaptureOutputToolNotVisibleWarning, NO,
 DEFINE_BOOL(closingTmuxWindowKillsTmuxWindows, NO, @"Warnings: Suppress kill/hide dialog when closing a tmux window.");
 DEFINE_BOOL(closingTmuxTabKillsTmuxWindows, NO, @"Warnings: Suppress kill/hide dialog when closing a tmux tab.");
 DEFINE_BOOL(aboutToPasteTabs, NO, @"Warnings: Suppress warning about pasting tabs with offer to convert them to spaces.");
+DEFINE_BOOL(noSyncDoNotWarnBeforeMultilinePaste, NO, @"Warnings: Suppress warning about pasting multiple lines (or a line ending in a newline).");
 
 #pragma mark Pasteboard
 DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Pasteboard: Trim whitespace when copying to pasteboard.");
