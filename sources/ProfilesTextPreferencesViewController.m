@@ -7,6 +7,7 @@
 //
 
 #import "ProfilesTextPreferencesViewController.h"
+#import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFontPanel.h"
 #import "NSFont+iTerm.h"
@@ -42,8 +43,12 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSTextField *_normalFontDescription;
     IBOutlet NSTextField *_nonAsciiFontDescription;
 
+    // Warning labels
+    IBOutlet NSTextField *_normalFontWantsAntialiasing;
+    IBOutlet NSTextField *_nonasciiFontWantsAntialiasing;
+
     // Hide this view to hide all non-ASCII font settings.
-    IBOutlet NSView *_nonAsciiFontView;  
+    IBOutlet NSView *_nonAsciiFontView;
 
     // If set, the font picker was last opened to change the non-ascii font.
     // Used to interpret messages from it.
@@ -70,27 +75,27 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                    type:kPreferenceInfoTypeMatrix
          settingChanged:^(id sender) { [self setInt:[[sender selectedCell] tag] forKey:KEY_CURSOR_TYPE]; }
                  update:^BOOL{ [_cursorType selectCellWithTag:[self intForKey:KEY_CURSOR_TYPE]]; return YES; }];
-    
+
     [self defineControl:_blinkingCursor
                     key:KEY_BLINKING_CURSOR
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_useBoldFont
                     key:KEY_USE_BOLD_FONT
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_useBrightBold
                     key:KEY_USE_BRIGHT_BOLD
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_blinkAllowed
                     key:KEY_BLINK_ALLOWED
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_useItalicFont
                     key:KEY_USE_ITALIC_FONT
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_ambiguousIsDoubleWidth
                     key:KEY_AMBIGUOUS_DOUBLE_WIDTH
                    type:kPreferenceInfoTypeCheckbox];
@@ -98,7 +103,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [self defineControl:_useHFSPlusMapping
                     key:KEY_USE_HFS_PLUS_MAPPING
                    type:kPreferenceInfoTypeCheckbox];
-    
+
     [self defineControl:_horizontalSpacing
                     key:KEY_HORIZONTAL_SPACING
                    type:kPreferenceInfoTypeSlider];
@@ -106,19 +111,21 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     [self defineControl:_verticalSpacing
                     key:KEY_VERTICAL_SPACING
                    type:kPreferenceInfoTypeSlider];
-    
+
     PreferenceInfo *info = [self defineControl:_useNonAsciiFont
                                            key:KEY_USE_NONASCII_FONT
                                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [self updateNonAsciiFontViewVisibility]; };
 
-    [self defineControl:_asciiAntiAliased
-                    key:KEY_ASCII_ANTI_ALIASED
-                   type:kPreferenceInfoTypeCheckbox];
-    
-    [self defineControl:_nonasciiAntiAliased
-                    key:KEY_NONASCII_ANTI_ALIASED
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_asciiAntiAliased
+                           key:KEY_ASCII_ANTI_ALIASED
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{ [self updateWarnings]; };
+
+    info = [self defineControl:_nonasciiAntiAliased
+                           key:KEY_NONASCII_ANTI_ALIASED
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{ [self updateWarnings]; };
 
     [self updateFontsDescriptions];
     [self updateNonAsciiFontViewVisibility];
@@ -143,7 +150,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     // Update the fonts.
     self.normalFont = [[self stringForKey:KEY_NORMAL_FONT] fontValue];
     self.nonAsciiFont = [[self stringForKey:KEY_NON_ASCII_FONT] fontValue];
-    
+
     // Update the descriptions.
     NSString *fontName;
     if (_normalFont != nil) {
@@ -153,7 +160,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
         fontName = @"Unknown Font";
     }
     [_normalFontDescription setStringValue:fontName];
-    
+
     if (_nonAsciiFont != nil) {
         fontName = [NSString stringWithFormat: @"%gpt %@",
                     [_nonAsciiFont pointSize], [_nonAsciiFont displayName]];
@@ -161,6 +168,15 @@ static NSInteger kNonAsciiFontButtonTag = 1;
         fontName = @"Unknown Font";
     }
     [_nonAsciiFontDescription setStringValue:fontName];
+
+    [self updateWarnings];
+}
+
+- (void)updateWarnings {
+    [_normalFontWantsAntialiasing setHidden:(!self.normalFont.futureShouldAntialias ||
+                                             [self boolForKey:KEY_ASCII_ANTI_ALIASED])];
+    [_nonasciiFontWantsAntialiasing setHidden:(!self.nonAsciiFont.futureShouldAntialias ||
+                                               [self boolForKey:KEY_NONASCII_ANTI_ALIASED])];
 }
 
 
@@ -176,7 +192,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 - (void)showFontPanel {
     // make sure we get the messages from the NSFontManager
     [[self.view window] makeFirstResponder:self];
-    
+
     NSFontPanel* aFontPanel = [[NSFontManager sharedFontManager] fontPanel: YES];
     [aFontPanel setAccessoryView:_displayFontAccessoryView];
     NSFont *theFont = (_fontPickerIsForNonAsciiFont ? _nonAsciiFont : _normalFont);

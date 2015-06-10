@@ -255,7 +255,7 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     } else {
         [self selectGuid:guid];
     }
-    if (selectGeneralTab) {
+    if (selectGeneralTab && !self.view.window.attachedSheet) {
         [_tabView selectTabViewItem:_generalTab];
     }
     [self.view.window performSelector:@selector(makeFirstResponder:)

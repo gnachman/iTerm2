@@ -48,7 +48,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 @end
 
-@implementation TmuxController
+@implementation TmuxController {
+    // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
+    // top of its header file)
+    NSMutableDictionary *_windowFlags;
+}
 
 @synthesize gateway = gateway_;
 @synthesize windowPositions = windowPositions_;
@@ -68,6 +72,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         pendingWindowOpens_ = [[NSMutableSet alloc] init];
         hiddenWindows_ = [[NSMutableSet alloc] init];
         self.clientName = [[TmuxControllerRegistry sharedInstance] uniqueClientNameBasedOn:clientName];
+        _windowFlags = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
     }
     return self;
@@ -86,6 +91,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [hiddenWindows_ release];
     [lastOrigins_ release];
     [_sessionGuid release];
+    [_windowFlags release];
     [super dealloc];
 }
 
@@ -118,6 +124,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.gateway = gateway_;
     windowOpener.target = self;
     windowOpener.selector = @selector(windowDidOpen:);
+    windowOpener.windowFlags = _windowFlags;
     [windowOpener openWindows:YES];
 }
 
@@ -135,6 +142,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.windowIndex = [tab tmuxWindow];
     windowOpener.target = self;
     windowOpener.selector = @selector(windowDidOpen:);
+    windowOpener.windowFlags = _windowFlags;
     [windowOpener updateLayoutInTab:tab];
 }
 
@@ -258,7 +266,27 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)openWindowsInitial {
-    NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
+    NSString *command = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_size", sessionId_];
+    [gateway_ sendCommand:command
+           responseTarget:self
+         responseSelector:@selector(handleShowSize:)];
+}
+
+- (void)handleShowSize:(NSString *)response {
+    NSScanner *scanner = [NSScanner scannerWithString:response ?: @""];
+    int width;
+    int height;
+    BOOL ok = ([scanner scanInt:&width] &&
+               [scanner scanString:@"," intoString:nil] &&
+               [scanner scanInt:&height]);
+    if (ok) {
+        [self openWindowsOfSize:NSMakeSize(width, height)];
+    } else {
+        [self openWindowsOfSize:[[gateway_ delegate] tmuxBookmarkSize]];
+    }
+}
+
+- (void)openWindowsOfSize:(NSSize)size {
     // There's a (hopefully) minor race condition here. When we initially connect to
     // a session we get its @iterm2_id. If one doesn't exist, it is assigned. This
     // lets us know if a single instance of iTerm2 is trying to attach to the same
@@ -446,12 +474,18 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [self setClientSize:minSize];
 }
 
-- (void)setClientSize:(NSSize)size
-{
+- (void)setClientSize:(NSSize)size {
     assert(size.width > 0 && size.height > 0);
     lastSize_ = size;
     NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
+    NSString *setSizeCommand = [NSString stringWithFormat:@"set -t $%d @iterm2_size %d,%d",
+                                sessionId_, (int)size.width, (int)size.height];
     NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:setSizeCommand
+                                         responseTarget:nil
+                                       responseSelector:nil
+                                         responseObject:nil
+                                                  flags:0],
                          [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"refresh-client -C %d,%d",
                                                          (int)size.width, (int)size.height]
                                          responseTarget:nil
@@ -878,6 +912,15 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
+- (NSString *)windowFlagsForTerminal:(PseudoTerminal *)term {
+    if (term.anyFullScreen) {
+        return [NSString stringWithFormat:@"%@=%@",
+                kTmuxWindowOpenerWindowFlagStyle, kTmuxWindowOpenerWindowFlagStyleValueFullScreen];
+    } else {
+        return @"";
+    }
+}
+
 - (void)saveAffinities {
     if (pendingWindowOpens_.count) {
         return;
@@ -897,9 +940,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
             [siblings addObject:[term terminalGuid]];
         }
         if (siblings.count > 0) {
-            [affinities addObject:[siblings componentsJoinedByString:@","]];
+            NSString *value = [NSString stringWithFormat:@"%@;%@",
+                               [siblings componentsJoinedByString:@","],
+                               [self windowFlagsForTerminal:term]];
+            [affinities addObject:value];
         }
     }
+    // Update affinities if any have changed.
     NSString *arg = [affinities componentsJoinedByString:@" "];
     NSString *command = [NSString stringWithFormat:@"set -t $%d @affinities \"%@\"",
                          sessionId_, [arg stringByEscapingQuotes]];
@@ -1063,6 +1110,32 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [self setAffinitiesFromString:result];
 }
 
+- (NSArray *)componentsOfAffinities:(NSString *)affinities {
+    NSRange semicolonRange = [affinities rangeOfString:@";"];
+    if (semicolonRange.location != NSNotFound) {
+        NSString *siblings = [affinities substringToIndex:semicolonRange.location];
+        NSString *windowFlags = [affinities substringFromIndex:NSMaxRange(semicolonRange)];
+        return @[ siblings, windowFlags ];
+    } else {
+        return @[ affinities, @"" ];
+    }
+}
+
+// Takes key1=value1,key2=value2 and returns @{ key1: value1, key2: value2 }
+- (NSDictionary *)windowFlagsFromString:(NSString *)kvpString {
+    NSMutableDictionary *flags = [NSMutableDictionary dictionary];
+    NSArray *kvps = [kvpString componentsSeparatedByString:@","];
+    for (NSString *flagString in kvps) {
+        NSRange equalsRange = [flagString rangeOfString:@"="];
+        if (equalsRange.location != NSNotFound) {
+            NSString *key = [flagString substringToIndex:equalsRange.location];
+            NSString *value = [flagString substringFromIndex:NSMaxRange(equalsRange)];
+            flags[key] = value;
+        }
+    }
+    return flags;
+}
+
 - (void)setAffinitiesFromString:(NSString *)result {
     // Replace the existing equivalence classes with those defined by the
     // affinity response.
@@ -1076,7 +1149,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         return;
     }
 
-    for (NSString *affset in affinities) {
+    for (NSString *theString in affinities) {
+        NSArray *components = [self componentsOfAffinities:theString];
+        NSString *affset = components[0];
+        NSString *windowFlagsString = components[1];
+
         NSArray *siblings = [affset componentsSeparatedByString:@","];
         NSString *exemplar = [siblings lastObject];
         if (siblings.count == 1) {
@@ -1086,10 +1163,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
             // unrecognized windows.
             exemplar = [exemplar stringByAppendingString:@"_ph"];
         }
+        NSDictionary *flags = [self windowFlagsFromString:windowFlagsString];
         for (NSString *widString in siblings) {
             if (![widString isEqualToString:exemplar]) {
                 [affinities_ setValue:widString
                          equalToValue:exemplar];
+                _windowFlags[widString] = flags;
             }
         }
     }

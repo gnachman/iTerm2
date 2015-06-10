@@ -749,7 +749,7 @@ Gw
                             <rect key="frame" x="1" y="17" width="762" height="247"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
+                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783" customClass="iTermTriggerTableView">
                                     <rect key="frame" x="0.0" y="0.0" width="761" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
@@ -1457,7 +1457,9 @@ DQ
                 <outlet property="_nonAsciiFontDescription" destination="4777" id="uzs-2L-0L5"/>
                 <outlet property="_nonAsciiFontView" destination="15P-ty-S1w" id="zin-qX-W0C"/>
                 <outlet property="_nonasciiAntiAliased" destination="4783" id="0xN-uO-bEh"/>
+                <outlet property="_nonasciiFontWantsAntialiasing" destination="IpC-rY-rHI" id="6PY-Kl-YD9"/>
                 <outlet property="_normalFontDescription" destination="4775" id="Pwe-1n-DX6"/>
+                <outlet property="_normalFontWantsAntialiasing" destination="QMj-Rf-IwZ" id="uPi-s4-g9d"/>
                 <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
                 <outlet property="_useBrightBold" destination="4766" id="d50-Oo-kAM"/>
                 <outlet property="_useHFSPlusMapping" destination="IwR-5a-srh" id="7OQ-G1-Lv5"/>
@@ -2634,7 +2636,7 @@ DQ
                     </connections>
                 </button>
                 <customView id="15P-ty-S1w">
-                    <rect key="frame" x="20" y="20" width="474" height="67"/>
+                    <rect key="frame" x="20" y="20" width="519" height="67"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField verticalHuggingPriority="750" id="4777">
@@ -2679,8 +2681,26 @@ DQ
                                 <outlet property="nextKeyView" destination="5126" id="5253"/>
                             </connections>
                         </button>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="IpC-rY-rHI">
+                            <rect key="frame" x="234" y="3" width="205" height="11"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="This font may look bad without anti-aliasing" id="75W-74-b8h">
+                                <font key="font" metaFont="miniSystem"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
                     </subviews>
                 </customView>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="QMj-Rf-IwZ">
+                    <rect key="frame" x="256" y="121" width="205" height="11"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="This font may look bad without anti-aliasing" id="fZK-Jv-MhF">
+                        <font key="font" metaFont="miniSystem"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
             </subviews>
         </customView>
         <customView id="77f-eM-Dma" userLabel="Prefs - Profiles - Window" customClass="iTermSizeRememberingView">

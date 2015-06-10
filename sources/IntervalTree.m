@@ -111,6 +111,61 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 
 @end
 
+@interface IntervalTreeReverseEnumerator : NSEnumerator {
+    long long previousLocation_;
+    IntervalTree *tree_;
+}
+@property(nonatomic, assign) long long previousLocation;
+@end
+
+@implementation IntervalTreeReverseEnumerator
+
+@synthesize previousLocation = previousLocation_;
+
+- (id)initWithTree:(IntervalTree *)tree {
+    self = [super init];
+    if (self) {
+        tree_ = [tree retain];
+        previousLocation_ = -2;
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [tree_ release];
+    [super dealloc];
+}
+
+- (NSArray *)allObjects {
+    NSMutableArray *result = [NSMutableArray array];
+    NSObject *o = [self nextObject];
+    while (o) {
+        [result addObject:o];
+    }
+    return result;
+}
+
+- (id)nextObject {
+    NSArray *objects;
+    if (previousLocation_ == -2) {
+        objects = [tree_ objectsWithLargestLocation];
+    } else if (previousLocation_ == -1) {
+        return nil;
+    } else {
+        objects = [tree_ objectsWithLargestLocationBefore:previousLocation_];
+    }
+    if (!objects.count) {
+        previousLocation_ = -1;
+        return nil;
+    } else {
+        id<IntervalTreeObject> obj = objects[0];
+        previousLocation_ = [obj.entry.interval location];
+        return objects;
+    }
+}
+
+@end
+
 @implementation Interval
 
 + (Interval *)intervalWithLocation:(long long)location length:(long long)length {
@@ -153,6 +208,12 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 
 - (BOOL)isEqualToInterval:(Interval *)interval {
     return self.location == interval.location && self.length == interval.length;
+}
+
+#pragma mark - NSCopying
+
+- (instancetype)copyWithZone:(NSZone *)zone {
+    return [[Interval intervalWithLocation:_location length:_length] retain];
 }
 
 @end
@@ -504,6 +565,54 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
     return [self objectsWithLargestLimitFromNode:_tree.root];
 }
 
+- (NSArray *)objectsWithLargestLocation {
+    AATreeNode *node = _tree.root;
+    while (node.right) {
+        node = node.right;
+    }
+    IntervalTreeValue *value = node.data;
+    NSMutableArray *objects = [NSMutableArray array];
+    for (IntervalTreeEntry *entry in value.entries) {
+        [objects addObject:entry.object];
+    }
+    return objects;
+}
+
+- (NSArray *)objectsWithLargestLocationBefore:(long long)location {
+    return [self objectsWithLargestLocationBefore:location atNode:_tree.root];
+}
+
+// Want objects with largest key < location
+- (NSArray *)objectsWithLargestLocationBefore:(long long)location atNode:(AATreeNode *)node {
+    if (!node) {
+        return nil;
+    }
+
+    long long key = [node.key longLongValue];
+    if (key >= location) {
+        // If there is a left subtree, search it. If not, this will return an empty array.
+        return [self objectsWithLargestLocationBefore:location atNode:node.left];
+    }
+
+    // key < location
+    if (node.right) {
+        // There is a larger value in the right subtree, but maybe there's nothing < location?
+        NSArray *result = [self objectsWithLargestLocationBefore:location atNode:node.right];
+        if (result) {
+            return result;
+        }
+    }
+
+    // If you get here then the there was no right subtree or the whole right subtrees had keys > location.
+    // Return the objects in this node.
+    IntervalTreeValue *value = node.data;
+    NSMutableArray *objects = [NSMutableArray array];
+    for (IntervalTreeEntry *entry in value.entries) {
+        [objects addObject:entry.object];
+    }
+    return objects;
+}
+
 - (NSArray *)objectsWithSmallestLimitAfter:(long long)bound fromNode:(AATreeNode *)node {
     if (!node) {
         return nil;
@@ -674,6 +783,14 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 
 - (NSArray *)objectsWithSmallestLimitAfter:(long long)limit {
     return [self objectsWithSmallestLimitAfter:limit fromNode:_tree.root];
+}
+
+- (NSEnumerator *)reverseEnumeratorAt:(long long)start {
+    assert(start >= 0);
+    IntervalTreeReverseEnumerator *enumerator =
+        [[[IntervalTreeReverseEnumerator alloc] initWithTree:self] autorelease];
+    enumerator.previousLocation = start + 1;
+    return enumerator;
 }
 
 - (NSEnumerator *)reverseLimitEnumeratorAt:(long long)start {

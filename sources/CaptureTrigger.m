@@ -112,10 +112,10 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     };
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcemenWithTitle:theTitle
-                                                        style:kiTermAnnouncementViewStyleWarning
-                                                  withActions:@[ @"Show It", @"Silence Warning" ]
-                                                   completion:completion];
+        [iTermAnnouncementViewController announcementWithTitle:theTitle
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Show It", @"Silence Warning" ]
+                                                    completion:completion];
     [aSession queueAnnouncement:announcement
                      identifier:kSuppressCaptureOutputToolNotVisibleWarning];
 }
@@ -140,10 +140,10 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     };
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcemenWithTitle:theTitle
-                                                        style:kiTermAnnouncementViewStyleWarning
-                                                  withActions:@[ @"Install", @"Silence Warning" ]
-                                                   completion:completion];
+        [iTermAnnouncementViewController announcementWithTitle:theTitle
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Install", @"Silence Warning" ]
+                                                    completion:completion];
     [aSession queueAnnouncement:announcement
                      identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
 }
@@ -156,10 +156,10 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     } else {
         iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcemenWithTitle:@"Can't run two coprocesses at once."
-                                                            style:kiTermAnnouncementViewStyleWarning
-                                                      withActions:@[ ]
-                                                       completion:^(int selection) { }];
+            [iTermAnnouncementViewController announcementWithTitle:@"Can't run two coprocesses at once."
+                                                             style:kiTermAnnouncementViewStyleWarning
+                                                       withActions:@[ ]
+                                                        completion:^(int selection) { }];
         announcement.timeout = 2;
         [session queueAnnouncement:announcement
                         identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];

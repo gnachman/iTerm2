@@ -6,22 +6,27 @@
 //
 
 #import "TriggerController.h"
-#import "ProfileModel.h"
-#import "ITAddressBookMgr.h"
-#import "GrowlTrigger.h"
-#import "BounceTrigger.h"
-#import "BellTrigger.h"
-#import "CaptureTrigger.h"
-#import "ScriptTrigger.h"
+
 #import "AlertTrigger.h"
-#import "HighlightTrigger.h"
-#import "MarkTrigger.h"
-#import "Trigger.h"
+#import "BellTrigger.h"
+#import "BounceTrigger.h"
+#import "CaptureTrigger.h"
 #import "CoprocessTrigger.h"
+#import "FutureMethods.h"
+#import "GrowlTrigger.h"
+#import "HighlightTrigger.h"
+#import "ITAddressBookMgr.h"
+#import "iTermNoColorAccessoryButton.h"
+#import "iTermTwoColorWellsCell.h"
+#import "iTermTriggerTableView.h"
+#import "MarkTrigger.h"
+#import "NSColor+iTerm.h"
+#import "PasswordTrigger.h"
+#import "ProfileModel.h"
+#import "ScriptTrigger.h"
 #import "SendTextTrigger.h"
 #import "StopTrigger.h"
-#import "PasswordTrigger.h"
-#import "FutureMethods.h"
+#import "Trigger.h"
 
 static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerControllerPasteboardType";
 
@@ -32,6 +37,7 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
     IBOutlet NSTableColumn *_partialLineColumn;
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSTableColumn *_parametersColumn;
+    int _currentWellNumber;
 }
 
 - (id)init {
@@ -363,8 +369,15 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
     } else if (tableColumn == _parametersColumn) {
         NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
         Trigger *trigger = [self triggerWithAction:triggerDicts[row][kTriggerActionKey]];
+        trigger.param = triggerDicts[row][kTriggerParameterKey];
         if ([trigger takesParameter]) {
-            if ([trigger paramIsPopupButton]) {
+            if ([trigger paramIsTwoColorWells]) {
+                iTermTwoColorWellsCell *cell = [[[iTermTwoColorWellsCell alloc] init] autorelease];
+                cell.textColor = [trigger textColor];
+                cell.backgroundColor = [trigger backgroundColor];
+                [cell setBordered:NO];
+                return cell;
+            } else if ([trigger paramIsPopupButton]) {
                 NSPopUpButtonCell *cell = [[[NSPopUpButtonCell alloc] initTextCell:@""
                                                                          pullsDown:NO] autorelease];
                 NSMenu *theMenu = [cell menu];
@@ -404,7 +417,21 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    _currentWellNumber = -1;
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
+}
+
+- (void)twoColorWellsCellDidOpenPickerForWellNumber:(int)wellNumber {
+    _currentWellNumber = wellNumber;
+    NSColor *currentColor = self.currentColor;
+    if (currentColor) {
+        [[NSColorPanel sharedColorPanel] setColor:self.currentColor];
+    }
+    [_tableView setNeedsDisplay];
+}
+
+- (NSNumber *)currentWellForCell {
+    return @(_currentWellNumber);
 }
 
 - (IBAction)help:(id)sender {
@@ -415,6 +442,59 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
 
 - (void)windowWillClose:(NSNotification *)notification {
     [_tableView reloadData];
+    if ([[[NSColorPanel sharedColorPanel] accessoryView] isKindOfClass:[iTermNoColorAccessoryButton class]]) {
+        [[NSColorPanel sharedColorPanel] setAccessoryView:nil];
+        [[NSColorPanel sharedColorPanel] close];
+    }
+}
+
+#pragma mark - NSResponder
+
+- (void)changeColor:(id)sender {
+    [self setColor:[sender color]];
+}
+
+- (NSColor *)currentColor {
+    NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
+    NSInteger row = _tableView.selectedRow;
+    if (row < 0 || row >= triggerDicts.count) {
+        return nil;
+    }
+    NSMutableDictionary *triggerDictionary = [[[self triggerDictionariesForCurrentProfile][row] mutableCopy] autorelease];
+    HighlightTrigger *trigger = (HighlightTrigger *)[HighlightTrigger triggerFromDict:triggerDictionary];
+    if (_currentWellNumber == 0) {
+        return trigger.textColor;
+    } else if (_currentWellNumber == 1) {
+        return trigger.backgroundColor;
+    }
+    return nil;
+}
+
+- (void)setColor:(NSColor *)color {
+    NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
+    NSInteger row = _tableView.selectedRow;
+    if (row < 0 || row >= triggerDicts.count) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary = [[[self triggerDictionariesForCurrentProfile][row] mutableCopy] autorelease];
+    HighlightTrigger *trigger = (HighlightTrigger *)[HighlightTrigger triggerFromDict:triggerDictionary];
+    if (_currentWellNumber == 0) {
+        trigger.textColor = color;
+    } else if (_currentWellNumber == 1) {
+        trigger.backgroundColor = color;
+    }
+    if (trigger.param) {
+        triggerDictionary[kTriggerParameterKey] = trigger.param;
+    } else {
+        [triggerDictionary removeObjectForKey:kTriggerParameterKey];
+    }
+    [self setTriggerDictionary:triggerDictionary forRow:row];
+
+    [_tableView reloadData];
+}
+
+- (void)noColorChosen:(id)sender {
+    [self setColor:nil];
 }
 
 @end

@@ -1061,19 +1061,11 @@ static const int kDragThreshold = 3;
 // TODO(georgen): Speed this up! This code is dreadfully slow but it's only used
 // when accessibility is on, and it might be faster than voiceover for reasonable
 // amounts of text.
-- (NSString*)_allText
-{
+- (NSString*)_allText {
     if ([_dataSource numberOfLines] > 1000) {
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [iTermWarning showWarningWithTitle:@"Accessibilty is making iTerm2 slow! "
-                                                   @"Reduce the number of lines of scrollback to "
-                                                   @"under 1000 to mitigate the damage."
-                                           actions:@[ @"OK" ]
-                                        identifier:@"NoSyncSlowAccessibilityWarning"
-                                       silenceable:kiTermWarningTypePermanentlySilenceable];
-            });
+            [_delegate textViewWarnThatAccessibilityIsCausingSlowness];
         });
     }
 

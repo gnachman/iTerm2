@@ -21,7 +21,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     long long _lastLineNumber;
     NSString *regex_;
     NSString *action_;
-    NSString *param_;
+    id param_;
 }
 
 @synthesize regex = regex_;
@@ -67,8 +67,11 @@ NSString * const kTriggerPartialLineKey = @"partial";
     assert(false);
 }
 
-- (BOOL)paramIsPopupButton
-{
+- (BOOL)paramIsPopupButton {
+    return NO;
+}
+
+- (BOOL)paramIsTwoColorWells {
     return NO;
 }
 

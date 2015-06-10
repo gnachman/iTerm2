@@ -84,3 +84,20 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
 
 @end
 
+@implementation NSFont(Future)
+
+- (BOOL)futureShouldAntialias {
+    typedef BOOL CTFontShouldAntialiasFunction(CTFontRef);
+    static CTFontShouldAntialiasFunction *function = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        function = GetFunctionByName(@"/System/Library/Frameworks/ApplicationServices.framework",
+                                     "CTFontShouldAntiAlias");
+    });
+    if (function) {
+        return function((CTFontRef)self);
+    }
+    return NO;
+}
+
+@end

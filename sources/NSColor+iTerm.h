@@ -23,6 +23,7 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 
 CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
++ (NSColor *)colorWithString:(NSString *)s;
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
                          blue:(int)blue;
@@ -62,6 +63,7 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 - (BOOL)isDark;
 
 - (NSDictionary *)dictionaryValue;
+- (NSString *)stringValue;
 
 // Return the color you'd get by rendering self over background.
 - (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;

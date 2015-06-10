@@ -165,6 +165,8 @@ typedef enum {
 
 - (void)popupWillClose:(Popup *)popup;
 
+- (void)toggleFullScreenMode:(id)sender;
+
 #pragma mark - Tabs
 
 // Close a tab and resize/close the window if needed.

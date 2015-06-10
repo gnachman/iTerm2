@@ -68,10 +68,10 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
         };
         NSString *title = @"A Coprocess trigger fired but could not run because a coprocess is already running.";
         iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcemenWithTitle:title
-                                                            style:kiTermAnnouncementViewStyleWarning
-                                                      withActions:@[ @"Silence Warning" ]
-                                                       completion:completion];
+            [iTermAnnouncementViewController announcementWithTitle:title
+                                                             style:kiTermAnnouncementViewStyleWarning
+                                                       withActions:@[ @"Silence Warning" ]
+                                                        completion:completion];
         [aSession queueAnnouncement:announcement
                          identifier:kSuppressCoprocessTriggerWarning];
     }
