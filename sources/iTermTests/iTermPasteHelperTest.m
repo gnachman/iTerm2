@@ -269,6 +269,16 @@ static const double kFloatingPointTolerance = 0.00001;
             spacesPerTab:0];
     assert(warned);
 
+    // Check crlf newline
+    warned = NO;
+    [_helper pasteString:@"line 1\r\nline 2"
+                  slowly:NO
+        escapeShellChars:NO
+                commands:NO
+            tabTransform:kTabTransformNone
+            spacesPerTab:0];
+    assert(warned);
+
     // Check no newline gives no warning.
     warned = NO;
     [_helper pasteString:@"line 1"
