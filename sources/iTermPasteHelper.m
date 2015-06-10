@@ -21,6 +21,7 @@
 #import "PasteContext.h"
 #import "PasteEvent.h"
 #import "PasteViewController.h"
+#import "RegexKitLite.h"
 
 const int kNumberOfSpacesPerTabCancel = -2;
 const int kNumberOfSpacesPerTabNoConversion = -1;
@@ -464,16 +465,28 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
         rangeOfFirstNewline.location == string.length - 1) {
         return YES;
     }
+    BOOL atShellPrompt = [_delegate pasteHelperIsAtShellPrompt];
     if ([iTermAdvancedSettingsModel suppressMultilinePasteWarningWhenNotAtShellPrompt] &&
-        ![_delegate pasteHelperIsAtShellPrompt]) {
+        !atShellPrompt) {
         return YES;
     }
-    NSArray *lines = [string componentsSeparatedByString:@"\n"];
-    if (lines.count < 2) {
-        return YES;
+    NSArray *lines = [string componentsSeparatedByRegex:@"(?:\r\n)|(?:\r)|(?:\n)"];
+    NSString *theTitle;
+    if (lines.count > 1) {
+        if (atShellPrompt) {
+            theTitle = [NSString stringWithFormat:@"OK to paste %d lines at shell prompt?",
+                        (int)[lines count]];
+        } else {
+            theTitle = [NSString stringWithFormat:@"OK to paste %d lines?",
+                        (int)[lines count]];
+        }
+    } else {
+        if (atShellPrompt) {
+            theTitle = @"OK to paste one line ending in a newline at shell prompt?";
+        } else {
+            theTitle = @"OK to paste one line ending in a newline?";
+        }
     }
-    NSString *theTitle = [NSString stringWithFormat:@"OK to paste %d lines?",
-                             (int)[lines count]];
     iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:theTitle
                                    actions:@[ @"Paste", @"Cancel" ]

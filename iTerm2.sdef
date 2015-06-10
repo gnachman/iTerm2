@@ -496,7 +496,7 @@
       </property>
 
       <property name="unique ID" code="Uniq" type="text" access="r">
-        <cocoa key="uniqueID" />
+        <cocoa key="guid" />
       </property>
 
     </class>

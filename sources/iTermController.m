@@ -30,6 +30,7 @@
 #import "FutureMethods.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PTYSession.h"
@@ -109,6 +110,17 @@ BOOL IsYosemiteOrLater(void) {
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
     NSMutableArray *_currentRestorableSessionsStack;
+
+    // PseudoTerminal objects
+    NSMutableArray *terminalWindows;
+    id FRONT;
+    ItermGrowlDelegate *gd;
+
+    int keyWindowIndexMemo_;
+
+    // For restoring previously active app when exiting hotkey window
+    NSNumber *previouslyActiveAppPID_;
+    id runningApplicationClass_;
 }
 
 static iTermController* shared = nil;
@@ -124,8 +136,7 @@ static BOOL initDone = NO;
     return shared;
 }
 
-+ (void)sharedInstanceRelease
-{
++ (void)sharedInstanceRelease {
     [shared release];
     shared = nil;
 }
@@ -170,17 +181,46 @@ static BOOL initDone = NO;
     return (self);
 }
 
-- (void)dealloc
-{
+- (BOOL)willRestoreWindowsAtNextLaunch {
+  return (![iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] &&
+          ![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
+          [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]);
+}
+
+- (BOOL)shouldLeaveSessionsRunningOnQuit {
+    const BOOL sessionsWillRestore = ([iTermAdvancedSettingsModel runJobsInServers] &&
+                                      [iTermAdvancedSettingsModel restoreWindowContents] &&
+                                      self.willRestoreWindowsAtNextLaunch);
+    iTermApplicationDelegate *itad =
+        (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    return (sessionsWillRestore &&
+            (itad.sparkleRestarting || ![iTermAdvancedSettingsModel killJobsInServersOnQuit]));
+}
+
+- (void)dealloc {
     // Save hotkey window arrangement to user defaults before closing it.
     [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
 
-    // Close all terminal windows]
-    while ([terminalWindows count] > 0) {
-        [[terminalWindows objectAtIndex:0] close];
+    if (self.shouldLeaveSessionsRunningOnQuit) {
+        // We don't want to kill running jobs. This can be for one of two reasons:
+        //
+        // 1. Sparkle is restarting the app. Because jobs are run in servers and window
+        //    restoration is on, we don't want to close term windows because that will
+        //    send SIGHUP to the job processes. Normally this path is taken during
+        //    a user-initiated quit, so we want the jobs killed, but not in this case.
+        // 2. The user has set a pref to not kill jobs on quit.
+        //
+        // In either case, we only get here if we're pretty sure everything will get restored
+        // nicely.
+        [terminalWindows autorelease];
+    } else {
+        // Close all terminal windows, killing jobs.
+        while ([terminalWindows count] > 0) {
+            [[terminalWindows objectAtIndex:0] close];
+        }
+        NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
+        [terminalWindows release];
     }
-    NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
-    [terminalWindows release];
 
     // Release the GrowlDelegate
     if (gd) {
@@ -1174,7 +1214,10 @@ static BOOL initDone = NO;
     if (block) {
         session = block(term);
     } else if (url) {
-        session = [term createSessionWithProfile:aDict withURL:url forObjectType:objectType];
+        session = [term createSessionWithProfile:aDict
+                                         withURL:url
+                                   forObjectType:objectType
+                                serverConnection:NULL];
     } else {
         session = [term createTabWithProfile:aDict withCommand:command];
     }
@@ -1409,6 +1452,15 @@ static BOOL initDone = NO;
 
 - (BOOL)hasRestorableSession {
     return _restorableSessions.count > 0;
+}
+
+- (void)killRestorableSessions {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    for (iTermRestorableSession *restorableSession in _restorableSessions) {
+        for (PTYSession *aSession in restorableSession.sessions) {
+            [aSession.shell sendSignal:SIGHUP];
+        }
+    }
 }
 
 // accessors for to-many relationships:

@@ -41,6 +41,7 @@
 }
 
 - (void)loadView {
+    [self retain];
     self.view = [iTermAnnouncementView announcementViewWithTitle:self.title
                                                            style:_style
                                                          actions:self.actions
@@ -49,6 +50,7 @@
                                                                    self.completion(index);
                                                                    [self dismiss];
                                                                }
+                                                               [self release];
                                                            }];
 }
 

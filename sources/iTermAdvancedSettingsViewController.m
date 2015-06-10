@@ -6,7 +6,7 @@
 //
 //
 
-#import "iTermAdvancedSettingsController.h"
+#import "iTermAdvancedSettingsViewController.h"
 #import "iTermAdvancedSettingsModel.h"
 #import <objc/runtime.h>
 
@@ -42,7 +42,7 @@ static NSString *const kAdvancedSettingDescription = @"kAdvancedSettingDescripti
 static BOOL gIntrospecting;
 static NSDictionary *gIntrospection;
 
-@implementation iTermAdvancedSettingsController {
+@implementation iTermAdvancedSettingsViewController {
     IBOutlet NSTableColumn *_settingColumn;
     IBOutlet NSTableColumn *_valueColumn;
     IBOutlet NSSearchField *_searchField;
@@ -145,6 +145,25 @@ static NSDictionary *gIntrospection;
     return [[self advancedSettings] sortedArrayUsingSelector:@selector(compareAdvancedSettingDicts:)];
 }
 
++ (NSArray *)groupedSettingsArrayFromSortedArray:(NSArray *)sorted {
+    NSString *previousCategory = nil;
+    NSMutableArray *result = [NSMutableArray array];
+    for (NSDictionary *dict in sorted) {
+        NSString *description = dict[kAdvancedSettingDescription];
+        NSInteger colon = [description rangeOfString:@":"].location;
+        NSString *thisCategory = [description substringToIndex:colon];
+        NSString *remainder = [description substringFromIndex:colon + 2];
+        if (![thisCategory isEqualToString:previousCategory]) {
+            previousCategory = [[thisCategory copy] autorelease];
+            [result addObject:thisCategory];
+        }
+        NSMutableDictionary *temp = [[dict mutableCopy] autorelease];
+        temp[kAdvancedSettingDescription] = remainder;
+        [result addObject:temp];
+    }
+    return result;
+}
+
 + (NSArray *)advancedSettings {
     static NSMutableArray *settings;
     if (!settings) {
@@ -172,12 +191,104 @@ static NSDictionary *gIntrospection;
     return settings;
 }
 
+- (void)awakeFromNib {
+    [_tableView setFloatsGroupRows:YES];
+    [_tableView setGridColor:[NSColor clearColor]];
+    [_tableView setGridStyleMask:NSTableViewGridNone];
+    [_tableView setIntercellSpacing:NSMakeSize(0, 0)];
+    [_tableView setBackgroundColor:[NSColor whiteColor]];
+}
+
+- (NSMutableAttributedString *)attributedStringForString:(NSString *)string
+                                                    size:(CGFloat)size
+                                               topMargin:(CGFloat)topMargin
+                                                selected:(BOOL)selected
+                                                    bold:(BOOL)bold {
+    NSDictionary *spacerAttributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:topMargin] };
+    NSAttributedString *topSpacer = [[[NSAttributedString alloc] initWithString:@"\n"
+                                                                     attributes:spacerAttributes] autorelease];
+    NSDictionary *attributes =
+        @{ NSFontAttributeName: bold ? [NSFont boldSystemFontOfSize:size] : [NSFont systemFontOfSize:size],
+           NSForegroundColorAttributeName: selected ? [NSColor whiteColor] : [NSColor blackColor] };
+    NSAttributedString *title = [[[NSAttributedString alloc] initWithString:string
+                                                                 attributes:attributes] autorelease];
+    NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+    [result appendAttributedString:topSpacer];
+    [result appendAttributedString:title];
+    return result;
+}
+
+- (NSAttributedString *)attributedStringForGroupNamed:(NSString *)groupName {
+    return [self attributedStringForString:groupName size:20 topMargin:8 selected:NO bold:YES];
+}
+
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)row {
+    NSArray *settings = [self filteredAdvancedSettings];
+    id obj = settings[row];
+    if ([obj isKindOfClass:[NSString class]]) {
+        return [[self attributedStringForGroupNamed:obj] size].height;
+    } else {
+        NSCell *cell = [tableView preparedCellAtColumn:0 row:row];
+        [cell setWraps:YES];
+        NSTableColumn *column = [[tableView tableColumns] firstObject];
+        NSRect constrainedBounds = NSMakeRect(0, 0, column.width, CGFLOAT_MAX);
+        NSSize naturalSize = [cell cellSizeForBounds:constrainedBounds];
+        return naturalSize.height + 4;
+    }
+}
+
+- (void)tableView:(NSTableView *)tableView
+  willDisplayCell:(id)cell
+   forTableColumn:(NSTableColumn *)tableColumn
+              row:(NSInteger)row {
+    NSArray *settings = [self filteredAdvancedSettings];
+    id obj = settings[row];
+    [cell setBackgroundColor:[NSColor whiteColor]];
+    if ([obj isKindOfClass:[NSString class]]) {
+        [cell setDrawsBackground:YES];
+    } else {
+        [cell setWraps:YES];
+    }
+}
+
 - (id)tableView:(NSTableView *)tableView
     objectValueForTableColumn:(NSTableColumn *)tableColumn
                           row:(NSInteger)row {
     NSArray *settings = [self filteredAdvancedSettings];
+    id obj = settings[row];
+    if ([obj isKindOfClass:[NSString class]]) {
+        if (tableColumn == _settingColumn) {
+            return [self attributedStringForGroupNamed:obj];
+        } else {
+            return nil;
+        }
+    }
+
     if (tableColumn == _settingColumn) {
-        return settings[row][kAdvancedSettingDescription];
+        NSString *description = settings[row][kAdvancedSettingDescription];
+        NSUInteger newline = [description rangeOfString:@"\n"].location;
+        NSString *subtitle = nil;
+        if (newline != NSNotFound) {
+            subtitle = [description substringFromIndex:newline];
+            description = [description substringToIndex:newline];
+        }
+
+        NSMutableAttributedString *attributedDescription =
+            [self attributedStringForString:description
+                                       size:[NSFont systemFontSize]
+                                  topMargin:2
+                                   selected:tableView.selectedRow == row
+                                       bold:NO];
+        if (subtitle) {
+            NSColor *color = (tableView.selectedRow == row) ? [NSColor whiteColor] : [NSColor grayColor];
+            NSDictionary *attributes = @{ NSForegroundColorAttributeName: color,
+                                          NSFontAttributeName: [NSFont systemFontOfSize:11] };
+            NSAttributedString *attributedSubtitle =
+                [[[NSAttributedString alloc] initWithString:subtitle
+                                                 attributes:attributes] autorelease];
+            [attributedDescription appendAttributedString:attributedSubtitle];
+        }
+        return attributedDescription;
     } else if (tableColumn == _valueColumn) {
         NSDictionary *dict = settings[row];
         NSString *identifier = dict[kAdvancedSettingIdentifier];
@@ -220,7 +331,7 @@ static NSDictionary *gIntrospection;
 
 - (NSArray *)filteredAdvancedSettings {
     if (_searchField.stringValue.length == 0) {
-        return [[self class] sortedAdvancedSettings];
+        return [[self class] groupedSettingsArrayFromSortedArray:[[self class] sortedAdvancedSettings]];
     } else {
         NSMutableArray *result = [NSMutableArray array];
         NSArray *parts = [_searchField.stringValue componentsSeparatedByString:@" "];
@@ -230,7 +341,7 @@ static NSDictionary *gIntrospection;
                 [result addObject:dict];
             }
         }
-        return result;
+        return [[self class] groupedSettingsArrayFromSortedArray:result];
     }
 }
 
@@ -243,6 +354,11 @@ static NSDictionary *gIntrospection;
                        row:(NSInteger)row {
     if (tableColumn == _valueColumn) {
         NSArray *settings = [self filteredAdvancedSettings];
+        id obj = settings[row];
+        if ([obj isKindOfClass:[NSString class]]) {
+            return nil;
+        }
+
         NSDictionary *dict = settings[row];
         switch ([dict advancedSettingType]) {
             case kiTermAdvancedSettingTypeBoolean: {
@@ -272,6 +388,12 @@ static NSDictionary *gIntrospection;
 - (BOOL)tableView:(NSTableView *)aTableView
       shouldEditTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex {
+    NSArray *settings = [self filteredAdvancedSettings];
+    id obj = settings[rowIndex];
+    if ([obj isKindOfClass:[NSString class]]) {
+        return NO;
+    }
+
     return aTableColumn == _valueColumn;
 }
 
@@ -281,6 +403,10 @@ static NSDictionary *gIntrospection;
               row:(NSInteger)row {
     if (tableColumn == _valueColumn) {
         NSArray *settings = [self filteredAdvancedSettings];
+        id obj = settings[row];
+        if ([obj isKindOfClass:[NSString class]]) {
+            return;
+        }
         NSDictionary *dict = settings[row];
         NSString *identifier = dict[kAdvancedSettingIdentifier];
         switch ([dict advancedSettingType]) {
@@ -304,6 +430,12 @@ static NSDictionary *gIntrospection;
                 break;
         }
     }
+}
+
+- (BOOL)tableView:(NSTableView *)tableView isGroupRow:(NSInteger)row {
+    NSArray *settings = [self filteredAdvancedSettings];
+    id obj = settings[row];
+    return ([obj isKindOfClass:[NSString class]]);
 }
 
 #pragma mark - NSControl Delegate

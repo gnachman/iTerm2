@@ -7,11 +7,25 @@
 //
 
 #import "VT100RemoteHost.h"
+#import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
+
+static NSString *const kRemoteHostHostNameKey = @"Host name";
+static NSString *const kRemoteHostUserNameKey = @"User name";
 
 @implementation VT100RemoteHost
 @synthesize entry;
 
-- (void)dealloc {
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+    self = [super init];
+    if (self) {
+        self.hostname = dict[kRemoteHostHostNameKey];
+        self.username = dict[kRemoteHostUserNameKey];
+    }
+    return self;
+}
+
+- (void)dealloc {   
     [_hostname release];
     [_username release];
     [super dealloc];
@@ -29,6 +43,15 @@
 
 - (NSString *)usernameAndHostname {
     return [NSString stringWithFormat:@"%@@%@", _username, _hostname];
+}
+
+#pragma mark - IntervalTreeObject
+
+- (NSDictionary *)dictionaryValue {
+    NSDictionary *dict =
+        @{ kRemoteHostHostNameKey: _hostname ?: [NSNull null],
+           kRemoteHostUserNameKey: _username ?: [NSNull null] };
+    return [dict dictionaryByRemovingNullValues];
 }
 
 @end

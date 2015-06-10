@@ -49,6 +49,30 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @end
 
 @implementation TmuxController {
+    TmuxGateway *gateway_;
+    NSMutableDictionary *windowPanes_;  // paneId -> PTYSession *
+    NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
+    NSArray *sessions_;
+    int numOutstandingWindowResizes_;
+    NSMutableDictionary *windowPositions_;
+    NSSize lastSize_;  // last size for windowDidChange:
+    NSString *lastOrigins_;
+    BOOL detached_;
+    NSString *sessionName_;
+    int sessionId_;
+    NSMutableSet *pendingWindowOpens_;
+    NSString *lastSaveAffinityCommand_;
+    // tmux windows that want to open as tabs in the same physical window
+    // belong to the same equivalence class.
+    EquivalenceClassSet *affinities_;
+    BOOL windowOriginsDirty_;
+    BOOL haveOutstandingSaveWindowOrigins_;
+    NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
+    NSMutableSet *hiddenWindows_;
+    NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
+    NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
+    BOOL ambiguousIsDoubleWidth_;
+
     // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
     // top of its header file)
     NSMutableDictionary *_windowFlags;
@@ -59,6 +83,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @synthesize sessionName = sessionName_;
 @synthesize sessions = sessions_;
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
+@synthesize sessionId = sessionId_;
 
 - (id)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName
 {

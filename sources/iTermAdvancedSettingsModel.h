@@ -95,4 +95,9 @@
 + (BOOL)useDoubleBufferedGrid;
 + (BOOL)eliminateCloseButtons;
 
++ (BOOL)runJobsInServers;
++ (BOOL)killJobsInServersOnQuit;
+
++ (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
+
 @end

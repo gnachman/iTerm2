@@ -1,6 +1,7 @@
 #import "PTYSession.h"
 
 #import "CommandHistory.h"
+#import "CommandUse.h"
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
@@ -29,6 +30,7 @@
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
+#import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -101,17 +103,41 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 static NSString *const SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
 static NSString *const SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
 static NSString *const SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
+static NSString *const SESSION_ARRANGEMENT_IS_TMUX_GATEWAY = @"Is Tmux Gateway";
+static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME = @"Tmux Gateway Session Name";
+static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID = @"Tmux Gateway Session ID";
 static NSString *const SESSION_ARRANGEMENT_DEFAULT_NAME = @"Session Default Name";  // manually set name
 static NSString *const SESSION_ARRANGEMENT_WINDOW_TITLE = @"Session Window Title";  // server-set window name
 static NSString *const SESSION_ARRANGEMENT_NAME = @"Session Name";  // server-set "icon" (tab) name
 static NSString *const SESSION_ARRANGEMENT_GUID = @"Session GUID";  // A truly unique ID.
 static NSString *const SESSION_ARRANGEMENT_LIVE_SESSION = @"Live Session";  // If zoomed, this gives the "live" session's arrangement.
 static NSString *const SESSION_ARRANGEMENT_SUBSTITUTIONS = @"Substitutions";  // Dictionary for $$VAR$$ substitutions
-static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // -uniqueId, used for restoring soft-terminated sessions
+static NSString *const SESSION_UNIQUE_ID = @"Session Unique ID";  // DEPRECATED. A string used for restoring soft-terminated sessions for arrangements that predate the introduction of the GUID.
+static NSString *const SESSION_ARRANGEMENT_SERVER_PID = @"Server PID";  // PID for server process for restoration
+static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
+static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
+static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED = @"Shell Integration Ever Used";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK = @"Alert on Next Mark";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_COMMANDS = @"Commands";  // Array of strings
+static NSString *const SESSION_ARRANGEMENT_DIRECTORIES = @"Directories";  // Array of strings
+static NSString *const SESSION_ARRANGEMENT_HOSTS = @"Hosts";  // Array of VT100RemoteHost
+static NSString *const SESSION_ARRANGEMENT_CURSOR_GUIDE = @"Cursor Guide";  // BOOL
+static NSString *const SESSION_ARRANGEMENT_LAST_DIRECTORY = @"Last Directory";  // NSString
+static NSString *const SESSION_ARRANGEMENT_SELECTION = @"Selection";  // Dictionary for iTermSelection.
+
+static NSString *const SESSION_ARRANGEMENT_PROGRAM = @"Program";  // Dictionary. See kProgram constants below.
+static NSString *const SESSION_ARRANGEMENT_ENVIRONMENT = @"Environment";  // Dictionary of environment vars program was run in
+static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in utf-8 mode
+
+// Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
+static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
+static NSString *const kProgramCommand = @"Command";  // For kProgramTypeCommand: value is command to run.
+
+// Values for kProgramType
+static NSString *const kProgramTypeShellLauncher = @"Shell Launcher";  // Use iTerm2 --launch_shell
+static NSString *const kProgramTypeCommand = @"Command";  // Use command in kProgramCommand
 
 static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
-
-static int gNextSessionID = 1;
 
 // Keys into _variables.
 static NSString *const kVariableKeySessionName = @"session.name";
@@ -133,14 +159,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @interface PTYSession () <iTermPasteHelperDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
-@property(nonatomic, assign) int sessionID;
 @property(nonatomic, readwrite) NSTimeInterval lastOutput;
 @property(nonatomic, readwrite) BOOL isDivorced;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
-@property(nonatomic, copy) NSString *uniqueID;
 @property(nonatomic, copy) NSString *badgeFormat;
 @property(nonatomic, retain) NSMutableDictionary *variables;
 
@@ -339,7 +363,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     self = [super init];
     if (self) {
         _triggerLineNumber = -1;
-        _sessionID = gNextSessionID++;
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
@@ -449,7 +472,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_patternedImage release];
     [_announcements release];
     [_queuedTokens release];
-    [_uniqueID release];
     [_badgeFormat release];
     [_variables release];
     [_program release];
@@ -672,20 +694,93 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [[theTab realParentWindow] setWindowTitle];
     }
     [aSession setTab:theTab];
+
+    BOOL haveSavedProgramData = YES;
+    if ([arrangement[SESSION_ARRANGEMENT_PROGRAM] isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *dict = arrangement[SESSION_ARRANGEMENT_PROGRAM];
+        if ([dict[kProgramType] isEqualToString:kProgramTypeShellLauncher]) {
+            aSession.program = [ITAddressBookMgr shellLauncherCommand];
+        } else if ([dict[kProgramType] isEqualToString:kProgramTypeCommand]) {
+            aSession.program = dict[kProgramCommand];
+        } else {
+            haveSavedProgramData = NO;
+        }
+    } else {
+        haveSavedProgramData = NO;
+    }
+    if (arrangement[SESSION_ARRANGEMENT_ENVIRONMENT]) {
+        aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
+    } else {
+        haveSavedProgramData = NO;
+    }
+
+    if (arrangement[SESSION_ARRANGEMENT_IS_UTF_8]) {
+        aSession.isUTF8 = [arrangement[SESSION_ARRANGEMENT_IS_UTF_8] boolValue];
+    } else {
+        haveSavedProgramData = NO;
+    }
+
+    if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
+        aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
+    } else {
+        haveSavedProgramData = NO;
+    }
+
+
     NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    BOOL shouldEnterTmuxMode = NO;
+    BOOL didRestoreContents = NO;
+    BOOL attachedToServer = NO;
     if (!n) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
         NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
+        BOOL runCommand = YES;
+        if ([iTermAdvancedSettingsModel runJobsInServers]) {
+            DLog(@"Configured to run jobs in servers");
+            // iTerm2 is currently configured to run jobs in servers, but we
+            // have to check if the arrangement was saved with that setting on.
+            if (arrangement[SESSION_ARRANGEMENT_SERVER_PID]) {
+                DLog(@"Have a server PID in the arrangement");
+                // The arrangement was save with a process ID so the server may still exist.
+                if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
+                    DLog(@"Was a tmux gateway. Start recovery mode in parser.");
+                    // Before attaching to the server we can put the parser into "tmux recovery mode".
+                    [aSession.terminal.parser startTmuxRecoveryMode];
+                }
+                pid_t serverPid = [arrangement[SESSION_ARRANGEMENT_SERVER_PID] intValue];
+                DLog(@"Try to attach to pid %d", (int)serverPid);
+                if ([aSession tryToAttachToServerWithProcessId:serverPid]) {
+                    DLog(@"Success!");
+                    runCommand = NO;
+                    attachedToServer = YES;
+                    shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
+                                           arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
+                                           arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
+                }
+            }
+        }
 
-        // When restoring a window arrangement with contents and a nonempty saved directory, always
-        // use the saved working directory, even if that contravenes the default setting for the
-        // profile.
-        NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
-        [aSession runCommandWithOldCwd:oldCWD
-                         forObjectType:objectType
-                        forceUseOldCWD:contents != nil && oldCWD.length
-                         substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
+        if (runCommand) {
+            // This path is NOT taken when attaching to a running server.
+            //
+            // When restoring a window arrangement with contents and a nonempty saved directory, always
+            // use the saved working directory, even if that contravenes the default setting for the
+            // profile.
+            NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+            DLog(@"Running command...");
+            if (haveSavedProgramData) {
+                [aSession startProgram:aSession.program
+                           environment:aSession.environment
+                                isUTF8:aSession.isUTF8
+                         substitutions:aSession.substitutions];
+            } else {
+                [aSession runCommandWithOldCwd:oldCWD
+                                 forObjectType:objectType
+                                forceUseOldCWD:contents != nil && oldCWD.length
+                                 substitutions:arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]];
+            }
+        }
 
         // GUID will be set for new saved arrangements since late 2014.
         // Older versions won't be able to associate saved state with windows from a saved arrangement.
@@ -700,18 +795,24 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 aSession.guid = guid;
                 DLog(@"Assign guid %@ to session %@ which will have its contents restored from registered contents",
                      guid, aSession);
-            } else if ([[iTermController sharedInstance] startingUp]) {
-                // Use the arrangement's guid during startup because we assume the session is being
-                // restored from a saved arrangement.
+            } else if ([[iTermController sharedInstance] startingUp] ||
+                       arrangement[SESSION_ARRANGEMENT_CONTENTS]) {
+                // If startingUp is set, then the session is being restored from the default
+                // arrangement, per user preference.
+                // If contents are present, then system window restoration is bringing back a
+                // session.
                 aSession.guid = guid;
-                DLog(@"iTerm2 is starting up. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
+                DLog(@"iTerm2 is starting up or has contents. Assign guid %@ to session %@ (session is loaded from saved arrangement. No content registered.)", guid, aSession);
             }
         }
         DLog(@"Have contents=%@", @(contents != nil));
         DLog(@"Restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
         if (contents && [iTermAdvancedSettingsModel restoreWindowContents]) {
             DLog(@"Loading content from line buffer dictionary");
-            [aSession setContentsFromLineBufferDictionary:contents];
+            [aSession setContentsFromLineBufferDictionary:contents
+                                 includeRestorationBanner:runCommand
+                                               reattached:attachedToServer];
+            didRestoreContents = YES;
         }
     } else {
         NSString *title = [state objectForKey:@"title"];
@@ -745,6 +846,57 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]) {
         [aSession setWindowTitle:arrangement[SESSION_ARRANGEMENT_WINDOW_TITLE]];
     }
+    if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
+        NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
+        for (id key in variables) {
+            aSession.variables[key] = variables[key];
+        }
+        aSession.textview.badgeLabel = aSession.badgeLabel;
+    }
+    if (arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED]) {
+        aSession->_shellIntegrationEverUsed = [arrangement[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] boolValue];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_COMMANDS]) {
+        [aSession.commands addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_COMMANDS]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_DIRECTORIES]) {
+        [aSession.directories addObjectsFromArray:arrangement[SESSION_ARRANGEMENT_DIRECTORIES]];
+    }
+    if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
+        for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
+            VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
+            if (remoteHost) {
+                [aSession.hosts addObject:remoteHost];
+            }
+        }
+    }
+
+    if (arrangement[SESSION_ARRANGEMENT_SELECTION]) {
+        [aSession.textview.selection setFromDictionaryValue:arrangement[SESSION_ARRANGEMENT_SELECTION]];
+    }
+    if (didRestoreContents && attachedToServer) {
+        Interval *interval = aSession.screen.lastPromptMark.entry.interval;
+        if (interval) {
+            VT100GridRange gridRange = [aSession.screen lineNumberRangeOfInterval:interval];
+            aSession->_lastPromptLine = gridRange.location + aSession.screen.totalScrollbackOverflow;
+        }
+
+        if (arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE]) {
+            aSession->_commandRange = [arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE] gridCoordRange];
+        }
+        if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
+            aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
+        }
+        if (arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE]) {
+            aSession.textview.highlightCursorLine = [arrangement[SESSION_ARRANGEMENT_CURSOR_GUIDE] boolValue];
+        }
+        aSession->_lastMark = [aSession.screen.lastMark retain];
+        aSession.lastRemoteHost = [aSession.screen.lastRemoteHost retain];
+        if (arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY]) {
+            [aSession->_lastDirectory autorelease];
+            aSession->_lastDirectory = [arrangement[SESSION_ARRANGEMENT_LAST_DIRECTORY] copy];
+        }
+    }
 
     if (state) {
         [[aSession screen] setTmuxState:state];
@@ -776,11 +928,38 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                       inTab:theTab
                                               forObjectType:objectType];
     }
+    if (shouldEnterTmuxMode) {
+        // Restored a tmux gateway session.
+        [aSession startTmuxMode];
+        [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
+                                        sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
+    }
     return aSession;
 }
 
-- (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict {
-    [_screen appendFromDictionary:dict];
+- (void)setContentsFromLineBufferDictionary:(NSDictionary *)dict
+                   includeRestorationBanner:(BOOL)includeRestorationBanner
+                                 reattached:(BOOL)reattached {
+    [_screen restoreFromDictionary:dict
+          includeRestorationBanner:includeRestorationBanner
+                     knownTriggers:_triggers
+                        reattached:reattached];
+}
+
+- (void)showOrphanAnnouncement {
+    NSString *notice = @"This already-running session was restored but its contents were not saved.";
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcemenWithTitle:notice
+                                                        style:kiTermAnnouncementViewStyleQuestion
+                                                  withActions:@[ @"Why?" ]
+                                                   completion:^(int selection) {
+                                                       if (selection == 0) {
+                                                           // Why?
+                                                           NSURL *whyUrl = [NSURL URLWithString:@"https://iterm2.com/why_no_content.html"];
+                                                           [[NSWorkspace sharedWorkspace] openURL:whyUrl];
+                                                       }
+                                                   }];
+    [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 }
 
 // Session specific methods
@@ -881,6 +1060,37 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_view updateScrollViewFrame];
 
     return YES;
+}
+
+- (BOOL)tryToAttachToServerWithProcessId:(pid_t)serverPid {
+    if (![iTermAdvancedSettingsModel runJobsInServers]) {
+        DLog(@"Failing to attach because run jobs in servers is off");
+        return NO;
+    }
+    DLog(@"Try to attach...");
+    if ([_shell tryToAttachToServerWithProcessId:serverPid]) {
+        @synchronized(self) {
+            _registered = YES;
+        }
+        DLog(@"Success, attached.");
+        return YES;
+    } else {
+        DLog(@"Failed to attach");
+        return NO;
+    }
+}
+
+- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection {
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        DLog(@"Attaching to a server...");
+        [_shell attachToServer:serverConnection];
+        [_shell setWidth:_screen.width height:_screen.height];
+        @synchronized(self) {
+            _registered = YES;
+        }
+    } else {
+        DLog(@"Can't attach to a server when runJobsInServers is off.");
+    }
 }
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
@@ -1037,9 +1247,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions {
     self.program = command;
-    self.environment = environment;
+    self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
-    self.substitutions = substitutions;
+    self.substitutions = substitutions ?: @{};
 
     NSString *program = [command stringByPerformingSubstitutions:substitutions];
     NSArray *components = [program componentsInShellCommand];
@@ -1184,6 +1394,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)restartSession {
+    assert(self.isRestartable);
     [self dismissAnnouncementWithIdentifier:kReopenSessionWarningIdentifier];
     if (_exited) {
         [self replaceTerminatedShellWithNewInstance];
@@ -1229,7 +1440,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_tmuxGateway release];
         _tmuxGateway = nil;
     }
-    BOOL undoable = ![self isTmuxClient] && !_shouldRestart && !_synthetic;
+    BOOL undoable = (![self isTmuxClient] &&
+                     !_shouldRestart &&
+                     !_synthetic &&
+                     ![[iTermController sharedInstance] applicationIsQuitting]);
     [_terminal.parser forceUnhookDCS];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
@@ -1309,6 +1523,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
+    // Free refs to VT100ScreenMarks for this session in CommandUse objects.
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandUseReleaseMarksInSession
+                                                        object:self.guid];
     _textview = nil;
 }
 
@@ -1656,6 +1873,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
 }
 
+// This is called in the main thread when coprocesses write to a tmux client.
+- (void)writeForCoprocessOnlyTask:(NSData *)data {
+    // The if statement is just a sanity check.
+    if (self.tmuxMode == TMUX_CLIENT) {
+        [self writeTask:data];
+    }
+}
+
 - (void)threadedTaskBrokenPipe
 {
     // Put the call to brokenPipe in the same queue as executeTokens:bytesHandled: to avoid a race.
@@ -1665,6 +1890,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)brokenPipe {
+    if (_exited) {
+        return;
+    }
+    [_shell killServerIfRunning];
     if ([self shouldPostGrowlNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Session Ended"
@@ -1687,29 +1916,36 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     } else {
         // Offer to restart the session by rerunning its program.
         [self appendBrokenPipeMessage:@"Broken Pipe"];
-        iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcementWithTitle:@"Session ended (broken pipe). Restart it?"
-                                                             style:kiTermAnnouncementViewStyleQuestion
-                                                       withActions:@[ @"Restart" ]
-                                                        completion:^(int selection) {
-                                                            switch (selection) {
-                                                                case -2:  // Dismiss programmatically
-                                                                    break;
+        if ([self isRestartable]) {
+            iTermAnnouncementViewController *announcement =
+                [iTermAnnouncementViewController announcemenWithTitle:@"Session ended (broken pipe). Restart it?"
+                                                                style:kiTermAnnouncementViewStyleQuestion
+                                                          withActions:@[ @"Restart" ]
+                                                           completion:^(int selection) {
+                                                               switch (selection) {
+                                                                   case -2:  // Dismiss programmatically
+                                                                       break;
 
-                                                                case -1: // No
-                                                                    break;
+                                                                   case -1: // No
+                                                                       break;
 
-                                                                case 0: // Yes
-                                                                    [self replaceTerminatedShellWithNewInstance];
-                                                                    break;
-                                                            }
-                                                        }];
-        [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+                                                                   case 0: // Yes
+                                                                       [self replaceTerminatedShellWithNewInstance];
+                                                                       break;
+                                                               }
+                                                           }];
+            [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
+        }
         [self updateDisplay];
     }
 }
 
+- (BOOL)isRestartable {
+    return _program != nil;
+}
+
 - (void)replaceTerminatedShellWithNewInstance {
+    assert(self.isRestartable);
     assert(_exited);
     _shouldRestart = NO;
     _exited = NO;
@@ -2452,14 +2688,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return (now - _lastOutput) < ([iTermAdvancedSettingsModel idleTimeSeconds] + 1);
 }
 
-- (NSString *)uniqueID {
-    if (!_uniqueID) {
-        static int gNextUniqueId;
-        self.uniqueID = [NSString stringWithFormat:@"%d", ++gNextUniqueId];
-    }
-    return _uniqueID;
-}
-
 - (NSString*)formattedName:(NSString*)base
 {
     NSString *prefix = _tmuxController ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
@@ -2925,9 +3153,21 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
     result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
     result[SESSION_ARRANGEMENT_BOOKMARK_NAME] = _bookmarkName;
+
     if (_substitutions) {
         result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
     }
+    if ([self.program isEqualToString:[ITAddressBookMgr shellLauncherCommand]]) {
+        // The shell launcher command could change from run to run (e.g., if you move iTerm2).
+        // I don't want to use a magic string, so setting program to an empty dic
+        result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeShellLauncher };
+    } else if (self.program) {
+        result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
+                                                 kProgramCommand: self.program };
+    }
+    result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
+    result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
+
     if (_name) {
         result[SESSION_ARRANGEMENT_NAME] = _name;
     }
@@ -2938,19 +3178,50 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         result[SESSION_ARRANGEMENT_WINDOW_TITLE] = _windowTitle;
     }
     if (includeContents) {
-        result[SESSION_ARRANGEMENT_CONTENTS] = [_screen contentsDictionary];
+        NSDictionary *contentsDictionary = [_screen contentsDictionary];
+        result[SESSION_ARRANGEMENT_CONTENTS] = contentsDictionary;
+        int numberOfLinesDropped =
+            [contentsDictionary[kScreenStateKey][kScreenStateNumberOfLinesDroppedKey] intValue];
+        result[SESSION_ARRANGEMENT_VARIABLES] = _variables;
+        VT100GridCoordRange range = _commandRange;
+        range.start.y -= numberOfLinesDropped;
+        range.end.y -= numberOfLinesDropped;
+        result[SESSION_ARRANGEMENT_COMMAND_RANGE] =
+            [NSDictionary dictionaryWithGridCoordRange:range];
+        result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
+        result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
+        if (self.lastDirectory) {
+            result[SESSION_ARRANGEMENT_LAST_DIRECTORY] = self.lastDirectory;
+        }
+        result[SESSION_ARRANGEMENT_SELECTION] =
+            [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped];
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
     if (_liveSession && includeContents && !_dvr) {
         result[SESSION_ARRANGEMENT_LIVE_SESSION] =
             [_liveSession arrangementWithContents:includeContents];
     }
+    if (!self.isTmuxClient) {
+        // These values are used for restoring sessions after a crash.
+        if ([iTermAdvancedSettingsModel runJobsInServers] && !_shell.pidIsChild) {
+            result[SESSION_ARRANGEMENT_SERVER_PID] = @(_shell.serverPid);
+        }
+    }
+    if (self.tmuxMode == TMUX_GATEWAY && self.tmuxController.sessionName) {
+        result[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] = @YES;
+        result[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] = @(self.tmuxController.sessionId);
+        result[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] = self.tmuxController.sessionName;
+    }
+
+    result[SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED] = @(_shellIntegrationEverUsed);
+    result[SESSION_ARRANGEMENT_COMMANDS] = _commands;
+    result[SESSION_ARRANGEMENT_DIRECTORIES] = _directories;
+    result[SESSION_ARRANGEMENT_HOSTS] = [_hosts mapWithBlock:^id(id anObject) {
+        return [(VT100RemoteHost *)anObject dictionaryValue];
+    }];
 
     NSString *pwd = [self currentLocalWorkingDirectory];
     result[SESSION_ARRANGEMENT_WORKING_DIRECTORY] = pwd ? pwd : @"";
-    if (self.uniqueID) {
-        result[SESSION_UNIQUE_ID] = self.uniqueID;  // TODO: This isn't really unique, it's just the tty number
-    }
     return result;
 }
 
@@ -2980,12 +3251,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return result;
 }
 
-+ (NSString *)uniqueIdInArrangement:(NSDictionary *)arrangement {
-    return arrangement[SESSION_UNIQUE_ID];
++ (NSString *)guidInArrangement:(NSDictionary *)arrangement {
+    NSString *guid = arrangement[SESSION_ARRANGEMENT_GUID];
+    if (guid) {
+        return guid;
+    } else {
+        return arrangement[SESSION_UNIQUE_ID];
+    }
 }
 
-- (void)updateScroll
-{
+- (void)updateScroll {
     if (![(PTYScroller*)([_scrollview verticalScroller]) userScroll]) {
         [_textview scrollEnd];
     }
@@ -3686,10 +3961,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_tmuxGateway detach];
 }
 
-- (void)setTmuxPane:(int)windowPane
-{
+- (void)setTmuxPane:(int)windowPane {
     _tmuxPane = windowPane;
     self.tmuxMode = TMUX_CLIENT;
+    [_shell registerAsCoprocessOnlyTask];
 }
 
 - (void)toggleTmuxZoom {
@@ -3924,8 +4199,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     _tmuxSecureLogging = secureLogging;
 }
 
-- (void)tmuxWriteData:(NSData *)data
-{
+- (void)tmuxWriteData:(NSData *)data {
     if (_exited) {
         return;
     }
@@ -3964,6 +4238,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [data release];
             [self release];
         });
+        if (_shell.coprocess) {
+            [_shell writeToCoprocessOnlyTask:data];
+        }
     }
 }
 
@@ -5387,8 +5664,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self continueTailFind];
 }
 
-- (void)sessionContentsChanged:(NSNotification *)notification
-{
+- (void)sessionContentsChanged:(NSNotification *)notification {
     if (!_tailFindTimer &&
         [notification object] == self &&
         [[_tab realParentWindow] currentTab] == _tab) {
@@ -5406,8 +5682,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)printTmuxMessage:(NSString *)message
-{
+- (void)printTmuxMessage:(NSString *)message {
     if (_exited) {
         return;
     }
@@ -5453,8 +5728,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 #pragma mark - VT100ScreenDelegate
 
-- (int)screenSessionID {
-    return self.sessionID;
+- (NSString *)screenSessionGuid {
+    return self.guid;
 }
 
 - (void)screenNeedsRedraw {

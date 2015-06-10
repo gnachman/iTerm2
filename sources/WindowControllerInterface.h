@@ -2,12 +2,13 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
+#import "PTYTabDelegate.h"
 
 @class Popup;
 @class PSMTabBarControl;
 @class PTYSession;
-@class PTYTabView;
 @class PTYTab;
+@class PTYTabView;
 @class TmuxController;
 @class VT100RemoteHost;
 
@@ -96,7 +97,7 @@ typedef enum {
 
 // The full interface for a window controller, as seen by objects that treat it
 // like a delegate.
-@protocol iTermWindowController <WindowControllerInterface>
+@protocol iTermWindowController <WindowControllerInterface, PTYTabDelegate>
 
 // Is the toolbelt visible for this window?
 @property(nonatomic, readonly) BOOL shouldShowToolbelt;

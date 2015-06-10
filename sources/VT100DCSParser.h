@@ -67,6 +67,9 @@ typedef enum {
 // For debug logging; nil if no hook.
 @property(nonatomic, readonly) NSString *hookDescription;
 
++ (NSDictionary *)termcapTerminfoNameDictionary;  // string name -> DcsTermcapTerminfoRequestName
++ (NSDictionary *)termcapTerminfoInverseNameDictionary;  // DcsTermcapTerminfoRequestName -> string name
+
 - (void)decodeFromContext:(iTermParserContext *)context
                     token:(VT100Token *)result
                  encoding:(NSStringEncoding)encoding
@@ -75,8 +78,7 @@ typedef enum {
 // Reset to ground state, unhooking if needed.
 - (void)reset;
 
-+ (NSDictionary *)termcapTerminfoNameDictionary;  // string name -> DcsTermcapTerminfoRequestName
-+ (NSDictionary *)termcapTerminfoInverseNameDictionary;  // DcsTermcapTerminfoRequestName -> string name
+- (void)startTmuxRecoveryMode;
 
 @end
 

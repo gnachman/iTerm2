@@ -526,8 +526,15 @@ const CGFloat kDefaultTagsWidth = 80;
     return theAttributedString;
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
+- (NSAttributedString *)attributedStringForString:(NSString *)string selected:(BOOL)selected {
+    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
+                                  NSForegroundColorAttributeName: selected ? [NSColor whiteColor] : [NSColor blackColor] };
+    return [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
+}
+
+- (id)tableView:(NSTableView *)aTableView
+    objectValueForTableColumn:(NSTableColumn *)aTableColumn
+                          row:(NSInteger)rowIndex {
     Profile* bookmark = [dataSource_ profileAtIndex:rowIndex];
 
     if (aTableColumn == tableColumn_) {
@@ -538,15 +545,20 @@ const CGFloat kDefaultTagsWidth = 80;
                                    isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]
                                       filter:[searchField_ stringValue]];
     } else if (aTableColumn == commandColumn_) {
+        NSString *theString = nil;
         if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
-            return @"Login shell";
+            theString = @"Login shell";
         } else {
-            return [bookmark objectForKey:KEY_COMMAND];
+            theString = [bookmark objectForKey:KEY_COMMAND];
         }
+        return [self attributedStringForString:theString
+                                      selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]];
     } else if (aTableColumn == shortcutColumn_) {
         NSString* key = [bookmark objectForKey:KEY_SHORTCUT];
         if ([key length]) {
-            return [NSString stringWithFormat:@"^⌘%@", [bookmark objectForKey:KEY_SHORTCUT]];
+            NSString *theString = [NSString stringWithFormat:@"^⌘%@", [bookmark objectForKey:KEY_SHORTCUT]];
+            return [self attributedStringForString:theString
+                                          selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]];
         } else {
             return @"";
         }

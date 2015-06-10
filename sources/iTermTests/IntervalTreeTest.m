@@ -6,6 +6,13 @@
 @end
 
 @implementation ITObject
+- (id)initWithDictionary:(NSDictionary *)dict {
+    return [self init];
+}
+- (NSDictionary *)dictionaryValue {
+    return @{};
+}
+
 @synthesize entry;
 @end
 

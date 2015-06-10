@@ -26,6 +26,7 @@
  */
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "ProfileModel.h"
@@ -560,6 +561,11 @@
     }
 }
 
++ (NSString *)shellLauncherCommand {
+    return [NSString stringWithFormat:@"%@ --launch_shell",
+            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
+}
+
 + (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
                             forObjectType:(iTermObjectType)objectType
 {
@@ -591,8 +597,8 @@
         // Not using the home directory. This requires some trickery.
         // Run iTerm2's executable with a special flag that makes it run the shell as a login shell
         // (with "-" inserted at the start of argv[0]). See shell_launcher.c for more details.
-        return [NSString stringWithFormat:@"%@ --launch_shell",
-                   [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
+        NSString *launchShellCommand = [self shellLauncherCommand];
+        return launchShellCommand;
     }
 }
 

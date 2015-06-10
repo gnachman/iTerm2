@@ -10,6 +10,8 @@
 #import "IntervalTree.h"
 #import "PTYNoteView.h"
 
+static NSString *const kNoteViewTextKey = @"Text";
+
 NSString * const PTYNoteViewControllerShouldUpdatePosition = @"PTYNoteViewControllerShouldUpdatePosition";
 
 static const CGFloat kBottomPadding = 3;
@@ -31,6 +33,14 @@ static const CGFloat kBottomPadding = 3;
 @synthesize watchForUpdate = watchForUpdate_;
 @synthesize entry;
 @synthesize delegate;
+
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+    self = [super init];
+    if (self) {
+        self.string = dict[kNoteViewTextKey];
+    }
+    return self;
+}
 
 - (void)dealloc {
     [noteView_ removeFromSuperview];
@@ -282,6 +292,12 @@ static const CGFloat kBottomPadding = 3;
     highlightStartTime_ = [NSDate timeIntervalSinceReferenceDate];
     [self performSelector:@selector(updateBackgroundColor) withObject:nil afterDelay:1/30.0];
     [self.noteView setNeedsDisplay:YES];
+}
+
+#pragma mark - IntervalTreeObject
+
+- (NSDictionary *)dictionaryValue {
+    return @{ kNoteViewTextKey: textView_.string ?: @"" };
 }
 
 @end

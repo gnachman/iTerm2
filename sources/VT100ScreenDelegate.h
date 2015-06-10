@@ -9,7 +9,7 @@
 @protocol VT100ScreenDelegate <NSObject>
 
 // Returns the session's unique ID.
-- (int)screenSessionID;
+- (NSString *)screenSessionGuid;
 
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;

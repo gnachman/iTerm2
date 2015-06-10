@@ -99,7 +99,7 @@ int main(int argc, const char * argv[]) {
 
     NSArray *include = nil;
     NSArray *exclude = @[
-                          // [AppleScriptTest class]      // I often exclude AppleScriptTest because it is slow.
+                           // [AppleScriptTest class]      // I often exclude AppleScriptTest because it is slow.
                         ];
 
     NSArray *testClassesToRun = TestClassesToRun(include, exclude);
