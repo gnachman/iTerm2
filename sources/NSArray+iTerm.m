@@ -33,4 +33,12 @@
     return result;
 }
 
+- (NSArray *)mapWithBlock:(id (^)(id anObject))block {
+    NSMutableArray *temp = [NSMutableArray array];
+    for (id anObject in self) {
+        [temp addObject:block(anObject)];
+    }
+    return temp;
+}
+
 @end

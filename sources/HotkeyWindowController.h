@@ -36,6 +36,7 @@
 
 - (BOOL)rollingInHotkeyTerm;
 - (void)showHotKeyWindow;
+- (void)createHiddenHotkeyWindow;
 - (void)doNotOrderOutWhenHidingHotkeyWindow;
 - (void)fastHideHotKeyWindow;
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm;

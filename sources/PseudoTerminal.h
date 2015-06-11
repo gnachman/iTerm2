@@ -11,6 +11,7 @@
 #import "ToolbeltView.h"
 #import "WindowControllerInterface.h"
 #import "iTermInstantReplayWindowController.h"
+#include "iTermFileDescriptorClient.h"
 
 @class PTYSession;
 @class PSMTabBarControl;
@@ -47,6 +48,10 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 // Indicates if the window is fully initialized.
 @property(nonatomic, readonly) BOOL windowInitialized;
+
+// If set, all substitutions whose values are unknown will be taken to be empty string.
+// This is useful when attaching to an orphaned server.
+@property(nonatomic, assign) BOOL disablePromptForSubstitutions;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
@@ -245,7 +250,8 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 - (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
                                  withURL:(NSString *)url
-                           forObjectType:(iTermObjectType)objectType;
+                           forObjectType:(iTermObjectType)objectType
+                        serverConnection:(iTermFileDescriptorServerConnection *)serverConnection;
 
 // Add a new session to this window with the given addressbook entry.
 // The optional command overrides the profile's settings.

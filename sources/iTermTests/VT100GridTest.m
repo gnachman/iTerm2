@@ -1550,48 +1550,6 @@ do { \
     return coverage;
 }
 
-- (void)testRunsMatchingRegex {
-    NSString *cl =
-    //    0123456789ab
-        @"george      !\n"  // 0
-        @"         geo+\n"  // 1
-        @"rge         !\n"  // 2
-        @"         geo!\n"  // 3
-        @"rge         !\n"  // 4
-        @"georgegeorge!\n"  // 5
-        @"     georgeo+\n"  // 6
-        @"rge         !";   // 7
-    VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:cl];
-    NSArray *runs = [grid runsMatchingRegex:@"george"];
-
-    NSString *expectedCoverage =
-        @"xxxxxx......\n"  // 0
-        @".........xxx\n"  // 1
-        @"xxx.........\n"  // 2
-        @"............\n"  // 3
-        @"............\n"  // 4
-        @"xxxxxxxxxxxx\n"  // 5
-        @".....xxxxxx.\n"  // 6
-        @"............";  // 7
-    VT100Grid *coverage = [self coverageForRuns:runs inGrid:grid];
-    assert([[coverage compactLineDump] isEqualToString:expectedCoverage]);
-
-    // Now test with combining marks.
-    screen_char_t *line = [grid screenCharsAtLineNumber:0];
-    BeginComplexChar(line + 1, 0x20dd, NO);  // e + combining enclosing circle
-    line[1].complexChar = YES;
-    runs = [grid runsMatchingRegex:@"ge.?orge"];  // the regex lib doesn't handle combining marks well
-    coverage = [self coverageForRuns:runs inGrid:grid];
-    assert([[coverage compactLineDump] isEqualToString:expectedCoverage]);
-
-    // Test with double-width char.
-    line[1].code = 0xff25;  // fullwidth e
-    line[1].complexChar = NO;
-    runs = [grid runsMatchingRegex:@"g.orge"];
-    coverage = [self coverageForRuns:runs inGrid:grid];
-    assert([[coverage compactLineDump] isEqualToString:expectedCoverage]);
-}
-
 // - is a DWC_RIGHT
 // . is null
 // All other chars are taken literally

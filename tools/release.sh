@@ -1,20 +1,14 @@
 #!/bin/bash
-function PrintUsageAndDie {
-  echo Usage:
-  echo release.sh 'normal|legacy'
-  exit
-}
-
 function die {
   echo $1
   exit
 }
 
+test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid private key (not set or nonexistent)"
 # Usage: SparkleSign testing.xml template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
-    test -f "$PRIVKEY" || die "Set PRIVKEY environment variable to point at a valid private key (not set or nonexistent)"
-    ruby "../../SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt
+    ruby "../../ThirdParty/SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt || die SparkleSign
     SIG=$(cat /tmp/sig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
     XML=$1
@@ -42,8 +36,11 @@ function Build {
   SUMMARY=$3
   DESCRIPTION=$4
   SPARKLE_PREFIX=$5
-  codesign $6 -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm.app"
-  codesign --verify --verbose "build/$BUILDTYPE/iTerm.app" || die "Signature not verified"
+  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Growl.framework"
+  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/NMSSH.framework"
+  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Sparkle.framework"
+  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app"
+  codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
 
   # Create the zip file
@@ -78,18 +75,10 @@ SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 NEWFILES=""
 
-[ $# -gt 0 ] || PrintUsageAndDie
-if [ "$1" = normal ]; then
-    echo "Build deployment release"
-    make release
-    Build Deployment "" "OS 10.6+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." "" "--deep"
-fi
-
-if [ "$1" = legacy ]; then
-    echo "Build legacy release"
-    make legacy
-    Build "Leopard Deployment" "-LeopardPPC" "OS 10.5, Intel, PPC" "This build has a limited set of features but supports OS 10.5 and PowerPC. If you have an Intel Mac that runs OS 10.6 or newer, you don't want this." "legacy_" ""
-fi
+echo "Build deployment release"
+make clean
+make release
+Build Deployment "" "OS 10.6+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." "" "--deep"
 
 #set -x
 

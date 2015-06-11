@@ -587,7 +587,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)setCursorNeedsDisplay {
-    [self setNeedsDisplayInRect:[self cursorFrame]];
+    [self setNeedsDisplayInRect:[self rectWithHalo:[self cursorFrame]]];
 }
 
 - (void)setCursorType:(ITermCursorType)value {
@@ -3638,7 +3638,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                [item action]==@selector(clearTextViewBuffer:) ||
                [item action]==@selector(editTextViewSession:) ||
                [item action]==@selector(closeTextViewSession:) ||
-               [item action]==@selector(restartTextViewSession:) ||
                [item action]==@selector(movePane:) ||
                [item action]==@selector(swapSessions:) ||
                [item action]==@selector(installShellIntegration:) ||
@@ -3646,6 +3645,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // We always validate the above commands
         return YES;
     }
+    if ([item action]==@selector(restartTextViewSession:)) {
+        return [_delegate isRestartable];
+    }
+
     if ([item action]==@selector(mail:) ||
         [item action]==@selector(browse:) ||
         [item action]==@selector(searchInBrowser:) ||
@@ -6009,9 +6012,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (_drawingHelper.showTimestamps) {
         dirtyRect.size.width = self.visibleRect.size.width - dirtyRect.origin.x;
     }
-    // Add a character on either side for glyphs that render unexpectedly wide.
-    dirtyRect.origin.x -= _charWidth;
-    dirtyRect.size.width += 2 * _charWidth;
+
+    // Expand the rect in case we're drawing a changed cell with an oversize glyph.
+    dirtyRect = [self rectWithHalo:dirtyRect];
+
     DLog(@"Line %d is dirty from %d to %d, set rect %@ dirty",
          y, x, maxX, [NSValue valueWithRect:dirtyRect]);
     [self setNeedsDisplayInRect:dirtyRect];
@@ -6147,7 +6151,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 ([_dataSource cursorY] - 1 + [_dataSource numberOfLines] - [_dataSource height]) * _lineHeight,
                                 [_dataSource width] * _charWidth,
                                 imeLines * _lineHeight);
+    imeRect = [self rectWithHalo:imeRect];
     [self setNeedsDisplayInRect:imeRect];
+}
+
+- (NSRect)rectWithHalo:(NSRect)rect {
+    rect.origin.x -= _charWidth;
+    rect.origin.y -= _lineHeight;
+    rect.size.width += _charWidth * 2;
+    rect.size.height += _lineHeight * 2;
+
+    return rect;
 }
 
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
@@ -6212,7 +6226,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     if (gDebugLogging) {
                         DLog(@"Found blinking char on line %d", y);
                     }
-                    [self setNeedsDisplayInRect:dirtyRect];
+                    [self setNeedsDisplayInRect:[self rectWithHalo:dirtyRect]];
                     break;
                 }
             }
@@ -6229,7 +6243,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (gDebugLogging) {
                 DLog(@"found selection change on line %d", y);
             }
-            [self setNeedsDisplayInRect:dirtyRect];
+            [self setNeedsDisplayInRect:[self rectWithHalo:dirtyRect]];
         }
     }
     return anyBlinkers;

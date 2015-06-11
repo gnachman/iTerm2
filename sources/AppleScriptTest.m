@@ -389,9 +389,11 @@ static NSString *const kTestBundleId = @"com.googlecode.iterm2.applescript";
     NSString *script = [self scriptWithCommands:commands
                                         outputs:outputs];
     NSAppleEventDescriptor *eventDescriptor = [self runScript:script];
-    int uid1 = [[eventDescriptor descriptorAtIndex:1] int32Value];
-    int uid2 = [[eventDescriptor descriptorAtIndex:2] int32Value];
-    assert(uid1 != uid2);
+    NSString *uid1 = [[eventDescriptor descriptorAtIndex:1] stringValue];
+    NSString *uid2 = [[eventDescriptor descriptorAtIndex:2] stringValue];
+    assert(uid1.length > 0);
+    assert(uid2.length > 0);
+    assert(![uid1 isEqualToString:uid2]);
 }
 
 - (void)testSetGetColors {

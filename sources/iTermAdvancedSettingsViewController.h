@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface iTermAdvancedSettingsController : NSViewController <NSTableViewDataSource, NSTableViewDelegate>
+@interface iTermAdvancedSettingsViewController : NSViewController <NSTableViewDataSource, NSTableViewDelegate>
 
 // Don't call these methods directly. Instead, go through iTermAdvancedSettingsModel.
 + (BOOL)boolForIdentifier:(NSString*)identifier

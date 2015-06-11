@@ -21,6 +21,14 @@
 // Dictionary keys for -highlightTextInRange:basedAtAbsoluteLineNumber:absoluteLineNumber:color:
 extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
+
+// Key into dictionaryValue to get screen state.
+extern NSString *const kScreenStateKey;
+
+// Key into dictionaryValue[kScreenStateKey] for the number of lines of scrollback history not saved.
+// Useful for converting row numbers into the context of the saved contents.
+extern NSString *const kScreenStateNumberOfLinesDroppedKey;
+
 extern int kVT100ScreenMinColumns;
 extern int kVT100ScreenMinRows;
 
@@ -151,6 +159,8 @@ extern int kVT100ScreenMinRows;
 #pragma mark - Marks and notes
 
 - (VT100ScreenMark *)lastMark;
+- (VT100ScreenMark *)lastPromptMark;
+- (VT100RemoteHost *)lastRemoteHost;
 - (BOOL)markIsValid:(VT100ScreenMark *)mark;
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
@@ -170,7 +180,13 @@ extern int kVT100ScreenMinRows;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
 - (NSDictionary *)contentsDictionary;
-- (void)appendFromDictionary:(NSDictionary *)dictionary;
+- (void)restoreFromDictionary:(NSDictionary *)dictionary
+     includeRestorationBanner:(BOOL)includeRestorationBanner
+                knownTriggers:(NSArray *)triggers
+                   reattached:(BOOL)reattached;
+
+// Zero-based (as VT100GridCoord always is), unlike -cursorX and -cursorY.
+- (void)setCursorPosition:(VT100GridCoord)coord;
 
 @end
 

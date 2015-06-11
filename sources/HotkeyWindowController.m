@@ -123,7 +123,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     }
 }
 
-- (BOOL)openHotkeyWindow {
+- (BOOL)openHotkeyWindowAndRollIn:(BOOL)rollIn {
     HKWLog(@"Open hotkey window");
     NSDictionary *arrangement = [[self.restorableState copy] autorelease];
     if (!arrangement) {
@@ -175,7 +175,9 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         if ([term windowType] != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
             [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
         }
-        RollInHotkeyTerm(term);
+        if (rollIn) {
+            RollInHotkeyTerm(term);
+        }
         return YES;
     }
     return NO;
@@ -281,10 +283,17 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         RollInHotkeyTerm(hotkeyTerm);
     } else {
         HKWLog(@"Open new hotkey window window");
-        if ([self openHotkeyWindow]) {
+        if ([self openHotkeyWindowAndRollIn:YES]) {
             rollingIn_ = YES;
         }
     }
+}
+
+- (void)createHiddenHotkeyWindow {
+    if (GetHotkeyWindow()) {
+        return;
+    }
+    [self openHotkeyWindowAndRollIn:NO];
 }
 
 - (BOOL)isHotKeyWindowOpen

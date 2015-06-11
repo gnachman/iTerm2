@@ -1243,7 +1243,7 @@ DQ
                 <outlet property="delegate" destination="6306" id="6372"/>
             </connections>
         </window>
-        <customObject id="yRc-rn-aAD" userLabel="Advanced Settings View Controller" customClass="iTermAdvancedSettingsController">
+        <customObject id="yRc-rn-aAD" userLabel="Advanced Settings View Controller" customClass="iTermAdvancedSettingsViewController">
             <connections>
                 <outlet property="_searchField" destination="gjV-o3-wzg" id="Rg5-PW-EAQ"/>
                 <outlet property="_settingColumn" destination="wQ6-7Q-vbc" id="ydA-mC-Eaq"/>
@@ -5615,10 +5615,10 @@ DQ
                     <rect key="frame" x="20" y="20" width="952" height="364"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
-                        <rect key="frame" x="1" y="17" width="950" height="346"/>
+                        <rect key="frame" x="1" y="1" width="950" height="362"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="oBO-lt-jAw" id="5ik-Xh-beg">
+                            <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" id="5ik-Xh-beg">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="19"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
@@ -5668,10 +5668,6 @@ DQ
                         <rect key="frame" x="224" y="17" width="15" height="102"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
-                    <tableHeaderView key="headerView" id="oBO-lt-jAw">
-                        <rect key="frame" x="0.0" y="0.0" width="950" height="17"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                    </tableHeaderView>
                 </scrollView>
                 <searchField wantsLayer="YES" verticalHuggingPriority="750" id="gjV-o3-wzg">
                     <rect key="frame" x="20" y="392" width="378" height="22"/>
@@ -5686,7 +5682,7 @@ DQ
                     </connections>
                 </searchField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="RTN-4A-tvQ">
-                    <rect key="frame" x="527" y="399" width="447" height="17"/>
+                    <rect key="frame" x="614" y="394" width="360" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Some changes will take effect only after restarting iTerm2." id="dKC-gp-53C">
                         <font key="font" metaFont="system"/>

@@ -171,4 +171,10 @@ typedef enum {
 // display purposes. Removes selected TAB_FILLERS that aren't followed by a selected TAB.
 - (NSIndexSet *)selectedIndexesIncludingTabFillersInLine:(int)y;
 
+// Load selection from serialized dict
+- (void)setFromDictionaryValue:(NSDictionary *)dict;
+
+// Serialized.
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset;
+
 @end

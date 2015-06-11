@@ -237,5 +237,11 @@
     }
 }
 
+- (void)startTmuxRecoveryMode {
+    @synchronized(self) {
+        [_controlParser startTmuxRecoveryMode];
+        _dcsHooked = YES;
+    }
+}
 
 @end

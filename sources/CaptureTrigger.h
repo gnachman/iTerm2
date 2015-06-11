@@ -8,16 +8,9 @@
 
 #import "Trigger.h"
 
+@class CapturedOutput;
 @class CaptureTrigger;
 @class iTermCapturedOutputMark;
-
-@interface CapturedOutput : NSObject
-@property(nonatomic, copy) NSString *line;
-@property(nonatomic, copy) NSArray *values;
-@property(nonatomic, retain) CaptureTrigger *trigger;
-@property(nonatomic, assign) BOOL state;  // user-defined state
-@property(nonatomic, retain) iTermCapturedOutputMark *mark;
-@end
 
 @interface CaptureTrigger : Trigger
 

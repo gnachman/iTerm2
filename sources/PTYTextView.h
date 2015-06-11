@@ -137,6 +137,9 @@ typedef enum {
 - (BOOL)textViewIsZoomedIn;
 - (void)textViewWarnThatAccessibilityIsCausingSlowness;
 
+// Is it possible to restart this session?
+- (BOOL)isRestartable;
+
 @end
 
 @interface PTYTextView : NSView <

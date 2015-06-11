@@ -179,7 +179,7 @@ static const CGFloat kHelpMargin = 5;
         // Contents
         NSString* value = [entry.command stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
         ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        if (entry.lastMark && [[wrapper.term currentSession] sessionID] == entry.lastMark.sessionID) {
+        if (entry.lastMark && [[[wrapper.term currentSession] guid] isEqualToString:entry.lastMark.sessionGuid]) {
             return [[[NSAttributedString alloc] initWithString:value
                                                    attributes:@{ NSFontAttributeName: boldFont_ }] autorelease];
         } else {

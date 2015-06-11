@@ -658,8 +658,8 @@
 - (void)screenDidChangeNumberOfScrollbackLines {
 }
 
-- (int)screenSessionID {
-    return 0;
+- (NSString *)screenSessionGuid {
+    return @"fjdkslafjdsklfa";
 }
 
 - (void)screenSetCursorBlinking:(BOOL)blink {
@@ -2023,57 +2023,6 @@
     assert(screen.cursorX == 5);
     [screen terminalAppendTabAtCursor];
     assert(screen.cursorX == 9);
-}
-
-- (void)testHighlightTextMatchingRegex {
-    NSArray *lines = @[@"rerex", @"xrere", @"xxrerexxxx", @"xxrererere"];
-    VT100Screen *screen = [self screenWithWidth:5 height:7];
-    screen.delegate = (id<VT100ScreenDelegate>)self;
-    [self appendLines:lines toScreen:screen];
-    [screen highlightTextMatchingRegex:@"re" colors:@{ kHighlightForegroundColor: [NSColor blueColor],
-                                                       kHighlightBackgroundColor: [NSColor redColor] }];
-    NSArray *expectedHighlights =
-        @[ @"hhhh.",
-           @".hhhh",
-           @"..hhh",
-           @"h....",
-           @"..hhh",
-           @"hhhhh",
-           @"....." ];
-    int blue = 16 + 5;
-    int red = 16 + 5 * 36;
-    [self assertScreen:screen
-     matchesHighlights:expectedHighlights
-           highlightFg:blue
-      highlightFgMode:ColorModeNormal
-           highlightBg:red
-       highlightBgMode:ColorModeNormal];
-    
-    // Leave fg unaffected
-    screen = [self screenWithWidth:5 height:7];
-    screen.delegate = (id<VT100ScreenDelegate>)self;
-    [self appendLines:lines toScreen:screen];
-    [screen highlightTextMatchingRegex:@"re" colors:@{ kHighlightBackgroundColor: [NSColor redColor] }];
-    int defaultFg = [terminal_ foregroundColorCode].foregroundColor;
-    [self assertScreen:screen
-     matchesHighlights:expectedHighlights
-           highlightFg:defaultFg
-      highlightFgMode:ColorModeAlternate
-           highlightBg:red
-       highlightBgMode:ColorModeNormal];
-    
-    // Leave bg unaffected
-    screen = [self screenWithWidth:5 height:7];
-    screen.delegate = (id<VT100ScreenDelegate>)self;
-    [self appendLines:lines toScreen:screen];
-    [screen highlightTextMatchingRegex:@"re" colors:@{ kHighlightForegroundColor: [NSColor blueColor] }];
-    int defaultBg = [terminal_ foregroundColorCode].backgroundColor;
-    [self assertScreen:screen
-     matchesHighlights:expectedHighlights
-           highlightFg:blue
-      highlightFgMode:ColorModeNormal
-           highlightBg:defaultBg
-       highlightBgMode:ColorModeAlternate];
 }
 
 - (void)testSetFromFrame {

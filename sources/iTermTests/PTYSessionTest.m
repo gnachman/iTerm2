@@ -20,6 +20,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
 - (void)pasteString:(NSString *)theString
              slowly:(BOOL)slowly
    escapeShellChars:(BOOL)escapeShellChars
+           commands:(BOOL)commands
        tabTransform:(iTermTabTransformTags)tabTransform
        spacesPerTab:(int)spacesPerTab {
     self.string = theString;
@@ -108,7 +109,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
 - (void)testEmbeddedTabsConvertToSpaces {
     NSString *theString = @"a\tb";
     _warningBlock = ^NSModalResponse(NSAlert *alert, NSString *identifier) {
-        assert([identifier isEqualToString:@"AboutToPasteTabs"]);
+        assert([identifier isEqualToString:@"AboutToPasteTabsWithCancel"]);
         BOOL found = NO;
         for (NSView *subview in alert.accessoryView.subviews) {
             if ([subview isKindOfClass:[NSTextField class]] &&
@@ -121,10 +122,10 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
             }
         }
         assert(found);
-        return NSAlertAlternateReturn;
+        return NSAlertOtherReturn;
     };
     [_session pasteString:theString flags:0];
-    assert([_warningIdentifiers containsObject:@"AboutToPasteTabs"]);
+    assert([_warningIdentifiers containsObject:@"AboutToPasteTabsWithCancel"]);
 
     assert([_fakePasteHelper.string isEqualToString:theString]);
     assert(_fakePasteHelper.tabTransform == kTabTransformConvertToSpaces);

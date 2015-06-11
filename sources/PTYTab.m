@@ -2142,7 +2142,7 @@ static NSString* FormatRect(NSRect r) {
             }
 
             NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-            NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+            NSString *uniqueId = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
             if (wp && theMap[wp]) {
                 // Creating splitters for a tmux tab. The arrangement is marked
                 // up with window pane IDs, whcih may or may not already exist.
@@ -2200,7 +2200,7 @@ static NSString* FormatRect(NSRect r) {
         SessionView* sessionView = (SessionView*)view;
 
         NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-        NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+        NSString *uniqueId = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
         PTYSession *session;
         if (uniqueId && [sessionView session]) {  // TODO: Is it right to check if session exists here?
             session = [sessionView session];
@@ -2498,13 +2498,13 @@ static NSString* FormatRect(NSRect r) {
         return YES;
     } else {
         // Is a session view
-        NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
-        if (!uniqueId) {
+        NSString *sessionGuid = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+        if (!sessionGuid) {
             return NO;
         }
         PTYSession *session = nil;
         for (PTYSession *aSession in sessions) {
-            if ([aSession.uniqueID isEqualToString:uniqueId]) {
+            if ([aSession.guid isEqualToString:sessionGuid]) {
                 session = aSession;
                 break;
             }
@@ -2512,7 +2512,7 @@ static NSString* FormatRect(NSRect r) {
         if (!session) {
             return NO;
         }
-        viewMap[uniqueId] = session;
+        viewMap[sessionGuid] = session;
         return YES;
     }
 }
