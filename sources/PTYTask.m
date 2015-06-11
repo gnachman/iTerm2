@@ -722,16 +722,15 @@ static int MyForkPty(int *amaster,
 // Sends a signal to the server. This breaks it out of accept()ing forever when iTerm2 quits.
 - (void)killServerIfRunning {
     if (_serverPid >= 0) {
+        // This makes the server unlink its socket and exit immediately.
         kill(_serverPid, SIGUSR1);
-        // It should die right away.
-        int rc;
-        int theError;
-        do {
-            DLog(@"waitpid on %d", _serverPid);
-            rc = waitpid(_serverPid, &status, 0);
-            theError = errno;
-            DLog(@"waitpid returned %d error=%s", rc, strerror(theError));
-        } while (rc == -1 && theError == EINTR);
+
+        // Mac OS seems to have a bug in waitpid. I've seen a case where the child has exited
+        // (ps shows it in parens) but when the parent calls waitPid it just hangs. Rather than
+        // wait here, I'll add the server to the deadpool. The TaskNotifier thread can wait
+        // on it when it spins. I hope in this weird case that waitpid doesn't take long to run
+        // and that it's rare enough that the zombies don't pile up. Not much else I can do.
+        [[TaskNotifier sharedInstance] waitForPid:_serverPid];
 
         // Don't want to leak these. They exist to let the server know when iTerm2 crashes, but if
         // the server is dead it's not needed any more.
