@@ -969,11 +969,21 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     // Pick off leading combining marks and low surrogates and modify the
     // character at the cursor position with them.
+    // TODO: A surrogate pair that is a combining mark isn't handled properly.
     while ([string length] > 0 &&
            (IsCombiningMark(firstChar) || IsLowSurrogate(firstChar))) {
         VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
+        int overflow = 0;
         if (pred.x < 0 ||
-            ![currentGrid_ addCombiningChar:firstChar toCoord:pred]) {
+            ![currentGrid_ addCombiningChar:firstChar
+                                    toCoord:pred
+                    scrollingIntoLineBuffer:linebuffer_
+                        unlimitedScrollback:unlimitedScrollback_
+                    useScrollbackWithRegion:_appendToScrollbackWithStatusBar
+                                 wraparound:_wraparoundMode
+                                       ansi:_ansi
+                                     insert:_insert
+                                overflowPtr:&overflow]) {
             // Combining mark will need to stand alone rather than combine
             // because nothing precedes it.
             if (IsCombiningMark(firstChar)) {
@@ -991,8 +1001,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                           [string substringFromIndex:1]];
             }
             len = [string length];
+            [self incrementOverflowBy:overflow];
             break;
         }
+        [self incrementOverflowBy:overflow];
         string = [string substringFromIndex:1];
         if ([string length] > 0) {
             firstChar = [string characterAtIndex:0];

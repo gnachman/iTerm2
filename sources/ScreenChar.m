@@ -361,6 +361,76 @@ BOOL StringContainsCombiningMark(NSString *s)
     return NO;
 }
 
+BOOL IsSpacingCombiningMark(UTF32Char c) {
+    static NSCharacterSet *spacingCombiningMarks;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableCharacterSet *temp = [[NSMutableCharacterSet alloc] init];
+        UTF32Char chars[] = {
+             0x0903, 0x093B, 0x093E, 0x093F, 0x0940, 0x0949, 0x094A,
+             0x094B, 0x094C, 0x094E, 0x094F, 0x0982, 0x0983, 0x09BE,
+             0x09BF, 0x09C0, 0x09C7, 0x09C8, 0x09CB, 0x09CC, 0x09D7,
+             0x0A03, 0x0A3E, 0x0A3F, 0x0A40, 0x0A83, 0x0ABE, 0x0ABF,
+             0x0AC0, 0x0AC9, 0x0ACB, 0x0ACC, 0x0B02, 0x0B03, 0x0B3E,
+             0x0B40, 0x0B47, 0x0B48, 0x0B4B, 0x0B4C, 0x0B57, 0x0BBE,
+             0x0BBF, 0x0BC1, 0x0BC2, 0x0BC6, 0x0BC7, 0x0BC8, 0x0BCA,
+             0x0BCB, 0x0BCC, 0x0BD7, 0x0C01, 0x0C02, 0x0C03, 0x0C41,
+             0x0C42, 0x0C43, 0x0C44, 0x0C82, 0x0C83, 0x0CBE, 0x0CC0,
+             0x0CC1, 0x0CC2, 0x0CC3, 0x0CC4, 0x0CC7, 0x0CC8, 0x0CCA,
+             0x0CCB, 0x0CD5, 0x0CD6, 0x0D02, 0x0D03, 0x0D3E, 0x0D3F,
+             0x0D40, 0x0D46, 0x0D47, 0x0D48, 0x0D4A, 0x0D4B, 0x0D4C,
+             0x0D57, 0x0D82, 0x0D83, 0x0DCF, 0x0DD0, 0x0DD1, 0x0DD8,
+             0x0DD9, 0x0DDA, 0x0DDB, 0x0DDC, 0x0DDD, 0x0DDE, 0x0DDF,
+             0x0DF2, 0x0DF3, 0x0F3E, 0x0F3F, 0x0F7F, 0x102B, 0x102C,
+             0x1031, 0x1038, 0x103B, 0x103C, 0x1056, 0x1057, 0x1062,
+             0x1063, 0x1064, 0x1067, 0x1068, 0x1069, 0x106A, 0x106B,
+             0x106C, 0x106D, 0x1083, 0x1084, 0x1087, 0x1088, 0x1089,
+             0x108A, 0x108B, 0x108C, 0x108F, 0x109A, 0x109B, 0x109C,
+             0x17B6, 0x17BE, 0x17BF, 0x17C0, 0x17C1, 0x17C2, 0x17C3,
+             0x17C4, 0x17C5, 0x17C7, 0x17C8, 0x1923, 0x1924, 0x1925,
+             0x1926, 0x1929, 0x192A, 0x192B, 0x1930, 0x1931, 0x1933,
+             0x1934, 0x1935, 0x1936, 0x1937, 0x1938, 0x19B0, 0x19B1,
+             0x19B2, 0x19B3, 0x19B4, 0x19B5, 0x19B6, 0x19B7, 0x19B8,
+             0x19B9, 0x19BA, 0x19BB, 0x19BC, 0x19BD, 0x19BE, 0x19BF,
+             0x19C0, 0x19C8, 0x19C9, 0x1A19, 0x1A1A, 0x1A55, 0x1A57,
+             0x1A61, 0x1A63, 0x1A64, 0x1A6D, 0x1A6E, 0x1A6F, 0x1A70,
+             0x1A71, 0x1A72, 0x1B04, 0x1B35, 0x1B3B, 0x1B3D, 0x1B3E,
+             0x1B3F, 0x1B40, 0x1B41, 0x1B43, 0x1B44, 0x1B82, 0x1BA1,
+             0x1BA6, 0x1BA7, 0x1BAA, 0x1BE7, 0x1BEA, 0x1BEB, 0x1BEC,
+             0x1BEE, 0x1BF2, 0x1BF3, 0x1C24, 0x1C25, 0x1C26, 0x1C27,
+             0x1C28, 0x1C29, 0x1C2A, 0x1C2B, 0x1C34, 0x1C35, 0x1CE1,
+             0x1CF2, 0x1CF3, 0x302E, 0x302F, 0xA823, 0xA824, 0xA827,
+             0xA880, 0xA881, 0xA8B4, 0xA8B5, 0xA8B6, 0xA8B7, 0xA8B8,
+             0xA8B9, 0xA8BA, 0xA8BB, 0xA8BC, 0xA8BD, 0xA8BE, 0xA8BF,
+             0xA8C0, 0xA8C1, 0xA8C2, 0xA8C3, 0xA952, 0xA953, 0xA983,
+             0xA9B4, 0xA9B5, 0xA9BA, 0xA9BB, 0xA9BD, 0xA9BE, 0xA9BF,
+             0xA9C0, 0xAA2F, 0xAA30, 0xAA33, 0xAA34, 0xAA4D, 0xAA7B,
+             0xAA7D, 0xAAEB, 0xAAEE, 0xAAEF, 0xAAF5, 0xABE3, 0xABE4,
+             0xABE6, 0xABE7, 0xABE9, 0xABEA, 0xABEC, 0x11000, 0x11002,
+             0x11082, 0x110B0, 0x110B1, 0x110B2, 0x110B7, 0x110B8, 0x1112C,
+             0x11182, 0x111B3, 0x111B4, 0x111B5, 0x111BF, 0x111C0, 0x1122C,
+             0x1122D, 0x1122E, 0x11232, 0x11233, 0x11235, 0x112E0, 0x112E1,
+             0x112E2, 0x11302, 0x11303, 0x1133E, 0x1133F, 0x11341, 0x11342,
+             0x11343, 0x11344, 0x11347, 0x11348, 0x1134B, 0x1134C, 0x1134D,
+             0x11357, 0x11362, 0x11363, 0x114B0, 0x114B1, 0x114B2, 0x114B9,
+             0x114BB, 0x114BC, 0x114BD, 0x114BE, 0x114C1, 0x115AF, 0x115B0,
+             0x115B1, 0x115B8, 0x115B9, 0x115BA, 0x115BB, 0x115BE, 0x11630,
+             0x11631, 0x11632, 0x1163B, 0x1163C, 0x1163E, 0x116AC, 0x116AE,
+             0x116AF, 0x116B6, 0x16F51, 0x16F52, 0x16F53, 0x16F54, 0x16F55,
+             0x16F56, 0x16F57, 0x16F58, 0x16F59, 0x16F5A, 0x16F5B, 0x16F5C,
+             0x16F5D, 0x16F5E, 0x16F5F, 0x16F60, 0x16F61, 0x16F62, 0x16F63,
+             0x16F64, 0x16F65, 0x16F66, 0x16F67, 0x16F68, 0x16F69, 0x16F6A,
+             0x16F6B, 0x16F6C, 0x16F6D, 0x16F6E, 0x16F6F, 0x16F70, 0x16F71,
+             0x16F72, 0x16F73, 0x16F74, 0x16F75, 0x16F76, 0x16F77, 0x16F78,
+             0x16F79, 0x16F7A, 0x16F7B, 0x16F7C, 0x16F7D, 0x16F7E, 0x1D165,
+             0x1D166, 0x1D16D, 0x1D16E, 0x1D16F, 0x1D170, 0x1D171, 0x1D172 };
+        for (int i = 0; i < sizeof(chars) / sizeof(*chars); i++) {
+            [temp addCharactersInRange:NSMakeRange(chars[i], 1)];
+        }
+        spacingCombiningMarks = temp;
+    });
+    return [spacingCombiningMarks longCharacterIsMember:c];
+}
 
 BOOL IsCombiningMark(UTF32Char c)
 {
@@ -679,7 +749,7 @@ void StringToScreenChars(NSString *s,
             if (j > 0) {
                 // Undo the initialization of the j'th character because we won't use it
                 j--;
-
+                BOOL appendDwcRight = NO;
                 BOOL movedBackOverDwcRight = NO;
                 if (buf[j].code == DWC_RIGHT && j > 0 && IsCombiningMark(sc[i])) {
                     // This happens easily with ambiguous-width characters, where something like
@@ -687,6 +757,10 @@ void StringToScreenChars(NSString *s,
                     // at the real code, not the DWC_RIGHT. Decrement j temporarily.
                     j--;
                     movedBackOverDwcRight = YES;
+                } else if (buf[j].code != DWC_RIGHT && IsSpacingCombiningMark(sc[i])) {
+                    // A spacing combining mark (e.g., U+BBE) can combine with a a single-width
+                    // character to make a double-width character.
+                    appendDwcRight = YES;
                 }
                 if (buf[j].complexChar) {
                     // Adding a combining mark to a char that already has one or was
@@ -706,32 +780,35 @@ void StringToScreenChars(NSString *s,
                     NSString* str = ComplexCharToStr(buf[j].code);
                     if ([NSString isDoubleWidthCharacter:DecodeSurrogatePair([str characterAtIndex:0], [str characterAtIndex:1])
                                   ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
-                        j++;
-                        buf[j].code = DWC_RIGHT;
-                        if (foundDwc) {
-                            *foundDwc = YES;
-                        }
-                        buf[j].complexChar = NO;
-
-                        buf[j].foregroundColor = fg.foregroundColor;
-                        buf[j].fgGreen = fg.fgGreen;
-                        buf[j].fgBlue = fg.fgBlue;
-
-                        buf[j].backgroundColor = bg.backgroundColor;
-                        buf[j].bgGreen = bg.fgGreen;
-                        buf[j].bgBlue = bg.fgBlue;
-
-                        buf[j].foregroundColorMode = fg.foregroundColorMode;
-                        buf[j].backgroundColorMode = bg.backgroundColorMode;
-
-                        buf[j].bold = fg.bold;
-                        buf[j].faint = fg.faint;
-                        buf[j].italic = fg.italic;
-                        buf[j].blink = fg.blink;
-                        buf[j].underline = fg.underline;
-
-                        buf[j].unused = 0;
+                        appendDwcRight = YES;
                     }
+                }
+                if (appendDwcRight) {
+                    j++;
+                    buf[j].code = DWC_RIGHT;
+                    if (foundDwc) {
+                        *foundDwc = YES;
+                    }
+                    buf[j].complexChar = NO;
+
+                    buf[j].foregroundColor = fg.foregroundColor;
+                    buf[j].fgGreen = fg.fgGreen;
+                    buf[j].fgBlue = fg.fgBlue;
+
+                    buf[j].backgroundColor = bg.backgroundColor;
+                    buf[j].bgGreen = bg.fgGreen;
+                    buf[j].bgBlue = bg.fgBlue;
+
+                    buf[j].foregroundColorMode = fg.foregroundColorMode;
+                    buf[j].backgroundColorMode = bg.backgroundColorMode;
+
+                    buf[j].bold = fg.bold;
+                    buf[j].faint = fg.faint;
+                    buf[j].italic = fg.italic;
+                    buf[j].blink = fg.blink;
+                    buf[j].underline = fg.underline;
+
+                    buf[j].unused = 0;
                 }
             }
         }

@@ -2543,7 +2543,14 @@ do { \
     
     VT100Grid *grid = [self gridFromCompactLines:@"abcd"];
     assert([grid addCombiningChar:kCombiningEnclosingCircle
-                          toCoord:VT100GridCoordMake(0, 0)]);
+                          toCoord:VT100GridCoordMake(0, 0)
+          scrollingIntoLineBuffer:nil
+              unlimitedScrollback:NO
+          useScrollbackWithRegion:NO
+                       wraparound:NO
+                             ansi:NO
+                           insert:NO
+                      overflowPtr:nil]);
     screen_char_t *line = [grid screenCharsAtLineNumber:0];
     assert(line[0].complexChar);
     NSString *str = ScreenCharToStr(&line[0]);
@@ -2552,18 +2559,115 @@ do { \
     // Fail to modify null character
     grid = [self gridFromCompactLines:@".bcd"];
     assert(![grid addCombiningChar:kCombiningAcuteAccent
-                           toCoord:VT100GridCoordMake(0, 0)]);
+                           toCoord:VT100GridCoordMake(0, 0)
+           scrollingIntoLineBuffer:nil
+               unlimitedScrollback:NO
+           useScrollbackWithRegion:NO
+                        wraparound:NO
+                              ansi:NO
+                            insert:NO
+                       overflowPtr:nil]);
+
 
     // Add two combining marks
     grid = [self gridFromCompactLines:@"abcd"];
     assert([grid addCombiningChar:kCombiningAcuteAccent
-                          toCoord:VT100GridCoordMake(0, 0)]);
+                          toCoord:VT100GridCoordMake(0, 0)
+          scrollingIntoLineBuffer:nil
+              unlimitedScrollback:NO
+          useScrollbackWithRegion:NO
+                       wraparound:NO
+                             ansi:NO
+                           insert:NO
+                      overflowPtr:nil]);
+
     assert([grid addCombiningChar:kCombiningCedilla
-                          toCoord:VT100GridCoordMake(0, 0)]);
+                          toCoord:VT100GridCoordMake(0, 0)
+          scrollingIntoLineBuffer:nil
+              unlimitedScrollback:NO
+          useScrollbackWithRegion:NO
+                       wraparound:NO
+                             ansi:NO
+                           insert:NO
+                      overflowPtr:nil]);
+
     line = [grid screenCharsAtLineNumber:0];
     assert(line[0].complexChar);
     str = ScreenCharToStr(&line[0]);
     assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"á̧" decomposedStringWithCanonicalMapping]]);
+}
+
+- (void)testAddCombiningSpacingMarkToChar {
+    VT100Grid *grid = [self gridFromCompactLines:@"ய   "];
+    assert([grid addCombiningChar:0xbbe  // TAMIL VOWEL SIGN AA
+                          toCoord:VT100GridCoordMake(0, 0)
+          scrollingIntoLineBuffer:nil
+              unlimitedScrollback:NO
+          useScrollbackWithRegion:NO
+                       wraparound:NO
+                             ansi:NO
+                           insert:NO
+                      overflowPtr:nil]);
+    screen_char_t *line = [grid screenCharsAtLineNumber:0];
+    assert(line[0].complexChar);
+    NSString *str = ScreenCharToStr(&line[0]);
+    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"யா" decomposedStringWithCanonicalMapping]]);
+    assert(line[1].code == DWC_RIGHT);
+}
+
+- (void)testAddCombiningSpacingMarkToCharAddingDWCSkip {
+    VT100Grid *grid = [self gridFromCompactLines:@"xyய\n   "];
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:4096] autorelease];
+    int overflow = 0;
+    assert([grid addCombiningChar:0xbbe  // TAMIL VOWEL SIGN AA
+                          toCoord:VT100GridCoordMake(2, 0)
+          scrollingIntoLineBuffer:lineBuffer
+              unlimitedScrollback:NO
+          useScrollbackWithRegion:NO
+                       wraparound:YES
+                             ansi:NO
+                           insert:NO
+                      overflowPtr:&overflow]);
+    assert([lineBuffer numLinesWithWidth:2] == 0);
+
+    screen_char_t *line = [grid screenCharsAtLineNumber:0];
+    assert(line[2].code == DWC_SKIP);
+    assert(line[3].code == EOL_DWC);
+
+    line = [grid screenCharsAtLineNumber:1];
+    assert(line[0].complexChar);
+    NSString *str = ScreenCharToStr(&line[0]);
+    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"யா" decomposedStringWithCanonicalMapping]]);
+    assert(line[1].code == DWC_RIGHT);
+    assert(!line[1].complexChar);
+}
+
+- (void)testAddCombiningSpacingMarkToCharAddingDWCSkipAndScrolling {
+    LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:4096] autorelease];
+    int overflow = 0;
+    VT100Grid *grid = [self gridFromCompactLines:@"  \n" "xய"];
+    assert([grid addCombiningChar:0xbbe  // TAMIL VOWEL SIGN AA
+                          toCoord:VT100GridCoordMake(1, 1)
+          scrollingIntoLineBuffer:lineBuffer
+              unlimitedScrollback:NO
+          useScrollbackWithRegion:NO
+                       wraparound:YES
+                             ansi:NO
+                           insert:NO
+                      overflowPtr:&overflow]);
+    assert(overflow == 0);
+    assert([lineBuffer numLinesWithWidth:2] == 1);
+
+    screen_char_t *line = [grid screenCharsAtLineNumber:0];
+    assert(line[1].code == DWC_SKIP);
+    assert(line[2].code == EOL_DWC);
+
+    line = [grid screenCharsAtLineNumber:1];
+    assert(line[0].complexChar);
+    NSString *str = ScreenCharToStr(&line[0]);
+    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"யா" decomposedStringWithCanonicalMapping]]);
+    assert(line[1].code == DWC_RIGHT);
+    assert(!line[1].complexChar);
 }
 
 - (void)testDeleteChars {

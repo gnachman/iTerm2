@@ -1813,11 +1813,28 @@ static NSString *const kGridSizeKey = @"Size";
 
 // Add a combining char to the cell at the cursor position if possible. Returns
 // YES if it is able to and NO if there is no base character to combine with.
-- (BOOL)addCombiningChar:(unichar)combiningChar toCoord:(VT100GridCoord)coord
-{
+TODO: Change this to "append combining char to coord before cursor" instead of passing in the coordinate; otherwise it's too messy to move the cursor.
+- (BOOL)addCombiningChar:(unichar)combiningChar
+                 toCoord:(VT100GridCoord)coord
+ scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
+     unlimitedScrollback:(BOOL)unlimitedScrollback
+ useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+              wraparound:(BOOL)wraparound
+                    ansi:(BOOL)ansi
+                  insert:(BOOL)insert
+             overflowPtr:(int *)overflow {
     int cx = coord.x;
     int cy = coord.y;
     screen_char_t* theLine = [self screenCharsAtLineNumber:cy];
+
+    if (theLine[cx].code == DWC_RIGHT && !theLine[cx].complexChar) {
+        // Base character is double-width
+        if (cx > 0) {
+            --cx;
+        } else {
+            return NO;
+        }
+    }
     if (theLine[cx].code == 0 ||
         (theLine[cx].code >= ITERM2_PRIVATE_BEGIN && theLine[cx].code <= ITERM2_PRIVATE_END) ||
         (IsLowSurrogate(combiningChar) && !IsHighSurrogate(theLine[cx].code)) ||
@@ -1831,6 +1848,39 @@ static NSString *const kGridSizeKey = @"Size";
     } else {
         BeginComplexChar(theLine + cx, combiningChar, [delegate_ gridUseHFSPlusMapping]);
     }
+    if (IsSpacingCombiningMark(combiningChar)) {
+        // Need to append a DWC_RIGHT.
+        if (cx + 1 < size_.width) {
+            theLine[cx + 1] = theLine[cx];
+            theLine[cx + 1].code = DWC_RIGHT;
+            theLine[cx + 1].complexChar = NO;
+            theLine[cx + 1].image = NO;
+        } else {
+            // Won't fit.
+            screen_char_t temp = theLine[cx];
+
+            // Erase char in case insert mode is on.
+            theLine[cx].code = 0;
+            theLine[cx].complexChar = NO;
+
+            screen_char_t dwc_right;
+            dwc_right.code = DWC_RIGHT;
+            dwc_right.complexChar = NO;
+            dwc_right.image = NO;
+
+            screen_char_t charsToAppend[2] = { temp, dwc_right };
+
+            *overflow = [self appendCharsAtCursor:charsToAppend
+                                           length:2
+                          scrollingIntoLineBuffer:lineBuffer
+                              unlimitedScrollback:unlimitedScrollback
+                          useScrollbackWithRegion:useScrollbackWithRegion
+                                       wraparound:wraparound
+                                             ansi:ansi
+                                           insert:insert];
+        }
+    }
+
     return YES;
 }
 

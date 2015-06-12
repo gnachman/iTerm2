@@ -326,6 +326,9 @@ int GetOrSetComplexChar(NSString* str);
 // the Unicode 6.0 spec, D52.
 BOOL IsCombiningMark(UTF32Char c);
 
+// Returns true if the given character is a spacing combining mark.
+BOOL IsSpacingCombiningMark(UTF32Char c);
+
 // Translate a surrogate pair into a single utf-32 char.
 UTF32Char DecodeSurrogatePair(unichar high, unichar low);
 
