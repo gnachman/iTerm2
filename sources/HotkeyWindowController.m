@@ -99,6 +99,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     // Issue 3199: With a non-autohiding hotkey window that is on all spaces, changing spaces makes
     // another app key, leaving the hotkey window open underneath other windows.
     if ([window isVisible] &&
+        window.isOnActiveSpace &&
         ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
         ![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
       DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
