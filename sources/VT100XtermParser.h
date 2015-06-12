@@ -12,7 +12,8 @@
 #import "VT100Token.h"
 
 NS_INLINE BOOL isXTERM(unsigned char *code, int len) {
-    return (len >= 2 && code[0] == VT100CC_ESC && (code[1] == ']'));
+    return (len >= 2 && code[0] == VT100CC_ESC && (code[1] == ']' ||  // OSC
+                                                   code[1] == '_'));  // APC
 }
 
 @interface VT100XtermParser : NSObject
