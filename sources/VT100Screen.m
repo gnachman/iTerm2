@@ -973,17 +973,26 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     while ([string length] > 0 &&
            (IsCombiningMark(firstChar) || IsLowSurrogate(firstChar))) {
         VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
-        int overflow = 0;
-        if (pred.x < 0 ||
-            ![currentGrid_ addCombiningChar:firstChar
-                                    toCoord:pred
-                    scrollingIntoLineBuffer:linebuffer_
-                        unlimitedScrollback:unlimitedScrollback_
-                    useScrollbackWithRegion:_appendToScrollbackWithStatusBar
-                                 wraparound:_wraparoundMode
-                                       ansi:_ansi
-                                     insert:_insert
-                                overflowPtr:&overflow]) {
+        BOOL fail = pred.x < 0;
+        if (!fail) {
+            VT100GridCoord saved = currentGrid_.cursor;
+            currentGrid_.cursor = pred;
+            int overflow;
+            fail = ![currentGrid_ addCombiningCharAtCursor:firstChar
+                                   scrollingIntoLineBuffer:linebuffer_
+                                       unlimitedScrollback:unlimitedScrollback_
+                                   useScrollbackWithRegion:_appendToScrollbackWithStatusBar
+                                                wraparound:_wraparoundMode
+                                                      ansi:_ansi
+                                                    insert:_insert
+                                               overflowPtr:&overflow];
+            if (fail) {
+                currentGrid_.cursor = saved;
+            } else {
+                [self incrementOverflowBy:overflow];
+            }
+        }
+        if (fail) {
             // Combining mark will need to stand alone rather than combine
             // because nothing precedes it.
             if (IsCombiningMark(firstChar)) {
@@ -1001,10 +1010,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                           [string substringFromIndex:1]];
             }
             len = [string length];
-            [self incrementOverflowBy:overflow];
             break;
         }
-        [self incrementOverflowBy:overflow];
         string = [string substringFromIndex:1];
         if ([string length] > 0) {
             firstChar = [string characterAtIndex:0];

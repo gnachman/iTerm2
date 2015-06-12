@@ -224,15 +224,14 @@
 - (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord;
 
 // If this turns the base char into a DWC it may end up appending to the line buffer.
-- (BOOL)addCombiningChar:(unichar)combiningChar
-                 toCoord:(VT100GridCoord)coord
- scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
-     unlimitedScrollback:(BOOL)unlimitedScrollback
- useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
-              wraparound:(BOOL)wraparound
-                    ansi:(BOOL)ansi
-                  insert:(BOOL)insert
-             overflowPtr:(int *)overflow;
+- (BOOL)addCombiningCharAtCursor:(unichar)combiningChar
+         scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
+             unlimitedScrollback:(BOOL)unlimitedScrollback
+         useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                      wraparound:(BOOL)wraparound
+                            ansi:(BOOL)ansi
+                          insert:(BOOL)insert
+                     overflowPtr:(int *)overflow;
 
 // TODO: write a test for this
 - (void)insertChar:(screen_char_t)c at:(VT100GridCoord)pos times:(int)num;

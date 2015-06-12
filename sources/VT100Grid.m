@@ -1813,18 +1813,16 @@ static NSString *const kGridSizeKey = @"Size";
 
 // Add a combining char to the cell at the cursor position if possible. Returns
 // YES if it is able to and NO if there is no base character to combine with.
-TODO: Change this to "append combining char to coord before cursor" instead of passing in the coordinate; otherwise it's too messy to move the cursor.
-- (BOOL)addCombiningChar:(unichar)combiningChar
-                 toCoord:(VT100GridCoord)coord
- scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
-     unlimitedScrollback:(BOOL)unlimitedScrollback
- useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
-              wraparound:(BOOL)wraparound
-                    ansi:(BOOL)ansi
-                  insert:(BOOL)insert
-             overflowPtr:(int *)overflow {
-    int cx = coord.x;
-    int cy = coord.y;
+- (BOOL)addCombiningCharAtCursor:(unichar)combiningChar
+         scrollingIntoLineBuffer:(LineBuffer *)lineBuffer
+             unlimitedScrollback:(BOOL)unlimitedScrollback
+         useScrollbackWithRegion:(BOOL)useScrollbackWithRegion
+                      wraparound:(BOOL)wraparound
+                            ansi:(BOOL)ansi
+                          insert:(BOOL)insert
+                     overflowPtr:(int *)overflow {
+    int cx = self.cursorX;
+    int cy = self.cursorY;
     screen_char_t* theLine = [self screenCharsAtLineNumber:cy];
 
     if (theLine[cx].code == DWC_RIGHT && !theLine[cx].complexChar) {

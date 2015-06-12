@@ -2536,21 +2536,21 @@ do { \
     assert(coord.y == 0);
 }
 
-- (void)testAddCombiningCharToCoord {
+- (void)testAddCombiningChar {
     const unichar kCombiningAcuteAccent = 0x301;
     const unichar kCombiningCedilla = 0x327;
     const unichar kCombiningEnclosingCircle = 0x20dd;
-    
+
     VT100Grid *grid = [self gridFromCompactLines:@"abcd"];
-    assert([grid addCombiningChar:kCombiningEnclosingCircle
-                          toCoord:VT100GridCoordMake(0, 0)
-          scrollingIntoLineBuffer:nil
-              unlimitedScrollback:NO
-          useScrollbackWithRegion:NO
-                       wraparound:NO
-                             ansi:NO
-                           insert:NO
-                      overflowPtr:nil]);
+    grid.cursor = VT100GridCoordMake(0, 0);
+    assert([grid addCombiningCharAtCursor:kCombiningEnclosingCircle
+                  scrollingIntoLineBuffer:nil
+                      unlimitedScrollback:NO
+                  useScrollbackWithRegion:NO
+                               wraparound:NO
+                                     ansi:NO
+                                   insert:NO
+                              overflowPtr:nil]);
     screen_char_t *line = [grid screenCharsAtLineNumber:0];
     assert(line[0].complexChar);
     NSString *str = ScreenCharToStr(&line[0]);
@@ -2558,39 +2558,39 @@ do { \
 
     // Fail to modify null character
     grid = [self gridFromCompactLines:@".bcd"];
-    assert(![grid addCombiningChar:kCombiningAcuteAccent
-                           toCoord:VT100GridCoordMake(0, 0)
-           scrollingIntoLineBuffer:nil
-               unlimitedScrollback:NO
-           useScrollbackWithRegion:NO
-                        wraparound:NO
-                              ansi:NO
-                            insert:NO
-                       overflowPtr:nil]);
+    grid.cursor = VT100GridCoordMake(0, 0);
+    assert(![grid addCombiningCharAtCursor:kCombiningAcuteAccent
+                   scrollingIntoLineBuffer:nil
+                       unlimitedScrollback:NO
+                   useScrollbackWithRegion:NO
+                                wraparound:NO
+                                      ansi:NO
+                                    insert:NO
+                               overflowPtr:nil]);
 
 
     // Add two combining marks
     grid = [self gridFromCompactLines:@"abcd"];
-    assert([grid addCombiningChar:kCombiningAcuteAccent
-                          toCoord:VT100GridCoordMake(0, 0)
-          scrollingIntoLineBuffer:nil
-              unlimitedScrollback:NO
-          useScrollbackWithRegion:NO
-                       wraparound:NO
-                             ansi:NO
-                           insert:NO
-                      overflowPtr:nil]);
+    grid.cursor = VT100GridCoordMake(0, 0);
+    assert([grid addCombiningCharAtCursor:kCombiningAcuteAccent
+                  scrollingIntoLineBuffer:nil
+                      unlimitedScrollback:NO
+                  useScrollbackWithRegion:NO
+                               wraparound:NO
+                                     ansi:NO
+                                   insert:NO
+                              overflowPtr:nil]);
 
-    assert([grid addCombiningChar:kCombiningCedilla
-                          toCoord:VT100GridCoordMake(0, 0)
-          scrollingIntoLineBuffer:nil
-              unlimitedScrollback:NO
-          useScrollbackWithRegion:NO
-                       wraparound:NO
-                             ansi:NO
-                           insert:NO
-                      overflowPtr:nil]);
-
+    grid.cursor = VT100GridCoordMake(0, 0);
+    assert([grid addCombiningCharAtCursor:kCombiningCedilla
+                  scrollingIntoLineBuffer:nil
+                      unlimitedScrollback:NO
+                  useScrollbackWithRegion:NO
+                               wraparound:NO
+                                     ansi:NO
+                                   insert:NO
+                              overflowPtr:nil]);
+    
     line = [grid screenCharsAtLineNumber:0];
     assert(line[0].complexChar);
     str = ScreenCharToStr(&line[0]);
@@ -2599,15 +2599,15 @@ do { \
 
 - (void)testAddCombiningSpacingMarkToChar {
     VT100Grid *grid = [self gridFromCompactLines:@"ய   "];
-    assert([grid addCombiningChar:0xbbe  // TAMIL VOWEL SIGN AA
-                          toCoord:VT100GridCoordMake(0, 0)
-          scrollingIntoLineBuffer:nil
-              unlimitedScrollback:NO
-          useScrollbackWithRegion:NO
-                       wraparound:NO
-                             ansi:NO
-                           insert:NO
-                      overflowPtr:nil]);
+    grid.cursor = VT100GridCoordMake(0, 0);
+    assert([grid addCombiningCharAtCursor:0xbbe  // TAMIL VOWEL SIGN AA
+                  scrollingIntoLineBuffer:nil
+                      unlimitedScrollback:NO
+                  useScrollbackWithRegion:NO
+                               wraparound:NO
+                                     ansi:NO
+                                   insert:NO
+                              overflowPtr:nil]);
     screen_char_t *line = [grid screenCharsAtLineNumber:0];
     assert(line[0].complexChar);
     NSString *str = ScreenCharToStr(&line[0]);
@@ -2619,8 +2619,8 @@ do { \
     VT100Grid *grid = [self gridFromCompactLines:@"xyய\n   "];
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:4096] autorelease];
     int overflow = 0;
-    assert([grid addCombiningChar:0xbbe  // TAMIL VOWEL SIGN AA
-                          toCoord:VT100GridCoordMake(2, 0)
+    grid.cursor = VT100GridCoordMake(2, 0);
+    assert([grid addCombiningCharAtCursor:0xbbe  // TAMIL VOWEL SIGN AA
           scrollingIntoLineBuffer:lineBuffer
               unlimitedScrollback:NO
           useScrollbackWithRegion:NO
@@ -2646,15 +2646,15 @@ do { \
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:4096] autorelease];
     int overflow = 0;
     VT100Grid *grid = [self gridFromCompactLines:@"  \n" "xய"];
-    assert([grid addCombiningChar:0xbbe  // TAMIL VOWEL SIGN AA
-                          toCoord:VT100GridCoordMake(1, 1)
-          scrollingIntoLineBuffer:lineBuffer
-              unlimitedScrollback:NO
-          useScrollbackWithRegion:NO
-                       wraparound:YES
-                             ansi:NO
-                           insert:NO
-                      overflowPtr:&overflow]);
+    grid.cursor = VT100GridCoordMake(1, 1);
+    assert([grid addCombiningCharAtCursor:0xbbe  // TAMIL VOWEL SIGN AA
+                  scrollingIntoLineBuffer:lineBuffer
+                      unlimitedScrollback:NO
+                  useScrollbackWithRegion:NO
+                               wraparound:YES
+                                     ansi:NO
+                                   insert:NO
+                              overflowPtr:&overflow]);
     assert(overflow == 0);
     assert([lineBuffer numLinesWithWidth:2] == 1);
 
