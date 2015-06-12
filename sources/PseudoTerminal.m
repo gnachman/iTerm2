@@ -2557,13 +2557,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 frame.size.width = screenVisibleFrameIgnoringHiddenDock.size.width;
                 frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
             }
-            if ([[self window] alphaValue] == 0) {
-                // Is hidden hotkey window
-                frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height;
-            } else {
-                // Normal case
-                frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
-            }
+            frame.origin.y = screenVisibleFrame.origin.y + screenVisibleFrame.size.height - frame.size.height;
 
             if (frame.size.width > 0) {
                 [[self window] setFrame:frame display:YES];
@@ -2590,13 +2584,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 frame.size.width = screenVisibleFrameIgnoringHiddenDock.size.width;
                 frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
             }
-            if ([[self window] alphaValue] == 0) {
-                // Is hidden hotkey window
-                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y - frame.size.height;
-            } else {
-                // Normal case
-                frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
-            }
+            frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
 
             if (frame.size.width > 0) {
                 [[self window] setFrame:frame display:YES];
@@ -2623,13 +2611,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 frame.size.height = screenVisibleFrameIgnoringHiddenDock.size.height;
                 frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
             }
-            if ([[self window] alphaValue] == 0) {
-                // Is hidden hotkey window
-                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x - frame.size.width;
-            } else {
-                // Normal case
-                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
-            }
+            frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x;
 
             if (frame.size.width > 0) {
                 [[self window] setFrame:frame display:YES];
@@ -2656,13 +2638,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 frame.size.height = screenVisibleFrameIgnoringHiddenDock.size.height;
                 frame.origin.y = screenVisibleFrameIgnoringHiddenDock.origin.y;
             }
-            if ([[self window] alphaValue] == 0) {
-                // Is hidden hotkey window
-                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width;
-            } else {
-                // Normal case
-                frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width;
-            }
+            frame.origin.x = screenVisibleFrameIgnoringHiddenDock.origin.x + screenVisibleFrameIgnoringHiddenDock.size.width - frame.size.width;
 
             if (frame.size.width > 0) {
                 [[self window] setFrame:frame display:YES];
