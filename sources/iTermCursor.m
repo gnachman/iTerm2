@@ -64,7 +64,7 @@
     [backgroundColor set];
     NSRectFill(NSMakeRect(rect.origin.x,
                           rect.origin.y + rect.size.height - 2,
-                          ceil(rect.size.width * (doubleWidth ? 2 : 1)),
+                          ceil(rect.size.width),
                           2));
 }
 

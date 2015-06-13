@@ -1474,11 +1474,11 @@ static const int kBadgeRightMargin = 10;
         screenChar.complexChar = NO;
     }
     if (screenChar.code) {
-        if (screenChar.code == DWC_RIGHT && column > 0) {
-            column--;
-            screenChar = theLine[column];
+        if (screenChar.code == DWC_RIGHT) {
+          *doubleWidth = NO;
+        } else {
+          *doubleWidth = (column < width - 1) && (theLine[column+1].code == DWC_RIGHT);
         }
-        *doubleWidth = (column < width - 1) && (theLine[column+1].code == DWC_RIGHT);
     } else {
         *doubleWidth = NO;
     }
