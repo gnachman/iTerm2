@@ -7124,7 +7124,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSString *preferredName = nil;
 
     iTermObjectType objectType;
-    if ([TABVIEW numberOfTabViewItems] == 1) {
+    if ([TABVIEW numberOfTabViewItems] == 0) {
         objectType = iTermWindowObject;
     } else {
         objectType = iTermTabObject;
