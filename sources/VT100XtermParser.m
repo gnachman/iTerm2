@@ -20,6 +20,9 @@ static NSString *const kXtermParserMultitokenHeaderEmittedkey = @"kXtermParserMu
 // it can be translated into XTERMCC_SET_PALETTE.
 static const int kLinuxSetPaletteMode = -1;
 
+// If this is APC ... ST instead of OSC ... ST, use this for the mode since APC doesn't have modes.
+static const int kAPCMode = -2;
+
 // This parser operates as a state machine. Each state has a corresponding
 // method that implements a hand-build parser.
 typedef enum {
@@ -186,7 +189,9 @@ typedef enum {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         theMap =
-            @{ @(kLinuxSetPaletteMode): @(XTERMCC_SET_PALETTE),
+            @{
+               @(kAPCMode): @(XTERMCC_WIN_TITLE),  // tmux treats APC like OSC 2. We must as well for tmux integration.
+               @(kLinuxSetPaletteMode): @(XTERMCC_SET_PALETTE),
                @0: @(XTERMCC_WINICON_TITLE),
                @1: @(XTERMCC_ICON_TITLE),
                @2: @(XTERMCC_WIN_TITLE),
@@ -254,7 +259,11 @@ typedef enum {
         multitokenHeaderEmitted = [savedState[kXtermParserMultitokenHeaderEmittedkey] boolValue];
     } else {
         iTermParserConsumeOrDie(context, VT100CC_ESC);
-        iTermParserConsumeOrDie(context, ']');
+        // 99% of the time the next byte is a ], but it could be a _ which is APC (used by tmux).
+        if (iTermParserConsume(context) == '_') {
+            mode = kAPCMode;
+            state = kXtermParserParsingStringState;
+        }
     }
 
     iTermXtermParserState previousState = state;

@@ -60,5 +60,6 @@ Hold Control while resizing a window and it won't snap to the character grid: yo
 If you paste text containing tabs, you'll be asked if you want to convert them to spaces. Handy at the shell prompt!
 If the bell rings too often, you'll be asked if you'd like to silence it temporarily.
 Dynamic Profiles let you store your profiles as individual JSON files. More here: https://iterm2.com/dynamic-profiles.html
-
-Continue at 412ef85e5757591b3808feb04ac9fc28fe099d52
+Edit > Paste Special > Advanced Paste lets you preview before you paste and tweak lots of options.
+Right-click on a selection and choose View > Zoom In on Selection. The session's contents will be temporarily replaced with the selection.
+Profile search recognizes name: and tag: operators to restrict the search. ^ anchors the query term to the name's start, $ to the end.
