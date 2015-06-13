@@ -41,6 +41,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
+#import "iTermProfilesWindowController.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermRestorableSession.h"
 #import "iTermURLSchemeController.h"
@@ -48,7 +49,6 @@
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
-#import "ProfilesWindow.h"
 #import "PseudoTerminal.h"
 #import "PseudoTerminalRestorer.h"
 #import "PTYSession.h"
@@ -885,7 +885,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)showBookmarkWindow:(id)sender
 {
-    [[ProfilesWindow sharedInstance] showWindow:sender];
+    [[iTermProfilesWindowController sharedInstance] showWindow:sender];
 }
 
 - (IBAction)instantReplayPrev:(id)sender

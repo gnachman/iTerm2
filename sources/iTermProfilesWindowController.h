@@ -1,5 +1,5 @@
 /*
- **  ProfilesWindow.h
+ **  iTermProfilesWindowController.h
  **  iTerm
  **
  **  Created by George Nachman on 8/29/10.
@@ -26,7 +26,7 @@
 #import "ProfileListView.h"
 #import "FutureMethods.h"
 
-@interface ProfilesWindow : NSWindowController <ProfileListViewDelegate, NSWindowDelegate> {
+@interface iTermProfilesWindowController : NSWindowController <ProfileListViewDelegate, NSWindowDelegate> {
     IBOutlet ProfileListView* tableView_;
     IBOutlet NSSegmentedControl* actions_;
     IBOutlet NSButton* horizontalPaneButton_;
@@ -38,7 +38,7 @@
     IBOutlet NSButton* toggleTagsButton_;
 }
 
-+ (ProfilesWindow*)sharedInstance;
++ (iTermProfilesWindowController*)sharedInstance;
 - (id)init;
 - (id)initWithWindowNibName:(NSString *)windowNibName;
 - (IBAction)openBookmarkInHorizontalPane:(id)sender;

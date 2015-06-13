@@ -27,6 +27,7 @@
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermProfilesWindowController.h"
 #import "iTermSelection.h"
 #import "iTermTabBarControlView.h"
 #import "iTermURLSchemeController.h"
@@ -42,7 +43,6 @@
 #import "PopupWindow.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
-#import "ProfilesWindow.h"
 #import "PseudoTerminalRestorer.h"
 #import "PSMDarkTabStyle.h"
 #import "PSMTabStyle.h"
@@ -2784,7 +2784,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             if (![[NSApp keyWindow] isKindOfClass:[PopupWindow class]] &&
                 ![[NSApp keyWindow] isKindOfClass:[iTermOpenQuicklyWindow class]] &&
                 ![[NSApp keyWindow] isKindOfClass:[iTermAboutWindow class]] &&
-                ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
+                ![[[NSApp keyWindow] windowController] isKindOfClass:[iTermProfilesWindowController class]] &&
                 ![iTermWarning showingWarning] &&
                 ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]] &&
                 ![self.window.sheets containsObject:[NSApp keyWindow]] &&

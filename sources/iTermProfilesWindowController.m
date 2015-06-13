@@ -1,5 +1,5 @@
 /*
-**  ProfilesWindow.m
+**  iTermProfilesWindowController.m
 **  iTerm
 **
 **  Created by George Nachman on 8/29/10.
@@ -22,7 +22,7 @@
 **  along with this program; if not, write to the Free Software
 */
 
-#import "ProfilesWindow.h"
+#import "iTermProfilesWindowController.h"
 #import "ProfileModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
@@ -38,47 +38,58 @@ typedef enum {
     NO_PANE // no gane
 } PaneMode;
 
-@implementation ProfilesWindow
+@interface iTermProfilesWindowRestorer : NSObject
+@end
 
-+ (ProfilesWindow*)sharedInstance
-{
-    static ProfilesWindow* instance;
+@implementation iTermProfilesWindowRestorer
+
++ (void)restoreWindowWithIdentifier:(NSString *)identifier
+                              state:(NSCoder *)state
+                  completionHandler:(void (^)(NSWindow *, NSError *))completionHandler {
+    iTermProfilesWindowController *windowController = [iTermProfilesWindowController sharedInstance];
+    [windowController.window restoreStateWithCoder:state];
+    completionHandler(windowController.window, NULL);
+}
+
+@end
+
+
+@implementation iTermProfilesWindowController
+
++ (iTermProfilesWindowController*)sharedInstance {
+    static iTermProfilesWindowController* instance;
     if (!instance) {
-        instance = [[ProfilesWindow alloc] init];
+        instance = [[iTermProfilesWindowController alloc] init];
     }
     return instance;
 }
 
-- (id)init
-{
-    self = [self initWithWindowNibName:@"BookmarksWindow"];
+- (id)init {
+    self = [self initWithWindowNibName:@"ProfilesWindow"];
     return self;
 }
 
-- (id)initWithWindowNibName:(NSString *)windowNibName
-{
+- (id)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
-    if (!self) {
-        return nil;
+
+    if (self) {
+        [[self window] setDelegate:self];
+        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
+        [tableView_ setDelegate:self];
+        [tableView_ allowMultipleSelections];
+        [tableView_ multiColumns];
+
+        NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+        NSNumber* n = [prefs objectForKey:kCloseBookmarksWindowAfterOpeningKey];
+        [closeAfterOpeningBookmark_ setState:[n boolValue] ? NSOnState : NSOffState];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(updatePaneButtons:)
+                                                     name:@"iTermWindowBecameKey"
+                                                   object:nil];
+        [[self window] setRestorable:YES];
+        [[self window] setRestorationClass:[iTermProfilesWindowRestorer class]];
     }
-
-    // Force the window to load
-    [self window];
-    [[self window] setDelegate:self];
-    [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-    [tableView_ setDelegate:self];
-    [tableView_ allowMultipleSelections];
-    [tableView_ multiColumns];
-
-    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-    NSNumber* n = [prefs objectForKey:kCloseBookmarksWindowAfterOpeningKey];
-    [closeAfterOpeningBookmark_ setState:[n boolValue] ? NSOnState : NSOffState];
-
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(updatePaneButtons:)
-                                                 name:@"iTermWindowBecameKey"
-                                               object:nil];
-
     return self;
 }
 
@@ -150,9 +161,9 @@ typedef enum {
     }
 }
 
-- (IBAction)toggleTags:(id)sender
-{
+- (IBAction)toggleTags:(id)sender {
     [tableView_ toggleTags];
+    [[self window] invalidateRestorableState];
 }
 
 - (void)updatePaneButtons:(id)sender
@@ -295,6 +306,10 @@ typedef enum {
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
+}
+
+- (void)windowDidMove:(NSNotification *)notification {
+    [[self window] invalidateRestorableState];
 }
 
 @end

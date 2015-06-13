@@ -45,6 +45,21 @@ const CGFloat kDefaultTagsWidth = 80;
 
 @implementation ProfileListView {
     BOOL tagsViewIsCollapsed_;
+    NSScrollView* scrollView_;
+    iTermSearchField* searchField_;
+    ProfileTableView* tableView_;
+    NSTableColumn* tableColumn_;
+    NSTableColumn* commandColumn_;
+    NSTableColumn* shortcutColumn_;
+    NSTableColumn* tagsColumn_;
+    NSObject<ProfileListViewDelegate> *delegate_;
+    NSSet* selectedGuids_;
+    BOOL debug;
+    ProfileModelWrapper *dataSource_;
+    int margin_;
+    ProfileTagsView *tagsView_;
+    NSSplitView *splitView_;
+    CGFloat lastTagsWidth_;
 }
 
 - (id)initWithFrame:(NSRect)frameRect
@@ -850,22 +865,32 @@ const CGFloat kDefaultTagsWidth = 80;
     [searchField_ setArrowHandler:nil];
 }
 
-- (void)toggleTags
-{
+- (void)toggleTags {
+    [self setTagsOpen:!self.tagsVisible animated:YES];
+}
+
+- (void)setTagsOpen:(BOOL)open animated:(BOOL)animated {
+    if (open == self.tagsVisible) {
+        return;
+    }
     NSRect newTableFrame = tableView_.frame;
     NSRect newTagsFrame = tagsView_.frame;
     CGFloat newTagsWidth;
-    if ([self tagsVisible]) {
+    if (open) {
+        newTagsWidth = lastTagsWidth_;
+    } else {
         lastTagsWidth_ = tagsView_.frame.size.width;
         newTagsWidth = 0;
-    } else {
-        newTagsWidth = lastTagsWidth_;
     }
     newTableFrame.size.width =  self.frame.size.width - newTagsWidth;
     newTagsFrame.size.width = newTagsWidth;
-
-    [tagsView_.animator setFrame:newTagsFrame];
-    [tableView_.animator setFrame:newTableFrame];
+    if (animated) {
+        [tagsView_.animator setFrame:newTagsFrame];
+        [tableView_.animator setFrame:newTableFrame];
+    } else {
+        tagsView_.frame = newTagsFrame;
+        tableView_.frame = newTableFrame;
+    }
 }
 
 - (BOOL)tagsVisible {
