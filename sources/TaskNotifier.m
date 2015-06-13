@@ -255,11 +255,14 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
                 [self deregisterTask:theTask];
             }
         }
-        for (PTYTask *theTask in _coprocessOnlyTasks) {
+        // Make a copy because -deregisterTask modifies _coprocessOnlyTasks
+        NSArray *coprocessOnlyTasks = [_coprocessOnlyTasks copy];
+        for (PTYTask *theTask in coprocessOnlyTasks) {
             if ([theTask coprocessOnlyTaskIsDead]) {
                 [self deregisterTask:theTask];
             }
         }
+        [coprocessOnlyTasks release];
 
         if ([deadpool count] > 0) {
             // waitpid() on pids that we think are dead or will be dead soon.
