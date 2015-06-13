@@ -1853,6 +1853,7 @@ static NSString *const kGridSizeKey = @"Size";
             theLine[cx + 1].code = DWC_RIGHT;
             theLine[cx + 1].complexChar = NO;
             theLine[cx + 1].image = NO;
+            self.cursorX = cx + 2;
         } else {
             // Won't fit.
             screen_char_t temp = theLine[cx];
