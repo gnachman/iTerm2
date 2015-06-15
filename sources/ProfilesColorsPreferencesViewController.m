@@ -58,6 +58,8 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
 
     IBOutlet NSButton *_useGuide;
     IBOutlet NSColorWell *_guideColor;
+
+    IBOutlet NSPopUpButton *_presetsPopupButton;
 }
 
 + (NSDictionary *)builtInColorPresets {
@@ -70,27 +72,39 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     return [[NSUserDefaults standardUserDefaults] objectForKey:kCustomColorPresetsKey];
 }
 
+// Checks built-ins for the name and, failing that, looks in custom presets.
++ (NSDictionary *)presetWithName:(NSString *)presetName {
+    NSDictionary *presetsDict = [self builtInColorPresets];
+    NSDictionary *settings = [presetsDict objectForKey:presetName];
+    if (!settings) {
+        presetsDict = [self customColorPresets];
+        settings = [presetsDict objectForKey:presetName];
+    }
+    return settings;
+}
+
+// This is an abuse of objectForKey:inProfile:, which expects the second arg to be a profile.
+// The preset dictionary looks just enough like a profile for this to work.
++ (NSDictionary *)colorInPresetDictionary:(NSDictionary *)settings withName:(NSString *)colorName {
+  // If the preset is missing an entry, the default color will be used for that entry.
+  return [iTermProfilePreferences objectForKey:colorName
+                                     inProfile:settings];
+}
+
 + (BOOL)loadColorPresetWithName:(NSString *)presetName
                       inProfile:(Profile *)profile
                           model:(ProfileModel *)model {
     NSString *guid = profile[KEY_GUID];
     assert(guid);
 
-    NSDictionary* presetsDict = [self builtInColorPresets];
-    NSDictionary* settings = [presetsDict objectForKey:presetName];
-    if (!settings) {
-        presetsDict = [self customColorPresets];
-        settings = [presetsDict objectForKey:presetName];
-    }
+    NSDictionary *settings = [self presetWithName:presetName];
     if (!settings) {
         return NO;
     }
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:profile];
 
     for (NSString *colorName in [self colorKeys]) {
-        // If the preset is missing an entry, the default color will be used for that entry.
-        NSDictionary *colorDict = [iTermProfilePreferences objectForKey:colorName
-                                                              inProfile:settings];
+      NSDictionary *colorDict = [self colorInPresetDictionary:settings withName:colorName];
         if (colorDict) {
             newDict[colorName] = colorDict;
         } else {
@@ -115,6 +129,10 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
                                              selector:@selector(rebuildColorPresetsMenu)
                                                  name:kRebuildColorPresetsMenuNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(popupButtonWillPopUp:)
+                                                 name:NSPopUpButtonWillPopUpNotification
+                                               object:_presetsPopupButton];
 
     // Add presets to preset color selection.
     [self rebuildColorPresetsMenu];
@@ -420,5 +438,35 @@ static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery"
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:kColorGalleryURL]];
 }
 
+- (BOOL)currentColorsEqualPreset:(NSDictionary *)preset {
+    Profile *profile = [self.delegate profilePreferencesCurrentProfile];
+    for (NSString *colorName in [self.class colorKeys]) {
+        NSDictionary *presetColorDict = [self.class colorInPresetDictionary:preset
+                                                                   withName:colorName];
+        NSDictionary *profileColorDict = [iTermProfilePreferences objectForKey:colorName
+                                                                     inProfile:profile];
+        if (![presetColorDict isEqual:profileColorDict] && presetColorDict != profileColorDict) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+// If the current color settings exactly match a preset, place a check mark next to it and uncheck
+// all others. If multiple presets match, check the first matching one.
+- (void)popupButtonWillPopUp:(id)sender {
+    BOOL found = NO;
+    for (NSMenuItem *item in _presetsMenu.itemArray) {
+        if (item.action == @selector(loadColorPreset:)) {
+            NSString *name = item.title;
+            if (!found && [self currentColorsEqualPreset:[self.class presetWithName:name]]) {
+                item.state = NSOnState;
+                found = YES;
+            } else {
+                item.state = NSOffState;
+            }
+        }
+    }
+}
 
 @end

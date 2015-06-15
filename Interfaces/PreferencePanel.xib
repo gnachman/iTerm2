@@ -1435,6 +1435,7 @@ DQ
                 <outlet property="_linkColor" destination="O31-5M-Une" id="xSw-6h-NT0"/>
                 <outlet property="_minimumContrast" destination="4896" id="2e4-71-ARX"/>
                 <outlet property="_presetsMenu" destination="3215" id="8lA-lg-5tg"/>
+                <outlet property="_presetsPopupButton" destination="3213" id="8pW-dt-uDC"/>
                 <outlet property="_selectedTextColor" destination="2277" id="jqd-jg-i3Y"/>
                 <outlet property="_selectionColor" destination="2282" id="OO4-S4-aaD"/>
                 <outlet property="_tabColor" destination="Wzz-9B-zqB" id="gfq-Eg-jc0"/>
