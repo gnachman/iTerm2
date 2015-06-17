@@ -20,7 +20,7 @@
   if (self) {
     iTermWelcomeCardActionButtonCell *cell =
         [[[iTermWelcomeCardActionButtonCell alloc] init] autorelease];
-    cell.inset = NSMakeSize(10, 3);
+    cell.inset = NSMakeSize(10, 5);
     [self setCell:cell];
   }
   return self;
@@ -42,12 +42,12 @@
 }
 
 - (NSSize)sizeThatFits:(NSSize)size {
-  return NSMakeSize(size.width, 30);
+  return NSMakeSize(size.width, 34);
 }
 
 - (void)sizeToFit {
   NSRect rect = self.frame;
-  rect.size.height = 30;
+  rect.size.height = 34;
   self.frame = rect;
 }
 

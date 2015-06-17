@@ -13,16 +13,8 @@
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
     
-  [[NSColor clearColor] set];
-  NSRectFill(self.bounds);
-
-  NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(self.bounds, 0.5, 0.5)
-                                                       xRadius:5
-                                                       yRadius:5];
-  [[[NSColor whiteColor] colorWithAlphaComponent:0.95] set];
-  [path fill];
-  [[NSColor colorWithCalibratedWhite:0.75 alpha:1] set];
-  [path stroke];
+    [[NSColor clearColor] set];
+    NSRectFill(self.bounds);
 }
 
 @end

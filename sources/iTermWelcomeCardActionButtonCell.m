@@ -38,7 +38,6 @@
          respectFlipped:YES
                   hints:nil];
 
-  NSLog(@"%@", @(self.isHighlighted));
   NSColor *textColor = foregroundColor;
   NSFont *font = [NSFont fontWithName:@"Helvetica Neue" size:14];
   NSRect textRect = cellFrame;

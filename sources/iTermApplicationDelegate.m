@@ -233,6 +233,14 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] setStartingUp:NO];
     [PTYSession removeAllRegisteredSessions];
     ranAutoLaunchScript = YES;
+
+    // Wait until startup activity has settled down so there's enough CPU for the animation to
+    // look good.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(),
+                   ^{
+                       [[[iTermWelcomeWindowController alloc] init] window];
+                   });
 }
 
 - (void)_createFlag
@@ -324,7 +332,6 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    [[[iTermWelcomeWindowController alloc] init] window];
     if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
         [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
         [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];

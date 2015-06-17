@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14C109" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
     </dependencies>
@@ -26,23 +26,23 @@
                         <rect key="frame" x="1" y="1" width="290" height="112"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     </view>
-                    <color key="borderColor" white="0.84999999999999998" alpha="1" colorSpace="calibratedWhite"/>
+                    <color key="borderColor" white="0.65000000000000002" alpha="1" colorSpace="calibratedWhite"/>
                     <color key="fillColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                 </box>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" id="oJ3-Cg-erw">
-                    <rect key="frame" x="14" y="15" width="272" height="54"/>
+                    <rect key="frame" x="14" y="13" width="272" height="54"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla" id="5Nk-zE-G82">
                         <font key="font" size="16" name="HelveticaNeue-Thin"/>
-                        <color key="textColor" white="0.41280324835526316" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="textColor" white="0.22997685185185185" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
                 <box autoresizesSubviews="NO" boxType="custom" borderType="line" titlePosition="noTitle" id="a3V-cP-S93" userLabel="Title background color (box)">
-                    <rect key="frame" x="5" y="73" width="290" height="48"/>
+                    <rect key="frame" x="5" y="71" width="290" height="50"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <view key="contentView">
-                        <rect key="frame" x="1" y="1" width="288" height="46"/>
+                        <rect key="frame" x="1" y="1" width="288" height="48"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     </view>
                     <color key="borderColor" red="0.1648087238456728" green="0.41528780037972046" blue="0.79472458964646464" alpha="0.0" colorSpace="calibratedRGB"/>
