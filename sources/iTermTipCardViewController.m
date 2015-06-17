@@ -10,6 +10,17 @@
 #import "iTermFlippedView.h"
 #import "iTermTipCardActionButton.h"
 
+@interface iTermTipCardView : iTermFlippedView
+@end
+
+@implementation iTermTipCardView
+
+- (void)awakeFromNib {
+    [self flipSubviews];
+}
+
+@end
+
 @interface iTermTipCardContainerView : iTermFlippedView
 @end
 
@@ -23,7 +34,6 @@
     [[NSColor whiteColor] set];
     NSRectFill(self.bounds);
 
-    NSRect bounds = self.bounds;
     [[NSColor colorWithCalibratedWhite:0.65 alpha:1] set];
     NSFrameRect(self.bounds);
 
@@ -156,6 +166,7 @@
                          1 +
                          bottomMargin);
     frame.origin = newOrigin;
+    frame = NSIntegralRect(frame);
     if (dry) {
         return frame;
     }
@@ -169,7 +180,7 @@
 
     NSRect containerFrame = self.view.bounds;
     containerFrame.origin.x = 4;
-    containerFrame.origin.y = bottomMargin;
+    containerFrame.origin.y = topMargin;
     containerFrame.size.width -= 8;
     containerFrame.size.height = (1 +
                                   _titleBox.frame.size.height +

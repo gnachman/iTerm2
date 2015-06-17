@@ -17,4 +17,8 @@
     NSRectFill(self.bounds);
 }
 
+- (BOOL)isFlipped {
+  return YES;
+}
+
 @end

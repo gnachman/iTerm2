@@ -8,6 +8,7 @@
 //
 
 #import "iTermTipWindowController.h"
+
 #import "iTermTipCardActionButton.h"
 #import "iTermTipCardViewController.h"
 #import "NSView+iTerm.h"
@@ -129,29 +130,18 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
     NSRect frame = card.view.frame;
     frame.size = [card sizeThatFits:NSMakeSize(400, CGFLOAT_MAX)];
 
-    CGFloat originalWindowHeight = self.window.frame.size.height;
-
     frame.origin = NSZeroPoint;
+
     [self.window.contentView addSubview:card.view];
+
     NSRect screenFrame = self.window.screen.visibleFrame;
     NSRect windowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
                                     NSMaxY(screenFrame) - NSHeight(frame) - 8,
                                     frame.size.width,
                                     frame.size.height);
-    [self.window setFrame:windowFrame display:YES];
-    if (animated) {
-        // Preserve the top of the card when the window resizes
-        NSRect cardFrame = originalCardFrame;
-        const CGFloat deltaHeight = windowFrame.size.height - originalWindowHeight;
-        cardFrame.origin.y += deltaHeight;
-        card.view.frame = cardFrame;
-//        [[NSAnimationContext currentContext] setDuration:5];
-        [card layoutWithWidth:400 animated:YES origin:frame.origin];
-//        card.view.animator.frame = frame;
-    } else {
-        card.view.frame = frame;
-        [card layoutWithWidth:400 animated:NO origin:frame.origin];
-    }
+    [self.window setFrame:windowFrame display:NO];
+    card.view.frame = originalCardFrame;
+    [card layoutWithWidth:400 animated:animated origin:NSZeroPoint];
 }
 
 - (void)dismiss {
