@@ -8,6 +8,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface iTermWelcomeRootView : NSView
+@interface iTermTipRootView : NSView
 
 @end

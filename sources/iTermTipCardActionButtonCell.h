@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface iTermWelcomeCardActionButtonCell : NSButtonCell
+@interface iTermTipCardActionButtonCell : NSButtonCell
 
 @property(nonatomic, assign) NSSize inset;
 @property(nonatomic, retain) NSImage *icon;

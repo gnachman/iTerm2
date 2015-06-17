@@ -6,9 +6,9 @@
 //
 //
 
-#import "iTermWelcomeCardActionButtonCell.h"
+#import "iTermTipCardActionButtonCell.h"
 
-@implementation iTermWelcomeCardActionButtonCell
+@implementation iTermTipCardActionButtonCell
 
 + (NSColor *)blueColor {
   return [NSColor colorWithCalibratedRed:0.25 green:0.25 blue:0.75 alpha:1];

@@ -7,27 +7,60 @@
 //
 //
 
-#import "iTermWelcomeWindowController.h"
-#import "iTermWelcomeCardViewController.h"
+#import "iTermTipWindowController.h"
+#import "iTermTipCardViewController.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
 
 static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNotification";
+static NSString *const kOpenURLTipNotification = @"kOpenURLTipNotification";
+static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotification";
 
-@interface iTermWelcomeWindowController()<NSAnimationDelegate>
+@interface iTermTipWindowController()<NSAnimationDelegate>
+@property(nonatomic, retain) iTermTipCardViewController *cardViewController;
+@property(nonatomic, copy) NSString *title;
+@property(nonatomic, copy) NSString *body;
+@property(nonatomic, copy) NSString *url;
 @end
 
-@implementation iTermWelcomeWindowController
+@implementation iTermTipWindowController
+
+- (instancetype)initWithTitle:(NSString *)title body:(NSString *)body url:(NSString *)url {
+    self = [self init];
+    if (self) {
+        self.title = title;
+        self.body = body;
+        self.url = url;
+        [self window];
+    }
+    return self;
+}
 
 - (instancetype)init {
-    self = [self initWithWindowNibName:@"iTermWelcomeWindowController"];
+    self = [self initWithWindowNibName:@"iTermTipWindowController"];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(dismiss)
                                                      name:kDismissCurrentTipNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(open)
+                                                     name:kOpenURLTipNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(remindMeLater)
+                                                     name:kRemindMeLaterTipNotification
+                                                   object:nil];
     }
     return self;
+}
+
+- (void)dealloc {
+    [_title release];
+    [_body release];
+    [_url release];
+    [_cardViewController release];
+    [super dealloc];
 }
 
 - (void)windowDidLoad {
@@ -36,15 +69,19 @@ static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNoti
     self.window.opaque = NO;
     self.window.alphaValue = 0;
 
-    iTermWelcomeCardViewController *card = [[iTermWelcomeCardViewController alloc] initWithNibName:@"iTermWelcomeCardViewController" bundle:nil];  // leaks
+    iTermTipCardViewController *card =
+        [[[iTermTipCardViewController alloc] initWithNibName:@"iTermWelcomeCardViewController"
+                                                      bundle:nil] autorelease];
+    self.cardViewController = card;
     [card view];
-    card.titleString = @"Shell Integration";
+    card.titleString = self.title;
     card.color = [NSColor colorWithCalibratedRed:120/255.0 green:178/255.0 blue:1.0 alpha:1];
-    card.bodyText = @"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla molestie molestie erat ac tempor.";
+    card.bodyText = self.body;
     [card addActionWithTitle:@"Learn More"
                         icon:[NSImage imageNamed:@"Navigate"]
                        block:^() {
-                           NSLog(@"Learn more");
+                           [[NSNotificationCenter defaultCenter] postNotificationName:kOpenURLTipNotification
+                                                                               object:nil];
                        }];
     [card addActionWithTitle:@"Dismiss Tip"
                         icon:[NSImage imageNamed:@"Dismiss"]
@@ -55,7 +92,8 @@ static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNoti
     [card addActionWithTitle:@"Remind Me Later"
                         icon:[NSImage imageNamed:@"Later"]
                        block:^() {
-                           NSLog(@"Later");
+                           [[NSNotificationCenter defaultCenter] postNotificationName:kRemindMeLaterTipNotification
+                                                                               object:nil];
                        }];
     [card layoutWithWidth:400];
 
@@ -74,6 +112,11 @@ static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNoti
 }
 
 - (void)dismiss {
+    [self animateOut];
+    [_delegate tipWindowDismissed];
+}
+
+- (void)animateOut {
     SolidColorView *container = [[[SolidColorView alloc] initWithFrame:[self.window.contentView frame]] autorelease];
     container.color = [NSColor clearColor];
     container.autoresizesSubviews = NO;
@@ -103,6 +146,16 @@ static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNoti
 
     // Run the animation.
     [viewAnimation startAnimation];
+}
+
+- (void)open {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:_url]];
+    [self dismiss];
+}
+
+- (void)remindMeLater {
+    [self animateOut];
+    [_delegate tipWindowPostponed];
 }
 
 - (void)present {

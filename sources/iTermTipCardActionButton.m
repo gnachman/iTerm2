@@ -6,20 +6,20 @@
 //
 //
 
-#import "iTermWelcomeCardActionButton.h"
-#import "iTermWelcomeCardActionButtonCell.h"
+#import "iTermTipCardActionButton.h"
+#import "iTermTipCardActionButtonCell.h"
 
-@implementation iTermWelcomeCardActionButton
+@implementation iTermTipCardActionButton
 
 + (Class)cellClass {
-  return [iTermWelcomeCardActionButtonCell class];
+  return [iTermTipCardActionButtonCell class];
 }
 
 - (id)initWithFrame:(NSRect)frameRect {
   self = [super initWithFrame:frameRect];
   if (self) {
-    iTermWelcomeCardActionButtonCell *cell =
-        [[[iTermWelcomeCardActionButtonCell alloc] init] autorelease];
+    iTermTipCardActionButtonCell *cell =
+        [[[iTermTipCardActionButtonCell alloc] init] autorelease];
     cell.inset = NSMakeSize(10, 5);
     [self setCell:cell];
   }
@@ -32,12 +32,12 @@
 }
 
 - (void)setTitle:(NSString *)title {
-  iTermWelcomeCardActionButtonCell *cell = (iTermWelcomeCardActionButtonCell *)self.cell;
+  iTermTipCardActionButtonCell *cell = (iTermTipCardActionButtonCell *)self.cell;
   cell.title = title;
 }
 
 - (void)setIcon:(NSImage *)image {
-  iTermWelcomeCardActionButtonCell *cell = (iTermWelcomeCardActionButtonCell *)self.cell;
+  iTermTipCardActionButtonCell *cell = (iTermTipCardActionButtonCell *)self.cell;
   cell.icon = image;
 }
 

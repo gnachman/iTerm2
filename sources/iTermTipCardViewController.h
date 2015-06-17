@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface iTermWelcomeCardViewController : NSViewController
+@interface iTermTipCardViewController : NSViewController
 
 - (void)setTitleString:(NSString *)titleString;
 - (void)setColor:(NSColor *)color;

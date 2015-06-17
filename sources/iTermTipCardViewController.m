@@ -6,10 +6,10 @@
 //
 //
 
-#import "iTermWelcomeCardViewController.h"
-#import "iTermWelcomeCardActionButton.h"
+#import "iTermTipCardViewController.h"
+#import "iTermTipCardActionButton.h"
 
-@implementation iTermWelcomeCardViewController {
+@implementation iTermTipCardViewController {
     IBOutlet NSTextField *_title;
     IBOutlet NSTextField *_body;
     IBOutlet NSBox *_titleBox;
@@ -50,7 +50,7 @@
     if (!_actionButtons) {
         _actionButtons = [[NSMutableArray alloc] init];
     }
-    iTermWelcomeCardActionButton *button = [[[iTermWelcomeCardActionButton alloc] initWithFrame:NSMakeRect(0, 0, _container.bounds.size.width, 0)] autorelease];
+    iTermTipCardActionButton *button = [[[iTermTipCardActionButton alloc] initWithFrame:NSMakeRect(0, 0, _container.bounds.size.width, 0)] autorelease];
     button.title = title;
     [button setIcon:image];
     button.block = block;
@@ -94,7 +94,7 @@
 }
 
 - (void)buttonPressed:(id)sender {
-    iTermWelcomeCardActionButton *button = sender;
+    iTermTipCardActionButton *button = sender;
     if (button.block) {
         button.block();
     }

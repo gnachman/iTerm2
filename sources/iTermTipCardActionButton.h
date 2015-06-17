@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface iTermWelcomeCardActionButton : NSButton
+@interface iTermTipCardActionButton : NSButton
 
 @property (nonatomic, copy) void (^block)();
 

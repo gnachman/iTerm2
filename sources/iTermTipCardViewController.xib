@@ -4,7 +4,7 @@
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="iTermWelcomeCardViewController">
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermTipCardViewController">
             <connections>
                 <outlet property="_body" destination="oJ3-Cg-erw" id="JpM-1Q-CfM"/>
                 <outlet property="_container" destination="yJ1-cJ-imY" id="3Vv-85-bJn"/>

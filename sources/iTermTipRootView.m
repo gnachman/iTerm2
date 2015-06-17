@@ -6,9 +6,9 @@
 //
 //
 
-#import "iTermWelcomeRootView.h"
+#import "iTermTipRootView.h"
 
-@implementation iTermWelcomeRootView
+@implementation iTermTipRootView
 
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];

@@ -44,9 +44,10 @@
 #import "iTermProfilesWindowController.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermRestorableSession.h"
+#import "iTermTipController.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
-#import "iTermWelcomeWindowController.h"
+#import "iTermTipWindowController.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
@@ -239,7 +240,7 @@ static BOOL hasBecomeActive = NO;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(),
                    ^{
-                       [[[iTermWelcomeWindowController alloc] init] window];
+                       [[iTermTipController sharedInstance] applicationDidFinishLaunching];
                    });
 }
 
