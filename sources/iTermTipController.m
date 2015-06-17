@@ -21,6 +21,8 @@ static NSString *const kTipURL = @"url";
 @property(nonatomic, copy) NSString *currentTipName;
 @end
 
+#define ALWAYS_SHOW_TIP 1
+
 @implementation iTermTipController {
     BOOL _showingTip;
 }
@@ -58,6 +60,11 @@ static NSString *const kTipURL = @"url";
 }
 
 - (void)tryToShowTip {
+#if ALWAYS_SHOW_TIP
+  [self showTipForKey:self.tips.allKeys.firstObject];
+  return;
+#endif
+  
     if (_showingTip || [self haveShownTipRecently]) {
         [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:3600 * 24];
         return;

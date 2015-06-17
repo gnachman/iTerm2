@@ -8,13 +8,19 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermTipCardActionButton;
+
 @interface iTermTipCardViewController : NSViewController
 
 - (void)setTitleString:(NSString *)titleString;
 - (void)setColor:(NSColor *)color;
 - (void)setBodyText:(NSString *)bodyText;
-- (void)layoutWithWidth:(CGFloat)width;
-- (void)addActionWithTitle:(NSString *)title
-                      icon:(NSImage *)image
-                     block:(void (^)())block;
+- (void)layoutWithWidth:(CGFloat)width animated:(BOOL)animated origin:(NSPoint)newOrigin;
+- (iTermTipCardActionButton *)addActionWithTitle:(NSString *)title
+                                            icon:(NSImage *)image
+                                           block:(void (^)(id card))block;
+- (iTermTipCardActionButton *)actionWithTitle:(NSString *)title;
+- (void)removeActionWithTitle:(NSString *)title;
+- (NSSize)sizeThatFits:(NSSize)size;
+
 @end

@@ -932,6 +932,12 @@
 		1D8BBA7B1B30FD230005A852 /* Later@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA771B30FD230005A852 /* Later@2x.png */; };
 		1D8BBA7C1B30FD230005A852 /* Later@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA771B30FD230005A852 /* Later@2x.png */; };
 		1D8BBA7D1B30FD230005A852 /* Later@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA771B30FD230005A852 /* Later@2x.png */; };
+		1D8BBA821B31DC0D0005A852 /* ChevronUp.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA7E1B31DC0D0005A852 /* ChevronUp.png */; };
+		1D8BBA831B31DC0D0005A852 /* ChevronUp@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA7F1B31DC0D0005A852 /* ChevronUp@2x.png */; };
+		1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA801B31DC0D0005A852 /* ChevronDown.png */; };
+		1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
+		1D8BBA861B31DC140005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
+		1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
 		1D8CDF521958F31700FE1BEE /* iTermSizeRememberingView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */; };
 		1D8CDF531958F31700FE1BEE /* iTermSizeRememberingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */; };
@@ -2377,7 +2383,7 @@
 		1D8B8A121806038F00C2DC25 /* VT100Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Grid.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D8B8A131806038F00C2DC25 /* VT100Grid.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Grid.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D8BBA581B30E9AF0005A852 /* iTermTipCardActionButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTipCardActionButton.h; sourceTree = "<group>"; };
-		1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipCardActionButton.m; sourceTree = "<group>"; };
+		1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipCardActionButton.m; sourceTree = "<group>"; };
 		1D8BBA5F1B30E9F50005A852 /* iTermTipCardActionButtonCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTipCardActionButtonCell.h; sourceTree = "<group>"; };
 		1D8BBA601B30E9F50005A852 /* iTermTipCardActionButtonCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipCardActionButtonCell.m; sourceTree = "<group>"; };
 		1D8BBA661B30F5C30005A852 /* Navigate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Navigate.png; path = images/Navigate.png; sourceTree = "<group>"; };
@@ -2386,6 +2392,10 @@
 		1D8BBA6F1B30F7FB0005A852 /* Dismiss.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Dismiss.png; path = images/Dismiss.png; sourceTree = "<group>"; };
 		1D8BBA761B30FD230005A852 /* Later..png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Later..png; path = images/Later..png; sourceTree = "<group>"; };
 		1D8BBA771B30FD230005A852 /* Later@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Later@2x.png"; path = "images/Later@2x.png"; sourceTree = "<group>"; };
+		1D8BBA7E1B31DC0D0005A852 /* ChevronUp.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ChevronUp.png; path = images/ChevronUp.png; sourceTree = "<group>"; };
+		1D8BBA7F1B31DC0D0005A852 /* ChevronUp@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ChevronUp@2x.png"; path = "images/ChevronUp@2x.png"; sourceTree = "<group>"; };
+		1D8BBA801B31DC0D0005A852 /* ChevronDown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ChevronDown.png; path = images/ChevronDown.png; sourceTree = "<group>"; };
+		1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ChevronDown@2x.png"; path = "images/ChevronDown@2x.png"; sourceTree = "<group>"; };
 		1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EncodingsWithLowerCase.plist; sourceTree = "<group>"; };
 		1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSizeRememberingView.h; sourceTree = "<group>"; };
 		1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSizeRememberingView.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -3705,6 +3715,10 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				1D8BBA7E1B31DC0D0005A852 /* ChevronUp.png */,
+				1D8BBA7F1B31DC0D0005A852 /* ChevronUp@2x.png */,
+				1D8BBA801B31DC0D0005A852 /* ChevronDown.png */,
+				1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */,
 				1D8BBA761B30FD230005A852 /* Later..png */,
 				1D8BBA771B30FD230005A852 /* Later@2x.png */,
 				1D8BBA6E1B30F7FB0005A852 /* Dismiss@2x.png */,
@@ -5530,6 +5544,7 @@
 				A67D0D581A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
 				A67D0D341A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				1D6ED9C519AEA20D005A7799 /* LogoShadow.png in Resources */,
+				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
 				1D6ED9CA19AEA20D005A7799 /* IBarCursorXMR@2x.png in Resources */,
 				1D6ED9CE19AEA20D005A7799 /* TabClose_Front_Rollover@2x.png in Resources */,
@@ -5689,6 +5704,7 @@
 				A686C1751ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */,
 				A67D0D721A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A686C14A1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrast.png in Resources */,
+				1D8BBA861B31DC140005A852 /* ChevronDown@2x.png in Resources */,
 				A67D0D7B1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				A686C16C1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allDarkGray.png in Resources */,
 				A686C1591ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorHidden.png in Resources */,
@@ -5791,11 +5807,13 @@
 				1D01609D1852AA6F0014D26A /* mark.png in Resources */,
 				1D5FDD931208E91100C46BA3 /* overflowImagePressed.tif in Resources */,
 				1D5FDD981208E91100C46BA3 /* TabNewMetal.png in Resources */,
+				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
 				A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				A65B72551B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				1D5FDD991208E91100C46BA3 /* TabNewMetalPressed.png in Resources */,
 				1D5FDD9A1208E91100C46BA3 /* TabNewMetalRollover.png in Resources */,
 				A67D0D7A1A2EE12A003A8B35 /* PasteView.xib in Resources */,
+				1D8BBA841B31DC0D0005A852 /* ChevronDown.png in Resources */,
 				A6B3A7381AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				1D01609B1852AA6F0014D26A /* mark@2x.png in Resources */,
@@ -5804,6 +5822,7 @@
 				A67F118218D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				A67D0D741A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
 				1D5FDD9B1208E91100C46BA3 /* Warning.png in Resources */,
+				1D8BBA831B31DC0D0005A852 /* ChevronUp@2x.png in Resources */,
 				A663010B19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				A6B70FBD19830C37007A4284 /* dead@2x.png in Resources */,
 				A605D4B519CF79F600D40343 /* iTerm2.iconset in Resources */,
@@ -5836,6 +5855,7 @@
 				A69B458B19710CC400F5444D /* SoftDivider.png in Resources */,
 				A67D0D861A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
+				1D8BBA821B31DC0D0005A852 /* ChevronUp.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				A67D0D961A2EE248003A8B35 /* iTerm2 Help in Resources */,
 				A67D0D6E1A2EE12A003A8B35 /* MainMenu.strings in Resources */,

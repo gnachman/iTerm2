@@ -10,9 +10,10 @@
 
 @interface iTermTipCardActionButton : NSButton
 
-@property (nonatomic, copy) void (^block)();
+@property(nonatomic, copy) void (^block)(id);
+@property(nonatomic, copy) NSString *title;
 
-- (void)setTitle:(NSString *)title;
 - (void)setIcon:(NSImage *)image;
+- (void)setCollapsed:(BOOL)collapsed;
 
 @end

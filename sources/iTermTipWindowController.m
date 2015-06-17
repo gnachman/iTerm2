@@ -8,6 +8,7 @@
 //
 
 #import "iTermTipWindowController.h"
+#import "iTermTipCardActionButton.h"
 #import "iTermTipCardViewController.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
@@ -15,6 +16,7 @@
 static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNotification";
 static NSString *const kOpenURLTipNotification = @"kOpenURLTipNotification";
 static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotification";
+static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNotification";
 
 @interface iTermTipWindowController()<NSAnimationDelegate>
 @property(nonatomic, retain) iTermTipCardViewController *cardViewController;
@@ -70,7 +72,7 @@ static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotifi
     self.window.alphaValue = 0;
 
     iTermTipCardViewController *card =
-        [[[iTermTipCardViewController alloc] initWithNibName:@"iTermWelcomeCardViewController"
+        [[[iTermTipCardViewController alloc] initWithNibName:@"iTermTipCardViewController"
                                                       bundle:nil] autorelease];
     self.cardViewController = card;
     [card view];
@@ -79,25 +81,56 @@ static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotifi
     card.bodyText = self.body;
     [card addActionWithTitle:@"Learn More"
                         icon:[NSImage imageNamed:@"Navigate"]
-                       block:^() {
+                       block:^(id card) {
                            [[NSNotificationCenter defaultCenter] postNotificationName:kOpenURLTipNotification
                                                                                object:nil];
                        }];
     [card addActionWithTitle:@"Dismiss Tip"
                         icon:[NSImage imageNamed:@"Dismiss"]
-                       block:^() {
+                       block:^(id card) {
                            [[NSNotificationCenter defaultCenter] postNotificationName:kDismissCurrentTipNotification
                                                                                object:nil];
                        }];
-    [card addActionWithTitle:@"Remind Me Later"
-                        icon:[NSImage imageNamed:@"Later"]
-                       block:^() {
-                           [[NSNotificationCenter defaultCenter] postNotificationName:kRemindMeLaterTipNotification
-                                                                               object:nil];
-                       }];
-    [card layoutWithWidth:400];
 
+    [card addActionWithTitle:@"More Options"
+                        icon:[NSImage imageNamed:@"ChevronDown"]
+                       block:^(id card) {
+        iTermTipCardActionButton *action = [card actionWithTitle:@"More Options"];
+        if (action) {
+            // Expanding
+            [action setTitle:@"Fewer Options"];
+            [action setIcon:[NSImage imageNamed:@"ChevronUp"]];
+            [[card actionWithTitle:@"Remind Me Later"] setCollapsed:NO];
+        } else {
+            // Collapsing
+            iTermTipCardActionButton *action = [card actionWithTitle:@"Fewer Options"];
+            [action setTitle:@"More Options"];
+            [action setIcon:[NSImage imageNamed:@"ChevronDown"]];
+            [[card actionWithTitle:@"Remind Me Later"] setCollapsed:YES];
+        }
+        [self layoutCard:card animated:YES];
+    }];
+    iTermTipCardActionButton *button =
+        [card addActionWithTitle:@"Remind Me Later"
+                            icon:[NSImage imageNamed:@"Later"]
+                           block:^(id card) {
+                               [[NSNotificationCenter defaultCenter] postNotificationName:kRemindMeLaterTipNotification
+                                                                                   object:nil];
+                           }];
+    [button setCollapsed:YES];
+
+    [self layoutCard:card animated:NO];
+
+    [self present];
+}
+
+- (void)layoutCard:(iTermTipCardViewController *)card animated:(BOOL)animated {
+    NSRect originalCardFrame = card.view.frame;
     NSRect frame = card.view.frame;
+    frame.size = [card sizeThatFits:NSMakeSize(400, CGFLOAT_MAX)];
+
+    CGFloat originalWindowHeight = self.window.frame.size.height;
+
     frame.origin = NSZeroPoint;
     [self.window.contentView addSubview:card.view];
     NSRect screenFrame = self.window.screen.visibleFrame;
@@ -106,9 +139,19 @@ static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotifi
                                     frame.size.width,
                                     frame.size.height);
     [self.window setFrame:windowFrame display:YES];
-    card.view.frame = frame;
-
-    [self present];
+    if (animated) {
+        // Preserve the top of the card when the window resizes
+        NSRect cardFrame = originalCardFrame;
+        const CGFloat deltaHeight = windowFrame.size.height - originalWindowHeight;
+        cardFrame.origin.y += deltaHeight;
+        card.view.frame = cardFrame;
+//        [[NSAnimationContext currentContext] setDuration:5];
+        [card layoutWithWidth:400 animated:YES origin:frame.origin];
+//        card.view.animator.frame = frame;
+    } else {
+        card.view.frame = frame;
+        [card layoutWithWidth:400 animated:NO origin:frame.origin];
+    }
 }
 
 - (void)dismiss {
