@@ -6,6 +6,7 @@
 //
 //
 
+#import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 
 @implementation NSImage (iTerm)
@@ -96,7 +97,7 @@
   CGContextDrawImage(context, rect, [self CGImageForProposedRect:NULL context:nil hints:nil]);
 
   // Now draw over it with |color|.
-  CGContextSetFillColorWithColor(context, [color CGColor]);
+  CGContextSetFillColorWithColor(context, [color iterm_CGColor]);
   CGContextSetBlendMode(context, kCGBlendModeSourceAtop);
   CGContextFillRect(context, rect);
 

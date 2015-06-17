@@ -292,5 +292,13 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [NSColor colorWithColorSpace:self.colorSpace components:x count:4];
 }
 
+- (CGColorRef)iterm_CGColor {
+    NSInteger numberOfComponents = [self numberOfComponents];
+    CGFloat components[numberOfComponents];
+
+    CGColorSpaceRef colorSpace = [[self colorSpace] CGColorSpace];
+    [self getComponents:(CGFloat *)&components];
+    return (CGColorRef)[(id)CGColorCreate(colorSpace, components) autorelease];
+}
 
 @end

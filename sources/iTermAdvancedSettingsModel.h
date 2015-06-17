@@ -100,4 +100,6 @@
 
 + (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
 
++ (BOOL)noSyncTipsDisabled;
+
 @end

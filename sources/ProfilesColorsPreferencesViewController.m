@@ -15,7 +15,7 @@
 
 NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
 static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
-static NSString * const kColorGalleryURL = @"http://www.iterm2.com/colorgallery";
+static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
 @implementation ProfilesColorsPreferencesViewController {
     IBOutlet NSColorWell *_ansi0Color;
