@@ -46,6 +46,7 @@
 #import "iTermRestorableSession.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
+#import "iTermWelcomeWindowController.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
@@ -323,6 +324,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    [[[iTermWelcomeWindowController alloc] init] window];
     if (IsMavericksOrLater() && [iTermAdvancedSettingsModel disableAppNap]) {
         [[NSProcessInfo processInfo] setAutomaticTerminationSupportEnabled:YES];
         [[NSProcessInfo processInfo] disableAutomaticTermination:@"User Preference"];
