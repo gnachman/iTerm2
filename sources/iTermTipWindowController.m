@@ -103,13 +103,13 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
                        }];
 
     NSString *toggleTitle = expanded ? @"Fewer Options" : @"More Options";
-    NSImage *toggleImage = expanded ? [NSImage imageNamed:@"ChevronUp"] : [NSImage imageNamed:@"ChevronDown"];
     [card addActionWithTitle:toggleTitle
-                        icon:toggleImage
+                        icon:[NSImage imageNamed:@"ChevronDown"]
                        block:^(id sendingCard) {
         iTermTipCardActionButton *action = [card actionWithTitle:@"More Options"];
         if (action) {
             // Expanding
+            [action setIconFlipped:YES];
             [action setTitle:@"Fewer Options"];
             [action setIcon:[NSImage imageNamed:@"ChevronUp"]];
             [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingIn];
@@ -118,8 +118,8 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
         } else {
             // Collapsing
             action = [card actionWithTitle:@"Fewer Options"];
+            [action setIconFlipped:NO];
             [action setTitle:@"More Options"];
-            [action setIcon:[NSImage imageNamed:@"ChevronDown"]];
             [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingOut];
             [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingOut];
             [[card actionWithTitle:@"Show Next Tip"] setAnimationState:kTipCardButtonAnimatingOut];

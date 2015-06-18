@@ -15,13 +15,15 @@ typedef NS_ENUM(NSInteger, iTermTipCardActionButtonAnimationState) {
     kTipCardButtonAnimatingOutCurrently
 };
 
-@interface iTermTipCardActionButton : NSButton
+@interface iTermTipCardActionButton : NSControl
 
 @property(nonatomic, copy) void (^block)(id);
 @property(nonatomic, assign) iTermTipCardActionButtonAnimationState animationState;
 @property(nonatomic, assign) NSRect postAnimationFrame;
 @property(nonatomic, assign, getter=isCollapsed) BOOL collapsed;
+@property(nonatomic, copy) NSString *title;
+@property(nonatomic, retain) NSImage *icon;
 
-- (void)setIcon:(NSImage *)image;
+- (void)setIconFlipped:(BOOL)isFlipped;
 
 @end
