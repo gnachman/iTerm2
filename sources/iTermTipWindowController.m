@@ -30,9 +30,13 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 @property(nonatomic, retain) iTermTipCardViewController *cardViewController;
 @property(nonatomic, retain) iTermTip *tip;
 @property(nonatomic, retain) NSView *intermediateView;
+@property(nonatomic, assign) BOOL windowCanShrink;
 @end
 
-@implementation iTermTipWindowController
+@implementation iTermTipWindowController {
+    NSRect _desiredWindowFrame;
+    NSInteger _holdWindowSizeCount;
+}
 
 - (instancetype)initWithTip:(id)tip {
     self = [self init];
@@ -173,7 +177,7 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
     [_intermediateView setWantsLayer:YES];
     _intermediateView.layer.opaque = NO;
     _intermediateView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    _intermediateView.autoresizesSubviews = YES;
+    _intermediateView.autoresizesSubviews = NO;
 
     [self.window.contentView addSubview:_intermediateView];
 
@@ -194,7 +198,7 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
                                     NSMaxY(screenFrame) - NSHeight(frame) - 8,
                                     frame.size.width,
                                     frame.size.height);
-    [self.window setFrame:windowFrame display:NO];
+    [self setWindowFrame:windowFrame];
     [card layoutWithWidth:kWindowWidth animated:NO origin:NSZeroPoint];
 
     if (animated) {
@@ -207,10 +211,10 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
             card.showFakeBottomDivider = NO;
             [card hideCollapsedButtons];
             NSRect finalWindowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
-                                                 NSMaxY(screenFrame) - NSHeight(frame) - 8,
-                                                 frame.size.width,
-                                                 frame.size.height);
-            [self.window setFrame:finalWindowFrame display:NO];
+                                                 NSMaxY(screenFrame) - NSHeight(postAnimationFrame) - 8,
+                                                 postAnimationFrame.size.width,
+                                                 postAnimationFrame.size.height);
+            [self setWindowFrame:finalWindowFrame];
             card.view.frame = postAnimationFrame;
             [card release];
             [self release];
@@ -332,8 +336,12 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 - (void)showNextTip {
     iTermTip *nextTip = [_delegate tipWindowTipAfterTipWithIdentifier:_tip.identifier];
     if (nextTip) {
+        self.windowCanShrink = NO;
+        const NSTimeInterval duration = 2;
+        [[NSAnimationContext currentContext] setDuration:duration];
         NSRect frame = _cardViewController.view.frame;
         frame.origin.x = -frame.size.width;
+        _cardViewController.view.autoresizingMask = 0;
 
         [_cardViewController.view.animator setFrame:frame];
         // TODO: remove old vc from view hierarchy when animation completes
@@ -349,6 +357,9 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 
         frame.origin.x -= self.window.frame.size.width;
         [_cardViewController.view.animator setFrame:frame];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            self.windowCanShrink = YES;
+        });
     }
 }
 
@@ -362,6 +373,31 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 
     // Run the animation.
     [viewAnimation startAnimation];
+}
+
+- (void)setWindowCanShrink:(BOOL)windowCanShrink {
+    if (windowCanShrink) {
+        --_holdWindowSizeCount;
+    } else {
+        ++_holdWindowSizeCount;
+    }
+
+    if (_holdWindowSizeCount == 0 && _desiredWindowFrame.size.width > 0) {
+        [self.window setFrame:_desiredWindowFrame display:NO];
+        _desiredWindowFrame.size.width = 0;
+    }
+}
+
+- (BOOL)windowCanShrink {
+    return _holdWindowSizeCount == 0;
+}
+
+- (void)setWindowFrame:(NSRect)frame {
+    if (self.windowCanShrink || frame.size.height >= self.window.frame.size.height) {
+        [self.window setFrame:frame display:NO];
+    } else {
+        _desiredWindowFrame = frame;
+    }
 }
 
 #pragma mark - NSAnimationDelegate
