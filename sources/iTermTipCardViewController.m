@@ -296,7 +296,11 @@
         CGFloat outY = finalYTop;
         CGFloat inY = liveY;
         _postAnimationFrame = frame;
-        _fakeBottomDivider.frame = NSMakeRect(1, liveY, _container.frame.size.width - 2, 1);
+        if (foundAnimatingOut) {
+            _fakeBottomDivider.frame = NSMakeRect(1, finalYBottom, _container.frame.size.width - 2, 1);
+        } else if (foundAnimatingIn) {
+            _fakeBottomDivider.frame = NSMakeRect(1, liveY, _container.frame.size.width - 2, 1);
+        }
         for (iTermTipCardActionButton *actionButton in _actionButtons) {
             if (actionButton.animationState == kTipCardButtonAnimatingOut) {
                 NSRect rect = actionButton.frame;

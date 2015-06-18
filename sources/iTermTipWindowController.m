@@ -11,16 +11,17 @@
 
 #import "iTermTipCardActionButton.h"
 #import "iTermTipCardViewController.h"
+#import "iTermFlippedView.h"
 #import "iTermTipLayerBackedView.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
 
 #import <QuartzCore/QuartzCore.h>
 
+static const CGFloat kWindowWidth = 400;
 static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNotification";
 static NSString *const kOpenURLTipNotification = @"kOpenURLTipNotification";
 static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotification";
-static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNotification";
 
 @interface iTermTipWindowController()<NSAnimationDelegate>
 @property(nonatomic, retain) iTermTipCardViewController *cardViewController;
@@ -77,6 +78,9 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
     self.window.opaque = NO;
     self.window.alphaValue = 0;
 
+    NSView *contentView = self.window.contentView;
+    contentView.autoresizesSubviews = NO;
+
     iTermTipCardViewController *card =
         [[[iTermTipCardViewController alloc] initWithNibName:@"iTermTipCardViewController"
                                                       bundle:nil] autorelease];
@@ -87,20 +91,20 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
     card.bodyText = self.body;
     [card addActionWithTitle:@"Learn More"
                         icon:[NSImage imageNamed:@"Navigate"]
-                       block:^(id card) {
+                       block:^(id sendingCard) {
                            [[NSNotificationCenter defaultCenter] postNotificationName:kOpenURLTipNotification
                                                                                object:nil];
                        }];
     [card addActionWithTitle:@"Dismiss Tip"
                         icon:[NSImage imageNamed:@"Dismiss"]
-                       block:^(id card) {
+                       block:^(id sendingCard) {
                            [[NSNotificationCenter defaultCenter] postNotificationName:kDismissCurrentTipNotification
                                                                                object:nil];
                        }];
 
     [card addActionWithTitle:@"More Options"
                         icon:[NSImage imageNamed:@"ChevronDown"]
-                       block:^(id card) {
+                       block:^(id sendingCard) {
         iTermTipCardActionButton *action = [card actionWithTitle:@"More Options"];
         if (action) {
             // Expanding
@@ -109,7 +113,7 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
             [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingIn];
         } else {
             // Collapsing
-            iTermTipCardActionButton *action = [card actionWithTitle:@"Fewer Options"];
+            action = [card actionWithTitle:@"Fewer Options"];
             [action setTitle:@"More Options"];
             [action setIcon:[NSImage imageNamed:@"ChevronDown"]];
             [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingOut];
@@ -119,13 +123,13 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
     iTermTipCardActionButton *button =
         [card addActionWithTitle:@"Remind Me Later"
                             icon:[NSImage imageNamed:@"Later"]
-                           block:^(id card) {
+                           block:^(id sendingCard) {
                                [[NSNotificationCenter defaultCenter] postNotificationName:kRemindMeLaterTipNotification
                                                                                    object:nil];
                            }];
     [button setCollapsed:YES];
 
-    self.intermediateView = [[[NSView alloc] initWithFrame:[self.window.contentView bounds]] autorelease];
+    self.intermediateView = [[[iTermFlippedView alloc] initWithFrame:[self.window.contentView bounds]] autorelease];
     [_intermediateView setWantsLayer:YES];
     _intermediateView.layer.opaque = NO;
     _intermediateView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
@@ -142,8 +146,9 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
 
 - (void)layoutCard:(iTermTipCardViewController *)card animated:(BOOL)animated {
     NSRect originalCardFrame = card.view.frame;
-    [card sizeThatFits:NSMakeSize(400, CGFLOAT_MAX)];
-    NSRect frame = card.postAnimationFrame;
+    [card sizeThatFits:NSMakeSize(kWindowWidth, CGFLOAT_MAX)];
+    NSRect postAnimationFrame = card.postAnimationFrame;
+    NSRect frame = postAnimationFrame;
     frame.size.height = MAX(frame.size.height, card.view.frame.size.height);
     frame.origin = NSZeroPoint;
 
@@ -153,29 +158,26 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
                                     frame.size.width,
                                     frame.size.height);
     [self.window setFrame:windowFrame display:NO];
-    [card layoutWithWidth:400 animated:NO origin:NSZeroPoint];
+    [card layoutWithWidth:kWindowWidth animated:NO origin:NSZeroPoint];
 
     if (animated) {
-//        card.view.layer.frame = originalCardFrame;
-
-//        card.view.layer.masksToBounds = YES;
-
-        const CGFloat duration = 5;
+        const CGFloat duration = 0.25;
         [CATransaction begin];
 
         [card retain];
+        [self retain];
         [CATransaction setCompletionBlock:^{
-            NSLog(@"Completion block running");
-            for (iTermTipCardActionButton *button in card.actionButtons) {
-                button.animationState = kTipCardButtonNotAnimating;
-            }
             card.showFakeBottomDivider = NO;
-            [card layoutWithWidth:400 animated:NO origin:NSZeroPoint];
+            NSRect finalWindowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
+                                                 NSMaxY(screenFrame) - NSHeight(frame) - 8,
+                                                 frame.size.width,
+                                                 frame.size.height);
+            [self.window setFrame:finalWindowFrame display:NO];
+            card.view.frame = postAnimationFrame;
             [card release];
+            [self release];
         }];
 
-        card.view.layer.borderColor = [[NSColor redColor] CGColor];
-        card.view.layer.borderWidth = 1;
         CGFloat heightChange = card.postAnimationFrame.size.height - card.view.frame.size.height;
 
         {
@@ -189,6 +191,7 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
             frame.origin = NSZeroPoint;
             fadeAnim.toValue = [NSValue valueWithRect:endBounds];
             fadeAnim.duration = duration;
+
             [card.view.layer addAnimation:fadeAnim forKey:@"bounds"];
         }
 
@@ -205,14 +208,6 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
         }
 
         {
-            CABasicAnimation* fadeAnim = [CABasicAnimation animationWithKeyPath:@"position"];
-            fadeAnim.fromValue = [NSValue valueWithPoint:NSMakePoint(0, heightChange)];
-            fadeAnim.toValue = [NSValue valueWithPoint:NSMakePoint(0, 0)];
-            fadeAnim.duration = duration;
-            [card.view.layer addAnimation:fadeAnim forKey:@"position"];
-        }
-
-        {
             for (iTermTipCardActionButton *button in card.actionButtons) {
                 if (button.animationState != kTipCardButtonNotAnimating) {
                     // Animate the button's position
@@ -223,11 +218,15 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
                     fadeAnim.toValue = [NSValue valueWithPoint:NSMakePoint(position.x, position.y + heightChange)];
                     fadeAnim.duration = duration;
                     [button.layer addAnimation:fadeAnim forKey:@"position"];
+                    if (button.animationState == kTipCardButtonAnimatingOut) {
+                        [button setCollapsed:YES];
+                    }
+                    button.animationState = kTipCardButtonNotAnimating;
                 }
             }
         }
 
-        NSLog(@"About to commit");
+        [card layoutWithWidth:kWindowWidth animated:NO origin:NSZeroPoint];
         [CATransaction commit];
     }
 }

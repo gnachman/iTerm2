@@ -452,8 +452,7 @@ const CGFloat kEdgeWidth = 3;
     state_.string = savedState_.string;
 }
 
-- (void)open
-{
+- (void)open {
     if (savedState_) {
         [self restoreState];
         ignoreCaseMenuItem_.state = state_.ignoreCase ? NSOnState : NSOffState;
