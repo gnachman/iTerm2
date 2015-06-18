@@ -12,6 +12,10 @@
 
 @interface iTermTipCardViewController : NSViewController
 
+@property(nonatomic, readonly) NSArray *actionButtons;
+@property(nonatomic, readonly) NSRect postAnimationFrame;
+@property(nonatomic, readonly) NSView *containerView;
+
 - (void)setTitleString:(NSString *)titleString;
 - (void)setColor:(NSColor *)color;
 - (void)setBodyText:(NSString *)bodyText;
@@ -22,5 +26,6 @@
 - (iTermTipCardActionButton *)actionWithTitle:(NSString *)title;
 - (void)removeActionWithTitle:(NSString *)title;
 - (NSSize)sizeThatFits:(NSSize)size;
+- (void)setShowFakeBottomDivider:(BOOL)showFakeBottomDivider;
 
 @end

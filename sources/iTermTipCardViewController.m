@@ -9,6 +9,7 @@
 #import "iTermTipCardViewController.h"
 #import "iTermFlippedView.h"
 #import "iTermTipCardActionButton.h"
+#import "SolidColorView.h"
 
 @interface iTermTipCardView : iTermFlippedView
 @end
@@ -46,16 +47,24 @@
 
 @end
 
+@interface iTermTipCardViewController()
+
+@property(nonatomic, assign) NSRect postAnimationFrame;
+
+@end
+
 @implementation iTermTipCardViewController {
     IBOutlet NSTextField *_title;
     IBOutlet NSTextField *_body;
     IBOutlet NSBox *_titleBox;
     IBOutlet iTermTipCardContainerView *_container;
+    SolidColorView *_fakeBottomDivider;
     NSMutableArray *_actionButtons;
 }
 
 - (void)dealloc {
     [_actionButtons release];
+    [_fakeBottomDivider release];
     [super dealloc];
 }
 
@@ -63,10 +72,15 @@
     [super viewDidLoad];
     NSShadow *dropShadow = [[[NSShadow alloc] init] autorelease];
     [dropShadow setShadowColor:[[NSColor blackColor] colorWithAlphaComponent:0.3]];
-    [dropShadow setShadowOffset:NSMakeSize(0, -1.5)];
+    [dropShadow setShadowOffset:NSMakeSize(0, 1.5)];
     [dropShadow setShadowBlurRadius:2];
     [self.view setWantsLayer:YES];
     [self.view setShadow:dropShadow];
+    _fakeBottomDivider = [[SolidColorView alloc] initWithFrame:NSZeroRect];
+    _fakeBottomDivider.color = [NSColor colorWithCalibratedWhite:0.65 alpha:1];
+    // TODO: root out and remove CGColor
+    [_container addSubview:_fakeBottomDivider];
+
     _container.autoresizesSubviews = NO;
 }
 
@@ -88,15 +102,18 @@
     if (!_actionButtons) {
         _actionButtons = [[NSMutableArray alloc] init];
     }
-    iTermTipCardActionButton *button = [[[iTermTipCardActionButton alloc] initWithFrame:NSMakeRect(1, 0, _container.bounds.size.width - 2, 0)] autorelease];
+    static const CGFloat sideMargin = 1;
+    iTermTipCardActionButton *button = [[[iTermTipCardActionButton alloc] initWithFrame:NSMakeRect(sideMargin, 0, _container.bounds.size.width - sideMargin * 2, 0)] autorelease];
     button.autoresizingMask = 0;
     button.title = title;
     [button setIcon:image];
     button.block = block;
     button.target = self;
     button.action = @selector(buttonPressed:);
+    NSView *goesBelow = [_actionButtons lastObject] ?: _body;
     [_actionButtons addObject:button];
-    [_container addSubview:button];
+    // Place later buttons under earlier buttons and all under body so they can animate in and out.
+    [_container addSubview:button positioned:NSWindowBelow relativeTo:goesBelow];
     return button;
 }
 
@@ -139,14 +156,26 @@
     bodyFrame.size = [_body sizeThatFits:NSMakeSize(_body.frame.size.width, CGFLOAT_MAX)];
 
     CGFloat totalButtonHeight = 0;
+    CGFloat stagedButtonHeight = 0;
     const CGFloat bottomMargin = 8;
     const CGFloat topMargin = 2;
     const CGFloat marginBetweenTextAndButtons = 6;
 
     // Calculate the height of the buttons
-    for (NSButton *actionButton in _actionButtons) {
-        [actionButton sizeToFit];
-        totalButtonHeight += actionButton.frame.size.height;
+    for (iTermTipCardActionButton *actionButton in _actionButtons) {
+        switch (actionButton.animationState) {
+            case kTipCardButtonAnimatingIn:
+                [actionButton setCollapsed:NO];
+                [actionButton sizeToFit];
+                stagedButtonHeight += actionButton.frame.size.height;
+                break;
+
+            case kTipCardButtonAnimatingOut:
+            case kTipCardButtonNotAnimating:
+                [actionButton sizeToFit];
+                totalButtonHeight += actionButton.frame.size.height;
+                break;
+        }
     }
 
     const CGFloat kMarginBetweenTitleAndBody = 8;
@@ -167,15 +196,13 @@
                          bottomMargin);
     frame.origin = newOrigin;
     frame = NSIntegralRect(frame);
-    if (dry) {
-        return frame;
-    }
 
-    // Don't need to worry about dry from here on down.
-    if (animated) {
-        self.view.animator.frame = frame;
-    } else {
-        self.view.frame = frame;
+    if (!dry) {
+        if (animated) {
+            self.view.animator.frame = frame;
+        } else {
+            self.view.frame = frame;
+        }
     }
 
     NSRect containerFrame = self.view.bounds;
@@ -189,10 +216,12 @@
                                   marginBetweenTextAndButtons +
                                   totalButtonHeight +
                                   1);
-    if (animated) {
-        _container.animator.frame = containerFrame;
-    } else {
-        _container.frame = containerFrame;
+    if (!dry) {
+        if (animated) {
+            _container.animator.frame = containerFrame;
+        } else {
+            _container.frame = containerFrame;
+        }
     }
 
     NSRect titleFrame = _titleBox.frame;
@@ -210,20 +239,66 @@
     }
 
     // Lay buttons out from top to bottom
-    CGFloat y = NSMaxY(bodyFrame) + marginBetweenTextAndButtons;
-    for (NSButton *actionButton in _actionButtons) {
-        NSRect buttonFrame = NSMakeRect(1,
-                                        y,
-                                        _container.bounds.size.width - 2,
-                                        actionButton.frame.size.height);
-        if (animated) {
-            actionButton.animator.frame = buttonFrame;
+    CGFloat liveY = NSMaxY(bodyFrame) + marginBetweenTextAndButtons;
+    CGFloat stageY = NSMaxY(bodyFrame) + totalButtonHeight + marginBetweenTextAndButtons - stagedButtonHeight;
+    CGFloat finalYBottom = liveY;
+    CGFloat finalYTop = liveY;
+    BOOL foundAnimatingOut = NO;
+    BOOL foundAnimatingIn = NO;
+    for (iTermTipCardActionButton *actionButton in _actionButtons) {
+        CGFloat y;
+        if (actionButton.animationState == kTipCardButtonAnimatingIn) {
+            y = stageY;
+            stageY += actionButton.frame.size.height;
+            finalYTop += actionButton.frame.size.height;
+            foundAnimatingIn = YES;
         } else {
-            actionButton.frame = buttonFrame;
+            if (actionButton.animationState == kTipCardButtonAnimatingOut) {
+                if (!foundAnimatingOut) {
+                    foundAnimatingOut = YES;
+                    finalYBottom = liveY;
+                    finalYTop = liveY;
+                }
+                finalYTop -= actionButton.frame.size.height;
+            }
+            y = liveY;
+            liveY += actionButton.frame.size.height;
         }
-        y += actionButton.frame.size.height;
+        NSRect buttonFrame = actionButton.frame;
+        buttonFrame.origin.y = y;
+        buttonFrame.size.width = containerFrame.size.width - 2;
+        if (!dry) {
+            if (animated) {
+                actionButton.animator.frame = buttonFrame;
+            } else {
+                actionButton.frame = buttonFrame;
+            }
+        }
     }
 
+    if (foundAnimatingOut || foundAnimatingIn) {
+        CGFloat outY = finalYTop;
+        CGFloat inY = liveY;
+        _postAnimationFrame = frame;
+        _fakeBottomDivider.frame = NSMakeRect(1, liveY, _container.frame.size.width - 2, 1);
+        for (iTermTipCardActionButton *actionButton in _actionButtons) {
+            if (actionButton.animationState == kTipCardButtonAnimatingOut) {
+                NSRect rect = actionButton.frame;
+                rect.origin.y = outY;
+                outY += rect.size.height;
+                actionButton.postAnimationFrame = rect;
+                _postAnimationFrame.size.height -= rect.size.height;
+            } else if (actionButton.animationState == kTipCardButtonAnimatingIn) {
+                NSRect rect = actionButton.frame;
+                rect.origin.y = inY;
+                inY += rect.size.height;
+                actionButton.postAnimationFrame = rect;
+                _postAnimationFrame.size.height += rect.size.height;
+            }
+        }
+    } else {
+        _postAnimationFrame = frame;
+    }
     return frame;
 }
 
@@ -232,6 +307,14 @@
     if (button.block) {
         button.block(self);
     }
+}
+
+- (NSView *)containerView {
+    return _container;
+}
+
+- (void)setShowFakeBottomDivider:(BOOL)showFakeBottomDivider {
+    _fakeBottomDivider.hidden = !showFakeBottomDivider;
 }
 
 @end

@@ -13,7 +13,7 @@
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
     
-    [[NSColor clearColor] set];
+    [[NSColor yellowColor] set];
     NSRectFill(self.bounds);
 }
 

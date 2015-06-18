@@ -938,6 +938,11 @@
 		1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8BBA861B31DC140005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
+		1D8BBA8A1B32399C0005A852 /* iTermTipLayerBackedView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA881B32399C0005A852 /* iTermTipLayerBackedView.h */; };
+		1D8BBA8B1B32399C0005A852 /* iTermTipLayerBackedView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA881B32399C0005A852 /* iTermTipLayerBackedView.h */; };
+		1D8BBA8C1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */; };
+		1D8BBA8D1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */; };
+		1D8BBA8E1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
 		1D8CDF521958F31700FE1BEE /* iTermSizeRememberingView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */; };
 		1D8CDF531958F31700FE1BEE /* iTermSizeRememberingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */; };
@@ -2396,6 +2401,8 @@
 		1D8BBA7F1B31DC0D0005A852 /* ChevronUp@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ChevronUp@2x.png"; path = "images/ChevronUp@2x.png"; sourceTree = "<group>"; };
 		1D8BBA801B31DC0D0005A852 /* ChevronDown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ChevronDown.png; path = images/ChevronDown.png; sourceTree = "<group>"; };
 		1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ChevronDown@2x.png"; path = "images/ChevronDown@2x.png"; sourceTree = "<group>"; };
+		1D8BBA881B32399C0005A852 /* iTermTipLayerBackedView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTipLayerBackedView.h; sourceTree = "<group>"; };
+		1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipLayerBackedView.m; sourceTree = "<group>"; };
 		1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EncodingsWithLowerCase.plist; sourceTree = "<group>"; };
 		1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSizeRememberingView.h; sourceTree = "<group>"; };
 		1D8CDF511958F31700FE1BEE /* iTermSizeRememberingView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSizeRememberingView.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -4101,6 +4108,8 @@
 				1D8BBA601B30E9F50005A852 /* iTermTipCardActionButtonCell.m */,
 				A65B72A01B3134FB00F947A7 /* iTermTipController.h */,
 				A65B72A11B3134FB00F947A7 /* iTermTipController.m */,
+				1D8BBA881B32399C0005A852 /* iTermTipLayerBackedView.h */,
+				1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */,
 			);
 			name = Tips;
 			sourceTree = "<group>";
@@ -4675,6 +4684,7 @@
 				A61ABBB51AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h in Headers */,
 				1D6ED87E19AEA20D005A7799 /* VT100XtermParser.h in Headers */,
 				1D6ED87F19AEA20D005A7799 /* VT100StringParser.h in Headers */,
+				1D8BBA8B1B32399C0005A852 /* iTermTipLayerBackedView.h in Headers */,
 				1D6ED88019AEA20D005A7799 /* PSMTabDragWindow.h in Headers */,
 				1D6ED88119AEA20D005A7799 /* NSImage+iTerm.h in Headers */,
 				1D6ED88219AEA20D005A7799 /* iTermGrowlDelegate.h in Headers */,
@@ -5312,6 +5322,7 @@
 				1D085F8616F02E7400B7FCE9 /* PasteContext.h in Headers */,
 				1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */,
 				1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */,
+				1D8BBA8A1B32399C0005A852 /* iTermTipLayerBackedView.h in Headers */,
 				A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */,
 				A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */,
 				A6E74752188C6693005355CF /* iTermExposeWindow.h in Headers */,
@@ -5997,6 +6008,7 @@
 				1D6ED9FA19AEA20D005A7799 /* NSMutableAttributedString+iTerm.m in Sources */,
 				1D6ED9FB19AEA20D005A7799 /* PTYNoteViewController.m in Sources */,
 				1D6ED9FC19AEA20D005A7799 /* VT100Screen.m in Sources */,
+				1D8BBA8E1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */,
 				1D6ED9FD19AEA20D005A7799 /* GeneralPreferencesViewController.m in Sources */,
 				1D6ED9FE19AEA20D005A7799 /* VT100Terminal.m in Sources */,
 				A6E77F9E1A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m in Sources */,
@@ -6617,6 +6629,7 @@
 				A6C537C01938374600A08C18 /* iTermTabBarControlView.m in Sources */,
 				A67F57B31B012BD100B4F135 /* NSWorkspace+iTerm.m in Sources */,
 				A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */,
+				1D8BBA8D1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */,
 				FB4CE4BB3E3E413B051DAFBC /* iTermRemotePreferences.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6655,6 +6668,7 @@
 				1D0AABC217B59B3D0072B5AF /* SearchResult.m in Sources */,
 				A60014F718550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
 				A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */,
+				1D8BBA8C1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */,
 				1D5FDDA91208E93600C46BA3 /* VT100Screen.m in Sources */,
 				A6E7137B18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
 				1D5FDDAA1208E93600C46BA3 /* VT100Terminal.m in Sources */,
