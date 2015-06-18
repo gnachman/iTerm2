@@ -8,15 +8,24 @@
 
 #import "iTermTipCardActionButtonCell.h"
 
-@implementation iTermTipCardActionButtonCell
+@implementation iTermTipCardActionButtonCell {
+    NSTimeInterval _highlightStartTime;
+}
 
 + (NSColor *)blueColor {
     return [NSColor colorWithCalibratedRed:0.25 green:0.25 blue:0.75 alpha:1];
 }
 
 - (void)drawInteriorWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
-    NSColor *foregroundColor = self.isHighlighted ? [NSColor whiteColor] : [self.class blueColor];
-    NSColor *backgroundColor = self.isHighlighted ? [self.class blueColor] : [NSColor whiteColor];
+    static const NSTimeInterval kHoldDuration = 0.25;
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    if (self.isHighlighted) {
+        _highlightStartTime = now;
+        [self.controlView performSelector:@selector(setNeedsDisplay:) withObject:@1 afterDelay:kHoldDuration];
+    }
+    BOOL highlighted = self.isHighlighted || (now - _highlightStartTime < kHoldDuration);
+    NSColor *foregroundColor = highlighted ? [NSColor whiteColor] : [self.class blueColor];
+    NSColor *backgroundColor = highlighted ? [self.class blueColor] : [NSColor whiteColor];
     [backgroundColor set];
     NSRectFill(cellFrame);
 

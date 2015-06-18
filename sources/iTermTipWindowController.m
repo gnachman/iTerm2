@@ -26,7 +26,7 @@ static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotifi
 static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotification";
 static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 
-@interface iTermTipWindowController()<NSAnimationDelegate>
+@interface iTermTipWindowController()
 @property(nonatomic, retain) iTermTipCardViewController *cardViewController;
 @property(nonatomic, retain) iTermTip *tip;
 @property(nonatomic, retain) NSView *intermediateView;
@@ -286,36 +286,17 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 }
 
 - (void)animateOut {
-    SolidColorView *container = [[[SolidColorView alloc] initWithFrame:[self.window.contentView frame]] autorelease];
-    container.color = [NSColor clearColor];
-    container.autoresizesSubviews = YES;
-
-    NSImageView *imageView = [[[NSImageView alloc] initWithFrame:[self.window.contentView bounds]] autorelease];
-    imageView.autoresizingMask = 0;
-    imageView.translatesAutoresizingMaskIntoConstraints = NO;
-    imageView.image = [self.window.contentView snapshot];
-    [self.window setContentView:container];
-    [container addSubview:imageView];
-
-    self.window.contentView = container;
-
-    NSRect startFrame = imageView.frame;
-    NSRect endFrame = startFrame;
-    endFrame.origin.y += endFrame.size.height;
-
-    NSDictionary *dict = @{ NSViewAnimationTargetKey: imageView,
-                            NSViewAnimationStartFrameKey: [NSValue valueWithRect:startFrame],
-                            NSViewAnimationEndFrameKey: [NSValue valueWithRect:endFrame],
-                            NSViewAnimationEffectKey: NSViewAnimationFadeOutEffect };
-    NSViewAnimation *viewAnimation = [[[NSViewAnimation alloc] initWithViewAnimations:@[ dict ]] autorelease];
-
-    // Set some additional attributes for the animation.
-    [viewAnimation setDuration:0.5];
-
-    [viewAnimation setDelegate:self];
-
-    // Run the animation.
-    [viewAnimation startAnimation];
+    NSRect newFrame = _cardViewController.view.frame;
+    newFrame.origin.y -= NSMaxY(newFrame);
+    NSTimeInterval duration = 0.35;
+    [[NSAnimationContext currentContext] setDuration:duration];
+    [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
+    [self retain];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        [self close];
+        [self release];
+    }];
+    [_cardViewController.view.animator setFrame:newFrame];
 }
 
 - (void)open {
@@ -337,7 +318,7 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
     iTermTip *nextTip = [_delegate tipWindowTipAfterTipWithIdentifier:_tip.identifier];
     if (nextTip) {
         self.windowCanShrink = NO;
-        const NSTimeInterval duration = 2;
+        const NSTimeInterval duration = 0.5;
         [[NSAnimationContext currentContext] setDuration:duration];
         NSRect frame = _cardViewController.view.frame;
         frame.origin.x = -frame.size.width;
@@ -357,9 +338,11 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 
         frame.origin.x -= self.window.frame.size.width;
         [_cardViewController.view.animator setFrame:frame];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            self.windowCanShrink = YES;
-        });
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(),
+                       ^{
+                           self.windowCanShrink = YES;
+                       });
     }
 }
 
@@ -398,12 +381,6 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
     } else {
         _desiredWindowFrame = frame;
     }
-}
-
-#pragma mark - NSAnimationDelegate
-
-- (void)animationDidEnd:(NSAnimation *)animation {
-    [self close];
 }
 
 @end
