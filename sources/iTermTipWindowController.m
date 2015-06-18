@@ -163,6 +163,17 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
         const CGFloat duration = 5;
         [CATransaction begin];
 
+        [card retain];
+        [CATransaction setCompletionBlock:^{
+            NSLog(@"Completion block running");
+            for (iTermTipCardActionButton *button in card.actionButtons) {
+                button.animationState = kTipCardButtonNotAnimating;
+            }
+            card.showFakeBottomDivider = NO;
+            [card layoutWithWidth:400 animated:NO origin:NSZeroPoint];
+            [card release];
+        }];
+
         card.view.layer.borderColor = [[NSColor redColor] CGColor];
         card.view.layer.borderWidth = 1;
         CGFloat heightChange = card.postAnimationFrame.size.height - card.view.frame.size.height;
@@ -216,15 +227,7 @@ static NSString *const kToggleMoreOptionsNotification = @"kToggleMoreOptionsNoti
             }
         }
 
-        [card retain];
-        [CATransaction setCompletionBlock:^{
-            for (iTermTipCardActionButton *button in card.actionButtons) {
-                button.animationState = kTipCardButtonNotAnimating;
-            }
-            card.showFakeBottomDivider = NO;
-            [card layoutWithWidth:400 animated:NO origin:NSZeroPoint];
-            [card release];
-        }];
+        NSLog(@"About to commit");
         [CATransaction commit];
     }
 }

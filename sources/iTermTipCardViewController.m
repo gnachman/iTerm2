@@ -11,6 +11,21 @@
 #import "iTermTipCardActionButton.h"
 #import "SolidColorView.h"
 
+@interface iTermTipCardFakeDividerView : SolidColorView
+@end
+
+@implementation iTermTipCardFakeDividerView
+
+- (void)drawRect:(NSRect)dirtyRect {
+    NSRect rect = self.bounds;
+    [self.color set];
+    NSRectFill(NSMakeRect(rect.origin.x,
+                          rect.origin.y + 0.5,
+                          rect.size.width,
+                          0.5));
+}
+
+@end
 @interface iTermTipCardView : iTermFlippedView
 @end
 
@@ -58,7 +73,7 @@
     IBOutlet NSTextField *_body;
     IBOutlet NSBox *_titleBox;
     IBOutlet iTermTipCardContainerView *_container;
-    SolidColorView *_fakeBottomDivider;
+    iTermTipCardFakeDividerView *_fakeBottomDivider;
     NSMutableArray *_actionButtons;
 }
 
@@ -76,8 +91,9 @@
     [dropShadow setShadowBlurRadius:2];
     [self.view setWantsLayer:YES];
     [self.view setShadow:dropShadow];
-    _fakeBottomDivider = [[SolidColorView alloc] initWithFrame:NSZeroRect];
-    _fakeBottomDivider.color = [NSColor colorWithCalibratedWhite:0.65 alpha:1];
+    _fakeBottomDivider = [[iTermTipCardFakeDividerView alloc] initWithFrame:NSZeroRect];
+    _fakeBottomDivider.hidden = YES;
+    _fakeBottomDivider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
     // TODO: root out and remove CGColor
     [_container addSubview:_fakeBottomDivider];
 
