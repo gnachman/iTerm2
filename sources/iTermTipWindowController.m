@@ -9,6 +9,7 @@
 
 #import "iTermTipWindowController.h"
 
+#import "iTermTip.h"
 #import "iTermTipCardActionButton.h"
 #import "iTermTipCardViewController.h"
 #import "iTermFlippedView.h"
@@ -23,24 +24,20 @@ static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNoti
 static NSString *const kOpenURLTipNotification = @"kOpenURLTipNotification";
 static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotification";
 static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotification";
+static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 
 @interface iTermTipWindowController()<NSAnimationDelegate>
 @property(nonatomic, retain) iTermTipCardViewController *cardViewController;
-@property(nonatomic, copy) NSString *title;
-@property(nonatomic, copy) NSString *body;
-@property(nonatomic, copy) NSString *url;
+@property(nonatomic, retain) iTermTip *tip;
 @property(nonatomic, retain) NSView *intermediateView;
 @end
 
 @implementation iTermTipWindowController
 
-- (instancetype)initWithTitle:(NSString *)title body:(NSString *)body url:(NSString *)url {
+- (instancetype)initWithTip:(id)tip {
     self = [self init];
     if (self) {
-        self.title = title;
-        self.body = body;
-        self.url = url;
-        [self window];
+        _tip = [tip retain];
     }
     return self;
 }
@@ -64,36 +61,30 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
                                                  selector:@selector(disableTips)
                                                      name:kDisableTipsTipNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(showNextTip)
+                                                     name:kShowNextTipNotification
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc {
-    [_title release];
-    [_body release];
-    [_url release];
+    [_tip release];
     [_cardViewController release];
     [_intermediateView release];
     [super dealloc];
 }
 
-- (void)windowDidLoad {
-    [super windowDidLoad];
-    self.window.level = NSModalPanelWindowLevel;
-    self.window.opaque = NO;
-    self.window.alphaValue = 0;
-
-    NSView *contentView = self.window.contentView;
-    contentView.autoresizesSubviews = YES;
-
+- (void)loadCardExpanded:(BOOL)expanded {
     iTermTipCardViewController *card =
         [[[iTermTipCardViewController alloc] initWithNibName:@"iTermTipCardViewController"
                                                       bundle:nil] autorelease];
     self.cardViewController = card;
     [card view];
-    card.titleString = self.title;
+    card.titleString = self.tip.title;
     card.color = [NSColor colorWithCalibratedRed:120/255.0 green:178/255.0 blue:1.0 alpha:1];
-    card.bodyText = self.body;
+    card.bodyText = self.tip.body;
     [card addActionWithTitle:@"Learn More"
                         icon:[NSImage imageNamed:@"Navigate"]
                        block:^(id sendingCard) {
@@ -107,8 +98,10 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
                                                                                object:nil];
                        }];
 
-    [card addActionWithTitle:@"More Options"
-                        icon:[NSImage imageNamed:@"ChevronDown"]
+    NSString *toggleTitle = expanded ? @"Fewer Options" : @"More Options";
+    NSImage *toggleImage = expanded ? [NSImage imageNamed:@"ChevronUp"] : [NSImage imageNamed:@"ChevronDown"];
+    [card addActionWithTitle:toggleTitle
+                        icon:toggleImage
                        block:^(id sendingCard) {
         iTermTipCardActionButton *action = [card actionWithTitle:@"More Options"];
         if (action) {
@@ -117,6 +110,7 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
             [action setIcon:[NSImage imageNamed:@"ChevronUp"]];
             [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingIn];
             [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingIn];
+            [[card actionWithTitle:@"Show Next Tip"] setAnimationState:kTipCardButtonAnimatingIn];
         } else {
             // Collapsing
             action = [card actionWithTitle:@"Fewer Options"];
@@ -124,6 +118,7 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
             [action setIcon:[NSImage imageNamed:@"ChevronDown"]];
             [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingOut];
             [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingOut];
+            [[card actionWithTitle:@"Show Next Tip"] setAnimationState:kTipCardButtonAnimatingOut];
         }
         [self layoutCard:card animated:YES];
     }];
@@ -134,7 +129,9 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
                                [[NSNotificationCenter defaultCenter] postNotificationName:kRemindMeLaterTipNotification
                                                                                    object:nil];
                            }];
-    [button setCollapsed:YES];
+    if (!expanded) {
+        [button setCollapsed:YES];
+    }
     button =
         [card addActionWithTitle:@"Disable Tips"
                             icon:[NSImage imageNamed:@"DisableTips"]
@@ -142,7 +139,35 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
                                [[NSNotificationCenter defaultCenter] postNotificationName:kDisableTipsTipNotification
                                                                                    object:nil];
                            }];
-    [button setCollapsed:YES];
+    if (!expanded) {
+        [button setCollapsed:YES];
+    }
+
+    if ([_delegate tipWindowTipAfterTipWithIdentifier:self.tip.identifier]) {
+        button =
+            [card addActionWithTitle:@"Show Next Tip"
+                                icon:[NSImage imageNamed:@"DisableTips"]
+                               block:^(id sendingCard) {
+                                   [[NSNotificationCenter defaultCenter] postNotificationName:kShowNextTipNotification
+                                                                                       object:nil];
+                               }];
+        if (!expanded) {
+            [button setCollapsed:YES];
+        }
+    }
+
+    [_intermediateView addSubview:_cardViewController.view];
+    [self layoutCard:card animated:NO];
+}
+
+- (void)windowDidLoad {
+    [super windowDidLoad];
+    self.window.level = NSModalPanelWindowLevel;
+    self.window.opaque = NO;
+    self.window.alphaValue = 0;
+
+    NSView *contentView = self.window.contentView;
+    contentView.autoresizesSubviews = YES;
 
     self.intermediateView = [[[iTermFlippedView alloc] initWithFrame:[self.window.contentView bounds]] autorelease];
     [_intermediateView setWantsLayer:YES];
@@ -151,11 +176,8 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
     _intermediateView.autoresizesSubviews = YES;
 
     [self.window.contentView addSubview:_intermediateView];
-    [_intermediateView addSubview:card.view];
-    
 
-    [self layoutCard:card animated:NO];
-
+    [self loadCardExpanded:NO];
     [self present];
 }
 
@@ -293,7 +315,7 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
 }
 
 - (void)open {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:_url]];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:self.tip.url]];
     [self dismiss];
 }
 
@@ -305,6 +327,29 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
 - (void)disableTips {
     [self animateOut];
     [_delegate tipWindowRequestsDisable];
+}
+
+- (void)showNextTip {
+    iTermTip *nextTip = [_delegate tipWindowTipAfterTipWithIdentifier:_tip.identifier];
+    if (nextTip) {
+        NSRect frame = _cardViewController.view.frame;
+        frame.origin.x = -frame.size.width;
+
+        [_cardViewController.view.animator setFrame:frame];
+        // TODO: remove old vc from view hierarchy when animation completes
+
+        [_delegate tipWindowWillShowTipWithIdentifier:nextTip.identifier];
+        self.tip = nextTip;
+        BOOL expanded = ([_cardViewController actionWithTitle:@"More Options"] == nil);
+        [self loadCardExpanded:expanded];
+
+        frame = _cardViewController.view.frame;
+        frame.origin.x += self.window.frame.size.width;
+        [_cardViewController.view setFrame:frame];
+
+        frame.origin.x -= self.window.frame.size.width;
+        [_cardViewController.view.animator setFrame:frame];
+    }
 }
 
 - (void)present {

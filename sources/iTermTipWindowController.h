@@ -8,16 +8,21 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermTip;
+
 @protocol iTermTipWindowDelegate<NSObject>
 - (void)tipWindowDismissed;
 - (void)tipWindowPostponed;
 - (void)tipWindowRequestsDisable;
+- (iTermTip *)tipWindowTipAfterTipWithIdentifier:(NSString *)identifier;
+- (void)tipWindowWillShowTipWithIdentifier:(NSString *)identifier;
+
 @end
 
 @interface iTermTipWindowController : NSWindowController
 
 @property(nonatomic, assign) id<iTermTipWindowDelegate> delegate;
 
-- (instancetype)initWithTitle:(NSString *)title body:(NSString *)body url:(NSString *)url;
+- (instancetype)initWithTip:(iTermTip *)tip;
 
 @end
