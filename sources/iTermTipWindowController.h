@@ -11,6 +11,7 @@
 @protocol iTermTipWindowDelegate<NSObject>
 - (void)tipWindowDismissed;
 - (void)tipWindowPostponed;
+- (void)tipWindowRequestsDisable;
 @end
 
 @interface iTermTipWindowController : NSWindowController

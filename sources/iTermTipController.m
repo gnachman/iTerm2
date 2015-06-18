@@ -11,6 +11,7 @@
 
 static NSString *const kUnshowableTipsKey = @"NoSyncTipsToNotShow";
 static NSString *const kLastTipTimeKey = @"NoSyncLastTipTime";
+static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";
 
 static NSString *const kTipTitle = @"title";
 static NSString *const kTipBody = @"body";
@@ -64,7 +65,10 @@ static NSString *const kTipURL = @"url";
   [self showTipForKey:self.tips.allKeys.firstObject];
   return;
 #endif
-  
+
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
+        return;
+    }
     if (_showingTip || [self haveShownTipRecently]) {
         [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:3600 * 24];
         return;
@@ -118,6 +122,10 @@ static NSString *const kTipURL = @"url";
 
 - (void)tipWindowPostponed {
     _showingTip = NO;
+}
+
+- (void)tipWindowRequestsDisable {
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kTipsDisabledKey];
 }
 
 @end

@@ -22,6 +22,7 @@ static const CGFloat kWindowWidth = 400;
 static NSString *const kDismissCurrentTipNotification = @"kDismissCurrentTipNotification";
 static NSString *const kOpenURLTipNotification = @"kOpenURLTipNotification";
 static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotification";
+static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotification";
 
 @interface iTermTipWindowController()<NSAnimationDelegate>
 @property(nonatomic, retain) iTermTipCardViewController *cardViewController;
@@ -58,6 +59,10 @@ static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotifi
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(remindMeLater)
                                                      name:kRemindMeLaterTipNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(disableTips)
+                                                     name:kDisableTipsTipNotification
                                                    object:nil];
     }
     return self;
@@ -111,12 +116,14 @@ static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotifi
             [action setTitle:@"Fewer Options"];
             [action setIcon:[NSImage imageNamed:@"ChevronUp"]];
             [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingIn];
+            [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingIn];
         } else {
             // Collapsing
             action = [card actionWithTitle:@"Fewer Options"];
             [action setTitle:@"More Options"];
             [action setIcon:[NSImage imageNamed:@"ChevronDown"]];
             [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingOut];
+            [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingOut];
         }
         [self layoutCard:card animated:YES];
     }];
@@ -125,6 +132,14 @@ static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotifi
                             icon:[NSImage imageNamed:@"Later"]
                            block:^(id sendingCard) {
                                [[NSNotificationCenter defaultCenter] postNotificationName:kRemindMeLaterTipNotification
+                                                                                   object:nil];
+                           }];
+    [button setCollapsed:YES];
+    button =
+        [card addActionWithTitle:@"Disable Tips"
+                            icon:[NSImage imageNamed:@"DisableTips"]
+                           block:^(id sendingCard) {
+                               [[NSNotificationCenter defaultCenter] postNotificationName:kDisableTipsTipNotification
                                                                                    object:nil];
                            }];
     [button setCollapsed:YES];
@@ -276,6 +291,11 @@ static NSString *const kRemindMeLaterTipNotification = @"kRemindMeLaterTipNotifi
 - (void)remindMeLater {
     [self animateOut];
     [_delegate tipWindowPostponed];
+}
+
+- (void)disableTips {
+    [self animateOut];
+    [_delegate tipWindowRequestsDisable];
 }
 
 - (void)present {
