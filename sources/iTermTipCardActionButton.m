@@ -62,6 +62,11 @@ static const CGFloat kStandardButtonHeight = 34;
 
 - (void)setCollapsed:(BOOL)collapsed {
     _desiredHeight = collapsed ? 0 : kStandardButtonHeight;
+    _collapsed = collapsed;
+    if (!collapsed) {
+        self.hidden = NO;
+    }
 }
+
 
 @end

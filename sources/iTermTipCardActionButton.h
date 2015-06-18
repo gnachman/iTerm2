@@ -9,9 +9,10 @@
 #import <Cocoa/Cocoa.h>
 
 typedef NS_ENUM(NSInteger, iTermTipCardActionButtonAnimationState) {
-  kTipCardButtonNotAnimating,
-  kTipCardButtonAnimatingIn,
-  kTipCardButtonAnimatingOut,
+    kTipCardButtonNotAnimating,
+    kTipCardButtonAnimatingIn,
+    kTipCardButtonAnimatingOut,
+    kTipCardButtonAnimatingOutCurrently
 };
 
 @interface iTermTipCardActionButton : NSButton
@@ -19,8 +20,8 @@ typedef NS_ENUM(NSInteger, iTermTipCardActionButtonAnimationState) {
 @property(nonatomic, copy) void (^block)(id);
 @property(nonatomic, assign) iTermTipCardActionButtonAnimationState animationState;
 @property(nonatomic, assign) NSRect postAnimationFrame;
+@property(nonatomic, assign, getter=isCollapsed) BOOL collapsed;
 
 - (void)setIcon:(NSImage *)image;
-- (void)setCollapsed:(BOOL)collapsed;
 
 @end

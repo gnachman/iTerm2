@@ -84,7 +84,7 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
     self.window.alphaValue = 0;
 
     NSView *contentView = self.window.contentView;
-    contentView.autoresizesSubviews = NO;
+    contentView.autoresizesSubviews = YES;
 
     iTermTipCardViewController *card =
         [[[iTermTipCardViewController alloc] initWithNibName:@"iTermTipCardViewController"
@@ -183,6 +183,7 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
         [self retain];
         [CATransaction setCompletionBlock:^{
             card.showFakeBottomDivider = NO;
+            [card hideCollapsedButtons];
             NSRect finalWindowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
                                                  NSMaxY(screenFrame) - NSHeight(frame) - 8,
                                                  frame.size.width,
@@ -222,6 +223,7 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
             [card.containerView.layer addAnimation:containerAnimation forKey:@"bounds"];
         }
 
+        NSMutableArray *buttonsToCollapse = [NSMutableArray array];
         {
             for (iTermTipCardActionButton *button in card.actionButtons) {
                 if (button.animationState != kTipCardButtonNotAnimating) {
@@ -234,15 +236,21 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
                     fadeAnim.duration = duration;
                     [button.layer addAnimation:fadeAnim forKey:@"position"];
                     if (button.animationState == kTipCardButtonAnimatingOut) {
-                        [button setCollapsed:YES];
+                        [buttonsToCollapse addObject:button];
+                        button.animationState = kTipCardButtonAnimatingOutCurrently;
+                    } else {
+                        button.animationState = kTipCardButtonNotAnimating;
                     }
-                    button.animationState = kTipCardButtonNotAnimating;
                 }
             }
         }
 
         [card layoutWithWidth:kWindowWidth animated:NO origin:NSZeroPoint];
         [CATransaction commit];
+
+        for (iTermTipCardActionButton *button in buttonsToCollapse) {
+            [button setCollapsed:YES];
+        }
     }
 }
 
@@ -254,7 +262,8 @@ static NSString *const kDisableTipsTipNotification = @"kDisableTipsTipNotificati
 - (void)animateOut {
     SolidColorView *container = [[[SolidColorView alloc] initWithFrame:[self.window.contentView frame]] autorelease];
     container.color = [NSColor clearColor];
-    container.autoresizesSubviews = NO;
+    container.autoresizesSubviews = YES;
+
     NSImageView *imageView = [[[NSImageView alloc] initWithFrame:[self.window.contentView bounds]] autorelease];
     imageView.autoresizingMask = 0;
     imageView.translatesAutoresizingMaskIntoConstraints = NO;

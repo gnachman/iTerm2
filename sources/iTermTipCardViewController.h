@@ -27,5 +27,6 @@
 - (void)removeActionWithTitle:(NSString *)title;
 - (NSSize)sizeThatFits:(NSSize)size;
 - (void)setShowFakeBottomDivider:(BOOL)showFakeBottomDivider;
+- (void)hideCollapsedButtons;
 
 @end

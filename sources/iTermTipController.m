@@ -40,8 +40,8 @@ static NSString *const kTipURL = @"url";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.tips = @{ @"Tip 1": @{ kTipTitle: @"Title 1",
-                                    kTipBody: @"Body 1",
+        self.tips = @{ @"Tip 1": @{ kTipTitle: @"Shell Integration",
+                                    kTipBody: @"The Shell Integration feature puts a blue arrow next to your shell prompt that turns red if the command fails.",
                                     kTipURL: @"http://google.com/" },
                        @"Tip 2": @{ kTipTitle: @"Title 2",
                                     kTipBody: @"Body 2",

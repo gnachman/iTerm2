@@ -9,6 +9,7 @@
 #import "iTermTipCardViewController.h"
 #import "iTermFlippedView.h"
 #import "iTermTipCardActionButton.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "SolidColorView.h"
 
 @interface iTermTipCardFakeDividerView : SolidColorView
@@ -44,16 +45,18 @@
 
 - (void)awakeFromNib {
     [self flipSubviews];
+    self.layer.borderWidth = 1;
+    self.layer.borderColor = [[NSColor redColor] CGColor];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
     [[NSColor whiteColor] set];
     NSRectFill(self.bounds);
 
+    [super drawRect:dirtyRect];
+
     [[NSColor colorWithCalibratedWhite:0.65 alpha:1] set];
     NSFrameRect(self.bounds);
-
-    [super drawRect:dirtyRect];
 }
 
 - (BOOL)isFlipped {
@@ -109,7 +112,23 @@
 }
 
 - (void)setBodyText:(NSString *)body {
-    _body.stringValue = body;
+    NSMutableAttributedString *attributedString =
+        [[[NSMutableAttributedString alloc] init] autorelease];
+
+    NSDictionary *bigTextAttributes =
+        @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Thin" size:16],
+           NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.23 alpha:1] };
+
+    NSDictionary *emphasisTextAttributes =
+    @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Thin" size:16],
+       NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0 alpha:1] };
+
+    [attributedString iterm_appendString:@"Tip of the day: "
+                          withAttributes:emphasisTextAttributes];
+    [attributedString iterm_appendString:body
+                          withAttributes:bigTextAttributes];
+
+    _body.attributedStringValue = attributedString;
 }
 
 - (iTermTipCardActionButton *)addActionWithTitle:(NSString *)title
@@ -168,14 +187,17 @@
                          origin:(NSPoint)newOrigin {
     NSRect cardFrame = self.view.frame;
     cardFrame.size.width = width;
+
+    static const CGFloat kBodySideMargin = 10;
     NSRect bodyFrame = _body.frame;
-    bodyFrame.size = [_body sizeThatFits:NSMakeSize(_body.frame.size.width, CGFLOAT_MAX)];
+    bodyFrame.size = [_body sizeThatFits:NSMakeSize(width - kBodySideMargin * 2, CGFLOAT_MAX)];
+    bodyFrame.origin.x = kBodySideMargin;
 
     CGFloat totalButtonHeight = 0;
     CGFloat stagedButtonHeight = 0;
     const CGFloat bottomMargin = 8;
     const CGFloat topMargin = 2;
-    const CGFloat marginBetweenTextAndButtons = 6;
+    const CGFloat marginBetweenTextAndButtons = 10;
 
     // Calculate the height of the buttons
     for (iTermTipCardActionButton *actionButton in _actionButtons) {
@@ -190,6 +212,11 @@
             case kTipCardButtonNotAnimating:
                 [actionButton sizeToFit];
                 totalButtonHeight += actionButton.frame.size.height;
+                break;
+
+            case kTipCardButtonAnimatingOutCurrently:
+                [actionButton sizeToFit];
+                // Treat as 0 height
                 break;
         }
     }
@@ -263,7 +290,9 @@
     BOOL foundAnimatingIn = NO;
     for (iTermTipCardActionButton *actionButton in _actionButtons) {
         CGFloat y;
-        if (actionButton.animationState == kTipCardButtonAnimatingIn) {
+        if (actionButton.animationState == kTipCardButtonAnimatingOutCurrently) {
+            continue;
+        } else if (actionButton.animationState == kTipCardButtonAnimatingIn) {
             y = stageY;
             stageY += actionButton.frame.size.height;
             finalYTop += actionButton.frame.size.height;
@@ -335,6 +364,14 @@
 
 - (void)setShowFakeBottomDivider:(BOOL)showFakeBottomDivider {
     _fakeBottomDivider.hidden = !showFakeBottomDivider;
+}
+
+- (void)hideCollapsedButtons {
+    for (iTermTipCardActionButton *button in _actionButtons) {
+        if (button.isCollapsed) {
+            button.hidden = YES;
+        }
+    }
 }
 
 @end
