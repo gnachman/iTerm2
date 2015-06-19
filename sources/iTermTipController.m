@@ -10,6 +10,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermTip.h"
+#import "iTermTipData.h"
 #import "iTermTipWindowController.h"
 
 static NSString *const kUnshowableTipsKey = @"NoSyncTipsToNotShow";
@@ -48,21 +49,7 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.tips = @{ @"Tip 1": @{ kTipTitleKey: @"Shell Integration",
-                                    kTipBodyKey: @"The Shell Integration feature puts a blue arrow next to your shell prompt that turns red if the command fails.",
-                                    kTipUrlKey: @"http://google.com/" },
-                       @"Tip 2": @{ kTipTitleKey: @"Title 2",
-                                    kTipBodyKey: @"Body 2",
-                                    kTipUrlKey: @"http://yahoo.com/" },
-                       @"Tip 3": @{ kTipTitleKey: @"Title 3",
-                                    kTipBodyKey: @"Body 3" },
-                       @"Tip 4": @{ kTipTitleKey: @"Title 4",
-                                    kTipBodyKey: @"Body 4",
-                                    kTipUrlKey: @"http://yahoo.com/" },
-                       @"Tip 5": @{ kTipTitleKey: @"Title 5",
-                                    kTipBodyKey: @"Body 5",
-                                    kTipUrlKey: @"http://yahoo.com/" },
-                       };
+        self.tips = [iTermTipData allTips];
     }
     return self;
 }

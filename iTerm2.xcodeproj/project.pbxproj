@@ -90,6 +90,11 @@
 		1D373E4918F3613600773D3E /* iTermShortcutInputView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D373E4718F3613600773D3E /* iTermShortcutInputView.h */; };
 		1D373E4A18F3613600773D3E /* iTermShortcutInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D373E4818F3613600773D3E /* iTermShortcutInputView.m */; };
 		1D373E4B18F3613600773D3E /* iTermShortcutInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D373E4818F3613600773D3E /* iTermShortcutInputView.m */; };
+		1D374DEB1B349FC8007BE76A /* iTermTipData.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D374DE91B349FC8007BE76A /* iTermTipData.h */; };
+		1D374DEC1B349FC8007BE76A /* iTermTipData.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D374DE91B349FC8007BE76A /* iTermTipData.h */; };
+		1D374DED1B349FC8007BE76A /* iTermTipData.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D374DEA1B349FC8007BE76A /* iTermTipData.m */; };
+		1D374DEE1B349FC8007BE76A /* iTermTipData.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D374DEA1B349FC8007BE76A /* iTermTipData.m */; };
+		1D374DEF1B349FC8007BE76A /* iTermTipData.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D374DEA1B349FC8007BE76A /* iTermTipData.m */; };
 		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
 		1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */; };
 		1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */; };
@@ -2282,6 +2287,8 @@
 		1D36155412CBF33E00803EA9 /* ScreenChar.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ScreenChar.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D373E4718F3613600773D3E /* iTermShortcutInputView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermShortcutInputView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D373E4818F3613600773D3E /* iTermShortcutInputView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShortcutInputView.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D374DE91B349FC8007BE76A /* iTermTipData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTipData.h; sourceTree = "<group>"; };
+		1D374DEA1B349FC8007BE76A /* iTermTipData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipData.m; sourceTree = "<group>"; };
 		1D395912134E75B5005A8021 /* SmartSelectionRules.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = SmartSelectionRules.plist; sourceTree = "<group>"; };
 		1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = HighlightTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = HighlightTrigger.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -4116,6 +4123,8 @@
 				A65B72A11B3134FB00F947A7 /* iTermTipController.m */,
 				1D8BBA8F1B33529E0005A852 /* iTermTip.h */,
 				1D8BBA901B33529E0005A852 /* iTermTip.m */,
+				1D374DE91B349FC8007BE76A /* iTermTipData.h */,
+				1D374DEA1B349FC8007BE76A /* iTermTipData.m */,
 			);
 			name = Tips;
 			sourceTree = "<group>";
@@ -4925,6 +4934,7 @@
 				1D6ED94419AEA20D005A7799 /* NSScreen+iTerm.h in Headers */,
 				1D6ED94519AEA20D005A7799 /* PTYTabView.h in Headers */,
 				1D6ED94619AEA20D005A7799 /* BulkCopyProfilePreferencesWindowController.h in Headers */,
+				1D374DEC1B349FC8007BE76A /* iTermTipData.h in Headers */,
 				1D6ED94719AEA20D005A7799 /* PTYTask.h in Headers */,
 				1D6ED94819AEA20D005A7799 /* PTYTextView.h in Headers */,
 				1DA1C1F41A2E49A3007381D3 /* NSTableColumn+iTerm.h in Headers */,
@@ -5094,6 +5104,7 @@
 				1DE5EBE8122B892900C736B0 /* iTermProfilesWindowController.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
+				1D374DEB1B349FC8007BE76A /* iTermTipData.h in Headers */,
 				1DBB4B371901F12400832B09 /* ProfilesSessionPreferencesViewController.h in Headers */,
 				A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */,
 				1D373E4918F3613600773D3E /* iTermShortcutInputView.h in Headers */,
@@ -6224,6 +6235,7 @@
 				A67F57C21B01A08800B4F135 /* iTermAnimatedImageInfo.m in Sources */,
 				1D6EDAA819AEA20D005A7799 /* PseudoTerminalRestorer.m in Sources */,
 				1D6EDAA919AEA20D005A7799 /* iTermWarning.m in Sources */,
+				1D374DEF1B349FC8007BE76A /* iTermTipData.m in Sources */,
 				1D6EDAAA19AEA20D005A7799 /* PointerPrefsController.m in Sources */,
 				A6E525D31A9C5725007B898E /* VT100StateTransition.m in Sources */,
 				1D6EDAAB19AEA20D005A7799 /* PointerController.m in Sources */,
@@ -6426,6 +6438,7 @@
 				1D9A554F180FA82E00B42CE9 /* TmuxWindowOpener.m in Sources */,
 				A682DE98190C5E7000BE8758 /* iTermProgressIndicator.m in Sources */,
 				1D9A5535180FA78B00B42CE9 /* DVRBuffer.m in Sources */,
+				1D374DEE1B349FC8007BE76A /* iTermTipData.m in Sources */,
 				A6E7475E188C6731005355CF /* iTermExposeGridView.m in Sources */,
 				A6E713AF18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.m in Sources */,
 				1D9A553F180FA7F200B42CE9 /* PasteboardHistory.m in Sources */,
@@ -6882,6 +6895,7 @@
 				A67F57C01B01A08800B4F135 /* iTermAnimatedImageInfo.m in Sources */,
 				A6C7DE5E19A469D6001E5C75 /* NSColor+Scripting.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,
+				1D374DED1B349FC8007BE76A /* iTermTipData.m in Sources */,
 				A6099B0618D6B0FD00081FA9 /* iTermWarning.m in Sources */,
 				A6E525D11A9C5725007B898E /* VT100StateTransition.m in Sources */,
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
