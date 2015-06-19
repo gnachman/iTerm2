@@ -29,6 +29,8 @@ static const CGFloat kStandardButtonHeight = 34;
         _desiredHeight = 34;
         _inset = NSMakeSize(10, 5);
         self.wantsLayer = YES;
+        [self makeBackingLayer];
+        self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
     }
     return self;
 }
@@ -121,17 +123,7 @@ static const CGFloat kStandardButtonHeight = 34;
     }
     BOOL highlighted = _isHighlighted;
     NSColor *foregroundColor = highlighted ? [NSColor whiteColor] : [self.class blueColor];
-    NSColor *backgroundColor = highlighted ? [self.class blueColor] : [NSColor whiteColor];
-    if (!self.layer.backgroundColor) {
-        self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
-    }
-    /*
-    [backgroundColor set];
-    NSRectFill(self.bounds);
 
-    [[NSColor colorWithCalibratedWhite:0.85 alpha:1] set];
-    NSRectFill(NSMakeRect(NSMinX(self.bounds), 0, NSWidth(self.bounds), 0.5));
-*/
     NSColor *textColor = foregroundColor;
     NSFont *font = [NSFont fontWithName:@"Helvetica Neue" size:14];
     NSRect textRect = self.bounds;
