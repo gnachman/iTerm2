@@ -143,4 +143,8 @@ DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, @"Pasteboard: Delay in seconds b
 DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard on selection includes color and font style.");
 DEFINE_INT(pasteHistoryMaxOptions, 20, @"Pasteboard: Number of entires to show in Paste History.\nThe value must be between 2 and 100.");
 
+#pragma mark - Tip of the day
+
+DEFINE_BOOL(noSyncTipsDisabled, NO, @"Tip of the Day: Disable the Tip of the Day?");
+
 @end
