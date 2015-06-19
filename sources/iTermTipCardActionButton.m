@@ -59,7 +59,7 @@ static const CGFloat kStandardButtonHeight = 34;
         NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(0, 0, 1, 1)];
         _highlightLayer.path = path.iterm_CGPath;
         _highlightLayer.anchorPoint = CGPointMake(0.5, 0.5);
-        _highlightLayer.fillColor = [[NSColor colorWithCalibratedWhite:0.95 alpha:1] CGColor];
+        _highlightLayer.fillColor = [[NSColor colorWithCalibratedWhite:0.90 alpha:1] CGColor];
         [self.layer addSublayer:_highlightLayer];
 
         _textField = [[[NSTextField alloc] initWithFrame:NSMakeRect(42, 5, 200, 17)] autorelease];
