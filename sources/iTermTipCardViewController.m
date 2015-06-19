@@ -116,15 +116,11 @@
         [[[NSMutableAttributedString alloc] init] autorelease];
 
     NSDictionary *bigTextAttributes =
-        @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Thin" size:16],
-           NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.23 alpha:1] };
+        @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:16],
+           NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.2 alpha:1] };
 
-    NSDictionary *emphasisTextAttributes =
-    @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Thin" size:16],
-       NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0 alpha:1] };
-
-    [attributedString iterm_appendString:@"Tip of the day: "
-                          withAttributes:emphasisTextAttributes];
+    [attributedString iterm_appendString:@"iTerm2 tip of the day: "
+                          withAttributes:bigTextAttributes];
     [attributedString iterm_appendString:body
                           withAttributes:bigTextAttributes];
 
@@ -185,12 +181,16 @@
                        animated:(BOOL)animated
                             dry:(BOOL)dry
                          origin:(NSPoint)newOrigin {
+    static const CGFloat kContainerSideInset = 4;
+    static const CGFloat kContainerTopBorder = 1;
+    static const CGFloat kContainerBottomBorder = 1;
     NSRect cardFrame = self.view.frame;
     cardFrame.size.width = width;
+    CGFloat containerWidth = width - kContainerSideInset * 2;
 
     static const CGFloat kBodySideMargin = 10;
     NSRect bodyFrame = _body.frame;
-    bodyFrame.size = [_body sizeThatFits:NSMakeSize(width - kBodySideMargin * 2, CGFLOAT_MAX)];
+    bodyFrame.size = [_body sizeThatFits:NSMakeSize(containerWidth - kBodySideMargin * 2, CGFLOAT_MAX)];
     bodyFrame.origin.x = kBodySideMargin;
 
     CGFloat totalButtonHeight = 0;
@@ -229,13 +229,13 @@
     // Set outermost view's frame
     NSRect frame = cardFrame;
     frame.size.height = (topMargin +
-                         1 +
+                         kContainerTopBorder +
                          _titleBox.frame.size.height +
                          kMarginBetweenTitleAndBody +
                          bodyFrame.size.height +
                          marginBetweenTextAndButtons +
                          totalButtonHeight +
-                         1 +
+                         kContainerBottomBorder +
                          bottomMargin);
     frame.origin = newOrigin;
     frame = NSIntegralRect(frame);
@@ -248,17 +248,17 @@
         }
     }
 
-    NSRect containerFrame = self.view.bounds;
-    containerFrame.origin.x = 4;
-    containerFrame.origin.y = topMargin;
-    containerFrame.size.width -= 8;
-    containerFrame.size.height = (1 +
-                                  _titleBox.frame.size.height +
-                                  kMarginBetweenTitleAndBody +
-                                  bodyFrame.size.height +
-                                  marginBetweenTextAndButtons +
-                                  totalButtonHeight +
-                                  1);
+    CGFloat containerHeight = (1 +
+                               _titleBox.frame.size.height +
+                               kMarginBetweenTitleAndBody +
+                               bodyFrame.size.height +
+                               marginBetweenTextAndButtons +
+                               totalButtonHeight +
+                               1);
+    NSRect containerFrame = NSMakeRect(kContainerSideInset,
+                                       topMargin,
+                                       containerWidth,
+                                       containerHeight);
     if (!dry) {
         if (animated) {
             _container.animator.frame = containerFrame;
