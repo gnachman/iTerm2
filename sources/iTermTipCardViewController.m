@@ -65,20 +65,10 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 
 - (void)awakeFromNib {
     [self flipSubviews];
-}
-
-- (void)drawRect:(NSRect)dirtyRect {
-    [[NSColor whiteColor] set];
-    NSRectFill(self.bounds);
-
-    [super drawRect:dirtyRect];
-
-    [[NSColor colorWithCalibratedWhite:0.65 alpha:1] set];
-    NSFrameRect(self.bounds);
-}
-
-- (BOOL)isFlipped {
-    return YES;
+    [self setWantsLayer:YES];
+    self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+    self.layer.borderColor = [[NSColor colorWithCalibratedWhite:0.65 alpha:1] CGColor];
+    self.layer.borderWidth = 1;
 }
 
 @end
@@ -88,6 +78,10 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     IBOutlet NSTextField *_body;
     IBOutlet NSBox *_titleBox;
     IBOutlet iTermTipCardContainerView *_container;
+
+    // A view that sits above the buttons and below the body content to hide staged buttons.
+    IBOutlet SolidColorView *_coverView;
+
     iTermTipCardFakeDividerView *_fakeBottomDivider;
     NSMutableArray *_actionButtons;
 
@@ -103,6 +97,8 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    _coverView.color = [NSColor whiteColor];
 
     // Add a shadow to the card.
     NSShadow *dropShadow = [[[NSShadow alloc] init] autorelease];
@@ -166,10 +162,10 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     button.block = block;
     button.target = self;
     button.action = @selector(buttonPressed:);
-    NSView *goesBelow = [_actionButtons lastObject] ?: _body;
+    NSView *viewToPlaceButtonBelow = [_actionButtons lastObject] ?: _coverView;
     [_actionButtons addObject:button];
     // Place later buttons under earlier buttons and all under body so they can animate in and out.
-    [_container addSubview:button positioned:NSWindowBelow relativeTo:goesBelow];
+    [_container addSubview:button positioned:NSWindowBelow relativeTo:viewToPlaceButtonBelow];
 
     return button;
 }
@@ -275,12 +271,18 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     NSRect titleFrame = _titleBox.frame;
     titleFrame.size.width = containerFrame.size.width - 2;
 
+    // Calculate frame for cover view
+    NSRect coverViewFrame = NSMakeRect(1,
+                                       NSMaxY(titleFrame),
+                                       containerWidth - 2,
+                                       NSHeight(containerFrame) - 1 - NSMaxY(titleFrame) - totalButtonHeight);
     // Set frames if not a dry run.
     if (!dry) {
         self.view.frame = frame;
         _container.frame = containerFrame;
         _titleBox.frame = titleFrame;
         _body.frame = bodyFrame;
+        _coverView.frame = coverViewFrame;
     }
 
     // Lay buttons out from top to bottom
@@ -393,7 +395,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 }
 
 // Animate for a height change.
-- (void)animateCardWithDuration:(const CGFloat)duration
+- (void)animateCardWithDuration:(CGFloat)duration
                    heightChange:(CGFloat)heightChange
               originalCardFrame:(NSRect)originalCardFrame
              postAnimationFrame:(NSRect)postAnimationFrame

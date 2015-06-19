@@ -101,11 +101,13 @@ static const CGFloat kWindowWidth = 400;
 
 // Add the standard buttons.
 - (void)addButtonsToCard:(iTermTipCardViewController *)card expanded:(BOOL)expanded {
-    [card addActionWithTitle:kLearnMoreTitle
-                        icon:[NSImage imageNamed:@"Navigate"]
-                       block:^(id sendingCard) {
-                           [self openURL];
-                       }];
+    if (_tip.url) {
+        [card addActionWithTitle:kLearnMoreTitle
+                            icon:[NSImage imageNamed:@"Navigate"]
+                           block:^(id sendingCard) {
+                               [self openURL];
+                           }];
+    }
     [card addActionWithTitle:kDismissTipTitle
                         icon:[NSImage imageNamed:@"Dismiss"]
                        block:^(id sendingCard) {

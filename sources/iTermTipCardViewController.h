@@ -52,7 +52,7 @@
 // Creates Core Animation animations for a change of card height.
 // |block| is responsible for animating the window or superview's frame and is called in the
 // completion block.
-- (void)animateCardWithDuration:(const CGFloat)duration
+- (void)animateCardWithDuration:(CGFloat)duration
                    heightChange:(CGFloat)heightChange
               originalCardFrame:(NSRect)originalCardFrame
              postAnimationFrame:(NSRect)postAnimationFrame
