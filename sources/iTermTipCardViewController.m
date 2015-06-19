@@ -27,6 +27,7 @@
 }
 
 @end
+
 @interface iTermTipCardView : iTermFlippedView
 @end
 

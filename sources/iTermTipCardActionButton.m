@@ -7,10 +7,28 @@
 //
 
 #import "iTermTipCardActionButton.h"
+
 #import "iTermTipCardActionButtonCell.h"
+#import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
 
 static const CGFloat kStandardButtonHeight = 34;
+
+@interface iTermTipCardActionButtonTopDividerView : SolidColorView
+@end
+
+@implementation iTermTipCardActionButtonTopDividerView
+
+- (void)drawRect:(NSRect)dirtyRect {
+    NSRect rect = self.bounds;
+    [self.color set];
+    NSRectFill(NSMakeRect(rect.origin.x,
+                          rect.origin.y,
+                          rect.size.width,
+                          0.5));
+}
+
+@end
 
 @implementation iTermTipCardActionButton {
     CGFloat _desiredHeight;
@@ -31,6 +49,11 @@ static const CGFloat kStandardButtonHeight = 34;
         self.wantsLayer = YES;
         [self makeBackingLayer];
         self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+        iTermTipCardActionButtonTopDividerView *divider =
+            [[[iTermTipCardActionButtonTopDividerView alloc] initWithFrame:NSMakeRect(0, 0, frameRect.size.width, 1)] autorelease];
+        divider.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
+        divider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
+        [self addSubview:divider];
     }
     return self;
 }
