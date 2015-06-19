@@ -156,7 +156,7 @@ static const CGFloat kStandardButtonHeight = 34;
     _highlightLayer.transform = CATransform3DIdentity;
     [CATransaction commit];
 
-    // Scale up the highlight circle til it fills the button.
+    // Scale up the highlight circle until it fills the button.
     [CATransaction begin];
     [CATransaction setAnimationDuration:1];
 
@@ -184,9 +184,9 @@ static const CGFloat kStandardButtonHeight = 34;
 - (void)mouseUp:(NSEvent *)theEvent {
     _isHighlighted = NO;
 
-    // Quickly scale up highlight while fading it out.
+    // Scale up highlight while fading it out.
     [CATransaction begin];
-    [CATransaction setAnimationDuration:0.3];
+    [CATransaction setAnimationDuration:1];
     _highlightLayer.opacity = 0;
     CGFloat scale = [self desiredHighlightScale];
     CATransform3D transform = CATransform3DConcat(CATransform3DMakeTranslation(-0.5, -0.5, 0),
