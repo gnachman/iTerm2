@@ -31,11 +31,13 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 @property(nonatomic, retain) iTermTip *tip;
 @property(nonatomic, retain) NSView *intermediateView;
 @property(nonatomic, assign) BOOL windowCanShrink;
+@property(nonatomic, assign) BOOL buttonsEnabled;
 @end
 
 @implementation iTermTipWindowController {
     NSRect _desiredWindowFrame;
     NSInteger _holdWindowSizeCount;
+    NSMutableArray *_exitingCardViewControllers;
 }
 
 - (instancetype)initWithTip:(id)tip {
@@ -69,6 +71,8 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
                                                  selector:@selector(showNextTip)
                                                      name:kShowNextTipNotification
                                                    object:nil];
+        _buttonsEnabled = YES;
+        _exitingCardViewControllers = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -77,6 +81,7 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
     [_tip release];
     [_cardViewController release];
     [_intermediateView release];
+    [_exitingCardViewControllers release];
     [super dealloc];
 }
 
@@ -103,30 +108,32 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
                        }];
 
     NSString *toggleTitle = expanded ? @"Fewer Options" : @"More Options";
-    [card addActionWithTitle:toggleTitle
-                        icon:[NSImage imageNamed:@"ChevronDown"]
-                       block:^(id sendingCard) {
-        iTermTipCardActionButton *action = [card actionWithTitle:@"More Options"];
-        if (action) {
-            // Expanding
-            [action setIconFlipped:YES];
-            [action setTitle:@"Fewer Options"];
-            [action setIcon:[NSImage imageNamed:@"ChevronUp"]];
-            [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingIn];
-            [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingIn];
-            [[card actionWithTitle:@"Show Next Tip"] setAnimationState:kTipCardButtonAnimatingIn];
-        } else {
-            // Collapsing
-            action = [card actionWithTitle:@"Fewer Options"];
-            [action setIconFlipped:NO];
-            [action setTitle:@"More Options"];
-            [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingOut];
-            [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingOut];
-            [[card actionWithTitle:@"Show Next Tip"] setAnimationState:kTipCardButtonAnimatingOut];
-        }
-        [self layoutCard:card animated:YES];
-    }];
     iTermTipCardActionButton *button =
+        [card addActionWithTitle:toggleTitle
+                            icon:[NSImage imageNamed:@"ChevronDown"]
+                           block:^(id sendingCard) {
+            iTermTipCardActionButton *action = [card actionWithTitle:@"More Options"];
+            if (action) {
+                // Expanding
+                [action setIconFlipped:YES];
+                [action setTitle:@"Fewer Options"];
+                [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingIn];
+                [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingIn];
+                [[card actionWithTitle:@"Show Next Tip"] setAnimationState:kTipCardButtonAnimatingIn];
+            } else {
+                // Collapsing
+                action = [card actionWithTitle:@"Fewer Options"];
+                [action setIconFlipped:NO];
+                [action setTitle:@"More Options"];
+                [[card actionWithTitle:@"Remind Me Later"] setAnimationState:kTipCardButtonAnimatingOut];
+                [[card actionWithTitle:@"Disable Tips"] setAnimationState:kTipCardButtonAnimatingOut];
+                [[card actionWithTitle:@"Show Next Tip"] setAnimationState:kTipCardButtonAnimatingOut];
+            }
+            [self layoutCard:card animated:YES];
+        }];
+    [button setIconFlipped:expanded];
+
+    button =
         [card addActionWithTitle:@"Remind Me Later"
                             icon:[NSImage imageNamed:@"Later"]
                            block:^(id sendingCard) {
@@ -158,6 +165,9 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
         if (!expanded) {
             [button setCollapsed:YES];
         }
+    }
+    for (iTermTipCardActionButton *button in card.actionButtons) {
+        button.enabled = _buttonsEnabled;
     }
 
     [_intermediateView addSubview:_cardViewController.view];
@@ -205,9 +215,11 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
         const CGFloat duration = 0.25;
         [CATransaction begin];
 
+        self.buttonsEnabled = NO;
         [card retain];
         [self retain];
         [CATransaction setCompletionBlock:^{
+            self.buttonsEnabled = YES;
             card.showFakeBottomDivider = NO;
             [card hideCollapsedButtons];
             NSRect finalWindowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
@@ -292,7 +304,9 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
     [[NSAnimationContext currentContext] setDuration:duration];
     [[NSAnimationContext currentContext] setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut]];
     [self retain];
+    self.buttonsEnabled = NO;
     [[NSAnimationContext currentContext] setCompletionHandler:^{
+        self.buttonsEnabled = YES;
         [self close];
         [self release];
     }];
@@ -319,17 +333,28 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
     if (nextTip) {
         self.windowCanShrink = NO;
         const NSTimeInterval duration = 0.5;
+        self.buttonsEnabled = NO;
         [[NSAnimationContext currentContext] setDuration:duration];
+        [self retain];
+        iTermTipCardViewController *exitingCardViewController = _cardViewController;
+        [[NSAnimationContext currentContext] setCompletionHandler:^{
+            [exitingCardViewController.view removeFromSuperview];
+            [_exitingCardViewControllers removeObject:exitingCardViewController];
+            self.buttonsEnabled = YES;
+            self.windowCanShrink = YES;
+            [self release];
+        }];
         NSRect frame = _cardViewController.view.frame;
         frame.origin.x = -frame.size.width;
         _cardViewController.view.autoresizingMask = 0;
 
         [_cardViewController.view.animator setFrame:frame];
-        // TODO: remove old vc from view hierarchy when animation completes
 
         [_delegate tipWindowWillShowTipWithIdentifier:nextTip.identifier];
         self.tip = nextTip;
         BOOL expanded = ([_cardViewController actionWithTitle:@"More Options"] == nil);
+        [_exitingCardViewControllers addObject:_cardViewController];
+        _cardViewController = nil;
         [self loadCardExpanded:expanded];
 
         frame = _cardViewController.view.frame;
@@ -338,11 +363,6 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
 
         frame.origin.x -= self.window.frame.size.width;
         [_cardViewController.view.animator setFrame:frame];
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(duration * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(),
-                       ^{
-                           self.windowCanShrink = YES;
-                       });
     }
 }
 
@@ -380,6 +400,16 @@ static NSString *const kShowNextTipNotification = @"kShowNextTipNotification";
         [self.window setFrame:frame display:NO];
     } else {
         _desiredWindowFrame = frame;
+    }
+}
+
+- (void)setButtonsEnabled:(BOOL)buttonsEnabled {
+    if (buttonsEnabled == _buttonsEnabled) {
+        return;
+    }
+    _buttonsEnabled = buttonsEnabled;
+    for (iTermTipCardActionButton *button in _cardViewController.actionButtons) {
+        button.enabled = _buttonsEnabled;
     }
 }
 

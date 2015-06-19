@@ -8,13 +8,13 @@
 
 #import "iTermTipCardActionButton.h"
 #import "iTermTipCardActionButtonCell.h"
+#import <QuartzCore/QuartzCore.h>
 
 static const CGFloat kStandardButtonHeight = 34;
 
 @implementation iTermTipCardActionButton {
     CGFloat _desiredHeight;
     NSSize _inset;
-    NSTimeInterval _highlightStartTime;
     BOOL _isHighlighted;
     CALayer *_iconLayer;  // weak
 }
@@ -85,14 +85,29 @@ static const CGFloat kStandardButtonHeight = 34;
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
+    if (!self.enabled) {
+        return;
+    }
     _isHighlighted = YES;
+    self.layer.backgroundColor = [[NSColor colorWithCalibratedRed:112.0 / 255
+                                                            green:154.0 / 255
+                                                             blue:233.0 / 255
+                                                            alpha:1] CGColor];
     [self setNeedsDisplay:YES];
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
     _isHighlighted = NO;
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"backgroundColor"];
+    animation.duration = 0.25;
+    animation.fromValue = [self.layer.presentationLayer backgroundColor];
+    animation.toValue = (id)[[NSColor whiteColor] CGColor];
+    [self.layer addAnimation:animation forKey:@"backgroundColor"];
+    self.layer.backgroundColor = (CGColorRef)[[NSColor whiteColor] CGColor];
+
     [self setNeedsDisplay:YES];
-    if (NSPointInRect([self convertPoint:theEvent.locationInWindow fromView:nil], self.bounds)) {
+    if (self.enabled &&
+        NSPointInRect([self convertPoint:theEvent.locationInWindow fromView:nil], self.bounds)) {
         if (self.target && self.action) {
             [self.target performSelector:self.action withObject:self];
         }
@@ -101,20 +116,22 @@ static const CGFloat kStandardButtonHeight = 34;
 
 - (void)drawRect:(NSRect)dirtyRect {
     static const NSTimeInterval kHoldDuration = 0.25;
-    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (_isHighlighted) {
-        _highlightStartTime = now;
         [self performSelector:@selector(setNeedsDisplay:) withObject:@1 afterDelay:kHoldDuration];
     }
-    BOOL highlighted = _isHighlighted || (now - _highlightStartTime < kHoldDuration);
+    BOOL highlighted = _isHighlighted;
     NSColor *foregroundColor = highlighted ? [NSColor whiteColor] : [self.class blueColor];
     NSColor *backgroundColor = highlighted ? [self.class blueColor] : [NSColor whiteColor];
+    if (!self.layer.backgroundColor) {
+        self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+    }
+    /*
     [backgroundColor set];
     NSRectFill(self.bounds);
 
     [[NSColor colorWithCalibratedWhite:0.85 alpha:1] set];
     NSRectFill(NSMakeRect(NSMinX(self.bounds), 0, NSWidth(self.bounds), 0.5));
-
+*/
     NSColor *textColor = foregroundColor;
     NSFont *font = [NSFont fontWithName:@"Helvetica Neue" size:14];
     NSRect textRect = self.bounds;
