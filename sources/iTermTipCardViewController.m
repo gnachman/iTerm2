@@ -23,7 +23,7 @@ static const CGFloat kContainerBottomBorder = 1;
 static const CGFloat kBodySideMargin = 10;
 static const CGFloat kCardBottomMargin = 8;
 static const CGFloat kCardTopMargin = 2;
-static const CGFloat kMarginBetweenTextAndButtons = 10;
+static const CGFloat kMarginBetweenTextAndButtons = 0;
 static const CGFloat kMarginBetweenTitleAndBody = 8;
 
 // A temporary divider used at the bottom of the card while it's growing in height.
@@ -134,10 +134,20 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
         @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:16],
            NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.2 alpha:1] };
 
-    [attributedString iterm_appendString:@"iTerm2 tip of the day: "
-                          withAttributes:bigTextAttributes];
+    NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    [paragraphStyle setAlignment:NSRightTextAlignment];
+
+    NSDictionary *signatureAttributes =
+        @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light Italic" size:12],
+           NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.3 alpha:1],
+           NSParagraphStyleAttributeName: paragraphStyle};
+
     [attributedString iterm_appendString:body
                           withAttributes:bigTextAttributes];
+    [attributedString iterm_appendString:@"\n"
+                          withAttributes:bigTextAttributes];
+    [attributedString iterm_appendString:@"iTerm2 tip of the day"
+                          withAttributes:signatureAttributes];
 
     _body.attributedStringValue = attributedString;
 }

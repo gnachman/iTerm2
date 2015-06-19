@@ -22,7 +22,7 @@ static NSString *const kLearnMoreTitle = @"Learn More";
 static NSString *const kDismissTipTitle = @"Dismiss Tip";
 static NSString *const kFewerOptionsTitle = @"Fewer Options";
 static NSString *const kMoreOptionsTitle = @"More Options";
-static NSString *const kRemindMeLaterTitle = @"Remind Me Later";
+static NSString *const kShowThisLaterTitle = @"Show This Later";
 static NSString *const kDisableTipsTitle = @"Disable Tips";
 static NSString *const kShowNextTipTitle = @"Show Next Tip";
 
@@ -124,10 +124,10 @@ static const CGFloat kWindowWidth = 400;
     [button setIconFlipped:expanded];
 
     button =
-        [card addActionWithTitle:kRemindMeLaterTitle
+        [card addActionWithTitle:kShowThisLaterTitle
                             icon:[NSImage imageNamed:@"Later"]
                            block:^(id sendingCard) {
-                               [self remindMeLater];
+                               [self showThisLater];
                            }];
     if (!expanded) {
         [button setCollapsed:YES];
@@ -169,7 +169,7 @@ static const CGFloat kWindowWidth = 400;
 
 // Action button titles that are collapsable. These must appear adjacently and last.
 - (NSArray *)collapsingTitles {
-    return @[ kRemindMeLaterTitle,
+    return @[ kShowThisLaterTitle,
               kDisableTipsTitle,
               kShowNextTipTitle ];
 }
@@ -271,7 +271,7 @@ static const CGFloat kWindowWidth = 400;
         // Expanding
         [action setIconFlipped:YES];
         [action setTitle:kFewerOptionsTitle];
-        [[card actionWithTitle:kRemindMeLaterTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
     } else {
@@ -279,14 +279,14 @@ static const CGFloat kWindowWidth = 400;
         action = [card actionWithTitle:kFewerOptionsTitle];
         [action setIconFlipped:NO];
         [action setTitle:kMoreOptionsTitle];
-        [[card actionWithTitle:kRemindMeLaterTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
     }
     [self layoutCard:card animated:YES];
 }
 
-- (void)remindMeLater {
+- (void)showThisLater {
     [self animateOut];
     [_delegate tipWindowPostponed];
 }

@@ -66,7 +66,7 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";
 
 - (void)tryToShowTip {
 #if ALWAYS_SHOW_TIP
-    [self showTipForKey:self.tips.allKeys.firstObject];
+    [self showTipForKey:[[self.tips.allKeys sortedArrayUsingSelector:@selector(compare:)] firstObject]];
     return;
 #endif
 
@@ -100,7 +100,7 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";
     unshowableTips = @[];
 #endif
     BOOL okToReturn = (prev == nil);
-    for (NSString *tipKey in _tips) {
+    for (NSString *tipKey in [[_tips allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         if (okToReturn && ![unshowableTips containsObject:tipKey]) {
             return tipKey;
         }
