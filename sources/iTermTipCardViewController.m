@@ -100,7 +100,10 @@
     _fakeBottomDivider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
     // TODO: root out and remove CGColor
     [_container addSubview:_fakeBottomDivider];
-
+    _titleBox.fillColor = [NSColor colorWithCalibratedRed:120/255.0
+                                                    green:178/255.0
+                                                     blue:1.0
+                                                    alpha:1];
     _container.autoresizesSubviews = NO;
 }
 
