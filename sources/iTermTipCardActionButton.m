@@ -10,6 +10,7 @@
 
 #import "iTermTipCardActionButtonCell.h"
 #import "NSBezierPath+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
 
@@ -51,7 +52,7 @@ static const CGFloat kStandardButtonHeight = 34;
         _inset = NSMakeSize(10, 5);
         self.wantsLayer = YES;
         [self makeBackingLayer];
-        self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+        self.layer.backgroundColor = [[NSColor whiteColor] iterm_CGColor];
         iTermTipCardActionButtonTopDividerView *divider =
             [[[iTermTipCardActionButtonTopDividerView alloc] initWithFrame:NSMakeRect(0, 0, frameRect.size.width, 1)] autorelease];
         divider.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
@@ -62,7 +63,7 @@ static const CGFloat kStandardButtonHeight = 34;
         NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(0, 0, 1, 1)];
         _highlightLayer.path = path.iterm_CGPath;
         _highlightLayer.anchorPoint = CGPointMake(0.5, 0.5);
-        _highlightLayer.fillColor = [[NSColor colorWithCalibratedWhite:0.95 alpha:1] CGColor];
+        _highlightLayer.fillColor = [[NSColor colorWithCalibratedWhite:0.95 alpha:1] iterm_CGColor];
         [self.layer addSublayer:_highlightLayer];
 
         _textField = [[NSTextField alloc] initWithFrame:NSMakeRect(42, 5, 200, 17)];

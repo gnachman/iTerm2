@@ -44,7 +44,7 @@
                             <color key="borderColor" red="0.1648087238456728" green="0.41528780037972046" blue="0.79472458964646464" alpha="0.0" colorSpace="calibratedRGB"/>
                             <color key="fillColor" red="0.44110292953359848" green="0.60443798638357948" blue="0.91491082702020199" alpha="1" colorSpace="calibratedRGB"/>
                         </box>
-                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" setsMaxLayoutWidthAtFirstLayout="YES" id="oJ3-Cg-erw">
+                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="oJ3-Cg-erw">
                             <rect key="frame" x="10" y="6" width="272" height="54"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla" id="5Nk-zE-G82">

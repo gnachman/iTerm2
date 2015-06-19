@@ -7,6 +7,7 @@
 #import "iTermOpenQuicklyTableCellView.h"
 #import "iTermOpenQuicklyTableRowView.h"
 #import "iTermOpenQuicklyTextField.h"
+#import "NSColor+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -74,7 +75,7 @@
     contentView.wantsLayer = YES;
     contentView.layer.cornerRadius = 6;
     contentView.layer.masksToBounds = YES;
-    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] CGColor];
+    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] iterm_CGColor];
     contentView.layer.borderWidth = 1;
 }
 

@@ -9,6 +9,7 @@
 #import "iTermTipCardViewController.h"
 #import "iTermFlippedView.h"
 #import "iTermTipCardActionButton.h"
+#import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "SolidColorView.h"
 
@@ -47,7 +48,7 @@
 - (void)awakeFromNib {
     [self flipSubviews];
     self.layer.borderWidth = 1;
-    self.layer.borderColor = [[NSColor redColor] CGColor];
+    self.layer.borderColor = [[NSColor redColor] iterm_CGColor];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
