@@ -56,4 +56,50 @@
     return path;
 }
 
+- (CGPathRef)iterm_CGPath {
+    if (self.elementCount == 0) {
+        return NULL;
+    }
+
+    CGMutablePathRef path = CGPathCreateMutable();
+    BOOL closed = YES;
+
+    for (NSInteger i = 0; i < self.elementCount; i++) {
+        NSPoint associatedPoints[3];
+        NSBezierPathElement element = [self elementAtIndex:i associatedPoints:associatedPoints];
+        switch (element) {
+            case NSMoveToBezierPathElement:
+                CGPathMoveToPoint(path, NULL, associatedPoints[0].x, associatedPoints[0].y);
+                break;
+
+            case NSLineToBezierPathElement:
+                closed = NO;
+                CGPathAddLineToPoint(path, NULL, associatedPoints[0].x, associatedPoints[0].y);
+                break;
+
+            case NSCurveToBezierPathElement:
+                closed = NO;
+                CGPathAddCurveToPoint(path, NULL,
+                                      associatedPoints[0].x, associatedPoints[0].y,
+                                      associatedPoints[1].x, associatedPoints[1].y,
+                                      associatedPoints[2].x, associatedPoints[2].y);
+                break;
+
+            case NSClosePathBezierPathElement:
+                closed = YES;
+                CGPathCloseSubpath(path);
+                break;
+        }
+    }
+
+    if (!closed) {
+        CGPathCloseSubpath(path);
+    }
+
+    CGPathRef theCopy = CGPathCreateCopy(path);
+    CGPathRelease(path);
+
+    return (CGPathRef)[(id)theCopy autorelease];
+}
+
 @end
