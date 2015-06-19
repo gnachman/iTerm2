@@ -47,8 +47,6 @@
 
 - (void)awakeFromNib {
     [self flipSubviews];
-    self.layer.borderWidth = 1;
-    self.layer.borderColor = [[NSColor redColor] iterm_CGColor];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -99,7 +97,6 @@
     _fakeBottomDivider = [[iTermTipCardFakeDividerView alloc] initWithFrame:NSZeroRect];
     _fakeBottomDivider.hidden = YES;
     _fakeBottomDivider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
-    // TODO: root out and remove CGColor
     [_container addSubview:_fakeBottomDivider];
     _titleBox.fillColor = [NSColor colorWithCalibratedRed:120/255.0
                                                     green:178/255.0

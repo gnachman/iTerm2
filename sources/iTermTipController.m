@@ -7,6 +7,7 @@
 //
 
 #import "iTermTipController.h"
+#import <Cocoa/Cocoa.h>
 
 #import "iTermTip.h"
 #import "iTermTipWindowController.h"
@@ -27,6 +28,15 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";
 }
 
 + (instancetype)sharedInstance {
+    // The tip of the day code uses sizeThatFits:, which is only available in 10.10.
+    // It also does a lot of other stuff that doesn't work on older versions for annoying and
+    // complex reasons. In the interest of getting this out in the world quickly I'm going to
+    // limit the feature's availability to 10.10 and up because it's not critical. If it's
+    // worthwhile I can always make a simpler version for users on older OS versions. Over 80%
+    // of users on 2.1.1 are running 10.10.
+    if (![[NSControl class] instancesRespondToSelector:@selector(sizeThatFits:)]) {
+        return nil;
+    }
     static id instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
