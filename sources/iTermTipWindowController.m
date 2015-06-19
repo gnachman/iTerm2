@@ -13,7 +13,6 @@
 #import "iTermTipCardActionButton.h"
 #import "iTermTipCardViewController.h"
 #import "iTermFlippedView.h"
-#import "iTermTipLayerBackedView.h"
 #import "NSView+iTerm.h"
 #import "SolidColorView.h"
 
@@ -32,14 +31,31 @@ static const CGFloat kWindowWidth = 400;
 @interface iTermTipWindowController()
 @property(nonatomic, retain) iTermTipCardViewController *cardViewController;
 @property(nonatomic, retain) iTermTip *tip;
+
+// This is a layer-backed view that contains the card because the contentView
+// can't be layer backed and clear.
 @property(nonatomic, retain) NSView *intermediateView;
+
+// Can the window shrink now? Window shrinking is desirable to prevent when
+// the card's size is animating down but the window oughtn't shrink til the
+// animation is complete.
 @property(nonatomic, assign) BOOL windowCanShrink;
+
+// Allowed to click on buttons? Clicks are off during animations to keep things
+// simple.
 @property(nonatomic, assign) BOOL buttonsEnabled;
 @end
 
 @implementation iTermTipWindowController {
+    // If you tried to resize the window but windowCanShrink is NO this saves
+    // the last desired window size. When the window can shrink again then it
+    // will be updated.
     NSRect _desiredWindowFrame;
+
+    // Reference count of window-can-shrink disablements.
     NSInteger _holdWindowSizeCount;
+
+    // Cards that are animating out. In practice this can have up to 1 element.
     NSMutableArray *_exitingCardViewControllers;
 }
 
@@ -68,6 +84,7 @@ static const CGFloat kWindowWidth = 400;
     [super dealloc];
 }
 
+// Expanded means the "more options" is open.
 - (void)loadCardExpanded:(BOOL)expanded {
     iTermTipCardViewController *card =
         [[[iTermTipCardViewController alloc] initWithNibName:@"iTermTipCardViewController"
@@ -82,6 +99,7 @@ static const CGFloat kWindowWidth = 400;
     [self layoutCard:card animated:NO];
 }
 
+// Add the standard buttons.
 - (void)addButtonsToCard:(iTermTipCardViewController *)card expanded:(BOOL)expanded {
     [card addActionWithTitle:kLearnMoreTitle
                         icon:[NSImage imageNamed:@"Navigate"]
@@ -147,6 +165,7 @@ static const CGFloat kWindowWidth = 400;
     }
 }
 
+// Action button titles that are collapsable. These must appear adjacently and last.
 - (NSArray *)collapsingTitles {
     return @[ kRemindMeLaterTitle,
               kDisableTipsTitle,
@@ -171,9 +190,12 @@ static const CGFloat kWindowWidth = 400;
     [self.window.contentView addSubview:_intermediateView];
 
     [self loadCardExpanded:NO];
+
+    // Animate in the window.
     [self present];
 }
 
+// Update the card's size.
 - (void)layoutCard:(iTermTipCardViewController *)card animated:(BOOL)animated {
     NSRect originalCardFrame = card.view.frame;
     [card sizeThatFits:NSMakeSize(kWindowWidth, CGFLOAT_MAX)];
@@ -188,88 +210,32 @@ static const CGFloat kWindowWidth = 400;
                                     frame.size.width,
                                     frame.size.height);
     [self setWindowFrame:windowFrame];
-    [card layoutWithWidth:kWindowWidth animated:NO origin:NSZeroPoint];
+    [card layoutWithWidth:kWindowWidth origin:NSZeroPoint];
 
     if (animated) {
-        const CGFloat duration = 0.25;
-        [CATransaction begin];
-
+        // Disable buttons until animation is done.
         self.buttonsEnabled = NO;
-        [card retain];
-        [self retain];
-        [CATransaction setCompletionBlock:^{
-            self.buttonsEnabled = YES;
-            card.showFakeBottomDivider = NO;
-            [card hideCollapsedButtons];
-            NSRect finalWindowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
-                                                 NSMaxY(screenFrame) - NSHeight(postAnimationFrame) - 8,
-                                                 postAnimationFrame.size.width,
-                                                 postAnimationFrame.size.height);
-            [self setWindowFrame:finalWindowFrame];
-            card.view.frame = postAnimationFrame;
-            [card release];
-            [self release];
-        }];
-
         CGFloat heightChange = card.postAnimationFrame.size.height - card.view.frame.size.height;
+        NSRect finalWindowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
+                                             NSMaxY(screenFrame) - NSHeight(postAnimationFrame) - 8,
+                                             postAnimationFrame.size.width,
+                                             postAnimationFrame.size.height);
 
-        {
-            CABasicAnimation* fadeAnim = [CABasicAnimation animationWithKeyPath:@"bounds"];
-            NSRect startBounds = originalCardFrame;
-            startBounds.origin = NSMakePoint(0, 0);
-            fadeAnim.fromValue = [NSValue valueWithRect:startBounds];
-
-            NSRect endBounds = startBounds;
-            endBounds.size.height += heightChange;
-            frame.origin = NSZeroPoint;
-            fadeAnim.toValue = [NSValue valueWithRect:endBounds];
-            fadeAnim.duration = duration;
-
-            [card.view.layer addAnimation:fadeAnim forKey:@"bounds"];
-        }
-
-        {
-            CABasicAnimation* containerAnimation = [CABasicAnimation animationWithKeyPath:@"bounds"];
-            NSRect startBounds = card.containerView.layer.bounds;
-            containerAnimation.fromValue = [NSValue valueWithRect:startBounds];
-
-            NSRect endBounds = startBounds;
-            endBounds.size.height += heightChange;
-            containerAnimation.toValue = [NSValue valueWithRect:endBounds];
-            containerAnimation.duration = duration;
-            [card.containerView.layer addAnimation:containerAnimation forKey:@"bounds"];
-        }
-
-        NSMutableArray *buttonsToCollapse = [NSMutableArray array];
-        {
-            for (iTermTipCardActionButton *button in card.actionButtons) {
-                if (button.animationState != kTipCardButtonNotAnimating) {
-                    // Animate the button's position
-                    card.showFakeBottomDivider = YES;
-                    CABasicAnimation* fadeAnim = [CABasicAnimation animationWithKeyPath:@"position"];
-                    NSPoint position = button.layer.position;
-                    fadeAnim.fromValue = [NSValue valueWithPoint:position];
-                    fadeAnim.toValue = [NSValue valueWithPoint:NSMakePoint(position.x, position.y + heightChange)];
-                    fadeAnim.duration = duration;
-                    [button.layer addAnimation:fadeAnim forKey:@"position"];
-                    if (button.animationState == kTipCardButtonAnimatingOut) {
-                        [buttonsToCollapse addObject:button];
-                        button.animationState = kTipCardButtonAnimatingOutCurrently;
-                    } else {
-                        button.animationState = kTipCardButtonNotAnimating;
-                    }
-                }
-            }
-        }
-
-        [card layoutWithWidth:kWindowWidth animated:NO origin:NSZeroPoint];
-        [CATransaction commit];
-
-        for (iTermTipCardActionButton *button in buttonsToCollapse) {
-            [button setCollapsed:YES];
-        }
+        [self retain];
+        [card animateCardWithDuration:0.25
+                         heightChange:heightChange
+                    originalCardFrame:originalCardFrame
+                   postAnimationFrame:postAnimationFrame
+                       superviewWidth:kWindowWidth
+                                block:^() {
+                                    [self setWindowFrame:finalWindowFrame];
+                                    self.buttonsEnabled = YES;
+                                    [self release];
+                                }];
     }
 }
+
+#pragma mark - User Actions
 
 - (void)dismiss {
     [self animateOut];
@@ -332,24 +298,31 @@ static const CGFloat kWindowWidth = 400;
     iTermTip *nextTip = [_delegate tipWindowTipAfterTipWithIdentifier:_tip.identifier];
     if (nextTip) {
         self.windowCanShrink = NO;
-        const NSTimeInterval duration = 0.5;
         self.buttonsEnabled = NO;
-        [[NSAnimationContext currentContext] setDuration:duration];
-        [self retain];
+
+        // Prepare to animate old card out and new card in.
+        [[NSAnimationContext currentContext] setDuration:0.5];
+
         iTermTipCardViewController *exitingCardViewController = _cardViewController;
+
+        [self retain];
         [[NSAnimationContext currentContext] setCompletionHandler:^{
+            // Kill old card and go back to normal behavior.
             [exitingCardViewController.view removeFromSuperview];
             [_exitingCardViewControllers removeObject:exitingCardViewController];
             self.buttonsEnabled = YES;
             self.windowCanShrink = YES;
             [self release];
         }];
+
+        // Move old card to the left, out of the window.
         NSRect frame = _cardViewController.view.frame;
         frame.origin.x = -frame.size.width;
         _cardViewController.view.autoresizingMask = 0;
 
         [_cardViewController.view.animator setFrame:frame];
 
+        // Tell the delegate we're going to show another tip, then show it.
         [_delegate tipWindowWillShowTipWithIdentifier:nextTip.identifier];
         self.tip = nextTip;
         BOOL expanded = ([_cardViewController actionWithTitle:kMoreOptionsTitle] == nil);
@@ -359,6 +332,7 @@ static const CGFloat kWindowWidth = 400;
         _cardViewController = nil;
         [self loadCardExpanded:expanded];
 
+        // Animate the new card in.
         frame = _cardViewController.view.frame;
         frame.origin.x += self.window.frame.size.width;
         [_cardViewController.view setFrame:frame];
@@ -368,6 +342,8 @@ static const CGFloat kWindowWidth = 400;
     }
 }
 
+// Animate the window in the first time. Use an old-school-cool API.
+// TODO: Just animate the card frame in, no need for NSViewAnimation.
 - (void)present {
     NSDictionary *dict = @{ NSViewAnimationTargetKey: self.window,
                             NSViewAnimationEffectKey: NSViewAnimationFadeInEffect };
@@ -388,6 +364,7 @@ static const CGFloat kWindowWidth = 400;
     }
 
     if (_holdWindowSizeCount == 0 && _desiredWindowFrame.size.width > 0) {
+        // Have a saved window shrink.
         [self.window setFrame:_desiredWindowFrame display:NO];
         _desiredWindowFrame.size.width = 0;
     }
@@ -400,6 +377,7 @@ static const CGFloat kWindowWidth = 400;
 - (void)setWindowFrame:(NSRect)frame {
     if (self.windowCanShrink || frame.size.height >= self.window.frame.size.height) {
         [self.window setFrame:frame display:NO];
+        _desiredWindowFrame = NSZeroRect;
     } else {
         _desiredWindowFrame = frame;
     }

@@ -8,9 +8,13 @@
 
 #import <Foundation/Foundation.h>
 
+// Manages the tip of the day. NOTE: Only supports OS 10.10+. Will return a nil
+// sharedInstance on older OSes.
 @interface iTermTipController : NSObject
 
 + (instancetype)sharedInstance;
+
+// Call this when the app finishes launching to show the initial card.
 - (void)applicationDidFinishLaunching;
 
 @end

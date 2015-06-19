@@ -8,7 +8,6 @@
 
 #import "iTermTipCardActionButton.h"
 
-#import "iTermTipCardActionButtonCell.h"
 #import "NSBezierPath+iTerm.h"
 #import "SolidColorView.h"
 #import <QuartzCore/QuartzCore.h>
@@ -33,11 +32,10 @@ static const CGFloat kStandardButtonHeight = 34;
 
 @implementation iTermTipCardActionButton {
     CGFloat _desiredHeight;
-    NSSize _inset;
     BOOL _isHighlighted;
     CALayer *_iconLayer;  // weak
     CAShapeLayer *_highlightLayer;  // weak
-    NSTextField *_textField;
+    NSTextField *_textField;  // weak
 }
 
 + (NSColor *)blueColor {
@@ -47,8 +45,7 @@ static const CGFloat kStandardButtonHeight = 34;
 - (id)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        _desiredHeight = 34;
-        _inset = NSMakeSize(10, 5);
+        _desiredHeight = kStandardButtonHeight;
         self.wantsLayer = YES;
         [self makeBackingLayer];
         self.layer.backgroundColor = [[NSColor whiteColor] CGColor];
@@ -65,7 +62,7 @@ static const CGFloat kStandardButtonHeight = 34;
         _highlightLayer.fillColor = [[NSColor colorWithCalibratedWhite:0.95 alpha:1] CGColor];
         [self.layer addSublayer:_highlightLayer];
 
-        _textField = [[NSTextField alloc] initWithFrame:NSMakeRect(42, 5, 200, 17)];
+        _textField = [[[NSTextField alloc] initWithFrame:NSMakeRect(42, 5, 200, 17)] autorelease];
         [_textField setBezeled:NO];
         [_textField setDrawsBackground:NO];
         [_textField setEditable:NO];
@@ -79,7 +76,6 @@ static const CGFloat kStandardButtonHeight = 34;
 
 - (void)dealloc {
     [_block release];
-    [_textField release];
     [_icon release];
     [super dealloc];
 }
@@ -93,6 +89,7 @@ static const CGFloat kStandardButtonHeight = 34;
     return _textField.stringValue;
 }
 
+// This assumes the icon is 22x22
 - (void)setIcon:(NSImage *)image {
     if (!_iconLayer) {
         _iconLayer = [[[CALayer alloc] init] autorelease];
@@ -131,6 +128,7 @@ static const CGFloat kStandardButtonHeight = 34;
     }
 }
 
+// Keep the highlight circle centered on the cursor during a drag, up to our bounds.
 - (void)mouseDragged:(NSEvent *)theEvent {
     [CATransaction begin];
     [CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
@@ -147,14 +145,18 @@ static const CGFloat kStandardButtonHeight = 34;
         return;
     }
     _isHighlighted = YES;
+
+    // Reset to a known state.
     [_highlightLayer removeAllAnimations];
     [CATransaction begin];
+    // This magic causes layer changes to happen immediately & synchronously.
     [CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
     _highlightLayer.position = (CGPoint)[self convertPoint:theEvent.locationInWindow fromView:nil];
     _highlightLayer.opacity = 1.0;
     _highlightLayer.transform = CATransform3DIdentity;
     [CATransaction commit];
 
+    // Scale up the highlight circle til it fills the button.
     [CATransaction begin];
     [CATransaction setAnimationDuration:1];
 
@@ -173,6 +175,7 @@ static const CGFloat kStandardButtonHeight = 34;
     [CATransaction commit];
 }
 
+// Radius for highlight circle.
 - (CGFloat)desiredHighlightScale {
     return sqrt(self.bounds.size.width * self.bounds.size.width +
                 self.bounds.size.height + self.bounds.size.height) * 3;
@@ -181,6 +184,7 @@ static const CGFloat kStandardButtonHeight = 34;
 - (void)mouseUp:(NSEvent *)theEvent {
     _isHighlighted = NO;
 
+    // Quickly scale up highlight while fading it out.
     [CATransaction begin];
     [CATransaction setAnimationDuration:0.3];
     _highlightLayer.opacity = 0;
@@ -191,6 +195,8 @@ static const CGFloat kStandardButtonHeight = 34;
     [CATransaction commit];
 
     [self setNeedsDisplay:YES];
+
+    // Report a click if appropriate.
     if (self.enabled &&
         NSPointInRect([self convertPoint:theEvent.locationInWindow fromView:nil], self.bounds)) {
         if (self.target && self.action) {

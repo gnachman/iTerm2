@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+// Root view for the tip window. Draws transparent. Is not layer backed because
+// a window's content view can't be both transparent and layer-backed.
 @interface iTermTipRootView : NSView
 
 @end

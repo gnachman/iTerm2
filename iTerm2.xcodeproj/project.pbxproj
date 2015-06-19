@@ -909,11 +909,6 @@
 		1D8BBA5C1B30E9AF0005A852 /* iTermTipCardActionButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */; };
 		1D8BBA5D1B30E9AF0005A852 /* iTermTipCardActionButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */; };
 		1D8BBA5E1B30E9AF0005A852 /* iTermTipCardActionButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */; };
-		1D8BBA611B30E9F50005A852 /* iTermTipCardActionButtonCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA5F1B30E9F50005A852 /* iTermTipCardActionButtonCell.h */; };
-		1D8BBA621B30E9F50005A852 /* iTermTipCardActionButtonCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA5F1B30E9F50005A852 /* iTermTipCardActionButtonCell.h */; };
-		1D8BBA631B30E9F50005A852 /* iTermTipCardActionButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA601B30E9F50005A852 /* iTermTipCardActionButtonCell.m */; };
-		1D8BBA641B30E9F50005A852 /* iTermTipCardActionButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA601B30E9F50005A852 /* iTermTipCardActionButtonCell.m */; };
-		1D8BBA651B30E9F50005A852 /* iTermTipCardActionButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA601B30E9F50005A852 /* iTermTipCardActionButtonCell.m */; };
 		1D8BBA681B30F5C30005A852 /* Navigate.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA661B30F5C30005A852 /* Navigate.png */; };
 		1D8BBA691B30F5C30005A852 /* Navigate.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA661B30F5C30005A852 /* Navigate.png */; };
 		1D8BBA6A1B30F5C30005A852 /* Navigate.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA661B30F5C30005A852 /* Navigate.png */; };
@@ -936,11 +931,6 @@
 		1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8BBA861B31DC140005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
 		1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */; };
-		1D8BBA8A1B32399C0005A852 /* iTermTipLayerBackedView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA881B32399C0005A852 /* iTermTipLayerBackedView.h */; };
-		1D8BBA8B1B32399C0005A852 /* iTermTipLayerBackedView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA881B32399C0005A852 /* iTermTipLayerBackedView.h */; };
-		1D8BBA8C1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */; };
-		1D8BBA8D1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */; };
-		1D8BBA8E1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */; };
 		1D8BBA911B33529E0005A852 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
 		1D8BBA921B33529E0005A852 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
 		1D8BBA931B33529E0005A852 /* iTermTip.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8BBA8F1B33529E0005A852 /* iTermTip.h */; };
@@ -2405,8 +2395,6 @@
 		1D8B8A131806038F00C2DC25 /* VT100Grid.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Grid.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D8BBA581B30E9AF0005A852 /* iTermTipCardActionButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTipCardActionButton.h; sourceTree = "<group>"; };
 		1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipCardActionButton.m; sourceTree = "<group>"; };
-		1D8BBA5F1B30E9F50005A852 /* iTermTipCardActionButtonCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTipCardActionButtonCell.h; sourceTree = "<group>"; };
-		1D8BBA601B30E9F50005A852 /* iTermTipCardActionButtonCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipCardActionButtonCell.m; sourceTree = "<group>"; };
 		1D8BBA661B30F5C30005A852 /* Navigate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Navigate.png; path = images/Navigate.png; sourceTree = "<group>"; };
 		1D8BBA671B30F5C30005A852 /* Navigate@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Navigate@2x.png"; path = "images/Navigate@2x.png"; sourceTree = "<group>"; };
 		1D8BBA6E1B30F7FB0005A852 /* Dismiss@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Dismiss@2x.png"; path = "images/Dismiss@2x.png"; sourceTree = "<group>"; };
@@ -2415,8 +2403,6 @@
 		1D8BBA771B30FD230005A852 /* Later@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Later@2x.png"; path = "images/Later@2x.png"; sourceTree = "<group>"; };
 		1D8BBA801B31DC0D0005A852 /* ChevronDown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ChevronDown.png; path = images/ChevronDown.png; sourceTree = "<group>"; };
 		1D8BBA811B31DC0D0005A852 /* ChevronDown@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ChevronDown@2x.png"; path = "images/ChevronDown@2x.png"; sourceTree = "<group>"; };
-		1D8BBA881B32399C0005A852 /* iTermTipLayerBackedView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTipLayerBackedView.h; sourceTree = "<group>"; };
-		1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTipLayerBackedView.m; sourceTree = "<group>"; };
 		1D8BBA8F1B33529E0005A852 /* iTermTip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTip.h; sourceTree = "<group>"; };
 		1D8BBA901B33529E0005A852 /* iTermTip.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTip.m; sourceTree = "<group>"; };
 		1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EncodingsWithLowerCase.plist; sourceTree = "<group>"; };
@@ -3436,7 +3422,6 @@
 				A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */,
 				A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */,
 				1D8BBA581B30E9AF0005A852 /* iTermTipCardActionButton.h */,
-				1D8BBA5F1B30E9F50005A852 /* iTermTipCardActionButtonCell.h */,
 				1DA76A1C1B308AD000CB272A /* iTermTipCardViewController.h */,
 				1DA76A0E1B30895600CB272A /* iTermTipRootView.h */,
 				1DA76A031B30892900CB272A /* iTermTipWindowController.h */,
@@ -4127,11 +4112,8 @@
 				1DA76A0F1B30895600CB272A /* iTermTipRootView.m */,
 				1DA76A1D1B308AD000CB272A /* iTermTipCardViewController.m */,
 				1D8BBA591B30E9AF0005A852 /* iTermTipCardActionButton.m */,
-				1D8BBA601B30E9F50005A852 /* iTermTipCardActionButtonCell.m */,
 				A65B72A01B3134FB00F947A7 /* iTermTipController.h */,
 				A65B72A11B3134FB00F947A7 /* iTermTipController.m */,
-				1D8BBA881B32399C0005A852 /* iTermTipLayerBackedView.h */,
-				1D8BBA891B32399C0005A852 /* iTermTipLayerBackedView.m */,
 				1D8BBA8F1B33529E0005A852 /* iTermTip.h */,
 				1D8BBA901B33529E0005A852 /* iTermTip.m */,
 			);
@@ -4708,7 +4690,6 @@
 				A61ABBB51AE4C17C004656C2 /* iTermMinimumSubsequenceMatcher.h in Headers */,
 				1D6ED87E19AEA20D005A7799 /* VT100XtermParser.h in Headers */,
 				1D6ED87F19AEA20D005A7799 /* VT100StringParser.h in Headers */,
-				1D8BBA8B1B32399C0005A852 /* iTermTipLayerBackedView.h in Headers */,
 				1D6ED88019AEA20D005A7799 /* PSMTabDragWindow.h in Headers */,
 				1D6ED88119AEA20D005A7799 /* NSImage+iTerm.h in Headers */,
 				1D6ED88219AEA20D005A7799 /* iTermGrowlDelegate.h in Headers */,
@@ -4776,7 +4757,6 @@
 				1D6ED8B819AEA20D005A7799 /* AppearancePreferencesViewController.h in Headers */,
 				1DB40AA91B221088005B83C7 /* iTermTwoColorWellsCell.h in Headers */,
 				1D6ED8B919AEA20D005A7799 /* iTermExposeView.h in Headers */,
-				1D8BBA621B30E9F50005A852 /* iTermTipCardActionButtonCell.h in Headers */,
 				1D6ED8BA19AEA20D005A7799 /* PasteboardHistory.h in Headers */,
 				1D6ED8BB19AEA20D005A7799 /* NSDateFormatterExtras.h in Headers */,
 				1D6ED8BC19AEA20D005A7799 /* Autocomplete.h in Headers */,
@@ -5284,7 +5264,6 @@
 				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
-				1D8BBA611B30E9F50005A852 /* iTermTipCardActionButtonCell.h in Headers */,
 				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
 				A6E77FB91A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h in Headers */,
 				A6E7474D188C6394005355CF /* CommandUse.h in Headers */,
@@ -5349,7 +5328,6 @@
 				1D085F8616F02E7400B7FCE9 /* PasteContext.h in Headers */,
 				1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */,
 				1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */,
-				1D8BBA8A1B32399C0005A852 /* iTermTipLayerBackedView.h in Headers */,
 				A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */,
 				A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */,
 				A6E74752188C6693005355CF /* iTermExposeWindow.h in Headers */,
@@ -6045,7 +6023,6 @@
 				1D6ED9FA19AEA20D005A7799 /* NSMutableAttributedString+iTerm.m in Sources */,
 				1D6ED9FB19AEA20D005A7799 /* PTYNoteViewController.m in Sources */,
 				1D6ED9FC19AEA20D005A7799 /* VT100Screen.m in Sources */,
-				1D8BBA8E1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */,
 				1D6ED9FD19AEA20D005A7799 /* GeneralPreferencesViewController.m in Sources */,
 				1D6ED9FE19AEA20D005A7799 /* VT100Terminal.m in Sources */,
 				A6E77F9E1A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m in Sources */,
@@ -6091,7 +6068,6 @@
 				1D6EDA2319AEA20D005A7799 /* iTermDragHandleView.m in Sources */,
 				1D6EDA2419AEA20D005A7799 /* PSMProgressIndicator.m in Sources */,
 				1D6EDA2519AEA20D005A7799 /* BulkCopyProfilePreferencesWindowController.m in Sources */,
-				1D8BBA651B30E9F50005A852 /* iTermTipCardActionButtonCell.m in Sources */,
 				1D6EDA2619AEA20D005A7799 /* PSMRolloverButton.m in Sources */,
 				1D6EDA2719AEA20D005A7799 /* SCPPath.m in Sources */,
 				1D6EDA2819AEA20D005A7799 /* PSMTabBarCell.m in Sources */,
@@ -6547,7 +6523,6 @@
 				1DD39B17180B82AC004E56D5 /* ScreenChar.m in Sources */,
 				1D9A5591180FA87000B42CE9 /* PseudoTerminalRestorer.m in Sources */,
 				A6E713C118FCF036008D94DD /* ProfilesColorsPreferencesViewController.m in Sources */,
-				1D8BBA641B30E9F50005A852 /* iTermTipCardActionButtonCell.m in Sources */,
 				1DD39B16180B81B3004E56D5 /* VT100GridTest.m in Sources */,
 				A6057C0B187A1809004A60AF /* TerminalFile.m in Sources */,
 				A682DE9D1915DB1F00BE8758 /* iTermFlippedView.m in Sources */,
@@ -6668,7 +6643,6 @@
 				A6C537C01938374600A08C18 /* iTermTabBarControlView.m in Sources */,
 				A67F57B31B012BD100B4F135 /* NSWorkspace+iTerm.m in Sources */,
 				A647E3A118C351F400450FA1 /* VT100DCSParser.m in Sources */,
-				1D8BBA8D1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */,
 				FB4CE4BB3E3E413B051DAFBC /* iTermRemotePreferences.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6707,7 +6681,6 @@
 				1D0AABC217B59B3D0072B5AF /* SearchResult.m in Sources */,
 				A60014F718550F3900CE38D8 /* NSMutableAttributedString+iTerm.m in Sources */,
 				A63F4096183B398C003A6A6D /* PTYNoteViewController.m in Sources */,
-				1D8BBA8C1B32399C0005A852 /* iTermTipLayerBackedView.m in Sources */,
 				1D5FDDA91208E93600C46BA3 /* VT100Screen.m in Sources */,
 				A6E7137B18F1D70E008D94DD /* GeneralPreferencesViewController.m in Sources */,
 				1D5FDDAA1208E93600C46BA3 /* VT100Terminal.m in Sources */,
@@ -6753,7 +6726,6 @@
 				A682DE9C1915DB1F00BE8758 /* iTermFlippedView.m in Sources */,
 				A69B45BE197CB78B00F5444D /* iTermDragHandleView.m in Sources */,
 				1D5FDDBE1208E93600C46BA3 /* PSMProgressIndicator.m in Sources */,
-				1D8BBA631B30E9F50005A852 /* iTermTipCardActionButtonCell.m in Sources */,
 				A6E7139D18F7B199008D94DD /* BulkCopyProfilePreferencesWindowController.m in Sources */,
 				1D5FDDBF1208E93600C46BA3 /* PSMRolloverButton.m in Sources */,
 				A68A30DE186D1429007F550F /* SCPPath.m in Sources */,

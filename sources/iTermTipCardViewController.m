@@ -7,12 +7,26 @@
 //
 
 #import "iTermTipCardViewController.h"
+
 #import "iTermFlippedView.h"
 #import "iTermTipCardActionButton.h"
 #import "NSColor+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "SolidColorView.h"
 
+#import <QuartzCore/QuartzCore.h>
+
+static const CGFloat kButtonSideInset = 1;
+static const CGFloat kContainerSideInset = 4;
+static const CGFloat kContainerTopBorder = 1;
+static const CGFloat kContainerBottomBorder = 1;
+static const CGFloat kBodySideMargin = 10;
+static const CGFloat kCardBottomMargin = 8;
+static const CGFloat kCardTopMargin = 2;
+static const CGFloat kMarginBetweenTextAndButtons = 10;
+static const CGFloat kMarginBetweenTitleAndBody = 8;
+
+// A temporary divider used at the bottom of the card while it's growing in height.
 @interface iTermTipCardFakeDividerView : SolidColorView
 @end
 
@@ -29,6 +43,8 @@
 
 @end
 
+// Root view in the xib. I need a flipped view and this makes the xib match up
+// with reality by flipping its subviews on awakeFromNib.
 @interface iTermTipCardView : iTermFlippedView
 @end
 
@@ -40,6 +56,8 @@
 
 @end
 
+// Bordered container view. Just a flipped view that draws a thin border around
+// its perimeter. Used in the xib.
 @interface iTermTipCardContainerView : iTermFlippedView
 @end
 
@@ -65,12 +83,6 @@
 
 @end
 
-@interface iTermTipCardViewController()
-
-@property(nonatomic, assign) NSRect postAnimationFrame;
-
-@end
-
 @implementation iTermTipCardViewController {
     IBOutlet NSTextField *_title;
     IBOutlet NSTextField *_body;
@@ -78,6 +90,9 @@
     IBOutlet iTermTipCardContainerView *_container;
     iTermTipCardFakeDividerView *_fakeBottomDivider;
     NSMutableArray *_actionButtons;
+
+    // When performing layout with an animation, the new frame is saved here.
+    NSRect _postAnimationFrame;
 }
 
 - (void)dealloc {
@@ -88,20 +103,28 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    // Add a shadow to the card.
     NSShadow *dropShadow = [[[NSShadow alloc] init] autorelease];
     [dropShadow setShadowColor:[[NSColor blackColor] colorWithAlphaComponent:0.3]];
     [dropShadow setShadowOffset:NSMakeSize(0, 1.5)];
     [dropShadow setShadowBlurRadius:2];
     [self.view setWantsLayer:YES];
     [self.view setShadow:dropShadow];
+
+    // Create the fake bottom divider to be used later.
     _fakeBottomDivider = [[iTermTipCardFakeDividerView alloc] initWithFrame:NSZeroRect];
     _fakeBottomDivider.hidden = YES;
     _fakeBottomDivider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
     [_container addSubview:_fakeBottomDivider];
+
+    // Set a dfeault color for the title box.
     _titleBox.fillColor = [NSColor colorWithCalibratedRed:120/255.0
                                                     green:178/255.0
                                                      blue:1.0
                                                     alpha:1];
+
+    // We do almost all manual layout here.
     _container.autoresizesSubviews = NO;
 }
 
@@ -135,8 +158,8 @@
     if (!_actionButtons) {
         _actionButtons = [[NSMutableArray alloc] init];
     }
-    static const CGFloat sideMargin = 1;
-    iTermTipCardActionButton *button = [[[iTermTipCardActionButton alloc] initWithFrame:NSMakeRect(sideMargin, 0, _container.bounds.size.width - sideMargin * 2, 0)] autorelease];
+
+    iTermTipCardActionButton *button = [[[iTermTipCardActionButton alloc] initWithFrame:NSMakeRect(kButtonSideInset, 0, _container.bounds.size.width - kButtonSideInset * 2, 0)] autorelease];
     button.autoresizingMask = 0;
     button.title = title;
     [button setIcon:image];
@@ -147,6 +170,7 @@
     [_actionButtons addObject:button];
     // Place later buttons under earlier buttons and all under body so they can animate in and out.
     [_container addSubview:button positioned:NSWindowBelow relativeTo:goesBelow];
+
     return button;
 }
 
@@ -169,39 +193,32 @@
 
 - (NSSize)sizeThatFits:(NSSize)size {
     NSRect desiredRect = [self performLayoutForWidth:size.width
-                                            animated:NO
                                                  dry:YES
                                               origin:self.view.frame.origin];
     return desiredRect.size;
 }
 
-- (void)layoutWithWidth:(CGFloat)width animated:(BOOL)animated origin:(NSPoint)newOrigin {
-    [self performLayoutForWidth:width animated:animated dry:NO origin:newOrigin];
+- (void)layoutWithWidth:(CGFloat)width origin:(NSPoint)newOrigin {
+    [self performLayoutForWidth:width dry:NO origin:newOrigin];
 }
 
+// "dry" means frames are calculated but not changed.
+// Returns what the frame for self.view would be (or will be, if dry==NO)
 - (NSRect)performLayoutForWidth:(CGFloat)width
-                       animated:(BOOL)animated
                             dry:(BOOL)dry
                          origin:(NSPoint)newOrigin {
-    static const CGFloat kContainerSideInset = 4;
-    static const CGFloat kContainerTopBorder = 1;
-    static const CGFloat kContainerBottomBorder = 1;
-    NSRect cardFrame = self.view.frame;
-    cardFrame.size.width = width;
     CGFloat containerWidth = width - kContainerSideInset * 2;
 
-    static const CGFloat kBodySideMargin = 10;
+    // Compute size of body text.
     NSRect bodyFrame = _body.frame;
     bodyFrame.size = [_body sizeThatFits:NSMakeSize(containerWidth - kBodySideMargin * 2, CGFLOAT_MAX)];
     bodyFrame.origin.x = kBodySideMargin;
-
-    CGFloat totalButtonHeight = 0;
-    CGFloat stagedButtonHeight = 0;
-    const CGFloat bottomMargin = 8;
-    const CGFloat topMargin = 2;
-    const CGFloat marginBetweenTextAndButtons = 10;
+    bodyFrame.origin.y = NSMaxY(_titleBox.frame) + kMarginBetweenTitleAndBody;
 
     // Calculate the height of the buttons
+    CGFloat totalButtonHeight = 0;  // visible buttons
+    CGFloat stagedButtonHeight = 0;  // buttons stacked behind visible buttons
+
     for (iTermTipCardActionButton *actionButton in _actionButtons) {
         switch (actionButton.animationState) {
             case kTipCardButtonAnimatingIn:
@@ -223,69 +240,52 @@
         }
     }
 
-    const CGFloat kMarginBetweenTitleAndBody = 8;
+    // Save the current frame but update its width.
+    NSRect cardFrame = self.view.frame;
+    cardFrame.size.width = width;
 
-    // Set the y origin of the body text
-    bodyFrame.origin.y = NSMaxY(_titleBox.frame) + kMarginBetweenTitleAndBody;
-
-    // Set outermost view's frame
+    // Calculate outermost view's frame
     NSRect frame = cardFrame;
-    frame.size.height = (topMargin +
+    frame.size.height = (kCardTopMargin +
                          kContainerTopBorder +
                          _titleBox.frame.size.height +
                          kMarginBetweenTitleAndBody +
                          bodyFrame.size.height +
-                         marginBetweenTextAndButtons +
+                         kMarginBetweenTextAndButtons +
                          totalButtonHeight +
                          kContainerBottomBorder +
-                         bottomMargin);
+                         kCardBottomMargin);
     frame.origin = newOrigin;
     frame = NSIntegralRect(frame);
 
-    if (!dry) {
-        if (animated) {
-            self.view.animator.frame = frame;
-        } else {
-            self.view.frame = frame;
-        }
-    }
-
+    // Calculate the container's frame.
     CGFloat containerHeight = (1 +
                                _titleBox.frame.size.height +
                                kMarginBetweenTitleAndBody +
                                bodyFrame.size.height +
-                               marginBetweenTextAndButtons +
+                               kMarginBetweenTextAndButtons +
                                totalButtonHeight +
                                1);
     NSRect containerFrame = NSMakeRect(kContainerSideInset,
-                                       topMargin,
+                                       kCardTopMargin,
                                        containerWidth,
                                        containerHeight);
-    if (!dry) {
-        if (animated) {
-            _container.animator.frame = containerFrame;
-        } else {
-            _container.frame = containerFrame;
-        }
-    }
 
+    // Calculate title's frame
     NSRect titleFrame = _titleBox.frame;
     titleFrame.size.width = containerFrame.size.width - 2;
-    if (animated) {
-        _titleBox.animator.frame = titleFrame;
-    } else {
-        _titleBox.frame = titleFrame;
-    }
 
-    if (animated) {
-        _body.animator.frame = bodyFrame;
-    } else {
+    // Set frames if not a dry run.
+    if (!dry) {
+        self.view.frame = frame;
+        _container.frame = containerFrame;
+        _titleBox.frame = titleFrame;
         _body.frame = bodyFrame;
     }
 
     // Lay buttons out from top to bottom
-    CGFloat liveY = NSMaxY(bodyFrame) + marginBetweenTextAndButtons;
-    CGFloat stageY = NSMaxY(bodyFrame) + totalButtonHeight + marginBetweenTextAndButtons - stagedButtonHeight;
+    CGFloat liveY = NSMaxY(bodyFrame) + kMarginBetweenTextAndButtons;
+    CGFloat stageY = NSMaxY(bodyFrame) + totalButtonHeight + kMarginBetweenTextAndButtons - stagedButtonHeight;
     CGFloat finalYBottom = liveY;
     CGFloat finalYTop = liveY;
     BOOL foundAnimatingOut = NO;
@@ -293,14 +293,19 @@
     for (iTermTipCardActionButton *actionButton in _actionButtons) {
         CGFloat y;
         if (actionButton.animationState == kTipCardButtonAnimatingOutCurrently) {
+            // Don't mess with moving buttons. They'll be fine. A layout pass
+            // must be done right after the animation begins and nothing can
+            // change during it by fiat.
             continue;
         } else if (actionButton.animationState == kTipCardButtonAnimatingIn) {
+            // Adjust "staging" coords.
             y = stageY;
             stageY += actionButton.frame.size.height;
             finalYTop += actionButton.frame.size.height;
             foundAnimatingIn = YES;
         } else {
             if (actionButton.animationState == kTipCardButtonAnimatingOut) {
+                // Adjust "final" (post-animation) coords.
                 if (!foundAnimatingOut) {
                     foundAnimatingOut = YES;
                     finalYBottom = liveY;
@@ -311,27 +316,34 @@
             y = liveY;
             liveY += actionButton.frame.size.height;
         }
-        NSRect buttonFrame = actionButton.frame;
-        buttonFrame.origin.y = y;
-        buttonFrame.size.width = containerFrame.size.width - 2;
+
+        // Finally, calculate the new button frame and update the button.
         if (!dry) {
-            if (animated) {
-                actionButton.animator.frame = buttonFrame;
-            } else {
-                actionButton.frame = buttonFrame;
-            }
+            NSRect buttonFrame = actionButton.frame;
+            buttonFrame.origin.y = y;
+            buttonFrame.size.width = containerFrame.size.width - 2;
+            actionButton.frame = buttonFrame;
         }
     }
 
+    // If animations are happening update the post-animation frames on each button
+    // and on the card. Also position the fake bottom divider if one is needed.
     if (foundAnimatingOut || foundAnimatingIn) {
         CGFloat outY = finalYTop;
         CGFloat inY = liveY;
+
+        // Update our post-animation frame.
         _postAnimationFrame = frame;
+
+        // Move fake bottom divider.
         if (foundAnimatingOut) {
             _fakeBottomDivider.frame = NSMakeRect(1, finalYBottom, _container.frame.size.width - 2, 1);
         } else if (foundAnimatingIn) {
             _fakeBottomDivider.frame = NSMakeRect(1, liveY, _container.frame.size.width - 2, 1);
         }
+
+        // Set post-animation frames on buttons and adjust our post-animation
+        // frame for buttons in motion.
         for (iTermTipCardActionButton *actionButton in _actionButtons) {
             if (actionButton.animationState == kTipCardButtonAnimatingOut) {
                 NSRect rect = actionButton.frame;
@@ -348,11 +360,15 @@
             }
         }
     } else {
+        // No animation is happening so post-animation frame equals actual frame.
         _postAnimationFrame = frame;
     }
+
+    // Return our new frame.
     return frame;
 }
 
+// Pass on a button press to our client.
 - (void)buttonPressed:(id)sender {
     iTermTipCardActionButton *button = sender;
     if (button.block) {
@@ -373,6 +389,82 @@
         if (button.isCollapsed) {
             button.hidden = YES;
         }
+    }
+}
+
+// Animate for a height change.
+- (void)animateCardWithDuration:(const CGFloat)duration
+                   heightChange:(CGFloat)heightChange
+              originalCardFrame:(NSRect)originalCardFrame
+             postAnimationFrame:(NSRect)postAnimationFrame
+                 superviewWidth:(CGFloat)superviewWidth
+                          block:(void (^)())block {
+    [CATransaction begin];
+    [self retain];
+    [CATransaction setCompletionBlock:^{
+        self.showFakeBottomDivider = NO;
+        [self hideCollapsedButtons];
+        block();
+        self.view.frame = postAnimationFrame;
+        [self release];
+    }];
+
+    NSMutableArray *buttonsToCollapse = [NSMutableArray array];
+    NSRect frame;
+    // Animate bounds of card.
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"bounds"];
+    NSRect startBounds = originalCardFrame;
+    startBounds.origin = NSMakePoint(0, 0);
+    animation.fromValue = [NSValue valueWithRect:startBounds];
+
+    NSRect endBounds = startBounds;
+    endBounds.size.height += heightChange;
+    frame.origin = NSZeroPoint;
+    animation.toValue = [NSValue valueWithRect:endBounds];
+    animation.duration = duration;
+
+    [self.view.layer addAnimation:animation forKey:@"bounds"];
+
+    // Animate bounds of card's container
+    CABasicAnimation* containerAnimation = [CABasicAnimation animationWithKeyPath:@"bounds"];
+    startBounds = self.containerView.layer.bounds;
+    containerAnimation.fromValue = [NSValue valueWithRect:startBounds];
+
+    endBounds = startBounds;
+    endBounds.size.height += heightChange;
+    containerAnimation.toValue = [NSValue valueWithRect:endBounds];
+    containerAnimation.duration = duration;
+    [self.containerView.layer addAnimation:containerAnimation forKey:@"bounds"];
+
+    // Animate buttons to new positions, if needed
+    for (iTermTipCardActionButton *button in self.actionButtons) {
+        if (button.animationState != kTipCardButtonNotAnimating) {
+            // Animate the button's position
+            self.showFakeBottomDivider = YES;
+            animation = [CABasicAnimation animationWithKeyPath:@"position"];
+            NSPoint position = button.layer.position;
+            animation.fromValue = [NSValue valueWithPoint:position];
+            animation.toValue = [NSValue valueWithPoint:NSMakePoint(position.x, position.y + heightChange)];
+            animation.duration = duration;
+            [button.layer addAnimation:animation forKey:@"position"];
+            if (button.animationState == kTipCardButtonAnimatingOut) {
+                [buttonsToCollapse addObject:button];
+                button.animationState = kTipCardButtonAnimatingOutCurrently;
+            } else {
+                button.animationState = kTipCardButtonNotAnimating;
+            }
+        }
+    }
+    [CATransaction commit];
+
+    // Now that animations are in flight, update the card's layout. It won't be visible until the
+    // animations are done.
+    [self layoutWithWidth:superviewWidth origin:NSZeroPoint];
+
+    // Change button frames. Also won't be visible until animations are done. A change to hidden
+    // apparently has to be doen after the transaction is committed so this goes here.
+    for (iTermTipCardActionButton *button in buttonsToCollapse) {
+        [button setCollapsed:YES];
     }
 }
 

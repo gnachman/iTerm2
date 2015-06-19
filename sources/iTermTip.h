@@ -13,6 +13,7 @@ extern NSString *const kTipTitleKey;
 extern NSString *const kTipBodyKey;
 extern NSString *const kTipUrlKey;
 
+// A tip of the day.
 @interface iTermTip : NSObject
 
 @property(nonatomic, readonly) NSString *identifier;
