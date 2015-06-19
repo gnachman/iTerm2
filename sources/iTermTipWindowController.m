@@ -24,6 +24,7 @@ static NSString *const kFewerOptionsTitle = @"Fewer Options";
 static NSString *const kMoreOptionsTitle = @"More Options";
 static NSString *const kShowThisLaterTitle = @"Show This Later";
 static NSString *const kDisableTipsTitle = @"Disable Tips";
+static NSString *const kReallyDisableTipsTitle = @"Click Again to Disable Tips";
 static NSString *const kShowNextTipTitle = @"Show Next Tip";
 
 static const CGFloat kWindowWidth = 400;
@@ -136,7 +137,12 @@ static const CGFloat kWindowWidth = 400;
         [card addActionWithTitle:kDisableTipsTitle
                             icon:[NSImage imageNamed:@"DisableTips"]
                            block:^(id sendingCard) {
-                               [self disableTips];
+                               iTermTipCardActionButton *theButton = [card actionWithTitle:kDisableTipsTitle];
+                               if (theButton) {
+                                   [theButton setTitle:kReallyDisableTipsTitle];
+                               } else {
+                                   [self disableTips];
+                               }
                            }];
     if (!expanded) {
         [button setCollapsed:YES];
@@ -171,6 +177,7 @@ static const CGFloat kWindowWidth = 400;
 - (NSArray *)collapsingTitles {
     return @[ kShowThisLaterTitle,
               kDisableTipsTitle,
+              kReallyDisableTipsTitle,
               kShowNextTipTitle ];
 }
 
@@ -273,6 +280,7 @@ static const CGFloat kWindowWidth = 400;
         [action setTitle:kFewerOptionsTitle];
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kReallyDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
     } else {
         // Collapsing
@@ -281,6 +289,7 @@ static const CGFloat kWindowWidth = 400;
         [action setTitle:kMoreOptionsTitle];
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kReallyDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
     }
     [self layoutCard:card animated:YES];
