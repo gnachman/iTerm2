@@ -114,12 +114,6 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     _fakeBottomDivider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
     [_container addSubview:_fakeBottomDivider];
 
-    // Set a dfeault color for the title box.
-    _titleBox.fillColor = [NSColor colorWithCalibratedRed:120/255.0
-                                                    green:178/255.0
-                                                     blue:1.0
-                                                    alpha:1];
-
     // We do almost all manual layout here.
     _container.autoresizesSubviews = NO;
 }
