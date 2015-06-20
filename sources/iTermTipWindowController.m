@@ -231,9 +231,11 @@ static const CGFloat kWindowWidth = 400;
     frame.size.height = MAX(frame.size.height, card.view.frame.size.height);
     frame.origin = NSZeroPoint;
 
-    NSRect screenFrame = self.window.screen.visibleFrame;
-    NSRect windowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
-                                    NSMaxY(screenFrame) - NSHeight(frame) - 8,
+    static const CGFloat kWindowLeftMargin = 8;
+    static const CGFloat kWindowTopMargin = 24;
+    NSRect screenFrame = self.window.screen.frame;
+    NSRect windowFrame = NSMakeRect(NSMinX(screenFrame) + kWindowLeftMargin,
+                                    NSMaxY(screenFrame) - NSHeight(frame) - kWindowTopMargin,  // In case menu bar is hidden and later becomes visible
                                     frame.size.width,
                                     frame.size.height);
     [self setWindowFrame:windowFrame];
@@ -243,8 +245,8 @@ static const CGFloat kWindowWidth = 400;
         // Disable buttons until animation is done.
         self.buttonsEnabled = NO;
         CGFloat heightChange = card.postAnimationFrame.size.height - card.view.frame.size.height;
-        NSRect finalWindowFrame = NSMakeRect(NSMinX(screenFrame) + 8,
-                                             NSMaxY(screenFrame) - NSHeight(postAnimationFrame) - 8,
+        NSRect finalWindowFrame = NSMakeRect(NSMinX(screenFrame) + kWindowLeftMargin,
+                                             NSMaxY(screenFrame) - NSHeight(postAnimationFrame) - kWindowTopMargin,
                                              postAnimationFrame.size.width,
                                              postAnimationFrame.size.height);
 
@@ -400,18 +402,14 @@ static const CGFloat kWindowWidth = 400;
     [_cardViewController.view.animator setFrame:frame];
 }
 
-// Animate the window in the first time. Use an old-school-cool API.
-// TODO: Just animate the card frame in, no need for NSViewAnimation.
 - (void)present {
-    NSDictionary *dict = @{ NSViewAnimationTargetKey: self.window,
-                            NSViewAnimationEffectKey: NSViewAnimationFadeInEffect };
-    NSViewAnimation *viewAnimation = [[[NSViewAnimation alloc] initWithViewAnimations:@[ dict ]] autorelease];
-
-    // Set some additional attributes for the animation.
-    [viewAnimation setDuration:0.5];
-
-    // Run the animation.
-    [viewAnimation startAnimation];
+    [[NSAnimationContext currentContext] setDuration:0.5];
+    NSRect endFrame = _cardViewController.view.frame;
+    NSRect startFrame = _cardViewController.view.frame;
+    startFrame.origin.y -= self.window.frame.size.height;
+    _cardViewController.view.frame = startFrame;
+    [_cardViewController.view.animator setFrame:endFrame];
+    self.window.alphaValue = 1;
 }
 
 - (void)setWindowCanShrink:(BOOL)windowCanShrink {

@@ -189,10 +189,11 @@
                         kTipBodyKey: @"Hold ⌘ while dragging to make multiple discontinuous selections." },
 
             @"0049": @{ kTipTitleKey: @"Dragging Panes",
-                        kTipBodyKey: @"Hold ⇧⌥⌘ and drag a session into another session to create or change split panes." }
+                        kTipBodyKey: @"Hold ⇧⌥⌘ and drag a session into another session to create or change split panes." },
 
             @"0050": @{ kTipTitleKey: @"Cursor Boost",
                         kTipBodyKey: @"Adjust Cursor Boost in “Prefs > Profiles > Colors” to make all colors more muted, except the cursor. Use a bright white cursor and it pops!" },
+            
             @"0051": @{ kTipTitleKey: @"Minimum Contrast",
                         kTipBodyKey: @"Adjust “Minimum Contrast” in “Prefs > Profiles > Colors” to ensure text is always legible regardless of text/background color combination." },
 
