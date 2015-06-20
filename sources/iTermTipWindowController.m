@@ -262,6 +262,10 @@ static const CGFloat kWindowWidth = 400;
     [[NSAnimationContext currentContext] setCompletionHandler:^{
         self.buttonsEnabled = YES;
         [self close];
+        // Buttons hold references to us.
+        for (iTermTipCardActionButton *button in _cardViewController.actionButtons) {
+            button.block = nil;
+        }
         [self release];
     }];
     [_cardViewController.view.animator setFrame:newFrame];

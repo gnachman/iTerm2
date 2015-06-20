@@ -15,7 +15,7 @@
 
 static NSString *const kUnshowableTipsKey = @"NoSyncTipsToNotShow";
 static NSString *const kLastTipTimeKey = @"NoSyncLastTipTime";
-static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";
+static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an advanced pref with the same name.
 
 @interface iTermTipController()<iTermTipWindowDelegate>
 @property(nonatomic, retain) NSDictionary *tips;
@@ -116,10 +116,10 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";
     [self willShowTipWithIdentifier:tipKey];
     iTermTip *tip = [[[iTermTip alloc] initWithDictionary:tipDictionary
                                                identifier:tipKey] autorelease];
-    iTermTipWindowController *controller = [[iTermTipWindowController alloc] initWithTip:tip];
+    iTermTipWindowController *controller = [[[iTermTipWindowController alloc] initWithTip:tip] autorelease];
     controller.delegate = self;
     // Cause it to load and become visible.
-    [controller window];
+    [[controller window] orderFront:nil];
 }
 
 - (void)willShowTipWithIdentifier:(NSString *)tipKey {
