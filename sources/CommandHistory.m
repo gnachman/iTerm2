@@ -84,7 +84,7 @@ static const int kMaxCommandsToSavePerHost = 200;
                                          @"OK",
                                          otherText)) {
         case NSAlertDefaultReturn:
-            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
             break;
             
         case NSAlertOtherReturn:

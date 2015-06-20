@@ -227,7 +227,8 @@
                          kTipBodyKey: @"Did you know? If the bell rings too often, you‘ll be asked if you‘d like to silence it temporarily. iTerm2 cares about your comfort." },
 
             @"0062" : @{ kTipTitleKey: @"Profile Search",
-                         kTipBodyKey: @"Every list of profiles has a search field (e.g., in ”Prefs > Profiles.”) It supports a few search operators: ”name:” restricts the keyword to match against a profile name. ”tag:” restricts the keyword to match against a tag name. Put ”^” at the start of a keyword to require the keyword to be at the start of a term, or “$” at the end to anchor the keyword to the end of a term." },
+                         kTipBodyKey: @"Every list of profiles has a search field (e.g., in ”Prefs > Profiles.”) You can use various operators to restrict your search query. Click “Learn More” for all the details.",
+                         kTipUrlKey: @"https://iterm2.com/search_syntax.html" },
 
             @"0063": @{ kTipTitleKey: @"Color Schemes",
                         kTipBodyKey: @"The online color gallery features over one hundred beautiful color schemes you can download.",
