@@ -26,6 +26,7 @@ static NSString *const kShowThisLaterTitle = @"Show This Later";
 static NSString *const kDisableTipsTitle = @"Disable Tips";
 static NSString *const kReallyDisableTipsTitle = @"Click Again to Disable Tips";
 static NSString *const kShowNextTipTitle = @"Show Next Tip";
+static NSString *const kShowPreviousTipTitle = @"Show Previous Tip";
 
 static const CGFloat kWindowWidth = 400;
 
@@ -159,6 +160,22 @@ static const CGFloat kWindowWidth = 400;
             [button setCollapsed:YES];
         }
     }
+    if ([_delegate tipWindowTipBeforeTipWithIdentifier:self.tip.identifier]) {
+        button =
+            [card addActionWithTitle:kShowPreviousTipTitle
+                                icon:[NSImage imageNamed:@"NextTip"]
+                               block:^(id sendingCard) {
+                                   [self showPreviousTip];
+                               }];
+        [button setIconFlipped:YES];
+        if (!expanded) {
+            [button setCollapsed:YES];
+        }
+        iTermTipCardActionButton *nextButton = [card actionWithTitle:kShowNextTipTitle];
+        if (nextButton) {
+            [card combineActionWithTitle:kShowPreviousTipTitle andTitle:kShowNextTipTitle];
+        }
+    }
 
     if (!expanded) {
         for (NSString *title in self.collapsingTitles) {
@@ -178,7 +195,8 @@ static const CGFloat kWindowWidth = 400;
     return @[ kShowThisLaterTitle,
               kDisableTipsTitle,
               kReallyDisableTipsTitle,
-              kShowNextTipTitle ];
+              kShowNextTipTitle,
+              kShowPreviousTipTitle ];
 }
 
 - (void)windowDidLoad {
@@ -286,6 +304,7 @@ static const CGFloat kWindowWidth = 400;
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kReallyDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
     } else {
         // Collapsing
         action = [card actionWithTitle:kFewerOptionsTitle];
@@ -295,6 +314,7 @@ static const CGFloat kWindowWidth = 400;
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kReallyDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
     }
     [self layoutCard:card animated:YES];
 }
@@ -312,49 +332,72 @@ static const CGFloat kWindowWidth = 400;
 - (void)showNextTip {
     iTermTip *nextTip = [_delegate tipWindowTipAfterTipWithIdentifier:_tip.identifier];
     if (nextTip) {
-        self.windowCanShrink = NO;
-        self.buttonsEnabled = NO;
-
-        // Prepare to animate old card out and new card in.
-        [[NSAnimationContext currentContext] setDuration:0.5];
-
-        iTermTipCardViewController *exitingCardViewController = _cardViewController;
-
-        [self retain];
-        [[NSAnimationContext currentContext] setCompletionHandler:^{
-            // Kill old card and go back to normal behavior.
-            [exitingCardViewController.view removeFromSuperview];
-            [_exitingCardViewControllers removeObject:exitingCardViewController];
-            self.buttonsEnabled = YES;
-            self.windowCanShrink = YES;
-            [self release];
-        }];
-
-        // Move old card to the left, out of the window.
-        NSRect frame = _cardViewController.view.frame;
-        frame.origin.x = -frame.size.width;
-        _cardViewController.view.autoresizingMask = 0;
-
-        [_cardViewController.view.animator setFrame:frame];
-
-        // Tell the delegate we're going to show another tip, then show it.
-        [_delegate tipWindowWillShowTipWithIdentifier:nextTip.identifier];
-        self.tip = nextTip;
-        BOOL expanded = ([_cardViewController actionWithTitle:kMoreOptionsTitle] == nil);
-        // Card moved to exitingCardViewControllers while buttons are disabled so buttons will
-        // never be enabled in this card again.
-        [_exitingCardViewControllers addObject:_cardViewController];
-        _cardViewController = nil;
-        [self loadCardExpanded:expanded];
-
-        // Animate the new card in.
-        frame = _cardViewController.view.frame;
-        frame.origin.x += self.window.frame.size.width;
-        [_cardViewController.view setFrame:frame];
-
-        frame.origin.x -= self.window.frame.size.width;
-        [_cardViewController.view.animator setFrame:frame];
+        [self rollInTip:nextTip fromRight:YES];
     }
+}
+
+- (void)showPreviousTip {
+    iTermTip *previousTip = [_delegate tipWindowTipBeforeTipWithIdentifier:_tip.identifier];
+    if (previousTip) {
+        [self rollInTip:previousTip fromRight:NO];
+    }
+}
+
+- (void)rollInTip:(iTermTip *)nextTip fromRight:(BOOL)fromRight {
+    self.windowCanShrink = NO;
+    self.buttonsEnabled = NO;
+
+    // Prepare to animate old card out and new card in.
+    [[NSAnimationContext currentContext] setDuration:0.5];
+
+    iTermTipCardViewController *exitingCardViewController = _cardViewController;
+
+    [self retain];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        // Kill old card and go back to normal behavior.
+        [exitingCardViewController.view removeFromSuperview];
+        [_exitingCardViewControllers removeObject:exitingCardViewController];
+        self.buttonsEnabled = YES;
+        self.windowCanShrink = YES;
+        [self release];
+    }];
+
+    // Move old card to the side, out of the window.
+    NSRect frame = _cardViewController.view.frame;
+    if (fromRight) {
+        frame.origin.x = -frame.size.width;
+    } else {
+        frame.origin.x = frame.size.width;
+    }
+    _cardViewController.view.autoresizingMask = 0;
+
+    [_cardViewController.view.animator setFrame:frame];
+
+    // Tell the delegate we're going to show another tip, then show it.
+    [_delegate tipWindowWillShowTipWithIdentifier:nextTip.identifier];
+    self.tip = nextTip;
+    BOOL expanded = ([_cardViewController actionWithTitle:kMoreOptionsTitle] == nil);
+    // Card moved to exitingCardViewControllers while buttons are disabled so buttons will
+    // never be enabled in this card again.
+    [_exitingCardViewControllers addObject:_cardViewController];
+    _cardViewController = nil;
+    [self loadCardExpanded:expanded];
+
+    // Animate the new card in.
+    frame = _cardViewController.view.frame;
+    if (fromRight) {
+        frame.origin.x += self.window.frame.size.width;
+    } else {
+        frame.origin.x -= self.window.frame.size.width;
+    }
+    [_cardViewController.view setFrame:frame];
+
+    if (fromRight) {
+        frame.origin.x -= self.window.frame.size.width;
+    } else {
+        frame.origin.x += self.window.frame.size.width;
+    }
+    [_cardViewController.view.animator setFrame:frame];
 }
 
 // Animate the window in the first time. Use an old-school-cool API.

@@ -30,9 +30,27 @@ static const CGFloat kStandardButtonHeight = 34;
 
 @end
 
+// Draws a left-side vertical divider one pixel wide.
+@interface iTermTipCardActionButtonLeftDividerView : SolidColorView
+@end
+
+@implementation iTermTipCardActionButtonLeftDividerView
+
+- (void)drawRect:(NSRect)dirtyRect {
+    NSRect rect = self.bounds;
+    [self.color set];
+    NSRectFill(NSMakeRect(rect.origin.x,
+                          rect.origin.y,
+                          0.5,
+                          rect.size.height));
+}
+
+@end
+
 @implementation iTermTipCardActionButton {
     CGFloat _desiredHeight;
     BOOL _isHighlighted;
+    iTermTipCardActionButtonLeftDividerView *_leftDivider;  // weak
     CALayer *_iconLayer;  // weak
     CAShapeLayer *_highlightLayer;  // weak
     NSTextField *_textField;  // weak
@@ -54,6 +72,12 @@ static const CGFloat kStandardButtonHeight = 34;
         divider.autoresizingMask = NSViewWidthSizable | NSViewMaxYMargin;
         divider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
         [self addSubview:divider];
+
+        _leftDivider = [[[iTermTipCardActionButtonLeftDividerView alloc] initWithFrame:NSMakeRect(0, 0, 1, frameRect.size.height)] autorelease];
+        _leftDivider.autoresizingMask = NSViewHeightSizable | NSViewMaxXMargin;
+        _leftDivider.color = [NSColor colorWithCalibratedWhite:0.85 alpha:1];
+        _leftDivider.hidden = YES;
+        [self addSubview:_leftDivider];
 
         _highlightLayer = [[[CAShapeLayer alloc] init] autorelease];
         NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(0, 0, 1, 1)];
@@ -78,6 +102,11 @@ static const CGFloat kStandardButtonHeight = 34;
     [_block release];
     [_icon release];
     [super dealloc];
+}
+
+- (void)setIndexInRow:(int)indexInRow {
+    _indexInRow = indexInRow;
+    _leftDivider.hidden = (indexInRow == 0);
 }
 
 - (void)setTitle:(NSString *)title {

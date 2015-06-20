@@ -59,4 +59,8 @@
                  superviewWidth:(CGFloat)superviewWidth
                           block:(void (^)())block;
 
+// Make two buttons share a row. Currently, this assumes a row has either 1 or
+// 2 buttons, and both titles must be for existing buttons.
+- (void)combineActionWithTitle:(NSString *)leftTitle andTitle:(NSString *)rightTitle;
+
 @end

@@ -166,12 +166,36 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     button.block = block;
     button.target = self;
     button.action = @selector(buttonPressed:);
+    button.numberOfButtonsInRow = 1;
     NSView *viewToPlaceButtonBelow = [_actionButtons lastObject] ?: _coverView;
     [_actionButtons addObject:button];
     // Place later buttons under earlier buttons and all under body so they can animate in and out.
     [_container addSubview:button positioned:NSWindowBelow relativeTo:viewToPlaceButtonBelow];
 
     return button;
+}
+
+- (void)combineActionWithTitle:(NSString *)leftTitle andTitle:(NSString *)rightTitle {
+    iTermTipCardActionButton *left = [self actionWithTitle:leftTitle];
+    iTermTipCardActionButton *right = [self actionWithTitle:rightTitle];
+    if (!left || !right) {
+        return;
+    }
+    NSRect frame = left.frame;
+    frame.size.width = round(frame.size.width / 2);
+    left.frame = frame;
+    left.indexInRow = 0;
+    left.numberOfButtonsInRow = 2;
+
+    frame.origin.x = NSMaxX(frame);
+    frame.size.width = _container.frame.size.width - frame.size.width - kContainerSideInset * 2;
+    right.frame = frame;
+    right.indexInRow = 1;
+    right.numberOfButtonsInRow = 2;
+
+    [[left retain] autorelease];
+    [_actionButtons removeObject:left];
+    [_actionButtons insertObject:left atIndex:[_actionButtons indexOfObject:right]];
 }
 
 - (iTermTipCardActionButton *)actionWithTitle:(NSString *)title {
@@ -224,13 +248,17 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
             case kTipCardButtonAnimatingIn:
                 [actionButton setCollapsed:NO];
                 [actionButton sizeToFit];
-                stagedButtonHeight += actionButton.frame.size.height;
+                if (actionButton.indexInRow == 0) {
+                    stagedButtonHeight += actionButton.frame.size.height;
+                }
                 break;
 
             case kTipCardButtonAnimatingOut:
             case kTipCardButtonNotAnimating:
                 [actionButton sizeToFit];
-                totalButtonHeight += actionButton.frame.size.height;
+                if (actionButton.indexInRow == 0) {
+                    totalButtonHeight += actionButton.frame.size.height;
+                }
                 break;
 
             case kTipCardButtonAnimatingOutCurrently:
@@ -298,36 +326,40 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     BOOL foundAnimatingIn = NO;
     for (iTermTipCardActionButton *actionButton in _actionButtons) {
         CGFloat y;
-        if (actionButton.animationState == kTipCardButtonAnimatingOutCurrently) {
-            // Don't mess with moving buttons. They'll be fine. A layout pass
-            // must be done right after the animation begins and nothing can
-            // change during it by fiat.
-            continue;
-        } else if (actionButton.animationState == kTipCardButtonAnimatingIn) {
-            // Adjust "staging" coords.
-            y = stageY;
-            stageY += actionButton.frame.size.height;
-            finalYTop += actionButton.frame.size.height;
-            foundAnimatingIn = YES;
-        } else {
-            if (actionButton.animationState == kTipCardButtonAnimatingOut) {
-                // Adjust "final" (post-animation) coords.
-                if (!foundAnimatingOut) {
-                    foundAnimatingOut = YES;
-                    finalYBottom = liveY;
-                    finalYTop = liveY;
+        if (actionButton.indexInRow == 0) {
+            if (actionButton.animationState == kTipCardButtonAnimatingOutCurrently) {
+                // Don't mess with moving buttons. They'll be fine. A layout pass
+                // must be done right after the animation begins and nothing can
+                // change during it by fiat.
+                continue;
+            } else if (actionButton.animationState == kTipCardButtonAnimatingIn) {
+                // Adjust "staging" coords.
+                y = stageY;
+                stageY += actionButton.frame.size.height;
+                finalYTop += actionButton.frame.size.height;
+                foundAnimatingIn = YES;
+            } else {
+                if (actionButton.animationState == kTipCardButtonAnimatingOut) {
+                    // Adjust "final" (post-animation) coords.
+                    if (!foundAnimatingOut) {
+                        foundAnimatingOut = YES;
+                        finalYBottom = liveY;
+                        finalYTop = liveY;
+                    }
+                    finalYTop -= actionButton.frame.size.height;
                 }
-                finalYTop -= actionButton.frame.size.height;
+                y = liveY;
+                liveY += actionButton.frame.size.height;
             }
-            y = liveY;
-            liveY += actionButton.frame.size.height;
         }
 
         // Finally, calculate the new button frame and update the button.
         if (!dry) {
             NSRect buttonFrame = actionButton.frame;
             buttonFrame.origin.y = y;
-            buttonFrame.size.width = containerFrame.size.width - 2;
+            CGFloat buttonWidth = (containerFrame.size.width - 2 * kContainerSideInset) / actionButton.numberOfButtonsInRow;
+            buttonFrame.origin.x = kContainerSideInset + buttonWidth * actionButton.indexInRow;
+            buttonFrame.size.width = buttonWidth;
             actionButton.frame = buttonFrame;
         }
     }
@@ -354,15 +386,19 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
             if (actionButton.animationState == kTipCardButtonAnimatingOut) {
                 NSRect rect = actionButton.frame;
                 rect.origin.y = outY;
-                outY += rect.size.height;
+                if (actionButton.indexInRow == 0) {
+                    outY += rect.size.height;
+                    _postAnimationFrame.size.height -= rect.size.height;
+                }
                 actionButton.postAnimationFrame = rect;
-                _postAnimationFrame.size.height -= rect.size.height;
             } else if (actionButton.animationState == kTipCardButtonAnimatingIn) {
                 NSRect rect = actionButton.frame;
                 rect.origin.y = inY;
-                inY += rect.size.height;
+                if (actionButton.indexInRow == 0) {
+                    inY += rect.size.height;
+                    _postAnimationFrame.size.height += rect.size.height;
+                }
                 actionButton.postAnimationFrame = rect;
-                _postAnimationFrame.size.height += rect.size.height;
             }
         }
     } else {

@@ -91,14 +91,17 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an 
 }
 
 - (NSString *)nextTipKey {
-    return [self tipKeyAfter:nil];
+    return [self tipKeyAfter:nil respectUnshowable:YES];
 }
 
-- (NSString *)tipKeyAfter:(NSString *)prev {
+- (NSString *)tipKeyAfter:(NSString *)prev respectUnshowable:(BOOL)respectUnshowable {
     NSArray *unshowableTips = [[NSUserDefaults standardUserDefaults] objectForKey:kUnshowableTipsKey];
 #if ALWAYS_SHOW_TIP
     unshowableTips = @[];
 #endif
+    if (!respectUnshowable) {
+        unshowableTips = @[];
+    }
     BOOL okToReturn = (prev == nil);
     for (NSString *tipKey in [[_tips allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         if (okToReturn && ![unshowableTips containsObject:tipKey]) {
@@ -109,6 +112,15 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an 
         }
     }
     return nil;
+}
+
+- (NSString *)tipKeyBefore:(NSString *)successor {
+    NSArray *keys = [[_tips allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    NSUInteger index = [keys indexOfObject:successor];
+    if (index == 0 || index == NSNotFound) {
+        return nil;
+    }
+    return keys[index - 1];
 }
 
 - (void)showTipForKey:(NSString *)tipKey {
@@ -154,7 +166,17 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an 
 }
 
 - (iTermTip *)tipWindowTipAfterTipWithIdentifier:(NSString *)previousId {
-    NSString *identifier = [self tipKeyAfter:previousId];
+    NSString *identifier = [self tipKeyAfter:previousId respectUnshowable:NO];
+    if (!identifier) {
+        return nil;
+    } else {
+        return [[[iTermTip alloc] initWithDictionary:_tips[identifier]
+                                          identifier:identifier] autorelease];
+    }
+}
+
+- (iTermTip *)tipWindowTipBeforeTipWithIdentifier:(NSString *)previousId {
+    NSString *identifier = [self tipKeyBefore:previousId];
     if (!identifier) {
         return nil;
     } else {

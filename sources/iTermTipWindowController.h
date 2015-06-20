@@ -23,6 +23,7 @@
 
 // Get the tip with a named id.
 - (iTermTip *)tipWindowTipAfterTipWithIdentifier:(NSString *)identifier;
+- (iTermTip *)tipWindowTipBeforeTipWithIdentifier:(NSString *)identifier;
 
 // Indicates that a named tip will show imminently.
 - (void)tipWindowWillShowTipWithIdentifier:(NSString *)identifier;

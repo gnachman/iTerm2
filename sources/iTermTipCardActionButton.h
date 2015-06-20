@@ -36,6 +36,12 @@ typedef NS_ENUM(NSInteger, iTermTipCardActionButtonAnimationState) {
 // 22x22pt icon
 @property(nonatomic, retain) NSImage *icon;
 
+// If many buttons share one row, this gives the button's index in the row.
+@property(nonatomic, assign) int indexInRow;
+
+// If many buttons share one row, this gives the number of buttons in the row.
+@property(nonatomic, assign) int numberOfButtonsInRow;
+
 // Rotate icon 90 degrees? Animates on change.
 - (void)setIconFlipped:(BOOL)isFlipped;
 
