@@ -108,7 +108,7 @@
                         kTipBodyKey: @"Adjust Cursor Boost in “Prefs > Profiles > Colors” to make all colors more muted, except the cursor. Use a bright white cursor and it pops!" },
             @"0038": @{ kTipTitleKey: @"Minimum Contrast",
                         kTipBodyKey: @"Adjust “Minimum Contrast” in “Prefs > Profiles > Colors” to ensure text is always legible regardless of text/background color combination." },
-            @"0039": @{ kTipTitleKey: @"Time Travel",
+            @"0039": @{ kTipTitleKey: @"Instant Replay",
                         kTipBodyKey: @"Press ⌥⌘B to step back in time in a terminal window. Use arrow keys to go frame by frame. Hold ⇧ and press arrow keys to go faster." },
             @"0040": @{ kTipTitleKey: @"Tabs",
                         kTipBodyKey: @"Normally, new tabs appear at the end of the tab bar. There‘s a setting in “Prefs > Advanced” to place them next to your current tab." },
@@ -161,6 +161,14 @@
             @"0071": @{ kTipTitleKey: @"Color Schemes",
                         kTipBodyKey: @"The online color gallery features over one hundred beautiful color schemes you can download.",
                         kTipUrlKey: @"https://www.iterm2.com/colorgallery"},
+            @"0072": @{ kTipTitleKey: @"ASCII/Non-Ascii Fonts",
+                        kTipBodyKey: @"You can have a separate font for ASCII versus non-ASCII text. Enable it in “Prefs > Profiles > Text.”" },
+            @"0073": @{ kTipTitleKey: @"Coprocesses",
+                        kTipBodyKey: @"A coprocess is a job, such as a shell script, that has a special relationship with a particular iTerm2 session. All output in a terminal window (that is, what you see on the screen) is also input to the coprocess. All output from the coprocess acts like text that the user is typing at the keyboard.",
+                        kTipUrlKey: @"https://iterm2.com/coprocesses.html" },
+            @"0074": @{ kTipTitleKey: @"Tmux Integration",
+                        kTipBodyKey: @"If you use tmux, try running “tmux -CC” to get iTerm2‘s tmux integration mode. The tmux windows show up as native iTerm2 windows, and you can use iTerm2‘s keyboard shortcuts. It even works over ssh!",
+                        kTipUrlKey: @"https://gitlab.com/gnachman/iterm2/wikis/TmuxIntegration" }
             };
 }
 
