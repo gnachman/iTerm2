@@ -13,7 +13,7 @@
 
 + (NSDictionary *)allTips {
   return @{ @"0001": @{ kTipTitleKey: @"Timestamps",
-                         kTipBodyKey: @"“View > Toggle Timestamps” shows when each line was last modified." },
+                         kTipBodyKey: @"“View > Toggle Timestamps” shows the time (and date, if appropriate) when each line was last modified." },
             @"0002": @{ kTipTitleKey: @"Annotations",
                          kTipBodyKey: @"Want to mark up your scrollback history? Right click on a selection and choose “Annotate Selection” to add a personal note to it. Use “Edit > Toggle Annotations” to show or hide them, and look in “View > Marks” and Annotations for more things you can do." },
             @"0003": @{ kTipTitleKey: @"Copy with Styles",
