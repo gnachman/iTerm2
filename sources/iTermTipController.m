@@ -16,6 +16,7 @@
 static NSString *const kUnshowableTipsKey = @"NoSyncTipsToNotShow";
 static NSString *const kLastTipTimeKey = @"NoSyncLastTipTime";
 static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an advanced pref with the same name.
+static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
 
 @interface iTermTipController()<iTermTipWindowDelegate>
 @property(nonatomic, retain) NSDictionary *tips;
@@ -74,20 +75,20 @@ static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an 
         return;
     }
     if (_showingTip || [self haveShownTipRecently]) {
-        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:3600 * 24];
+        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:kSecondsPerDay];
         return;
     }
     NSString *nextTipKey = [self nextTipKey];
     if (nextTipKey) {
         [self showTipForKey:nextTipKey];
-        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:3600 * 24];
+        [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:kSecondsPerDay];
     }
 }
 
 - (BOOL)haveShownTipRecently {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval previous = [[NSUserDefaults standardUserDefaults] doubleForKey:kLastTipTimeKey];
-    return (now - previous) < 24 * 3600;
+    return (now - previous) < kSecondsPerDay;
 }
 
 - (NSString *)nextTipKey {
