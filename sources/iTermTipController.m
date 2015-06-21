@@ -62,7 +62,18 @@ static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
 }
 
 - (void)applicationDidFinishLaunching {
+    [self preventTipFor48HoursForNewInstallsIfNeeded];
     [self tryToShowTip];
+}
+
+// If this is the first time kLastTipTimeKey has been seen (a new install or upgrade) then set it
+// to 24 hours from now. That means a tip won't show up for at least 48 hours so we don't bombard
+// new users with too many things.
+- (void)preventTipFor48HoursForNewInstallsIfNeeded {
+    if (![[NSUserDefaults standardUserDefaults] objectForKey:kLastTipTimeKey]) {
+        NSTimeInterval tomorrow = [NSDate timeIntervalSinceReferenceDate] + kSecondsPerDay;
+        [[NSUserDefaults standardUserDefaults] setDouble:tomorrow forKey:kLastTipTimeKey];
+    }
 }
 
 - (void)tryToShowTip {
