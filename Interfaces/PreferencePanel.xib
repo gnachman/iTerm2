@@ -3601,7 +3601,7 @@ DQ
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="fn0-X1-OtH">
-                    <rect key="frame" x="446" y="336" width="55" height="17"/>
+                    <rect key="frame" x="446" y="336" width="63" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="seconds" id="vCA-Gp-FvI">
                         <font key="font" metaFont="system"/>
@@ -3665,7 +3665,7 @@ DQ
                     </connections>
                 </matrix>
                 <textField verticalHuggingPriority="750" id="4292">
-                    <rect key="frame" x="254" y="80" width="189" height="18"/>
+                    <rect key="frame" x="254" y="80" width="189" height="19"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Left option (⌥) key acts as:" id="4300">
                         <font key="font" metaFont="system"/>
@@ -3705,7 +3705,7 @@ DQ
                     </connections>
                 </matrix>
                 <textField verticalHuggingPriority="750" id="4294">
-                    <rect key="frame" x="450" y="80" width="189" height="18"/>
+                    <rect key="frame" x="450" y="80" width="189" height="19"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Right option (⌥) key acts as:" id="4295">
                         <font key="font" metaFont="system"/>
@@ -5799,7 +5799,7 @@ DQ
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <button id="O5A-H9-sKq">
-                        <rect key="frame" x="18" y="109" width="123" height="18"/>
+                        <rect key="frame" x="18" y="109" width="123" height="19"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send “Bell” alert" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="RWj-e3-HBy">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5811,7 +5811,7 @@ DQ
                         </connections>
                     </button>
                     <button id="bxF-vz-pm1">
-                        <rect key="frame" x="18" y="89" width="124" height="18"/>
+                        <rect key="frame" x="18" y="88" width="124" height="19"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send “Idle” alert" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5OR-eB-vkq">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5823,7 +5823,7 @@ DQ
                         </connections>
                     </button>
                     <button id="gMB-do-VHw">
-                        <rect key="frame" x="198" y="89" width="176" height="18"/>
+                        <rect key="frame" x="198" y="88" width="176" height="19"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send “New Output” alert" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="cP6-Jq-skb">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5835,7 +5835,7 @@ DQ
                         </connections>
                     </button>
                     <button id="Hn1-0h-Vve">
-                        <rect key="frame" x="198" y="109" width="190" height="18"/>
+                        <rect key="frame" x="198" y="109" width="190" height="19"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send “Session Ended” alert" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2lN-Vt-8WG">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5847,7 +5847,7 @@ DQ
                         </connections>
                     </button>
                     <button id="pot-jK-a8U">
-                        <rect key="frame" x="18" y="59" width="272" height="18"/>
+                        <rect key="frame" x="18" y="58" width="272" height="19"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="check" title="Send escape sequence-generated alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="T4Q-lq-oX1">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
