@@ -3015,6 +3015,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
+- (void)windowDidChangeScreen:(NSNotification *)notification {
+    [self canonicalizeWindowFrame];
+}
+
 - (void)windowDidMove:(NSNotification *)notification
 {
     DLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
