@@ -3016,6 +3016,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)windowDidChangeScreen:(NSNotification *)notification {
+    // This gets called when any part of the window enters or exits the screen and
+    // appears to be spuriously called for nonnative fullscreen windows.
+    DLog(@"windowDidChangeScreen called. This is known to happen when the screen didn't really change! screen=%@",
+         self.window.screen);
     [self canonicalizeWindowFrame];
 }
 
@@ -5925,8 +5929,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else if (!tabBarVisible) {
         // Invisible bottom tab bar
         return YES;
+    } else if ([iTermPreferences boolForKey:kPreferenceKeyTabStyle] == TAB_STYLE_DARK) {
+        // Dark tab style needs a border
+        return YES;
     } else {
-        // Visible bottom tab bar
+        // Visible bottom tab bar with light style. It's light enough so it doesn't need a border.
         return NO;
     }
 }
@@ -6025,8 +6032,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 // Change position of window widgets.
-- (void)repositionWidgets
-{
+- (void)repositionWidgets {
     PtyLog(@"repositionWidgets");
 
     BOOL showToolbeltInline = [self shouldShowToolbelt];
@@ -6104,8 +6110,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 if ([self _haveTopBorder]) {
                     heightAdjustment += 1;
                 }
+                CGFloat y = tabBarFrame.origin.y;
+                if (!tabBarControl.flashing) {
+                    y += kHorizontalTabBarHeight;
+                }
                 NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
-                                                 tabBarFrame.origin.y + tabBarControl.flashing ? 0 : kHorizontalTabBarHeight,
+                                                 y,
                                                  tabBarFrame.size.width,
                                                  [thisWindow.contentView frame].size.height - heightAdjustment);
                 PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
