@@ -2650,13 +2650,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
             PtyLog(@"Window type = NORMAL");
-            if (![self lionFullScreen]) {
-                PtyLog(@"Window type = NORMAL BUT it's not lion fullscreen");
-                break;
-            }
             // fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
             PtyLog(@"Window type = LION");
+            if (![self lionFullScreen]) {
+                PtyLog(@"Window type = %d but it's not in lion fullscreen right now so not doing anything", windowType_);
+                break;
+            }
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
