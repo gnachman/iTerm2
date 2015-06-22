@@ -3502,6 +3502,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [aTab notifyWindowChanged];
     }
     [self saveTmuxWindowOrigins];
+    [self.window makeFirstResponder:self.currentSession.textview];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -3535,6 +3536,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
     [self notifyTmuxOfWindowResize];
     [self saveTmuxWindowOrigins];
+    [self.window makeFirstResponder:self.currentSession.textview];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
