@@ -9,7 +9,8 @@
 #ifndef SUAPPCASTITEM_H
 #define SUAPPCASTITEM_H
 
-#include "SUExport.h"
+#import <Foundation/Foundation.h>
+#import "SUExport.h"
 
 SU_EXPORT @interface SUAppcastItem : NSObject
 @property (copy, readonly) NSString *title;

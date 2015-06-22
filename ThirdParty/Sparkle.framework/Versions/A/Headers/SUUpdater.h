@@ -9,6 +9,7 @@
 #ifndef SUUPDATER_H
 #define SUUPDATER_H
 
+#import <Foundation/Foundation.h>
 #import "SUExport.h"
 #import "SUVersionComparisonProtocol.h"
 #import "SUVersionDisplayProtocol.h"
