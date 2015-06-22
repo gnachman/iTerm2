@@ -110,8 +110,8 @@ static const NSUInteger kPTYTabDeadState = (1 << 3);
 
     NSString *tmuxWindowName_;
 
-	// This tab broadcasts to all its sessions?
-	BOOL broadcasting_;
+        // This tab broadcasts to all its sessions?
+        BOOL broadcasting_;
 }
 
 @synthesize broadcasting = broadcasting_;
@@ -3176,8 +3176,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
-       tmuxController:(TmuxController *)tmuxController
-{
+       tmuxController:(TmuxController *)tmuxController {
     DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_];
@@ -3196,6 +3195,47 @@ static NSString* FormatRect(NSRect r) {
     [[root_ window] makeFirstResponder:[[self activeSession] textview]];
     [parseTree_ release];
     parseTree_ = [parseTree retain];
+
+    [self activateJuniorSession];
+}
+
+// Find a session that is not "senior" to a tmux pane getting split by the user and make it
+// active.
+- (void)activateJuniorSession {
+    DLog(@"activateJuniorSession");
+    BOOL haveSenior = NO;
+    for (PTYSession *aSession in self.sessions) {
+        if (aSession.sessionIsSeniorToTmuxSplitPane) {
+            haveSenior = YES;
+            DLog(@"Found a senior session");
+            break;
+        }
+    }
+    if (!haveSenior) {
+        // Just a layout change, not a user-driven split.
+        DLog(@"No senior session found");
+        return;
+    }
+
+    // Find a non-senior pane.
+    PTYSession *newSession = nil;
+    for (PTYSession *aSession in self.sessions) {
+        if (!aSession.sessionIsSeniorToTmuxSplitPane) {
+            newSession = aSession;
+            DLog(@"Found a junior session");
+            break;
+        }
+    }
+    if (newSession) {
+        DLog(@"Activate junior session");
+        [self setActiveSession:newSession];
+    }
+
+    // Reset the flag so layout changes in the future because of resizing, dragging a split pane
+    // divider, etc. won't change active session.
+    for (PTYSession *aSession in self.sessions) {
+        aSession.sessionIsSeniorToTmuxSplitPane = NO;
+    }
 }
 
 - (BOOL)layoutIsTooLarge

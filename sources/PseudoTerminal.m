@@ -4964,6 +4964,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
     if ([[self currentTab] isTmuxTab]) {
+        [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane]
                                                      vertically:isVertical];
         return;
@@ -4974,6 +4975,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
 {
     if ([[self currentTab] isTmuxTab]) {
+        [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
         return;
     }
@@ -5029,10 +5031,17 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                       userInfo:nil];
 }
 
+- (void)willSplitTmuxPane {
+    for (PTYSession *session in self.allSessions) {
+        session.sessionIsSeniorToTmuxSplitPane = YES;
+    }
+}
+
 - (void)splitVertically:(BOOL)isVertical
            withBookmark:(Profile*)theBookmark
           targetSession:(PTYSession*)targetSession {
     if ([targetSession isTmuxClient]) {
+        [self willSplitTmuxPane];
         [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
         return;
     }

@@ -154,8 +154,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)setLayoutInTab:(PTYTab *)tab
-              toLayout:(NSString *)layout
-{
+              toLayout:(NSString *)layout {
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
     windowOpener.layout = layout;
@@ -623,8 +622,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 // The splitVertically parameter uses the iTerm2 conventions.
-- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically
-{
+- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically {
     // No need for a callback. We should get a layout-changed message and act on it.
     [gateway_ sendCommand:[NSString stringWithFormat:@"split-window -%@ -t %%%d", splitVertically ? @"h": @"v", wp]
            responseTarget:nil
