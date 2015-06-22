@@ -505,9 +505,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
             if (haveScreenPreference_) {
-                DLog(@"Moving window to screen %d", screenNumber_);
                 // Move the frame to the desired screen
-                NSScreen* baseScreen = [[self window] deepestScreen];
+                NSScreen* baseScreen = [[self window] screen];
                 NSPoint basePoint = [baseScreen visibleFrame].origin;
                 double xoffset = initialFrame.origin.x - basePoint.x;
                 double yoffset = initialFrame.origin.y - basePoint.y;
@@ -1035,11 +1034,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (NSScreen*)screen {
     NSArray* screens = [NSScreen screens];
     if (!haveScreenPreference_) {
-        return self.window.deepestScreen;
+        DLog(@"No screen preference so using the window's current screen");
+        return self.window.screen;
     }
     if ([screens count] > screenNumber_) {
+        DLog(@"Screen preference %d respected", screenNumber_);
         return screens[screenNumber_];
     } else {
+        DLog(@"Screen preference %d out of range so using main screen.", screenNumber_);
         return [NSScreen mainScreen];
     }
 }
@@ -2115,7 +2117,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSRect rect = [[self window] frame];
     int screenNumber = 0;
     for (NSScreen* screen in [NSScreen screens]) {
-        if (screen == [[self window] deepestScreen]) {
+        if (screen == [[self window] screen]) {
             break;
         }
         ++screenNumber;
@@ -2497,9 +2499,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     PtyLog(@"canonicalizeWindowFrame");
     PTYSession* session = [self currentSession];
     NSDictionary* abDict = [session profile];
-    NSScreen* screen = [[self window] deepestScreen];
+    NSScreen* screen = [[self window] screen];
     if (!screen) {
-        PtyLog(@"No deepest screen");
+        PtyLog(@"No window screen");
         // Try to use the screen of the current session. Fall back to the main
         // screen if that's not an option.
         NSArray* screens = [NSScreen screens];
@@ -5253,6 +5255,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 #endif
     // Set the frame for X-of-screen windows. The size doesn't change
     // for _PARTIAL window types.
+    DLog(@"fitWindowToTabSize using screen number %@ with frame %@", @([[NSScreen screens] indexOfObject:self.screen]),
+         NSStringFromRect(self.screen.frame));
     switch (windowType_) {
         case WINDOW_TYPE_BOTTOM:
             frame.origin.y = self.screen.visibleFrameIgnoringHiddenDock.origin.y;
@@ -5822,8 +5826,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [style release];
 }
 
-- (void)hideMenuBar
-{
+- (void)hideMenuBar {
     NSScreen* menubarScreen = nil;
     NSScreen* currentScreen = nil;
 
@@ -5832,7 +5835,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     menubarScreen = [[NSScreen screens] objectAtIndex:0];
-    currentScreen = [[self window] deepestScreen];
+    currentScreen = [[self window] screen];
     if (!currentScreen) {
         currentScreen = [NSScreen mainScreen];
     }
@@ -5851,8 +5854,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)showMenuBarHideDock
-{
+- (void)showMenuBarHideDock {
     NSApplicationPresentationOptions presentationOptions =
         [[NSApplication sharedApplication] presentationOptions];
     presentationOptions |= NSApplicationPresentationAutoHideDock;
