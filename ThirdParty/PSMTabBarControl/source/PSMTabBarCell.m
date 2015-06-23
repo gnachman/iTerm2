@@ -251,7 +251,7 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
         // TODO: This image is missing!
         NSImage *piImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"pi"]];
         [returnImage lockFocus];
-        NSPoint indicatorPoint = NSMakePoint([self frame].size.width - MARGIN_X - kPSMTabBarIndicatorWidth, MARGIN_Y);
+        NSPoint indicatorPoint = NSMakePoint([self frame].size.width - kSPMTabBarCellInternalXMargin - kPSMTabBarIndicatorWidth, kSPMTabBarCellInternalYMargin);
         [piImage drawAtPoint:indicatorPoint
                     fromRect:NSZeroRect
                    operation:NSCompositeSourceOver
