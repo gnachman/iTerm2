@@ -112,18 +112,9 @@ const NSInteger kPSMStartResizeAnimation = 0;
         // default config
         _currentStep = kPSMIsNotBeingResized;
         _orientation = PSMTabBarHorizontalOrientation;
-        _disableTabClose = NO;
-        _showAddTabButton = NO;
-        _hideForSingleTab = NO;
-        _sizeCellsToFit = NO;
-        _isHidden = NO;
-        _hideIndicators = NO;
-        _awakenedFromNib = NO;
-        _automaticallyAnimates = NO;
         _useOverflowMenu = YES;
         _allowsBackgroundTabClosing = YES;
         _allowsResizing = YES;
-        _selectsTabsOnMouseDown = NO;
         _cellMinWidth = 100;
         _cellMaxWidth = 280;
         _cellOptimumWidth = 130;
@@ -1625,7 +1616,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 - (void)windowStatusDidChange:(NSNotification *)notification {
     // hide? must readjust things if I'm not supposed to be showing
     // this block of code only runs when the app launches
-    if ([self hideForSingleTab] && ([_cells count] <= 1) && !_awakenedFromNib){
+    if ([self hideForSingleTab] && ([_cells count] <= 1) && !_awakenedFromNib) {
         // must adjust frames now before display
         NSRect myFrame = [self frame];
         if ([self orientation] == PSMTabBarHorizontalOrientation) {
@@ -1745,26 +1736,21 @@ const NSInteger kPSMStartResizeAnimation = 0;
     }
 }
 
-- (PSMTabBarCell *)firstCellNotContainedByTabViewItems:(NSArray *)tabItems {
-    for (PSMTabBarCell *cell in _cells) {
-        if (![tabItems containsObject:[cell representedObject]]) {
-            return cell;
-        }
-    }
-    return nil;
-}
-
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)aTabView {
     NSArray *tabItems = [_tabView tabViewItems];
-    // go through cells, remove any whose representedObjects are not in [_tabView tabViewItems]
-    PSMTabBarCell *cell = [self firstCellNotContainedByTabViewItems:tabItems];
-    while (cell) {
+    // go through cells, remove any whose representedObjects are not in [tabView tabViewItems]
+    NSMutableArray *cellsToRemove = [NSMutableArray array];
+    for (PSMTabBarCell *cell in _cells) {
+        if (![tabItems containsObject:[cell representedObject]]) {
+            [cellsToRemove addObject:cell];
+        }
+    }
+    for (PSMTabBarCell *cell in cellsToRemove) {
         if ([[self delegate] respondsToSelector:@selector(tabView:didCloseTabViewItem:)]) {
             [[self delegate] tabView:aTabView didCloseTabViewItem:[cell representedObject]];
         }
-        [self removeTabForCell:cell];
 
-        cell = [self firstCellNotContainedByTabViewItems:tabItems];
+        [self removeTabForCell:cell];
     }
 
     // go through tab view items, add cell for any not present
