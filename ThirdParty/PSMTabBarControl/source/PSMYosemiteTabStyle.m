@@ -15,9 +15,8 @@
 
 @implementation PSMYosemiteTabStyle
 
-- (NSString *)name
-{
-    return @"Metal";
+- (NSString *)name {
+    return @"Yosemite";
 }
 
 #pragma mark -

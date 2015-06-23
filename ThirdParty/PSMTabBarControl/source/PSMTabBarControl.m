@@ -1931,6 +1931,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item {
     // bind my string value to the label on the represented tab
     [cell bind:@"title" toObject:item withKeyPath:@"label" options:nil];
+    [_delegate tabView:self updateStateForTabViewItem:item];
 }
 
 - (NSMutableArray *)representedTabViewItems {

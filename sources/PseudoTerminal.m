@@ -3962,8 +3962,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)tabView:(NSTabView*)aTabView
     willDropTabViewItem:(NSTabViewItem *)tabViewItem
-               inTabBar:(PSMTabBarControl *)aTabBarControl
-{
+               inTabBar:(PSMTabBarControl *)aTabBarControl {
     PTYTab *aTab = [tabViewItem identifier];
     for (PTYSession* aSession in [aTab sessions]) {
         [aSession setIgnoreResizeNotifications:YES];
@@ -4321,6 +4320,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // Note: this assume that self is the front window (it should be!). It is smart enough to create
     // a tmux tab if the user wants one (or ask if needed).
     [itad newSession:nil];
+}
+
+- (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
+    PTYTab *tab = tabViewItem.identifier;
+    [tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
+    [tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
+    [tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
 }
 
 - (void)updateTabColors
