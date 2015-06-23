@@ -616,6 +616,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSRect tabBarFrame = [[[self window] contentView] bounds];
     tabBarFrame.size.height = kHorizontalTabBarHeight;
     tabBarControl = [[iTermTabBarControlView alloc] initWithFrame:tabBarFrame];
+    NSLog(@"Tab bar control view for %@ (%@) is %@", self, self.window, tabBarControl);
     tabBarControl.itermTabBarDelegate = self;
 
     [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
@@ -638,6 +639,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[[self window] contentView] addSubview:tabBarControl];
 
     [tabBarControl setTabView:TABVIEW];
+    NSLog(@"Add tab bar control %@ as subview of %@", tabBarControl, self.window.contentView);
     [TABVIEW setDelegate:tabBarControl];
     [tabBarControl setDelegate:self];
     [tabBarControl setHideForSingleTab:NO];
