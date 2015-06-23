@@ -2183,9 +2183,9 @@ static NSString* FormatRect(NSRect r) {
         NSArray* subArrangements = [arrangement objectForKey:SUBVIEWS];
         PTYSession* active = nil;
         iTermObjectType subObjectType = objectType;
-        for (int i = 0; i < [subArrangements count]; ++i) {
-            NSDictionary* subArrangement = [subArrangements objectAtIndex:i];
-            PTYSession* session = [self _recursiveRestoreSessions:subArrangement
+        for (int i = 0; i < [subArrangements count] && i < splitter.subviews.count; ++i) {
+            NSDictionary *subArrangement = subArrangements[i];
+            PTYSession *session = [self _recursiveRestoreSessions:subArrangement
                                                            atNode:[[splitter subviews] objectAtIndex:i]
                                                             inTab:theTab
                                                     forObjectType:subObjectType];
