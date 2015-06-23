@@ -674,13 +674,13 @@ const NSInteger kPSMStartResizeAnimation = 0;
     [_cells removeObjectAtIndex:sourceIndex];
     [_cells insertObject:cell atIndex:destIndex];
     [cell release];
-    
+
     [_tabView setDelegate:tempDelegate];
 
     if (reselect) {
         [_tabView selectTabViewItem:theItem];
     }
-    
+
     [self update:YES];
 }
 
@@ -1121,12 +1121,12 @@ const NSInteger kPSMStartResizeAnimation = 0;
             if ([cell count] > 0) {
                 [menuItem setTitle:[[menuItem title] stringByAppendingFormat:@" (%d)", [cell count]]];
             }
-            
+
             [overflowMenu addItem:menuItem];
             [menuItem release];
         }
     }
-    
+
     return overflowMenu;
 }
 
@@ -1344,7 +1344,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
                 cell.closeButtonVisible &&
                 [mouseDownCell closeButtonPressed]) {
                 [self performSelector:@selector(closeTabClick:) withObject:cell];
-            } else if (NSMouseInRect(mousePt, 
+            } else if (NSMouseInRect(mousePt,
                                      mouseDownCellFrame,
                                      [self isFlipped]) &&
                        (!NSMouseInRect(trackingStartPoint,
@@ -1724,7 +1724,7 @@ const NSInteger kPSMStartResizeAnimation = 0;
 
 - (BOOL)tabView:(NSTabView *)aTabView shouldSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     if ([[self delegate] respondsToSelector:@selector(tabView:shouldSelectTabViewItem:)]) {
-        return (int)[[self delegate] tabView:aTabView shouldSelectTabViewItem:tabViewItem];
+        return (BOOL)[[self delegate] tabView:aTabView shouldSelectTabViewItem:tabViewItem];
     } else {
         return YES;
     }

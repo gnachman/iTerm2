@@ -148,7 +148,7 @@ enum {
 @interface PSMTabBarControl : NSControl<
   NSDraggingSource,
   PSMProgressIndicatorDelegate,
-  PSMTabViewDelegate> 
+  PSMTabViewDelegate>
 
 // control configuration
 @property(nonatomic, assign) BOOL disableTabClose;
