@@ -201,16 +201,13 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
-    //unbind all the items to prevent crashing
-    //not sure if this is necessary or not
-    NSEnumerator *enumerator = [_cells objectEnumerator];
-    PSMTabBarCell *nextCell;
-    while ( (nextCell = [enumerator nextObject]) ) {
-        [self removeTabForCell:nextCell];
+    // Remove bindings.
+    NSArray *temp = [[_cells copy] autorelease];
+    for (PSMTabBarCell *cell in temp) {
+        [self removeTabForCell:cell];
     }
 
     [_overflowPopUpButton release];
@@ -541,13 +538,13 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     [self addTabViewItem:item atIndex:[_cells count]];
 }
 
-- (void)removeTabForCell:(PSMTabBarCell *)cell
-{
+- (void)removeTabForCell:(PSMTabBarCell *)cell {
     // unbind
     [cell unbind:@"title"];
 
     // remove indicator
-    if([[self subviews] containsObject:[cell indicator]]){
+    if ([[self subviews] containsObject:[cell indicator]]) {
+        [[cell indicator] setDelegate:nil];
         [[cell indicator] removeFromSuperview];
     }
     // remove tracking
@@ -563,11 +560,10 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     }
     [self removeAllToolTips];
 
+    [cell setControlView:nil];
+
     // pull from collection
     [_cells removeObject:cell];
-
-    //[self update];
-
 }
 
 #pragma mark -

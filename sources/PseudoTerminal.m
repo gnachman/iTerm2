@@ -762,7 +762,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     // Release all our sessions
     NSTabViewItem *aTabViewItem;
-    for (; [TABVIEW numberOfTabViewItems]; )  {
+    while ([TABVIEW numberOfTabViewItems])  {
         aTabViewItem = [TABVIEW tabViewItemAtIndex:0];
         [[aTabViewItem identifier] terminateAllSessions];
         PTYTab* theTab = [aTabViewItem identifier];
