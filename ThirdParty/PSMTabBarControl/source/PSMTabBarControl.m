@@ -560,8 +560,6 @@ NSString *const kPSMTabModifierKey = @"TabModifier";
     }
     [self removeAllToolTips];
 
-    [cell setControlView:nil];
-
     // pull from collection
     [_cells removeObject:cell];
 }
