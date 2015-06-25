@@ -37,7 +37,10 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
     kPasteFlagsBase64Encode = (1 << 6),
 
     // Wait for prompt before each line
-    kPasteFlagsCommands = (1 << 7)
+    kPasteFlagsCommands = (1 << 8),
+
+    // New additions
+    kPasteFlagsRemovingNewlines = (1 << 9),
 };
 
 @interface PasteEvent : NSEvent

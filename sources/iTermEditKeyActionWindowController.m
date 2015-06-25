@@ -83,6 +83,7 @@
     } else {
         // Set a few defaults; otherwise everything is reasonable.
         _pasteSpecialViewController.numberOfSpacesPerTab = [iTermPreferences intForKey:kPreferenceKeyPasteSpecialSpacesPerTab];
+        _pasteSpecialViewController.shouldRemoveNewlines = NO;
         _pasteSpecialViewController.shouldBase64Encode = NO;
         _pasteSpecialViewController.shouldWaitForPrompt = NO;
         _pasteSpecialViewController.shouldEscapeShellCharsWithBackslash = NO;

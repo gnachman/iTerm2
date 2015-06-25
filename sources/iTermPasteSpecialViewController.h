@@ -32,6 +32,8 @@ extern NSString *const kPasteSpecialViewControllerUnicodeSingleQuotesRegularExpr
 @property(nonatomic, assign) NSInteger selectedTabTransform;
 @property(nonatomic, assign, getter=isConvertNewlinesEnabled) BOOL enableConvertNewlines;
 @property(nonatomic, assign) BOOL shouldConvertNewlines;
+@property(nonatomic, assign, getter=isRemoveNewlinesEnabled) BOOL enableRemoveNewlines;
+@property(nonatomic, assign) BOOL shouldRemoveNewlines;
 @property(nonatomic, assign, getter=isEscapeShellCharsWithBackslashEnabled) BOOL enableEscapeShellCharsWithBackslash;
 @property(nonatomic, assign) BOOL shouldEscapeShellCharsWithBackslash;
 @property(nonatomic, assign, getter=isRemoveControlCodesEnabled) BOOL enableRemoveControlCodes;
