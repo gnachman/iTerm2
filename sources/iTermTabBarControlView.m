@@ -40,11 +40,6 @@ static const NSTimeInterval kFlashHoldTime = 1;
     return self;
 }
 
-- (void)removeFromSuperview {
-    NSLog(@"Remove %@ from superview from %@", self, [NSThread callStackSymbols]);
-    [super removeFromSuperview];
-}
-
 - (void)drawRect:(NSRect)dirtyRect {
     [[NSColor windowBackgroundColor] set];
     NSRectFill(dirtyRect);
