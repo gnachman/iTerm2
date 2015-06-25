@@ -248,6 +248,8 @@ typedef enum {
 + (NSColor*)decodeColor:(NSDictionary*)plist;
 + (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict;
 + (NSString *)shellLauncherCommand;
+// Login command that leaves you in your home directory.
++ (NSString *)standardLoginCommand;
 
 - (id)init;
 - (void)dealloc;
