@@ -104,7 +104,10 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     NSUInteger flags = pasteEvent.flags;
     NSString *theString = pasteEvent.string;
 
-    if (flags & kPasteFlagsSanitizingNewlines) {
+    if (flags & kPasteFlagsRemovingNewlines) {
+        theString = [[theString stringByReplacingOccurrencesOfString:@"\r" withString:@""]
+                     stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+    } else if (flags & kPasteFlagsSanitizingNewlines) {
         // Convert DOS (\r\n) CRLF newlines and linefeeds (\n) into carriage returns (\r==13).
         theString = [theString stringWithLinefeedNewlines];
     }
@@ -523,13 +526,14 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
 
 #pragma mark - PasteViewControllerDelegate
 
-- (void)pasteViewControllerDidCancel
-{
+- (void)pasteViewControllerDidCancel {
     [self hidePasteIndicator];
     [_timer invalidate];
     _timer = nil;
     [_buffer release];
     _buffer = [[NSMutableData alloc] init];
+    [_pasteContext release];
+    _pasteContext = nil;
     [self dequeueEvents];
 }
 
