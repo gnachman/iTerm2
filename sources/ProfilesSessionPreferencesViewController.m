@@ -241,7 +241,9 @@
     [panel setAllowsMultipleSelection:NO];
     
     if ([panel runModal] == NSOKButton) {
-        [_logDir setStringValue:[panel legacyDirectory]];
+        NSString *path = [[panel directoryURL] path];
+        _logDir.stringValue = path;
+        [self setString:path forKey:KEY_LOGDIR];
     }
     [self updateLogDirWarning];
 }
