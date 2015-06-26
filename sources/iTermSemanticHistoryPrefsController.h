@@ -17,6 +17,7 @@ extern NSString *kSublimeText3Identifier;
 extern NSString *kMacVimIdentifier;
 extern NSString *kAtomIdentifier;
 extern NSString *kTextmateIdentifier;
+extern NSString *kTextmate2Identifier;
 extern NSString *kBBEditIdentifier;
 
 extern NSString *kSemanticHistoryBestEditorAction;

@@ -76,7 +76,6 @@
 @property(nonatomic, copy) NSString *openedFile;
 @property(nonatomic, copy) NSURL *openedURL;
 @property(nonatomic, copy) NSString *openedEditor;
-@property(nonatomic, assign) BOOL isTextFile;
 @property(nonatomic, assign) BOOL defaultAppIsEditor;
 @property(nonatomic, copy) NSString *launchedApp;
 @property(nonatomic, copy) NSString *launchedAppArg;
@@ -122,10 +121,6 @@
     self.openedURL = url;
     self.openedEditor = editorIdentifier;
     return YES;
-}
-
-- (BOOL)isTextFile:(NSString *)path {
-    return _isTextFile;
 }
 
 - (BOOL)defaultAppForFileIsEditor:(NSString *)file {
@@ -474,7 +469,6 @@
            kSemanticHistoryEditorKey: kMacVimIdentifier };
     NSString *kExistingFileAbsolutePath = @"/file/that/exists";
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
-    _semanticHistoryController.isTextFile = YES;
     _semanticHistoryController.defaultAppIsEditor = YES;
     BOOL opened = [_semanticHistoryController openPath:kExistingFileAbsolutePath
                                       workingDirectory:@"/"
@@ -485,7 +479,7 @@
     NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file://%@",
                                    kExistingFileAbsolutePath];
     assert([_semanticHistoryController.openedURL isEqualTo:[NSURL URLWithString:expectedUrlString]]);
-    assert(!_semanticHistoryController.openedEditor);
+    assert([_semanticHistoryController.openedEditor isEqualToString:kMacVimIdentifier]);
 }
 
 - (void)testOpenPathOpensTextFileInEditorWithLineNumberWhenEditorIsDefaultApp {
@@ -495,7 +489,6 @@
     NSString *kExistingFileAbsolutePath = @"/file/that/exists";
     NSString *fileWithLineNumber = [kExistingFileAbsolutePath stringByAppendingString:@":12"];
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
-    _semanticHistoryController.isTextFile = YES;
     _semanticHistoryController.defaultAppIsEditor = YES;
     BOOL opened = [_semanticHistoryController openPath:fileWithLineNumber
                                       workingDirectory:@"/"
@@ -506,7 +499,7 @@
     NSString *expectedUrlString = [NSString stringWithFormat:@"mvim://open?url=file://%@&line=12",
                                    kExistingFileAbsolutePath];
     assert([_semanticHistoryController.openedURL isEqualTo:[NSURL URLWithString:expectedUrlString]]);
-    assert(!_semanticHistoryController.openedEditor);
+    assert([_semanticHistoryController.openedEditor isEqualToString:kMacVimIdentifier]);
 }
 
 - (void)testOpenPathOpensTextFileAtomEditor {
@@ -516,7 +509,6 @@
     NSString *kExistingFileAbsolutePath = @"/file/that/exists";
     NSString *kExistingFileAbsolutePathWithLineNumber = [kExistingFileAbsolutePath stringByAppendingString:@":12"];
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
-    _semanticHistoryController.isTextFile = YES;
     _semanticHistoryController.defaultAppIsEditor = NO;
     BOOL opened = [_semanticHistoryController openPath:kExistingFileAbsolutePathWithLineNumber
                                       workingDirectory:@"/"
@@ -535,7 +527,6 @@
     NSString *kExistingFileAbsolutePath = @"/file/that/exists";
     NSString *kExistingFileAbsolutePathWithLineNumber = [kExistingFileAbsolutePath stringByAppendingString:@":12"];
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
-    _semanticHistoryController.isTextFile = YES;
     _semanticHistoryController.defaultAppIsEditor = NO;
     _semanticHistoryController.bundleIdForDefaultApp = kAtomIdentifier;  // Act like Atom is the default app for this file
     BOOL opened = [_semanticHistoryController openPath:kExistingFileAbsolutePathWithLineNumber
@@ -555,7 +546,6 @@
     NSString *kExistingFileAbsolutePath = @"/file/that/exists";
     NSString *kExistingFileAbsolutePathWithLineNumber =[kExistingFileAbsolutePath stringByAppendingString:@":12"];
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
-    _semanticHistoryController.isTextFile = YES;
     _semanticHistoryController.defaultAppIsEditor = NO;
     BOOL opened = [_semanticHistoryController openPath:kExistingFileAbsolutePathWithLineNumber
                                       workingDirectory:@"/"
@@ -574,7 +564,6 @@
     NSString *kExistingFileAbsolutePath = @"/file/that/exists";
     NSString *kExistingFileAbsolutePathWithLineNumber =[kExistingFileAbsolutePath stringByAppendingString:@":12"];
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
-    _semanticHistoryController.isTextFile = YES;
     _semanticHistoryController.defaultAppIsEditor = NO;
     BOOL opened = [_semanticHistoryController openPath:kExistingFileAbsolutePathWithLineNumber
                                       workingDirectory:@"/"
@@ -596,7 +585,6 @@
     NSString *kExistingFileAbsolutePathWithLineNumber =
         [kExistingFileAbsolutePath stringByAppendingString:kLineNumber];
     [_semanticHistoryController.fakeFileManager.files addObject:kExistingFileAbsolutePath];
-    _semanticHistoryController.isTextFile = YES;
     _semanticHistoryController.defaultAppIsEditor = NO;
     BOOL opened = [_semanticHistoryController openPath:kExistingFileAbsolutePathWithLineNumber
                                       workingDirectory:@"/"
@@ -609,11 +597,7 @@
             expectedScheme, kExistingFileAbsolutePath, [kLineNumber substringFromIndex:1]];
     NSURL *expectedURL = [NSURL URLWithString:urlString];
     assert([_semanticHistoryController.openedURL isEqual:expectedURL]);
-    if ([editorId isEqualToString:kBBEditIdentifier]) {
-        assert([_semanticHistoryController.openedEditor isEqual:kBBEditIdentifier]);
-    } else {
-        assert(!_semanticHistoryController.openedEditor);
-    }
+    assert([_semanticHistoryController.openedEditor isEqual:editorId]);
 }
 
 - (void)testOpenPathOpensTextFileInMacVim {
