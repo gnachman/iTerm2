@@ -39,29 +39,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
 
-- (BOOL)isTextFile:(NSString *)path {
-    if (!path) {
-        return NO;
-    }
-    // TODO(chendo): link in the "magic" library from file instead of calling it.
-    NSTask *task = [[[NSTask alloc] init] autorelease];
-    NSPipe *myPipe = [NSPipe pipe];
-    NSFileHandle *file = [myPipe fileHandleForReading];
-
-    [task setStandardOutput:myPipe];
-    [task setLaunchPath:@"/usr/bin/file"];
-    [task setArguments:@[ path ]];
-    [task launch];
-    [task waitUntilExit];
-
-    NSString *output = [[NSString alloc] initWithData:[file readDataToEndOfFile]
-                                             encoding:NSUTF8StringEncoding];
-
-    BOOL ret = ([output rangeOfRegex:@"\\btext\\b"].location != NSNotFound);
-    [output release];
-    return ret;
-}
-
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber {
@@ -182,7 +159,18 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 }
 
-- (BOOL)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
++ (NSArray *)bundleIdsThatSupportOpeningToLineNumber {
+    return @[ kAtomIdentifier,
+              kSublimeText2Identifier,
+              kSublimeText3Identifier,
+              kMacVimIdentifier,
+              kTextmateIdentifier,
+              kBBEditIdentifier ];
+}
+
+- (void)openFile:(NSString *)path
+    inEditorWithBundleId:(NSString *)identifier
+          lineNumber:(NSString *)lineNumber {
     if ([self preferredEditorIdentifier]) {
         DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
         if ([[self preferredEditorIdentifier] isEqualToString:kAtomIdentifier]) {
@@ -197,9 +185,9 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             }
             NSString *bundleId;
             if ([[self preferredEditorIdentifier] isEqualToString:kSublimeText3Identifier]) {
-                bundleId = @"com.sublimetext.3";
+                bundleId = kSublimeText3Identifier;
             } else {
-                bundleId = @"com.sublimetext.2";
+                bundleId = kSublimeText2Identifier;
             }
 
             [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
@@ -209,9 +197,9 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             NSString *editorIdentifier = [self preferredEditorIdentifier];
             if (lineNumber) {
                 url = [NSURL URLWithString:[NSString stringWithFormat:
-                                                   @"%@://open?url=file://%@&line=%@",
-                                                   [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
-                                                   path, lineNumber]];
+                                            @"%@://open?url=file://%@&line=%@",
+                                            [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
+                                            path, lineNumber]];
             } else {
                 url = [NSURL URLWithString:[NSString stringWithFormat:
                                             @"%@://open?url=file://%@",
@@ -226,7 +214,10 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
             }
         }
     }
-    return YES;
+}
+
+- (void)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
+    [self openFile:path inEditorWithBundleId:[self preferredEditorIdentifier] lineNumber:lineNumber];
 }
 
 - (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
@@ -341,29 +332,26 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction] &&
         [self preferredEditorIdentifier]) {
         // Action is to open in a specific editor, so open it in the editor.
-        return [self openFileInEditor:path lineNumber:lineNumber];
+        [self openFileInEditor:path lineNumber:lineNumber];
+        return YES;
     }
 
-    if ([self preferredEditorIdentifier] && [self isTextFile:path]) {
-        // This is a text file and there's a baked-in-preferred editor and we're using the default action.
-        // If a specific editor was chosen, that was handled by the preceding if statement.
-        if (lineNumber && [[self bundleIdForDefaultAppForFile:path] isEqualTo:[self preferredEditorIdentifier]]) {
-            DLog(@"Default app is the preferred editor (%@) and a line number is present (%@). Open in editor.",
-                 [self preferredEditorIdentifier], lineNumber);
-            return [self openFileInEditor:path lineNumber:lineNumber];
-        } else if (![self defaultAppForFileIsEditor:path]) {
-            // I regret this code path. We use our arbitrarily chosen editor in
-            // favor of the registered app for this file type, simply because
-            // it's not an editor (by our definition) and this is a text file.
-            DLog(@"Default app for %@ is NOT an editor, so open it in an editor", path);
-            return [self openFileInEditor:path lineNumber:lineNumber];
-        } else {
-            DLog(@"Default app for %@ is an editor so just open it", path);
+    if (lineNumber) {
+        NSString *appBundleId = [self bundleIdForDefaultAppForFile:path];
+        if ([self canOpenFileWithLineNumberUsingEditorWithBundleId:appBundleId]) {
+            DLog(@"A line number is present and I know how to open this file to the line number using %@. Do so.",
+                 appBundleId);
+            [self openFile:path inEditorWithBundleId:appBundleId lineNumber:lineNumber];
+            return YES;
         }
     }
 
     [self openFile:path];
     return YES;
+}
+
+- (BOOL)canOpenFileWithLineNumberUsingEditorWithBundleId:(NSString *)appBundleId {
+    return [[self.class bundleIdsThatSupportOpeningToLineNumber] containsObject:appBundleId];
 }
 
 - (NSString *)bundleIdForDefaultAppForFile:(NSString *)file {
