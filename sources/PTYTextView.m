@@ -90,6 +90,7 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 static const int kDragThreshold = 3;
 
 @interface PTYTextView () <
+    iTermTextViewAccessibilityHelperDelegate,
     iTermTextDrawingHelperDelegate,
     iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
