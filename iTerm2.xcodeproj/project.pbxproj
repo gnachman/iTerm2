@@ -1370,6 +1370,11 @@
 		A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
 		A6099B0618D6B0FD00081FA9 /* iTermWarning.m in Sources */ = {isa = PBXBuildFile; fileRef = A6099B0418D6B0FD00081FA9 /* iTermWarning.m */; };
 		A6099B0718D6B0FD00081FA9 /* iTermWarning.m in Sources */ = {isa = PBXBuildFile; fileRef = A6099B0418D6B0FD00081FA9 /* iTermWarning.m */; };
+		A60BD9131B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */; };
+		A60BD9141B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */; };
+		A60BD9151B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */; };
+		A60BD9161B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */; };
+		A60BD9171B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */; };
 		A60D85A81A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60D85A91A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60D85AA1A3A8105003AEE22 /* NSPasteboard+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */; };
@@ -2660,6 +2665,8 @@
 		A6057C161883D12E004A60AF /* broken_image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = broken_image.png; path = images/broken_image.png; sourceTree = "<group>"; };
 		A6099B0318D6B0FD00081FA9 /* iTermWarning.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermWarning.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6099B0418D6B0FD00081FA9 /* iTermWarning.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWarning.m; sourceTree = "<group>"; tabWidth = 4; };
+		A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextViewAccessibilityHelper.h; sourceTree = "<group>"; };
+		A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTextViewAccessibilityHelper.m; sourceTree = "<group>"; };
 		A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSPasteboard+iTerm.h"; sourceTree = "<group>"; };
 		A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPasteboard+iTerm.m"; sourceTree = "<group>"; };
 		A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PTYSessionTest.h; path = iTermTests/PTYSessionTest.h; sourceTree = "<group>"; };
@@ -4467,6 +4474,8 @@
 				1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */,
 				A67F57D21B11882900B4F135 /* CapturedOutput.h */,
 				A67F57D31B11882900B4F135 /* CapturedOutput.m */,
+				A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */,
+				A60BD9121B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -4853,6 +4862,7 @@
 				1D6ED90319AEA20D005A7799 /* iTermApplication+Scripting.h in Headers */,
 				A65B72A31B3134FB00F947A7 /* iTermTipController.h in Headers */,
 				1D6ED90419AEA20D005A7799 /* VT100WorkingDirectory.h in Headers */,
+				A60BD9141B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */,
 				1D6ED90519AEA20D005A7799 /* ScriptTrigger.h in Headers */,
 				1D6ED90619AEA20D005A7799 /* AlertTrigger.h in Headers */,
 				1D6ED90719AEA20D005A7799 /* TransferrableFileMenuItemViewController.h in Headers */,
@@ -5306,6 +5316,7 @@
 				A61ABBC21AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */,
 				A6A13AB118C33ED300B241ED /* VT100CSIParser.h in Headers */,
 				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
+				A60BD9131B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h in Headers */,
 				1DB83952192E95EB0037E548 /* CaptureTrigger.h in Headers */,
 				1D8BBA911B33529E0005A852 /* iTermTip.h in Headers */,
 				1D03D420191419080049EB8F /* DirectoriesPopup.h in Headers */,
@@ -6210,6 +6221,7 @@
 				1D6EDA9319AEA20D005A7799 /* PointerPreferencesViewController.m in Sources */,
 				1D6EDA9419AEA20D005A7799 /* PTYSession+Scripting.m in Sources */,
 				1D6EDA9519AEA20D005A7799 /* VT100Grid.m in Sources */,
+				A60BD9171B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				1D6EDA9619AEA20D005A7799 /* TriggerController.m in Sources */,
 				A6B3A7471AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */,
 				A6E77FBD1A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m in Sources */,
@@ -6391,6 +6403,7 @@
 				1D9A5577180FA85D00B42CE9 /* BounceTrigger.m in Sources */,
 				1D5655CB19AD2B1A001C460B /* PTYTab+Scripting.m in Sources */,
 				1D9A5545180FA81400B42CE9 /* ProfileTableView.m in Sources */,
+				A60BD9161B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				A6358648184BEA57009ED690 /* AATree.m in Sources */,
 				A63679831A328E7E000DB943 /* SemanticHistoryTest.m in Sources */,
 				A69B45921973193100F5444D /* iTermOpenQuicklyTableView.m in Sources */,
@@ -6870,6 +6883,7 @@
 				1D67ABAC14285D6000D5DA4E /* NSFileManager+iTerm.m in Sources */,
 				1DFA9D7118F3A30F008ADC98 /* PointerPreferencesViewController.m in Sources */,
 				A6B70FCE1986FB39007A4284 /* PTYSession+Scripting.m in Sources */,
+				A60BD9151B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				1D8B8A151806038F00C2DC25 /* VT100Grid.m in Sources */,
 				A6B3A7451AC89DED008E8D4E /* NSCharacterSet+iTerm.m in Sources */,
 				1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */,

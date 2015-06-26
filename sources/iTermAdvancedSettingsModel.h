@@ -101,5 +101,6 @@
 + (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
 
 + (BOOL)noSyncTipsDisabled;
++ (int)numberOfLinesForAccessibility;
 
 @end
