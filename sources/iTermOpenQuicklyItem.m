@@ -42,3 +42,11 @@
 }
 
 @end
+
+@implementation iTermOpenQuicklyArrangementItem
+
+- (NSImage *)icon {
+  return [NSImage imageNamed:@"restore-arrangement"];
+}
+
+@end

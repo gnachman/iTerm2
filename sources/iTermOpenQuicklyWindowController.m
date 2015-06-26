@@ -174,6 +174,8 @@
                                makeKey:YES
                                command:nil
                                  block:nil];
+        } else if ([object isKindOfClass:[NSString class]]) {
+            [[iTermController sharedInstance] loadWindowArrangementWithName:object];
         }
     }
 

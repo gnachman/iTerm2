@@ -15,9 +15,8 @@
 
 @implementation PSMYosemiteTabStyle
 
-- (NSString *)name
-{
-    return @"Metal";
+- (NSString *)name {
+    return @"Yosemite";
 }
 
 #pragma mark -
@@ -111,8 +110,8 @@
 
     NSRect result;
     result.size = [metalCloseButton size];
-    result.origin.x = cellFrame.origin.x + MARGIN_X;
-    result.origin.y = cellFrame.origin.y + MARGIN_Y;
+    result.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin;
+    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
 
     return result;
 }
@@ -129,14 +128,14 @@
         NSRect objectCounterRect = [self objectCounterRectForTabCell:cell];
         minX = NSMinX(objectCounterRect);
     } else if (![[cell indicator] isHidden]) {
-        minX = NSMinX([self indicatorRectForTabCell:cell]) - MARGIN_X;
+        minX = NSMinX([self indicatorRectForTabCell:cell]) - kSPMTabBarCellInternalXMargin;
     } else {
-        minX = NSMaxX(cellFrame) - MARGIN_X;
+        minX = NSMaxX(cellFrame) - kSPMTabBarCellInternalXMargin;
     }
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIconWidth, kPSMTabBarIconWidth);
     result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIconWidth;
-    result.origin.y = cellFrame.origin.y + MARGIN_Y - 1.0;
+    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin - 1.0;
 
     return result;
 }
@@ -150,8 +149,8 @@
 
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIndicatorWidth, kPSMTabBarIndicatorWidth);
-    result.origin.x = cellFrame.origin.x + cellFrame.size.width - MARGIN_X - kPSMTabBarIndicatorWidth;
-    result.origin.y = cellFrame.origin.y + MARGIN_Y - 0.5;
+    result.origin.x = cellFrame.origin.x + cellFrame.size.width - kSPMTabBarCellInternalXMargin - kPSMTabBarIndicatorWidth;
+    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin - 0.5;
 
     return result;
 }
@@ -171,8 +170,8 @@
 
     NSRect result;
     result.size = NSMakeSize(countWidth, 2 * kPSMMetalObjectCounterRadius); // temp
-    result.origin.x = cellFrame.origin.x + cellFrame.size.width - MARGIN_X - result.size.width;
-    result.origin.y = cellFrame.origin.y + MARGIN_Y;
+    result.origin.x = cellFrame.origin.x + cellFrame.size.width - kSPMTabBarCellInternalXMargin - result.size.width;
+    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
 
     if (![[cell indicator] isHidden]) {
         result.origin.x -= kPSMTabBarIndicatorWidth + kPSMTabBarCellPadding;
@@ -185,7 +184,7 @@
     CGFloat resultWidth = 0.0;
 
     // left margin
-    resultWidth = MARGIN_X;
+    resultWidth = kSPMTabBarCellInternalXMargin;
 
     // close button?
     resultWidth += [metalCloseButton size].width + kPSMTabBarCellPadding;
@@ -212,7 +211,7 @@
     }
 
     // right margin
-    resultWidth += MARGIN_X;
+    resultWidth += kSPMTabBarCellInternalXMargin;
     return resultWidth;
 }
 
@@ -440,7 +439,7 @@
                          inView:(NSView*)controlView
                 highlightAmount:(CGFloat)highlightAmount {
     NSRect cellFrame = [cell frame];
-    float labelPosition = cellFrame.origin.x + MARGIN_X;
+    float labelPosition = cellFrame.origin.x + kSPMTabBarCellInternalXMargin;
 
     // close button
     NSSize closeButtonSize = NSZeroSize;
@@ -518,7 +517,7 @@
         labelRect.size.width -= iconRect.size.width + kPSMTabBarCellIconPadding;
     }
     labelRect.size.height = cellFrame.size.height;
-    labelRect.origin.y = cellFrame.origin.y + MARGIN_Y + 0.5;
+    labelRect.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin + 0.5;
 
     if (![[cell indicator] isHidden]) {
         labelRect.size.width -= (kPSMTabBarIndicatorWidth + kPSMTabBarCellPadding);

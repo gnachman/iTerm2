@@ -666,7 +666,7 @@
   assert(numCharsFromPrefix == [@"five six seven eight" length]);
 }
 
-- (void)testPathOfExistingFileSupportsParens {
+- (void)testPathOfExistingFileRemovesParens {
     int numCharsFromPrefix;
     NSString *kWorkingDirectory = @"/directory";
     NSString *kRelativeFilename = @"five six seven eight";
@@ -677,8 +677,8 @@
                                                                             suffix:@"seven eight) nine ten eleven"
                                                                   workingDirectory:kWorkingDirectory
                                                               charsTakenFromPrefix:&numCharsFromPrefix];
-    assert([@"(five six seven eight)" isEqualToString:path]);
-    assert(numCharsFromPrefix == [@"(five six " length]);
+    assert([@"five six seven eight" isEqualToString:path]);
+    assert(numCharsFromPrefix == [@"five six " length]);
 }
 
 - (void)testPathOfExistingFileSupportsLineNumberAndColumnNumber {
@@ -707,8 +707,8 @@
                                                                             suffix:@"seven eight:123:456). nine ten eleven"
                                                                   workingDirectory:kWorkingDirectory
                                                               charsTakenFromPrefix:&numCharsFromPrefix];
-    assert([@"(five.six\tseven eight:123:456)" isEqualToString:path]);
-    assert(numCharsFromPrefix == [@"(five.six\t" length]);
+    assert([@"five.six\tseven eight:123:456" isEqualToString:path]);
+    assert(numCharsFromPrefix == [@"five.six\t" length]);
 }
 
 - (void)testPathOfExistingFile_IgnoresFilesOnNetworkVolumes {

@@ -771,6 +771,20 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
             DLog(@"Running command...");
             if (haveSavedProgramData) {
+                if (oldCWD) {
+                    // Replace PWD with the working directory at the time the arrangement was saved
+                    // so it will be properly restored.
+                    NSMutableDictionary *temp = [[aSession.environment mutableCopy] autorelease];
+                    temp[PWD_ENVNAME] = oldCWD;
+                    aSession.environment = temp;
+
+                    if ([aSession.program isEqualToString:[ITAddressBookMgr standardLoginCommand]]) {
+                        // Create a login session that drops you in the old directory instead of
+                        // using login -fp "$USER". This lets saved arrangements properly restore
+                        // the working directory when the profile specifies the home directory.
+                        aSession.program = [ITAddressBookMgr shellLauncherCommand];
+                    }
+                }
                 [aSession startProgram:aSession.program
                            environment:aSession.environment
                                 isUTF8:aSession.isUTF8

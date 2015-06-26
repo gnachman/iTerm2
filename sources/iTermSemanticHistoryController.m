@@ -396,23 +396,23 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     NSMutableString *beforeString = [[beforeStringIn mutableCopy] autorelease];
     NSMutableString *afterString = [[afterStringIn mutableCopy] autorelease];
-    
+
     // Remove escaping slashes
     NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
-    
+
     DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
          beforeString, afterString, workingDirectory);
-    
+
     [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     beforeString = [[beforeString copy] autorelease];
     // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
     // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autorelease]
     // then the items in the array get over-released.
-    NSString *const kSplitRegex = @"([\t ])";
+    NSString *const kSplitRegex = @"([\t ()])";
     NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:kSplitRegex];
     NSArray *afterChunks = [afterString componentsSeparatedByRegex:kSplitRegex];
-    
+
     // If the before/after string didn't produce any chunks, allow the other
     // half to stand alone.
     if (!beforeChunks.count) {
@@ -421,7 +421,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if (!afterChunks.count) {
         afterChunks = @[ @"" ];
     }
-    
+
     NSMutableString *left = [NSMutableString string];
     // Bail after 100 iterations if nothing is still found.
     int limit = 100;

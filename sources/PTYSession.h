@@ -285,6 +285,10 @@ typedef enum {
 // startup instead of respecting the wishes of system window restoration.
 @property(nonatomic, readonly) NSString *guid;
 
+// Indicates if this session predates a tmux split pane. Used to figure out which pane is new when
+// layout changes due to a user-initiated pane split.
+@property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;

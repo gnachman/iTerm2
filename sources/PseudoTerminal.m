@@ -616,6 +616,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSRect tabBarFrame = [[[self window] contentView] bounds];
     tabBarFrame.size.height = kHorizontalTabBarHeight;
     tabBarControl = [[iTermTabBarControlView alloc] initWithFrame:tabBarFrame];
+    NSLog(@"Tab bar control view for %@ (%@) is %@", self, self.window, tabBarControl);
     tabBarControl.itermTabBarDelegate = self;
 
     [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
@@ -638,6 +639,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[[self window] contentView] addSubview:tabBarControl];
 
     [tabBarControl setTabView:TABVIEW];
+    NSLog(@"Add tab bar control %@ as subview of %@", tabBarControl, self.window.contentView);
     [TABVIEW setDelegate:tabBarControl];
     [tabBarControl setDelegate:self];
     [tabBarControl setHideForSingleTab:NO];
@@ -762,7 +764,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     // Release all our sessions
     NSTabViewItem *aTabViewItem;
-    for (; [TABVIEW numberOfTabViewItems]; )  {
+    while ([TABVIEW numberOfTabViewItems])  {
         aTabViewItem = [TABVIEW tabViewItemAtIndex:0];
         [[aTabViewItem identifier] terminateAllSessions];
         PTYTab* theTab = [aTabViewItem identifier];
@@ -940,6 +942,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [autocompleteView autorelease];
         autocompleteView = nil;
     }
+    [self.window performSelector:@selector(makeKeyWindow) withObject:nil afterDelay:0];
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification
@@ -3961,8 +3964,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)tabView:(NSTabView*)aTabView
     willDropTabViewItem:(NSTabViewItem *)tabViewItem
-               inTabBar:(PSMTabBarControl *)aTabBarControl
-{
+               inTabBar:(PSMTabBarControl *)aTabBarControl {
     PTYTab *aTab = [tabViewItem identifier];
     for (PTYSession* aSession in [aTab sessions]) {
         [aSession setIgnoreResizeNotifications:YES];
@@ -4320,6 +4322,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // Note: this assume that self is the front window (it should be!). It is smart enough to create
     // a tmux tab if the user wants one (or ask if needed).
     [itad newSession:nil];
+}
+
+- (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
+    PTYTab *tab = tabViewItem.identifier;
+    [tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
+    [tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
+    [tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
 }
 
 - (void)updateTabColors
@@ -4963,6 +4972,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
     if ([[self currentTab] isTmuxTab]) {
+        [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane]
                                                      vertically:isVertical];
         return;
@@ -4973,6 +4983,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
 {
     if ([[self currentTab] isTmuxTab]) {
+        [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
         return;
     }
@@ -5028,10 +5039,17 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                       userInfo:nil];
 }
 
+- (void)willSplitTmuxPane {
+    for (PTYSession *session in self.allSessions) {
+        session.sessionIsSeniorToTmuxSplitPane = YES;
+    }
+}
+
 - (void)splitVertically:(BOOL)isVertical
            withBookmark:(Profile*)theBookmark
           targetSession:(PTYSession*)targetSession {
     if ([targetSession isTmuxClient]) {
+        [self willSplitTmuxPane];
         [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
         return;
     }

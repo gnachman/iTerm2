@@ -12,33 +12,34 @@
 extern NSString *const kPSMModifierChangedNotification;
 extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifier changed notification
 
-#define PSMTabDragDidEndNotification @"PSMTabDragDidEndNotification"
-#define PSMTabDragDidBeginNotification @"PSMTabDragDidBeginNotification"
+extern NSString *const PSMTabDragDidEndNotification;
+extern NSString *const PSMTabDragDidBeginNotification;
 
-#define kPSMTabBarControlHeight 22
+extern const CGFloat kPSMTabBarControlHeight;
+
 // internal cell border
-#define MARGIN_X        6
-#define MARGIN_Y        3.5
+extern const CGFloat kSPMTabBarCellInternalXMargin;
+extern const CGFloat kSPMTabBarCellInternalYMargin;
+
 // padding between objects
-#define kPSMTabBarCellPadding 4
-#define kPSMTabBarCellIconPadding 0
+extern const CGFloat kPSMTabBarCellPadding;
+extern const CGFloat kPSMTabBarCellIconPadding;
 // fixed size objects
-#define kPSMMinimumTitleWidth 30
-#define kPSMTabBarIndicatorWidth 16.0
-#define kPSMTabBarIconWidth 16.0
-#define kPSMHideAnimationSteps 2.0
+extern const CGFloat kPSMMinimumTitleWidth;
+extern const CGFloat kPSMTabBarIndicatorWidth;
+extern const CGFloat kPSMTabBarIconWidth;
+extern const CGFloat kPSMHideAnimationSteps;
 
 // Value used in _currentStep to indicate that resizing operation is not in progress
-#define kPSMIsNotBeingResized -1
+extern const NSInteger kPSMIsNotBeingResized;
 
 // Value used in _currentStep when a resizing operation has just been started
-#define kPSMStartResizeAnimation 0
+extern const NSInteger kPSMStartResizeAnimation;
 
 @class PSMOverflowPopUpButton;
 @class PSMRolloverButton;
 @class PSMTabBarCell;
 @class PSMTabBarControl;
-
 @protocol PSMTabStyle;
 
 // Tab views controlled by the tab bar may expect this protocol to be conformed to by their delegate.
@@ -50,10 +51,12 @@ extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifie
 - (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)sender;
 - (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender;
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+// Set object count, icon, etc.
+- (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem;
 @end
 
 // These methods are KVO-observed.
-@protocol PSMTabBarControlRepresentedObjectIdentifierProtocol <NSObject>
+@protocol PSMTabBarControlRepresentedObjectIdentifierProtocol<NSObject>
 @optional
 - (BOOL)isProcessing;
 - (void)setIsProcessing:(BOOL)processing;
@@ -63,7 +66,7 @@ extern NSString *const kPSMTabModifierKey;  // Key for user info dict in modifie
 - (void)setObjectCount:(int)objectCount;
 @end
 
-@protocol PSMTabBarControlDelegate <NSTabViewDelegate>
+@protocol PSMTabBarControlDelegate<NSTabViewDelegate>
 @optional
 - (NSDragOperation)tabView:(NSTabView *)aTabView
     draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tabView;
@@ -127,19 +130,19 @@ typedef enum {
 } PSMTabBarOrientation;
 
 enum {
-    PSMTab_SelectedMask                 = 1 << 1,
-    PSMTab_LeftIsSelectedMask       = 1 << 2,
-    PSMTab_RightIsSelectedMask          = 1 << 3,
-    PSMTab_PositionLeftMask     = 1 << 4,
-    PSMTab_PositionMiddleMask       = 1 << 5,
-    PSMTab_PositionRightMask        = 1 << 6,
-    PSMTab_PositionSingleMask       = 1 << 7
+    PSMTab_SelectedMask = 1 << 1,
+    PSMTab_LeftIsSelectedMask = 1 << 2,
+    PSMTab_RightIsSelectedMask = 1 << 3,
+    PSMTab_PositionLeftMask = 1 << 4,
+    PSMTab_PositionMiddleMask = 1 << 5,
+    PSMTab_PositionRightMask = 1 << 6,
+    PSMTab_PositionSingleMask = 1 << 7
 };
 
 enum {
-    PSMTab_TopTab           = 0,
-    PSMTab_BottomTab        = 1,
-    PSMTab_LeftTab          = 2,
+    PSMTab_TopTab = 0,
+    PSMTab_BottomTab = 1,
+    PSMTab_LeftTab = 2,
 };
 
 // This view provides a control interface to manage a regular NSTabView.  It looks and works like
@@ -147,14 +150,11 @@ enum {
 @interface PSMTabBarControl : NSControl<
   NSDraggingSource,
   PSMProgressIndicatorDelegate,
-  PSMTabViewDelegate> 
-
-// control characteristics
-+ (NSBundle *)bundle;
+  PSMTabViewDelegate>
 
 // control configuration
-@property(nonatomic, assign) PSMTabBarOrientation orientation;
 @property(nonatomic, assign) BOOL disableTabClose;
+@property(nonatomic, assign) PSMTabBarOrientation orientation;
 @property(nonatomic, retain) id<PSMTabStyle> style;
 @property(nonatomic, assign) BOOL hideForSingleTab;
 @property(nonatomic, assign) BOOL showAddTabButton;
@@ -169,17 +169,19 @@ enum {
 @property(nonatomic, assign) BOOL automaticallyAnimates;
 @property(nonatomic, assign) int tabLocation;
 
-@property(nonatomic, retain) NSTabView *tabView;
+@property(nonatomic, retain) IBOutlet NSTabView *tabView;
 @property(nonatomic, assign) id<PSMTabBarControlDelegate> delegate;
 @property(nonatomic, retain) id partnerView;
+@property(nonatomic, readonly) PSMOverflowPopUpButton *overflowPopUpButton;
 
+// control characteristics
++ (NSBundle *)bundle;
 
 - (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex;
 - (void)moveTabAtIndex:(NSInteger)i1 toIndex:(NSInteger)i2;
 
 // the buttons
 - (PSMRolloverButton *)addTabButton;
-- (PSMOverflowPopUpButton *)overflowPopUpButton;
 
 // tab information
 - (NSMutableArray *)representedTabViewItems;
