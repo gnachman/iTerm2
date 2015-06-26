@@ -102,8 +102,8 @@ DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging
 DEFINE_BOOL(logDrawingPerformance, NO, @"Debugging: Log stats about text drawing performance to console.\nUsed for performance testing.");
 
 #pragma mark - Session Restoration
-DEFINE_BOOL(runJobsInServers, NO, @"Session Restoration: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
-DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session Restoration: User-initiated Quit (⌘-Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
+DEFINE_BOOL(runJobsInServers, YES, @"Session Restoration: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
+DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session Restoration: User-initiated Quit (⌘Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
 
 #pragma mark - Window
 DEFINE_BOOL(openFileInNewWindows, NO, @"Windows: Open files in new windows, not new tabs.\nThis affects shell scripts opened from Finder, for example.");
