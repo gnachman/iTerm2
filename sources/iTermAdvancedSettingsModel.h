@@ -102,5 +102,6 @@
 
 + (BOOL)noSyncTipsDisabled;
 + (int)numberOfLinesForAccessibility;
++ (BOOL)useOpenDirectory;
 
 @end
