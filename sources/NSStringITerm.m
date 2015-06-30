@@ -538,7 +538,7 @@ int decode_utf8_char(const unsigned char *datap,
     int resultLength = apr_base64_decode(decodedBuffer, buffer);
     return [[[NSString alloc] initWithBytes:decodedBuffer
                                      length:resultLength
-                                   encoding:NSISOLatin1StringEncoding] autorelease];
+                                   encoding:encoding] autorelease];
 }
 
 - (NSString *)stringByTrimmingTrailingWhitespace {
