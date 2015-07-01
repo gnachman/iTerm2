@@ -6303,7 +6303,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)screenSetBadgeFormat:(NSString *)theFormat {
-    theFormat = [theFormat stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    theFormat = [theFormat stringByBase64DecodingStringWithEncoding:self.encoding];
     [self setSessionSpecificProfileValues:@{ KEY_BADGE_FORMAT: theFormat }];
     _textview.badgeLabel = [self badgeLabel];
 }
