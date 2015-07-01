@@ -6611,8 +6611,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 // Turn off session logging in the current session.
-- (IBAction)logStop:(id)sender
-{
+- (IBAction)logStop:(id)sender {
     if ([[self currentSession] logging]) {
         [[self currentSession] logStop];
     }

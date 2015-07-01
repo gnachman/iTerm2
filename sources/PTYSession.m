@@ -1320,7 +1320,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
-        [_shell loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
+        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:itermId]];
     }
     @synchronized(self) {
       _registered = YES;
@@ -3075,16 +3075,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     panel.nameFieldStringValue = @"";
     sts = [panel runModal];
     if (sts == NSOKButton) {
-        BOOL logsts = [_shell loggingStartWithPath:panel.URL.path];
+        BOOL logsts = [_shell startLoggingToFileWithPath:panel.URL.path];
         if (logsts == NO) {
             NSBeep();
         }
     }
 }
 
-- (void)logStop
-{
-    [_shell loggingStop];
+- (void)logStop {
+    [_shell stopLogging];
 }
 
 - (void)clearBuffer {

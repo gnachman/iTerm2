@@ -85,6 +85,8 @@ setup_tty_param(struct termios* term,
 @interface PTYTask ()
 @property(atomic, assign) BOOL hasMuteCoprocess;
 @property(atomic, assign) BOOL coprocessOnlyTaskIsDead;
+@property(atomic, retain) NSFileHandle *logHandle;
+@property(nonatomic, copy) NSString *logPath;
 @end
 
 @implementation PTYTask {
@@ -100,8 +102,6 @@ setup_tty_param(struct termios* term,
     NSLock* writeLock;  // protects writeBuffer
     NSMutableData* writeBuffer;
 
-    NSString* logPath;
-    NSFileHandle* logHandle;
 
     Coprocess *coprocess_;  // synchronized (self)
     BOOL brokenPipe_;
@@ -144,11 +144,14 @@ setup_tty_param(struct termios* term,
     }
 
     [self closeFileDescriptor];
+    [_logPath release];
+    [_logHandle closeFile];
+    [_logHandle release];
     [writeLock release];
     [writeBuffer release];
     [tty release];
     [path release];
-        [command_ release];
+    [command_ release];
 
     @synchronized (self) {
         [[self coprocess] mainProcessDidTerminate];
@@ -716,10 +719,10 @@ static int MyForkPty(int *amaster,
 }
 
 - (void)logData:(const char *)buffer length:(int)length {
-    @synchronized(logHandle) {
+    @synchronized(self) {
         if ([self logging]) {
-            [logHandle writeData:[NSData dataWithBytes:buffer
-                                                length:length]];
+            [_logHandle writeData:[NSData dataWithBytes:buffer
+                                                 length:length]];
         }
     }
 }
@@ -840,10 +843,9 @@ static int MyForkPty(int *amaster,
     }
 }
 
-- (void)stop
-{
+- (void)stop {
     self.paused = NO;
-    [self loggingStop];
+    [self stopLogging];
     [self sendSignal:SIGHUP];
     [self killServerIfRunning];
 
@@ -906,47 +908,35 @@ static int MyForkPty(int *amaster,
     return path;
 }
 
-- (BOOL)loggingStartWithPath:(NSString*)aPath
-{
-    BOOL rc;
-    @synchronized(logHandle) {
-        [logPath autorelease];
-        logPath = [[aPath stringByStandardizingPath] copy];
+- (BOOL)startLoggingToFileWithPath:(NSString*)aPath {
+    @synchronized(self) {
+        self.logPath = [aPath stringByStandardizingPath];
 
-        [logHandle autorelease];
-        logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
-        if (logHandle == nil) {
-            NSFileManager* fm = [NSFileManager defaultManager];
-            [fm createFileAtPath:logPath contents:nil attributes:nil];
-            logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
+        [_logHandle closeFile];
+        self.logHandle = [NSFileHandle fileHandleForWritingAtPath:_logPath];
+        if (_logHandle == nil) {
+            NSFileManager *fileManager = [NSFileManager defaultManager];
+            [fileManager createFileAtPath:_logPath contents:nil attributes:nil];
+            self.logHandle = [NSFileHandle fileHandleForWritingAtPath:_logPath];
         }
-        [logHandle retain];
-        [logHandle truncateFileAtOffset:0];
+        [_logHandle truncateFileAtOffset:0];
 
-        rc = (logHandle == nil ? NO : YES);
-    }
-    return rc;
-}
-
-- (void)loggingStop
-{
-    @synchronized(logHandle) {
-        [logHandle closeFile];
-
-        [logPath autorelease];
-        [logHandle autorelease];
-        logPath = nil;
-        logHandle = nil;
+        return self.logging;
     }
 }
 
-- (BOOL)logging
-{
-    BOOL rc;
-    @synchronized(logHandle) {
-        rc = (logHandle == nil ? NO : YES);
+- (void)stopLogging {
+    @synchronized(self) {
+        [_logHandle closeFile];
+        self.logPath = nil;
+        self.logHandle = nil;
     }
-    return rc;
+}
+
+- (BOOL)logging {
+    @synchronized(self) {
+        return (_logHandle != nil);
+    }
 }
 
 - (NSString*)description {
