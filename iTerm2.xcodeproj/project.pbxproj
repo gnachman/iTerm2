@@ -1798,7 +1798,6 @@
 		1D70BA341680158700824B72 /* PTYFontInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYFontInfo.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D72438C11F416E500BD4924 /* LineBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBuffer.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; tabWidth = 4; };
-		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
 		1D78B55C183EE1C000014D49 /* LineBufferPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferPosition.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D78B55D183EE1C000014D49 /* LineBufferPosition.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferPosition.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D7B9A671491D82F003A2A22 /* IntervalMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalMap.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3426,7 +3425,6 @@
 				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
-				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
 				A671C065192981D000A7F796 /* NSStringCategoryTest.h */,
 				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
 				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
