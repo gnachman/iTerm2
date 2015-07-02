@@ -6,11 +6,14 @@
 //
 //
 
-#import "VT100XtermParserTest.h"
+#import <XCTest/XCTest.h>
 #import "CVector.h"
 #import "iTermParser.h"
 #import "VT100XtermParser.h"
 #import "VT100Token.h"
+
+@interface VT100XtermParserTest : XCTestCase
+@end
 
 @implementation VT100XtermParserTest {
     NSMutableDictionary *_savedState;
@@ -18,12 +21,12 @@
     CVector _incidentals;
 }
 
-- (void)setup {
+- (void)setUp {
     _savedState = [NSMutableDictionary dictionary];
     CVectorCreate(&_incidentals, 1);
 }
 
-- (void)teardown {
+- (void)tearDown {
     CVectorDestroy(&_incidentals);
 }
 
