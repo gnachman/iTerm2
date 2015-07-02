@@ -1,15 +1,18 @@
 //
-//  SemanticHistoryTest.m
+//  iTermSemanticHistoryTest.m
 //  iTerm2
 //
 //  Created by George Nachman on 12/5/14.
 //
 //
 
-#import "SemanticHistoryTest.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermSemanticHistoryPrefsController.h"
 #import "NSFileManager+iTerm.h"
+#import <XCTest/XCTest.h>
+
+@interface iTermSemanticHistoryTest : XCTestCase
+@end
 
 @interface iTermFakeFileManager : NSFileManager
 @property(nonatomic, readonly) NSMutableSet *files;
@@ -146,15 +149,15 @@
 
 @end
 
-@interface SemanticHistoryTest ()<iTermSemanticHistoryControllerDelegate>
+@interface iTermSemanticHistoryTest ()<iTermSemanticHistoryControllerDelegate>
 @end
 
-@implementation SemanticHistoryTest {
+@implementation iTermSemanticHistoryTest {
     TestSemanticHistoryController *_semanticHistoryController;
     NSString *_coprocessCommand;
 }
 
-- (void)setup {
+- (void)setUp {
     _semanticHistoryController = [[[TestSemanticHistoryController alloc] init] autorelease];
     _semanticHistoryController.delegate = self;
     _coprocessCommand = nil;
