@@ -47,7 +47,7 @@
 #import "PTYScrollView.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
-#import "RegexKitLite/RegexKitLite.h"
+#import "RegexKitLite.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SmartMatch.h"

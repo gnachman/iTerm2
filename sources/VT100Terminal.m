@@ -160,7 +160,6 @@ typedef enum {
     COLORCODE_WATER = 6,
     COLORCODE_WHITE = 7,
     COLORCODE_256 = 8,
-    COLORS
 } colorCode;
 
 // Color constants

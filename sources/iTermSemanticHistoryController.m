@@ -27,7 +27,7 @@
 #import "iTermSemanticHistoryPrefsController.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
-#import "RegexKitLite/RegexKitLite.h"
+#import "RegexKitLite.h"
 
 NSString *const kSemanticHistoryPathSubstitutionKey = @"semanticHistory.path";
 NSString *const kSemanticHistoryPrefixSubstitutionKey = @"semanticHistory.prefix";

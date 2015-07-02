@@ -55,7 +55,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "Growl.framework/Headers/GrowlApplicationBridge.h"
+#import <Growl/Growl.h>
 
 @interface iTermGrowlDelegate : NSObject <
   GrowlApplicationBridgeDelegate,

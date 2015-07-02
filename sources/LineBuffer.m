@@ -31,7 +31,7 @@
 
 #import "BackgroundThread.h"
 #import "LineBlock.h"
-#import "RegexKitLite/RegexKitLite.h"
+#import "RegexKitLite.h"
 
 static NSString *const kLineBufferVersionKey = @"Version";
 static NSString *const kLineBufferBlocksKey = @"Blocks";
