@@ -260,7 +260,6 @@
 		1D6ED8C419AEA20D005A7799 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D6ED8C519AEA20D005A7799 /* UKCrashReporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAA512D64022008225A9 /* UKCrashReporter.h */; };
 		1D6ED8C619AEA20D005A7799 /* UKNibOwner.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAA912D64022008225A9 /* UKNibOwner.h */; };
-		1D6ED8C719AEA20D005A7799 /* VT100GridTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B12180B819A004E56D5 /* VT100GridTest.h */; };
 		1D6ED8C819AEA20D005A7799 /* CommandHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C0C187BC4C3004A60AF /* CommandHistory.h */; };
 		1D6ED8C919AEA20D005A7799 /* UKSystemInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D94EAAB12D64022008225A9 /* UKSystemInfo.h */; };
 		1D6ED8CA19AEA20D005A7799 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
@@ -672,7 +671,6 @@
 		1DD39AD7180B8118004E56D5 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
 		1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39ADF180B8118004E56D5 /* InfoPlist.strings */; };
 		1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DD39AE5180B8118004E56D5 /* Credits.rtf */; };
-		1DD39B14180B819A004E56D5 /* VT100GridTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B12180B819A004E56D5 /* VT100GridTest.h */; };
 		1DD39B1A180B82F5004E56D5 /* DebugLogging.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B18180B82F5004E56D5 /* DebugLogging.h */; };
 		1DD39B7B180B8842004E56D5 /* libicucore.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39B7A180B8842004E56D5 /* libicucore.dylib */; };
 		1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */; };
@@ -1149,6 +1147,7 @@
 		A6BDB0411B45E8BA00F511E6 /* VT100XtermParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */; };
 		A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */; };
 		A6BDB0441B45E8EE00F511E6 /* VT100ScreenTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */; };
+		A6BDB0461B45EAE700F511E6 /* VT100GridTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0451B45EAE700F511E6 /* VT100GridTest.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
@@ -1485,7 +1484,6 @@
 		A6C764021B45C72F00E3C992 /* PTYTextViewTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */; };
 		A6C764031B45C72F00E3C992 /* SemanticHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A63679821A328E7D000DB943 /* SemanticHistoryTest.m */; };
 		A6C764041B45C72F00E3C992 /* VT100CSIParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF7B731A5F581700D96409 /* VT100CSIParserTest.m */; };
-		A6C764061B45C72F00E3C992 /* VT100GridTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B13180B819A004E56D5 /* VT100GridTest.m */; };
 		A6C764161B45C77100E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C764171B45C7B200E3C992 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
 		A6C7642A1B45CBA800E3C992 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
@@ -1979,8 +1977,6 @@
 		1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermTests-Prefix.pch"; sourceTree = "<group>"; };
 		1DD39AE6180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		1DD39AF5180B8119004E56D5 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		1DD39B12180B819A004E56D5 /* VT100GridTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100GridTest.h; path = iTermTests/VT100GridTest.h; sourceTree = "<group>"; };
-		1DD39B13180B819A004E56D5 /* VT100GridTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = VT100GridTest.m; path = iTermTests/VT100GridTest.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39B18180B82F5004E56D5 /* DebugLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = DebugLogging.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39B19180B82F5004E56D5 /* DebugLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DebugLogging.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39B7A180B8842004E56D5 /* libicucore.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libicucore.dylib; path = usr/lib/libicucore.dylib; sourceTree = SDKROOT; };
@@ -2453,6 +2449,7 @@
 		A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100XtermParserTest.m; sourceTree = "<group>"; };
 		A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEquivalenceClassSetTest.m; sourceTree = "<group>"; };
 		A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenTest.m; sourceTree = "<group>"; };
+		A6BDB0451B45EAE700F511E6 /* VT100GridTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100GridTest.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
@@ -3431,7 +3428,6 @@
 				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
 				A63679811A328E7D000DB943 /* SemanticHistoryTest.h */,
 				A6DF7B721A5F581700D96409 /* VT100CSIParserTest.h */,
-				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
 				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
 				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
 				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
@@ -3441,7 +3437,6 @@
 				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
 				A63679821A328E7D000DB943 /* SemanticHistoryTest.m */,
 				A6DF7B731A5F581700D96409 /* VT100CSIParserTest.m */,
-				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1DD39ADC180B8118004E56D5 /* iTermTests */,
 			);
 			name = Tests;
@@ -4004,6 +3999,7 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				A6BDB0451B45EAE700F511E6 /* VT100GridTest.m */,
 				A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */,
 				A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */,
 				A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */,
@@ -4254,7 +4250,6 @@
 				A6E525DE1A9C5730007B898E /* VT100StateMachine.h in Headers */,
 				1D6ED8C619AEA20D005A7799 /* UKNibOwner.h in Headers */,
 				1D468F051B06A79000226083 /* StopTrigger.h in Headers */,
-				1D6ED8C719AEA20D005A7799 /* VT100GridTest.h in Headers */,
 				1D6ED8C819AEA20D005A7799 /* CommandHistory.h in Headers */,
 				1D6ED8C919AEA20D005A7799 /* UKSystemInfo.h in Headers */,
 				1D6ED8CA19AEA20D005A7799 /* iTermWarning.h in Headers */,
@@ -4615,7 +4610,6 @@
 				A6E77FB11A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.h in Headers */,
 				A6E77F811A23F484009B1CB6 /* iTermFindOnPageHelper.h in Headers */,
 				1D94EAB212D64022008225A9 /* UKNibOwner.h in Headers */,
-				1DD39B14180B819A004E56D5 /* VT100GridTest.h in Headers */,
 				A6057C0E187BC4C3004A60AF /* CommandHistory.h in Headers */,
 				1D94EAB412D64022008225A9 /* UKSystemInfo.h in Headers */,
 				A6E525DF1A9C5730007B898E /* VT100StateTransition.h in Headers */,
@@ -5575,7 +5569,6 @@
 				1D1F8C1D1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 				A6C764041B45C72F00E3C992 /* VT100CSIParserTest.m in Sources */,
 				A6C764001B45C72F00E3C992 /* NSStringCategoryTest.m in Sources */,
-				A6C764061B45C72F00E3C992 /* VT100GridTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5923,6 +5916,7 @@
 				A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */,
 				A6BDB0411B45E8BA00F511E6 /* VT100XtermParserTest.m in Sources */,
 				A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */,
+				A6BDB0461B45EAE700F511E6 /* VT100GridTest.m in Sources */,
 				A6BDB0441B45E8EE00F511E6 /* VT100ScreenTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

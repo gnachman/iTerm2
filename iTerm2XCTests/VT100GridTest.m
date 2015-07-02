@@ -7,16 +7,19 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import <XCTest/XCTest.h>
 #import "DVRBuffer.h"
 #import "LineBuffer.h"
-#import "VT100GridTest.h"
 #import "VT100Grid.h"
+
+@interface VT100GridTest : XCTestCase
+@end
 
 #define ASSERT_STRUCTS_EQUAL(type, a, b) \
 do { \
   type tempA = a; \
   type tempB = b; \
-  assert(!memcmp(&tempA, &tempB, sizeof(type))); \
+  XCTAssert(!memcmp(&tempA, &tempB, sizeof(type))); \
 } while (0)
 
 @interface VT100GridTest () <VT100GridDelegate>
@@ -31,7 +34,7 @@ do { \
 }
 
 // This is run before each test.
-- (void)setup {
+- (void)setUp {
     wraparoundMode_ = YES;
     foregroundColor_.foregroundColor = ALTSEM_DEFAULT;
     foregroundColor_.foregroundColorMode = ColorModeAlternate;
@@ -61,37 +64,37 @@ do { \
     VT100GridRect rect = VT100GridRectMake(7, 8, 9, 10);
     VT100GridRun run = VT100GridRunMake(11, 12, 13);
 
-    assert(coord.x == 1);
-    assert(coord.y == 2);
-    assert(size.width == 3);
-    assert(size.height == 4);
-    assert(range.location = 5);
-    assert(range.length = 6);
-    assert(rect.origin.x == 7);
-    assert(rect.origin.y == 8);
-    assert(rect.size.width == 9);
-    assert(rect.size.height == 10);
-    assert(run.origin.x == 11);
-    assert(run.origin.y == 12);
-    assert(run.length == 13);
+    XCTAssert(coord.x == 1);
+    XCTAssert(coord.y == 2);
+    XCTAssert(size.width == 3);
+    XCTAssert(size.height == 4);
+    XCTAssert(range.location = 5);
+    XCTAssert(range.length = 6);
+    XCTAssert(rect.origin.x == 7);
+    XCTAssert(rect.origin.y == 8);
+    XCTAssert(rect.size.width == 9);
+    XCTAssert(rect.size.height == 10);
+    XCTAssert(run.origin.x == 11);
+    XCTAssert(run.origin.y == 12);
+    XCTAssert(run.length == 13);
 
-    assert(VT100GridRangeMax(range) == 10);
+    XCTAssert(VT100GridRangeMax(range) == 10);
 
     VT100GridRun trivialRun = VT100GridRunMake(1, 1, 1);
     VT100GridCoord runMax = VT100GridRunMax(trivialRun, 100);
-    assert(runMax.x == 1);
-    assert(runMax.y == 1);
+    XCTAssert(runMax.x == 1);
+    XCTAssert(runMax.y == 1);
 
     runMax = VT100GridRunMax(run, 100);
-    assert(runMax.x == 11 + 13 - 1);
-    assert(runMax.y == 12);
+    XCTAssert(runMax.x == 11 + 13 - 1);
+    XCTAssert(runMax.y == 12);
     runMax = VT100GridRunMax(run, 12);
-    assert(runMax.x == 11);
-    assert(runMax.y == 13);
+    XCTAssert(runMax.x == 11);
+    XCTAssert(runMax.y == 13);
 
     VT100GridCoord rectMax = VT100GridRectMax(rect);
-    assert(rectMax.x == 7 + 9 - 1);
-    assert(rectMax.y == 8 + 10 - 1);
+    XCTAssert(rectMax.x == 7 + 9 - 1);
+    XCTAssert(rectMax.y == 8 + 10 - 1);
 
     VT100GridRun runFromCoords = VT100GridRunFromCoords(VT100GridCoordMake(1, 2),
                                                         VT100GridCoordMake(2, 4),
@@ -101,9 +104,9 @@ do { \
     // .1234
     // 56789
     // 0ab..
-    assert(runFromCoords.length == 12);
-    assert(runFromCoords.origin.x == 1);
-    assert(runFromCoords.origin.y == 2);
+    XCTAssert(runFromCoords.length == 12);
+    XCTAssert(runFromCoords.origin.x == 1);
+    XCTAssert(runFromCoords.origin.y == 2);
 }
 
 - (void)testTypeValues {
@@ -149,7 +152,7 @@ do { \
 
 - (void)testInitialization {
     VT100Grid *grid = [self smallGrid];
-    assert([[grid compactLineDump] isEqualToString:@"..\n.."]);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"..\n.."]);
 }
 
 - (void)testLookUpScreenCharsByLineNumber {
@@ -159,195 +162,195 @@ do { \
     line = [grid screenCharsAtLineNumber:1];
     line[0].code = 'b';
     line = [grid screenCharsAtLineNumber:0];
-    assert(line[0].code == 'a');
+    XCTAssert(line[0].code == 'a');
     line = [grid screenCharsAtLineNumber:1];
-    assert(line[0].code == 'b');
-    assert([[grid compactLineDump] isEqualToString:@"a.\nb."]);
+    XCTAssert(line[0].code == 'b');
+    XCTAssert([[grid compactLineDump] isEqualToString:@"a.\nb."]);
 }
 
 - (void)testSetCursor {
     VT100Grid *grid = [self smallGrid];
     [grid setCursor:VT100GridCoordMake(1, 1)];
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 1);
     [grid setCursor:VT100GridCoordMake(2, 1)];
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
     [grid setCursor:VT100GridCoordMake(3, 1)];
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
     [grid setCursor:VT100GridCoordMake(3, 2)];
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorY == 1);
     [grid setCursor:VT100GridCoordMake(-1, -1)];
-    assert(grid.cursorX == 0 && grid.cursorY == 0);
+    XCTAssert(grid.cursorX == 0 && grid.cursorY == 0);
 }
 
 - (void)testMarkCharDirty {
     VT100Grid *grid = [self smallGrid];
     VT100GridCoord coord = VT100GridCoordMake(1,1);
-    assert(![grid isCharDirtyAt:coord]);
-    assert(![grid isAnyCharDirty]);
+    XCTAssert(![grid isCharDirtyAt:coord]);
+    XCTAssert(![grid isAnyCharDirty]);
 
     [grid markCharDirty:YES at:coord updateTimestamp:NO];
-    assert([grid isCharDirtyAt:coord]);
-    assert([grid isAnyCharDirty]);
+    XCTAssert([grid isCharDirtyAt:coord]);
+    XCTAssert([grid isAnyCharDirty]);
     [grid markCharDirty:NO at:coord updateTimestamp:YES];
 
-    assert(![grid isCharDirtyAt:coord]);
-    assert(![grid isAnyCharDirty]);
+    XCTAssert(![grid isCharDirtyAt:coord]);
+    XCTAssert(![grid isAnyCharDirty]);
 }
 
 - (void)testMarkAndClearDirty {
     // This test assumes that underlying implementation of dirty chars is a range per line.
     VT100Grid *grid = [self largeGrid];
     [grid markCharDirty:YES at:VT100GridCoordMake(1,1) updateTimestamp:NO];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
     
     [grid markCharDirty:YES at:VT100GridCoordMake(3,1) updateTimestamp:NO];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
     
     [grid markCharDirty:NO at:VT100GridCoordMake(2,1) updateTimestamp:NO];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
 
     [grid markCharDirty:NO at:VT100GridCoordMake(1,1) updateTimestamp:NO];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
 
     [grid markCharDirty:NO at:VT100GridCoordMake(3,1) updateTimestamp:NO];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
     
     [grid markCharDirty:NO at:VT100GridCoordMake(2,1) updateTimestamp:NO];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
     
     [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(5, 1)];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(5, 1)];
-    assert([grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(2, 1) to:VT100GridCoordMake(4, 1)];
-    assert([grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(2, 1)];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(2, 1)];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(3, 1)];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(8, 1)];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(5, 1)];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(3, 1) to:VT100GridCoordMake(8, 1)];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 
     [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(2, 1) to:VT100GridCoordMake(2, 1)];
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    assert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    assert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
+    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
+    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
 }
 
 - (void)testMarkCharsDirtyInRect {
     VT100Grid *grid = [self mediumGrid];
 
-    assert([[grid compactDirtyDump] isEqualToString:@"cccc\ncccc\ncccc\ncccc"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\ncccc\ncccc\ncccc"]);
     [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(2, 2)];
-    assert([[grid compactDirtyDump] isEqualToString:@"cccc\ncddc\ncddc\ncccc"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\ncddc\ncddc\ncccc"]);
     [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(2, 1) to:VT100GridCoordMake(2, 2)];
-    assert([[grid compactDirtyDump] isEqualToString:@"cccc\ncdcc\ncdcc\ncccc"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\ncdcc\ncdcc\ncccc"]);
 }
 
 - (void)testMarkAllCharsDirty {
     VT100Grid *grid = [self smallGrid];
-    assert([[grid compactDirtyDump] isEqualToString:@"cc\ncc"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cc\ncc"]);
     [grid markAllCharsDirty:YES];
-    assert([[grid compactDirtyDump] isEqualToString:@"dd\ndd"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"dd\ndd"]);
     [grid markAllCharsDirty:NO];
-    assert([[grid compactDirtyDump] isEqualToString:@"cc\ncc"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cc\ncc"]);
 }
 
 - (void)gridCursorDidMove {
@@ -402,7 +405,7 @@ do { \
         } else if ([line characterAtIndex:j] == '>') {
             s[j].code = EOL_DWC;
         } else {
-            assert(false);
+            XCTAssert(false);
         }
     }
     return grid;
@@ -410,31 +413,31 @@ do { \
 
 - (void)testNumberOfLinesUsed {
     VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\n....\n...."];
-    assert([grid numberOfLinesUsed] == 2);
+    XCTAssert([grid numberOfLinesUsed] == 2);
     grid.cursorY = 1;
-    assert([grid numberOfLinesUsed] == 2);
+    XCTAssert([grid numberOfLinesUsed] == 2);
     grid.cursorY = 2;
-    assert([grid numberOfLinesUsed] == 3);
+    XCTAssert([grid numberOfLinesUsed] == 3);
 
     grid = [self smallGrid];
-    assert([grid numberOfLinesUsed] == 1);
+    XCTAssert([grid numberOfLinesUsed] == 1);
 }
 
 - (void)testAppendLineToLineBuffer {
     VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\n....\n...."];
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [grid appendLines:2 toLineBuffer:lineBuffer];
-    assert([[lineBuffer debugString] isEqualToString:@"abcd!\nefgh!"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!\nefgh!"]);
 
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd!\nefgh+\n....!\n....!"];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [grid appendLines:2 toLineBuffer:lineBuffer];
-    assert([[lineBuffer debugString] isEqualToString:@"abcd!\nefgh+"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!\nefgh+"]);
 
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd+\nefgh!\n....!\n....!"];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [grid appendLines:2 toLineBuffer:lineBuffer];
-    assert([[lineBuffer debugString] isEqualToString:@"abcdefgh!"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"abcdefgh!"]);
 
     grid = [self gridFromCompactLines:@"abcd\nefgh\n....\n...."];
     lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
@@ -442,8 +445,8 @@ do { \
     grid.cursorY = 1;
     [grid appendLines:2 toLineBuffer:lineBuffer];
     int x;
-    assert([lineBuffer getCursorInLastLineWithWidth:4 atX:&x]);
-    assert(x == 2);
+    XCTAssert([lineBuffer getCursorInLastLineWithWidth:4 atX:&x]);
+    XCTAssert(x == 2);
 
     // Test that the cursor gets hoisted from the start of a blank line following a soft-eol to the
     // end of the preceding line.
@@ -452,15 +455,15 @@ do { \
     grid.cursorX = 0;
     grid.cursorY = 2;
     [grid appendLines:2 toLineBuffer:lineBuffer];
-    assert([lineBuffer getCursorInLastLineWithWidth:4 atX:&x]);
-    assert(x == 4);
+    XCTAssert([lineBuffer getCursorInLastLineWithWidth:4 atX:&x]);
+    XCTAssert(x == 4);
 }
 
 - (void)testLengthOfLineNumber {
     VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefg.\n....\n...."];
-    assert([grid lengthOfLineNumber:0] == 4);
-    assert([grid lengthOfLineNumber:1] == 3);
-    assert([grid lengthOfLineNumber:2] == 0);
+    XCTAssert([grid lengthOfLineNumber:0] == 4);
+    XCTAssert([grid lengthOfLineNumber:1] == 3);
+    XCTAssert([grid lengthOfLineNumber:2] == 0);
 }
 
 - (void)testMoveCursorDownOneLineNoScroll {
@@ -473,12 +476,12 @@ do { \
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:NO
                                             willScroll:^{
-                                                assert(false);
+                                                XCTAssert(false);
                                             }];
-    assert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
-    assert([[lineBuffer debugString] isEqualToString:@""]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 1);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 1);
 
     // Test cursor below scrollBottom but above last line.
     grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
@@ -490,9 +493,9 @@ do { \
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:NO
                                             willScroll:nil];
-    assert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 2);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"abcd\nefgh\nijkl\nmnop"]);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 2);
 
     // Test whole screen scrolling
     grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
@@ -506,11 +509,11 @@ do { \
                                             willScroll:^{
                                                 scrolled = YES;
                                             }];
-    assert(scrolled);
-    assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 3);
+    XCTAssert(scrolled);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 3);
 
     // Test whole screen scrolling, verify soft eol's are respected
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd+\nefgh!\nijkl!\nmnop!"];
@@ -521,10 +524,10 @@ do { \
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:NO
                                             willScroll:nil];
-    assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"abcd+"]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 3);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd+"]);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 3);
 
     // Test scrolling when there's a full-width region touching the top of the screen
     grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
@@ -536,10 +539,10 @@ do { \
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:YES
                                             willScroll:nil];
-    assert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
-    assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 1);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 1);
 
     // Same, but with useScrollbackWithRegion = NO
     grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
@@ -551,10 +554,10 @@ do { \
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:NO
                                             willScroll:nil];
-    assert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
-    assert([[lineBuffer debugString] isEqualToString:@""]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 1);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\n....\nijkl\nmnop"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 1);
 
     // Test that the dropped line count is correct.
     grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
@@ -569,11 +572,11 @@ do { \
                                               useScrollbackWithRegion:NO
                                                            willScroll:nil];
     }
-    assert(dropped == 2);
-    assert([[grid compactLineDump] isEqualToString:@"mnop\n....\n....\n...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"ijkl!"]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 3);
+    XCTAssert(dropped == 2);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"mnop\n....\n....\n...."]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"ijkl!"]);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 3);
 
     // Test with both vertical and horizontal scroll region
     grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
@@ -587,10 +590,10 @@ do { \
                                    unlimitedScrollback:NO
                                useScrollbackWithRegion:YES
                                             willScroll:nil];
-    assert([[grid compactLineDump] isEqualToString:@"abcd\nejkh\ni..l\nmnop"]);
-    assert([[lineBuffer debugString] isEqualToString:@""]);
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 2);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"abcd\nejkh\ni..l\nmnop"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 2);
 }
 
 - (void)testMoveCursorLeft {
@@ -598,23 +601,23 @@ do { \
     grid.cursorX = 1;
     grid.cursorY = 0;
     [grid moveCursorLeft:1];
-    assert(grid.cursorX == 0 && grid.cursorY == 0);
+    XCTAssert(grid.cursorX == 0 && grid.cursorY == 0);
     [grid moveCursorLeft:1];
-    assert(grid.cursorX == 0 && grid.cursorY == 0);
+    XCTAssert(grid.cursorX == 0 && grid.cursorY == 0);
 
     grid.scrollRegionCols = VT100GridRangeMake(1, 2);
     grid.useScrollRegionCols = YES;
     grid.cursorX = 1;
     [grid moveCursorLeft:1];
-    assert(grid.cursorX == 1);
+    XCTAssert(grid.cursorX == 1);
 
     grid.cursorX = 2;
     [grid moveCursorLeft:1];
-    assert(grid.cursorX == 1);
+    XCTAssert(grid.cursorX == 1);
 
     grid.cursorX = 3;
     [grid moveCursorLeft:1];
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
 }
 
 // Make sure that moveCursorLeft wraps around soft EOLs
@@ -632,17 +635,17 @@ do { \
                    wraparound:YES
                          ansi:NO
                        insert:NO];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"abcd\n"
             @"ef..\n"
             @"....\n"
             @"...."]);
 
-    assert(grid.cursorX == 2);
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorX == 2);
+    XCTAssert(grid.cursorY == 1);
     [grid moveCursorLeft:4];
-    assert(grid.cursorX == 2);
-    assert(grid.cursorY == 0);
+    XCTAssert(grid.cursorX == 2);
+    XCTAssert(grid.cursorY == 0);
 }
 
 // Make sure that moveCursorLeft wraps around soft EOLs
@@ -661,16 +664,16 @@ do { \
                    wraparound:YES
                          ansi:NO
                        insert:NO];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"ab>\n"
             @"c-.\n"
             @"..."]);
 
-    assert(grid.cursorX == 2);
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorX == 2);
+    XCTAssert(grid.cursorY == 1);
     [grid moveCursorLeft:4];
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 0);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 0);
 }
 
 // Make sure that moveCursorLeft wraps around soft EOLs
@@ -705,17 +708,17 @@ do { \
                          ansi:NO
                        insert:NO];
 
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"abc.\n"
             @"d...\n"
             @"....\n"
             @"...."]);
 
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 1);
     [grid moveCursorLeft:4];
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 1);
 }
 
 - (void)testMoveCursorRight {
@@ -723,21 +726,21 @@ do { \
     grid.cursorX = 2;
     grid.cursorY = 0;
     [grid moveCursorRight:1];
-    assert(grid.cursorX == 3 && grid.cursorY == 0);
+    XCTAssert(grid.cursorX == 3 && grid.cursorY == 0);
 
     grid.scrollRegionCols = VT100GridRangeMake(2, 1);
     grid.useScrollRegionCols = YES;
     grid.cursorX = 0;
     [grid moveCursorRight:1];
-    assert(grid.cursorX == 1);
+    XCTAssert(grid.cursorX == 1);
 
     grid.cursorX = 1;
     [grid moveCursorRight:1];
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
 
     grid.cursorX = 2;
     [grid moveCursorRight:1];
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
 }
 
 - (void)testMoveCursorUp {
@@ -745,25 +748,25 @@ do { \
     grid.cursorX = 0;
     grid.cursorY = 2;
     [grid moveCursorUp:1];
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorY == 1);
     [grid moveCursorUp:1];
-    assert(grid.cursorY == 0);
+    XCTAssert(grid.cursorY == 0);
     [grid moveCursorUp:1];
-    assert(grid.cursorY == 0);
+    XCTAssert(grid.cursorY == 0);
 
     // If starting at or below scrollTop, clamp to scrollTop
     grid.scrollRegionRows = VT100GridRangeMake(1, 2);
     grid.cursorY = 2;
     [grid moveCursorUp:1];
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorY == 1);
     [grid moveCursorUp:1];
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorY == 1);
 
     // If starting above scrollTop, don't clamp
     grid.scrollRegionRows = VT100GridRangeMake(2, 2);
     grid.cursorY = 1;
     [grid moveCursorUp:1];
-    assert(grid.cursorY == 0);
+    XCTAssert(grid.cursorY == 0);
 }
 
 - (void)testMoveCursorDown {
@@ -771,25 +774,25 @@ do { \
     grid.cursorX = 0;
     grid.cursorY = 2;
     [grid moveCursorDown:1];
-    assert(grid.cursorY == 3);
+    XCTAssert(grid.cursorY == 3);
     [grid moveCursorDown:1];
-    assert(grid.cursorY == 3);
+    XCTAssert(grid.cursorY == 3);
 
     // If starting at or above scrollBottom, clamp to scrollBottom
     grid.scrollRegionRows = VT100GridRangeMake(1, 2);
     grid.cursorY = 1;
     [grid moveCursorDown:1];
-    assert(grid.cursorY == 2);
+    XCTAssert(grid.cursorY == 2);
     [grid moveCursorDown:1];
-    assert(grid.cursorY == 2);
+    XCTAssert(grid.cursorY == 2);
 
     // If starting below scrollBottom, don't clamp
     grid.scrollRegionRows = VT100GridRangeMake(0, 2);
     grid.cursorY = 2;
     [grid moveCursorDown:1];
-    assert(grid.cursorY == 3);
+    XCTAssert(grid.cursorY == 3);
     [grid moveCursorDown:1];
-    assert(grid.cursorY == 3);
+    XCTAssert(grid.cursorY == 3);
 }
 
 - (void)testScrollUpIntoLineBuffer {
@@ -798,8 +801,8 @@ do { \
     [grid scrollUpIntoLineBuffer:lineBuffer
              unlimitedScrollback:NO
          useScrollbackWithRegion:YES];
-    assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
 
     // Check that dropped lines is accurate
     grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
@@ -808,13 +811,13 @@ do { \
     int dropped = [grid scrollUpIntoLineBuffer:lineBuffer
                            unlimitedScrollback:NO
                        useScrollbackWithRegion:YES];
-    assert(dropped == 0);
+    XCTAssert(dropped == 0);
     dropped = [grid scrollUpIntoLineBuffer:lineBuffer
                        unlimitedScrollback:NO
                    useScrollbackWithRegion:YES];
-    assert(dropped == 1);
-    assert([[grid compactLineDump] isEqualToString:@"ijkl\nmnop\n....\n...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
+    XCTAssert(dropped == 1);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"ijkl\nmnop\n....\n...."]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
 
     // Scroll a horizontal region. Shouldn't append to linebuffer.
     grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
@@ -824,13 +827,13 @@ do { \
     dropped = [grid scrollUpIntoLineBuffer:lineBuffer
                        unlimitedScrollback:NO
                    useScrollbackWithRegion:YES];
-    assert(dropped == 0);
-    assert([[grid compactLineDump] isEqualToString:@"afgd\nejkh\ninol\nm..p"]);
-    assert([[lineBuffer debugString] isEqualToString:@""]);
+    XCTAssert(dropped == 0);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"afgd\nejkh\ninol\nm..p"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@""]);
 }
 
 - (void)setLine:(int)lineNumber ofGrid:(VT100Grid *)grid toString:(NSString *)string {
-    assert(grid.size.width == string.length);
+    XCTAssert(grid.size.width == string.length);
     VT100Grid *temp = [self gridFromCompactLines:string];
     screen_char_t *src = [temp screenCharsAtLineNumber:0];
     screen_char_t *dst = [grid screenCharsAtLineNumber:lineNumber];
@@ -840,17 +843,17 @@ do { \
 - (void)testScrollWholeScreenUpIntoLineBuffer {
     VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
     [grid markCharDirty:YES at:VT100GridCoordMake(2, 2) updateTimestamp:YES];
-    assert([[grid compactDirtyDump] isEqualToString:@"cccc\ncccc\nccdc\ncccc"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\ncccc\nccdc\ncccc"]);
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [lineBuffer setMaxLines:1];
-    assert([grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:NO] == 0);
-    assert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
-    assert([[grid compactDirtyDump] isEqualToString:@"cccc\nccdc\ncccc\ndddd"]);
+    XCTAssert([grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:NO] == 0);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\nccdc\ncccc\ndddd"]);
     [self setLine:3 ofGrid:grid toString:@"qrst"];
-    assert([grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:NO] == 1);
-    assert([[grid compactLineDump] isEqualToString:@"ijkl\nmnop\nqrst\n...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
-    assert([[grid compactDirtyDump] isEqualToString:@"ccdc\ncccc\ndddd\ndddd"]);
+    XCTAssert([grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:NO] == 1);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"ijkl\nmnop\nqrst\n...."]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"ccdc\ncccc\ndddd\ndddd"]);
 }
 
 // No test for scrollDown because it's just a wafer thin wrapper around scrollRect:downBy:.
@@ -882,14 +885,14 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:0
                                         scrollRect:VT100GridRectMake(1, 1, 2, 2)
                                       initialValue:basicValue];
-    assert([s isEqualToString:@"abcd\nefgh\nijkl\nmnop\n\ncccc\ncccc\ncccc\ncccc"]);
+    XCTAssert([s isEqualToString:@"abcd\nefgh\nijkl\nmnop\n\ncccc\ncccc\ncccc\ncccc"]);
 
 
     // Test that downBy:1 works
     s = [self compactLineDumpForRectScrolledDownBy:1
                                         scrollRect:VT100GridRectMake(1, 1, 2, 2)
                                       initialValue:basicValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcd\n"
             @"e..h\n"
             @"ifgl\n"
@@ -904,7 +907,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(1, 1, 2, 2)
                                       initialValue:basicValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcd\n"
             @"ejkh\n"
             @"i..l\n"
@@ -919,7 +922,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:2
                                         scrollRect:VT100GridRectMake(1, 1, 3, 3)
                                       initialValue:largerValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcde\n"
             @"f...j\n"
             @"k...o\n"
@@ -936,7 +939,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-2
                                         scrollRect:VT100GridRectMake(1, 1, 3, 3)
                                       initialValue:largerValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcde\n"
             @"fqrsj\n"
             @"k...o\n"
@@ -953,7 +956,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:3
                                         scrollRect:VT100GridRectMake(1, 1, 3, 3)
                                       initialValue:largerValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcde\n"
             @"f...j\n"
             @"k...o\n"
@@ -970,7 +973,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-3
                                         scrollRect:VT100GridRectMake(1, 1, 3, 3)
                                       initialValue:largerValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcde\n"
             @"f...j\n"
             @"k...o\n"
@@ -987,7 +990,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:4
                                         scrollRect:VT100GridRectMake(1, 1, 3, 3)
                                       initialValue:largerValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcde\n"
             @"f...j\n"
             @"k...o\n"
@@ -1004,7 +1007,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-4
                                         scrollRect:VT100GridRectMake(1, 1, 3, 3)
                                       initialValue:largerValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcde\n"
             @"f...j\n"
             @"k...o\n"
@@ -1028,7 +1031,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(0, 1, 3, 2)
                                       initialValue:multiSplitDwcValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"ab.\n"
             @"ef.\n"
             @"...\n"
@@ -1047,7 +1050,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:1
                                         scrollRect:VT100GridRectMake(0, 1, 3, 2)
                                       initialValue:singleSplitDwcOnTopValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"ab.\n"
             @"...\n"
             @"c-d\n"
@@ -1064,7 +1067,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(0, 0, 3, 3)
                                       initialValue:singleSplitDwcOnBottomValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"de>\n"
             @"f-g\n"
             @"...\n"
@@ -1084,7 +1087,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(1, 0, 3, 6)
                                       initialValue:orphansValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"a.g.e\n"
             @".j-k.\n"
             @"i.mn.\n"
@@ -1109,7 +1112,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(0, 1, 5, 3)
                                       initialValue:edgeCaseyOrphans];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcd.\n"
             @"ijklm\n"
             @"nopq.\n"
@@ -1126,7 +1129,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-10
                                         scrollRect:VT100GridRectMake(0, 1, 5, 3)
                                       initialValue:edgeCaseyOrphans];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcd.\n"
             @".....\n"
             @".....\n"
@@ -1143,7 +1146,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(1, 0, 4, 5)
                                       initialValue:edgeCaseyOrphans];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"a.fgh\n"
             @".jklm\n"
             @"iopq.\n"
@@ -1160,7 +1163,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(0, 0, 4, 5)
                                       initialValue:edgeCaseyOrphans];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"e-fg.\n"
             @"ijklh\n"
             @"nopqm\n"
@@ -1177,7 +1180,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:1
                                         scrollRect:VT100GridRectMake(1, 1, 0, 0)
                                       initialValue:basicValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"abcd\n"
             @"efgh\n"
             @"ijkl\n"
@@ -1192,7 +1195,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(0, 1, 3, 2)
                                       initialValue:@"ab>\nc-d\ne-f"];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"ab.\n"
             @"e-f\n"
             @"...\n"
@@ -1210,7 +1213,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:1
                                         scrollRect:VT100GridRectMake(0, 1, 3, 3)
                                       initialValue:lotsOfDwcsValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"ab.\n"
             @"...\n"
             @"c->\n"
@@ -1226,7 +1229,7 @@ do { \
     s = [self compactLineDumpForRectScrolledDownBy:-1
                                         scrollRect:VT100GridRectMake(0, 1, 3, 2)
                                       initialValue:lotsOfDwcsValue];
-    assert([s isEqualToString:
+    XCTAssert([s isEqualToString:
             @"ab.\n"
             @"d-.\n"
             @"...\n"
@@ -1246,7 +1249,7 @@ do { \
                        @"mnop+\n"
                        @"qrst!"];
     [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd!\n"
             @"....!\n"
             @"efgh+\n"
@@ -1261,7 +1264,7 @@ do { \
             @"mnop+\n"
             @"qrst!"];
     [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:2];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd!\n"
             @"....!\n"
             @"....!\n"
@@ -1277,7 +1280,7 @@ do { \
             @"mnop+\n"
             @"qrst!"];
     [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:-1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd!\n"
             @"ijkl+\n"
             @"mnop!\n"
@@ -1292,7 +1295,7 @@ do { \
             @"mnop+\n"
             @"qrst!"];
     [grid scrollRect:VT100GridRectMake(0, 1, 4, 3) downBy:-2];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd!\n"
             @"mnop!\n"
             @"....!\n"
@@ -1308,7 +1311,7 @@ do { \
             @"mnop+\n"
             @"qrst!"];
     [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"e...!\n"
             @"ifgh+\n"
@@ -1323,7 +1326,7 @@ do { \
             @"mnop+\n"
             @"qrst!"];
     [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:2];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"e...!\n"
             @"i...!\n"
@@ -1338,7 +1341,7 @@ do { \
             @"M-op+\n"
             @"qrst!"];
     [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"e...!\n"
             @"ifgh+\n"
@@ -1354,7 +1357,7 @@ do { \
             @"mnop+\n"
             @"qrst!"];
     [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"ejkl+\n"
             @"inop!\n"
@@ -1369,7 +1372,7 @@ do { \
             @"mno>>\n"
             @"Q-st!"];
     [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abc.!\n"
             @".jkl+\n"
             @"ino.!\n"
@@ -1384,7 +1387,7 @@ do { \
             @"mnop+\n"
             @"qrst!"];
     [grid scrollRect:VT100GridRectMake(1, 1, 3, 3) downBy:-2];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"enop!\n"
             @"i...!\n"
@@ -1417,9 +1420,9 @@ do { \
         .frameType = DVRFrameTypeKeyFrame
     };
     [testGrid setContentsFromDVRFrame:frame info:info];
-    assert([[testGrid compactLineDump] isEqualToString:compactLines]);
-    assert(testGrid.cursorX == 1);
-    assert(testGrid.cursorY == 2);
+    XCTAssert([[testGrid compactLineDump] isEqualToString:compactLines]);
+    XCTAssert(testGrid.cursorX == 1);
+    XCTAssert(testGrid.cursorY == 2);
 
     // Put it into a smaller grid.
     testGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(3, 3)
@@ -1429,9 +1432,9 @@ do { \
         @"efg\n"
         @"ijk\n"
         @"mno";
-    assert([[testGrid compactLineDump] isEqualToString:truncatedCompactLines]);
-    assert(testGrid.cursorX == 1);
-    assert(testGrid.cursorY == 1);
+    XCTAssert([[testGrid compactLineDump] isEqualToString:truncatedCompactLines]);
+    XCTAssert(testGrid.cursorX == 1);
+    XCTAssert(testGrid.cursorY == 1);
 
     // Put it into a bigger grid
     testGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(5, 5)
@@ -1443,9 +1446,9 @@ do { \
         @"ijkl.\n"
         @"mnop.\n"
         @".....";
-    assert([[testGrid compactLineDump] isEqualToString:paddedCompactLines]);
-    assert(testGrid.cursorX == 1);
-    assert(testGrid.cursorY == 2);
+    XCTAssert([[testGrid compactLineDump] isEqualToString:paddedCompactLines]);
+    XCTAssert(testGrid.cursorX == 1);
+    XCTAssert(testGrid.cursorY == 2);
 }
 
 - (void)doTestDefaultLine {
@@ -1453,13 +1456,13 @@ do { \
     const int w = 80;
     NSMutableData *data = [grid defaultLineOfWidth:80];
     screen_char_t *line = [data mutableBytes];
-    assert(data.length == sizeof(screen_char_t) * (w + 1));  // w+1 because it adds one for continuation marker
+    XCTAssert(data.length == sizeof(screen_char_t) * (w + 1));  // w+1 because it adds one for continuation marker
     for (int i = 0; i < w; i++) {
-        assert(ForegroundAttributesEqual(line[i], foregroundColor_));
-        assert(BackgroundColorsEqual(line[i], backgroundColor_));
-        assert(line[i].code == 0);
+        XCTAssert(ForegroundAttributesEqual(line[i], foregroundColor_));
+        XCTAssert(BackgroundColorsEqual(line[i], backgroundColor_));
+        XCTAssert(line[i].code == 0);
     }
-    assert(line[w].code == EOL_HARD);
+    XCTAssert(line[w].code == EOL_HARD);
 }
 
 - (void)testDefaultLine {
@@ -1490,14 +1493,14 @@ do { \
             if ((x == 1 || x == 2) && (y == 1 || y == 2)) {
                 fg = redFg;
                 bg = greenBg;
-                assert([grid isCharDirtyAt:VT100GridCoordMake(x, y)]);
+                XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(x, y)]);
             } else {
                 fg = foregroundColor_;
                 bg = backgroundColor_;
-                assert(![grid isCharDirtyAt:VT100GridCoordMake(x, y)]);
+                XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(x, y)]);
             }
-            assert(ForegroundAttributesEqual(fg, line[x]));
-            assert(BackgroundColorsEqual(bg, line[x]));
+            XCTAssert(ForegroundAttributesEqual(fg, line[x]));
+            XCTAssert(BackgroundColorsEqual(bg, line[x]));
         }
     }
 
@@ -1518,8 +1521,8 @@ do { \
             } else {
                 fg = foregroundColor_;
             }
-            assert(ForegroundAttributesEqual(fg, line[x]));
-            assert(BackgroundColorsEqual(greenBg, line[x]));
+            XCTAssert(ForegroundAttributesEqual(fg, line[x]));
+            XCTAssert(BackgroundColorsEqual(greenBg, line[x]));
         }
     }
 
@@ -1534,8 +1537,8 @@ do { \
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
             screen_char_t *line = [grid screenCharsAtLineNumber:y];
-            assert(ForegroundAttributesEqual(foregroundColor_, line[x]));
-            assert(BackgroundColorsEqual(greenBg, line[x]));
+            XCTAssert(ForegroundAttributesEqual(foregroundColor_, line[x]));
+            XCTAssert(BackgroundColorsEqual(greenBg, line[x]));
         }
     }
 }
@@ -1610,7 +1613,7 @@ do { \
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
                     maxLinesToRestore:1];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"rld.....\n"
             @"........\n"
             @"........\n"
@@ -1619,15 +1622,15 @@ do { \
             @"........\n"
             @"........\n"
             @"........"]);
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 0);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 0);
 
     grid = [self largeGrid];
     lineBuffer = [self lineBufferWithStrings:@"test", @"hello wo*rld", nil];
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
                     maxLinesToRestore:100];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"test....\n"
             @"hello wo\n"
             @"rld.....\n"
@@ -1636,8 +1639,8 @@ do { \
             @"........\n"
             @"........\n"
             @"........"]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 2);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 2);
 
     grid = [self smallGrid];
     lineBuffer = [self lineBufferWithStrings:@"test", @"hello wor*ld", nil];
@@ -1647,15 +1650,15 @@ do { \
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:dc
                     maxLinesToRestore:100];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"rl\n"
             @"d."]);
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 0);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 0);
 
     screen_char_t *line = [grid screenCharsAtLineNumber:1];
-    assert(!BackgroundColorsEqual(dc, line[0]));
-    assert(!BackgroundColorsEqual(dc, line[1]));
+    XCTAssert(!BackgroundColorsEqual(dc, line[0]));
+    XCTAssert(!BackgroundColorsEqual(dc, line[1]));
 
     // Handle DWC_SKIPs
     grid = [self mediumGrid];
@@ -1663,13 +1666,13 @@ do { \
     [grid restoreScreenFromLineBuffer:lineBuffer
                       withDefaultChar:[grid defaultChar]
                     maxLinesToRestore:100];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"abc>\n"
             @"W-xy\n"
             @"....\n"
             @"...."]);
-    assert(grid.cursorX == 0);
-    assert(grid.cursorY == 1);
+    XCTAssert(grid.cursorX == 0);
+    XCTAssert(grid.cursorY == 1);
 }
 
 - (void)testClampCursorPositionToValid {
@@ -1678,9 +1681,9 @@ do { \
     // < width.
     VT100Grid *grid = [self smallGrid];
     grid.cursorX = 2;
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
     [grid clampCursorPositionToValid];
-    assert(grid.cursorX == 1);
+    XCTAssert(grid.cursorX == 1);
 }
 
 - (void)testRectsForRun {
@@ -1693,7 +1696,7 @@ do { \
         [grid setCharsFrom:rect.origin to:VT100GridRectMax(rect) toChar:x];
     }
 
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"........\n"
             @"........\n"
             @"...xxxxx\n"
@@ -1704,16 +1707,16 @@ do { \
             @"........"]);
 
     // Test empty run
-    assert([[grid rectsForRun:VT100GridRunMake(3, 2, 0)] count] == 0);
+    XCTAssert([[grid rectsForRun:VT100GridRunMake(3, 2, 0)] count] == 0);
 
     // Test one-line run
     NSArray *rects = [grid rectsForRun:VT100GridRunMake(3, 2, 2)];
-    assert(rects.count == 1);
+    XCTAssert(rects.count == 1);
     VT100GridRect rect = [[rects objectAtIndex:0] gridRectValue];
-    assert(rect.origin.x == 3);
-    assert(rect.origin.y == 2);
-    assert(rect.size.width == 2);
-    assert(rect.size.height == 1);
+    XCTAssert(rect.origin.x == 3);
+    XCTAssert(rect.origin.y == 2);
+    XCTAssert(rect.size.width == 2);
+    XCTAssert(rect.size.height == 1);
 }
 
 - (void)testResetScrollRegions {
@@ -1722,10 +1725,10 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(2, 3);
     grid.useScrollRegionCols = YES;
     [grid resetScrollRegions];
-    assert(grid.scrollRegionRows.location == 0);
-    assert(grid.scrollRegionRows.length == 8);
-    assert(grid.scrollRegionCols.location == 0);
-    assert(grid.scrollRegionCols.length == 8);
+    XCTAssert(grid.scrollRegionRows.location == 0);
+    XCTAssert(grid.scrollRegionRows.length == 8);
+    XCTAssert(grid.scrollRegionCols.location == 0);
+    XCTAssert(grid.scrollRegionCols.length == 8);
 }
 
 - (void)testScrollRegionRect {
@@ -1735,44 +1738,44 @@ do { \
     grid.useScrollRegionCols = YES;
 
     VT100GridRect rect = [grid scrollRegionRect];
-    assert(rect.origin.x == 2);
-    assert(rect.origin.y == 1);
-    assert(rect.size.width == 3);
-    assert(rect.size.height == 2);
+    XCTAssert(rect.origin.x == 2);
+    XCTAssert(rect.origin.y == 1);
+    XCTAssert(rect.size.width == 3);
+    XCTAssert(rect.size.height == 2);
 
     grid.useScrollRegionCols = NO;
     rect = [grid scrollRegionRect];
-    assert(rect.origin.x == 0);
-    assert(rect.origin.y == 1);
-    assert(rect.size.width == 8);
-    assert(rect.size.height == 2);
+    XCTAssert(rect.origin.x == 0);
+    XCTAssert(rect.origin.y == 1);
+    XCTAssert(rect.size.width == 8);
+    XCTAssert(rect.size.height == 2);
 }
 
 - (void)testEraseDwc {
     // Erase a DWC
     VT100Grid *grid = [self gridFromCompactLinesWithContinuationMarks:@"ab-!"];
     screen_char_t dc = [grid defaultChar];
-    assert([grid erasePossibleDoubleWidthCharInLineNumber:0
+    XCTAssert([grid erasePossibleDoubleWidthCharInLineNumber:0
                                          startingAtOffset:1
                                                  withChar:dc]);
-    assert([[grid compactLineDump] isEqualToString:@"a.."]);
-    assert([[grid compactDirtyDump] isEqualToString:@"cdd"]);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"a.."]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cdd"]);
 
     // Do nothing
     grid = [self gridFromCompactLinesWithContinuationMarks:@"ab-!"];
-    assert(![grid erasePossibleDoubleWidthCharInLineNumber:0
+    XCTAssert(![grid erasePossibleDoubleWidthCharInLineNumber:0
                                           startingAtOffset:0
                                                   withChar:dc]);
-    assert([[grid compactLineDump] isEqualToString:@"ab-"]);
-    assert([[grid compactDirtyDump] isEqualToString:@"ccc"]);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"ab-"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"ccc"]);
 
     // Erase DWC-skip on prior line
     grid = [self gridFromCompactLinesWithContinuationMarks:@"ab>>\nc-.!"];
-    assert([grid erasePossibleDoubleWidthCharInLineNumber:1
+    XCTAssert([grid erasePossibleDoubleWidthCharInLineNumber:1
                                          startingAtOffset:0
                                                  withChar:dc]);
-    assert([[grid compactLineDump] isEqualToString:@"ab.\n..."]);
-    assert([[grid compactDirtyDump] isEqualToString:@"ccc\nddc"]);  // Don't need to set DWC_SKIP->NULL char to dirty
+    XCTAssert([[grid compactLineDump] isEqualToString:@"ab.\n..."]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"ccc\nddc"]);  // Don't need to set DWC_SKIP->NULL char to dirty
 }
 
 - (void)testMoveCursorToLeftMargin {
@@ -1780,23 +1783,23 @@ do { \
 
     // Test without scroll region
     grid.cursorX = 2;
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
     [grid moveCursorToLeftMargin];
-    assert(grid.cursorX == 0);
+    XCTAssert(grid.cursorX == 0);
 
     // Scroll region defined but not used
     grid.scrollRegionCols = VT100GridRangeMake(1,2);
     grid.cursorX = 2;
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
     [grid moveCursorToLeftMargin];
-    assert(grid.cursorX == 0);
+    XCTAssert(grid.cursorX == 0);
 
     // Scroll region defined & used
     grid.useScrollRegionCols = YES;
     grid.cursorX = 2;
-    assert(grid.cursorX == 2);
+    XCTAssert(grid.cursorX == 2);
     [grid moveCursorToLeftMargin];
-    assert(grid.cursorX == 1);
+    XCTAssert(grid.cursorX == 1);
 
 }
 
@@ -1812,19 +1815,19 @@ do { \
     int dropped = [grid resetWithLineBuffer:lineBuffer
                         unlimitedScrollback:NO
                          preserveCursorLine:NO];
-    assert(dropped == 2);
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert(dropped == 2);
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"....\n"
             @"....\n"
             @"....\n"
             @"...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
-    assert(grid.scrollRegionRows.location == 0);
-    assert(grid.scrollRegionRows.length == 4);
-    assert(grid.scrollRegionCols.location == 0);
-    assert(grid.scrollRegionCols.length == 4);
-    assert(grid.cursor.x == 0);
-    assert(grid.cursor.y == 0);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
+    XCTAssert(grid.scrollRegionRows.location == 0);
+    XCTAssert(grid.scrollRegionRows.length == 4);
+    XCTAssert(grid.scrollRegionCols.location == 0);
+    XCTAssert(grid.scrollRegionCols.length == 4);
+    XCTAssert(grid.cursor.x == 0);
+    XCTAssert(grid.cursor.y == 0);
 
     // Test unlimited scrollback --------------------------------------------------------------------
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
@@ -1833,13 +1836,13 @@ do { \
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
                      preserveCursorLine:NO];
-    assert(dropped == 0);
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert(dropped == 0);
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"....\n"
             @"....\n"
             @"....\n"
             @"...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"0123!\nabcd!\nefgh!"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"0123!\nabcd!\nefgh!"]);
 
     // Test on empty screen ------------------------------------------------------------------------
     grid = [self smallGrid];
@@ -1848,11 +1851,11 @@ do { \
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
                      preserveCursorLine:NO];
-    assert(dropped == 0);
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert(dropped == 0);
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"..\n"
             @".."]);
-    assert([lineBuffer numLinesWithWidth:grid.size.width] == 0);
+    XCTAssert([lineBuffer numLinesWithWidth:grid.size.width] == 0);
 }
 
 - (void)testResetWithLineBufferLeavingBehindCursorLine {
@@ -1868,19 +1871,19 @@ do { \
     int dropped = [grid resetWithLineBuffer:lineBuffer
                         unlimitedScrollback:NO
                          preserveCursorLine:YES];
-    assert(dropped == 2);
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert(dropped == 2);
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"....\n"
             @"....\n"
             @"....\n"
             @"...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
-    assert(grid.scrollRegionRows.location == 0);
-    assert(grid.scrollRegionRows.length == 4);
-    assert(grid.scrollRegionCols.location == 0);
-    assert(grid.scrollRegionCols.length == 4);
-    assert(grid.cursor.x == 0);
-    assert(grid.cursor.y == 0);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
+    XCTAssert(grid.scrollRegionRows.location == 0);
+    XCTAssert(grid.scrollRegionRows.length == 4);
+    XCTAssert(grid.scrollRegionCols.location == 0);
+    XCTAssert(grid.scrollRegionCols.length == 4);
+    XCTAssert(grid.cursor.x == 0);
+    XCTAssert(grid.cursor.y == 0);
 
     // Cursor at end of content
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
@@ -1894,19 +1897,19 @@ do { \
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:NO
                      preserveCursorLine:YES];
-    assert(dropped == 1);
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert(dropped == 1);
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"efgh\n"
             @"....\n"
             @"....\n"
             @"...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
-    assert(grid.scrollRegionRows.location == 0);
-    assert(grid.scrollRegionRows.length == 4);
-    assert(grid.scrollRegionCols.location == 0);
-    assert(grid.scrollRegionCols.length == 4);
-    assert(grid.cursor.x == 0);
-    assert(grid.cursor.y == 0);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"abcd!"]);
+    XCTAssert(grid.scrollRegionRows.location == 0);
+    XCTAssert(grid.scrollRegionRows.length == 4);
+    XCTAssert(grid.scrollRegionCols.location == 0);
+    XCTAssert(grid.scrollRegionCols.length == 4);
+    XCTAssert(grid.cursor.x == 0);
+    XCTAssert(grid.cursor.y == 0);
 
     // Cursor within content
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
@@ -1920,19 +1923,19 @@ do { \
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:NO
                      preserveCursorLine:YES];
-    assert(dropped == 0);
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert(dropped == 0);
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"abcd\n"
             @"....\n"
             @"....\n"
             @"...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"0123!"]);
-    assert(grid.scrollRegionRows.location == 0);
-    assert(grid.scrollRegionRows.length == 4);
-    assert(grid.scrollRegionCols.location == 0);
-    assert(grid.scrollRegionCols.length == 4);
-    assert(grid.cursor.x == 0);
-    assert(grid.cursor.y == 0);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"0123!"]);
+    XCTAssert(grid.scrollRegionRows.location == 0);
+    XCTAssert(grid.scrollRegionRows.length == 4);
+    XCTAssert(grid.scrollRegionCols.location == 0);
+    XCTAssert(grid.scrollRegionCols.length == 4);
+    XCTAssert(grid.cursor.x == 0);
+    XCTAssert(grid.cursor.y == 0);
 
     // Test unlimited scrollback --------------------------------------------------------------------
     grid = [self gridFromCompactLines:@"0123\nabcd\nefgh\n...."];
@@ -1942,13 +1945,13 @@ do { \
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
                      preserveCursorLine:YES];
-    assert(dropped == 0);
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert(dropped == 0);
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"....\n"
             @"....\n"
             @"....\n"
             @"...."]);
-    assert([[lineBuffer debugString] isEqualToString:@"0123!\nabcd!\nefgh!"]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:@"0123!\nabcd!\nefgh!"]);
 
     // Test on empty screen ------------------------------------------------------------------------
     grid = [self smallGrid];
@@ -1957,11 +1960,11 @@ do { \
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
                      preserveCursorLine:YES];
-    assert(dropped == 0);
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert(dropped == 0);
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"..\n"
             @".."]);
-    assert([lineBuffer numLinesWithWidth:grid.size.width] == 0);
+    XCTAssert([lineBuffer numLinesWithWidth:grid.size.width] == 0);
 }
 
 
@@ -1978,7 +1981,7 @@ do { \
     grid.cursorY = 4;
     [grid moveWrappedCursorLineToTopOfGrid];
 
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"hijk\n"
             @"lmno\n"
             @"pq..\n"
@@ -1986,8 +1989,8 @@ do { \
             @"vwx.\n"
             @"....\n"
             @"...."]);
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 2);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 2);
 
     // Test empty screen
     grid = [self smallGrid];
@@ -1995,9 +1998,9 @@ do { \
     grid.cursorY = 1;
     [grid moveWrappedCursorLineToTopOfGrid];
 
-    assert([[grid compactLineDump] isEqualToString:@"..\n.."]);
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 0);
+    XCTAssert([[grid compactLineDump] isEqualToString:@"..\n.."]);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 0);
 
     // Test that scroll regions are ignored.
     grid = [self gridFromCompactLinesWithContinuationMarks:
@@ -2015,7 +2018,7 @@ do { \
     grid.cursorY = 4;
     [grid moveWrappedCursorLineToTopOfGrid];
 
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"hijk\n"
             @"lmno\n"
             @"pq..\n"
@@ -2023,8 +2026,8 @@ do { \
             @"vwx.\n"
             @"....\n"
             @"...."]);
-    assert(grid.cursorX == 1);
-    assert(grid.cursorY == 2);
+    XCTAssert(grid.cursorX == 1);
+    XCTAssert(grid.cursorY == 2);
 }
 
 - (void)doAppendCharsAtCursorTestWithInitialBuffer:(NSString *)initialBuffer
@@ -2056,11 +2059,11 @@ do { \
                                          wraparound:wraparoundMode_
                                                ansi:isAnsi_
                                              insert:insertMode_];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:expectedLines]);
-    assert([[lineBuffer debugString] isEqualToString:expectedLineBuffer]);
-    assert(numLinesDropped == expectedNumLinesDropped);
-    assert(grid.cursorX == expectedCursor.x);
-    assert(grid.cursorY == expectedCursor.y);
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:expectedLines]);
+    XCTAssert([[lineBuffer debugString] isEqualToString:expectedLineBuffer]);
+    XCTAssert(numLinesDropped == expectedNumLinesDropped);
+    XCTAssert(grid.cursorX == expectedCursor.x);
+    XCTAssert(grid.cursorY == expectedCursor.y);
 }
 
 - (void)testAppendCharsAtCursor {
@@ -2489,51 +2492,51 @@ do { \
     VT100Grid *grid = [self smallGrid];
     // Test basic case
     VT100GridCoord coord = [grid coordinateBefore:VT100GridCoordMake(1, 0)];
-    assert(coord.x == 0);
-    assert(coord.y == 0);
+    XCTAssert(coord.x == 0);
+    XCTAssert(coord.y == 0);
 
     // Test failure to move before grid
     coord = [grid coordinateBefore:VT100GridCoordMake(0, 0)];
-    assert(coord.x == -1);
-    assert(coord.y == -1);
+    XCTAssert(coord.x == -1);
+    XCTAssert(coord.y == -1);
 
     // Test simple wrap-back over EOL_SOFT
     grid = [self gridFromCompactLinesWithContinuationMarks:@"ab+\ncd!"];
     coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
-    assert(coord.x == 1);
-    assert(coord.y == 0);
+    XCTAssert(coord.x == 1);
+    XCTAssert(coord.y == 0);
 
     // Test failure to wrap-back across EOL_HARD
     grid = [self gridFromCompactLinesWithContinuationMarks:@"ab!\ncd!"];
     coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
-    assert(coord.x == -1);
-    assert(coord.y == -1);
+    XCTAssert(coord.x == -1);
+    XCTAssert(coord.y == -1);
 
     // Test wrap-back over EOL_DWC + DWC_SKIP
     grid = [self gridFromCompactLinesWithContinuationMarks:@"a>>\nC-!"];
     coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
-    assert(coord.x == 0);
-    assert(coord.y == 0);
+    XCTAssert(coord.x == 0);
+    XCTAssert(coord.y == 0);
 
     // Test scroll region
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd!\nefgh!"];
     grid.scrollRegionCols = VT100GridRangeMake(1, 2);
     grid.useScrollRegionCols = YES;
     coord = [grid coordinateBefore:VT100GridCoordMake(1, 1)];
-    assert(coord.x == 2);
-    assert(coord.y == 0);
+    XCTAssert(coord.x == 2);
+    XCTAssert(coord.y == 0);
 
     // Test moving back over DWC_RIGHT
     grid = [self gridFromCompactLinesWithContinuationMarks:@"A-b!"];
     coord = [grid coordinateBefore:VT100GridCoordMake(2, 0)];
-    assert(coord.x == 0);
-    assert(coord.y == 0);
+    XCTAssert(coord.x == 0);
+    XCTAssert(coord.y == 0);
 
     // Test wrap + skip over dwc
     grid = [self gridFromCompactLinesWithContinuationMarks:@"aB-+\ncde!"];
     coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
-    assert(coord.x == 1);
-    assert(coord.y == 0);
+    XCTAssert(coord.x == 1);
+    XCTAssert(coord.y == 0);
 }
 
 - (void)testAddCombiningCharToCoord {
@@ -2542,28 +2545,28 @@ do { \
     const unichar kCombiningEnclosingCircle = 0x20dd;
     
     VT100Grid *grid = [self gridFromCompactLines:@"abcd"];
-    assert([grid addCombiningChar:kCombiningEnclosingCircle
+    XCTAssert([grid addCombiningChar:kCombiningEnclosingCircle
                           toCoord:VT100GridCoordMake(0, 0)]);
     screen_char_t *line = [grid screenCharsAtLineNumber:0];
-    assert(line[0].complexChar);
+    XCTAssert(line[0].complexChar);
     NSString *str = ScreenCharToStr(&line[0]);
-    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"a⃝" decomposedStringWithCanonicalMapping]]);
+    XCTAssert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"a⃝" decomposedStringWithCanonicalMapping]]);
 
     // Fail to modify null character
     grid = [self gridFromCompactLines:@".bcd"];
-    assert(![grid addCombiningChar:kCombiningAcuteAccent
+    XCTAssert(![grid addCombiningChar:kCombiningAcuteAccent
                            toCoord:VT100GridCoordMake(0, 0)]);
 
     // Add two combining marks
     grid = [self gridFromCompactLines:@"abcd"];
-    assert([grid addCombiningChar:kCombiningAcuteAccent
+    XCTAssert([grid addCombiningChar:kCombiningAcuteAccent
                           toCoord:VT100GridCoordMake(0, 0)]);
-    assert([grid addCombiningChar:kCombiningCedilla
+    XCTAssert([grid addCombiningChar:kCombiningCedilla
                           toCoord:VT100GridCoordMake(0, 0)]);
     line = [grid screenCharsAtLineNumber:0];
-    assert(line[0].complexChar);
+    XCTAssert(line[0].complexChar);
     str = ScreenCharToStr(&line[0]);
-    assert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"á̧" decomposedStringWithCanonicalMapping]]);
+    XCTAssert([[str decomposedStringWithCanonicalMapping] isEqualToString:[@"á̧" decomposedStringWithCanonicalMapping]]);
 }
 
 - (void)testDeleteChars {
@@ -2572,7 +2575,7 @@ do { \
                        @"abcd!\n"
                        @"efg.!"];
     [grid deleteChars:1 startingAt:VT100GridCoordMake(1, 0)];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"acd.\n"
             @"efg."]);
 
@@ -2581,7 +2584,7 @@ do { \
             @"abcd+\n"
             @"efg.!"];
     [grid deleteChars:100 startingAt:VT100GridCoordMake(1, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a...!\n"
             @"efg.!"]);
 
@@ -2590,7 +2593,7 @@ do { \
             @"abcd+\n"
             @"efg.!"];
     [grid deleteChars:0 startingAt:VT100GridCoordMake(1, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"efg.!"]);
 
@@ -2599,7 +2602,7 @@ do { \
             @"aB-d!\n"
             @"efg.!"];
     [grid deleteChars:1 startingAt:VT100GridCoordMake(1, 0)];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"a.d.\n"
             @"efg."]);
 
@@ -2608,7 +2611,7 @@ do { \
             @"aB-d!\n"
             @"efg.!"];
     [grid deleteChars:1 startingAt:VT100GridCoordMake(2, 0)];
-    assert([[grid compactLineDump] isEqualToString:
+    XCTAssert([[grid compactLineDump] isEqualToString:
             @"a.d.\n"
             @"efg."]);
 
@@ -2617,7 +2620,7 @@ do { \
             @"abc>>\n"
             @"D-ef!"];
     [grid deleteChars:1 startingAt:VT100GridCoordMake(0, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"bc..!\n"
             @"D-ef!"]);
 
@@ -2628,7 +2631,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(1, 3);
     grid.useScrollRegionCols = YES;
     [grid deleteChars:1 startingAt:VT100GridCoordMake(2, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abd.e+\n"
             @"fghi.!"]);
 
@@ -2639,7 +2642,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(1, 3);
     grid.useScrollRegionCols = YES;
     [grid deleteChars:100 startingAt:VT100GridCoordMake(2, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab..e+\n"
             @"fghi.!"]);
 
@@ -2650,7 +2653,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(1, 3);
     grid.useScrollRegionCols = YES;
     [grid deleteChars:1 startingAt:VT100GridCoordMake(2, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a.c.d+\n"
             @"fghi.!"]);
 
@@ -2660,7 +2663,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(0, 3);
     grid.useScrollRegionCols = YES;
     [grid deleteChars:1 startingAt:VT100GridCoordMake(0, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"b...e+"]);
 
     // Scroll region right boundary overlaps half a DWC, orphaning its left half
@@ -2669,7 +2672,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(3, 2);
     grid.useScrollRegionCols = YES;
     [grid deleteChars:1 startingAt:VT100GridCoordMake(3, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab.e.fg+"]);
 
     // DWC skip survives with a scroll region
@@ -2679,7 +2682,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(0, 3);
     grid.useScrollRegionCols = YES;
     [grid deleteChars:1 startingAt:VT100GridCoordMake(0, 0)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"bc.>>\n"
             @"D-ef!"]);
 
@@ -2690,7 +2693,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(0, 1);
     grid.useScrollRegionCols = YES;
     [grid deleteChars:1 startingAt:VT100GridCoordMake(10, 10)];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abc!\n"
             @"def!"]);
 }
@@ -2702,7 +2705,7 @@ do { \
                        @"efg.!"];
     screen_char_t c = [grid defaultChar];
     [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a.bc+\n"
             @"efg.!"]);
 
@@ -2711,7 +2714,7 @@ do { \
             @"abcd+\n"
             @"efg.!"];
     [grid insertChar:c at:VT100GridCoordMake(1, 0) times:100];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a...!\n"
             @"efg.!"]);
 
@@ -2721,7 +2724,7 @@ do { \
             @"abcd+\n"
             @"efg.!"];
     [grid insertChar:c at:VT100GridCoordMake(1, 0) times:100];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"axxx+\n"
             @"efg.!"]);
     c.code = 0;
@@ -2731,7 +2734,7 @@ do { \
             @"abcd+\n"
             @"efg.!"];
     [grid insertChar:c at:VT100GridCoordMake(1, 0) times:0];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abcd+\n"
             @"efg.!"]);
 
@@ -2741,7 +2744,7 @@ do { \
             @"fghi.!"];
     c.code = 'x';
     [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a.x.d+\n"
             @"fghi.!"]);
     c.code = 0;
@@ -2751,7 +2754,7 @@ do { \
             @"abcd>>\n"
             @"E-fgh!"];
     [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab.cd+\n"
             @"E-fgh!"]);
 
@@ -2760,7 +2763,7 @@ do { \
             @"abcd>>\n"
             @"E-fgh!"];
     [grid insertChar:c at:VT100GridCoordMake(2, 0) times:2];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab..c+\n"
             @"E-fgh!"]);
 
@@ -2769,7 +2772,7 @@ do { \
             @"abC->>\n"
             @"E-fgh!"];
     [grid insertChar:c at:VT100GridCoordMake(2, 0) times:2];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab...!\n"
             @"E-fgh!"]);
 
@@ -2779,7 +2782,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(1, 4);
     grid.useScrollRegionCols = YES;
     [grid insertChar:c at:VT100GridCoordMake(2, 0) times:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab.cdf+"]);
 
     // Insert more than fits in scroll region
@@ -2788,7 +2791,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(1, 4);
     grid.useScrollRegionCols = YES;
     [grid insertChar:c at:VT100GridCoordMake(2, 0) times:100];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"ab...f+"]);
 
     // Make orphan by inserting into scroll region that overlaps left half of dwc
@@ -2797,7 +2800,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(1, 3);
     grid.useScrollRegionCols = YES;
     [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"a.bc.f+"]);
 
     // Make orphan by inserting into scroll region that overlaps right half of dec
@@ -2806,7 +2809,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(1, 3);
     grid.useScrollRegionCols = YES;
     [grid insertChar:c at:VT100GridCoordMake(1, 0) times:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"...cef+"]);
 
     // DWC skip survives with scroll region
@@ -2816,7 +2819,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(0, 2);
     grid.useScrollRegionCols = YES;
     [grid insertChar:c at:VT100GridCoordMake(0, 0) times:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @".aC->>\n"
             @"E-fgh!"]);
 
@@ -2827,7 +2830,7 @@ do { \
     grid.scrollRegionCols = VT100GridRangeMake(0, 2);
     grid.useScrollRegionCols = YES;
     [grid insertChar:c at:VT100GridCoordMake(3, 0) times:1];
-    assert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
+    XCTAssert([[grid compactLineDumpWithContinuationMarks] isEqualToString:
             @"abC->>\n"
             @"E-fgh!"]);
 }
@@ -2840,7 +2843,7 @@ do { \
                        @"efg.!"];
     [grid setCursorX:1];
     [grid moveCursorRight:99];
-    assert(grid.cursorX == grid.size.width - 1);
+    XCTAssert(grid.cursorX == grid.size.width - 1);
 }
 
 @end
