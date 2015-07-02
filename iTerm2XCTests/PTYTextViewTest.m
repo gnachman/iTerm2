@@ -1,4 +1,3 @@
-#import "iTermTests.h"
 #import "iTermColorMap.h"
 #import "iTermSelection.h"
 #import "iTermTextDrawingHelper.h"
@@ -8,10 +7,13 @@
 #import "NSView+iTerm.h"
 #import "PTYSession.h"
 #import "PTYTextView.h"
-#import "PTYTextViewTest.h"
 #import "SessionView.h"
 #import "VT100LineInfo.h"
 #import <objc/runtime.h>
+#import <XCTest/XCTest.h>
+
+@interface PTYTextViewTest : XCTestCase
+@end
 
 @interface iTermFakeSessionForPTYTextViewTest : PTYSession
 @end
@@ -41,6 +43,21 @@
     NSMutableDictionary *_methodsCalled;
     BOOL _canPasteFile;
     screen_char_t _buffer[4];
+}
+
+- (void)setUp {
+    _colorMap = [[iTermColorMap alloc] init];
+    _textView = [[PTYTextView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) colorMap:_colorMap];
+    _textView.delegate = self;
+    _textView.dataSource = self;
+    _methodsCalled = [[NSMutableDictionary alloc] init];
+    _canPasteFile = NO;
+}
+
+- (void)tearDown {
+    [_textView release];
+    [_colorMap release];
+    [_methodsCalled release];
 }
 
 - (void)setLineDirtyAtY:(int)y {
@@ -458,21 +475,6 @@
 }
 
 
-- (void)setup {
-    _colorMap = [[iTermColorMap alloc] init];
-    _textView = [[PTYTextView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) colorMap:_colorMap];
-    _textView.delegate = self;
-    _textView.dataSource = self;
-    _methodsCalled = [[NSMutableDictionary alloc] init];
-    _canPasteFile = NO;
-}
-
-- (void)teardown {
-    [_textView release];
-    [_colorMap release];
-    [_methodsCalled release];
-}
-
 - (void)invokeMenuItemWithSelector:(SEL)selector {
     [self invokeMenuItemWithSelector:selector tag:0];
 }
@@ -482,7 +484,7 @@
                                                            action:selector
                                                     keyEquivalent:@""] autorelease];
     [fakeMenuItem setTag:tag];
-    assert([_textView validateMenuItem:fakeMenuItem]);
+    XCTAssert([_textView validateMenuItem:fakeMenuItem]);
     [_textView performSelector:selector withObject:fakeMenuItem];
 }
 
@@ -506,24 +508,24 @@
     [[NSPasteboard generalPasteboard] clearContents];
     [[NSPasteboard generalPasteboard] setString:@"test" forType:NSPasteboardTypeString];
     [self invokeMenuItemWithSelector:@selector(paste:)];
-    assert([_methodsCalled[@"paste:"] intValue] == 1);
+    XCTAssert([_methodsCalled[@"paste:"] intValue] == 1);
 }
 
 - (void)testPasteOptions {
     [self invokeMenuItemWithSelector:@selector(pasteOptions:)];
-    assert([_methodsCalled[@"pasteOptions:"] intValue] == 1);
+    XCTAssert([_methodsCalled[@"pasteOptions:"] intValue] == 1);
 }
 
 - (void)testPasteSelection {
     [_textView selectAll:nil];
     [self invokeMenuItemWithSelector:@selector(pasteSelection:) tag:1];
-    assert([_methodsCalled[@"textViewPasteFromSessionWithMostRecentSelection:1"] intValue] == 1);
+    XCTAssert([_methodsCalled[@"textViewPasteFromSessionWithMostRecentSelection:1"] intValue] == 1);
 }
 
 - (void)testPasteBase64Encoded {
     _canPasteFile = YES;
     [self invokeMenuItemWithSelector:@selector(pasteBase64Encoded:)];
-    assert([_methodsCalled[@"textViewPasteFileWithBase64Encoding"] intValue] == 1);
+    XCTAssert([_methodsCalled[@"textViewPasteFileWithBase64Encoding"] intValue] == 1);
 }
 
 - (NSImage *)imageForInput:(NSString *)input
@@ -541,7 +543,7 @@
 
     [session setProfile:profile];
 
-    assert([session setScreenSize:NSMakeRect(0, 0, 200, 200) parent:nil]);
+    XCTAssert([session setScreenSize:NSMakeRect(0, 0, 200, 200) parent:nil]);
     [session setPreferencesFromAddressBookEntry:profile];
     [session setWidth:size.width height:size.height];
     NSRect theFrame = NSMakeRect(0,
@@ -562,9 +564,12 @@
 }
 
 - (NSString *)pathForGoldenWithName:(NSString *)name {
+    return [self pathForTestResourceNamed:[NSString stringWithFormat:@"PTYTextViewTest-golden-%@.png", name]];
+}
+
+- (NSString *)pathForTestResourceNamed:(NSString *)name {
     NSString *resourcePath = [[NSBundle bundleForClass:[self class]] resourcePath];
-    NSString *filename = [NSString stringWithFormat:@"PTYTextViewTest-golden-%@.png", name];
-    return [resourcePath stringByAppendingPathComponent:filename];
+    return [resourcePath stringByAppendingPathComponent:name];
 }
 
 // Minor differences in anti-aliasing cause false failures with golden images, so we'll ignore tiny
@@ -610,7 +615,7 @@
             NSLog(@"Test “%@” about to fail.\nActual output in %@.\nExpected output in %@",
                   name, failPath, goldenName);
         }
-        assert(ok);
+        XCTAssert(ok);
     }
 }
 
@@ -1133,7 +1138,7 @@
 // Background image low blending - less of background shows through on default bg color
 // Background noise should be subtle.
 - (void)testBackgroundImageLowBlending {
-    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    NSString *pathToImage = [self pathForTestResourceNamed:@"TestBackground.png"];
     [self doGoldenTestForInput:@"a\e[31mb\e[41mc"
                           name:NSStringFromSelector(_cmd)
                           hook:nil
@@ -1146,7 +1151,7 @@
 // Background image high blending - more of background shows through on default bg color
 // Background noise should be quite visible (annoyingly so).
 - (void)testBackgroundImageHighBlending {
-    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    NSString *pathToImage = [self pathForTestResourceNamed:@"TestBackground.png"];
     [self doGoldenTestForInput:@"a\e[31mb\e[41mc"
                           name:NSStringFromSelector(_cmd)
                           hook:nil
@@ -1159,7 +1164,7 @@
 // The first line is fg/bg swapped vs the second line. a and b on the second line should have
 // transparent (default) backgrounds; all others should have opaque background colors.
 - (void)testBackgroundImageWithReverseVideo {
-    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    NSString *pathToImage = [self pathForTestResourceNamed:@"TestBackground.png"];
     [self doGoldenTestForInput:@"\e[7ma\e[31mb\e[42mc\r\n"
                                @"\e[0ma\e[31mb\e[42mc"
                           name:NSStringFromSelector(_cmd)
@@ -1172,7 +1177,7 @@
 
 // Default bg becomes gray. Default fg over default bg (a in second row) becomes black.
 - (void)testBackgroundImageWithGloballyInvertedColors {
-    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    NSString *pathToImage = [self pathForTestResourceNamed:@"TestBackground.png"];
     [self doGoldenTestForInput:@"\e[7ma\e[31mb\e[42mc\r\n"  // reversed
                                @"\e[0ma\e[31mb\e[42mc"  // regular
                                @"\e[?5h"  // invert colors globally (affects default bg and default fg when over default bg)
@@ -1187,7 +1192,7 @@
 // Default background color is transparent on a and b. Nondefault red background is opaque on c
 // (which you can't see because it's also red).
 - (void)testBackgroundImageWithTransparency {
-    NSString *pathToImage = [[NSBundle mainBundle] pathForImageResource:@"TestBackground"];
+    NSString *pathToImage = [self pathForTestResourceNamed:@"TestBackground.png"];
     [self doGoldenTestForInput:@"a\e[31mb\e[41mc"
                           name:NSStringFromSelector(_cmd)
                           hook:^(PTYTextView *textView) {

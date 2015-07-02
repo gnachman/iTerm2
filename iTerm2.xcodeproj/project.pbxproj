@@ -950,102 +950,6 @@
 		A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */; };
 		A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
 		A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE991915DB1F00BE8758 /* iTermFlippedView.h */; };
-		A686C1331ADA38EE00906FAE /* PTYTextViewTest-golden-testAnsiColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D31ADA38EE00906FAE /* PTYTextViewTest-golden-testAnsiColors.png */; };
-		A686C1341ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D41ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursor.png */; };
-		A686C1351ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D51ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursorReverseVideo.png */; };
-		A686C1361ADA38EE00906FAE /* PTYTextViewTest-golden-testBasicDraw.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D61ADA38EE00906FAE /* PTYTextViewTest-golden-testBasicDraw.png */; };
-		A686C1371ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursorDoublyReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D71ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursorDoublyReverseVideo.png */; };
-		A686C1381ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D81ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursorReverseVideo.png */; };
-		A686C1391ADA38EE00906FAE /* PTYTextViewTest-golden-testBoxDrawing.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D91ADA38EE00906FAE /* PTYTextViewTest-golden-testBoxDrawing.png */; };
-		A686C13A1ADA38EE00906FAE /* PTYTextViewTest-golden-testCombiningMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DA1ADA38EE00906FAE /* PTYTextViewTest-golden-testCombiningMark.png */; };
-		A686C13B1ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DB1ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorBoost.png */; };
-		A686C13C1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingText.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DC1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingText.png */; };
-		A686C13D1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBg.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DD1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBg.png */; };
-		A686C13E1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DE1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoost.png */; };
-		A686C13F1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DF1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png */; };
-		A686C1401ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E01ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndMinimumContrast.png */; };
-		A686C1411ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E11ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndCursorBoost.png */; };
-		A686C1421ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E21ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png */; };
-		A686C1431ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E31ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndMinimumContrast.png */; };
-		A686C1441ADA38EE00906FAE /* PTYTextViewTest-golden-testDoubleWidthCharacter.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E41ADA38EE00906FAE /* PTYTextViewTest-golden-testDoubleWidthCharacter.png */; };
-		A686C1451ADA38EE00906FAE /* PTYTextViewTest-golden-testEmoji.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E51ADA38EE00906FAE /* PTYTextViewTest-golden-testEmoji.png */; };
-		A686C1461ADA38EE00906FAE /* PTYTextViewTest-golden-testFaintText.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E61ADA38EE00906FAE /* PTYTextViewTest-golden-testFaintText.png */; };
-		A686C1471ADA38EE00906FAE /* PTYTextViewTest-golden-testFaintTextWithTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E71ADA38EE00906FAE /* PTYTextViewTest-golden-testFaintTextWithTransparency.png */; };
-		A686C1481ADA38EE00906FAE /* PTYTextViewTest-golden-testFindMatches.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E81ADA38EE00906FAE /* PTYTextViewTest-golden-testFindMatches.png */; };
-		A686C1491ADA38EE00906FAE /* PTYTextViewTest-golden-testMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E91ADA38EE00906FAE /* PTYTextViewTest-golden-testMark.png */; };
-		A686C14A1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EA1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrast.png */; };
-		A686C14B1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrastAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EB1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrastAndCursorBoost.png */; };
-		A686C14C1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonretinaFakeBold.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EC1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonretinaFakeBold.png */; };
-		A686C14D1ADA38EE00906FAE /* PTYTextViewTest-golden-testNote.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0ED1ADA38EE00906FAE /* PTYTextViewTest-golden-testNote.png */; };
-		A686C14E1ADA38EE00906FAE /* PTYTextViewTest-golden-testOversizeGlyphs.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EE1ADA38EE00906FAE /* PTYTextViewTest-golden-testOversizeGlyphs.png */; };
-		A686C14F1ADA38EE00906FAE /* PTYTextViewTest-golden-testRetinaFakeBold.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EF1ADA38EE00906FAE /* PTYTextViewTest-golden-testRetinaFakeBold.png */; };
-		A686C1501ADA38EE00906FAE /* PTYTextViewTest-golden-testSurrogatePair.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F01ADA38EE00906FAE /* PTYTextViewTest-golden-testSurrogatePair.png */; };
-		A686C1511ADA38EE00906FAE /* PTYTextViewTest-golden-testSurrogatePairWithCombiningMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F11ADA38EE00906FAE /* PTYTextViewTest-golden-testSurrogatePairWithCombiningMark.png */; };
-		A686C1521ADA38EE00906FAE /* PTYTextViewTest-golden-testTimestamps.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F21ADA38EE00906FAE /* PTYTextViewTest-golden-testTimestamps.png */; };
-		A686C1531ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F31ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineCursorReverseVideo.png */; };
-		A686C1541ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageHighBlending.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F41ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageHighBlending.png */; };
-		A686C1551ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageLowBlending.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F51ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageLowBlending.png */; };
-		A686C1561ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithGloballyInvertedColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F61ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithGloballyInvertedColors.png */; };
-		A686C1571ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F71ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithReverseVideo.png */; };
-		A686C1581ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F81ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithTransparency.png */; };
-		A686C1591ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F91ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorHidden.png */; };
-		A686C15A1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorNotHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FA1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorNotHidden.png */; };
-		A686C15B1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingTextHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FB1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingTextHidden.png */; };
-		A686C15C1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingTextVisible.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FC1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingTextVisible.png */; };
-		A686C15D1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FD1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursor.png */; };
-		A686C15E1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOff.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FE1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOff.png */; };
-		A686C15F1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOn.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FF1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOn.png */; };
-		A686C1601ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseKeyWindowAndActiveTextview.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1001ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseKeyWindowAndActiveTextview.png */; };
-		A686C1611ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseOfDelegateOverride.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1011ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseOfDelegateOverride.png */; };
-		A686C1621ADA38EE00906FAE /* PTYTextViewTest-golden-testDontUseNonAsciiFont.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1021ADA38EE00906FAE /* PTYTextViewTest-golden-testDontUseNonAsciiFont.png */; };
-		A686C1631ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1031ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursor.png */; };
-		A686C1641ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursorWithNondefaultColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1041ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursorWithNondefaultColors.png */; };
-		A686C1651ADA38EE00906FAE /* PTYTextViewTest-golden-testHiddenCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1051ADA38EE00906FAE /* PTYTextViewTest-golden-testHiddenCursor.png */; };
-		A686C1661ADA38EE00906FAE /* PTYTextViewTest-golden-testIME.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1061ADA38EE00906FAE /* PTYTextViewTest-golden-testIME.png */; };
-		A686C1671ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1071ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png */; };
-		A686C1681ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsNotDoubleWidth.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1081ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsNotDoubleWidth.png */; };
-		A686C1691ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWrapsDoubleWidthAtEndOfLine.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1091ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWrapsDoubleWidthAtEndOfLine.png */; };
-		A686C16A1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10A1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allBlack.png */; };
-		A686C16B1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allCursorColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10B1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allCursorColor.png */; };
-		A686C16C1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allDarkGray.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10C1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allDarkGray.png */; };
-		A686C16D1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhite.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10D1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhite.png */; };
-		A686C16E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhiteDarkRedFore.png */; };
-		A686C16F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_frameAllCursorColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_frameAllCursorColor.png */; };
-		A686C1701ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1101ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png */; };
-		A686C1711ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhite.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1111ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhite.png */; };
-		A686C1721ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1121ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png */; };
-		A686C1731ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_onIsland.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1131ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_onIsland.png */; };
-		A686C1741ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1141ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideo.png */; };
-		A686C1751ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1151ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackground.png */; };
-		A686C1761ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1161ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png */; };
-		A686C1771ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1171ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForeground.png */; };
-		A686C1781ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1181ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png */; };
-		A686C1791ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1191ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png */; };
-		A686C17A1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_whiteCrossGrayCorners.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11A1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_whiteCrossGrayCorners.png */; };
-		A686C17B1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColorWithCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11B1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColorWithCursorBoost.png */; };
-		A686C17C1ADA38EE00906FAE /* PTYTextViewTest-golden-testTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11C1ADA38EE00906FAE /* PTYTextViewTest-golden-testTransparency.png */; };
-		A686C17D1ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11D1ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineCursor.png */; };
-		A686C17E1ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineHost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11E1ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineHost.png */; };
-		A686C17F1ADA38EE00906FAE /* PTYTextViewTest-golden-testUseNonAsciiFont.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11F1ADA38EE00906FAE /* PTYTextViewTest-golden-testUseNonAsciiFont.png */; };
-		A686C1801ADA38EE00906FAE /* PTYTextViewTest-golden-test24BitColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1201ADA38EE00906FAE /* PTYTextViewTest-golden-test24BitColor.png */; };
-		A686C1811ADA38EE00906FAE /* PTYTextViewTest-golden-test256Colors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1211ADA38EE00906FAE /* PTYTextViewTest-golden-test256Colors.png */; };
-		A686C1821ADA38EE00906FAE /* PTYTextViewTest-golden-testAsciiAntiAliasOnly.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1221ADA38EE00906FAE /* PTYTextViewTest-golden-testAsciiAntiAliasOnly.png */; };
-		A686C1831ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1231ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundStripes.png */; };
-		A686C1841ADA38EE00906FAE /* PTYTextViewTest-golden-testBadge.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1241ADA38EE00906FAE /* PTYTextViewTest-golden-testBadge.png */; };
-		A686C1851ADA38EE00906FAE /* PTYTextViewTest-golden-testBoxSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1251ADA38EE00906FAE /* PTYTextViewTest-golden-testBoxSelection.png */; };
-		A686C1861ADA38EE00906FAE /* PTYTextViewTest-golden-testCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1261ADA38EE00906FAE /* PTYTextViewTest-golden-testCharacterSelection.png */; };
-		A686C1871ADA38EE00906FAE /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1271ADA38EE00906FAE /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png */; };
-		A686C1881ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorGuide.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1281ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorGuide.png */; };
-		A686C1891ADA38EE00906FAE /* PTYTextViewTest-golden-testHorizontalSpacing.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1291ADA38EE00906FAE /* PTYTextViewTest-golden-testHorizontalSpacing.png */; };
-		A686C18A1ADA38EE00906FAE /* PTYTextViewTest-golden-testMultipleDiscontinuousSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12A1ADA38EE00906FAE /* PTYTextViewTest-golden-testMultipleDiscontinuousSelection.png */; };
-		A686C18B1ADA38EE00906FAE /* PTYTextViewTest-golden-testNoAntiAlias.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12B1ADA38EE00906FAE /* PTYTextViewTest-golden-testNoAntiAlias.png */; };
-		A686C18C1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonAsciiAntiAliasOnly.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12C1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonAsciiAntiAliasOnly.png */; };
-		A686C18D1ADA38EE00906FAE /* PTYTextViewTest-golden-testScrollbackOverflow.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12D1ADA38EE00906FAE /* PTYTextViewTest-golden-testScrollbackOverflow.png */; };
-		A686C18E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTab.png */; };
-		A686C18F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabFillerWithoutTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabFillerWithoutTab.png */; };
-		A686C1901ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabOrphan.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1301ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabOrphan.png */; };
-		A686C1911ADA38EE00906FAE /* PTYTextViewTest-golden-testVerticalSpacing.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1311ADA38EE00906FAE /* PTYTextViewTest-golden-testVerticalSpacing.png */; };
-		A686C1921ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1321ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png */; };
 		A686C1951ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
 		A686C1961ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
 		A686C1971ADF62F200906FAE /* Zoomed.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1931ADF62F200906FAE /* Zoomed.png */; };
@@ -1131,7 +1035,6 @@
 		A6B3A7401AC74E02008E8D4E /* FindCursorCell1.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7341AC74E02008E8D4E /* FindCursorCell1.png */; };
 		A6B3A7431AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */; };
 		A6B3A7441AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B3A7411AC89DED008E8D4E /* NSCharacterSet+iTerm.h */; };
-		A6B3A7491AC8A9A3008E8D4E /* TestBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */; };
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B70FBB19830C37007A4284 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
 		A6B70FBC19830C37007A4284 /* dead.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FB919830C37007A4284 /* dead.png */; };
@@ -1150,6 +1053,105 @@
 		A6BDB04A1B45EBD900F511E6 /* VT100CSIParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */; };
 		A6BDB04C1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */; };
 		A6BDB04E1B45EC8A00F511E6 /* PTYSessionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */; };
+		A6BDB0501B45FBCB00F511E6 /* PTYTextViewTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB04F1B45FBCB00F511E6 /* PTYTextViewTest.m */; };
+		A6BDB0511B45FC4300F511E6 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
+		A6BDB0521B45FC9E00F511E6 /* PTYTextViewTest-golden-test24BitColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1201ADA38EE00906FAE /* PTYTextViewTest-golden-test24BitColor.png */; };
+		A6BDB0531B45FC9E00F511E6 /* PTYTextViewTest-golden-test256Colors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1211ADA38EE00906FAE /* PTYTextViewTest-golden-test256Colors.png */; };
+		A6BDB0541B45FC9E00F511E6 /* PTYTextViewTest-golden-testAnsiColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D31ADA38EE00906FAE /* PTYTextViewTest-golden-testAnsiColors.png */; };
+		A6BDB0551B45FC9E00F511E6 /* PTYTextViewTest-golden-testAsciiAntiAliasOnly.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1221ADA38EE00906FAE /* PTYTextViewTest-golden-testAsciiAntiAliasOnly.png */; };
+		A6BDB0561B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageHighBlending.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F41ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageHighBlending.png */; };
+		A6BDB0571B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageLowBlending.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F51ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageLowBlending.png */; };
+		A6BDB0581B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageWithGloballyInvertedColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F61ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithGloballyInvertedColors.png */; };
+		A6BDB0591B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageWithReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F71ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithReverseVideo.png */; };
+		A6BDB05A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageWithTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F81ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithTransparency.png */; };
+		A6BDB05B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1231ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundStripes.png */; };
+		A6BDB05C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBadge.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1241ADA38EE00906FAE /* PTYTextViewTest-golden-testBadge.png */; };
+		A6BDB05D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D41ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursor.png */; };
+		A6BDB05E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBarCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D51ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursorReverseVideo.png */; };
+		A6BDB05F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBasicDraw.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D61ADA38EE00906FAE /* PTYTextViewTest-golden-testBasicDraw.png */; };
+		A6BDB0601B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlinkingCursorHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F91ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorHidden.png */; };
+		A6BDB0611B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlinkingCursorNotHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FA1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorNotHidden.png */; };
+		A6BDB0621B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlinkingTextHidden.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FB1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingTextHidden.png */; };
+		A6BDB0631B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlinkingTextVisible.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FC1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingTextVisible.png */; };
+		A6BDB0641B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlockCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FD1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursor.png */; };
+		A6BDB0651B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlockCursorDoublyReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D71ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursorDoublyReverseVideo.png */; };
+		A6BDB0661B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlockCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D81ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursorReverseVideo.png */; };
+		A6BDB0671B45FC9E00F511E6 /* PTYTextViewTest-golden-testBoxDrawing.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0D91ADA38EE00906FAE /* PTYTextViewTest-golden-testBoxDrawing.png */; };
+		A6BDB0681B45FC9E00F511E6 /* PTYTextViewTest-golden-testBoxSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1251ADA38EE00906FAE /* PTYTextViewTest-golden-testBoxSelection.png */; };
+		A6BDB0691B45FC9E00F511E6 /* PTYTextViewTest-golden-testBrightBoldOff.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FE1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOff.png */; };
+		A6BDB06A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBrightBoldOn.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0FF1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOn.png */; };
+		A6BDB06B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1261ADA38EE00906FAE /* PTYTextViewTest-golden-testCharacterSelection.png */; };
+		A6BDB06C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1271ADA38EE00906FAE /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png */; };
+		A6BDB06D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCombiningMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DA1ADA38EE00906FAE /* PTYTextViewTest-golden-testCombiningMark.png */; };
+		A6BDB06E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DB1ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorBoost.png */; };
+		A6BDB06F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCursorFilledInBecauseKeyWindowAndActiveTextview.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1001ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseKeyWindowAndActiveTextview.png */; };
+		A6BDB0701B45FC9E00F511E6 /* PTYTextViewTest-golden-testCursorFilledInBecauseOfDelegateOverride.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1011ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseOfDelegateOverride.png */; };
+		A6BDB0711B45FC9E00F511E6 /* PTYTextViewTest-golden-testCursorGuide.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1281ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorGuide.png */; };
+		A6BDB0721B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingText.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DC1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingText.png */; };
+		A6BDB0731B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndBg.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DD1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBg.png */; };
+		A6BDB0741B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DE1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoost.png */; };
+		A6BDB0751B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0DF1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png */; };
+		A6BDB0761B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndBgAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E01ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndMinimumContrast.png */; };
+		A6BDB0771B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E11ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndCursorBoost.png */; };
+		A6BDB0781B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E21ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png */; };
+		A6BDB0791B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E31ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndMinimumContrast.png */; };
+		A6BDB07A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testDontUseNonAsciiFont.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1021ADA38EE00906FAE /* PTYTextViewTest-golden-testDontUseNonAsciiFont.png */; };
+		A6BDB07B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testDoubleWidthCharacter.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E41ADA38EE00906FAE /* PTYTextViewTest-golden-testDoubleWidthCharacter.png */; };
+		A6BDB07C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testEmoji.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E51ADA38EE00906FAE /* PTYTextViewTest-golden-testEmoji.png */; };
+		A6BDB07D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testFaintText.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E61ADA38EE00906FAE /* PTYTextViewTest-golden-testFaintText.png */; };
+		A6BDB07E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testFaintTextWithTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E71ADA38EE00906FAE /* PTYTextViewTest-golden-testFaintTextWithTransparency.png */; };
+		A6BDB07F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testFindMatches.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E81ADA38EE00906FAE /* PTYTextViewTest-golden-testFindMatches.png */; };
+		A6BDB0801B45FC9E00F511E6 /* PTYTextViewTest-golden-testFrameCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1031ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursor.png */; };
+		A6BDB0811B45FC9E00F511E6 /* PTYTextViewTest-golden-testFrameCursorWithNondefaultColors.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1041ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursorWithNondefaultColors.png */; };
+		A6BDB0821B45FC9E00F511E6 /* PTYTextViewTest-golden-testHiddenCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1051ADA38EE00906FAE /* PTYTextViewTest-golden-testHiddenCursor.png */; };
+		A6BDB0831B45FC9E00F511E6 /* PTYTextViewTest-golden-testHorizontalSpacing.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1291ADA38EE00906FAE /* PTYTextViewTest-golden-testHorizontalSpacing.png */; };
+		A6BDB0841B45FC9E00F511E6 /* PTYTextViewTest-golden-testIME.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1061ADA38EE00906FAE /* PTYTextViewTest-golden-testIME.png */; };
+		A6BDB0851B45FC9E00F511E6 /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1071ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png */; };
+		A6BDB0861B45FC9E00F511E6 /* PTYTextViewTest-golden-testIMEWithAmbiguousIsNotDoubleWidth.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1081ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsNotDoubleWidth.png */; };
+		A6BDB0871B45FC9E00F511E6 /* PTYTextViewTest-golden-testIMEWrapsDoubleWidthAtEndOfLine.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1091ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWrapsDoubleWidthAtEndOfLine.png */; };
+		A6BDB0881B45FC9E00F511E6 /* PTYTextViewTest-golden-testMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0E91ADA38EE00906FAE /* PTYTextViewTest-golden-testMark.png */; };
+		A6BDB0891B45FC9E00F511E6 /* PTYTextViewTest-golden-testMinimumContrast.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EA1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrast.png */; };
+		A6BDB08A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testMinimumContrastAndCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EB1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrastAndCursorBoost.png */; };
+		A6BDB08B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testMultipleDiscontinuousSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12A1ADA38EE00906FAE /* PTYTextViewTest-golden-testMultipleDiscontinuousSelection.png */; };
+		A6BDB08C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testNoAntiAlias.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12B1ADA38EE00906FAE /* PTYTextViewTest-golden-testNoAntiAlias.png */; };
+		A6BDB08D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testNonAsciiAntiAliasOnly.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12C1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonAsciiAntiAliasOnly.png */; };
+		A6BDB08E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testNonretinaFakeBold.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EC1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonretinaFakeBold.png */; };
+		A6BDB08F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testNote.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0ED1ADA38EE00906FAE /* PTYTextViewTest-golden-testNote.png */; };
+		A6BDB0901B45FC9E00F511E6 /* PTYTextViewTest-golden-testOversizeGlyphs.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EE1ADA38EE00906FAE /* PTYTextViewTest-golden-testOversizeGlyphs.png */; };
+		A6BDB0911B45FC9E00F511E6 /* PTYTextViewTest-golden-testRetinaFakeBold.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0EF1ADA38EE00906FAE /* PTYTextViewTest-golden-testRetinaFakeBold.png */; };
+		A6BDB0921B45FC9E00F511E6 /* PTYTextViewTest-golden-testScrollbackOverflow.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12D1ADA38EE00906FAE /* PTYTextViewTest-golden-testScrollbackOverflow.png */; };
+		A6BDB0931B45FC9E00F511E6 /* PTYTextViewTest-golden-testSelectedTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTab.png */; };
+		A6BDB0941B45FC9E00F511E6 /* PTYTextViewTest-golden-testSelectedTabFillerWithoutTab.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C12F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabFillerWithoutTab.png */; };
+		A6BDB0951B45FC9E00F511E6 /* PTYTextViewTest-golden-testSelectedTabOrphan.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1301ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabOrphan.png */; };
+		A6BDB0961B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10A1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allBlack.png */; };
+		A6BDB0971B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allCursorColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10B1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allCursorColor.png */; };
+		A6BDB0981B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allDarkGray.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10C1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allDarkGray.png */; };
+		A6BDB0991B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allWhite.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10D1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhite.png */; };
+		A6BDB09A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhiteDarkRedFore.png */; };
+		A6BDB09B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_frameAllCursorColor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C10F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_frameAllCursorColor.png */; };
+		A6BDB09C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1101ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png */; };
+		A6BDB09D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhite.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1111ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhite.png */; };
+		A6BDB09E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1121ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png */; };
+		A6BDB09F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_onIsland.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1131ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_onIsland.png */; };
+		A6BDB0A01B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1141ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideo.png */; };
+		A6BDB0A11B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1151ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackground.png */; };
+		A6BDB0A21B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1161ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png */; };
+		A6BDB0A31B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1171ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForeground.png */; };
+		A6BDB0A41B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1181ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png */; };
+		A6BDB0A51B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1191ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png */; };
+		A6BDB0A61B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_whiteCrossGrayCorners.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11A1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_whiteCrossGrayCorners.png */; };
+		A6BDB0A71B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColorWithCursorBoost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11B1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColorWithCursorBoost.png */; };
+		A6BDB0A81B45FC9E00F511E6 /* PTYTextViewTest-golden-testSurrogatePair.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F01ADA38EE00906FAE /* PTYTextViewTest-golden-testSurrogatePair.png */; };
+		A6BDB0A91B45FC9E00F511E6 /* PTYTextViewTest-golden-testSurrogatePairWithCombiningMark.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F11ADA38EE00906FAE /* PTYTextViewTest-golden-testSurrogatePairWithCombiningMark.png */; };
+		A6BDB0AA1B45FC9E00F511E6 /* PTYTextViewTest-golden-testTimestamps.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F21ADA38EE00906FAE /* PTYTextViewTest-golden-testTimestamps.png */; };
+		A6BDB0AB1B45FC9E00F511E6 /* PTYTextViewTest-golden-testTransparency.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11C1ADA38EE00906FAE /* PTYTextViewTest-golden-testTransparency.png */; };
+		A6BDB0AC1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUnderlineCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11D1ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineCursor.png */; };
+		A6BDB0AD1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUnderlineCursorReverseVideo.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C0F31ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineCursorReverseVideo.png */; };
+		A6BDB0AE1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUnderlineHost.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11E1ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineHost.png */; };
+		A6BDB0AF1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUseNonAsciiFont.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C11F1ADA38EE00906FAE /* PTYTextViewTest-golden-testUseNonAsciiFont.png */; };
+		A6BDB0B01B45FC9E00F511E6 /* PTYTextViewTest-golden-testVerticalSpacing.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1311ADA38EE00906FAE /* PTYTextViewTest-golden-testVerticalSpacing.png */; };
+		A6BDB0B11B45FC9E00F511E6 /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1321ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png */; };
+		A6BDB0B31B45FD8300F511E6 /* TestBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
@@ -1478,10 +1480,8 @@
 		A6C763E91B45C71900E3C992 /* UKCrashReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAA612D64022008225A9 /* UKCrashReporter.m */; };
 		A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAA12D64022008225A9 /* UKNibOwner.m */; };
 		A6C763EB1B45C71900E3C992 /* UKSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAC12D64022008225A9 /* UKSystemInfo.m */; };
-		A6C763FC1B45C72F00E3C992 /* IntervalTreeTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */; };
 		A6C763FD1B45C72F00E3C992 /* iTermPasteHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */; };
 		A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A5521180FA46100B42CE9 /* iTermTests.m */; };
-		A6C764021B45C72F00E3C992 /* PTYTextViewTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */; };
 		A6C764031B45C72F00E3C992 /* SemanticHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A63679821A328E7D000DB943 /* SemanticHistoryTest.m */; };
 		A6C764161B45C77100E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C764171B45C7B200E3C992 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
@@ -2448,9 +2448,9 @@
 		A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100CSIParserTest.m; sourceTree = "<group>"; };
 		A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSStringCategoryTest.m; sourceTree = "<group>"; };
 		A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYSessionTest.m; sourceTree = "<group>"; };
+		A6BDB04F1B45FBCB00F511E6 /* PTYTextViewTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTextViewTest.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
-		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
 		A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTabBarControlView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2534,8 +2534,6 @@
 		A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNumberOfSpacesAccessoryViewController.m; sourceTree = "<group>"; };
 		A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteSpecialViewController.h; sourceTree = "<group>"; };
 		A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteSpecialViewController.m; sourceTree = "<group>"; tabWidth = 4; };
-		A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PTYTextViewTest.h; path = iTermTests/PTYTextViewTest.h; sourceTree = "<group>"; };
-		A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = PTYTextViewTest.m; path = iTermTests/PTYTextViewTest.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
@@ -3415,14 +3413,11 @@
 			children = (
 				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
 				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
-				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
 				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
 				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
 				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
-				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
-				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
 				A63679811A328E7D000DB943 /* SemanticHistoryTest.h */,
 				A63679821A328E7D000DB943 /* SemanticHistoryTest.m */,
 			);
@@ -3986,6 +3981,7 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				A6BDB04F1B45FBCB00F511E6 /* PTYTextViewTest.m */,
 				A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */,
 				A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */,
 				A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */,
@@ -5139,56 +5135,28 @@
 			files = (
 				A6B70FBC19830C37007A4284 /* dead.png in Resources */,
 				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
-				A686C1891ADA38EE00906FAE /* PTYTextViewTest-golden-testHorizontalSpacing.png in Resources */,
-				A686C1701ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */,
 				A6CEDA6019988A7300BB57EC /* LogoFrame.png in Resources */,
-				A686C1341ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursor.png in Resources */,
-				A686C1641ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursorWithNondefaultColors.png in Resources */,
-				A686C14D1ADA38EE00906FAE /* PTYTextViewTest-golden-testNote.png in Resources */,
-				A686C14E1ADA38EE00906FAE /* PTYTextViewTest-golden-testOversizeGlyphs.png in Resources */,
-				A686C1711ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhite.png in Resources */,
 				A67D0D751A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
-				A686C16D1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhite.png in Resources */,
-				A686C16A1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allBlack.png in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				A690F7021B424C55009F76D8 /* Media.xcassets in Resources */,
-				A686C1521ADA38EE00906FAE /* PTYTextViewTest-golden-testTimestamps.png in Resources */,
 				1DB40A421B1FDC7F005B83C7 /* NoColor@2x.png in Resources */,
-				A686C15C1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingTextVisible.png in Resources */,
 				A67D0D5D1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib in Resources */,
-				A686C17C1ADA38EE00906FAE /* PTYTextViewTest-golden-testTransparency.png in Resources */,
 				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				A67D0D8D1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
-				A686C1921ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */,
-				A686C1391ADA38EE00906FAE /* PTYTextViewTest-golden-testBoxDrawing.png in Resources */,
-				A686C1761ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */,
-				A686C15A1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorNotHidden.png in Resources */,
 				A67D0D691A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				1DEDF56A19C917FD005B023A /* new-tab.png in Resources */,
 				1DA76A251B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
-				A686C1501ADA38EE00906FAE /* PTYTextViewTest-golden-testSurrogatePair.png in Resources */,
-				A686C18D1ADA38EE00906FAE /* PTYTextViewTest-golden-testScrollbackOverflow.png in Resources */,
-				A686C1601ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseKeyWindowAndActiveTextview.png in Resources */,
-				A686C15B1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingTextHidden.png in Resources */,
 				A6B3A73F1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
-				A686C1371ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursorDoublyReverseVideo.png in Resources */,
-				A686C18A1ADA38EE00906FAE /* PTYTextViewTest-golden-testMultipleDiscontinuousSelection.png in Resources */,
 				1D8BBA6C1B30F5C30005A852 /* Navigate@2x.png in Resources */,
-				A686C1511ADA38EE00906FAE /* PTYTextViewTest-golden-testSurrogatePairWithCombiningMark.png in Resources */,
-				A686C18E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTab.png in Resources */,
 				A69B458C19710CC400F5444D /* SoftDivider.png in Resources */,
 				1DA76A0C1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
 				A65B72AD1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
-				A686C13B1ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorBoost.png in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				A65B72B21B33C07D00F947A7 /* NextTip.png in Resources */,
-				A686C1741ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideo.png in Resources */,
 				A65B72AA1B3285A300F947A7 /* DisableTips.png in Resources */,
-				A686C1541ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageHighBlending.png in Resources */,
 				A6B70FBE19830C37007A4284 /* dead@2x.png in Resources */,
-				A686C14F1ADA38EE00906FAE /* PTYTextViewTest-golden-testRetinaFakeBold.png in Resources */,
 				1D01609E1852AA6F0014D26A /* mark.png in Resources */,
 				A67D0D481A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A67D0D421A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
@@ -5196,134 +5164,65 @@
 				A67D0D451A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				1DE922E71AC3709200965876 /* BackgroundStripes.png in Resources */,
 				A67D0D871A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
-				A686C1421ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */,
 				A69B457C1967B04300F5444D /* BrokenPipeDivider.png in Resources */,
 				A67D0D571A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
-				A686C1401ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndMinimumContrast.png in Resources */,
 				A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */,
-				A686C14B1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrastAndCursorBoost.png in Resources */,
 				1D8BBA741B30F7FB0005A852 /* Dismiss.png in Resources */,
-				A686C1871ADA38EE00906FAE /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
 				A67D0D811A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
-				A686C1791ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */,
 				A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A67D0D361A2EE12A003A8B35 /* AddressBook.strings in Resources */,
 				A67D0D661A2EE12A003A8B35 /* iTermPasswordManager.xib in Resources */,
-				A686C1441ADA38EE00906FAE /* PTYTextViewTest-golden-testDoubleWidthCharacter.png in Resources */,
 				1D8BBA791B30FD230005A852 /* Later.png in Resources */,
 				1D8BBA691B30F5C30005A852 /* Navigate.png in Resources */,
-				A686C1731ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_onIsland.png in Resources */,
-				A686C1411ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndCursorBoost.png in Resources */,
-				A686C1461ADA38EE00906FAE /* PTYTextViewTest-golden-testFaintText.png in Resources */,
-				A686C1831ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundStripes.png in Resources */,
-				A686C1571ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithReverseVideo.png in Resources */,
-				A686C1561ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithGloballyInvertedColors.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				1DE922EB1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A6B70FC219830F0D007A4284 /* NewOutput.png in Resources */,
-				A686C17F1ADA38EE00906FAE /* PTYTextViewTest-golden-testUseNonAsciiFont.png in Resources */,
 				A67D0D631A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
-				A686C16B1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allCursorColor.png in Resources */,
 				A67D0D331A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
 				A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */,
-				A686C13C1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingText.png in Resources */,
 				A67D0D781A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A65B725E1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				1DC2AF5419521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1DD39AE1180B8118004E56D5 /* InfoPlist.strings in Resources */,
-				A686C1881ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorGuide.png in Resources */,
-				A686C17D1ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineCursor.png in Resources */,
-				A686C1851ADA38EE00906FAE /* PTYTextViewTest-golden-testBoxSelection.png in Resources */,
 				1DEF5E6E185F889600300319 /* Alert.png in Resources */,
-				A686C13F1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */,
-				A686C1351ADA38EE00906FAE /* PTYTextViewTest-golden-testBarCursorReverseVideo.png in Resources */,
-				A6B3A7491AC8A9A3008E8D4E /* TestBackground.png in Resources */,
-				A686C1781ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
 				1DBBA5DF1B3CB0590026E3B6 /* restore-arrangement.png in Resources */,
-				A686C1331ADA38EE00906FAE /* PTYTextViewTest-golden-testAnsiColors.png in Resources */,
-				A686C13A1ADA38EE00906FAE /* PTYTextViewTest-golden-testCombiningMark.png in Resources */,
 				A65B72561B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
-				A686C15F1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOn.png in Resources */,
-				A686C1361ADA38EE00906FAE /* PTYTextViewTest-golden-testBasicDraw.png in Resources */,
-				A686C1651ADA38EE00906FAE /* PTYTextViewTest-golden-testHiddenCursor.png in Resources */,
 				1D01609C1852AA6F0014D26A /* mark@2x.png in Resources */,
 				A67D0D391A2EE12A003A8B35 /* AdvancedWorkingDirectoryWindow.xib in Resources */,
-				A686C13D1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBg.png in Resources */,
-				A686C17B1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColorWithCursorBoost.png in Resources */,
-				A686C18B1ADA38EE00906FAE /* PTYTextViewTest-golden-testNoAntiAlias.png in Resources */,
-				A686C1751ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */,
 				A67D0D721A2EE12A003A8B35 /* MainMenu.xib in Resources */,
-				A686C14A1ADA38EE00906FAE /* PTYTextViewTest-golden-testMinimumContrast.png in Resources */,
 				1D8BBA861B31DC140005A852 /* ChevronDown@2x.png in Resources */,
 				A67D0D7B1A2EE12A003A8B35 /* PasteView.xib in Resources */,
-				A686C16C1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allDarkGray.png in Resources */,
-				A686C1591ADA38EE00906FAE /* PTYTextViewTest-golden-testBlinkingCursorHidden.png in Resources */,
-				A686C14C1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonretinaFakeBold.png in Resources */,
 				1DBBA5E21B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
-				A686C1621ADA38EE00906FAE /* PTYTextViewTest-golden-testDontUseNonAsciiFont.png in Resources */,
 				A67D0D6C1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */,
 				A67D0D4E1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
-				A686C1471ADA38EE00906FAE /* PTYTextViewTest-golden-testFaintTextWithTransparency.png in Resources */,
-				A686C1491ADA38EE00906FAE /* PTYTextViewTest-golden-testMark.png in Resources */,
-				A686C1821ADA38EE00906FAE /* PTYTextViewTest-golden-testAsciiAntiAliasOnly.png in Resources */,
-				A686C1721ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */,
 				A686C1961ADF62F200906FAE /* Zoomed.png in Resources */,
-				A686C16E1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */,
 				A6B3A73C1AC74E02008E8D4E /* FindCursorCell2.png in Resources */,
-				A686C1811ADA38EE00906FAE /* PTYTextViewTest-golden-test256Colors.png in Resources */,
 				A663010C19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
-				A686C1801ADA38EE00906FAE /* PTYTextViewTest-golden-test24BitColor.png in Resources */,
-				A686C1901ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabOrphan.png in Resources */,
-				A686C1911ADA38EE00906FAE /* PTYTextViewTest-golden-testVerticalSpacing.png in Resources */,
 				A67D0D3C1A2EE12A003A8B35 /* Autocomplete.xib in Resources */,
-				A686C15E1ADA38EE00906FAE /* PTYTextViewTest-golden-testBrightBoldOff.png in Resources */,
 				A67D0D4B1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				1DC2AF5219521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				1D8BBA7C1B30FD230005A852 /* Later@2x.png in Resources */,
 				A663010919CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
-				A686C1691ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWrapsDoubleWidthAtEndOfLine.png in Resources */,
-				A686C1861ADA38EE00906FAE /* PTYTextViewTest-golden-testCharacterSelection.png in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A67D0D8A1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
 				1DC13ABE1886146B00034DAE /* mark_err.png in Resources */,
-				A686C1551ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageLowBlending.png in Resources */,
-				A686C1581ADA38EE00906FAE /* PTYTextViewTest-golden-testBackgroundImageWithTransparency.png in Resources */,
 				A67D0D6F1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
-				A686C17A1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_whiteCrossGrayCorners.png in Resources */,
 				A6B3A7361AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
-				A686C1451ADA38EE00906FAE /* PTYTextViewTest-golden-testEmoji.png in Resources */,
 				1DD39AE7180B8118004E56D5 /* Credits.rtf in Resources */,
-				A686C1631ADA38EE00906FAE /* PTYTextViewTest-golden-testFrameCursor.png in Resources */,
-				A686C18F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSelectedTabFillerWithoutTab.png in Resources */,
 				A65B725B1B1A630100F947A7 /* CheckMark.png in Resources */,
-				A686C1671ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png in Resources */,
 				A65B72531B1A5D7500F947A7 /* WarningSign.png in Resources */,
-				A686C13E1ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoost.png in Resources */,
-				A686C1611ADA38EE00906FAE /* PTYTextViewTest-golden-testCursorFilledInBecauseOfDelegateOverride.png in Resources */,
 				1D8BBA711B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
 				A67D0D901A2EE12A003A8B35 /* TmuxDashboard.xib in Resources */,
 				A67D0D601A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
-				A686C1431ADA38EE00906FAE /* PTYTextViewTest-golden-testDimmingTextAndMinimumContrast.png in Resources */,
-				A686C15D1ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursor.png in Resources */,
 				A6B3A7391AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
-				A686C1481ADA38EE00906FAE /* PTYTextViewTest-golden-testFindMatches.png in Resources */,
-				A686C1841ADA38EE00906FAE /* PTYTextViewTest-golden-testBadge.png in Resources */,
-				A686C1661ADA38EE00906FAE /* PTYTextViewTest-golden-testIME.png in Resources */,
-				A686C1771ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */,
 				A67D0D541A2EE12A003A8B35 /* GlobalSearch.xib in Resources */,
-				A686C18C1ADA38EE00906FAE /* PTYTextViewTest-golden-testNonAsciiAntiAliasOnly.png in Resources */,
-				A686C17E1ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineHost.png in Resources */,
-				A686C1681ADA38EE00906FAE /* PTYTextViewTest-golden-testIMEWithAmbiguousIsNotDoubleWidth.png in Resources */,
 				A67D0D5A1A2EE12A003A8B35 /* iTerm.strings in Resources */,
 				A66A1FAF1A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
 				1DC13AC01886146B00034DAE /* mark_err@2x.png in Resources */,
-				A686C1381ADA38EE00906FAE /* PTYTextViewTest-golden-testBlockCursorReverseVideo.png in Resources */,
-				A686C1531ADA38EE00906FAE /* PTYTextViewTest-golden-testUnderlineCursorReverseVideo.png in Resources */,
 				A67D0D511A2EE12A003A8B35 /* FindView.xib in Resources */,
 				A67D0D7E1A2EE12A003A8B35 /* PreferencePanel.strings in Resources */,
-				A686C16F1ADA38EE00906FAE /* PTYTextViewTest-golden-testSmartCursorColor_frameAllCursorColor.png in Resources */,
 				1DEF5E70185F889600300319 /* Alert@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5481,6 +5380,104 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6BDB07F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testFindMatches.png in Resources */,
+				A6BDB0751B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoostAndMinimumContrast.png in Resources */,
+				A6BDB0571B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageLowBlending.png in Resources */,
+				A6BDB0891B45FC9E00F511E6 /* PTYTextViewTest-golden-testMinimumContrast.png in Resources */,
+				A6BDB07D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testFaintText.png in Resources */,
+				A6BDB0A01B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideo.png in Resources */,
+				A6BDB0771B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndCursorBoost.png in Resources */,
+				A6BDB0961B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allBlack.png in Resources */,
+				A6BDB09D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhite.png in Resources */,
+				A6BDB05D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBarCursor.png in Resources */,
+				A6BDB0801B45FC9E00F511E6 /* PTYTextViewTest-golden-testFrameCursor.png in Resources */,
+				A6BDB0781B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndCursorBoostAndMinimumContrast.png in Resources */,
+				A6BDB0871B45FC9E00F511E6 /* PTYTextViewTest-golden-testIMEWrapsDoubleWidthAtEndOfLine.png in Resources */,
+				A6BDB0921B45FC9E00F511E6 /* PTYTextViewTest-golden-testScrollbackOverflow.png in Resources */,
+				A6BDB08D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testNonAsciiAntiAliasOnly.png in Resources */,
+				A6BDB0841B45FC9E00F511E6 /* PTYTextViewTest-golden-testIME.png in Resources */,
+				A6BDB0521B45FC9E00F511E6 /* PTYTextViewTest-golden-test24BitColor.png in Resources */,
+				A6BDB0911B45FC9E00F511E6 /* PTYTextViewTest-golden-testRetinaFakeBold.png in Resources */,
+				A6BDB0591B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageWithReverseVideo.png in Resources */,
+				A6BDB0561B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageHighBlending.png in Resources */,
+				A6BDB0581B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageWithGloballyInvertedColors.png in Resources */,
+				A6BDB0671B45FC9E00F511E6 /* PTYTextViewTest-golden-testBoxDrawing.png in Resources */,
+				A6BDB0A41B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundAndBackgroundUnderCursor.png in Resources */,
+				A6BDB0A81B45FC9E00F511E6 /* PTYTextViewTest-golden-testSurrogatePair.png in Resources */,
+				A6BDB0A71B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColorWithCursorBoost.png in Resources */,
+				A6BDB08C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testNoAntiAlias.png in Resources */,
+				A6BDB05B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundStripes.png in Resources */,
+				A6BDB0AE1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUnderlineHost.png in Resources */,
+				A6BDB07C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testEmoji.png in Resources */,
+				A6BDB0AD1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUnderlineCursorReverseVideo.png in Resources */,
+				A6BDB06F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCursorFilledInBecauseKeyWindowAndActiveTextview.png in Resources */,
+				A6BDB0A21B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */,
+				A6BDB0661B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlockCursorReverseVideo.png in Resources */,
+				A6BDB05C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBadge.png in Resources */,
+				A6BDB0631B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlinkingTextVisible.png in Resources */,
+				A6BDB0651B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlockCursorDoublyReverseVideo.png in Resources */,
+				A6BDB09F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_onIsland.png in Resources */,
+				A6BDB08A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testMinimumContrastAndCursorBoost.png in Resources */,
+				A6BDB07E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testFaintTextWithTransparency.png in Resources */,
+				A6BDB07A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testDontUseNonAsciiFont.png in Resources */,
+				A6BDB0541B45FC9E00F511E6 /* PTYTextViewTest-golden-testAnsiColors.png in Resources */,
+				A6BDB0A61B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_whiteCrossGrayCorners.png in Resources */,
+				A6BDB0681B45FC9E00F511E6 /* PTYTextViewTest-golden-testBoxSelection.png in Resources */,
+				A6BDB0A51B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForegroundOnlyUnderCursor.png in Resources */,
+				A6BDB0901B45FC9E00F511E6 /* PTYTextViewTest-golden-testOversizeGlyphs.png in Resources */,
+				A6BDB0621B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlinkingTextHidden.png in Resources */,
+				A6BDB0A31B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultForeground.png in Resources */,
+				A6BDB0941B45FC9E00F511E6 /* PTYTextViewTest-golden-testSelectedTabFillerWithoutTab.png in Resources */,
+				A6BDB0951B45FC9E00F511E6 /* PTYTextViewTest-golden-testSelectedTabOrphan.png in Resources */,
+				A6BDB0761B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndBgAndMinimumContrast.png in Resources */,
+				A6BDB0531B45FC9E00F511E6 /* PTYTextViewTest-golden-test256Colors.png in Resources */,
+				A6BDB0831B45FC9E00F511E6 /* PTYTextViewTest-golden-testHorizontalSpacing.png in Resources */,
+				A6BDB09C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_frameManyGrayOneWhiteOneBlack.png in Resources */,
+				A6BDB0991B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allWhite.png in Resources */,
+				A6BDB0611B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlinkingCursorNotHidden.png in Resources */,
+				A6BDB0AC1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUnderlineCursor.png in Resources */,
+				A6BDB0511B45FC4300F511E6 /* DefaultBookmark.plist in Resources */,
+				A6BDB0791B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndMinimumContrast.png in Resources */,
+				A6BDB08B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testMultipleDiscontinuousSelection.png in Resources */,
+				A6BDB0881B45FC9E00F511E6 /* PTYTextViewTest-golden-testMark.png in Resources */,
+				A6BDB08F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testNote.png in Resources */,
+				A6BDB0641B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlockCursor.png in Resources */,
+				A6BDB06B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCharacterSelection.png in Resources */,
+				A6BDB05A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBackgroundImageWithTransparency.png in Resources */,
+				A6BDB0861B45FC9E00F511E6 /* PTYTextViewTest-golden-testIMEWithAmbiguousIsNotDoubleWidth.png in Resources */,
+				A6BDB08E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testNonretinaFakeBold.png in Resources */,
+				A6BDB0A11B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */,
+				A6BDB0971B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allCursorColor.png in Resources */,
+				A6BDB0701B45FC9E00F511E6 /* PTYTextViewTest-golden-testCursorFilledInBecauseOfDelegateOverride.png in Resources */,
+				A6BDB06A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBrightBoldOn.png in Resources */,
+				A6BDB0AF1B45FC9E00F511E6 /* PTYTextViewTest-golden-testUseNonAsciiFont.png in Resources */,
+				A6BDB0931B45FC9E00F511E6 /* PTYTextViewTest-golden-testSelectedTab.png in Resources */,
+				A6BDB09A1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allWhiteDarkRedFore.png in Resources */,
+				A6BDB0A91B45FC9E00F511E6 /* PTYTextViewTest-golden-testSurrogatePairWithCombiningMark.png in Resources */,
+				A6BDB0711B45FC9E00F511E6 /* PTYTextViewTest-golden-testCursorGuide.png in Resources */,
+				A6BDB0691B45FC9E00F511E6 /* PTYTextViewTest-golden-testBrightBoldOff.png in Resources */,
+				A6BDB06D1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCombiningMark.png in Resources */,
+				A6BDB0731B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndBg.png in Resources */,
+				A6BDB0721B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingText.png in Resources */,
+				A6BDB0821B45FC9E00F511E6 /* PTYTextViewTest-golden-testHiddenCursor.png in Resources */,
+				A6BDB0B01B45FC9E00F511E6 /* PTYTextViewTest-golden-testVerticalSpacing.png in Resources */,
+				A6BDB0811B45FC9E00F511E6 /* PTYTextViewTest-golden-testFrameCursorWithNondefaultColors.png in Resources */,
+				A6BDB0AA1B45FC9E00F511E6 /* PTYTextViewTest-golden-testTimestamps.png in Resources */,
+				A6BDB09B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_frameAllCursorColor.png in Resources */,
+				A6BDB0551B45FC9E00F511E6 /* PTYTextViewTest-golden-testAsciiAntiAliasOnly.png in Resources */,
+				A6BDB0B31B45FD8300F511E6 /* TestBackground.png in Resources */,
+				A6BDB0981B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_allDarkGray.png in Resources */,
+				A6BDB05E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBarCursorReverseVideo.png in Resources */,
+				A6BDB06C1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCharacterSelectionTextviewIsFirstResponder.png in Resources */,
+				A6BDB0601B45FC9E00F511E6 /* PTYTextViewTest-golden-testBlinkingCursorHidden.png in Resources */,
+				A6BDB0AB1B45FC9E00F511E6 /* PTYTextViewTest-golden-testTransparency.png in Resources */,
+				A6BDB0B11B45FC9E00F511E6 /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */,
+				A6BDB09E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */,
+				A6BDB07B1B45FC9E00F511E6 /* PTYTextViewTest-golden-testDoubleWidthCharacter.png in Resources */,
+				A6BDB06E1B45FC9E00F511E6 /* PTYTextViewTest-golden-testCursorBoost.png in Resources */,
+				A6BDB0741B45FC9E00F511E6 /* PTYTextViewTest-golden-testDimmingTextAndBgAndCursorBoost.png in Resources */,
+				A6BDB0851B45FC9E00F511E6 /* PTYTextViewTest-golden-testIMEWithAmbiguousIsDoubleWidth.png in Resources */,
+				A6BDB05F1B45FC9E00F511E6 /* PTYTextViewTest-golden-testBasicDraw.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5552,8 +5549,6 @@
 				A6C763FD1B45C72F00E3C992 /* iTermPasteHelperTest.m in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
-				A6C763FC1B45C72F00E3C992 /* IntervalTreeTest.m in Sources */,
-				A6C764021B45C72F00E3C992 /* PTYTextViewTest.m in Sources */,
 				1D1F8C1D1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5906,6 +5901,7 @@
 				A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */,
 				A6BDB04E1B45EC8A00F511E6 /* PTYSessionTest.m in Sources */,
 				A6BDB04C1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m in Sources */,
+				A6BDB0501B45FBCB00F511E6 /* PTYTextViewTest.m in Sources */,
 				A6BDB0461B45EAE700F511E6 /* VT100GridTest.m in Sources */,
 				A6BDB0441B45E8EE00F511E6 /* VT100ScreenTest.m in Sources */,
 			);
