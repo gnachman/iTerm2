@@ -1146,6 +1146,7 @@
 		A6B70FC319830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
 		A6B70FC419830F0D007A4284 /* NewOutput@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B70FC019830F0D007A4284 /* NewOutput@2x.png */; };
 		A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B70FCB1986FB39007A4284 /* PTYSession+Scripting.h */; };
+		A6BDB03D1B45E73000F511E6 /* iTermEquivalenceClassSetTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D82FF6014ABC38700B34CEA /* iTermEquivalenceClassSetTest.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
@@ -1474,7 +1475,6 @@
 		A6C763E91B45C71900E3C992 /* UKCrashReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAA612D64022008225A9 /* UKCrashReporter.m */; };
 		A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAA12D64022008225A9 /* UKNibOwner.m */; };
 		A6C763EB1B45C71900E3C992 /* UKSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAC12D64022008225A9 /* UKSystemInfo.m */; };
-		A6C763FB1B45C72F00E3C992 /* EquivalenceClassSetTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */; };
 		A6C763FC1B45C72F00E3C992 /* IntervalTreeTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */; };
 		A6C763FD1B45C72F00E3C992 /* iTermPasteHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */; };
 		A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A5521180FA46100B42CE9 /* iTermTests.m */; };
@@ -1819,8 +1819,7 @@
 		1D8255FF146881EC007CAE78 /* PointerController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PointerController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D825602146B258A007CAE78 /* EventMonitorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = EventMonitorView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D825603146B258A007CAE78 /* EventMonitorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = EventMonitorView.m; sourceTree = "<group>"; tabWidth = 4; };
-		1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EquivalenceClassSetTest.h; sourceTree = "<group>"; };
-		1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EquivalenceClassSetTest.m; sourceTree = "<group>"; };
+		1D82FF6014ABC38700B34CEA /* iTermEquivalenceClassSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermEquivalenceClassSetTest.m; path = ../sources/iTermEquivalenceClassSetTest.m; sourceTree = "<group>"; };
 		1D85D1D81306687700A3E998 /* RegexKitLite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegexKitLite.h; sourceTree = "<group>"; };
 		1D85D1DA1306687700A3E998 /* RegexKitLite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegexKitLite.m; sourceTree = "<group>"; };
 		1D891E41190724DB0053C4BB /* MarkTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = MarkTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3425,7 +3424,6 @@
 			isa = PBXGroup;
 			children = (
 				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
-				1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */,
 				A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */,
 				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
@@ -3439,7 +3437,6 @@
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
 				A6DF7B6E1A539B4200D96409 /* VT100XtermParserTest.h */,
 				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
-				1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */,
 				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
 				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
@@ -4013,6 +4010,7 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				1D82FF6014ABC38700B34CEA /* iTermEquivalenceClassSetTest.m */,
 				A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */,
 				A6C7641E1B45CB2800E3C992 /* Supporting Files */,
 			);
@@ -5575,7 +5573,6 @@
 				A6C764071B45C72F00E3C992 /* VT100ScreenTest.m in Sources */,
 				A6C763FD1B45C72F00E3C992 /* iTermPasteHelperTest.m in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
-				A6C763FB1B45C72F00E3C992 /* EquivalenceClassSetTest.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				A6C763FC1B45C72F00E3C992 /* IntervalTreeTest.m in Sources */,
 				A6C764011B45C72F00E3C992 /* PTYSessionTest.m in Sources */,
@@ -5929,6 +5926,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6BDB03D1B45E73000F511E6 /* iTermEquivalenceClassSetTest.m in Sources */,
 				A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
