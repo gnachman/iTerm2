@@ -73,16 +73,17 @@ static const double kFloatingPointTolerance = 0.00001;
     _helper.delegate = self;
     [iTermWarning setWarningHandler:self];
     [[PasteboardHistory sharedInstance] clear];
-    _warningBlock = ^NSModalResponse(NSAlert *alert, NSString *identifier) {
+    _warningBlock = [^NSModalResponse(NSAlert *alert, NSString *identifier) {
         if ([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]) {
             return NSAlertDefaultReturn;
         }
         XCTAssert(false);
-    };
+    } copy];
 }
 
 - (void)tearDown {
     [iTermWarning setWarningHandler:nil];
+    [_warningBlock release];
 }
 
 - (void)runTimer {
@@ -247,11 +248,12 @@ static const double kFloatingPointTolerance = 0.00001;
 
 - (void)testMultilineWarning {
     __block BOOL warned = NO;
-    _warningBlock = ^NSModalResponse(NSAlert *alert, NSString *identifier) {
+    [_warningBlock release];
+    _warningBlock = [^NSModalResponse(NSAlert *alert, NSString *identifier) {
         XCTAssert([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]);
         warned = YES;
         return NSAlertDefaultReturn;
-    };
+    } copy];
 
     // Check cr newline
     [_helper pasteString:@"line 1\rline 2"
