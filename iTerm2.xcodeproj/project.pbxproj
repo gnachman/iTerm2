@@ -1971,7 +1971,6 @@
 		1DD39AE0180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1DD39AE4180B8118004E56D5 /* iTermTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermTests-Prefix.pch"; sourceTree = "<group>"; };
 		1DD39AE6180B8118004E56D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
-		1DD39AF5180B8119004E56D5 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		1DD39B18180B82F5004E56D5 /* DebugLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = DebugLogging.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39B19180B82F5004E56D5 /* DebugLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = DebugLogging.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DD39B7A180B8842004E56D5 /* libicucore.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libicucore.dylib; path = usr/lib/libicucore.dylib; sourceTree = SDKROOT; };
@@ -2017,9 +2016,6 @@
 		1DF8FEF218F3217100722B35 /* KeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = KeysPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DFA7C671923E83500DF1410 /* libSSKeychain.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libSSKeychain.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DFA7C6B1923E83600DF1410 /* SSKeychain-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SSKeychain-Prefix.pch"; path = "SSKeychain/SSKeychain-Prefix.pch"; sourceTree = "<group>"; };
-		1DFA7C7B1923E83600DF1410 /* SSKeychainTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SSKeychainTests-Info.plist"; sourceTree = "<group>"; };
-		1DFA7C7D1923E83600DF1410 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		1DFA7C7F1923E83600DF1410 /* SSKeychainTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SSKeychainTests.m; sourceTree = "<group>"; };
 		1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSKeychainQuery.h; path = SSKeychain/SSKeychainQuery.h; sourceTree = "<group>"; };
 		1DFA7C8C1923E86400DF1410 /* SSKeychainQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSKeychainQuery.m; path = SSKeychain/SSKeychainQuery.m; sourceTree = "<group>"; };
 		1DFA7C8F1923E89100DF1410 /* SSKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSKeychain.h; path = SSKeychain/SSKeychain.h; sourceTree = "<group>"; };
@@ -2697,14 +2693,11 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A690F7001B424C55009F76D8 /* Media.xcassets */,
-				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1D03D42519144B8E0049EB8F /* ThirdParty */,
-				1D5FD9AD11F61CA900C46BA3 /* Tests */,
+				1D5FD9AD11F61CA900C46BA3 /* Applescript Tests */,
 				0464AB27006CD2EC7F000001 /* Supporting Files */,
-				1DFA7C791923E83600DF1410 /* SSKeychainTests */,
 				A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
@@ -3209,6 +3202,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A690F7001B424C55009F76D8 /* Media.xcassets */,
 				1DEF5E6B185F889600300319 /* Alert.png */,
 				1DEF5E6C185F889600300319 /* Alert@2x.png */,
 				1DE922E51AC3709200965876 /* BackgroundStripes.png */,
@@ -3405,16 +3399,16 @@
 			name = Applescript;
 			sourceTree = "<group>";
 		};
-		1D5FD9AD11F61CA900C46BA3 /* Tests */ = {
+		1D5FD9AD11F61CA900C46BA3 /* Applescript Tests */ = {
 			isa = PBXGroup;
 			children = (
+				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
 				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
-				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
 			);
-			name = Tests;
+			name = "Applescript Tests";
 			path = sources/;
 			sourceTree = "<group>";
 		};
@@ -3567,21 +3561,21 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */,
-				A624231819CF6DE000182C08 /* NMSSH.framework */,
-				A624231319CF6B1600182C08 /* Growl.framework */,
-				A624230F19CF6B0C00182C08 /* Sparkle.framework */,
-				1DFA7C9D1923F77100DF1410 /* Security.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
 				1DD39AD6180B8118004E56D5 /* Cocoa.framework */,
+				A624231319CF6B1600182C08 /* Growl.framework */,
 				1DD39B7A180B8842004E56D5 /* libicucore.dylib */,
+				A624232519CF70DF00182C08 /* NMSSH.framework */,
+				A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */,
+				A624231819CF6DE000182C08 /* NMSSH.framework */,
 				1DD39AD8180B8118004E56D5 /* Other Frameworks */,
 				1DEB29301288885700B2CB9F /* Quartz.framework */,
 				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
-				1DF0897013DBAF4C00A52AD8 /* Quartz.framework */,
 				1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */,
-				1DD39AF5180B8119004E56D5 /* XCTest.framework */,
+				1DFA7C9D1923F77100DF1410 /* Security.framework */,
+				A624230F19CF6B0C00182C08 /* Sparkle.framework */,
+				1DF0897013DBAF4C00A52AD8 /* Quartz.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -3625,24 +3619,6 @@
 				1DFA7C6B1923E83600DF1410 /* SSKeychain-Prefix.pch */,
 			);
 			name = SSKeychain;
-			sourceTree = "<group>";
-		};
-		1DFA7C791923E83600DF1410 /* SSKeychainTests */ = {
-			isa = PBXGroup;
-			children = (
-				1DFA7C7F1923E83600DF1410 /* SSKeychainTests.m */,
-				1DFA7C7A1923E83600DF1410 /* Supporting Files */,
-			);
-			path = SSKeychainTests;
-			sourceTree = "<group>";
-		};
-		1DFA7C7A1923E83600DF1410 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				1DFA7C7B1923E83600DF1410 /* SSKeychainTests-Info.plist */,
-				1DFA7C7C1923E83600DF1410 /* InfoPlist.strings */,
-			);
-			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		A6358641184BEA47009ED690 /* AATree */ = {
@@ -5956,14 +5932,6 @@
 				1DD39AE6180B8118004E56D5 /* en */,
 			);
 			name = Credits.rtf;
-			sourceTree = "<group>";
-		};
-		1DFA7C7C1923E83600DF1410 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				1DFA7C7D1923E83600DF1410 /* en */,
-			);
-			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
