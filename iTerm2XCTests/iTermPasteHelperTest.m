@@ -77,7 +77,7 @@ static const double kFloatingPointTolerance = 0.00001;
         if ([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]) {
             return NSAlertDefaultReturn;
         }
-        assert(false);
+        XCTAssert(false);
     };
 }
 
@@ -105,7 +105,7 @@ static const double kFloatingPointTolerance = 0.00001;
                                             tabTransform:tabTransform
                                             spacesPerTab:spacesPerTab];
     [iTermPasteHelper sanitizePasteEvent:event encoding:NSUTF8StringEncoding];
-    assert([expected isEqualToString:event.string]);
+    XCTAssert([expected isEqualToString:event.string]);
 }
 
 - (void)testSanitizeIdentity {
@@ -204,9 +204,9 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
-    assert([_dataWritten isEqualToData:[kHelloWorld dataUsingEncoding:NSUTF8StringEncoding]]);
-    assert(_helper.duration == 0);
-    assert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:kHelloWorld]);
+    XCTAssert([_dataWritten isEqualToData:[kHelloWorld dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert(_helper.duration == 0);
+    XCTAssert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:kHelloWorld]);
 }
 
 - (void)testDefaultFlagsOnPasteString {
@@ -218,7 +218,7 @@ static const double kFloatingPointTolerance = 0.00001;
             spacesPerTab:0];
     [self runTimer];
     NSString *expected = @"a (\t\r\r“”‘’–—b";
-    assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
 }
 
 - (void)testPasteStringWithFlagsAndConvertToSpacesTabTransform {
@@ -230,7 +230,7 @@ static const double kFloatingPointTolerance = 0.00001;
             spacesPerTab:4];
     [self runTimer];
     NSString *expected = @"a\\ \\(    \r\r“”‘’–—b";
-    assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
 }
 
 - (void)testPasteStringWithFlagsAndCtrlVTabTransform {
@@ -242,13 +242,13 @@ static const double kFloatingPointTolerance = 0.00001;
             spacesPerTab:0];
     [self runTimer];
     NSString *expected = @"a\\ \\(\x16\t\r\r“”‘’–—b";
-    assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
 }
 
 - (void)testMultilineWarning {
     __block BOOL warned = NO;
     _warningBlock = ^NSModalResponse(NSAlert *alert, NSString *identifier) {
-        assert([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]);
+        XCTAssert([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]);
         warned = YES;
         return NSAlertDefaultReturn;
     };
@@ -260,7 +260,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 commands:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    assert(warned);
+    XCTAssert(warned);
 
     // Check lf newline
     warned = NO;
@@ -270,7 +270,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 commands:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    assert(warned);
+    XCTAssert(warned);
 
     // Check crlf newline
     warned = NO;
@@ -280,7 +280,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 commands:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    assert(warned);
+    XCTAssert(warned);
 
     // Check no newline gives no warning.
     warned = NO;
@@ -290,7 +290,7 @@ static const double kFloatingPointTolerance = 0.00001;
                 commands:NO
             tabTransform:kTabTransformNone
             spacesPerTab:0];
-    assert(!warned);
+    XCTAssert(!warned);
 }
 
 - (void)testBracketingOnPasteString {
@@ -303,8 +303,8 @@ static const double kFloatingPointTolerance = 0.00001;
             spacesPerTab:0];
     [self runTimer];
     NSString *expected = @"\x1b[200~Hello World\x1b[201~";
-    assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
-    assert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:kHelloWorld]);
+    XCTAssert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:kHelloWorld]);
 }
 
 // You still get a close bracket even if you change your mind about wanting it unless the whole paste
@@ -321,8 +321,8 @@ static const double kFloatingPointTolerance = 0.00001;
     _shouldBracket = NO;
     [self runTimer];
     NSString *expected = [[@"\x1b[200~" stringByAppendingString:test] stringByAppendingString:@"\x1b[201~"];
-    assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
-    assert(fabs(_helper.duration - 0.01) < kFloatingPointTolerance);
+    XCTAssert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert(fabs(_helper.duration - 0.01) < kFloatingPointTolerance);
 }
 
 - (void)testDelegateChangesItsMindAboutBracketingWithQueue {
@@ -346,7 +346,7 @@ static const double kFloatingPointTolerance = 0.00001;
 
     [self runTimer];
     NSString *expected = [[[@"\x1b[200~" stringByAppendingString:test1] stringByAppendingString:@"\x1b[201~"] stringByAppendingString:test2];
-    assert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert([_dataWritten isEqualToData:[expected dataUsingEncoding:NSUTF8StringEncoding]]);
 }
 
 - (void)testTwoChunkPasteString {
@@ -358,8 +358,8 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
-    assert([_dataWritten isEqualToData:[test dataUsingEncoding:NSUTF8StringEncoding]]);
-    assert(fabs(_helper.duration - 0.01) < kFloatingPointTolerance);
+    XCTAssert([_dataWritten isEqualToData:[test dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert(fabs(_helper.duration - 0.01) < kFloatingPointTolerance);
 }
 
 - (void)testSlowTwoChunkPasteString {
@@ -371,8 +371,8 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
-    assert([_dataWritten isEqualToData:[test dataUsingEncoding:NSUTF8StringEncoding]]);
-    assert(fabs(_helper.duration - 0.125) < kFloatingPointTolerance);
+    XCTAssert([_dataWritten isEqualToData:[test dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert(fabs(_helper.duration - 0.125) < kFloatingPointTolerance);
 }
 
 - (void)testPasteQueued {
@@ -391,11 +391,11 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
-    assert([_dataWritten isEqualToData:[[test1 stringByAppendingString:test2] dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert([_dataWritten isEqualToData:[[test1 stringByAppendingString:test2] dataUsingEncoding:NSUTF8StringEncoding]]);
     NSTimeInterval expectedDuration = 2 * 0.01;
-    assert(fabs(_helper.duration - expectedDuration) < kFloatingPointTolerance);
-    assert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:test1]);
-    assert([[[[PasteboardHistory sharedInstance] entries][1] mainValue] isEqualToString:test2]);
+    XCTAssert(fabs(_helper.duration - expectedDuration) < kFloatingPointTolerance);
+    XCTAssert([[[[PasteboardHistory sharedInstance] entries][0] mainValue] isEqualToString:test1]);
+    XCTAssert([[[[PasteboardHistory sharedInstance] entries][1] mainValue] isEqualToString:test2]);
 }
 
 - (void)testQueuedKeystrokeAndPaste {
@@ -424,9 +424,9 @@ static const double kFloatingPointTolerance = 0.00001;
             tabTransform:kTabTransformNone
             spacesPerTab:0];
     [self runTimer];
-    assert([_dataWritten isEqualToData:[[[test1 stringByAppendingString:@"x"] stringByAppendingString:test2] dataUsingEncoding:NSUTF8StringEncoding]]);
+    XCTAssert([_dataWritten isEqualToData:[[[test1 stringByAppendingString:@"x"] stringByAppendingString:test2] dataUsingEncoding:NSUTF8StringEncoding]]);
     NSTimeInterval expectedDuration = 2 * 0.01;
-    assert(fabs(_helper.duration - expectedDuration) < kFloatingPointTolerance);
+    XCTAssert(fabs(_helper.duration - expectedDuration) < kFloatingPointTolerance);
 }
 
 #pragma mark - iTermPasteHelperDelegate

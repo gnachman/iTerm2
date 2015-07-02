@@ -52,12 +52,12 @@ static Interval *MakeInterval(long long location, long long length) {
 - (void)testEmptyTree {
     tree_ = [[[IntervalTree alloc] init] autorelease];
     NSArray *entries = [tree_ objectsInInterval:MakeInterval(0, 256)];
-    assert(entries.count == 0);
+    XCTAssert(entries.count == 0);
 }
 
 - (void)assertEntriesInInterval:(Interval *)interval equal:(NSArray *)expectedObjects {
     NSArray *foundObjects = [tree_ objectsInInterval:interval];
-    assert(foundObjects.count == expectedObjects.count);
+    XCTAssert(foundObjects.count == expectedObjects.count);
     for (ITObject *object in foundObjects) {
         BOOL ok = NO;
         for (NSObject *obj in expectedObjects) {
@@ -66,7 +66,7 @@ static Interval *MakeInterval(long long location, long long length) {
                 break;
             }
         }
-        assert(ok);
+        XCTAssert(ok);
     }
 }
 
@@ -243,7 +243,7 @@ static Interval *MakeInterval(long long location, long long length) {
     [tree_ addObject:obj2_ withInterval:MakeInterval(2, 1)];
     [tree_ addObject:obj3_ withInterval:MakeInterval(9, 10)];
     NSArray *objects = [tree_ objectsWithSmallestLimit];
-    assert(objects.count == 2);
+    XCTAssert(objects.count == 2);
 }
 
 #if 0
@@ -271,34 +271,34 @@ static Interval *MakeInterval(long long location, long long length) {
             }
             [tree_ addObject:entry.object withInterval:entry.interval];
             [entries addObject:entry];
-            assert(tree_.count == entries.count);
+            XCTAssert(tree_.count == entries.count);
             [tree_ sanityCheck];
         }
         
-        assert(((id<IntervalTreeObject>)[tree_ objectsWithLargestLimit][0]).entry.interval.limit == objectWithLargestLimit.entry.interval.limit);
-        assert(((id<IntervalTreeObject>)[tree_ objectsWithSmallestLimit][0]).entry.interval.limit == objectWithSmallestLimit.entry.interval.limit);
-        assert([tree_ objectsWithLargestLimitBefore:objectWithSmallestLimit.entry.interval.limit] == nil);
-        assert([tree_ objectsWithSmallestLimitAfter:objectWithLargestLimit.entry.interval.limit] == nil);
+        XCTAssert(((id<IntervalTreeObject>)[tree_ objectsWithLargestLimit][0]).entry.interval.limit == objectWithLargestLimit.entry.interval.limit);
+        XCTAssert(((id<IntervalTreeObject>)[tree_ objectsWithSmallestLimit][0]).entry.interval.limit == objectWithSmallestLimit.entry.interval.limit);
+        XCTAssert([tree_ objectsWithLargestLimitBefore:objectWithSmallestLimit.entry.interval.limit] == nil);
+        XCTAssert([tree_ objectsWithSmallestLimitAfter:objectWithLargestLimit.entry.interval.limit] == nil);
         NSArray *sortedLimits = [limits sortedArrayUsingSelector:@selector(compare:)];
         NSEnumerator *enumerator = [tree_ forwardLimitEnumerator];
         for (int i = 0; i < N; ) {
             NSArray *objects = [enumerator nextObject];
-            assert(objects.count > 0);
+            XCTAssert(objects.count > 0);
             for (id<IntervalTreeObject> obj in objects) {
-                assert(obj.entry.interval.limit == [sortedLimits[i] longLongValue]);
+                XCTAssert(obj.entry.interval.limit == [sortedLimits[i] longLongValue]);
                 i++;
-                assert(i <= N);
+                XCTAssert(i <= N);
             }
         }
 
         enumerator = [tree_ reverseLimitEnumerator];
         for (int i = N - 1; i >= 0; ) {
             NSArray *objects = [enumerator nextObject];
-            assert(objects.count > 0);
+            XCTAssert(objects.count > 0);
             for (id<IntervalTreeObject>  obj in objects) {
-                assert(obj.entry.interval.limit == [sortedLimits[i] longLongValue]);
+                XCTAssert(obj.entry.interval.limit == [sortedLimits[i] longLongValue]);
                 i--;
-                assert(i >= -1);
+                XCTAssert(i >= -1);
             }
         }
 
@@ -316,9 +316,9 @@ static Interval *MakeInterval(long long location, long long length) {
                     [expectedObjects addObject:entry.object];
                 }
             }
-            assert(actualObjects.count == expectedObjects.count);
+            XCTAssert(actualObjects.count == expectedObjects.count);
             for (IntervalTreeEntry *expected in expectedObjects) {
-                assert([actualObjects containsObject:expected]);
+                XCTAssert([actualObjects containsObject:expected]);
             }
         }
         
@@ -328,7 +328,7 @@ static Interval *MakeInterval(long long location, long long length) {
             IntervalTreeEntry *entry = entries[index];
             [tree_ removeObject:entry.object];
             [entries removeObjectAtIndex:index];
-            assert(tree_.count == entries.count);
+            XCTAssert(tree_.count == entries.count);
             [tree_ sanityCheck];
         }
         
@@ -341,9 +341,9 @@ static Interval *MakeInterval(long long location, long long length) {
                     [expectedObjects addObject:entry.object];
                 }
             }
-            assert(actualObjects.count == expectedObjects.count);
+            XCTAssert(actualObjects.count == expectedObjects.count);
             for (IntervalTreeEntry *expected in expectedObjects) {
-                assert([actualObjects containsObject:expected]);
+                XCTAssert([actualObjects containsObject:expected]);
             }
         }
     }
