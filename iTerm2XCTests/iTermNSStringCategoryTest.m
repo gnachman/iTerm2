@@ -1,6 +1,8 @@
-#import "iTermTests.h"
-#import "NSStringCategoryTest.h"
+#import <XCTest/XCTest.h>
 #import "NSStringITerm.h"
+
+@interface NSStringCategoryTest : XCTestCase
+@end
 
 @implementation NSStringCategoryTest
 
