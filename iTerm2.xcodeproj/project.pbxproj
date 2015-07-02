@@ -76,7 +76,6 @@
 		1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3114BABE8700BD5035 /* PTYWindow.h */; };
 		1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3214BABE8700BD5035 /* VT100Screen.h */; };
 		1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3314BABE8700BD5035 /* VT100Terminal.h */; };
-		1D4097B91A2F947F00100892 /* iTermPasteHelperTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D468BB91B0543E300226083 /* iTermKeyboardNavigatableTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */; };
 		1D468BBA1B0543E300226083 /* iTermKeyboardNavigatableTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */; };
@@ -1153,6 +1152,7 @@
 		A6BDB0B11B45FC9E00F511E6 /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1321ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png */; };
 		A6BDB0B31B45FD8300F511E6 /* TestBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */; };
 		A6BDB0B51B45FE7700F511E6 /* iTermSemanticHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0B41B45FE7700F511E6 /* iTermSemanticHistoryTest.m */; };
+		A6BDB0B71B45FEF700F511E6 /* iTermPasteHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0B61B45FEF700F511E6 /* iTermPasteHelperTest.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
@@ -1481,7 +1481,6 @@
 		A6C763E91B45C71900E3C992 /* UKCrashReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAA612D64022008225A9 /* UKCrashReporter.m */; };
 		A6C763EA1B45C71900E3C992 /* UKNibOwner.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAA12D64022008225A9 /* UKNibOwner.m */; };
 		A6C763EB1B45C71900E3C992 /* UKSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D94EAAC12D64022008225A9 /* UKSystemInfo.m */; };
-		A6C763FD1B45C72F00E3C992 /* iTermPasteHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */; };
 		A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A5521180FA46100B42CE9 /* iTermTests.m */; };
 		A6C764161B45C77100E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C764171B45C7B200E3C992 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
@@ -1741,8 +1740,6 @@
 		1D407A3114BABE8700BD5035 /* PTYWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYWindow.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D407A3214BABE8700BD5035 /* VT100Screen.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Screen.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D407A3314BABE8700BD5035 /* VT100Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Terminal.h; sourceTree = "<group>"; tabWidth = 4; };
-		1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermPasteHelperTest.h; path = iTermTests/iTermPasteHelperTest.h; sourceTree = "<group>"; };
-		1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermPasteHelperTest.m; path = iTermTests/iTermPasteHelperTest.m; sourceTree = "<group>"; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D468BB71B0543E300226083 /* iTermKeyboardNavigatableTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyboardNavigatableTableView.h; sourceTree = "<group>"; };
@@ -2448,6 +2445,7 @@
 		A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYSessionTest.m; sourceTree = "<group>"; };
 		A6BDB04F1B45FBCB00F511E6 /* PTYTextViewTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTextViewTest.m; sourceTree = "<group>"; };
 		A6BDB0B41B45FE7700F511E6 /* iTermSemanticHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSemanticHistoryTest.m; sourceTree = "<group>"; };
+		A6BDB0B61B45FEF700F511E6 /* iTermPasteHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelperTest.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTabBarControlView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3412,8 +3410,6 @@
 			children = (
 				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
 				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
-				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
-				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
 				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
@@ -3978,18 +3974,19 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
-				A6BDB0B41B45FE7700F511E6 /* iTermSemanticHistoryTest.m */,
-				A6BDB04F1B45FBCB00F511E6 /* PTYTextViewTest.m */,
-				A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */,
-				A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */,
-				A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */,
+				A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */,
 				A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */,
+				A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */,
+				A6BDB0B61B45FEF700F511E6 /* iTermPasteHelperTest.m */,
+				A6BDB0B41B45FE7700F511E6 /* iTermSemanticHistoryTest.m */,
+				A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */,
+				A6BDB04F1B45FBCB00F511E6 /* PTYTextViewTest.m */,
+				A6C7641E1B45CB2800E3C992 /* Supporting Files */,
+				A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */,
+				A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */,
 				A6BDB0451B45EAE700F511E6 /* VT100GridTest.m */,
 				A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */,
 				A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */,
-				A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */,
-				A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */,
-				A6C7641E1B45CB2800E3C992 /* Supporting Files */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -4650,7 +4647,6 @@
 				1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */,
 				1D67ABAB14285D6000D5DA4E /* NSFileManager+iTerm.h in Headers */,
 				1D1F8C1A1A32616A00167161 /* AMIndeterminateProgressIndicator.h in Headers */,
-				1D4097B91A2F947F00100892 /* iTermPasteHelperTest.h in Headers */,
 				1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */,
 				A6E713A318F7C7E0008D94DD /* iTermProfilePreferencesBaseViewController.h in Headers */,
 				A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */,
@@ -5543,7 +5539,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A6C763FD1B45C72F00E3C992 /* iTermPasteHelperTest.m in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				1D1F8C1D1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
@@ -5894,6 +5889,7 @@
 				A6BDB04A1B45EBD900F511E6 /* VT100CSIParserTest.m in Sources */,
 				A6BDB0481B45EB7F00F511E6 /* iTermIntervalTreeTest.m in Sources */,
 				A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */,
+				A6BDB0B71B45FEF700F511E6 /* iTermPasteHelperTest.m in Sources */,
 				A6BDB0411B45E8BA00F511E6 /* VT100XtermParserTest.m in Sources */,
 				A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */,
 				A6BDB04E1B45EC8A00F511E6 /* PTYSessionTest.m in Sources */,

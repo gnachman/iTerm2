@@ -6,7 +6,6 @@
 //
 //
 
-#import "iTermPasteHelperTest.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermPasteHelper.h"
 #import "iTermWarning.h"
@@ -14,12 +13,16 @@
 #import "NSStringITerm.h"
 #import "PasteEvent.h"
 #import "PasteboardHistory.h"
+#import <XCTest/XCTest.h>
 
 typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier);
 
 static NSString *const kTestString = @"a (\t\r\r\n" @"\x16" @"“”‘’–—b";
 static NSString *const kHelloWorld = @"Hello World";
 static const double kFloatingPointTolerance = 0.00001;
+
+@interface iTermPasteHelperTest : XCTestCase
+@end
 
 @interface iTermInstrumentedPasteHelper : iTermPasteHelper
 @property(nonatomic, assign) NSTimer *timer;
@@ -62,7 +65,7 @@ static const double kFloatingPointTolerance = 0.00001;
     WarningBlockType _warningBlock;
 }
 
-- (void)setup {
+- (void)setUp {
     _dataWritten = [[[NSMutableData alloc] init] autorelease];
     _shouldBracket = NO;
     _isAtShellPrompt = NO;
