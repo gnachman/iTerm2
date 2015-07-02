@@ -1,5 +1,4 @@
-#import "iTermTests.h"
-#import "PTYSessionTest.h"
+#import <XCTest/XCTest.h>
 #import "PTYSession.h"
 
 #import "iTermPasteHelper.h"
@@ -37,7 +36,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
 
 @end
 
-@interface PTYSessionTest ()<iTermWarningHandler>
+@interface PTYSessionTest : XCTestCase <iTermWarningHandler>
 @end
 
 @interface PTYSession (Internal)
@@ -51,7 +50,7 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
     NSMutableSet *_warningIdentifiers;
 }
 
-- (void)setup {
+- (void)setUp {
     _session = [[PTYSession alloc] init];
     _fakePasteHelper = [[[FakePasteHelper alloc] init] autorelease];
     [_session setPasteHelper:_fakePasteHelper];
@@ -59,57 +58,57 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
     [iTermWarning setWarningHandler:self];
 }
 
-- (void)teardown {
+- (void)tearDown {
     [_session release];
     [_warningIdentifiers release];
 }
 
 - (void)testPasteEmptyString {
     [_session pasteString:@"" flags:0];
-    assert(_fakePasteHelper.string == nil);
+    XCTAssert(_fakePasteHelper.string == nil);
 }
 
 - (void)testBasicPaste {
     NSString *theString = @".";
     [_session pasteString:theString flags:0];
-    assert([_fakePasteHelper.string isEqualToString:theString]);
-    assert(_fakePasteHelper.tabTransform == kTabTransformNone);
-    assert(!_fakePasteHelper.slowly);
-    assert(!_fakePasteHelper.escapeShellChars);
+    XCTAssert([_fakePasteHelper.string isEqualToString:theString]);
+    XCTAssert(_fakePasteHelper.tabTransform == kTabTransformNone);
+    XCTAssert(!_fakePasteHelper.slowly);
+    XCTAssert(!_fakePasteHelper.escapeShellChars);
 }
 
 - (void)testEscapeShellTabs {
     NSString *theString = @"\t";
     [_session pasteString:theString flags:kPTYSessionPasteWithShellEscapedTabs];
-    assert([_fakePasteHelper.string isEqualToString:theString]);
-    assert(_fakePasteHelper.tabTransform == kTabTransformEscapeWithCtrlV);
-    assert(!_fakePasteHelper.slowly);
-    assert(!_fakePasteHelper.escapeShellChars);
+    XCTAssert([_fakePasteHelper.string isEqualToString:theString]);
+    XCTAssert(_fakePasteHelper.tabTransform == kTabTransformEscapeWithCtrlV);
+    XCTAssert(!_fakePasteHelper.slowly);
+    XCTAssert(!_fakePasteHelper.escapeShellChars);
 }
 
 - (void)testPasteSlowly {
     NSString *theString = @".";
     [_session pasteString:theString flags:kPTYSessionPasteSlowly];
-    assert([_fakePasteHelper.string isEqualToString:theString]);
-    assert(_fakePasteHelper.tabTransform == kTabTransformNone);
-    assert(_fakePasteHelper.slowly);
-    assert(!_fakePasteHelper.escapeShellChars);
+    XCTAssert([_fakePasteHelper.string isEqualToString:theString]);
+    XCTAssert(_fakePasteHelper.tabTransform == kTabTransformNone);
+    XCTAssert(_fakePasteHelper.slowly);
+    XCTAssert(!_fakePasteHelper.escapeShellChars);
 }
 
 - (void)testEscapeSpecialChars {
     NSString *theString = @".";
     [_session pasteString:theString flags:kPTYSessionPasteEscapingSpecialCharacters];
-    assert([_fakePasteHelper.string isEqualToString:theString]);
-    assert(_fakePasteHelper.tabTransform == kTabTransformNone);
-    assert(!_fakePasteHelper.slowly);
-    assert(
+    XCTAssert([_fakePasteHelper.string isEqualToString:theString]);
+    XCTAssert(_fakePasteHelper.tabTransform == kTabTransformNone);
+    XCTAssert(!_fakePasteHelper.slowly);
+    XCTAssert(
            _fakePasteHelper.escapeShellChars);
 }
 
 - (void)testEmbeddedTabsConvertToSpaces {
     NSString *theString = @"a\tb";
     _warningBlock = ^NSModalResponse(NSAlert *alert, NSString *identifier) {
-        assert([identifier isEqualToString:@"AboutToPasteTabsWithCancel"]);
+        XCTAssert([identifier isEqualToString:@"AboutToPasteTabsWithCancel"]);
         BOOL found = NO;
         for (NSView *subview in alert.accessoryView.subviews) {
             if ([subview isKindOfClass:[NSTextField class]] &&
@@ -121,17 +120,17 @@ typedef NSModalResponse (^WarningBlockType)(NSAlert *alert, NSString *identifier
                 break;
             }
         }
-        assert(found);
+        XCTAssert(found);
         return NSAlertOtherReturn;
     };
     [_session pasteString:theString flags:0];
-    assert([_warningIdentifiers containsObject:@"AboutToPasteTabsWithCancel"]);
+    XCTAssert([_warningIdentifiers containsObject:@"AboutToPasteTabsWithCancel"]);
 
-    assert([_fakePasteHelper.string isEqualToString:theString]);
-    assert(_fakePasteHelper.tabTransform == kTabTransformConvertToSpaces);
-    assert(!_fakePasteHelper.slowly);
-    assert(!_fakePasteHelper.escapeShellChars);
-    assert(_fakePasteHelper.spacesPerTab == 8);
+    XCTAssert([_fakePasteHelper.string isEqualToString:theString]);
+    XCTAssert(_fakePasteHelper.tabTransform == kTabTransformConvertToSpaces);
+    XCTAssert(!_fakePasteHelper.slowly);
+    XCTAssert(!_fakePasteHelper.escapeShellChars);
+    XCTAssert(_fakePasteHelper.spacesPerTab == 8);
 }
 
 #pragma mark - iTermWarningHandler

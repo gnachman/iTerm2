@@ -1149,6 +1149,7 @@
 		A6BDB0481B45EB7F00F511E6 /* iTermIntervalTreeTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */; };
 		A6BDB04A1B45EBD900F511E6 /* VT100CSIParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */; };
 		A6BDB04C1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */; };
+		A6BDB04E1B45EC8A00F511E6 /* PTYSessionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
@@ -2082,7 +2083,6 @@
 		A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenDirectory.framework; path = System/Library/Frameworks/OpenDirectory.framework; sourceTree = SDKROOT; };
 		A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSPasteboard+iTerm.h"; sourceTree = "<group>"; };
 		A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPasteboard+iTerm.m"; sourceTree = "<group>"; };
-		A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PTYSessionTest.h; path = iTermTests/PTYSessionTest.h; sourceTree = "<group>"; };
 		A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PTYSessionTest.m; path = iTermTests/PTYSessionTest.m; sourceTree = "<group>"; };
 		A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Profile.h"; sourceTree = "<group>"; };
 		A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Profile.m"; sourceTree = "<group>"; };
@@ -2449,6 +2449,7 @@
 		A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntervalTreeTest.m; sourceTree = "<group>"; };
 		A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100CSIParserTest.m; sourceTree = "<group>"; };
 		A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSStringCategoryTest.m; sourceTree = "<group>"; };
+		A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYSessionTest.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
@@ -3422,7 +3423,6 @@
 				1DD39ADC180B8118004E56D5 /* iTermTests */,
 				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
-				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
 				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
 				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
 				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
@@ -3989,6 +3989,7 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				A6BDB04D1B45EC8A00F511E6 /* PTYSessionTest.m */,
 				A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */,
 				A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */,
 				A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */,
@@ -5907,6 +5908,7 @@
 				A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */,
 				A6BDB0411B45E8BA00F511E6 /* VT100XtermParserTest.m in Sources */,
 				A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */,
+				A6BDB04E1B45EC8A00F511E6 /* PTYSessionTest.m in Sources */,
 				A6BDB04C1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m in Sources */,
 				A6BDB0461B45EAE700F511E6 /* VT100GridTest.m in Sources */,
 				A6BDB0441B45E8EE00F511E6 /* VT100ScreenTest.m in Sources */,
