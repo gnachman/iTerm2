@@ -1,5 +1,4 @@
-#import "iTermTests.h"
-#import "IntervalTreeTest.h"
+#import <XCTest/XCTest.h>
 #import "IntervalTree.h"
 
 @interface ITObject : NSObject <IntervalTreeObject>
@@ -23,6 +22,9 @@ static Interval *MakeInterval(long long location, long long length) {
     return interval;
 }
 
+@interface IntervalTreeTest : XCTestCase
+@end
+
 @implementation IntervalTreeTest {
     ITObject *obj1_;
     ITObject *obj2_;
@@ -35,7 +37,7 @@ static Interval *MakeInterval(long long location, long long length) {
     unsigned int seed_;
 }
 
-- (void)setup {
+- (void)setUp {
     tree_ = nil;
     obj1_ = [[[ITObject alloc] init] autorelease];
     obj2_ = [[[ITObject alloc] init] autorelease];

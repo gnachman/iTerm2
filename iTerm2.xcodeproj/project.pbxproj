@@ -1148,6 +1148,7 @@
 		A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */; };
 		A6BDB0441B45E8EE00F511E6 /* VT100ScreenTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */; };
 		A6BDB0461B45EAE700F511E6 /* VT100GridTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0451B45EAE700F511E6 /* VT100GridTest.m */; };
+		A6BDB0481B45EB7F00F511E6 /* iTermIntervalTreeTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */; };
 		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
@@ -2450,10 +2451,10 @@
 		A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEquivalenceClassSetTest.m; sourceTree = "<group>"; };
 		A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenTest.m; sourceTree = "<group>"; };
 		A6BDB0451B45EAE700F511E6 /* VT100GridTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100GridTest.m; sourceTree = "<group>"; };
+		A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntervalTreeTest.m; sourceTree = "<group>"; };
 		A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalTree.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalTree.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IntervalTreeTest.m; path = iTermTests/IntervalTreeTest.m; sourceTree = "<group>"; };
-		A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IntervalTreeTest.h; path = iTermTests/IntervalTreeTest.h; sourceTree = "<group>"; };
 		A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermTabBarControlView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTabBarControlView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3419,25 +3420,24 @@
 			isa = PBXGroup;
 			children = (
 				90A1E139186F9EA4003EC3E8 /* AppleScriptTest.h */,
-				A6C4E8E71846E32600CFAA77 /* IntervalTreeTest.h */,
-				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
-				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
-				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
-				A671C065192981D000A7F796 /* NSStringCategoryTest.h */,
-				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
-				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
-				A63679811A328E7D000DB943 /* SemanticHistoryTest.h */,
-				A6DF7B721A5F581700D96409 /* VT100CSIParserTest.h */,
 				90A1E13A186F9EA4003EC3E8 /* AppleScriptTest.m */,
 				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
+				1D4097B71A2F947F00100892 /* iTermPasteHelperTest.h */,
 				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
-				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
-				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
-				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
-				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
-				A63679821A328E7D000DB943 /* SemanticHistoryTest.m */,
-				A6DF7B731A5F581700D96409 /* VT100CSIParserTest.m */,
 				1DD39ADC180B8118004E56D5 /* iTermTests */,
+				1D9A5522180FA46100B42CE9 /* iTermTests.h */,
+				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
+				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
+				A671C065192981D000A7F796 /* NSStringCategoryTest.h */,
+				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
+				A61397711A2ED74D00B8BEFA /* PTYSessionTest.h */,
+				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
+				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
+				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
+				A63679811A328E7D000DB943 /* SemanticHistoryTest.h */,
+				A63679821A328E7D000DB943 /* SemanticHistoryTest.m */,
+				A6DF7B721A5F581700D96409 /* VT100CSIParserTest.h */,
+				A6DF7B731A5F581700D96409 /* VT100CSIParserTest.m */,
 			);
 			name = Tests;
 			path = sources/;
@@ -3999,6 +3999,7 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */,
 				A6BDB0451B45EAE700F511E6 /* VT100GridTest.m */,
 				A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */,
 				A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */,
@@ -5913,6 +5914,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6BDB0481B45EB7F00F511E6 /* iTermIntervalTreeTest.m in Sources */,
 				A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */,
 				A6BDB0411B45E8BA00F511E6 /* VT100XtermParserTest.m in Sources */,
 				A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */,
