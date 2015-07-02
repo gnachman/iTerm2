@@ -325,7 +325,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     BOOL foundAnimatingOut = NO;
     BOOL foundAnimatingIn = NO;
     for (iTermTipCardActionButton *actionButton in _actionButtons) {
-        CGFloat y;
+        CGFloat y = 0;
         if (actionButton.indexInRow == 0) {
             if (actionButton.animationState == kTipCardButtonAnimatingOutCurrently) {
                 // Don't mess with moving buttons. They'll be fine. A layout pass
