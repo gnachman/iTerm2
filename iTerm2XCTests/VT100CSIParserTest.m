@@ -6,19 +6,22 @@
 //
 //
 
-#import "VT100CSIParserTest.h"
+#import <XCTest/XCTest.h>
 #import "VT100CSIParser.h"
+
+@interface VT100CSIParserTest : XCTestCase
+@end
 
 @implementation VT100CSIParserTest {
     CVector _incidentals;
     iTermParserContext _context;
 }
 
-- (void)setup {
+- (void)setUp {
     CVectorCreate(&_incidentals, 1);
 }
 
-- (void)teardown {
+- (void)tearDown {
     CVectorDestroy(&_incidentals);
 }
 
