@@ -8,9 +8,9 @@
 
 #import <Foundation/Foundation.h>
 #import "EquivalenceClassSet.h"
+#import "EquivalenceClassSetTest.h"
 
 @implementation EquivalenceClassSetTest
-
 
 + (void)basicTest
 {

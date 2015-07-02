@@ -509,7 +509,6 @@
 		1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EE176CCABE0071CCF8 /* PrefsArrangements.png */; };
 		1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9DB3D6EF176CCABE0071CCF8 /* PrefsArrangements@2x.png */; };
 		1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
-		1D6EDAF619AEA20D005A7799 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D81F0BC183C3B0100910838 /* ScriptingBridge.framework */; };
 		1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
 		1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
@@ -710,7 +709,6 @@
 		1DFA7C681923E83500DF1410 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39AD6180B8118004E56D5 /* Cocoa.framework */; };
 		1DFA7C8D1923E86400DF1410 /* SSKeychainQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8B1923E86400DF1410 /* SSKeychainQuery.h */; };
 		1DFA7C911923E89100DF1410 /* SSKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C8F1923E89100DF1410 /* SSKeychain.h */; };
-		1DFA7C941923E8B300DF1410 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		1DFA7C9A1923EDD900DF1410 /* iTermPasswordManagerWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */; };
 		1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
 		1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C9D1923F77100DF1410 /* Security.framework */; };
@@ -1118,6 +1116,7 @@
 		A6A269901900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698D1900F95D00437DA9 /* ProfilesTerminalPreferencesViewController.h */; };
 		A6A269971902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A269951902FA6800437DA9 /* ProfilesKeysPreferencesViewController.h */; };
 		A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
+		A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
 		A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
 		A6AE1ED81926F89B00780C19 /* iTermAnnouncementViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */; };
@@ -1479,18 +1478,18 @@
 		A6C763FC1B45C72F00E3C992 /* IntervalTreeTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */; };
 		A6C763FD1B45C72F00E3C992 /* iTermPasteHelperTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */; };
 		A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A5521180FA46100B42CE9 /* iTermTests.m */; };
-		A6C763FF1B45C72F00E3C992 /* LineBufferTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72477311F55E5700BD4924 /* LineBufferTest.m */; };
 		A6C764001B45C72F00E3C992 /* NSStringCategoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A671C066192981D000A7F796 /* NSStringCategoryTest.m */; };
 		A6C764011B45C72F00E3C992 /* PTYSessionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */; };
 		A6C764021B45C72F00E3C992 /* PTYTextViewTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */; };
 		A6C764031B45C72F00E3C992 /* SemanticHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A63679821A328E7D000DB943 /* SemanticHistoryTest.m */; };
 		A6C764041B45C72F00E3C992 /* VT100CSIParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF7B731A5F581700D96409 /* VT100CSIParserTest.m */; };
-		A6C764051B45C72F00E3C992 /* VT100DCSParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E525E41A9D07D9007B898E /* VT100DCSParserTest.m */; };
 		A6C764061B45C72F00E3C992 /* VT100GridTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B13180B819A004E56D5 /* VT100GridTest.m */; };
 		A6C764071B45C72F00E3C992 /* VT100ScreenTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */; };
 		A6C764081B45C72F00E3C992 /* VT100XtermParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF7B6F1A539B4200D96409 /* VT100XtermParserTest.m */; };
 		A6C764161B45C77100E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C764171B45C7B200E3C992 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
+		A6C7642A1B45CBA800E3C992 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
+		A6C7642B1B45CBA800E3C992 /* libSSKeychain.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DFA7C671923E83500DF1410 /* libSSKeychain.a */; };
 		A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */; };
 		A6C7DE5519A4591E001E5C75 /* iTermNewWindowCommand.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */; };
 		A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */ = {isa = PBXBuildFile; fileRef = A6C7DE5819A459E9001E5C75 /* iTerm2.sdef */; };
@@ -1596,6 +1595,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = A6C7603F1B45C4CF00E3C992;
 			remoteInfo = iTerm2Shared;
+		};
+		A6C764221B45CB2800E3C992 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 874206460564169600CFC3F1;
+			remoteInfo = iTerm2;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -1794,7 +1800,6 @@
 		1D72438C11F416E500BD4924 /* LineBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBuffer.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
-		1D72477311F55E5700BD4924 /* LineBufferTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferTest.m; sourceTree = "<group>"; };
 		1D78B55C183EE1C000014D49 /* LineBufferPosition.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferPosition.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D78B55D183EE1C000014D49 /* LineBufferPosition.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferPosition.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D7B9A671491D82F003A2A22 /* IntervalMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = IntervalMap.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2425,6 +2430,7 @@
 		A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesKeysPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesAdvancedPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2699B190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesAdvancedPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMouseCursor.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2457,6 +2463,8 @@
 		A6C537C11939507100A08C18 /* iTermRestorableSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermRestorableSession.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6C537C21939507100A08C18 /* iTermRestorableSession.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRestorableSession.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiTerm2Shared.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iTerm2XCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6C7641F1B45CB2800E3C992 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A6C7DE4E199F302C001E5C75 /* PTYWindow+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYWindow+Scripting.m"; sourceTree = "<group>"; };
 		A6C7DE51199F3087001E5C75 /* PTYWindow+Scripting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PTYWindow+Scripting.h"; sourceTree = "<group>"; };
 		A6C7DE5319A4591E001E5C75 /* iTermNewWindowCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNewWindowCommand.h; sourceTree = "<group>"; };
@@ -2483,8 +2491,6 @@
 		A6E525DA1A9C5730007B898E /* VT100StateMachine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100StateMachine.h; sourceTree = "<group>"; };
 		A6E525DB1A9C5730007B898E /* VT100StateTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100StateTransition.h; sourceTree = "<group>"; };
 		A6E525DC1A9C5730007B898E /* VT100State.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100State.h; sourceTree = "<group>"; };
-		A6E525E31A9D07D9007B898E /* VT100DCSParserTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100DCSParserTest.h; sourceTree = "<group>"; };
-		A6E525E41A9D07D9007B898E /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6E7137818F1D70D008D94DD /* GeneralPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = GeneralPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7137918F1D70D008D94DD /* GeneralPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = GeneralPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6E7137D18F1DB1E008D94DD /* iTermPreferences.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPreferences.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -2625,7 +2631,6 @@
 				A624231719CF6DD100182C08 /* Growl.framework in Frameworks */,
 				A624231219CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
 				1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */,
-				1D6EDAF619AEA20D005A7799 /* libSSKeychain.a in Frameworks */,
 				1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */,
 				1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */,
 				1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */,
@@ -2643,7 +2648,6 @@
 				A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */,
 				A624231E19CF6E2400182C08 /* Growl.framework in Frameworks */,
 				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
-				1DFA7C941923E8B300DF1410 /* libSSKeychain.a in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,
 				1D9A55B8180FA92100B42CE9 /* libncurses.dylib in Frameworks */,
@@ -2694,6 +2698,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6C764191B45CB2800E3C992 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6C7642A1B45CBA800E3C992 /* libiTerm2Shared.a in Frameworks */,
+				A6C7642B1B45CBA800E3C992 /* libSSKeychain.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -2708,6 +2721,7 @@
 				1D5FD9AD11F61CA900C46BA3 /* Tests */,
 				0464AB27006CD2EC7F000001 /* Supporting Files */,
 				1DFA7C791923E83600DF1410 /* SSKeychainTests */,
+				A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -3134,6 +3148,7 @@
 				1DFA7C671923E83500DF1410 /* libSSKeychain.a */,
 				1D6EDB0A19AEA20D005A7799 /* iTerm2ForApplescriptTesting.app */,
 				A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */,
+				A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -3420,7 +3435,6 @@
 				A6E77FC11A2ECDB6009B1CB6 /* PTYTextViewTest.h */,
 				A63679811A328E7D000DB943 /* SemanticHistoryTest.h */,
 				A6DF7B721A5F581700D96409 /* VT100CSIParserTest.h */,
-				A6E525E31A9D07D9007B898E /* VT100DCSParserTest.h */,
 				1DD39B12180B819A004E56D5 /* VT100GridTest.h */,
 				1D9A5527180FA61700B42CE9 /* VT100ScreenTest.h */,
 				A6DF7B6E1A539B4200D96409 /* VT100XtermParserTest.h */,
@@ -3429,13 +3443,11 @@
 				A6C4E8E61846E32600CFAA77 /* IntervalTreeTest.m */,
 				1D4097B81A2F947F00100892 /* iTermPasteHelperTest.m */,
 				1D9A5521180FA46100B42CE9 /* iTermTests.m */,
-				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
 				A671C066192981D000A7F796 /* NSStringCategoryTest.m */,
 				A61397721A2ED74D00B8BEFA /* PTYSessionTest.m */,
 				A6E77FC21A2ECDB6009B1CB6 /* PTYTextViewTest.m */,
 				A63679821A328E7D000DB943 /* SemanticHistoryTest.m */,
 				A6DF7B731A5F581700D96409 /* VT100CSIParserTest.m */,
-				A6E525E41A9D07D9007B898E /* VT100DCSParserTest.m */,
 				1DD39B13180B819A004E56D5 /* VT100GridTest.m */,
 				1D9A5528180FA61700B42CE9 /* VT100ScreenTest.m */,
 				A6DF7B6F1A539B4200D96409 /* VT100XtermParserTest.m */,
@@ -3996,6 +4008,23 @@
 				A693395B1851A61D00EBEA20 /* VT100ScreenMark.m */,
 			);
 			name = "Shell Integration";
+			sourceTree = "<group>";
+		};
+		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
+			isa = PBXGroup;
+			children = (
+				A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */,
+				A6C7641E1B45CB2800E3C992 /* Supporting Files */,
+			);
+			path = iTerm2XCTests;
+			sourceTree = "<group>";
+		};
+		A6C7641E1B45CB2800E3C992 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				A6C7641F1B45CB2800E3C992 /* Info.plist */,
+			);
+			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		A6E74764188C6A2A005355CF /* Expose */ = {
@@ -4917,6 +4946,24 @@
 			productReference = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		A6C7641B1B45CB2800E3C992 /* iTerm2XCTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6C764241B45CB2800E3C992 /* Build configuration list for PBXNativeTarget "iTerm2XCTests" */;
+			buildPhases = (
+				A6C764181B45CB2800E3C992 /* Sources */,
+				A6C764191B45CB2800E3C992 /* Frameworks */,
+				A6C7641A1B45CB2800E3C992 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A6C764231B45CB2800E3C992 /* PBXTargetDependency */,
+			);
+			name = iTerm2XCTests;
+			productName = iTerm2XCTests;
+			productReference = A6C7641C1B45CB2800E3C992 /* iTerm2XCTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -4924,6 +4971,12 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0630;
+				TargetAttributes = {
+					A6C7641B1B45CB2800E3C992 = {
+						CreatedOnToolsVersion = 6.3;
+						TestTargetID = 874206460564169600CFC3F1;
+					};
+				};
 			};
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm2" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -4951,6 +5004,7 @@
 				1DFA7C661923E83500DF1410 /* SSKeychain */,
 				1D6ED85219AEA20D005A7799 /* iTerm2ForApplescriptTesting */,
 				A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */,
+				A6C7641B1B45CB2800E3C992 /* iTerm2XCTests */,
 			);
 		};
 /* End PBXProject section */
@@ -5446,6 +5500,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6C7641A1B45CB2800E3C992 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXRezBuildPhase section */
@@ -5518,11 +5579,9 @@
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
 				A6C763FC1B45C72F00E3C992 /* IntervalTreeTest.m in Sources */,
 				A6C764011B45C72F00E3C992 /* PTYSessionTest.m in Sources */,
-				A6C763FF1B45C72F00E3C992 /* LineBufferTest.m in Sources */,
 				A6C764081B45C72F00E3C992 /* VT100XtermParserTest.m in Sources */,
 				A6C764021B45C72F00E3C992 /* PTYTextViewTest.m in Sources */,
 				1D1F8C1D1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
-				A6C764051B45C72F00E3C992 /* VT100DCSParserTest.m in Sources */,
 				A6C764041B45C72F00E3C992 /* VT100CSIParserTest.m in Sources */,
 				A6C764001B45C72F00E3C992 /* NSStringCategoryTest.m in Sources */,
 				A6C764061B45C72F00E3C992 /* VT100GridTest.m in Sources */,
@@ -5866,6 +5925,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6C764181B45CB2800E3C992 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -5898,6 +5965,11 @@
 			isa = PBXTargetDependency;
 			target = A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */;
 			targetProxy = A6C763D61B45C5C500E3C992 /* PBXContainerItemProxy */;
+		};
+		A6C764231B45CB2800E3C992 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 874206460564169600CFC3F1 /* iTerm2 */;
+			targetProxy = A6C764221B45CB2800E3C992 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -6052,6 +6124,7 @@
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
+					"-ObjC",
 				);
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
 				SDKROOT = macosx;
@@ -6113,6 +6186,7 @@
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
+					"-ObjC",
 				);
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
 				SDKROOT = macosx;
@@ -6172,6 +6246,7 @@
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
+					"-ObjC",
 				);
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
 				SDKROOT = macosx;
@@ -6229,6 +6304,7 @@
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
+					"-ObjC",
 				);
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
@@ -6303,6 +6379,7 @@
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
+					"-ObjC",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -6364,6 +6441,7 @@
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
+					"-ObjC",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -6426,6 +6504,7 @@
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
+					"-ObjC",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -6488,6 +6567,7 @@
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",
+					"-ObjC",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -6819,6 +6899,193 @@
 			};
 			name = Default;
 		};
+		A6C764251B45CB2800E3C992 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+			};
+			name = Development;
+		};
+		A6C764261B45CB2800E3C992 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+			};
+			name = Deployment;
+		};
+		A6C764271B45CB2800E3C992 /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+			};
+			name = Nightly;
+		};
+		A6C764281B45CB2800E3C992 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/iTerm2.app/Contents/MacOS/iTerm2";
+			};
+			name = Default;
+		};
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -7105,6 +7372,17 @@
 				A6C7604D1B45C4CF00E3C992 /* Deployment */,
 				A6C7604E1B45C4CF00E3C992 /* Nightly */,
 				A6C7604F1B45C4CF00E3C992 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		A6C764241B45CB2800E3C992 /* Build configuration list for PBXNativeTarget "iTerm2XCTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6C764251B45CB2800E3C992 /* Development */,
+				A6C764261B45CB2800E3C992 /* Deployment */,
+				A6C764271B45CB2800E3C992 /* Nightly */,
+				A6C764281B45CB2800E3C992 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Default;

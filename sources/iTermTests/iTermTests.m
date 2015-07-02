@@ -28,7 +28,6 @@ DECLARE_TEST(iTermPasteHelperTest)
 DECLARE_TEST(SemanticHistoryTest)
 DECLARE_TEST(VT100XtermParserTest);
 DECLARE_TEST(VT100CSIParserTest);
-DECLARE_TEST(VT100DCSParserTest);
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -64,8 +63,7 @@ NSArray *AllTestClasses() {
               [iTermPasteHelperTest class],
               [SemanticHistoryTest class],
               [VT100XtermParserTest class],
-              [VT100CSIParserTest class],
-              [VT100DCSParserTest class]];
+              [VT100CSIParserTest class] ];
 }
 
 NSArray *TestClassesToRun(NSArray *include, NSArray *exclude) {
@@ -99,7 +97,7 @@ int main(int argc, const char * argv[]) {
 
     NSArray *include = nil;
     NSArray *exclude = @[
-                            [AppleScriptTest class]      // I often exclude AppleScriptTest because it is slow.
+                           // [AppleScriptTest class]      // I often exclude AppleScriptTest because it is slow.
                         ];
 
     NSArray *testClassesToRun = TestClassesToRun(include, exclude);

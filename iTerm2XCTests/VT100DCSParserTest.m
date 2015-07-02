@@ -6,15 +6,15 @@
 //
 //
 
-#import "VT100DCSParserTest.h"
 #import "VT100DCSParser.h"
 #import "VT100Parser.h"
 
-// Macros don't play nice with objective c, throwing bogus syntax errors. This
-// works around that issue.
-static void Assert(BOOL condition) {
-    assert(condition);
-}
+#import <Cocoa/Cocoa.h>
+#import <XCTest/XCTest.h>
+
+@interface VT100DCSParserTest : XCTestCase
+
+@end
 
 @implementation VT100DCSParserTest {
     iTermParserContext _context;
@@ -22,14 +22,19 @@ static void Assert(BOOL condition) {
     NSMutableDictionary *_savedState;
 }
 
-- (void)setup {
+- (void)setUp {
     _parser = [[VT100DCSParser alloc] init];
     _savedState = [[NSMutableDictionary alloc] init];
 }
 
-- (void)teardown {
+- (void)tearDown {
     [_parser release];
     [_savedState release];
+}
+
+- (void)reset {
+    [self tearDown];
+    [self setUp];
 }
 
 - (VT100Token *)tokenForDataWithFormat:(NSString *)formatString, ... {
@@ -50,180 +55,186 @@ static void Assert(BOOL condition) {
 
 - (void)testDCS {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateEntry);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateEntry);
 }
 
 - (void)testDCSControl {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP%c", VT100CC_ESC, VT100CC_LF];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateEntry);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateEntry);
 }
 
 - (void)testDCSBackspace {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP%c", VT100CC_ESC, VT100CC_DEL];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateEntry);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateEntry);
 }
 
 - (void)testDCSIntermediate {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP ", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIntermediate);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIntermediate);
 }
 
 - (void)testDCSMultipleIntermediates {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP !", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIntermediate);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIntermediate);
 }
 
 - (void)testDCSIntermediateIgnore {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP 0", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIgnore);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIgnore);
 }
 
 - (void)testDCSIntermediateIgnoreIgnore {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP 01", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIgnore);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIgnore);
 }
 
 - (void)testDCSIntermediateIgnoreMany {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP 0%c%c%c0",
                          VT100CC_ESC, VT100CC_LF, VT100CC_EM, VT100CC_FS];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIgnore);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIgnore);
 }
 
 - (void)testDCSIntermediateIgnoreIgnoreEsc {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP 01%c", VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateDCSEscape);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateDCSEscape);
 }
 
 - (void)testDCSIntermediateIgnoreIgnoreST {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP 01%c\\", VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == VT100_INVALID_SEQUENCE);
-    assert(_parser.state == kVT100DCSStateGround);
+    XCTAssert(token->type == VT100_INVALID_SEQUENCE);
+    XCTAssert(_parser.state == kVT100DCSStateGround);
 }
 
 - (void)testDCSIntermediateIgnoreIgnoreEscAsciiST {
     // Enter ignore, then dcs escape, then passthrough, then ground; should still be invalid.
     VT100Token *token = [self tokenForDataWithFormat:@"%cP 01%cabc%c\\",
                              VT100CC_ESC, VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == VT100_INVALID_SEQUENCE);
-    assert(_parser.state == kVT100DCSStateGround);
+    XCTAssert(token->type == VT100_INVALID_SEQUENCE);
+    XCTAssert(_parser.state == kVT100DCSStateGround);
 }
 
 - (void)testDCSIntermediatePassthrough {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP x", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStatePassthrough);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStatePassthrough);
 }
 
 - (void)testDCSIntermediatePassthroughEsc {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP x%c", VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateDCSEscape);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateDCSEscape);
 }
 
 - (void)testDCSIntermediatePassthroughST {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP x%c\\", VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == VT100_NOTSUPPORT);
-    assert(_parser.state == kVT100DCSStateGround);
+    XCTAssert(token->type == VT100_NOTSUPPORT);
+    XCTAssert(_parser.state == kVT100DCSStateGround);
 }
 
 - (void)testDCSIgnore {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP:", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIgnore);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIgnore);
 }
 
 - (void)testDCSParam {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP1", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateParam);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateParam);
 }
 
 - (void)testDCSMultipleParameters {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP12%c3;45%c6;;0",
                             VT100CC_ESC, VT100CC_LF, VT100CC_DEL];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateParam);
-    Assert([_parser.parameters isEqual:@[ @"123", @"456", @"", @"0" ]]);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateParam);
+    NSArray *expected = @[ @"123", @"456", @"", @"0" ];
+    XCTAssertEqualObjects(_parser.parameters, expected);
 }
 
 - (void)testDCSParamIgnoreColon {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP1:", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIgnore);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIgnore);
 }
 
 - (void)testDCSParamIgnoreLT {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP1<", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIgnore);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIgnore);
 }
 
 - (void)testDCSPrivate {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP<1;2", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateParam);
-    assert([_parser.privateMarkers isEqualToString:@"<"]);
-    Assert([_parser.parameters isEqual:@[ @"1", @"2" ]]);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateParam);
+    XCTAssert([_parser.privateMarkers isEqualToString:@"<"]);
+    NSArray *expected = @[ @"1", @"2" ];
+    XCTAssertEqualObjects(_parser.parameters, expected);
 }
 
 - (void)testDCSParamIntermediate {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP1;2 ", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateIntermediate);
-    Assert([_parser.parameters isEqual:@[ @"1", @"2" ]]);
-    assert([_parser.intermediateString isEqualToString:@" "]);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateIntermediate);
+    NSArray *expected = @[ @"1", @"2" ];
+    XCTAssertEqualObjects(_parser.parameters, expected);
+    XCTAssert([_parser.intermediateString isEqualToString:@" "]);
 }
 
 - (void)testDCSParamPassthrough {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP1;2Abc~", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStatePassthrough);
-    Assert([_parser.parameters isEqual:@[ @"1", @"2" ]]);
-    assert([_parser.data isEqualToString:@"Abc~"]);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStatePassthrough);
+    NSArray *expected = @[ @"1", @"2" ];
+    XCTAssertEqualObjects(_parser.parameters, expected);
+    XCTAssert([_parser.data isEqualToString:@"Abc~"]);
 }
 
 - (void)testDCSPassthrough {
     VT100Token *token = [self tokenForDataWithFormat:@"%cPAbc%c%c%c%c~",
                             VT100CC_ESC, VT100CC_LF, VT100CC_EM, VT100CC_FS, VT100CC_DEL];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStatePassthrough);
-    assert([_parser.parameters isEqual:@[ ]]);
-    Assert([_parser.data isEqualToString:[NSString stringWithFormat:@"Abc%c%c%c~",
-                                          VT100CC_LF, VT100CC_EM, VT100CC_FS]]);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStatePassthrough);
+    XCTAssert([_parser.parameters isEqual:@[ ]]);
+    NSString *expected = [NSString stringWithFormat:@"Abc%c%c%c~",
+                          VT100CC_LF, VT100CC_EM, VT100CC_FS];
+    XCTAssertEqualObjects(_parser.data, expected);
 }
 
 - (void)testDCSPassthroughEsc {
     VT100Token *token = [self tokenForDataWithFormat:@"%cPAbcd%c", VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.state == kVT100DCSStateDCSEscape);
-    assert([_parser.data isEqualToString:@"Abcd"]);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.state == kVT100DCSStateDCSEscape);
+    XCTAssert([_parser.data isEqualToString:@"Abcd"]);
 }
 
 - (void)testDCSPassthroughST {
     VT100Token *token = [self tokenForDataWithFormat:@"%cPAbcd%c%\\", VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == VT100_NOTSUPPORT);
-    assert(_parser.state == kVT100DCSStateGround);
-    assert([_parser.data isEqualToString:@"Abcd"]);
+    XCTAssert(token->type == VT100_NOTSUPPORT);
+    XCTAssert(_parser.state == kVT100DCSStateGround);
+    XCTAssert([_parser.data isEqualToString:@"Abcd"]);
 }
 
 - (void)testDCSEverything {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP<0;1;!\"abc%c\\",
                             VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == VT100_NOTSUPPORT);
-    assert(_parser.state == kVT100DCSStateGround);
-    Assert([_parser.privateMarkers isEqualToString:@"<"]);
-    Assert([_parser.parameters isEqual:@[ @"0", @"1", @"" ]]);
-    assert([_parser.intermediateString isEqualToString:@"!\""]);
-    assert([_parser.data isEqualToString:@"abc"]);
+    XCTAssert(token->type == VT100_NOTSUPPORT);
+    XCTAssert(_parser.state == kVT100DCSStateGround);
+    XCTAssertEqualObjects(_parser.privateMarkers, @"<");
+    NSArray *expected = @[ @"0", @"1", @"" ];
+    XCTAssertEqualObjects(_parser.parameters, expected);
+    XCTAssert([_parser.intermediateString isEqualToString:@"!\""]);
+    XCTAssert([_parser.data isEqualToString:@"abc"]);
 }
 
 - (NSString *)hexEncodedString:(NSString *)s {
@@ -237,97 +248,98 @@ static void Assert(BOOL condition) {
 - (void)testDCSRequestTermcapTerminfo {
     VT100Token *token = [self tokenForDataWithFormat:@"%cP+q%@%c\\",
                             VT100CC_ESC, [self hexEncodedString:@"TN"], VT100CC_ESC];
-    assert(token->type == DCS_REQUEST_TERMCAP_TERMINFO);
+    XCTAssert(token->type == DCS_REQUEST_TERMCAP_TERMINFO);
 }
 
 - (void)testDCSEnterTmuxIntegration {
-    assert(!_parser.isHooked);
+    XCTAssert(!_parser.isHooked);
     VT100Token *token = [self tokenForDataWithFormat:@"%cP1000p%c\\", VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == DCS_TMUX_HOOK);
-    assert(_parser.isHooked);
-    assert(_context.datalen == 2);
+    XCTAssert(token->type == DCS_TMUX_HOOK);
+    XCTAssert(_parser.isHooked);
+    XCTAssert(_context.datalen == 2);
     [_savedState removeAllObjects];
 
     token = [self tokenForDataWithFormat:@"%%exit\n"];
-    assert(token->type == TMUX_EXIT);
-    assert(_parser.isHooked);
-    assert(_context.datalen == 0);
-    assert(_parser.state == kVT100DCSStatePassthrough);
+    XCTAssert(token->type == TMUX_EXIT);
+    XCTAssert(_parser.isHooked);
+    XCTAssert(_context.datalen == 0);
+    XCTAssert(_parser.state == kVT100DCSStatePassthrough);
 
     token = [self tokenForDataWithFormat:@"\e\\"];
-    assert(token->type == VT100_SKIP);
-    assert(!_parser.isHooked);
-    assert(_parser.state == kVT100DCSStateGround);
+    XCTAssert(token->type == VT100_SKIP);
+    XCTAssert(!_parser.isHooked);
+    XCTAssert(_parser.state == kVT100DCSStateGround);
 }
 
 - (void)testDCSTmuxHook {
-    assert(!_parser.isHooked);
+    XCTAssert(!_parser.isHooked);
     VT100Token *token = [self tokenForDataWithFormat:@"%cP1000", VT100CC_ESC];
-    assert(token->type == VT100_WAIT);
-    assert(!_parser.isHooked);
-    assert(_context.datalen == 6);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(!_parser.isHooked);
+    XCTAssert(_context.datalen == 6);
 
     token = [self tokenForDataWithFormat:@"%cP1000p", VT100CC_ESC];
-    assert(token->type == DCS_TMUX_HOOK);
-    assert(_parser.isHooked);
-    assert(_context.datalen == 0);
+    XCTAssert(token->type == DCS_TMUX_HOOK);
+    XCTAssert(_parser.isHooked);
+    XCTAssert(_context.datalen == 0);
     [_savedState removeAllObjects];
 
     token = [self tokenForDataWithFormat:@"abc"];
-    assert(token->type == VT100_WAIT);
-    assert(_parser.isHooked);
-    assert(_context.datalen == 0);
+    XCTAssert(token->type == VT100_WAIT);
+    XCTAssert(_parser.isHooked);
+    XCTAssert(_context.datalen == 0);
 
     token = [self tokenForDataWithFormat:@"def\r\n"];
-    assert(token->type == TMUX_LINE);
-    Assert([token.string isEqualToString:@"abcdef"]);
-    assert(_parser.isHooked);
-    assert(_context.datalen == 0);
+    XCTAssert(token->type == TMUX_LINE);
+    XCTAssertEqualObjects(token.string, @"abcdef");
+    XCTAssert(_parser.isHooked);
+    XCTAssert(_context.datalen == 0);
     [_savedState removeAllObjects];
 
     // Technically DCS should take ESC ESC as input to produce ESC as output, but that's not how
     // tmux works so we have a hack that in tmux mode only a single ESC is treated as an ESC.
     NSString *s = [NSString stringWithFormat:@"%c[1m", VT100CC_ESC];
     token = [self tokenForDataWithFormat:@"%@\n", s];
-    assert(token->type == TMUX_LINE);
-    Assert([token.string isEqualToString:s]);
+    XCTAssert(token->type == TMUX_LINE);
+    XCTAssertEqualObjects(token.string, s);
 
     // Test an empty line.
     s = @"";
     token = [self tokenForDataWithFormat:@"%@\n", s];
-    assert(token->type == TMUX_LINE);
-    Assert([token.string isEqualToString:s]);
+    XCTAssert(token->type == TMUX_LINE);
+    XCTAssertEqualObjects(token.string, s);
 
     // Test an empty line with CR's
     s = @"\r\r\r";
     token = [self tokenForDataWithFormat:@"%@\n", s];
-    assert(token->type == TMUX_LINE);
-    Assert([token.string isEqualToString:@""]);
+    XCTAssert(token->type == TMUX_LINE);
+    XCTAssertEqualObjects(token.string, @"");
 
     // Test an empty line split in two.
     token = [self tokenForDataWithFormat:@"\r"];
-    assert(token->type == VT100_WAIT);
+    XCTAssert(token->type == VT100_WAIT);
     token = [self tokenForDataWithFormat:@"\n", s];
-    assert(token->type == TMUX_LINE);
-    Assert([token.string isEqualToString:@""]);
+    XCTAssert(token->type == TMUX_LINE);
+    XCTAssertEqualObjects(token.string, @"");
 
     token = [self tokenForDataWithFormat:@"%%exit\r\n"];
-    assert(token->type == TMUX_EXIT);
-    assert(_parser.isHooked);
-    assert(_context.datalen == 0);
+    XCTAssert(token->type == TMUX_EXIT);
+    XCTAssert(_parser.isHooked);
+    XCTAssert(_context.datalen == 0);
     [_savedState removeAllObjects];
 
     token = [self tokenForDataWithFormat:@"%c\\", VT100CC_ESC];
-    assert(token->type == VT100_SKIP);
-    assert(!_parser.isHooked);
-    assert(_context.datalen == 0);
+    XCTAssert(token->type == VT100_SKIP);
+    XCTAssert(!_parser.isHooked);
+    XCTAssert(_context.datalen == 0);
 }
 
 -  (void)testDCSTmuxWrap {
     VT100Token *token = [self tokenForDataWithFormat:@"%cPtmux;%c%c[1m%c\\",
                             VT100CC_ESC, VT100CC_ESC, VT100CC_ESC, VT100CC_ESC];
-    assert(token->type == DCS_TMUX_CODE_WRAP);
-    Assert([token.string isEqualToString:[NSString stringWithFormat:@"%c[1m", VT100CC_ESC]]);
+    XCTAssert(token->type == DCS_TMUX_CODE_WRAP);
+    NSString *expected = [NSString stringWithFormat:@"%c[1m", VT100CC_ESC];
+    XCTAssertEqualObjects(token.string, expected);
 }
 
 - (void)testDCSSavedState {
@@ -335,18 +347,19 @@ static void Assert(BOOL condition) {
                                   VT100CC_ESC, VT100CC_ESC];
 
     for (int i = 2; i < wholeSequence.length; i++) {
-        [self teardown];
-        [self setup];
         VT100Token *token = [self tokenForDataWithFormat:@"%@", [wholeSequence substringToIndex:i]];
-        assert(token->type == VT100_WAIT);
+        XCTAssert(token->type == VT100_WAIT);
 
         token = [self tokenForDataWithFormat:@"%@%@",
                     [@"-" stringRepeatedTimes:i], [wholeSequence substringFromIndex:i]];
-        assert(_parser.state == kVT100DCSStateGround);
-        assert([_parser.privateMarkers isEqualToString:@"<"]);
-        Assert([_parser.parameters isEqual:@[ @"0", @"1", @"" ]]);
-        assert([_parser.intermediateString isEqualToString:@"!\""]);
-        assert([_parser.data isEqualToString:@"abc"]);
+        XCTAssert(_parser.state == kVT100DCSStateGround);
+        XCTAssert([_parser.privateMarkers isEqualToString:@"<"]);
+        NSArray *expected = @[ @"0", @"1", @"" ];
+        XCTAssertEqualObjects(_parser.parameters, expected);
+        XCTAssert([_parser.intermediateString isEqualToString:@"!\""]);
+        XCTAssert([_parser.data isEqualToString:@"abc"]);
+
+        [self reset];
     }
 }
 
@@ -358,9 +371,9 @@ static void Assert(BOOL condition) {
     CVector v;
     CVectorCreate(&v, 10);
     [parser addParsedTokensToVector:&v];
-    assert(CVectorCount(&v) == 1);
+    XCTAssert(CVectorCount(&v) == 1);
     VT100Token *token = CVectorGetObject(&v, 0);
-    assert(token->type == VT100CSI_SGR);
+    XCTAssert(token->type == VT100CSI_SGR);
 }
 
 @end
