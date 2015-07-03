@@ -7,13 +7,29 @@
 //
 
 #import "iTermRootTerminalView.h"
+#import "PTYTabView.h"
+
+@interface iTermRootTerminalView()
+
+@property(nonatomic, retain) PTYTabView *tabView;
+
+@end
+
 
 @implementation iTermRootTerminalView
 
-- (void)drawRect:(NSRect)dirtyRect {
-    [super drawRect:dirtyRect];
-    
-    // Drawing code here.
+- (instancetype)initWithFrame:(NSRect)frameRect color:(NSColor *)color {
+    self = [super initWithFrame:frameRect color:color];
+    if (self) {
+        self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
+        _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+        _tabView.autoresizesSubviews = YES;
+        _tabView.allowsTruncatedLabels = NO;
+        _tabView.controlSize = NSSmallControlSize;
+        _tabView.tabViewType = NSNoTabsNoBorder;
+        [self addSubview:_tabView];
+    }
+    return self;
 }
 
 @end
