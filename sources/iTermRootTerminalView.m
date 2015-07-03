@@ -17,7 +17,7 @@ const CGFloat kHorizontalTabBarHeight = 22;
 
 @property(nonatomic, retain) PTYTabView *tabView;
 @property(nonatomic, retain) iTermTabBarControlView *tabBarControl;
-
+@property(nonatomic, retain) NSView *divisionView;
 @end
 
 
@@ -28,6 +28,8 @@ const CGFloat kHorizontalTabBarHeight = 22;
                tabBarDelegate:(id<iTermTabBarControlViewDelegate, PSMTabBarControlDelegate>)tabBarDelegate {
     self = [super initWithFrame:frameRect color:color];
     if (self) {
+        self.autoresizesSubviews = YES;
+
         // Create the tab view.
         self.tabView = [[[PTYTabView alloc] initWithFrame:self.bounds] autorelease];
         _tabView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
@@ -77,8 +79,43 @@ const CGFloat kHorizontalTabBarHeight = 22;
     _tabBarControl.itermTabBarDelegate = nil;
     _tabBarControl.delegate = nil;
     [_tabBarControl release];
-    
+
+    [_divisionView release];
+
     [super dealloc];
+}
+
+- (void)updateDivisionViewVisible:(BOOL)shouldBeVisible {
+    if (shouldBeVisible) {
+        // A division is needed, but there might already be one.
+        NSRect reducedTabviewFrame = _tabView.frame;
+        if (!_divisionView) {
+            reducedTabviewFrame.size.height -= 1;
+        }
+        NSRect divisionViewFrame = NSMakeRect(reducedTabviewFrame.origin.x,
+                                              reducedTabviewFrame.size.height + reducedTabviewFrame.origin.y,
+                                              reducedTabviewFrame.size.width,
+                                              1);
+        if (_divisionView) {
+            // Simply update divisionView's frame.
+            _divisionView.frame = divisionViewFrame;
+        } else {
+            // Shrink the tabview and add a division view.
+            _tabView.frame = reducedTabviewFrame;
+            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame
+                                                            color:[NSColor darkGrayColor]];
+            _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
+            [self addSubview:_divisionView];
+        }
+    } else if (_divisionView) {
+        // Remove existing division
+        NSRect augmentedTabviewFrame = _tabView.frame;
+        augmentedTabviewFrame.size.height += 1;
+        [_divisionView removeFromSuperview];
+        [_divisionView release];
+        _divisionView = nil;
+        _tabView.frame = augmentedTabviewFrame;
+    }
 }
 
 @end

@@ -18,10 +18,6 @@ extern const CGFloat kHorizontalTabBarHeight;
 
 @interface iTermRootTerminalView : SolidColorView
 
-- (instancetype)initWithFrame:(NSRect)frame
-                        color:(NSColor *)color
-               tabBarDelegate:(id<iTermTabBarControlViewDelegate, PSMTabBarControlDelegate>)tabBarDelegate;
-
 // The tabview occupies almost the entire window. Each tab has an identifier
 // which is a PTYTab.
 @property(nonatomic, readonly) PTYTabView *tabView;
@@ -29,5 +25,17 @@ extern const CGFloat kHorizontalTabBarHeight;
 // This is a sometimes-visible control that shows the tabs and lets the user
 // change which is visible.
 @property(nonatomic, readonly) iTermTabBarControlView *tabBarControl;
+
+// Gray line dividing tab/title bar from content. Will be nil if a division
+// view isn't needed such as for fullscreen windows or windows without a
+// title bar (e.g., top-of-screen).
+@property(nonatomic, readonly) NSView *divisionView;
+
+- (instancetype)initWithFrame:(NSRect)frame
+                        color:(NSColor *)color
+               tabBarDelegate:(id<iTermTabBarControlViewDelegate, PSMTabBarControlDelegate>)tabBarDelegate;
+
+// Update the division view's frame and set it visible/hidden per |shouldBeVisible|.
+- (void)updateDivisionViewVisible:(BOOL)shouldBeVisible;
 
 @end

@@ -143,11 +143,6 @@ static const CGFloat kLeftTabsWidth = 150;
     // Instant Replay
     iTermInstantReplayWindowController *_instantReplayWindowController;
 
-    // Gray line dividing tab/title bar from content. Will be nil if a division
-    // view isn't needed such as for fullscreen windows or windows without a
-    // title bar (e.g., top-of-screen).
-    NSView *_divisionView;
-
     // This is either 0 or 1. If 1, then a tab item is in the process of being
     // added and the tabBarControl will be shown if it is added successfully
     // if it's not currently shown.
@@ -594,9 +589,7 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 
     [self updateTabBarStyle];
-
-    [[[self window] contentView] setAutoresizesSubviews: YES];
-    [[self window] setDelegate: self];
+    self.window.delegate = self;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateWindowNumberVisibility:)
@@ -737,7 +730,6 @@ static const CGFloat kLeftTabsWidth = 150;
     [autocompleteView release];
     [_terminalGuid release];
     [lastArrangement_ release];
-    [_divisionView release];
     [_autoCommandHistorySessionGuid release];
 #if ENABLE_SHORTCUT_ACCESSORY
     [_shortcutAccessoryViewController release];
@@ -745,43 +737,20 @@ static const CGFloat kLeftTabsWidth = 150;
     [super dealloc];
 }
 
+- (BOOL)tabBarVisibleOnTop {
+    return ([self tabBarShouldBeVisible] &&
+            [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
+}
+
 - (void)updateDivisionView {
-    // The division is only shown if there is a title bar and no tab bar. There
+    // The division is only shown if there is a title bar and no tab bar on top. There
     // are cases in fullscreen (e.g., when entering Lion fullscreen) when the
     // window doesn't have a title bar but also isn't borderless we also check
     // if we're in fullscreen.
-    if ((self.window.styleMask & NSTitledWindowMask) &&
-        ![self anyFullScreen] &&
-        ![self tabBarShouldBeVisible]) {
-        // A division is needed, but there might already be one.
-        NSRect reducedTabviewFrame = _contentView.tabView.frame;
-        if (!_divisionView) {
-          reducedTabviewFrame.size.height -= 1;
-        }
-        NSRect divisionViewFrame = NSMakeRect(reducedTabviewFrame.origin.x,
-                                              reducedTabviewFrame.size.height + reducedTabviewFrame.origin.y,
-                                              reducedTabviewFrame.size.width,
-                                              1);
-        if (_divisionView) {
-            // Simply update divisionView's frame.
-            _divisionView.frame = divisionViewFrame;
-        } else {
-            // Shrink the tabview and add a division view.
-            _contentView.tabView.frame = reducedTabviewFrame;
-            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame
-                                                            color:[NSColor darkGrayColor]];
-            _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
-            [self.window.contentView addSubview:_divisionView];
-        }
-    } else if (_divisionView) {
-        // Remove existing division
-        NSRect augmentedTabviewFrame = _contentView.tabView.frame;
-        augmentedTabviewFrame.size.height += 1;
-        [_divisionView removeFromSuperview];
-        [_divisionView release];
-        _divisionView = nil;
-        _contentView.tabView.frame = augmentedTabviewFrame;
-    }
+    BOOL shouldBeVisible = ((self.window.styleMask & NSTitledWindowMask) &&
+                            ![self anyFullScreen] &&
+                            ![self tabBarVisibleOnTop]);
+    [_contentView updateDivisionViewVisible:shouldBeVisible];
 }
 
 - (CGFloat)tabviewWidth {
@@ -3427,14 +3396,11 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 }
 
-- (void)windowWillEnterFullScreen:(NSNotification *)notification
-{
+- (void)windowWillEnterFullScreen:(NSNotification *)notification {
     DLog(@"Window will enter lion fullscreen");
     [self repositionWidgets];
     togglingLionFullScreen_ = YES;
-    [_divisionView removeFromSuperview];
-    [_divisionView release];
-    _divisionView = nil;
+    [_contentView updateDivisionViewVisible:NO];
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
@@ -5963,7 +5929,7 @@ static const CGFloat kLeftTabsWidth = 150;
     if ([self _haveTopBorder]) {
         ++contentSize.height;
     }
-    if (_divisionView) {
+    if (_contentView.divisionView) {
         ++contentSize.height;
     }
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
@@ -6012,7 +5978,7 @@ static const CGFloat kLeftTabsWidth = 150;
         // The tabBarControl should not be visible.
         [_contentView.tabBarControl setHidden:YES];
         CGFloat yOrigin = [self _haveBottomBorder] ? 1 : 0;
-        CGFloat heightAdjustment = ([self _haveTopBorder] || _divisionView) ? 1 : 0;
+        CGFloat heightAdjustment = ([self _haveTopBorder] || _contentView.divisionView) ? 1 : 0;
         NSRect tabViewFrame =
                 NSMakeRect([self _haveLeftBorder] ? 1 : 0,
                            yOrigin,
