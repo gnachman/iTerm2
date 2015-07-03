@@ -28,6 +28,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
 #import "iTermTabBarControlView.h"
 #import "iTermURLSchemeController.h"
@@ -125,14 +126,17 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 @implementation PseudoTerminal {
     NSPoint preferredOrigin_;
 
-    SolidColorView* background_;
+    // This is a weak reference to the window's content view, here for convenience because it has
+    // the right type.
+    iTermRootTerminalView *_contentView;
+
     ////////////////////////////////////////////////////////////////////////////
     // Parameter Panel
     // A bookmark may have metasyntactic variables like $$FOO$$ in the command.
     // When opening such a bookmark, pop up a sheet and ask the user to fill in
     // the value. These fields belong to that sheet.
     IBOutlet NSTextField *parameterName;
-    IBOutlet NSPanel     *parameterPanel;
+    IBOutlet NSPanel *parameterPanel;
     IBOutlet NSTextField *parameterValue;
     IBOutlet NSTextField *parameterPrompt;
 
@@ -572,15 +576,18 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [myWindow release];
 
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
-    background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
+    _contentView =
+        [[[iTermRootTerminalView alloc] initWithFrame:[self.window.contentView frame]
+                                                color:[NSColor windowBackgroundColor]] autorelease];
+    self.window.contentView = _contentView;
     if (!isHotkey) {
-        [[self window] setAlphaValue:1];
+        self.window.alphaValue = 1;
     } else {
-        [[self window] setAlphaValue:0];
+        self.window.alphaValue = 0;
     }
-    [[self window] setOpaque:NO];
+    self.window.opaque = NO;
 
-    normalBackgroundColor = [background_ color];
+    normalBackgroundColor = [_contentView color];
 
     _resizeInProgressFlag = NO;
 
@@ -594,10 +601,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             // TODO: Why is this here?
             [[self window] setBottomCornerRounded:NO];
     }
-
-    // create the tab bar control
-    [[self window] setContentView:background_];
-    [background_ release];
 
     // create the tabview
     NSRect tabViewFrame = [[[self window] contentView] bounds];
@@ -4344,10 +4347,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                 [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                 newTabColor) {
                 [[self window] setBackgroundColor:newTabColor];
-                [background_ setColor:newTabColor];
+                [_contentView setColor:newTabColor];
             } else {
                 [[self window] setBackgroundColor:nil];
-                [background_ setColor:normalBackgroundColor];
+                [_contentView setColor:normalBackgroundColor];
             }
         }
     }

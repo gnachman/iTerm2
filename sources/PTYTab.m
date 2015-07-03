@@ -17,6 +17,7 @@
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "SessionView.h"
+#import "SolidColorView.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "WindowControllerInterface.h"

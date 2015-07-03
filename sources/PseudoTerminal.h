@@ -7,7 +7,6 @@
 #import "PasteboardHistory.h"
 #import "Popup.h"
 #import "ProfileListView.h"
-#import "SolidColorView.h"
 #import "ToolbeltView.h"
 #import "WindowControllerInterface.h"
 #import "iTermInstantReplayWindowController.h"
