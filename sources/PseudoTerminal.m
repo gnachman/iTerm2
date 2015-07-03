@@ -104,8 +104,6 @@ static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
 static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
 
-// In full screen, leave a bit of space at the top of the toolbelt for aesthetics.
-static const CGFloat kToolbeltMargin = 8;
 static const CGFloat kLeftTabsWidth = 150;
 
 @interface NSWindow (private)
@@ -115,7 +113,8 @@ static const CGFloat kLeftTabsWidth = 150;
 @interface PseudoTerminal () <
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
-    PTYTabDelegate>
+    PTYTabDelegate,
+    iTermRootTerminalViewDelegate>  // TODO: Kill this.
 @property(nonatomic, assign) BOOL windowInitialized;
 
 // Session ID of session that currently has an auto-command history window open
@@ -238,9 +237,6 @@ static const CGFloat kLeftTabsWidth = 150;
     // In 10.7 style full screen mode
     BOOL lionFullScreen_;
 
-    // Toolbelt view. Goes on the right side of the terminal window, if visible.
-    ToolbeltView *toolbelt_;
-
     IBOutlet NSPanel *coprocesssPanel_;
     IBOutlet NSButton *coprocessOkButton_;
     IBOutlet NSComboBox *coprocessCommand_;
@@ -269,19 +265,12 @@ static const CGFloat kLeftTabsWidth = 150;
     // forever.
     int desiredRows_, desiredColumns_;
 
-    // How wide the toolbelt should be. User may drag it to change.
-    // ALWAYS USE THE FLOOR OF THIS VALUE!
-    CGFloat toolbeltWidth_;
-
     // If set, then hiding the toolbelt should shrink the window by the toolbelt's width.
     BOOL hidingToolbeltShouldResizeWindow_;
 
     // If set, prevents hidingToolbeltShouldResizeWindow_ from getting its value inferred based on
     // the window's frame.
     BOOL hidingToolbeltShouldResizeWindowInitialized_;
-
-    // Should the toolbelt be visible?
-    BOOL shouldShowToolbelt_;
 
 #if ENABLE_SHORTCUT_ACCESSORY
     // This thing is a freaking horror show, and it's what people are talking about when they say
@@ -318,8 +307,6 @@ static const CGFloat kLeftTabsWidth = 150;
 
     BOOL _parameterPanelCanceled;
 }
-
-@synthesize shouldShowToolbelt = shouldShowToolbelt_;
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
@@ -563,7 +550,8 @@ static const CGFloat kLeftTabsWidth = 150;
     _contentView =
         [[[iTermRootTerminalView alloc] initWithFrame:[self.window.contentView frame]
                                                 color:[NSColor windowBackgroundColor]
-                                       tabBarDelegate:self] autorelease];
+                                       tabBarDelegate:self
+                                             delegate:self] autorelease];
     self.window.contentView = _contentView;
     if (!isHotkey) {
         self.window.alphaValue = 1;
@@ -575,6 +563,12 @@ static const CGFloat kLeftTabsWidth = 150;
     normalBackgroundColor = [_contentView color];
 
     _resizeInProgressFlag = NO;
+
+    hidingToolbeltShouldResizeWindow_ = NO;
+    // hidingToolbeltShouldResizeWindow_ can only be set to the right value after the window's frame
+    // has been established. The window is always fiddled with (e.g., adding tabs) after this call
+    // returns, so we'll do it on the next spin of the runloop.
+    [self performSelector:@selector(finishToolbeltInitialization) withObject:nil afterDelay:0];
 
     if (!smartLayout || windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         PtyLog(@"no smart layout or is full screen, so set layout done");
@@ -638,26 +632,6 @@ static const CGFloat kLeftTabsWidth = 150;
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
     }
 
-    // A decent default value.
-    toolbeltWidth_ = 250;
-    [self constrainToolbeltWidth];
-
-    NSRect toolbeltFrame = NSMakeRect(0,
-                                      0,
-                                      floor(toolbeltWidth_),
-                                      self.window.frame.size.height - kToolbeltMargin);
-    toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
-                                                term:self] autorelease];
-    toolbelt_.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
-    [[self.window contentView] addSubview:toolbelt_];
-    [self updateToolbelt];
-
-    hidingToolbeltShouldResizeWindow_ = NO;
-    // hidingToolbeltShouldResizeWindow_ can only be set to the right value after the window's frame
-    // has been established. The window is always fiddled with (e.g., adding tabs) after this call
-    // returns, so we'll do it on the next spin of the runloop.
-    [self performSelector:@selector(finishToolbeltInitialization) withObject:nil afterDelay:0];
-
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
     [[self window] setRestorationClass:[PseudoTerminalRestorer class]];
@@ -694,12 +668,12 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
+    [_contentView shutdown];
+
     [self closeInstantReplayWindow];
     doNotSetRestorableState_ = YES;
     wellFormed_ = NO;
-    [toolbelt_ shutdown];
 
     // Do not assume that [self window] is valid here. It may have been freed.
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -760,8 +734,8 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 
     CGFloat width;
-    if ([self shouldShowToolbelt] && !exitingLionFullscreen_) {
-        width = self.window.frame.size.width - floor(toolbeltWidth_);
+    if (_contentView.shouldShowToolbelt && !exitingLionFullscreen_) {
+        width = self.window.frame.size.width - floor(_contentView.toolbeltWidth);
     } else {
         width = self.window.frame.size.width;
     }
@@ -789,32 +763,32 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 }
 
+- (BOOL)shouldShowToolbelt {
+    return _contentView.shouldShowToolbelt;
+}
+
 - (void)hideToolbelt {
-    if (shouldShowToolbelt_) {
+    if (_contentView.shouldShowToolbelt) {
         [self toggleToolbeltVisibility:nil];
     }
 }
 
 - (IBAction)toggleToolbeltVisibility:(id)sender {
-    shouldShowToolbelt_ = !shouldShowToolbelt_;
+    _contentView.shouldShowToolbelt = !_contentView.shouldShowToolbelt;
     BOOL didResizeWindow = NO;
-    if ([self shouldShowToolbelt]) {
-        [toolbelt_ setHidden:NO];
-
+    if (_contentView.shouldShowToolbelt) {
         if (![self anyFullScreen]) {
-            [self constrainToolbeltWidth];
-
             // Tweak the window's frame to avoid shrinking content, if possible.
             NSRect windowFrame = self.window.frame;
-            windowFrame.size.width += toolbeltWidth_;
+            windowFrame.size.width += _contentView.toolbeltWidth;
             NSRect screenFrame = self.window.screen.visibleFrame;
             CGFloat rightLimit = NSMaxX(screenFrame);
             CGFloat overage = NSMaxX(windowFrame) - rightLimit;
             if (overage > 0) {
                 // Compensate by making the toolbelt a little smaller, unless that would make it too
                 // small.
-                if (toolbeltWidth_ - overage > 100) {
-                    toolbeltWidth_ -= overage;
+                if (_contentView.toolbeltWidth - overage > 100) {
+                    _contentView.toolbeltWidth = _contentView.toolbeltWidth - overage;
                     windowFrame.size.width -= overage;
                     overage = 0;
                 }
@@ -828,10 +802,9 @@ static const CGFloat kLeftTabsWidth = 150;
 
         [self refreshTools];
     } else {
-        [toolbelt_ setHidden:YES];
         if (![self anyFullScreen] && hidingToolbeltShouldResizeWindow_) {
             NSRect windowFrame = self.window.frame;
-            windowFrame.size.width -= toolbeltWidth_;
+            windowFrame.size.width -= _contentView.toolbeltWidth;
             didResizeWindow = YES;
             [self.window setFrame:windowFrame display:YES];
         }
@@ -1991,7 +1964,7 @@ static const CGFloat kLeftTabsWidth = 150;
             return NO;
         }
     }
-    shouldShowToolbelt_ = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
+    _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
@@ -2025,7 +1998,7 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 
     [self fitTabsToWindow];
-    [self updateToolbelt];
+    [_contentView updateToolbelt];
     return YES;
 }
 
@@ -2048,7 +2021,7 @@ static const CGFloat kLeftTabsWidth = 150;
     result[TERMINAL_ARRANGEMENT_Y_ORIGIN] = @(rect.origin.y);
     result[TERMINAL_ARRANGEMENT_WIDTH] = @(rect.size.width);
     result[TERMINAL_ARRANGEMENT_HEIGHT] = @(rect.size.height);
-    result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(shouldShowToolbelt_);
+    result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(_contentView.shouldShowToolbelt);
     result[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] =
             @(hidingToolbeltShouldResizeWindow_);
 
@@ -2118,14 +2091,15 @@ static const CGFloat kLeftTabsWidth = 150;
     return NO;
 }
 
+// TODO: Kill this
 - (ToolbeltView *)toolbelt {
-    return toolbelt_;
+    return _contentView.toolbelt;
 }
 
 - (void)refreshTools {
-    [[toolbelt_ commandHistoryView] updateCommands];
-    [[toolbelt_ capturedOutputView] updateCapturedOutput];
-    [[toolbelt_ directoriesView] updateDirectories];
+    [[_contentView.toolbelt commandHistoryView] updateCommands];
+    [[_contentView.toolbelt capturedOutputView] updateCapturedOutput];
+    [[_contentView.toolbelt directoriesView] updateDirectories];
 }
 
 - (int)numRunningSessions
@@ -2386,31 +2360,12 @@ static const CGFloat kLeftTabsWidth = 150;
     return _isHotKeyWindow;
 }
 
-- (NSRect)toolbeltFrame {
-    CGFloat width = floor(toolbeltWidth_);
-    NSView *contentView = self.window.contentView;
-    CGFloat top = [self _haveTopBorder] ? 1 : 0;
-    CGFloat bottom = [self _haveBottomBorder] ? 1 : 0;
-    CGFloat right = [self _haveRightBorder] ? 1 : 0;
-    NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width - right,
-                                      bottom,
-                                      width,
-                                      contentView.bounds.size.height - top - bottom);
-    return toolbeltFrame;
-}
-
 - (CGFloat)growToolbeltBy:(CGFloat)diff {
-    CGFloat before = toolbeltWidth_;
-    toolbeltWidth_ += diff;
-    [self constrainToolbeltWidth];
+    CGFloat before = _contentView.toolbeltWidth;
+    _contentView.toolbeltWidth = _contentView.toolbeltWidth + diff;
+    [_contentView constrainToolbeltWidth];
     [self repositionWidgets];
-    return toolbeltWidth_ - before;
-}
-
-- (void)constrainToolbeltWidth {
-    CGFloat minSize = MIN(100, self.window.frame.size.width * 0.05);
-    toolbeltWidth_ = MAX(MIN(toolbeltWidth_, self.window.frame.size.width / 2),
-                         minSize);
+    return _contentView.toolbeltWidth - before;
 }
 
 - (void)canonicalizeWindowFrame {
@@ -2591,7 +2546,7 @@ static const CGFloat kLeftTabsWidth = 150;
             break;
     }
 
-    [toolbelt_ setFrame:[self toolbeltFrame]];
+    [_contentView updateToolbeltFrame];
 }
 
 - (void)screenParametersDidChange
@@ -2992,7 +2947,7 @@ static const CGFloat kLeftTabsWidth = 150;
     [self invalidateRestorableState];
 
     // If the toolbelt changed size by autoresizing, keep things in sync.
-    toolbeltWidth_ = toolbelt_.frame.size.width;
+    _contentView.toolbeltWidth = _contentView.toolbelt.frame.size.width;
 }
 
 - (void)updateUseTransparency {
@@ -3145,6 +3100,7 @@ static const CGFloat kLeftTabsWidth = 150;
 {
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
+    CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;
     if (!_fullScreen) {
         oldFrame_ = self.window.frame;
         oldFrameSizeIsBogus_ = NO;
@@ -3198,7 +3154,9 @@ static const CGFloat kLeftTabsWidth = 150;
     _fullScreen = !_fullScreen;
     [_contentView.tabBarControl updateFlashing];
     togglingFullScreen_ = YES;
-    [self updateToolbelt];
+    _contentView.toolbeltWidth = savedToolbeltWidth;
+    [_contentView constrainToolbeltWidth];
+    [_contentView updateToolbelt];
     [self updateUseTransparency];
 
     if (_fullScreen) {
@@ -3207,7 +3165,6 @@ static const CGFloat kLeftTabsWidth = 150;
         [self hideMenuBar];
     }
 
-    [toolbelt_ setHidden:![self shouldShowToolbelt]];
     // The toolbelt may try to become the first responder.
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 
@@ -3215,8 +3172,8 @@ static const CGFloat kLeftTabsWidth = 150;
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
         NSSize contentSize = [[[self window] contentView] frame].size;
-        if ([self shouldShowToolbelt]) {
-            contentSize.width -= toolbelt_.frame.size.width;
+        if (_contentView.shouldShowToolbelt) {
+            contentSize.width -= _contentView.toolbelt.frame.size.width;
         }
         if ([self tabBarShouldBeVisible]) {
             switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
@@ -3411,7 +3368,7 @@ static const CGFloat kLeftTabsWidth = 150;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
     [_contentView.tabBarControl updateFlashing];
-    [self updateToolbelt];
+    [_contentView updateToolbelt];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
     [self fitTabsToWindow];
@@ -3446,7 +3403,7 @@ static const CGFloat kLeftTabsWidth = 150;
     [self fitTabsToWindow];
     [self repositionWidgets];
     [self invalidateRestorableState];
-    [self updateToolbelt];
+    [_contentView updateToolbelt];
 
     DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
     windowType_ = savedWindowType_;
@@ -5038,7 +4995,7 @@ static const CGFloat kLeftTabsWidth = 150;
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
-    [[toolbelt_ commandHistoryView] updateCommands];
+    [[_contentView.toolbelt commandHistoryView] updateCommands];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
         [self editSession:self.currentSession makeKey:NO];
@@ -5133,8 +5090,8 @@ static const CGFloat kLeftTabsWidth = 150;
     winSize.height += decorationSize.height;
     NSRect frame = [[self window] frame];
 
-    if ([self shouldShowToolbelt]) {
-        winSize.width += floor(toolbeltWidth_);
+    if (_contentView.shouldShowToolbelt) {
+        winSize.width += floor(_contentView.toolbeltWidth);
     }
 
     BOOL mustResizeTabs = NO;
@@ -5965,14 +5922,14 @@ static const CGFloat kLeftTabsWidth = 150;
 - (void)repositionWidgets {
     PtyLog(@"repositionWidgets");
 
-    BOOL showToolbeltInline = [self shouldShowToolbelt];
+    BOOL showToolbeltInline = _contentView.shouldShowToolbelt;
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
     NSWindow *thisWindow = [self window];
     [thisWindow setShowsResizeIndicator:hasScrollbar];
 
     // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
     // too big for the current window size, you could end up with a negative-width tab view frame.
-    [self constrainToolbeltWidth];
+    [_contentView constrainToolbeltWidth];
 
     if (![self tabBarShouldBeVisible]) {
         // The tabBarControl should not be visible.
@@ -6086,7 +6043,7 @@ static const CGFloat kLeftTabsWidth = 150;
                                                  [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
                                                  NSHeight(tabBarFrame));
                 if (showToolbeltInline) {
-                    tabViewFrame.size.width -= [self toolbeltFrame].size.width;
+                    tabViewFrame.size.width -= [_contentView toolbeltFrame].size.width;
                 }
                 _contentView.tabView.frame = tabViewFrame;
                 [self updateDivisionView];
@@ -6095,9 +6052,7 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 
     if (showToolbeltInline) {
-        DLog(@"Set toolbelt frame to %@", NSStringFromRect([self toolbeltFrame]));
-        [self constrainToolbeltWidth];
-        [toolbelt_ setFrame:[self toolbeltFrame]];
+        [_contentView updateToolbeltFrame];
     }
 
     // Update the tab style.
@@ -6551,7 +6506,7 @@ static const CGFloat kLeftTabsWidth = 150;
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
-        [item setState:toolbelt_.isHidden ? NSOffState : NSOnState];
+        [item setState:_contentView.shouldShowToolbelt ? NSOnState : NSOffState];
         return [[ToolbeltView configuredTools] count] > 0;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
@@ -6987,13 +6942,6 @@ static const CGFloat kLeftTabsWidth = 150;
                                                       userInfo:nil];
 }
 
-- (void)updateToolbelt {
-    [toolbelt_ setFrame:[self toolbeltFrame]];
-    [toolbelt_ setHidden:![self shouldShowToolbelt]];
-    [self repositionWidgets];
-    [toolbelt_ relayoutAllTools];
-}
-
 - (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
 {
     return kValidModesForFontPanel;
@@ -7263,7 +7211,7 @@ static const CGFloat kLeftTabsWidth = 150;
         if ([self numberOfTabs] == 1 &&
             [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT
                                       inProfile:object.profile] &&
-            !self.shouldShowToolbelt) {
+            !_contentView.shouldShowToolbelt) {
             [self toggleToolbeltVisibility:self];
         }
     }
