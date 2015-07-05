@@ -11,10 +11,14 @@
 #import "iTermApplication.h"
 #import "iTermDragHandleView.h"
 #import "FutureMethods.h"
-#import "PseudoTerminal.h"  // TODO: Use delegacy
 
-NSString *kCapturedOutputToolName = @"Captured Output";
-NSString *kCommandHistoryToolName = @"Command History";
+NSString *const kCapturedOutputToolName = @"Captured Output";
+NSString *const kCommandHistoryToolName = @"Command History";
+NSString *const kRecentDirectoriesToolName = @"Recent Directories";
+NSString *const kJobsToolName = @"Jobs";
+NSString *const kNotesToolName = @"Notes";
+NSString *const kPasteHistoryToolName = @"Paste History";
+NSString *const kProfilesToolName = @"Profiles";
 
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
@@ -50,22 +54,22 @@ NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
 @implementation ToolbeltView {
     iTermDragHandleView *dragHandle_;
+    ToolbeltSplitView *splitter_;
+    NSMutableDictionary *tools_;
 }
 
 static NSMutableDictionary *gRegisteredTools;
 static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
-+ (void)initialize
-{
++ (void)initialize {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
     [ToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
-    [ToolbeltView registerToolWithName:kCommandHistoryToolName
-                             withClass:[ToolCommandHistoryView class]];
-    [ToolbeltView registerToolWithName:@"Recent Directories" withClass:[ToolDirectoriesView class]];
-    [ToolbeltView registerToolWithName:@"Jobs" withClass:[ToolJobs class]];
-    [ToolbeltView registerToolWithName:@"Notes" withClass:[ToolNotes class]];
-    [ToolbeltView registerToolWithName:@"Paste History" withClass:[ToolPasteHistory class]];
-    [ToolbeltView registerToolWithName:@"Profiles" withClass:[ToolProfiles class]];
+    [ToolbeltView registerToolWithName:kCommandHistoryToolName withClass:[ToolCommandHistoryView class]];
+    [ToolbeltView registerToolWithName:kRecentDirectoriesToolName withClass:[ToolDirectoriesView class]];
+    [ToolbeltView registerToolWithName:kJobsToolName withClass:[ToolJobs class]];
+    [ToolbeltView registerToolWithName:kNotesToolName withClass:[ToolNotes class]];
+    [ToolbeltView registerToolWithName:kPasteHistoryToolName withClass:[ToolPasteHistory class]];
+    [ToolbeltView registerToolWithName:kProfilesToolName withClass:[ToolProfiles class]];
 }
 
 + (NSArray *)defaultTools
@@ -73,8 +77,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return [NSArray arrayWithObjects:@"Profiles", nil];
 }
 
-+ (NSArray *)allTools
-{
++ (NSArray *)allTools {
     return [gRegisteredTools allKeys];
 }
 
@@ -93,11 +96,10 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return vettedTools;
 }
 
-- (id)initWithFrame:(NSRect)frame term:(PseudoTerminal *)term
-{
+- (id)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate {
     self = [super initWithFrame:frame];
     if (self) {
-        term_ = term;
+        _delegate = delegate;
 
         NSArray *items = [ToolbeltView configuredTools];
         if (!items) {
@@ -183,7 +185,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (void)toggleShowToolWithName:(NSString *)theName
 {
-        [ToolbeltView toggleShouldShowTool:theName];
+    [ToolbeltView toggleShouldShowTool:theName];
 }
 
 + (void)toggleShouldShowTool:(NSString *)theName
@@ -308,8 +310,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
                                                                           self.frame.size.width,
                                                                           self.frame.size.height / MAX(1, [ToolbeltView numberOfVisibleTools ] - 1))] autorelease];
     wrapper.name = toolName;
-    wrapper.term = term_;
-        wrapper.delegate = self;
+    wrapper.delegate = self;
     Class c = [gRegisteredTools objectForKey:toolName];
     if (c) {
         [self addTool:[[[c alloc] initWithFrame:NSMakeRect(0,
@@ -337,6 +338,10 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     for (ToolWrapper *wrapper in [splitter_ subviews]) {
         [wrapper relayout];
     }
+}
+
+- (id<ToolbeltTool>)toolWithName:(NSString *)name {
+    return [tools_[name] tool];
 }
 
 #pragma mark - ToolWrapperDelegate
@@ -421,7 +426,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 #pragma mark - iTermDragHandleViewDelegate
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
-    return -[term_ growToolbeltBy:-delta];
+    return -[_delegate growToolbeltBy:-delta];
 }
 
 @end

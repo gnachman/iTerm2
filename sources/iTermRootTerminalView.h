@@ -13,6 +13,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 
 @class iTermTabBarControlView;
 @protocol iTermTabBarControlViewDelegate;
+@protocol iTermToolbeltViewDelegate;
 @protocol PSMTabBarControlDelegate;
 @class PTYTabView;
 @class ToolbeltView;
@@ -58,7 +59,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(NSColor *)color
                tabBarDelegate:(id<iTermTabBarControlViewDelegate, PSMTabBarControlDelegate>)tabBarDelegate
-                     delegate:(id<iTermRootTerminalViewDelegate>)delegate;  // TODO: This should hopefully go away
+                     delegate:(id<iTermRootTerminalViewDelegate, iTermToolbeltViewDelegate>)delegate;  // TODO: This should hopefully go away
 
 // Update the division view's frame and set it visible/hidden per |shouldBeVisible|.
 - (void)updateDivisionViewVisible:(BOOL)shouldBeVisible;

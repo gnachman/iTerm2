@@ -6,28 +6,30 @@
 @class ToolCommandHistoryView;
 @class ToolDirectoriesView;
 @class ToolbeltSplitView;
-@class PseudoTerminal;
 
-extern NSString *kCommandHistoryToolName;
-extern NSString *kCapturedOutputToolName;
+extern NSString *const kCapturedOutputToolName;
+extern NSString *const kCommandHistoryToolName;
+extern NSString *const kRecentDirectoriesToolName;
+extern NSString *const kJobsToolName;
+extern NSString *const kNotesToolName;
+extern NSString *const kPasteHistoryToolName;
+extern NSString *const kProfilesToolName;
 
 // Notification posted when all windows should hide their toolbelts.
 extern NSString *const kToolbeltShouldHide;
 
-@interface ToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate> {
-    ToolbeltSplitView *splitter_;
-    NSMutableDictionary *tools_;
-    PseudoTerminal *term_;   // weak
-}
+@interface ToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate>
 
+@property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
 + (NSArray *)configuredTools;
 
 + (void)registerToolWithName:(NSString *)name withClass:(Class)c;
 + (void)populateMenu:(NSMenu *)menu;
 + (void)toggleShouldShowTool:(NSString *)theName;
 + (int)numberOfVisibleTools;
++ (NSArray *)allTools;
 
-- (id)initWithFrame:(NSRect)frame term:(PseudoTerminal *)term;
+- (id)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate;
 
 // Is the tool visible?
 - (BOOL)showingToolWithName:(NSString *)theName;
@@ -45,5 +47,9 @@ extern NSString *const kToolbeltShouldHide;
 - (ToolCapturedOutputView *)capturedOutputView;
 
 - (void)relayoutAllTools;
+
+#pragma mark - Testing
+
+- (id<ToolbeltTool>)toolWithName:(NSString *)name;
 
 @end

@@ -16,7 +16,14 @@
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
 
-@implementation ToolPasteHistory
+@implementation ToolPasteHistory {
+    NSScrollView *scrollView_;
+    NSTableView *tableView_;
+    NSButton *clear_;
+    PasteboardHistory *pasteHistory_;
+    NSTimer *minuteRefreshTimer_;
+    BOOL shutdown_;
+}
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -140,13 +147,12 @@ static const CGFloat kMargin = 4;
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
 }
 
-- (void)fixCursor
-{
+- (void)fixCursor {
     if (shutdown_) {
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+    [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
 - (void)doubleClickOnTableView:(id)sender

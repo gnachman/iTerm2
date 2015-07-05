@@ -11,14 +11,7 @@
 #import "PasteboardHistory.h"
 #import "FutureMethods.h"
 
-@interface ToolPasteHistory : NSView <ToolbeltTool, NSTableViewDataSource, NSTableViewDelegate> {
-    NSScrollView *scrollView_;
-    NSTableView *tableView_;
-    NSButton *clear_;
-    PasteboardHistory *pasteHistory_;
-    NSTimer *minuteRefreshTimer_;
-    BOOL shutdown_;
-}
+@interface ToolPasteHistory : NSView <ToolbeltTool, NSTableViewDataSource, NSTableViewDelegate>
 
 - (id)initWithFrame:(NSRect)frame;
 - (void)shutdown;

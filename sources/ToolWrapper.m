@@ -18,11 +18,16 @@ static const CGFloat kButtonSize = 17;
 static const CGFloat kTopMargin = 3;  // Margin above title bar and close button
 static const CGFloat kCloseButtonLeftMargin = 5;
 
-@implementation ToolWrapper
+@implementation ToolWrapper {
+    NSTextField *title_;
+    NSButton *closeButton_;
+    NSString *name;
+    NSView *container_;
+    id<ToolWrapperDelegate> delegate_;  // weak
+}
 
 @synthesize name;
 @synthesize container = container_;
-@synthesize term;
 @synthesize delegate = delegate_;
 
 - (id)initWithFrame:(NSRect)frame

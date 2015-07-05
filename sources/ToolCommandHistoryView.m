@@ -179,7 +179,8 @@ static const CGFloat kHelpMargin = 5;
         // Contents
         NSString* value = [entry.command stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
         ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        if (entry.lastMark && [[[wrapper.term currentSession] guid] isEqualToString:entry.lastMark.sessionGuid]) {
+        if (entry.lastMark &&
+            [wrapper.delegate.delegate toolbeltCurrentSessionHasGuid:entry.lastMark.sessionGuid]) {
             return [[[NSAttributedString alloc] initWithString:value
                                                    attributes:@{ NSFontAttributeName: boldFont_ }] autorelease];
         } else {
@@ -205,7 +206,7 @@ static const CGFloat kHelpMargin = 5;
         // Post a notification in case the captured output tool is observing us.
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
                                                             object:nil];
-        [[wrapper.term currentSession] scrollToMark:entry.lastMark];
+        [wrapper.delegate.delegate toolbeltDidSelectMark:entry.lastMark];
     }
 }
 
@@ -217,7 +218,7 @@ static const CGFloat kHelpMargin = 5;
 - (void)updateCommands {
     [entries_ autorelease];
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    VT100RemoteHost *host = [[wrapper.term currentSession] currentHost];
+    VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
     NSArray *temp = [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:@""
                                                                                         onHost:host];
     NSArray *expanded = [[CommandHistory sharedInstance] entryArrayByExpandingAllUsesInEntryArray:temp];
@@ -241,7 +242,7 @@ static const CGFloat kHelpMargin = 5;
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+    [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
 - (void)doubleClickOnTableView:(id)sender
@@ -260,7 +261,7 @@ static const CGFloat kHelpMargin = 5;
             return;
         }
     }
-    [[wrapper.term currentSession] insertText:text];
+    [wrapper.delegate.delegate toolbeltInsertText:text];
 }
 
 - (void)clear:(id)sender

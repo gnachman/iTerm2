@@ -36,7 +36,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 - (instancetype)initWithFrame:(NSRect)frameRect
                         color:(NSColor *)color
                tabBarDelegate:(id<iTermTabBarControlViewDelegate,PSMTabBarControlDelegate>)tabBarDelegate
-                     delegate:(id<iTermRootTerminalViewDelegate>)delegate {
+                     delegate:(id<iTermRootTerminalViewDelegate, iTermToolbeltViewDelegate>)delegate {
     self = [super initWithFrame:frameRect color:color];
     if (self) {
         _delegate = delegate;
@@ -89,7 +89,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         [self constrainToolbeltWidth];
 
         self.toolbelt = [[[ToolbeltView alloc] initWithFrame:self.toolbeltFrame
-                                                        term:(id)_delegate] autorelease];  // TODO: ToolbeltView should use delegacy
+                                                    delegate:(id)_delegate] autorelease];
         _toolbelt.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
         [self addSubview:_toolbelt];
         [self updateToolbelt];

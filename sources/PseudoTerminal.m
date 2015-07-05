@@ -1,5 +1,7 @@
 #import "PseudoTerminal.h"
 
+#import "CapturedOutput.h"
+#import "CaptureTrigger.h"
 #import "ColorsMenuItemView.h"
 #import "CommandHistory.h"
 #import "CommandHistoryEntry.h"
@@ -114,7 +116,8 @@ static const CGFloat kLeftTabsWidth = 150;
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
     PTYTabDelegate,
-    iTermRootTerminalViewDelegate>  // TODO: Kill this.
+    iTermRootTerminalViewDelegate,
+    iTermToolbeltViewDelegate>
 @property(nonatomic, assign) BOOL windowInitialized;
 
 // Session ID of session that currently has an auto-command history window open
@@ -1690,7 +1693,7 @@ static const CGFloat kLeftTabsWidth = 150;
         tabRect.origin.y += step.height;
     }
 
-    NSDictionary* tabArrangement = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] objectAtIndex:0];
+    NSDictionary* tabArrangement = terminalArrangement[TERMINAL_ARRANGEMENT_TABS][0];
     NSRect contentRect = NSMakeRect(rect.origin.x + 1,
                                     rect.origin.y,
                                     rect.size.width - 2,
@@ -6381,7 +6384,7 @@ static const CGFloat kLeftTabsWidth = 150;
 
     if ([[self allSessions] indexOfObject:aSession] == NSNotFound) {
         // create a new tab
-        PTYTab* aTab = [[PTYTab alloc] initWithSession:aSession];
+        PTYTab *aTab = [[PTYTab alloc] initWithSession:aSession];
         [aSession setIgnoreResizeNotifications:YES];
         if ([self numberOfTabs] == 0) {
             [aTab setReportIdealSizeAsCurrent:YES];
@@ -7307,5 +7310,44 @@ static const CGFloat kLeftTabsWidth = 150;
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount {
     [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
 }
+
+#pragma mark - Toolbelt
+
+- (void)toolbeltUpdateMouseCursor {
+    [[[self currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+}
+
+- (void)toolbeltInsertText:(NSString *)text {
+    [[[self currentSession] textview] insertText:text];
+}
+
+- (VT100RemoteHost *)toolbeltCurrentHost {
+    return [[self currentSession] currentHost];
+}
+
+- (pid_t)toolbeltCurrentShellProcessId {
+    return [[[self currentSession] shell] pid];
+}
+
+- (VT100ScreenMark *)toolbeltLastCommandMark {
+    return self.currentSession.screen.lastCommandMark;
+}
+
+- (void)toolbeltDidSelectMark:(iTermMark *)mark {
+    [self.currentSession scrollToMark:mark];
+    [self.currentSession takeFocus];
+}
+
+- (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput {
+    if (self.currentSession) {
+        CaptureTrigger *trigger = (CaptureTrigger *)capturedOutput.trigger;
+        [trigger activateOnOutput:capturedOutput inSession:self.currentSession];
+    }
+}
+
+- (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid {
+    return [self.currentSession.guid isEqualToString:guid];
+}
+
 
 @end

@@ -23,8 +23,6 @@ static const CGFloat kMargin = 4;
 @interface ToolCapturedOutputView() <
     ToolbeltTool,
     NSMenuDelegate,
-    NSTableViewDataSource,
-    NSTableViewDelegate,
     NSTextFieldDelegate>
 @end
 
@@ -39,6 +37,8 @@ static const CGFloat kMargin = 4;
     NSButton *help_;
     NSArray *filteredEntries_;
 }
+
+@synthesize tableView = tableView_;
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -125,14 +125,14 @@ static const CGFloat kMargin = 4;
 
 - (void)updateCapturedOutput {
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    ToolCommandHistoryView *commandHistoryView = [[wrapper.term toolbelt] commandHistoryView];
+    ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];
     CommandHistoryEntry *entry = [commandHistoryView selectedEntry];
     VT100ScreenMark *mark;
     NSArray *theArray;
     if (entry) {
         mark = entry.lastMark;
     } else {
-        mark = wrapper.term.currentSession.screen.lastCommandMark;
+        mark = [wrapper.delegate.delegate toolbeltLastCommandMark];
     }
     theArray = mark.capturedOutput;
     if (mark != mark_) {
@@ -255,8 +255,7 @@ static const CGFloat kMargin = 4;
 
     if (capturedOutput) {
         ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [wrapper.term.currentSession scrollToMark:capturedOutput.mark];
-        [wrapper.term.currentSession takeFocus];
+        [wrapper.delegate.delegate toolbeltDidSelectMark:capturedOutput.mark];
     }
 }
 
@@ -269,7 +268,7 @@ static const CGFloat kMargin = 4;
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+    [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
 - (void)doubleClickOnTableView:(id)sender {
@@ -278,19 +277,12 @@ static const CGFloat kMargin = 4;
         return;
     }
     CapturedOutput *capturedOutput = filteredEntries_[selectedIndex];
-    PTYSession *session = [self session];
-    if (session) {
-        [capturedOutput.trigger activateOnOutput:capturedOutput inSession:session];
-    }
+    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    [wrapper.delegate.delegate toolbeltActivateTriggerForCapturedOutputInCurrentSession:capturedOutput];
 }
 
 - (CGFloat)minimumHeight {
     return 60;
-}
-
-- (PTYSession *)session {
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    return [wrapper.term currentSession];
 }
 
 - (void)toggleCheckmark:(id)sender {

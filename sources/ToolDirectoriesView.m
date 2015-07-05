@@ -187,7 +187,7 @@ static const CGFloat kHelpMargin = 5;
 - (void)updateDirectories {
     [entries_ autorelease];
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    VT100RemoteHost *host = [[wrapper.term currentSession] currentHost];
+    VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
     NSArray *entries = [[iTermDirectoriesModel sharedInstance] entriesSortedByScoreOnHost:host];
     NSArray *reversed = [[entries reverseObjectEnumerator] allObjects];
     entries_ = [reversed retain];
@@ -208,7 +208,7 @@ static const CGFloat kHelpMargin = 5;
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+    [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
 - (void)doubleClickOnTableView:(id)sender {
@@ -224,7 +224,7 @@ static const CGFloat kHelpMargin = 5;
     } else {
         text = entry.path;
     }
-    [[wrapper.term currentSession] insertText:text];
+    [wrapper.delegate.delegate toolbeltInsertText:text];
 }
 
 - (void)clear:(id)sender {
