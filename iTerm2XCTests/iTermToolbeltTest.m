@@ -342,6 +342,46 @@
 }
 
 - (void)testCommandHistoryLinkedToCapturedOutput {
+    [self sendPromptAndStartCommand:@"command 1" toSession:_session];
+    [self sendData:[@"error: 1\r\n" dataUsingEncoding:NSUTF8StringEncoding]
+        toTerminal:_session.terminal];
+    [self endCommand];
+
+    [self sendPromptAndStartCommand:@"command 2" toSession:_session];
+    [self sendData:[@"error: 2\r\n" dataUsingEncoding:NSUTF8StringEncoding]
+        toTerminal:_session.terminal];
+    [self endCommand];
+
+    ToolCapturedOutputView *capturedOutputTool =
+        (ToolCapturedOutputView *)[_view.toolbelt toolWithName:kCapturedOutputToolName];
+    ToolCommandHistoryView *commandHistoryTool =
+        (ToolCommandHistoryView *)[_view.toolbelt toolWithName:kCommandHistoryToolName];
+
+    // Select first command
+    [commandHistoryTool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0]
+                              byExtendingSelection:NO];
+    NSString *object;
+    object = [capturedOutputTool.tableView.dataSource tableView:capturedOutputTool.tableView
+                                      objectValueForTableColumn:capturedOutputTool.tableView.tableColumns[0]
+                                                            row:0];
+    XCTAssert([object containsString:@"error: 1"]);
+
+    // Select second command
+    [commandHistoryTool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:1]
+                              byExtendingSelection:NO];
+
+    object = [capturedOutputTool.tableView.dataSource tableView:capturedOutputTool.tableView
+                                      objectValueForTableColumn:capturedOutputTool.tableView.tableColumns[0]
+                                                            row:0];
+    XCTAssert([object containsString:@"error: 2"]);
+
+    // Select nothing
+    [commandHistoryTool.tableView selectRowIndexes:[NSIndexSet indexSet]
+                              byExtendingSelection:NO];
+    object = [capturedOutputTool.tableView.dataSource tableView:capturedOutputTool.tableView
+                                      objectValueForTableColumn:capturedOutputTool.tableView.tableColumns[0]
+                                                            row:0];
+    XCTAssert([object containsString:@"error: 2"]);
 }
 
 - (void)testDirectoriesUpdatesOnCd {
