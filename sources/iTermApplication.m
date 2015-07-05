@@ -41,8 +41,12 @@
 
 @implementation iTermApplication
 
-- (BOOL)_eventUsesNavigationKeys:(NSEvent*)event
-{
+- (void)dealloc {
+    [_fakeCurrentEvent release];
+    [super dealloc];
+}
+
+- (BOOL)_eventUsesNavigationKeys:(NSEvent*)event {
     NSString* unmodkeystr = [event charactersIgnoringModifiers];
     if ([unmodkeystr length] == 0) {
         return NO;
@@ -65,8 +69,7 @@
 }
 
 // override to catch key press events very early on
-- (void)sendEvent:(NSEvent*)event
-{
+- (void)sendEvent:(NSEvent*)event {
     if ([event type] == NSKeyDown) {
         iTermController* cont = [iTermController sharedInstance];
 #ifdef FAKE_EVENT_TAP
@@ -193,9 +196,16 @@
     [super sendEvent:event];
 }
 
-- (iTermApplicationDelegate *)delegate
-{
+- (iTermApplicationDelegate *)delegate {
     return (iTermApplicationDelegate *)[super delegate];
+}
+
+- (NSEvent *)currentEvent {
+    if (_fakeCurrentEvent) {
+        return _fakeCurrentEvent;
+    } else {
+        return [super currentEvent];
+    }
 }
 
 @end

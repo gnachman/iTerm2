@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import <XCTest/XCTest.h>
 #import "CommandHistory.h"
+#import "iTermApplication.h"
 #import "iTermController.h"
 #import "iTermRootTerminalView.h"
 #import "PseudoTerminal.h"
@@ -70,6 +71,8 @@
 }
 
 - (void)tearDown {
+    iTermApplication *app = [NSApplication sharedApplication];
+    app.fakeCurrentEvent = nil;
     [_insertedText release];
     [[_windowController retain] autorelease];
     [_session terminate];
@@ -315,6 +318,27 @@
     tool.toolWrapper.delegate.delegate = self;
     [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:tool.tableView];
     XCTAssertEqualObjects(_insertedText, @"command 1");
+}
+
+- (void)testCommandHistoryWritesCdOnOptionDoubleClick {
+    [self sendPromptAndStartCommand:@"command 1" toSession:_session];
+    [self endCommand];
+
+    [self sendPrompt];
+
+    ToolCommandHistoryView *tool =
+        (ToolCommandHistoryView *)[_view.toolbelt toolWithName:kCommandHistoryToolName];
+    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+
+    tool.toolWrapper.delegate.delegate = self;
+    iTermApplication *app = (iTermApplication *)[NSApplication sharedApplication];
+    CGEventRef fakeEvent = CGEventCreateKeyboardEvent(NULL, 0, true);
+    CGEventSetFlags(fakeEvent, kCGEventFlagMaskAlternate);
+    app.fakeCurrentEvent = [NSEvent eventWithCGEvent:fakeEvent];
+    CFRelease(fakeEvent);
+
+    [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:tool.tableView];
+    XCTAssertEqualObjects(_insertedText, @"cd /dir");
 }
 
 - (void)testCommandHistoryLinkedToCapturedOutput {
