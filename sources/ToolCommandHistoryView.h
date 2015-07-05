@@ -17,6 +17,9 @@
   NSTableViewDelegate,
   NSTextFieldDelegate>
 
+// For testing
+@property(nonatomic, readonly) NSTableView *tableView;
+
 - (id)initWithFrame:(NSRect)frame;
 - (void)shutdown;
 - (void)updateCommands;

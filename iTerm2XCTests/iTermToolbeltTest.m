@@ -8,12 +8,14 @@
 
 #import <Cocoa/Cocoa.h>
 #import <XCTest/XCTest.h>
-#import "PseudoTerminal.h"
-#import "PTYTab.h"
+#import "CommandHistory.h"
 #import "iTermController.h"
 #import "iTermRootTerminalView.h"
+#import "PseudoTerminal.h"
+#import "PTYTab.h"
 #import "ToolCapturedOutputView.h"
 #import "Trigger.h"
+#import "VT100RemoteHost.h"
 
 @interface iTermToolbeltTest : XCTestCase
 
@@ -27,6 +29,13 @@
 
 - (void)setUp {
     [super setUp];
+
+    // Erase command history for the remotehost we test with.
+    VT100RemoteHost *host = [[[VT100RemoteHost alloc] init] autorelease];
+    host.hostname = @"hostname";
+    host.username = @"user";
+    [[CommandHistory sharedInstance] eraseHistoryForHost:host];
+
     // Create a window and save convenience pointers to its various bits.
     _session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
     _windowController = (PseudoTerminal *)_session.tab.realParentWindow;
@@ -50,7 +59,7 @@
     // Define a capture output trigger.
     NSDictionary *trigger = @{ kTriggerRegexKey: @"error:",
                                kTriggerActionKey: @"CaptureTrigger",
-                               kTriggerParameterKey: @"echo hello" };
+                               kTriggerParameterKey: @"sleep 99999" };
 
     [_session setSessionSpecificProfileValues:@{ KEY_TRIGGERS: @[ trigger ] }];
 }
@@ -76,10 +85,27 @@
     CVectorDestroy(&vector);
 }
 
-- (void)sendPrompt {
-    NSString *promptLine = [NSString stringWithFormat:@"%c]133;A%c> %c]133;B%cmake%c]133;C%c",
-                            VT100CC_ESC, VT100CC_BEL,
-                            VT100CC_ESC, VT100CC_BEL,
+- (void)sendPromptAndStartCommand:(NSString *)command toSession:(PTYSession *)session {
+    NSString *promptLine = [NSString stringWithFormat:
+                            @"%c]1337;RemoteHost=user@hostname%c"
+                            @"%c]1337;CurrentDir=/dir%c"
+                            @"%c]133;A%c"
+                            @"> "
+                            @"%c]133;B%c"
+                            @"%@"
+                            @"%c]133;C%c",
+                            VT100CC_ESC, VT100CC_BEL,  // RemoteHost
+                            VT100CC_ESC, VT100CC_BEL,  // CurrentDir
+                            VT100CC_ESC, VT100CC_BEL,  // FinalTerm A
+                            VT100CC_ESC, VT100CC_BEL,  // FinalTerm B
+                            command,
+                            VT100CC_ESC, VT100CC_BEL];  // FinalTerm C
+    [self sendData:[promptLine dataUsingEncoding:NSUTF8StringEncoding]
+        toTerminal:session.terminal];
+}
+
+- (void)endCommand {
+    NSString *promptLine = [NSString stringWithFormat:@"%c]133;D;1%c",
                             VT100CC_ESC, VT100CC_BEL];
     [self sendData:[promptLine dataUsingEncoding:NSUTF8StringEncoding]
         toTerminal:_session.terminal];
@@ -107,7 +133,7 @@
                                                               toolWithName:kCapturedOutputToolName];
     XCTAssertEqual(tool.tableView.numberOfRows, 0);
     // Gotta have a command mark for captured output to work
-    [self sendPrompt];
+    [self sendPromptAndStartCommand:@"make" toSession:_session];
     [self sendData:[@"Hello\r\n" dataUsingEncoding:NSUTF8StringEncoding]
         toTerminal:_session.terminal];
     XCTAssertEqual(tool.tableView.numberOfRows, 0);
@@ -121,7 +147,7 @@
                                                               toolWithName:kCapturedOutputToolName];
     XCTAssertEqual(tool.tableView.numberOfRows, 0);
     // Gotta have a command mark for captured output to work
-    [self sendPrompt];
+    [self sendPromptAndStartCommand:@"make" toSession:_session];
     NSRect rectForFirstCellOfCapturedLine = _session.textview.cursorFrame;
     [self sendData:[@"error: blah\r\n" dataUsingEncoding:NSUTF8StringEncoding]
         toTerminal:_session.terminal];
@@ -141,9 +167,73 @@
 }
 
 - (void)testCapturedOutputActivatesTriggerOnDoubleClick {
+    ToolCapturedOutputView *tool = (ToolCapturedOutputView *)[_view.toolbelt
+                                                              toolWithName:kCapturedOutputToolName];
+    XCTAssertEqual(tool.tableView.numberOfRows, 0);
+    // Gotta have a command mark for captured output to work
+    [self sendPromptAndStartCommand:@"make" toSession:_session];
+    [self sendData:[@"error: blah\r\n" dataUsingEncoding:NSUTF8StringEncoding]
+        toTerminal:_session.terminal];
+
+    // Select the row
+    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+
+    XCTAssert(!_session.hasCoprocess);
+
+    // Fake a double click on it
+    [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:nil];
+
+    XCTAssert(_session.hasCoprocess);
 }
 
+#pragma mark Command History
+
 - (void)testCommandHistoryBoldsCommandsForCurrentSession {
+    PTYSession *otherSession = [[iTermController sharedInstance] launchBookmark:nil
+                                                                     inTerminal:_windowController];
+
+    // Set the hostname for both sessions
+    [self sendPromptAndStartCommand:@"command 1" toSession:_session];
+    [self sendPromptAndStartCommand:@"command 2" toSession:otherSession];
+
+    // Send the first command to tab 0
+    [self sendData:[@"Output 1" dataUsingEncoding:NSUTF8StringEncoding]
+        toTerminal:_session.terminal];
+    [self endCommand];
+
+    // Send the second command to tab 1
+    [self sendData:[@"Output 2" dataUsingEncoding:NSUTF8StringEncoding]
+        toTerminal:_session.terminal];
+    [self endCommand];
+
+    ToolCapturedOutputView *tool = (ToolCapturedOutputView *)[_view.toolbelt
+                                                              toolWithName:kCommandHistoryToolName];
+
+    // Select tab 0 and get its two commands from the table view.
+    [_windowController.tabView selectTabViewItemAtIndex:0];
+    NSArray *values = @[ [tool.tableView.dataSource tableView:tool.tableView
+                                    objectValueForTableColumn:tool.tableView.tableColumns[0]
+                                                          row:0],
+                         [tool.tableView.dataSource tableView:tool.tableView
+                                    objectValueForTableColumn:tool.tableView.tableColumns[0]
+                                                          row:1] ];
+
+    // First one should be bold.
+    XCTAssert([values[0] isKindOfClass:[NSAttributedString class]]);
+    XCTAssert([values[1] isKindOfClass:[NSString class]]);
+
+    // Select tab 1 and get its two commands from the table view.
+    [_windowController.tabView selectTabViewItemAtIndex:1];
+    values = @[ [tool.tableView.dataSource tableView:tool.tableView
+                           objectValueForTableColumn:tool.tableView.tableColumns[0]
+                                                 row:0],
+                [tool.tableView.dataSource tableView:tool.tableView
+                           objectValueForTableColumn:tool.tableView.tableColumns[0]
+                                                 row:1] ];
+
+    // Second one should be bold.
+    XCTAssert([values[0] isKindOfClass:[NSString class]]);
+    XCTAssert([values[1] isKindOfClass:[NSAttributedString class]]);
 }
 
 - (void)testCommandHistoryScrollsToClickedCommand {

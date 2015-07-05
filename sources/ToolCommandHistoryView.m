@@ -30,6 +30,8 @@ static const CGFloat kHelpMargin = 5;
     NSButton *help_;
 }
 
+@synthesize tableView = tableView_;
+
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
