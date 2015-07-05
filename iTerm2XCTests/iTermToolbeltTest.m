@@ -78,7 +78,7 @@
 }
 
 - (void)tearDown {
-    iTermApplication *app = [NSApplication sharedApplication];
+    iTermApplication *app = (iTermApplication *)[NSApplication sharedApplication];
     app.fakeCurrentEvent = nil;
     [_currentDir release];
     [_insertedText release];
