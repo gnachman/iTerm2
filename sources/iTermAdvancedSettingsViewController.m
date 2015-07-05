@@ -8,6 +8,7 @@
 
 #import "iTermAdvancedSettingsViewController.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSApplication+iTerm.h"
 #import <objc/runtime.h>
 
 typedef enum {
@@ -59,6 +60,18 @@ static NSDictionary *gIntrospection;
                              kAdvancedSettingDefaultValue: @(defaultValue),
                              kAdvancedSettingDescription: description } retain];
         return defaultValue;
+    }
+
+    static BOOL testing;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        testing = [[NSApplication sharedApplication] isRunningUnitTests];
+    });
+    if (testing) {
+        NSDictionary *overrides = @{ @"RunJobsInServers": @NO };
+        if (overrides[identifier]) {
+            return [overrides[identifier] boolValue];
+        }
     }
     
     NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];

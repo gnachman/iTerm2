@@ -404,8 +404,8 @@
         (ToolDirectoriesView *)[_view.toolbelt toolWithName:kRecentDirectoriesToolName];
     XCTAssertEqual(tool.tableView.numberOfRows, 2);
 
-    NSString *object = [tool.tableView.dataSource tableView:tool.tableView
-                                  objectValueForTableColumn:tool.tableView.tableColumns[0]
+    NSAttributedString *object = [tool.tableView.dataSource tableView:tool.tableView
+                                            objectValueForTableColumn:tool.tableView.tableColumns[0]
                                                         row:0];
     XCTAssertEqualObjects([object string], @"/dir");
 
