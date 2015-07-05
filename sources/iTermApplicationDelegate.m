@@ -48,6 +48,7 @@
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "iTermTipWindowController.h"
+#import "NSApplication+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
@@ -574,7 +575,9 @@ static BOOL hasBecomeActive = NO;
         //    open no windows at startup.
         return NO;
     }
-    [self newWindow:nil];
+    if (![[NSApplication sharedApplication] isRunningUnitTests]) {
+        [self newWindow:nil];
+    }
     return YES;
 }
 
