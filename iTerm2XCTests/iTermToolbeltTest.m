@@ -419,7 +419,7 @@
     [self sendPromptAndStartCommand:@"make" toSession:_session];
 
     ToolDirectoriesView *tool =
-    (ToolDirectoriesView *)[_view.toolbelt toolWithName:kRecentDirectoriesToolName];
+        (ToolDirectoriesView *)[_view.toolbelt toolWithName:kRecentDirectoriesToolName];
     [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
 
     tool.toolWrapper.delegate.delegate = self;
@@ -427,13 +427,50 @@
     XCTAssertEqualObjects(_insertedText, _currentDir);
 }
 
-- (void)testJobsUpdatesFromTimer {
-}
+#pragma mark Window
 
 - (void)testToolbeltImpingesOnWindowWhenNearRightEdge {
+    // Hide toolbelt
+    [_windowController toggleToolbeltVisibility:nil];
+
+    XCTAssert(!_view.shouldShowToolbelt);
+
+    // Ensure the window fills the visible frame
+    [_windowController.window setFrame:_windowController.window.screen.visibleFrame display:YES];
+    NSRect originalWindowFrame = _windowController.window.frame;
+    NSRect originalTabViewFrame = _view.tabView.frame;
+
+    // Show toolbelt
+    [_windowController toggleToolbeltVisibility:nil];
+
+    // Window frame should not change
+    XCTAssertEqual(_windowController.window.frame.size.width, originalWindowFrame.size.width);
+
+    // TabView's frame should change
+    XCTAssertNotEqual(_view.tabView.frame.size.width, originalTabViewFrame.size.width);
 }
 
 - (void)testToolbeltGrowsWhenSpaceIsAvailableOnRight {
+    // Hide toolbelt
+    [_windowController toggleToolbeltVisibility:nil];
+
+    XCTAssert(!_view.shouldShowToolbelt);
+
+    // Ensure the window has space on right
+    NSRect newWindowFrame = _windowController.window.screen.visibleFrame;
+    newWindowFrame.size.width -= 300;
+    [_windowController.window setFrame:newWindowFrame display:YES];
+    NSRect originalWindowFrame = _windowController.window.frame;
+    NSRect originalTabViewFrame = _view.tabView.frame;
+
+    // Show toolbelt
+    [_windowController toggleToolbeltVisibility:nil];
+
+    // Window frame should change
+    XCTAssertNotEqual(_windowController.window.frame.size.width, originalWindowFrame.size.width);
+
+    // TabView's frame should not
+    XCTAssertEqual(_view.tabView.frame.size.width, originalTabViewFrame.size.width);
 }
 
 #pragma mark - iTermToolbeltViewDelegate
