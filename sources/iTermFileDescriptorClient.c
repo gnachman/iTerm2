@@ -19,52 +19,56 @@ static ssize_t ReceiveMessageAndFileDescriptor(int fd,
                                                void *buffer,
                                                size_t bufferCapacity,
                                                int *receivedFileDescriptorPtr) {
-    syslog(LOG_NOTICE, "ReceiveMessageAndFileDescriptor\n");
-    struct msghdr message;
-    struct iovec ioVector[1];
-    iTermFileDescriptorControlMessage controlMessage;
+    // Loop because sometimes the dynamic loader spews warnings (for example, when malloc logging
+    // is enabled)
+    while (1) {
+        syslog(LOG_NOTICE, "ReceiveMessageAndFileDescriptor\n");
+        struct msghdr message;
+        struct iovec ioVector[1];
+        iTermFileDescriptorControlMessage controlMessage;
 
-    message.msg_control = controlMessage.control;
-    message.msg_controllen = sizeof(controlMessage.control);
+        message.msg_control = controlMessage.control;
+        message.msg_controllen = sizeof(controlMessage.control);
 
-    message.msg_name = NULL;
-    message.msg_namelen = 0;
+        message.msg_name = NULL;
+        message.msg_namelen = 0;
 
-    ioVector[0].iov_base = buffer;
-    ioVector[0].iov_len = bufferCapacity;
-    message.msg_iov = ioVector;
-    message.msg_iovlen = 1;
+        ioVector[0].iov_base = buffer;
+        ioVector[0].iov_len = bufferCapacity;
+        message.msg_iov = ioVector;
+        message.msg_iovlen = 1;
 
-    ssize_t n;
-    do {
-        n = recvmsg(fd, &message, 0);
-    } while (n < 0 && errno == EINTR);
+        ssize_t n;
+        do {
+            n = recvmsg(fd, &message, 0);
+        } while (n < 0 && errno == EINTR);
 
-    if (n <= 0) {
-        syslog(LOG_NOTICE, "error from recvmsg %s\n", strerror(errno));
-        return n;
-    }
-    syslog(LOG_NOTICE, "recvmsg returned %d\n", (int)n);
-
-    struct cmsghdr *messageHeader = CMSG_FIRSTHDR(&message);
-    if (messageHeader != NULL && messageHeader->cmsg_len == CMSG_LEN(sizeof(int))) {
-        if (messageHeader->cmsg_level != SOL_SOCKET) {
-            syslog(LOG_NOTICE, "Wrong cmsg level\n");
-            return -1;
+        if (n <= 0) {
+            syslog(LOG_NOTICE, "error from recvmsg %s\n", strerror(errno));
+            return n;
         }
-        if (messageHeader->cmsg_type != SCM_RIGHTS) {
-            syslog(LOG_NOTICE, "Wrong cmsg type\n");
-            return -1;
-        }
-        syslog(LOG_NOTICE, "Got a fd\n");
-        *receivedFileDescriptorPtr = *((int *)CMSG_DATA(messageHeader));
-    } else {
-        syslog(LOG_NOTICE, "No descriptor passed\n");
-        *receivedFileDescriptorPtr = -1;       // descriptor was not passed
-    }
+        syslog(LOG_NOTICE, "recvmsg returned %d\n", (int)n);
 
-    syslog(LOG_NOTICE, "Return %d\n", (int)n);
-    return n;
+        struct cmsghdr *messageHeader = CMSG_FIRSTHDR(&message);
+        if (messageHeader != NULL && messageHeader->cmsg_len == CMSG_LEN(sizeof(int))) {
+            if (messageHeader->cmsg_level != SOL_SOCKET) {
+                syslog(LOG_NOTICE, "Wrong cmsg level\n");
+                return -1;
+            }
+            if (messageHeader->cmsg_type != SCM_RIGHTS) {
+                syslog(LOG_NOTICE, "Wrong cmsg type\n");
+                return -1;
+            }
+            syslog(LOG_NOTICE, "Got a fd\n");
+            *receivedFileDescriptorPtr = *((int *)CMSG_DATA(messageHeader));
+            syslog(LOG_NOTICE, "Return %d\n", (int)n);
+            return n;
+        } else {
+            syslog(LOG_NOTICE, "No descriptor passed\n");
+            *receivedFileDescriptorPtr = -1;       // descriptor was not passed, try again.
+            // This is the only case where the loop repeats.
+        }
+    }
 }
 
 int iTermFileDescriptorClientConnect(const char *path) {
