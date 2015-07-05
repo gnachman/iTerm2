@@ -448,6 +448,10 @@ static const int kMaxDirectoriesToSavePerHost = 200;
                                                         object:nil];
 }
 
+- (void)eraseHistoryForHost:(VT100RemoteHost *)host {
+    [_hostToPathArrayDictionary removeObjectForKey:[self keyForHost:host]];
+}
+
 - (NSIndexSet *)abbreviationSafeIndexesInEntry:(iTermDirectoryEntry *)entry {
     return [_tree abbreviationSafeIndexesInPath:entry.path];
 }

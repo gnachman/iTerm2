@@ -11,16 +11,18 @@
 #import "CommandHistory.h"
 #import "iTermApplication.h"
 #import "iTermController.h"
+#import "iTermDirectoriesModel.h"
 #import "iTermRootTerminalView.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
+#import "ToolDirectoriesView.h"
 #import "Trigger.h"
 #import "VT100RemoteHost.h"
 
 @interface iTermToolbeltTest : XCTestCase<iTermToolbeltViewDelegate>
-
+@property(nonatomic, retain) NSString *currentDir;
 @end
 
 @implementation iTermToolbeltTest {
@@ -29,18 +31,23 @@
     iTermRootTerminalView *_view;  // weak
 
     NSMutableString *_insertedText;
+    NSString *_currentDir;
 }
 
 - (void)setUp {
     [super setUp];
 
     _insertedText = [[NSMutableString alloc] init];
+    _currentDir = [@"/dir" retain];
 
     // Erase command history for the remotehost we test with.
     VT100RemoteHost *host = [[[VT100RemoteHost alloc] init] autorelease];
     host.hostname = @"hostname";
     host.username = @"user";
     [[CommandHistory sharedInstance] eraseHistoryForHost:host];
+
+    // Erase directory history for the remotehost we test with.
+    [[iTermDirectoriesModel sharedInstance] eraseHistoryForHost:host];
 
     // Create a window and save convenience pointers to its various bits.
     _session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
@@ -73,6 +80,7 @@
 - (void)tearDown {
     iTermApplication *app = [NSApplication sharedApplication];
     app.fakeCurrentEvent = nil;
+    [_currentDir release];
     [_insertedText release];
     [[_windowController retain] autorelease];
     [_session terminate];
@@ -97,12 +105,12 @@
 - (void)sendPrompt {
     NSString *promptLine = [NSString stringWithFormat:
                             @"%c]1337;RemoteHost=user@hostname%c"
-                            @"%c]1337;CurrentDir=/dir%c"
+                            @"%c]1337;CurrentDir=%@%c"
                             @"%c]133;A%c"
                             @"> "
                             @"%c]133;B%c",
                             VT100CC_ESC, VT100CC_BEL,  // RemoteHost
-                            VT100CC_ESC, VT100CC_BEL,  // CurrentDir
+                            VT100CC_ESC, _currentDir, VT100CC_BEL,  // CurrentDir
                             VT100CC_ESC, VT100CC_BEL,  // FinalTerm A
                             VT100CC_ESC, VT100CC_BEL];  // FinalTerm B
     [self sendData:[promptLine dataUsingEncoding:NSUTF8StringEncoding]
@@ -112,14 +120,14 @@
 - (void)sendPromptAndStartCommand:(NSString *)command toSession:(PTYSession *)session {
     NSString *promptLine = [NSString stringWithFormat:
                             @"%c]1337;RemoteHost=user@hostname%c"
-                            @"%c]1337;CurrentDir=/dir%c"
+                            @"%c]1337;CurrentDir=%@%c"
                             @"%c]133;A%c"
                             @"> "
                             @"%c]133;B%c"
                             @"%@"
                             @"%c]133;C%c",
                             VT100CC_ESC, VT100CC_BEL,  // RemoteHost
-                            VT100CC_ESC, VT100CC_BEL,  // CurrentDir
+                            VT100CC_ESC, _currentDir, VT100CC_BEL,  // CurrentDir
                             VT100CC_ESC, VT100CC_BEL,  // FinalTerm A
                             VT100CC_ESC, VT100CC_BEL,  // FinalTerm B
                             command,
@@ -142,7 +150,7 @@
     }
 }
 
-#pragma mark - Tests
+#pragma mark - General Testse
 
 - (void)testToolbeltIsVisible {
     // Ensure the toolbelt is visible.
@@ -338,7 +346,7 @@
     CFRelease(fakeEvent);
 
     [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:tool.tableView];
-    XCTAssertEqualObjects(_insertedText, @"cd /dir");
+    XCTAssertEqualObjects(_insertedText, [@"cd " stringByAppendingString:_currentDir]);
 }
 
 - (void)testCommandHistoryLinkedToCapturedOutput {
@@ -384,7 +392,27 @@
     XCTAssert([object containsString:@"error: 2"]);
 }
 
+#pragma mark Directories
+
 - (void)testDirectoriesUpdatesOnCd {
+    [self sendPromptAndStartCommand:@"cd /tmp" toSession:_session];
+    self.currentDir = @"/tmp";
+    [self endCommand];
+    [self sendPrompt];
+
+    ToolDirectoriesView *tool =
+        (ToolDirectoriesView *)[_view.toolbelt toolWithName:kRecentDirectoriesToolName];
+    XCTAssertEqual(tool.tableView.numberOfRows, 2);
+
+    NSString *object = [tool.tableView.dataSource tableView:tool.tableView
+                                  objectValueForTableColumn:tool.tableView.tableColumns[0]
+                                                        row:0];
+    XCTAssertEqualObjects([object string], @"/dir");
+
+    object = [tool.tableView.dataSource tableView:tool.tableView
+                        objectValueForTableColumn:tool.tableView.tableColumns[0]
+                                              row:1];
+    XCTAssertEqualObjects([object string], @"/tmp");
 }
 
 - (void)testDirectoriesEntersCommandOnDoubleClick {

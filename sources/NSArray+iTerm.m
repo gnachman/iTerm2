@@ -28,7 +28,9 @@
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
     for (NSAttributedString *element in self) {
         [result appendAttributedString:element];
-        [result appendAttributedString:joiner];
+        if (element != self.lastObject) {
+            [result appendAttributedString:joiner];
+        }
     }
     return result;
 }
