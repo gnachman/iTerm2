@@ -14,6 +14,7 @@
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "ToolCapturedOutputView.h"
+#import "ToolCommandHistoryView.h"
 #import "Trigger.h"
 #import "VT100RemoteHost.h"
 
@@ -111,6 +112,13 @@
         toTerminal:_session.terminal];
 }
 
+- (void)writeLongCommandOutput {
+    for (int i = 0; i < _session.screen.height * 2; i++) {
+        [self sendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]
+            toTerminal:_session.terminal];
+    }
+}
+
 #pragma mark - Tests
 
 - (void)testToolbeltIsVisible {
@@ -151,10 +159,7 @@
     NSRect rectForFirstCellOfCapturedLine = _session.textview.cursorFrame;
     [self sendData:[@"error: blah\r\n" dataUsingEncoding:NSUTF8StringEncoding]
         toTerminal:_session.terminal];
-    for (int i = 0; i < _session.screen.height * 2; i++) {
-        [self sendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]
-            toTerminal:_session.terminal];
-    }
+    [self writeLongCommandOutput];
     // Update scroll position for new text
     [_session.textview refresh];
     XCTAssert(!NSIntersectsRect(_session.textview.enclosingScrollView.documentVisibleRect,
@@ -206,8 +211,8 @@
         toTerminal:_session.terminal];
     [self endCommand];
 
-    ToolCapturedOutputView *tool = (ToolCapturedOutputView *)[_view.toolbelt
-                                                              toolWithName:kCommandHistoryToolName];
+    ToolCommandHistoryView *tool =
+        (ToolCommandHistoryView *)[_view.toolbelt toolWithName:kCommandHistoryToolName];
 
     // Select tab 0 and get its two commands from the table view.
     [_windowController.tabView selectTabViewItemAtIndex:0];
@@ -237,12 +242,35 @@
 }
 
 - (void)testCommandHistoryScrollsToClickedCommand {
+    NSRect firstCommandRect = _session.textview.enclosingScrollView.documentVisibleRect;
+    [self sendPromptAndStartCommand:@"command 1" toSession:_session];
+    [self writeLongCommandOutput];
+    [self endCommand];
+
+    [self sendPromptAndStartCommand:@"command 2" toSession:_session];
+    [self writeLongCommandOutput];
+    [self endCommand];
+
+    ToolCommandHistoryView *tool =
+        (ToolCommandHistoryView *)[_view.toolbelt toolWithName:kCommandHistoryToolName];
+
+    XCTAssert(!NSIntersectsRect(_session.textview.enclosingScrollView.documentVisibleRect,
+                                firstCommandRect));
+
+    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+
+    XCTAssert(NSIntersectsRect(_session.textview.enclosingScrollView.documentVisibleRect,
+                               firstCommandRect));
+
 }
 
 - (void)testCommandHistoryUpdatesWhenNewCommandIsEntered {
 }
 
 - (void)testCommandHistoryEntersCommandOnDoubleClick {
+}
+
+- (void)testCommandHistoryLinkedToCapturedOutput {
 }
 
 - (void)testDirectoriesUpdatesOnCd {
@@ -253,5 +281,12 @@
 
 - (void)testJobsUpdatesFromTimer {
 }
+
+- (void)testToolbeltImpingesOnWindowWhenNearRightEdge {
+}
+
+- (void)testToolbeltGrowsWhenSpaceIsAvailableOnRight {
+}
+
 
 @end
