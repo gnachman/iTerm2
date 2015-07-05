@@ -265,6 +265,21 @@
 }
 
 - (void)testCommandHistoryUpdatesWhenNewCommandIsEntered {
+    ToolCommandHistoryView *tool =
+        (ToolCommandHistoryView *)[_view.toolbelt toolWithName:kCommandHistoryToolName];
+
+    // Send a prompt first so we know the hostname.
+    [self sendPromptAndStartCommand:@"command 1" toSession:_session];
+    [self writeLongCommandOutput];
+    [self endCommand];
+
+    int n = tool.tableView.numberOfRows;
+
+    [self sendPromptAndStartCommand:@"command 2" toSession:_session];
+    [self writeLongCommandOutput];
+    [self endCommand];
+
+    XCTAssertEqual(tool.tableView.numberOfRows, n + 1);
 }
 
 - (void)testCommandHistoryEntersCommandOnDoubleClick {
