@@ -415,7 +415,16 @@
     XCTAssertEqualObjects([object string], @"/tmp");
 }
 
-- (void)testDirectoriesEntersCommandOnDoubleClick {
+- (void)testDirectoriesInsertsDirectoryNameOnDoubleClick {
+    [self sendPromptAndStartCommand:@"make" toSession:_session];
+
+    ToolDirectoriesView *tool =
+    (ToolDirectoriesView *)[_view.toolbelt toolWithName:kRecentDirectoriesToolName];
+    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+
+    tool.toolWrapper.delegate.delegate = self;
+    [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:tool.tableView];
+    XCTAssertEqualObjects(_insertedText, _currentDir);
 }
 
 - (void)testJobsUpdatesFromTimer {
