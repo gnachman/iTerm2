@@ -4131,8 +4131,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-// Legacy NSTextInput method, probably not used.
+// Legacy NSTextInput method, probably not used by the system but used internally.
 - (void)insertText:(id)aString {
+    // TODO: The replacement range is wrong
     [self insertText:aString replacementRange:NSMakeRange(0, [_drawingHelper.markedText length])];
 }
 

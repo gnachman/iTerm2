@@ -12,6 +12,7 @@
 @class iTermMark;
 @class VT100RemoteHost;
 @class ToolCommandHistoryView;
+@class ToolWrapper;
 @class VT100ScreenMark;
 
 @protocol iTermToolbeltViewDelegate<NSObject>
@@ -28,7 +29,7 @@
 
 @protocol ToolWrapperDelegate
 
-@property(nonatomic, readonly) id<iTermToolbeltViewDelegate> delegate;
+@property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
 
 - (BOOL)haveOnlyOneTool;
 - (void)hideToolbelt;
@@ -43,6 +44,11 @@
 @optional
 - (void)relayout;
 - (void)shutdown;
+@end
+
+@interface NSView (ToolWrapper)
+// Call this on a tool to get its wrapper.
+- (ToolWrapper *)toolWrapper;
 @end
 
 @interface ToolWrapper : NSView

@@ -18,7 +18,7 @@
 #import "Trigger.h"
 #import "VT100RemoteHost.h"
 
-@interface iTermToolbeltTest : XCTestCase
+@interface iTermToolbeltTest : XCTestCase<iTermToolbeltViewDelegate>
 
 @end
 
@@ -26,10 +26,14 @@
     PseudoTerminal *_windowController;  // weak
     PTYSession *_session;  // weak
     iTermRootTerminalView *_view;  // weak
+
+    NSMutableString *_insertedText;
 }
 
 - (void)setUp {
     [super setUp];
+
+    _insertedText = [[NSMutableString alloc] init];
 
     // Erase command history for the remotehost we test with.
     VT100RemoteHost *host = [[[VT100RemoteHost alloc] init] autorelease];
@@ -66,6 +70,7 @@
 }
 
 - (void)tearDown {
+    [_insertedText release];
     [[_windowController retain] autorelease];
     [_session terminate];
     [_windowController close];
@@ -84,6 +89,21 @@
         [terminal executeToken:CVectorGetObject(&vector, i)];
     }
     CVectorDestroy(&vector);
+}
+
+- (void)sendPrompt {
+    NSString *promptLine = [NSString stringWithFormat:
+                            @"%c]1337;RemoteHost=user@hostname%c"
+                            @"%c]1337;CurrentDir=/dir%c"
+                            @"%c]133;A%c"
+                            @"> "
+                            @"%c]133;B%c",
+                            VT100CC_ESC, VT100CC_BEL,  // RemoteHost
+                            VT100CC_ESC, VT100CC_BEL,  // CurrentDir
+                            VT100CC_ESC, VT100CC_BEL,  // FinalTerm A
+                            VT100CC_ESC, VT100CC_BEL];  // FinalTerm B
+    [self sendData:[promptLine dataUsingEncoding:NSUTF8StringEncoding]
+        toTerminal:_session.terminal];
 }
 
 - (void)sendPromptAndStartCommand:(NSString *)command toSession:(PTYSession *)session {
@@ -283,6 +303,18 @@
 }
 
 - (void)testCommandHistoryEntersCommandOnDoubleClick {
+    [self sendPromptAndStartCommand:@"command 1" toSession:_session];
+    [self endCommand];
+
+    [self sendPrompt];
+
+    ToolCommandHistoryView *tool =
+        (ToolCommandHistoryView *)[_view.toolbelt toolWithName:kCommandHistoryToolName];
+    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+
+    tool.toolWrapper.delegate.delegate = self;
+    [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:tool.tableView];
+    XCTAssertEqualObjects(_insertedText, @"command 1");
 }
 
 - (void)testCommandHistoryLinkedToCapturedOutput {
@@ -303,5 +335,39 @@
 - (void)testToolbeltGrowsWhenSpaceIsAvailableOnRight {
 }
 
+#pragma mark - iTermToolbeltViewDelegate
+
+- (CGFloat)growToolbeltBy:(CGFloat)amount {
+    return amount;
+}
+
+- (void)toolbeltUpdateMouseCursor {
+}
+
+- (void)toolbeltInsertText:(NSString *)text {
+    [_insertedText appendString:text];
+}
+
+- (VT100RemoteHost *)toolbeltCurrentHost {
+    return nil;
+}
+
+- (pid_t)toolbeltCurrentShellProcessId {
+    return 0;
+}
+
+- (VT100ScreenMark *)toolbeltLastCommandMark {
+    return nil;
+}
+
+- (void)toolbeltDidSelectMark:(iTermMark *)mark {
+}
+
+- (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput {
+}
+
+- (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid {
+    return NO;
+}
 
 @end

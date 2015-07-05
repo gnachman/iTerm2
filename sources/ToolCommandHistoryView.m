@@ -247,8 +247,7 @@ static const CGFloat kHelpMargin = 5;
     [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
-- (void)doubleClickOnTableView:(id)sender
-{
+- (void)doubleClickOnTableView:(id)sender {
     NSInteger selectedIndex = [tableView_ selectedRow];
     if (selectedIndex < 0) {
         return;
