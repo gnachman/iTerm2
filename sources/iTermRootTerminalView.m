@@ -12,7 +12,7 @@
 #import "iTermPreferences.h"
 #import "iTermTabBarControlView.h"
 #import "PTYTabView.h"
-#import "ToolbeltView.h"
+#import "iTermToolbeltView.h"
 
 const CGFloat kHorizontalTabBarHeight = 22;
 static const CGFloat kDefaultToolbeltWidth = 250;
@@ -25,7 +25,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 @property(nonatomic, retain) PTYTabView *tabView;
 @property(nonatomic, retain) iTermTabBarControlView *tabBarControl;
 @property(nonatomic, retain) NSView *divisionView;
-@property(nonatomic, retain) ToolbeltView *toolbelt;
+@property(nonatomic, retain) iTermToolbeltView *toolbelt;
 
 @end
 
@@ -88,7 +88,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         _toolbeltWidth = kDefaultToolbeltWidth;
         [self constrainToolbeltWidth];
 
-        self.toolbelt = [[[ToolbeltView alloc] initWithFrame:self.toolbeltFrame
+        self.toolbelt = [[[iTermToolbeltView alloc] initWithFrame:self.toolbeltFrame
                                                     delegate:(id)_delegate] autorelease];
         _toolbelt.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
         [self addSubview:_toolbelt];

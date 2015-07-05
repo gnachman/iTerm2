@@ -18,7 +18,7 @@ extern NSString *const kProfilesToolName;
 // Notification posted when all windows should hide their toolbelts.
 extern NSString *const kToolbeltShouldHide;
 
-@interface ToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate>
+@interface iTermToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate>
 
 @property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
 + (NSArray *)configuredTools;

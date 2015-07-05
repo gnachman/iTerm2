@@ -7,7 +7,7 @@
 //
 
 #import "ToolWrapper.h"
-#import "ToolbeltView.h"
+#import "iTermToolbeltView.h"
 
 static const CGFloat kTitleHeight = 19;
 static const CGFloat kMargin = 4;  // Margin between title bar and content

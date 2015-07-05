@@ -167,7 +167,7 @@ static BOOL hasBecomeActive = NO;
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
 
-    [ToolbeltView populateMenu:toolbeltMenu];
+    [iTermToolbeltView populateMenu:toolbeltMenu];
 
     // Set the Appcast URL and when it changes update it.
     [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
@@ -768,10 +768,10 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem
 {
-    if ([ToolbeltView numberOfVisibleTools] == 1 && [menuItem state] == NSOnState) {
+    if ([iTermToolbeltView numberOfVisibleTools] == 1 && [menuItem state] == NSOnState) {
         return;
     }
-    [ToolbeltView toggleShouldShowTool:[menuItem title]];
+    [iTermToolbeltView toggleShouldShowTool:[menuItem title]];
 }
 
 - (void)toolDidToggle:(NSNotification *)notification

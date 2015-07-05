@@ -63,9 +63,9 @@
     }
 
     // Show all the tools
-    for (NSString *toolName in [ToolbeltView allTools]) {
-        if (![ToolbeltView shouldShowTool:toolName]) {
-            [ToolbeltView toggleShouldShowTool:toolName];
+    for (NSString *toolName in [iTermToolbeltView allTools]) {
+        if (![iTermToolbeltView shouldShowTool:toolName]) {
+            [iTermToolbeltView toggleShouldShowTool:toolName];
         }
     }
 

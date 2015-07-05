@@ -7,7 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "ToolbeltView.h"
+#import "iTermToolbeltView.h"
 
 @class CommandHistoryEntry;
 

@@ -16,7 +16,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 @protocol iTermToolbeltViewDelegate;
 @protocol PSMTabBarControlDelegate;
 @class PTYTabView;
-@class ToolbeltView;
+@class iTermToolbeltView;
 
 @protocol iTermRootTerminalViewDelegate<NSObject>
 - (void)repositionWidgets;
@@ -44,7 +44,7 @@ extern const CGFloat kHorizontalTabBarHeight;
 @property(nonatomic, readonly) NSView *divisionView;
 
 // Toolbelt view. Goes on the right side of the terminal window, if visible.
-@property(nonatomic, readonly) ToolbeltView *toolbelt;
+@property(nonatomic, readonly) iTermToolbeltView *toolbelt;
 
 // Should the toolbelt be visible?
 @property(nonatomic, assign) BOOL shouldShowToolbelt;

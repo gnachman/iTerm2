@@ -299,7 +299,7 @@
 		1D6ED8EE19AEA20D005A7799 /* MarkTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D891E41190724DB0053C4BB /* MarkTrigger.h */; };
 		1D6ED8EF19AEA20D005A7799 /* SplitSelectionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732914082A52004C5DBE /* SplitSelectionView.h */; };
 		1D6ED8F019AEA20D005A7799 /* FutureMethods.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */; };
-		1D6ED8F119AEA20D005A7799 /* ToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* ToolbeltView.h */; };
+		1D6ED8F119AEA20D005A7799 /* iTermToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* iTermToolbeltView.h */; };
 		1D6ED8F219AEA20D005A7799 /* ToolProfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC8B1415546000F83147 /* ToolProfiles.h */; };
 		1D6ED8F319AEA20D005A7799 /* ToolPasteHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */; };
 		1D6ED8F419AEA20D005A7799 /* ToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* ToolWrapper.h */; };
@@ -677,7 +677,7 @@
 		1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */; };
 		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
 		1DE5EBE8122B892900C736B0 /* iTermProfilesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */; };
-		1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* ToolbeltView.h */; };
+		1DE8DC891415513A00F83147 /* iTermToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* iTermToolbeltView.h */; };
 		1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC8B1415546000F83147 /* ToolProfiles.h */; };
 		1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */; };
 		1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* ToolWrapper.h */; };
@@ -1419,7 +1419,7 @@
 		A6C7639F1B45C52B00E3C992 /* TmuxWindowOpener.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */; };
 		A6C763A01B45C52B00E3C992 /* TmuxWindowsTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613B14A7C76500C57C33 /* TmuxWindowsTable.m */; };
 		A6C763A11B45C52B00E3C992 /* TSVParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21941483144600FAC8E7 /* TSVParser.m */; };
-		A6C763A21B45C52B00E3C992 /* ToolbeltView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC881415513A00F83147 /* ToolbeltView.m */; };
+		A6C763A21B45C52B00E3C992 /* iTermToolbeltView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC881415513A00F83147 /* iTermToolbeltView.m */; };
 		A6C763A31B45C52B00E3C992 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
 		A6C763A41B45C52B00E3C992 /* ToolCommandHistoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */; };
 		A6C763A51B45C52B00E3C992 /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
@@ -1993,8 +1993,8 @@
 		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Autocomplete.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProfilesWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DE5EBE7122B892900C736B0 /* iTermProfilesWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermProfilesWindowController.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		1DE8DC871415513A00F83147 /* ToolbeltView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolbeltView.h; sourceTree = "<group>"; tabWidth = 4; };
-		1DE8DC881415513A00F83147 /* ToolbeltView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolbeltView.m; sourceTree = "<group>"; tabWidth = 4; };
+		1DE8DC871415513A00F83147 /* iTermToolbeltView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermToolbeltView.h; sourceTree = "<group>"; tabWidth = 4; };
+		1DE8DC881415513A00F83147 /* iTermToolbeltView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DE8DC8B1415546000F83147 /* ToolProfiles.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolProfiles.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DE8DC8C1415546000F83147 /* ToolProfiles.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolProfiles.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolPasteHistory.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3018,7 +3018,7 @@
 				1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */,
 				1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */,
 				1D085FA016F138A000B7FCE9 /* ToastWindowController.h */,
-				1DE8DC871415513A00F83147 /* ToolbeltView.h */,
+				1DE8DC871415513A00F83147 /* iTermToolbeltView.h */,
 				1DB83955192E9A610037E548 /* ToolCapturedOutputView.h */,
 				A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */,
 				1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */,
@@ -3472,7 +3472,7 @@
 		1D9DDE2E142E733100275650 /* Toolbelt */ = {
 			isa = PBXGroup;
 			children = (
-				1DE8DC881415513A00F83147 /* ToolbeltView.m */,
+				1DE8DC881415513A00F83147 /* iTermToolbeltView.m */,
 				1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */,
 				A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */,
 				1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */,
@@ -4269,7 +4269,7 @@
 				1D6ED8EE19AEA20D005A7799 /* MarkTrigger.h in Headers */,
 				1D6ED8EF19AEA20D005A7799 /* SplitSelectionView.h in Headers */,
 				1D6ED8F019AEA20D005A7799 /* FutureMethods.h in Headers */,
-				1D6ED8F119AEA20D005A7799 /* ToolbeltView.h in Headers */,
+				1D6ED8F119AEA20D005A7799 /* iTermToolbeltView.h in Headers */,
 				1D6ED8F219AEA20D005A7799 /* ToolProfiles.h in Headers */,
 				1D6ED8F319AEA20D005A7799 /* ToolPasteHistory.h in Headers */,
 				1D6ED8F419AEA20D005A7799 /* ToolWrapper.h in Headers */,
@@ -4629,7 +4629,7 @@
 				1D891E43190724DB0053C4BB /* MarkTrigger.h in Headers */,
 				1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */,
 				1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */,
-				1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */,
+				1DE8DC891415513A00F83147 /* iTermToolbeltView.h in Headers */,
 				1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */,
 				1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */,
 				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
@@ -5725,7 +5725,7 @@
 				A6C763671B45C52B00E3C992 /* ContextMenuActionPrefsController.m in Sources */,
 				A6C763681B45C52B00E3C992 /* EventMonitorView.m in Sources */,
 				A6C762D51B45C52B00E3C992 /* LineBufferHelpers.m in Sources */,
-				A6C763A21B45C52B00E3C992 /* ToolbeltView.m in Sources */,
+				A6C763A21B45C52B00E3C992 /* iTermToolbeltView.m in Sources */,
 				A6C763001B45C52B00E3C992 /* TransferrableFileMenuItemView.m in Sources */,
 				A6C763201B45C52B00E3C992 /* iTermTextViewAccessibilityHelper.m in Sources */,
 				A6C763C11B45C52B00E3C992 /* VT100CSIParser.m in Sources */,

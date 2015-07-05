@@ -1,4 +1,4 @@
-#import "ToolbeltView.h"
+#import "iTermToolbeltView.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
@@ -49,10 +49,10 @@ NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
 @end
 
-@interface ToolbeltView () <iTermDragHandleViewDelegate>
+@interface iTermToolbeltView () <iTermDragHandleViewDelegate>
 @end
 
-@implementation ToolbeltView {
+@implementation iTermToolbeltView {
     iTermDragHandleView *dragHandle_;
     ToolbeltSplitView *splitter_;
     NSMutableDictionary *tools_;
@@ -63,13 +63,13 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 + (void)initialize {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
-    [ToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
-    [ToolbeltView registerToolWithName:kCommandHistoryToolName withClass:[ToolCommandHistoryView class]];
-    [ToolbeltView registerToolWithName:kRecentDirectoriesToolName withClass:[ToolDirectoriesView class]];
-    [ToolbeltView registerToolWithName:kJobsToolName withClass:[ToolJobs class]];
-    [ToolbeltView registerToolWithName:kNotesToolName withClass:[ToolNotes class]];
-    [ToolbeltView registerToolWithName:kPasteHistoryToolName withClass:[ToolPasteHistory class]];
-    [ToolbeltView registerToolWithName:kProfilesToolName withClass:[ToolProfiles class]];
+    [iTermToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
+    [iTermToolbeltView registerToolWithName:kCommandHistoryToolName withClass:[ToolCommandHistoryView class]];
+    [iTermToolbeltView registerToolWithName:kRecentDirectoriesToolName withClass:[ToolDirectoriesView class]];
+    [iTermToolbeltView registerToolWithName:kJobsToolName withClass:[ToolJobs class]];
+    [iTermToolbeltView registerToolWithName:kNotesToolName withClass:[ToolNotes class]];
+    [iTermToolbeltView registerToolWithName:kPasteHistoryToolName withClass:[ToolPasteHistory class]];
+    [iTermToolbeltView registerToolWithName:kProfilesToolName withClass:[ToolProfiles class]];
 }
 
 + (NSArray *)defaultTools
@@ -85,7 +85,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 {
     NSArray *tools = [[NSUserDefaults standardUserDefaults] objectForKey:kToolbeltPrefKey];
     if (!tools) {
-        return [ToolbeltView defaultTools];
+        return [iTermToolbeltView defaultTools];
     }
     NSMutableArray *vettedTools = [NSMutableArray array];
     for (NSString *toolName in tools) {
@@ -101,9 +101,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     if (self) {
         _delegate = delegate;
 
-        NSArray *items = [ToolbeltView configuredTools];
+        NSArray *items = [iTermToolbeltView configuredTools];
         if (!items) {
-            items = [ToolbeltView defaultTools];
+            items = [iTermToolbeltView defaultTools];
             [[NSUserDefaults standardUserDefaults] setObject:items forKey:kToolbeltPrefKey];
         }
 
@@ -120,7 +120,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
         tools_ = [[NSMutableDictionary alloc] init];
 
         for (NSString *theName in items) {
-            if ([ToolbeltView shouldShowTool:theName]) {
+            if ([iTermToolbeltView shouldShowTool:theName]) {
                 [self addToolWithName:theName];
             }
         }
@@ -180,19 +180,19 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 + (BOOL)shouldShowTool:(NSString *)name
 {
-    return [[ToolbeltView configuredTools] indexOfObject:name] != NSNotFound;
+    return [[iTermToolbeltView configuredTools] indexOfObject:name] != NSNotFound;
 }
 
 - (void)toggleShowToolWithName:(NSString *)theName
 {
-    [ToolbeltView toggleShouldShowTool:theName];
+    [iTermToolbeltView toggleShouldShowTool:theName];
 }
 
 + (void)toggleShouldShowTool:(NSString *)theName
 {
-    NSMutableArray *tools = [[[ToolbeltView configuredTools] mutableCopy] autorelease];
+    NSMutableArray *tools = [[[iTermToolbeltView configuredTools] mutableCopy] autorelease];
     if (!tools) {
-        tools = [[[ToolbeltView defaultTools] mutableCopy] autorelease];
+        tools = [[[iTermToolbeltView defaultTools] mutableCopy] autorelease];
     }
     if ([tools indexOfObject:theName] == NSNotFound) {
         [tools addObject:theName];
@@ -208,9 +208,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 + (int)numberOfVisibleTools
 {
-    NSArray *tools = [ToolbeltView configuredTools];
+    NSArray *tools = [iTermToolbeltView configuredTools];
     if (!tools) {
-        tools = [ToolbeltView defaultTools];
+        tools = [iTermToolbeltView defaultTools];
     }
     return [tools count];
 }
@@ -278,12 +278,12 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 + (void)populateMenu:(NSMenu *)menu
 {
-    NSArray *names = [[ToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
+    NSArray *names = [[iTermToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
     for (NSString *theName in names) {
         NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName
                                                     action:@selector(toggleToolbeltTool:)
                                              keyEquivalent:@""] autorelease];
-        [i setState:[ToolbeltView shouldShowTool:theName] ? NSOnState : NSOffState];
+        [i setState:[iTermToolbeltView shouldShowTool:theName] ? NSOnState : NSOffState];
         [menu addItem:i];
     }
 }
@@ -308,7 +308,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     ToolWrapper *wrapper = [[[ToolWrapper alloc] initWithFrame:NSMakeRect(0,
                                                                           0,
                                                                           self.frame.size.width,
-                                                                          self.frame.size.height / MAX(1, [ToolbeltView numberOfVisibleTools ] - 1))] autorelease];
+                                                                          self.frame.size.height / MAX(1, [iTermToolbeltView numberOfVisibleTools ] - 1))] autorelease];
     wrapper.name = toolName;
     wrapper.delegate = self;
     Class c = [gRegisteredTools objectForKey:toolName];

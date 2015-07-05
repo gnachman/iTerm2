@@ -63,7 +63,7 @@
 #import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
-#import "ToolbeltView.h"
+#import "iTermToolbeltView.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
@@ -2095,7 +2095,7 @@ static const CGFloat kLeftTabsWidth = 150;
 }
 
 // TODO: Kill this
-- (ToolbeltView *)toolbelt {
+- (iTermToolbeltView *)toolbelt {
     return _contentView.toolbelt;
 }
 
@@ -6510,7 +6510,7 @@ static const CGFloat kLeftTabsWidth = 150;
         result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
         [item setState:_contentView.shouldShowToolbelt ? NSOnState : NSOffState];
-        return [[ToolbeltView configuredTools] count] > 0;
+        return [[iTermToolbeltView configuredTools] count] > 0;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||

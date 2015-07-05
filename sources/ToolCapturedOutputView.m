@@ -14,7 +14,7 @@
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
-#import "ToolbeltView.h"
+#import "iTermToolbeltView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolWrapper.h"
 
