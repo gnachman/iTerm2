@@ -102,5 +102,6 @@
 
 + (BOOL)noSyncTipsDisabled;
 + (int)numberOfLinesForAccessibility;
++ (int)triggerRadius;
 
 @end

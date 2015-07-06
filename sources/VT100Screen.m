@@ -2121,16 +2121,23 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     int i;
     NSMutableData *data = [NSMutableData data];
     *startAbsLineNumber = self.totalScrollbackOverflow;
-    const int kMaxRadius = 3;  // Max radius of lines to search above and below absoluteLineNumber
+
+    // Max radius of lines to search above and below absoluteLineNumber
+    const int kMaxRadius = [iTermAdvancedSettingsModel triggerRadius];
+    BOOL foundStart = NO;
     for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
         screen_char_t *line = [self getLineAtIndex:i];
         if (line[self.width].code == EOL_HARD) {
             *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
+            foundStart = YES;
             break;
         }
         [data replaceBytesInRange:NSMakeRange(0, 0)
                         withBytes:line
                            length:self.width * sizeof(screen_char_t)];
+    }
+    if (!foundStart) {
+        *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
     }
     BOOL done = NO;
     for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
