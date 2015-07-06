@@ -10,19 +10,26 @@
 #import "SolidColorView.h"
 
 extern const CGFloat kHorizontalTabBarHeight;
+extern const CGFloat kLeftTabsWidth;
 
 @class iTermTabBarControlView;
 @protocol iTermTabBarControlViewDelegate;
+@class iTermToolbeltView;
 @protocol iTermToolbeltViewDelegate;
 @protocol PSMTabBarControlDelegate;
 @class PTYTabView;
-@class iTermToolbeltView;
 
 @protocol iTermRootTerminalViewDelegate<NSObject>
 - (void)repositionWidgets;
 - (BOOL)_haveTopBorder;
 - (BOOL)_haveBottomBorder;
+- (BOOL)_haveLeftBorder;
 - (BOOL)_haveRightBorder;
+- (BOOL)anyFullScreen;
+- (BOOL)fullScreenTabControl;
+- (BOOL)exitingLionFullscreen;
+- (BOOL)divisionViewShouldBeVisible;
+- (NSWindow *)window;
 @end
 
 @interface iTermRootTerminalView : SolidColorView
@@ -56,13 +63,19 @@ extern const CGFloat kHorizontalTabBarHeight;
 // TODO: Remove this
 @property(nonatomic, readonly) NSRect toolbeltFrame;
 
+@property(nonatomic, readonly) BOOL scrollbarShouldBeVisible;
+
+@property(nonatomic, readonly) BOOL tabBarShouldBeVisible;
+
+@property(nonatomic, readonly) CGFloat tabviewWidth;
+
 - (instancetype)initWithFrame:(NSRect)frame
                         color:(NSColor *)color
                tabBarDelegate:(id<iTermTabBarControlViewDelegate, PSMTabBarControlDelegate>)tabBarDelegate
                      delegate:(id<iTermRootTerminalViewDelegate, iTermToolbeltViewDelegate>)delegate;  // TODO: This should hopefully go away
 
 // Update the division view's frame and set it visible/hidden per |shouldBeVisible|.
-- (void)updateDivisionViewVisible:(BOOL)shouldBeVisible;
+- (void)updateDivisionView;
 
 // Perform a layout pass on the toolbelt, and hide/show it as needed.
 - (void)updateToolbelt;
@@ -74,5 +87,9 @@ extern const CGFloat kHorizontalTabBarHeight;
 - (void)updateToolbeltFrame;
 
 - (void)shutdown;
+
+- (void)layoutSubviews;
+
+- (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs;
 
 @end

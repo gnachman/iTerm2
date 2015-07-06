@@ -24,7 +24,7 @@ static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
 @property(nonatomic, copy) NSString *currentTipName;
 @end
 
-#define ALWAYS_SHOW_TIP 0
+#define ALWAYS_SHOW_TIP 1
 
 @implementation iTermTipController {
     BOOL _showingTip;

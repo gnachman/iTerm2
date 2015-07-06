@@ -107,8 +107,6 @@ static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
 static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
 
-static const CGFloat kLeftTabsWidth = 150;
-
 @interface NSWindow (private)
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
@@ -622,8 +620,6 @@ static const CGFloat kLeftTabsWidth = 150;
         [self hideMenuBar];
     }
 
-    [self updateDivisionView];
-
     if (isHotkey) {
         // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
@@ -720,36 +716,19 @@ static const CGFloat kLeftTabsWidth = 150;
             [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
 }
 
-- (void)updateDivisionView {
+- (BOOL)divisionViewShouldBeVisible {
     // The division is only shown if there is a title bar and no tab bar on top. There
     // are cases in fullscreen (e.g., when entering Lion fullscreen) when the
     // window doesn't have a title bar but also isn't borderless we also check
     // if we're in fullscreen.
-    BOOL shouldBeVisible = ((self.window.styleMask & NSTitledWindowMask) &&
-                            ![self anyFullScreen] &&
-                            ![self tabBarVisibleOnTop]);
-    [_contentView updateDivisionViewVisible:shouldBeVisible];
+    return (!togglingFullScreen_ &&
+            (self.window.styleMask & NSTitledWindowMask) &&
+            ![self anyFullScreen] &&
+            ![self tabBarVisibleOnTop]);
 }
 
 - (CGFloat)tabviewWidth {
-    if ([self tabBarShouldBeVisible] &&
-        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab)  {
-        return kLeftTabsWidth;
-    }
-
-    CGFloat width;
-    if (_contentView.shouldShowToolbelt && !exitingLionFullscreen_) {
-        width = self.window.frame.size.width - floor(_contentView.toolbeltWidth);
-    } else {
-        width = self.window.frame.size.width;
-    }
-    if ([self _haveLeftBorder]) {
-        --width;
-    }
-    if ([self _haveRightBorder]) {
-        --width;
-    }
-    return width;
+    return _contentView.tabviewWidth;
 }
 
 - (void)toggleBroadcastingToCurrentSession:(id)sender
@@ -3252,22 +3231,12 @@ static const CGFloat kLeftTabsWidth = 150;
     return _fullScreen;
 }
 
-- (BOOL)tabBarShouldBeVisible
-{
-    if (_contentView.tabBarControl.flashing) {
-        return YES;
-    } else {
-        return [self tabBarShouldBeVisibleWithAdditionalTabs:0];
-    }
+- (BOOL)tabBarShouldBeVisible {
+    return _contentView.tabBarShouldBeVisible;
 }
 
-- (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n
-{
-    if ([self anyFullScreen] && !fullscreenTabs_) {
-        return NO;
-    }
-    return ([_contentView.tabView numberOfTabViewItems] + n > 1 ||
-            ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
+- (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n {
+    return [_contentView tabBarShouldBeVisibleWithAdditionalTabs:n];
 }
 
 - (NSScrollerStyle)scrollerStyle
@@ -3279,8 +3248,8 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 }
 
-- (BOOL)scrollbarShouldBeVisible
-{
+- (BOOL)scrollbarShouldBeVisible {
+    return _contentView.scrollbarShouldBeVisible;
     return ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
 
@@ -3359,9 +3328,8 @@ static const CGFloat kLeftTabsWidth = 150;
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
     DLog(@"Window will enter lion fullscreen");
-    [self repositionWidgets];
     togglingLionFullScreen_ = YES;
-    [_contentView updateDivisionViewVisible:NO];
+    [self repositionWidgets];
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
@@ -3402,7 +3370,6 @@ static const CGFloat kLeftTabsWidth = 150;
     lionFullScreen_ = NO;
     [_contentView.tabBarControl updateFlashing];
     // Set scrollbars appropriately
-    [self updateDivisionView];
     [self updateSessionScrollbars];
     [self fitTabsToWindow];
     [self repositionWidgets];
@@ -5791,6 +5758,10 @@ static const CGFloat kLeftTabsWidth = 150;
     }
 }
 
+- (BOOL)exitingLionFullscreen {
+    return exitingLionFullscreen_;
+}
+
 - (BOOL)_haveLeftBorder
 {
     BOOL leftTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab);
@@ -5924,160 +5895,7 @@ static const CGFloat kLeftTabsWidth = 150;
 
 // Change position of window widgets.
 - (void)repositionWidgets {
-    PtyLog(@"repositionWidgets");
-
-    BOOL showToolbeltInline = _contentView.shouldShowToolbelt;
-    BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-    NSWindow *thisWindow = [self window];
-    [thisWindow setShowsResizeIndicator:hasScrollbar];
-
-    // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
-    // too big for the current window size, you could end up with a negative-width tab view frame.
-    [_contentView constrainToolbeltWidth];
-
-    if (![self tabBarShouldBeVisible]) {
-        // The tabBarControl should not be visible.
-        [_contentView.tabBarControl setHidden:YES];
-        CGFloat yOrigin = [self _haveBottomBorder] ? 1 : 0;
-        CGFloat heightAdjustment = ([self _haveTopBorder] || _contentView.divisionView) ? 1 : 0;
-        NSRect tabViewFrame =
-                NSMakeRect([self _haveLeftBorder] ? 1 : 0,
-                           yOrigin,
-                           [self tabviewWidth],
-                           [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
-        PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-        [_contentView.tabView setFrame:tabViewFrame];
-        [self updateDivisionView];
-    } else {
-        // The tabBar control is visible.
-        PtyLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
-        [_contentView.tabBarControl setHidden:NO];
-        [_contentView.tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
-
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_TopTab: {
-                // Place tabs at the top.
-                // Add 1px border
-                CGFloat yOrigin = [self _haveBottomBorder] ? 1 : 0;
-                CGFloat heightAdjustment = 0;
-                if (!_contentView.tabBarControl.flashing) {
-                    heightAdjustment += kHorizontalTabBarHeight;
-                }
-                if ([self _haveTopBorder]) {
-                    heightAdjustment += 1;
-                }
-
-                NSRect tabViewFrame =
-                    NSMakeRect([self _haveLeftBorder] ? 1 : 0,
-                               yOrigin,
-                               [self tabviewWidth],
-                               [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
-                PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-                [_contentView.tabView setFrame:tabViewFrame];
-
-                heightAdjustment = _contentView.tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
-                NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,
-                                                NSMaxY(tabViewFrame) - heightAdjustment,
-                                                tabViewFrame.size.width,
-                                                kHorizontalTabBarHeight);
-
-                [self updateDivisionView];
-                _contentView.tabBarControl.frame = tabBarFrame;
-                _contentView.tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
-                break;
-            }
-
-            case PSMTab_BottomTab: {
-                PtyLog(@"repositionWidgets - putting tabs at bottom");
-                // setup aRect to make room for the tabs at the bottom.
-                NSRect tabBarFrame = NSMakeRect([self _haveLeftBorder] ? 1 : 0,
-                                                [self _haveBottomBorder] ? 1 : 0,
-                                                [self tabviewWidth],
-                                                kHorizontalTabBarHeight);
-                _contentView.tabBarControl.frame = tabBarFrame;
-                _contentView.tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
-
-                CGFloat heightAdjustment = _contentView.tabBarControl.flashing ? 0 : tabBarFrame.origin.y + kHorizontalTabBarHeight;
-                if ([self _haveTopBorder]) {
-                    heightAdjustment += 1;
-                }
-                CGFloat y = tabBarFrame.origin.y;
-                if (!_contentView.tabBarControl.flashing) {
-                    y += kHorizontalTabBarHeight;
-                }
-                NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
-                                                 y,
-                                                 tabBarFrame.size.width,
-                                                 [thisWindow.contentView frame].size.height - heightAdjustment);
-                PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-                _contentView.tabView.frame = tabViewFrame;
-                [self updateDivisionView];
-                break;
-            }
-
-            case PSMTab_LeftTab: {
-                CGFloat heightAdjustment = 0;
-                if ([self _haveBottomBorder]) {
-                    heightAdjustment += 1;
-                }
-                if ([self _haveTopBorder]) {
-                    heightAdjustment += 1;
-                }
-                NSRect tabBarFrame = NSMakeRect([self _haveLeftBorder] ? 1 : 0,
-                                                [self _haveBottomBorder] ? 1 : 0,
-                                                [self tabviewWidth],
-                                                [thisWindow.contentView frame].size.height - heightAdjustment);
-                _contentView.tabBarControl.frame = tabBarFrame;
-                _contentView.tabBarControl.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
-
-                CGFloat widthAdjustment = 0;
-                if ([self _haveLeftBorder]) {
-                    widthAdjustment += 1;
-                }
-                if ([self _haveRightBorder]) {
-                    widthAdjustment += 1;
-                }
-                CGFloat xOffset = 0;
-                if (_contentView.tabBarControl.flashing) {
-                    xOffset = -NSMaxX(tabBarFrame);
-                    widthAdjustment -= NSWidth(tabBarFrame);
-                }
-                NSRect tabViewFrame = NSMakeRect(NSMaxX(tabBarFrame) + xOffset,
-                                                 NSMinY(tabBarFrame),
-                                                 [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
-                                                 NSHeight(tabBarFrame));
-                if (showToolbeltInline) {
-                    tabViewFrame.size.width -= [_contentView toolbeltFrame].size.width;
-                }
-                _contentView.tabView.frame = tabViewFrame;
-                [self updateDivisionView];
-            }
-        }
-    }
-
-    if (showToolbeltInline) {
-        [_contentView updateToolbeltFrame];
-    }
-
-    // Update the tab style.
-    [_contentView.tabBarControl setDisableTabClose:[iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]];
-    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton] &&
-        [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
-        [_contentView.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minCompactTabWidth]];
-    } else {
-        [_contentView.tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
-    }
-    [_contentView.tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
-    [_contentView.tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
-
-    PtyLog(@"repositionWidgets - refresh textviews in this tab");
-    for (PTYSession* session in [[self currentTab] sessions]) {
-        [[session textview] setNeedsDisplay:YES];
-    }
-
-    PtyLog(@"repositionWidgets - update tab bar");
-    [_contentView.tabBarControl updateFlashing];
-    PtyLog(@"repositionWidgets - return.");
+    [_contentView layoutSubviews];
 }
 
 // Returns the width of characters in pixels in the session with the widest
