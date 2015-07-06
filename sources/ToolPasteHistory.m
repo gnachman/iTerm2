@@ -152,7 +152,7 @@ static const CGFloat kMargin = 4;
     if (shutdown_) {
         return;
     }
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 

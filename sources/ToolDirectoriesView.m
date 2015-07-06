@@ -189,7 +189,7 @@ static const CGFloat kHelpMargin = 5;
 
 - (void)updateDirectories {
     [entries_ autorelease];
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
     NSArray *entries = [[iTermDirectoriesModel sharedInstance] entriesSortedByScoreOnHost:host];
     NSArray *reversed = [[entries reverseObjectEnumerator] allObjects];
@@ -210,7 +210,7 @@ static const CGFloat kHelpMargin = 5;
     if (shutdown_) {
         return;
     }
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
@@ -220,7 +220,7 @@ static const CGFloat kHelpMargin = 5;
         return;
     }
     iTermDirectoryEntry* entry = filteredEntries_[selectedIndex];
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text;
     if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
         text = [@"cd " stringByAppendingString:entry.path];

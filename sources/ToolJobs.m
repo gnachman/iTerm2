@@ -312,7 +312,7 @@ static const CGFloat kMargin = 4;
     if (shutdown_) {
         return;
     }
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     pid_t rootPid = [wrapper.delegate.delegate toolbeltCurrentShellProcessId];
     NSSet *pids = [[ProcessCache sharedInstance] childrenOfPid:rootPid levelsToSkip:0];
     if (![pids isEqualToSet:[NSSet setWithArray:pids_]]) {
@@ -349,7 +349,7 @@ static const CGFloat kMargin = 4;
 
 - (void)fixCursor {
     if (!shutdown_) {
-        iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+        iTermToolWrapper *wrapper = self.toolWrapper;
         [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
     }
 }

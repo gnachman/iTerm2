@@ -125,7 +125,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (void)updateCapturedOutput {
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];
     CommandHistoryEntry *entry = [commandHistoryView selectedEntry];
     VT100ScreenMark *mark;
@@ -255,7 +255,7 @@ static const CGFloat kMargin = 4;
     CapturedOutput *capturedOutput = filteredEntries_[selectedIndex];
 
     if (capturedOutput) {
-        iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+        iTermToolWrapper *wrapper = self.toolWrapper;
         [wrapper.delegate.delegate toolbeltDidSelectMark:capturedOutput.mark];
     }
 }
@@ -268,7 +268,7 @@ static const CGFloat kMargin = 4;
     if (shutdown_) {
         return;
     }
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
@@ -278,7 +278,7 @@ static const CGFloat kMargin = 4;
         return;
     }
     CapturedOutput *capturedOutput = filteredEntries_[selectedIndex];
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     [wrapper.delegate.delegate toolbeltActivateTriggerForCapturedOutputInCurrentSession:capturedOutput];
 }
 

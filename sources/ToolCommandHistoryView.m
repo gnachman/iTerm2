@@ -180,7 +180,7 @@ static const CGFloat kHelpMargin = 5;
     } else {
         // Contents
         NSString* value = [entry.command stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-        iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+        iTermToolWrapper *wrapper = self.toolWrapper;
         if (entry.lastMark &&
             [wrapper.delegate.delegate toolbeltCurrentSessionHasGuid:entry.lastMark.sessionGuid]) {
             return [[[NSAttributedString alloc] initWithString:value
@@ -204,7 +204,7 @@ static const CGFloat kHelpMargin = 5;
     CommandHistoryEntry *entry = [self selectedEntry];
 
     if (entry.lastMark) {
-        iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+        iTermToolWrapper *wrapper = self.toolWrapper;
         // Post a notification in case the captured output tool is observing us.
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
                                                             object:nil];
@@ -219,7 +219,7 @@ static const CGFloat kHelpMargin = 5;
 
 - (void)updateCommands {
     [entries_ autorelease];
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
     NSArray *temp = [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:@""
                                                                                         onHost:host];
@@ -243,7 +243,7 @@ static const CGFloat kHelpMargin = 5;
     if (shutdown_) {
         return;
     }
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
@@ -253,7 +253,7 @@ static const CGFloat kHelpMargin = 5;
         return;
     }
     CommandHistoryEntry* entry = filteredEntries_[selectedIndex];
-    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text = entry.command;
     if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask)) {
         if (entry.lastDirectory) {
