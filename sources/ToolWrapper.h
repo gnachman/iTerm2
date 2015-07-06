@@ -16,6 +16,7 @@
 @class VT100ScreenMark;
 
 @protocol iTermToolbeltViewDelegate<NSObject>
+
 - (CGFloat)growToolbeltBy:(CGFloat)amount;
 - (void)toolbeltUpdateMouseCursor;
 - (void)toolbeltInsertText:(NSString *)text;
@@ -25,6 +26,7 @@
 - (void)toolbeltDidSelectMark:(iTermMark *)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
+
 @end
 
 @protocol ToolWrapperDelegate

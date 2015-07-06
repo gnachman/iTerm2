@@ -36,6 +36,8 @@ NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 static NSMutableDictionary *gRegisteredTools;
 static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
+#pragma mark - Public class methods
+
 + (void)initialize {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
     [iTermToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
@@ -47,29 +49,84 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [iTermToolbeltView registerToolWithName:kProfilesToolName withClass:[ToolProfiles class]];
 }
 
-+ (NSArray *)defaultTools
-{
-    return [NSArray arrayWithObjects:@"Profiles", nil];
-}
-
 + (NSArray *)allTools {
     return [gRegisteredTools allKeys];
 }
 
-+ (NSArray *)configuredTools
-{
++ (NSArray *)configuredTools {
     NSArray *tools = [[NSUserDefaults standardUserDefaults] objectForKey:kToolbeltPrefKey];
     if (!tools) {
         return [iTermToolbeltView defaultTools];
     }
     NSMutableArray *vettedTools = [NSMutableArray array];
     for (NSString *toolName in tools) {
-        if ([gRegisteredTools objectForKey:toolName]) {
+        if (gRegisteredTools[toolName]) {
             [vettedTools addObject:toolName];
         }
     }
     return vettedTools;
 }
+
++ (void)populateMenu:(NSMenu *)menu {
+    NSArray *names = [[iTermToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
+    for (NSString *theName in names) {
+        NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName
+                                                    action:@selector(toggleToolbeltTool:)
+                                             keyEquivalent:@""] autorelease];
+        [i setState:[iTermToolbeltView shouldShowTool:theName] ? NSOnState : NSOffState];
+        [menu addItem:i];
+    }
+}
+
++ (void)toggleShouldShowTool:(NSString *)theName {
+    NSMutableArray *tools = [[[iTermToolbeltView configuredTools] mutableCopy] autorelease];
+    if (!tools) {
+        tools = [[[iTermToolbeltView defaultTools] mutableCopy] autorelease];
+    }
+    if ([tools indexOfObject:theName] == NSNotFound) {
+        [tools addObject:theName];
+    } else {
+        [tools removeObject:theName];
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:tools forKey:kToolbeltPrefKey];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermToolToggled"
+                                                        object:theName
+                                                      userInfo:nil];
+}
+
++ (int)numberOfVisibleTools {
+    NSArray *tools = [iTermToolbeltView configuredTools];
+    if (!tools) {
+        tools = [iTermToolbeltView defaultTools];
+    }
+    return [tools count];
+}
+
++ (BOOL)shouldShowTool:(NSString *)name {
+    return [[iTermToolbeltView configuredTools] indexOfObject:name] != NSNotFound;
+}
+
+#pragma mark - Private class methods
+
++ (NSArray *)defaultTools {
+    return [NSArray arrayWithObjects:@"Profiles", nil];
+}
+
++ (void)registerToolWithName:(NSString *)name withClass:(Class)c {
+    [gRegisteredTools setObject:c forKey:name];
+}
+
++ (NSDictionary *)toolsDictionary {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    for (NSString *toolName in gRegisteredTools) {
+        [dict setObject:[[[[gRegisteredTools objectForKey:toolName] alloc] init] autorelease]
+                 forKey:toolName];
+    }
+    return dict;
+}
+
+#pragma mark - NSObject
 
 - (id)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate {
     self = [super initWithFrame:frame];
@@ -92,6 +149,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
         [splitter_ setDelegate:self];
         [splitter_ setDividerColor:[NSColor colorWithCalibratedWhite:122/255.0 alpha:0.25]];
         [self addSubview:splitter_];
+
         tools_ = [[NSMutableDictionary alloc] init];
 
         for (NSString *theName in items) {
@@ -108,12 +166,13 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [splitter_ release];
     [tools_ release];
     [super dealloc];
 }
+
+#pragma mark - NSView
 
 - (void)drawRect:(NSRect)dirtyRect {
     [[NSColor colorWithCalibratedWhite:237.0/255.0 alpha:1] set];
@@ -121,16 +180,21 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [super drawRect:dirtyRect];
 }
 
-- (void)shutdown
-{
+- (BOOL)isFlipped {
+    return YES;
+}
+
+#pragma mark - APIs
+
+- (void)shutdown {
     while ([tools_ count]) {
         NSString *theName = [[tools_ allKeys] objectAtIndex:0];
 
         ToolWrapper *wrapper = [tools_ objectForKey:theName];
-                if ([wrapper.tool respondsToSelector:@selector(shutdown)]) {
-                        [wrapper.tool shutdown];
-                }
-                [wrapper setDelegate:nil];
+        if ([wrapper.tool respondsToSelector:@selector(shutdown)]) {
+            [wrapper.tool shutdown];
+        }
+        [wrapper setDelegate:nil];
         [tools_ removeObjectForKey:theName];
         [[wrapper retain] autorelease];
         [wrapper removeToolSubviews];
@@ -138,60 +202,42 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     }
 }
 
-+ (void)registerToolWithName:(NSString *)name withClass:(Class)c
-{
-    [gRegisteredTools setObject:c forKey:name];
-}
-
-+ (NSDictionary *)toolsDictionary
-{
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    for (NSString *toolName in gRegisteredTools) {
-        [dict setObject:[[[[gRegisteredTools objectForKey:toolName] alloc] init] autorelease]
-                 forKey:toolName];
-    }
-    return dict;
-}
-
-+ (BOOL)shouldShowTool:(NSString *)name
-{
-    return [[iTermToolbeltView configuredTools] indexOfObject:name] != NSNotFound;
-}
-
-- (void)toggleShowToolWithName:(NSString *)theName
-{
-    [iTermToolbeltView toggleShouldShowTool:theName];
-}
-
-+ (void)toggleShouldShowTool:(NSString *)theName
-{
-    NSMutableArray *tools = [[[iTermToolbeltView configuredTools] mutableCopy] autorelease];
-    if (!tools) {
-        tools = [[[iTermToolbeltView defaultTools] mutableCopy] autorelease];
-    }
-    if ([tools indexOfObject:theName] == NSNotFound) {
-        [tools addObject:theName];
+- (void)toggleToolWithName:(NSString *)theName {
+    ToolWrapper *wrapper = [tools_ objectForKey:theName];
+    if (wrapper) {
+        [[wrapper tool] shutdown];
+        [tools_ removeObjectForKey:theName];
+        [wrapper removeFromSuperview];
+        [wrapper setDelegate:nil];
     } else {
-        [tools removeObject:theName];
+        [self addToolWithName:theName];
     }
-    [[NSUserDefaults standardUserDefaults] setObject:tools forKey:kToolbeltPrefKey];
-
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermToolToggled"
-                                                        object:theName
-                                                      userInfo:nil];
+    [self forceSplitterSubviewsToRespectSizeConstraints];
 }
 
-+ (int)numberOfVisibleTools
-{
-    NSArray *tools = [iTermToolbeltView configuredTools];
-    if (!tools) {
-        tools = [iTermToolbeltView defaultTools];
-    }
-    return [tools count];
+- (BOOL)showingToolWithName:(NSString *)theName {
+    return [tools_ objectForKey:theName] != nil;
 }
 
-- (void)forceSplitterSubviewsToRespectSizeConstraints
-{
+- (ToolDirectoriesView *)directoriesView {
+    ToolWrapper *wrapper = [tools_ objectForKey:@"Recent Directories"];
+    return (ToolDirectoriesView *)wrapper.tool;
+}
+
+- (ToolCapturedOutputView *)capturedOutputView {
+    ToolWrapper *wrapper = [tools_ objectForKey:kCapturedOutputToolName];
+    return (ToolCapturedOutputView *)wrapper.tool;
+}
+
+#pragma mark - Testing APIs
+
+- (id<ToolbeltTool>)toolWithName:(NSString *)name {
+    return [tools_[name] tool];
+}
+
+#pragma mark - Private
+
+- (void)forceSplitterSubviewsToRespectSizeConstraints {
     NSArray *subviews = [splitter_ subviews];
     CGFloat totalSlop = 0;
     CGFloat totalDeficit = 0;
@@ -232,39 +278,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     }
 }
 
-- (void)toggleToolWithName:(NSString *)theName
-{
-    ToolWrapper *wrapper = [tools_ objectForKey:theName];
-    if (wrapper) {
-        [[wrapper tool] shutdown];
-        [tools_ removeObjectForKey:theName];
-        [wrapper removeFromSuperview];
-        [wrapper setDelegate:nil];
-    } else {
-        [self addToolWithName:theName];
-    }
-    [self forceSplitterSubviewsToRespectSizeConstraints];
-}
-
-- (BOOL)showingToolWithName:(NSString *)theName
-{
-    return [tools_ objectForKey:theName] != nil;
-}
-
-+ (void)populateMenu:(NSMenu *)menu
-{
-    NSArray *names = [[iTermToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
-    for (NSString *theName in names) {
-        NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName
-                                                    action:@selector(toggleToolbeltTool:)
-                                             keyEquivalent:@""] autorelease];
-        [i setState:[iTermToolbeltView shouldShowTool:theName] ? NSOnState : NSOffState];
-        [menu addItem:i];
-    }
-}
-
-- (void)addTool:(NSView<ToolbeltTool> *)theTool toWrapper:(ToolWrapper *)wrapper
-{
+- (void)addTool:(NSView<ToolbeltTool> *)theTool toWrapper:(ToolWrapper *)wrapper {
     [splitter_ addSubview:wrapper];
     [wrapper.container addSubview:theTool];
 
@@ -274,8 +288,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [tools_ setObject:wrapper forKey:[[wrapper.name copy] autorelease]];
 }
 
-- (void)addToolWithName:(NSString *)toolName
-{
+- (void)addToolWithName:(NSString *)toolName {
     if (![gRegisteredTools objectForKey:toolName]) {
         // User could have a plist from a future version with a tool that doesn't exist here.
         return;
@@ -297,50 +310,45 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     }
 }
 
-- (BOOL)isFlipped
-{
-    return YES;
-}
-
-- (void)setHaveOnlyOneTool:(BOOL)value
-{
+- (void)setHaveOnlyOneTool:(BOOL)value {
     // For KVO
 }
 
-- (void)relayoutAllTools
-{
+- (void)relayoutAllTools {
     splitter_.frame = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
     for (ToolWrapper *wrapper in [splitter_ subviews]) {
         [wrapper relayout];
     }
 }
 
-- (id<ToolbeltTool>)toolWithName:(NSString *)name {
-    return [tools_[name] tool];
-}
-
 #pragma mark - ToolWrapperDelegate
+
+- (BOOL)haveOnlyOneTool {
+    return [[splitter_ subviews] count] == 1;
+}
 
 - (void)hideToolbelt {
     [[NSNotificationCenter defaultCenter] postNotificationName:kToolbeltShouldHide object:nil userInfo:nil];
 }
 
-- (BOOL)haveOnlyOneTool
-{
-    return [[splitter_ subviews] count] == 1;
+- (void)toggleShowToolWithName:(NSString *)theName {
+    [iTermToolbeltView toggleShouldShowTool:theName];
+}
+
+- (ToolCommandHistoryView *)commandHistoryView {
+    ToolWrapper *wrapper = [tools_ objectForKey:kCommandHistoryToolName];
+    return (ToolCommandHistoryView *)wrapper.tool;
 }
 
 #pragma mark - NSSplitViewDelegate
 
-- (void)splitViewDidResizeSubviews:(NSNotification *)aNotification
-{
+- (void)splitViewDidResizeSubviews:(NSNotification *)aNotification {
     [self relayoutAllTools];
 }
 
 - (CGFloat)splitView:(NSSplitView *)splitView
     constrainMinCoordinate:(CGFloat)proposedMinimumPosition
-         ofSubviewAt:(NSInteger)dividerIndex
-{
+         ofSubviewAt:(NSInteger)dividerIndex {
     CGFloat min = 0;
     NSArray *subviews = [splitter_ subviews];
     for (int i = 0; i <= dividerIndex; i++) {
@@ -359,8 +367,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (CGFloat)splitView:(NSSplitView *)splitView
     constrainMaxCoordinate:(CGFloat)proposedMaximumPosition
-         ofSubviewAt:(NSInteger)dividerIndex
-{
+         ofSubviewAt:(NSInteger)dividerIndex {
     CGFloat height = splitView.frame.size.height;
     NSArray *subviews = [splitter_ subviews];
     for (int i = subviews.count - 1; i > dividerIndex; i--) {
@@ -377,25 +384,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return height;
 }
 
-- (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize
-{
+- (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize {
     [splitView adjustSubviews];
     [self forceSplitterSubviewsToRespectSizeConstraints];
-}
-
-- (ToolCommandHistoryView *)commandHistoryView {
-    ToolWrapper *wrapper = [tools_ objectForKey:kCommandHistoryToolName];
-    return (ToolCommandHistoryView *)wrapper.tool;
-}
-
-- (ToolDirectoriesView *)directoriesView {
-    ToolWrapper *wrapper = [tools_ objectForKey:@"Recent Directories"];
-    return (ToolDirectoriesView *)wrapper.tool;
-}
-
-- (ToolCapturedOutputView *)capturedOutputView {
-    ToolWrapper *wrapper = [tools_ objectForKey:kCapturedOutputToolName];
-    return (ToolCapturedOutputView *)wrapper.tool;
 }
 
 #pragma mark - iTermDragHandleViewDelegate

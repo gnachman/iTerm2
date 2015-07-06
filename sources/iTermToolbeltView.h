@@ -21,30 +21,29 @@ extern NSString *const kToolbeltShouldHide;
 @interface iTermToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate>
 
 @property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
+@property(nonatomic, readonly) ToolDirectoriesView *directoriesView;
+@property(nonatomic, readonly) ToolCapturedOutputView *capturedOutputView;
+
+// Returns an array of tool keys.
++ (NSArray *)allTools;
+
+// Returns an array of tool keys for tools to show.
 + (NSArray *)configuredTools;
 
-+ (void)registerToolWithName:(NSString *)name withClass:(Class)c;
 + (void)populateMenu:(NSMenu *)menu;
 + (void)toggleShouldShowTool:(NSString *)theName;
 + (int)numberOfVisibleTools;
-+ (NSArray *)allTools;
++ (BOOL)shouldShowTool:(NSString *)name;
 
 - (id)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate;
 
-// Is the tool visible?
-- (BOOL)showingToolWithName:(NSString *)theName;
+// Stop timers, etc., releasing any internal references to self.
+- (void)shutdown;
 
 - (void)toggleToolWithName:(NSString *)theName;
 
-// Do prefs say the tool is visible?
-+ (BOOL)shouldShowTool:(NSString *)name;
-
-- (BOOL)haveOnlyOneTool;
-- (void)shutdown;
-
-- (ToolCommandHistoryView *)commandHistoryView;
-- (ToolDirectoriesView *)directoriesView;
-- (ToolCapturedOutputView *)capturedOutputView;
+// Is the tool visible?
+- (BOOL)showingToolWithName:(NSString *)theName;
 
 - (void)relayoutAllTools;
 
