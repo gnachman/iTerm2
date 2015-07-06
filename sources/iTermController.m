@@ -39,7 +39,7 @@
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYWindow.h"
-#import "UKCrashReporter/UKCrashReporter.h"
+#import "UKCrashReporter.h"
 #import "VT100Screen.h"
 #import "WindowArrangements.h"
 #import "iTerm.h"

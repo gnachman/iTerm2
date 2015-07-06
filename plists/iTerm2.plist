@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSHumanReadableCopyright</key>
-	<string>GPL v2</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleDocumentTypes</key>
@@ -26,12 +24,12 @@
 			<string>Editor</string>
 		</dict>
 		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Folders</string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>fold</string>
 			</array>
-			<key>CFBundleTypeName</key>
-			<string>Folders</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 		</dict>
@@ -64,8 +62,6 @@
 	<string>iTerm2 Help</string>
 	<key>CFBundleHelpBookName</key>
 	<string>iTerm2 Help</string>
-	<key>CFBundleIconFile</key>
-	<string>iTerm2.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.googlecode.iterm2</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -183,21 +179,23 @@
 	<string>public.app-category.utilities</string>
 	<key>NSAppleScriptEnabled</key>
 	<string>YES</string>
-	<key>OSAScriptingDefinition</key>
-	<string>iTerm2.sdef</string>
 	<key>NSExtensions</key>
 	<dict/>
+	<key>NSHumanReadableCopyright</key>
+	<string>GPL v2</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>iTermApplication</string>
-	<key>SUPublicDSAKeyFile</key>
-	<string>dsa_pub.pem</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
-	<key>SUFeedURLForTesting</key>
-	<string>http://iterm2.com/appcasts/testing.xml</string>
+	<key>OSAScriptingDefinition</key>
+	<string>iTerm2.sdef</string>
 	<key>SUFeedURLForFinal</key>
 	<string>http://iterm2.com/appcasts/final.xml</string>
+	<key>SUFeedURLForTesting</key>
+	<string>http://iterm2.com/appcasts/testing.xml</string>
+	<key>SUPublicDSAKeyFile</key>
+	<string>dsa_pub.pem</string>
 </dict>
 </plist>

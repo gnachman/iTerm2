@@ -8,7 +8,7 @@
 
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermSearchField.h"
-#import "SSKeychain/SSKeychain.h"
+#import <SSKeychain.h>
 #import <Security/Security.h>
 
 static NSString *const kServiceName = @"iTerm2";

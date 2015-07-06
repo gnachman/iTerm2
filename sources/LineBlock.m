@@ -9,7 +9,7 @@
 #import "LineBlock.h"
 #import "FindContext.h"
 #import "LineBufferHelpers.h"
-#import "RegexKitLite/RegexKitLite.h"
+#import "RegexKitLite.h"
 
 NSString *const kLineBlockRawBufferKey = @"Raw Buffer";
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";

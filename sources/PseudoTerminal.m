@@ -942,7 +942,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [autocompleteView autorelease];
         autocompleteView = nil;
     }
-    [self.window performSelector:@selector(makeKeyWindow) withObject:nil afterDelay:0];
+    [self.window makeKeyWindow];
 }
 
 - (void)tmuxFontDidChange:(NSNotification *)notification

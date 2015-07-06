@@ -311,7 +311,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                       @"[": @"]",
                                       @"{": @"}" };
     NSString *match = nil;
-    BOOL forward;
+    BOOL forward = YES;
     for (NSString *open in forwardMatches) {
         NSString *close = forwardMatches[open];
         if ([paren isEqualToString:open]) {

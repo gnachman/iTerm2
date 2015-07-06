@@ -4,7 +4,9 @@
 //
 //  Created by George Nachman on 10/16/13.
 //
-//
+//  This test driver was used before XCTest was mature. It hangs around stll because Applescript
+//  tests aren't compatible with XCTest (they fail to get the path to the iTerm2ForApplescript
+//  app).
 
 #import "iTermTests.h"
 #import <objc/runtime.h>
@@ -17,18 +19,7 @@
 @interface t : iTermTest \
 @end
 
-DECLARE_TEST(VT100GridTest)
-DECLARE_TEST(VT100ScreenTest)
-DECLARE_TEST(IntervalTreeTest)
 DECLARE_TEST(AppleScriptTest)
-DECLARE_TEST(NSStringCategoryTest)
-DECLARE_TEST(PTYTextViewTest)
-DECLARE_TEST(PTYSessionTest)
-DECLARE_TEST(iTermPasteHelperTest)
-DECLARE_TEST(SemanticHistoryTest)
-DECLARE_TEST(VT100XtermParserTest);
-DECLARE_TEST(VT100CSIParserTest);
-DECLARE_TEST(VT100DCSParserTest);
 
 static void RunTestsInObject(iTermTest *test) {
     NSLog(@"-- Begin tests in %@ --", [test class]);
@@ -54,18 +45,7 @@ static void RunTestsInObject(iTermTest *test) {
 }
 
 NSArray *AllTestClasses() {
-    return @[ [VT100GridTest class],
-              [VT100ScreenTest class],
-              [IntervalTreeTest class],
-              [NSStringCategoryTest class],
-              [AppleScriptTest class],
-              [PTYTextViewTest class],
-              [PTYSessionTest class],
-              [iTermPasteHelperTest class],
-              [SemanticHistoryTest class],
-              [VT100XtermParserTest class],
-              [VT100CSIParserTest class],
-              [VT100DCSParserTest class]];
+    return @[ [AppleScriptTest class] ];
 }
 
 NSArray *TestClassesToRun(NSArray *include, NSArray *exclude) {
@@ -98,9 +78,7 @@ int main(int argc, const char * argv[]) {
     // listed tests will run.
 
     NSArray *include = nil;
-    NSArray *exclude = @[
-                           // [AppleScriptTest class]      // I often exclude AppleScriptTest because it is slow.
-                        ];
+    NSArray *exclude = nil;
 
     NSArray *testClassesToRun = TestClassesToRun(include, exclude);
     NSLog(@"Running tests: %@", testClassesToRun);

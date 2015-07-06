@@ -4334,7 +4334,9 @@ static void SwapInt(int *a, int *b) {
         [lineBuffer appendMessage:@"Session Restored"];
     }
     [lineBuffer setMaxLines:maxScrollbackLines_];
-    [lineBuffer dropExcessLinesWithWidth:self.width];
+    if (!unlimitedScrollback_) {
+        [lineBuffer dropExcessLinesWithWidth:self.width];
+    }
     [linebuffer_ release];
     linebuffer_ = lineBuffer;
     int maxLinesToRestore;

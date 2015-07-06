@@ -222,7 +222,7 @@ static NSString *const kGridSizeKey = @"Size";
     // Push the current screen contents into the scrollback buffer.
     // The maximum number of lines of scrollback are temporarily ignored because this
     // loop doesn't call dropExcessLinesWithWidth.
-    int lengthOfNextLine;
+    int lengthOfNextLine = 0;
     if (numLines > 0) {
         lengthOfNextLine = [self lengthOfLineNumber:0];
     }
