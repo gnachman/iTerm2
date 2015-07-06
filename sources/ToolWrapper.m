@@ -44,8 +44,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 @synthesize container = container_;
 @synthesize delegate = delegate_;
 
-- (id)initWithFrame:(NSRect)frame
-{
+- (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         title_ = [[NSTextField alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin + kButtonSize,
@@ -83,8 +82,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [name release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
@@ -94,8 +92,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
     return [NSString stringWithFormat:@"<%@: %p frame=%@>", [self class], self, [NSValue valueWithRect:self.frame]];
 }
 
-- (void)relayout
-{
+- (void)relayout {
     NSRect frame = [self frame];
     title_.frame = NSMakeRect(kCloseButtonLeftMargin + kButtonSize,
                               kTopMargin,
@@ -123,13 +120,11 @@ static const CGFloat kCloseButtonLeftMargin = 5;
     [title_ unbind:@"value"];
 }
 
-- (BOOL)isFlipped
-{
+- (BOOL)isFlipped {
     return YES;
 }
 
-- (void)close:(id)sender
-{
+- (void)close:(id)sender {
     if ([delegate_ haveOnlyOneTool]) {
         [delegate_ hideToolbelt];
     } else {
@@ -137,20 +132,17 @@ static const CGFloat kCloseButtonLeftMargin = 5;
     }
 }
 
-- (void)setName:(NSString *)theName
-{
+- (void)setName:(NSString *)theName {
     [name autorelease];
     name = [theName copy];
     [self performSelector:@selector(setTitleEditable) withObject:nil afterDelay:0];
 }
 
-- (void)setTitleEditable
-{
+- (void)setTitleEditable {
     [title_ setEditable:NO];
 }
 
-- (NSObject<ToolbeltTool> *)tool
-{
+- (NSObject<ToolbeltTool> *)tool {
     if ([[container_ subviews] count] == 0) {
         return nil;
     }
