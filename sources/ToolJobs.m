@@ -7,12 +7,13 @@
 //
 
 #import "ToolJobs.h"
+
+#import "iTermToolWrapper.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTask.h"
 #import "ProcessCache.h"
-#import "ToolWrapper.h"
 
 // For SignalPicker
 static const int kDefaultSignal = 9;
@@ -311,7 +312,7 @@ static const CGFloat kMargin = 4;
     if (shutdown_) {
         return;
     }
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
     pid_t rootPid = [wrapper.delegate.delegate toolbeltCurrentShellProcessId];
     NSSet *pids = [[ProcessCache sharedInstance] childrenOfPid:rootPid levelsToSkip:0];
     if (![pids isEqualToSet:[NSSet setWithArray:pids_]]) {
@@ -348,7 +349,7 @@ static const CGFloat kMargin = 4;
 
 - (void)fixCursor {
     if (!shutdown_) {
-        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+        iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
         [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
     }
 }

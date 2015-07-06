@@ -12,12 +12,12 @@
 #import "CaptureTrigger.h"
 #import "CommandHistoryEntry.h"
 #import "iTermSearchField.h"
+#import "iTermToolWrapper.h"
 #import "iTermToolbeltView.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "ToolCommandHistoryView.h"
-#import "ToolWrapper.h"
 
 static const CGFloat kMargin = 4;
 
@@ -125,7 +125,7 @@ static const CGFloat kMargin = 4;
 }
 
 - (void)updateCapturedOutput {
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
     ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];
     CommandHistoryEntry *entry = [commandHistoryView selectedEntry];
     VT100ScreenMark *mark;
@@ -255,7 +255,7 @@ static const CGFloat kMargin = 4;
     CapturedOutput *capturedOutput = filteredEntries_[selectedIndex];
 
     if (capturedOutput) {
-        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+        iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
         [wrapper.delegate.delegate toolbeltDidSelectMark:capturedOutput.mark];
     }
 }
@@ -268,7 +268,7 @@ static const CGFloat kMargin = 4;
     if (shutdown_) {
         return;
     }
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
     [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
@@ -278,7 +278,7 @@ static const CGFloat kMargin = 4;
         return;
     }
     CapturedOutput *capturedOutput = filteredEntries_[selectedIndex];
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
     [wrapper.delegate.delegate toolbeltActivateTriggerForCapturedOutputInCurrentSession:capturedOutput];
 }
 

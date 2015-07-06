@@ -7,12 +7,13 @@
 //
 
 #import "ToolDirectoriesView.h"
+
 #import "iTermDirectoriesModel.h"
 #import "iTermSearchField.h"
+#import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
 #import "NSTableColumn+iTerm.h"
 #import "PTYSession.h"
-#import "ToolWrapper.h"
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
@@ -188,7 +189,7 @@ static const CGFloat kHelpMargin = 5;
 
 - (void)updateDirectories {
     [entries_ autorelease];
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
     VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
     NSArray *entries = [[iTermDirectoriesModel sharedInstance] entriesSortedByScoreOnHost:host];
     NSArray *reversed = [[entries reverseObjectEnumerator] allObjects];
@@ -209,7 +210,7 @@ static const CGFloat kHelpMargin = 5;
     if (shutdown_) {
         return;
     }
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
     [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
@@ -219,7 +220,7 @@ static const CGFloat kHelpMargin = 5;
         return;
     }
     iTermDirectoryEntry* entry = filteredEntries_[selectedIndex];
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
     NSString *text;
     if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
         text = [@"cd " stringByAppendingString:entry.path];

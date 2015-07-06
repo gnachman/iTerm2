@@ -1,5 +1,5 @@
 //
-//  ToolWrapper.h
+//  iTermToolWrapper.h
 //  iTerm
 //
 //  Created by George Nachman on 9/5/11.
@@ -12,7 +12,7 @@
 @class iTermMark;
 @class VT100RemoteHost;
 @class ToolCommandHistoryView;
-@class ToolWrapper;
+@class iTermToolWrapper;
 @class VT100ScreenMark;
 
 @protocol iTermToolbeltViewDelegate<NSObject>
@@ -50,10 +50,10 @@
 
 @interface NSView (ToolWrapper)
 // Call this on a tool to get its wrapper.
-- (ToolWrapper *)toolWrapper;
+- (iTermToolWrapper *)toolWrapper;
 @end
 
-@interface ToolWrapper : NSView
+@interface iTermToolWrapper : NSView
 
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, readonly) __weak NSView *container;

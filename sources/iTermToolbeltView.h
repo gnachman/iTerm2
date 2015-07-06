@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
-#import "ToolWrapper.h"
+
 #import "FutureMethods.h"
+#import "iTermToolWrapper.h"
 
 @class ToolCapturedOutputView;
 @class ToolCommandHistoryView;

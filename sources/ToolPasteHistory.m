@@ -7,11 +7,12 @@
 //
 
 #import "ToolPasteHistory.h"
+
 #import "iTermController.h"
+#import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
-#import "ToolWrapper.h"
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
@@ -151,7 +152,7 @@ static const CGFloat kMargin = 4;
     if (shutdown_) {
         return;
     }
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = (iTermToolWrapper *)[[self superview] superview];
     [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 

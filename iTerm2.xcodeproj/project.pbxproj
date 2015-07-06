@@ -302,7 +302,7 @@
 		1D6ED8F119AEA20D005A7799 /* iTermToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* iTermToolbeltView.h */; };
 		1D6ED8F219AEA20D005A7799 /* ToolProfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC8B1415546000F83147 /* ToolProfiles.h */; };
 		1D6ED8F319AEA20D005A7799 /* ToolPasteHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */; };
-		1D6ED8F419AEA20D005A7799 /* ToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* ToolWrapper.h */; };
+		1D6ED8F419AEA20D005A7799 /* iTermToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* iTermToolWrapper.h */; };
 		1D6ED8F519AEA20D005A7799 /* iTermDragHandleView.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B45BB197CB78B00F5444D /* iTermDragHandleView.h */; };
 		1D6ED8F619AEA20D005A7799 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
 		1D6ED8F719AEA20D005A7799 /* VT100RemoteHost.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30F2186D150A007F550F /* VT100RemoteHost.h */; };
@@ -680,7 +680,7 @@
 		1DE8DC891415513A00F83147 /* iTermToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* iTermToolbeltView.h */; };
 		1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC8B1415546000F83147 /* ToolProfiles.h */; };
 		1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */; };
-		1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* ToolWrapper.h */; };
+		1DE8DF361415799700F83147 /* iTermToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* iTermToolWrapper.h */; };
 		1DE922E61AC3709200965876 /* BackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E51AC3709200965876 /* BackgroundStripes.png */; };
 		1DE922E71AC3709200965876 /* BackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E51AC3709200965876 /* BackgroundStripes.png */; };
 		1DE922E81AC3709200965876 /* BackgroundStripes.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E51AC3709200965876 /* BackgroundStripes.png */; };
@@ -1429,7 +1429,7 @@
 		A6C763A71B45C52B00E3C992 /* ToolNotes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67AAA814284BF300D5DA4E /* ToolNotes.m */; };
 		A6C763A81B45C52B00E3C992 /* ToolPasteHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */; };
 		A6C763A91B45C52B00E3C992 /* ToolProfiles.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC8C1415546000F83147 /* ToolProfiles.m */; };
-		A6C763AA1B45C52B00E3C992 /* ToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* ToolWrapper.m */; };
+		A6C763AA1B45C52B00E3C992 /* iTermToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* iTermToolWrapper.m */; };
 		A6C763AB1B45C52B00E3C992 /* AlertTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC15142D7FC10016228A /* AlertTrigger.m */; };
 		A6C763AC1B45C52B00E3C992 /* BellTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC0D142D7F5F0016228A /* BellTrigger.m */; };
 		A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC09142D7F300016228A /* BounceTrigger.m */; };
@@ -2001,8 +2001,8 @@
 		1DE8DC8C1415546000F83147 /* ToolProfiles.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolProfiles.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolPasteHistory.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolPasteHistory.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DE8DF341415799700F83147 /* ToolWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolWrapper.h; sourceTree = "<group>"; tabWidth = 4; };
-		1DE8DF351415799700F83147 /* ToolWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolWrapper.m; sourceTree = "<group>"; tabWidth = 4; };
+		1DE8DF341415799700F83147 /* iTermToolWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermToolWrapper.h; sourceTree = "<group>"; tabWidth = 4; };
+		1DE8DF351415799700F83147 /* iTermToolWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolWrapper.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DE922E51AC3709200965876 /* BackgroundStripes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BackgroundStripes.png; path = images/BackgroundStripes.png; sourceTree = "<group>"; };
 		1DE922E91AC370DC00965876 /* BackgroundStripes@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "BackgroundStripes@2x.png"; path = "images/BackgroundStripes@2x.png"; sourceTree = "<group>"; };
 		1DEB29301288885700B2CB9F /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
@@ -3031,7 +3031,7 @@
 				1D67AAA714284BF300D5DA4E /* ToolNotes.h */,
 				1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */,
 				1DE8DC8B1415546000F83147 /* ToolProfiles.h */,
-				1DE8DF341415799700F83147 /* ToolWrapper.h */,
+				1DE8DF341415799700F83147 /* iTermToolWrapper.h */,
 				A68A30EF186D150A007F550F /* TransferrableFile.h */,
 				A68A30F0186D150A007F550F /* TransferrableFileMenuItemView.h */,
 				A68A30F1186D150A007F550F /* TransferrableFileMenuItemViewController.h */,
@@ -3486,7 +3486,7 @@
 				1D67AAA814284BF300D5DA4E /* ToolNotes.m */,
 				1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */,
 				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
-				1DE8DF351415799700F83147 /* ToolWrapper.m */,
+				1DE8DF351415799700F83147 /* iTermToolWrapper.m */,
 			);
 			name = Toolbelt;
 			sourceTree = "<group>";
@@ -4278,7 +4278,7 @@
 				1D6ED8F119AEA20D005A7799 /* iTermToolbeltView.h in Headers */,
 				1D6ED8F219AEA20D005A7799 /* ToolProfiles.h in Headers */,
 				1D6ED8F319AEA20D005A7799 /* ToolPasteHistory.h in Headers */,
-				1D6ED8F419AEA20D005A7799 /* ToolWrapper.h in Headers */,
+				1D6ED8F419AEA20D005A7799 /* iTermToolWrapper.h in Headers */,
 				1D6ED8F519AEA20D005A7799 /* iTermDragHandleView.h in Headers */,
 				1D6ED8F619AEA20D005A7799 /* ToolJobs.h in Headers */,
 				1D6ED8F719AEA20D005A7799 /* VT100RemoteHost.h in Headers */,
@@ -4638,7 +4638,7 @@
 				1DE8DC891415513A00F83147 /* iTermToolbeltView.h in Headers */,
 				1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */,
 				1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */,
-				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
+				1DE8DF361415799700F83147 /* iTermToolWrapper.h in Headers */,
 				A69B45BD197CB78B00F5444D /* iTermDragHandleView.h in Headers */,
 				1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */,
 				A68A30FC186D150B007F550F /* VT100RemoteHost.h in Headers */,
@@ -5792,7 +5792,7 @@
 				A6C763CD1B45C52B00E3C992 /* VT100XtermParser.m in Sources */,
 				A6C762E81B45C52B00E3C992 /* VT100LineInfo.m in Sources */,
 				A6C7636A1B45C52B00E3C992 /* iTermAdvancedSettingsModel.m in Sources */,
-				A6C763AA1B45C52B00E3C992 /* ToolWrapper.m in Sources */,
+				A6C763AA1B45C52B00E3C992 /* iTermToolWrapper.m in Sources */,
 				A6C762A61B45C52B00E3C992 /* iTermApplication+Scripting.m in Sources */,
 				A6C763401B45C52B00E3C992 /* iTermDragHandleView.m in Sources */,
 				A6C7632F1B45C52B00E3C992 /* FindViewController.m in Sources */,

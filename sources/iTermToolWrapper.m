@@ -1,12 +1,12 @@
 //
-//  ToolWrapper.m
+//  iTermToolWrapper.m
 //  iTerm
 //
 //  Created by George Nachman on 9/5/11.
 //  Copyright 2011 Georgetech. All rights reserved.
 //
 
-#import "ToolWrapper.h"
+#import "iTermToolWrapper.h"
 
 #import "iTermToolbeltView.h"
 
@@ -21,10 +21,10 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 
 @implementation NSView (ToolWrapper)
 
-- (ToolWrapper *)toolWrapper {
+- (iTermToolWrapper *)toolWrapper {
     NSView *view = self.superview.superview;
-    if ([view isKindOfClass:[ToolWrapper class]]) {
-        return (ToolWrapper *)view;
+    if ([view isKindOfClass:[iTermToolWrapper class]]) {
+        return (iTermToolWrapper *)view;
     } else {
         return nil;
     }
@@ -32,7 +32,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 
 @end
 
-@implementation ToolWrapper {
+@implementation iTermToolWrapper {
     NSTextField *_title;
     NSButton *_closeButton;
 }
