@@ -1,16 +1,18 @@
 #import "iTermToolbeltView.h"
+
+#import "FutureMethods.h"
+#import "iTermApplication.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermDragHandleView.h"
+#import "iTermToolbeltSplitView.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
-#import "ToolProfiles.h"
-#import "ToolPasteHistory.h"
-#import "ToolWrapper.h"
 #import "ToolJobs.h"
 #import "ToolNotes.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermApplication.h"
-#import "iTermDragHandleView.h"
-#import "FutureMethods.h"
+#import "ToolPasteHistory.h"
+#import "ToolProfiles.h"
+#import "ToolWrapper.h"
 
 NSString *const kCapturedOutputToolName = @"Captured Output";
 NSString *const kCommandHistoryToolName = @"Command History";
@@ -22,39 +24,12 @@ NSString *const kProfilesToolName = @"Profiles";
 
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
-@interface ToolbeltSplitView : NSSplitView {
-    NSColor *dividerColor_;
-}
-
-- (void)setDividerColor:(NSColor *)dividerColor;
-
-@end
-
-@implementation ToolbeltSplitView
-
-- (void)dealloc {
-    [dividerColor_ release];
-    [super dealloc];
-}
-
-- (void)setDividerColor:(NSColor *)dividerColor {
-    [dividerColor_ autorelease];
-    dividerColor_ = [dividerColor retain];
-    [self setNeedsDisplay:YES];
-}
-
-- (NSColor *)dividerColor {
-    return dividerColor_;
-}
-
-@end
-
 @interface iTermToolbeltView () <iTermDragHandleViewDelegate>
 @end
 
 @implementation iTermToolbeltView {
     iTermDragHandleView *dragHandle_;
-    ToolbeltSplitView *splitter_;
+    iTermToolbeltSplitView *splitter_;
     NSMutableDictionary *tools_;
 }
 
@@ -107,10 +82,10 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
             [[NSUserDefaults standardUserDefaults] setObject:items forKey:kToolbeltPrefKey];
         }
 
-        splitter_ = [[ToolbeltSplitView alloc] initWithFrame:NSMakeRect(0,
-                                                                        0,
-                                                                        frame.size.width,
-                                                                        frame.size.height)];
+        splitter_ = [[iTermToolbeltSplitView alloc] initWithFrame:NSMakeRect(0,
+                                                                             0,
+                                                                             frame.size.width,
+                                                                             frame.size.height)];
         [splitter_ setVertical:NO];
         [splitter_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [splitter_ setDividerStyle:NSSplitViewDividerStyleThin];

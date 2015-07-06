@@ -7,6 +7,7 @@
 //
 
 #import "ToolWrapper.h"
+
 #import "iTermToolbeltView.h"
 
 static const CGFloat kTitleHeight = 19;

@@ -7,14 +7,14 @@
 //
 
 #import "CaptureTrigger.h"
+
 #import "CapturedOutput.h"
 #import "CommandHistory.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermToolbeltView.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
-#import "PseudoTerminal.h"  // TODO: Use delegacy? Or something?
-#import "iTermToolbeltView.h"
 #import "VT100ScreenMark.h"
 
 // This one cannot be suppressed.

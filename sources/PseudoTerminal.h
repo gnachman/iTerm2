@@ -1,15 +1,16 @@
 #import <Cocoa/Cocoa.h>
+
 #import "Autocomplete.h"
 #import "FutureMethods.h"
-#import "PSMTabBarControl.h"
-#import "PTYTabView.h"
-#import "PTYWindow.h"
+#import "iTermInstantReplayWindowController.h"
+#import "iTermToolbeltView.h"
 #import "PasteboardHistory.h"
 #import "Popup.h"
 #import "ProfileListView.h"
-#import "iTermToolbeltView.h"
+#import "PSMTabBarControl.h"
+#import "PTYTabView.h"
+#import "PTYWindow.h"
 #import "WindowControllerInterface.h"
-#import "iTermInstantReplayWindowController.h"
 #include "iTermFileDescriptorClient.h"
 
 @class PTYSession;

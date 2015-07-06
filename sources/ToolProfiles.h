@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+
 #import "iTermToolbeltView.h"
 #import "ProfileListView.h"
 

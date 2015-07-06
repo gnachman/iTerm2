@@ -33,6 +33,7 @@
 #import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
 #import "iTermTabBarControlView.h"
+#import "iTermToolbeltView.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
@@ -63,7 +64,6 @@
 #import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
-#import "iTermToolbeltView.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
@@ -71,6 +71,7 @@
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
 #include "iTermFileDescriptorClient.h"
+
 #include <unistd.h>
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";

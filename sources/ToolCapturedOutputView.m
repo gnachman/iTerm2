@@ -7,14 +7,15 @@
 //
 
 #import "ToolCapturedOutputView.h"
+
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
 #import "CommandHistoryEntry.h"
 #import "iTermSearchField.h"
+#import "iTermToolbeltView.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
-#import "iTermToolbeltView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolWrapper.h"
 

@@ -7,8 +7,9 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "iTermToolbeltView.h"
+
 #import "FutureMethods.h"
+#import "iTermToolbeltView.h"
 
 @interface ToolNotes : NSView <ToolbeltTool, NSTextViewDelegate> {
     NSTextView *textView_;
