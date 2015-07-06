@@ -3360,6 +3360,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
     [self repositionWidgets];
+    self.window.hasShadow = YES;
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
