@@ -46,4 +46,8 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 
 - (CommandUse *)commandUseWithMarkGuid:(NSString *)markGuid onHost:(VT100RemoteHost *)host;
 
+#pragma mark - Testing
+
+- (void)eraseHistoryForHost:(VT100RemoteHost *)host;
+
 @end

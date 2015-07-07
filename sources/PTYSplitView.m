@@ -58,7 +58,8 @@
     NSPoint locationInWindow = [theEvent locationInWindow];
     locationInWindow.y--;
     NSPoint locationInView = [self convertPoint:locationInWindow toView:self];
-    int x, y;
+    int x = 0;
+    int y = 0;
     int bestDistance = -1;
     const BOOL isVertical = [self isVertical];
     if (isVertical) {

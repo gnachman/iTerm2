@@ -77,6 +77,7 @@ DEFINE_BOOL(noSyncSilenceAnnoyingBellAutomatically, NO, @"Terminal: Automaticall
 DEFINE_BOOL(restoreWindowContents, YES, @"Terminal: Restore window contents at startup.\nThis requires “System Prefs>General>Close windows when quitting an app” to be off.");
 DEFINE_BOOL(useDoubleBufferedGrid, YES, @"Terminal: Avoid repainting the screen when the cursor is hidden.\nThis reduces flicker when scrolling in interactive applications.");
 DEFINE_INT(numberOfLinesForAccessibility, 1000, @"Terminal: Maximum number of lines of history to expose to Accessibility.\nAccessibility APIs can make iTerm2 slow. In order to limit the effect, you can restrict the number of lines in each session that are visible to accessibility. The last lines of each session will be made accessible.");
+DEFINE_INT(triggerRadius, 3, @"Terminal: Number of screen lines to match against trigger regular expressions.\nTrigger regular expressions are matched against the last logical line of text when a newline is received. A search is performed to find the start of the line. Since very long lines would cause performance problems, the search (and consequently the regular expression match, highlighting, and so on) is limited to this many screen lines.");
 
 #pragma mark Hotkey
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of the hotkey window animation.");
@@ -87,7 +88,7 @@ DEFINE_STRING(searchCommand, @"http://google.com/search?q=%@", @"General: Templa
 DEFINE_INT(autocompleteMaxOptions, 20, @"General: Number of autocomplete options to present.\nA value less than 100 is recommended.");
 DEFINE_FLOAT(minRunningTime, 10, @"General: Grace period for automatic quitting after the last window is closed.\nIf iTerm2 is configured to quit automatically when the last window is closed, this setting gives a grace period (in seconds) after startup where that feature is disabled. Set to 0 to have no grace period.");
 DEFINE_FLOAT(updateScreenParamsDelay, 1, @"General: Delay after changing number of screens/resolution until refresh (seconds).\nThis works around OS bugs where it takes some time after a screen change before it is safe to resize windows.");
-DEFINE_BOOL(disableAppNap, NO, @"General: Disable App Nap.\nChange effective after retarting iTerm2.");
+DEFINE_BOOL(disableAppNap, NO, @"General: Disable App Nap.\nChange effective after restarting iTerm2.");
 DEFINE_FLOAT(idleTimeSeconds, 2, @"General: Time in seconds before a session is considered idle.\nUsed for updating icons and activity indicator in tabs.");
 DEFINE_FLOAT(findDelaySeconds, 1, @"General: Time to wait before performing Find action on 1- or 2- character queries.");
 DEFINE_INT(maximumBytesToProvideToServices, 100000, @"General: Maximum number of bytes of selection to provide to Services.\nA large value here can cause performance issues when you have a big selection.");
@@ -103,8 +104,8 @@ DEFINE_BOOL(startDebugLoggingAutomatically, NO, @"Debugging: Start debug logging
 DEFINE_BOOL(logDrawingPerformance, NO, @"Debugging: Log stats about text drawing performance to console.\nUsed for performance testing.");
 
 #pragma mark - Session Restoration
-DEFINE_BOOL(runJobsInServers, NO, @"Session Restoration: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
-DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session Restoration: User-initiated Quit (⌘-Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
+DEFINE_BOOL(runJobsInServers, YES, @"Session Restoration: Enable session restoration.\nSession restoration runs jobs in separate processes. They will survive crashes, force quits, and upgrades.\nYou must restart iTerm2 for this change to take effect.");
+DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session Restoration: User-initiated Quit (⌘Q) of iTerm2 will kill all running jobs.\nApplies only when session restoration is on.");
 
 #pragma mark - Window
 DEFINE_BOOL(openFileInNewWindows, NO, @"Windows: Open files in new windows, not new tabs.\nThis affects shell scripts opened from Finder, for example.");

@@ -7,10 +7,10 @@
 //
 
 #import "SCPFile.h"
-#import "NMSSH.framework/Headers/NMSSH.h"
-#import "NMSSH.framework/Headers/NMSSHConfig.h"
-#import "NMSSH.framework/Headers/NMSSHHostConfig.h"
-#import "NMSSH.framework/Headers/libssh2.h"
+#import <NMSSH/NMSSH.h>
+#import <NMSSH/NMSSHConfig.h>
+#import <NMSSH/NMSSHHostConfig.h>
+#import <NMSSH/libssh2.h>
 #import "NSFileManager+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"

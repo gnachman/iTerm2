@@ -39,7 +39,7 @@
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYWindow.h"
-#import "UKCrashReporter/UKCrashReporter.h"
+#import "UKCrashReporter.h"
 #import "VT100Screen.h"
 #import "WindowArrangements.h"
 #import "iTerm.h"
@@ -1082,7 +1082,7 @@ static BOOL initDone = NO;
     return term;
 }
 
-- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
+- (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
     return [self launchBookmark:bookmarkData
                      inTerminal:theTerm
                         withURL:nil
@@ -1149,13 +1149,13 @@ static BOOL initDone = NO;
     return aDict;
 }
 
-- (id)launchBookmark:(NSDictionary *)bookmarkData
-          inTerminal:(PseudoTerminal *)theTerm
-             withURL:(NSString *)url
-            isHotkey:(BOOL)isHotkey
-             makeKey:(BOOL)makeKey
-             command:(NSString *)command
-               block:(PTYSession *(^)(PseudoTerminal *))block {
+- (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
+                    inTerminal:(PseudoTerminal *)theTerm
+                       withURL:(NSString *)url
+                      isHotkey:(BOOL)isHotkey
+                       makeKey:(BOOL)makeKey
+                       command:(NSString *)command
+                         block:(PTYSession *(^)(PseudoTerminal *))block {
     PseudoTerminal *term;
     NSDictionary *aDict;
     const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;

@@ -47,7 +47,7 @@
 #import "PTYScrollView.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
-#import "RegexKitLite/RegexKitLite.h"
+#import "RegexKitLite.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SmartMatch.h"
@@ -4131,8 +4131,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-// Legacy NSTextInput method, probably not used.
+// Legacy NSTextInput method, probably not used by the system but used internally.
 - (void)insertText:(id)aString {
+    // TODO: The replacement range is wrong
     [self insertText:aString replacementRange:NSMakeRange(0, [_drawingHelper.markedText length])];
 }
 

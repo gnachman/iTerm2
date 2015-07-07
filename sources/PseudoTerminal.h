@@ -1,21 +1,21 @@
 #import <Cocoa/Cocoa.h>
+
 #import "Autocomplete.h"
 #import "FutureMethods.h"
-#import "PSMTabBarControl.h"
-#import "PTYTabView.h"
-#import "PTYWindow.h"
+#import "iTermInstantReplayWindowController.h"
+#import "iTermToolbeltView.h"
 #import "PasteboardHistory.h"
 #import "Popup.h"
 #import "ProfileListView.h"
-#import "SolidColorView.h"
-#import "ToolbeltView.h"
+#import "PSMTabBarControl.h"
+#import "PTYTabView.h"
+#import "PTYWindow.h"
 #import "WindowControllerInterface.h"
-#import "iTermInstantReplayWindowController.h"
 #include "iTermFileDescriptorClient.h"
 
 @class PTYSession;
 @class PSMTabBarControl;
-@class ToolbeltView;
+@class iTermToolbeltView;
 @class iTermController;
 @class TmuxController;
 
@@ -181,7 +181,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (BOOL)promptOnClose;
 
 // Accessor for toolbelt view.
-- (ToolbeltView *)toolbelt;
+- (iTermToolbeltView *)toolbelt;
 
 // Tries to grow (or shrink, for negative values) the toolbelt. Returns the amount it was actually
 // grown by, in case it hits a limit.

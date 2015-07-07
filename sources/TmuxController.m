@@ -298,8 +298,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)handleShowSize:(NSString *)response {
     NSScanner *scanner = [NSScanner scannerWithString:response ?: @""];
-    int width;
-    int height;
+    int width = 0;
+    int height = 0;
     BOOL ok = ([scanner scanInt:&width] &&
                [scanner scanString:@"," intoString:nil] &&
                [scanner scanInt:&height]);

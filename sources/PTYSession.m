@@ -84,8 +84,6 @@ static NSString *const kReopenSessionWarningIdentifier = @"ReopenSessionAfterBro
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
-static NSString *const kAccessibilitySlownessAnnouncementIdentifier =
-    @"kAccessibilitySlownessAnnouncementIdentifier";
 
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
@@ -5462,36 +5460,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)textViewIsZoomedIn {
     return _liveSession && !_dvr;
-}
-
-- (void)textViewWarnThatAccessibilityIsCausingSlowness {
-    static NSString *const kSilenceKey = @"NoSyncSlowAccessibilityWarning";
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSilenceKey]) {
-        return;
-    }
-    iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:@"Accessibilty is making iTerm2 slow! "
-                                                               @"Reduce the number of lines of scrollback to "
-                                                               @"under 1000 to mitigate the damage."
-                                                         style:kiTermAnnouncementViewStyleWarning
-                                                   withActions:@[ @"OK", @"Don't warn me again" ]
-                                                    completion:^(int selection) {
-                switch (selection) {
-                    case -2:  // Dismiss programmatically
-                        break;
-
-                    case -1: // Cancel button
-                        break;
-
-                    case 0: // OK
-                        break;
-
-                    case 1: // Don't warn again
-                        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kSilenceKey];
-                        break;
-                }
-            }];
-    [self queueAnnouncement:announcement identifier:kAccessibilitySlownessAnnouncementIdentifier];
 }
 
 - (void)sendEscapeSequence:(NSString *)text

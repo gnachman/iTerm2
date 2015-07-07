@@ -12,6 +12,7 @@
 #import "iTermTip.h"
 #import "iTermTipData.h"
 #import "iTermTipWindowController.h"
+#import "NSApplication+iTerm.h"
 
 static NSString *const kUnshowableTipsKey = @"NoSyncTipsToNotShow";
 static NSString *const kLastTipTimeKey = @"NoSyncLastTipTime";
@@ -37,6 +38,9 @@ static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
     // worthwhile I can always make a simpler version for users on older OS versions. Over 80%
     // of users on 2.1.1 are running 10.10.
     if (![[NSControl class] instancesRespondToSelector:@selector(sizeThatFits:)]) {
+        return nil;
+    }
+    if ([[NSApplication sharedApplication] isRunningUnitTests]) {
         return nil;
     }
     static id instance;

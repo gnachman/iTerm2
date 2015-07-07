@@ -7,26 +7,20 @@
 
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier {
-    NSUInteger theIndex = 0;
-    id classDescription = nil;
-
-    NSScriptObjectSpecifier *containerRef = nil;
     if (![[self tab] realParentWindow]) {
         // TODO(georgen): scripting is broken while in instant replay.
         return nil;
     }
     // TODO: Test this with multiple panes per tab.
-    theIndex = [[[[self tab] realParentWindow] tabView] indexOfTabViewItem:[[self tab] tabViewItem]];
+    NSUInteger theIndex = [self.tab.sessions indexOfObject:self];
 
     if (theIndex != NSNotFound) {
-        containerRef = [[[self tab] realParentWindow] objectSpecifier];
-        classDescription = [containerRef keyClassDescription];
+        id classDescription = [NSClassDescription classDescriptionForClass:[PTYTab class]];
         //create and return the specifier
-        return [[[NSIndexSpecifier allocWithZone:[self zone]]
-                 initWithContainerClassDescription:classDescription
-                 containerSpecifier:containerRef
-                 key:@ "sessions"
-                 index:theIndex] autorelease];
+        return [[[NSIndexSpecifier alloc] initWithContainerClassDescription:classDescription
+                                                         containerSpecifier:[self.tab objectSpecifier]
+                                                                        key:@"sessions"
+                                                                      index:theIndex] autorelease];
     } else {
         // NSLog(@"recipient not found!");
         return nil;

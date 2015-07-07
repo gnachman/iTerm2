@@ -160,7 +160,6 @@ typedef enum {
     COLORCODE_WATER = 6,
     COLORCODE_WHITE = 7,
     COLORCODE_256 = 8,
-    COLORS
 } colorCode;
 
 // Color constants
@@ -1869,7 +1868,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)executeXtermSetRgb:(VT100Token *)token {
     NSArray *parts = [token.string componentsSeparatedByString:@";"];
-    int theIndex;
+    int theIndex = 0;
     for (int i = 0; i < parts.count; i++) {
         NSString *part = parts[i];
         if ((i % 2) == 0 ) {

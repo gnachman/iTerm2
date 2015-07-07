@@ -135,7 +135,6 @@ typedef enum {
 - (NSDictionary *)textViewVariables;
 - (BOOL)textViewSuppressingAllOutput;
 - (BOOL)textViewIsZoomedIn;
-- (void)textViewWarnThatAccessibilityIsCausingSlowness;
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;
@@ -254,6 +253,9 @@ typedef enum {
 // Used by tests to modify drawing helper. Called within -drawRect:.
 typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 @property(nonatomic, copy) PTYTextViewDrawingHookBlock drawingHook;
+
+// For tests.
+@property(nonatomic, readonly) NSRect cursorFrame;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

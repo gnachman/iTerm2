@@ -13,6 +13,7 @@
 #import "iTermController.h"
 #import "iTermOrphanServerAdopter.h"
 #import "iTermPreferences.h"
+#import "NSApplication+iTerm.h"
 #import "PseudoTerminal.h"
 
 static NSMutableArray *queuedBlocks;
@@ -50,6 +51,11 @@ typedef void (^VoidBlock)(void);
     if ([[[NSBundle mainBundle] bundleIdentifier] containsString:@"applescript"]) {
         // Disable window restoration for iTerm2ForApplescriptTesting
         DLog(@"Abort because bundle ID contains applescript");
+        completionHandler(nil, nil);
+        return;
+    }
+    if ([[NSApplication sharedApplication] isRunningUnitTests]) {
+        DLog(@"Abort because this is a unit test.");
         completionHandler(nil, nil);
         return;
     }

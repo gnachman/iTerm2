@@ -101,14 +101,14 @@
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
 // new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
 // URL.
-- (id)launchBookmark:(NSDictionary *)bookmarkData
-          inTerminal:(PseudoTerminal *)theTerm
-             withURL:(NSString *)url
-            isHotkey:(BOOL)isHotkey
-             makeKey:(BOOL)makeKey
-             command:(NSString *)command
-               block:(PTYSession *(^)(PseudoTerminal *))block;
-- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
+- (PTYSession *)launchBookmark:(Profile *)bookmarkData
+                    inTerminal:(PseudoTerminal *)theTerm
+                       withURL:(NSString *)url
+                      isHotkey:(BOOL)isHotkey
+                       makeKey:(BOOL)makeKey
+                       command:(NSString *)command
+                         block:(PTYSession *(^)(PseudoTerminal *))block;
+- (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
 - (int)numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
