@@ -105,5 +105,6 @@
 
 + (int)triggerRadius;
 + (BOOL)useOpenDirectory;
++ (BOOL)disallowCopyEmptyString;
 
 @end
