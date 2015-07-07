@@ -12,10 +12,14 @@
 @implementation iTermTipData
 
 + (NSDictionary *)allTips {
+  // The keys in this dictionary are saved in user defaults and should not be changed or
+  // recycled, or users will see the same tip more than once.
   return @{
     // Big new features
+            @"000": @{ kTipTitleKey: @"Tip of the Day",
+                        kTipBodyKey: @"This window shows the iTerm2 tip of the day. It'll appear every 24 hours to let you know about new features and hidden secrets. Hit “More Options” to view more tips or to stop getting them altogether." },
             @"0000": @{ kTipTitleKey: @"Shell Integration",
-                         kTipBodyKey: @"The big new feature of iTerm2 version 3 is Shell Integration. Click Learn More for all the details.",
+                         kTipBodyKey: @"The big new feature of iTerm2 version 3 is Shell Integration. Click “Learn More” for all the details.",
                           kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0001": @{ kTipTitleKey: @"Timestamps",

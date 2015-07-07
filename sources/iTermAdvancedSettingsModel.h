@@ -102,6 +102,8 @@
 
 + (BOOL)noSyncTipsDisabled;
 + (int)numberOfLinesForAccessibility;
+
++ (int)triggerRadius;
 + (BOOL)useOpenDirectory;
 
 @end
