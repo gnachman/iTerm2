@@ -5462,6 +5462,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return _liveSession && !_dvr;
 }
 
+- (BOOL)textViewShouldShowMarkIndicators {
+    return [iTermProfilePreferences boolForKey:KEY_SHOW_MARK_INDICATORS inProfile:_profile];
+}
+
 - (void)sendEscapeSequence:(NSString *)text
 {
     if (_exited) {

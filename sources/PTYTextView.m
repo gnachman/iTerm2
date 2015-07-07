@@ -1113,6 +1113,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.haveUnderlinedHostname = (self.currentUnderlineHostname != nil);
     _drawingHelper.transparencyAlpha = [self transparencyAlpha];
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
+    _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
 
     const NSRect *rectArray;
     NSInteger rectCount;

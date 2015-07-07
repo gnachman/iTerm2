@@ -135,6 +135,7 @@ typedef enum {
 - (NSDictionary *)textViewVariables;
 - (BOOL)textViewSuppressingAllOutput;
 - (BOOL)textViewIsZoomedIn;
+- (BOOL)textViewShouldShowMarkIndicators;
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;
