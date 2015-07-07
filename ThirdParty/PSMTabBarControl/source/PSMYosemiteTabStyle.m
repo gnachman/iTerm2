@@ -455,8 +455,10 @@
     }
 
     closeButtonSize = [closeButton size];
-    // scoot label over
-    labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
+    if ([cell hasCloseButton]) {
+        // scoot label over
+        labelPosition += closeButtonSize.width + kPSMTabBarCellPadding;
+    }
 
     // Draw close button
     if ([cell hasCloseButton] && [cell closeButtonVisible]) {
@@ -525,7 +527,9 @@
 
     if ([cell count] > 0) {
         labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
-    } else {
+    }
+
+    if ([cell hasCloseButton]) {
         labelRect.size.width -= (closeButtonSize.width + kPSMTabBarCellPadding);
     }
 
