@@ -4313,7 +4313,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         maxSize.height *= 0.2;
         NSFont *font = nil;
         CGFloat min = 4, max = 100;
-        int points = (min + max / 2);
+        int points = (min + max) / 2;
         int prevPoints = -1;
         NSSize sizeWithFont = NSZeroSize;
         NSDictionary *attributes = nil;
