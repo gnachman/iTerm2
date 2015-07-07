@@ -22,7 +22,7 @@
         return [[[NSIndexSpecifier alloc]
                    initWithContainerClassDescription:classDescription
                                   containerSpecifier:containerRef
-                                                 key:@"windows"
+                                                 key:@"orderedWindows"
                                                index:anIndex] autorelease];
     } else {
         return nil;
