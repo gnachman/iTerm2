@@ -675,6 +675,10 @@
 		1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD6707514934ADE008E4361 /* PTYSplitView.h */; };
 		1DD736411283C2FA009B7829 /* Popup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* Popup.h */; };
 		1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */; };
+		1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDC093D1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h */; };
+		1DDC09401B4DB97500B1A910 /* iTermRoundedCornerScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DDC093E1B4DB97500B1A910 /* iTermRoundedCornerScrollView.m */; };
+		1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDC09411B4DB9A600B1A910 /* iTermClearView.h */; };
+		1DDC09441B4DB9A600B1A910 /* iTermClearView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DDC09421B4DB9A600B1A910 /* iTermClearView.m */; };
 		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
 		1DE5EBE8122B892900C736B0 /* iTermProfilesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */; };
 		1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* ToolbeltView.h */; };
@@ -1984,6 +1988,10 @@
 		1DD736401283C2FA009B7829 /* Popup.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = Popup.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermExpose.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DDBC61D12E2BCDC00BC3868 /* iTermExpose.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExpose.m; sourceTree = "<group>"; tabWidth = 4; };
+		1DDC093D1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRoundedCornerScrollView.h; sourceTree = "<group>"; };
+		1DDC093E1B4DB97500B1A910 /* iTermRoundedCornerScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRoundedCornerScrollView.m; sourceTree = "<group>"; };
+		1DDC09411B4DB9A600B1A910 /* iTermClearView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermClearView.h; sourceTree = "<group>"; };
+		1DDC09421B4DB9A600B1A910 /* iTermClearView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermClearView.m; sourceTree = "<group>"; };
 		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Autocomplete.h; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Autocomplete.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProfilesWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3365,6 +3373,10 @@
 				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1DC38817148E840700B89F7C /* SolidColorView.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
+				1DDC093D1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h */,
+				1DDC093E1B4DB97500B1A910 /* iTermRoundedCornerScrollView.m */,
+				1DDC09411B4DB9A600B1A910 /* iTermClearView.h */,
+				1DDC09421B4DB9A600B1A910 /* iTermClearView.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -4780,7 +4792,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6C760471B45C4CF00E3C992 /* SSKeychain.h in Headers */,
+				1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */,
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
+				1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */,
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
 			);
@@ -5607,6 +5621,7 @@
 				A6C763AD1B45C52B00E3C992 /* BounceTrigger.m in Sources */,
 				A6C763321B45C52B00E3C992 /* iTermInstantReplayWindowController.m in Sources */,
 				A6C762AC1B45C52B00E3C992 /* NSArray+iTerm.m in Sources */,
+				1DDC09401B4DB97500B1A910 /* iTermRoundedCornerScrollView.m in Sources */,
 				A6C762AE1B45C52B00E3C992 /* NSCharacterSet+iTerm.m in Sources */,
 				A6C763E11B45C6DD00E3C992 /* PSMTabDragAssistant.m in Sources */,
 				A6C763AE1B45C52B00E3C992 /* CaptureTrigger.m in Sources */,
@@ -5794,6 +5809,7 @@
 				A6C762BC1B45C52B00E3C992 /* NSObject+iTerm.m in Sources */,
 				A6C762CE1B45C52B00E3C992 /* iTermKeyBindingMgr.m in Sources */,
 				A6C763861B45C52B00E3C992 /* iTermProfilesPanel.m in Sources */,
+				1DDC09441B4DB9A600B1A910 /* iTermClearView.m in Sources */,
 				A6C763161B45C52B00E3C992 /* iTermMinimumSubsequenceMatcher.m in Sources */,
 				A6C763131B45C52B00E3C992 /* iTermIndicatorsHelper.m in Sources */,
 				A6C763BD1B45C52B00E3C992 /* iTermTipRootView.m in Sources */,
