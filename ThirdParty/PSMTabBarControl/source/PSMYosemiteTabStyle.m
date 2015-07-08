@@ -529,10 +529,6 @@
         labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
     }
 
-    if ([cell hasCloseButton]) {
-        labelRect.size.width -= (closeButtonSize.width + kPSMTabBarCellPadding);
-    }
-
     // label
     [[cell attributedStringValue] drawInRect:labelRect];
 }
