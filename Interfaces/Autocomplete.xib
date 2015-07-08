@@ -63,6 +63,7 @@
 											<int key="NSvFlags">256</int>
 											<string key="NSFrameSize">{478, 554}</string>
 											<reference key="NSSuperview" ref="408735364"/>
+											<reference key="NSNextKeyView" ref="953729231"/>
 											<bool key="NSEnabled">YES</bool>
 											<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
 											<bool key="NSControlAllowsExpansionToolTips">YES</bool>
@@ -193,6 +194,7 @@
 									<int key="NSvFlags">-2147483392</int>
 									<string key="NSFrame">{{1, 119}, {223, 15}}</string>
 									<reference key="NSSuperview" ref="564209956"/>
+									<reference key="NSNextKeyView"/>
 									<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
 									<string key="NSControlAction">_doScroller:</string>
 									<reference key="NSControlTarget" ref="564209956"/>
@@ -204,6 +206,7 @@
 							</array>
 							<string key="NSFrameSize">{480, 556}</string>
 							<reference key="NSSuperview" ref="1006"/>
+							<reference key="NSNextKeyView"/>
 							<int key="NSsFlags">133681</int>
 							<reference key="NSVScroller" ref="953729231"/>
 							<reference key="NSHScroller" ref="206456440"/>
