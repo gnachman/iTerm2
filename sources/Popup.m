@@ -98,8 +98,14 @@
     self.delegate = delegate;
     
     [[self window] setParentWindow:delegate.popupWindowController.window];
+    self.window.alphaValue = 0;
     [self showWindow:delegate.popupWindowController];
     [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
+
+    [NSAnimationContext beginGrouping];
+    [[NSAnimationContext currentContext] setDuration:0.15];
+    self.window.animator.alphaValue = 1;
+    [NSAnimationContext endGrouping];
 }
 
 - (PopupModel*)unfilteredModel
