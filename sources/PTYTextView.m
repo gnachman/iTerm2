@@ -13,6 +13,7 @@
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermBadgeLabel.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
@@ -104,8 +105,6 @@ static const int kDragThreshold = 3;
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
 @property(nonatomic, retain) iTermSelection *selection;
 @property(nonatomic, retain) iTermSemanticHistoryController *semanticHistoryController;
-@property(nonatomic, retain) NSColor *badgeColor;
-@property(nonatomic, copy) NSString *bagdgeLabel;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
 @property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
 
@@ -213,6 +212,7 @@ static const int kDragThreshold = 3;
 
     iTermFindOnPageHelper *_findOnPageHelper;
     iTermTextViewAccessibilityHelper *_accessibilityHelper;
+    iTermBadgeLabel *_badgeLabel;
 }
 
 
@@ -315,6 +315,8 @@ static const int kDragThreshold = 3;
 
         _accessibilityHelper = [[iTermTextViewAccessibilityHelper alloc] init];
         _accessibilityHelper.delegate = self;
+
+        _badgeLabel = [[iTermBadgeLabel alloc] init];
     }
     return self;
 }
@@ -358,8 +360,6 @@ static const int kDragThreshold = 3;
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
     [_currentUnderlineHostname release];
-    [_badgeColor release];
-    [_bagdgeLabel release];
     _indicatorsHelper.delegate = nil;
     [_indicatorsHelper release];
     _selectionScrollHelper.delegate = nil;
@@ -370,6 +370,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.delegate = nil;
     [_drawingHelper release];
     [_accessibilityHelper release];
+    [_badgeLabel release];
 
     [super dealloc];
 }
@@ -758,7 +759,7 @@ static const int kDragThreshold = 3;
 
     frameSize.height += VMARGIN;  // This causes a margin to be left at the top
     [[self superview] setFrameSize:frameSize];
-    self.badgeLabel = _badgeLabel;
+    [self recomputeBadgeLabel];
     [_delegate textViewSizeDidChange];
 }
 
@@ -4294,83 +4295,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)setBadgeLabel:(NSString *)badgeLabel {
+    _badgeLabel.stringValue = badgeLabel;
+    [self recomputeBadgeLabel];
+}
+
+- (void)recomputeBadgeLabel {
     if (!_delegate) {
         return;
     }
-    NSColor *fillColor = [_delegate textViewBadgeColor];
-    // We compare pointer equality below to catch equal nil pointers, which isEqual: cannot.
-    if (NSEqualSizes(_badgeDocumentVisibleRectSize, self.enclosingScrollView.documentVisibleRect.size) &&
-        (fillColor == _badgeColor || [fillColor isEqual:_badgeColor]) &&
-        (badgeLabel == _badgeLabel || [badgeLabel isEqualToString:_badgeLabel])) {
-        return;
-    }
-    int oldLength = [_badgeLabel length];
-    DLog(@"Recompute badge self=%p, label=new:%@ vs old:%@, color=new:%@ vs old:%@, size=new:%@ vs old:%@",
-          self,
-         badgeLabel, _badgeLabel,
-         fillColor, _badgeColor,
-         NSStringFromSize(self.enclosingScrollView.documentVisibleRect.size),
-         NSStringFromSize(_badgeDocumentVisibleRectSize));
-    DLog(@"Called from:\n%@", [NSThread callStackSymbols]);
-    _badgeDocumentVisibleRectSize = self.enclosingScrollView.documentVisibleRect.size;
-    [_badgeLabel autorelease];
-    _badgeLabel = [badgeLabel copy];
-    self.badgeColor = fillColor;
 
-    if ([_badgeLabel length]) {
-        NSSize maxSize = self.enclosingScrollView.documentVisibleRect.size;
-        maxSize.width *= 0.5;  // Max size of image
-        maxSize.height *= 0.2;
-        NSFont *font = nil;
-        CGFloat min = 4, max = 100;
-        int points = (min + max / 2);
-        int prevPoints = -1;
-        NSSize sizeWithFont = NSZeroSize;
-        NSDictionary *attributes = nil;
-        NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
-        NSFontManager *fontManager = [NSFontManager sharedFontManager];
-        NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
-        paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-        paragraphStyle.alignment = NSRightTextAlignment;
-        while (points != prevPoints) {
-            font = [fontManager convertFont:[NSFont fontWithName:@"Helvetica" size:points]
-                                toHaveTrait:NSBoldFontMask];
-            attributes = @{ NSFontAttributeName: font,
-                            NSForegroundColorAttributeName: fillColor,
-                            NSParagraphStyleAttributeName: paragraphStyle };
-            NSRect bounds = [badgeLabel boundingRectWithSize:maxSize options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes];
-            sizeWithFont = bounds.size;
-            if (sizeWithFont.width > maxSize.width || sizeWithFont.height > maxSize.height) {
-                max = points;
-            } else if (sizeWithFont.width < maxSize.width && sizeWithFont.height < maxSize.height) {
-                min = points;
-            }
-            prevPoints = points;
-            points = (min + max) / 2;
-        }
-        if (sizeWithFont.width > 0 && sizeWithFont.height > 0) {
-            NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
-            [image lockFocus];
-            NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
-            temp[NSStrokeWidthAttributeName] = @-2;
-            temp[NSStrokeColorAttributeName] = [backgroundColor colorWithAlphaComponent:fillColor.alphaComponent];
-            [badgeLabel drawWithRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
-                             options:NSStringDrawingUsesLineFragmentOrigin
-                          attributes:temp];
-            [image unlockFocus];
-
-            _drawingHelper.badgeImage = image;
-        } else {
-            _drawingHelper.badgeImage = nil;
-        }
-    } else {
-        _drawingHelper.badgeImage = nil;
-        if (oldLength == 0) {
-            // Optimization - don't call setNeedsDisplay if nothing changed.
-            return;
-        }
+    _badgeLabel.fillColor = [_delegate textViewBadgeColor];
+    _badgeLabel.backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+    _badgeLabel.viewSize = self.enclosingScrollView.documentVisibleRect.size;
+    if (_badgeLabel.isDirty) {
+        _badgeLabel.dirty = NO;
+        _drawingHelper.badgeImage = _badgeLabel.image;
+        [self setNeedsDisplay:YES];
     }
-    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)growSelectionLeft
@@ -4776,10 +4717,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate launchCoprocessWithCommand:command];
 }
 
-- (PTYFontInfo*)getFontForChar:(UniChar)ch
-                     isComplex:(BOOL)complex
-                    renderBold:(BOOL *)renderBold
-                  renderItalic:(BOOL *)renderItalic {
+- (PTYFontInfo *)getFontForChar:(UniChar)ch
+                      isComplex:(BOOL)complex
+                     renderBold:(BOOL *)renderBold
+                   renderItalic:(BOOL *)renderItalic {
     BOOL isBold = *renderBold && _useBoldFont;
     BOOL isItalic = *renderItalic && _useItalicFont;
     *renderBold = NO;
@@ -5941,9 +5882,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (theKey == kColorMapBackground) {
         [self updateScrollerForBackgroundColor];
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
-        self.badgeLabel = _badgeLabel;
+        [self recomputeBadgeLabel];
     } else if (theKey == kColorMapForeground) {
-        self.badgeLabel = _badgeLabel;
+        [self recomputeBadgeLabel];
     } else if (theKey == kColorMapSelection) {
         _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                               towardsGrayLevel:0.5];

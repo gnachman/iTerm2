@@ -242,9 +242,6 @@ typedef enum {
 // Semantic history. TODO: Move this into PTYSession.
 @property(nonatomic, readonly) iTermSemanticHistoryController *semanticHistoryController;
 
-// A text badge shown in the top right of the window
-@property(nonatomic, copy) NSString *badgeLabel;
-
 // Is this view in the key window?
 @property(nonatomic, readonly) BOOL isInKeyWindow;
 
@@ -450,6 +447,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (void)setMinimumContrast:(double)value;
 
 - (BOOL)getAndResetDrawingAnimatedImageFlag;
+
+// A text badge shown in the top right of the window
+- (void)setBadgeLabel:(NSString *)badgeLabel;
 
 @end
 
