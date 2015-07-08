@@ -12,8 +12,6 @@
 @implementation PTYTab (Scripting)
 
 - (NSScriptObjectSpecifier *)objectSpecifier {
-  NSScriptObjectSpecifier *containerRef;
-
   id classDescription = [NSClassDescription classDescriptionForClass:[PTYWindow class]];
   NSInteger index = [[self realParentWindow] indexOfTab:self];
   return [[[NSIndexSpecifier alloc] initWithContainerClassDescription:classDescription
