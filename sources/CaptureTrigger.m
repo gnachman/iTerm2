@@ -7,14 +7,14 @@
 //
 
 #import "CaptureTrigger.h"
+
 #import "CapturedOutput.h"
 #import "CommandHistory.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermToolbeltView.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
-#import "PseudoTerminal.h"  // TODO: Use delegacy? Or something?
-#import "ToolbeltView.h"
 #import "VT100ScreenMark.h"
 
 // This one cannot be suppressed.
@@ -45,15 +45,15 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
-    return [ToolbeltView shouldShowTool:kCapturedOutputToolName];
+    return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName];
 }
 
 - (void)showCaptureOutputToolInSession:(PTYSession *)aSession {
     if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
         [aSession.tab.realParentWindow toggleToolbeltVisibility:nil];
     }
-    if (![ToolbeltView shouldShowTool:kCapturedOutputToolName]) {
-        [ToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
+    if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName]) {
+        [iTermToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
     }
 }
 

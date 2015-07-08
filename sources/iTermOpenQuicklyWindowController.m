@@ -11,6 +11,7 @@
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
+#import "SolidColorView.h"
 #import "VT100RemoteHost.h"
 
 @interface iTermOpenQuicklyWindowController () <

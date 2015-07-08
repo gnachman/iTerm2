@@ -17,6 +17,7 @@
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "SessionView.h"
+#import "SolidColorView.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "WindowControllerInterface.h"
@@ -216,8 +217,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 // init/dealloc
-- (id)initWithSession:(PTYSession*)session
-{
+- (id)initWithSession:(PTYSession*)session {
     self = [super init];
     PtyLog(@"PTYTab initWithSession %p", self);
     if (self) {

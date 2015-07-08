@@ -7,7 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "ToolbeltView.h"
+
+#import "iTermToolbeltView.h"
 #import "ProfileListView.h"
 
 @interface ToolProfiles : NSView <ToolbeltTool, ProfileListViewDelegate> {

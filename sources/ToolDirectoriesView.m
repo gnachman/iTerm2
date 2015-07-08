@@ -7,12 +7,13 @@
 //
 
 #import "ToolDirectoriesView.h"
+
 #import "iTermDirectoriesModel.h"
 #import "iTermSearchField.h"
+#import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
 #import "NSTableColumn+iTerm.h"
 #import "PTYSession.h"
-#import "ToolWrapper.h"
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
@@ -30,6 +31,8 @@ static const CGFloat kHelpMargin = 5;
     NSMenu *menu_;
     NSButton *help_;
 }
+
+@synthesize tableView = tableView_;
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -186,8 +189,8 @@ static const CGFloat kHelpMargin = 5;
 
 - (void)updateDirectories {
     [entries_ autorelease];
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    VT100RemoteHost *host = [[wrapper.term currentSession] currentHost];
+    iTermToolWrapper *wrapper = self.toolWrapper;
+    VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
     NSArray *entries = [[iTermDirectoriesModel sharedInstance] entriesSortedByScoreOnHost:host];
     NSArray *reversed = [[entries reverseObjectEnumerator] allObjects];
     entries_ = [reversed retain];
@@ -207,8 +210,8 @@ static const CGFloat kHelpMargin = 5;
     if (shutdown_) {
         return;
     }
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+    iTermToolWrapper *wrapper = self.toolWrapper;
+    [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
 - (void)doubleClickOnTableView:(id)sender {
@@ -217,14 +220,14 @@ static const CGFloat kHelpMargin = 5;
         return;
     }
     iTermDirectoryEntry* entry = filteredEntries_[selectedIndex];
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text;
     if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
         text = [@"cd " stringByAppendingString:entry.path];
     } else {
         text = entry.path;
     }
-    [[wrapper.term currentSession] insertText:text];
+    [wrapper.delegate.delegate toolbeltInsertText:text];
 }
 
 - (void)clear:(id)sender {

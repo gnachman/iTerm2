@@ -231,6 +231,9 @@
 
 @property(nonatomic, assign) BOOL isRetina;
 
+// Draw mark indicators?
+@property(nonatomic, assign) BOOL drawMarkIndicators;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

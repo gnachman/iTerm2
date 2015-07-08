@@ -1,5 +1,7 @@
 #import "PseudoTerminal.h"
 
+#import "CapturedOutput.h"
+#import "CaptureTrigger.h"
 #import "ColorsMenuItemView.h"
 #import "CommandHistory.h"
 #import "CommandHistoryEntry.h"
@@ -28,8 +30,10 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
 #import "iTermTabBarControlView.h"
+#import "iTermToolbeltView.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
@@ -60,7 +64,6 @@
 #import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
-#import "ToolbeltView.h"
 #import "ToolCapturedOutputView.h"
 #import "ToolCommandHistoryView.h"
 #import "ToolDirectoriesView.h"
@@ -68,6 +71,7 @@
 #import "VT100Screen.h"
 #import "VT100Terminal.h"
 #include "iTermFileDescriptorClient.h"
+
 #include <unistd.h>
 
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
@@ -103,11 +107,6 @@ static NSString* TERMINAL_GUID = @"TerminalGuid";
 static NSString* TERMINAL_ARRANGEMENT_HAS_TOOLBELT = @"Has Toolbelt";
 static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"Hiding Toolbelt Should Resize Window";
 
-// In full screen, leave a bit of space at the top of the toolbelt for aesthetics.
-static const CGFloat kToolbeltMargin = 8;
-static const CGFloat kLeftTabsWidth = 150;
-static const CGFloat kHorizontalTabBarHeight = 22;
-
 @interface NSWindow (private)
 - (void)setBottomCornerRounded:(BOOL)rounded;
 @end
@@ -115,7 +114,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 @interface PseudoTerminal () <
     iTermTabBarControlViewDelegate,
     iTermPasswordManagerDelegate,
-    PTYTabDelegate>
+    PTYTabDelegate,
+    iTermRootTerminalViewDelegate,
+    iTermToolbeltViewDelegate>
 @property(nonatomic, assign) BOOL windowInitialized;
 
 // Session ID of session that currently has an auto-command history window open
@@ -125,35 +126,23 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 @implementation PseudoTerminal {
     NSPoint preferredOrigin_;
 
-    SolidColorView* background_;
+    // This is a weak reference to the window's content view, here for convenience because it has
+    // the right type.
+    iTermRootTerminalView *_contentView;
+
     ////////////////////////////////////////////////////////////////////////////
     // Parameter Panel
     // A bookmark may have metasyntactic variables like $$FOO$$ in the command.
     // When opening such a bookmark, pop up a sheet and ask the user to fill in
     // the value. These fields belong to that sheet.
     IBOutlet NSTextField *parameterName;
-    IBOutlet NSPanel     *parameterPanel;
+    IBOutlet NSPanel *parameterPanel;
     IBOutlet NSTextField *parameterValue;
     IBOutlet NSTextField *parameterPrompt;
 
     ////////////////////////////////////////////////////////////////////////////
     // Instant Replay
     iTermInstantReplayWindowController *_instantReplayWindowController;
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Tab View
-    // The tabview occupies almost the entire window. Each tab has an identifier
-    // which is a PTYTab.
-    PTYTabView *TABVIEW;
-
-    // Gray line dividing tab/title bar from content. Will be nil if a division
-    // view isn't needed such as for fullscreen windows or windows without a
-    // title bar (e.g., top-of-screen).
-    NSView *_divisionView;
-
-    // This is a sometimes-visible control that shows the tabs and lets the user
-    // change which is visible.
-    iTermTabBarControlView *tabBarControl;
 
     // This is either 0 or 1. If 1, then a tab item is in the process of being
     // added and the tabBarControl will be shown if it is added successfully
@@ -250,9 +239,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // In 10.7 style full screen mode
     BOOL lionFullScreen_;
 
-    // Toolbelt view. Goes on the right side of the terminal window, if visible.
-    ToolbeltView *toolbelt_;
-
     IBOutlet NSPanel *coprocesssPanel_;
     IBOutlet NSButton *coprocessOkButton_;
     IBOutlet NSComboBox *coprocessCommand_;
@@ -281,19 +267,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // forever.
     int desiredRows_, desiredColumns_;
 
-    // How wide the toolbelt should be. User may drag it to change.
-    // ALWAYS USE THE FLOOR OF THIS VALUE!
-    CGFloat toolbeltWidth_;
-
     // If set, then hiding the toolbelt should shrink the window by the toolbelt's width.
     BOOL hidingToolbeltShouldResizeWindow_;
 
     // If set, prevents hidingToolbeltShouldResizeWindow_ from getting its value inferred based on
     // the window's frame.
     BOOL hidingToolbeltShouldResizeWindowInitialized_;
-
-    // Should the toolbelt be visible?
-    BOOL shouldShowToolbelt_;
 
 #if ENABLE_SHORTCUT_ACCESSORY
     // This thing is a freaking horror show, and it's what people are talking about when they say
@@ -330,8 +309,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     BOOL _parameterPanelCanceled;
 }
-
-@synthesize shouldShowToolbelt = shouldShowToolbelt_;
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
     for (NSDictionary *tabArrangement in arrangement[TERMINAL_ARRANGEMENT_TABS]) {
@@ -572,82 +549,43 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [myWindow release];
 
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
-    background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
+    _contentView =
+        [[[iTermRootTerminalView alloc] initWithFrame:[self.window.contentView frame]
+                                                color:[NSColor windowBackgroundColor]
+                                       tabBarDelegate:self
+                                             delegate:self] autorelease];
+    self.window.contentView = _contentView;
     if (!isHotkey) {
-        [[self window] setAlphaValue:1];
+        self.window.alphaValue = 1;
     } else {
-        [[self window] setAlphaValue:0];
+        self.window.alphaValue = 0;
     }
-    [[self window] setOpaque:NO];
+    self.window.opaque = NO;
 
-    normalBackgroundColor = [background_ color];
+    normalBackgroundColor = [_contentView color];
 
     _resizeInProgressFlag = NO;
 
+    hidingToolbeltShouldResizeWindow_ = NO;
+    // hidingToolbeltShouldResizeWindow_ can only be set to the right value after the window's frame
+    // has been established. The window is always fiddled with (e.g., adding tabs) after this call
+    // returns, so we'll do it on the next spin of the runloop.
+    [self performSelector:@selector(finishToolbeltInitialization) withObject:nil afterDelay:0];
+
     if (!smartLayout || windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         PtyLog(@"no smart layout or is full screen, so set layout done");
-        [(PTYWindow*)[self window] setLayoutDone];
+        [self.ptyWindow setLayoutDone];
     }
 
     if (styleMask & NSTitledWindowMask) {
-        if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)])
+        if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)]) {
             // TODO: Why is this here?
-            [[self window] setBottomCornerRounded:NO];
+            self.window.bottomCornerRounded = NO;
+        }
     }
-
-    // create the tab bar control
-    [[self window] setContentView:background_];
-    [background_ release];
-
-    // create the tabview
-    NSRect tabViewFrame = [[[self window] contentView] bounds];
-
-    TABVIEW = [[PTYTabView alloc] initWithFrame:tabViewFrame];
-    [TABVIEW setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
-    [TABVIEW setAutoresizesSubviews:YES];
-    [TABVIEW setAllowsTruncatedLabels:NO];
-    [TABVIEW setControlSize:NSSmallControlSize];
-    [TABVIEW setTabViewType:NSNoTabsNoBorder];
-    // Add to the window
-    [[[self window] contentView] addSubview:TABVIEW];
-    [TABVIEW release];
-
-    // create the tab bar.
-    NSRect tabBarFrame = [[[self window] contentView] bounds];
-    tabBarFrame.size.height = kHorizontalTabBarHeight;
-    tabBarControl = [[iTermTabBarControlView alloc] initWithFrame:tabBarFrame];
-    NSLog(@"Tab bar control view for %@ (%@) is %@", self, self.window, tabBarControl);
-    tabBarControl.itermTabBarDelegate = self;
-
-    [tabBarControl setModifier:[iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]]];
-    switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-        case PSMTab_BottomTab:
-            tabBarControl.orientation = PSMTabBarHorizontalOrientation;
-            [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
-            break;
-
-        case PSMTab_TopTab:
-            tabBarControl.orientation = PSMTabBarHorizontalOrientation;
-            [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
-            break;
-
-        case PSMTab_LeftTab:
-            tabBarControl.orientation = PSMTabBarVerticalOrientation;
-            tabBarControl.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
-            break;
-    }
-    [[[self window] contentView] addSubview:tabBarControl];
-
-    [tabBarControl setTabView:TABVIEW];
-    NSLog(@"Add tab bar control %@ as subview of %@", tabBarControl, self.window.contentView);
-    [TABVIEW setDelegate:tabBarControl];
-    [tabBarControl setDelegate:self];
-    [tabBarControl setHideForSingleTab:NO];
 
     [self updateTabBarStyle];
-
-    [[[self window] contentView] setAutoresizesSubviews: YES];
-    [[self window] setDelegate: self];
+    self.window.delegate = self;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateWindowNumberVisibility:)
@@ -682,8 +620,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [self hideMenuBar];
     }
 
-    [self updateDivisionView];
-
     if (isHotkey) {
         // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
@@ -695,26 +631,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
     }
-
-    // A decent default value.
-    toolbeltWidth_ = 250;
-    [self constrainToolbeltWidth];
-
-    NSRect toolbeltFrame = NSMakeRect(0,
-                                      0,
-                                      floor(toolbeltWidth_),
-                                      self.window.frame.size.height - kToolbeltMargin);
-    toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
-                                                term:self] autorelease];
-    toolbelt_.autoresizingMask = (NSViewMinXMargin | NSViewHeightSizable);
-    [[self.window contentView] addSubview:toolbelt_];
-    [self updateToolbelt];
-
-    hidingToolbeltShouldResizeWindow_ = NO;
-    // hidingToolbeltShouldResizeWindow_ can only be set to the right value after the window's frame
-    // has been established. The window is always fiddled with (e.g., adding tabs) after this call
-    // returns, so we'll do it on the next spin of the runloop.
-    [self performSelector:@selector(finishToolbeltInitialization) withObject:nil afterDelay:0];
 
     wellFormed_ = YES;
     [[self window] setRestorable:YES];
@@ -752,25 +668,25 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
+    [_contentView shutdown];
+
     [self closeInstantReplayWindow];
     doNotSetRestorableState_ = YES;
     wellFormed_ = NO;
-    [toolbelt_ shutdown];
 
     // Do not assume that [self window] is valid here. It may have been freed.
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     // Release all our sessions
     NSTabViewItem *aTabViewItem;
-    while ([TABVIEW numberOfTabViewItems])  {
-        aTabViewItem = [TABVIEW tabViewItemAtIndex:0];
+    while ([_contentView.tabView numberOfTabViewItems])  {
+        aTabViewItem = [_contentView.tabView tabViewItemAtIndex:0];
         [[aTabViewItem identifier] terminateAllSessions];
         PTYTab* theTab = [aTabViewItem identifier];
         [theTab setParentWindow:nil];
         theTab.delegate = nil;
-        [TABVIEW removeTabViewItem:aTabViewItem];
+        [_contentView.tabView removeTabViewItem:aTabViewItem];
     }
 
     if ([[iTermController sharedInstance] currentTerminal] == self) {
@@ -786,12 +702,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [commandHistoryPopup release];
     [_directoriesPopupWindowController release];
     [autocompleteView release];
-    tabBarControl.itermTabBarDelegate = nil;
-    tabBarControl.delegate = nil;
-    [tabBarControl release];
     [_terminalGuid release];
     [lastArrangement_ release];
-    [_divisionView release];
     [_autoCommandHistorySessionGuid release];
 #if ENABLE_SHORTCUT_ACCESSORY
     [_shortcutAccessoryViewController release];
@@ -799,64 +711,24 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [super dealloc];
 }
 
-- (void)updateDivisionView {
-    // The division is only shown if there is a title bar and no tab bar. There
+- (BOOL)tabBarVisibleOnTop {
+    return ([self tabBarShouldBeVisible] &&
+            [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
+}
+
+- (BOOL)divisionViewShouldBeVisible {
+    // The division is only shown if there is a title bar and no tab bar on top. There
     // are cases in fullscreen (e.g., when entering Lion fullscreen) when the
     // window doesn't have a title bar but also isn't borderless we also check
     // if we're in fullscreen.
-    if ((self.window.styleMask & NSTitledWindowMask) &&
-        ![self anyFullScreen] &&
-        ![self tabBarShouldBeVisible]) {
-        // A division is needed, but there might already be one.
-        NSRect reducedTabviewFrame = TABVIEW.frame;
-        if (!_divisionView) {
-          reducedTabviewFrame.size.height -= 1;
-        }
-        NSRect divisionViewFrame = NSMakeRect(reducedTabviewFrame.origin.x,
-                                              reducedTabviewFrame.size.height + reducedTabviewFrame.origin.y,
-                                              reducedTabviewFrame.size.width,
-                                              1);
-        if (_divisionView) {
-            // Simply update divisionView's frame.
-            _divisionView.frame = divisionViewFrame;
-        } else {
-            // Shrink the tabview and add a division view.
-            TABVIEW.frame = reducedTabviewFrame;
-            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame
-                                                            color:[NSColor darkGrayColor]];
-            _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
-            [self.window.contentView addSubview:_divisionView];
-        }
-    } else if (_divisionView) {
-        // Remove existing division
-        NSRect augmentedTabviewFrame = TABVIEW.frame;
-        augmentedTabviewFrame.size.height += 1;
-        [_divisionView removeFromSuperview];
-        [_divisionView release];
-        _divisionView = nil;
-        TABVIEW.frame = augmentedTabviewFrame;
-    }
+    return (!togglingFullScreen_ &&
+            (self.window.styleMask & NSTitledWindowMask) &&
+            ![self anyFullScreen] &&
+            ![self tabBarVisibleOnTop]);
 }
 
 - (CGFloat)tabviewWidth {
-    if ([self tabBarShouldBeVisible] &&
-        [iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab)  {
-        return kLeftTabsWidth;
-    }
-
-    CGFloat width;
-    if ([self shouldShowToolbelt] && !exitingLionFullscreen_) {
-        width = self.window.frame.size.width - floor(toolbeltWidth_);
-    } else {
-        width = self.window.frame.size.width;
-    }
-    if ([self _haveLeftBorder]) {
-        --width;
-    }
-    if ([self _haveRightBorder]) {
-        --width;
-    }
-    return width;
+    return _contentView.tabviewWidth;
 }
 
 - (void)toggleBroadcastingToCurrentSession:(id)sender
@@ -874,32 +746,32 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
+- (BOOL)shouldShowToolbelt {
+    return _contentView.shouldShowToolbelt;
+}
+
 - (void)hideToolbelt {
-    if (shouldShowToolbelt_) {
+    if (_contentView.shouldShowToolbelt) {
         [self toggleToolbeltVisibility:nil];
     }
 }
 
 - (IBAction)toggleToolbeltVisibility:(id)sender {
-    shouldShowToolbelt_ = !shouldShowToolbelt_;
+    _contentView.shouldShowToolbelt = !_contentView.shouldShowToolbelt;
     BOOL didResizeWindow = NO;
-    if ([self shouldShowToolbelt]) {
-        [toolbelt_ setHidden:NO];
-
+    if (_contentView.shouldShowToolbelt) {
         if (![self anyFullScreen]) {
-            [self constrainToolbeltWidth];
-
             // Tweak the window's frame to avoid shrinking content, if possible.
             NSRect windowFrame = self.window.frame;
-            windowFrame.size.width += toolbeltWidth_;
+            windowFrame.size.width += _contentView.toolbeltWidth;
             NSRect screenFrame = self.window.screen.visibleFrame;
             CGFloat rightLimit = NSMaxX(screenFrame);
             CGFloat overage = NSMaxX(windowFrame) - rightLimit;
             if (overage > 0) {
                 // Compensate by making the toolbelt a little smaller, unless that would make it too
                 // small.
-                if (toolbeltWidth_ - overage > 100) {
-                    toolbeltWidth_ -= overage;
+                if (_contentView.toolbeltWidth - overage > 100) {
+                    _contentView.toolbeltWidth = _contentView.toolbeltWidth - overage;
                     windowFrame.size.width -= overage;
                     overage = 0;
                 }
@@ -913,10 +785,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         [self refreshTools];
     } else {
-        [toolbelt_ setHidden:YES];
         if (![self anyFullScreen] && hidingToolbeltShouldResizeWindow_) {
             NSRect windowFrame = self.window.frame;
-            windowFrame.size.width -= toolbeltWidth_;
+            windowFrame.size.width -= _contentView.toolbeltWidth;
             didResizeWindow = YES;
             [self.window setFrame:windowFrame display:YES];
         }
@@ -1026,7 +897,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (PTYTab *)tabWithUniqueId:(int)uniqueId {
     for (int i = 0; i < [self numberOfTabs]; i++) {
-        PTYTab *tab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        PTYTab *tab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
         if (tab.uniqueId == uniqueId) {
             return tab;
         }
@@ -1082,12 +953,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)selectSessionAtIndexAction:(id)sender
 {
-    [TABVIEW selectTabViewItemAtIndex:[sender tag]];
+    [_contentView.tabView selectTabViewItemAtIndex:[sender tag]];
 }
 
 - (NSInteger)indexOfTab:(PTYTab*)aTab
 {
-    NSArray* items = [TABVIEW tabViewItems];
+    NSArray* items = [_contentView.tabView tabViewItems];
     for (int i = 0; i < [items count]; i++) {
         NSTabViewItem *tabViewItem = [items objectAtIndex:i];
         if ([tabViewItem identifier] == aTab) {
@@ -1216,7 +1087,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (BOOL)confirmCloseTab:(PTYTab *)aTab
 {
-    if ([TABVIEW indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
+    if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
         return NO;
     }
 
@@ -1317,13 +1188,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
     }
 
-    if ([TABVIEW numberOfTabViewItems] <= 1 && self.windowInitialized) {
+    if ([_contentView.tabView numberOfTabViewItems] <= 1 && self.windowInitialized) {
         [[self window] close];
     } else {
         NSTabViewItem *aTabViewItem;
         // now get rid of this tab
         aTabViewItem = [aTab tabViewItem];
-        [TABVIEW removeTabViewItem:aTabViewItem];
+        [_contentView.tabView removeTabViewItem:aTabViewItem];
         PtyLog(@"closeSession - calling fitWindowToTabs");
         [self fitWindowToTabs];
     }
@@ -1374,7 +1245,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)toggleFullScreenTabBar
 {
     fullscreenTabs_ = !fullscreenTabs_;
-    [tabBarControl updateFlashing];
+    [_contentView.tabBarControl updateFlashing];
     [[NSUserDefaults standardUserDefaults] setBool:fullscreenTabs_
                                             forKey:kShowFullscreenTabBarKey];
     [self repositionWidgets];
@@ -1382,7 +1253,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (IBAction)closeCurrentTab:(id)sender {
-    if ([self tabView:TABVIEW shouldCloseTabViewItem:[TABVIEW selectedTabViewItem]]) {
+    if ([self tabView:_contentView.tabView shouldCloseTabViewItem:[_contentView.tabView selectedTabViewItem]]) {
         [self closeTab:[self currentTab]];
     }
 }
@@ -1392,7 +1263,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
     [appDelegate userDidInteractWithASession];
     if ([[self window] isKeyWindow]) {
-        PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
+        PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
         [self closeSessionWithConfirmation:aSession];
     }
 }
@@ -1439,11 +1310,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (IBAction)previousTab:(id)sender {
-    [TABVIEW previousTab:sender];
+    [_contentView.tabView previousTab:sender];
 }
 
 - (IBAction)nextTab:(id)sender {
-    [TABVIEW nextTab:sender];
+    [_contentView.tabView nextTab:sender];
 }
 
 - (IBAction)previousPane:(id)sender
@@ -1458,12 +1329,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (int)numberOfTabs
 {
-    return [TABVIEW numberOfTabViewItems];
+    return [_contentView.tabView numberOfTabViewItems];
 }
 
 - (PTYTab*)currentTab
 {
-    return [[TABVIEW selectedTabViewItem] identifier];
+    return [[_contentView.tabView selectedTabViewItem] identifier];
 }
 
 - (void)makeSessionActive:(PTYSession *)session {
@@ -1476,7 +1347,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else {
         [self.window makeKeyAndOrderFront:nil];
     }
-    [TABVIEW selectTabViewItem:session.tab.tabViewItem];
+    [_contentView.tabView selectTabViewItem:session.tab.tabViewItem];
     if (session.tab.isMaximized) {
         [session.tab unmaximize];
     }
@@ -1485,7 +1356,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (PTYSession *)currentSession
 {
-    return [[[TABVIEW selectedTabViewItem] identifier] activeSession];
+    return [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
 }
 
 
@@ -1548,7 +1419,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     NSMutableArray *sessions = [NSMutableArray array];
     int i;
-    int n = [TABVIEW numberOfTabViewItems];
+    int n = [_contentView.tabView numberOfTabViewItems];
     switch ([self broadcastMode]) {
         case BROADCAST_OFF:
             break;
@@ -1563,7 +1434,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         case BROADCAST_TO_ALL_TABS:
             for (i = 0; i < n; ++i) {
-                for (PTYSession* aSession in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+                for (PTYSession* aSession in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
                     if (![aSession exited]) {
                         [sessions addObject:aSession];
                     }
@@ -1802,7 +1673,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         tabRect.origin.y += step.height;
     }
 
-    NSDictionary* tabArrangement = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] objectAtIndex:0];
+    NSDictionary* tabArrangement = terminalArrangement[TERMINAL_ARRANGEMENT_TABS][0];
     NSRect contentRect = NSMakeRect(rect.origin.x + 1,
                                     rect.origin.y,
                                     rect.size.width - 2,
@@ -2076,7 +1947,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             return NO;
         }
     }
-    shouldShowToolbelt_ = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
+    _contentView.shouldShowToolbelt = [arrangement[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] boolValue];
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
@@ -2095,8 +1966,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     const int tabIndex = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue];
-    if (tabIndex >= 0 && tabIndex < [TABVIEW numberOfTabViewItems]) {
-        [TABVIEW selectTabViewItemAtIndex:tabIndex];
+    if (tabIndex >= 0 && tabIndex < [_contentView.tabView numberOfTabViewItems]) {
+        [_contentView.tabView selectTabViewItemAtIndex:tabIndex];
     }
 
     Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] profile];
@@ -2110,7 +1981,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     [self fitTabsToWindow];
-    [self updateToolbelt];
+    [_contentView updateToolbelt];
     return YES;
 }
 
@@ -2133,7 +2004,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     result[TERMINAL_ARRANGEMENT_Y_ORIGIN] = @(rect.origin.y);
     result[TERMINAL_ARRANGEMENT_WIDTH] = @(rect.size.width);
     result[TERMINAL_ARRANGEMENT_HEIGHT] = @(rect.size.height);
-    result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(shouldShowToolbelt_);
+    result[TERMINAL_ARRANGEMENT_HAS_TOOLBELT] = @(_contentView.shouldShowToolbelt);
     result[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] =
             @(hidingToolbeltShouldResizeWindow_);
 
@@ -2153,7 +2024,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     // Save tabs.
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[self numberOfTabs]];
-    for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
+    for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
         PTYTab *theTab = [tabViewItem identifier];
         if ([[theTab sessions] count]) {
             if (!excludeTmux || ![theTab isTmuxTab]) {
@@ -2167,7 +2038,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     result[TERMINAL_ARRANGEMENT_TABS] = tabs;
 
     // Save index of selected tab.
-    result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @([TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]);
+    result[TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] = @([_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]);
     result[TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] = @(hideAfterOpening_);
     result[TERMINAL_ARRANGEMENT_IS_HOTKEY_WINDOW] = @(_isHotKeyWindow);
 
@@ -2203,14 +2074,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return NO;
 }
 
-- (ToolbeltView *)toolbelt {
-    return toolbelt_;
+// TODO: Kill this
+- (iTermToolbeltView *)toolbelt {
+    return _contentView.toolbelt;
 }
 
 - (void)refreshTools {
-    [[toolbelt_ commandHistoryView] updateCommands];
-    [[toolbelt_ capturedOutputView] updateCapturedOutput];
-    [[toolbelt_ directoriesView] updateDirectories];
+    [[_contentView.toolbelt commandHistoryView] updateCommands];
+    [[_contentView.toolbelt capturedOutputView] updateCapturedOutput];
+    [[_contentView.toolbelt directoriesView] updateDirectories];
 }
 
 - (int)numRunningSessions
@@ -2288,7 +2160,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             }
 
             if (doTmuxDetach) {
-                 PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
+                 PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
                  [[aSession tmuxController] requestDetach];
              }
         }
@@ -2315,8 +2187,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [commandHistoryPopup close];
     [_directoriesPopupWindowController close];
 
-    // tabBarControl is holding on to us, so we have to tell it to let go
-    [tabBarControl setDelegate:nil];
+    // _contentView.tabBarControl is holding on to us, so we have to tell it to let go
+    [_contentView.tabBarControl setDelegate:nil];
 
     [self disableBlur];
     // If a fullscreen window is closing, hide the menu bar unless it's only fullscreen because it's
@@ -2471,31 +2343,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return _isHotKeyWindow;
 }
 
-- (NSRect)toolbeltFrame {
-    CGFloat width = floor(toolbeltWidth_);
-    NSView *contentView = self.window.contentView;
-    CGFloat top = [self _haveTopBorder] ? 1 : 0;
-    CGFloat bottom = [self _haveBottomBorder] ? 1 : 0;
-    CGFloat right = [self _haveRightBorder] ? 1 : 0;
-    NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width - right,
-                                      bottom,
-                                      width,
-                                      contentView.bounds.size.height - top - bottom);
-    return toolbeltFrame;
-}
-
 - (CGFloat)growToolbeltBy:(CGFloat)diff {
-    CGFloat before = toolbeltWidth_;
-    toolbeltWidth_ += diff;
-    [self constrainToolbeltWidth];
+    CGFloat before = _contentView.toolbeltWidth;
+    _contentView.toolbeltWidth = _contentView.toolbeltWidth + diff;
+    [_contentView constrainToolbeltWidth];
     [self repositionWidgets];
-    return toolbeltWidth_ - before;
-}
-
-- (void)constrainToolbeltWidth {
-    CGFloat minSize = MIN(100, self.window.frame.size.width * 0.05);
-    toolbeltWidth_ = MAX(MIN(toolbeltWidth_, self.window.frame.size.width / 2),
-                         minSize);
+    return _contentView.toolbeltWidth - before;
 }
 
 - (void)canonicalizeWindowFrame {
@@ -2676,7 +2529,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             break;
     }
 
-    [toolbelt_ setFrame:[self toolbeltFrame]];
+    [_contentView updateToolbeltFrame];
 }
 
 - (void)screenParametersDidChange
@@ -2701,8 +2554,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     [self maybeHideHotkeyWindow];
 
-    tabBarControl.flashing = NO;
-    tabBarControl.cmdPressed = NO;
+    _contentView.tabBarControl.flashing = NO;
+    _contentView.tabBarControl.cmdPressed = NO;
 
     if ([[pbHistoryView window] isVisible] ||
         [[autocompleteView window] isVisible] ||
@@ -2715,7 +2568,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
           __FILE__, __LINE__, aNotification);
 
     if (_fullScreen) {
-        tabBarControl.flashing = NO;
+        _contentView.tabBarControl.flashing = NO;
         [self showMenuBar];
     }
     // update the cursor
@@ -2927,7 +2780,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                    controlSize:NSRegularControlSize
                                  scrollerStyle:[self scrollerStyle]];
     // Respect minimum tab sizes.
-    for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
+    for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
         PTYTab* theTab = [tabViewItem identifier];
         NSSize minTabSize = [theTab minSize];
         tabSize.width = MAX(tabSize.width, minTabSize.width);
@@ -3077,7 +2930,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [self invalidateRestorableState];
 
     // If the toolbelt changed size by autoresizing, keep things in sync.
-    toolbeltWidth_ = toolbelt_.frame.size.width;
+    _contentView.toolbeltWidth = _contentView.toolbelt.frame.size.width;
 }
 
 - (void)updateUseTransparency {
@@ -3230,6 +3083,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     [SessionView windowDidResize];
     PtyLog(@"toggleFullScreenMode called");
+    CGFloat savedToolbeltWidth = _contentView.toolbeltWidth;
     if (!_fullScreen) {
         oldFrame_ = self.window.frame;
         oldFrameSizeIsBogus_ = NO;
@@ -3281,9 +3135,11 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
     }
     _fullScreen = !_fullScreen;
-    [tabBarControl updateFlashing];
+    [_contentView.tabBarControl updateFlashing];
     togglingFullScreen_ = YES;
-    [self updateToolbelt];
+    _contentView.toolbeltWidth = savedToolbeltWidth;
+    [_contentView constrainToolbeltWidth];
+    [_contentView updateToolbelt];
     [self updateUseTransparency];
 
     if (_fullScreen) {
@@ -3292,7 +3148,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [self hideMenuBar];
     }
 
-    [toolbelt_ setHidden:![self shouldShowToolbelt]];
     // The toolbelt may try to become the first responder.
     [[self window] makeFirstResponder:[[self currentSession] textview]];
 
@@ -3300,8 +3155,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // Find the largest possible session size for the existing window frame
         // and fit the window to an imaginary session of that size.
         NSSize contentSize = [[[self window] contentView] frame].size;
-        if ([self shouldShowToolbelt]) {
-            contentSize.width -= toolbelt_.frame.size.width;
+        if (_contentView.shouldShowToolbelt) {
+            contentSize.width -= _contentView.toolbelt.frame.size.width;
         }
         if ([self tabBarShouldBeVisible]) {
             switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
@@ -3376,22 +3231,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     return _fullScreen;
 }
 
-- (BOOL)tabBarShouldBeVisible
-{
-    if (tabBarControl.flashing) {
-        return YES;
-    } else {
-        return [self tabBarShouldBeVisibleWithAdditionalTabs:0];
-    }
+- (BOOL)tabBarShouldBeVisible {
+    return _contentView.tabBarShouldBeVisible;
 }
 
-- (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n
-{
-    if ([self anyFullScreen] && !fullscreenTabs_) {
-        return NO;
-    }
-    return ([TABVIEW numberOfTabViewItems] + n > 1 ||
-            ![iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
+- (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n {
+    return [_contentView tabBarShouldBeVisibleWithAdditionalTabs:n];
 }
 
 - (NSScrollerStyle)scrollerStyle
@@ -3403,8 +3248,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (BOOL)scrollbarShouldBeVisible
-{
+- (BOOL)scrollbarShouldBeVisible {
+    return _contentView.scrollbarShouldBeVisible;
     return ![iTermPreferences boolForKey:kPreferenceKeyHideScrollbar];
 }
 
@@ -3481,14 +3326,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 }
 
-- (void)windowWillEnterFullScreen:(NSNotification *)notification
-{
+- (void)windowWillEnterFullScreen:(NSNotification *)notification {
     DLog(@"Window will enter lion fullscreen");
-    [self repositionWidgets];
     togglingLionFullScreen_ = YES;
-    [_divisionView removeFromSuperview];
-    [_divisionView release];
-    _divisionView = nil;
+    [self repositionWidgets];
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
@@ -3498,8 +3339,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
-    [tabBarControl updateFlashing];
-    [self updateToolbelt];
+    [_contentView.tabBarControl updateFlashing];
+    [_contentView updateToolbelt];
     // Set scrollbars appropriately
     [self updateSessionScrollbars];
     [self fitTabsToWindow];
@@ -3516,7 +3357,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     DLog(@"Window will exit lion fullscreen");
     exitingLionFullscreen_ = YES;
-    [tabBarControl updateFlashing];
+    [_contentView.tabBarControl updateFlashing];
     [self fitTabsToWindow];
     [self repositionWidgets];
 }
@@ -3527,14 +3368,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
-    [tabBarControl updateFlashing];
+    [_contentView.tabBarControl updateFlashing];
     // Set scrollbars appropriately
-    [self updateDivisionView];
     [self updateSessionScrollbars];
     [self fitTabsToWindow];
     [self repositionWidgets];
     [self invalidateRestorableState];
-    [self updateToolbelt];
+    [_contentView updateToolbelt];
 
     DLog(@"Window did exit fullscreen. Set window type to %d", savedWindowType_);
     windowType_ = savedWindowType_;
@@ -3726,7 +3566,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                          atIndex:nextIndex++];
 
     // Create a menu with a submenu to navigate between tabs if there are more than one
-    if ([TABVIEW numberOfTabViewItems] > 1) {
+    if ([_contentView.tabView numberOfTabViewItems] > 1) {
         [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"Select",
                                                                         @"iTerm",
                                                                         [NSBundle bundleForClass:[self class]],
@@ -3738,14 +3578,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         NSMenu *tabMenu = [[NSMenu alloc] initWithTitle:@""];
         int i;
 
-        for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
+        for (i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
             aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"%@ #%d",
-                                                           [[TABVIEW tabViewItemAtIndex: i] label],
+                                                           [[_contentView.tabView tabViewItemAtIndex: i] label],
                                                            i+1]
                                                    action:@selector(selectTab:)
                                             keyEquivalent:@""];
-            [aMenuItem setRepresentedObject:[[TABVIEW tabViewItemAtIndex:i] identifier]];
-            [aMenuItem setTarget:TABVIEW];
+            [aMenuItem setRepresentedObject:[[_contentView.tabView tabViewItemAtIndex:i] identifier]];
+            [aMenuItem setTarget:_contentView.tabView];
             [tabMenu addItem:aMenuItem];
             [aMenuItem release];
         }
@@ -3811,7 +3651,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     DLog(@"Did select tab view %@", tabViewItem);
-    tabBarControl.flashing = YES;
+    _contentView.tabBarControl.flashing = YES;
 
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
@@ -3973,8 +3813,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)_updateTabObjectCounts
 {
-    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYTab *theTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+    for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
+        PTYTab *theTab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
         [theTab setObjectCount:i+1];
     }
 }
@@ -3995,7 +3835,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     // In fullscreen mode reordering the tabs causes the tabview not to be displayed properly.
     // This seems to fix it.
-    [TABVIEW display];
+    [_contentView.tabView display];
 
     for (PTYSession* aSession in [aTab sessions]) {
         [aSession setIgnoreResizeNotifications:NO];
@@ -4018,7 +3858,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     if (tabViewItem == [aTabView selectedTabViewItem]) {
         NSView *textview = [tabViewItem view];
-        NSRect tabFrame = [tabBarControl frame];
+        NSRect tabFrame = [_contentView.tabBarControl frame];
 
         NSRect contentFrame, viewRect;
         contentFrame = viewRect = [textview frame];
@@ -4086,7 +3926,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
         [viewImage unlockFocus];
 
-        offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
+        offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
         if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab) {
             offset->height = kHorizontalTabBarHeight;
         } else if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab) {
@@ -4100,7 +3940,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // grabs whole tabview image
         viewImage = [[tabViewItem identifier] image:YES];
 
-        offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
+        offset->width = [(id <PSMTabStyle>)[_contentView.tabBarControl style] leftMarginForTabBarControl];
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_LeftTab:
                 offset->width = kLeftTabsWidth;
@@ -4130,13 +3970,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     // check window size in case tabs have to be hidden or shown
-    if (([TABVIEW numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
+    if (([_contentView.tabView numberOfTabViewItems] == 1) ||  // just decreased to 1 or increased above 1 and is hidden
         ([iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
-         ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
+         ([_contentView.tabView numberOfTabViewItems] > 1 && [_contentView.tabBarControl isHidden]))) {
         // Need to change the visibility status of the tab bar control.
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
 
-        NSTabViewItem *tabViewItem = [[TABVIEW tabViewItems] objectAtIndex:0];
+        NSTabViewItem *tabViewItem = [[_contentView.tabView tabViewItems] objectAtIndex:0];
         PTYTab *firstTab = [tabViewItem identifier];
 
         if (wasDraggedFromAnotherWindow_) {
@@ -4167,16 +4007,16 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
 
     // Create a menu with a submenu to navigate between tabs if there are more than one
-    if ([TABVIEW numberOfTabViewItems] > 1) {
+    if ([_contentView.tabView numberOfTabViewItems] > 1) {
         NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
         NSUInteger count = 1;
-        for (NSTabViewItem *aTabViewItem in [TABVIEW tabViewItems]) {
+        for (NSTabViewItem *aTabViewItem in [_contentView.tabView tabViewItems]) {
             NSString *title = [NSString stringWithFormat:@"%@ #%ld", [aTabViewItem label], (unsigned long)count++];
             item = [[[NSMenuItem alloc] initWithTitle:title
                                                action:@selector(selectTab:)
                                         keyEquivalent:@""] autorelease];
             [item setRepresentedObject:[aTabViewItem identifier]];
-            [item setTarget:TABVIEW];
+            [item setTarget:_contentView.tabView];
             [tabMenu addItem:item];
         }
 
@@ -4203,7 +4043,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [rootMenu addItem:item];
     }
 
-    if ([TABVIEW numberOfTabViewItems] > 1) {
+    if ([_contentView.tabView numberOfTabViewItems] > 1) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Move to New Window"
                                            action:@selector(moveTabToNewWindowContextualMenuAction:)
                                     keyEquivalent:@""] autorelease];
@@ -4211,7 +4051,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [rootMenu addItem:item];
     }
 
-    if ([TABVIEW numberOfTabViewItems] > 1) {
+    if ([_contentView.tabView numberOfTabViewItems] > 1) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Close Other Tabs"
                                            action:@selector(closeOtherTabs:)
                                     keyEquivalent:@""] autorelease];
@@ -4219,7 +4059,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [rootMenu addItem:item];
     }
 
-    if ([TABVIEW numberOfTabViewItems] > 1) {
+    if ([_contentView.tabView numberOfTabViewItems] > 1) {
         item = [[[NSMenuItem alloc] initWithTitle:@"Close Tabs to the Right"
                                            action:@selector(closeTabsToTheRight:)
                                     keyEquivalent:@""] autorelease];
@@ -4326,9 +4166,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)tabView:(NSTabView *)tabView updateStateForTabViewItem:(NSTabViewItem *)tabViewItem {
     PTYTab *tab = tabViewItem.identifier;
-    [tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
-    [tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
-    [tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setIsProcessing:tab.isProcessing forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setIcon:tab.icon forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
 }
 
 - (void)updateTabColors
@@ -4337,17 +4177,17 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
         PTYSession *aSession = [aTab activeSession];
         NSColor *color = [aSession tabColor];
-        [tabBarControl setTabColor:color forTabViewItem:tabViewItem];
-        if ([TABVIEW selectedTabViewItem] == tabViewItem) {
-            NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
-            if ([TABVIEW numberOfTabViewItems] == 1 &&
+        [_contentView.tabBarControl setTabColor:color forTabViewItem:tabViewItem];
+        if ([_contentView.tabView selectedTabViewItem] == tabViewItem) {
+            NSColor* newTabColor = [_contentView.tabBarControl tabColorForTabViewItem:tabViewItem];
+            if ([_contentView.tabView numberOfTabViewItems] == 1 &&
                 [iTermPreferences boolForKey:kPreferenceKeyHideTabBar] &&
                 newTabColor) {
                 [[self window] setBackgroundColor:newTabColor];
-                [background_ setColor:newTabColor];
+                [_contentView setColor:newTabColor];
             } else {
                 [[self window] setBackgroundColor:nil];
-                [background_ setColor:normalBackgroundColor];
+                [_contentView setColor:normalBackgroundColor];
             }
         }
     }
@@ -4369,30 +4209,30 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (PTYTabView *)tabView
 {
-    return TABVIEW;
+    return _contentView.tabView;
 }
 
 - (BOOL)isInitialized
 {
-    return TABVIEW != nil;
+    return _contentView.tabView != nil;
 }
 
 - (void)fillPath:(NSBezierPath*)path {
-    if ([tabBarControl isHidden] && ![self anyFullScreen]) {
+    if ([_contentView.tabBarControl isHidden] && ![self anyFullScreen]) {
         [[NSColor windowBackgroundColor] set];
         [path fill];
         [[NSColor darkGrayColor] set];
         [path stroke];
     } else {
-        [tabBarControl fillPath:path];
+        [_contentView.tabBarControl fillPath:path];
     }
 }
 
 - (NSColor *)accessoryTextColor {
-    if ([tabBarControl isHidden] && ![self anyFullScreen]) {
+    if ([_contentView.tabBarControl isHidden] && ![self anyFullScreen]) {
         return [NSColor blackColor];
     } else {
-        return [tabBarControl accessoryTextColor];
+        return [_contentView.tabBarControl accessoryTextColor];
     }
 }
 
@@ -4500,7 +4340,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // Is there space above?
         p.y = windowRect.origin.y + windowRect.size.height;
     } else {
-        p.y = [TABVIEW convertRect:NSMakeRect(0, 0, 0, 0) toView:nil].origin.y - size.height;
+        p.y = [_contentView.tabView convertRect:NSMakeRect(0, 0, 0, 0) toView:nil].origin.y - size.height;
     }
     return p;
 }
@@ -4537,7 +4377,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (PTYSession *)syntheticSessionForSession:(PTYSession *)oldSession {
-    NSTabViewItem *tabViewItem = [TABVIEW selectedTabViewItem];
+    NSTabViewItem *tabViewItem = [_contentView.tabView selectedTabViewItem];
     if (!tabViewItem) {
         return nil;
     }
@@ -4895,7 +4735,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)recreateTab:(PTYTab *)tab
     withArrangement:(NSDictionary *)arrangement
            sessions:(NSArray *)sessions {
-    NSInteger tabIndex = [TABVIEW indexOfTabViewItemWithIdentifier:tab];
+    NSInteger tabIndex = [_contentView.tabView indexOfTabViewItemWithIdentifier:tab];
     if (tabIndex == NSNotFound) {
         return;
     }
@@ -5000,7 +4840,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
            performSetup:(BOOL)performSetup
 {
     NSView *scrollView;
-    NSColor *tabColor = [[[tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
+    NSColor *tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
@@ -5126,7 +4966,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
     }
-    [[toolbelt_ commandHistoryView] updateCommands];
+    [[_contentView.toolbelt commandHistoryView] updateCommands];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
         [self editSession:self.currentSession makeKey:NO];
@@ -5148,7 +4988,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // Determine the size of the largest tab.
     NSSize maxTabSize = NSZeroSize;
     PtyLog(@"fitWindowToTabs.......");
-    for (NSTabViewItem* item in [TABVIEW tabViewItems]) {
+    for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
         PTYTab* tab = [item identifier];
         if ([tab isTmuxTab] && excludeTmux) {
             continue;
@@ -5221,8 +5061,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     winSize.height += decorationSize.height;
     NSRect frame = [[self window] frame];
 
-    if ([self shouldShowToolbelt]) {
-        winSize.width += floor(toolbeltWidth_);
+    if (_contentView.shouldShowToolbelt) {
+        winSize.width += floor(_contentView.toolbeltWidth);
     }
 
     BOOL mustResizeTabs = NO;
@@ -5269,15 +5109,15 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         // the window's content view does not have a subview with an autoresizing
         // mask or autoresizing is off for the content view. I'm sure this isn't
         // the best fix, but it's all I could find: I turn off the autoresizing
-        // mask for the TABVIEW (which I really don't want autoresized--it needs to
+        // mask for the _contentView.tabView (which I really don't want autoresized--it needs to
         // be done by hand in fitTabToWindow), and add a silly one pixel view
         // that lives just long enough to be resized in this function. I don't know
         // why it works but it does.
         bugFixView = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)] autorelease];
         bugFixView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
         [[[self window] contentView] addSubview:bugFixView];
-        savedMask = TABVIEW.autoresizingMask;
-        TABVIEW.autoresizingMask = 0;
+        savedMask = _contentView.tabView.autoresizingMask;
+        _contentView.tabView.autoresizingMask = 0;
 #if ENABLE_SHORTCUT_ACCESSORY
     }
 #endif
@@ -5342,8 +5182,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [[self window] setFrame:frame display:YES];
 
     if (bugFixView) {
-        // Restore TABVIEW's autoresizingMask and remove the stupid bugFixView.
-        TABVIEW.autoresizingMask = savedMask;
+        // Restore _contentView.tabView's autoresizingMask and remove the stupid bugFixView.
+        _contentView.tabView.autoresizingMask = savedMask;
         [bugFixView removeFromSuperview];
     }
     [[[self window] contentView] setAutoresizesSubviews:YES];
@@ -5353,7 +5193,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [[session textview] setNeedsDisplay:YES];
     }
     PtyLog(@"fitWindowToTabs - update tab bar");
-    [tabBarControl updateFlashing];
+    [_contentView.tabBarControl updateFlashing];
     PtyLog(@"fitWindowToTabs - return.");
 
     if (mustResizeTabs) {
@@ -5456,7 +5296,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     // Pick 400 as an absolute minimum just to be safe. This is rather arbitrary and hacky.
     float minWidth = 400;
-    for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
+    for (NSTabViewItem* tabViewItem in [_contentView.tabView tabViewItems]) {
         PTYTab* theTab = [tabViewItem identifier];
         minWidth = MAX(minWidth, [theTab minSize].width);
     }
@@ -5465,7 +5305,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (void)appendTab:(PTYTab*)aTab
 {
-    [self insertTab:aTab atIndex:[TABVIEW numberOfTabViewItems]];
+    [self insertTab:aTab atIndex:[_contentView.tabView numberOfTabViewItems]];
 }
 
 - (NSString *)promptForParameter:(NSString *)name {
@@ -5525,10 +5365,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (NSArray*)tabs
 {
-    int n = [TABVIEW numberOfTabViewItems];
+    int n = [_contentView.tabView numberOfTabViewItems];
     NSMutableArray *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
-        NSTabViewItem* theItem = [TABVIEW tabViewItemAtIndex:i];
+        NSTabViewItem* theItem = [_contentView.tabView tabViewItemAtIndex:i];
         [tabs addObject:[theItem identifier]];
     }
     return tabs;
@@ -5656,27 +5496,27 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (IBAction)moveTabLeft:(id)sender
 {
-    NSInteger selectedIndex = [TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]];
+    NSInteger selectedIndex = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
     NSInteger destinationIndex = selectedIndex - 1;
     if (destinationIndex < 0) {
-        destinationIndex = [TABVIEW numberOfTabViewItems] - 1;
+        destinationIndex = [_contentView.tabView numberOfTabViewItems] - 1;
     }
     if (selectedIndex == destinationIndex) {
         return;
     }
-    [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self _updateTabObjectCounts];
     [self tabsDidReorder];
 }
 
 - (IBAction)moveTabRight:(id)sender
 {
-    NSInteger selectedIndex = [TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]];
-    NSInteger destinationIndex = (selectedIndex + 1) % [TABVIEW numberOfTabViewItems];
+    NSInteger selectedIndex = [_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]];
+    NSInteger destinationIndex = (selectedIndex + 1) % [_contentView.tabView numberOfTabViewItems];
     if (selectedIndex == destinationIndex) {
         return;
     }
-    [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self _updateTabObjectCounts];
     [self tabsDidReorder];
 }
@@ -5800,8 +5640,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     // called an objectCount. When the "compact tab" pref is toggled, this makes
     // formerly countless tabs show their counts.
     BOOL needResize = NO;
-    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+    for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
+        PTYTab *aTab = [[_contentView.tabView tabViewItemAtIndex:i] identifier];
         if ([aTab updatePaneTitles]) {
             needResize = YES;
         }
@@ -5836,7 +5676,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     }
 
     // If the theme changed from light to dark make sure split pane dividers redraw.
-    [TABVIEW setNeedsDisplay:YES];
+    [_contentView.tabView setNeedsDisplay:YES];
 }
 
 - (void)updateTabBarStyle {
@@ -5850,7 +5690,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
             style = [[PSMDarkTabStyle alloc] init];
             break;
     }
-    [tabBarControl setStyle:style];
+    [_contentView.tabBarControl setStyle:style];
     [style release];
 }
 
@@ -5916,6 +5756,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     if ([self inInstantReplay] != visible) {
         [self showHideInstantReplay];
     }
+}
+
+- (BOOL)exitingLionFullscreen {
+    return exitingLionFullscreen_;
 }
 
 - (BOOL)_haveLeftBorder
@@ -5991,7 +5835,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     NSSize contentSize = NSZeroSize;
 
-    if (!tabBarControl.flashing &&
+    if (!_contentView.tabBarControl.flashing &&
         [self tabBarShouldBeVisibleWithAdditionalTabs:tabViewItemsBeingAdded]) {
         switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
             case PSMTab_TopTab:
@@ -6017,7 +5861,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     if ([self _haveTopBorder]) {
         ++contentSize.height;
     }
-    if (_divisionView) {
+    if (_contentView.divisionView) {
         ++contentSize.height;
     }
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
@@ -6030,7 +5874,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                       userInfo:nil];
 
 
-    [TABVIEW cycleFlagsChanged:[theEvent modifierFlags]];
+    [_contentView.tabView cycleFlagsChanged:[theEvent modifierFlags]];
     
     NSUInteger modifierFlags = [theEvent modifierFlags];
     if (!(modifierFlags & NSCommandKeyMask) &&
@@ -6046,167 +5890,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         }
     }
 
-    tabBarControl.cmdPressed = ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask);
+    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask);
 }
 
 // Change position of window widgets.
 - (void)repositionWidgets {
-    PtyLog(@"repositionWidgets");
-
-    BOOL showToolbeltInline = [self shouldShowToolbelt];
-    BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-    NSWindow *thisWindow = [self window];
-    [thisWindow setShowsResizeIndicator:hasScrollbar];
-
-    // The tab view frame (calculated below) is based on the toolbelt's width. If the toolbelt is
-    // too big for the current window size, you could end up with a negative-width tab view frame.
-    [self constrainToolbeltWidth];
-
-    if (![self tabBarShouldBeVisible]) {
-        // The tabBarControl should not be visible.
-        [tabBarControl setHidden:YES];
-        CGFloat yOrigin = [self _haveBottomBorder] ? 1 : 0;
-        CGFloat heightAdjustment = ([self _haveTopBorder] || _divisionView) ? 1 : 0;
-        NSRect tabViewFrame =
-                NSMakeRect([self _haveLeftBorder] ? 1 : 0,
-                           yOrigin,
-                           [self tabviewWidth],
-                           [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
-        PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-        [TABVIEW setFrame:tabViewFrame];
-        [self updateDivisionView];
-    } else {
-        // The tabBar control is visible.
-        PtyLog(@"repositionWidgets - tabs are visible. Adjusting window size...");
-        [tabBarControl setHidden:NO];
-        [tabBarControl setTabLocation:[iTermPreferences intForKey:kPreferenceKeyTabPosition]];
-
-        switch ([iTermPreferences intForKey:kPreferenceKeyTabPosition]) {
-            case PSMTab_TopTab: {
-                // Place tabs at the top.
-                // Add 1px border
-                CGFloat yOrigin = [self _haveBottomBorder] ? 1 : 0;
-                CGFloat heightAdjustment = 0;
-                if (!tabBarControl.flashing) {
-                    heightAdjustment += kHorizontalTabBarHeight;
-                }
-                if ([self _haveTopBorder]) {
-                    heightAdjustment += 1;
-                }
-
-                NSRect tabViewFrame =
-                    NSMakeRect([self _haveLeftBorder] ? 1 : 0,
-                               yOrigin,
-                               [self tabviewWidth],
-                               [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
-                PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-                [TABVIEW setFrame:tabViewFrame];
-
-                heightAdjustment = tabBarControl.flashing ? kHorizontalTabBarHeight : 0;
-                NSRect tabBarFrame = NSMakeRect(tabViewFrame.origin.x,
-                                                NSMaxY(tabViewFrame) - heightAdjustment,
-                                                tabViewFrame.size.width,
-                                                kHorizontalTabBarHeight);
-
-                [self updateDivisionView];
-                tabBarControl.frame = tabBarFrame;
-                tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
-                break;
-            }
-
-            case PSMTab_BottomTab: {
-                PtyLog(@"repositionWidgets - putting tabs at bottom");
-                // setup aRect to make room for the tabs at the bottom.
-                NSRect tabBarFrame = NSMakeRect([self _haveLeftBorder] ? 1 : 0,
-                                                [self _haveBottomBorder] ? 1 : 0,
-                                                [self tabviewWidth],
-                                                kHorizontalTabBarHeight);
-                tabBarControl.frame = tabBarFrame;
-                tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
-
-                CGFloat heightAdjustment = tabBarControl.flashing ? 0 : tabBarFrame.origin.y + kHorizontalTabBarHeight;
-                if ([self _haveTopBorder]) {
-                    heightAdjustment += 1;
-                }
-                CGFloat y = tabBarFrame.origin.y;
-                if (!tabBarControl.flashing) {
-                    y += kHorizontalTabBarHeight;
-                }
-                NSRect tabViewFrame = NSMakeRect(tabBarFrame.origin.x,
-                                                 y,
-                                                 tabBarFrame.size.width,
-                                                 [thisWindow.contentView frame].size.height - heightAdjustment);
-                PtyLog(@"repositionWidgets - Set tab view frame to %@", NSStringFromRect(tabViewFrame));
-                TABVIEW.frame = tabViewFrame;
-                [self updateDivisionView];
-                break;
-            }
-
-            case PSMTab_LeftTab: {
-                CGFloat heightAdjustment = 0;
-                if ([self _haveBottomBorder]) {
-                    heightAdjustment += 1;
-                }
-                if ([self _haveTopBorder]) {
-                    heightAdjustment += 1;
-                }
-                NSRect tabBarFrame = NSMakeRect([self _haveLeftBorder] ? 1 : 0,
-                                                [self _haveBottomBorder] ? 1 : 0,
-                                                [self tabviewWidth],
-                                                [thisWindow.contentView frame].size.height - heightAdjustment);
-                tabBarControl.frame = tabBarFrame;
-                tabBarControl.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
-
-                CGFloat widthAdjustment = 0;
-                if ([self _haveLeftBorder]) {
-                    widthAdjustment += 1;
-                }
-                if ([self _haveRightBorder]) {
-                    widthAdjustment += 1;
-                }
-                CGFloat xOffset = 0;
-                if (tabBarControl.flashing) {
-                    xOffset = -NSMaxX(tabBarFrame);
-                    widthAdjustment -= NSWidth(tabBarFrame);
-                }
-                NSRect tabViewFrame = NSMakeRect(NSMaxX(tabBarFrame) + xOffset,
-                                                 NSMinY(tabBarFrame),
-                                                 [thisWindow.contentView frame].size.width - NSWidth(tabBarFrame) - widthAdjustment,
-                                                 NSHeight(tabBarFrame));
-                if (showToolbeltInline) {
-                    tabViewFrame.size.width -= [self toolbeltFrame].size.width;
-                }
-                TABVIEW.frame = tabViewFrame;
-                [self updateDivisionView];
-            }
-        }
-    }
-
-    if (showToolbeltInline) {
-        DLog(@"Set toolbelt frame to %@", NSStringFromRect([self toolbeltFrame]));
-        [self constrainToolbeltWidth];
-        [toolbelt_ setFrame:[self toolbeltFrame]];
-    }
-
-    // Update the tab style.
-    [tabBarControl setDisableTabClose:[iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton]];
-    if ([iTermPreferences boolForKey:kPreferenceKeyHideTabCloseButton] &&
-        [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber]) {
-        [tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minCompactTabWidth]];
-    } else {
-        [tabBarControl setCellMinWidth:[iTermAdvancedSettingsModel minTabWidth]];
-    }
-    [tabBarControl setSizeCellsToFit:[iTermAdvancedSettingsModel useUnevenTabs]];
-    [tabBarControl setCellOptimumWidth:[iTermAdvancedSettingsModel optimumTabWidth]];
-
-    PtyLog(@"repositionWidgets - refresh textviews in this tab");
-    for (PTYSession* session in [[self currentTab] sessions]) {
-        [[session textview] setNeedsDisplay:YES];
-    }
-
-    PtyLog(@"repositionWidgets - update tab bar");
-    [tabBarControl updateFlashing];
-    PtyLog(@"repositionWidgets - return.");
+    [_contentView layoutSubviews];
 }
 
 // Returns the width of characters in pixels in the session with the widest
@@ -6214,8 +5903,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (float)maxCharWidth:(int*)numChars
 {
     float max=0;
-    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+    for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
+        for (PTYSession* session in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
             float w =[[session textview] charWidth];
             PtyLog(@"maxCharWidth - session %d has %dx%d, chars are %fx%f",
                    i, [session columns], [session rows], [[session textview] charWidth],
@@ -6236,8 +5925,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (float)maxCharHeight:(int*)numChars
 {
     float max=0;
-    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+    for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
+        for (PTYSession* session in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
             float h =[[session textview] lineHeight];
             PtyLog(@"maxCharHeight - session %d has %dx%d, chars are %fx%f", i, [session columns],
                    [session rows], [[session textview] charWidth], [[session textview] lineHeight]);
@@ -6258,8 +5947,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     float max=0;
     float ch=0;
-    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+    for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
+        for (PTYSession* session in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
             float w = [[session textview] charWidth];
             PtyLog(@"widestSessionWidth - session %d has %dx%d, chars are %fx%f", i,
                    [session columns], [session rows], [[session textview] charWidth],
@@ -6280,8 +5969,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     float max=0;
     float ch=0;
-    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+    for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
+        for (PTYSession* session in [[[_contentView.tabView tabViewItemAtIndex:i] identifier] sessions]) {
             float h = [[session textview] lineHeight];
             PtyLog(@"tallestSessionheight - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session textview] charWidth], [[session textview] lineHeight]);
             if (h * [session rows] > max) {
@@ -6352,7 +6041,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                  horizontalSpacing:[[tempPrefs objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
                                    verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
-    if (size == nil && [TABVIEW numberOfTabViewItems] != 0) {
+    if (size == nil && [_contentView.tabView numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[self currentSession] scrollview] documentVisibleRect].size;
         rows = (contentSize.height - VMARGIN*2) / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
@@ -6442,8 +6131,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         maxTabSize.height = maxFrame.height - decoration.height;
 
         // 2. Figure out how much the window could grow by in rows and columns.
-        NSSize currentSize = [TABVIEW frame].size;
-        if ([TABVIEW numberOfTabViewItems] == 0) {
+        NSSize currentSize = [_contentView.tabView frame].size;
+        if ([_contentView.tabView numberOfTabViewItems] == 0) {
             currentSize = NSZeroSize;
         }
         NSSize maxGrowth;
@@ -6472,7 +6161,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 // Adjust the tab's size for a new window size.
 - (void)fitTabToWindow:(PTYTab*)aTab
 {
-    NSSize size = [TABVIEW contentRect].size;
+    NSSize size = [_contentView.tabView contentRect].size;
     PtyLog(@"fitTabToWindow calling setSize for content size of %@", [NSValue valueWithSize:size]);
     [aTab setSize:size];
 }
@@ -6482,7 +6171,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 {
     PtyLog(@"insertTab:atIndex:%d", anIndex);
     assert(aTab);
-    if ([TABVIEW indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
+    if ([_contentView.tabView indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
         for (PTYSession* aSession in [aTab sessions]) {
             [aSession setIgnoreResizeNotifications:YES];
         }
@@ -6490,10 +6179,10 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [aTabViewItem setLabel:@""];
         assert(aTabViewItem);
         [aTab setTabViewItem:aTabViewItem];
-        PtyLog(@"insertTab:atIndex - calling [TABVIEW insertTabViewItem:atIndex]");
-        [TABVIEW insertTabViewItem:aTabViewItem atIndex:anIndex];
+        PtyLog(@"insertTab:atIndex - calling [_contentView.tabView insertTabViewItem:atIndex]");
+        [_contentView.tabView insertTabViewItem:aTabViewItem atIndex:anIndex];
         [aTabViewItem release];
-        [TABVIEW selectTabViewItemAtIndex:anIndex];
+        [_contentView.tabView selectTabViewItemAtIndex:anIndex];
         if (self.windowInitialized && !_fullScreen) {
             [[self window] makeKeyAndOrderFront:self];
         } else {
@@ -6514,7 +6203,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
     if ([[self allSessions] indexOfObject:aSession] == NSNotFound) {
         // create a new tab
-        PTYTab* aTab = [[PTYTab alloc] initWithSession:aSession];
+        PTYTab *aTab = [[PTYTab alloc] initWithSession:aSession];
         [aSession setIgnoreResizeNotifications:YES];
         if ([self numberOfTabs] == 0) {
             [aTab setReportIdealSizeAsCurrent:YES];
@@ -6539,7 +6228,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         NSMutableString *title = [NSMutableString string];
         NSString *progpath = [NSString stringWithFormat: @"%@ #%ld",
                               [[[[aSession shell] path] pathComponents] lastObject],
-                              (long)[TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]];
+                              (long)[_contentView.tabView indexOfTabViewItem:[_contentView.tabView selectedTabViewItem]]];
 
         if ([aSession exited]) {
             [title appendString:@"Finish"];
@@ -6611,8 +6300,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 // Turn off session logging in the current session.
-- (IBAction)logStop:(id)sender
-{
+- (IBAction)logStop:(id)sender {
     if ([[self currentSession] logging]) {
         [[self currentSession] logStop];
     }
@@ -6639,8 +6327,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
         [item action] == @selector(openDashboard:)) {
         result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(toggleToolbeltVisibility:)) {
-        [item setState:toolbelt_.isHidden ? NSOffState : NSOnState];
-        return [[ToolbeltView configuredTools] count] > 0;
+        [item setState:_contentView.shouldShowToolbelt ? NSOnState : NSOffState];
+        return [[iTermToolbeltView configuredTools] count] > 0;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
@@ -6649,9 +6337,9 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     } else if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
     } else if ([item action] == @selector(moveTabLeft:)) {
-        result = [TABVIEW numberOfTabViewItems] > 1;
+        result = [_contentView.tabView numberOfTabViewItems] > 1;
     } else if ([item action] == @selector(moveTabRight:)) {
-        result = [TABVIEW numberOfTabViewItems] > 1;
+        result = [_contentView.tabView numberOfTabViewItems] > 1;
     } else if ([item action] == @selector(toggleBroadcastingToCurrentSession:)) {
         result = ![[self currentSession] exited];
     } else if ([item action] == @selector(runCoprocess:)) {
@@ -6807,8 +6495,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 - (void)fitTabsToWindow
 {
     PtyLog(@"fitTabsToWindow begins");
-    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        [self fitTabToWindow:[[TABVIEW tabViewItemAtIndex:i] identifier]];
+    for (int i = 0; i < [_contentView.tabView numberOfTabViewItems]; ++i) {
+        [self fitTabToWindow:[[_contentView.tabView tabViewItemAtIndex:i] identifier]];
     }
     PtyLog(@"fitTabsToWindow returns");
 }
@@ -6823,13 +6511,13 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (PSMTabBarControl*)tabBarControl
 {
-    return tabBarControl;
+    return _contentView.tabBarControl;
 }
 
 // Called when the "Close tab" contextual menu item is clicked.
 - (void)closeTabContextualMenuAction:(id)sender {
     PTYTab *tabToClose = (PTYTab *)[[sender representedObject] identifier];
-    if ([self tabView:TABVIEW shouldCloseTabViewItem:tabToClose.tabViewItem]) {
+    if ([self tabView:_contentView.tabView shouldCloseTabViewItem:tabToClose.tabViewItem]) {
         [self closeTab:tabToClose];
     }
 }
@@ -6927,7 +6615,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     [aTabViewItem retain];
 
     // remove from our window
-    [TABVIEW removeTabViewItem:aTabViewItem];
+    [_contentView.tabView removeTabViewItem:aTabViewItem];
 
     // add the session to the new terminal
     [term insertTab:aTab atIndex:0];
@@ -6941,9 +6629,12 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 // Change the tab color to the selected menu color
 - (void)changeTabColorToMenuAction:(id)sender
 {
+    NSTabViewItem *aTabViewItem = [sender representedObject];
+    PTYTab *aTab = [aTabViewItem identifier];
+
     ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];
     NSColor *color = menuItem.color;
-    for (PTYSession *aSession in [[self currentTab] sessions]) {
+    for (PTYSession *aSession in [aTab sessions]) {
         [aSession setTabColor:color];
     }
     [self updateTabColors];
@@ -6998,8 +6689,8 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 
 - (NSArray*)allSessions
 {
-    NSMutableArray* result = [NSMutableArray arrayWithCapacity:[TABVIEW numberOfTabViewItems]];
-    for (NSTabViewItem* item in [TABVIEW tabViewItems]) {
+    NSMutableArray* result = [NSMutableArray arrayWithCapacity:[_contentView.tabView numberOfTabViewItems]];
+    for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
         [result addObjectsFromArray:[[item identifier] sessions]];
     }
     return result;
@@ -7075,13 +6766,6 @@ static const CGFloat kHorizontalTabBarHeight = 22;
                                                       userInfo:nil];
 }
 
-- (void)updateToolbelt {
-    [toolbelt_ setFrame:[self toolbeltFrame]];
-    [toolbelt_ setHidden:![self shouldShowToolbelt]];
-    [self repositionWidgets];
-    [toolbelt_ relayoutAllTools];
-}
-
 - (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
 {
     return kValidModesForFontPanel;
@@ -7128,14 +6812,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 }
 
 - (void)iTermTabBarWillBeginFlash {
-    tabBarControl.alphaValue = 0;
-    tabBarControl.hidden = NO;
+    _contentView.tabBarControl.alphaValue = 0;
+    _contentView.tabBarControl.hidden = NO;
     [self repositionWidgets];
 }
 
 - (void)iTermTabBarDidFinishFlash {
-    tabBarControl.alphaValue = 1;
-    tabBarControl.hidden = YES;
+    _contentView.tabBarControl.alphaValue = 1;
+    _contentView.tabBarControl.hidden = YES;
     [self repositionWidgets];
 }
 
@@ -7160,7 +6844,7 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     NSString *preferredName = nil;
 
     iTermObjectType objectType;
-    if ([TABVIEW numberOfTabViewItems] == 0) {
+    if ([_contentView.tabView numberOfTabViewItems] == 0) {
         objectType = iTermWindowObject;
     } else {
         objectType = iTermTabObject;
@@ -7344,14 +7028,14 @@ static const CGFloat kHorizontalTabBarHeight = 22;
     tabViewItemsBeingAdded--;
     if ([object screen]) {  // screen initialized ok
         if ([iTermAdvancedSettingsModel addNewTabAtEndOfTabs] || ![self currentTab]) {
-            [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
+            [self insertSession:object atIndex:[_contentView.tabView numberOfTabViewItems]];
         } else {
             [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];
         }
         if ([self numberOfTabs] == 1 &&
             [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT
                                       inProfile:object.profile] &&
-            !self.shouldShowToolbelt) {
+            !_contentView.shouldShowToolbelt) {
             [self toggleToolbeltVisibility:self];
         }
     }
@@ -7437,15 +7121,54 @@ static const CGFloat kHorizontalTabBarHeight = 22;
 #pragma mark - PTYTabDelegate
 
 - (void)tab:(PTYTab *)tab didChangeProcessingStatus:(BOOL)isProcessing {
-    [tabBarControl setIsProcessing:isProcessing forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setIsProcessing:isProcessing forTabWithIdentifier:tab];
 }
 
 - (void)tab:(PTYTab *)tab didChangeIcon:(NSImage *)icon {
-    [tabBarControl setIcon:icon forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setIcon:icon forTabWithIdentifier:tab];
 }
 
 - (void)tab:(PTYTab *)tab didChangeObjectCount:(NSInteger)objectCount {
-    [tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
+    [_contentView.tabBarControl setObjectCount:objectCount forTabWithIdentifier:tab];
 }
+
+#pragma mark - Toolbelt
+
+- (void)toolbeltUpdateMouseCursor {
+    [[[self currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+}
+
+- (void)toolbeltInsertText:(NSString *)text {
+    [[[self currentSession] textview] insertText:text];
+}
+
+- (VT100RemoteHost *)toolbeltCurrentHost {
+    return [[self currentSession] currentHost];
+}
+
+- (pid_t)toolbeltCurrentShellProcessId {
+    return [[[self currentSession] shell] pid];
+}
+
+- (VT100ScreenMark *)toolbeltLastCommandMark {
+    return self.currentSession.screen.lastCommandMark;
+}
+
+- (void)toolbeltDidSelectMark:(iTermMark *)mark {
+    [self.currentSession scrollToMark:mark];
+    [self.currentSession takeFocus];
+}
+
+- (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput {
+    if (self.currentSession) {
+        CaptureTrigger *trigger = (CaptureTrigger *)capturedOutput.trigger;
+        [trigger activateOnOutput:capturedOutput inSession:self.currentSession];
+    }
+}
+
+- (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid {
+    return [self.currentSession.guid isEqualToString:guid];
+}
+
 
 @end

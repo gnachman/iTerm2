@@ -246,6 +246,13 @@ static const int kMaxCommandsToSavePerHost = 200;
                                                         object:nil];
 }
 
+- (void)eraseHistoryForHost:(VT100RemoteHost *)host {
+    NSString *key = [self keyForHost:host];
+    [_hosts removeObjectForKey:key];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
+                                                        object:nil];
+}
+
 - (CommandUse *)commandUseWithMarkGuid:(NSString *)markGuid onHost:(VT100RemoteHost *)host {
     if (!markGuid) {
         return nil;

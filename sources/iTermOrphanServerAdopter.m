@@ -10,6 +10,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermFileDescriptorSocketPath.h"
+#import "NSApplication+iTerm.h"
 #import "PseudoTerminal.h"
 
 @implementation iTermOrphanServerAdopter {
@@ -28,6 +29,9 @@
 
 - (instancetype)init {
     if (![iTermAdvancedSettingsModel runJobsInServers]) {
+        return nil;
+    }
+    if ([[NSApplication sharedApplication] isRunningUnitTests]) {
         return nil;
     }
     self = [super init];

@@ -14,6 +14,8 @@
   NSTableViewDelegate,
   NSTextFieldDelegate>
 
+@property(nonatomic, readonly) NSTableView *tableView;
+
 - (void)updateDirectories;
 
 @end

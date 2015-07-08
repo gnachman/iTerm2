@@ -1318,7 +1318,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
-        [_shell loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
+        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:itermId]];
     }
     @synchronized(self) {
       _registered = YES;
@@ -3073,16 +3073,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     panel.nameFieldStringValue = @"";
     sts = [panel runModal];
     if (sts == NSOKButton) {
-        BOOL logsts = [_shell loggingStartWithPath:panel.URL.path];
+        BOOL logsts = [_shell startLoggingToFileWithPath:panel.URL.path];
         if (logsts == NO) {
             NSBeep();
         }
     }
 }
 
-- (void)logStop
-{
-    [_shell loggingStop];
+- (void)logStop {
+    [_shell stopLogging];
 }
 
 - (void)clearBuffer {
@@ -3110,17 +3109,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return NO;
 }
 
-- (void)setProfile:(NSDictionary*)entry
-{
-    assert(entry);
-    DLog(@"Set address book entry to one with guid %@", entry[KEY_GUID]);
-    NSMutableDictionary *dict = [[entry mutableCopy] autorelease];
+- (void)setProfile:(Profile *)newProfile {
+    assert(newProfile);
+    DLog(@"Set profile to one with guid %@", newProfile[KEY_GUID]);
+    NSMutableDictionary *mutableProfile = [[newProfile mutableCopy] autorelease];
     // This is the most practical way to migrate the bopy of a
     // profile that's stored in a saved window arrangement. It doesn't get
     // saved back into the arrangement, unfortunately.
-    [ProfileModel migratePromptOnCloseInMutableBookmark:dict];
+    [ProfileModel migratePromptOnCloseInMutableBookmark:mutableProfile];
 
-    NSString *originalGuid = [entry objectForKey:KEY_ORIGINAL_GUID];
+    NSString *originalGuid = newProfile[KEY_ORIGINAL_GUID];
     if (originalGuid) {
         // This code path is taken when changing an existing session's profile.
         // See bug 2632.
@@ -3132,11 +3130,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     if (!_originalProfile) {
         // This is normally taken when a new session is being created.
-        _originalProfile = [NSDictionary dictionaryWithDictionary:dict];
+        _originalProfile = [NSDictionary dictionaryWithDictionary:mutableProfile];
         [_originalProfile retain];
     }
+
     [_profile release];
-    _profile = [dict retain];
+    _profile = [mutableProfile retain];
     [[_tab realParentWindow] invalidateRestorableState];
     [[[self tab] realParentWindow] updateTabColors];
 }
@@ -5461,6 +5460,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)textViewIsZoomedIn {
     return _liveSession && !_dvr;
+}
+
+- (BOOL)textViewShouldShowMarkIndicators {
+    return [iTermProfilePreferences boolForKey:KEY_SHOW_MARK_INDICATORS inProfile:_profile];
 }
 
 - (void)sendEscapeSequence:(NSString *)text

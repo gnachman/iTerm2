@@ -7,12 +7,13 @@
 //
 
 #import "ToolJobs.h"
+
+#import "iTermToolWrapper.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTask.h"
 #import "ProcessCache.h"
-#import "ToolWrapper.h"
 
 // For SignalPicker
 static const int kDefaultSignal = 9;
@@ -311,8 +312,8 @@ static const CGFloat kMargin = 4;
     if (shutdown_) {
         return;
     }
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    pid_t rootPid = [[[wrapper.term currentSession] shell] pid];
+    iTermToolWrapper *wrapper = self.toolWrapper;
+    pid_t rootPid = [wrapper.delegate.delegate toolbeltCurrentShellProcessId];
     NSSet *pids = [[ProcessCache sharedInstance] childrenOfPid:rootPid levelsToSkip:0];
     if (![pids isEqualToSet:[NSSet setWithArray:pids_]]) {
         // Something changed. Get job names, which is expensive.
@@ -346,26 +347,24 @@ static const CGFloat kMargin = 4;
                                              repeats:NO];
 }
 
-- (void)fixCursor
-{
+- (void)fixCursor {
     if (!shutdown_) {
-        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+        iTermToolWrapper *wrapper = self.toolWrapper;
+        [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
     }
 }
 
-- (BOOL)isFlipped
-{
+- (BOOL)isFlipped {
     return YES;
 }
 
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
-{
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     return [names_ count];
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
+- (id)tableView:(NSTableView *)aTableView
+objectValueForTableColumn:(NSTableColumn *)aTableColumn
+            row:(NSInteger)rowIndex {
     if ([[aTableColumn identifier] isEqualToString:@"name"]) {
         // name
         return [names_ objectAtIndex:rowIndex];

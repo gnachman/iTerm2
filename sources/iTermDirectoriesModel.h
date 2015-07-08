@@ -41,7 +41,12 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 
 - (NSArray *)entriesSortedByScoreOnHost:(VT100RemoteHost *)host;
 - (void)eraseHistory;
+
 - (void)save;
 - (BOOL)haveEntriesForHost:(VT100RemoteHost *)host;
+
+#pragma mark - Testing
+
+- (void)eraseHistoryForHost:(VT100RemoteHost *)host;
 
 @end
