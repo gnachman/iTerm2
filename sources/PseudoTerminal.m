@@ -6300,8 +6300,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 // Turn off session logging in the current session.
-- (IBAction)logStop:(id)sender
-{
+- (IBAction)logStop:(id)sender {
     if ([[self currentSession] logging]) {
         [[self currentSession] logStop];
     }
@@ -6630,9 +6629,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 // Change the tab color to the selected menu color
 - (void)changeTabColorToMenuAction:(id)sender
 {
+    NSTabViewItem *aTabViewItem = [sender representedObject];
+    PTYTab *aTab = [aTabViewItem identifier];
+
     ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];
     NSColor *color = menuItem.color;
-    for (PTYSession *aSession in [[self currentTab] sessions]) {
+    for (PTYSession *aSession in [aTab sessions]) {
         [aSession setTabColor:color];
     }
     [self updateTabColors];

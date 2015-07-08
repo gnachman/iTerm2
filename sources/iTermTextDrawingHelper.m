@@ -446,7 +446,7 @@ static const int kBadgeRightMargin = 10;
 
 - (void)drawMarkIfNeededOnLine:(int)line leftMarginRect:(NSRect)leftMargin {
     VT100ScreenMark *mark = [self.delegate drawingHelperMarkOnLine:line];
-    if (mark.isVisible) {
+    if (mark.isVisible && self.drawMarkIndicators) {
         NSImage *image = mark.code ? _markErrImage : _markImage;
         CGFloat offset = (_cellSize.height - _markImage.size.height) / 2.0;
         [image drawAtPoint:NSMakePoint(leftMargin.origin.x,

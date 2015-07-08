@@ -1113,6 +1113,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.haveUnderlinedHostname = (self.currentUnderlineHostname != nil);
     _drawingHelper.transparencyAlpha = [self transparencyAlpha];
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
+    _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
 
     const NSRect *rectArray;
     NSInteger rectCount;
@@ -3078,13 +3079,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // call refresh here to take care of any scrollback overflow that would cause the selected range
     // to not match reality.
     [self refresh];
-    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    NSString *copyString;
 
     DLog(@"-[PTYTextView copy:] called");
-    copyString = [self selectedText];
+    NSString *copyString = [self selectedText];
+
+    if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
+        DLog(@"Disallow copying empty string");
+        return;
+    }
     DLog(@"Have selected text of length %d. selection=%@", (int)[copyString length], _selection);
     if (copyString) {
+        NSPasteboard *pboard = [NSPasteboard generalPasteboard];
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
         [pboard setString:copyString forType:NSStringPboardType];
     }
@@ -3092,12 +3097,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[PasteboardHistory sharedInstance] save:copyString];
 }
 
-- (IBAction)copyWithStyles:(id)sender
-{
+- (IBAction)copyWithStyles:(id)sender {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
 
     DLog(@"-[PTYTextView copyWithStyles:] called");
     NSAttributedString *copyAttributedString = [self selectedAttributedTextWithPad:NO];
+    if ([iTermAdvancedSettingsModel disallowCopyEmptyString] &&
+        copyAttributedString.length == 0) {
+        DLog(@"Disallow copying empty string");
+        return;
+    }
+
     DLog(@"Have selected text of length %d. selection=%@", (int)[copyAttributedString length], _selection);
     NSMutableArray *types = [NSMutableArray array];
     if (copyAttributedString) {
