@@ -686,14 +686,13 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                       registerHotKey:keyCode
                       modifiers:hotkeyModifiers_
                       target:self
-                      action:@selector(carbonHotkeyPressed)
+                      action:@selector(carbonHotkeyPressed:)
                       userInfo:nil
                       whenPressed:YES] retain];
     return YES;
 }
 
-- (void)carbonHotkeyPressed
-{
+- (void)carbonHotkeyPressed:(id)handler {
     iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
     if (!ad.workspaceSessionActive) {
         return;
