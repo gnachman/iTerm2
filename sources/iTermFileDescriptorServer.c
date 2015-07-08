@@ -159,7 +159,7 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
     }
 
     // Mask off all permissions for group and other. Only user can use this socket.
-    umask(S_IRWXG | S_IRWXO);
+    mode_t oldMask = umask(S_IRWXG | S_IRWXO);
 
     struct sockaddr_un local;
     local.sun_family = AF_UNIX;
@@ -168,13 +168,16 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
     int len = strlen(local.sun_path) + sizeof(local.sun_family) + 1;
     if (bind(socketFd, (struct sockaddr *)&local, len) == -1) {
         syslog(LOG_NOTICE, "bind() failed: %s", strerror(errno));
+        umask(oldMask);
         return -1;
     }
 
     if (listen(socketFd, kMaxConnections) == -1) {
         syslog(LOG_NOTICE, "listen() failed: %s", strerror(errno));
+        umask(oldMask);
         return -1;
     }
+    umask(oldMask);
     return socketFd;
 }
 
