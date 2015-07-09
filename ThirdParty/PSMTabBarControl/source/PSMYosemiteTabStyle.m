@@ -13,7 +13,19 @@
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
 
-@implementation PSMYosemiteTabStyle
+@implementation PSMYosemiteTabStyle {
+    NSImage *metalCloseButton;
+    NSImage *metalCloseButtonDown;
+    NSImage *metalCloseButtonOver;
+    NSImage *_addTabButtonImage;
+    NSImage *_addTabButtonPressedImage;
+    NSImage *_addTabButtonRolloverImage;
+
+    NSDictionary *_objectCountStringAttributes;
+
+    PSMTabBarOrientation orientation;
+    PSMTabBarControl *tabBar;
+}
 
 - (NSString *)name {
     return @"Yosemite";
