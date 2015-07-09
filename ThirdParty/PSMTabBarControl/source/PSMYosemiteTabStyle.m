@@ -14,9 +14,9 @@
 #define kPSMMetalCounterMinWidth 20
 
 @implementation PSMYosemiteTabStyle {
-    NSImage *metalCloseButton;
-    NSImage *metalCloseButtonDown;
-    NSImage *metalCloseButtonOver;
+    NSImage *_closeButton;
+    NSImage *_closeButtonDown;
+    NSImage *_closeButtonOver;
     NSImage *_addTabButtonImage;
     NSImage *_addTabButtonPressedImage;
     NSImage *_addTabButtonRolloverImage;
@@ -37,9 +37,9 @@
 - (id)init {
     if ((self = [super init]))  {
         // Load close buttons 
-        metalCloseButton = [[NSImage imageNamed:@"TabClose_Front"] retain];
-        metalCloseButtonDown = [[NSImage imageNamed:@"TabClose_Front_Pressed"] retain];
-        metalCloseButtonOver = [[NSImage imageNamed:@"TabClose_Front_Rollover"] retain];
+        _closeButton = [[NSImage imageNamed:@"TabClose_Front"] retain];
+        _closeButtonDown = [[NSImage imageNamed:@"TabClose_Front_Pressed"] retain];
+        _closeButtonOver = [[NSImage imageNamed:@"TabClose_Front_Rollover"] retain];
 
         // Load "new tab" buttons
         _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetal"]];
@@ -50,9 +50,9 @@
 }
 
 - (void)dealloc {
-    [metalCloseButton release];
-    [metalCloseButtonDown release];
-    [metalCloseButtonOver release];
+    [_closeButton release];
+    [_closeButtonDown release];
+    [_closeButtonOver release];
     [_addTabButtonImage release];
     [_addTabButtonPressedImage release];
     [_addTabButtonRolloverImage release];
@@ -121,7 +121,7 @@
     }
 
     NSRect result;
-    result.size = [metalCloseButton size];
+    result.size = [_closeButton size];
     result.origin.x = cellFrame.origin.x + kSPMTabBarCellInternalXMargin;
     result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
 
@@ -199,7 +199,7 @@
     resultWidth = kSPMTabBarCellInternalXMargin;
 
     // close button?
-    resultWidth += [metalCloseButton size].width + kPSMTabBarCellPadding;
+    resultWidth += [_closeButton size].width + kPSMTabBarCellPadding;
 
     // icon?
     if ([cell hasIcon]) {
@@ -214,7 +214,7 @@
     if ([cell count] > 0) {
         resultWidth += [self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding;
     } else {
-        resultWidth += [metalCloseButton size].width + kPSMTabBarCellPadding;
+        resultWidth += [_closeButton size].width + kPSMTabBarCellPadding;
     }
 
     // indicator?
@@ -458,12 +458,12 @@
     NSRect closeButtonRect = [cell closeButtonRectForFrame:cellFrame];
     NSImage *closeButton = nil;
 
-    closeButton = metalCloseButton;
+    closeButton = _closeButton;
     if ([cell closeButtonOver]) {
-        closeButton = metalCloseButtonOver;
+        closeButton = _closeButtonOver;
     }
     if ([cell closeButtonPressed]) {
-        closeButton = metalCloseButtonDown;
+        closeButton = _closeButtonDown;
     }
 
     closeButtonSize = [closeButton size];
@@ -674,9 +674,9 @@
 - (void)encodeWithCoder:(NSCoder *)aCoder
 {
     if ([aCoder allowsKeyedCoding]) {
-        [aCoder encodeObject:metalCloseButton forKey:@"metalCloseButton"];
-        [aCoder encodeObject:metalCloseButtonDown forKey:@"metalCloseButtonDown"];
-        [aCoder encodeObject:metalCloseButtonOver forKey:@"metalCloseButtonOver"];
+        [aCoder encodeObject:_closeButton forKey:@"metalCloseButton"];
+        [aCoder encodeObject:_closeButtonDown forKey:@"metalCloseButtonDown"];
+        [aCoder encodeObject:_closeButtonOver forKey:@"metalCloseButtonOver"];
         [aCoder encodeObject:_addTabButtonImage forKey:@"addTabButtonImage"];
         [aCoder encodeObject:_addTabButtonPressedImage forKey:@"addTabButtonPressedImage"];
         [aCoder encodeObject:_addTabButtonRolloverImage forKey:@"addTabButtonRolloverImage"];
@@ -687,9 +687,9 @@
     self = [super init];
     if (self) {
         if ([aDecoder allowsKeyedCoding]) {
-            metalCloseButton = [[aDecoder decodeObjectForKey:@"metalCloseButton"] retain];
-            metalCloseButtonDown = [[aDecoder decodeObjectForKey:@"metalCloseButtonDown"] retain];
-            metalCloseButtonOver = [[aDecoder decodeObjectForKey:@"metalCloseButtonOver"] retain];
+            _closeButton = [[aDecoder decodeObjectForKey:@"metalCloseButton"] retain];
+            _closeButtonDown = [[aDecoder decodeObjectForKey:@"metalCloseButtonDown"] retain];
+            _closeButtonOver = [[aDecoder decodeObjectForKey:@"metalCloseButtonOver"] retain];
             _addTabButtonImage = [[aDecoder decodeObjectForKey:@"addTabButtonImage"] retain];
             _addTabButtonPressedImage = [[aDecoder decodeObjectForKey:@"addTabButtonPressedImage"] retain];
             _addTabButtonRolloverImage = [[aDecoder decodeObjectForKey:@"addTabButtonRolloverImage"] retain];
