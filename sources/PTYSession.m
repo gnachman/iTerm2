@@ -1798,15 +1798,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     long long startAbsLineNumber;
     iTermStringLine *stringLine = [_screen stringLineAsStringAtAbsoluteLineNumber:_triggerLineNumber
                                                                          startPtr:&startAbsLineNumber];
-    for (Trigger *trigger in _triggers) {
-        BOOL stop = [trigger tryString:stringLine
-                             inSession:self
-                           partialLine:NO
-                            lineNumber:startAbsLineNumber];
-        if (stop) {
-            break;
-        }
-    }
+    [self checkTriggersOnPartialLine:NO
+                          stringLine:stringLine
+                          lineNumber:startAbsLineNumber];
 }
 
 - (void)checkPartialLineTriggers {
@@ -1821,10 +1815,18 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     long long startAbsLineNumber;
     iTermStringLine *stringLine = [_screen stringLineAsStringAtAbsoluteLineNumber:_triggerLineNumber
                                                                          startPtr:&startAbsLineNumber];
+    [self checkTriggersOnPartialLine:YES
+                          stringLine:stringLine
+                          lineNumber:startAbsLineNumber];
+}
+
+- (void)checkTriggersOnPartialLine:(BOOL)partial
+                        stringLine:(iTermStringLine *)stringLine
+                                  lineNumber:(long long)startAbsLineNumber {
     for (Trigger *trigger in _triggers) {
         BOOL stop = [trigger tryString:stringLine
                              inSession:self
-                           partialLine:YES
+                           partialLine:partial
                             lineNumber:startAbsLineNumber];
         if (stop) {
             break;
@@ -1835,6 +1837,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)appendStringToTriggerLine:(NSString *)s {
     if (_triggerLineNumber == -1) {
         _triggerLineNumber = _screen.numberOfScrollbackLines + _screen.cursorY - 1 + _screen.totalScrollbackOverflow;
+    }
+
+    // We used to build up the string so you could write triggers that included bells. That doesn't
+    // really make sense, especially in the new model, but it's so useful to be able to customize
+    // the bell that I'll add this special case.
+    if ([s isEqualToString:@"\a"]) {
+        iTermStringLine *stringLine = [iTermStringLine stringLineWithString:s];
+        [self checkTriggersOnPartialLine:YES stringLine:stringLine lineNumber:_triggerLineNumber];
     }
 }
 
