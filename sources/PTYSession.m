@@ -24,6 +24,7 @@
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
+#import "iTermSavePanel.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextExtractor.h"
@@ -1318,7 +1319,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
     if ([_profile[KEY_AUTOLOG] boolValue]) {
-        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:itermId]];
+        [_shell startLoggingToFileWithPath:[self _autoLogFilenameForTermId:itermId]
+                              shouldAppend:NO];
     }
     @synchronized(self) {
       _registered = YES;
@@ -3061,20 +3063,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_shell logging];
 }
 
-- (void)logStart
-{
-    NSSavePanel *panel;
-    int sts;
-
-    panel = [NSSavePanel savePanel];
-    // Session could end before panel is dismissed.
-    [[self retain] autorelease];
-    panel.directoryURL = [NSURL fileURLWithPath:NSHomeDirectory()];
-    panel.nameFieldStringValue = @"";
-    sts = [panel runModal];
-    if (sts == NSOKButton) {
-        BOOL logsts = [_shell startLoggingToFileWithPath:panel.URL.path];
-        if (logsts == NO) {
+- (void)logStart {
+    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:kSavePanelOptionAppendOrReplace
+                                                     identifier:@"StartSessionLog"
+                                               initialDirectory:NSHomeDirectory()
+                                                defaultFilename:@""];
+    if (savePanel.path) {
+        BOOL shouldAppend = (savePanel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
+        BOOL ok = [_shell startLoggingToFileWithPath:savePanel.path
+                                        shouldAppend:shouldAppend];
+        if (!ok) {
             NSBeep();
         }
     }

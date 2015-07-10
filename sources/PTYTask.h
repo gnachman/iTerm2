@@ -62,7 +62,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (NSString*)getWorkingDirectory;
 - (NSString*)description;
 
-- (BOOL)startLoggingToFileWithPath:(NSString*)path;
+- (BOOL)startLoggingToFileWithPath:(NSString*)path shouldAppend:(BOOL)shouldAppend;
 - (void)stopLogging;
 - (BOOL)logging;
 - (BOOL)hasOutput;
