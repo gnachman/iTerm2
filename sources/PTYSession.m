@@ -726,11 +726,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
 
-    NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     BOOL shouldEnterTmuxMode = NO;
     BOOL didRestoreContents = NO;
     BOOL attachedToServer = NO;
-    if (!n) {
+    if (!tmuxPaneNumber) {
         DLog(@"No tmux pane ID during session restoration");
         // |contents| will be non-nil when using system window restoration.
         NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
@@ -829,10 +829,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             didRestoreContents = YES;
         }
     } else {
+        // Is a tmux pane
         NSString *title = [state objectForKey:@"title"];
         if (title) {
             [aSession setName:title];
             [aSession setWindowTitle:title];
+        }
+        if ([aSession.profile[KEY_AUTOLOG] boolValue]) {
+            [aSession.shell startLoggingToFileWithPath:[aSession _autoLogFilenameForTermId:aSession.sessionId]
+                                          shouldAppend:NO];
         }
     }
     if (needDivorce) {
@@ -840,8 +845,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [aSession sessionProfileDidChange];
     }
 
-    if (n) {
-        [aSession setTmuxPane:[n intValue]];
+    if (tmuxPaneNumber) {
+        [aSession setTmuxPane:[tmuxPaneNumber intValue]];
     }
     NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
     if (history) {
@@ -1256,6 +1261,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return ![iTermAdvancedSettingsModel doNotSetCtype];
 }
 
+- (NSString *)sessionId {
+    return [NSString stringWithFormat:@"w%dt%dp%lu",
+            [[_tab realParentWindow] number],
+            _tab.tabNumberForItermSessionId,
+            (unsigned long)_tab.sessions.count];
+}
+
 - (void)startProgram:(NSString *)command
          environment:(NSDictionary *)environment
               isUTF8:(BOOL)isUTF8
@@ -1309,11 +1321,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
     }
 
-    NSWindowController<iTermWindowController> *pty = [_tab realParentWindow];
-    NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%lu",
-                         [pty number],
-                         _tab.tabNumberForItermSessionId,
-                         (unsigned long)_tab.sessions.count];
+    NSString *itermId = [self sessionId];
     env[@"ITERM_SESSION_ID"] = itermId;
     if (_profile[KEY_NAME]) {
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
