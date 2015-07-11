@@ -497,7 +497,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSetUserVar:(NSString *)kvp {
 }
 
-- (void)screenUpdateDisplay {
+- (void)screenUpdateDisplay:(BOOL)redraw {
     ++updates_;
 }
 

@@ -843,7 +843,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)clearBuffer {
     [self clearAndResetScreenPreservingCursorLine];
     [self clearScrollbackBuffer];
-    [delegate_ screenUpdateDisplay];
+    [delegate_ screenUpdateDisplay:NO];
 }
 
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
@@ -4465,7 +4465,10 @@ static void SwapInt(int *a, int *b) {
 
 - (void)temporaryDoubleBufferedGridDidExpire {
     [currentGrid_ setAllDirty:YES];
-    [delegate_ screenUpdateDisplay];
+    // Force the screen to redraw right away. Some users reported lag and this seems to fix it.
+    // I think the update timer was hitting a worst case scenario which made the lag visible.
+    // See issue 3537.
+    [delegate_ screenUpdateDisplay:YES];
 }
 
 @end

@@ -5732,8 +5732,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setNeedsDisplay:YES];
 }
 
-- (void)screenUpdateDisplay {
+- (void)screenUpdateDisplay:(BOOL)redraw {
     [self updateDisplay];
+    if (redraw) {
+        [_textview setNeedsDisplay:YES];
+    }
 }
 
 - (void)screenSizeDidChange {
