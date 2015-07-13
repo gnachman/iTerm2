@@ -197,6 +197,12 @@
 // Dynamic Profiles (not in prefs ui)
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
 
+typedef NS_ENUM(NSInteger, iTermOptionKeyAction) {
+    OPT_NORMAL = 0,
+    OPT_META = 1,
+    OPT_ESC = 2
+};
+
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also
 // stored in saved arrangements.

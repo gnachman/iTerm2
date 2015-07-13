@@ -31,9 +31,6 @@
 @class VT100Screen;
 @class VT100Terminal;
 
-#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
-#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
-
 // Types of characters. Used when classifying characters for word selection.
 typedef enum {
     CHARTYPE_WHITESPACE,  // whitespace chars or NUL
@@ -45,12 +42,9 @@ typedef enum {
 @protocol PTYTextViewDelegate <NSObject>
 
 - (BOOL)xtermMouseReporting;
-- (BOOL)isPasting;
 - (void)queueKeyDown:(NSEvent *)event;
-- (void)keyDown:(NSEvent *)event;
+- (void)textViewKeyDown:(NSEvent *)event;
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event;
-- (int)optionKey;
-- (int)rightOptionKey;
 // Contextual menu
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 - (void)pasteString:(NSString *)aString;
@@ -88,7 +82,6 @@ typedef enum {
 - (BOOL)textViewIsMaximized;
 - (BOOL)textViewTabHasMaximizedPanel;
 - (void)textViewWillNeedUpdateForBlink;
-- (BOOL)textViewDelegateHandlesAllKeystrokes;
 - (BOOL)textViewInSameTabAsTextView:(PTYTextView *)other;
 - (void)textViewSplitVertically:(BOOL)vertically withProfileGuid:(NSString *)guid;
 - (void)textViewSelectNextTab;
@@ -198,9 +191,6 @@ typedef enum {
 // Should transparency be used?
 @property(nonatomic, readonly) BOOL useTransparency;
 
-// Indicates if the last key pressed was a repeat.
-@property(nonatomic, readonly) BOOL keyIsARepeat;
-
 // Returns the currently selected text.
 @property(nonatomic, readonly) NSString *selectedText;
 
@@ -254,6 +244,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // For tests.
 @property(nonatomic, readonly) NSRect cursorFrame;
+
+// After a call to interpretKeyEvents:, this will be set if text was inserted.
+@property(nonatomic, readonly) BOOL didInsertText;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
@@ -450,6 +443,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // A text badge shown in the top right of the window
 - (void)setBadgeLabel:(NSString *)badgeLabel;
+
+// Use this during a keypress to work around an OS bug (see comments in implementation).
+// Sets didInsertText as a side-effect.
+- (void)interpretKeyEventsWithBugfix:(NSArray *)eventArray;
 
 @end
 

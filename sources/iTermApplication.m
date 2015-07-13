@@ -169,6 +169,8 @@
                 }
             }
 
+            // NOTE: This is NSTextView, not PTYTextView. We don't want keybinding actions to affect
+            // the current session when you're typing in the toolbelt, alert box, etc.
             BOOL okToRemap = YES;
             if ([responder isKindOfClass:[NSTextView class]]) {
                 // Disable keymaps that send text
@@ -180,9 +182,8 @@
                 }
             }
 
-            if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event]) {
-                // Remap key.
-                [currentSession keyDown:event];
+            if (okToRemap && [currentSession executeBoundActionForEvent:event]) {
+                // Executed action for remapped key.
                 return;
             }
         } else {

@@ -64,7 +64,7 @@ typedef enum {
 
 @class PTYTab;
 @class SessionView;
-@interface PTYSession : NSResponder <
+@interface PTYSession : NSObject <
     FindViewControllerDelegate,
     PopupDelegate,
     PTYTaskDelegate,
@@ -373,16 +373,14 @@ typedef enum {
 // overriddenFields.
 - (BOOL)reloadProfile;
 
-- (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
-
 // Writing output.
 - (void)writeTask:(NSData*)data;
 - (void)writeTaskNoBroadcast:(NSData *)data;
 
 // PTYTextView
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;
-- (BOOL)willHandleEvent: (NSEvent *)theEvent;
-- (void)handleEvent: (NSEvent *)theEvent;
+- (BOOL)willHandleEvent:(NSEvent *)theEvent;
+- (void)handleEvent:(NSEvent *)theEvent;
 - (void)insertNewline:(id)sender;
 - (void)insertTab:(id)sender;
 - (void)moveUp:(id)sender;
@@ -520,6 +518,9 @@ typedef enum {
 
 // Show an announcement explaining why a restored session is an orphan.
 - (void)showOrphanAnnouncement;
+
+// Returns YES if there was a bound action.
+- (BOOL)executeBoundActionForEvent:(NSEvent *)event;
 
 #pragma mark - Testing utilities
 

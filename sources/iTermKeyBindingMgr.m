@@ -472,8 +472,7 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 + (int)localActionForKeyCode:(unichar)keyCode
                    modifiers:(unsigned int) keyMods
                         text:(NSString **) text
-                 keyMappings:(NSDictionary *)keyMappings
-{
+                 keyMappings:(NSDictionary *)keyMappings {
     NSString *keyString;
     NSDictionary *theKeyMapping;
     int retCode = -1;
@@ -498,10 +497,11 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 
     // parse the mapping
     retCode = [[theKeyMapping objectForKey: @"Action"] intValue];
-    if(text != nil)
+    if (text != nil) {
         *text = [theKeyMapping objectForKey: @"Text"];
+    }
 
-    return (retCode);
+    return retCode;
 }
 
 + (void)_loadGlobalKeyMap
@@ -530,10 +530,9 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
 }
 
 + (int)actionForKeyCode:(unichar)keyCode
-              modifiers:(unsigned int) keyMods
-                   text:(NSString **) text
-            keyMappings:(NSDictionary *)keyMappings
-{
+              modifiers:(unsigned int)keyMods
+                   text:(NSString **)text
+            keyMappings:(NSDictionary *)keyMappings {
     int keyBindingAction = -1;
     if (keyMappings) {
         keyBindingAction = [iTermKeyBindingMgr localActionForKeyCode:keyCode

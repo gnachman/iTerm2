@@ -122,7 +122,7 @@ static const int kDragThreshold = 3;
     double _charHeightWithoutSpacing;
 
     // NSTextInputClient support
-    BOOL _inputMethodIsInserting;
+    BOOL _didInsertText;
     NSDictionary *_markedTextAttributes;
 
     PTYFontInfo *_primaryFont;
@@ -137,9 +137,6 @@ static const int kDragThreshold = 3;
 
     // blinking cursor
     NSTimeInterval _timeOfLastBlink;
-
-    // Was the last pressed key a "repeat" where the key is held down?
-    BOOL _keyIsARepeat;
 
     // Previous tracking rect to avoid expensive calls to addTrackingRect.
     NSRect _trackingRect;
@@ -1325,147 +1322,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)keyDown:(NSEvent*)event {
-    if (!_selection.live) {
-        // Remove selection when you type, unless the selection is live because it's handy to be
-        // able to scroll up, click, hit a key, and then drag to select to (near) the end. See
-        // issue 3340.
-        [self deselect];
-    }
-    static BOOL isFirstInteraction = YES;
-    if (isFirstInteraction) {
-        iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
-        [appDelegate userDidInteractWithASession];
-        isFirstInteraction = NO;
-    }
-
-    DLog(@"PTYTextView keyDown BEGIN %@", event);
-    id delegate = [self delegate];
-    if ([delegate isPasting]) {
-        [delegate queueKeyDown:event];
-        return;
-    }
-    if ([_delegate textViewDelegateHandlesAllKeystrokes]) {
-        DLog(@"PTYTextView keyDown: in instant replay, send to delegate");
-        // Delegate has special handling for this case.
-        [delegate keyDown:event];
-        return;
-    }
-    unsigned int modflag = [event modifierFlags];
-    unsigned short keyCode = [event keyCode];
-    BOOL prev = [self hasMarkedText];
-    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
-    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
-
-    _keyIsARepeat = [event isARepeat];
-    DLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-    DLog(@"prev=%d", (int)prev);
-    DLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
-    DLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%lu", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
-    DLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
-    DLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
-    DLog(@"leftAltPressed && optionKey != NORMAL = %d", (int)(leftAltPressed && [delegate optionKey] != OPT_NORMAL));
-    DLog(@"rightAltPressed && rightOptionKey != NORMAL = %d", (int)(rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL));
-    DLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-    DLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
-    DLog(@"event is repeated=%d", _keyIsARepeat);
-
-    // discard repeated key events if auto repeat mode (DECARM) is disabled
-    if (_keyIsARepeat && ![[_dataSource terminal] autorepeatMode]) {
-        return;
-    }
-
-    // Hide the cursor
-    [NSCursor setHiddenUntilMouseMoves:YES];
-
-    if ([[iTermNSKeyBindingEmulator sharedInstance] handlesEvent:event]) {
-        DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
-        [self interpretKeyEvents:@[ event ]];
-        return;
-    }
-
-    // Should we process the event immediately in the delegate?
-    if ((!prev) &&
-        ([delegate hasActionableKeyMappingForEvent:event] ||       // delegate will do something useful
-         (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
-         ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
-          ((leftAltPressed && [delegate optionKey] != OPT_NORMAL) ||
-           (rightAltPressed && [delegate rightOptionKey] != OPT_NORMAL))) ||
-         ((modflag & NSControlKeyMask) &&                          // a few special cases
-          (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
-             DLog(@"PTYTextView keyDown: process in delegate");
-             [delegate keyDown:event];
-             return;
-    }
-
-    DLog(@"Test for command key");
-
-    if (modflag & NSCommandKeyMask) {
-        // You pressed cmd+something but it's not handled by the delegate. Going further would
-        // send the unmodified key to the terminal which doesn't make sense.
-        DLog(@"PTYTextView keyDown You pressed cmd+something");
-        return;
-    }
-
-    // Control+Key doesn't work right with custom keyboard layouts. Handle ctrl+key here for the
-    // standard combinations.
-    BOOL workAroundControlBug = NO;
-    if (!prev &&
-        (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
-        DLog(@"Special ctrl+key handler running");
-
-        NSString *unmodkeystr = [event charactersIgnoringModifiers];
-        if ([unmodkeystr length] != 0) {
-            unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-            unichar cc = 0xffff;
-            if (unmodunicode >= 'a' && unmodunicode <= 'z') {
-                cc = unmodunicode - 'a' + 1;
-            } else if (unmodunicode == ' ' || unmodunicode == '2' || unmodunicode == '@') {
-                cc = 0;
-            } else if (unmodunicode == '[') {  // esc
-                cc = 27;
-            } else if (unmodunicode == '\\') {
-                cc = 28;
-            } else if (unmodunicode == ']') {
-                cc = 29;
-            } else if (unmodunicode == '^' || unmodunicode == '6') {
-                cc = 30;
-            } else if (unmodunicode == '-' || unmodunicode == '_') {
-                cc = 31;
-            }
-            if (cc != 0xffff) {
-                [self insertText:[NSString stringWithCharacters:&cc length:1]];
-                DLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
-                workAroundControlBug = YES;
-            }
-        }
-    }
-
-    if (!workAroundControlBug) {
-        // Let the IME process key events
-        _inputMethodIsInserting = NO;
-        DLog(@"PTYTextView keyDown send to IME");
-
-        // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
-        // wrong instnace of PTYTextView. We work around the issue by using a global variable to
-        // track the instance of PTYTextView that is currently handling a key event and rerouting
-        // calls as needed in -insertText and -doCommandBySelector.
-        gCurrentKeyEventTextView = [[self retain] autorelease];
-        [self interpretKeyEvents:[NSArray arrayWithObject:event]];
-        gCurrentKeyEventTextView = nil;
-
-        // If the IME didn't want it, pass it on to the delegate
-        if (!prev &&
-            !_inputMethodIsInserting &&
-            ![self hasMarkedText]) {
-            DLog(@"PTYTextView keyDown IME no, send to delegate");
-            [delegate keyDown:event];
-        }
-    }
-    DLog(@"PTYTextView keyDown END");
-}
-
-- (BOOL)keyIsARepeat {
-    return (_keyIsARepeat);
+    [_delegate textViewKeyDown:event];
 }
 
 // WARNING: This indicates if mouse reporting is a possiblity. -terminalWantsMouseReports indicates
@@ -4090,8 +3947,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 #pragma mark - NSTextInputClient
 
-- (void)doCommandBySelector:(SEL)aSelector
-{
+- (void)doCommandBySelector:(SEL)aSelector {
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
     if (gCurrentKeyEventTextView && self != gCurrentKeyEventTextView) {
         // See comment in -keyDown:
@@ -4100,6 +3956,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     DLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
+}
+
+- (void)interpretKeyEventsWithBugfix:(NSArray *)eventArray {
+    // In issue 2743, it is revealed that in OS 10.9 this sometimes calls -insertText on the
+    // wrong instance of PTYTextView. We work around the issue by using a global variable to
+    // track the instance of PTYTextView that is currently handling a key event and rerouting
+    // calls as needed in -insertText and -doCommandBySelector.
+    assert(!gCurrentKeyEventTextView);
+    gCurrentKeyEventTextView = [[self retain] autorelease];
+    [self interpretKeyEvents:eventArray];
+    gCurrentKeyEventTextView = nil;
+}
+
+- (void)interpretKeyEvents:(NSArray *)eventArray {
+    _didInsertText = NO;
+    [super interpretKeyEvents:eventArray];
 }
 
 // TODO: Respect replacementRange
@@ -4133,7 +4005,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             [super insertText:aString];
         }
 
-        _inputMethodIsInserting = YES;
+        _didInsertText = YES;
     }
 
     if ([self hasMarkedText]) {

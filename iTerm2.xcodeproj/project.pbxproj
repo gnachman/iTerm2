@@ -780,6 +780,11 @@
 		A63F409F183F3AF5003A6A6D /* VT100LineInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */; };
 		A63F40A4183F3B78003A6A6D /* LineBlock.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A2183F3B78003A6A6D /* LineBlock.h */; };
 		A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */; };
+		A641E94C1B51A20D00F465FF /* vterm_keyboard.h in Headers */ = {isa = PBXBuildFile; fileRef = A641E94A1B51A20D00F465FF /* vterm_keyboard.h */; };
+		A641E94D1B51A20D00F465FF /* vterm_keyboard.c in Sources */ = {isa = PBXBuildFile; fileRef = A641E94B1B51A20D00F465FF /* vterm_keyboard.c */; };
+		A641E9501B51A22A00F465FF /* vterm_utf8.h in Headers */ = {isa = PBXBuildFile; fileRef = A641E94E1B51A22A00F465FF /* vterm_utf8.h */; };
+		A641E9581B51E71800F465FF /* iTermInputHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A641E9561B51E71800F465FF /* iTermInputHandler.h */; };
+		A641E9591B51E71800F465FF /* iTermInputHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = A641E9571B51E71800F465FF /* iTermInputHandler.m */; };
 		A647E39A18C3515900450FA1 /* VT100AnsiParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39818C3515900450FA1 /* VT100AnsiParser.h */; };
 		A647E39F18C351F400450FA1 /* VT100DCSParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E39D18C351F400450FA1 /* VT100DCSParser.h */; };
 		A647E3A418C352B000450FA1 /* VT100OtherParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A647E3A218C352B000450FA1 /* VT100OtherParser.h */; };
@@ -2131,6 +2136,11 @@
 		A63F40A3183F3B78003A6A6D /* LineBlock.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBlock.m; sourceTree = "<group>"; tabWidth = 4; };
 		A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferHelpers.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferHelpers.m; sourceTree = "<group>"; tabWidth = 4; };
+		A641E94A1B51A20D00F465FF /* vterm_keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vterm_keyboard.h; path = libvterm/vterm_keyboard.h; sourceTree = "<group>"; };
+		A641E94B1B51A20D00F465FF /* vterm_keyboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vterm_keyboard.c; path = libvterm/vterm_keyboard.c; sourceTree = "<group>"; };
+		A641E94E1B51A22A00F465FF /* vterm_utf8.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vterm_utf8.h; path = libvterm/vterm_utf8.h; sourceTree = "<group>"; };
+		A641E9561B51E71800F465FF /* iTermInputHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermInputHandler.h; sourceTree = "<group>"; };
+		A641E9571B51E71800F465FF /* iTermInputHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermInputHandler.m; sourceTree = "<group>"; };
 		A647E39718C3504100450FA1 /* VT100Token.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100Token.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E39818C3515900450FA1 /* VT100AnsiParser.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100AnsiParser.h; sourceTree = "<group>"; tabWidth = 4; };
 		A647E39918C3515900450FA1 /* VT100AnsiParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100AnsiParser.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -3165,6 +3175,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A641E9491B51A1F500F465FF /* libvterm */,
 				1D1F8C171A32616A00167161 /* AMIndeterminateProgressIndicator */,
 				F6441F610E748404000EC682 /* CGSInternal */,
 				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
@@ -3716,6 +3727,16 @@
 			name = Core;
 			sourceTree = "<group>";
 		};
+		A641E9491B51A1F500F465FF /* libvterm */ = {
+			isa = PBXGroup;
+			children = (
+				A641E94E1B51A22A00F465FF /* vterm_utf8.h */,
+				A641E94A1B51A20D00F465FF /* vterm_keyboard.h */,
+				A641E94B1B51A20D00F465FF /* vterm_keyboard.c */,
+			);
+			name = libvterm;
+			sourceTree = "<group>";
+		};
 		A647E3B118C35DD900450FA1 /* VT100 */ = {
 			isa = PBXGroup;
 			children = (
@@ -3913,6 +3934,8 @@
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 				A667F3911B4CC8BA00705186 /* iTermBadgeLabel.h */,
 				A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */,
+				A641E9561B51E71800F465FF /* iTermInputHandler.h */,
+				A641E9571B51E71800F465FF /* iTermInputHandler.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -4832,8 +4855,11 @@
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */,
 				A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */,
+				A641E9501B51A22A00F465FF /* vterm_utf8.h in Headers */,
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,
 				A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */,
+				A641E94C1B51A20D00F465FF /* vterm_keyboard.h in Headers */,
+				A641E9581B51E71800F465FF /* iTermInputHandler.h in Headers */,
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5721,6 +5747,7 @@
 				A6C7632E1B45C52B00E3C992 /* URLAction.m in Sources */,
 				A6C7630D1B45C52B00E3C992 /* iTermAnimatedImageInfo.m in Sources */,
 				A6C763871B45C52B00E3C992 /* iTermProfilesWindowController.m in Sources */,
+				A641E9591B51E71800F465FF /* iTermInputHandler.m in Sources */,
 				A6C763151B45C52B00E3C992 /* iTermLogoGenerator.m in Sources */,
 				A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */,
 				A6C7635B1B45C52B00E3C992 /* Autocomplete.m in Sources */,
@@ -5802,6 +5829,7 @@
 				A6C7631A1B45C52B00E3C992 /* iTermProfileSearchToken.m in Sources */,
 				A6C762FB1B45C52B00E3C992 /* FileTransferManager.m in Sources */,
 				A6C762B81B45C52B00E3C992 /* NSImage+iTerm.m in Sources */,
+				A641E94D1B51A20D00F465FF /* vterm_keyboard.c in Sources */,
 				A6C762E61B45C52B00E3C992 /* VT100Grid.m in Sources */,
 				A6C763981B45C52B00E3C992 /* TmuxControllerRegistry.m in Sources */,
 				A6C763A61B45C52B00E3C992 /* ToolJobs.m in Sources */,
