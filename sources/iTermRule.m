@@ -74,14 +74,20 @@
 - (int)scoreForHostname:(NSString *)hostname
                username:(NSString *)username
                    path:(NSString *)path {
-  const int kHostMatchScore = 4;
-  const int kUserMatchScore = 2;
-  const int kPathMatchScore = 1;
+  const int kHostExactMatchScore = 8;
+  const int kHostMatchScore      = 4;
+  const int kUserMatchScore      = 2;
+  const int kPathMatchScore      = 1;
 
   int score = 0;
 
   if ([hostname isEqualToString:self.hostname]) {
-    score |= kHostMatchScore;
+    score |= kHostExactMatchScore;
+  } else {
+    NSRange containsHost = [hostname rangeOfString:self.hostname options:NSCaseInsensitiveSearch];
+    if (containsHost.location != NSNotFound) {
+      score |= kHostMatchScore;
+    }
   }
   if ([username isEqualToString:self.username]) {
     score |= kUserMatchScore;
