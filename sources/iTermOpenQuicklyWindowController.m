@@ -142,8 +142,8 @@
 
     frame.size.height = contentSize.height;
 
-    frame.origin.x = floor((screen.frame.size.width - frame.size.width) / 2);
-    frame.origin.y = screen.frame.origin.y + screen.frame.size.height - kMarginAboveWindow - frame.size.height;
+    frame.origin.x = NSMinX(screen.frame) + floor((screen.frame.size.width - frame.size.width) / 2);
+    frame.origin.y = NSMaxY(screen.frame) - kMarginAboveWindow - frame.size.height;
     return frame;
 }
 

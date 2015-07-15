@@ -908,7 +908,7 @@ static int MyForkPty(int *amaster,
     return path;
 }
 
-- (BOOL)startLoggingToFileWithPath:(NSString*)aPath {
+- (BOOL)startLoggingToFileWithPath:(NSString*)aPath shouldAppend:(BOOL)shouldAppend {
     @synchronized(self) {
         self.logPath = [aPath stringByStandardizingPath];
 
@@ -919,7 +919,11 @@ static int MyForkPty(int *amaster,
             [fileManager createFileAtPath:_logPath contents:nil attributes:nil];
             self.logHandle = [NSFileHandle fileHandleForWritingAtPath:_logPath];
         }
-        [_logHandle truncateFileAtOffset:0];
+        if (shouldAppend) {
+            [_logHandle seekToEndOfFile];
+        } else {
+            [_logHandle truncateFileAtOffset:0];
+        }
 
         return self.logging;
     }
