@@ -89,6 +89,7 @@ NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
 NSString *const kPreferenceKeyHotKeyTogglesWindow = @"HotKeyTogglesWindow";
 NSString *const kPreferenceKeyHotkeyProfileGuid = @"HotKeyBookmark";
 NSString *const kPreferenceKeyHotkeyAutoHides = @"HotkeyAutoHides";
+NSString *const kPreferenceKeyHotkeyFollowsMouse = @"HotkeyFollowsMouse";
 
 NSString *const kPreferenceKeyCmdClickOpensURLs = @"CommandSelection";
 NSString *const kPreferenceKeyControlLeftClickBypassesContextMenu = @"PassOnControlClick";
@@ -237,6 +238,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyHotKeyTogglesWindow: @NO,
                   kPreferenceKeyHotkeyProfileGuid: [NSNull null],
                   kPreferenceKeyHotkeyAutoHides: @YES,
+                  kPreferenceKeyHotkeyFollowsMouse: @YES,
 
                   kPreferenceKeyCmdClickOpensURLs: @YES,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,

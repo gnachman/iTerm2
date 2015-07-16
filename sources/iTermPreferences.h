@@ -108,6 +108,7 @@ extern NSString *const kPreferenceKeyHotkeyModifiers;
 extern NSString *const kPreferenceKeyHotKeyTogglesWindow;
 extern NSString *const kPreferenceKeyHotkeyProfileGuid;
 extern NSString *const kPreferenceKeyHotkeyAutoHides;
+extern NSString *const kPreferenceKeyHotkeyFollowsMouse;
 
 // Pointer
 extern NSString *const kPreferenceKeyCmdClickOpensURLs;

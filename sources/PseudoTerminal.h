@@ -283,5 +283,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (NSColor *)accessoryTextColor;
 - (void)openPasswordManagerToAccountName:(NSString *)name;
 
+- (void)moveToScreenWithMouseCursor;
+
 @end
 

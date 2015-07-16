@@ -57,11 +57,13 @@ static PseudoTerminal* GetHotkeyWindow()
     return GetHotkeyWindow();
 }
 
-static void RollInHotkeyTerm(PseudoTerminal* term)
-{
+static void RollInHotkeyTerm(PseudoTerminal* term) {
     HKWLog(@"Roll in [show] hotkey window");
 
     [NSApp activateIgnoringOtherApps:YES];
+    if ([iTermPreferences boolForKey:kPreferenceKeyHotkeyFollowsMouse]) {
+        [term moveToScreenWithMouseCursor];
+    }
     [[term window] makeKeyAndOrderFront:nil];
     [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
     [[[term window] animator] setAlphaValue:1];

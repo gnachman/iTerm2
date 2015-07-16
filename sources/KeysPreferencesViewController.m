@@ -42,6 +42,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSButton *_hotkeyTogglesWindow;
     IBOutlet NSButton *_hotkeyAutoHides;
     IBOutlet NSPopUpButton *_hotkeyBookmark;
+    IBOutlet NSButton *_hotkeyFollowsMouse;
 }
 
 - (void)awakeFromNib {
@@ -126,6 +127,10 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                            key:kPreferenceKeyHotkeyAutoHides
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
+
+    [self defineControl:_hotkeyFollowsMouse
+                    key:kPreferenceKeyHotkeyFollowsMouse
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_hotkeyBookmark
                     key:kPreferenceKeyHotkeyProfileGuid
@@ -227,8 +232,10 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     _hotkeyTogglesWindow.enabled = isEnabled;
 
     BOOL hasDedicatedWindow = [iTermPreferences boolForKey:kPreferenceKeyHotKeyTogglesWindow];
-    _hotkeyAutoHides.enabled = isEnabled && hasDedicatedWindow;
-    _hotkeyBookmark.enabled = isEnabled && hasDedicatedWindow;
+    const BOOL isHotkeyWindow = (isEnabled && hasDedicatedWindow);
+    _hotkeyAutoHides.enabled = isHotkeyWindow;
+    _hotkeyFollowsMouse.enabled = isHotkeyWindow;
+    _hotkeyBookmark.enabled = isHotkeyWindow;
 }
 
 - (void)registerHotkey {

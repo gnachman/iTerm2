@@ -195,7 +195,7 @@ static NSString *const kKey = @"key";
                            update:(BOOL (^)())update {
     assert(![_keyMap objectForKey:key]);
     assert(key);
-    assert(control);
+//    assert(control);
     assert([self keyHasDefaultValue:key]);
     if (!settingChanged || !update) {
         assert([self defaultValueForKey:key isCompatibleWithType:type]);
@@ -222,7 +222,7 @@ static NSString *const kKey = @"key";
     }
     switch (info.type) {
         case kPreferenceInfoTypeCheckbox: {
-            assert([info.control isKindOfClass:[NSButton class]]);
+//            assert([info.control isKindOfClass:[NSButton class]]);
             NSButton *button = (NSButton *)info.control;
             button.state = [self boolForKey:info.key] ? NSOnState : NSOffState;
             break;

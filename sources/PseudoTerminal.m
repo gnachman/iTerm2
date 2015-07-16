@@ -2351,10 +2351,157 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return _contentView.toolbeltWidth - before;
 }
 
+- (void)moveToScreenWithMouseCursor {
+    NSPoint mouseLocation = [NSEvent mouseLocation];
+    for (NSScreen *screen in [NSScreen screens]) {
+        if (NSPointInRect(mouseLocation, screen.frame)) {
+            if (screen != self.window.screen) {
+                [self moveToScreen:screen];
+                return;
+            }
+        }
+    }
+}
+
+- (void)moveToScreen:(NSScreen *)screen {
+    switch (windowType_) {
+        case WINDOW_TYPE_NORMAL:
+        case WINDOW_TYPE_NO_TITLE_BAR:
+            [self moveNormalWindowToScreen:screen];
+            break;
+
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            assert(false);
+            break;
+
+        case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
+        case WINDOW_TYPE_BOTTOM_PARTIAL:
+        case WINDOW_TYPE_TOP_PARTIAL:
+        case WINDOW_TYPE_LEFT_PARTIAL:
+        case WINDOW_TYPE_RIGHT_PARTIAL:
+            [self canonicalizeWindowFrameInScreen:screen];
+            break;
+    }
+}
+
+- (void)moveNormalWindowToScreen:(NSScreen *)screen {
+    // Find the horizontal and vertical anchor that the window is closest to. Anchors are the
+    // screen edges plus the screen center.
+    NSRect windowFrame = self.window.frame;
+    NSRect destinationScreenFrame = screen.visibleFrame;
+    CGFloat windowXPoints[3] = {
+        NSMinX(self.window.frame),
+        NSMidX(self.window.frame),
+        NSMaxX(self.window.frame)
+    };
+    CGFloat windowYPoints[3] = {
+        NSMinY(self.window.frame),
+        NSMidY(self.window.frame),
+        NSMaxY(self.window.frame)
+    };
+    CGFloat sourceScreenXPoints[3] = {
+        NSMinX(self.window.screen.frame),
+        NSMidX(self.window.screen.frame),
+        NSMaxX(self.window.screen.frame)
+    };
+    CGFloat sourceScreenYPoints[3] = {
+        NSMinY(self.window.screen.frame),
+        NSMidY(self.window.screen.frame),
+        NSMaxY(self.window.screen.frame)
+    };
+    CGFloat destinationScreenXPoints[3] = {
+        NSMinX(destinationScreenFrame),
+        NSMidX(destinationScreenFrame),
+        NSMaxX(destinationScreenFrame)
+    };
+    CGFloat destinationScreenYPoints[3] = {
+        NSMinY(destinationScreenFrame),
+        NSMidY(destinationScreenFrame),
+        NSMaxY(destinationScreenFrame)
+    };
+    int bestXIndex = -1;
+    int bestYIndex = -1;
+    NSSize bestDistance;
+    for (int i = 0; i < 3; i++) {
+        CGFloat xDistance = windowXPoints[i] - sourceScreenXPoints[i];
+        CGFloat yDistance = windowYPoints[i] - sourceScreenYPoints[i];
+        if (bestXIndex == -1 || fabs(xDistance) < fabs(bestDistance.width)) {
+            bestDistance.width = xDistance;
+            bestXIndex = i;
+        }
+        if (bestYIndex == -1 || fabs(yDistance) < fabs(bestDistance.height)) {
+            bestDistance.height = xDistance;
+            bestYIndex = i;
+        }
+    }
+
+    // Ensure the window will fit in its new screen.
+    windowFrame.size.width = MIN(windowFrame.size.width, destinationScreenFrame.size.width);
+    windowFrame.size.height = MIN(windowFrame.size.height, destinationScreenFrame.size.height);
+
+    // Move the window so that it is the same distance from its anchor edge horizontally.
+    switch (bestXIndex) {
+        case 0:
+            windowFrame.origin.x = destinationScreenXPoints[bestXIndex] + bestDistance.width;
+            break;
+
+        case 1:
+            windowFrame.origin.x = round(destinationScreenXPoints[bestXIndex] +
+                                         bestDistance.width -
+                                         NSWidth(windowFrame) / 2);
+            break;
+
+        case 2:
+            windowFrame.origin.x = (destinationScreenXPoints[bestXIndex] +
+                                    bestDistance.width -
+                                    NSWidth(windowFrame));
+            break;
+    }
+    // Ensure the window is still contained within the bounds of the destination screen
+    // horizontally.
+    if (NSMinX(windowFrame) < NSMinX(destinationScreenFrame)) {
+        windowFrame.origin.x += (NSMinX(destinationScreenFrame) - NSMinX(windowFrame));
+    }
+    if (NSMaxX(windowFrame) > NSMaxX(destinationScreenFrame)) {
+        windowFrame.origin.x -= (NSMaxX(windowFrame) - NSMaxX(destinationScreenFrame));
+    }
+
+    // Move the window so that it is the same distance from its anchor edge vertically.
+    switch (bestYIndex) {
+        case 0:
+            windowFrame.origin.y = destinationScreenYPoints[bestYIndex] + bestDistance.height;
+            break;
+
+        case 1:
+            windowFrame.origin.y = round(destinationScreenYPoints[bestYIndex] +
+                                         bestDistance.height -
+                                         NSHeight(windowFrame) / 2);
+            break;
+
+        case 2:
+            windowFrame.origin.y = (destinationScreenYPoints[bestYIndex] +
+                                    bestDistance.height -
+                                    NSHeight(windowFrame));
+            break;
+    }
+    // Move the window so that it is the same distance from its anchor edge vertically.
+    if (NSMinY(windowFrame) < NSMinY(destinationScreenFrame)) {
+        windowFrame.origin.y += (NSMinY(destinationScreenFrame) - NSMinY(windowFrame));
+    }
+    if (NSMaxY(windowFrame) > NSMaxY(destinationScreenFrame)) {
+        windowFrame.origin.y -= (NSMaxY(windowFrame) - NSMaxY(destinationScreenFrame));
+    }
+
+    [self.window setFrame:windowFrame display:NO];
+}
+
 - (void)canonicalizeWindowFrame {
     PtyLog(@"canonicalizeWindowFrame");
-    PTYSession* session = [self currentSession];
-    NSDictionary* abDict = [session profile];
+    NSDictionary* abDict = [self.currentSession profile];
     NSScreen* screen = [[self window] screen];
     if (!screen) {
         PtyLog(@"No window screen");
@@ -2382,6 +2529,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         }
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
     }
+    [self canonicalizeWindowFrameInScreen:screen];
+}
+
+- (void)canonicalizeWindowFrameInScreen:(NSScreen *)screen {
     NSRect frame = [[self window] frame];
     NSRect screenVisibleFrame = [screen visibleFrame];
     NSRect screenVisibleFrameIgnoringHiddenDock = [screen visibleFrameIgnoringHiddenDock];
@@ -2391,6 +2542,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
     // window's frame.
     NSSize decorationSize = [self windowDecorationSize];
+    PTYSession* session = [self currentSession];
     PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
     PtyLog(@"Line height is %f, char width is %f", (float) [[session textview] lineHeight], [[session textview] charWidth]);
     BOOL edgeSpanning = YES;
