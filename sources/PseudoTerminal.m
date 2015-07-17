@@ -2321,6 +2321,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [self editSession:self.currentSession makeKey:NO];
     }
     [self notifyTmuxOfTabChange];
+
+    [_contentView updateDivisionView];
 }
 
 - (void)makeCurrentSessionFirstResponder
@@ -2583,6 +2585,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     for (PTYSession* aSession in [self allSessions]) {
         [aSession setFocused:NO];
     }
+
+    [_contentView updateDivisionView];
 }
 
 // Returns the hotkey window that should be hidden or nil if the hotkey window
