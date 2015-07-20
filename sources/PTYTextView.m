@@ -59,6 +59,7 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "WindowControllerInterface.h"
+#import <QuartzCore/QuartzCore.h>
 #include <math.h>
 #include <sys/time.h>
 
@@ -4548,13 +4549,34 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)highlightMarkOnLine:(int)line {
     CGFloat y = line * _lineHeight;
-    SolidColorView *blue = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)
-                                                            color:[NSColor blueColor]] autorelease];
-    blue.alphaValue = 0;
+    NSView *blue = [[[NSView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)] autorelease];
+    [blue setWantsLayer:YES];
     [self addSubview:blue];
-    [[NSAnimationContext currentContext] setDuration:0.5];
-    [blue.animator setAlphaValue:0.75];
-    [blue performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:0.75];
+
+    // Set up layer's initial state
+    blue.layer.backgroundColor = [[NSColor blueColor] iterm_CGColor];
+    blue.layer.opaque = NO;
+    blue.layer.opacity = 0.75;
+
+    // Animate it out, removing from superview when complete.
+    [CATransaction begin];
+    [blue retain];
+    [CATransaction setCompletionBlock:^{
+        [blue removeFromSuperview];
+        [blue release];
+    }];
+    const NSTimeInterval duration = 0.75;
+
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+    animation.fromValue = (id)@0.75;
+    animation.toValue = (id)@0.0;
+    animation.duration = duration;
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
+    animation.removedOnCompletion = NO;
+    animation.fillMode = kCAFillModeForwards;
+    [blue.layer addAnimation:animation forKey:@"opacity"];
+
+    [CATransaction commit];
 }
 
 #pragma mark - Find Cursor
