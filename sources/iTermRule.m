@@ -40,7 +40,10 @@
       colon = NSNotFound;
     } else if (colon != NSNotFound) {
       // user@host:path
-      hostname = [string substringWithRange:NSMakeRange(atSign + 1, colon - atSign)];
+      hostname = [string substringWithRange:NSMakeRange(atSign + 1, colon - atSign - 1)];
+    } else if (colon == NSNotFound) {
+      // user@host
+      hostname = [string substringFromIndex:atSign + 1];
     }
   }
   if (colon != NSNotFound) {
