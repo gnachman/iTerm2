@@ -24,7 +24,7 @@ static const CGFloat kMinimumToolbeltSizeInPoints = 100;
 static const CGFloat kMinimumToolbeltSizeAsFractionOfWindow = 0.05;
 static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
-@interface iTermRootTerminalView()
+@interface iTermRootTerminalView()<iTermTabBarControlViewDelegate>
 
 @property(nonatomic, retain) PTYTabView *tabView;
 @property(nonatomic, retain) iTermTabBarControlView *tabBarControl;
@@ -61,7 +61,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         NSRect tabBarFrame = self.bounds;
         tabBarFrame.size.height = kHorizontalTabBarHeight;
         self.tabBarControl = [[[iTermTabBarControlView alloc] initWithFrame:tabBarFrame] autorelease];
-        _tabBarControl.itermTabBarDelegate = tabBarDelegate;
+        _tabBarControl.itermTabBarDelegate = self;
 
         int theModifier =
             [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]];
@@ -397,6 +397,24 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     DLog(@"repositionWidgets - update tab bar");
     [self.tabBarControl updateFlashing];
     DLog(@"repositionWidgets - return.");
+}
+
+#pragma mark - iTermTabBarControlViewDelegate
+
+- (BOOL)iTermTabBarShouldFlash {
+    return [_delegate iTermTabBarShouldFlash];
+}
+
+- (NSTimeInterval)iTermTabBarCmdPressDuration {
+    return [_delegate iTermTabBarCmdPressDuration];
+}
+
+- (void)iTermTabBarWillBeginFlash {
+    [_delegate iTermTabBarWillBeginFlash];
+}
+
+- (void)iTermTabBarDidFinishFlash {
+    [_delegate iTermTabBarDidFinishFlash];
 }
 
 @end

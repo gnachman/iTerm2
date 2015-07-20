@@ -19,7 +19,7 @@ extern const CGFloat kLeftTabsWidth;
 @protocol PSMTabBarControlDelegate;
 @class PTYTabView;
 
-@protocol iTermRootTerminalViewDelegate<NSObject>
+@protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate>
 - (void)repositionWidgets;
 - (BOOL)_haveTopBorder;
 - (BOOL)_haveBottomBorder;
