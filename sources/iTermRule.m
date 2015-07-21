@@ -81,14 +81,17 @@
 
   int score = 0;
 
-  if ([hostname isEqualToString:self.hostname]) {
-    score |= kHostExactMatchScore;
-  } else {
+  if (self.hostname != nil) {
     NSRange containsHost = [hostname rangeOfString:self.hostname options:NSCaseInsensitiveSearch];
     if (containsHost.location != NSNotFound) {
-      score |= kHostMatchScore;
+      if (containsHost.location == 0 && containsHost.length == hostname.length) {
+        score |= kHostExactMatchScore;
+      } else {
+        score |= kHostMatchScore;
+      }
     }
   }
+
   if ([username isEqualToString:self.username]) {
     score |= kUserMatchScore;
   }
