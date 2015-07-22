@@ -6634,10 +6634,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 // Change the tab color to the selected menu color
-- (void)changeTabColorToMenuAction:(id)sender
-{
+- (void)changeTabColorToMenuAction:(id)sender {
+    // If we got here because you right clicked on a tab, use the represented object.
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
+
+    if (!aTab) {
+        // Must have selected it from the view menu.
+        aTab = [self currentTab];
+    }
 
     ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];
     NSColor *color = menuItem.color;
