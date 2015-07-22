@@ -240,6 +240,8 @@
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
+
+      <result type="tab" description="The tab that was created" />
     </command>
 
     <command name="create tab with default profile" code="Itrmntwn"
@@ -251,6 +253,8 @@
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
+
+      <result type="tab" description="The tab that was created" />
     </command>
 
     <command name="create window with profile" code="Itrmnwwp"
@@ -265,6 +269,7 @@
         <cocoa key="command"/>
       </parameter>
 
+      <result type="window" description="The window that was created"/>
     </command>
 
     <command name="create window with default profile" code="Itrmnwwn"
@@ -275,6 +280,7 @@
         description="Shell command to run">
         <cocoa key="command"/>
       </parameter>
+      <result type="window" description="The window that was created"/>
     </command>
 
     <command name="write" code="Itrmsntx"
@@ -307,16 +313,19 @@
           description="Name of profile for new session.">
         <cocoa key="profile" />
       </parameter>
+      <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split vertically with default profile" code="Itrmsvdp"
         description="Split a session vertically, using the default profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
+      <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split vertically with same profile" code="Itrmsvsp"
         description="Split a session vertically, using the original session's profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
+      <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split horizontally" code="Itrmsplh"
@@ -326,16 +335,19 @@
           description="Name of profile for new session.">
         <cocoa key="profile" />
       </parameter>
+      <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split horizontally with default profile" code="Itrmshdp"
         description="Split a session horizontally, using the default profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
+      <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split horizontally with same profile" code="Itrmshsp"
         description="Split a session horizontally, using the original session's profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
+      <result type="session" description="The session that was created"/>
     </command>
 
     <value-type name="RGB color" code="cRGB">

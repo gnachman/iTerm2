@@ -4811,26 +4811,31 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [tab addToTerminal:self withArrangement:arrangement];
 }
 
-- (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
+- (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
     if ([[self currentTab] isTmuxTab]) {
         [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane]
-                                                     vertically:isVertical];
-        return;
+                                                            vertically:isVertical];
+        return nil;
     }
-    [self splitVertically:isVertical withBookmark:profile targetSession:[self currentSession]];
+    return [self splitVertically:isVertical
+                    withBookmark:profile
+                   targetSession:[self currentSession]];
 }
 
-- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
-{
+- (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid {
     if ([[self currentTab] isTmuxTab]) {
         [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
-        return;
+        return nil;
     }
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
-        [self splitVertically:isVertical withBookmark:bookmark targetSession:[self currentSession]];
+        return [self splitVertically:isVertical
+                        withBookmark:bookmark
+                       targetSession:[self currentSession]];
+    } else {
+        return nil;
     }
 }
 
@@ -4886,18 +4891,18 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)splitVertically:(BOOL)isVertical
-           withBookmark:(Profile*)theBookmark
-          targetSession:(PTYSession*)targetSession {
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                   withBookmark:(Profile*)theBookmark
+                  targetSession:(PTYSession*)targetSession {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
         [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
-        return;
+        return nil;
     }
     PtyLog(@"--------- splitVertically -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
-        return;
+        return nil;
     }
 
     NSString *oldCWD = nil;
@@ -4917,6 +4922,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [newSession terminate];
         [newSession.tab removeSession:newSession];
     }
+    return newSession;
 }
 
 - (Profile*)_bookmarkToSplit
