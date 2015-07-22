@@ -61,6 +61,8 @@
     NSString *contentsOfFile = [args objectForKey:@"contentsOfFile"];
     // optional argument follows (might be nil):
     NSString *text = [args objectForKey:@"text"];
+    // optional argument follows (might be nil; if so, defaults to true):
+    BOOL newline = ( [args objectForKey:@"newline"] ? [[args objectForKey:@"newline"] boolValue] : YES );
     NSData *data = nil;
     NSString *aString = nil;
 
@@ -79,11 +81,11 @@
         text = [text description];
     }
     if (text != nil) {
-        if ([text characterAtIndex:[text length]-1]==' ') {
-            data = [text dataUsingEncoding:[self.terminal encoding]];
-        } else {
+        if (newline) {
             aString = [NSString stringWithFormat:@"%@\n", text];
             data = [aString dataUsingEncoding:[self.terminal encoding]];
+        } else {
+            data = [text dataUsingEncoding:[self.terminal encoding]];
         }
     }
 
