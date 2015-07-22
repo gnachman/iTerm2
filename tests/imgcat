@@ -27,8 +27,8 @@ function error() {
 }
 
 function show_help() {
-    echo "Usage: imgcat filename ..."
-    echo "   or: cat filename | imgcat"
+    echo "Usage: imgcat filename ..." 1>& 2
+    echo "   or: cat filename | imgcat" 1>& 2
 }
 
 ## Main
