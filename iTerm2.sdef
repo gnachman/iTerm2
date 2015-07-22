@@ -294,10 +294,10 @@
       <parameter name="text" code="Text" type="text"
           description="Text to send" optional="yes">
         <cocoa key="text"/>
-	<parameter name="newline" code="wrtxtnl" type="boolean"
-            description="If newline should be added to end of text (default: yes)" optional="yes">
-          <cocoa key="newline"/>
-        </parameter>
+      </parameter>
+      <parameter name="newline" code="Wtnl" type="boolean"
+          description="If newline should be added to end of text (default: yes)" optional="yes">
+        <cocoa key="newline"/>
       </parameter>
     </command>
 
