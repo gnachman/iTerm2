@@ -6414,7 +6414,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
     }
 
-    // First, try to match any rule with the hostname
+    // Find the best-matching rule.
     int bestScore = 0;
     Profile *bestProfile = nil;
 
