@@ -28,9 +28,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 @property(nonatomic, retain) PTYTabView *tabView;
 @property(nonatomic, retain) iTermTabBarControlView *tabBarControl;
-@property(nonatomic, retain) NSView *divisionView;
+@property(nonatomic, retain) SolidColorView *divisionView;
 @property(nonatomic, retain) iTermToolbeltView *toolbelt;
-
 @end
 
 
@@ -126,11 +125,13 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                                               self.bounds.size.width,
                                               kDivisionViewHeight);
         if (!_divisionView) {
-            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame
-                                                            color:[NSColor darkGrayColor]];
+            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame];
             _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
             [self addSubview:_divisionView];
         }
+        _divisionView.color = self.window.isKeyWindow
+                ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.49 alpha:1]
+                : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.65 alpha:1];
         _divisionView.frame = divisionViewFrame;
     } else if (_divisionView) {
         // Remove existing division
