@@ -32,11 +32,11 @@
     _hostname = [iTermRule ruleWithString:@"hostname"];
     _username = [iTermRule ruleWithString:@"username@"];
     _usernameHostname = [iTermRule ruleWithString:@"username@hostname"];
-    _usernameHostnamePath = [iTermRule ruleWithString:@"username@hostname:path"];
-    _usernameWildcardPath = [iTermRule ruleWithString:@"username@*:path"];
-    _hostnamePath = [iTermRule ruleWithString:@"hostname:path"];
+    _usernameHostnamePath = [iTermRule ruleWithString:@"username@hostname:/path"];
+    _usernameWildcardPath = [iTermRule ruleWithString:@"username@*:/path"];
+    _hostnamePath = [iTermRule ruleWithString:@"hostname:/path"];
     _path = [iTermRule ruleWithString:@"/path"];
-    _malformed1 = [iTermRule ruleWithString:@"foo:bar@baz"];
+    _malformed1 = [iTermRule ruleWithString:@"/foo:bar@baz"];
 
     _rules = @[ _hostname,
                 _username,
@@ -48,57 +48,83 @@
                 _malformed1 ];
 }
 
-- (iTermRule *)highestScoringRuleWithHostname:(NSString *)hostname username:(NSString *)username path:(NSString *)path {
-    int bestScore = 0;
-    iTermRule *bestRule = nil;
+- (NSArray *)matchingRulesSortedByScoreWithHostname:(NSString *)hostname username:(NSString *)username path:(NSString *)path {
+    NSMutableArray *matching = [NSMutableArray array];
     for (iTermRule *rule in _rules) {
         int score = [rule scoreForHostname:hostname username:username path:path];
-        if (score > bestScore) {
-            bestScore = score;
-            bestRule = rule;
+        if (score > 0) {
+            [matching addObject:rule];
         }
     }
-    return bestRule;
+    return [matching sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        int score1 = [obj1 scoreForHostname:hostname username:username path:path];
+        int score2 = [obj2 scoreForHostname:hostname username:username path:path];
+        return [@(score2) compare:@(score1)];
+    }];
 }
 
 - (void)testHostname {
-    iTermRule *winner = [self highestScoringRuleWithHostname:@"hostname" username:@"x" path:@"x"];
-    XCTAssertEqual(winner, _hostname);
+    NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname"
+                                                         username:@"x"
+                                                             path:@"x"];
+    XCTAssertEqualObjects(rules, @[ _hostname ]);
 }
 
 - (void)testUsername {
-    iTermRule *winner = [self highestScoringRuleWithHostname:@"x" username:@"username" path:@"x"];
-    XCTAssertEqual(winner, _username);
+    NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"x"
+                                                         username:@"username"
+                                                             path:@"x"];
+    XCTAssertEqualObjects(rules, @[ _username ]);
 }
 
 - (void)testUsernameHostname {
-    iTermRule *winner = [self highestScoringRuleWithHostname:@"hostname" username:@"username" path:@"x"];
-    XCTAssertEqual(winner, _usernameHostname);
+    NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname"
+                                                         username:@"username"
+                                                             path:@"x"];
+    NSArray *expected = @[ _usernameHostname, _hostname, _username ];
+    XCTAssertEqualObjects(rules, expected);
 }
 
 - (void)testUsernameHostnamePath {
-    iTermRule *winner = [self highestScoringRuleWithHostname:@"hostname" username:@"username" path:@"path"];
-    XCTAssertEqual(winner, _usernameHostnamePath);
+    NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname"
+                                                         username:@"username"
+                                                             path:@"/path"];
+    NSArray *expected = @[ _usernameHostnamePath, _usernameHostname, _hostnamePath, _hostname,
+                           _usernameWildcardPath, _username,
+                           _path ];
+    XCTAssertEqualObjects(rules, expected);
 }
 
 - (void)testUsernameWildcardPath {
-    iTermRule *winner = [self highestScoringRuleWithHostname:@"x" username:@"username" path:@"path"];
-    XCTAssertEqual(winner, _usernameWildcardPath);
+    NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"x"
+                                                         username:@"username"
+                                                             path:@"/path"];
+    NSArray *expected = @[ _usernameWildcardPath, _username,
+                           _path ];
+    XCTAssertEqualObjects(rules, expected);
 }
 
 - (void)testHostnamePath {
-    iTermRule *winner = [self highestScoringRuleWithHostname:@"hostname" username:@"x" path:@"path"];
-    XCTAssertEqual(winner, _hostnamePath);
+    NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname"
+                                                         username:@"x"
+                                                             path:@"/path"];
+    NSArray *expected = @[ _hostnamePath, _hostname,
+                           _path ];
+    XCTAssertEqualObjects(rules, expected);
 }
 
 - (void)testPath {
-    iTermRule *winner = [self highestScoringRuleWithHostname:@"x" username:@"x" path:@"/path"];
-    XCTAssertEqual(winner, _path);
+    NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"x"
+                                                         username:@"x"
+                                                             path:@"/path"];
+    XCTAssertEqualObjects(rules, @[ _path ]);
 }
 
 - (void)testNoMatch {
-    iTermRule *winner = [self highestScoringRuleWithHostname:@"x" username:@"x" path:@"x"];
-    XCTAssertNil(winner);
+    NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"x"
+                                                         username:@"x"
+                                                             path:@"x"];
+    XCTAssertEqualObjects(rules, @[ ]);
 }
 
 @end

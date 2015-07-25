@@ -77,6 +77,11 @@
   [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ path=%@>",
+            [self class], self, self.hostname, self.username, self.path];
+}
+
 - (int)scoreForHostname:(NSString *)hostname
                username:(NSString *)username
                    path:(NSString *)path {
