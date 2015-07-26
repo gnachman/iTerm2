@@ -2434,7 +2434,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             bestXIndex = i;
         }
         if (bestYIndex == -1 || fabs(yDistance) < fabs(bestDistance.height)) {
-            bestDistance.height = xDistance;
+            bestDistance.height = yDistance;
             bestYIndex = i;
         }
     }

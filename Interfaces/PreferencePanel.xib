@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14E46" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
@@ -1318,6 +1318,7 @@ DQ
                 <outlet property="_hotkeyBookmark" destination="5108" id="Zkv-ne-3zF"/>
                 <outlet property="_hotkeyEnabled" destination="5104" id="QVB-Xu-fmz"/>
                 <outlet property="_hotkeyField" destination="5105" id="7JV-k6-QEN"/>
+                <outlet property="_hotkeyFollowsMouse" destination="fpn-yy-v3x" id="ouK-id-55U"/>
                 <outlet property="_hotkeyLabel" destination="5106" id="nqf-CS-llf"/>
                 <outlet property="_hotkeyTogglesWindow" destination="5107" id="Dw3-dZ-bfg"/>
                 <outlet property="_leftCommandButton" destination="4393" id="Acz-Ri-0zT"/>
@@ -5302,7 +5303,7 @@ DQ
                     </connections>
                 </button>
                 <button id="fpn-yy-v3x">
-                    <rect key="frame" x="27" y="18" width="270" height="18"/>
+                    <rect key="frame" x="27" y="18" width="275" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Opens on same screen as mouse cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="mr6-Ed-ATw">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
