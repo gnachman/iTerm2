@@ -24,13 +24,12 @@ static const CGFloat kMinimumToolbeltSizeInPoints = 100;
 static const CGFloat kMinimumToolbeltSizeAsFractionOfWindow = 0.05;
 static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
-@interface iTermRootTerminalView()
+@interface iTermRootTerminalView()<iTermTabBarControlViewDelegate>
 
 @property(nonatomic, retain) PTYTabView *tabView;
 @property(nonatomic, retain) iTermTabBarControlView *tabBarControl;
-@property(nonatomic, retain) NSView *divisionView;
+@property(nonatomic, retain) SolidColorView *divisionView;
 @property(nonatomic, retain) iTermToolbeltView *toolbelt;
-
 @end
 
 
@@ -61,7 +60,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         NSRect tabBarFrame = self.bounds;
         tabBarFrame.size.height = kHorizontalTabBarHeight;
         self.tabBarControl = [[[iTermTabBarControlView alloc] initWithFrame:tabBarFrame] autorelease];
-        _tabBarControl.itermTabBarDelegate = tabBarDelegate;
+        _tabBarControl.itermTabBarDelegate = self;
 
         int theModifier =
             [iTermPreferences maskForModifierTag:[iTermPreferences intForKey:kPreferenceKeySwitchTabModifier]];
@@ -126,11 +125,13 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                                               self.bounds.size.width,
                                               kDivisionViewHeight);
         if (!_divisionView) {
-            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame
-                                                            color:[NSColor darkGrayColor]];
+            _divisionView = [[SolidColorView alloc] initWithFrame:divisionViewFrame];
             _divisionView.autoresizingMask = (NSViewWidthSizable | NSViewMinYMargin);
             [self addSubview:_divisionView];
         }
+        _divisionView.color = self.window.isKeyWindow
+                ? [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.49 alpha:1]
+                : [NSColor colorWithCalibratedHue:1 saturation:0 brightness:0.65 alpha:1];
         _divisionView.frame = divisionViewFrame;
     } else if (_divisionView) {
         // Remove existing division
@@ -397,6 +398,24 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     DLog(@"repositionWidgets - update tab bar");
     [self.tabBarControl updateFlashing];
     DLog(@"repositionWidgets - return.");
+}
+
+#pragma mark - iTermTabBarControlViewDelegate
+
+- (BOOL)iTermTabBarShouldFlash {
+    return [_delegate iTermTabBarShouldFlash];
+}
+
+- (NSTimeInterval)iTermTabBarCmdPressDuration {
+    return [_delegate iTermTabBarCmdPressDuration];
+}
+
+- (void)iTermTabBarWillBeginFlash {
+    [_delegate iTermTabBarWillBeginFlash];
+}
+
+- (void)iTermTabBarDidFinishFlash {
+    [_delegate iTermTabBarDidFinishFlash];
 }
 
 @end

@@ -40,11 +40,17 @@
       colon = NSNotFound;
     } else if (colon != NSNotFound) {
       // user@host:path
-      hostname = [string substringWithRange:NSMakeRange(atSign + 1, colon - atSign)];
+      hostname = [string substringWithRange:NSMakeRange(atSign + 1, colon - atSign - 1)];
+    } else if (colon == NSNotFound) {
+      // user@host
+      hostname = [string substringFromIndex:atSign + 1];
     }
   }
   if (colon != NSNotFound) {
     // [user@]host:path
+      if (!hostname) {
+          hostname = [string substringToIndex:colon];
+      }
     path = [string substringFromIndex:colon + 1];
   } else if (atSign == NSNotFound && [string hasPrefix:@"/"]) {
     // /path
@@ -71,6 +77,11 @@
   [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ path=%@>",
+            [self class], self, self.hostname, self.username, self.path];
+}
+
 - (int)scoreForHostname:(NSString *)hostname
                username:(NSString *)username
                    path:(NSString *)path {
@@ -94,9 +105,13 @@
 
   if ([username isEqualToString:self.username]) {
     score |= kUserMatchScore;
+  } else if (self.username.length) {
+      return 0;
   }
   if ([path isEqualToString:self.path]) {
     score |= kPathMatchScore;
+  } else if (self.path.length) {
+      return 0;
   }
 
   return score;

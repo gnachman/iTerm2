@@ -2321,6 +2321,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [self editSession:self.currentSession makeKey:NO];
     }
     [self notifyTmuxOfTabChange];
+
+    [_contentView updateDivisionView];
 }
 
 - (void)makeCurrentSessionFirstResponder
@@ -2583,6 +2585,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     for (PTYSession* aSession in [self allSessions]) {
         [aSession setFocused:NO];
     }
+
+    [_contentView updateDivisionView];
 }
 
 // Returns the hotkey window that should be hidden or nil if the hotkey window
@@ -4811,26 +4815,31 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [tab addToTerminal:self withArrangement:arrangement];
 }
 
-- (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
+- (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
     if ([[self currentTab] isTmuxTab]) {
         [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane]
-                                                     vertically:isVertical];
-        return;
+                                                            vertically:isVertical];
+        return nil;
     }
-    [self splitVertically:isVertical withBookmark:profile targetSession:[self currentSession]];
+    return [self splitVertically:isVertical
+                    withBookmark:profile
+                   targetSession:[self currentSession]];
 }
 
-- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
-{
+- (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid {
     if ([[self currentTab] isTmuxTab]) {
         [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
-        return;
+        return nil;
     }
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
-        [self splitVertically:isVertical withBookmark:bookmark targetSession:[self currentSession]];
+        return [self splitVertically:isVertical
+                        withBookmark:bookmark
+                       targetSession:[self currentSession]];
+    } else {
+        return nil;
     }
 }
 
@@ -4886,18 +4895,18 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)splitVertically:(BOOL)isVertical
-           withBookmark:(Profile*)theBookmark
-          targetSession:(PTYSession*)targetSession {
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                   withBookmark:(Profile*)theBookmark
+                  targetSession:(PTYSession*)targetSession {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
         [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
-        return;
+        return nil;
     }
     PtyLog(@"--------- splitVertically -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
-        return;
+        return nil;
     }
 
     NSString *oldCWD = nil;
@@ -4917,6 +4926,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [newSession terminate];
         [newSession.tab removeSession:newSession];
     }
+    return newSession;
 }
 
 - (Profile*)_bookmarkToSplit
@@ -6628,10 +6638,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 // Change the tab color to the selected menu color
-- (void)changeTabColorToMenuAction:(id)sender
-{
+- (void)changeTabColorToMenuAction:(id)sender {
+    // If we got here because you right clicked on a tab, use the represented object.
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
+
+    if (!aTab) {
+        // Must have selected it from the view menu.
+        aTab = [self currentTab];
+    }
 
     ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];
     NSColor *color = menuItem.color;

@@ -61,6 +61,8 @@
     NSString *contentsOfFile = [args objectForKey:@"contentsOfFile"];
     // optional argument follows (might be nil):
     NSString *text = [args objectForKey:@"text"];
+    // optional argument follows (might be nil; if so, defaults to true):
+    BOOL newline = ( [args objectForKey:@"newline"] ? [[args objectForKey:@"newline"] boolValue] : YES );
     NSData *data = nil;
     NSString *aString = nil;
 
@@ -79,11 +81,11 @@
         text = [text description];
     }
     if (text != nil) {
-        if ([text characterAtIndex:[text length]-1]==' ') {
-            data = [text dataUsingEncoding:[self.terminal encoding]];
-        } else {
+        if (newline) {
             aString = [NSString stringWithFormat:@"%@\n", text];
             data = [aString dataUsingEncoding:[self.terminal encoding]];
+        } else {
+            data = [text dataUsingEncoding:[self.terminal encoding]];
         }
     }
 
@@ -108,51 +110,53 @@
     }
 }
 
-- (void)splitVertically:(BOOL)vertically withProfile:(Profile *)profile {
-    [[[self tab] realParentWindow] splitVertically:vertically
-                                       withProfile:profile];
+- (PTYSession *)splitVertically:(BOOL)vertically withProfile:(Profile *)profile {
+    return [[[self tab] realParentWindow] splitVertically:vertically
+                                              withProfile:profile];
 }
 
-- (void)handleSplitVertically:(NSScriptCommand *)scriptCommand {
+- (id)handleSplitVertically:(NSScriptCommand *)scriptCommand {
     NSDictionary *args = [scriptCommand evaluatedArguments];
     NSString *profileName = args[@"profile"];
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (profile) {
-        [self splitVertically:YES withProfile:profile];
+        return [self splitVertically:YES withProfile:profile];
+    } else {
+        [scriptCommand setScriptErrorNumber:1];
+        [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
+                                             profileName]];
+        return nil;
+    }
+}
+
+- (id)handleSplitVerticallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
+    return [self splitVertically:YES withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+}
+
+- (id)handleSplitVerticallyWithSameProfile:(NSScriptCommand *)scriptCommand {
+    return [self splitVertically:YES withProfile:self.profile];
+}
+
+- (id)handleSplitHorizontally:(NSScriptCommand *)scriptCommand {
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    NSString *profileName = args[@"profile"];
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
+    if (profile) {
+        return [self splitVertically:NO withProfile:profile];
     } else {
         [scriptCommand setScriptErrorNumber:1];
         [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
                                              profileName]];
     }
+    return nil;
 }
 
-- (void)handleSplitVerticallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
-    [self splitVertically:YES withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+- (id)handleSplitHorizontallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
+    return [self splitVertically:NO withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
 }
 
-- (void)handleSplitVerticallyWithSameProfile:(NSScriptCommand *)scriptCommand {
-    [self splitVertically:YES withProfile:self.profile];
-}
-
-- (void)handleSplitHorizontally:(NSScriptCommand *)scriptCommand {
-    NSDictionary *args = [scriptCommand evaluatedArguments];
-    NSString *profileName = args[@"profile"];
-    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
-    if (profile) {
-        [self splitVertically:NO withProfile:profile];
-    } else {
-        [scriptCommand setScriptErrorNumber:1];
-        [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
-                                             profileName]];
-    }
-}
-
-- (void)handleSplitHorizontallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
-    [self splitVertically:NO withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
-}
-
-- (void)handleSplitHorizontallyWithSameProfile:(NSScriptCommand *)scriptCommand {
-    [self splitVertically:NO withProfile:self.profile];
+- (id)handleSplitHorizontallyWithSameProfile:(NSScriptCommand *)scriptCommand {
+    return [self splitVertically:NO withProfile:self.profile];
 }
 
 - (void)handleTerminateScriptCommand:(NSScriptCommand *)command {

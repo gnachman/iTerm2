@@ -9,7 +9,10 @@
 #import "iTermNewWindowCommand.h"
 #import "iTermController.h"
 #import "NSStringITerm.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
 #import "ProfileModel.h"
+#import "PseudoTerminal.h"
 
 @implementation iTermNewWindowCommand
 
@@ -31,13 +34,15 @@
         NSDictionary *args = [self evaluatedArguments];
         NSString *command = args[@"command"];
         // maybe pass isUTF8 all the way through?
-        [[iTermController sharedInstance] launchBookmark:profile
-                                              inTerminal:nil
-                                                 withURL:nil
-                                                isHotkey:NO
-                                                 makeKey:YES
-                                                 command:command
-                                                   block:nil];
+        PTYSession *session =
+            [[iTermController sharedInstance] launchBookmark:profile
+                                                  inTerminal:nil
+                                                     withURL:nil
+                                                    isHotkey:NO
+                                                     makeKey:YES
+                                                     command:command
+                                                       block:nil];
+        return session.tab.realParentWindow.window;
     }
     return nil;
 }

@@ -1031,6 +1031,7 @@
 		A6A2699C190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2699A190319A000437DA9 /* ProfilesAdvancedPreferencesViewController.h */; };
 		A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */; };
 		A6A5991D1887C63700CB4209 /* ToolCommandHistoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */; };
+		A6ACD1F81B62F2210095CB57 /* iTermRuleTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */; };
 		A6AE1ECF191FFA1C00780C19 /* iTermMouseCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */; };
 		A6AE1ED81926F89B00780C19 /* iTermAnnouncementViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */; };
 		A6AE1EDD192723F700780C19 /* iTermAnnouncementView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AE1EDB192723F700780C19 /* iTermAnnouncementView.h */; };
@@ -2438,6 +2439,7 @@
 		A6A51A3F1B45CEA9007891F3 /* VT100DCSParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100DCSParserTest.m; sourceTree = "<group>"; };
 		A6A5991B1887C63700CB4209 /* ToolCommandHistoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ToolCommandHistoryView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A5991C1887C63700CB4209 /* ToolCommandHistoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolCommandHistoryView.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRuleTest.m; sourceTree = "<group>"; };
 		A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermMouseCursor.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1ECE191FFA1C00780C19 /* iTermMouseCursor.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermMouseCursor.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6AE1ED61926F89B00780C19 /* iTermAnnouncementViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermAnnouncementViewController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -4008,6 +4010,7 @@
 				A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */,
 				A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */,
 				A6C7641E1B45CB2800E3C992 /* Supporting Files */,
+				A6ACD1F71B62F2210095CB57 /* iTermRuleTest.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -5934,6 +5937,7 @@
 				A6BDB0461B45EAE700F511E6 /* VT100GridTest.m in Sources */,
 				A6BDB0441B45E8EE00F511E6 /* VT100ScreenTest.m in Sources */,
 				A6BDB0B51B45FE7700F511E6 /* iTermSemanticHistoryTest.m in Sources */,
+				A6ACD1F81B62F2210095CB57 /* iTermRuleTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

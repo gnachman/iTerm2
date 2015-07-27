@@ -19,7 +19,7 @@ extern const CGFloat kLeftTabsWidth;
 @protocol PSMTabBarControlDelegate;
 @class PTYTabView;
 
-@protocol iTermRootTerminalViewDelegate<NSObject>
+@protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate>
 - (void)repositionWidgets;
 - (BOOL)_haveTopBorder;
 - (BOOL)_haveBottomBorder;
@@ -48,7 +48,7 @@ extern const CGFloat kLeftTabsWidth;
 // Gray line dividing tab/title bar from content. Will be nil if a division
 // view isn't needed such as for fullscreen windows or windows without a
 // title bar (e.g., top-of-screen).
-@property(nonatomic, readonly) NSView *divisionView;
+@property(nonatomic, readonly) SolidColorView *divisionView;
 
 // Toolbelt view. Goes on the right side of the terminal window, if visible.
 @property(nonatomic, readonly) iTermToolbeltView *toolbelt;

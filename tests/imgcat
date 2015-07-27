@@ -22,26 +22,56 @@ function print_image() {
     printf '\a\n'
 }
 
-if [ ! -t 0 ]; then
-  print_image "" 1 "$(cat | base64)"
-  exit 0
+function error() {
+    echo "ERROR: $*" 1>&2
+}
+
+function show_help() {
+    echo "Usage: imgcat filename ..." 1>& 2
+    echo "   or: cat filename | imgcat" 1>& 2
+}
+
+## Main
+
+if [ -t 0 ]; then
+    has_stdin=f
+else
+    has_stdin=t
 fi
 
-if [ $# -eq 0 ]; then
-  echo "Usage: imgcat filename ..."
-  echo "   or: cat filename | imgcat"
-  exit 1
+# Show help if no arguments and no stdin.
+if [ $has_stdin = f -a $# -eq 0 ]; then
+    show_help
+    exit
 fi
 
-for fn in "$@"
-do
-  if [ -r "$fn" ] ; then
-    print_image "$fn" 1 "$(base64 < "$fn")"
-  else
-    echo "imgcat: $fn: No such file or directory"
-    exit 1
-  fi
+# Look for command line flags.
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h|--h|--help)
+        show_help
+        exit
+        ;;
+    -*)
+        error "Unknown option flag: $1"
+        show_help
+        exit 1
+      ;;
+    *)
+        if [ -r "$1" ] ; then
+            print_image "$1" 1 "$(base64 < "$1")"
+        else
+            error "imgcat: $1: No such file or directory"
+            exit 2
+        fi
+        ;;
+    esac
+    shift
 done
 
-exit 0
+# Read and print stdin
+if [ $has_stdin = t ]; then
+    print_image "" 1 "$(cat | base64)"
+fi
 
+exit 0
