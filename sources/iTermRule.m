@@ -93,16 +93,43 @@
   int score = 0;
 
   if (self.hostname != nil) {
-    NSRange containsHost = [hostname rangeOfString:self.hostname options:NSCaseInsensitiveSearch];
-    if (containsHost.location != NSNotFound) {
-      if (containsHost.location == 0 && containsHost.length == hostname.length) {
+    // Fixup hostname for regex match
+    NSString *fixedHostname = [self.hostname stringByReplacingOccurrencesOfString:@"." withString:@"\\."];
+    int prevLength = [fixedHostname length];
+    fixedHostname = [fixedHostname stringByReplacingOccurrencesOfString:@"*" withString:@".*"];
+    int postLength = [fixedHostname length];
+
+    // If no wildcards just do exact match
+    if (prevLength == postLength) {
+      if ([hostname isEqualToString:self.hostname]) {
         score |= kHostExactMatchScore;
+      }
+    } else {
+      // Wildcards found, do regex pattern match
+      NSError *error = nil;
+      NSRegularExpression *regex = [[NSRegularExpression alloc] initWithPattern:fixedHostname
+                                                                        options:NSRegularExpressionCaseInsensitive
+                                                                          error:&error];
+      if (error) {
+        NSLog(@"Could not create regex from pattern: %@", fixedHostname);
       } else {
-        score |= kHostMatchScore;
+        NSRange hostnameRange = NSMakeRange(0, [hostname length]);
+        NSRange foundRange = [regex rangeOfFirstMatchInString:hostname
+                                                      options:NSMatchingReportProgress
+                                                        range:hostnameRange];
+        if (foundRange.location != NSNotFound &&
+            foundRange.location == 0 &&
+            foundRange.length == hostnameRange.length) {
+          score |= kHostMatchScore;
+        }
       }
     }
+    
+    if (score == 0 && self.hostname.length) {
+      return 0;
+    }
   }
-
+  
   if ([username isEqualToString:self.username]) {
     score |= kUserMatchScore;
   } else if (self.username.length) {

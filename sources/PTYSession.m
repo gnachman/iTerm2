@@ -6416,13 +6416,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Find the best-matching rule.
     int bestScore = 0;
+    int longestHost = 0;
     Profile *bestProfile = nil;
 
     for (NSString *ruleString in stringToProfile) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
         int score = [rule scoreForHostname:hostname username:username path:path];
-        if (score > bestScore) {
+        if ((score > bestScore) || (score > 0 && score == bestScore && [rule.hostname length] > longestHost)) {
             bestScore = score;
+            longestHost = [rule.hostname length];
             bestProfile = stringToProfile[ruleString];
         }
     }
