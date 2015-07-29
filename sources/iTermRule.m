@@ -86,9 +86,9 @@
                username:(NSString *)username
                    path:(NSString *)path {
   const int kHostExactMatchScore = 8;
-  const int kHostMatchScore      = 4;
-  const int kUserMatchScore      = 2;
-  const int kPathMatchScore      = 1;
+  const int kHostMatchScore = 4;
+  const int kUserMatchScore = 2;
+  const int kPathMatchScore = 1;
 
   int score = 0;
 
