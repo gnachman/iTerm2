@@ -8,10 +8,10 @@
 
 #import "CommandHistory.h"
 #import "CommandHistoryEntry.h"
-#import "CommandUse.h"
 #import "iTermPreferences.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
+#import "VT100ScreenMark.h"
 
 NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
 NSString *const kCommandHistoryHasEverBeenUsed = @"kCommandHistoryHasEverBeenUsed";
@@ -84,7 +84,7 @@ static const int kMaxCommandsToSavePerHost = 200;
                                          @"OK",
                                          otherText)) {
         case NSAlertDefaultReturn:
-            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
             break;
             
         case NSAlertOtherReturn:
@@ -244,6 +244,29 @@ static const int kMaxCommandsToSavePerHost = 200;
     
     [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
                                                         object:nil];
+}
+
+- (void)eraseHistoryForHost:(VT100RemoteHost *)host {
+    NSString *key = [self keyForHost:host];
+    [_hosts removeObjectForKey:key];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
+                                                        object:nil];
+}
+
+- (CommandUse *)commandUseWithMarkGuid:(NSString *)markGuid onHost:(VT100RemoteHost *)host {
+    if (!markGuid) {
+        return nil;
+    }
+    NSArray *entries = _hosts[[self keyForHost:host]];
+    // TODO: Create an index of markGuid's in command uses if this becomes a performance problem during restore.
+    for (CommandHistoryEntry *entry in entries) {
+        for (CommandUse *use in entry.useTimes) {
+            if ([use.markGuid isEqual:markGuid]) {
+                return use;
+            }
+        }
+    }
+    return nil;
 }
 
 @end

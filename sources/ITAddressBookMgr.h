@@ -170,6 +170,7 @@
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
 #define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"
 #define KEY_PLACE_PROMPT_AT_FIRST_COLUMN      @"Place Prompt at First Column"
+#define KEY_SHOW_MARK_INDICATORS              @"Show Mark Indicators"
 
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"
@@ -247,6 +248,9 @@ typedef enum {
 + (NSDictionary*)encodeColor:(NSColor*)origColor;
 + (NSColor*)decodeColor:(NSDictionary*)plist;
 + (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict;
++ (NSString *)shellLauncherCommand;
+// Login command that leaves you in your home directory.
++ (NSString *)standardLoginCommand;
 
 - (id)init;
 - (void)dealloc;

@@ -9,6 +9,8 @@
 #ifndef SUUNARCHIVER_H
 #define SUUNARCHIVER_H
 
+#import <Foundation/Foundation.h>
+
 @class SUHost;
 @protocol SUUnarchiverDelegate;
 

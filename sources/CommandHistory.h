@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "CommandUse.h"
 
 extern NSString *const kCommandHistoryDidChangeNotificationName;
 
@@ -42,5 +43,11 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 - (NSArray *)entryArrayByExpandingAllUsesInEntryArray:(NSArray *)array;
 
 - (void)eraseHistory;
+
+- (CommandUse *)commandUseWithMarkGuid:(NSString *)markGuid onHost:(VT100RemoteHost *)host;
+
+#pragma mark - Testing
+
+- (void)eraseHistoryForHost:(VT100RemoteHost *)host;
 
 @end

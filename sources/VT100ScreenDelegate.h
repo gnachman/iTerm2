@@ -9,13 +9,13 @@
 @protocol VT100ScreenDelegate <NSObject>
 
 // Returns the session's unique ID.
-- (int)screenSessionID;
+- (NSString *)screenSessionGuid;
 
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;
 
 // Update window title, tab colors, and redraw view.
-- (void)screenUpdateDisplay;
+- (void)screenUpdateDisplay:(BOOL)redraw;
 
 // Called when the screen's size changes.
 - (void)screenSizeDidChange;

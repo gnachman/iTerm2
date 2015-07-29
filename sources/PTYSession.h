@@ -2,6 +2,7 @@
 
 #import "DVR.h"
 #import "FindViewController.h"
+#import "iTermFileDescriptorClient.h"
 #import "ITAddressBookMgr.h"
 #import "LineBuffer.h"
 #import "PTYTask.h"
@@ -72,7 +73,6 @@ typedef enum {
     VT100ScreenDelegate>
 
 @property(nonatomic, assign) BOOL alertOnNextMark;
-@property(nonatomic, readonly) int sessionID;
 @property(nonatomic, copy) NSColor *tabColor;
 
 @property(nonatomic, readonly) DVR *dvr;
@@ -124,9 +124,6 @@ typedef enum {
 
 // The value to which defaultName was last set, unadorned with additional formatting.
 @property(nonatomic, readonly) NSString *joblessDefaultName;
-
-// A temporary unique name for this session.
-@property(nonatomic, readonly) NSString *uniqueID;
 
 // The window title that should be used when this session is current. Otherwise defaultName
 // should be used.
@@ -280,6 +277,18 @@ typedef enum {
 // symlinks resolved is returned.
 @property(nonatomic, readonly) NSString *currentLocalWorkingDirectory;
 
+// A UUID that uniquely identifies this session.
+// Used to link serialized data back to a restored session (e.g., which session
+// a command in command history belongs to). Also to link content from an
+// arrangement provided to us by the OS during system window restoration with a
+// session in a saved arrangement when we're opening a saved arrangement at
+// startup instead of respecting the wishes of system window restoration.
+@property(nonatomic, readonly) NSString *guid;
+
+// Indicates if this session predates a tmux split pane. Used to figure out which pane is new when
+// layout changes due to a user-initiated pane split.
+@property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
@@ -325,7 +334,7 @@ typedef enum {
                         forObjectType:(iTermObjectType)objectType;
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Profile *)bookmark;
-+ (NSString *)uniqueIdInArrangement:(NSDictionary *)arrangement;
++ (NSString *)guidInArrangement:(NSDictionary *)arrangement;
 
 - (void)textViewFontDidChange;
 
@@ -341,6 +350,11 @@ typedef enum {
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions;
+
+// This is an alternative to runCommandWithOldCwd and startProgram. It attaches
+// to an existing server. Use only if [iTermAdvancedSettingsModel runJobsInServers]
+// is YES.
+- (void)attachToServer:(iTermFileDescriptorServerConnection)serverConnection;
 
 - (void)softTerminate;
 - (void)terminate;
@@ -503,6 +517,9 @@ typedef enum {
 
 // Make this session's textview the first responder.
 - (void)takeFocus;
+
+// Show an announcement explaining why a restored session is an orphan.
+- (void)showOrphanAnnouncement;
 
 #pragma mark - Testing utilities
 

@@ -6,6 +6,7 @@
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
 #import "VT100RemoteHost.h"
+#import "WindowArrangements.h"
 
 // It's nice for each of these to be unique so in degenerate cases (e.g., empty query) the detail
 // uses the same feature for all items.
@@ -20,6 +21,9 @@ static const double kUserDefinedVariableMultiplier = 1;
 
 // Multipliers for profile items
 static const double kProfileNameMultiplierForProfileItem = 0.1;
+
+// Multipliers for arrangement items. Arrangements rank just above profiles
+static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
 @implementation iTermOpenQuicklyModel
 
@@ -69,7 +73,7 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
                                                                   highlightedIndexes:nil];
             }
 
-            item.identifier = session.uniqueID;
+            item.identifier = session.guid;
             [items addObject:item];
         }
     }
@@ -77,7 +81,8 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     BOOL haveCurrentWindow = [[iTermController sharedInstance] currentTerminal] != nil;
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
         iTermOpenQuicklyProfileItem *item = [[[iTermOpenQuicklyProfileItem alloc] init] autorelease];
-        item.score = [self scoreForProfile:profile matcher:matcher];
+        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+        item.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
         if (item.score > 0) {
             NSString *theValue;
             if (!haveCurrentWindow || [profile[KEY_PREVENT_TAB] boolValue]) {
@@ -88,8 +93,24 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
             item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
                                                                             value:theValue
                                                                highlightedIndexes:nil];
-            item.title = profile[KEY_NAME];
+            item.title = attributedName;
             item.identifier = profile[KEY_GUID];
+            [items addObject:item];
+        }
+    }
+
+    for (NSString *arrangementName in [WindowArrangements allNames]) {
+        iTermOpenQuicklyArrangementItem *item = [[[iTermOpenQuicklyArrangementItem alloc] init] autorelease];
+        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+        item.score = [self scoreForArrangementWithName:arrangementName
+                                               matcher:matcher
+                                        attributedName:attributedName];
+        if (item.score > 0) {
+            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                            value:@"Restore window arrangement"
+                                                               highlightedIndexes:nil];
+            item.title = attributedName;
+            item.identifier = arrangementName;
             [items addObject:item];
         }
     }
@@ -110,17 +131,44 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     self.items = items;
 }
 
-- (double)scoreForProfile:(Profile *)profile matcher:(iTermMinimumSubsequenceMatcher *)matcher {
+- (double)scoreForArrangementWithName:(NSString *)arrangementName
+                              matcher:(iTermMinimumSubsequenceMatcher *)matcher
+                       attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ arrangementName ?: @"" ]
+                                multiplier:kProfileNameMultiplierForArrangementItem
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kProfileNameMultiplierForArrangementItem];
+    if (score > 0 &&
+        [[WindowArrangements defaultArrangementName] isEqualToString:arrangementName]) {
+        // Make the default arrangement always be the highest-scored arrangement if it matches the query.
+        score += 0.2;
+    }
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForProfile:(Profile *)profile
+                  matcher:(iTermMinimumSubsequenceMatcher *)matcher
+           attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
     double score = [self scoreUsingMatcher:matcher
                                  documents:@[ profile[KEY_NAME] ]
                                 multiplier:kProfileNameMultiplierForProfileItem
                                       name:nil
-                                  features:nil
+                                  features:nameFeature
                                      limit:2 * kProfileNameMultiplierForProfileItem];
     if (score > 0 &&
         [[[ProfileModel sharedInstance] defaultBookmark][KEY_GUID] isEqualToString:profile[KEY_GUID]]) {
         // Make the default profile always be the highest-scored profile if it matches the query.
         score += 0.2;
+    }
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
     }
     return score;
 }
@@ -348,10 +396,12 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     iTermOpenQuicklyItem *item = _items[index];
     if ([item isKindOfClass:[iTermOpenQuicklyProfileItem class]]) {
         return [[ProfileModel sharedInstance] bookmarkWithGuid:item.identifier];
+    } else if ([item isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
+        return item.identifier;
     } else if ([item isKindOfClass:[iTermOpenQuicklySessionItem class]]) {
-        NSString *sessionId = item.identifier;
+        NSString *guid = item.identifier;
         for (PTYSession *session in [self sessions]) {
-            if ([session.uniqueID isEqualTo:sessionId]) {
+            if ([session.guid isEqualTo:guid]) {
                 return session;
             }
         }

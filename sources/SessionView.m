@@ -175,6 +175,7 @@ static NSDate* lastResizeDate_;
     }
     if (_backgroundDimmed != orig) {
         [self updateDim];
+        [self setNeedsDisplay:YES];
     }
 }
 

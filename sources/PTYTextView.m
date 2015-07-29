@@ -13,6 +13,7 @@
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermBadgeLabel.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermExpose.h"
@@ -26,6 +27,7 @@
 #import "iTermSelectionScrollHelper.h"
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextExtractor.h"
+#import "iTermTextViewAccessibilityHelper.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -46,7 +48,7 @@
 #import "PTYScrollView.h"
 #import "PTYTab.h"
 #import "PTYTask.h"
-#import "RegexKitLite/RegexKitLite.h"
+#import "RegexKitLite.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SmartMatch.h"
@@ -57,6 +59,7 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "WindowControllerInterface.h"
+#import <QuartzCore/QuartzCore.h>
 #include <math.h>
 #include <sys/time.h>
 
@@ -89,6 +92,7 @@ static PTYTextView *gCurrentKeyEventTextView;  // See comment in -keyDown:
 static const int kDragThreshold = 3;
 
 @interface PTYTextView () <
+    iTermTextViewAccessibilityHelperDelegate,
     iTermTextDrawingHelperDelegate,
     iTermFindCursorViewDelegate,
     iTermFindOnPageHelperDelegate,
@@ -102,8 +106,6 @@ static const int kDragThreshold = 3;
 @property(nonatomic, copy) NSString *currentUnderlineHostname;
 @property(nonatomic, retain) iTermSelection *selection;
 @property(nonatomic, retain) iTermSemanticHistoryController *semanticHistoryController;
-@property(nonatomic, retain) NSColor *badgeColor;
-@property(nonatomic, copy) NSString *bagdgeLabel;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
 @property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
 
@@ -165,15 +167,6 @@ static const int kDragThreshold = 3;
     // selection.
     NSInteger _firstMouseEventNumber;
 
-    // For accessibility. This is a giant string with the entire scrollback buffer plus screen
-    // concatenated with newlines for hard eol's.
-    NSMutableString *_allText;
-    // For accessibility. This is the indices at which soft newlines occur in allText_, ignoring
-    // multi-char compositing characters.
-    NSMutableArray *_lineBreakIndexOffsets;
-    // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
-    NSMutableArray *_lineBreakCharOffsets;
-
     // Number of fingers currently down (only valid if three finger click
     // emulates middle button)
     int _numTouches;
@@ -219,6 +212,8 @@ static const int kDragThreshold = 3;
     BOOL _showStripesWhenBroadcastingInput;
 
     iTermFindOnPageHelper *_findOnPageHelper;
+    iTermTextViewAccessibilityHelper *_accessibilityHelper;
+    iTermBadgeLabel *_badgeLabel;
 }
 
 
@@ -318,6 +313,11 @@ static const int kDragThreshold = 3;
 
         _findOnPageHelper = [[iTermFindOnPageHelper alloc] init];
         _findOnPageHelper.delegate = self;
+
+        _accessibilityHelper = [[iTermTextViewAccessibilityHelper alloc] init];
+        _accessibilityHelper.delegate = self;
+
+        _badgeLabel = [[iTermBadgeLabel alloc] init];
     }
     return self;
 }
@@ -361,8 +361,6 @@ static const int kDragThreshold = 3;
         [[AsyncHostLookupController sharedInstance] cancelRequestForHostname:self.currentUnderlineHostname];
     }
     [_currentUnderlineHostname release];
-    [_badgeColor release];
-    [_bagdgeLabel release];
     _indicatorsHelper.delegate = nil;
     [_indicatorsHelper release];
     _selectionScrollHelper.delegate = nil;
@@ -372,7 +370,9 @@ static const int kDragThreshold = 3;
     [_drawingHook release];
     _drawingHelper.delegate = nil;
     [_drawingHelper release];
-    
+    [_accessibilityHelper release];
+    [_badgeLabel release];
+
     [super dealloc];
 }
 
@@ -587,7 +587,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)setCursorNeedsDisplay {
-    [self setNeedsDisplayInRect:[self cursorFrame]];
+    [self setNeedsDisplayInRect:[self rectWithHalo:[self cursorFrame]]];
 }
 
 - (void)setCursorType:(ITermCursorType)value {
@@ -760,439 +760,8 @@ static const int kDragThreshold = 3;
 
     frameSize.height += VMARGIN;  // This causes a margin to be left at the top
     [[self superview] setFrameSize:frameSize];
-    self.badgeLabel = _badgeLabel;
+    [self recomputeBadgeLabel];
     [_delegate textViewSizeDidChange];
-}
-
-
-- (BOOL)accessibilityIsIgnored
-{
-    return NO;
-}
-
-- (NSArray*)accessibilityAttributeNames
-{
-    return [NSArray arrayWithObjects:
-            NSAccessibilityRoleAttribute,
-            NSAccessibilityRoleDescriptionAttribute,
-            NSAccessibilityHelpAttribute,
-            NSAccessibilityFocusedAttribute,
-            NSAccessibilityParentAttribute,
-            NSAccessibilityChildrenAttribute,
-            NSAccessibilityWindowAttribute,
-            NSAccessibilityTopLevelUIElementAttribute,
-            NSAccessibilityPositionAttribute,
-            NSAccessibilitySizeAttribute,
-            NSAccessibilityDescriptionAttribute,
-            NSAccessibilityValueAttribute,
-            NSAccessibilityNumberOfCharactersAttribute,
-            NSAccessibilitySelectedTextAttribute,
-            NSAccessibilitySelectedTextRangeAttribute,
-            NSAccessibilitySelectedTextRangesAttribute,
-            NSAccessibilityInsertionPointLineNumberAttribute,
-            NSAccessibilityVisibleCharacterRangeAttribute,
-            nil];
-}
-
-- (NSArray *)accessibilityParameterizedAttributeNames
-{
-    return [NSArray arrayWithObjects:
-            NSAccessibilityLineForIndexParameterizedAttribute,
-            NSAccessibilityRangeForLineParameterizedAttribute,
-            NSAccessibilityStringForRangeParameterizedAttribute,
-            NSAccessibilityRangeForPositionParameterizedAttribute,
-            NSAccessibilityRangeForIndexParameterizedAttribute,
-            NSAccessibilityBoundsForRangeParameterizedAttribute,
-            nil];
-}
-
-// Range in allText_ of the given line.
-- (NSRange)_rangeOfLine:(NSUInteger)lineNumber
-{
-    NSRange range;
-    [self _allText];  // Refresh lineBreakCharOffsets_
-    if (lineNumber == 0) {
-        range.location = 0;
-    } else {
-        range.location = [[_lineBreakCharOffsets objectAtIndex:lineNumber-1] unsignedLongValue];
-    }
-    if (lineNumber >= [_lineBreakCharOffsets count]) {
-        range.length = [_allText length] - range.location;
-    } else {
-        range.length = [[_lineBreakCharOffsets objectAtIndex:lineNumber] unsignedLongValue] - range.location;
-    }
-    return range;
-}
-
-// Range in allText_ of the given index.
-- (NSUInteger)_lineNumberOfIndex:(NSUInteger)theIndex
-{
-    NSUInteger lineNum = 0;
-    for (NSNumber* n in _lineBreakIndexOffsets) {
-        NSUInteger offset = [n unsignedLongValue];
-        if (offset > theIndex) {
-            break;
-        }
-        lineNum++;
-    }
-    return lineNum;
-}
-
-// Line number of a location (respecting compositing chars) in allText_.
-- (NSUInteger)_lineNumberOfChar:(NSUInteger)location
-{
-    NSUInteger lineNum = 0;
-    for (NSNumber* n in _lineBreakCharOffsets) {
-        NSUInteger offset = [n unsignedLongValue];
-        if (offset > location) {
-            break;
-        }
-        lineNum++;
-    }
-    return lineNum;
-}
-
-// Number of unichar a character uses (normally 1 in English).
-- (int)_lengthOfChar:(screen_char_t)sct
-{
-    return [ScreenCharToStr(&sct) length];
-}
-
-// Position, respecting compositing chars, in allText_ of a line.
-- (NSUInteger)_offsetOfLine:(NSUInteger)lineNum
-{
-    if (lineNum == 0) {
-        return 0;
-    }
-    assert(lineNum < [_lineBreakCharOffsets count] + 1);
-    return [[_lineBreakCharOffsets objectAtIndex:lineNum - 1] unsignedLongValue];
-}
-
-// Onscreen X-position of a location (respecting compositing chars) in allText_.
-- (NSUInteger)_columnOfChar:(NSUInteger)location inLine:(NSUInteger)lineNum
-{
-    NSUInteger lineStart = [self _offsetOfLine:lineNum];
-    screen_char_t* theLine = [_dataSource getLineAtIndex:lineNum];
-    assert(location >= lineStart);
-    int remaining = location - lineStart;
-    int i = 0;
-    while (remaining > 0 && i < [_dataSource width]) {
-        remaining -= [self _lengthOfChar:theLine[i++]];
-    }
-    return i;
-}
-
-// Index (ignoring compositing chars) of a line in allText_.
-- (NSUInteger)_startingIndexOfLineNumber:(NSUInteger)lineNumber
-{
-    if (lineNumber < [_lineBreakIndexOffsets count]) {
-        return [[_lineBreakCharOffsets objectAtIndex:lineNumber] unsignedLongValue];
-    } else if ([_lineBreakIndexOffsets count] > 0) {
-        return [[_lineBreakIndexOffsets lastObject] unsignedLongValue];
-    } else {
-        return 0;
-    }
-}
-
-// Range in allText_ of an index (ignoring compositing chars).
-- (NSRange)_rangeOfIndex:(NSUInteger)theIndex
-{
-    NSUInteger lineNumber = [self _lineNumberOfIndex:theIndex];
-    screen_char_t* theLine = [_dataSource getLineAtIndex:lineNumber];
-    NSUInteger startingIndexOfLine = [self _startingIndexOfLineNumber:lineNumber];
-    if (theIndex < startingIndexOfLine) {
-        return NSMakeRange(NSNotFound, 0);
-    }
-    int x = theIndex - startingIndexOfLine;
-    NSRange rangeOfLine = [self _rangeOfLine:lineNumber];
-    NSRange range;
-    range.location = rangeOfLine.location;
-    for (int i = 0; i < x; i++) {
-        range.location += [self _lengthOfChar:theLine[i]];
-    }
-    range.length = [self _lengthOfChar:theLine[x]];
-    return range;
-}
-
-// Range, respecting compositing chars, of a character at an x,y position where 0,0 is the
-// first char of the first line in the scrollback buffer.
-- (NSRange)_rangeOfCharAtX:(int)x y:(int)y
-{
-    screen_char_t* theLine = [_dataSource getLineAtIndex:y];
-    NSRange lineRange = [self _rangeOfLine:y];
-    NSRange result = lineRange;
-    for (int i = 0; i < x; i++) {
-        result.location += [self _lengthOfChar:theLine[i]];
-    }
-    result.length = [self _lengthOfChar:theLine[x]];
-    return result;
-}
-
-- (VT100GridCoordRange)coordRangeForAccessibilityRange:(NSRange)range {
-    VT100GridCoordRange coordRange;
-    coordRange.start.y = [self _lineNumberOfIndex:range.location];
-    coordRange.start.x = [self _columnOfChar:range.location inLine:coordRange.start.y];
-    if (range.length == 0) {
-        coordRange.end = coordRange.start;
-    } else {
-        range.length--;
-        coordRange.end.y = [self _lineNumberOfIndex:NSMaxRange(range)];
-        coordRange.end.x = [self _columnOfChar:NSMaxRange(range) inLine:coordRange.end.y];
-        ++coordRange.end.x;
-        if (coordRange.end.x == [_dataSource width]) {
-            coordRange.end.x = 0;
-            coordRange.end.y++;
-        }
-    }
-
-    return coordRange;
-}
-
-/*
- * The concepts used here are not defined, so I'm going to give it my best guess.
- *
- * Suppose we have a terminal window like this:
- *
- * Line  On-Screen Contents
- * 0     [x]
- * 1     [ba'r]  (the ' is a combining accent)
- * 2     [y]
- *
- * Index  Location (as in a range)  Character
- * 0      0                         f
- * 1      1                         b
- * 2      2-3                       b + [']
- * 3      4                         r
- * 4      5                         y
- *
- * Index                   012 34
- * Char                    012345
- * allText_              = xba´ry
- * lineBreakCharOffests_ = [1, 4]
- * lineBreakInexOffsets_ = [1, 3]
- */
-- (id)_accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter
-{
-    if ([attribute isEqualToString:NSAccessibilityLineForIndexParameterizedAttribute]) {
-        //(NSNumber *) - line# for char index; param:(NSNumber *)
-        NSUInteger theIndex = [(NSNumber*)parameter unsignedLongValue];
-        return [NSNumber numberWithUnsignedLong:[self _lineNumberOfIndex:theIndex]];
-    } else if ([attribute isEqualToString:NSAccessibilityRangeForLineParameterizedAttribute]) {
-        //(NSValue *)  - (rangeValue) range of line; param:(NSNumber *)
-        NSUInteger lineNumber = [(NSNumber*)parameter unsignedLongValue];
-        if (lineNumber >= [_lineBreakIndexOffsets count]) {
-            return [NSValue valueWithRange:NSMakeRange(NSNotFound, 0)];
-        } else {
-            return [NSValue valueWithRange:[self _rangeOfLine:lineNumber]];
-        }
-    } else if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {
-        //(NSString *) - substring; param:(NSValue * - rangeValue)
-        NSRange range = [(NSValue*)parameter rangeValue];
-        return [_allText substringWithRange:range];
-    } else if ([attribute isEqualToString:NSAccessibilityRangeForPositionParameterizedAttribute]) {
-        //(NSValue *)  - (rangeValue) composed char range; param:(NSValue * - pointValue)
-        NSPoint screenPosition = [(NSValue*)parameter pointValue];
-        NSRect screenRect = NSMakeRect(screenPosition.x,
-                                       screenPosition.y,
-                                       0,
-                                       0);
-        NSRect windowRect = [self.window convertRectFromScreen:screenRect];
-        NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
-        NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-        int x = (locationInTextView.x - MARGIN - visibleRect.origin.x) / _charWidth;
-        int y = locationInTextView.y / _lineHeight;
-
-        if (y < 0) {
-            return [NSValue valueWithRange:NSMakeRange(0, 0)];
-        } else {
-            return [NSValue valueWithRange:[self _rangeOfCharAtX:x y:y]];
-        }
-    } else if ([attribute isEqualToString:NSAccessibilityRangeForIndexParameterizedAttribute]) {
-        //(NSValue *)  - (rangeValue) composed char range; param:(NSNumber *)
-        NSUInteger theIndex = [(NSNumber*)parameter unsignedLongValue];
-        return [NSValue valueWithRange:[self _rangeOfIndex:theIndex]];
-    } else if ([attribute isEqualToString:NSAccessibilityBoundsForRangeParameterizedAttribute]) {
-        //(NSValue *)  - (rectValue) bounds of text; param:(NSValue * - rangeValue)
-        NSRange range = [(NSValue*)parameter rangeValue];
-        int yStart = [self _lineNumberOfChar:range.location];
-        int y2 = [self _lineNumberOfChar:range.location + range.length - 1];
-        int xStart = [self _columnOfChar:range.location inLine:yStart];
-        int x2 = [self _columnOfChar:range.location + range.length - 1 inLine:y2];
-        ++x2;
-        if (x2 == [_dataSource width]) {
-            x2 = 0;
-            ++y2;
-        }
-        int yMin = MIN(yStart, y2);
-        int yMax = MAX(yStart, y2);
-        int xMin = MIN(xStart, x2);
-        int xMax = MAX(xStart, x2);
-        NSRect result = NSMakeRect(MAX(0, floor(xMin * _charWidth + MARGIN)),
-                                   MAX(0, yMin * _lineHeight),
-                                   MAX(0, (xMax - xMin) * _charWidth),
-                                   MAX(0, (yMax - yMin + 1) * _lineHeight));
-        result = [self convertRect:result toView:nil];
-        result = [self.window convertRectToScreen:result];
-        return [NSValue valueWithRect:result];
-    } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
-        //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
-        NSRange range = [(NSValue*)parameter rangeValue];
-        if (range.location == NSNotFound || range.length == 0) {
-            return nil;
-        } else {
-            NSString *theString = [_allText substringWithRange:range];
-            NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:theString] autorelease];
-            return attributedString;
-        }
-    } else {
-        return [super accessibilityAttributeValue:attribute forParameter:parameter];
-    }
-}
-
-- (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter
-{
-    // NSLog(@"accessibilityAttributeValue:%@ forParameter:%@", attribute, parameter);
-    id result = [self _accessibilityAttributeValue:attribute forParameter:parameter];
-    // NSLog(@"  returns %@", result);
-    // NSLog(@"%@(%@) = %@", attribute, parameter, result);
-    return result;
-}
-
-// TODO(georgen): Speed this up! This code is dreadfully slow but it's only used
-// when accessibility is on, and it might be faster than voiceover for reasonable
-// amounts of text.
-- (NSString*)_allText {
-    if ([_dataSource numberOfLines] > 1000) {
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            [_delegate textViewWarnThatAccessibilityIsCausingSlowness];
-        });
-    }
-
-    [_allText release];
-    [_lineBreakCharOffsets release];
-    [_lineBreakIndexOffsets release];
-
-    _allText = [[NSMutableString alloc] init];
-    _lineBreakCharOffsets = [[NSMutableArray alloc] init];
-    _lineBreakIndexOffsets = [[NSMutableArray alloc] init];
-
-    int width = [_dataSource width];
-    unichar chars[width * kMaxParts];
-    int offset = 0;
-    for (int i = 0; i < [_dataSource numberOfLines]; i++) {
-        screen_char_t* line = [_dataSource getLineAtIndex:i];
-        int k;
-        // Get line width, store it in k
-        for (k = width - 1; k >= 0; k--) {
-            if (line[k].code) {
-                break;
-            }
-        }
-        int o = 0;
-        // Add first width-k chars to the 'chars' array, expanding complex chars.
-        for (int j = 0; j <= k; j++) {
-            if (line[j].complexChar) {
-                NSString* cs = ComplexCharToStr(line[j].code);
-                for (int l = 0; l < [cs length]; ++l) {
-                    chars[o++] = [cs characterAtIndex:l];
-                }
-            } else {
-                if (line[j].code >= 0xf000) {
-                    // Don't output private range chars to accessibility.
-                    chars[o++] = 0;
-                } else {
-                    chars[o++] = line[j].code;
-                }
-            }
-        }
-        // Append this line to allText_.
-        offset += o;
-        if (k >= 0) {
-            [_allText appendString:[NSString stringWithCharacters:chars length:o]];
-        }
-        if (line[width].code == EOL_HARD) {
-            // Add a newline and update offsets arrays that track line break locations.
-            [_allText appendString:@"\n"];
-            ++offset;
-        }
-        [_lineBreakCharOffsets addObject:[NSNumber numberWithUnsignedLong:[_allText length]]];
-        [_lineBreakIndexOffsets addObject:[NSNumber numberWithUnsignedLong:offset]];
-    }
-
-    return _allText;
-}
-
-- (id)_accessibilityAttributeValue:(NSString *)attribute
-{
-    if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
-        return NSAccessibilityTextAreaRole;
-    } else if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute]) {
-        return NSAccessibilityRoleDescriptionForUIElement(self);
-    } else if ([attribute isEqualToString:NSAccessibilityHelpAttribute]) {
-        return nil;
-    } else if ([attribute isEqualToString:NSAccessibilityFocusedAttribute]) {
-        return [NSNumber numberWithBool:YES];
-    } else if ([attribute isEqualToString:NSAccessibilityDescriptionAttribute]) {
-        return @"shell";
-    } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
-        return [self _allText];
-    } else if ([attribute isEqualToString:NSAccessibilityNumberOfCharactersAttribute]) {
-        return [NSNumber numberWithInt:[[self _allText] length]];
-    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextAttribute]) {
-        return [self selectedText];
-    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
-        int x = [_dataSource cursorX] - 1;
-        int y = [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1;
-        // quick fix for ZoomText for Mac - it does not query AXValue or other
-        // attributes that (re)generate allText_ and especially lineBreak{Char,Index}Offsets_
-        // which are needed for _rangeOfCharAtX:y:
-        [self _allText];
-        NSRange range = [self _rangeOfCharAtX:x y:y];
-        range.length--;
-        return [NSValue valueWithRange:range];
-    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangesAttribute]) {
-        return [NSArray arrayWithObject:
-                [self _accessibilityAttributeValue:NSAccessibilitySelectedTextRangeAttribute]];
-    } else if ([attribute isEqualToString:NSAccessibilityInsertionPointLineNumberAttribute]) {
-        return [NSNumber numberWithInt:[_dataSource cursorY]-1 + [_dataSource numberOfScrollbackLines]];
-    } else if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute]) {
-        return [NSValue valueWithRange:NSMakeRange(0, [[self _allText] length])];
-    } else {
-        return [super accessibilityAttributeValue:attribute];
-    }
-}
-
-- (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute {
-    if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
-        return YES;
-    } else {
-        return [super accessibilityIsAttributeSettable:attribute];
-    }
-}
-
-- (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute {
-    if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
-        NSRange range = [(NSValue *)value rangeValue];
-        VT100GridCoordRange coordRange = [self coordRangeForAccessibilityRange:range];
-        [_selection clearSelection];
-        [_selection beginSelectionAt:coordRange.start
-                                mode:kiTermSelectionModeCharacter
-                              resume:NO
-                              append:NO];
-        [_selection moveSelectionEndpointTo:coordRange.end];
-        [_selection endLiveSelection];
-    } else {
-        [super accessibilitySetValue:value forAttribute:attribute];
-    }
-}
-
-- (id)accessibilityAttributeValue:(NSString *)attribute {
-    // NSLog(@"accessibilityAttributeValue:%@", attribute);
-    id result = [self _accessibilityAttributeValue:attribute];
-    // NSLog(@"  returns %@", result);
-    // NSLog(@"%@ = %@", attribute, result);
-    return result;
 }
 
 // This exists to work around an apparent OS bug described in issue 2690. Under some circumstances
@@ -1402,50 +971,42 @@ static const int kDragThreshold = 3;
     return proposedVisibleRect;
 }
 
-- (void)scrollLineUp:(id)sender
-{
-    NSRect scrollRect;
-
-    scrollRect= [self visibleRect];
-    scrollRect.origin.y-=[[self enclosingScrollView] verticalLineScroll];
-    if (scrollRect.origin.y<0) scrollRect.origin.y=0;
-    [self scrollRectToVisible: scrollRect];
+- (void)scrollLineUp:(id)sender {
+    [self scrollBy:-[self.enclosingScrollView verticalLineScroll]];
 }
 
-- (void)scrollLineDown:(id)sender
-{
-    NSRect scrollRect;
-
-    scrollRect= [self visibleRect];
-    scrollRect.origin.y+=[[self enclosingScrollView] verticalLineScroll];
-    [self scrollRectToVisible: scrollRect];
+- (void)scrollLineDown:(id)sender {
+    [self scrollBy:[self.enclosingScrollView verticalLineScroll]];
 }
 
-- (void)scrollPageUp:(id)sender
-{
-    NSRect scrollRect;
-
-    scrollRect = [self visibleRect];
-    scrollRect.origin.y -= scrollRect.size.height - [[self enclosingScrollView] verticalPageScroll];
-    [self scrollRectToVisible:scrollRect];
+- (void)scrollBy:(CGFloat)deltaY {
+    NSScrollView *scrollView = self.enclosingScrollView;
+    NSRect rect = scrollView.documentVisibleRect;
+    NSPoint point;
+    point = rect.origin;
+    point.y += deltaY;
+    [scrollView.documentView scrollPoint:point];
 }
 
-- (void)scrollPageDown:(id)sender
-{
-    NSRect scrollRect;
-
-    scrollRect = [self visibleRect];
-    scrollRect.origin.y+= scrollRect.size.height - [[self enclosingScrollView] verticalPageScroll];
-    [self scrollRectToVisible: scrollRect];
+- (CGFloat)pageScrollHeight {
+    NSRect scrollRect = [self visibleRect];
+    return scrollRect.size.height - [[self enclosingScrollView] verticalPageScroll];
 }
 
-- (void)scrollHome
-{
+- (void)scrollPageUp:(id)sender {
+    [self scrollBy:-self.pageScrollHeight];
+}
+
+- (void)scrollPageDown:(id)sender {
+    [self scrollBy:self.pageScrollHeight];
+}
+
+- (void)scrollHome {
     NSRect scrollRect;
 
     scrollRect = [self visibleRect];
     scrollRect.origin.y = 0;
-    [self scrollRectToVisible: scrollRect];
+    [self scrollRectToVisible:scrollRect];
 }
 
 - (void)scrollEnd {
@@ -1546,6 +1107,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.haveUnderlinedHostname = (self.currentUnderlineHostname != nil);
     _drawingHelper.transparencyAlpha = [self transparencyAlpha];
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
+    _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
 
     const NSRect *rectArray;
     NSInteger rectCount;
@@ -1755,8 +1317,7 @@ static const int kDragThreshold = 3;
     return [super performKeyEquivalent:theEvent];
 }
 
-- (void)keyDown:(NSEvent*)event
-{
+- (void)keyDown:(NSEvent*)event {
     if (!_selection.live) {
         // Remove selection when you type, unless the selection is live because it's handy to be
         // able to scroll up, click, hit a key, and then drag to select to (near) the end. See
@@ -3264,19 +2825,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_selection clearSelection];
 }
 
-- (NSString *)selectedText
-{
+- (NSString *)selectedText {
     return [self selectedTextWithPad:NO];
 }
 
-- (NSString *)selectedTextWithPad:(BOOL)pad
-{
+- (NSString *)selectedTextWithPad:(BOOL)pad {
     return [self selectedTextWithPad:pad cappedAtSize:0];
 }
 
 - (NSString *)selectedTextWithPad:(BOOL)pad
+                     cappedAtSize:(int)maxBytes {
+    return [self selectedTextWithPad:pad cappedAtSize:maxBytes minimumLineNumber:0];
+}
+
+// Does not include selected text on lines before |minimumLineNumber|.
+- (NSString *)selectedTextWithPad:(BOOL)pad
                      cappedAtSize:(int)maxBytes
-{
+                minimumLineNumber:(int)minimumLineNumber {
     if (![_selection hasSelection]) {
         DLog(@"startx < 0 so there is no selected text");
         return nil;
@@ -3285,6 +2850,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
     NSMutableString *theSelectedText = [[NSMutableString alloc] init];
     [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
+        if (range.coordRange.end.y < minimumLineNumber) {
+            return;
+        } else {
+            range.coordRange.start.y = MAX(range.coordRange.start.y, minimumLineNumber);
+        }
         int cap = INT_MAX;
         if (maxBytes > 0) {
             cap = maxBytes - [theSelectedText length];
@@ -3503,13 +3073,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // call refresh here to take care of any scrollback overflow that would cause the selected range
     // to not match reality.
     [self refresh];
-    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    NSString *copyString;
 
     DLog(@"-[PTYTextView copy:] called");
-    copyString = [self selectedText];
+    NSString *copyString = [self selectedText];
+
+    if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
+        DLog(@"Disallow copying empty string");
+        return;
+    }
     DLog(@"Have selected text of length %d. selection=%@", (int)[copyString length], _selection);
     if (copyString) {
+        NSPasteboard *pboard = [NSPasteboard generalPasteboard];
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
         [pboard setString:copyString forType:NSStringPboardType];
     }
@@ -3517,12 +3091,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[PasteboardHistory sharedInstance] save:copyString];
 }
 
-- (IBAction)copyWithStyles:(id)sender
-{
+- (IBAction)copyWithStyles:(id)sender {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
 
     DLog(@"-[PTYTextView copyWithStyles:] called");
     NSAttributedString *copyAttributedString = [self selectedAttributedTextWithPad:NO];
+    if ([iTermAdvancedSettingsModel disallowCopyEmptyString] &&
+        copyAttributedString.length == 0) {
+        DLog(@"Disallow copying empty string");
+        return;
+    }
+
     DLog(@"Have selected text of length %d. selection=%@", (int)[copyAttributedString length], _selection);
     NSMutableArray *types = [NSMutableArray array];
     if (copyAttributedString) {
@@ -3638,7 +3217,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                [item action]==@selector(clearTextViewBuffer:) ||
                [item action]==@selector(editTextViewSession:) ||
                [item action]==@selector(closeTextViewSession:) ||
-               [item action]==@selector(restartTextViewSession:) ||
                [item action]==@selector(movePane:) ||
                [item action]==@selector(swapSessions:) ||
                [item action]==@selector(installShellIntegration:) ||
@@ -3646,6 +3224,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // We always validate the above commands
         return YES;
     }
+    if ([item action]==@selector(restartTextViewSession:)) {
+        return [_delegate isRestartable];
+    }
+
     if ([item action]==@selector(mail:) ||
         [item action]==@selector(browse:) ||
         [item action]==@selector(searchInBrowser:) ||
@@ -4553,8 +4135,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-// Legacy NSTextInput method, probably not used.
+// Legacy NSTextInput method, probably not used by the system but used internally.
 - (void)insertText:(id)aString {
+    // TODO: The replacement range is wrong
     [self insertText:aString replacementRange:NSMakeRange(0, [_drawingHelper.markedText length])];
 }
 
@@ -4705,83 +4288,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)setBadgeLabel:(NSString *)badgeLabel {
+    _badgeLabel.stringValue = badgeLabel;
+    [self recomputeBadgeLabel];
+}
+
+- (void)recomputeBadgeLabel {
     if (!_delegate) {
         return;
     }
-    NSColor *fillColor = [_delegate textViewBadgeColor];
-    // We compare pointer equality below to catch equal nil pointers, which isEqual: cannot.
-    if (NSEqualSizes(_badgeDocumentVisibleRectSize, self.enclosingScrollView.documentVisibleRect.size) &&
-        (fillColor == _badgeColor || [fillColor isEqual:_badgeColor]) &&
-        (badgeLabel == _badgeLabel || [badgeLabel isEqualToString:_badgeLabel])) {
-        return;
-    }
-    int oldLength = [_badgeLabel length];
-    DLog(@"Recompute badge self=%p, label=new:%@ vs old:%@, color=new:%@ vs old:%@, size=new:%@ vs old:%@",
-          self,
-         badgeLabel, _badgeLabel,
-         fillColor, _badgeColor,
-         NSStringFromSize(self.enclosingScrollView.documentVisibleRect.size),
-         NSStringFromSize(_badgeDocumentVisibleRectSize));
-    DLog(@"Called from:\n%@", [NSThread callStackSymbols]);
-    _badgeDocumentVisibleRectSize = self.enclosingScrollView.documentVisibleRect.size;
-    [_badgeLabel autorelease];
-    _badgeLabel = [badgeLabel copy];
-    self.badgeColor = fillColor;
 
-    if ([_badgeLabel length]) {
-        NSSize maxSize = self.enclosingScrollView.documentVisibleRect.size;
-        maxSize.width *= 0.5;  // Max size of image
-        maxSize.height *= 0.2;
-        NSFont *font = nil;
-        CGFloat min = 4, max = 100;
-        int points = (min + max / 2);
-        int prevPoints = -1;
-        NSSize sizeWithFont = NSZeroSize;
-        NSDictionary *attributes = nil;
-        NSColor *backgroundColor = [_colorMap colorForKey:kColorMapBackground];
-        NSFontManager *fontManager = [NSFontManager sharedFontManager];
-        NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
-        paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-        paragraphStyle.alignment = NSRightTextAlignment;
-        while (points != prevPoints) {
-            font = [fontManager convertFont:[NSFont fontWithName:@"Helvetica" size:points]
-                                toHaveTrait:NSBoldFontMask];
-            attributes = @{ NSFontAttributeName: font,
-                            NSForegroundColorAttributeName: fillColor,
-                            NSParagraphStyleAttributeName: paragraphStyle };
-            NSRect bounds = [badgeLabel boundingRectWithSize:maxSize options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes];
-            sizeWithFont = bounds.size;
-            if (sizeWithFont.width > maxSize.width || sizeWithFont.height > maxSize.height) {
-                max = points;
-            } else if (sizeWithFont.width < maxSize.width && sizeWithFont.height < maxSize.height) {
-                min = points;
-            }
-            prevPoints = points;
-            points = (min + max) / 2;
-        }
-        if (sizeWithFont.width > 0 && sizeWithFont.height > 0) {
-            NSImage *image = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
-            [image lockFocus];
-            NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
-            temp[NSStrokeWidthAttributeName] = @-2;
-            temp[NSStrokeColorAttributeName] = [backgroundColor colorWithAlphaComponent:fillColor.alphaComponent];
-            [badgeLabel drawWithRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
-                             options:NSStringDrawingUsesLineFragmentOrigin
-                          attributes:temp];
-            [image unlockFocus];
-
-            _drawingHelper.badgeImage = image;
-        } else {
-            _drawingHelper.badgeImage = nil;
-        }
-    } else {
-        _drawingHelper.badgeImage = nil;
-        if (oldLength == 0) {
-            // Optimization - don't call setNeedsDisplay if nothing changed.
-            return;
-        }
+    _badgeLabel.fillColor = [_delegate textViewBadgeColor];
+    _badgeLabel.backgroundColor = [_colorMap colorForKey:kColorMapBackground];
+    _badgeLabel.viewSize = self.enclosingScrollView.documentVisibleRect.size;
+    if (_badgeLabel.isDirty) {
+        _badgeLabel.dirty = NO;
+        _drawingHelper.badgeImage = _badgeLabel.image;
+        [self setNeedsDisplay:YES];
     }
-    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)growSelectionLeft
@@ -5018,13 +4541,34 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)highlightMarkOnLine:(int)line {
     CGFloat y = line * _lineHeight;
-    SolidColorView *blue = [[[SolidColorView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)
-                                                            color:[NSColor blueColor]] autorelease];
-    blue.alphaValue = 0;
+    NSView *blue = [[[NSView alloc] initWithFrame:NSMakeRect(0, y, self.frame.size.width, _lineHeight)] autorelease];
+    [blue setWantsLayer:YES];
     [self addSubview:blue];
-    [[NSAnimationContext currentContext] setDuration:0.5];
-    [blue.animator setAlphaValue:0.75];
-    [blue performSelector:@selector(removeFromSuperview) withObject:nil afterDelay:0.75];
+
+    // Set up layer's initial state
+    blue.layer.backgroundColor = [[NSColor blueColor] iterm_CGColor];
+    blue.layer.opaque = NO;
+    blue.layer.opacity = 0.75;
+
+    // Animate it out, removing from superview when complete.
+    [CATransaction begin];
+    [blue retain];
+    [CATransaction setCompletionBlock:^{
+        [blue removeFromSuperview];
+        [blue release];
+    }];
+    const NSTimeInterval duration = 0.75;
+
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+    animation.fromValue = (id)@0.75;
+    animation.toValue = (id)@0.0;
+    animation.duration = duration;
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
+    animation.removedOnCompletion = NO;
+    animation.fillMode = kCAFillModeForwards;
+    [blue.layer addAnimation:animation forKey:@"opacity"];
+
+    [CATransaction commit];
 }
 
 #pragma mark - Find Cursor
@@ -5187,10 +4731,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate launchCoprocessWithCommand:command];
 }
 
-- (PTYFontInfo*)getFontForChar:(UniChar)ch
-                     isComplex:(BOOL)complex
-                    renderBold:(BOOL *)renderBold
-                  renderItalic:(BOOL *)renderItalic {
+- (PTYFontInfo *)getFontForChar:(UniChar)ch
+                      isComplex:(BOOL)complex
+                     renderBold:(BOOL *)renderBold
+                   renderItalic:(BOOL *)renderItalic {
     BOOL isBold = *renderBold && _useBoldFont;
     BOOL isItalic = *renderItalic && _useItalicFont;
     *renderBold = NO;
@@ -6009,9 +5553,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (_drawingHelper.showTimestamps) {
         dirtyRect.size.width = self.visibleRect.size.width - dirtyRect.origin.x;
     }
-    // Add a character on either side for glyphs that render unexpectedly wide.
-    dirtyRect.origin.x -= _charWidth;
-    dirtyRect.size.width += 2 * _charWidth;
+
+    // Expand the rect in case we're drawing a changed cell with an oversize glyph.
+    dirtyRect = [self rectWithHalo:dirtyRect];
+
     DLog(@"Line %d is dirty from %d to %d, set rect %@ dirty",
          y, x, maxX, [NSValue valueWithRect:dirtyRect]);
     [self setNeedsDisplayInRect:dirtyRect];
@@ -6147,7 +5692,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 ([_dataSource cursorY] - 1 + [_dataSource numberOfLines] - [_dataSource height]) * _lineHeight,
                                 [_dataSource width] * _charWidth,
                                 imeLines * _lineHeight);
+    imeRect = [self rectWithHalo:imeRect];
     [self setNeedsDisplayInRect:imeRect];
+}
+
+- (NSRect)rectWithHalo:(NSRect)rect {
+    rect.origin.x -= _charWidth;
+    rect.origin.y -= _lineHeight;
+    rect.size.width += _charWidth * 2;
+    rect.size.height += _lineHeight * 2;
+
+    return rect;
 }
 
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
@@ -6212,7 +5767,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     if (gDebugLogging) {
                         DLog(@"Found blinking char on line %d", y);
                     }
-                    [self setNeedsDisplayInRect:dirtyRect];
+                    [self setNeedsDisplayInRect:[self rectWithHalo:dirtyRect]];
                     break;
                 }
             }
@@ -6229,7 +5784,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (gDebugLogging) {
                 DLog(@"found selection change on line %d", y);
             }
-            [self setNeedsDisplayInRect:dirtyRect];
+            [self setNeedsDisplayInRect:[self rectWithHalo:dirtyRect]];
         }
     }
     return anyBlinkers;
@@ -6341,9 +5896,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (theKey == kColorMapBackground) {
         [self updateScrollerForBackgroundColor];
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
-        self.badgeLabel = _badgeLabel;
+        [self recomputeBadgeLabel];
     } else if (theKey == kColorMapForeground) {
-        self.badgeLabel = _badgeLabel;
+        [self recomputeBadgeLabel];
     } else if (theKey == kColorMapSelection) {
         _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                               towardsGrayLevel:0.5];
@@ -6623,6 +6178,135 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord
                                                 ofLength:(int)length {
     [_dataSource setRangeOfCharsAnimated:NSMakeRange(coord.x, length) onLine:coord.y];
+}
+
+#pragma mark - Accessibility
+
+- (BOOL)accessibilityIsIgnored {
+    return NO;
+}
+
+- (NSArray *)accessibilityAttributeNames {
+    return [_accessibilityHelper accessibilityAttributeNames];
+}
+
+- (NSArray *)accessibilityParameterizedAttributeNames {
+    return [_accessibilityHelper accessibilityParameterizedAttributeNames];
+}
+
+- (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter {
+    BOOL handled;
+    id result = [_accessibilityHelper accessibilityAttributeValue:attribute
+                                                     forParameter:parameter
+                                                          handled:&handled];
+    if (!handled) {
+        result = [super accessibilityAttributeValue:attribute forParameter:parameter];
+    }
+    return result;
+}
+
+- (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute {
+    BOOL handled;
+    BOOL result = [_accessibilityHelper accessibilityIsAttributeSettable:attribute handled:&handled];
+    if (!handled) {
+        result = [super accessibilityIsAttributeSettable:attribute];
+    }
+    return result;
+}
+
+- (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute {
+    BOOL handled;
+    [_accessibilityHelper accessibilitySetValue:value forAttribute:attribute handled:&handled];
+    if (!handled) {
+        [super accessibilitySetValue:value forAttribute:attribute];
+    }
+}
+
+- (id)accessibilityAttributeValue:(NSString *)attribute {
+    BOOL handled;
+    id result = [_accessibilityHelper accessibilityAttributeValue:attribute handled:&handled];
+    if (!handled) {
+        result = [super accessibilityAttributeValue:attribute];
+    }
+    return result;
+}
+
+#pragma mark - Accessibility Helper Delegate
+
+- (int)accessibilityHelperAccessibilityLineNumberForLineNumber:(int)actualLineNumber {
+    int numberOfLines = [_dataSource numberOfLines];
+    int offset = MAX(0, numberOfLines - [iTermAdvancedSettingsModel numberOfLinesForAccessibility]);
+    return actualLineNumber - offset;
+}
+
+- (int)accessibilityHelperLineNumberForAccessibilityLineNumber:(int)accessibilityLineNumber {
+    int numberOfLines = [_dataSource numberOfLines];
+    int offset = MAX(0, numberOfLines - [iTermAdvancedSettingsModel numberOfLinesForAccessibility]);
+    return accessibilityLineNumber + offset;
+}
+
+- (VT100GridCoord)accessibilityHelperCoordForPoint:(NSPoint)screenPosition {
+    NSRect screenRect = NSMakeRect(screenPosition.x,
+                                   screenPosition.y,
+                                   0,
+                                   0);
+    NSRect windowRect = [self.window convertRectFromScreen:screenRect];
+    NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    int x = (locationInTextView.x - MARGIN - visibleRect.origin.x) / _charWidth;
+    int y = locationInTextView.y / _lineHeight;
+    return VT100GridCoordMake(x, [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
+}
+
+- (NSRect)accessibilityHelperFrameForCoordRange:(VT100GridCoordRange)coordRange {
+    coordRange.start.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
+    coordRange.end.y = [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
+    NSRect result = NSMakeRect(MAX(0, floor(coordRange.start.x * _charWidth + MARGIN)),
+                               MAX(0, coordRange.start.y * _lineHeight),
+                               MAX(0, (coordRange.end.x - coordRange.start.x) * _charWidth),
+                               MAX(0, (coordRange.end.y - coordRange.start.y + 1) * _lineHeight));
+    result = [self convertRect:result toView:nil];
+    result = [self.window convertRectToScreen:result];
+    return result;
+}
+
+- (VT100GridCoord)accessibilityHelperCursorCoord {
+    int y = [_dataSource numberOfLines] - [_dataSource height] + [_dataSource cursorY] - 1;
+    return VT100GridCoordMake([_dataSource cursorX] - 1,
+                              [self accessibilityHelperAccessibilityLineNumberForLineNumber:y]);
+}
+
+- (void)accessibilityHelperSetSelectedRange:(VT100GridCoordRange)coordRange {
+    coordRange.start.y =
+        [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.start.y];
+    coordRange.end.y =
+        [self accessibilityHelperLineNumberForAccessibilityLineNumber:coordRange.end.y];
+    [_selection clearSelection];
+    [_selection beginSelectionAt:coordRange.start
+                            mode:kiTermSelectionModeCharacter
+                          resume:NO
+                          append:NO];
+    [_selection moveSelectionEndpointTo:coordRange.end];
+    [_selection endLiveSelection];
+}
+
+- (NSString *)accessibilityHelperSelectedText {
+    return [self selectedTextWithPad:NO
+                        cappedAtSize:0
+                   minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
+}
+
+- (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex {
+    return [_dataSource getLineAtIndex:[self accessibilityHelperLineNumberForAccessibilityLineNumber:accessibilityIndex]];
+}
+
+- (int)accessibilityHelperWidth {
+    return [_dataSource width];
+}
+
+- (int)accessibilityHelperNumberOfLines {
+    return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility],
+               [_dataSource numberOfLines]);
 }
 
 @end

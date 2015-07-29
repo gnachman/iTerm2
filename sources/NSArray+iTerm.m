@@ -28,9 +28,19 @@
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
     for (NSAttributedString *element in self) {
         [result appendAttributedString:element];
-        [result appendAttributedString:joiner];
+        if (element != self.lastObject) {
+            [result appendAttributedString:joiner];
+        }
     }
     return result;
+}
+
+- (NSArray *)mapWithBlock:(id (^)(id anObject))block {
+    NSMutableArray *temp = [NSMutableArray array];
+    for (id anObject in self) {
+        [temp addObject:block(anObject)];
+    }
+    return temp;
 }
 
 @end

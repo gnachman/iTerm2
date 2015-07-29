@@ -17,6 +17,7 @@
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "SessionView.h"
+#import "SolidColorView.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "WindowControllerInterface.h"
@@ -110,8 +111,8 @@ static const NSUInteger kPTYTabDeadState = (1 << 3);
 
     NSString *tmuxWindowName_;
 
-	// This tab broadcasts to all its sessions?
-	BOOL broadcasting_;
+        // This tab broadcasts to all its sessions?
+        BOOL broadcasting_;
 }
 
 @synthesize broadcasting = broadcasting_;
@@ -216,8 +217,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 // init/dealloc
-- (id)initWithSession:(PTYSession*)session
-{
+- (id)initWithSession:(PTYSession*)session {
     self = [super init];
     PtyLog(@"PTYTab initWithSession %p", self);
     if (self) {
@@ -2142,7 +2142,7 @@ static NSString* FormatRect(NSRect r) {
             }
 
             NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-            NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+            NSString *uniqueId = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
             if (wp && theMap[wp]) {
                 // Creating splitters for a tmux tab. The arrangement is marked
                 // up with window pane IDs, whcih may or may not already exist.
@@ -2183,9 +2183,9 @@ static NSString* FormatRect(NSRect r) {
         NSArray* subArrangements = [arrangement objectForKey:SUBVIEWS];
         PTYSession* active = nil;
         iTermObjectType subObjectType = objectType;
-        for (int i = 0; i < [subArrangements count]; ++i) {
-            NSDictionary* subArrangement = [subArrangements objectAtIndex:i];
-            PTYSession* session = [self _recursiveRestoreSessions:subArrangement
+        for (int i = 0; i < [subArrangements count] && i < splitter.subviews.count; ++i) {
+            NSDictionary *subArrangement = subArrangements[i];
+            PTYSession *session = [self _recursiveRestoreSessions:subArrangement
                                                            atNode:[[splitter subviews] objectAtIndex:i]
                                                             inTab:theTab
                                                     forObjectType:subObjectType];
@@ -2200,7 +2200,7 @@ static NSString* FormatRect(NSRect r) {
         SessionView* sessionView = (SessionView*)view;
 
         NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-        NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+        NSString *uniqueId = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
         PTYSession *session;
         if (uniqueId && [sessionView session]) {  // TODO: Is it right to check if session exists here?
             session = [sessionView session];
@@ -2498,13 +2498,13 @@ static NSString* FormatRect(NSRect r) {
         return YES;
     } else {
         // Is a session view
-        NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
-        if (!uniqueId) {
+        NSString *sessionGuid = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+        if (!sessionGuid) {
             return NO;
         }
         PTYSession *session = nil;
         for (PTYSession *aSession in sessions) {
-            if ([aSession.uniqueID isEqualToString:uniqueId]) {
+            if ([aSession.guid isEqualToString:sessionGuid]) {
                 session = aSession;
                 break;
             }
@@ -2512,7 +2512,7 @@ static NSString* FormatRect(NSRect r) {
         if (!session) {
             return NO;
         }
-        viewMap[uniqueId] = session;
+        viewMap[sessionGuid] = session;
         return YES;
     }
 }
@@ -3176,8 +3176,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
-       tmuxController:(TmuxController *)tmuxController
-{
+       tmuxController:(TmuxController *)tmuxController {
     DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_];
@@ -3196,6 +3195,47 @@ static NSString* FormatRect(NSRect r) {
     [[root_ window] makeFirstResponder:[[self activeSession] textview]];
     [parseTree_ release];
     parseTree_ = [parseTree retain];
+
+    [self activateJuniorSession];
+}
+
+// Find a session that is not "senior" to a tmux pane getting split by the user and make it
+// active.
+- (void)activateJuniorSession {
+    DLog(@"activateJuniorSession");
+    BOOL haveSenior = NO;
+    for (PTYSession *aSession in self.sessions) {
+        if (aSession.sessionIsSeniorToTmuxSplitPane) {
+            haveSenior = YES;
+            DLog(@"Found a senior session");
+            break;
+        }
+    }
+    if (!haveSenior) {
+        // Just a layout change, not a user-driven split.
+        DLog(@"No senior session found");
+        return;
+    }
+
+    // Find a non-senior pane.
+    PTYSession *newSession = nil;
+    for (PTYSession *aSession in self.sessions) {
+        if (!aSession.sessionIsSeniorToTmuxSplitPane) {
+            newSession = aSession;
+            DLog(@"Found a junior session");
+            break;
+        }
+    }
+    if (newSession) {
+        DLog(@"Activate junior session");
+        [self setActiveSession:newSession];
+    }
+
+    // Reset the flag so layout changes in the future because of resizing, dragging a split pane
+    // divider, etc. won't change active session.
+    for (PTYSession *aSession in self.sessions) {
+        aSession.sessionIsSeniorToTmuxSplitPane = NO;
+    }
 }
 
 - (BOOL)layoutIsTooLarge

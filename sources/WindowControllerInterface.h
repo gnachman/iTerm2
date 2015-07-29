@@ -2,12 +2,13 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
+#import "PTYTabDelegate.h"
 
 @class Popup;
 @class PSMTabBarControl;
 @class PTYSession;
-@class PTYTabView;
 @class PTYTab;
+@class PTYTabView;
 @class TmuxController;
 @class VT100RemoteHost;
 
@@ -96,7 +97,7 @@ typedef enum {
 
 // The full interface for a window controller, as seen by objects that treat it
 // like a delegate.
-@protocol iTermWindowController <WindowControllerInterface>
+@protocol iTermWindowController <WindowControllerInterface, PTYTabDelegate>
 
 // Is the toolbelt visible for this window?
 @property(nonatomic, readonly) BOOL shouldShowToolbelt;
@@ -318,16 +319,16 @@ typedef enum {
 #pragma mark - Splits
 
 // Create a new split. The new session uses the profile with |guid|.
-- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
+- (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
 
 // Create a new split with a provided profile.
-- (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile;
+- (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile;
 
 // Create a new split with a specified bookmark. |targetSession| is the session
 // to split.
-- (void)splitVertically:(BOOL)isVertical
-           withBookmark:(Profile*)theBookmark
-          targetSession:(PTYSession*)targetSession;
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                   withBookmark:(Profile*)theBookmark
+                  targetSession:(PTYSession*)targetSession;
 
 // Create a new split with the specified bookmark. The passed-in session is
 // inserted either before (left/above) or after (right/below) the target

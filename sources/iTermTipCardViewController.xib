@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="iTermTipCardViewController">
+            <connections>
+                <outlet property="_body" destination="oJ3-Cg-erw" id="JpM-1Q-CfM"/>
+                <outlet property="_container" destination="eLp-gP-ZDf" id="exL-Ju-Ugw"/>
+                <outlet property="_coverView" destination="Ko0-wO-3Hh" id="7Wh-LD-V5L"/>
+                <outlet property="_title" destination="Uqc-uM-fBd" id="mQv-h6-V5Y"/>
+                <outlet property="_titleBox" destination="a3V-cP-S93" id="FoX-xY-b3M"/>
+                <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="Hz6-mo-xeY" userLabel="Tip card view" customClass="iTermTipCardView">
+            <rect key="frame" x="0.0" y="0.0" width="300" height="124"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <customView id="eLp-gP-ZDf" userLabel="Container View" customClass="iTermTipCardContainerView">
+                    <rect key="frame" x="4" y="8" width="292" height="114"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <subviews>
+                        <customView id="Ko0-wO-3Hh" userLabel="Cover View" customClass="SolidColorView">
+                            <rect key="frame" x="1" y="1" width="290" height="62"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        </customView>
+                        <box autoresizesSubviews="NO" boxType="custom" borderType="line" titlePosition="noTitle" id="a3V-cP-S93" userLabel="Title background color (box)">
+                            <rect key="frame" x="1" y="63" width="290" height="50"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                            <view key="contentView">
+                                <rect key="frame" x="1" y="1" width="288" height="48"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="Uqc-uM-fBd">
+                                        <rect key="frame" x="4" y="4" width="280" height="41"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Shell Integration" id="F7A-0l-yly">
+                                            <font key="font" size="32" name="HelveticaNeue-Thin"/>
+                                            <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                </subviews>
+                            </view>
+                            <color key="borderColor" red="0.1648087238456728" green="0.41528780037972046" blue="0.79472458964646464" alpha="0.0" colorSpace="calibratedRGB"/>
+                            <color key="fillColor" red="0.56470588235294117" green="0.57647058823529407" blue="0.80392156862745101" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        </box>
+                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="oJ3-Cg-erw" userLabel="Body text field">
+                            <rect key="frame" x="10" y="6" width="272" height="54"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla" id="5Nk-zE-G82">
+                                <font key="font" size="16" name="HelveticaNeue-Thin"/>
+                                <color key="textColor" white="0.22997685185185185" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                    </subviews>
+                </customView>
+            </subviews>
+            <point key="canvasLocation" x="262" y="330"/>
+        </customView>
+    </objects>
+</document>

@@ -16,10 +16,10 @@ typedef NS_OPTIONS(NSUInteger, NMSSHLogLevel) {
 
 /**
  Retrieve the shared logger instance
-
+ 
  @returns Shared logger
  */
-+ (NMSSHLogger *)logger;
++ (instancetype) sharedLogger;
 
 /// ----------------------------------------------------------------------------
 /// @name Logger settings

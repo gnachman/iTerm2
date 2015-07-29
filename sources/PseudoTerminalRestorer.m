@@ -11,7 +11,9 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
+#import "iTermOrphanServerAdopter.h"
 #import "iTermPreferences.h"
+#import "NSApplication+iTerm.h"
 #import "PseudoTerminal.h"
 
 static NSMutableArray *queuedBlocks;
@@ -52,20 +54,29 @@ typedef void (^VoidBlock)(void);
         completionHandler(nil, nil);
         return;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
-        DLog(@"Abort because opening arrangement at startup");
-        NSDictionary *arrangement =
-            [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
-        if (arrangement) {
-            [PseudoTerminal registerSessionsInArrangement:arrangement];
-        }
+    if ([[NSApplication sharedApplication] isRunningUnitTests]) {
+        DLog(@"Abort because this is a unit test.");
         completionHandler(nil, nil);
         return;
     }
-    if ([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
-        DLog(@"Abort because opening no windows at startup");
-        completionHandler(nil, nil);
-        return;
+
+    if (![[iTermOrphanServerAdopter sharedInstance] haveOrphanServers]) {
+        // We don't respect the startup preference if orphan servers are present. Just restore things
+        // as best we can.
+        if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]) {
+            DLog(@"Abort because opening arrangement at startup");
+            NSDictionary *arrangement =
+                [state decodeObjectForKey:kPseudoTerminalStateRestorationWindowArrangementKey];
+            if (arrangement) {
+                [PseudoTerminal registerSessionsInArrangement:arrangement];
+            }
+            completionHandler(nil, nil);
+            return;
+        } else if ([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+            DLog(@"Abort because opening no windows at startup");
+            completionHandler(nil, nil);
+            return;
+        }
     }
 
     if (!queuedBlocks) {
@@ -120,6 +131,14 @@ typedef void (^VoidBlock)(void);
     } else {
         DLog(@"Abort because no arrangement");
         completionHandler(nil, nil);
+    }
+}
+
++ (void)setRestorationCompletionBlock:(void(^)())completion {
+    if (queuedBlocks) {
+        [queuedBlocks addObject:[[completion copy] autorelease]];
+    } else {
+        completion();
     }
 }
 

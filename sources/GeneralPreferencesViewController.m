@@ -326,7 +326,11 @@ enum {
     if (shouldLoadRemotePrefs) {
         _prefsDirWarning.alphaValue = 1;
     } else {
-        _prefsDirWarning.alphaValue = 0.5;
+        if (_prefsCustomFolder.stringValue.length > 0) {
+            _prefsDirWarning.alphaValue = 0.5;
+        } else {
+            _prefsDirWarning.alphaValue = 0;
+        }
     }
 
     BOOL remoteLocationIsValid = [[iTermRemotePreferences sharedInstance] remoteLocationIsValid];

@@ -45,6 +45,21 @@ const CGFloat kDefaultTagsWidth = 80;
 
 @implementation ProfileListView {
     BOOL tagsViewIsCollapsed_;
+    NSScrollView* scrollView_;
+    iTermSearchField* searchField_;
+    ProfileTableView* tableView_;
+    NSTableColumn* tableColumn_;
+    NSTableColumn* commandColumn_;
+    NSTableColumn* shortcutColumn_;
+    NSTableColumn* tagsColumn_;
+    NSObject<ProfileListViewDelegate> *delegate_;
+    NSSet* selectedGuids_;
+    BOOL debug;
+    ProfileModelWrapper *dataSource_;
+    int margin_;
+    ProfileTagsView *tagsView_;
+    NSSplitView *splitView_;
+    CGFloat lastTagsWidth_;
 }
 
 - (id)initWithFrame:(NSRect)frameRect
@@ -526,8 +541,15 @@ const CGFloat kDefaultTagsWidth = 80;
     return theAttributedString;
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
+- (NSAttributedString *)attributedStringForString:(NSString *)string selected:(BOOL)selected {
+    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]],
+                                  NSForegroundColorAttributeName: selected ? [NSColor whiteColor] : [NSColor blackColor] };
+    return [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
+}
+
+- (id)tableView:(NSTableView *)aTableView
+    objectValueForTableColumn:(NSTableColumn *)aTableColumn
+                          row:(NSInteger)rowIndex {
     Profile* bookmark = [dataSource_ profileAtIndex:rowIndex];
 
     if (aTableColumn == tableColumn_) {
@@ -538,15 +560,20 @@ const CGFloat kDefaultTagsWidth = 80;
                                    isDefault:[bookmark[KEY_GUID] isEqualToString:defaultProfile[KEY_GUID]]
                                       filter:[searchField_ stringValue]];
     } else if (aTableColumn == commandColumn_) {
+        NSString *theString = nil;
         if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
-            return @"Login shell";
+            theString = @"Login shell";
         } else {
-            return [bookmark objectForKey:KEY_COMMAND];
+            theString = [bookmark objectForKey:KEY_COMMAND];
         }
+        return [self attributedStringForString:theString
+                                      selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]];
     } else if (aTableColumn == shortcutColumn_) {
         NSString* key = [bookmark objectForKey:KEY_SHORTCUT];
         if ([key length]) {
-            return [NSString stringWithFormat:@"^⌘%@", [bookmark objectForKey:KEY_SHORTCUT]];
+            NSString *theString = [NSString stringWithFormat:@"^⌘%@", [bookmark objectForKey:KEY_SHORTCUT]];
+            return [self attributedStringForString:theString
+                                          selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]];
         } else {
             return @"";
         }
@@ -838,22 +865,32 @@ const CGFloat kDefaultTagsWidth = 80;
     [searchField_ setArrowHandler:nil];
 }
 
-- (void)toggleTags
-{
+- (void)toggleTags {
+    [self setTagsOpen:!self.tagsVisible animated:YES];
+}
+
+- (void)setTagsOpen:(BOOL)open animated:(BOOL)animated {
+    if (open == self.tagsVisible) {
+        return;
+    }
     NSRect newTableFrame = tableView_.frame;
     NSRect newTagsFrame = tagsView_.frame;
     CGFloat newTagsWidth;
-    if ([self tagsVisible]) {
+    if (open) {
+        newTagsWidth = lastTagsWidth_;
+    } else {
         lastTagsWidth_ = tagsView_.frame.size.width;
         newTagsWidth = 0;
-    } else {
-        newTagsWidth = lastTagsWidth_;
     }
     newTableFrame.size.width =  self.frame.size.width - newTagsWidth;
     newTagsFrame.size.width = newTagsWidth;
-
-    [tagsView_.animator setFrame:newTagsFrame];
-    [tableView_.animator setFrame:newTableFrame];
+    if (animated) {
+        [tagsView_.animator setFrame:newTagsFrame];
+        [tableView_.animator setFrame:newTableFrame];
+    } else {
+        tagsView_.frame = newTagsFrame;
+        tableView_.frame = newTableFrame;
+    }
 }
 
 - (BOOL)tagsVisible {

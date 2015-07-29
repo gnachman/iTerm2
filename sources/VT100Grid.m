@@ -10,16 +10,36 @@
 
 #import "DebugLogging.h"
 #import "LineBuffer.h"
-#import "RegexKitLite.h"
+#import "NSDictionary+iTerm.h"
 #import "VT100GridTypes.h"
 #import "VT100LineInfo.h"
 #import "VT100Terminal.h"
+
+static NSString *const kGridCursorKey = @"Cursor";
+static NSString *const kGridScrollRegionRowsKey = @"Scroll Region Rows";
+static NSString *const kGridScrollRegionColumnsKey = @"Scroll Region Columns";
+static NSString *const kGridUseScrollRegionColumnsKey = @"Use Scroll Region Columns";
+static NSString *const kGridSizeKey = @"Size";
 
 @interface VT100Grid ()
 @property(nonatomic, readonly) NSArray *lines;  // Warning: not in order found on screen!
 @end
 
-@implementation VT100Grid
+@implementation VT100Grid {
+    VT100GridSize size_;
+    int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
+    NSMutableArray *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
+    NSMutableArray *lineInfos_;  // Array of VT100LineInfo.
+    id<VT100GridDelegate> delegate_;
+    VT100GridCoord cursor_;
+    VT100GridRange scrollRegionRows_;
+    VT100GridRange scrollRegionCols_;
+    BOOL useScrollRegionCols_;
+
+    NSMutableData *cachedDefaultLine_;
+    NSMutableData *resultLine_;
+    screen_char_t savedDefaultChar_;
+}
 
 @synthesize size = size_;
 @synthesize scrollRegionRows = scrollRegionRows_;
@@ -202,7 +222,7 @@
     // Push the current screen contents into the scrollback buffer.
     // The maximum number of lines of scrollback are temporarily ignored because this
     // loop doesn't call dropExcessLinesWithWidth.
-    int lengthOfNextLine;
+    int lengthOfNextLine = 0;
     if (numLines > 0) {
         lengthOfNextLine = [self lengthOfLineNumber:0];
     }
@@ -228,9 +248,10 @@
             [lineBuffer setCursor:currentLineLength];
         }
 
+        const BOOL isPartial = (continuation != EOL_HARD) || (i == size_.height - 1);
         [lineBuffer appendLine:line
                         length:currentLineLength
-                       partial:(continuation != EOL_HARD)
+                       partial:isPartial
                          width:size_.width
                      timestamp:[[self lineInfoAtLineNumber:i] timestamp]
                   continuation:line[size_.width]];
@@ -1540,6 +1561,30 @@
     }
     return array;
 }
+
+- (NSDictionary *)dictionaryValue {
+    return @{ kGridCursorKey: [NSDictionary dictionaryWithGridCoord:cursor_],
+              kGridScrollRegionRowsKey: [NSDictionary dictionaryWithGridRange:scrollRegionRows_],
+              kGridScrollRegionColumnsKey: [NSDictionary dictionaryWithGridRange:scrollRegionCols_],
+              kGridUseScrollRegionColumnsKey: @(useScrollRegionCols_),
+              kGridSizeKey: [NSDictionary dictionaryWithGridSize:size_] };
+}
+
+- (void)setStateFromDictionary:(NSDictionary *)dict {
+    if (!dict) {
+        return;
+    }
+    VT100GridSize size = [dict[kGridSizeKey] gridSize];
+
+    // Saved values only make sense if the size is the same as when the state was saved.
+    if (VT100GridSizeEquals(size, size_)) {
+        cursor_ = [dict[kGridCursorKey] gridCoord];
+        scrollRegionRows_ = [dict[kGridScrollRegionRowsKey] gridRange];
+        scrollRegionCols_ = [dict[kGridScrollRegionColumnsKey] gridRange];
+        useScrollRegionCols_ = [dict[kGridUseScrollRegionColumnsKey] boolValue];
+    }
+}
+
 
 #pragma mark - Private
 

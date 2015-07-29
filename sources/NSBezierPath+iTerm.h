@@ -11,5 +11,6 @@
 @interface NSBezierPath (iTerm)
 
 + (NSBezierPath *)smoothPathAroundBottomOfFrame:(NSRect)frame;
+- (CGPathRef)iterm_CGPath;
 
 @end

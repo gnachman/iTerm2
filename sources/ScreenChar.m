@@ -62,6 +62,16 @@ static BOOL hasWrapped = NO;
     int _length;
 }
 
++ (iTermStringLine *)stringLineWithString:(NSString *)string {
+    screen_char_t screenChars[string.length];
+    memset(screenChars, 0, string.length * sizeof(screen_char_t));
+    for (int i = 0; i < string.length; i++) {
+        screenChars[i].code = [string characterAtIndex:i];
+        screenChars[i].complexChar = NO;
+    }
+    return [[[self alloc] initWithScreenChars:screenChars length:string.length] autorelease];
+}
+
 - (instancetype)initWithScreenChars:(screen_char_t *)screenChars
                              length:(NSInteger)length {
     self = [super init];

@@ -136,26 +136,21 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
 // Returns the path to the applicationSupportDirectory (creating it if it doesn't
 // exist).
 //
-- (NSString *)applicationSupportDirectory
-{
-	NSString *executableName =
-		[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleExecutable"];
-	NSError *error;
-	NSString *result =
-		[self
-			findOrCreateDirectory:NSApplicationSupportDirectory
-			inDomain:NSUserDomainMask
-			appendPathComponent:executableName
-			error:&error];
-	if (!result)
-	{
-		NSLog(@"Unable to find or create application support directory:\n%@", error);
-	}
-	return result;
+- (NSString *)applicationSupportDirectory {
+    NSString *executableName =
+        [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
+    NSError *error;
+    NSString *result = [self findOrCreateDirectory:NSApplicationSupportDirectory
+                                          inDomain:NSUserDomainMask
+                               appendPathComponent:executableName
+                                             error:&error];
+    if (!result) {
+        NSLog(@"Unable to find or create application support directory:\n%@", error);
+    }
+    return result;
 }
 
-- (NSString *)temporaryDirectory
-{
+- (NSString *)temporaryDirectory {
     // Create a unique directory in the system temporary directory
     NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
     NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:guid];
@@ -163,6 +158,11 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         return nil;
     }
     return path;
+}
+
+- (NSString *)desktopDirectory {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDesktopDirectory, NSUserDomainMask, YES);
+    return [paths firstObject];
 }
 
 - (BOOL)directoryIsWritable:(NSString *)dir

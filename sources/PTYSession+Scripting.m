@@ -7,26 +7,20 @@
 
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier {
-    NSUInteger theIndex = 0;
-    id classDescription = nil;
-
-    NSScriptObjectSpecifier *containerRef = nil;
     if (![[self tab] realParentWindow]) {
         // TODO(georgen): scripting is broken while in instant replay.
         return nil;
     }
     // TODO: Test this with multiple panes per tab.
-    theIndex = [[[[self tab] realParentWindow] tabView] indexOfTabViewItem:[[self tab] tabViewItem]];
+    NSUInteger theIndex = [self.tab.sessions indexOfObject:self];
 
     if (theIndex != NSNotFound) {
-        containerRef = [[[self tab] realParentWindow] objectSpecifier];
-        classDescription = [containerRef keyClassDescription];
+        id classDescription = [NSClassDescription classDescriptionForClass:[PTYTab class]];
         //create and return the specifier
-        return [[[NSIndexSpecifier allocWithZone:[self zone]]
-                 initWithContainerClassDescription:classDescription
-                 containerSpecifier:containerRef
-                 key:@ "sessions"
-                 index:theIndex] autorelease];
+        return [[[NSIndexSpecifier alloc] initWithContainerClassDescription:classDescription
+                                                         containerSpecifier:[self.tab objectSpecifier]
+                                                                        key:@"sessions"
+                                                                      index:theIndex] autorelease];
     } else {
         // NSLog(@"recipient not found!");
         return nil;
@@ -67,6 +61,8 @@
     NSString *contentsOfFile = [args objectForKey:@"contentsOfFile"];
     // optional argument follows (might be nil):
     NSString *text = [args objectForKey:@"text"];
+    // optional argument follows (might be nil; if so, defaults to true):
+    BOOL newline = ( [args objectForKey:@"newline"] ? [[args objectForKey:@"newline"] boolValue] : YES );
     NSData *data = nil;
     NSString *aString = nil;
 
@@ -85,11 +81,11 @@
         text = [text description];
     }
     if (text != nil) {
-        if ([text characterAtIndex:[text length]-1]==' ') {
-            data = [text dataUsingEncoding:[self.terminal encoding]];
-        } else {
+        if (newline) {
             aString = [NSString stringWithFormat:@"%@\n", text];
             data = [aString dataUsingEncoding:[self.terminal encoding]];
+        } else {
+            data = [text dataUsingEncoding:[self.terminal encoding]];
         }
     }
 
@@ -114,51 +110,53 @@
     }
 }
 
-- (void)splitVertically:(BOOL)vertically withProfile:(Profile *)profile {
-    [[[self tab] realParentWindow] splitVertically:vertically
-                                       withProfile:profile];
+- (PTYSession *)splitVertically:(BOOL)vertically withProfile:(Profile *)profile {
+    return [[[self tab] realParentWindow] splitVertically:vertically
+                                              withProfile:profile];
 }
 
-- (void)handleSplitVertically:(NSScriptCommand *)scriptCommand {
+- (id)handleSplitVertically:(NSScriptCommand *)scriptCommand {
     NSDictionary *args = [scriptCommand evaluatedArguments];
     NSString *profileName = args[@"profile"];
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (profile) {
-        [self splitVertically:YES withProfile:profile];
+        return [self splitVertically:YES withProfile:profile];
+    } else {
+        [scriptCommand setScriptErrorNumber:1];
+        [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
+                                             profileName]];
+        return nil;
+    }
+}
+
+- (id)handleSplitVerticallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
+    return [self splitVertically:YES withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+}
+
+- (id)handleSplitVerticallyWithSameProfile:(NSScriptCommand *)scriptCommand {
+    return [self splitVertically:YES withProfile:self.profile];
+}
+
+- (id)handleSplitHorizontally:(NSScriptCommand *)scriptCommand {
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    NSString *profileName = args[@"profile"];
+    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
+    if (profile) {
+        return [self splitVertically:NO withProfile:profile];
     } else {
         [scriptCommand setScriptErrorNumber:1];
         [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
                                              profileName]];
     }
+    return nil;
 }
 
-- (void)handleSplitVerticallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
-    [self splitVertically:YES withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+- (id)handleSplitHorizontallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
+    return [self splitVertically:NO withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
 }
 
-- (void)handleSplitVerticallyWithSameProfile:(NSScriptCommand *)scriptCommand {
-    [self splitVertically:YES withProfile:self.profile];
-}
-
-- (void)handleSplitHorizontally:(NSScriptCommand *)scriptCommand {
-    NSDictionary *args = [scriptCommand evaluatedArguments];
-    NSString *profileName = args[@"profile"];
-    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
-    if (profile) {
-        [self splitVertically:NO withProfile:profile];
-    } else {
-        [scriptCommand setScriptErrorNumber:1];
-        [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
-                                             profileName]];
-    }
-}
-
-- (void)handleSplitHorizontallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
-    [self splitVertically:NO withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
-}
-
-- (void)handleSplitHorizontallyWithSameProfile:(NSScriptCommand *)scriptCommand {
-    [self splitVertically:NO withProfile:self.profile];
+- (id)handleSplitHorizontallyWithSameProfile:(NSScriptCommand *)scriptCommand {
+    return [self splitVertically:NO withProfile:self.profile];
 }
 
 - (void)handleTerminateScriptCommand:(NSScriptCommand *)command {

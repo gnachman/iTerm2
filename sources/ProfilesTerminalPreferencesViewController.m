@@ -31,6 +31,7 @@
     IBOutlet NSButton *_bellIconInTabs;
     IBOutlet NSButton *_setLocaleVars;
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
+    IBOutlet NSButton *_showMarkIndicators;
 
     IBOutlet NSPanel *_filterAlertsPanel;
     IBOutlet NSButton *_bellAlert;
@@ -144,6 +145,10 @@
 
     [self defineControl:_forceCommandPromptToFirstColumn
                     key:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_showMarkIndicators
+                    key:KEY_SHOW_MARK_INDICATORS
                    type:kPreferenceInfoTypeCheckbox];
 }
 

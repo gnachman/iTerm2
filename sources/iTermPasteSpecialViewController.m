@@ -38,6 +38,7 @@ static NSString *const kDelayBetweenChunks = @"Delay";
 static NSString *const kNumberOfSpacesPerTab = @"TabStopSize";
 static NSString *const kSelectedTabTransform = @"TabTransform";
 static NSString *const kShouldConvertNewlines = @"ConvertNewlines";
+static NSString *const kShouldRemoveNewlines = @"RemoveNewlines";
 static NSString *const kShouldEscapeShellCharsWithBackslash = @"EscapeForShell";
 static NSString *const kShouldRemoveControlCodes = @"RemoveControls";
 static NSString *const kShouldUseBracketedPasteMode = @"BracketAllowed";
@@ -52,6 +53,7 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
     IBOutlet NSButton *_bracketedPasteMode;
     IBOutlet NSMatrix *_tabTransform;
     IBOutlet NSButton *_convertNewlines;
+    IBOutlet NSButton *_removeNewlines;
     IBOutlet NSButton *_base64Encode;
     IBOutlet NSButton *_waitForPrompts;
     IBOutlet NSButton *_convertUnicodePunctuation;
@@ -148,6 +150,7 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
 - (IBAction)settingChanged:(id)sender {
     _spacesPerTab.enabled = (_tabTransform.enabled &&
                              _tabTransform.selectedTag == kTabTransformConvertToSpaces);
+    _convertNewlines.enabled = (_removeNewlines.state != NSOnState);
     [_delegate pasteSpecialTransformDidChange];
 }
 
@@ -201,6 +204,14 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
     return _convertNewlines.enabled;
 }
 
+- (void)setEnableRemoveNewlines:(BOOL)enableRemoveNewlines {
+    _removeNewlines.enabled = enableRemoveNewlines;
+}
+
+- (BOOL)isRemoveNewlinesEnabled {
+    return _removeNewlines.enabled;
+}
+
 - (void)setEnableConvertUnicodePunctuation:(BOOL)enableConvertUnicodePunctuation {
     _convertUnicodePunctuation.enabled = enableConvertUnicodePunctuation;
 }
@@ -223,6 +234,14 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
 
 - (BOOL)shouldConvertNewlines {
     return _convertNewlines.state == NSOnState;
+}
+
+- (void)setShouldRemoveNewlines:(BOOL)shouldRemoveNewlines {
+    _removeNewlines.state = shouldRemoveNewlines ? NSOnState : NSOffState;
+}
+
+- (BOOL)shouldRemoveNewlines {
+    return _removeNewlines.state == NSOnState;
 }
 
 - (void)setEnableEscapeShellCharsWithBackslash:(BOOL)enableEscapeShellCharsWithBackslash {
@@ -324,6 +343,7 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
            kNumberOfSpacesPerTab: @(self.numberOfSpacesPerTab),
            kSelectedTabTransform: @(self.selectedTabTransform),
            kShouldConvertNewlines: @(self.shouldConvertNewlines),
+           kShouldRemoveNewlines: @(self.shouldRemoveNewlines),
            kShouldConvertUnicodePunctuation: @(self.shouldConvertUnicodePunctuation),
            kShouldEscapeShellCharsWithBackslash: @(self.shouldEscapeShellCharsWithBackslash),
            kShouldRemoveControlCodes: @(self.shouldRemoveControlCodes),
@@ -381,6 +401,10 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
         [components addObject:@"NoCRLFConversion"];
     }
 
+    if ([dict[kShouldRemoveNewlines] boolValue]) {
+        [components addObject:@"RemoveNewlines"];
+    }
+
     if ([dict[kShouldConvertUnicodePunctuation] boolValue]) {
         [components addObject:@"ConvertPunctuation"];
     }
@@ -396,6 +420,7 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
     self.numberOfSpacesPerTab = [dict[kNumberOfSpacesPerTab] integerValue];
     self.selectedTabTransform = [dict[kSelectedTabTransform] integerValue];
     self.shouldConvertNewlines = [dict[kShouldConvertNewlines] boolValue];
+    self.shouldRemoveNewlines = [dict[kShouldRemoveNewlines] boolValue];
     self.shouldConvertUnicodePunctuation = [dict[kShouldConvertUnicodePunctuation] boolValue];
     self.shouldEscapeShellCharsWithBackslash = [dict[kShouldEscapeShellCharsWithBackslash] boolValue];
     self.shouldRemoveControlCodes = [dict[kShouldRemoveControlCodes] boolValue];
@@ -413,6 +438,7 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
     int numberOfSpacesPerTab = [dict[kNumberOfSpacesPerTab] integerValue];
     iTermTabTransformTags selectedTabTransform = [dict[kSelectedTabTransform] integerValue];
     BOOL shouldConvertNewlines = [dict[kShouldConvertNewlines] boolValue];
+    BOOL shouldRemoveNewlines = [dict[kShouldRemoveNewlines] boolValue];
     BOOL shouldEscapeShellCharsWithBackslash = [dict[kShouldEscapeShellCharsWithBackslash] boolValue];
     BOOL shouldRemoveControlCodes = [dict[kShouldRemoveControlCodes] boolValue];
     BOOL shouldUseBracketedPasteMode = [dict[kShouldUseBracketedPasteMode] boolValue];
@@ -423,6 +449,9 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
     NSUInteger flags = 0;
     if (shouldConvertNewlines) {
         flags |= kPasteFlagsSanitizingNewlines;
+    }
+    if (shouldRemoveNewlines) {
+        flags |= kPasteFlagsRemovingNewlines;
     }
     if (shouldEscapeShellCharsWithBackslash) {
         flags |= kPasteFlagsEscapeSpecialCharacters;
@@ -458,6 +487,9 @@ static NSString *const kShouldWaitForPrompts = @"WaitForPrompts";
     NSUInteger flags = 0;
     if (self.shouldConvertNewlines) {
         flags |= kPasteFlagsSanitizingNewlines;
+    }
+    if (self.shouldRemoveNewlines) {
+        flags |= kPasteFlagsRemovingNewlines;
     }
     if (self.shouldEscapeShellCharsWithBackslash) {
         flags |= kPasteFlagsEscapeSpecialCharacters;

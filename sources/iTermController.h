@@ -44,22 +44,13 @@
 @class PTYTextView;
 
 @interface iTermController : NSObject
-{
-    // PseudoTerminal objects
-    NSMutableArray *terminalWindows;
-    id FRONT;
-    ItermGrowlDelegate *gd;
-
-    int keyWindowIndexMemo_;
-
-    // For restoring previously active app when exiting hotkey window
-    NSNumber *previouslyActiveAppPID_;
-    id runningApplicationClass_;
-}
 
 @property(nonatomic, readonly) iTermRestorableSession *currentRestorableSession;
 @property(nonatomic, assign) BOOL selectionRespectsSoftBoundaries;
 @property(nonatomic, assign) BOOL startingUp;
+@property(nonatomic, assign) BOOL applicationIsQuitting;
+@property(nonatomic, readonly) BOOL willRestoreWindowsAtNextLaunch;
+@property(nonatomic, readonly) BOOL shouldLeaveSessionsRunningOnQuit;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
@@ -110,14 +101,14 @@
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
 // new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
 // URL.
-- (id)launchBookmark:(NSDictionary *)bookmarkData
-          inTerminal:(PseudoTerminal *)theTerm
-             withURL:(NSString *)url
-            isHotkey:(BOOL)isHotkey
-             makeKey:(BOOL)makeKey
-             command:(NSString *)command
-               block:(PTYSession *(^)(PseudoTerminal *))block;
-- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
+- (PTYSession *)launchBookmark:(Profile *)bookmarkData
+                    inTerminal:(PseudoTerminal *)theTerm
+                       withURL:(NSString *)url
+                      isHotkey:(BOOL)isHotkey
+                       makeKey:(BOOL)makeKey
+                       command:(NSString *)command
+                         block:(PTYSession *(^)(PseudoTerminal *))block;
+- (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
 - (int)numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
@@ -151,6 +142,7 @@
 - (void)commitAndPopCurrentRestorableSession;
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (BOOL)hasRestorableSession;
+- (void)killRestorableSessions;
 
 - (NSArray*)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;

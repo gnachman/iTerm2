@@ -250,6 +250,7 @@
     BOOL containsShellCharacters =
         [string rangeOfCharacterFromSet:theSet].location != NSNotFound;
     BOOL containsDosNewlines = [string containsString:@"\n"];
+    BOOL containsNewlines = containsDosNewlines || [string containsString:@"\r"];
     BOOL containsUnicodePunctuation = ([string rangeOfRegex:kPasteSpecialViewControllerUnicodePunctuationRegularExpression].location != NSNotFound);
     BOOL convertValue = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialConvertDosNewlines];
     BOOL shouldEscape = [iTermPreferences boolForKey:kPreferenceKeyPasteSpecialEscapeShellCharsWithBackslash];
@@ -266,6 +267,8 @@
     _pasteSpecialViewController.selectedTabTransform = tabTransformTag;
     _pasteSpecialViewController.enableConvertNewlines = containsDosNewlines;
     _pasteSpecialViewController.shouldConvertNewlines = (containsDosNewlines && convertValue);
+    _pasteSpecialViewController.enableRemoveNewlines = containsNewlines;
+    _pasteSpecialViewController.shouldRemoveNewlines = NO;
     _pasteSpecialViewController.enableConvertUnicodePunctuation = containsUnicodePunctuation;
     _pasteSpecialViewController.shouldConvertUnicodePunctuation =
         (containsUnicodePunctuation && convertUnicodePunctuation);

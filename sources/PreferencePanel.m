@@ -69,7 +69,7 @@
 #import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
-#import "iTermAdvancedSettingsController.h"
+#import "iTermAdvancedSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
@@ -114,7 +114,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
     IBOutlet PointerPreferencesViewController *_pointerViewController;
-    IBOutlet iTermAdvancedSettingsController *_advancedViewController;
+    IBOutlet iTermAdvancedSettingsViewController *_advancedViewController;
 
     IBOutlet NSToolbar *_toolbar;
     IBOutlet NSTabView *_tabView;

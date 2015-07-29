@@ -247,8 +247,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     [self requestDidComplete];
 }
 
-- (void)getPendingOutputResponse:(NSData *)response pane:(NSNumber *)wp
-{
+- (void)getPendingOutputResponse:(NSData *)response pane:(NSNumber *)wp {
     const char *bytes = response.bytes;
     NSMutableData *pending = [NSMutableData data];
     for (int i = 0; i < response.length; i++) {
@@ -289,8 +288,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     [self requestDidComplete];
 }
 
-- (void)requestDidComplete
-{
+- (void)requestDidComplete {
     --pendingRequests_;
     DLog(@"requestDidComplete. Pending requests is now %d", pendingRequests_);
     if (pendingRequests_ == 0) {

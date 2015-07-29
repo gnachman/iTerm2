@@ -46,12 +46,8 @@
 - (void)snapshot {
     DLog(@"Take a snapshot of the grid because cursor was hidden (delegate=%@)", _delegate);
     static const NSTimeInterval kTimeToKeepSavedGrid = 0.2;
-    BOOL hadSavedGrid = self.savedGrid != nil;
     self.savedGrid = [_delegate temporaryDoubleBufferedGridCopy];
 
-    if (hadSavedGrid) {
-        [_delegate temporaryDoubleBufferedGridDidExpire];
-    }
     [_timer invalidate];
     _timer = [NSTimer scheduledTimerWithTimeInterval:kTimeToKeepSavedGrid
                                               target:self

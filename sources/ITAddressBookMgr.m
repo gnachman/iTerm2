@@ -26,6 +26,7 @@
  */
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "ProfileModel.h"
@@ -560,10 +561,13 @@
     }
 }
 
++ (NSString *)shellLauncherCommand {
+    return [NSString stringWithFormat:@"%@ --launch_shell",
+            [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
+}
+
 + (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
-                            forObjectType:(iTermObjectType)objectType
-{
-    NSString* thisUser = NSUserName();
+                            forObjectType:(iTermObjectType)objectType {
     NSString *customDirectoryString;
     if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryAdvancedValue]) {
         switch (objectType) {
@@ -586,14 +590,18 @@
 
     if ([customDirectoryString isEqualToString:kProfilePreferenceInitialDirectoryHomeValue]) {
         // Run login without -l argument: this is a login session and will use the home dir.
-        return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
+        return [self standardLoginCommand];
     } else {
         // Not using the home directory. This requires some trickery.
         // Run iTerm2's executable with a special flag that makes it run the shell as a login shell
         // (with "-" inserted at the start of argv[0]). See shell_launcher.c for more details.
-        return [NSString stringWithFormat:@"%@ --launch_shell",
-                   [[[NSBundle mainBundle] executablePath] stringWithEscapedShellCharacters]];
+        NSString *launchShellCommand = [self shellLauncherCommand];
+        return launchShellCommand;
     }
+}
+
++ (NSString *)standardLoginCommand {
+    return [NSString stringWithFormat:@"login -fp \"%@\"", NSUserName()];
 }
 
 + (NSString*)bookmarkCommand:(Profile*)bookmark

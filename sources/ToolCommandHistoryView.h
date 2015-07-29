@@ -7,7 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "ToolbeltView.h"
+
+#import "iTermToolbeltView.h"
 
 @class CommandHistoryEntry;
 
@@ -16,6 +17,9 @@
   NSTableViewDataSource,
   NSTableViewDelegate,
   NSTextFieldDelegate>
+
+// For testing
+@property(nonatomic, readonly) NSTableView *tableView;
 
 - (id)initWithFrame:(NSRect)frame;
 - (void)shutdown;

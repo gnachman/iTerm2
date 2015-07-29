@@ -33,6 +33,7 @@
 {
     [color_ autorelease];
     color_ = [color retain];
+    [self setNeedsDisplay:YES];
 }
 
 - (NSColor*)color
@@ -50,4 +51,9 @@
     isFlipped_ = value;
 }
 
+- (void)dealloc
+{
+    [color_ release];
+    [super dealloc];
+}
 @end

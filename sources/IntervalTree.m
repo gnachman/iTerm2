@@ -3,6 +3,14 @@
 static const long long kMinLocation = LLONG_MIN / 2;
 static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 
+static NSString *const kIntervalTreeEntriesKey = @"Entries";
+static NSString *const kIntervalTreeIntervalKey = @"Interval";
+static NSString *const kIntervalTreeObjectKey = @"Object";
+static NSString *const kIntervalTreeClassNameKey = @"Class";
+
+static NSString *const kIntervalLocationKey = @"Location";
+static NSString *const kIntervalLengthKey = @"Length";
+
 @interface IntervalTreeForwardLimitEnumerator : NSEnumerator {
     long long previousLimit_;
     IntervalTree *tree_;
@@ -168,6 +176,14 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 
 @implementation Interval
 
++ (Interval *)intervalWithDictionary:(NSDictionary *)dict {
+    if (!dict[kIntervalLocationKey] || !dict[kIntervalLengthKey]) {
+        return nil;
+    }
+    return [self intervalWithLocation:[dict[kIntervalLocationKey] longLongValue]
+                               length:[dict[kIntervalLengthKey] longLongValue]];
+}
+
 + (Interval *)intervalWithLocation:(long long)location length:(long long)length {
     Interval *interval = [[[Interval alloc] init] autorelease];
     interval.location = location;
@@ -208,6 +224,11 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 
 - (BOOL)isEqualToInterval:(Interval *)interval {
     return self.location == interval.location && self.length == interval.length;
+}
+
+- (NSDictionary *)dictionaryValue {
+    return @{ kIntervalLocationKey: @(_location),
+              kIntervalLengthKey: @(_length) };
 }
 
 #pragma mark - NSCopying
@@ -287,6 +308,26 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 @end
 
 @implementation IntervalTree
+
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+    self = [self init];
+    if (self) {
+        for (NSDictionary *entry in dict[kIntervalTreeEntriesKey]) {
+            NSDictionary *intervalDict = entry[kIntervalTreeIntervalKey];
+            NSDictionary *objectDict = entry[kIntervalTreeObjectKey];
+            NSString *className = entry[kIntervalTreeClassNameKey];
+            if (intervalDict && objectDict && className) {
+                Class theClass = NSClassFromString(className);
+                if ([theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
+                    id<IntervalTreeObject> object = [[theClass alloc] initWithDictionary:objectDict];
+                    Interval *interval = [Interval intervalWithDictionary:intervalDict];
+                    [self addObject:object withInterval:interval];
+                }
+            }
+        }
+    }
+    return self;
+}
 
 - (id)init {
     self = [super init];
@@ -862,6 +903,19 @@ static const long long kMaxLimit = kMinLocation + LLONG_MAX;
 
 - (NSString *)debugString {
     return [_tree description];
+}
+
+- (NSDictionary *)dictionaryValueWithOffset:(long long)offset {
+    NSMutableArray *objectDicts = [NSMutableArray array];
+    for (id<IntervalTreeObject> object in self.allObjects) {
+        Interval *interval = object.entry.interval;
+        interval.location = interval.location + offset;
+        [objectDicts addObject:@{ kIntervalTreeIntervalKey: object.entry.interval.dictionaryValue,
+                                  kIntervalTreeObjectKey: object.dictionaryValue,
+                                  kIntervalTreeClassNameKey: NSStringFromClass(object.class) }];
+        interval.location = interval.location - offset;
+    }
+    return @{ kIntervalTreeEntriesKey: objectDicts };
 }
 
 @end

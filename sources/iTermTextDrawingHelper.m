@@ -364,15 +364,16 @@ static const int kBadgeRightMargin = 10;
 - (void)drawTopMargin {
     // Draw a margin at the top of the visible area.
     NSRect topMarginRect = _visibleRect;
-    if (topMarginRect.origin.y > 0) {
-        topMarginRect.size.height = VMARGIN;
-        [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
-                                       blendDefaultBackground:YES];
+    topMarginRect.origin.y -=
+        MAX(0, VMARGIN - NSMinY(_delegate.enclosingScrollView.documentVisibleRect));
 
-        if (_showStripes) {
-            [self drawStripesInRect:topMarginRect];
-        }
-   }
+    topMarginRect.size.height = VMARGIN;
+    [self.delegate drawingHelperDrawBackgroundImageInRect:topMarginRect
+                                   blendDefaultBackground:YES];
+
+    if (_showStripes) {
+        [self drawStripesInRect:topMarginRect];
+    }
 }
 
 - (void)drawMarginsAndMarkForLine:(int)line y:(CGFloat)y {
@@ -446,7 +447,7 @@ static const int kBadgeRightMargin = 10;
 
 - (void)drawMarkIfNeededOnLine:(int)line leftMarginRect:(NSRect)leftMargin {
     VT100ScreenMark *mark = [self.delegate drawingHelperMarkOnLine:line];
-    if (mark.isVisible) {
+    if (mark.isVisible && self.drawMarkIndicators) {
         NSImage *image = mark.code ? _markErrImage : _markImage;
         CGFloat offset = (_cellSize.height - _markImage.size.height) / 2.0;
         [image drawAtPoint:NSMakePoint(leftMargin.origin.x,
@@ -1474,11 +1475,11 @@ static const int kBadgeRightMargin = 10;
         screenChar.complexChar = NO;
     }
     if (screenChar.code) {
-        if (screenChar.code == DWC_RIGHT && column > 0) {
-            column--;
-            screenChar = theLine[column];
+        if (screenChar.code == DWC_RIGHT) {
+          *doubleWidth = NO;
+        } else {
+          *doubleWidth = (column < width - 1) && (theLine[column+1].code == DWC_RIGHT);
         }
-        *doubleWidth = (column < width - 1) && (theLine[column+1].code == DWC_RIGHT);
     } else {
         *doubleWidth = NO;
     }
@@ -1549,8 +1550,8 @@ static const int kBadgeRightMargin = 10;
 }
 
 - (NSRange)rangeOfVisibleRows {
-    int visibleRows = floor(_scrollViewContentSize.height / _cellSize.height);
-    CGFloat top = _scrollViewDocumentVisibleRect.origin.y + _frame.origin.y;
+    int visibleRows = floor((_scrollViewContentSize.height - VMARGIN * 2) / _cellSize.height);
+    CGFloat top = _scrollViewDocumentVisibleRect.origin.y;
     int firstVisibleRow = floor(top / _cellSize.height);
     if (firstVisibleRow < 0) {
         // I'm pretty sure this will never happen, but safety first when
@@ -1785,6 +1786,7 @@ static const int kBadgeRightMargin = 10;
                                 matches:nil
                                 storage:storage];
     if (run) {
+        CGFloat underlineOffset = ceil(run->attrs.fontInfo.font.underlinePosition);
         CRun *head = run;
         // If an override color is given, change the runs' colors.
         if (overrideColor) {
@@ -1795,26 +1797,26 @@ static const int kBadgeRightMargin = 10;
         }
         [self drawRunsAt:point run:head storage:storage context:ctx];
         CRunFree(head);
-    }
 
-    // draw underline
-    if (screenChar.underline && screenChar.code) {
-        if (overrideColor) {
-            [overrideColor set];
-        } else {
-            [[_delegate drawingHelperColorForCode:screenChar.foregroundColor
-                                            green:screenChar.fgGreen
-                                             blue:screenChar.fgBlue
-                                        colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
-                                             bold:screenChar.bold
-                                            faint:screenChar.faint
-                                     isBackground:_reverseVideo] set];
+        // draw underline
+        if (screenChar.underline && screenChar.code) {
+            if (overrideColor) {
+                [overrideColor set];
+            } else {
+                [[_delegate drawingHelperColorForCode:screenChar.foregroundColor
+                                                green:screenChar.fgGreen
+                                                 blue:screenChar.fgBlue
+                                            colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
+                                                 bold:screenChar.bold
+                                                faint:screenChar.faint
+                                         isBackground:_reverseVideo] set];
+            }
+
+            NSRectFill(NSMakeRect(point.x,
+                                  point.y + _cellSize.height + underlineOffset,
+                                  doubleWidth ? _cellSize.width * 2 : _cellSize.width,
+                                  0.5));
         }
-
-        NSRectFill(NSMakeRect(point.x,
-                              point.y + _cellSize.height - 2,
-                              doubleWidth ? _cellSize.width * 2 : _cellSize.width,
-                              1));
     }
 }
 

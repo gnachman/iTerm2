@@ -13,4 +13,7 @@
 - (NSArray *)objectsOfClasses:(NSArray *)classes;
 - (NSAttributedString *)attributedComponentsJoinedByAttributedString:(NSAttributedString *)joiner;
 
+// Returns an array where each object in self is replaced with block(object).
+- (NSArray *)mapWithBlock:(id (^)(id anObject))block;
+
 @end

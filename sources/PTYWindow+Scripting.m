@@ -2,6 +2,7 @@
 #import "DebugLogging.h"
 #import "iTermApplication.h"
 #import "iTermController.h"
+#import "PTYSession.h"
 #import "PTYTab.h"
 
 @implementation PTYWindow (Scripting)
@@ -22,7 +23,7 @@
         return [[[NSIndexSpecifier alloc]
                    initWithContainerClassDescription:classDescription
                                   containerSpecifier:containerRef
-                                                 key:@"windows"
+                                                 key:@"orderedWindows"
                                                index:anIndex] autorelease];
     } else {
         return nil;
@@ -41,20 +42,22 @@
     return nil;
 }
 
-- (void)handleCreateTabWithDefaultProfileCommand:(NSScriptCommand *)scriptCommand {
+- (id)handleCreateTabWithDefaultProfileCommand:(NSScriptCommand *)scriptCommand {
     NSDictionary *args = [scriptCommand evaluatedArguments];
     NSString *command = args[@"command"];
     Profile *profile = [[ProfileModel sharedInstance] defaultBookmark];
-    [[iTermController sharedInstance] launchBookmark:profile
-                                          inTerminal:_delegate
-                                             withURL:nil
-                                            isHotkey:NO
-                                             makeKey:YES
-                                             command:command
-                                               block:nil];
+    PTYSession *session =
+        [[iTermController sharedInstance] launchBookmark:profile
+                                              inTerminal:_delegate
+                                                 withURL:nil
+                                                isHotkey:NO
+                                                 makeKey:YES
+                                                 command:command
+                                                   block:nil];
+    return session.tab;
 }
 
-- (void)handleCreateTabCommand:(NSScriptCommand *)scriptCommand {
+- (id)handleCreateTabCommand:(NSScriptCommand *)scriptCommand {
     NSDictionary *args = [scriptCommand evaluatedArguments];
     NSString *command = args[@"command"];
     NSString *profileName = args[@"profile"];
@@ -63,15 +66,17 @@
         [scriptCommand setScriptErrorNumber:1];
         [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile exists named '%@'",
                                              profileName]];
-        return;
+        return nil;
     }
-    [[iTermController sharedInstance] launchBookmark:profile
-                                          inTerminal:_delegate
-                                             withURL:nil
-                                            isHotkey:NO
-                                             makeKey:YES
-                                             command:command
-                                               block:nil];
+    PTYSession *session =
+        [[iTermController sharedInstance] launchBookmark:profile
+                                              inTerminal:_delegate
+                                                 withURL:nil
+                                                isHotkey:NO
+                                                 makeKey:YES
+                                                 command:command
+                                                   block:nil];
+    return session.tab;
 }
 
 #pragma mark - Accessors

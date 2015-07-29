@@ -12,4 +12,5 @@
 #import "VT100DCSParser.h"
 
 @interface VT100TmuxParser : NSObject <VT100DCSParserHook>
+- (instancetype)initInRecoveryMode;
 @end

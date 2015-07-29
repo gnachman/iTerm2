@@ -53,7 +53,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
 {
-        [Coprocess addCommandToMostRecentlyUsed:command];
+    [Coprocess addCommandToMostRecentlyUsed:command];
     int inputPipe[2];
     int outputPipe[2];
     pipe(inputPipe);

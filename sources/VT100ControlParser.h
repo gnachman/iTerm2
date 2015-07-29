@@ -31,5 +31,7 @@ NS_INLINE BOOL iscontrol(int c) {
                   savedState:(NSMutableDictionary *)savedState
                    dcsHooked:(BOOL *)dcsHooked;
 
+- (void)startTmuxRecoveryMode;
+
 @end
 

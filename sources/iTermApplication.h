@@ -32,8 +32,10 @@
 
 @class iTermApplicationDelegate;
 
-@interface iTermApplication : NSApplication {
-}
+@interface iTermApplication : NSApplication
+
+// Sets the return value for -currentEvent. Only for testing.
+@property(atomic, retain) NSEvent *fakeCurrentEvent;
 
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate *)delegate;

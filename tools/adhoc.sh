@@ -10,6 +10,7 @@ codesign --deep -s "Developer ID Application: GEORGE NACHMAN" -f "build/Deployme
 codesign --verify --verbose "build/Deployment/iTerm.app" || die "Signature not verified"
 pushd build/Deployment
 zip -ry iTerm2-${NAME}.zip iTerm.app
+chmod a+r iTerm2-${NAME}.zip
 scp iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/adhocbuilds/ || \
   scp iTerm2-${NAME}.zip gnachman@iterm2.com:iterm2.com/adhocbuilds/
 BRANCH=$(git rev-parse --abbrev-ref HEAD)

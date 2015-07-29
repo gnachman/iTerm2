@@ -8,7 +8,14 @@
 
 #import "iTermSelection.h"
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "ScreenChar.h"
+
+static NSString *const kSelectionSubSelectionsKey = @"Sub selections";
+
+static NSString *const kiTermSubSelectionRange = @"Range";
+static NSString *const kiTermSubSelectionMode = @"Mode";
 
 @implementation iTermSubSelection
 
@@ -18,6 +25,19 @@
     sub.range = range;
     sub.selectionMode = mode;
     return sub;
+}
+
++ (instancetype)subSelectinWithDictionary:(NSDictionary *)dict {
+    return [self subSelectionWithRange:[dict[kiTermSubSelectionRange] gridWindowedRange]
+                                  mode:[dict[kiTermSubSelectionMode] intValue]];
+}
+
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset {
+    VT100GridWindowedRange range = _range;
+    range.coordRange.start.y += yOffset;
+    range.coordRange.end.y += yOffset;
+    return @{ kiTermSubSelectionRange: [NSDictionary dictionaryWithGridWindowedRange:range],
+              kiTermSubSelectionMode: @(_selectionMode) };
 }
 
 - (NSString *)description {
@@ -1003,6 +1023,28 @@
               ![connectors containsIndex:endIndex] && value != [sortedRanges lastObject]);
         if (stop) {
             break;
+        }
+    }
+}
+
+#pragma mark - Serialization
+
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset {
+    NSArray *subs = self.allSubSelections;
+    subs = [subs mapWithBlock:^id(id anObject) {
+        iTermSubSelection *sub = anObject;
+        return [sub dictionaryValueWithYOffset:yOffset];
+    }];
+    return @{ kSelectionSubSelectionsKey: subs };
+}
+
+- (void)setFromDictionaryValue:(NSDictionary *)dict {
+    [self clearSelection];
+    NSArray *subs = dict[kSelectionSubSelectionsKey];
+    for (NSDictionary *subDict in subs) {
+        iTermSubSelection *sub = [iTermSubSelection subSelectinWithDictionary:subDict];
+        if (sub) {
+            [self addSubSelection:sub];
         }
     }
 }
