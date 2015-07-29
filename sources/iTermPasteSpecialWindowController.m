@@ -143,11 +143,19 @@
         if (string && ![item stringForType:(NSString *)kUTTypeFileURL]) {
             // Is a non-file URL string. File URLs get special handling.
             [values addObject:string];
-            CFStringRef description = UTTypeCopyDescription((CFStringRef)item.types[0]);
+            CFStringRef description = NULL;
+            for (NSString *theType in item.types) {
+                description = UTTypeCopyDescription((CFStringRef)theType);
+                if (description) {
+                    break;
+                }
+            }
             NSString *label = [NSString stringWithFormat:@"%@: “%@”",
-                               [(NSString *)description stringByCapitalizingFirstLetter],
+                               [((NSString *)description ?: @"Unknown Type") stringByCapitalizingFirstLetter],
                                [string ellipsizedDescriptionNoLongerThan:100]];
-            CFRelease(description);
+            if (description) {
+                CFRelease(description);
+            }
             [labels addObject:label];
         }
         if (!string) {
