@@ -270,7 +270,8 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (void)addRevivedSession:(PTYSession *)session;
 - (void)addTabWithArrangement:(NSDictionary *)arrangement
                      uniqueId:(int)tabUniqueId
-                     sessions:(NSArray *)sessions;
+                     sessions:(NSArray *)sessions
+                 predecessors:(NSArray *)predecessors;  // NSInteger of tab uniqueId's that come before this tab.
 - (void)recreateTab:(PTYTab *)tab
     withArrangement:(NSDictionary *)arrangement
            sessions:(NSArray *)sessions;

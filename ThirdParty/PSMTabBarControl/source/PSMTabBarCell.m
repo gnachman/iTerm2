@@ -414,11 +414,10 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     [super setHighlighted:highlighted];
     if (highlighted != wasHighlighted) {
         _highlightChangeTime = [NSDate timeIntervalSinceReferenceDate];
-        [self.controlView retain];
         [NSTimer scheduledTimerWithTimeInterval:1 / 60.0
                                          target:self
                                        selector:@selector(redrawHighlight:)
-                                       userInfo:nil
+                                       userInfo:self.controlView
                                         repeats:YES];
     }
 }
@@ -426,7 +425,6 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
 - (void)redrawHighlight:(NSTimer *)timer {
     [self.controlView setNeedsDisplayInRect:self.frame];
     if ([NSDate timeIntervalSinceReferenceDate] - _highlightChangeTime > kHighlightAnimationDuration) {
-        [self.controlView release];
         [timer invalidate];
     }
 }
