@@ -1153,7 +1153,8 @@ static BOOL hasBecomeActive = NO;
                     // Add a tab to it.
                     [term addTabWithArrangement:restorableSession.arrangement
                                        uniqueId:restorableSession.tabUniqueId
-                                       sessions:restorableSession.sessions];
+                                       sessions:restorableSession.sessions
+                                   predecessors:restorableSession.predecessors];
                     if (fitTermToTabs) {
                         [term fitWindowToTabs];
                     }
