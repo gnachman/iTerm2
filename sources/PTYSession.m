@@ -1434,6 +1434,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)terminate {
+    DLog(@"terminate called from %@", [NSThread callStackSymbols]);
+
     if ([[self textview] isFindingCursor]) {
         [[self textview] endFindCursor];
     }
