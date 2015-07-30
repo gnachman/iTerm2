@@ -188,7 +188,46 @@
         NSRange range = [string rangeOfURLInString];
         XCTAssert([[string substringWithRange:range] isEqualToString:@"example.com"]);
     }
+}
 
+- (void)testStringMatchesCaseInsensitiveGlobPattern {
+  // Empty string tests
+  XCTAssertTrue([@"" stringMatchesCaseInsensitiveGlobPattern:@""]);
+  XCTAssertFalse([@"" stringMatchesCaseInsensitiveGlobPattern:@"abc"]);
+
+  // Basic tests that should pass
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"abc"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"a*c"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"a*"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"*c"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"*bc"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"*b*"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"**c"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"a*b*c"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"*a*b*c"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"a*b*c*"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"*a*b*c*"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"***a****b****c****"]);
+
+  // Basic tests that should fail
+  XCTAssertFalse([@"abc" stringMatchesCaseInsensitiveGlobPattern:@""]);
+  XCTAssertFalse([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"a"]);
+  XCTAssertFalse([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"x"]);
+  XCTAssertFalse([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"a*b"]);
+  XCTAssertFalse([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"*b"]);
+  XCTAssertFalse([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"***a****b**x**c****"]);
+
+  // Longer string tests
+  XCTAssertTrue([@"abcdefghi" stringMatchesCaseInsensitiveGlobPattern:@"a*d*g*i"]);
+  XCTAssertTrue([@"abcdefghi" stringMatchesCaseInsensitiveGlobPattern:@"a*d*g*"]);
+  XCTAssertFalse([@"abcdefghi" stringMatchesCaseInsensitiveGlobPattern:@"a*q*g*"]);
+
+  // Case insensitivity tests
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"ABC"]);
+  XCTAssertTrue([@"abc" stringMatchesCaseInsensitiveGlobPattern:@"A*C"]);
+  XCTAssertTrue([@"ABC" stringMatchesCaseInsensitiveGlobPattern:@"abc"]);
+  XCTAssertTrue([@"ABC" stringMatchesCaseInsensitiveGlobPattern:@"a*c"]);
+  XCTAssertFalse([@"ABC" stringMatchesCaseInsensitiveGlobPattern:@"a*x"]);
 }
 
 @end

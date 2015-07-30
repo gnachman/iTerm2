@@ -194,6 +194,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Returns the set of $$VARIABLES$$ in the string.
 - (NSSet *)doubleDollarVariables;
 
+// Returns whether |self| is matched by |glob|, which is a shell-like glob pattern (e.g., *x or
+// x*y).
+// Only * is supported as a wildcard.
+- (BOOL)stringMatchesCaseInsensitiveGlobPattern:(NSString *)glob;
+
 @end
 
 @interface NSMutableString (iTerm)

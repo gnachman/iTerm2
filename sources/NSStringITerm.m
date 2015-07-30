@@ -1,4 +1,3 @@
-// $Id: NSStringITerm.m,v 1.11 2008-09-24 22:35:38 yfabian Exp $
 /*
  **  NSStringIterm.m
  **
@@ -1235,6 +1234,38 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
                                   [set addObject:[[capturedStrings[0] copy] autorelease]];
                               }];
     return set;
+}
+
+- (BOOL)stringMatchesCaseInsensitiveGlobPattern:(NSString *)glob {
+    NSArray *parts = [glob componentsSeparatedByString:@"*"];
+    const BOOL anchorToStart = ![glob hasPrefix:@"*"];
+
+    NSUInteger start = 0;
+    for (NSString *part in parts) {
+        if (part.length == 0) {
+            // This happens with an empty glob or with two stars in a row.
+            continue;
+        }
+        assert(start <= self.length);
+        NSRange searchRange = NSMakeRange(start, self.length - start);
+        NSRange matchingRange = [self rangeOfString:part
+                                            options:NSCaseInsensitiveSearch
+                                              range:searchRange];
+        if (matchingRange.location == NSNotFound) {
+            return NO;
+        }
+        if (anchorToStart && start == 0 && matchingRange.location != 0) {
+            return NO;
+        }
+        start = NSMaxRange(matchingRange);
+    }
+
+    const BOOL anchorToEnd = ![glob hasSuffix:@"*"];
+    if (anchorToEnd) {
+        return start == self.length;
+    } else {
+        return YES;
+    }
 }
 
 @end
