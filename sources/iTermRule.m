@@ -7,6 +7,7 @@
 //
 
 #import "iTermRule.h"
+#import "NSStringITerm.h"
 
 @interface iTermRule()
 @property(nonatomic, copy) NSString *username;
@@ -93,39 +94,12 @@
   int score = 0;
 
   if (self.hostname != nil) {
-    // Fixup hostname for regex match
-    NSString *fixedHostname = [self.hostname stringByReplacingOccurrencesOfString:@"." withString:@"\\."];
-    int prevLength = [fixedHostname length];
-    fixedHostname = [fixedHostname stringByReplacingOccurrencesOfString:@"*" withString:@".*"];
-    int postLength = [fixedHostname length];
-
-    // If no wildcards just do exact match
-    if (prevLength == postLength) {
-      if ([hostname isEqualToString:self.hostname]) {
-        score |= kHostExactMatchScore;
-      }
-    } else {
-      // Wildcards found, do regex pattern match
-      NSError *error = nil;
-      NSRegularExpression *regex = [[NSRegularExpression alloc] initWithPattern:fixedHostname
-                                                                        options:NSRegularExpressionCaseInsensitive
-                                                                          error:&error];
-      if (error) {
-        NSLog(@"Could not create regex from pattern: %@", fixedHostname);
-      } else {
-        NSRange hostnameRange = NSMakeRange(0, [hostname length]);
-        NSRange foundRange = [regex rangeOfFirstMatchInString:hostname
-                                                      options:NSMatchingReportProgress
-                                                        range:hostnameRange];
-        if (foundRange.location != NSNotFound &&
-            foundRange.location == 0 &&
-            foundRange.length == hostnameRange.length) {
-          score |= kHostMatchScore;
-        }
-      }
-    }
-    
-    if (score == 0 && self.hostname.length) {
+    NSRange wildcardPos = [self.hostname rangeOfString:@"*"];
+    if (wildcardPos.location == NSNotFound && [hostname isEqualToString:self.hostname]) {
+      score |= kHostExactMatchScore;
+    } else if ([hostname stringMatchesCaseInsensitiveGlobPattern: self.hostname]) {
+      score |= kHostMatchScore;
+    } else if (self.hostname.length) {
       return 0;
     }
   }
@@ -133,12 +107,12 @@
   if ([username isEqualToString:self.username]) {
     score |= kUserMatchScore;
   } else if (self.username.length) {
-      return 0;
+    return 0;
   }
   if ([path isEqualToString:self.path]) {
     score |= kPathMatchScore;
   } else if (self.path.length) {
-      return 0;
+    return 0;
   }
 
   return score;
