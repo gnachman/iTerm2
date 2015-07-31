@@ -971,50 +971,42 @@ static const int kDragThreshold = 3;
     return proposedVisibleRect;
 }
 
-- (void)scrollLineUp:(id)sender
-{
-    NSRect scrollRect;
-
-    scrollRect= [self visibleRect];
-    scrollRect.origin.y-=[[self enclosingScrollView] verticalLineScroll];
-    if (scrollRect.origin.y<0) scrollRect.origin.y=0;
-    [self scrollRectToVisible: scrollRect];
+- (void)scrollLineUp:(id)sender {
+    [self scrollBy:-[self.enclosingScrollView verticalLineScroll]];
 }
 
-- (void)scrollLineDown:(id)sender
-{
-    NSRect scrollRect;
-
-    scrollRect= [self visibleRect];
-    scrollRect.origin.y+=[[self enclosingScrollView] verticalLineScroll];
-    [self scrollRectToVisible: scrollRect];
+- (void)scrollLineDown:(id)sender {
+    [self scrollBy:[self.enclosingScrollView verticalLineScroll]];
 }
 
-- (void)scrollPageUp:(id)sender
-{
-    NSRect scrollRect;
-
-    scrollRect = [self visibleRect];
-    scrollRect.origin.y -= scrollRect.size.height - [[self enclosingScrollView] verticalPageScroll];
-    [self scrollRectToVisible:scrollRect];
+- (void)scrollBy:(CGFloat)deltaY {
+    NSScrollView *scrollView = self.enclosingScrollView;
+    NSRect rect = scrollView.documentVisibleRect;
+    NSPoint point;
+    point = rect.origin;
+    point.y += deltaY;
+    [scrollView.documentView scrollPoint:point];
 }
 
-- (void)scrollPageDown:(id)sender
-{
-    NSRect scrollRect;
-
-    scrollRect = [self visibleRect];
-    scrollRect.origin.y+= scrollRect.size.height - [[self enclosingScrollView] verticalPageScroll];
-    [self scrollRectToVisible: scrollRect];
+- (CGFloat)pageScrollHeight {
+    NSRect scrollRect = [self visibleRect];
+    return scrollRect.size.height - [[self enclosingScrollView] verticalPageScroll];
 }
 
-- (void)scrollHome
-{
+- (void)scrollPageUp:(id)sender {
+    [self scrollBy:-self.pageScrollHeight];
+}
+
+- (void)scrollPageDown:(id)sender {
+    [self scrollBy:self.pageScrollHeight];
+}
+
+- (void)scrollHome {
     NSRect scrollRect;
 
     scrollRect = [self visibleRect];
     scrollRect.origin.y = 0;
-    [self scrollRectToVisible: scrollRect];
+    [self scrollRectToVisible:scrollRect];
 }
 
 - (void)scrollEnd {

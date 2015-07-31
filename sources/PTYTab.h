@@ -200,8 +200,8 @@
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2;
 
-- (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
-      withArrangement:(NSDictionary *)arrangement;
+- (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
+         withArrangement:(NSDictionary *)arrangement;
 
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
 

@@ -1434,6 +1434,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)terminate {
+    DLog(@"terminate called from %@", [NSThread callStackSymbols]);
+
     if ([[self textview] isFindingCursor]) {
         [[self textview] endFindCursor];
     }
@@ -3371,8 +3373,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)scheduleUpdateIn:(NSTimeInterval)timeout
-{
+- (void)scheduleUpdateIn:(NSTimeInterval)timeout {
     if (_exited) {
         return;
     }
@@ -3400,11 +3401,23 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     _timeOfLastScheduling = now;
     _lastTimeout = timeout;
 
+#if 0
+    // TODO: Try this. It solves the bug where we don't redraw properly during live resize.
+    // I'm worried about the possible side effects it might have since there's no way to 
+    // know all the tracking event loops.
+    _updateTimer = [[NSTimer timerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
+                                            target:self
+                                          selector:@selector(updateDisplay)
+                                          userInfo:[NSNumber numberWithFloat:(float)timeout]
+                                           repeats:NO] retain];
+    [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
+#else
     _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
                                                      target:self
                                                    selector:@selector(updateDisplay)
                                                    userInfo:[NSNumber numberWithFloat:(float)timeout]
                                                     repeats:NO] retain];
+#endif
 }
 
 - (void)doAntiIdle {
