@@ -8,20 +8,21 @@
 
 #import <Foundation/Foundation.h>
 
-// When a session wants references to its marks released it should post this notification with
-// the session GUID as the object.
-extern NSString *const kCommandUseReleaseMarksInSession;
-
 @class VT100ScreenMark;
 
 @interface CommandUse : NSObject <NSCopying>
 
 @property(nonatomic, assign) NSTimeInterval time;
+
+// Optional.
+@property(nonatomic, retain) NSString *command;
+
+// Setting this actually sets the markGuid.
 @property(nonatomic, retain) VT100ScreenMark *mark;
 @property(nonatomic, retain) NSString *directory;
 
 // This is used to figure out which mark matches this command use when deserializing marks.
-@property(nonatomic, copy) NSString *markGuid;
+@property(nonatomic, readonly) NSString *markGuid;
 
 + (instancetype)commandUseFromSerializedValue:(NSArray *)serializedValue;
 - (NSArray *)serializedValue;

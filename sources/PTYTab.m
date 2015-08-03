@@ -2361,11 +2361,8 @@ static NSString* FormatRect(NSRect r) {
 
 // This can only be used in conjunction with
 // +[tabWithArrangement:inTerminal:hasFlexibleView:viewMap:].
- - (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
-       withArrangement:(NSDictionary *)arrangement {
-    // Add the existing tab, which is now fully populated, to the term.
-    [term appendTab:self];
-
+ - (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
+          withArrangement:(NSDictionary *)arrangement {
     NSDictionary* root = [arrangement objectForKey:TAB_ARRANGEMENT_ROOT];
     if ([root[TAB_ARRANGEMENT_IS_MAXIMIZED] boolValue]) {
         [self maximize];
@@ -2388,8 +2385,10 @@ static NSString* FormatRect(NSRect r) {
     if ([[theTab sessionViews] count] == 0) {
         return nil;
     }
-    [theTab addToTerminal:term
-          withArrangement:arrangement];
+
+    [term appendTab:theTab];
+    [theTab didAddToTerminal:term
+             withArrangement:arrangement];
     return theTab;
 }
 
@@ -2788,8 +2787,9 @@ static NSString* FormatRect(NSRect r) {
     for (PTYSession *aSession in [theTab sessions]) {
         [[aSession view] setAutoresizesSubviews:NO];  // This is ok because it's a tmux tab
     }
-    [theTab addToTerminal:term
-          withArrangement:arrangement];
+
+    [term appendTab:theTab];
+    [theTab didAddToTerminal:term withArrangement:arrangement];
 
     return theTab;
 }

@@ -319,16 +319,16 @@ typedef enum {
 #pragma mark - Splits
 
 // Create a new split. The new session uses the profile with |guid|.
-- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
+- (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
 
 // Create a new split with a provided profile.
-- (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile;
+- (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile;
 
 // Create a new split with a specified bookmark. |targetSession| is the session
 // to split.
-- (void)splitVertically:(BOOL)isVertical
-           withBookmark:(Profile*)theBookmark
-          targetSession:(PTYSession*)targetSession;
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                   withBookmark:(Profile*)theBookmark
+                  targetSession:(PTYSession*)targetSession;
 
 // Create a new split with the specified bookmark. The passed-in session is
 // inserted either before (left/above) or after (right/below) the target

@@ -26,6 +26,18 @@
                                                                   attributes:attributes] autorelease]];
 }
 
+- (void)trimTrailingWhitespace {
+    NSCharacterSet *nonWhitespaceSet = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
+    NSRange rangeOfLastWantedCharacter = [self.string rangeOfCharacterFromSet:nonWhitespaceSet
+                                                                      options:NSBackwardsSearch];
+    if (rangeOfLastWantedCharacter.location == NSNotFound) {
+        [self deleteCharactersInRange:NSMakeRange(0, self.length)];
+    } else if (NSMaxRange(rangeOfLastWantedCharacter) < self.length) {
+        [self deleteCharactersInRange:NSMakeRange(NSMaxRange(rangeOfLastWantedCharacter),
+                                                  self.length - NSMaxRange(rangeOfLastWantedCharacter))];
+    }
+}
+
 @end
 
 @implementation NSAttributedString (iTerm)

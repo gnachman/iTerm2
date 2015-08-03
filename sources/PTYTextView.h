@@ -284,9 +284,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (VT100GridCoordRange)rangeByTrimmingNullsFromRange:(VT100GridCoordRange)range
                                           trimSpaces:(BOOL)trimSpaces;
 
-// Returns the currently selected text. If pad is set, then the last line will be padded out to the
-// full width of the view with spaces.
-- (NSString *)selectedTextWithPad:(BOOL)pad;
+// Returns the currently selected text.
+- (NSString *)selectedText;
 
 // Copy with or without styles, as set by user defaults. Not for use when a copy item in the menu is invoked.
 - (void)copySelectionAccordingToUserPreferences;
@@ -447,6 +446,13 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Use this during a keypress to work around an OS bug (see comments in implementation).
 // Sets didInsertText as a side-effect.
 - (void)interpretKeyEventsWithBugfix:(NSArray *)eventArray;
+
+#pragma mark - Testing only
+
+- (id)selectedTextAttributed:(BOOL)attributed
+                cappedAtSize:(int)maxBytes
+           minimumLineNumber:(int)minimumLineNumber;
+
 
 @end
 

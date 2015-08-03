@@ -1158,13 +1158,22 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 // Just like closeTab but skips the tmux code. Terminates sessions, removes the
 // tab, and closes the window if there are no tabs left.
-- (void)removeTab:(PTYTab *)aTab
-{
+- (void)removeTab:(PTYTab *)aTab {
     if (![aTab isTmuxTab]) {
         iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
         restorableSession.sessions = [aTab sessions];
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.tabUniqueId = aTab.uniqueId;
+        NSArray *tabs = [self tabs];
+        NSUInteger index = [tabs indexOfObject:aTab];
+        if (index != NSNotFound) {
+            NSMutableArray *predecessors = [NSMutableArray array];
+            for (NSUInteger i = 0; i < index; i++) {
+                [predecessors addObject:@([tabs[i] uniqueId])];
+            }
+            restorableSession.predecessors = predecessors;
+        }
+
         if (self.numberOfTabs == 1) {
             // Closing the last tab is equivalent to closing the window.
             restorableSession.arrangement = [self arrangement];
@@ -2321,6 +2330,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [self editSession:self.currentSession makeKey:NO];
     }
     [self notifyTmuxOfTabChange];
+
+    [_contentView updateDivisionView];
 }
 
 - (void)makeCurrentSessionFirstResponder
@@ -2583,6 +2594,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     for (PTYSession* aSession in [self allSessions]) {
         [aSession setFocused:NO];
     }
+
+    [_contentView updateDivisionView];
 }
 
 // Returns the hotkey window that should be hidden or nil if the hotkey window
@@ -4630,8 +4643,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             return;
         }
         if ([commands count] == 1) {
-            CommandHistoryEntry *entry = commands[0];
-            if ([entry.command isEqualToString:prefix]) {
+            CommandUse *commandUse = commands[0];
+            if ([commandUse.command isEqualToString:prefix]) {
                 [commandHistoryPopup close];
                 return;
             }
@@ -4787,7 +4800,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)addTabWithArrangement:(NSDictionary *)arrangement
                      uniqueId:(int)tabUniqueId
-                     sessions:(NSArray *)sessions {
+                     sessions:(NSArray *)sessions
+                 predecessors:(NSArray *)predecessors {
     NSDictionary *theMap = [PTYTab viewMapWithArrangement:arrangement sessions:sessions];
     if (!theMap) {
         // Can't do it. Just add each session as its own tab.
@@ -4808,29 +4822,59 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         PTYSession *session = theMap[theKey];
         assert([session revive]);  // TODO: This isn't guarantted
     }
-    [tab addToTerminal:self withArrangement:arrangement];
+
+    [self insertTab:tab atIndex:[self indexForTabWithPredecessors:predecessors]];
+    [tab didAddToTerminal:self withArrangement:arrangement];
 }
 
-- (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
+- (NSUInteger)indexOfTabWithUniqueId:(int)uniqueId {
+    NSUInteger i = 0;
+    for (PTYTab *tab in self.tabs) {
+        if (tab.uniqueId == uniqueId) {
+            return i;
+        }
+        i++;
+    }
+    return NSNotFound;
+}
+
+- (int)indexForTabWithPredecessors:(NSArray *)predecessors {
+    int index = 0;
+    for (NSNumber *uniqueIdNumber in predecessors) {
+        int uniqueId = [uniqueIdNumber intValue];
+        NSUInteger theIndex = [self indexOfTabWithUniqueId:uniqueId];
+        if (theIndex != NSNotFound && theIndex + 1 > index) {
+            index = theIndex + 1;
+        }
+    }
+    return index;
+}
+
+- (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
     if ([[self currentTab] isTmuxTab]) {
         [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane]
-                                                     vertically:isVertical];
-        return;
+                                                            vertically:isVertical];
+        return nil;
     }
-    [self splitVertically:isVertical withBookmark:profile targetSession:[self currentSession]];
+    return [self splitVertically:isVertical
+                    withBookmark:profile
+                   targetSession:[self currentSession]];
 }
 
-- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
-{
+- (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid {
     if ([[self currentTab] isTmuxTab]) {
         [self willSplitTmuxPane];
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
-        return;
+        return nil;
     }
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
-        [self splitVertically:isVertical withBookmark:bookmark targetSession:[self currentSession]];
+        return [self splitVertically:isVertical
+                        withBookmark:bookmark
+                       targetSession:[self currentSession]];
+    } else {
+        return nil;
     }
 }
 
@@ -4886,18 +4930,18 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)splitVertically:(BOOL)isVertical
-           withBookmark:(Profile*)theBookmark
-          targetSession:(PTYSession*)targetSession {
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                   withBookmark:(Profile*)theBookmark
+                  targetSession:(PTYSession*)targetSession {
     if ([targetSession isTmuxClient]) {
         [self willSplitTmuxPane];
         [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
-        return;
+        return nil;
     }
     PtyLog(@"--------- splitVertically -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
-        return;
+        return nil;
     }
 
     NSString *oldCWD = nil;
@@ -4917,6 +4961,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [newSession terminate];
         [newSession.tab removeSession:newSession];
     }
+    return newSession;
 }
 
 - (Profile*)_bookmarkToSplit
@@ -5290,7 +5335,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // This works around an apparent bug in NSSplitView that causes dividers'
     // cursor rects to survive after the divider is gone.
     [[self window] resetCursorRects];
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
 - (float)minWidth
@@ -5304,8 +5349,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return minWidth;
 }
 
-- (void)appendTab:(PTYTab*)aTab
-{
+- (void)appendTab:(PTYTab*)aTab {
     [self insertTab:aTab atIndex:[_contentView.tabView numberOfTabViewItems]];
 }
 
@@ -5364,8 +5408,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return allSubstitutions;
 }
 
-- (NSArray*)tabs
-{
+- (NSArray*)tabs {
     int n = [_contentView.tabView numberOfTabViewItems];
     NSMutableArray *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
@@ -6628,10 +6671,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 // Change the tab color to the selected menu color
-- (void)changeTabColorToMenuAction:(id)sender
-{
+- (void)changeTabColorToMenuAction:(id)sender {
+    // If we got here because you right clicked on a tab, use the represented object.
     NSTabViewItem *aTabViewItem = [sender representedObject];
     PTYTab *aTab = [aTabViewItem identifier];
+
+    if (!aTab) {
+        // Must have selected it from the view menu.
+        aTab = [self currentTab];
+    }
 
     ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];
     NSColor *color = menuItem.color;
@@ -7171,5 +7219,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [self.currentSession.guid isEqualToString:guid];
 }
 
+- (NSArray *)toolbeltCommandUsesForCurrentSession {
+    return [self.currentSession commandUses];
+}
 
 @end

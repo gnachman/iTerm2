@@ -232,4 +232,6 @@
 - (void)screenSetBadgeFormat:(NSString *)theFormat;
 - (void)screenSetUserVar:(NSString *)kvp;
 
+- (BOOL)screenShouldReduceFlicker;
+
 @end

@@ -144,7 +144,7 @@ const float kItermExposeThumbMargin = 25;
     iTermController* controller = [iTermController sharedInstance];
     for (int i = 0; i < [controller numberOfTerminals]; i++) {
         PseudoTerminal* term = [controller terminalAtIndex:i];
-        if ([[term window] alphaValue] == 0) {
+        if ([[term window] alphaValue] == 0 && ![term isHotKeyWindow]) {
             if (fade) {
                 [[[term window] animator] setAlphaValue:1];
             } else {
