@@ -4468,7 +4468,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)setBlend:(float)fVal {
-    _drawingHelper.blend = MIN(MAX(0.3, fVal), 1);
+    _drawingHelper.blend = MIN(MAX(0.05, fVal), 1);
     [self setNeedsDisplay:YES];
 }
 
