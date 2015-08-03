@@ -6807,6 +6807,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self queueAnnouncement:announcement identifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 }
 
+- (BOOL)screenShouldReduceFlicker {
+    return [iTermProfilePreferences boolForKey:KEY_REDUCE_FLICKER inProfile:self.profile];
+}
+
 #pragma mark - Announcements
 
 - (void)dismissAnnouncementWithIdentifier:(NSString *)identifier {
