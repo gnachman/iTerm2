@@ -49,25 +49,27 @@
               partialCommand:(NSString *)partialCommand
                       expand:(BOOL)expand {
     CommandHistory *history = [CommandHistory sharedInstance];
-    NSArray *autocompleteEntries = [history autocompleteSuggestionsWithPartialCommand:partialCommand
-                                                                               onHost:host];
-    NSArray *expandedEntries;
     if (expand) {
-        expandedEntries = [history entryArrayByExpandingAllUsesInEntryArray:autocompleteEntries];
+        return [history autocompleteSuggestionsWithPartialCommand:partialCommand onHost:host];
     } else {
-        expandedEntries = autocompleteEntries;
+        return [history commandHistoryEntriesWithPrefix:partialCommand onHost:host];
     }
-    return expandedEntries;
 }
 
 - (void)loadCommands:(NSArray *)commands partialCommand:(NSString *)partialCommand {
     [[self unfilteredModel] removeAllObjects];
     _partialCommandLength = partialCommand.length;
-    for (CommandHistoryEntry *entry in commands) {
+    for (id obj in commands) {
         CommandHistoryPopupEntry *popupEntry = [[[CommandHistoryPopupEntry alloc] init] autorelease];
-        popupEntry.command = entry.command;
-        popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.lastUsed];
-
+        if ([obj isKindOfClass:[CommandUse class]]) {
+            CommandUse *commandUse = obj;
+            popupEntry.command = commandUse.command;
+            popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:commandUse.time];
+        } else {
+            CommandHistoryEntry *entry = obj;
+            popupEntry.command = entry.command;
+            popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.lastUsed];
+        }
         [popupEntry setMainValue:popupEntry.command];
         [[self unfilteredModel] addObject:popupEntry];
     }

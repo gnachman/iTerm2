@@ -24,7 +24,7 @@
 @property(nonatomic, assign) NSTimeInterval lastUsed;
 
 // Array of ComamndUse objects.
-@property(nonatomic, readonly) NSMutableArray *useTimes;
+@property(nonatomic, readonly) NSMutableArray *commandUses;
 
 // First character matched by current search.
 @property(nonatomic, assign) int matchLocation;
@@ -41,5 +41,7 @@
 - (NSDictionary *)dictionary;
 
 - (NSComparisonResult)compareUseTime:(CommandHistoryEntry *)other;
+
+- (CommandHistoryEntry *)copyWithoutUses;
 
 @end

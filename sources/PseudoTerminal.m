@@ -4643,8 +4643,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             return;
         }
         if ([commands count] == 1) {
-            CommandHistoryEntry *entry = commands[0];
-            if ([entry.command isEqualToString:prefix]) {
+            CommandUse *commandUse = commands[0];
+            if ([commandUse.command isEqualToString:prefix]) {
                 [commandHistoryPopup close];
                 return;
             }
@@ -7219,5 +7219,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [self.currentSession.guid isEqualToString:guid];
 }
 
+- (NSArray *)toolbeltCommandUsesForCurrentSession {
+    return [self.currentSession commandUses];
+}
 
 @end
