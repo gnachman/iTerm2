@@ -7,6 +7,7 @@
 //
 
 #import "iTermRule.h"
+#import "NSStringITerm.h"
 
 @interface iTermRule()
 @property(nonatomic, copy) NSString *username;
@@ -85,26 +86,33 @@
 - (int)scoreForHostname:(NSString *)hostname
                username:(NSString *)username
                    path:(NSString *)path {
+  const int kHostExactMatchScore = 8;
   const int kHostMatchScore = 4;
   const int kUserMatchScore = 2;
   const int kPathMatchScore = 1;
 
   int score = 0;
 
-  if ([hostname isEqualToString:self.hostname]) {
-    score |= kHostMatchScore;
-  } else if (self.hostname.length) {
+  if (self.hostname != nil) {
+    NSRange wildcardPos = [self.hostname rangeOfString:@"*"];
+    if (wildcardPos.location == NSNotFound && [hostname isEqualToString:self.hostname]) {
+      score |= kHostExactMatchScore;
+    } else if ([hostname stringMatchesCaseInsensitiveGlobPattern: self.hostname]) {
+      score |= kHostMatchScore;
+    } else if (self.hostname.length) {
       return 0;
+    }
   }
+  
   if ([username isEqualToString:self.username]) {
     score |= kUserMatchScore;
   } else if (self.username.length) {
-      return 0;
+    return 0;
   }
   if ([path isEqualToString:self.path]) {
     score |= kPathMatchScore;
   } else if (self.path.length) {
-      return 0;
+    return 0;
   }
 
   return score;
