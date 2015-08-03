@@ -605,32 +605,35 @@ static const int kNumCharsToSearchForDivider = 8;
                                                                 end)];
 }
 
-- (NSString *)contentInRange:(VT100GridWindowedRange)windowedRange
-                  nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
-                         pad:(BOOL)pad
-          includeLastNewline:(BOOL)includeLastNewline
-      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
-                cappedAtSize:(int)maxBytes {
-    return [self contentInRange:windowedRange
-                     nullPolicy:nullPolicy
-                            pad:pad
-             includeLastNewline:includeLastNewline
-         trimTrailingWhitespace:trimSelectionTrailingSpaces
-                   cappedAtSize:maxBytes
-              continuationChars:nil];
-}
-
-- (NSString *)contentInRange:(VT100GridWindowedRange)windowedRange
-                  nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
-                         pad:(BOOL)pad
-          includeLastNewline:(BOOL)includeLastNewline
-      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
-                cappedAtSize:(int)maxBytes
-            continuationChars:(NSMutableIndexSet *)continuationChars {
+- (id)contentInRange:(VT100GridWindowedRange)windowedRange
+   attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
+          nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
+                 pad:(BOOL)pad
+  includeLastNewline:(BOOL)includeLastNewline
+    trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+              cappedAtSize:(int)maxBytes
+         continuationChars:(NSMutableIndexSet *)continuationChars {
     DLog(@"Find selected text in range %@ pad=%d, includeLastNewline=%d, trim=%d",
          VT100GridWindowedRangeDescription(windowedRange), (int)pad, (int)includeLastNewline,
          (int)trimSelectionTrailingSpaces);
-    NSMutableString* result = [NSMutableString string];
+    __block id result;
+    // Appends a string to |result|, either attributed or not, as appropriate.
+    void (^appendString)(NSString *string, screen_char_t theChar) =
+        ^void(NSString *string, screen_char_t theChar) {
+            if (attributeProvider) {
+                [result iterm_appendString:string
+                            withAttributes:attributeProvider(theChar)];
+            } else {
+                [result appendString:string];
+            }
+        };
+
+    if (attributeProvider) {
+        result = [[[NSMutableAttributedString alloc] init] autorelease];
+    } else {
+        result = [NSMutableString string];
+    }
+
     if (maxBytes < 0) {
         maxBytes = INT_MAX;
     }
@@ -643,20 +646,20 @@ static const int kNumCharsToSearchForDivider = 8;
                               // Convert orphan tab fillers (those without a subsequent
                               // tab character) into spaces.
                               if ([tabFillerOrphans containsIndex:coord.x]) {
-                                  [result appendString:@" "];
+                                  appendString(@" ", theChar);
                               }
                           } else if (theChar.code == 0 && !theChar.complexChar) {
                               // This is only reached for midline nulls; nulls at the end of the
                               // line end up in eolBlock.
                               switch (nullPolicy) {
                                   case kiTermTextExtractorNullPolicyFromLastToEnd:
-                                      [result deleteCharactersInRange:NSMakeRange(0, result.length)];
+                                      [result deleteCharactersInRange:NSMakeRange(0, [result length])];
                                       break;
                                   case kiTermTextExtractorNullPolicyFromStartToFirst:
                                       return YES;
                                   case kiTermTextExtractorNullPolicyTreatAsSpace:
                                   case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
-                                      [result appendString:@" "];
+                                      appendString(@" ", theChar);
                                       break;
                               }
                           } else if (theChar.code != DWC_RIGHT &&
@@ -672,7 +675,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                   [continuationChars addIndex:[self indexForCoord:coord width:width]];
                               } else {
                                   // Normal character.
-                                  [result appendString:ScreenCharToStr(&theChar)];
+                                  appendString(ScreenCharToStr(&theChar), theChar);
                               }
                           }
                           return [result length] >= maxBytes;
@@ -683,17 +686,17 @@ static const int kNumCharsToSearchForDivider = 8;
                            // If there is no text after this, insert a hard line break.
                            if (pad) {
                                for (int i = 0; i < numPreceedingNulls; i++) {
-                                   [result appendString:@" "];
+                                   appendString(@" ", [self defaultChar]);
                                }
                            } else if (numPreceedingNulls > 0) {
                                switch (nullPolicy) {
                                    case kiTermTextExtractorNullPolicyFromLastToEnd:
-                                       [result deleteCharactersInRange:NSMakeRange(0, result.length)];
+                                       [result deleteCharactersInRange:NSMakeRange(0, [result length])];
                                        break;
                                    case kiTermTextExtractorNullPolicyFromStartToFirst:
                                        return YES;
                                    case kiTermTextExtractorNullPolicyTreatAsSpace:
-                                       [result appendString:@" "];
+                                       appendString(@" ", [self defaultChar]);
                                        break;
                                    case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
                                        break;
@@ -704,57 +707,14 @@ static const int kNumCharsToSearchForDivider = 8;
                                if (trimSelectionTrailingSpaces) {
                                    [result trimTrailingWhitespace];
                                }
-                               [result appendString:@"\n"];
+                               appendString(@"\n", [self defaultChar]);
                            }
                            return [result length] >= maxBytes;
                            }];
 
     if (trimSelectionTrailingSpaces) {
-        return [result stringByTrimmingTrailingWhitespace];
-    } else {
-        return result;
+        [result trimTrailingWhitespace];
     }
-}
-
-
-- (NSAttributedString *)attributedContentInRange:(VT100GridWindowedRange)range
-                                             pad:(BOOL)pad
-                               attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
-{
-    NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] init] autorelease];
-    __block NSIndexSet *tabFillerOrphans = [self tabFillerOrphansOnRow:range.coordRange.start.y];
-    [self enumerateCharsInRange:range
-                      charBlock:^BOOL(screen_char_t theChar, VT100GridCoord coord) {
-                          if (theChar.code == 0 && !theChar.complexChar) {
-                              [result iterm_appendString:@" "];
-                          } else if (theChar.code == TAB_FILLER && !theChar.complexChar) {
-                              // Convert orphan tab fillers (those without a subsequent
-                              // tab character) into spaces.
-                              if ([tabFillerOrphans containsIndex:coord.x]) {
-                                  [result iterm_appendString:@" "
-                                              withAttributes:attributeProvider(theChar)];
-                              }
-                          } else if (theChar.code != DWC_RIGHT &&
-                                     theChar.code != DWC_SKIP) {
-                              // Normal character
-                              [result iterm_appendString:ScreenCharToStr(&theChar)
-                                          withAttributes:attributeProvider(theChar)];
-                          }
-                          return NO;
-                      }
-                       eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
-                           tabFillerOrphans = [self tabFillerOrphansOnRow:line + 1];
-                           if (pad) {
-                               for (int i = 0; i < numPreceedingNulls; i++) {
-                                   [result iterm_appendString:@" "
-                                               withAttributes:attributeProvider([self defaultChar])];
-                               }
-                           }
-                           [result iterm_appendString:@"\n"
-                                       withAttributes:attributeProvider([self defaultChar])];
-                           return NO;
-                       }];
-
     return result;
 }
 
@@ -882,6 +842,7 @@ static const int kNumCharsToSearchForDivider = 8;
 
     NSString *content =
             [self contentInRange:range
+               attributeProvider:nil
                       nullPolicy:nullPolicy
                              pad:NO
               includeLastNewline:NO

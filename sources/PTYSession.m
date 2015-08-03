@@ -3784,9 +3784,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                withOffset:offset];
 }
 
-- (NSString*)unpaddedSelectedText
-{
-    return [_textview selectedTextWithPad:NO];
+- (NSString*)unpaddedSelectedText {
+    return [_textview selectedText];
 }
 
 - (void)copySelection {
@@ -6492,11 +6491,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
     NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
+                                attributeProvider:nil
                                        nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                               pad:NO
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
-                                     cappedAtSize:-1];
+                                     cappedAtSize:-1
+                                continuationChars:nil];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
