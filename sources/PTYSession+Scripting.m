@@ -11,20 +11,12 @@
         // TODO(georgen): scripting is broken while in instant replay.
         return nil;
     }
-    // TODO: Test this with multiple panes per tab.
-    NSUInteger theIndex = [self.tab.sessions indexOfObject:self];
+    id classDescription = [NSClassDescription classDescriptionForClass:[PTYTab class]];
 
-    if (theIndex != NSNotFound) {
-        id classDescription = [NSClassDescription classDescriptionForClass:[PTYTab class]];
-        //create and return the specifier
-        return [[[NSIndexSpecifier alloc] initWithContainerClassDescription:classDescription
-                                                         containerSpecifier:[self.tab objectSpecifier]
-                                                                        key:@"sessions"
-                                                                      index:theIndex] autorelease];
-    } else {
-        // NSLog(@"recipient not found!");
-        return nil;
-    }
+    return [[NSUniqueIDSpecifier alloc] initWithContainerClassDescription:classDescription
+                                                       containerSpecifier:[self.tab objectSpecifier]
+                                                                      key:@"sessions"
+                                                                 uniqueID:self.guid];
 }
 
 // Handlers for supported commands:
@@ -110,9 +102,19 @@
     }
 }
 
+- (PTYSession *)activateSessionAndTab {
+    PTYSession *saved = [self.tab.realParentWindow currentSession];
+    [[self.tab.realParentWindow tabView] selectTabViewItemWithIdentifier:self.tab];
+    [self.tab setActiveSession:self];
+    return saved;
+}
+
 - (PTYSession *)splitVertically:(BOOL)vertically withProfile:(Profile *)profile {
-    return [[[self tab] realParentWindow] splitVertically:vertically
+    PTYSession *formerSession = [self activateSessionAndTab];
+    PTYSession *session = [[[self tab] realParentWindow] splitVertically:vertically
                                               withProfile:profile];
+    [formerSession activateSessionAndTab];
+    return session;
 }
 
 - (id)handleSplitVertically:(NSScriptCommand *)scriptCommand {
@@ -120,7 +122,10 @@
     NSString *profileName = args[@"profile"];
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (profile) {
-        return [self splitVertically:YES withProfile:profile];
+        PTYSession *formerSession = [self activateSessionAndTab];
+        PTYSession *session = [self splitVertically:YES withProfile:profile];
+        [formerSession activateSessionAndTab];
+        return session;
     } else {
         [scriptCommand setScriptErrorNumber:1];
         [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
@@ -130,11 +135,17 @@
 }
 
 - (id)handleSplitVerticallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
-    return [self splitVertically:YES withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+    PTYSession *formerSession = [self activateSessionAndTab];
+    PTYSession *session = [self splitVertically:YES withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+    [formerSession activateSessionAndTab];
+    return session;
 }
 
 - (id)handleSplitVerticallyWithSameProfile:(NSScriptCommand *)scriptCommand {
-    return [self splitVertically:YES withProfile:self.profile];
+    PTYSession *formerSession = [self activateSessionAndTab];
+    PTYSession *session = [self splitVertically:YES withProfile:self.profile];
+    [formerSession activateSessionAndTab];
+    return session;
 }
 
 - (id)handleSplitHorizontally:(NSScriptCommand *)scriptCommand {
@@ -142,7 +153,10 @@
     NSString *profileName = args[@"profile"];
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (profile) {
-        return [self splitVertically:NO withProfile:profile];
+        PTYSession *formerSession = [self activateSessionAndTab];
+        PTYSession *session = [self splitVertically:NO withProfile:profile];
+        [formerSession activateSessionAndTab];
+        return session;
     } else {
         [scriptCommand setScriptErrorNumber:1];
         [scriptCommand setScriptErrorString:[NSString stringWithFormat:@"No profile named %@",
@@ -152,11 +166,17 @@
 }
 
 - (id)handleSplitHorizontallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
-    return [self splitVertically:NO withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+    PTYSession *formerSession = [self activateSessionAndTab];
+    PTYSession *session = [self splitVertically:NO withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+    [formerSession activateSessionAndTab];
+    return session;
 }
 
 - (id)handleSplitHorizontallyWithSameProfile:(NSScriptCommand *)scriptCommand {
-    return [self splitVertically:NO withProfile:self.profile];
+    PTYSession *formerSession = [self activateSessionAndTab];
+    PTYSession *session = [self splitVertically:NO withProfile:self.profile];
+    [formerSession activateSessionAndTab];
+    return session;
 }
 
 - (void)handleTerminateScriptCommand:(NSScriptCommand *)command {
