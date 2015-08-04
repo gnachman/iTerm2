@@ -15,6 +15,10 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
+@interface NMSSHSession(iTerm)
+- (id)agent;
+@end
+
 static NSString *const kSCPFileErrorDomain = @"com.googlecode.iterm2.SCPFile";
 
 static NSError *SCPFileError(NSString *description) {
@@ -209,8 +213,12 @@ static NSError *SCPFileError(NSString *description) {
     return filename;
 }
 
-// This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload {
+    [self performTransfer:isDownload agentAllowed:YES];
+}
+
+// This runs in a thread.
+- (void)performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
     if (!baseName) {
         self.error = [NSString stringWithFormat:@"Invalid path: %@", self.path.path];
@@ -255,8 +263,15 @@ static NSError *SCPFileError(NSString *description) {
         });
         return;
     }
-    
-    [self.session connectToAgent];
+
+    BOOL didConnectToAgent = NO;
+    if (agentAllowed) {
+        [self.session connectToAgent];
+        // Check a private property to see if the connection to the agent was made.
+        if ([self.session respondsToSelector:@selector(agent)]) {
+            didConnectToAgent = [self.session agent] != nil;
+        }
+    }
 
     if (!self.session.isAuthorized) {
         NSArray *authTypes = [self.session supportedAuthenticationMethods];
@@ -348,6 +363,13 @@ static NSError *SCPFileError(NSString *description) {
             [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
         });
         return;
+    }
+    if (!self.session.session && didConnectToAgent) {
+        // Try again without agent. I got into a state where using the agent prevented connections
+        // from going through.
+        [self.session disconnect];
+        self.session = nil;
+        [self performTransfer:isDownload agentAllowed:NO];
     }
     if (!self.session.isAuthorized) {
         __block NSError *error = [self lastError];
