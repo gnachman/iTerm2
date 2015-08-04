@@ -4276,6 +4276,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self userDidInteract];
 
     if ([self handleSpecialModeKeyDown:event]) {
+        // In instant replay, zoomed, or some other special mode where input doesn't go to the
+        // terminal.
         return;
     }
 

@@ -103,11 +103,10 @@ static const NSEventModifierFlags RightAlternateKeyMask = (0x000040 | NSAlternat
         return YES;
     }
 
-    // The IME won't start on function keys, opt+key, or ctrl+key.
-    // This is an undocumented assumption but it has held up OK over time.
-    if (event.modifierFlags & (NSNumericPadKeyMask | NSFunctionKeyMask)) {
-        return NO;
-    }
+    // It used to be that we would return NO for numeric keypad keys and function keys, under the
+    // assumption that the IME wouldn't start in response to them. That is not true, though. For
+    // example, in issue 3578 we see that cmd-shift-f13 can be made to do some magic with the
+    // US Custom Keyboard extension.
 
     if ([self dataForOptionKeyPress:event].length > 0) {
         return NO;
