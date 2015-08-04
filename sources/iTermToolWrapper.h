@@ -26,6 +26,7 @@
 - (void)toolbeltDidSelectMark:(iTermMark *)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
+- (NSArray *)toolbeltCommandUsesForCurrentSession;
 
 @end
 

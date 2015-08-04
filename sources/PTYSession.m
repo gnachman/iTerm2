@@ -338,6 +338,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
+
+    NSMutableArray *_commandUses;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -399,6 +401,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _hosts = [[NSMutableArray alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
+        _commandUses = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -482,6 +485,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_guid release];
     [_lastCommand release];
     [_substitutions release];
+    [_commandUses release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -952,6 +956,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [aSession startTmuxMode];
         [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
+    }
+
+    VT100RemoteHost *lastRemoteHost = aSession.screen.lastRemoteHost;
+    if (lastRemoteHost) {
+        [aSession screenCurrentHostDidChange:lastRemoteHost];
     }
     return aSession;
 }
@@ -1548,9 +1557,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
-    // Free refs to VT100ScreenMarks for this session in CommandUse objects.
-    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandUseReleaseMarksInSession
-                                                        object:self.guid];
     _textview = nil;
 }
 
@@ -3778,9 +3784,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                withOffset:offset];
 }
 
-- (NSString*)unpaddedSelectedText
-{
-    return [_textview selectedTextWithPad:NO];
+- (NSString*)unpaddedSelectedText {
+    return [_textview selectedText];
 }
 
 - (void)copySelection {
@@ -6407,6 +6412,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_variables removeObjectForKey:kVariableKeySessionUsername];
     }
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
+
+    [_commandUses autorelease];
+    _commandUses = [[[CommandHistory sharedInstance] commandUsesForHost:host] retain];
+
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
@@ -6429,13 +6438,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Find the best-matching rule.
     int bestScore = 0;
+    int longestHost = 0;
     Profile *bestProfile = nil;
 
     for (NSString *ruleString in stringToProfile) {
         iTermRule *rule = [iTermRule ruleWithString:ruleString];
         int score = [rule scoreForHostname:hostname username:username path:path];
-        if (score > bestScore) {
+        if ((score > bestScore) || (score > 0 && score == bestScore && [rule.hostname length] > longestHost)) {
             bestScore = score;
+            longestHost = [rule.hostname length];
             bestProfile = stringToProfile[ruleString];
         }
     }
@@ -6480,11 +6491,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
     NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
+                                attributeProvider:nil
                                        nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                               pad:NO
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
-                                     cappedAtSize:-1];
+                                     cappedAtSize:-1
+                                continuationChars:nil];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
@@ -6511,9 +6524,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    return [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:trimmedCommand
-                                                                               onHost:host];
+    return [[CommandHistory sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
+                                                                     onHost:host];
 }
+
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
     DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
     _shellIntegrationEverUsed = YES;
@@ -6792,6 +6806,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 }
             }];
     [self queueAnnouncement:announcement identifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
+}
+
+- (BOOL)screenShouldReduceFlicker {
+    return [iTermProfilePreferences boolForKey:KEY_REDUCE_FLICKER inProfile:self.profile];
 }
 
 #pragma mark - Announcements

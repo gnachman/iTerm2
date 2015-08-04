@@ -7,6 +7,7 @@
 //
 
 #import "VT100TmuxParser.h"
+#import "DebugLogging.h"
 #import "NSMutableData+iTerm.h"
 
 @interface VT100TmuxParser ()
@@ -50,6 +51,7 @@
 - (BOOL)handleInput:(iTermParserContext *)context token:(VT100Token *)result {
     int bytesTilNewline = iTermParserNumberOfBytesUntilCharacter(context, '\n');
     if (bytesTilNewline == -1) {
+        DLog(@"No newline found.");
         // No newline to be found. Append everything that is available to |_line|.
         int length = iTermParserLength(context);
         [_line appendBytes:iTermParserPeekRawBytes(context, length)
@@ -58,7 +60,7 @@
         iTermParserAdvanceMultiple(context, length);
         result->type = VT100_WAIT;
     } else {
-        // Append bytes upt to the newline, stripping out linefeeds. Consume the newline.
+        // Append bytes up to the newline, stripping out linefeeds. Consume the newline.
         [_line appendBytes:iTermParserPeekRawBytes(context, bytesTilNewline)
                     length:bytesTilNewline
             excludingCharacter:'\r'];

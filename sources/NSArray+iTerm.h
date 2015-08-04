@@ -17,3 +17,7 @@
 - (NSArray *)mapWithBlock:(id (^)(id anObject))block;
 
 @end
+
+@interface NSMutableArray (iTerm)
+- (void)reverse;
+@end

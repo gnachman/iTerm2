@@ -8,6 +8,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "PreferencePanel.h"
@@ -142,7 +143,7 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
 static NSString* TAB_ARRANGEMENT_ID = @"ID";  // only for maximize/unmaximize
 static NSString* TAB_ARRANGEMENT_IS_MAXIMIZED = @"Maximized";
 static NSString* TAB_ARRANGEMENT_TMUX_WINDOW_PANE = @"tmux window pane";
-static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";
+static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTYSession has its own tab color now
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -2361,8 +2362,8 @@ static NSString* FormatRect(NSRect r) {
 
 // This can only be used in conjunction with
 // +[tabWithArrangement:inTerminal:hasFlexibleView:viewMap:].
- - (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
-          withArrangement:(NSDictionary *)arrangement {
+- (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
+         withArrangement:(NSDictionary *)arrangement {
     NSDictionary* root = [arrangement objectForKey:TAB_ARRANGEMENT_ROOT];
     if ([root[TAB_ARRANGEMENT_IS_MAXIMIZED] boolValue]) {
         [self maximize];
@@ -2370,7 +2371,17 @@ static NSString* FormatRect(NSRect r) {
 
     [self numberOfSessionsDidChange];
     [term setDimmingForSessions];
-    [term updateTabColors];
+
+    // Handle old-style (now deprecated) tab color field.
+    NSString *colorName = [arrangement objectForKey:TAB_ARRANGEMENT_COLOR];
+    NSColor *tabColor = [[self class] colorForHtmlName:colorName];
+    if (tabColor) {
+        PTYSession *session = [self activeSession];
+        [session setSessionSpecificProfileValues:@{ KEY_TAB_COLOR: [tabColor dictionaryValue],
+                                                    KEY_USE_TAB_COLOR: @YES }];
+    } else {
+        [term updateTabColors];
+    }
 }
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
@@ -2465,16 +2476,7 @@ static NSString* FormatRect(NSRect r) {
                                       contents:contents];
     }
 
-    // Fill in the tab's color, which is unfortunately not stored in the root
-    // node of the arrangement.
-    NSColor *color = [[realParentWindow_ tabBarControl] tabColorForTabViewItem:tabViewItem_];
-    NSString *colorName = color ? [[self class] htmlNameForColor:color] : nil;
-    if (colorName) {
-        return @{ TAB_ARRANGEMENT_ROOT: rootNode,
-                  TAB_ARRANGEMENT_COLOR: colorName };
-    } else {
-        return @{ TAB_ARRANGEMENT_ROOT: rootNode };
-    }
+    return @{ TAB_ARRANGEMENT_ROOT: rootNode };
 }
 
 - (NSDictionary*)arrangement {

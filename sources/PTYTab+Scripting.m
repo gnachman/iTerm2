@@ -42,6 +42,22 @@
   }
 }
 
+- (id)valueWithUniqueID:(id)uniqueID inPropertyWithKey:(NSString *)key {
+    if ([key isEqualToString:@"sessions"]) {
+        return [self valueInSessionsWithWithUniqueID:uniqueID];
+    }
+    return nil;
+}
+
+- (id)valueInSessionsWithWithUniqueID:(NSString *)guid {
+    for (PTYSession *session in self.sessions) {
+        if ([session.guid isEqual:guid]) {
+            return session;
+        }
+    }
+    return nil;
+}
+
 - (NSUInteger)countOfSessions {
   return [[self sessions] count];
 }

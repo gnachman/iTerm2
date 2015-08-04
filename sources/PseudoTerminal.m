@@ -4185,8 +4185,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
 }
 
-- (void)updateTabColors
-{
+- (void)updateTabColors {
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
         PTYSession *aSession = [aTab activeSession];
@@ -4643,8 +4642,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             return;
         }
         if ([commands count] == 1) {
-            CommandHistoryEntry *entry = commands[0];
-            if ([entry.command isEqualToString:prefix]) {
+            CommandUse *commandUse = commands[0];
+            if ([commandUse.command isEqualToString:prefix]) {
                 [commandHistoryPopup close];
                 return;
             }
@@ -5905,9 +5904,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([self _haveTopBorder]) {
         ++contentSize.height;
     }
-    if (_contentView.divisionView) {
+    if (![_contentView tabBarShouldBeVisible] && self.divisionViewShouldBeVisible) {
         ++contentSize.height;
     }
+
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
 }
 
@@ -7219,5 +7219,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [self.currentSession.guid isEqualToString:guid];
 }
 
+- (NSArray *)toolbeltCommandUsesForCurrentSession {
+    return [self.currentSession commandUses];
+}
 
 @end
