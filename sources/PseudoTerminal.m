@@ -5904,9 +5904,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([self _haveTopBorder]) {
         ++contentSize.height;
     }
-    if (_contentView.divisionView) {
+    if (![_contentView tabBarShouldBeVisible] && self.divisionViewShouldBeVisible) {
         ++contentSize.height;
     }
+
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
 }
 
