@@ -8,7 +8,12 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface ToolCapturedOutputView : NSView
+@interface ToolCapturedOutputView : NSView<
+    NSTableViewDataSource,
+    NSTableViewDelegate>
+
+// Exposed for testing only.
+@property(nonatomic, readonly) NSTableView *tableView;
 
 - (void)updateCapturedOutput;
 

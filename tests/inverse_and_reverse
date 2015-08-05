@@ -1,0 +1,9 @@
+inverse and reversed
+
+Default over Default, Red over Deafult, Red over green
+
+Regular: a[31mb[42mc[0m
+Reverse: [7ma[31mb[42mc
+[0m
+
+Note that Terminal and iTerm2/xterm behave differently if you issue CSI ? 5h after this to globally invert colors.

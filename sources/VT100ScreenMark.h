@@ -27,7 +27,7 @@
 @property(nonatomic, copy) NSString *command;
 
 // The session this mark belongs to.
-@property(nonatomic, assign) int sessionID;
+@property(nonatomic, retain) NSString *sessionGuid;
 
 // Time the command was set at (and presumably began running).
 @property(nonatomic, retain) NSDate *startDate;
@@ -52,8 +52,15 @@
 
 // Visible marks that can be navigated.
 @interface VT100ScreenMark : iTermMark
+@property(nonatomic, assign) BOOL isPrompt;
+@property(nonatomic, copy) NSString *guid;
+
+// Returns a reference to an existing mark with the given GUID.
++ (VT100ScreenMark *)markWithGuid:(NSString *)guid;
+
 @end
 
 // Invisible marks used for keep track of the location of captured output.
 @interface iTermCapturedOutputMark : iTermMark
+@property(nonatomic, copy) NSString *guid;
 @end

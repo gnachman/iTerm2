@@ -10,16 +10,36 @@
 
 #import "DebugLogging.h"
 #import "LineBuffer.h"
-#import "RegexKitLite.h"
+#import "NSDictionary+iTerm.h"
 #import "VT100GridTypes.h"
 #import "VT100LineInfo.h"
 #import "VT100Terminal.h"
+
+static NSString *const kGridCursorKey = @"Cursor";
+static NSString *const kGridScrollRegionRowsKey = @"Scroll Region Rows";
+static NSString *const kGridScrollRegionColumnsKey = @"Scroll Region Columns";
+static NSString *const kGridUseScrollRegionColumnsKey = @"Use Scroll Region Columns";
+static NSString *const kGridSizeKey = @"Size";
 
 @interface VT100Grid ()
 @property(nonatomic, readonly) NSArray *lines;  // Warning: not in order found on screen!
 @end
 
-@implementation VT100Grid
+@implementation VT100Grid {
+    VT100GridSize size_;
+    int screenTop_;  // Index into lines_ and dirty_ of first line visible in the grid.
+    NSMutableArray *lines_;  // Array of NSMutableData. Each data has size_.width+1 screen_char_t's.
+    NSMutableArray *lineInfos_;  // Array of VT100LineInfo.
+    id<VT100GridDelegate> delegate_;
+    VT100GridCoord cursor_;
+    VT100GridRange scrollRegionRows_;
+    VT100GridRange scrollRegionCols_;
+    BOOL useScrollRegionCols_;
+
+    NSMutableData *cachedDefaultLine_;
+    NSMutableData *resultLine_;
+    screen_char_t savedDefaultChar_;
+}
 
 @synthesize size = size_;
 @synthesize scrollRegionRows = scrollRegionRows_;
@@ -30,7 +50,6 @@
 @synthesize savedDefaultChar = savedDefaultChar_;
 @synthesize cursor = cursor_;
 @synthesize delegate = delegate_;
-@synthesize trackCursorLineMovement = trackCursorLineMovement_;
 
 - (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate {
     self = [super init];
@@ -153,14 +172,19 @@
 }
 
 - (void)setCursorX:(int)cursorX {
-    cursor_.x = MIN(size_.width, MAX(0, cursorX));
+    int newX = MIN(size_.width, MAX(0, cursorX));
+    if (newX != cursor_.x) {
+        cursor_.x = newX;
+        [delegate_ gridCursorDidMove];
+    }
 }
 
 - (void)setCursorY:(int)cursorY {
     int prev = cursor_.y;
     cursor_.y = MIN(size_.height - 1, MAX(0, cursorY));
-    if (trackCursorLineMovement_ && cursorY != prev) {
+    if (cursorY != prev) {
         [delegate_ gridCursorDidChangeLine];
+        [delegate_ gridCursorDidMove];
     }
 }
 
@@ -198,7 +222,7 @@
     // Push the current screen contents into the scrollback buffer.
     // The maximum number of lines of scrollback are temporarily ignored because this
     // loop doesn't call dropExcessLinesWithWidth.
-    int lengthOfNextLine;
+    int lengthOfNextLine = 0;
     if (numLines > 0) {
         lengthOfNextLine = [self lengthOfLineNumber:0];
     }
@@ -224,9 +248,10 @@
             [lineBuffer setCursor:currentLineLength];
         }
 
+        const BOOL isPartial = (continuation != EOL_HARD) || (i == size_.height - 1);
         [lineBuffer appendLine:line
                         length:currentLineLength
-                       partial:(continuation != EOL_HARD)
+                       partial:isPartial
                          width:size_.width
                      timestamp:[[self lineInfoAtLineNumber:i] timestamp]
                   continuation:line[size_.width]];
@@ -837,8 +862,8 @@
         if (aLine[cursor_.x].code == DWC_RIGHT) {
 #ifdef VERBOSE_STRING
             NSLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
-#endif
             NSAssert(cursor_.x > 0, @"DWC split");  // there should never be the second half of a DWC at x=0
+#endif
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
             aLine[cursor_.x-1].code = 0;
@@ -1221,62 +1246,21 @@
     return result;
 }
 
-- (NSArray *)runsMatchingRegex:(NSString *)regex {
-    NSMutableArray *runs = [NSMutableArray array];
+- (VT100GridRun)gridRunFromRange:(NSRange)range relativeToRow:(int)row {
+    NSInteger location = range.location;
+    NSInteger length = range.length;
+    if (row < 0) {
+        location += row * size_.width;
+        length += row * size_.width;
 
-    int y = 0;
-    while (y < size_.height) {
-        int numLines;
-        unichar *backingStore;
-        int *deltas;
-
-        NSString *joinedLine = [self joinedLineBeginningAtLineNumber:y
-                                                         numLinesPtr:&numLines
-                                                     backingStorePtr:&backingStore
-                                                           deltasPtr:&deltas];
-        NSRange searchRange = NSMakeRange(0, joinedLine.length);
-        NSRange range;
-        while (1) {
-            range = [joinedLine rangeOfRegex:regex
-                                     options:0
-                                     inRange:searchRange
-                                     capture:0
-                                       error:nil];
-            if (range.location == NSNotFound || range.length == 0) {
-                break;
-            }
-            assert(range.location != NSNotFound);
-            int start = (int)(range.location);
-            int end = (int)(range.location + range.length - 1);
-            start += deltas[start];
-            end += deltas[end];
-            int startY = y + start / size_.width;
-            int startX = start % size_.width;
-            int endY = y + end / size_.width;
-            int endX = end % size_.width;
-
-            if (endY >= size_.height) {
-                endY = size_.height - 1;
-                endX = size_.width;
-            }
-            if (startY < size_.height) {
-                int length = [self numCellsFrom:VT100GridCoordMake(startX, startY)
-                                             to:VT100GridCoordMake(endX, endY)];
-                NSValue *value = [NSValue valueWithGridRun:VT100GridRunMake(startX,
-                                                                            startY,
-                                                                            length)];
-                [runs addObject:value];
-            }
-
-            searchRange.location = range.location + range.length;
-            searchRange.length = joinedLine.length - searchRange.location;
+        if (location < 0 || length <= 0) {
+            return VT100GridRunMake(0, 0, 0);
         }
-        y += numLines;
-        free(backingStore);
-        free(deltas);
     }
 
-    return runs;
+    return VT100GridRunMake(location % size_.width,
+                            row + location / size_.width,
+                            length);
 }
 
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
@@ -1577,6 +1561,30 @@
     }
     return array;
 }
+
+- (NSDictionary *)dictionaryValue {
+    return @{ kGridCursorKey: [NSDictionary dictionaryWithGridCoord:cursor_],
+              kGridScrollRegionRowsKey: [NSDictionary dictionaryWithGridRange:scrollRegionRows_],
+              kGridScrollRegionColumnsKey: [NSDictionary dictionaryWithGridRange:scrollRegionCols_],
+              kGridUseScrollRegionColumnsKey: @(useScrollRegionCols_),
+              kGridSizeKey: [NSDictionary dictionaryWithGridSize:size_] };
+}
+
+- (void)setStateFromDictionary:(NSDictionary *)dict {
+    if (!dict) {
+        return;
+    }
+    VT100GridSize size = [dict[kGridSizeKey] gridSize];
+
+    // Saved values only make sense if the size is the same as when the state was saved.
+    if (VT100GridSizeEquals(size, size_)) {
+        cursor_ = [dict[kGridCursorKey] gridCoord];
+        scrollRegionRows_ = [dict[kGridScrollRegionRowsKey] gridRange];
+        scrollRegionCols_ = [dict[kGridScrollRegionColumnsKey] gridRange];
+        useScrollRegionCols_ = [dict[kGridUseScrollRegionColumnsKey] boolValue];
+    }
+}
+
 
 #pragma mark - Private
 
@@ -1980,12 +1988,11 @@ static void DumpBuf(screen_char_t* p, int n) {
         [theCopy->lineInfos_ addObject:[[line copy] autorelease]];
     }
     theCopy->screenTop_ = screenTop_;
-    theCopy.cursor = cursor_;
+    theCopy->cursor_ = cursor_;  // Don't use property to avoid delegate call
     theCopy.scrollRegionRows = scrollRegionRows_;
     theCopy.scrollRegionCols = scrollRegionCols_;
     theCopy.useScrollRegionCols = useScrollRegionCols_;
     theCopy.savedDefaultChar = savedDefaultChar_;
-    theCopy.trackCursorLineMovement = trackCursorLineMovement_;
 
     return theCopy;
 }

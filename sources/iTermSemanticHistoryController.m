@@ -27,7 +27,7 @@
 #import "iTermSemanticHistoryPrefsController.h"
 #import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
-#import "RegexKitLite/RegexKitLite.h"
+#import "RegexKitLite.h"
 
 NSString *const kSemanticHistoryPathSubstitutionKey = @"semanticHistory.path";
 NSString *const kSemanticHistoryPrefixSubstitutionKey = @"semanticHistory.prefix";
@@ -38,29 +38,6 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
 @synthesize prefs = prefs_;
 @synthesize delegate = delegate_;
-
-- (BOOL)isTextFile:(NSString *)path {
-    if (!path) {
-        return NO;
-    }
-    // TODO(chendo): link in the "magic" library from file instead of calling it.
-    NSTask *task = [[[NSTask alloc] init] autorelease];
-    NSPipe *myPipe = [NSPipe pipe];
-    NSFileHandle *file = [myPipe fileHandleForReading];
-
-    [task setStandardOutput:myPipe];
-    [task setLaunchPath:@"/usr/bin/file"];
-    [task setArguments:@[ path ]];
-    [task launch];
-    [task waitUntilExit];
-
-    NSString *output = [[NSString alloc] initWithData:[file readDataToEndOfFile]
-                                             encoding:NSUTF8StringEncoding];
-
-    BOOL ret = ([output rangeOfRegex:@"\\btext\\b"].location != NSNotFound);
-    [output release];
-    return ret;
-}
 
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
@@ -128,7 +105,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return nil;
 }
 
-- (NSString *)editor {
+- (NSString *)preferredEditorIdentifier {
     if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryBestEditorAction]) {
         return [iTermSemanticHistoryPrefsController bestEditor];
     } else if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction]) {
@@ -149,7 +126,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
     NSString *executable = [bundlePath stringByAppendingPathComponent:@"Contents/MacOS"];
     executable = [executable stringByAppendingPathComponent:
-                            [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
+                            [bundle objectForInfoDictionaryKey:(id)kCFBundleExecutableKey]];
     if (bundle && executable) {
         DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, path);
         [self launchTaskWithPath:executable arguments:@[ executable, path ] wait:NO];
@@ -182,39 +159,63 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     }
 }
 
-- (BOOL)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
-    if ([self editor]) {
-        DLog(@"openFileInEditor. editor=%@", [self editor]);
-        if ([[self editor] isEqualToString:kAtomIdentifier]) {
++ (NSArray *)bundleIdsThatSupportOpeningToLineNumber {
+    return @[ kAtomIdentifier,
+              kSublimeText2Identifier,
+              kSublimeText3Identifier,
+              kMacVimIdentifier,
+              kTextmateIdentifier,
+              kTextmate2Identifier,
+              kBBEditIdentifier ];
+}
+
+- (void)openFile:(NSString *)path
+    inEditorWithBundleId:(NSString *)identifier
+          lineNumber:(NSString *)lineNumber {
+    if ([self preferredEditorIdentifier]) {
+        DLog(@"openFileInEditor. editor=%@", [self preferredEditorIdentifier]);
+        if ([[self preferredEditorIdentifier] isEqualToString:kAtomIdentifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
             [self launchAtomWithPath:path];
-        } else if ([[self editor] isEqualToString:kSublimeText2Identifier] ||
-                   [[self editor] isEqualToString:kSublimeText3Identifier]) {
+        } else if ([[self preferredEditorIdentifier] isEqualToString:kSublimeText2Identifier] ||
+                   [[self preferredEditorIdentifier] isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
             NSString *bundleId;
-            if ([[self editor] isEqualToString:kSublimeText3Identifier]) {
-                bundleId = @"com.sublimetext.3";
+            if ([[self preferredEditorIdentifier] isEqualToString:kSublimeText3Identifier]) {
+                bundleId = kSublimeText3Identifier;
             } else {
-                bundleId = @"com.sublimetext.2";
+                bundleId = kSublimeText2Identifier;
             }
 
             [self launchSublimeTextWithBundleIdentifier:bundleId path:path];
         } else {
             path = [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-            NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
-                                               @"%@://open?url=file://%@&line=%@",
-                                               [iTermSemanticHistoryPrefsController schemeForEditor:[self editor]],
-                                               path, lineNumber, nil]];
+            NSURL *url = nil;
+            NSString *editorIdentifier = [self preferredEditorIdentifier];
+            if (lineNumber) {
+                url = [NSURL URLWithString:[NSString stringWithFormat:
+                                            @"%@://open?url=file://%@&line=%@",
+                                            [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
+                                            path, lineNumber]];
+            } else {
+                url = [NSURL URLWithString:[NSString stringWithFormat:
+                                            @"%@://open?url=file://%@",
+                                            [iTermSemanticHistoryPrefsController schemeForEditor:editorIdentifier],
+                                            path]];
+            }
             DLog(@"Open url %@", url);
-            [self openURL:url];
-
+            // BBEdit and TextMate share a URL scheme, so this disambiguates.
+            [self openURL:url editorIdentifier:editorIdentifier];
         }
     }
-    return YES;
+}
+
+- (void)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
+    [self openFile:path inEditorWithBundleId:[self preferredEditorIdentifier] lineNumber:lineNumber];
 }
 
 - (BOOL)canOpenPath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
@@ -236,11 +237,25 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 }
 
 - (BOOL)openFile:(NSString *)fullPath {
+    DLog(@"Open file %@", fullPath);
     return [[NSWorkspace sharedWorkspace] openFile:fullPath];
 }
 
+- (BOOL)openURL:(NSURL *)url editorIdentifier:(NSString *)editorIdentifier {
+    DLog(@"Open URL %@", url);
+    if (editorIdentifier) {
+        return [[NSWorkspace sharedWorkspace] openURLs:@[ url ]
+                               withAppBundleIdentifier:editorIdentifier
+                                               options:NSWorkspaceLaunchDefault
+                        additionalEventParamDescriptor:nil
+                                     launchIdentifiers:NULL];
+    } else {
+        return [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
+
 - (BOOL)openURL:(NSURL *)url {
-    return [[NSWorkspace sharedWorkspace] openURL:url];
+    return [self openURL:url editorIdentifier:nil];
 }
 
 - (BOOL)openPath:(NSString *)path
@@ -312,12 +327,20 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         return YES;
     }
 
-    if ([self editor] && [self isTextFile:path]) {
-        if (![self defaultAppForFileIsEditor:path]) {
-            DLog(@"Default app for %@ is NOT an editor, so open it in an editor", path);
-            return [self openFileInEditor:path lineNumber:lineNumber];
-        } else {
-            DLog(@"Default app for %@ is an editor so just open it", path);
+    if ([prefs_[kSemanticHistoryActionKey] isEqualToString:kSemanticHistoryEditorAction] &&
+        [self preferredEditorIdentifier]) {
+        // Action is to open in a specific editor, so open it in the editor.
+        [self openFileInEditor:path lineNumber:lineNumber];
+        return YES;
+    }
+
+    if (lineNumber) {
+        NSString *appBundleId = [self bundleIdForDefaultAppForFile:path];
+        if ([self canOpenFileWithLineNumberUsingEditorWithBundleId:appBundleId]) {
+            DLog(@"A line number is present and I know how to open this file to the line number using %@. Do so.",
+                 appBundleId);
+            [self openFile:path inEditorWithBundleId:appBundleId lineNumber:lineNumber];
+            return YES;
         }
     }
 
@@ -325,8 +348,16 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     return YES;
 }
 
-- (BOOL)defaultAppForFileIsEditor:(NSString *)file {
+- (BOOL)canOpenFileWithLineNumberUsingEditorWithBundleId:(NSString *)appBundleId {
+    return [[self.class bundleIdsThatSupportOpeningToLineNumber] containsObject:appBundleId];
+}
+
+- (NSString *)bundleIdForDefaultAppForFile:(NSString *)file {
     NSURL *fileUrl = [NSURL fileURLWithPath:file];
+    return [self bundleIdForDefaultAppForURL:fileUrl];
+}
+
+- (NSString *)bundleIdForDefaultAppForURL:(NSURL *)fileUrl {
     NSURL *appUrl = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:fileUrl];
     if (!appUrl) {
         return NO;
@@ -336,8 +367,11 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if (!appBundle) {
         return NO;
     }
-    NSString *bundleId = [appBundle bundleIdentifier];
-    return [iTermSemanticHistoryPrefsController bundleIdIsEditor:bundleId];
+    return [appBundle bundleIdentifier];
+}
+
+- (BOOL)defaultAppForFileIsEditor:(NSString *)file {
+    return [iTermSemanticHistoryPrefsController bundleIdIsEditor:[self bundleIdForDefaultAppForFile:file]];
 }
 
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
@@ -352,23 +386,23 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
     NSMutableString *beforeString = [[beforeStringIn mutableCopy] autorelease];
     NSMutableString *afterString = [[afterStringIn mutableCopy] autorelease];
-    
+
     // Remove escaping slashes
     NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
-    
+
     DLog(@"Brute force path from prefix <<%@>>, suffix <<%@>> directory=%@",
          beforeString, afterString, workingDirectory);
-    
+
     [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     beforeString = [[beforeString copy] autorelease];
     // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
     // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autorelease]
     // then the items in the array get over-released.
-    NSString *const kSplitRegex = @"([\t ])";
+    NSString *const kSplitRegex = @"([\t ()])";
     NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:kSplitRegex];
     NSArray *afterChunks = [afterString componentsSeparatedByRegex:kSplitRegex];
-    
+
     // If the before/after string didn't produce any chunks, allow the other
     // half to stand alone.
     if (!beforeChunks.count) {
@@ -377,7 +411,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     if (!afterChunks.count) {
         afterChunks = @[ @"" ];
     }
-    
+
     NSMutableString *left = [NSMutableString string];
     // Bail after 100 iterations if nothing is still found.
     int limit = 100;
@@ -391,7 +425,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     // We'll try versions with and without a questionable suffix. The version
     // with the suffix is always preferred if it exists.
     NSArray *questionableSuffixes = @[ @"!", @"?", @".", @",", @";", @":", @"...", @"…" ];
-
+    NSCharacterSet *whitespaceCharset = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     for (int i = [beforeChunks count]; i >= 0; i--) {
         NSString *beforeChunk = @"";
         if (i < [beforeChunks count]) {
@@ -400,23 +434,31 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 
         [left insertString:beforeChunk atIndex:0];
         NSMutableString *possiblePath = [NSMutableString stringWithString:left];
-        
+
         // Do not search more than 10 chunks forward to avoid starving leftward search.
         for (int j = 0; j < [afterChunks count] && j < 10; j++) {
-            [possiblePath appendString:[afterChunks objectAtIndex:j]];
-            if ([paths containsObject:[NSString stringWithString:possiblePath]]) {
+            [possiblePath appendString:afterChunks[j]];
+            NSString *trimmedPath = [possiblePath stringByTrimmingCharactersInSet:whitespaceCharset];
+            if ([paths containsObject:[NSString stringWithString:trimmedPath]]) {
                 continue;
             }
-            [paths addObject:[[possiblePath copy] autorelease]];
+            [paths addObject:[[trimmedPath copy] autorelease]];
 
-            for (NSString *modifiedPossiblePath in [self pathsFromPath:possiblePath byRemovingBadSuffixes:questionableSuffixes]) {
+            for (NSString *modifiedPossiblePath in [self pathsFromPath:trimmedPath byRemovingBadSuffixes:questionableSuffixes]) {
                 BOOL exists = NO;
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
                     exists = ([self getFullPath:modifiedPossiblePath workingDirectory:workingDirectory lineNumber:NULL] != nil);
                 }
                 if (exists) {
                     if (charsTakenFromPrefixPtr) {
-                        *charsTakenFromPrefixPtr = left.length;
+                        if ([afterChunks[j] length] == 0) {
+                            // trimmedPath is trim(left + afterChunks[j]). If afterChunks[j] is empty
+                            // then we don't want to count trailing whitespace from left in the chars
+                            // taken from prefix.
+                            *charsTakenFromPrefixPtr = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
+                        } else {
+                            *charsTakenFromPrefixPtr = left.length;
+                        }
                     }
                     DLog(@"Using path %@", modifiedPossiblePath);
                     return modifiedPossiblePath;

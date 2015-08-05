@@ -8,6 +8,14 @@
 
 #import "iTermSelection.h"
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "ScreenChar.h"
+
+static NSString *const kSelectionSubSelectionsKey = @"Sub selections";
+
+static NSString *const kiTermSubSelectionRange = @"Range";
+static NSString *const kiTermSubSelectionMode = @"Mode";
 
 @implementation iTermSubSelection
 
@@ -17,6 +25,19 @@
     sub.range = range;
     sub.selectionMode = mode;
     return sub;
+}
+
++ (instancetype)subSelectinWithDictionary:(NSDictionary *)dict {
+    return [self subSelectionWithRange:[dict[kiTermSubSelectionRange] gridWindowedRange]
+                                  mode:[dict[kiTermSubSelectionMode] intValue]];
+}
+
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset {
+    VT100GridWindowedRange range = _range;
+    range.coordRange.start.y += yOffset;
+    range.coordRange.end.y += yOffset;
+    return @{ kiTermSubSelectionRange: [NSDictionary dictionaryWithGridWindowedRange:range],
+              kiTermSubSelectionMode: @(_selectionMode) };
 }
 
 - (NSString *)description {
@@ -503,11 +524,40 @@
 }
 
 - (void)moveUpByLines:(int)numLines {
-    _range.coordRange.start.y -= numLines;
-    _range.coordRange.end.y -= numLines;
+    BOOL notifyDelegateOfChange = _subSelections.count > 0 || [self haveLiveSelection];
+    if ([self haveLiveSelection]) {
+        _range.coordRange.start.y -= numLines;
+        _range.coordRange.end.y -= numLines;
+        if (_range.coordRange.start.y < 0) {
+           _range.coordRange.start.x = 0;
+           _range.coordRange.start.y = 0;
+        }
+       if (_range.coordRange.end.y < 0) {
+          [self clearSelection];
+        }
+    }
 
-    if (_range.coordRange.start.y < 0 || _range.coordRange.end.y < 0) {
-        [self clearSelection];
+    NSMutableArray *subsToRemove = [NSMutableArray array];
+    for (iTermSubSelection *sub in _subSelections) {
+        VT100GridWindowedRange range = sub.range;
+        range.coordRange.start.y -= numLines;
+        range.coordRange.end.y -= numLines;
+        if (range.coordRange.start.y < 0) {
+            range.coordRange.start.x = 0;
+            range.coordRange.start.y = 0;
+        }
+        sub.range = range;
+        if (range.coordRange.end.y < 0) {
+            [subsToRemove addObject:sub];
+        }
+    }
+
+    for (iTermSubSelection *sub in subsToRemove) {
+        [_subSelections removeObject:sub];
+    }
+
+    if (notifyDelegateOfChange) {
+        [_delegate selectionDidChange:self];
     }
 }
 
@@ -557,7 +607,9 @@
     theCopy->_initialRange = _initialRange;
     theCopy->_live = _live;
     theCopy->_extend = _extend;
-    [theCopy->_subSelections addObjectsFromArray:_subSelections];
+    for (iTermSubSelection *sub in _subSelections) {
+        [theCopy->_subSelections addObject:[[sub copy] autorelease]];
+    }
     theCopy->_resumable = _resumable;
 
     theCopy.delegate = _delegate;
@@ -839,6 +891,53 @@
     return indexes;
 }
 
+// orphaned tab fillers are selected iff they are in the selection.
+// unorphaned tab fillers are selected iff their tab is selected.
+- (NSIndexSet *)selectedIndexesIncludingTabFillersInLine:(int)y {
+    NSIndexSet *basicIndexes = [self selectedIndexesOnLine:y];
+    if (!basicIndexes.count) {
+        return basicIndexes;
+    }
+
+    // Add in tab fillers preceding already-selected tabs.
+    NSMutableIndexSet *indexes = [[basicIndexes mutableCopy] autorelease];
+
+    NSRange range;
+    if (_range.columnWindow.length > 0) {
+        range = NSMakeRange(_range.columnWindow.location, _range.columnWindow.length);
+    } else {
+        range = NSMakeRange(0, [_delegate selectionViewportWidth]);
+    }
+    NSIndexSet *tabs = [_delegate selectionIndexesOnLine:y
+                                     containingCharacter:'\t'
+                                                 inRange:range];
+    NSIndexSet *tabFillers =
+        [_delegate selectionIndexesOnLine:y
+                      containingCharacter:TAB_FILLER
+                                  inRange:range];
+
+    [tabs enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        BOOL select = [basicIndexes containsIndex:idx];
+        // Found a tab. If selected, add all preceding consecutive TAB_FILLERS
+        // to |indexes|. If not selected, remove all preceding consecutive
+        // TAB_FILLERs.
+        int theIndex = idx;
+        for (int i = theIndex - 1; i >= range.location; i--) {
+            if ([tabFillers containsIndex:i]) {
+                if (select) {
+                    [indexes addIndex:i];
+                } else {
+                    [indexes removeIndex:i];
+                }
+            } else {
+                break;
+            }
+        }
+    }];
+
+    return indexes;
+}
+
 - (void)enumerateSelectedRanges:(void (^)(VT100GridWindowedRange, BOOL *, BOOL))block {
     if (_live) {
         // Live ranges can have box subs, which is just a pain to deal with, so make a copy,
@@ -924,6 +1023,28 @@
               ![connectors containsIndex:endIndex] && value != [sortedRanges lastObject]);
         if (stop) {
             break;
+        }
+    }
+}
+
+#pragma mark - Serialization
+
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset {
+    NSArray *subs = self.allSubSelections;
+    subs = [subs mapWithBlock:^id(id anObject) {
+        iTermSubSelection *sub = anObject;
+        return [sub dictionaryValueWithYOffset:yOffset];
+    }];
+    return @{ kSelectionSubSelectionsKey: subs };
+}
+
+- (void)setFromDictionaryValue:(NSDictionary *)dict {
+    [self clearSelection];
+    NSArray *subs = dict[kSelectionSubSelectionsKey];
+    for (NSDictionary *subDict in subs) {
+        iTermSubSelection *sub = [iTermSubSelection subSelectinWithDictionary:subDict];
+        if (sub) {
+            [self addSubSelection:sub];
         }
     }
 }

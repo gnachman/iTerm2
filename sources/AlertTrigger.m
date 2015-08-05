@@ -12,7 +12,7 @@
 
 @implementation AlertTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Show Alert…";
 }
@@ -27,12 +27,18 @@
     return YES;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
     if (disabled_) {
         return YES;
     }
-    NSString *message = [self paramWithBackreferencesReplacedWithValues:values];
+    NSString *message = [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                                                  count:captureCount];
 
     NSAlert *alert = [NSAlert alertWithMessageText:message
                                      defaultButton:@"OK"

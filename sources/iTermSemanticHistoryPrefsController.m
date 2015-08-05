@@ -29,7 +29,13 @@ NSString *kSemanticHistoryCommandAction = @"command";
 NSString *kSemanticHistoryRawCommandAction = @"raw command";
 NSString *kSemanticHistoryCoprocessAction = @"coprocess";
 
-@implementation iTermSemanticHistoryPrefsController
+@implementation iTermSemanticHistoryPrefsController {
+    NSString *guid_;
+    IBOutlet NSPopUpButton *action_;
+    IBOutlet NSTextField *text_;
+    IBOutlet NSPopUpButton *editors_;
+    IBOutlet NSTextField *caveat_;
+}
 
 enum {
     kSublimeText2Tag = 1,
@@ -38,6 +44,7 @@ enum {
     kBBEditTag,
     kSublimeText3Tag,
     kAtomTag,
+    kTextmate2Tag,
     // Only append to the end of the list; never delete or change.
 };
 
@@ -91,6 +98,7 @@ enum {
                                kSublimeText3Identifier: @"subl",
                                kMacVimIdentifier: @"mvim",
                                kTextmateIdentifier: @"txmt",
+                               kTextmate2Identifier: @"txmt",
                                kBBEditIdentifier: @"txmt",
                                kAtomIdentifier: @"atom" };
     return schemes[editor];
@@ -123,6 +131,7 @@ enum {
                                   kSublimeText3Identifier,
                                   kMacVimIdentifier,
                                   kTextmateIdentifier,
+                                  kTextmate2Identifier,
                                   kBBEditIdentifier,
                                   kAtomIdentifier ];
     return [editorBundleIds containsObject:bundleId];
@@ -133,7 +142,7 @@ enum {
                             kSublimeText2Identifier: @(kSublimeText2Tag),
                                   kMacVimIdentifier: @(kMacVimTag),
                                 kTextmateIdentifier: @(kTextmateTag),
-                               kTextmate2Identifier: @(kTextmateTag),
+                               kTextmate2Identifier: @(kTextmate2Tag),
                                   kBBEditIdentifier: @(kBBEditTag),
                                     kAtomIdentifier: @(kAtomTag) };
     return tags;
@@ -144,7 +153,7 @@ enum {
                              kSublimeText2Identifier: @"Sublime Text 2",
                                    kMacVimIdentifier: @"MacVim",
                                  kTextmateIdentifier: @"Textmate",
-                                kTextmate2Identifier: @"Textmate",
+                                kTextmate2Identifier: @"Textmate 2",
                                    kBBEditIdentifier: @"BBEdit",
                                      kAtomIdentifier: @"Atom" };
 
@@ -199,6 +208,7 @@ enum {
                            @(kSublimeText2Tag): kSublimeText2Identifier,
                                  @(kMacVimTag): kMacVimIdentifier,
                                @(kTextmateTag): kTextmateIdentifier,
+                              @(kTextmate2Tag): kTextmate2Identifier,
                                  @(kBBEditTag): kBBEditIdentifier,
                                    @(kAtomTag): kAtomIdentifier };
     return map[@([[editors_ selectedItem] tag])];
@@ -314,6 +324,13 @@ enum {
     if (tagNumber) {
         [editors_ selectItemWithTag:[tagNumber integerValue]];
     }
+}
+
+- (void)setEnabled:(BOOL)enabled {
+    action_.enabled = enabled;
+    text_.enabled = enabled;
+    editors_.enabled = enabled;
+    caveat_.enabled = enabled;
 }
 
 @end

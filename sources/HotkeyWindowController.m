@@ -99,6 +99,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     // Issue 3199: With a non-autohiding hotkey window that is on all spaces, changing spaces makes
     // another app key, leaving the hotkey window open underneath other windows.
     if ([window isVisible] &&
+        window.isOnActiveSpace &&
         ([window collectionBehavior] & NSWindowCollectionBehaviorCanJoinAllSpaces) &&
         ![iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides]) {
       DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
@@ -123,7 +124,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     }
 }
 
-- (BOOL)openHotkeyWindow {
+- (BOOL)openHotkeyWindowAndRollIn:(BOOL)rollIn {
     HKWLog(@"Open hotkey window");
     NSDictionary *arrangement = [[self.restorableState copy] autorelease];
     if (!arrangement) {
@@ -162,8 +163,11 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
                                            withURL:nil
                                           isHotkey:YES
                                            makeKey:YES
-                                           command:nil];
-        term = [[iTermController sharedInstance] terminalWithSession:session];
+                                           command:nil
+                                             block:nil];
+        if (session) {
+            term = [[iTermController sharedInstance] terminalWithSession:session];
+        }
     }
     if (term) {
         [term setIsHotKeyWindow:YES];
@@ -172,7 +176,9 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         if ([term windowType] != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
             [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
         }
-        RollInHotkeyTerm(term);
+        if (rollIn) {
+            RollInHotkeyTerm(term);
+        }
         return YES;
     }
     return NO;
@@ -278,10 +284,17 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         RollInHotkeyTerm(hotkeyTerm);
     } else {
         HKWLog(@"Open new hotkey window window");
-        if ([self openHotkeyWindow]) {
+        if ([self openHotkeyWindowAndRollIn:YES]) {
             rollingIn_ = YES;
         }
     }
+}
+
+- (void)createHiddenHotkeyWindow {
+    if (GetHotkeyWindow()) {
+        return;
+    }
+    [self openHotkeyWindowAndRollIn:NO];
 }
 
 - (BOOL)isHotKeyWindowOpen
@@ -314,8 +327,10 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     }
 }
 
-- (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm
-{
+- (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm {
+    for (NSWindow *sheet in hotkeyTerm.window.sheets) {
+        [NSApp endSheet:sheet];
+    }
     HKWLog(@"Hide hotkey window.");
     if ([[hotkeyTerm window] isVisible]) {
         HKWLog(@"key window is %@", [NSApp keyWindow]);
@@ -671,14 +686,13 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                       registerHotKey:keyCode
                       modifiers:hotkeyModifiers_
                       target:self
-                      action:@selector(carbonHotkeyPressed)
+                      action:@selector(carbonHotkeyPressed:)
                       userInfo:nil
                       whenPressed:YES] retain];
     return YES;
 }
 
-- (void)carbonHotkeyPressed
-{
+- (void)carbonHotkeyPressed:(id)handler {
     iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
     if (!ad.workspaceSessionActive) {
         return;

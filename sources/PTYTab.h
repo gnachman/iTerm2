@@ -6,8 +6,10 @@
 #import "PSMTabBarControl.h"
 #import "PTYSplitView.h"
 #import "FutureMethods.h"
+#import "PTYTabDelegate.h"
 
 @class PTYSession;
+@class PTYTab;
 @class FakeWindow;
 @class SessionView;
 @class TmuxController;
@@ -19,76 +21,7 @@
   NSCopying,
   NSSplitViewDelegate,
   PTYSplitViewDelegate,
-  PSMTabBarControlRepresentedObjectIdentifierProtocol> {
-    PTYSession* activeSession_;
-
-    // Owning tab view item
-    NSTabViewItem* tabViewItem_;
-
-    id<WindowControllerInterface> parentWindow_;  // Parent controller. Always set. Equals one of realParent or fakeParent.
-    NSWindowController<iTermWindowController> *realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
-    FakeWindow* fakeParentWindow_;  // non-nil only if parent is FakeWindow*
-
-    // The tab number that is observed by PSMTabBarControl.
-    int objectCount_;
-
-    // The icon to display in the tab. Observed by PSMTabBarControl.
-    NSImage* icon_;
-
-    // Whether the session is "busy". Observed by PSMTabBarControl.
-    BOOL isProcessing_;
-
-    // Does any session have new output?
-    BOOL newOutput_;
-
-    // The root view of this tab. May be a SolidColorView for tmux tabs or the
-    // same as root_ otherwise (the normal case).
-    NSView *tabView_;  // weak
-
-    // If there is a flexible root view, this is set and is the tabview's view.
-    // Otherwise it is nil.
-    SolidColorView *flexibleView_;
-
-    // The root of a tree of split views whose leaves are SessionViews. The root is the view of the
-    // NSTabViewItem.
-    //
-    // NSTabView -> NSTabViewItem -> NSSplitView (root) -> ... -> SessionView -> PTYScrollView -> etc.
-    NSSplitView* root_;
-
-    // If non-nil, this session may not change size.
-    PTYSession* lockedSession_;
-
-    // The active pane is maximized, meaning there are other panes that are hidden.
-    BOOL isMaximized_;
-    NSMutableDictionary* idMap_;  // maps saved session id to ptysession.
-    NSDictionary* savedArrangement_;  // layout of splitters pre-maximize
-    NSSize savedSize_;  // pre-maximize active session size.
-
-    // If true, report that the tab's ideal size is its currentSize.
-    BOOL reportIdeal_;
-
-    // If this window is a tmux client, this is the window number defined by
-    // the tmux server. -1 if not a tmux client.
-    int tmuxWindow_;
-
-    // If positive, then a tmux-originated resize is in progress and splitter
-    // delegates won't interfere.
-    int tmuxOriginatedResizeInProgress_;
-
-    // The tmux controller used by all sessions in this tab.
-    TmuxController *tmuxController_;
-
-    // The last tmux parse tree
-    NSMutableDictionary *parseTree_;
-
-    // Temporarily hidden live views (this is needed to hold a reference count).
-    NSMutableArray *hiddenLiveViews_;  // SessionView objects
-
-    NSString *tmuxWindowName_;
-
-	// This tab broadcasts to all its sessions?
-	BOOL broadcasting_;
-}
+  PSMTabBarControlRepresentedObjectIdentifierProtocol>
 
 @property(nonatomic, assign, getter=isBroadcasting) BOOL broadcasting;
 
@@ -97,6 +30,9 @@
 @property(nonatomic, readonly) BOOL isMaximized;
 // Sessions ordered in a similar-to-reading-order fashion.
 @property(nonatomic, readonly) NSArray *orderedSessions;
+@property(nonatomic, readonly) int tabNumberForItermSessionId;
+@property(nonatomic, assign) id<PTYTabDelegate> delegate;
+
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup
 // activities, their contents can be rescued.
@@ -165,6 +101,7 @@
 - (NSArray *)windowPanes;
 - (NSArray*)sessionViews;
 - (BOOL)allSessionsExited;
+- (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
 - (BOOL)hasMultipleSessions;
@@ -263,12 +200,14 @@
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2;
 
-- (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
-      withArrangement:(NSDictionary *)arrangement;
+- (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
+         withArrangement:(NSDictionary *)arrangement;
 
 - (void)replaceWithContentsOfTab:(PTYTab *)tabToGut;
 
 - (NSDictionary*)arrangementWithContents:(BOOL)contents;
+
+- (void)addHiddenLiveView:(SessionView *)hiddenLiveView;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;

@@ -248,14 +248,16 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     [[self tabViewControllers] makeObjectsPerformSelector:@selector(reloadProfile)];
 }
 
-- (void)openToProfileWithGuid:(NSString *)guid {
+- (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab {
     [_profilesListView reloadData];
     if ([[self selectedProfile][KEY_GUID] isEqualToString:guid]) {
         [self reloadProfileInProfileViewControllers];
     } else {
         [self selectGuid:guid];
     }
-    [_tabView selectTabViewItem:_generalTab];
+    if (selectGeneralTab && !self.view.window.attachedSheet) {
+        [_tabView selectTabViewItem:_generalTab];
+    }
     [self.view.window performSelector:@selector(makeFirstResponder:)
                            withObject:_generalViewController.profileNameFieldForEditCurrentSession
                            afterDelay:0];

@@ -7,9 +7,10 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "ToolbeltView.h"
 
-@class CommandHistoryEntry;
+#import "iTermToolbeltView.h"
+
+@class CommandUse;
 
 @interface ToolCommandHistoryView : NSView <
   ToolbeltTool,
@@ -17,9 +18,12 @@
   NSTableViewDelegate,
   NSTextFieldDelegate>
 
+// For testing
+@property(nonatomic, readonly) NSTableView *tableView;
+
 - (id)initWithFrame:(NSRect)frame;
 - (void)shutdown;
 - (void)updateCommands;
-- (CommandHistoryEntry *)selectedEntry;
+- (CommandUse *)selectedCommandUse;
 
 @end

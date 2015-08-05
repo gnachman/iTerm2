@@ -58,6 +58,9 @@
 - (NSString*)debugString;
 - (BOOL)isAllDirty;
 - (void)resetAllDirty;
+- (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line;
+- (NSIndexSet *)animatedLines;
+- (void)resetAnimatedLines;
 
 // Set the cursor dirty. Cursor coords are different because of how they handle
 // being in the WIDTH'th column (it wraps to the start of the next line)
@@ -97,10 +100,17 @@
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark;
 
 // Indicates if we're in alternate screen mode.
 - (BOOL)showingAlternateScreen;
 
 - (void)clearBuffer;
+
+// When the cursor is about to be hidden, a copy of the grid is saved. This
+// method is used to temporarily swap in the saved grid if one is available. It
+// returns YES if the saved grid was swapped in (only possible if useSavedGrid
+// is YES, of course).
+- (BOOL)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 
 @end

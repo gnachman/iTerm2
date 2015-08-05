@@ -17,7 +17,7 @@
 				<string>pl</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2.iconset</string>
+			<string>iTerm2.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>Terminal scripts</string>
 			<key>CFBundleTypeRole</key>
@@ -39,7 +39,7 @@
 				<string>itermcolors</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string>iTerm2.iconset</string>
+			<string>iTerm2.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>iTerm2 Color Presets</string>
 			<key>CFBundleTypeRole</key>
@@ -62,8 +62,6 @@
 	<string>iTerm2 Help</string>
 	<key>CFBundleHelpBookName</key>
 	<string>iTerm2 Help</string>
-	<key>CFBundleIconFile</key>
-	<string>iTerm2</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.googlecode.iterm2</string>
 	<key>CFBundleInfoDictionaryVersion</key>

@@ -69,7 +69,7 @@
 #import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
-#import "iTermAdvancedSettingsController.h"
+#import "iTermAdvancedSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
@@ -114,7 +114,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     IBOutlet KeysPreferencesViewController *_keysViewController;
     IBOutlet ProfilePreferencesViewController *_profilesViewController;
     IBOutlet PointerPreferencesViewController *_pointerViewController;
-    IBOutlet iTermAdvancedSettingsController *_advancedViewController;
+    IBOutlet iTermAdvancedSettingsViewController *_advancedViewController;
 
     IBOutlet NSToolbar *_toolbar;
     IBOutlet NSTabView *_tabView;
@@ -208,12 +208,12 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [_toolbar setSelectedItemIdentifier:[_bookmarksToolbarItem itemIdentifier]];
 }
 
-- (void)openToProfileWithGuid:(NSString*)guid {
+// NOTE: Callers should invoke makeKeyAndOrderFront if they are so inclined.
+- (void)openToProfileWithGuid:(NSString*)guid selectGeneralTab:(BOOL)selectGeneralTab {
     [self window];
     [self selectProfilesTab];
-    [_profilesViewController selectGeneralTab];
     [self run];
-    [_profilesViewController openToProfileWithGuid:guid];
+    [_profilesViewController openToProfileWithGuid:guid selectGeneralTab:selectGeneralTab];
 }
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename {
@@ -227,8 +227,9 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 - (void)run {
     [_generalPreferencesViewController updateEnabledState];
     [_profilesViewController selectFirstProfileIfNecessary];
-    [self showWindow:self];
-    [[self window] makeKeyAndOrderFront:self];
+    if (!self.window.isVisible) {
+        [self showWindow:self];
+    }
 }
 
 // Update the values in form fields to reflect the bookmark's state

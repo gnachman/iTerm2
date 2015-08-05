@@ -116,7 +116,21 @@
     NSRect scrollRect;
 
     scrollRect = [self documentVisibleRect];
-    scrollRect.origin.y -= [theEvent deltaY] * [self verticalLineScroll];
+
+    CGFloat delta = [theEvent deltaY];
+    // Make sure that a very small scroll event moves by at least one line.
+    if (fabs(delta) < 1) {
+        if (delta > 0) {
+            delta = 1;
+        } else if (delta < 0) {
+            delta = -1;
+        } else {
+            // The delta could be 0 in case of touchpad scrolling.
+            delta = 0;
+        }
+    }
+
+    scrollRect.origin.y -= delta * [self verticalLineScroll];
     [[self documentView] scrollRectToVisible:scrollRect];
 
     [self detectUserScroll];
@@ -178,6 +192,5 @@
         [super setHasVerticalScroller:flag];
     }
 }
-
 
 @end

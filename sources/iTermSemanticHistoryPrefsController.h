@@ -17,6 +17,7 @@ extern NSString *kSublimeText3Identifier;
 extern NSString *kMacVimIdentifier;
 extern NSString *kAtomIdentifier;
 extern NSString *kTextmateIdentifier;
+extern NSString *kTextmate2Identifier;
 extern NSString *kBBEditIdentifier;
 
 extern NSString *kSemanticHistoryBestEditorAction;
@@ -32,13 +33,7 @@ extern NSString *kSemanticHistoryCoprocessAction;
 - (void)semanticHistoryPrefsControllerSettingChanged:(iTermSemanticHistoryPrefsController *)controller;
 @end
 
-@interface iTermSemanticHistoryPrefsController : NSObject {
-    NSString *guid_;
-    IBOutlet NSPopUpButton *action_;
-    IBOutlet NSTextField *text_;
-    IBOutlet NSPopUpButton *editors_;
-    IBOutlet NSTextField *caveat_;
-}
+@interface iTermSemanticHistoryPrefsController : NSObject
 
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic, assign) IBOutlet id<iTermSemanticHistoryPrefsControllerDelegate> delegate;
@@ -48,5 +43,6 @@ extern NSString *kSemanticHistoryCoprocessAction;
 + (BOOL)bundleIdIsEditor:(NSString *)bundleId;
 - (IBAction)actionChanged:(id)sender;
 - (NSDictionary *)prefs;
+- (void)setEnabled:(BOOL)enabled;
 
 @end

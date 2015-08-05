@@ -35,6 +35,12 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
 
     // Only used by key actions and paste special
     kPasteFlagsBase64Encode = (1 << 6),
+
+    // Wait for prompt before each line
+    kPasteFlagsCommands = (1 << 8),
+
+    // New additions
+    kPasteFlagsRemovingNewlines = (1 << 9),
 };
 
 @interface PasteEvent : NSEvent

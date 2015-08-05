@@ -8,6 +8,7 @@
 
 #import "ProfilesSessionPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermWarning.h"
 #import "NSFileManager+iTerm.h"
 #import "PreferencePanel.h"
 
@@ -28,6 +29,7 @@
     IBOutlet NSButton *_changeLogDir;
 
     IBOutlet NSTextField *_undoTimeout;
+    IBOutlet NSButton *_reduceFlicker;
 
     BOOL _awoken;
 }
@@ -64,7 +66,7 @@
         _changeLogDir.enabled = [self boolForKey:KEY_AUTOLOG];
         [self updateLogDirWarning];
     };
-    
+
     info = [self defineControl:_logDir
                            key:KEY_LOGDIR
                           type:kPreferenceInfoTypeStringTextField];
@@ -73,14 +75,48 @@
     info = [self defineControl:_sendCodeWhenIdle
                            key:KEY_SEND_CODE_WHEN_IDLE
                           type:kPreferenceInfoTypeCheckbox];
-    info.observer = ^() { _idleCode.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE]; };
+    info.customSettingChangedHandler = ^(id sender) {
+        BOOL isOn = [sender state] == NSOnState;
+        if (isOn) {
+            static NSString *const kWarnAboutSendCodeWhenIdle = @"NoSyncWarnAboutSendCodeWhenIdle";
+            // This stupid feature was inherited from iTerm 0.1. It doesn't work because people
+            // set a code of 0, thinking it will keep their ssh sessions alive. While it does, it
+            // will also fill your prompt with ^@ characters, if you're lucky. If you're not at your
+            // prompt it could do basically anything. It's useful for people working with awful
+            // outdated networking equipment who know what they're doing so I'm not kiling it.
+            // If you came here because you want to keep your ssh sessions alive, look into enabling
+            // KeepAlive on your ssh client. Put this in your ~/.ssh/config:
+            // Host *
+            //   ServerAliveInterval 60
+            iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:@"You probably don't want to turn this on. "
+                                                   @"It's not suitable for keeping ssh sessions alive, "
+                                                   @"even with a code of “0”. Are you sure you want this?"
+                                           actions:@[ @"Enable Send Code", @"Cancel" ]
+                                        identifier:kWarnAboutSendCodeWhenIdle
+                                       silenceable:kiTermWarningTypePermanentlySilenceable];
+            if (selection == kiTermWarningSelection0) {
+                [self setBool:YES forKey:KEY_SEND_CODE_WHEN_IDLE];
+            }
+        } else {
+            [self setBool:NO forKey:KEY_SEND_CODE_WHEN_IDLE];
+        }
+    };
+    info.observer = ^() {
+        _idleCode.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE];
+    };
 
     info = [self defineControl:_idleCode
                            key:KEY_IDLE_CODE
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 256);
-    
+
     [self updateRemoveJobButtonEnabled];
+
+    [self defineControl:_reduceFlicker
+                    key:KEY_REDUCE_FLICKER
+                   type:kPreferenceInfoTypeCheckbox];
+
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {
@@ -209,9 +245,11 @@
     [panel setCanChooseFiles:NO];
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
-    
+
     if ([panel runModal] == NSOKButton) {
-        [_logDir setStringValue:[panel legacyDirectory]];
+        NSString *path = [[panel directoryURL] path];
+        _logDir.stringValue = path;
+        [self setString:path forKey:KEY_LOGDIR];
     }
     [self updateLogDirWarning];
 }

@@ -8,6 +8,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "NSColor+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
 #import "PreferencePanel.h"
@@ -17,6 +18,7 @@
 #import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "SessionView.h"
+#import "SolidColorView.h"
 #import "TmuxDashboardController.h"
 #import "TmuxLayoutParser.h"
 #import "WindowControllerInterface.h"
@@ -42,6 +44,76 @@ static const NSUInteger kPTYTabDeadState = (1 << 3);
     int _uniqueId;
     // See kPTYTab*State constants above.
     NSUInteger _state;
+    int _tabNumberForItermSessionId;
+
+    PTYSession* activeSession_;
+
+    // Owning tab view item
+    NSTabViewItem* tabViewItem_;
+
+    id<WindowControllerInterface> parentWindow_;  // Parent controller. Always set. Equals one of realParent or fakeParent.
+    NSWindowController<iTermWindowController> *realParentWindow_;  // non-nil only if parent is PseudoTerminal*. Implements optional methods of protocol.
+    FakeWindow* fakeParentWindow_;  // non-nil only if parent is FakeWindow*
+
+    // The tab number that is observed by PSMTabBarControl.
+    int objectCount_;
+
+    // The icon to display in the tab. Observed by PSMTabBarControl.
+    NSImage* icon_;
+
+    // Whether the session is "busy". Observed by PSMTabBarControl.
+    BOOL isProcessing_;
+
+    // Does any session have new output?
+    BOOL newOutput_;
+
+    // The root view of this tab. May be a SolidColorView for tmux tabs or the
+    // same as root_ otherwise (the normal case).
+    NSView *tabView_;  // weak
+
+    // If there is a flexible root view, this is set and is the tabview's view.
+    // Otherwise it is nil.
+    SolidColorView *flexibleView_;
+
+    // The root of a tree of split views whose leaves are SessionViews. The root is the view of the
+    // NSTabViewItem.
+    //
+    // NSTabView -> NSTabViewItem -> NSSplitView (root) -> ... -> SessionView -> PTYScrollView -> etc.
+    NSSplitView* root_;
+
+    // If non-nil, this session may not change size.
+    PTYSession* lockedSession_;
+
+    // The active pane is maximized, meaning there are other panes that are hidden.
+    BOOL isMaximized_;
+    NSMutableDictionary* idMap_;  // maps saved session id to ptysession.
+    NSDictionary* savedArrangement_;  // layout of splitters pre-maximize
+    NSSize savedSize_;  // pre-maximize active session size.
+
+    // If true, report that the tab's ideal size is its currentSize.
+    BOOL reportIdeal_;
+
+    // If this window is a tmux client, this is the window number defined by
+    // the tmux server. -1 if not a tmux client.
+    int tmuxWindow_;
+
+    // If positive, then a tmux-originated resize is in progress and splitter
+    // delegates won't interfere.
+    int tmuxOriginatedResizeInProgress_;
+
+    // The tmux controller used by all sessions in this tab.
+    TmuxController *tmuxController_;
+
+    // The last tmux parse tree
+    NSMutableDictionary *parseTree_;
+
+    // Temporarily hidden live views (this is needed to hold a reference count).
+    NSMutableArray *hiddenLiveViews_;  // SessionView objects
+
+    NSString *tmuxWindowName_;
+
+        // This tab broadcasts to all its sessions?
+        BOOL broadcasting_;
 }
 
 @synthesize broadcasting = broadcasting_;
@@ -71,7 +143,7 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
 static NSString* TAB_ARRANGEMENT_ID = @"ID";  // only for maximize/unmaximize
 static NSString* TAB_ARRANGEMENT_IS_MAXIMIZED = @"Maximized";
 static NSString* TAB_ARRANGEMENT_TMUX_WINDOW_PANE = @"tmux window pane";
-static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";
+static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";  // DEPRECATED - Each PTYSession has its own tab color now
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -146,11 +218,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 // init/dealloc
-- (id)initWithSession:(PTYSession*)session
-{
+- (id)initWithSession:(PTYSession*)session {
     self = [super init];
     PtyLog(@"PTYTab initWithSession %p", self);
     if (self) {
+        _tabNumberForItermSessionId = -1;
         hiddenLiveViews_ = [[NSMutableArray alloc] init];
         activeSession_ = session;
         [session setActivityCounter:@(_activityCounter++)];
@@ -209,6 +281,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     self = [super init];
     PtyLog(@"PTYTab initWithRoot %p", self);
     if (self) {
+        _tabNumberForItermSessionId = -1;
         activeSession_ = nil;
         hiddenLiveViews_ = [[NSMutableArray alloc] init];
         [self setRoot:root];
@@ -298,9 +371,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [self setIcon:gDeadImage];
     } else if (_state & kPTYTabBellState) {
         [self setIcon:warningImage];
-    } else if (_state & (kPTYTabNewOutputState)) {
+    } else if (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
+               (_state & (kPTYTabNewOutputState))) {
         [self setIcon:gNewOutputImage];
-    } else if (_state & kPTYTabIdleState) {
+    } else if (![iTermPreferences boolForKey:kPreferenceKeyHideTabActivityIndicator] &&
+               (_state & kPTYTabIdleState)) {
         [self setIcon:gIdleImage];
     } else {
         [self setIcon:nil];
@@ -536,8 +611,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
-- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent
-{
+- (void)setParentWindow:(NSWindowController<iTermWindowController> *)theParent {
     // Parent holds a reference to us (indirectly) so we mustn't reference it.
     parentWindow_ = realParentWindow_ = theParent;
     [self updateFlexibleViewColors];
@@ -590,9 +664,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return [iTermPreferences boolForKey:kPreferenceKeyHideTabNumber] ? 0 : objectCount_;
 }
 
-- (void)setObjectCount:(int)value
-{
+- (void)setObjectCount:(int)value {
     objectCount_ = value;
+    [_delegate tab:self didChangeObjectCount:self.objectCount];
 }
 
 - (NSImage *)icon
@@ -600,10 +674,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return icon_;
 }
 
-- (void)setIcon:(NSImage *)anIcon
-{
+- (void)setIcon:(NSImage *)anIcon {
     [icon_ autorelease];
     icon_ = [anIcon retain];
+    [_delegate tab:self didChangeIcon:anIcon];
 }
 
 - (BOOL)realIsProcessing
@@ -620,6 +694,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (void)setIsProcessing:(BOOL)aFlag {
     isProcessing_ = aFlag;
+    [_delegate tab:self didChangeProcessingStatus:self.isProcessing];
 }
 
 - (BOOL)isActiveSession
@@ -895,8 +970,11 @@ static NSString* FormatRect(NSRect r) {
     return [[self activeSession] exited];
 }
 
-- (void)setDvrInSession:(PTYSession*)newSession
-{
+- (void)addHiddenLiveView:(SessionView *)hiddenLiveView {
+    [hiddenLiveViews_ addObject:hiddenLiveView];
+}
+
+- (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession {
     PtyLog(@"PTYTab setDvrInSession:%p", newSession);
     PTYSession* oldSession = [self activeSession];
     assert(oldSession != newSession);
@@ -911,11 +989,7 @@ static NSString* FormatRect(NSRect r) {
     [newSession setName:[oldSession name]];
     [newSession setDefaultName:[oldSession defaultName]];
 
-    // Put the new session in DVR mode and pass it the old session, which it
-    // keeps a reference to.
-
-    [newSession setDvr:[[oldSession screen] dvr] liveSession:oldSession];
-
+    newSession.liveSession = oldSession;
     activeSession_ = newSession;
 
     // TODO(georgen): the hidden window can resize itself and the FakeWindow
@@ -927,6 +1001,33 @@ static NSString* FormatRect(NSRect r) {
 
     // This starts the new session's update timer
     [newSession updateDisplay];
+    [realParentWindow_.window makeFirstResponder:newSession.textview];
+}
+
+- (int)tabNumberForItermSessionId {
+    if (_tabNumberForItermSessionId != -1) {
+        return _tabNumberForItermSessionId;
+    }
+
+    NSMutableSet *tabNumbersInUse = [NSMutableSet set];
+    for (PTYTab *tab in realParentWindow_.tabs) {
+        [tabNumbersInUse addObject:@(tab->_tabNumberForItermSessionId)];
+    }
+    int i = objectCount_ - 1;
+    int next = 0;
+    while ([tabNumbersInUse containsObject:@(i)]) {
+        i = next;
+        next++;
+    }
+    _tabNumberForItermSessionId = i;
+    return i;
+}
+
+
+- (void)setDvrInSession:(PTYSession*)newSession {
+    PTYSession *oldSession = [[activeSession_ retain] autorelease];
+    [self replaceActiveSessionWithSyntheticSession:newSession];
+    [newSession setDvr:[[oldSession screen] dvr] liveSession:oldSession];
 }
 
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession {
@@ -942,6 +1043,10 @@ static NSString* FormatRect(NSRect r) {
     activeSession_ = liveSession;
 
     [fakeParentWindow_ rejoin:realParentWindow_];
+    [fakeParentWindow_ autorelease];
+    replaySession.view.session = nil;
+    replaySession.liveSession = nil;
+    fakeParentWindow_ = nil;
 }
 
 - (void)_dumpView:(id)view withPrefix:(NSString*)prefix
@@ -2038,7 +2143,7 @@ static NSString* FormatRect(NSRect r) {
             }
 
             NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-            NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+            NSString *uniqueId = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
             if (wp && theMap[wp]) {
                 // Creating splitters for a tmux tab. The arrangement is marked
                 // up with window pane IDs, whcih may or may not already exist.
@@ -2079,9 +2184,9 @@ static NSString* FormatRect(NSRect r) {
         NSArray* subArrangements = [arrangement objectForKey:SUBVIEWS];
         PTYSession* active = nil;
         iTermObjectType subObjectType = objectType;
-        for (int i = 0; i < [subArrangements count]; ++i) {
-            NSDictionary* subArrangement = [subArrangements objectAtIndex:i];
-            PTYSession* session = [self _recursiveRestoreSessions:subArrangement
+        for (int i = 0; i < [subArrangements count] && i < splitter.subviews.count; ++i) {
+            NSDictionary *subArrangement = subArrangements[i];
+            PTYSession *session = [self _recursiveRestoreSessions:subArrangement
                                                            atNode:[[splitter subviews] objectAtIndex:i]
                                                             inTab:theTab
                                                     forObjectType:subObjectType];
@@ -2096,7 +2201,7 @@ static NSString* FormatRect(NSRect r) {
         SessionView* sessionView = (SessionView*)view;
 
         NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
-        NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+        NSString *uniqueId = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
         PTYSession *session;
         if (uniqueId && [sessionView session]) {  // TODO: Is it right to check if session exists here?
             session = [sessionView session];
@@ -2112,7 +2217,6 @@ static NSString* FormatRect(NSRect r) {
                                                   inView:(SessionView*)view
                                                    inTab:theTab
                                            forObjectType:objectType];
-            [sessionView setSession:session];
         }
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
             return session;
@@ -2237,6 +2341,7 @@ static NSString* FormatRect(NSRect r) {
         [theTab enableFlexibleView];
     }
     [theTab setParentWindow:term];
+    theTab.delegate = term;
     [theTab->tabViewItem_ setLabel:@"Restoring..."];
 
     [theTab setObjectCount:[term numberOfTabs] + 1];
@@ -2257,11 +2362,8 @@ static NSString* FormatRect(NSRect r) {
 
 // This can only be used in conjunction with
 // +[tabWithArrangement:inTerminal:hasFlexibleView:viewMap:].
- - (void)addToTerminal:(NSWindowController<iTermWindowController> *)term
-       withArrangement:(NSDictionary *)arrangement {
-    // Add the existing tab, which is now fully populated, to the term.
-    [term appendTab:self];
-
+- (void)didAddToTerminal:(NSWindowController<iTermWindowController> *)term
+         withArrangement:(NSDictionary *)arrangement {
     NSDictionary* root = [arrangement objectForKey:TAB_ARRANGEMENT_ROOT];
     if ([root[TAB_ARRANGEMENT_IS_MAXIMIZED] boolValue]) {
         [self maximize];
@@ -2269,7 +2371,17 @@ static NSString* FormatRect(NSRect r) {
 
     [self numberOfSessionsDidChange];
     [term setDimmingForSessions];
-    [term updateTabColors];
+
+    // Handle old-style (now deprecated) tab color field.
+    NSString *colorName = [arrangement objectForKey:TAB_ARRANGEMENT_COLOR];
+    NSColor *tabColor = [[self class] colorForHtmlName:colorName];
+    if (tabColor) {
+        PTYSession *session = [self activeSession];
+        [session setSessionSpecificProfileValues:@{ KEY_TAB_COLOR: [tabColor dictionaryValue],
+                                                    KEY_USE_TAB_COLOR: @YES }];
+    } else {
+        [term updateTabColors];
+    }
 }
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
@@ -2284,8 +2396,10 @@ static NSString* FormatRect(NSRect r) {
     if ([[theTab sessionViews] count] == 0) {
         return nil;
     }
-    [theTab addToTerminal:term
-          withArrangement:arrangement];
+
+    [term appendTab:theTab];
+    [theTab didAddToTerminal:term
+             withArrangement:arrangement];
     return theTab;
 }
 
@@ -2362,16 +2476,7 @@ static NSString* FormatRect(NSRect r) {
                                       contents:contents];
     }
 
-    // Fill in the tab's color, which is unfortunately not stored in the root
-    // node of the arrangement.
-    NSColor *color = [[realParentWindow_ tabBarControl] tabColorForTabViewItem:tabViewItem_];
-    NSString *colorName = color ? [[self class] htmlNameForColor:color] : nil;
-    if (colorName) {
-        return @{ TAB_ARRANGEMENT_ROOT: rootNode,
-                  TAB_ARRANGEMENT_COLOR: colorName };
-    } else {
-        return @{ TAB_ARRANGEMENT_ROOT: rootNode };
-    }
+    return @{ TAB_ARRANGEMENT_ROOT: rootNode };
 }
 
 - (NSDictionary*)arrangement {
@@ -2394,13 +2499,13 @@ static NSString* FormatRect(NSRect r) {
         return YES;
     } else {
         // Is a session view
-        NSString *uniqueId = [PTYSession uniqueIdInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
-        if (!uniqueId) {
+        NSString *sessionGuid = [PTYSession guidInArrangement:arrangement[TAB_ARRANGEMENT_SESSION]];
+        if (!sessionGuid) {
             return NO;
         }
         PTYSession *session = nil;
         for (PTYSession *aSession in sessions) {
-            if ([aSession.uniqueID isEqualToString:uniqueId]) {
+            if ([aSession.guid isEqualToString:sessionGuid]) {
                 session = aSession;
                 break;
             }
@@ -2408,7 +2513,7 @@ static NSString* FormatRect(NSRect r) {
         if (!session) {
             return NO;
         }
-        viewMap[uniqueId] = session;
+        viewMap[sessionGuid] = session;
         return YES;
     }
 }
@@ -2684,8 +2789,9 @@ static NSString* FormatRect(NSRect r) {
     for (PTYSession *aSession in [theTab sessions]) {
         [[aSession view] setAutoresizesSubviews:NO];  // This is ok because it's a tmux tab
     }
-    [theTab addToTerminal:term
-          withArrangement:arrangement];
+
+    [term appendTab:theTab];
+    [theTab didAddToTerminal:term withArrangement:arrangement];
 
     return theTab;
 }
@@ -3072,8 +3178,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
-       tmuxController:(TmuxController *)tmuxController
-{
+       tmuxController:(TmuxController *)tmuxController {
     DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_];
@@ -3092,6 +3197,47 @@ static NSString* FormatRect(NSRect r) {
     [[root_ window] makeFirstResponder:[[self activeSession] textview]];
     [parseTree_ release];
     parseTree_ = [parseTree retain];
+
+    [self activateJuniorSession];
+}
+
+// Find a session that is not "senior" to a tmux pane getting split by the user and make it
+// active.
+- (void)activateJuniorSession {
+    DLog(@"activateJuniorSession");
+    BOOL haveSenior = NO;
+    for (PTYSession *aSession in self.sessions) {
+        if (aSession.sessionIsSeniorToTmuxSplitPane) {
+            haveSenior = YES;
+            DLog(@"Found a senior session");
+            break;
+        }
+    }
+    if (!haveSenior) {
+        // Just a layout change, not a user-driven split.
+        DLog(@"No senior session found");
+        return;
+    }
+
+    // Find a non-senior pane.
+    PTYSession *newSession = nil;
+    for (PTYSession *aSession in self.sessions) {
+        if (!aSession.sessionIsSeniorToTmuxSplitPane) {
+            newSession = aSession;
+            DLog(@"Found a junior session");
+            break;
+        }
+    }
+    if (newSession) {
+        DLog(@"Activate junior session");
+        [self setActiveSession:newSession];
+    }
+
+    // Reset the flag so layout changes in the future because of resizing, dragging a split pane
+    // divider, etc. won't change active session.
+    for (PTYSession *aSession in self.sessions) {
+        aSession.sessionIsSeniorToTmuxSplitPane = NO;
+    }
 }
 
 - (BOOL)layoutIsTooLarge

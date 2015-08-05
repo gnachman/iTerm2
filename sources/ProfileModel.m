@@ -23,9 +23,10 @@
  */
 
 #import "ITAddressBookMgr.h"
+#import "iTermProfileSearchToken.h"
 #import "NSStringITerm.h"
-#import "ProfileModel.h"
 #import "PreferencePanel.h"
+#import "ProfileModel.h"
 
 NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
 
@@ -95,63 +96,108 @@ int gMigrated;
     return [bookmarks_ count];
 }
 
-- (BOOL)_document:(NSArray *)nameWords containsToken:(NSString *)token
-{
-    for (int k = 0; k < [nameWords count]; ++k) {
-        NSString* tagPart = [nameWords objectAtIndex:k];
-        NSRange range;
-        if ([token length] && [token characterAtIndex:0] == '*') {
-            range = [tagPart rangeOfString:[token substringFromIndex:1] options:NSCaseInsensitiveSearch];
-        } else {
-            range = [tagPart rangeOfString:token options:(NSCaseInsensitiveSearch | NSAnchoredSearch)];
-        }
-        if (range.location != NSNotFound) {
-            return YES;
-        }
-    }
-    return NO;
++ (NSAttributedString *)attributedStringForName:(NSString *)name
+                   highlightingMatchesForFilter:(NSString *)filter
+                              defaultAttributes:(NSDictionary *)defaultAttributes
+                          highlightedAttributes:(NSDictionary *)highlightedAttributes {
+    NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
+    NSArray* tokens = [self parseFilter:filter];
+    [self doesProfileWithName:name tags:@[] matchFilter:tokens nameIndexSet:indexes tagIndexSets:nil];
+    NSMutableAttributedString *result =
+        [[[NSMutableAttributedString alloc] initWithString:name
+                                                attributes:defaultAttributes] autorelease];
+    [indexes enumerateRangesUsingBlock:^(NSRange range, BOOL *stop) {
+        [result setAttributes:highlightedAttributes range:range];
+    }];
+    return result;
 }
-- (BOOL)doesBookmarkAtIndex:(int)theIndex matchFilter:(NSArray*)tokens
-{
-    Profile* bookmark = [self profileAtIndex:theIndex];
-    NSArray* tags = [bookmark objectForKey:KEY_TAGS];
-    NSArray* nameWords = [[bookmark objectForKey:KEY_NAME] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
++ (NSArray *)attributedTagsForTags:(NSArray *)tags
+                 highlightingMatchesForFilter:(NSString *)filter
+                            defaultAttributes:(NSDictionary *)defaultAttributes
+                        highlightedAttributes:(NSDictionary *)highlightedAttributes {
+    NSMutableArray *indexSets = [NSMutableArray array];
+    for (int i = 0; i < tags.count; i++) {
+        [indexSets addObject:[NSMutableIndexSet indexSet]];
+    }
+    NSArray* tokens = [self parseFilter:filter];
+    [self doesProfileWithName:nil
+                         tags:tags
+                  matchFilter:tokens
+                 nameIndexSet:nil
+                 tagIndexSets:indexSets];
+    NSMutableArray *result = [NSMutableArray array];
+    for (int i = 0; i < tags.count; i++) {
+        NSMutableAttributedString *attributedString =
+            [[[NSMutableAttributedString alloc] initWithString:tags[i]
+                                                    attributes:defaultAttributes] autorelease];
+        NSIndexSet *indexSet = indexSets[i];
+        [indexSet enumerateRangesUsingBlock:^(NSRange range, BOOL *stop) {
+            [attributedString setAttributes:highlightedAttributes range:range];
+        }];
+        [result addObject:attributedString];
+    }
+    return result;
+}
+
++ (BOOL)doesProfile:(Profile *)profile matchFilter:(NSArray *)tokens {
+    return [self.class doesProfileWithName:profile[KEY_NAME]
+                                      tags:profile[KEY_TAGS]
+                               matchFilter:tokens
+                              nameIndexSet:nil
+                              tagIndexSets:nil];
+}
+
++ (BOOL)doesProfileWithName:(NSString *)name
+                       tags:(NSArray *)tags
+                matchFilter:(NSArray *)tokens
+               nameIndexSet:(NSMutableIndexSet *)nameIndexSet
+               tagIndexSets:(NSArray *)tagIndexSets {
+    NSArray* nameWords = [name componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     for (int i = 0; i < [tokens count]; ++i) {
-        NSString* token = [tokens objectAtIndex:i];
-        if (![token length]) {
-            continue;
-        }
+        iTermProfileSearchToken *token = [tokens objectAtIndex:i];
         // Search each word in tag until one has this token as a prefix.
-        bool found;
-
         // First see if this token occurs in the title
-        found = [self _document:nameWords containsToken:token];
+        BOOL found = [token matchesAnyWordInNameWords:nameWords];
 
+        if (found) {
+            [nameIndexSet addIndexesInRange:token.range];
+        }
         // If not try each tag.
         for (int j = 0; !found && j < [tags count]; ++j) {
             // Expand the jth tag into an array of the words in the tag
             NSArray* tagWords = [[tags objectAtIndex:j] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-            found = [self _document:tagWords containsToken:token];
+            found = [token matchesAnyWordInTagWords:tagWords];
+            if (found) {
+                NSMutableIndexSet *indexSet = tagIndexSets[j];
+                [indexSet addIndexesInRange:token.range];
+            }
         }
-        if (!found) {
-            // No tag had token i as a prefix.
+        if (!found && name != nil) {
+            // No tag had token i as a prefix. If name is nil then we don't really care about the
+            // answer and we just want index sets.
             return NO;
         }
     }
     return YES;
 }
 
-- (NSArray*)parseFilter:(NSString*)filter
-{
-    return [filter componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
++ (NSArray *)parseFilter:(NSString*)filter {
+    NSArray *phrases = [filter componentsBySplittingProfileListQuery];
+    NSMutableArray *tokens = [NSMutableArray array];
+    for (NSString *phrase in phrases) {
+        iTermProfileSearchToken *token = [[[iTermProfileSearchToken alloc] initWithPhrase:phrase] autorelease];
+        [tokens addObject:token];
+    }
+    return tokens;
 }
 
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter orGuid:(NSString *)lockedGuid {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:[bookmarks_ count]];
-    NSArray* tokens = [self parseFilter:filter];
+    NSArray* tokens = [self.class parseFilter:filter];
     int count = [bookmarks_ count];
     for (int i = 0; i < count; ++i) {
-        if ([self doesBookmarkAtIndex:i matchFilter:tokens] ||
+        if ([self.class doesProfile:[self profileAtIndex:i] matchFilter:tokens] ||
             [bookmarks_[i][KEY_GUID] isEqualToString:lockedGuid]) {
             [result addObject:@(i)];
         }
@@ -165,11 +211,11 @@ int gMigrated;
 
 - (int)numberOfBookmarksWithFilter:(NSString*)filter
 {
-    NSArray* tokens = [self parseFilter:filter];
+    NSArray* tokens = [self.class parseFilter:filter];
     int count = [bookmarks_ count];
     int n = 0;
     for (int i = 0; i < count; ++i) {
-        if ([self doesBookmarkAtIndex:i matchFilter:tokens]) {
+        if ([self.class doesProfile:[self profileAtIndex:i] matchFilter:tokens]) {
             ++n;
         }
     }
@@ -186,11 +232,11 @@ int gMigrated;
 
 - (Profile*)profileAtIndex:(int)theIndex withFilter:(NSString*)filter
 {
-    NSArray* tokens = [self parseFilter:filter];
+    NSArray* tokens = [self.class parseFilter:filter];
     int count = [bookmarks_ count];
     int n = 0;
     for (int i = 0; i < count; ++i) {
-        if ([self doesBookmarkAtIndex:i matchFilter:tokens]) {
+        if ([self.class doesProfile:[self profileAtIndex:i] matchFilter:tokens]) {
             if (n == theIndex) {
                 return [self profileAtIndex:i];
             }
@@ -341,11 +387,11 @@ int gMigrated;
 
 - (int)convertFilteredIndex:(int)theIndex withFilter:(NSString*)filter
 {
-    NSArray* tokens = [self parseFilter:filter];
+    NSArray* tokens = [self.class parseFilter:filter];
     int count = [bookmarks_ count];
     int n = 0;
     for (int i = 0; i < count; ++i) {
-        if ([self doesBookmarkAtIndex:i matchFilter:tokens]) {
+        if ([self.class doesProfile:[self profileAtIndex:i] matchFilter:tokens]) {
             if (n == theIndex) {
                 return i;
             }
@@ -460,17 +506,14 @@ int gMigrated;
     return bookmarks_;
 }
 
-- (void)load:(NSArray*)prefs
-{
+- (void)load:(NSArray *)prefs {
     [bookmarks_ removeAllObjects];
-    for (int i = 0; i < [prefs count]; ++i) {
-        Profile* bookmark = [prefs objectAtIndex:i];
-        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
+    for (Profile *profile in prefs) {
+        NSArray *tags = profile[KEY_TAGS];
         if (![tags containsObject:@"bonjour"]) {
-            [self addBookmark:bookmark];
+            [self addBookmark:profile];
         }
     }
-    [bookmarks_ retain];
 }
 
 + (NSString*)freshGuid {
@@ -484,11 +527,11 @@ int gMigrated;
 
 - (int)indexOfProfileWithGuid:(NSString*)guid withFilter:(NSString*)filter
 {
-    NSArray* tokens = [self parseFilter:filter];
+    NSArray* tokens = [self.class parseFilter:filter];
     int count = [bookmarks_ count];
     int n = 0;
     for (int i = 0; i < count; ++i) {
-        if (![self doesBookmarkAtIndex:i matchFilter:tokens]) {
+        if (![self.class doesProfile:[self profileAtIndex:i] matchFilter:tokens]) {
             continue;
         }
         if ([[[bookmarks_ objectAtIndex:i] objectForKey:KEY_GUID] isEqualToString:guid]) {

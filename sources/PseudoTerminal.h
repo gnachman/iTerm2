@@ -1,20 +1,21 @@
 #import <Cocoa/Cocoa.h>
+
 #import "Autocomplete.h"
 #import "FutureMethods.h"
-#import "PSMTabBarControl.h"
-#import "PTYTabView.h"
-#import "PTYWindow.h"
+#import "iTermInstantReplayWindowController.h"
+#import "iTermToolbeltView.h"
 #import "PasteboardHistory.h"
 #import "Popup.h"
 #import "ProfileListView.h"
-#import "SolidColorView.h"
-#import "ToolbeltView.h"
+#import "PSMTabBarControl.h"
+#import "PTYTabView.h"
+#import "PTYWindow.h"
 #import "WindowControllerInterface.h"
-#import "iTermInstantReplayWindowController.h"
+#include "iTermFileDescriptorClient.h"
 
 @class PTYSession;
 @class PSMTabBarControl;
-@class ToolbeltView;
+@class iTermToolbeltView;
 @class iTermController;
 @class TmuxController;
 
@@ -47,6 +48,10 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 
 // Indicates if the window is fully initialized.
 @property(nonatomic, readonly) BOOL windowInitialized;
+
+// If set, all substitutions whose values are unknown will be taken to be empty string.
+// This is useful when attaching to an orphaned server.
+@property(nonatomic, assign) BOOL disablePromptForSubstitutions;
 
 // Draws a mock-up of a window arrangement into the current graphics context.
 // |frames| gives an array of NSValue's having NSRect values for each screen,
@@ -176,7 +181,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (BOOL)promptOnClose;
 
 // Accessor for toolbelt view.
-- (ToolbeltView *)toolbelt;
+- (iTermToolbeltView *)toolbelt;
 
 // Tries to grow (or shrink, for negative values) the toolbelt. Returns the amount it was actually
 // grown by, in case it hits a limit.
@@ -243,10 +248,10 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
 
-- (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry withURL:(NSString *)url;
 - (PTYSession *)createSessionWithProfile:(NSDictionary *)addressbookEntry
                                  withURL:(NSString *)url
-                           forObjectType:(iTermObjectType)objectType;
+                           forObjectType:(iTermObjectType)objectType
+                        serverConnection:(iTermFileDescriptorServerConnection *)serverConnection;
 
 // Add a new session to this window with the given addressbook entry.
 // The optional command overrides the profile's settings.
@@ -257,7 +262,6 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (IBAction)newTmuxTab:(id)sender;
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.
-- (IBAction)toggleFullScreenMode:(id)sender;
 - (IBAction)closeCurrentTab:(id)sender;
 
 - (void)changeTabColorToMenuAction:(id)sender;
@@ -266,7 +270,8 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 - (void)addRevivedSession:(PTYSession *)session;
 - (void)addTabWithArrangement:(NSDictionary *)arrangement
                      uniqueId:(int)tabUniqueId
-                     sessions:(NSArray *)sessions;
+                     sessions:(NSArray *)sessions
+                 predecessors:(NSArray *)predecessors;  // NSInteger of tab uniqueId's that come before this tab.
 - (void)recreateTab:(PTYTab *)tab
     withArrangement:(NSDictionary *)arrangement
            sessions:(NSArray *)sessions;
@@ -277,6 +282,7 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
             withSize:(NSSize *)size;
 
 - (NSColor *)accessoryTextColor;
+- (void)openPasswordManagerToAccountName:(NSString *)name;
 
 @end
 

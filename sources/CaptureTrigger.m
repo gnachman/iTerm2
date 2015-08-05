@@ -7,13 +7,14 @@
 //
 
 #import "CaptureTrigger.h"
+
+#import "CapturedOutput.h"
 #import "CommandHistory.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermToolbeltView.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
-#import "PseudoTerminal.h"  // TODO: Use delegacy? Or something?
-#import "ToolbeltView.h"
 #import "VT100ScreenMark.h"
 
 // This one cannot be suppressed.
@@ -25,21 +26,10 @@ static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
 static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     @"NoSyncSuppressCaptureOutputToolNotVisibleWarning";
 
-@implementation CapturedOutput
-
-- (void)dealloc {
-    [_values release];
-    [_trigger release];
-    [_mark release];
-    [super dealloc];
-}
-
-@end
-
 
 @implementation CaptureTrigger
 
-- (NSString *)title {
++ (NSString *)title {
     return @"Capture Output";
 }
 
@@ -55,19 +45,25 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
     if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
-    return [ToolbeltView shouldShowTool:kCapturedOutputToolName];
+    return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName];
 }
 
 - (void)showCaptureOutputToolInSession:(PTYSession *)aSession {
     if (!aSession.tab.realParentWindow.shouldShowToolbelt) {
         [aSession.tab.realParentWindow toggleToolbeltVisibility:nil];
     }
-    if (![ToolbeltView shouldShowTool:kCapturedOutputToolName]) {
-        [ToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
+    if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName]) {
+        [iTermToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
     }
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber {
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
     if (!aSession.screen.shellIntegrationInstalled) {
         if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
             [self showShellIntegrationRequiredAnnouncementInSession:aSession];
@@ -78,9 +74,9 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     }
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
-    output.line = string;
+    output.line = stringLine.stringValue;
     output.trigger = self;
-    output.values = values;
+    output.values = [NSArray arrayWithObjects:capturedStrings count:captureCount];
     output.mark = [aSession markAddedAtCursorOfClass:[iTermCapturedOutputMark class]];
     [aSession addCapturedOutput:output];
     return NO;
@@ -106,10 +102,10 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     };
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcemenWithTitle:theTitle
-                                                        style:kiTermAnnouncementViewStyleWarning
-                                                  withActions:@[ @"Show It", @"Silence Warning" ]
-                                                   completion:completion];
+        [iTermAnnouncementViewController announcementWithTitle:theTitle
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Show It", @"Silence Warning" ]
+                                                    completion:completion];
     [aSession queueAnnouncement:announcement
                      identifier:kSuppressCaptureOutputToolNotVisibleWarning];
 }
@@ -134,10 +130,10 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     };
     iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcemenWithTitle:theTitle
-                                                        style:kiTermAnnouncementViewStyleWarning
-                                                  withActions:@[ @"Install", @"Silence Warning" ]
-                                                   completion:completion];
+        [iTermAnnouncementViewController announcementWithTitle:theTitle
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Install", @"Silence Warning" ]
+                                                    completion:completion];
     [aSession queueAnnouncement:announcement
                      identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];
 }
@@ -150,10 +146,10 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
         }
     } else {
         iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcemenWithTitle:@"Can't run two coprocesses at once."
-                                                            style:kiTermAnnouncementViewStyleWarning
-                                                      withActions:@[ ]
-                                                       completion:^(int selection) { }];
+            [iTermAnnouncementViewController announcementWithTitle:@"Can't run two coprocesses at once."
+                                                             style:kiTermAnnouncementViewStyleWarning
+                                                       withActions:@[ ]
+                                                        completion:^(int selection) { }];
         announcement.timeout = 2;
         [session queueAnnouncement:announcement
                         identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier];

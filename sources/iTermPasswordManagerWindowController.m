@@ -8,10 +8,11 @@
 
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermSearchField.h"
-#import "SSKeychain/SSKeychain.h"
+#import <SSKeychain.h>
 #import <Security/Security.h>
 
 static NSString *const kServiceName = @"iTerm2";
+static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersShouldReloadData";
 
 @interface iTermPasswordManagerWindowController () <
     NSTableViewDataSource,
@@ -24,6 +25,7 @@ static NSString *const kServiceName = @"iTerm2";
     IBOutlet NSTableColumn *_accountNameColumn;
     IBOutlet NSTableColumn *_passwordColumn;
     IBOutlet NSButton *_removeButton;
+    IBOutlet NSButton *_editButton;
     IBOutlet NSButton *_enterPasswordButton;
     IBOutlet iTermSearchField *_searchField;
     NSArray *_accounts;
@@ -51,11 +53,19 @@ static NSString *const kServiceName = @"iTerm2";
 }
 
 - (id)init {
-    return [self initWithWindowNibName:@"iTermPasswordManager"];
+    self = [self initWithWindowNibName:@"iTermPasswordManager"];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(reloadAccounts)
+                                                     name:kPasswordManagersShouldReloadData
+                                                   object:nil];
+    }
+    return self;
 }
 
 - (void)dealloc {
     [_accounts release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
 
@@ -78,6 +88,9 @@ static NSString *const kServiceName = @"iTerm2";
 }
 
 - (void)selectAccountName:(NSString *)name {
+    if (!name) {
+        return;
+    }
     NSUInteger index = [_accounts indexOfObject:name];
     if (index != NSNotFound) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
@@ -88,7 +101,15 @@ static NSString *const kServiceName = @"iTerm2";
 #pragma mark - Actions
 
 - (IBAction)closeCurrentSession:(id)sender {
-    [[self window] orderOut:sender];
+    [self orderOutOrEndSheet];
+}
+
+- (void)orderOutOrEndSheet {
+    if (self.window.isSheet) {
+        [NSApp endSheet:self.window];
+    } else {
+        [[self window] orderOut:nil];
+    }
 }
 
 - (void)doubleClickOnTableView:(id)sender {
@@ -107,6 +128,7 @@ static NSString *const kServiceName = @"iTerm2";
             [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
         }
     }
+    [self passwordsDidChange];
 }
 
 - (IBAction)remove:(id)sender {
@@ -114,13 +136,31 @@ static NSString *const kServiceName = @"iTerm2";
     NSString *selectedAccountName = [self accountNameForRow:selectedRow];
     [SSKeychain deletePasswordForService:kServiceName account:selectedAccountName];
     [self reloadAccounts];
+    [self passwordsDidChange];
+}
+
+- (IBAction)edit:(id)sender {
+    if ([_tableView selectedRow] >= 0) {
+        [_tableView editColumn:[[_tableView tableColumns] indexOfObject:_passwordColumn]
+                           row:[_tableView selectedRow]
+                     withEvent:nil
+                        select:YES];
+    }
 }
 
 - (IBAction)enterPassword:(id)sender {
     NSString *password = [self selectedPassword];
     if (password) {
         [_delegate iTermPasswordManagerEnterPassword:password];
-        [[self window] close];
+        [self closeOrEndSheet];
+    }
+}
+
+- (void)closeOrEndSheet {
+    if (self.window.isSheet) {
+        [NSApp endSheet:self.window];
+    } else {
+        [self.window close];
     }
 }
 
@@ -181,6 +221,11 @@ static NSString *const kServiceName = @"iTerm2";
     [_tableView reloadData];
 }
 
+- (void)passwordsDidChange {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPasswordManagersShouldReloadData object:nil];
+}
+
+
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
@@ -230,14 +275,14 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
         [self clearPasswordBeingShown];
         [SSKeychain setPassword:anObject forService:kServiceName account:accountName];
     }
+    [self passwordsDidChange];
 }
 
 #pragma mark - NSTableViewDelegate
 
 - (BOOL)tableView:(NSTableView *)aTableView
 shouldEditTableColumn:(NSTableColumn *)aTableColumn
-              row:(NSInteger)rowIndex
-{
+              row:(NSInteger)rowIndex {
     if (aTableColumn == _accountNameColumn) {
         return YES;
     } else {
@@ -247,6 +292,7 @@ shouldEditTableColumn:(NSTableColumn *)aTableColumn
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
     [_removeButton setEnabled:([_tableView selectedRow] != -1)];
+    [_editButton setEnabled:([_tableView selectedRow] != -1)];
     if (_passwordBeingShown) {
         [self clearPasswordBeingShown];
         [_tableView reloadData];

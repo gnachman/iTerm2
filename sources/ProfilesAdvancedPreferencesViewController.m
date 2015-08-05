@@ -13,6 +13,7 @@
 #import "iTermSemanticHistoryPrefsController.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
+#import "PointerPreferencesViewController.h"
 #import "PreferencePanel.h"
 #import "SmartSelectionController.h"
 #import "TriggerController.h"
@@ -39,6 +40,8 @@
     IBOutlet NSControl *_boundHostShellIntegrationWarning;
     IBOutlet NSControl *_boundHostHelp;
 
+    IBOutlet NSTextField *_disabledTip;
+
     BOOL _addingBoundHost;  // Don't remove empty-named hosts while this is set
 }
 
@@ -46,6 +49,10 @@
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadProfiles:)
                                                  name:kReloadAllProfiles
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateSemanticHistoryDisabledLabel:)
+                                                 name:kPointerPrefsSemanticHistoryEnabledChangedNotification
                                                object:nil];
 }
 
@@ -87,6 +94,11 @@
     [_boundHostsTableView reloadData];
 }
 
+- (void)viewWillAppear {
+    [self updateSemanticHistoryDisabledLabel:nil];
+    [super viewWillAppear];
+}
+
 #pragma mark - Triggers
 
 - (IBAction)editTriggers:(id)sender {
@@ -99,13 +111,23 @@
 }
 
 - (IBAction)closeTriggersSheet:(id)sender {
+    [[_triggerWindowController.window undoManager] removeAllActionsWithTarget:self];
     [NSApp endSheet:[_triggerWindowController window]];
 }
 
 #pragma mark - TriggerDelegate
 
 - (void)triggerChanged:(TriggerController *)triggerController newValue:(NSArray *)value {
+    [[triggerController.window undoManager] registerUndoWithTarget:self
+                                                          selector:@selector(setTriggersValue:)
+                                                            object:[self objectForKey:KEY_TRIGGERS]];
+    [[triggerController.window undoManager] setActionName:@"Edit Triggers"];
     [self setObject:value forKey:KEY_TRIGGERS];
+}
+
+- (void)setTriggersValue:(NSArray *)value {
+    [self setObject:value forKey:KEY_TRIGGERS];
+    [_triggerWindowController.tableView reloadData];
 }
 
 #pragma mark - SmartSelectionDelegate
@@ -299,6 +321,11 @@
 
 - (void)reloadProfiles:(NSNotification *)notification {
     [_boundHostsTableView reloadData];
+}
+
+- (void)updateSemanticHistoryDisabledLabel:(NSNotification *)notification {
+    _disabledTip.hidden = [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs];
+    _semanticHistoryPrefController.enabled = _disabledTip.hidden;
 }
 
 @end

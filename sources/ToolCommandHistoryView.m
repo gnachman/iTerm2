@@ -23,12 +23,13 @@ static const CGFloat kHelpMargin = 5;
     NSTableView *tableView_;
     NSButton *clear_;
     BOOL shutdown_;
-    NSArray *entries_;
     NSArray *filteredEntries_;
     iTermSearchField *searchField_;
     NSFont *boldFont_;
     NSButton *help_;
 }
+
+@synthesize tableView = tableView_;
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -114,12 +115,12 @@ static const CGFloat kHelpMargin = 5;
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [tableView_ release];
     [scrollView_ release];
     [boldFont_ release];
+    [filteredEntries_ release];
     [super dealloc];
 }
 
@@ -141,7 +142,7 @@ static const CGFloat kHelpMargin = 5;
 {
     NSRect frame = self.frame;
     help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
-                             frame.size.height - help_.frame.size.height - ceil((clear_.frame.size.height - help_.frame.size.height) / 2),
+                             frame.size.height - help_.frame.size.height - ceil((clear_.frame.size.height - help_.frame.size.height) / 2) + 2,
                              help_.frame.size.width,
                              help_.frame.size.height);
     searchField_.frame = NSMakeRect(0, 0, frame.size.width, searchField_.frame.size.height);
@@ -162,31 +163,38 @@ static const CGFloat kHelpMargin = 5;
     return YES;
 }
 
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
-{
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     return filteredEntries_.count;
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
-    CommandHistoryEntry *entry = filteredEntries_[rowIndex];
+- (id)tableView:(NSTableView *)aTableView
+    objectValueForTableColumn:(NSTableColumn *)aTableColumn
+            row:(NSInteger)rowIndex {
+    CommandUse *commandUse = filteredEntries_[rowIndex];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
-        return [NSDateFormatter compactDateDifferenceStringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:entry.lastUsed]];
+        return [NSDateFormatter compactDateDifferenceStringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:commandUse.time]];
     } else {
         // Contents
-        NSString* value = [entry.command stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        if (entry.lastMark && [[wrapper.term currentSession] sessionID] == entry.lastMark.sessionID) {
+        NSString *value = [commandUse.command stringByReplacingOccurrencesOfString:@"\n"
+                                                                        withString:@" "];
+        NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+
+        iTermToolWrapper *wrapper = self.toolWrapper;
+        if (commandUse.mark &&
+            [wrapper.delegate.delegate toolbeltCurrentSessionHasGuid:commandUse.mark.sessionGuid]) {
             return [[[NSAttributedString alloc] initWithString:value
-                                                   attributes:@{ NSFontAttributeName: boldFont_ }] autorelease];
+                                                   attributes:@{ NSFontAttributeName: boldFont_,
+                                                                 NSParagraphStyleAttributeName: paragraphStyle }] autorelease];
         } else {
-            return value;
+            return [[[NSAttributedString alloc] initWithString:value
+                                                    attributes:@{ NSParagraphStyleAttributeName: paragraphStyle }] autorelease];
         }
     }
 }
 
-- (CommandHistoryEntry *)selectedEntry {
+- (CommandUse *)selectedCommandUse {
     NSInteger row = [tableView_ selectedRow];
     if (row != -1) {
         return filteredEntries_[row];
@@ -196,33 +204,22 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
-    CommandHistoryEntry *entry = [self selectedEntry];
+    CommandUse *commandUse = [self selectedCommandUse];
 
-    if (entry.lastMark) {
-        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    if (commandUse.mark) {
+        iTermToolWrapper *wrapper = self.toolWrapper;
         // Post a notification in case the captured output tool is observing us.
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
                                                             object:nil];
-        [[wrapper.term currentSession] scrollToMark:entry.lastMark];
+        [wrapper.delegate.delegate toolbeltDidSelectMark:commandUse.mark];
     }
 }
 
-- (void)commandHistoryDidChange:(id)sender
-{
+- (void)commandHistoryDidChange:(id)sender {
     [self updateCommands];
 }
 
 - (void)updateCommands {
-    [entries_ autorelease];
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    VT100RemoteHost *host = [[wrapper.term currentSession] currentHost];
-    NSArray *temp = [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:@""
-                                                                                        onHost:host];
-    NSArray *expanded = [[CommandHistory sharedInstance] entryArrayByExpandingAllUsesInEntryArray:temp];
-    NSArray *reversed = [[expanded reverseObjectEnumerator] allObjects];
-    entries_ = [reversed retain];
-    [tableView_ reloadData];
-
     [self computeFilteredEntries];
     // Updating the table data causes the cursor to change into an arrow!
     [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
@@ -238,18 +235,17 @@ static const CGFloat kHelpMargin = 5;
     if (shutdown_) {
         return;
     }
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+    iTermToolWrapper *wrapper = self.toolWrapper;
+    [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
-- (void)doubleClickOnTableView:(id)sender
-{
+- (void)doubleClickOnTableView:(id)sender {
     NSInteger selectedIndex = [tableView_ selectedRow];
     if (selectedIndex < 0) {
         return;
     }
     CommandHistoryEntry* entry = filteredEntries_[selectedIndex];
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text = entry.command;
     if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask)) {
         if (entry.lastDirectory) {
@@ -258,7 +254,7 @@ static const CGFloat kHelpMargin = 5;
             return;
         }
     }
-    [[wrapper.term currentSession] insertText:text];
+    [wrapper.delegate.delegate toolbeltInsertText:text];
 }
 
 - (void)clear:(id)sender
@@ -272,14 +268,14 @@ static const CGFloat kHelpMargin = 5;
     }
 }
 
-- (void)computeFilteredEntries
-{
+- (void)computeFilteredEntries {
     [filteredEntries_ release];
+    NSArray *entries = [self.toolWrapper.delegate.delegate toolbeltCommandUsesForCurrentSession];
     if (searchField_.stringValue.length == 0) {
-        filteredEntries_ = [entries_ retain];
+        filteredEntries_ = [entries retain];
     } else {
         NSMutableArray *array = [NSMutableArray array];
-        for (CommandHistoryEntry *entry in entries_) {
+        for (CommandHistoryEntry *entry in entries) {
             if ([entry.command rangeOfString:searchField_.stringValue].location != NSNotFound) {
                 [array addObject:entry];
             }

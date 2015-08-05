@@ -82,6 +82,10 @@ int decode_utf8_char(const unsigned char * restrict datap,
 //   @[ @"foo", @"/Users/root", @"~", @"bar baz", @"" ]
 - (NSArray *)componentsInShellCommand;
 
+// Same as componentsInShellCommand but \r, \n, \t, and \a map to the letters r, n, t, and a,
+// not to controls.
+- (NSArray *)componentsBySplittingProfileListQuery;
+
 - (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s;
 - (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)s;
 - (NSString *)stringByReplacingEscapedHexValuesWithChars;
@@ -100,6 +104,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)stringByTrimmingLeadingWhitespace;
 - (NSString *)stringByTrimmingTrailingWhitespace;
 
+- (NSString *)stringByTrimmingTrailingCharactersFromCharacterSet:(NSCharacterSet *)charset;
+
 - (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding;
 
 // Returns a substring of contiguous characters only from a given character set
@@ -108,7 +114,25 @@ int decode_utf8_char(const unsigned char * restrict datap,
                       fromCharacterSet:(NSCharacterSet *)charSet
                   charsTakenFromPrefix:(int*)charsTakenFromPrefixPtr;
 
-- (NSString *)URLInStringWithOffset:(int *)offset length:(int *)length;
+// This handles a few kinds of URLs, after trimming whitespace from the beginning and end:
+// 1. Well formed strings like:
+//    "http://example.com/foo?query#fragment"
+// 2. URLs in parens:
+//    "(http://example.com/foo?query#fragment)" -> http://example.com/foo?query#fragment
+// 3. URLs at the end of a sentence:
+//    "http://example.com/foo?query#fragment." -> http://example.com/foo?query#fragment
+// 4. Case 2 & 3 combined:
+//    "(http://example.com/foo?query#fragment)." -> http://example.com/foo?query#fragment
+//    "(http://example.com/foo?query#fragment.)" -> http://example.com/foo?query#fragment
+// 5. Strings wrapped by parens, square brackets, double quotes, or single quotes.
+//    "'example.com/foo'" -> http://example.com/foo
+//    "(example.com/foo)" -> http://example.com/foo
+//    "[example.com/foo]" -> http://example.com/foo
+//    "\"example.com/foo\"" -> http://example.com/foo
+//    "(example.com/foo.)" -> http://example.com/foo
+// 6. URLs with cruft before the scheme
+//    "*http://example.com" -> "http://example.com"
+- (NSRange)rangeOfURLInString;
 
 - (NSString *)stringByEscapingForURL;
 - (NSString *)stringByCapitalizingFirstLetter;
@@ -144,6 +168,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSArray *)keyValuePair;
 
 - (NSString *)stringByReplacingVariableReferencesWithVariables:(NSDictionary *)vars;
+- (NSString *)stringByPerformingSubstitutions:(NSDictionary *)substituions;
 
 // Does self contain |substring|?
 - (BOOL)containsString:(NSString *)substring;
@@ -165,6 +190,14 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Characters in [0, 31] and 127 get replaced with ?
 - (NSString *)stringByReplacingControlCharsWithQuestionMark;
+
+// Returns the set of $$VARIABLES$$ in the string.
+- (NSSet *)doubleDollarVariables;
+
+// Returns whether |self| is matched by |glob|, which is a shell-like glob pattern (e.g., *x or
+// x*y).
+// Only * is supported as a wildcard.
+- (BOOL)stringMatchesCaseInsensitiveGlobPattern:(NSString *)glob;
 
 @end
 

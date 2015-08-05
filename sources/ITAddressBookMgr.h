@@ -34,7 +34,7 @@
 
 // Prefs-level keys
 #define KEY_DEFAULT_GUID                @"Default Bookmark Guid"  // use this instead (not in a bookmark)
-#define KEY_DEPRECATED_BOOKMARKS               @"Bookmarks"
+#define KEY_DEPRECATED_BOOKMARKS        @"Bookmarks"  // Deprecated
 #define KEY_NEW_BOOKMARKS               @"New Bookmarks"
 
 // Bookmark-level keys
@@ -138,6 +138,7 @@
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"
 #define KEY_PREVENT_TAB                       @"Prevent Opening in a Tab"
+#define KEY_OPEN_TOOLBELT                     @"Open Toolbelt"
 #define KEY_HIDE_AFTER_OPENING                @"Hide After Opening"
 #define KEY_SYNC_TITLE                        @"Sync Title"
 #define KEY_CLOSE_SESSIONS_ON_END             @"Close Sessions On End"
@@ -169,6 +170,7 @@
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
 #define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"
 #define KEY_PLACE_PROMPT_AT_FIRST_COLUMN      @"Place Prompt at First Column"
+#define KEY_SHOW_MARK_INDICATORS              @"Show Mark Indicators"
 
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"
@@ -179,6 +181,7 @@
 #define KEY_PROMPT_CLOSE_DEPRECATED           @"Prompt Before Closing"  // Deprecated due to bad migration in 8/28 build
 #define KEY_PROMPT_CLOSE                      @"Prompt Before Closing 2"
 #define KEY_JOBS                              @"Jobs to Ignore"
+#define KEY_REDUCE_FLICKER                    @"Reduce Flicker"
 
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"
@@ -246,6 +249,9 @@ typedef enum {
 + (NSDictionary*)encodeColor:(NSColor*)origColor;
 + (NSColor*)decodeColor:(NSDictionary*)plist;
 + (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict;
++ (NSString *)shellLauncherCommand;
+// Login command that leaves you in your home directory.
++ (NSString *)standardLoginCommand;
 
 - (id)init;
 - (void)dealloc;

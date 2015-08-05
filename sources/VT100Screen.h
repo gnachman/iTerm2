@@ -8,6 +8,7 @@
 
 @class DVR;
 @class iTermGrowlDelegate;
+@class iTermStringLine;
 @class LineBuffer;
 @class IntervalTree;
 @class PTYTask;
@@ -17,9 +18,17 @@
 @protocol iTermMark;
 @class VT100Terminal;
 
-// Dictionary keys for -highlightTextMatchingRegex:
+// Dictionary keys for -highlightTextInRange:basedAtAbsoluteLineNumber:absoluteLineNumber:color:
 extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
+
+// Key into dictionaryValue to get screen state.
+extern NSString *const kScreenStateKey;
+
+// Key into dictionaryValue[kScreenStateKey] for the number of lines of scrollback history not saved.
+// Useful for converting row numbers into the context of the saved contents.
+extern NSString *const kScreenStateNumberOfLinesDroppedKey;
+
 extern int kVT100ScreenMinColumns;
 extern int kVT100ScreenMinRows;
 
@@ -28,77 +37,10 @@ extern int kVT100ScreenMinRows;
     PTYTextViewDataSource,
     VT100GridDelegate,
     VT100TerminalDelegate> {
-    NSMutableSet* tabStops_;
-    VT100Terminal *terminal_;
-    id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
-
-    // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
-    BOOL charsetUsesLineDrawingMode_[4];
-    BOOL audibleBell_;
-    BOOL showBellIndicator_;
-    BOOL flashBell_;
-    BOOL postGrowlNotifications_;
-    BOOL cursorBlinks_;
-    VT100Grid *primaryGrid_;
-    VT100Grid *altGrid_;  // may be nil
-    VT100Grid *currentGrid_;  // Weak reference. Points to either primaryGrid or altGrid.
-
-    // Max size of scrollback buffer
-    unsigned int maxScrollbackLines_;
-    // This flag overrides maxScrollbackLines_:
-    BOOL unlimitedScrollback_;
-
-    // How many scrollback lines have been lost due to overflow. Periodically reset with
-    // -resetScrollbackOverflow.
-    int scrollbackOverflow_;
-
-    // A rarely reset count of the number of lines lost to scrollback overflow. Adding this to a
-    // line number gives a unique line number that won't be reused when the linebuffer overflows.
-    long long cumulativeScrollbackOverflow_;
-
-    // When set, strings, newlines, and linefeeds are appened to printBuffer_. When ANSICSI_PRINT
-    // with code 4 is received, it's sent for printing.
-    BOOL collectInputForPrinting_;
-    NSMutableString *printBuffer_;
-
+@private
+    // This is here because the unit test needs to manipulate it.
     // Scrollback buffer
     LineBuffer* linebuffer_;
-
-    // Current find context.
-    FindContext *findContext_;
-
-    // Where we left off searching.
-    long long savedFindContextAbsPos_;
-
-    // Used for recording instant replay.
-    DVR* dvr_;
-    BOOL saveToScrollbackInAlternateScreen_;
-
-    // OK to report window title?
-    BOOL allowTitleReporting_;
-
-    // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
-    // grid.
-    IntervalTree *savedIntervalTree_;
-
-    // All currently visible marks and notes. Maps an interval of
-    //   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
-    // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
-    IntervalTree *intervalTree_;
-
-    NSMutableDictionary *markCache_;  // Maps an absolute line number to a VT100ScreenMark.
-    VT100GridCoordRange markCacheRange_;
-
-    // Location of the start of the current command, or -1 for none. Y is absolute.
-    int commandStartX_;
-    long long commandStartY_;
-
-    // Cached copies of terminal attributes
-    BOOL _wraparoundMode;
-    BOOL _ansi;
-    BOOL _insert;
-    
-    BOOL _shellIntegrationInstalled;
 }
 
 @property(nonatomic, retain) VT100Terminal *terminal;
@@ -119,6 +61,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;
 @property(nonatomic, assign) BOOL useHFSPlusMapping;
 @property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
+@property(nonatomic, readonly) NSIndexSet *animatedLines;
 
 // Designated initializer.
 - (id)initWithTerminal:(VT100Terminal *)terminal;
@@ -144,6 +87,10 @@ extern int kVT100ScreenMinRows;
 // Clears the scrollback buffer, leaving screen contents alone.
 - (void)clearScrollbackBuffer;
 
+- (void)appendScreenChars:(screen_char_t *)line
+                   length:(int)length
+             continuation:(screen_char_t)continuation;
+
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
 // buffer may change.
@@ -167,10 +114,11 @@ extern int kVT100ScreenMinRows;
 // Load state from tmux. The |state| dictionary has keys from the kStateDictXxx values.
 - (void)setTmuxState:(NSDictionary *)state;
 
-// Set the colors in the prototype char to all text on screen that matches the regex.
+// Set the colors in the range relative to the start of the given line number.
 // See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.
-- (void)highlightTextMatchingRegex:(NSString *)regex
-                            colors:(NSDictionary *)colors;
+- (void)highlightTextInRange:(NSRange)range
+   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                      colors:(NSDictionary *)colors;
 
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
@@ -200,11 +148,19 @@ extern int kVT100ScreenMinRows;
                              height:(int)height
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
-                              image:(NSImage *)image;
+                              image:(NSImage *)image
+                               data:(NSData *)data;  // data is optional and only used by animated GIFs
+
+- (void)resetAnimatedLines;
+
+- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                   startPtr:(long long *)startAbsLineNumber;
 
 #pragma mark - Marks and notes
 
 - (VT100ScreenMark *)lastMark;
+- (VT100ScreenMark *)lastPromptMark;
+- (VT100RemoteHost *)lastRemoteHost;
 - (BOOL)markIsValid:(VT100ScreenMark *)mark;
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
@@ -224,7 +180,13 @@ extern int kVT100ScreenMinRows;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
 
 - (NSDictionary *)contentsDictionary;
-- (void)appendFromDictionary:(NSDictionary *)dictionary;
+- (void)restoreFromDictionary:(NSDictionary *)dictionary
+     includeRestorationBanner:(BOOL)includeRestorationBanner
+                knownTriggers:(NSArray *)triggers
+                   reattached:(BOOL)reattached;
+
+// Zero-based (as VT100GridCoord always is), unlike -cursorX and -cursorY.
+- (void)setCursorPosition:(VT100GridCoord)coord;
 
 @end
 

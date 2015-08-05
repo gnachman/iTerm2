@@ -2,12 +2,13 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
+#import "PTYTabDelegate.h"
 
 @class Popup;
 @class PSMTabBarControl;
 @class PTYSession;
-@class PTYTabView;
 @class PTYTab;
+@class PTYTabView;
 @class TmuxController;
 @class VT100RemoteHost;
 
@@ -96,10 +97,11 @@ typedef enum {
 
 // The full interface for a window controller, as seen by objects that treat it
 // like a delegate.
-@protocol iTermWindowController <WindowControllerInterface>
+@protocol iTermWindowController <WindowControllerInterface, PTYTabDelegate>
 
 // Is the toolbelt visible for this window?
 @property(nonatomic, readonly) BOOL shouldShowToolbelt;
+@property(nonatomic, readonly) NSArray *tabs;
 
 #pragma mark - Basics
 
@@ -164,6 +166,8 @@ typedef enum {
 
 - (void)popupWillClose:(Popup *)popup;
 
+- (void)toggleFullScreenMode:(id)sender;
+
 #pragma mark - Tabs
 
 // Close a tab and resize/close the window if needed.
@@ -213,17 +217,11 @@ typedef enum {
 // or "Finish" if it's closed.
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession;
 
-// For each instance of a substring like $$foo$$ in command and name,
-// prompt the user for a value and replace $$foo$$ with the user-entered
-// value in both command and name.
-- (void)getSessionParameters:(NSMutableString *)command
-                    withName:(NSMutableString *)name;
-
 // Return the name of the foreground session.
 - (NSString *)currentSessionName;
 
 // Show the pref panel for the current session, divorcing it from its profile.
-- (void)editSession:(PTYSession*)session;
+- (void)editSession:(PTYSession*)session makeKey:(BOOL)makeKey;
 
 // Close a session if the user agrees to a modal alert.
 - (void)closeSessionWithConfirmation:(PTYSession *)aSession;
@@ -278,6 +276,9 @@ typedef enum {
 // Toggle the visibility of IR.
 - (void)showHideInstantReplay;
 
+// Exit a synthetic view (a generalized version of an IR session).
+- (void)replaceSyntheticActiveSessionWithLiveSessionIfNeeded;
+
 #pragma mark - Broadcast
 
 // Indicates if a session participates in input broadcasting.
@@ -318,16 +319,16 @@ typedef enum {
 #pragma mark - Splits
 
 // Create a new split. The new session uses the profile with |guid|.
-- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
+- (PTYSession *)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
 
 // Create a new split with a provided profile.
-- (void)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile;
+- (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile;
 
 // Create a new split with a specified bookmark. |targetSession| is the session
 // to split.
-- (void)splitVertically:(BOOL)isVertical
-           withBookmark:(Profile*)theBookmark
-          targetSession:(PTYSession*)targetSession;
+- (PTYSession *)splitVertically:(BOOL)isVertical
+                   withBookmark:(Profile*)theBookmark
+                  targetSession:(PTYSession*)targetSession;
 
 // Create a new split with the specified bookmark. The passed-in session is
 // inserted either before (left/above) or after (right/below) the target

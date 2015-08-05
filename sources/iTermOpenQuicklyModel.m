@@ -1,10 +1,12 @@
 #import "iTermOpenQuicklyModel.h"
 #import "iTermController.h"
 #import "iTermLogoGenerator.h"
+#import "iTermMinimumSubsequenceMatcher.h"
 #import "iTermOpenQuicklyItem.h"
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
 #import "VT100RemoteHost.h"
+#import "WindowArrangements.h"
 
 // It's nice for each of these to be unique so in degenerate cases (e.g., empty query) the detail
 // uses the same feature for all items.
@@ -19,6 +21,9 @@ static const double kUserDefinedVariableMultiplier = 1;
 
 // Multipliers for profile items
 static const double kProfileNameMultiplierForProfileItem = 0.1;
+
+// Multipliers for arrangement items. Arrangements rank just above profiles
+static const double kProfileNameMultiplierForArrangementItem = 0.11;
 
 @implementation iTermOpenQuicklyModel
 
@@ -41,9 +46,8 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     NSArray *sessions = [self sessions];
 
     queryString = [queryString lowercaseString];
-    unichar *query = (unichar *)malloc(queryString.length * sizeof(unichar) + 1);
-    [queryString getCharacters:query];
-    query[queryString.length] = 0;
+    iTermMinimumSubsequenceMatcher *matcher =
+        [[[iTermMinimumSubsequenceMatcher alloc] initWithQuery:queryString] autorelease];
 
     NSMutableArray *items = [NSMutableArray array];
     for (PTYSession *session in sessions) {
@@ -56,8 +60,7 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
 
         NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
         item.score = [self scoreForSession:session
-                                     query:query
-                                    length:queryString.length
+                                   matcher:matcher
                                   features:features
                             attributedName:attributedName];
         if (item.score > 0) {
@@ -70,7 +73,7 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
                                                                   highlightedIndexes:nil];
             }
 
-            item.identifier = session.uniqueID;
+            item.identifier = session.guid;
             [items addObject:item];
         }
     }
@@ -78,7 +81,8 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     BOOL haveCurrentWindow = [[iTermController sharedInstance] currentTerminal] != nil;
     for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
         iTermOpenQuicklyProfileItem *item = [[[iTermOpenQuicklyProfileItem alloc] init] autorelease];
-        item.score = [self scoreForProfile:profile query:query length:queryString.length];
+        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+        item.score = [self scoreForProfile:profile matcher:matcher attributedName:attributedName];
         if (item.score > 0) {
             NSString *theValue;
             if (!haveCurrentWindow || [profile[KEY_PREVENT_TAB] boolValue]) {
@@ -89,8 +93,24 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
             item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
                                                                             value:theValue
                                                                highlightedIndexes:nil];
-            item.title = profile[KEY_NAME];
+            item.title = attributedName;
             item.identifier = profile[KEY_GUID];
+            [items addObject:item];
+        }
+    }
+
+    for (NSString *arrangementName in [WindowArrangements allNames]) {
+        iTermOpenQuicklyArrangementItem *item = [[[iTermOpenQuicklyArrangementItem alloc] init] autorelease];
+        NSMutableAttributedString *attributedName = [[[NSMutableAttributedString alloc] init] autorelease];
+        item.score = [self scoreForArrangementWithName:arrangementName
+                                               matcher:matcher
+                                        attributedName:attributedName];
+        if (item.score > 0) {
+            item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                            value:@"Restore window arrangement"
+                                                               highlightedIndexes:nil];
+            item.title = attributedName;
+            item.identifier = arrangementName;
             [items addObject:item];
         }
     }
@@ -109,20 +129,46 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
 
     // Replace self.items with new items.
     self.items = items;
-    free(query);
 }
 
-- (double)scoreForProfile:(Profile *)profile query:(unichar *)query length:(int)length {
-    double score = [self scoreForQuery:query
-                             documents:@[ profile[KEY_NAME] ]
-                            multiplier:kProfileNameMultiplierForProfileItem
-                                  name:nil
-                              features:nil
-                                 limit:2 * kProfileNameMultiplierForProfileItem];
+- (double)scoreForArrangementWithName:(NSString *)arrangementName
+                              matcher:(iTermMinimumSubsequenceMatcher *)matcher
+                       attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ arrangementName ?: @"" ]
+                                multiplier:kProfileNameMultiplierForArrangementItem
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kProfileNameMultiplierForArrangementItem];
+    if (score > 0 &&
+        [[WindowArrangements defaultArrangementName] isEqualToString:arrangementName]) {
+        // Make the default arrangement always be the highest-scored arrangement if it matches the query.
+        score += 0.2;
+    }
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForProfile:(Profile *)profile
+                  matcher:(iTermMinimumSubsequenceMatcher *)matcher
+           attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ profile[KEY_NAME] ]
+                                multiplier:kProfileNameMultiplierForProfileItem
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kProfileNameMultiplierForProfileItem];
     if (score > 0 &&
         [[[ProfileModel sharedInstance] defaultBookmark][KEY_GUID] isEqualToString:profile[KEY_GUID]]) {
         // Make the default profile always be the highest-scored profile if it matches the query.
         score += 0.2;
+    }
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
     }
     return score;
 }
@@ -138,78 +184,77 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
 // attributedName: The session's name with matching characters highlighted
 //   (suitable for display) will be appended to this NSMutableAttributedString.
 - (double)scoreForSession:(PTYSession *)session
-                    query:(unichar *)query
-                   length:(int)length
+                  matcher:(iTermMinimumSubsequenceMatcher *)matcher
                  features:(NSMutableArray *)features
            attributedName:(NSMutableAttributedString *)attributedName {
     double score = 0;
-    double maxScorePerFeature = 2 + length / 4;
+    double maxScorePerFeature = 2 + matcher.query.length / 4;
     if (session.name) {
         NSMutableArray *nameFeature = [NSMutableArray array];
-        score += [self scoreForQuery:query
-                           documents:@[ session.name ]
-                          multiplier:kSessionNameMultiplier
-                                name:nil
-                            features:nameFeature
-                               limit:maxScorePerFeature];
+        score += [self scoreUsingMatcher:matcher
+                               documents:@[ session.name ]
+                              multiplier:kSessionNameMultiplier
+                                    name:nil
+                                features:nameFeature
+                                   limit:maxScorePerFeature];
         if (nameFeature.count) {
             [attributedName appendAttributedString:nameFeature[0][0]];
         }
     }
 
     if (session.badgeLabel) {
-        score += [self scoreForQuery:query
-                           documents:@[ session.badgeLabel ]
-                          multiplier:kSessionBadgeMultiplier
-                                name:@"Badge"
-                            features:features
-                               limit:maxScorePerFeature];
+        score += [self scoreUsingMatcher:matcher
+                               documents:@[ session.badgeLabel ]
+                              multiplier:kSessionBadgeMultiplier
+                                    name:@"Badge"
+                                features:features
+                                   limit:maxScorePerFeature];
     }
 
-    score += [self scoreForQuery:query
-                       documents:session.commands
-                      multiplier:kCommandMultiplier
-                            name:@"Command"
-                        features:features
-                           limit:maxScorePerFeature];
+    score += [self scoreUsingMatcher:matcher
+                           documents:session.commands
+                          multiplier:kCommandMultiplier
+                                name:@"Command"
+                            features:features
+                               limit:maxScorePerFeature];
 
-    score += [self scoreForQuery:query
-                       documents:session.directories
-                      multiplier:kDirectoryMultiplier
-                            name:@"Directory"
-                        features:features
-                           limit:maxScorePerFeature];
+    score += [self scoreUsingMatcher:matcher
+                           documents:session.directories
+                          multiplier:kDirectoryMultiplier
+                                name:@"Directory"
+                            features:features
+                               limit:maxScorePerFeature];
 
-    score += [self scoreForQuery:query
-                       documents:[self hostnamesInHosts:session.hosts]
-                      multiplier:kHostnameMultiplier
-                            name:@"Host"
-                        features:features
-                           limit:maxScorePerFeature];
+    score += [self scoreUsingMatcher:matcher
+                           documents:[self hostnamesInHosts:session.hosts]
+                          multiplier:kHostnameMultiplier
+                                name:@"Host"
+                            features:features
+                               limit:maxScorePerFeature];
 
-    score += [self scoreForQuery:query
-                       documents:[self usernamesInHosts:session.hosts]
-                      multiplier:kUsernameMultiplier
-                            name:@"User"
-                        features:features
-                           limit:maxScorePerFeature];
+    score += [self scoreUsingMatcher:matcher
+                           documents:[self usernamesInHosts:session.hosts]
+                          multiplier:kUsernameMultiplier
+                                name:@"User"
+                            features:features
+                               limit:maxScorePerFeature];
 
-    score += [self scoreForQuery:query
-                       documents:@[ session.profile[KEY_NAME] ?: @"" ]
-                      multiplier:kProfileNameMultiplier
-                            name:@"Profile"
-                        features:features
-                           limit:maxScorePerFeature];
+    score += [self scoreUsingMatcher:matcher
+                           documents:@[ session.profile[KEY_NAME] ?: @"" ]
+                          multiplier:kProfileNameMultiplier
+                                name:@"Profile"
+                            features:features
+                               limit:maxScorePerFeature];
 
     for (NSString *var in session.variables) {
         NSString *const kUserPrefix = @"user.";
         if ([var hasPrefix:kUserPrefix]) {
-            score += [self scoreForQuery:query
-                               documents:@[ session.variables[var] ]
-                              multiplier:kUserDefinedVariableMultiplier
-                                    name:[var substringFromIndex:[kUserPrefix length]]
-                                features:features
-                                   limit:maxScorePerFeature];
+            score += [self scoreUsingMatcher:matcher
+                                   documents:@[ session.variables[var] ]
+                                  multiplier:kUserDefinedVariableMultiplier
+                                        name:[var substringFromIndex:[kUserPrefix length]]
+                                    features:features
+                                       limit:maxScorePerFeature];
         }
     }
 
@@ -242,12 +287,12 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
 // features: The highest-scoring document will have an NSAttributedString added
 //   to this array describing the match, suitable for display.
 // limit: Upper bound for the returned score.
-- (double)scoreForQuery:(unichar *)query
-              documents:(NSArray *)documents
-             multiplier:(double)multipler
-                   name:(NSString *)name
-               features:(NSMutableArray *)features
-                  limit:(double)limit {
+- (double)scoreUsingMatcher:(iTermMinimumSubsequenceMatcher *)matcher
+                  documents:(NSArray *)documents
+                 multiplier:(double)multipler
+                       name:(NSString *)name
+                   features:(NSMutableArray *)features
+                      limit:(double)limit {
     if (multipler == 0) {
         // Feature is disabled. In the future, we might let users tweak multipliers.
         return 0;
@@ -260,9 +305,9 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     NSMutableIndexSet *indexSet = [NSMutableIndexSet indexSet];
     for (NSString *document in documents) {
         [indexSet removeAllIndexes];
-        double value = [self qualityOfMatchBetweenQuery:query
-                                              andString:[document lowercaseString]
-                                               indexSet:indexSet];
+        double value = [self qualityOfMatchWithMatcher:matcher
+                                              document:[document lowercaseString]
+                                              indexSet:indexSet];
 
         // Discount older documents (which appear at the beginning of the list)
         value /= n;
@@ -293,35 +338,40 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
 // The passed-in indexSet will be populated with indices into documentString
 // that were found to match query.
 // The current implementation returns:
-//   1.0 if query is a prefix of document.
-//   0.5 if query is a subsequence of document
+//   1.0 if query equals document.
+//   0.9 if query is a prefix of document.
+//   0.5 if query is a substring of document
+//   0 < score < 0.5 if query is a subsequence of a document. Each gap of non-matching characters
+//       increases the penalty.
 //   0.0 otherwise
-- (double)qualityOfMatchBetweenQuery:(unichar *)query
-                           andString:(NSString *)documentString
-                            indexSet:(NSMutableIndexSet *)indexSet {
-    unichar *document = (unichar *)malloc(documentString.length * sizeof(unichar) + 1);
-    [documentString getCharacters:document];
-    document[documentString.length] = 0;
-    int q = 0;
-    int d = 0;
-    while (query[q] && document[d]) {
-        if (document[d] == query[q]) {
-            [indexSet addIndex:d];
-            ++q;
-        }
-        ++d;
-    }
+- (double)qualityOfMatchWithMatcher:(iTermMinimumSubsequenceMatcher *)matcher
+                           document:(NSString *)documentString
+                           indexSet:(NSMutableIndexSet *)indexSet {
+    [indexSet addIndexes:[matcher indexSetForDocument:documentString]];
+
     double score;
-    if (query[q]) {
+    if (!indexSet.count) {
+        // No match
         score = 0;
-    } else if (q == d) {
-        // Is a prefix
+    } else if (indexSet.firstIndex == 0 && indexSet.lastIndex == documentString.length - 1) {
+        // Exact equality
         score = 1;
+    } else if (indexSet.firstIndex == 0) {
+        // Is a prefix
+        score = 0.9;
     } else {
-        score = 0.5;
+        score = 0.5 / ([self numberOfGapsInIndexSet:indexSet] + 1);
     }
-    free(document);
+
     return score;
+}
+
+- (NSInteger)numberOfGapsInIndexSet:(NSIndexSet *)indexSet {
+    __block NSInteger numRanges = 0;
+    [indexSet enumerateRangesUsingBlock:^(NSRange range, BOOL *stop) {
+        ++numRanges;
+    }];
+    return numRanges - 1;
 }
 
 // Returns an array of hostnames from an array of VT100RemoteHost*s
@@ -346,10 +396,12 @@ static const double kProfileNameMultiplierForProfileItem = 0.1;
     iTermOpenQuicklyItem *item = _items[index];
     if ([item isKindOfClass:[iTermOpenQuicklyProfileItem class]]) {
         return [[ProfileModel sharedInstance] bookmarkWithGuid:item.identifier];
+    } else if ([item isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
+        return item.identifier;
     } else if ([item isKindOfClass:[iTermOpenQuicklySessionItem class]]) {
-        NSString *sessionId = item.identifier;
+        NSString *guid = item.identifier;
         for (PTYSession *session in [self sessions]) {
-            if ([session.uniqueID isEqualTo:sessionId]) {
+            if ([session.guid isEqualTo:guid]) {
                 return session;
             }
         }

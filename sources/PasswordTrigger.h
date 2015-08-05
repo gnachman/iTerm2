@@ -10,4 +10,6 @@
 
 @interface PasswordTrigger : Trigger
 
++ (NSString *)title;
+
 @end

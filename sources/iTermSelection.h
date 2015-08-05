@@ -48,6 +48,11 @@ typedef enum {
 // Returns the width of the viewport (total columns in session).
 - (int)selectionViewportWidth;
 
+// Returns the indexes of cells on the given line containing the given (non-complex) character.
+- (NSIndexSet *)selectionIndexesOnLine:(int)line
+                   containingCharacter:(unichar)c
+                               inRange:(NSRange)range;
+
 @end
 
 // Represents a single region of selected text, in either a continuous range or in a box (depending
@@ -161,5 +166,15 @@ typedef enum {
 // Convert windowed selections to multiple discontinuous non-windowed selections.
 // If a subselection's window spans 0 to width, then it is windowless.
 - (void)removeWindowsWithWidth:(int)width;
+
+// Augments the "real" selection by adding TAB_FILLER characters preceding a selected TAB. Used for
+// display purposes. Removes selected TAB_FILLERS that aren't followed by a selected TAB.
+- (NSIndexSet *)selectedIndexesIncludingTabFillersInLine:(int)y;
+
+// Load selection from serialized dict
+- (void)setFromDictionaryValue:(NSDictionary *)dict;
+
+// Serialized.
+- (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset;
 
 @end

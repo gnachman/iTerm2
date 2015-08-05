@@ -25,6 +25,7 @@
                                 defer:flag];
     if (self) {
         [self setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
+        self.opaque = NO;
     }
     return self;
 }

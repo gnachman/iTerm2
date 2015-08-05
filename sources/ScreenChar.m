@@ -1,4 +1,3 @@
-// -*- mode:objc -*-
 /*
  **  ScreenChar.m
  **
@@ -32,6 +31,7 @@
 #import "ScreenChar.h"
 #import "charmaps.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermImageInfo.h"
 
 static NSString *const kScreenCharComplexCharMapKey = @"Complex Char Map";
 static NSString *const kScreenCharInverseComplexCharMapKey = @"Inverse Complex Char Map";
@@ -52,107 +52,70 @@ static int ccmNextKey = 1;
 // strings before creating a new one with a recycled code.
 static BOOL hasWrapped = NO;
 
-static NSString *const kImageInfoSizeKey = @"Size";
-static NSString *const kImageInfoImageKey = @"Image";
-static NSString *const kImageInfoPreserveAspectRatioKey = @"Preserve Aspect Ratio";
-static NSString *const kImageInfoFilenameKey = @"Filename";
-static NSString *const kImageInfoCodeKey = @"Code";
-
-@interface ImageInfo ()
-- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
-
-@property(nonatomic, retain) NSImage *embeddedImage;
-@property(nonatomic, assign) unichar code;
-@property(nonatomic, retain) NSData *smallEncodedImageData;
-
+@interface iTermStringLine()
+@property(nonatomic, retain) NSString *stringValue;
 @end
 
-@implementation ImageInfo
+@implementation iTermStringLine {
+    unichar *_backingStore;
+    int *_deltas;
+    int _length;
+}
 
-- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
++ (iTermStringLine *)stringLineWithString:(NSString *)string {
+    screen_char_t screenChars[string.length];
+    memset(screenChars, 0, string.length * sizeof(screen_char_t));
+    for (int i = 0; i < string.length; i++) {
+        screenChars[i].code = [string characterAtIndex:i];
+        screenChars[i].complexChar = NO;
+    }
+    return [[[self alloc] initWithScreenChars:screenChars length:string.length] autorelease];
+}
+
+- (instancetype)initWithScreenChars:(screen_char_t *)screenChars
+                             length:(NSInteger)length {
     self = [super init];
     if (self) {
-        _size = [dictionary[kImageInfoSizeKey] sizeValue];
-        _image = [[NSImage alloc] initWithData:dictionary[kImageInfoImageKey]];
-        _preserveAspectRatio = [dictionary[kImageInfoPreserveAspectRatioKey] boolValue];
-        _filename = [dictionary[kImageInfoFilenameKey] copy];
-        _code = [dictionary[kImageInfoCodeKey] shortValue];
-        if (!_size.width ||
-            !_size.height ||
-            !_image) {
-            [self release];
-            return nil;
-        }
+        _length = length;
+        _stringValue = [ScreenCharArrayToString(screenChars,
+                                                0,
+                                                length,
+                                                &_backingStore,
+                                                &_deltas) retain];
     }
     return self;
 }
 
-- (NSData *)smallEncodedImageData {
-    if (_smallEncodedImageData) {
-        return _smallEncodedImageData;
-    }
-
-    NSBitmapImageRep *imgRep = [[_image representations] objectAtIndex:0];
-    NSData *data;
-    if ([imgRep isOpaque]) {
-        CGFloat pixels = (CGFloat)_image.size.width * (CGFloat)_image.size.height;
-        CGFloat factor = MIN(0.8, MAX(0.1, 1000 / pixels));
-        data = [imgRep representationUsingType:NSJPEGFileType
-                                    properties:@{ NSImageCompressionFactor: @(factor) }];
-    } else {
-        data = [imgRep representationUsingType:NSPNGFileType properties:nil];
-    }
-    _smallEncodedImageData = [data retain];
-    return _smallEncodedImageData;
-}
-
-- (NSDictionary *)dictionary {
-    return @{ kImageInfoSizeKey: [NSValue valueWithSize:_size],
-              kImageInfoImageKey: [self smallEncodedImageData],
-              kImageInfoPreserveAspectRatioKey: @(_preserveAspectRatio),
-              kImageInfoFilenameKey: _filename,
-              kImageInfoCodeKey: @(_code)};
-}
-
 - (void)dealloc {
-    [_filename release];
-    [_image release];
-    [_embeddedImage release];
-    [_smallEncodedImageData release];
+    [_stringValue release];
+    if (_backingStore) {
+        free(_backingStore);
+    }
+    if (_deltas) {
+        free(_deltas);
+    }
     [super dealloc];
 }
 
-- (NSImage *)imageEmbeddedInRegionOfSize:(NSSize)region {
-    if (!_image) {
-        return nil;
+- (NSRange)rangeOfScreenCharsForRangeInString:(NSRange)rangeInString {
+    if (_length == 0) {
+        return NSMakeRange(NSNotFound, 0);
     }
-    if (!NSEqualSizes(_embeddedImage.size, region)) {
-        NSImage *canvas = [[[NSImage alloc] init] autorelease];
-        NSSize size;
-        if (!_preserveAspectRatio) {
-            size = region;
-        } else {
-            double imageAR = _image.size.width / _image.size.height;
-            double canvasAR = region.width / region.height;
-            if (imageAR > canvasAR) {
-                // image is wider than canvas, add black bars on top and bottom
-                size = NSMakeSize(region.width, region.width / imageAR);
-            } else {
-                // image is taller than canvas, add black bars on sides
-                size = NSMakeSize(region.height * imageAR, region.height);
-            }
-        }
-        [canvas setSize:region];
-        [canvas lockFocus];
-        [_image drawInRect:NSMakeRect((region.width - size.width) / 2,
-                                      (region.height - size.height) / 2,
-                                      size.width,
-                                      size.height)];
-        [canvas unlockFocus];
-        
-        self.embeddedImage = canvas;
+
+    // Convert to signed types because subtraction is used later on.
+    const NSInteger location = rangeInString.location;
+    const NSInteger length = rangeInString.length;
+    NSInteger indexInScreenCharsOfFirstCharInRange = location + _deltas[MIN(_length - 1, location)];
+    if (length == 0) {
+        return NSMakeRange(indexInScreenCharsOfFirstCharInRange, 0);
     }
-    return _embeddedImage;
+
+    const NSInteger indexInStringOfLastCharInRange = location + length - 1;
+    const NSInteger indexInScreenCharsOfLastCharInRange =
+        indexInStringOfLastCharInRange + _deltas[MIN(_length - 1, indexInStringOfLastCharInRange)];
+    const NSInteger numberOfScreenChars =
+        indexInScreenCharsOfLastCharInRange - indexInScreenCharsOfFirstCharInRange + 1;
+    return NSMakeRange(indexInScreenCharsOfFirstCharInRange, numberOfScreenChars);
 }
 
 @end
@@ -272,11 +235,10 @@ screen_char_t ImageCharForNewImage(NSString *name, int width, int height, BOOL p
     c.image = 1;
     c.code = newKey;
 
-    ImageInfo *imageInfo = [[[ImageInfo alloc] init] autorelease];
+    iTermImageInfo *imageInfo = [[[iTermImageInfo alloc] initWithCode:c.code] autorelease];
     imageInfo.filename = name;
     imageInfo.preserveAspectRatio = preserveAspectRatio;
     imageInfo.size = NSMakeSize(width, height);
-    imageInfo.code = c.code;
     gImages[@(c.code)] = imageInfo;
 
     return c;
@@ -288,10 +250,9 @@ void SetPositionInImageChar(screen_char_t *charPtr, int x, int y)
     charPtr->backgroundColor = y;
 }
 
-void SetDecodedImage(unichar code, NSImage *image)
-{
-    ImageInfo *imageInfo = gImages[@(code)];
-    imageInfo.image = image;
+void SetDecodedImage(unichar code, NSImage *image, NSData *data) {
+    iTermImageInfo *imageInfo = gImages[@(code)];
+    [imageInfo setImageFromImage:image data:data];
     gEncodableImageMap[@(code)] = [imageInfo dictionary];
 }
 
@@ -300,7 +261,7 @@ void ReleaseImage(unichar code) {
     [gEncodableImageMap removeObjectForKey:@(code)];
 }
 
-ImageInfo *GetImageInfo(unichar code) {
+iTermImageInfo *GetImageInfo(unichar code) {
     return gImages[@(code)];
 }
 
@@ -839,7 +800,10 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
     AllocateImageMapsIfNeeded();
     for (id key in imageMap) {
         gEncodableImageMap[key] = imageMap[key];
-        gImages[key] = [[[ImageInfo alloc] initWithDictionary:imageMap[key]] autorelease];
+        iTermImageInfo *info = [[[iTermImageInfo alloc] initWithDictionary:imageMap[key]] autorelease];
+        if (info) {
+            gImages[key] = info;
+        }
     }
     ccmNextKey = [state[kScreenCharCCMNextKeyKey] intValue];
     hasWrapped = [state[kScreenCharHasWrappedKey] boolValue];

@@ -31,10 +31,10 @@
         NSAttributedString *webAString = [self attributedStringWithLinkToURL:@"https://iterm2.com/"
                                                                        title:@"Home Page\n"];
         NSAttributedString *bugsAString =
-                [self attributedStringWithLinkToURL:@"http://code.google.com/p/iterm2/issues/entry"
+                [self attributedStringWithLinkToURL:@"https://iterm2.com/bugs"
                                               title:@"Report a bug\n\n"];
         NSAttributedString *creditsAString =
-                [self attributedStringWithLinkToURL:@"http://code.google.com/p/iterm2/wiki/Credits"
+                [self attributedStringWithLinkToURL:@"https://iterm2.com/credits"
                                               title:@"Credits"];
 
         NSDictionary *linkTextViewAttributes = @{ NSUnderlineStyleAttributeName: @(NSSingleUnderlineStyle),

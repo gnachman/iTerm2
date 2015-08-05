@@ -9,13 +9,13 @@
 @protocol VT100ScreenDelegate <NSObject>
 
 // Returns the session's unique ID.
-- (int)screenSessionID;
+- (NSString *)screenSessionGuid;
 
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;
 
 // Update window title, tab colors, and redraw view.
-- (void)screenUpdateDisplay;
+- (void)screenUpdateDisplay:(BOOL)redraw;
 
 // Called when the screen's size changes.
 - (void)screenSizeDidChange;
@@ -186,7 +186,7 @@
 
 // Save the current scroll position
 - (void)screenSaveScrollPosition;
-- (void)screenAddMarkOnLine:(int)line;
+- (VT100ScreenMark *)screenAddMarkOnLine:(int)line;
 - (void)screenPromptDidStartAtLine:(int)line;
 
 - (void)screenActivateWindow;
@@ -231,5 +231,7 @@
 - (void)screenSetBackgroundImageFile:(NSString *)filename;
 - (void)screenSetBadgeFormat:(NSString *)theFormat;
 - (void)screenSetUserVar:(NSString *)kvp;
+
+- (BOOL)screenShouldReduceFlicker;
 
 @end

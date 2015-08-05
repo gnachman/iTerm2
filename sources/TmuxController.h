@@ -31,38 +31,15 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 // Posted when a session changes name
 extern NSString *kTmuxControllerSessionWasRenamed;
 
-@interface TmuxController : NSObject {
-    TmuxGateway *gateway_;
-    NSMutableDictionary *windowPanes_;  // paneId -> PTYSession *
-    NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
-    NSArray *sessions_;
-    int numOutstandingWindowResizes_;
-    NSMutableDictionary *windowPositions_;
-    NSSize lastSize_;  // last size for windowDidChange:
-    NSString *lastOrigins_;
-    BOOL detached_;
-    NSString *sessionName_;
-    int sessionId_;
-    NSMutableSet *pendingWindowOpens_;
-    NSString *lastSaveAffinityCommand_;
-    // tmux windows that want to open as tabs in the same physical window
-    // belong to the same equivalence class.
-    EquivalenceClassSet *affinities_;
-    BOOL windowOriginsDirty_;
-    BOOL haveOutstandingSaveWindowOrigins_;
-    NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
-    NSMutableSet *hiddenWindows_;
-    NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
-    NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
-    BOOL ambiguousIsDoubleWidth_;
-}
+@interface TmuxController : NSObject
 
-@property (nonatomic, readonly) TmuxGateway *gateway;
-@property (nonatomic, retain) NSMutableDictionary *windowPositions;
-@property (nonatomic, copy) NSString *sessionName;
-@property (nonatomic, retain) NSArray *sessions;
-@property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
-@property (nonatomic, readonly) NSString *clientName;
+@property(nonatomic, readonly) TmuxGateway *gateway;
+@property(nonatomic, retain) NSMutableDictionary *windowPositions;
+@property(nonatomic, copy) NSString *sessionName;
+@property(nonatomic, retain) NSArray *sessions;
+@property(nonatomic, assign) BOOL ambiguousIsDoubleWidth;
+@property(nonatomic, readonly) NSString *clientName;
+@property(nonatomic, readonly) int sessionId;
 
 - (id)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName;
 - (void)openWindowsInitial;
@@ -138,10 +115,10 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 - (void)saveAffinities;
 - (void)saveWindowOrigins;
 - (void)saveHiddenWindows;
-- (void)addAffinityBetweenPane:(int)windowPane
-                   andTerminal:(PseudoTerminal *)term;
 
 - (void)swapPane:(int)pane1 withPane:(int)pane2;
 - (void)toggleZoomForPane:(int)pane;
+- (void)setPartialWindowIdOrder:(NSArray *)partialOrder;
+- (void)setCurrentWindow:(int)windowId;
 
 @end

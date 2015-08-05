@@ -452,8 +452,7 @@ const CGFloat kEdgeWidth = 3;
     state_.string = savedState_.string;
 }
 
-- (void)open
-{
+- (void)open {
     if (savedState_) {
         [self restoreState];
         ignoreCaseMenuItem_.state = state_.ignoreCase ? NSOnState : NSOffState;
@@ -469,8 +468,6 @@ const CGFloat kEdgeWidth = 3;
     [NSAnimationContext beginGrouping];
 
     [[NSAnimationContext currentContext] setCompletionHandler:^{
-        DLog(@"Grab focus for find view %@", self.view);
-        [[[self view] window] makeFirstResponder:findBarTextField_];
         [[[[self view] window] contentView] setNeedsDisplay:YES];
     }];
 
@@ -478,7 +475,8 @@ const CGFloat kEdgeWidth = 3;
 
     [NSAnimationContext endGrouping];
 
-    [delegate_ findViewControllerMakeDocumentFirstResponder];
+    DLog(@"Grab focus for find view %@", self.view);
+    [[[self view] window] makeFirstResponder:findBarTextField_];
 }
 
 - (void)makeVisible {

@@ -9,10 +9,13 @@
 #import <Foundation/Foundation.h>
 #import "VT100GridTypes.h"
 
+@class iTermImageInfo;
+
 typedef enum {
     kURLActionOpenURL,
     kURLActionSmartSelectionAction,
-    kURLActionOpenExistingFile
+    kURLActionOpenExistingFile,
+    kURLActionOpenImage
 } URLActionType;
 
 @interface URLAction : NSObject
@@ -21,7 +24,11 @@ typedef enum {
 @property(nonatomic, assign) URLActionType actionType;
 
 // Always set. Generally, the text that was used to select the action (e.g., the selection).
+// For images, this is the filename. See |identifier| for the ImageInfo.
 @property(nonatomic, readonly) NSString *string;
+
+// Extra info. Currently only used for images (holds the ImageInfo).
+@property(nonatomic, readonly) id identifier;
 
 // Always set. The range of |string| on screen.
 @property(nonatomic, assign) VT100GridWindowedRange range;
@@ -47,5 +54,6 @@ typedef enum {
 + (instancetype)urlActionToPerformSmartSelectionRule:(NSDictionary *)rule
                                             onString:(NSString *)content;
 + (instancetype)urlActionToOpenExistingFile:(NSString *)filename;
++ (instancetype)urlActionToOpenImage:(iTermImageInfo *)imageInfo;
 
 @end

@@ -30,6 +30,7 @@
 #import "FutureMethods.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PTYSession.h"
@@ -38,7 +39,7 @@
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYWindow.h"
-#import "UKCrashReporter/UKCrashReporter.h"
+#import "UKCrashReporter.h"
 #import "VT100Screen.h"
 #import "WindowArrangements.h"
 #import "iTerm.h"
@@ -109,6 +110,17 @@ BOOL IsYosemiteOrLater(void) {
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
     NSMutableArray *_currentRestorableSessionsStack;
+
+    // PseudoTerminal objects
+    NSMutableArray *terminalWindows;
+    id FRONT;
+    ItermGrowlDelegate *gd;
+
+    int keyWindowIndexMemo_;
+
+    // For restoring previously active app when exiting hotkey window
+    NSNumber *previouslyActiveAppPID_;
+    id runningApplicationClass_;
 }
 
 static iTermController* shared = nil;
@@ -124,8 +136,7 @@ static BOOL initDone = NO;
     return shared;
 }
 
-+ (void)sharedInstanceRelease
-{
++ (void)sharedInstanceRelease {
     [shared release];
     shared = nil;
 }
@@ -170,17 +181,46 @@ static BOOL initDone = NO;
     return (self);
 }
 
-- (void)dealloc
-{
+- (BOOL)willRestoreWindowsAtNextLaunch {
+  return (![iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] &&
+          ![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
+          [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]);
+}
+
+- (BOOL)shouldLeaveSessionsRunningOnQuit {
+    const BOOL sessionsWillRestore = ([iTermAdvancedSettingsModel runJobsInServers] &&
+                                      [iTermAdvancedSettingsModel restoreWindowContents] &&
+                                      self.willRestoreWindowsAtNextLaunch);
+    iTermApplicationDelegate *itad =
+        (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    return (sessionsWillRestore &&
+            (itad.sparkleRestarting || ![iTermAdvancedSettingsModel killJobsInServersOnQuit]));
+}
+
+- (void)dealloc {
     // Save hotkey window arrangement to user defaults before closing it.
     [[HotkeyWindowController sharedInstance] saveHotkeyWindowState];
 
-    // Close all terminal windows]
-    while ([terminalWindows count] > 0) {
-        [[terminalWindows objectAtIndex:0] close];
+    if (self.shouldLeaveSessionsRunningOnQuit) {
+        // We don't want to kill running jobs. This can be for one of two reasons:
+        //
+        // 1. Sparkle is restarting the app. Because jobs are run in servers and window
+        //    restoration is on, we don't want to close term windows because that will
+        //    send SIGHUP to the job processes. Normally this path is taken during
+        //    a user-initiated quit, so we want the jobs killed, but not in this case.
+        // 2. The user has set a pref to not kill jobs on quit.
+        //
+        // In either case, we only get here if we're pretty sure everything will get restored
+        // nicely.
+        [terminalWindows autorelease];
+    } else {
+        // Close all terminal windows, killing jobs.
+        while ([terminalWindows count] > 0) {
+            [[terminalWindows objectAtIndex:0] close];
+        }
+        NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
+        [terminalWindows release];
     }
-    NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
-    [terminalWindows release];
 
     // Release the GrowlDelegate
     if (gd) {
@@ -287,7 +327,7 @@ static BOOL initDone = NO;
     keyWindowIndexMemo_ = i;
 }
 
-- (void)newSessionInWindowAtIndex:(id) sender
+- (void)newSessionInWindowAtIndex:(id)sender
 {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
@@ -300,8 +340,7 @@ static BOOL initDone = NO;
 {
 }
 
-- (IBAction)newSessionWithSameProfile:(id)sender
-{
+- (void)newSessionWithSameProfile:(id)sender {
     Profile *bookmark = nil;
     if (FRONT) {
         bookmark = [[FRONT currentSession] profile];
@@ -309,17 +348,11 @@ static BOOL initDone = NO;
     [self launchBookmark:bookmark inTerminal:FRONT];
 }
 
-- (IBAction)newSession:(id)sender
-{
-    DLog(@"iTermController newSession:");
-    [self newSession:sender possiblyTmux:NO];
-}
-
 // Launch a new session using the default profile. If the current session is
 // tmux and possiblyTmux is true, open a new tmux session.
-- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux
-{
-    DLog(@"newSession:%@ possiblyTmux:%d from %@", sender, (int)possiblyTmux, [NSThread callStackSymbols]);
+- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux {
+    DLog(@"newSession:%@ possiblyTmux:%d from %@",
+         sender, (int)possiblyTmux, [NSThread callStackSymbols]);
     if (possiblyTmux &&
         FRONT &&
         [[FRONT currentSession] isTmuxClient]) {
@@ -329,14 +362,42 @@ static BOOL initDone = NO;
     }
 }
 
-// navigation
-- (IBAction)previousTerminal:(id)sender
-{
-    [NSApp _cycleWindowsReversed:YES];
+- (NSArray *)terminalsSortedByNumber {
+    return [terminalWindows sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        return [@([obj1 number]) compare:@([obj2 number])];
+    }];
 }
-- (IBAction)nextTerminal:(id)sender
-{
-    [NSApp _cycleWindowsReversed:NO];
+
+- (IBAction)previousTerminal:(id)sender {
+    NSArray *windows = [self terminalsSortedByNumber];
+    if (windows.count < 2) {
+        return;
+    }
+    NSUInteger index = [windows indexOfObject:FRONT];
+    if (index == NSNotFound) {
+        DLog(@"Index of terminal not found, so cycle.");
+        [NSApp _cycleWindowsReversed:YES];
+    } else {
+        int i = index;
+        i += terminalWindows.count - 1;
+        [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
+    }
+}
+
+- (IBAction)nextTerminal:(id)sender {
+    NSArray *windows = [self terminalsSortedByNumber];
+    if (windows.count < 2) {
+        return;
+    }
+    NSUInteger index = [windows indexOfObject:FRONT];
+    if (index == NSNotFound) {
+        DLog(@"Index of terminal not found, so cycle.");
+        [NSApp _cycleWindowsReversed:NO];
+    } else {
+        int i = index;
+        i++;
+        [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
+    }
 }
 
 - (NSString *)_showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
@@ -807,26 +868,6 @@ static BOOL initDone = NO;
     }
 }
 
-- (void)_newSessionsInManyWindowsInMenu:(NSMenu*)parent
-{
-    for (NSMenuItem* item in [parent itemArray]) {
-        if (![item isSeparatorItem] && ![item submenu]) {
-            NSString* guid = [item representedObject];
-            Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-            if (bookmark) {
-                [self launchBookmark:bookmark inTerminal:nil];
-            }
-        } else if (![item isSeparatorItem] && [item submenu]) {
-            [self _newSessionsInManyWindowsInMenu:[item submenu]];
-        }
-    }
-}
-
-- (void)newSessionsInManyWindows:(id)sender
-{
-    [self _newSessionsInManyWindowsInMenu:[sender menu]];
-}
-
 - (PseudoTerminal *)terminalWithTab:(PTYTab *)tab
 {
     for (PseudoTerminal *term in [self terminals]) {
@@ -880,7 +921,9 @@ static BOOL initDone = NO;
     for (Profile* bookmark in bookmarks) {
         if (!term) {
             PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
-            term = [self terminalWithSession:session];
+            if (session) {
+                term = [self terminalWithSession:session];
+            }
         } else {
             [self launchBookmark:bookmark inTerminal:term];
         }
@@ -951,14 +994,6 @@ static BOOL initDone = NO;
                  params:&params
                   atPos:i];
     }
-}
-
-- (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt
-{
-    [self addBookmarksToMenu:aMenu
-                withSelector:@selector(newSessionInTabAtIndex:)
-             openAllSelector:@selector(newSessionsInWindow:)
-                  startingAt:startingAt];
 }
 
 - (void)irAdvance:(int)dir
@@ -1047,14 +1082,14 @@ static BOOL initDone = NO;
     return term;
 }
 
-- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
-{
+- (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
     return [self launchBookmark:bookmarkData
                      inTerminal:theTerm
                         withURL:nil
                        isHotkey:NO
                         makeKey:YES
-                        command:nil];
+                        command:nil
+                          block:nil];
 }
 
 - (NSDictionary *)profile:(NSDictionary *)aDict
@@ -1114,12 +1149,13 @@ static BOOL initDone = NO;
     return aDict;
 }
 
-- (id)launchBookmark:(NSDictionary *)bookmarkData
-          inTerminal:(PseudoTerminal *)theTerm
-             withURL:(NSString *)url
-            isHotkey:(BOOL)isHotkey
-             makeKey:(BOOL)makeKey
-             command:(NSString *)command {
+- (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData
+                    inTerminal:(PseudoTerminal *)theTerm
+                       withURL:(NSString *)url
+                      isHotkey:(BOOL)isHotkey
+                       makeKey:(BOOL)makeKey
+                       command:(NSString *)command
+                         block:(PTYSession *(^)(PseudoTerminal *))block {
     PseudoTerminal *term;
     NSDictionary *aDict;
     const iTermObjectType objectType = theTerm ? iTermTabObject : iTermWindowObject;
@@ -1173,13 +1209,23 @@ static BOOL initDone = NO;
         term = theTerm;
     }
 
-    PTYSession* session;
+    PTYSession* session = nil;
 
-    if (url) {
-        session = [term createSessionWithProfile:aDict withURL:url forObjectType:objectType];
+    if (block) {
+        session = block(term);
+    } else if (url) {
+        session = [term createSessionWithProfile:aDict
+                                         withURL:url
+                                   forObjectType:objectType
+                                serverConnection:NULL];
     } else {
         session = [term createTabWithProfile:aDict withCommand:command];
     }
+    if (!session && term.numberOfTabs == 0) {
+        [[term window] close];
+        return nil;
+    }
+
     if (toggle) {
         [term delayedEnterFullscreen];
     }
@@ -1406,6 +1452,15 @@ static BOOL initDone = NO;
 
 - (BOOL)hasRestorableSession {
     return _restorableSessions.count > 0;
+}
+
+- (void)killRestorableSessions {
+    assert([iTermAdvancedSettingsModel runJobsInServers]);
+    for (iTermRestorableSession *restorableSession in _restorableSessions) {
+        for (PTYSession *aSession in restorableSession.sessions) {
+            [aSession.shell sendSignal:SIGHUP];
+        }
+    }
 }
 
 // accessors for to-many relationships:

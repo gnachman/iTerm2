@@ -10,7 +10,7 @@
 
 @interface HighlightTrigger : Trigger
 
-- (NSString *)title;
++ (NSString *)title;
 - (BOOL)takesParameter;
 - (BOOL)paramIsPopupButton;
 

@@ -1,10 +1,21 @@
 ﻿#import "VT100Screen.h"
-
+#import "CapturedOutput.h"
+#import "CommandHistory.h"
 #import "DebugLogging.h"
 #import "DVR.h"
 #import "IntervalTree.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermColorMap.h"
+#import "iTermExpose.h"
+#import "iTermGrowlDelegate.h"
+#import "iTermPreferences.h"
+#import "iTermSelection.h"
+#import "iTermTemporaryDoubleBufferedGridController.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "PTYNoteViewController.h"
 #import "PTYTextView.h"
 #import "RegexKitLite.h"
@@ -13,17 +24,32 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "VT100WorkingDirectory.h"
-#import "iTermColorMap.h"
-#import "iTermExpose.h"
-#import "iTermGrowlDelegate.h"
-#import "iTermPreferences.h"
-#import "iTermSelection.h"
 #import "VT100DCSParser.h"
 #import "VT100Token.h"
 
 #import <apr-1/apr_base64.h>
 #include <string.h>
 
+NSString *const kScreenStateKey = @"Screen State";
+
+NSString *const kScreenStateTabStopsKey = @"Tab Stops";
+NSString *const kScreenStateTerminalKey = @"Terminal State";
+NSString *const kScreenStateLineDrawingModeKey = @"Line Drawing Modes";
+NSString *const kScreenStateNonCurrentGridKey = @"Non-current Grid";
+NSString *const kScreenStateCurrentGridIsPrimaryKey = @"Showing Primary Grid";
+NSString *const kScreenStateIntervalTreeKey = @"Interval Tree";
+NSString *const kScreenStateSavedIntervalTreeKey = @"Saved Interval Tree";
+NSString *const kScreenStateCommandStartXKey = @"Command Start X";
+NSString *const kScreenStateCommandStartYKey = @"Command Start Y";
+NSString *const kScreenStateNextCommandOutputStartKey = @"Output Start";
+NSString *const kScreenStateCursorVisibleKey = @"Cursor Visible";
+NSString *const kScreenStateTrackCursorLineMovementKey = @"Track Cursor Line";
+NSString *const kScreenStateLastCommandOutputRangeKey = @"Last Command Output Range";
+NSString *const kScreenStateShellIntegrationInstalledKey = @"Shell Integration Installed";
+NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
+NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
+NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
+NSString *const kScreenStateNumberOfLinesDroppedKey = @"Number of Lines Dropped";
 
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
@@ -39,15 +65,89 @@ NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
-@interface VT100Screen () <iTermMarkDelegate>
+@interface VT100Screen () <iTermTemporaryDoubleBufferedGridControllerDelegate, iTermMarkDelegate>
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
+@property(nonatomic, retain) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @end
 
 @implementation VT100Screen {
+    NSMutableSet* tabStops_;
+    VT100Terminal *terminal_;
+    id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
+
+    // BOOLs indicating, for each of the characters sets, which ones are in line-drawing mode.
+    BOOL charsetUsesLineDrawingMode_[4];
+    BOOL audibleBell_;
+    BOOL showBellIndicator_;
+    BOOL flashBell_;
+    BOOL postGrowlNotifications_;
+    BOOL cursorBlinks_;
+    VT100Grid *primaryGrid_;
+    VT100Grid *altGrid_;  // may be nil
+    VT100Grid *currentGrid_;  // Weak reference. Points to either primaryGrid or altGrid.
+    VT100Grid *realCurrentGrid_;  // When a saved grid is swapped in, this is the live current grid.
+
+    // Max size of scrollback buffer
+    unsigned int maxScrollbackLines_;
+    // This flag overrides maxScrollbackLines_:
+    BOOL unlimitedScrollback_;
+
+    // How many scrollback lines have been lost due to overflow. Periodically reset with
+    // -resetScrollbackOverflow.
+    int scrollbackOverflow_;
+
+    // A rarely reset count of the number of lines lost to scrollback overflow. Adding this to a
+    // line number gives a unique line number that won't be reused when the linebuffer overflows.
+    long long cumulativeScrollbackOverflow_;
+
+    // When set, strings, newlines, and linefeeds are appened to printBuffer_. When ANSICSI_PRINT
+    // with code 4 is received, it's sent for printing.
+    BOOL collectInputForPrinting_;
+    NSMutableString *printBuffer_;
+
+    // Current find context.
+    FindContext *findContext_;
+
+    // Where we left off searching.
+    long long savedFindContextAbsPos_;
+
+    // Used for recording instant replay.
+    DVR* dvr_;
+    BOOL saveToScrollbackInAlternateScreen_;
+
+    // OK to report window title?
+    BOOL allowTitleReporting_;
+
+    // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
+    // grid.
+    IntervalTree *savedIntervalTree_;
+
+    // All currently visible marks and notes. Maps an interval of
+    //   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
+    // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
+    IntervalTree *intervalTree_;
+
+    NSMutableDictionary *markCache_;  // Maps an absolute line number to a VT100ScreenMark.
+    VT100GridCoordRange markCacheRange_;
+
+    // Location of the start of the current command, or -1 for none. Y is absolute.
+    int commandStartX_;
+    long long commandStartY_;
+
+    // Cached copies of terminal attributes
+    BOOL _wraparoundMode;
+    BOOL _ansi;
+    BOOL _insert;
+    
+    BOOL _shellIntegrationInstalled;
+
     NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
     NSMutableArray *inlineFileCodes_;
     VT100GridAbsCoord nextCommandOutputStart_;
     NSTimeInterval lastBell_;
+    BOOL _cursorVisible;
+    // Line numbers containing animated GIFs that need to be redrawn for the next frame.
+    NSMutableIndexSet *_animatedLines;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -71,8 +171,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
 
-- (id)initWithTerminal:(VT100Terminal *)terminal
-{
+- (id)initWithTerminal:(VT100Terminal *)terminal {
     self = [super init];
     if (self) {
         assert(terminal);
@@ -81,6 +180,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                                          kDefaultScreenRows)
                                               delegate:self];
         currentGrid_ = primaryGrid_;
+        _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
+        _temporaryDoubleBuffer.delegate = self;
 
         maxScrollbackLines_ = kDefaultMaxScrollbackLines;
         tabStops_ = [[NSMutableSet alloc] init];
@@ -104,12 +205,12 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
         nextCommandOutputStart_ = VT100GridAbsCoordMake(-1, -1);
         _lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+        _animatedLines = [[NSMutableIndexSet alloc] init];
     }
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [primaryGrid_ release];
     [altGrid_ release];
     [tabStops_ release];
@@ -127,11 +228,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         ReleaseImage([code intValue]);
     }
     [inlineFileCodes_ release];
+    _temporaryDoubleBuffer.delegate = nil;
+    [_temporaryDoubleBuffer reset];
+    [_temporaryDoubleBuffer release];
+    [_animatedLines release];
     [super dealloc];
 }
 
-- (NSString *)description
-{
+- (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p grid:%@>", [self class], self, currentGrid_];
 }
 
@@ -308,8 +412,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return result;
 }
 
-- (void)resizeWidth:(int)new_width height:(int)new_height
-{
+- (void)resizeWidth:(int)new_width height:(int)new_height {
+    [self.temporaryDoubleBuffer reset];
+
     DLog(@"Resize session to %d height", new_height);
 
     if (commandStartX_ != -1) {
@@ -735,7 +840,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)clearBuffer {
     [self clearAndResetScreenPreservingCursorLine];
     [self clearScrollbackBuffer];
-    [delegate_ screenUpdateDisplay];
+    [delegate_ screenUpdateDisplay:NO];
 }
 
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
@@ -766,6 +871,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [intervalTree_ release];
     intervalTree_ = [[IntervalTree alloc] init];
     [self reloadMarkCache];
+}
+
+- (void)appendScreenChars:(screen_char_t *)line
+                   length:(int)length
+             continuation:(screen_char_t)continuation {
+    [self appendScreenCharArrayAtCursor:line
+                                 length:length
+                             shouldFree:NO];
+    if (continuation.code == EOL_HARD) {
+        [self terminalCarriageReturn];
+        [self linefeed];
+    }
 }
 
 - (void)appendAsciiDataAtCursor:(AsciiData *)asciiData
@@ -1189,15 +1306,16 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 }
 
-// Change color of text on screen that matches regex to the color of prototypechar.
-- (void)highlightTextMatchingRegex:(NSString *)regex
-                            colors:(NSDictionary *)colors
-{
-    NSArray *runs = [currentGrid_ runsMatchingRegex:regex];
-    for (NSValue *run in runs) {
-        [self highlightRun:[run gridRunValue]
-       withForegroundColor:[colors objectForKey:kHighlightForegroundColor]
-           backgroundColor:[colors objectForKey:kHighlightBackgroundColor]];
+- (void)highlightTextInRange:(NSRange)range
+   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                      colors:(NSDictionary *)colors {
+    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - self.numberOfScrollbackLines;
+
+    VT100GridRun gridRun = [currentGrid_ gridRunFromRange:range relativeToRow:lineNumber];
+    if (gridRun.length > 0) {
+        NSColor *foreground = colors[kHighlightForegroundColor];
+        NSColor *background = colors[kHighlightBackgroundColor];
+        [self highlightRun:gridRun withForegroundColor:foreground backgroundColor:background];
     }
 }
 
@@ -1229,15 +1347,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self popScrollbackLines:linesPushed];
 }
 
-- (void)setTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
-    primaryGrid_.trackCursorLineMovement = trackCursorLineMovement;
-    altGrid_.trackCursorLineMovement = trackCursorLineMovement;
-}
-
-- (BOOL)trackCursorLineMovement {
-    return currentGrid_.trackCursorLineMovement;
-}
-
 #pragma mark - PTYTextViewDataSource
 
 // This is a wee hack until PTYTextView breaks its direct dependence on PTYSession
@@ -1246,8 +1355,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 // Returns the number of lines in scrollback plus screen height.
-- (int)numberOfLines
-{
+- (int)numberOfLines {
     return [linebuffer_ numLinesWithWidth:currentGrid_.size.width] + currentGrid_.size.height;
 }
 
@@ -1269,6 +1377,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (int)cursorY
 {
     return currentGrid_.cursorY + 1;
+}
+
+- (void)setCursorPosition:(VT100GridCoord)coord {
+    currentGrid_.cursor = coord;
 }
 
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
@@ -1475,6 +1587,20 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return string;
 }
 
+- (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
+    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]]];
+    if ([string length]) {
+        [string appendString:@"\n"];
+    }
+    [string appendString:[currentGrid_ compactLineDumpWithContinuationMarks]];
+
+    NSMutableArray *lines = [[[string componentsSeparatedByString:@"\n"] mutableCopy] autorelease];
+    for (int i = 0; i < lines.count; i++) {
+        lines[i] = [NSString stringWithFormat:@"%8lld: %@", self.totalScrollbackOverflow + i, lines[i]];
+    }
+    return [lines componentsJoinedByString:@"\n"];
+}
+
 - (NSString *)compactLineDump {
     return [currentGrid_ compactLineDump];
 }
@@ -1493,15 +1619,27 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.allDirty = NO;
 }
 
-- (void)setLineDirtyAtY:(int)y
-{
-    [currentGrid_ markCharsDirty:YES
-                      inRectFrom:VT100GridCoordMake(0, y)
-                              to:VT100GridCoordMake(self.width - 1, y)];
+- (void)setLineDirtyAtY:(int)y {
+    if (y >= 0) {
+        [currentGrid_ markCharsDirty:YES
+                          inRectFrom:VT100GridCoordMake(0, y)
+                                  to:VT100GridCoordMake(self.width - 1, y)];
+    }
 }
 
-- (void)setCharDirtyAtCursorX:(int)x Y:(int)y
-{
+- (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line {
+    // TODO: Store range
+    [_animatedLines addIndex:line];
+}
+
+- (void)resetAnimatedLines {
+    [_animatedLines removeAllIndexes];
+}
+
+- (void)setCharDirtyAtCursorX:(int)x Y:(int)y {
+    if (y < 0) {
+        return;
+    }
     int xToMark = x;
     int yToMark = y;
     if (xToMark == currentGrid_.size.width && yToMark < currentGrid_.size.height - 1) {
@@ -1636,10 +1774,33 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     if (workingDirectory.length) {
         workingDirectoryObj.workingDirectory = workingDirectory;
-        VT100GridCoordRange range;
-        range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
-        [intervalTree_ addObject:workingDirectoryObj
-                    withInterval:[self intervalForGridCoordRange:range]];
+
+        VT100WorkingDirectory *previousWorkingDirectory = [[[self objectOnOrBeforeLine:line
+                                                                               ofClass:[VT100WorkingDirectory class]] retain] autorelease];
+        if ([previousWorkingDirectory.workingDirectory isEqualTo:workingDirectory]) {
+            // Extend the previous working directory. We used to add a new VT100WorkingDirectory
+            // every time but if the window title gets changed a lot then they can pile up really
+            // quickly and you spend all your time searching through VT001WorkingDirectory marks
+            // just to find VT100RemoteHost or VT100ScreenMark objects.
+            //
+            // It's a little weird that a VT100WorkingDirectory can now represent the same path on
+            // two different hosts (e.g., you ssh from /Users/georgen to another host and you're in
+            // /Users/georgen over there, but you can share the same VT100WorkingDirectory between
+            // the two hosts because the path is the same). I can't see the harm in it besides being
+            // odd.
+            //
+            // Intervals aren't removed while part of them is on screen, so this works fine.
+            VT100GridCoordRange range = [self coordRangeForInterval:previousWorkingDirectory.entry.interval];
+            [intervalTree_ removeObject:previousWorkingDirectory];
+            range.end = VT100GridCoordMake(self.width, line);
+            Interval *interval = [self intervalForGridCoordRange:range];
+            [intervalTree_ addObject:previousWorkingDirectory withInterval:interval];
+        } else {
+            VT100GridCoordRange range;
+            range = VT100GridCoordRangeMake(currentGrid_.cursorX, line, self.width, line);
+            [intervalTree_ addObject:workingDirectoryObj
+                        withInterval:[self intervalForGridCoordRange:range]];
+        }
     }
     [delegate_ screenLogWorkingDirectoryAtLine:line withDirectory:workingDirectory];
 }
@@ -1658,8 +1819,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
                                                                             line + 1,
                                                                             0,
-                                                                            line + 1)].limit;
-    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:pos];
+                                                                            line + 1)].location;
+    NSEnumerator *enumerator = [intervalTree_ reverseEnumeratorAt:pos];
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
@@ -1741,7 +1902,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                        ofClass:(Class)markClass {
     id<iTermMark> mark = [[[markClass alloc] init] autorelease];
     mark.delegate = self;
-    mark.sessionID = [delegate_ screenSessionID];
+    mark.sessionGuid = [delegate_ screenSessionGuid];
     int nonAbsoluteLine = line - [self totalScrollbackOverflow];
     VT100GridCoordRange range;
     if (oneLine) {
@@ -1757,7 +1918,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                         self.width,
                                         limit);
     }
-    markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
+    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
+        markCache_[@([self totalScrollbackOverflow] + range.end.y)] = mark;
+    }
     [intervalTree_ addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [delegate_ screenNeedsRedraw];
     return mark;
@@ -1806,13 +1969,29 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return notes;
 }
 
+- (VT100ScreenMark *)lastPromptMark {
+    return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
+}
+
 - (VT100ScreenMark *)lastMark {
+    return [self lastMarkMustBePrompt:NO class:[VT100ScreenMark class]];
+}
+
+- (VT100RemoteHost *)lastRemoteHost {
+    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+}
+
+- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id obj in objects) {
-            if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                return obj;
+            if ([obj isKindOfClass:theClass]) {
+                if (wantPrompt && [obj isPrompt]) {
+                    return obj;
+                } else if (!wantPrompt) {
+                    return obj;
+                }
             }
         }
         objects = [enumerator nextObject];
@@ -1882,6 +2061,99 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:mark.entry.interval.limit];
+    NSArray *objects;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ [VT100ScreenMark class] ]];
+        for (VT100ScreenMark *nextMark in objects) {
+            if (nextMark.isPrompt) {
+                VT100GridCoordRange range;
+                range.start = [self coordRangeForInterval:mark.entry.interval].end;
+                range.start.x = 0;
+                range.start.y++;
+                range.end = [self coordRangeForInterval:nextMark.entry.interval].start;
+                return range;
+            }
+        }
+    } while (objects && !objects.count);
+
+    // Command must still be running with no subsequent prompt.
+    VT100GridCoordRange range;
+    range.start = [self coordRangeForInterval:mark.entry.interval].end;
+    range.start.x = 0;
+    range.start.y++;
+    range.end.x = 0;
+    range.end.y = self.numberOfLines - self.height + [currentGrid_ numberOfLinesUsed];
+    return range;
+}
+
+- (BOOL)setUseSavedGridIfAvailable:(BOOL)useSavedGrid {
+    if (useSavedGrid && !realCurrentGrid_ && self.temporaryDoubleBuffer.savedGrid) {
+        realCurrentGrid_ = [currentGrid_ retain];
+        [currentGrid_ release];
+        currentGrid_ = [self.temporaryDoubleBuffer.savedGrid retain];
+        self.temporaryDoubleBuffer.drewSavedGrid = YES;
+        return YES;
+    } else if (!useSavedGrid && realCurrentGrid_) {
+        [currentGrid_ release];
+        currentGrid_ = [realCurrentGrid_ retain];
+        [realCurrentGrid_ release];
+        realCurrentGrid_ = nil;
+    }
+    return NO;
+}
+
+- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                   startPtr:(long long *)startAbsLineNumber {
+    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow;
+    if (lineNumber < 0) {
+        return nil;
+    }
+    if (lineNumber >= self.numberOfLines) {
+        return nil;
+    }
+    // Search backward for start of line
+    int i;
+    NSMutableData *data = [NSMutableData data];
+    *startAbsLineNumber = self.totalScrollbackOverflow;
+
+    // Max radius of lines to search above and below absoluteLineNumber
+    const int kMaxRadius = [iTermAdvancedSettingsModel triggerRadius];
+    BOOL foundStart = NO;
+    for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
+        screen_char_t *line = [self getLineAtIndex:i];
+        if (line[self.width].code == EOL_HARD) {
+            *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
+            foundStart = YES;
+            break;
+        }
+        [data replaceBytesInRange:NSMakeRange(0, 0)
+                        withBytes:line
+                           length:self.width * sizeof(screen_char_t)];
+    }
+    if (!foundStart) {
+        *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
+    }
+    BOOL done = NO;
+    for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
+        screen_char_t *line = [self getLineAtIndex:i];
+        int length = self.width;
+        done = line[length].code == EOL_HARD;
+        if (done) {
+            // Remove trailing newlines
+            while (length > 0 && line[length - 1].code == 0 && !line[length - 1].complexChar) {
+                --length;
+            }
+        }
+        [data appendBytes:line length:length * sizeof(screen_char_t)];
+    }
+
+    return [[[iTermStringLine alloc] initWithScreenChars:data.mutableBytes
+                                                  length:data.length / sizeof(screen_char_t)] autorelease];
+}
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {
@@ -1935,12 +2207,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         }
     }
 
-    // Make sure we didn't land on the right half of a double-width character
-    screen_char_t *aLine = [self getLineAtScreenIndex:currentGrid_.cursorY];
-    unichar c = aLine[currentGrid_.cursorX].code;
-    if ((c == DWC_RIGHT || c == DWC_SKIP) && !aLine[currentGrid_.cursorX].complexChar) {
-        [self doBackspace];
-    }
+    // It is OK to land on the right half of a double-width character (issue 3475).
 }
 
 // Reverse wrap is allowed when the cursor is on the left margin or left edge, wraparoundMode is
@@ -2040,7 +2307,18 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     currentGrid_.cursorX = nextTabStop;
 }
 
+- (BOOL)cursorOutsideLeftRightMargin {
+    return (currentGrid_.useScrollRegionCols && (currentGrid_.cursorX < currentGrid_.leftMargin ||
+                                                 currentGrid_.cursorX > currentGrid_.rightMargin));
+}
+
 - (void)terminalLineFeed {
+    if (currentGrid_.cursor.y == VT100GridRangeMax(currentGrid_.scrollRegionRows) &&
+        [self cursorOutsideLeftRightMargin]) {
+        DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
+        return;
+    }
+
     if (collectInputForPrinting_) {
         [printBuffer_ appendString:@"\n"];
     } else {
@@ -2226,7 +2504,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)terminalReverseIndex {
     if (currentGrid_.cursorY == currentGrid_.topMargin) {
-        [currentGrid_ scrollDown];
+        if ([self cursorOutsideLeftRightMargin]) {
+            return;
+        } else {
+            [currentGrid_ scrollDown];
+        }
     } else {
         currentGrid_.cursorY = MAX(0, currentGrid_.cursorY - 1);
     }
@@ -2380,6 +2662,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
     // changes shouldn't override CurrentDirectory.
     if (![self remoteHostOnLine:[self numberOfScrollbackLines] + self.height]) {
+        // TODO: There's a bug here where remote host can scroll off the end of history, causing the
+        // working directory to come from PTYTask (which is what happens when nil is passed here).
         [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor]];
     }
 }
@@ -2462,9 +2746,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
     if (rows == -1) {
         rows = self.height;
+    } else if (rows == 0) {
+        rows = [self terminalScreenHeightInCells];
     }
     if (columns == -1) {
         columns = self.width;
+    } else if (columns == 0) {
+        columns = [self terminalScreenWidthInCells];
     }
     if ([delegate_ screenShouldInitiateWindowResize] &&
         ![delegate_ screenWindowIsFullscreen]) {
@@ -2716,6 +3004,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         altGrid_ = [[VT100Grid alloc] initWithSize:primaryGrid_.size delegate:self];
     }
 
+    [self.temporaryDoubleBuffer reset];
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
     [self hideOnScreenNotesAndTruncateSpanners];
     currentGrid_ = altGrid_;
@@ -2758,6 +3047,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 - (void)terminalShowPrimaryBuffer {
     if (currentGrid_ == altGrid_) {
+        [self.temporaryDoubleBuffer reset];
         [delegate_ screenRemoveSelection];
         [self hideOnScreenNotesAndTruncateSpanners];
         currentGrid_ = primaryGrid_;
@@ -2845,7 +3135,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         dir = [delegate_ screenCurrentWorkingDirectory];
     }
     if (dir.length) {
-        BOOL willChange = [dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
+        BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
         [self setWorkingDirectory:dir onLine:cursorLine];
         if (willChange) {
             [delegate_ screenCurrentDirectoryDidChangeTo:dir];
@@ -2928,7 +3218,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                              height:(int)height
                               units:(VT100TerminalUnits)heightUnits
                 preserveAspectRatio:(BOOL)preserveAspectRatio
-                              image:(NSImage *)image {
+                              image:(NSImage *)image
+                               data:(NSData *)data {
     if (!image) {
         image = [NSImage imageNamed:@"broken_image"];
     }
@@ -3020,21 +3311,24 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     currentGrid_.cursorX = currentGrid_.cursorX + width + 1;
 
-    SetDecodedImage(c.code, image);
+    SetDecodedImage(c.code, image, data);
     [inlineFileCodes_ addObject:@(c.code)];
     [delegate_ screenNeedsRedraw];
 }
 
 - (void)terminalDidFinishReceivingFile {
     if (inlineFileInfo_) {
-        NSImage *image = [self imageWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
+        // TODO: Handle objects other than images.
+        NSData *data = [NSData dataWithBase64EncodedString:inlineFileInfo_[kInlineFileBase64String]];
+        NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
         [self appendImageAtCursorWithName:inlineFileInfo_[kInlineFileName]
                                     width:[inlineFileInfo_[kInlineFileWidth] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileWidthUnits] intValue]
                                    height:[inlineFileInfo_[kInlineFileHeight] intValue]
                                     units:(VT100TerminalUnits)[inlineFileInfo_[kInlineFileHeightUnits] intValue]
                       preserveAspectRatio:[inlineFileInfo_[kInlineFilePreserveAspectRatio] boolValue]
-                                    image:image];
+                                    image:image
+                                     data:data];
         [inlineFileInfo_ release];
         inlineFileInfo_ = nil;
     } else {
@@ -3146,6 +3440,14 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)terminalSetCursorVisible:(BOOL)visible {
+    if (visible != _cursorVisible) {
+        _cursorVisible = visible;
+        if (visible) {
+            [self.temporaryDoubleBuffer reset];
+        } else {
+            [self.temporaryDoubleBuffer start];
+        }
+    }
     [delegate_ screenSetCursorVisible:visible];
 }
 
@@ -3329,7 +3631,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         return VT100GridCoordRangeMake(-1, -1, -1, -1);
     } else {
         return VT100GridCoordRangeMake(commandStartX_,
-                                       commandStartY_ - offset,
+                                       MAX(0, commandStartY_ - offset),
                                        currentGrid_.cursorX,
                                        currentGrid_.cursorY + [self numberOfScrollbackLines]);
     }
@@ -3364,18 +3666,30 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 // Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
 - (void)highlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
-        backgroundColor:(NSColor *)bgColor
-{
-    int fgColorCode = [fgColor nearestIndexIntoAnsi256ColorTable];
-    int bgColorCode = [bgColor nearestIndexIntoAnsi256ColorTable];
-
+        backgroundColor:(NSColor *)bgColor {
     screen_char_t fg = { 0 };
     screen_char_t bg = { 0 };
 
-    fg.foregroundColor = fgColorCode;
-    fg.foregroundColorMode = fgColor ? ColorModeNormal : ColorModeInvalid;
-    bg.backgroundColor = bgColorCode;
-    bg.backgroundColorMode = bgColor ? ColorModeNormal : ColorModeInvalid;
+    NSColor *genericFgColor = [fgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+    NSColor *genericBgColor = [bgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+
+    if (fgColor) {
+        fg.foregroundColor = genericFgColor.redComponent * 255;
+        fg.fgBlue = genericFgColor.blueComponent * 255;
+        fg.fgGreen = genericFgColor.greenComponent * 255;
+        fg.foregroundColorMode = ColorMode24bit;
+    } else {
+        fg.foregroundColorMode = ColorModeInvalid;
+    }
+
+    if (bgColor) {
+        bg.backgroundColor = genericBgColor.redComponent * 255;
+        bg.bgBlue = genericBgColor.blueComponent * 255;
+        bg.bgGreen = genericBgColor.greenComponent * 255;
+        bg.backgroundColorMode = ColorMode24bit;
+    } else {
+        bg.backgroundColorMode = ColorModeInvalid;
+    }
 
     for (NSValue *value in [currentGrid_ rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
@@ -3880,26 +4194,6 @@ static void SwapInt(int *a, int *b) {
     return keepSearching;
 }
 
-- (NSImage *)imageWithBase64EncodedString:(NSString *)string {
-    // TODO: Handle objects other than images.
-    const char *buffer = [string UTF8String];
-    int destLength = apr_base64_decode_len(buffer);
-    if (destLength <= 0) {
-        return nil;
-    }
-
-    NSMutableData *data = [NSMutableData dataWithLength:destLength];
-    char *decodedBuffer = [data mutableBytes];
-    int resultLength = apr_base64_decode(decodedBuffer, buffer);
-    if (resultLength <= 0) {
-        return nil;
-    }
-
-    NSImage *image = [[[NSImage alloc] initWithData:data] autorelease];
-    return image;
-}
-
-
 #pragma mark - PTYNoteViewControllerDelegate
 
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note {
@@ -3929,11 +4223,16 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (void)gridCursorDidChangeLine {
-    [delegate_ screenCursorDidMoveToLine:currentGrid_.cursorY + [self numberOfScrollbackLines]];
+    if (_trackCursorLineMovement) {
+        [delegate_ screenCursorDidMoveToLine:currentGrid_.cursorY + [self numberOfScrollbackLines]];
+    }
 }
 
 - (BOOL)gridUseHFSPlusMapping {
     return _useHFSPlusMapping;
+}
+
+- (void)gridCursorDidMove {
 }
 
 #pragma mark - iTermMarkDelegate
@@ -3945,24 +4244,236 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (NSDictionary *)contentsDictionary {
-    LineBuffer *temp = [[linebuffer_ newAppendOnlyCopy] autorelease];
-    [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed] toLineBuffer:temp];
+    // We want 10k lines of history at 80 cols, and fewer for small widths, to keep the size
+    // reasonable.
+    int maxArea = 10000 * 80;
+    int effectiveWidth = self.width ?: 80;
+    int maxLines = MAX(1000, maxArea / effectiveWidth);
+
+    // Make a copy of the last blocks of the line buffer; enough to contain at least |maxLines|.
+    LineBuffer *temp = [linebuffer_ appendOnlyCopyWithMinimumLines:maxLines
+                                                           atWidth:effectiveWidth];
+
+    // Offset for intervals so 0 is the first char in the provided contents.
+    int linesDroppedForBrevity = ([linebuffer_ numLinesWithWidth:effectiveWidth] -
+                                  [temp numLinesWithWidth:effectiveWidth]);
+    long long intervalOffset =
+        -(linesDroppedForBrevity + [self totalScrollbackOverflow]) * (self.width + 1);
+
+    int numLines;
+    if ([iTermAdvancedSettingsModel runJobsInServers]) {
+        numLines = currentGrid_.size.height;
+    } else {
+        numLines = [currentGrid_ numberOfLinesUsed];
+    }
+    [currentGrid_ appendLines:numLines toLineBuffer:temp];
+    NSMutableDictionary *dict = [[[temp dictionary] mutableCopy] autorelease];
+    static NSString *const kScreenStateTabStopsKey = @"Tab Stops";
+    dict[kScreenStateKey] =
+        @{ kScreenStateTabStopsKey: [tabStops_ allObjects],
+           kScreenStateTerminalKey: [terminal_ stateDictionary],
+           kScreenStateLineDrawingModeKey: @[ @(charsetUsesLineDrawingMode_[0]),
+                                              @(charsetUsesLineDrawingMode_[1]),
+                                              @(charsetUsesLineDrawingMode_[2]),
+                                              @(charsetUsesLineDrawingMode_[3]) ],
+           kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid],
+           kScreenStateCurrentGridIsPrimaryKey: @(primaryGrid_ == currentGrid_),
+           kScreenStateIntervalTreeKey: [intervalTree_ dictionaryValueWithOffset:intervalOffset],
+           kScreenStateSavedIntervalTreeKey: [savedIntervalTree_ dictionaryValueWithOffset:0] ?: [NSNull null],
+           kScreenStateCommandStartXKey: @(commandStartX_),
+           kScreenStateCommandStartYKey: @(commandStartY_),
+           kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:nextCommandOutputStart_],
+           kScreenStateCursorVisibleKey: @(_cursorVisible),
+           kScreenStateTrackCursorLineMovementKey: @(_trackCursorLineMovement),
+           kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
+           kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
+           kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
+           kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue,
+           kScreenStateAlternateGridStateKey: primaryGrid_.dictionaryValue ?: [NSNull null],
+           kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity)
+           };
+    return [dict dictionaryByRemovingNullValues];
+}
+
+- (NSDictionary *)contentsOfNonCurrentGrid {
+    LineBuffer *temp = [[[LineBuffer alloc] initWithBlockSize:4096] autorelease];
+    VT100Grid *grid;
+    if (currentGrid_ == primaryGrid_) {
+        grid = altGrid_;
+    } else {
+        grid = primaryGrid_;
+    }
+    if (!grid) {
+        return @{};
+    }
+    [grid appendLines:grid.size.height toLineBuffer:temp];
     return [temp dictionary];
 }
 
-- (void)appendFromDictionary:(NSDictionary *)dictionary {
+- (void)restoreFromDictionary:(NSDictionary *)dictionary
+     includeRestorationBanner:(BOOL)includeRestorationBanner
+                knownTriggers:(NSArray *)triggers
+                   reattached:(BOOL)reattached {
+    if (!altGrid_) {
+        altGrid_ = [primaryGrid_ copy];
+    }
+    NSDictionary *screenState = reattached ? dictionary[kScreenStateKey] : nil;
+    if (screenState) {
+        if ([screenState[kScreenStateCurrentGridIsPrimaryKey] boolValue]) {
+            currentGrid_ = primaryGrid_;
+        } else {
+            currentGrid_ = altGrid_;
+        }
+    }
+
     LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
+    if (includeRestorationBanner) {
+        [lineBuffer appendMessage:@"Session Restored"];
+    }
     [lineBuffer setMaxLines:maxScrollbackLines_];
-    [lineBuffer dropExcessLinesWithWidth:self.width];
+    if (!unlimitedScrollback_) {
+        [lineBuffer dropExcessLinesWithWidth:self.width];
+    }
     [linebuffer_ release];
     linebuffer_ = lineBuffer;
-    int linesRestored = MIN(MAX(0, currentGrid_.size.height - 1),
+    int maxLinesToRestore;
+    if ([iTermAdvancedSettingsModel runJobsInServers] && reattached) {
+        maxLinesToRestore = currentGrid_.size.height;
+    } else {
+        maxLinesToRestore = currentGrid_.size.height - 1;
+    }
+    int linesRestored = MIN(MAX(0, maxLinesToRestore),
                             [lineBuffer numLinesWithWidth:self.width]);
     [currentGrid_ restoreScreenFromLineBuffer:linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:linesRestored];
+    DLog(@"appendFromDictionary: Grid size is %dx%d", currentGrid_.size.width, currentGrid_.size.height);
+    DLog(@"Restored %d wrapped lines from dictionary", [self numberOfScrollbackLines] + linesRestored);
     currentGrid_.cursorY = linesRestored + 1;
     currentGrid_.cursorX = 0;
+
+    if (screenState) {
+        [tabStops_ removeAllObjects];
+        [tabStops_ addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
+
+        [terminal_ setStateFromDictionary:screenState[kScreenStateTerminalKey]];
+        NSArray *array = screenState[kScreenStateLineDrawingModeKey];
+        for (int i = 0; i < sizeof(charsetUsesLineDrawingMode_) / sizeof(charsetUsesLineDrawingMode_[0]) && i < array.count; i++) {
+            charsetUsesLineDrawingMode_[i] = [array[i] boolValue];
+        }
+
+        VT100Grid *otherGrid = (currentGrid_ == primaryGrid_) ? altGrid_ : primaryGrid_;
+        LineBuffer *otherLineBuffer = [[[LineBuffer alloc] initWithDictionary:screenState[kScreenStateNonCurrentGridKey]] autorelease];
+        [otherGrid restoreScreenFromLineBuffer:otherLineBuffer
+                               withDefaultChar:[altGrid_ defaultChar]
+                             maxLinesToRestore:altGrid_.size.height];
+
+        NSString *guidOfLastCommandMark = screenState[kScreenStateLastCommandMarkKey];
+
+        [intervalTree_ release];
+        intervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
+        [self fixUpDeserializedIntervalTree:intervalTree_
+                              knownTriggers:triggers
+                                    visible:YES
+                      guidOfLastCommandMark:guidOfLastCommandMark];
+
+        [savedIntervalTree_ release];
+        savedIntervalTree_ = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
+        [self fixUpDeserializedIntervalTree:savedIntervalTree_
+                              knownTriggers:triggers
+                                    visible:NO
+                      guidOfLastCommandMark:guidOfLastCommandMark];
+
+        [self reloadMarkCache];
+        commandStartX_ = [screenState[kScreenStateCommandStartXKey] intValue];
+        commandStartY_ = [screenState[kScreenStateCommandStartYKey] intValue];
+        nextCommandOutputStart_ = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
+        _cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
+        _trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
+        _lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
+        _shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
+
+        [primaryGrid_ setStateFromDictionary:screenState[kScreenStatePrimaryGridStateKey]];
+        [altGrid_ setStateFromDictionary:screenState[kScreenStateAlternateGridStateKey]];
+    }
+}
+
+// Link references to marks in CapturedOutput (for the lines where output was captured) to the deserialized mark.
+// Link marks for commands to CommandUse objects in command history.
+// Notify delegate of PTYNoteViewControllers so they get added as subviews, and set the delegate of not view controllers to self.
+- (void)fixUpDeserializedIntervalTree:(IntervalTree *)intervalTree
+                        knownTriggers:(NSArray *)triggers
+                              visible:(BOOL)visible
+                guidOfLastCommandMark:(NSString *)guidOfLastCommandMark {
+    VT100RemoteHost *lastRemoteHost = nil;
+    NSMutableDictionary *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
+    for (NSArray *objects in [intervalTree forwardLimitEnumerator]) {
+        for (id<IntervalTreeObject> object in objects) {
+            if ([object isKindOfClass:[iTermMark class]]) {
+                iTermMark *mark = (iTermMark *)object;
+                mark.delegate = self;
+                // If |capturedOutput| is not empty then this mark is a command, some of whose output
+                // was captured. The iTermCapturedOutputMarks will come later so save the GUIDs we need
+                // in markGuidToCapturedOutput and they'll get backfilled when found.
+                for (CapturedOutput *capturedOutput in mark.capturedOutput) {
+                    [capturedOutput setKnownTriggers:triggers];
+                    if (capturedOutput.markGuid) {
+                        markGuidToCapturedOutput[capturedOutput.markGuid] = capturedOutput;
+                    }
+                }
+            }
+            if ([object isKindOfClass:[VT100RemoteHost class]]) {
+                lastRemoteHost = object;
+            } else if ([object isKindOfClass:[VT100ScreenMark class]]) {
+                VT100ScreenMark *screenMark = (VT100ScreenMark *)object;
+                if (screenMark.command) {
+                    // Find the matching object in command history and link it.
+                    CommandUse *commandUse = [[CommandHistory sharedInstance] commandUseWithMarkGuid:screenMark.guid
+                                                                                              onHost:lastRemoteHost];
+                    commandUse.mark = screenMark;
+                }
+                if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {
+                    self.lastCommandMark = screenMark;
+                }
+            } else if ([object isKindOfClass:[iTermCapturedOutputMark class]]) {
+                // This mark represents a line whose output was captured. Find the preceding command
+                // mark that has a CapturedOutput corresponding to this mark and fill it in.
+                iTermCapturedOutputMark *capturedOutputMark = (iTermCapturedOutputMark *)object;
+                CapturedOutput *capturedOutput = markGuidToCapturedOutput[capturedOutputMark.guid];
+                capturedOutput.mark = capturedOutputMark;
+            } else if ([object isKindOfClass:[PTYNoteViewController class]]) {
+                PTYNoteViewController *note = (PTYNoteViewController *)object;
+                note.delegate = self;
+                if (visible) {
+                    [delegate_ screenDidAddNote:note];
+                }
+            }
+        }
+    }
+}
+
+- (iTermTemporaryDoubleBufferedGridController *)temporaryDoubleBuffer {
+    if ([delegate_ screenShouldReduceFlicker]) {
+        return _temporaryDoubleBuffer;
+    } else {
+        return nil;
+    }
+}
+
+#pragma mark - iTermFullScreenUpdateDetectorDelegate
+
+- (VT100Grid *)temporaryDoubleBufferedGridCopy {
+    VT100Grid *copy = [[currentGrid_ copy] autorelease];
+    copy.delegate = nil;
+    return copy;
+}
+
+- (void)temporaryDoubleBufferedGridDidExpire {
+    [currentGrid_ setAllDirty:YES];
+    // Force the screen to redraw right away. Some users reported lag and this seems to fix it.
+    // I think the update timer was hitting a worst case scenario which made the lag visible.
+    // See issue 3537.
+    [delegate_ screenUpdateDisplay:YES];
 }
 
 @end

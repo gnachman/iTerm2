@@ -48,13 +48,42 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 @end
 
-@implementation TmuxController
+@implementation TmuxController {
+    TmuxGateway *gateway_;
+    NSMutableDictionary *windowPanes_;  // paneId -> PTYSession *
+    NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
+    NSArray *sessions_;
+    int numOutstandingWindowResizes_;
+    NSMutableDictionary *windowPositions_;
+    NSSize lastSize_;  // last size for windowDidChange:
+    NSString *lastOrigins_;
+    BOOL detached_;
+    NSString *sessionName_;
+    int sessionId_;
+    NSMutableSet *pendingWindowOpens_;
+    NSString *lastSaveAffinityCommand_;
+    // tmux windows that want to open as tabs in the same physical window
+    // belong to the same equivalence class.
+    EquivalenceClassSet *affinities_;
+    BOOL windowOriginsDirty_;
+    BOOL haveOutstandingSaveWindowOrigins_;
+    NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
+    NSMutableSet *hiddenWindows_;
+    NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
+    NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
+    BOOL ambiguousIsDoubleWidth_;
+
+    // Maps a window id string to a dictionary of window flags defined by TmuxWindowOpener (see the
+    // top of its header file)
+    NSMutableDictionary *_windowFlags;
+}
 
 @synthesize gateway = gateway_;
 @synthesize windowPositions = windowPositions_;
 @synthesize sessionName = sessionName_;
 @synthesize sessions = sessions_;
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
+@synthesize sessionId = sessionId_;
 
 - (id)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName
 {
@@ -68,6 +97,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         pendingWindowOpens_ = [[NSMutableSet alloc] init];
         hiddenWindows_ = [[NSMutableSet alloc] init];
         self.clientName = [[TmuxControllerRegistry sharedInstance] uniqueClientNameBasedOn:clientName];
+        _windowFlags = [[NSMutableDictionary alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self forClient:_clientName];
     }
     return self;
@@ -86,6 +116,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [hiddenWindows_ release];
     [lastOrigins_ release];
     [_sessionGuid release];
+    [_windowFlags release];
     [super dealloc];
 }
 
@@ -118,18 +149,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.gateway = gateway_;
     windowOpener.target = self;
     windowOpener.selector = @selector(windowDidOpen:);
+    windowOpener.windowFlags = _windowFlags;
     [windowOpener openWindows:YES];
 }
 
-- (void)addAffinityBetweenPane:(int)windowPane
-                   andTerminal:(PseudoTerminal *)term {
-    [affinities_ setValue:[[NSNumber numberWithInt:windowPane] stringValue]
-             equalToValue:[term terminalGuid]];
-}
-
 - (void)setLayoutInTab:(PTYTab *)tab
-              toLayout:(NSString *)layout
-{
+              toLayout:(NSString *)layout {
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
     windowOpener.layout = layout;
@@ -141,6 +166,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.windowIndex = [tab tmuxWindow];
     windowOpener.target = self;
     windowOpener.selector = @selector(windowDidOpen:);
+    windowOpener.windowFlags = _windowFlags;
     [windowOpener updateLayoutInTab:tab];
 }
 
@@ -264,7 +290,27 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)openWindowsInitial {
-    NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
+    NSString *command = [NSString stringWithFormat:@"show -v -q -t $%d @iterm2_size", sessionId_];
+    [gateway_ sendCommand:command
+           responseTarget:self
+         responseSelector:@selector(handleShowSize:)];
+}
+
+- (void)handleShowSize:(NSString *)response {
+    NSScanner *scanner = [NSScanner scannerWithString:response ?: @""];
+    int width = 0;
+    int height = 0;
+    BOOL ok = ([scanner scanInt:&width] &&
+               [scanner scanString:@"," intoString:nil] &&
+               [scanner scanInt:&height]);
+    if (ok) {
+        [self openWindowsOfSize:NSMakeSize(width, height)];
+    } else {
+        [self openWindowsOfSize:[[gateway_ delegate] tmuxBookmarkSize]];
+    }
+}
+
+- (void)openWindowsOfSize:(NSSize)size {
     // There's a (hopefully) minor race condition here. When we initially connect to
     // a session we get its @iterm2_id. If one doesn't exist, it is assigned. This
     // lets us know if a single instance of iTerm2 is trying to attach to the same
@@ -452,12 +498,18 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [self setClientSize:minSize];
 }
 
-- (void)setClientSize:(NSSize)size
-{
+- (void)setClientSize:(NSSize)size {
     assert(size.width > 0 && size.height > 0);
     lastSize_ = size;
     NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
+    NSString *setSizeCommand = [NSString stringWithFormat:@"set -t $%d @iterm2_size %d,%d",
+                                sessionId_, (int)size.width, (int)size.height];
     NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:setSizeCommand
+                                         responseTarget:nil
+                                       responseSelector:nil
+                                         responseObject:nil
+                                                  flags:0],
                          [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"refresh-client -C %d,%d",
                                                          (int)size.width, (int)size.height]
                                          responseTarget:nil
@@ -570,8 +622,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 // The splitVertically parameter uses the iTerm2 conventions.
-- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically
-{
+- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically {
     // No need for a callback. We should get a layout-changed message and act on it.
     [gateway_ sendCommand:[NSString stringWithFormat:@"split-window -%@ -t %%%d", splitVertically ? @"h": @"v", wp]
            responseTarget:nil
@@ -884,8 +935,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)saveAffinities
-{
+- (NSString *)windowFlagsForTerminal:(PseudoTerminal *)term {
+    if (term.anyFullScreen) {
+        return [NSString stringWithFormat:@"%@=%@",
+                kTmuxWindowOpenerWindowFlagStyle, kTmuxWindowOpenerWindowFlagStyleValueFullScreen];
+    } else {
+        return @"";
+    }
+}
+
+- (void)saveAffinities {
     if (pendingWindowOpens_.count) {
         return;
     }
@@ -904,15 +963,20 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
             [siblings addObject:[term terminalGuid]];
         }
         if (siblings.count > 0) {
-            [affinities addObject:[siblings componentsJoinedByString:@","]];
+            NSString *value = [NSString stringWithFormat:@"%@;%@",
+                               [siblings componentsJoinedByString:@","],
+                               [self windowFlagsForTerminal:term]];
+            [affinities addObject:value];
         }
     }
+    // Update affinities if any have changed.
     NSString *arg = [affinities componentsJoinedByString:@" "];
     NSString *command = [NSString stringWithFormat:@"set -t $%d @affinities \"%@\"",
                          sessionId_, [arg stringByEscapingQuotes]];
     if ([command isEqualToString:lastSaveAffinityCommand_]) {
         return;
     }
+    [self setAffinitiesFromString:arg];
     [lastSaveAffinityCommand_ release];
     lastSaveAffinityCommand_ = [command retain];
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
@@ -1065,8 +1129,37 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)getAffinitiesResponse:(NSString *)result
-{
+- (void)getAffinitiesResponse:(NSString *)result {
+    [self setAffinitiesFromString:result];
+}
+
+- (NSArray *)componentsOfAffinities:(NSString *)affinities {
+    NSRange semicolonRange = [affinities rangeOfString:@";"];
+    if (semicolonRange.location != NSNotFound) {
+        NSString *siblings = [affinities substringToIndex:semicolonRange.location];
+        NSString *windowFlags = [affinities substringFromIndex:NSMaxRange(semicolonRange)];
+        return @[ siblings, windowFlags ];
+    } else {
+        return @[ affinities, @"" ];
+    }
+}
+
+// Takes key1=value1,key2=value2 and returns @{ key1: value1, key2: value2 }
+- (NSDictionary *)windowFlagsFromString:(NSString *)kvpString {
+    NSMutableDictionary *flags = [NSMutableDictionary dictionary];
+    NSArray *kvps = [kvpString componentsSeparatedByString:@","];
+    for (NSString *flagString in kvps) {
+        NSRange equalsRange = [flagString rangeOfString:@"="];
+        if (equalsRange.location != NSNotFound) {
+            NSString *key = [flagString substringToIndex:equalsRange.location];
+            NSString *value = [flagString substringFromIndex:NSMaxRange(equalsRange)];
+            flags[key] = value;
+        }
+    }
+    return flags;
+}
+
+- (void)setAffinitiesFromString:(NSString *)result {
     // Replace the existing equivalence classes with those defined by the
     // affinity response.
     // For example "1,2,3 4,5,6" has two equivalence classes.
@@ -1079,7 +1172,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         return;
     }
 
-    for (NSString *affset in affinities) {
+    for (NSString *theString in affinities) {
+        NSArray *components = [self componentsOfAffinities:theString];
+        NSString *affset = components[0];
+        NSString *windowFlagsString = components[1];
+
         NSArray *siblings = [affset componentsSeparatedByString:@","];
         NSString *exemplar = [siblings lastObject];
         if (siblings.count == 1) {
@@ -1089,10 +1186,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
             // unrecognized windows.
             exemplar = [exemplar stringByAppendingString:@"_ph"];
         }
+        NSDictionary *flags = [self windowFlagsFromString:windowFlagsString];
         for (NSString *widString in siblings) {
             if (![widString isEqualToString:exemplar]) {
                 [affinities_ setValue:widString
                          equalToValue:exemplar];
+                _windowFlags[widString] = flags;
             }
         }
     }
@@ -1236,6 +1335,70 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [[term window] setFrameOrigin:[p pointValue]];
     }
     [self saveAffinities];
+}
+
+- (void)setPartialWindowIdOrder:(NSArray *)partialOrder {
+    [gateway_ sendCommand:@"list-windows -F \"#{window_id}\""
+           responseTarget:self
+         responseSelector:@selector(responseForListWindows:toSetPartialOrder:)
+           responseObject:partialOrder
+                    flags:0];
+}
+
+- (void)responseForListWindows:(NSString *)response toSetPartialOrder:(NSArray *)partialOrder {
+    NSArray *ids = [response componentsSeparatedByString:@"\n"];
+    NSMutableArray *currentOrder = [NSMutableArray array];
+    for (NSString *windowId in ids) {
+        if ([windowId hasPrefix:@"@"]) {
+            int i = [[windowId substringFromIndex:1] intValue];
+            NSNumber *n = @(i);
+            if ([partialOrder containsObject:n]) {
+                [currentOrder addObject:n];
+            }
+        }
+    }
+
+    NSMutableArray *desiredOrder = [NSMutableArray array];
+    for (NSNumber *n in partialOrder) {
+        if ([currentOrder containsObject:n]) {
+            [desiredOrder addObject:n];
+        }
+    }
+
+    // We have two lists, desiredOrder and currentOrder, that contain the same objects but
+    // in (possibly) a different order. For each out-of-place value, swap it with a later value,
+    // placing the later value in its correct location.
+    NSMutableArray *commands = [NSMutableArray array];
+    for (int i = 0; i < currentOrder.count; i++) {
+        if ([currentOrder[i] intValue] != [desiredOrder[i] intValue]) {
+            NSInteger swapIndex = [currentOrder indexOfObject:desiredOrder[i]];
+            assert(swapIndex != NSNotFound);
+
+            NSString *command = [NSString stringWithFormat:@"swap-window -s @%@ -t @%@",
+                                    currentOrder[i], currentOrder[swapIndex]];
+            NSDictionary *dict = [gateway_ dictionaryForCommand:command
+                                                 responseTarget:self
+                                               responseSelector:@selector(didSwapWindows:)
+                                                 responseObject:nil
+                                                          flags:0];
+            [commands addObject:dict];
+            NSNumber *temp = [[currentOrder[i] retain] autorelease];
+            currentOrder[i] = currentOrder[swapIndex];
+            currentOrder[swapIndex] = temp;
+        }
+    }
+
+    [gateway_ sendCommandList:commands];
+}
+
+- (void)didSwapWindows:(NSString *)response {
+}
+
+- (void)setCurrentWindow:(int)windowId {
+    NSString *command = [NSString stringWithFormat:@"select-window -t @%d", windowId];
+    [gateway_ sendCommand:command
+           responseTarget:nil
+         responseSelector:nil];
 }
 
 @end

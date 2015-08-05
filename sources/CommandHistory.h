@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "CommandUse.h"
 
 extern NSString *const kCommandHistoryDidChangeNotificationName;
 
@@ -33,14 +34,23 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
        inDirectory:(NSString *)directory
           withMark:(VT100ScreenMark *)mark;
 
+- (NSArray *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand
+                                      onHost:(VT100RemoteHost *)host;
+
+// Returns an array of CommandUse
 - (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host;
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host;
 
-// Expands each entry to one entry per use.
-- (NSArray *)entryArrayByExpandingAllUsesInEntryArray:(NSArray *)array;
-
 - (void)eraseHistory;
+
+- (CommandUse *)commandUseWithMarkGuid:(NSString *)markGuid onHost:(VT100RemoteHost *)host;
+
+- (NSMutableArray *)commandUsesForHost:(VT100RemoteHost *)host;
+
+#pragma mark - Testing
+
+- (void)eraseHistoryForHost:(VT100RemoteHost *)host;
 
 @end

@@ -144,7 +144,7 @@ const float kItermExposeThumbMargin = 25;
     iTermController* controller = [iTermController sharedInstance];
     for (int i = 0; i < [controller numberOfTerminals]; i++) {
         PseudoTerminal* term = [controller terminalAtIndex:i];
-        if ([[term window] alphaValue] == 0) {
+        if ([[term window] alphaValue] == 0 && ![term isHotKeyWindow]) {
             if (fade) {
                 [[[term window] animator] setAlphaValue:1];
             } else {
@@ -449,6 +449,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     NSScreen* theScreen = [iTermExposeGridView exposeScreen];
     SetSystemUIMode(kUIModeAllHidden, 0);
     NSRect screenFrame = [theScreen frame];
+    screenFrame.origin = NSZeroPoint;
     // Create the window and its view.
     window_ = [[iTermExposeWindow alloc] initWithContentRect:screenFrame
                                                    styleMask:NSBorderlessWindowMask

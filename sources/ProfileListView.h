@@ -55,23 +55,7 @@
   NSTextFieldDelegate,
   NSTableViewDataSource,
   NSTableViewDelegate,
-  ProfileTableMenuHandler> {
-    NSScrollView* scrollView_;
-    iTermSearchField* searchField_;
-    ProfileTableView* tableView_;
-    NSTableColumn* tableColumn_;
-    NSTableColumn* commandColumn_;
-    NSTableColumn* shortcutColumn_;
-    NSTableColumn* tagsColumn_;
-    NSObject<ProfileListViewDelegate> *delegate_;
-    NSSet* selectedGuids_;
-    BOOL debug;
-    ProfileModelWrapper *dataSource_;
-    int margin_;
-    ProfileTagsView *tagsView_;
-    NSSplitView *splitView_;
-    CGFloat lastTagsWidth_;
-}
+  ProfileTableMenuHandler>
 
 @property(nonatomic, readonly) BOOL tagsVisible;
 @property(nonatomic, assign) IBOutlet id<ProfileListViewDelegate> delegate;
@@ -128,6 +112,7 @@
 - (void)disableArrowHandler;
 
 - (void)toggleTags;
+- (void)setTagsOpen:(BOOL)open animated:(BOOL)animated;
 
 // Keep the currently selected profile in the list and selected even if it no longer matches the
 // filter.

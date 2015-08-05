@@ -3,7 +3,7 @@
 
 @class IntervalTreeEntry;
 
-@interface Interval : NSObject
+@interface Interval : NSObject<NSCopying>
 // Negative locations have special meaning. Don't use them.
 @property(nonatomic, assign) long long location;
 @property(nonatomic, assign) long long length;
@@ -15,10 +15,19 @@
 - (BOOL)intersects:(Interval *)other;
 - (BOOL)isEqualToInterval:(Interval *)interval;
 
+// Serialized value.
+- (NSDictionary *)dictionaryValue;
+
 @end
 
 @protocol IntervalTreeObject <NSObject>
+// Deserialize from dictionaryValue.
+- (instancetype)initWithDictionary:(NSDictionary *)dict;
+
 @property(nonatomic, assign) IntervalTreeEntry *entry;
+
+// Serialized value.
+- (NSDictionary *)dictionaryValue;
 @end
 
 // A node in the interval tree will contain one or more entries, each of which has an interval and an object. All intervals should have the same location.
@@ -46,6 +55,9 @@
     int _count;
 }
 
+// Deserialize
+- (instancetype)initWithDictionary:(NSDictionary *)dict;
+
 // |object| should implement -hash.
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval;
 - (void)removeObject:(id<IntervalTreeObject>)object;
@@ -56,12 +68,20 @@
 
 // Returns the object with the highest limit
 - (NSArray *)objectsWithLargestLimit;
-
 // Returns the object with the smallest limit
 - (NSArray *)objectsWithSmallestLimit;
 
+// Returns the object with the largest location
+- (NSArray *)objectsWithLargestLocation;
+
+// Returns the object with the largest location before (but NOT AT) |location|.
+- (NSArray *)objectsWithLargestLocationBefore:(long long)location;
+
 - (NSArray *)objectsWithLargestLimitBefore:(long long)limit;
 - (NSArray *)objectsWithSmallestLimitAfter:(long long)limit;
+
+// Enumerates backwards by location (NOT LIMIT)
+- (NSEnumerator *)reverseEnumeratorAt:(long long)start;
 
 - (NSEnumerator *)reverseLimitEnumeratorAt:(long long)start;
 - (NSEnumerator *)forwardLimitEnumeratorAt:(long long)start;
@@ -70,5 +90,9 @@
 
 - (void)sanityCheck;
 - (NSString *)debugString;
+
+// Serialize, adding offset to interval locations (useful for taking the tail
+// of an interval tree).
+- (NSDictionary *)dictionaryValueWithOffset:(long long)offset;
 
 @end

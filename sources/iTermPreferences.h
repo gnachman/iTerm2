@@ -55,6 +55,8 @@ extern NSString *const kPreferenceKeyAddBonjourHostsToProfiles;
 extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
 extern NSString *const kPreferenceKeyCheckForTestReleases;
 extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
+extern NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection;
+extern NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection;
 extern NSString *const kPreferenceKeyCustomFolder;  // Path/URL to location with prefs. Path may have ~ in it.
 extern NSString *const kPreferenceKeySelectionCopiesText;
 extern NSString *const kPreferenceKeyCopyLastNewline;

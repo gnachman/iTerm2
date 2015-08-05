@@ -26,12 +26,14 @@
  */
 
 #import "iTermGrowlDelegate.h"
-#import "Growl.framework/Headers/GrowlApplicationBridge.h"
-#import "PTYSession.h"
-#import "PTYTab.h"
+
+#import "iTermController.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
-#import "iTermController.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+
+#import <Growl/Growl.h>
 
 static NSString *const kGrowlAppName = @"iTerm";
 static NSString *const kDefaultNotification = @"Miscellaneous";

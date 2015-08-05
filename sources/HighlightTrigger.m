@@ -6,6 +6,8 @@
 //
 
 #import "HighlightTrigger.h"
+#import "NSColor+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
@@ -57,7 +59,7 @@ enum {
 
 @implementation HighlightTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Highlight Text…";
 }
@@ -72,8 +74,11 @@ enum {
     return YES;
 }
 
-- (BOOL)paramIsPopupButton
-{
+- (BOOL)paramIsPopupButton {
+    return NO;
+}
+
+- (BOOL)paramIsTwoColorWells {
     return YES;
 }
 
@@ -108,9 +113,9 @@ enum {
             @"Blue Background",  [NSNumber numberWithInt:(int)kBlueBackgroundHighlight],
             @"Brown Background",  [NSNumber numberWithInt:(int)kBrownBackgroundHighlight],
             @"Cyan Background",  [NSNumber numberWithInt:(int)kCyanBackgroundHighlight],
-            @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
+            @"Dark Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
             @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
-            @"Gren Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
+            @"Green Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
             @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
             @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
             @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
@@ -157,7 +162,7 @@ enum {
                         @"Cyan Background",  [NSNumber numberWithInt:(int)kCyanBackgroundHighlight],
                         @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
                         @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
-                        @"Gren Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
+                        @"Green Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
                         @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
                         @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
                         @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
@@ -223,9 +228,89 @@ enum {
     return [NSDictionary dictionaryWithObjectsAndKeys:background, kHighlightBackgroundColor, nil];
 }
 
-- (NSDictionary *)colors
-{
-    switch ([self.param intValue]) {
+- (NSString *)stringValue {
+    return [self stringForTextColor:self.textColor backgroundColor:self.backgroundColor];
+}
+
+- (NSString *)stringForTextColor:(NSColor *)textColor backgroundColor:(NSColor *)backgroundColor {
+    return [NSString stringWithFormat:@"{%@,%@}",
+            textColor.stringValue ?: @"",
+            backgroundColor.stringValue ?: @""];
+}
+
+- (NSColor *)textColor {
+    NSDictionary *colors = [self colors];
+    return colors[kHighlightForegroundColor];
+}
+
+- (NSColor *)backgroundColor {
+    NSDictionary *colors = [self colors];
+    return colors[kHighlightBackgroundColor];
+}
+
+- (void)setTextColor:(NSColor *)textColor {
+    [super setTextColor:textColor];
+    NSMutableArray *temp = [[[self stringsForColors] mutableCopy] autorelease];
+    temp[0] = textColor ? textColor.stringValue: @"";
+    self.param = [NSString stringWithFormat:@"{%@,%@}", temp[0], temp[1]];
+}
+
+- (void)setBackgroundColor:(NSColor *)backgroundColor {
+    [super setBackgroundColor:backgroundColor];
+    NSMutableArray *temp = [[[self stringsForColors] mutableCopy] autorelease];
+    temp[1] = backgroundColor ? backgroundColor.stringValue: @"";
+    self.param = [NSString stringWithFormat:@"{%@,%@}", temp[0], temp[1]];
+}
+
+// Returns a string of the form {text components,background components} from self.param.
+- (NSArray *)stringsForColors {
+    if (self.param == nil) {
+        return @[ [[NSColor whiteColor] stringValue], [[NSColor redColor] stringValue] ];
+    }
+    if ([self.param isKindOfClass:[NSString class]] &&
+        [self.param hasPrefix:@"{"] && [self.param hasSuffix:@"}"]) {
+        NSString *stringParam = self.param;
+        NSString *inner = [self.param substringWithRange:NSMakeRange(1, stringParam.length - 2)];
+        NSArray *parts = [inner componentsSeparatedByString:@","];
+        if (parts.count == 2) {
+            return parts;
+        }
+        return @[ @"", @"" ];
+    }
+
+    if ([self.param isKindOfClass:[NSNumber class]]) {
+        NSNumber *numberParam = self.param;
+        NSDictionary *dict = [self colorDictionaryForInteger:numberParam.intValue];
+        NSColor *text = dict[kHighlightForegroundColor];
+        NSColor *background = dict[kHighlightBackgroundColor];
+        return @[ text ? text.stringValue : @"",
+                  background ? background.stringValue : @"" ];
+    }
+
+    return @[ @"", @"" ];
+}
+
+// Returns a dictionary with text and background color from the self.param string.
+- (NSDictionary *)colors {
+    NSArray *parts = [self stringsForColors];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    NSColor *textColor = nil;
+    NSColor *backgroundColor = nil;
+    if (parts.count == 2) {
+        textColor = [NSColor colorWithString:parts[0]];
+        backgroundColor = [NSColor colorWithString:parts[1]];
+    }
+    if (textColor) {
+        dict[kHighlightForegroundColor] = textColor;
+    }
+    if (backgroundColor) {
+        dict[kHighlightBackgroundColor] = backgroundColor;
+    }
+    return dict;
+}
+
+- (NSDictionary *)colorDictionaryForInteger:(int)param {
+    switch (param) {
         case kYellowOnBlackHighlight:
             return [self dictionaryWithForegroundColor:[NSColor yellowColor] backgroundColor:[NSColor blackColor]];
 
@@ -337,10 +422,21 @@ enum {
     return nil;
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
-    [[aSession screen] highlightTextMatchingRegex:self.regex
-                                           colors:[self colors]];
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
+    for (NSInteger i = 0; i < captureCount; i++) {
+        NSRange rangeInString = capturedRanges[i];
+        NSRange rangeInScreenChars = [stringLine rangeOfScreenCharsForRangeInString:rangeInString];
+        [[aSession screen] highlightTextInRange:rangeInScreenChars
+                      basedAtAbsoluteLineNumber:lineNumber
+                                         colors:[self colors]];
+    }
+
     return YES;
 }
 

@@ -6,8 +6,10 @@
 //
 
 #import "Trigger.h"
-#import "RegexKitLite.h"
 #import "NSStringITerm.h"
+#import "RegexKitLite.h"
+#import "ScreenChar.h"
+#import <CommonCrypto/CommonDigest.h>
 
 NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
@@ -20,7 +22,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     long long _lastLineNumber;
     NSString *regex_;
     NSString *action_;
-    NSString *param_;
+    id param_;
 }
 
 @synthesize regex = regex_;
@@ -66,8 +68,11 @@ NSString * const kTriggerPartialLineKey = @"partial";
     assert(false);
 }
 
-- (BOOL)paramIsPopupButton
-{
+- (BOOL)paramIsPopupButton {
+    return NO;
+}
+
+- (BOOL)paramIsTwoColorWells {
     return NO;
 }
 
@@ -90,17 +95,21 @@ NSString * const kTriggerPartialLineKey = @"partial";
     [regex_ release];
     [action_ release];
     [param_ release];
-
     [super dealloc];
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
     assert(false);
     return NO;
 }
 
-- (void)tryString:(NSString *)s
+- (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(PTYSession *)aSession
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber {
@@ -109,39 +118,53 @@ NSString * const kTriggerPartialLineKey = @"partial";
         if (!partialLine) {
             _lastLineNumber = -1;
         }
-        return;
+        return NO;
     }
     if (partialLine && !_partialLine) {
         // This trigger doesn't support partial lines.
-        return;
+        return NO;
     }
-    NSRange range = [s rangeOfRegex:regex_];
-    if (range.location != NSNotFound) {
-        NSArray *captures = [s arrayOfCaptureComponentsMatchedByRegex:regex_];
-        if (captures.count) {
-            _lastLineNumber = lineNumber;
-        }
-        for (NSArray *matches in captures) {
-            if (![self performActionWithValues:matches
-                                    inSession:aSession
-                                     onString:s
-                          atAbsoluteLineNumber:lineNumber]) {
-                break;
-            }
-        }
-    }
+
+    __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
+    NSString *s = stringLine.stringValue;
+    [s enumerateStringsMatchedByRegex:regex_
+                           usingBlock:^(NSInteger captureCount,
+                                        NSString *const *capturedStrings,
+                                        const NSRange *capturedRanges,
+                                        volatile BOOL *const stopEnumerating) {
+                               _lastLineNumber = lineNumber;
+                               if (![self performActionWithCapturedStrings:capturedStrings
+                                                            capturedRanges:capturedRanges
+                                                              captureCount:captureCount
+                                                                 inSession:aSession
+                                                                  onString:stringLine
+                                                      atAbsoluteLineNumber:lineNumber
+                                                                      stop:&stopFutureTriggersFromRunningOnThisLine]) {
+                                   *stopEnumerating = YES;
+                               }
+                           }];
     if (!partialLine) {
         _lastLineNumber = -1;
     }
+    return stopFutureTriggersFromRunningOnThisLine;
 }
 
-- (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values
-{
+- (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)strings {
+    NSString *temp[10];
+    int i;
+    for (i = 0; i < strings.count; i++) {
+        temp[i] = strings[i];
+    }
+    return [self paramWithBackreferencesReplacedWithValues:temp count:i];
+}
+
+- (NSString *)paramWithBackreferencesReplacedWithValues:(NSString * const*)strings
+                                                  count:(NSInteger)count {
     NSString *p = self.param;
     for (int i = 0; i < 9; i++) {
         NSString *rep = @"";
-        if (values.count > i) {
-            rep = [values objectAtIndex:i];
+        if (count > i) {
+            rep = strings[i];
         }
         p = [p stringByReplacingBackreference:i withString:rep];
     }
@@ -198,6 +221,28 @@ NSString * const kTriggerPartialLineKey = @"partial";
 
 // Called before a trigger window opens.
 - (void)reloadData {
+}
+
+- (NSData *)digest {
+    NSDictionary *triggerDictionary = @{ kTriggerActionKey: NSStringFromClass(self.class),
+                                         kTriggerRegexKey: self.regex ?: @"",
+                                         kTriggerParameterKey: self.param ?: @"",
+                                         kTriggerPartialLineKey: @(self.partialLine) };
+
+    // Glom all the data together as key=value\nkey=value\n...
+    NSMutableString *temp = [NSMutableString string];
+    for (NSString *key in [[triggerDictionary allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+        [temp appendFormat:@"%@=%@\n", key, triggerDictionary[key]];
+    }
+
+    NSData *data = [temp dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char hash[CC_SHA1_DIGEST_LENGTH];
+    if (CC_SHA1([data bytes], [data length], hash) ) {
+        NSData *sha1 = [NSData dataWithBytes:hash length:CC_SHA1_DIGEST_LENGTH];
+        return sha1;
+    } else {
+        return data;
+    }
 }
 
 @end

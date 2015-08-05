@@ -58,7 +58,8 @@
     NSPoint locationInWindow = [theEvent locationInWindow];
     locationInWindow.y--;
     NSPoint locationInView = [self convertPoint:locationInWindow toView:self];
-    int x, y;
+    int x = 0;
+    int y = 0;
     int bestDistance = -1;
     const BOOL isVertical = [self isVertical];
     if (isVertical) {
@@ -116,44 +117,6 @@
          draggingDidEndOfSplit:clickedOnSplitterIndex
                         pixels:changePx];
 }
-
-#if 0
-// Don't need this unless the background behind the split view is a color other
-// than windowBackgroundColor.
-- (void)drawRect:(NSRect)dirtyRect
-{
-	[super drawRect:dirtyRect];
-
-	// Draw splitters since the base class actually doesn't do that (it just
-	// lets the background show through).
-	BOOL isVertical = [self isVertical];
-	double offset = 0;
-	NSRect myFrame = self.frame;
-	double dividerThickness = [self dividerThickness];
-	[[NSColor windowBackgroundColor] set];
-	for (NSView *v in [self subviews]) {
-		NSRect rect;
-		if (isVertical) {
-			offset += v.frame.size.width;
-		} else {
-			offset += v.frame.size.height;
-		}
-		if (isVertical) {
-			rect.origin.y = 0;
-			rect.origin.x = offset;
-			rect.size.width = dividerThickness;
-			rect.size.height = myFrame.size.height;
-		} else {
-			rect.origin.x = 0;
-			rect.origin.y = offset;
-			rect.size.height = dividerThickness;
-			rect.size.width = myFrame.size.width;
-		}
-		NSRectFill(rect);
-		offset += dividerThickness;
-	}
-}
-#endif
 
 @end
 

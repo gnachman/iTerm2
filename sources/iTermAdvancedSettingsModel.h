@@ -92,5 +92,18 @@
 + (int)maximumBytesToProvideToServices;
 
 + (BOOL)disableWindowSizeSnap;
++ (BOOL)eliminateCloseButtons;
+
++ (BOOL)runJobsInServers;
++ (BOOL)killJobsInServersOnQuit;
+
++ (BOOL)noSyncDoNotWarnBeforeMultilinePaste;
+
++ (BOOL)noSyncTipsDisabled;
++ (int)numberOfLinesForAccessibility;
+
++ (int)triggerRadius;
++ (BOOL)useOpenDirectory;
++ (BOOL)disallowCopyEmptyString;
 
 @end

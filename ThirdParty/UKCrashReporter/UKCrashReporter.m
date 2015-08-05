@@ -36,7 +36,7 @@ NSString*    UKCrashReporterFindTenFiveCrashReportPath( NSString* appName, NSArr
 void    UKCrashReporterCheckForCrash(void)
 {
     NSAutoreleasePool*    pool = [[NSAutoreleasePool alloc] init];
-    
+
     NS_DURING
         // Try whether the classes we need to talk to the CGI are present:
         Class            NSMutableURLRequestClass = NSClassFromString( @"NSMutableURLRequest" );

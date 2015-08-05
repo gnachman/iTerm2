@@ -45,16 +45,19 @@
     isMiniaturized = [[aTerm window] isMiniaturized];
     frame = [[aTerm window] frame];
     screen = [[aTerm window] screen];
-    session = aSession;
-    [session retain];
+    session = [aSession retain];
     realWindow = aTerm;
     scrollbarShouldBeVisible = [aTerm scrollbarShouldBeVisible];
     return self;
 }
 
+- (void)dealloc {
+    [session release];
+    [super dealloc];
+}
+
 - (void)rejoin:(NSWindowController<iTermWindowController> *)aTerm
 {
-    [session release];
     if (hasPendingClose) {
         // TODO(georgen): We don't honor pending closes. It's not safe to close right now because
         // this may release aTerm, but aTerm may exist in the calling stack (in many places!).

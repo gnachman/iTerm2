@@ -42,33 +42,7 @@
 //   - Store an unlimited or a fixed number of wrapped lines
 // The implementation uses an array of small blocks that hold a few kb of unwrapped lines. Each
 // block caches some information to speed up repeated lookups with the same screen width.
-@interface LineBuffer : NSObject {
-    // An array of LineBlock*s.
-    NSMutableArray* blocks;
-
-    // The default storage for a LineBlock (some may be larger to accomodate very long lines).
-    int block_size;
-
-    // If a cursor size is saved, this gives its offset from the start of its line.
-    int cursor_x;
-
-    // The raw line number (in lines from the first block) of the cursor.
-    int cursor_rawline;
-
-    // The maximum number of lines to store. In truth, more lines will be stored, but no more
-    // than max_lines will be exposed by the interface.
-    int max_lines;
-
-    // The number of blocks at the head of the list that have been removed.
-    int num_dropped_blocks;
-
-    // Cache of the number of wrapped lines
-    int num_wrapped_lines_cache;
-    int num_wrapped_lines_width;
-
-    // Number of char that have been dropped
-    long long droppedChars;
-}
+@interface LineBuffer : NSObject <NSCopying> 
 
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 
@@ -201,5 +175,11 @@
 // then it is truncated. The data is a weak reference and will be invalid if the line buffer is
 // changed.
 - (NSDictionary *)dictionary;
+
+// Append text in reverse video to the end of the line buffer.
+- (void)appendMessage:(NSString *)message;
+
+// Make a copy of the last |minLines| at width |width|. May copy more than |minLines| for speed.
+- (LineBuffer *)appendOnlyCopyWithMinimumLines:(int)minLines atWidth:(int)width;
 
 @end

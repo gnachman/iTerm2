@@ -6,21 +6,29 @@
 //
 
 #import "TriggerController.h"
-#import "ProfileModel.h"
-#import "ITAddressBookMgr.h"
-#import "GrowlTrigger.h"
-#import "BounceTrigger.h"
-#import "BellTrigger.h"
-#import "CaptureTrigger.h"
-#import "ScriptTrigger.h"
+
 #import "AlertTrigger.h"
-#import "HighlightTrigger.h"
-#import "MarkTrigger.h"
-#import "Trigger.h"
+#import "BellTrigger.h"
+#import "BounceTrigger.h"
+#import "CaptureTrigger.h"
 #import "CoprocessTrigger.h"
-#import "SendTextTrigger.h"
-#import "PasswordTrigger.h"
 #import "FutureMethods.h"
+#import "GrowlTrigger.h"
+#import "HighlightTrigger.h"
+#import "ITAddressBookMgr.h"
+#import "iTermNoColorAccessoryButton.h"
+#import "iTermTwoColorWellsCell.h"
+#import "iTermTriggerTableView.h"
+#import "MarkTrigger.h"
+#import "NSColor+iTerm.h"
+#import "PasswordTrigger.h"
+#import "ProfileModel.h"
+#import "ScriptTrigger.h"
+#import "SendTextTrigger.h"
+#import "StopTrigger.h"
+#import "Trigger.h"
+
+static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerControllerPasteboardType";
 
 @implementation TriggerController {
     NSArray *_triggers;
@@ -29,6 +37,7 @@
     IBOutlet NSTableColumn *_partialLineColumn;
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSTableColumn *_parametersColumn;
+    int _currentWellNumber;
 }
 
 - (id)init {
@@ -50,18 +59,27 @@
 }
 
 - (NSArray *)triggerClasses {
-    return @[ [AlertTrigger class],
-              [BellTrigger class],
-              [BounceTrigger class],
-              [CaptureTrigger class],
-              [GrowlTrigger class],
-              [SendTextTrigger class],
-              [ScriptTrigger class],
-              [CoprocessTrigger class],
-              [MuteCoprocessTrigger class],
-              [HighlightTrigger class],
-              [MarkTrigger class],
-              [PasswordTrigger class] ];
+    NSArray *allClasses = @[ [AlertTrigger class],
+                             [BellTrigger class],
+                             [BounceTrigger class],
+                             [CaptureTrigger class],
+                             [GrowlTrigger class],
+                             [SendTextTrigger class],
+                             [ScriptTrigger class],
+                             [CoprocessTrigger class],
+                             [MuteCoprocessTrigger class],
+                             [HighlightTrigger class],
+                             [MarkTrigger class],
+                             [PasswordTrigger class],
+                             [StopTrigger class] ];
+
+    return [allClasses sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+                  return [[obj1 title] compare:[obj2 title]];
+              }];
+}
+
+- (void)awakeFromNib {
+    [_tableView registerForDraggedTypes:@[ kiTermTriggerControllerPasteboardType ]];
 }
 
 - (void)windowWillOpen {
@@ -133,6 +151,20 @@
             [triggerDictionaries removeObjectAtIndex:rowIndex];
         }
     }
+    [_delegate triggerChanged:self newValue:triggerDictionaries];
+    [_tableView reloadData];
+}
+
+- (void)moveTriggerOnRow:(int)sourceRow toRow:(int)destinationRow {
+    // Stop editing. A reload while editing crashes.
+    [_tableView reloadData];
+    NSMutableArray *triggerDictionaries = [[[self triggerDictionariesForCurrentProfile] mutableCopy] autorelease];
+    if (destinationRow > sourceRow) {
+        --destinationRow;
+    }
+    NSDictionary *temp = [[triggerDictionaries[sourceRow] retain] autorelease];
+    [triggerDictionaries removeObjectAtIndex:sourceRow];
+    [triggerDictionaries insertObject:temp atIndex:destinationRow];
     [_delegate triggerChanged:self newValue:triggerDictionaries];
     [_tableView reloadData];
 }
@@ -244,7 +276,60 @@
     [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
 }
 
+#pragma mark Drag/Drop
+
+- (BOOL)tableView:(NSTableView *)tableView
+    writeRowsWithIndexes:(NSIndexSet *)rowIndexes
+     toPasteboard:(NSPasteboard*)pasteboard {
+    NSMutableArray *indexes = [NSMutableArray array];
+    [rowIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+        [indexes addObject:@(idx)];
+    }];
+
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:indexes];
+    [pasteboard declareTypes:@[ kiTermTriggerControllerPasteboardType ] owner:self];
+    [pasteboard setData:data forType:kiTermTriggerControllerPasteboardType];
+    return YES;
+}
+
+- (NSDragOperation)tableView:(NSTableView *)aTableView
+                validateDrop:(id<NSDraggingInfo>)info
+                 proposedRow:(NSInteger)row
+       proposedDropOperation:(NSTableViewDropOperation)operation {
+    if ([info draggingSource] != aTableView) {
+        return NSDragOperationNone;
+    }
+
+    // Add code here to validate the drop
+    switch (operation) {
+        case NSTableViewDropOn:
+            return NSDragOperationNone;
+
+        case NSTableViewDropAbove:
+            return NSDragOperationMove;
+
+        default:
+            return NSDragOperationNone;
+    }
+}
+
+- (BOOL)tableView:(NSTableView *)aTableView
+       acceptDrop:(id <NSDraggingInfo>)info
+              row:(NSInteger)row
+    dropOperation:(NSTableViewDropOperation)operation {
+    NSPasteboard *pasteboard = [info draggingPasteboard];
+    NSData *rowData = [pasteboard dataForType:kiTermTriggerControllerPasteboardType];
+    NSArray *indexes = [NSKeyedUnarchiver unarchiveObjectWithData:rowData];
+
+    // This code assumes you can only select one trigger at a time.
+    int sourceRow = [indexes[0] intValue];
+    [self moveTriggerOnRow:sourceRow toRow:row];
+
+    return YES;
+}
+
 #pragma mark NSTableViewDelegate
+
 - (BOOL)tableView:(NSTableView *)aTableView
     shouldEditTableColumn:(NSTableColumn *)aTableColumn
                       row:(NSInteger)rowIndex {
@@ -264,9 +349,9 @@
                   row:(NSInteger)row {
     if (tableColumn == _actionColumn) {
         NSPopUpButtonCell *cell =
-            [[[NSPopUpButtonCell alloc] initTextCell:[_triggers[0] title] pullsDown:NO] autorelease];
+            [[[NSPopUpButtonCell alloc] initTextCell:[[_triggers[0] class] title] pullsDown:NO] autorelease];
         for (int i = 0; i < [self numberOfTriggers]; i++) {
-            [cell addItemWithTitle:[_triggers[i] title]];
+            [cell addItemWithTitle:[[_triggers[i] class] title]];
         }
 
         [cell setBordered:NO];
@@ -284,8 +369,15 @@
     } else if (tableColumn == _parametersColumn) {
         NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
         Trigger *trigger = [self triggerWithAction:triggerDicts[row][kTriggerActionKey]];
+        trigger.param = triggerDicts[row][kTriggerParameterKey];
         if ([trigger takesParameter]) {
-            if ([trigger paramIsPopupButton]) {
+            if ([trigger paramIsTwoColorWells]) {
+                iTermTwoColorWellsCell *cell = [[[iTermTwoColorWellsCell alloc] init] autorelease];
+                cell.textColor = [trigger textColor];
+                cell.backgroundColor = [trigger backgroundColor];
+                [cell setBordered:NO];
+                return cell;
+            } else if ([trigger paramIsPopupButton]) {
                 NSPopUpButtonCell *cell = [[[NSPopUpButtonCell alloc] initTextCell:@""
                                                                          pullsDown:NO] autorelease];
                 NSMenu *theMenu = [cell menu];
@@ -325,7 +417,21 @@
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
+    _currentWellNumber = -1;
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
+}
+
+- (void)twoColorWellsCellDidOpenPickerForWellNumber:(int)wellNumber {
+    _currentWellNumber = wellNumber;
+    NSColor *currentColor = self.currentColor;
+    if (currentColor) {
+        [[NSColorPanel sharedColorPanel] setColor:self.currentColor];
+    }
+    [_tableView setNeedsDisplay];
+}
+
+- (NSNumber *)currentWellForCell {
+    return @(_currentWellNumber);
 }
 
 - (IBAction)help:(id)sender {
@@ -336,6 +442,59 @@
 
 - (void)windowWillClose:(NSNotification *)notification {
     [_tableView reloadData];
+    if ([[[NSColorPanel sharedColorPanel] accessoryView] isKindOfClass:[iTermNoColorAccessoryButton class]]) {
+        [[NSColorPanel sharedColorPanel] setAccessoryView:nil];
+        [[NSColorPanel sharedColorPanel] close];
+    }
+}
+
+#pragma mark - NSResponder
+
+- (void)changeColor:(id)sender {
+    [self setColor:[sender color]];
+}
+
+- (NSColor *)currentColor {
+    NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
+    NSInteger row = _tableView.selectedRow;
+    if (row < 0 || row >= triggerDicts.count) {
+        return nil;
+    }
+    NSMutableDictionary *triggerDictionary = [[[self triggerDictionariesForCurrentProfile][row] mutableCopy] autorelease];
+    HighlightTrigger *trigger = (HighlightTrigger *)[HighlightTrigger triggerFromDict:triggerDictionary];
+    if (_currentWellNumber == 0) {
+        return trigger.textColor;
+    } else if (_currentWellNumber == 1) {
+        return trigger.backgroundColor;
+    }
+    return nil;
+}
+
+- (void)setColor:(NSColor *)color {
+    NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
+    NSInteger row = _tableView.selectedRow;
+    if (row < 0 || row >= triggerDicts.count) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary = [[[self triggerDictionariesForCurrentProfile][row] mutableCopy] autorelease];
+    HighlightTrigger *trigger = (HighlightTrigger *)[HighlightTrigger triggerFromDict:triggerDictionary];
+    if (_currentWellNumber == 0) {
+        trigger.textColor = color;
+    } else if (_currentWellNumber == 1) {
+        trigger.backgroundColor = color;
+    }
+    if (trigger.param) {
+        triggerDictionary[kTriggerParameterKey] = trigger.param;
+    } else {
+        [triggerDictionary removeObjectForKey:kTriggerParameterKey];
+    }
+    [self setTriggerDictionary:triggerDictionary forRow:row];
+
+    [_tableView reloadData];
+}
+
+- (void)noColorChosen:(id)sender {
+    [self setColor:nil];
 }
 
 @end

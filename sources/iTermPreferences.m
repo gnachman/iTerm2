@@ -16,7 +16,7 @@
 #import "iTermRemotePreferences.h"
 #import "WindowArrangements.h"
 
-#define BLOCK(x) [^id() { return [self x]; } copy]
+#define BLOCK(x) [[^id() { return [self x]; } copy] autorelease]
 
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
@@ -30,6 +30,16 @@ NSString *const kPreferenceKeyAddBonjourHostsToProfiles = @"EnableRendezvous";  
 NSString *const kPreferenceKeyCheckForUpdatesAutomatically = @"SUEnableAutomaticChecks";  // Key defined by Sparkle
 NSString *const kPreferenceKeyCheckForTestReleases = @"CheckTestRelease";
 NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomFolder";
+
+// This pref was originally a suppressable warning plus a user default, which is why it's in two
+// parts.
+
+// 0 = Save, 1 = Lose changes
+NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection = @"NoSyncNeverRemindPrefsChangesLostForFile_selection";
+
+// YES = apply preference from above key, NO = ask on exit if changes exist
+NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection = @"NoSyncNeverRemindPrefsChangesLostForFile";
+
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
@@ -126,6 +136,35 @@ static NSMutableDictionary *gObservers;
     NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
     [userDefaults setObject:infoDictionary[@"CFBundleVersion"] forKey:kPreferenceKeyAppVersion];
 
+    // Disable under-titlebar mirror view.
+
+    // OS 10.10 has a spiffy feature where it finds a scrollview that is
+    // adjacent to the title bar and then does some magic to makes the
+    // scrollview's content show up with "vibrancy" (i.e., blur) under the
+    // title bar. The way it does this is to create an "NSScrollViewMirrorView"
+    // in the title bar's view hierarchy, under a view whose class is
+    // NSTitlebarContainerView. Unfortunately there is no way to turn
+    // this off. You can move the scroll view at least two points away from the
+    // title bar, but that looks terrible. Terminal.app went so far as to stop
+    // using scroll views! Trying to replace NSScrollView with my custom
+    // implementation seems fraught with peril. Trying to hide the mirror view
+    // doesn't work because it only becomes visible once the scroll view is
+    // taller than the window's content view (I think that is new in 10.10.3).
+    // I tried swizzling addSubview: in NSTitlebarContainerView to hide
+    // mirror views when they get added, but it caused some performance problems
+    // I can't reproduce (see issue 3499).
+    //
+    // Another option, which seems more fragile, is to override
+    // -[PTYScrollView _makeUnderTitlebarView] and have it return nil. That works
+    // in testing but could break things pretty badly.
+    //
+    // I found this undocumented setting while disassembling the caller to _makeUnderTitlebarView,
+    // and it seems to work.
+    //
+    // See issue 3244 for details.
+    [[NSUserDefaults standardUserDefaults] setBool:NO
+                                            forKey:@"NSScrollViewShouldScrollUnderTitlebar"];
+
     // Load prefs from remote.
     [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaults];
 }
@@ -147,6 +186,8 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,
                   kPreferenceKeyCheckForTestReleases: @YES,
                   kPreferenceKeyLoadPrefsFromCustomFolder: @NO,
+                  kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection: @NO,
+                  kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection: @0,
                   kPreferenceKeyCustomFolder: [NSNull null],
                   kPreferenceKeySelectionCopiesText: @YES,
                   kPreferenceKeyCopyLastNewline: @NO,
@@ -375,7 +416,7 @@ static NSMutableDictionary *gObservers;
         observersForKey = [NSMutableArray array];
         gObservers[key] = observersForKey;
     }
-    [observersForKey addObject:[block copy]];
+    [observersForKey addObject:[[block copy] autorelease]];
 }
 
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag {

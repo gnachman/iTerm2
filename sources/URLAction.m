@@ -7,11 +7,13 @@
 //
 
 #import "URLAction.h"
+#import "iTermImageInfo.h"
 
 @interface URLAction ()
 
 @property(nonatomic, copy) NSString *string;
 @property(nonatomic, copy) NSDictionary *rule;
+@property(nonatomic, retain) id identifier;
 
 @end
 
@@ -44,11 +46,20 @@
     return action;
 }
 
++ (instancetype)urlActionToOpenImage:(iTermImageInfo *)imageInfo {
+    URLAction *action = [self urlAction];
+    action.string = imageInfo.filename;
+    action.actionType = kURLActionOpenImage;
+    action.identifier = imageInfo;
+    return action;
+}
+
 - (void)dealloc {
     [_string release];
     [_rule release];
     [_fullPath release];
     [_workingDirectory release];
+    [_identifier release];
     [super dealloc];
 }
 
@@ -63,6 +74,9 @@
             break;
         case kURLActionSmartSelectionAction:
             actionType = @"SmartSelectionAction";
+            break;
+        case kURLActionOpenImage:
+            actionType = @"OpenImage";
             break;
     }
     return [NSString stringWithFormat:@"<%@: %p actionType=%@ string=%@ rule=%@>",

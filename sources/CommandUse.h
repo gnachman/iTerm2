@@ -13,8 +13,16 @@
 @interface CommandUse : NSObject <NSCopying>
 
 @property(nonatomic, assign) NSTimeInterval time;
+
+// Optional.
+@property(nonatomic, retain) NSString *command;
+
+// Setting this actually sets the markGuid.
 @property(nonatomic, retain) VT100ScreenMark *mark;
 @property(nonatomic, retain) NSString *directory;
+
+// This is used to figure out which mark matches this command use when deserializing marks.
+@property(nonatomic, readonly) NSString *markGuid;
 
 + (instancetype)commandUseFromSerializedValue:(NSArray *)serializedValue;
 - (NSArray *)serializedValue;

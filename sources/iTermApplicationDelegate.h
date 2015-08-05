@@ -50,21 +50,13 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 // Returns one of the kMarkAlertAction strings defined above.
 @property(nonatomic, readonly) NSString *markAlertAction;
 
+// Is Sparkle in the process of restarting us?
+@property(nonatomic, readonly) BOOL sparkleRestarting;
+
 - (void)awakeFromNib;
 
 // NSApplication Delegate methods
-- (void)applicationWillFinishLaunching:(NSNotification *)aNotification;
-- (BOOL)applicationShouldTerminate: (NSNotification *) theNotification;
-- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
-- (BOOL)applicationOpenUntitledFile:(NSApplication *)app;
-- (NSMenu *)applicationDockMenu:(NSApplication *)sender;
 - (NSMenu*)bookmarksMenu;
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app;
-
-- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag;
-
-- (void)applicationDidBecomeActive:(NSNotification *)aNotification;
-- (void)applicationDidResignActive:(NSNotification *)aNotification;
 
 - (IBAction)undo:(id)sender;
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem;
@@ -91,7 +83,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)unmakeDefaultTerminal:(id)sender;
 
 - (IBAction)saveWindowArrangement:(id)sender;
-- (IBAction)loadWindowArrangement:(id)sender;
 
 - (IBAction)showPrefWindow:(id)sender;
 - (IBAction)showBookmarkWindow:(id)sender;
@@ -104,10 +95,10 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)arrangeHorizontally:(id)sender;
 
 // Notifications
-- (void) reloadMenus: (NSNotification *) aNotification;
-- (void) buildSessionSubmenu: (NSNotification *) aNotification;
-- (void) reloadSessionMenus: (NSNotification *) aNotification;
-- (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification;
+- (void)reloadMenus: (NSNotification *) aNotification;
+- (void)buildSessionSubmenu: (NSNotification *) aNotification;
+- (void)reloadSessionMenus: (NSNotification *) aNotification;
+- (void)nonTerminalWindowBecameKey: (NSNotification *) aNotification;
 
 // font control
 - (IBAction) biggerFont: (id) sender;

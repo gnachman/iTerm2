@@ -52,16 +52,13 @@ class DCHTests(object):
 
     AssertScreenCharsInRectEqual(Rect(1, 1, 5, 1), [ "abcde" ])
 
-  @knownBug(terminal="xterm", reason="DCH operates on the current line when outside the scroll region in xterm.")
-  @knownBug(terminal="xterm", reason="Assertion fires", shouldTry=False)
-  @knownBug(terminal="iTerm2", reason="DCH operates on the current line when outside the scroll region in iTerm2.")
-  @knownBug(terminal="Terminal.app", reason="DCH operates on the current line when outside the scroll region in Terminal.app.")
-  def test_DCH_DoesNothingOutsideTopBottomMargin(self):
-    """DCH should do nothing outside top-bottom margins."""
+  def test_DCH_WorksOutsideTopBottomMargin(self):
+    """Per Thomas Dickey, DCH should work outside scrolling margin (see xterm
+    changelog for patch 316)."""
     escio.Write("abcde")
     esccmd.DECSTBM(2, 3)
     esccmd.CUP(Point(1, 1))
     esccmd.DCH(99)
     esccmd.DECSTBM()
 
-    AssertScreenCharsInRectEqual(Rect(1, 1, 5, 1), [ "abcde" ])
+    AssertScreenCharsInRectEqual(Rect(1, 1, 5, 1), [ NUL * 5 ])

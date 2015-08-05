@@ -15,7 +15,7 @@ enum {
 
 @implementation BounceTrigger
 
-- (NSString *)title
++ (NSString *)title
 {
     return @"Bounce Dock Icon";
 }
@@ -80,8 +80,13 @@ enum {
     }
 }
 
-- (BOOL)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession onString:(NSString *)string atAbsoluteLineNumber:(long long)absoluteLineNumber
-{
+- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+                          capturedRanges:(const NSRange *)capturedRanges
+                            captureCount:(NSInteger)captureCount
+                               inSession:(PTYSession *)aSession
+                                onString:(iTermStringLine *)stringLine
+                    atAbsoluteLineNumber:(long long)lineNumber
+                                    stop:(BOOL *)stop {
     [NSApp requestUserAttention:[self bounceType]];
     return YES;
 }

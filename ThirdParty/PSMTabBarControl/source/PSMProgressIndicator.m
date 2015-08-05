@@ -32,8 +32,6 @@
         [_darkIndicator setStyle:NSProgressIndicatorSpinningStyle];
         [_darkIndicator setControlSize:NSSmallControlSize];
         [self addSubview:_darkIndicator];
-        [[self class] exposeBinding:@"animate"];
-        [[self class] exposeBinding:@"hidden"];
 
         _lightIndicator =
             [[AMIndeterminateProgressIndicator alloc] initWithFrame:_darkIndicator.frame];

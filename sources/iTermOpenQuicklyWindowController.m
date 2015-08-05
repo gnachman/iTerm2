@@ -7,9 +7,11 @@
 #import "iTermOpenQuicklyTableCellView.h"
 #import "iTermOpenQuicklyTableRowView.h"
 #import "iTermOpenQuicklyTextField.h"
+#import "NSColor+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
+#import "SolidColorView.h"
 #import "VT100RemoteHost.h"
 
 @interface iTermOpenQuicklyWindowController () <
@@ -74,7 +76,7 @@
     contentView.wantsLayer = YES;
     contentView.layer.cornerRadius = 6;
     contentView.layer.masksToBounds = YES;
-    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] CGColor];
+    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] iterm_CGColor];
     contentView.layer.borderWidth = 1;
 }
 
@@ -140,8 +142,8 @@
 
     frame.size.height = contentSize.height;
 
-    frame.origin.x = floor((screen.frame.size.width - frame.size.width) / 2);
-    frame.origin.y = screen.frame.origin.y + screen.frame.size.height - kMarginAboveWindow - frame.size.height;
+    frame.origin.x = NSMinX(screen.frame) + floor((screen.frame.size.width - frame.size.width) / 2);
+    frame.origin.y = NSMaxY(screen.frame) - kMarginAboveWindow - frame.size.height;
     return frame;
 }
 
@@ -171,7 +173,10 @@
                                withURL:nil
                               isHotkey:NO
                                makeKey:YES
-                               command:nil];
+                               command:nil
+                                 block:nil];
+        } else if ([object isKindOfClass:[NSString class]]) {
+            [[iTermController sharedInstance] loadWindowArrangementWithName:object];
         }
     }
 

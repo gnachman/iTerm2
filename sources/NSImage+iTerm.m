@@ -6,9 +6,21 @@
 //
 //
 
+#import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 
 @implementation NSImage (iTerm)
+
++ (NSString *)extensionForUniformType:(NSString *)type {
+    NSDictionary *map = @{ (NSString *)kUTTypeBMP: @"bmp",
+                           (NSString *)kUTTypeGIF: @"gif",
+                           (NSString *)kUTTypeJPEG2000: @"jp2",
+                           (NSString *)kUTTypeJPEG: @"jpeg",
+                           (NSString *)kUTTypePNG: @"png",
+                           (NSString *)kUTTypeTIFF: @"tiff",
+                           (NSString *)kUTTypeICO: @"ico" };
+    return map[type];
+}
 
 - (NSImage *)blurredImageWithRadius:(int)radius {
     // Initially, this used a CIFilter but this doesn't work on some machines for mysterious reasons.
@@ -85,7 +97,7 @@
   CGContextDrawImage(context, rect, [self CGImageForProposedRect:NULL context:nil hints:nil]);
 
   // Now draw over it with |color|.
-  CGContextSetFillColorWithColor(context, [color CGColor]);
+  CGContextSetFillColorWithColor(context, [color iterm_CGColor]);
   CGContextSetBlendMode(context, kCGBlendModeSourceAtop);
   CGContextFillRect(context, rect);
 
@@ -100,6 +112,57 @@
   CGImageRelease(image);
 
   return coloredImage;
+}
+
+// TODO: Should this use -bitmapImageRep?
+- (NSData *)dataForFileOfType:(NSBitmapImageFileType)fileType {
+    CGImageRef cgImage = [self CGImageForProposedRect:NULL
+                                              context:nil
+                                                hints:nil];
+    NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithCGImage:cgImage] autorelease];
+    [imageRep setSize:self.size];
+    return [imageRep representationUsingType:fileType properties:nil];
+}
+
+- (NSData *)rawPixelsInRGBColorSpace {
+    NSMutableData *storage = [NSMutableData data];
+    CGContextRef context = [self newBitmapContextWithStorage:storage];
+    CGContextDrawImage(context, NSMakeRect(0, 0, self.size.width, self.size.height),
+                       [self CGImageForProposedRect:NULL context:nil hints:nil]);
+    CGContextRelease(context);
+    return storage;
+}
+
+- (NSBitmapImageRep *)bitmapImageRep {
+    int width = [self size].width;
+    int height = [self size].height;
+
+    if (width < 1 || height < 1) {
+        return nil;
+    }
+
+    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+                                                                    pixelsWide:width
+                                                                    pixelsHigh:height
+                                                                 bitsPerSample:8
+                                                               samplesPerPixel:4
+                                                                      hasAlpha:YES
+                                                                      isPlanar:NO
+                                                                colorSpaceName:NSDeviceRGBColorSpace
+                                                                   bytesPerRow:width * 4
+                                                                  bitsPerPixel:32];
+
+    NSGraphicsContext *ctx = [NSGraphicsContext graphicsContextWithBitmapImageRep: rep];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:ctx];
+    [self drawAtPoint:NSZeroPoint
+             fromRect:NSZeroRect
+            operation:NSCompositeCopy
+             fraction:1.0];
+    [ctx flushGraphics];
+    [NSGraphicsContext restoreGraphicsState];
+    
+    return [rep autorelease];
 }
 
 @end

@@ -8,20 +8,16 @@
 
 #import "PTYTab+Scripting.h"
 #import "PseudoTerminal.h"
-
+#import "PTYWindow.h"
 @implementation PTYTab (Scripting)
 
 - (NSScriptObjectSpecifier *)objectSpecifier {
-  NSScriptObjectSpecifier *containerRef;
-
-  containerRef = [PseudoTerminal objectSpecifier];
-  id classDescription = [NSClassDescription classDescriptionForClass:[PseudoTerminal class]];
+  id classDescription = [NSClassDescription classDescriptionForClass:[PTYWindow class]];
   NSInteger index = [[self realParentWindow] indexOfTab:self];
-  return [[[NSIndexSpecifier alloc]
-           initWithContainerClassDescription:classDescription
-           containerSpecifier:containerRef
-           key:@"tabs"
-           index:index] autorelease];
+  return [[[NSIndexSpecifier alloc] initWithContainerClassDescription:classDescription
+                                                   containerSpecifier:[self.realParentWindow.window objectSpecifier]
+                                                                  key:@"tabs"
+                                                                index:index] autorelease];
 }
 
 - (id)valueInSessionsAtIndex:(unsigned)anIndex {
@@ -44,6 +40,22 @@
   } else {
     return nil;
   }
+}
+
+- (id)valueWithUniqueID:(id)uniqueID inPropertyWithKey:(NSString *)key {
+    if ([key isEqualToString:@"sessions"]) {
+        return [self valueInSessionsWithWithUniqueID:uniqueID];
+    }
+    return nil;
+}
+
+- (id)valueInSessionsWithWithUniqueID:(NSString *)guid {
+    for (PTYSession *session in self.sessions) {
+        if ([session.guid isEqual:guid]) {
+            return session;
+        }
+    }
+    return nil;
 }
 
 - (NSUInteger)countOfSessions {

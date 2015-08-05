@@ -18,6 +18,7 @@
 // sequences) may occur prior to its termination and should be interpreted literally.
 
 #import "VT100DCSParser.h"
+#import "DebugLogging.h"
 #import "NSStringITerm.h"
 #import "VT100StateMachine.h"
 #import "VT100TmuxParser.h"
@@ -65,6 +66,22 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     // is for the buggy tmux protocol, which is not terminated by ST alone (only %exit followed by
     // ST).
     id<VT100DCSParserHook> _hook;
+}
+
++ (NSDictionary *)termcapTerminfoNameDictionary {
+    return @{ @"TN": @(kDcsTermcapTerminfoRequestTerminalName),
+              @"name": @(kDcsTermcapTerminfoRequestTerminfoName),
+              @"iTerm2Profile": @(kDcsTermcapTerminfoRequestiTerm2ProfileName) };
+}
+
++ (NSDictionary *)termcapTerminfoInverseNameDictionary {
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    NSDictionary *dict = [self termcapTerminfoNameDictionary];
+    for (NSString *key in dict) {
+        id value = dict[key];
+        result[value] = key;
+    }
+    return result;
 }
 
 - (id)init {
@@ -347,6 +364,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
                     token:(VT100Token *)result
                  encoding:(NSStringEncoding)encoding
                savedState:(NSMutableDictionary *)savedState {
+    DLog(@"DCS parser running");
     static NSString *const kOffset = @"offset";
     if (savedState[kOffset]) {
         iTermParserAdvanceMultiple(context, [savedState[kOffset] intValue]);
@@ -355,6 +373,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     result->type = VT100_WAIT;
     while (result->type == VT100_WAIT && iTermParserCanAdvance(context)) {
         if (_hook && !_hookFinished) {
+            DLog(@"Sending input to hook %@", _hook);
             _hookFinished = [_hook handleInput:context token:result];
         } else {
             [_stateMachine handleCharacter:iTermParserConsume(context)];
@@ -380,7 +399,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     if ([self compactSequence] == MAKE_COMPACT_SEQUENCE(0, 0, 'p') &&
         [[self parameters] isEqual:@[ @"1000" ]]) {
         VT100Token *token = _stateMachine.userInfo[kVT100DCSUserInfoToken];
-        token->type = DCS_TMUX_HOOK;
+        if (token) {
+            token->type = DCS_TMUX_HOOK;
+        }
 
         [_hook release];
         _hook = [[VT100TmuxParser alloc] init];
@@ -485,22 +506,17 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 }
 
-+ (NSDictionary *)termcapTerminfoNameDictionary {
-    return @{ @"TN": @(kDcsTermcapTerminfoRequestTerminalName),
-              @"name": @(kDcsTermcapTerminfoRequestTerminfoName),
-              @"iTerm2Profile": @(kDcsTermcapTerminfoRequestiTerm2ProfileName) };
-}
-
-+ (NSDictionary *)termcapTerminfoInverseNameDictionary {
-    NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    NSDictionary *dict = [self termcapTerminfoNameDictionary];
-    for (NSString *key in dict) {
-        id value = dict[key];
-        result[value] = key;
+- (void)startTmuxRecoveryMode {
+    // Put the state machine in the passthrough mode.
+    char *fakeControlSequence = "\eP1000p";
+    for (int i = 0; fakeControlSequence[i]; i++) {
+        [_stateMachine handleCharacter:fakeControlSequence[i]];
     }
-    return result;
-}
 
+    // Replace the hook with one in recovery mode.
+    [_hook release];
+    _hook = [[VT100TmuxParser alloc] initInRecoveryMode];
+}
 
 @end
 

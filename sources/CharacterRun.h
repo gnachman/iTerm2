@@ -26,7 +26,10 @@
     int used_;  // Number of elements in use.
 
     // Like an autorelease pool, but avoids multiple retain/release's per object.
-    CRunSet *colors_;
+    // Why? Who knows. Autoreleased colors were getting released prematurely and
+    // causing crashes. Looks like a bug in the runtime and this is a nasty
+    // workaround for it.
+    NSHashTable *colors_;
 }
 
 // Create a new CRunStorage with space preallocated for |capacity| characters.
@@ -78,6 +81,7 @@ struct CRun {
     BOOL terminated;          // No more appends allowed (will go into |next|)
     CRunStorage *storage;     // Backing store for codes, glyphs, and advances.
     int numImageCells;        // Number of consecutive image cells.
+    VT100GridCoord coord;     // Origin of run. Kept to know where to redraw animated GIFs.
     CRun *next;               // Next run in linked list.
 };
 

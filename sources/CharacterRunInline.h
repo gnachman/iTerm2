@@ -1,11 +1,12 @@
 // Prevent inlining by changing to
 // #define CRUN_INLINE
-#define CRUN_INLINE static
+#define CRUN_INLINE NS_INLINE
 
 // Initialize the state of a new run, whether it is on the stack or malloc'ed.
 CRUN_INLINE void CRunInitialize(CRun *run,
                                 CAttrs *attrs,
                                 CRunStorage *storage,
+                                VT100GridCoord coord,
                                 CGFloat x);
 
 // Append a single unicode character (no combining marks allowed) to a run.
@@ -56,6 +57,7 @@ CRUN_INLINE void CRunTerminate(CRun *run);
 CRUN_INLINE void CRunInitialize(CRun *run,
                                 CAttrs *attrs,
                                 CRunStorage *storage,
+                                VT100GridCoord coord,
                                 CGFloat x) {
     run->attrs = *attrs;
     run->x = x;
@@ -65,6 +67,7 @@ CRUN_INLINE void CRunInitialize(CRun *run,
     run->string = nil;
     run->terminated = NO;
     run->numImageCells = 0;
+    run->coord = coord;
     run->storage = [storage retain];
 }
 
@@ -101,10 +104,11 @@ CRUN_INLINE CRun *CRunAppendNew(CRun *run,
                                 CAttrs *attrs,
                                 CGFloat x,
                                 unichar code,
+                                VT100GridCoord coord,
                                 CGFloat advance) {
     assert(!run->next);
     CRun *newRun = malloc(sizeof(CRun));
-    CRunInitialize(newRun, attrs, run->storage, x);
+    CRunInitialize(newRun, attrs, run->storage, coord, x);
     CRunAppendSelf(newRun, code, advance);
     run->next = newRun;
     return newRun;
@@ -117,10 +121,11 @@ CRUN_INLINE CRun *CRunAppendNewString(CRun *run,
                                       CGFloat x,
                                       NSString *string,
                                       int key,
+                                      VT100GridCoord coord,
                                       CGFloat advance) {
     assert(!run->next);
     CRun *newRun = malloc(sizeof(CRun));
-    CRunInitialize(newRun, attrs, run->storage, x);
+    CRunInitialize(newRun, attrs, run->storage, coord, x);
     CRunAppendSelfString(newRun, string, key, advance);
     run->next = newRun;
     if (attrs->imageCode) {
@@ -146,7 +151,8 @@ CRUN_INLINE CRun *CRunAppend(CRun *run,
         CRunAppendSelf(run, code, advance);
         return run;
     } else {
-        return CRunAppendNew(run, attrs, x, code, advance);
+        return CRunAppendNew(run, attrs, x, code, VT100GridCoordMake(run->coord.x + run->length,
+                                                                     run->coord.y), advance);
     }
 }
 
@@ -171,7 +177,9 @@ CRUN_INLINE CRun *CRunAppendString(CRun *run,
         return run;
     } else {
         // Current run already has data so create a new complex run.
-        return CRunAppendNewString(run, attrs, x, string, key, advance);
+        return CRunAppendNewString(run, attrs, x, string, key,
+                                   VT100GridCoordMake(run->coord.x + run->length, run->coord.y),
+                                   advance);
     }
 }
 
@@ -199,6 +207,7 @@ CRUN_INLINE void CRunAdvance(CRun *run, int offset) {
     }
     run->index += offset;
     run->length -= offset;
+    run->coord.x += offset;
 }
 
 CRUN_INLINE CRun *CRunSplit(CRun *run, int newStart) {
@@ -212,7 +221,7 @@ CRUN_INLINE CRun *CRunSplit(CRun *run, int newStart) {
     CRunAdvance(run, newStart);
 
     // Create a new string run from the first char
-    CRunInitialize(newRun, &run->attrs, run->storage, run->x);
+    CRunInitialize(newRun, &run->attrs, run->storage, run->coord, run->x);
     CRunAppendString(newRun,
                      &run->attrs,
                      [NSString stringWithCharacters:[run->storage codesFromIndex:run->index]

@@ -7,23 +7,23 @@
 //
 
 #import "ToolCapturedOutputView.h"
+
+#import "CapturedOutput.h"
 #import "CaptureTrigger.h"
-#import "CommandHistoryEntry.h"
+#import "CommandUse.h"
 #import "iTermSearchField.h"
+#import "iTermToolWrapper.h"
+#import "iTermToolbeltView.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
-#import "ToolbeltView.h"
 #import "ToolCommandHistoryView.h"
-#import "ToolWrapper.h"
 
 static const CGFloat kMargin = 4;
 
 @interface ToolCapturedOutputView() <
     ToolbeltTool,
     NSMenuDelegate,
-    NSTableViewDataSource,
-    NSTableViewDelegate,
     NSTextFieldDelegate>
 @end
 
@@ -39,6 +39,8 @@ static const CGFloat kMargin = 4;
     NSArray *filteredEntries_;
 }
 
+@synthesize tableView = tableView_;
+
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
@@ -52,7 +54,7 @@ static const CGFloat kMargin = 4;
         help_.target = self;
         help_.action = @selector(help:);
         help_.title = @"";
-        [help_ setAutoresizingMask:NSViewMinYMargin | NSViewMinXMargin];
+        [help_ setAutoresizingMask:NSViewMinXMargin];
         [self addSubview:help_];
 
         searchField_ = [[iTermSearchField alloc] initWithFrame:CGRectZero];
@@ -123,15 +125,15 @@ static const CGFloat kMargin = 4;
 }
 
 - (void)updateCapturedOutput {
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    ToolCommandHistoryView *commandHistoryView = [[wrapper.term toolbelt] commandHistoryView];
-    CommandHistoryEntry *entry = [commandHistoryView selectedEntry];
+    iTermToolWrapper *wrapper = self.toolWrapper;
+    ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];
+    CommandUse *commandUse = [commandHistoryView selectedCommandUse];
     VT100ScreenMark *mark;
     NSArray *theArray;
-    if (entry) {
-        mark = entry.lastMark;
+    if (commandUse) {
+        mark = commandUse.mark;
     } else {
-        mark = wrapper.term.currentSession.screen.lastCommandMark;
+        mark = [wrapper.delegate.delegate toolbeltLastCommandMark];
     }
     theArray = mark.capturedOutput;
     if (mark != mark_) {
@@ -178,7 +180,7 @@ static const CGFloat kMargin = 4;
     
     // Help button
     help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
-                             -1.5,
+                             1,
                              help_.frame.size.width,
                              help_.frame.size.height);
 
@@ -253,8 +255,8 @@ static const CGFloat kMargin = 4;
     CapturedOutput *capturedOutput = filteredEntries_[selectedIndex];
 
     if (capturedOutput) {
-        ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [wrapper.term.currentSession scrollToMark:capturedOutput.mark];
+        iTermToolWrapper *wrapper = self.toolWrapper;
+        [wrapper.delegate.delegate toolbeltDidSelectMark:capturedOutput.mark];
     }
 }
 
@@ -266,8 +268,8 @@ static const CGFloat kMargin = 4;
     if (shutdown_) {
         return;
     }
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-        [[[wrapper.term currentSession] textview] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+    iTermToolWrapper *wrapper = self.toolWrapper;
+    [wrapper.delegate.delegate toolbeltUpdateMouseCursor];
 }
 
 - (void)doubleClickOnTableView:(id)sender {
@@ -276,19 +278,12 @@ static const CGFloat kMargin = 4;
         return;
     }
     CapturedOutput *capturedOutput = filteredEntries_[selectedIndex];
-    PTYSession *session = [self session];
-    if (session) {
-        [capturedOutput.trigger activateOnOutput:capturedOutput inSession:session];
-    }
+    iTermToolWrapper *wrapper = self.toolWrapper;
+    [wrapper.delegate.delegate toolbeltActivateTriggerForCapturedOutputInCurrentSession:capturedOutput];
 }
 
 - (CGFloat)minimumHeight {
     return 60;
-}
-
-- (PTYSession *)session {
-    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    return [wrapper.term currentSession];
 }
 
 - (void)toggleCheckmark:(id)sender {

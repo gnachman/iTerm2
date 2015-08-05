@@ -18,6 +18,9 @@
 
 NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 
+NSString *const kTmuxWindowOpenerWindowFlagStyle = @"WindowStyle";
+NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
+
 @interface TmuxWindowOpener (Private)
 
 - (id)appendRequestsForNode:(NSMutableDictionary *)node
@@ -77,6 +80,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
     [altHistories_ release];
     [states_ release];
     [tabToUpdate_ release];
+    [_windowFlags release];
     [super dealloc];
 }
 
@@ -243,8 +247,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
     [self requestDidComplete];
 }
 
-- (void)getPendingOutputResponse:(NSData *)response pane:(NSNumber *)wp
-{
+- (void)getPendingOutputResponse:(NSData *)response pane:(NSNumber *)wp {
     const char *bytes = response.bytes;
     NSMutableData *pending = [NSMutableData data];
     for (int i = 0; i < response.length; i++) {
@@ -285,8 +288,7 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
     [self requestDidComplete];
 }
 
-- (void)requestDidComplete
-{
+- (void)requestDidComplete {
     --pendingRequests_;
     DLog(@"requestDidComplete. Pending requests is now %d", pendingRequests_);
     if (pendingRequests_ == 0) {
@@ -348,6 +350,16 @@ NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
                 // large as we were asked to (for instance, if the gateway is full-
                 // screen).
                 [controller_ windowDidResize:term];
+
+                // Check the window flags
+                NSString *windowId = [NSString stringWithFormat:@"%d", windowIndex_];
+                NSDictionary *flags = _windowFlags[windowId];
+                NSString *style = flags[kTmuxWindowOpenerWindowFlagStyle];
+                BOOL wantFullScreen = [style isEqual:kTmuxWindowOpenerWindowFlagStyleValueFullScreen];
+                BOOL isFullScreen = [term anyFullScreen];
+                if (wantFullScreen && !isFullScreen) {
+                    [term toggleFullScreenMode:nil];
+                }
             } else {
                 DLog(@"Not calling loadTmuxLayout");
             }

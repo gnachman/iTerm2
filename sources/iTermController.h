@@ -44,22 +44,13 @@
 @class PTYTextView;
 
 @interface iTermController : NSObject
-{
-    // PseudoTerminal objects
-    NSMutableArray *terminalWindows;
-    id FRONT;
-    ItermGrowlDelegate *gd;
-
-    int keyWindowIndexMemo_;
-
-    // For restoring previously active app when exiting hotkey window
-    NSNumber *previouslyActiveAppPID_;
-    id runningApplicationClass_;
-}
 
 @property(nonatomic, readonly) iTermRestorableSession *currentRestorableSession;
 @property(nonatomic, assign) BOOL selectionRespectsSoftBoundaries;
 @property(nonatomic, assign) BOOL startingUp;
+@property(nonatomic, assign) BOOL applicationIsQuitting;
+@property(nonatomic, readonly) BOOL willRestoreWindowsAtNextLaunch;
+@property(nonatomic, readonly) BOOL shouldLeaveSessionsRunningOnQuit;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
@@ -72,8 +63,7 @@
 // actions are forwarded from application
 - (IBAction)newWindow:(id)sender;
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux;
-- (IBAction)newSessionWithSameProfile:(id)sender;
-- (IBAction)newSession:(id)sender;
+- (void)newSessionWithSameProfile:(id)sender;
 - (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux;
 - (IBAction) previousTerminal:(id)sender;
 - (IBAction) nextTerminal:(id)sender;
@@ -102,19 +92,23 @@
 
 - (PseudoTerminal *)currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
-- (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt;
 - (PseudoTerminal *)openWindow;
-- (id)launchBookmark:(NSDictionary *)bookmarkData
-          inTerminal:(PseudoTerminal *)theTerm
-             withURL:(NSString *)url
-            isHotkey:(BOOL)isHotkey
-             makeKey:(BOOL)makeKey
-             command:(NSString *)command;
-- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
+
+// Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
+// new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
+// URL.
+- (PTYSession *)launchBookmark:(Profile *)bookmarkData
+                    inTerminal:(PseudoTerminal *)theTerm
+                       withURL:(NSString *)url
+                      isHotkey:(BOOL)isHotkey
+                       makeKey:(BOOL)makeKey
+                       command:(NSString *)command
+                         block:(PTYSession *(^)(PseudoTerminal *))block;
+- (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
 - (int)numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
@@ -148,6 +142,7 @@
 - (void)commitAndPopCurrentRestorableSession;
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
 - (BOOL)hasRestorableSession;
+- (void)killRestorableSessions;
 
 - (NSArray*)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;

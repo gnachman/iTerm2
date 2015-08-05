@@ -7,6 +7,7 @@
 //
 
 #import "NSColor+iTerm.h"
+#import "DebugLogging.h"
 
 // Constants for converting RGB to luma.
 static const double kRedComponentBrightness = 0.30;
@@ -21,13 +22,39 @@ NSString *const kEncodedColorDictionaryColorSpace = @"Color Space";
 NSString *const kEncodedColorDictionarySRGBColorSpace = @"sRGB";
 NSString *const kEncodedColorDictionaryCalibratedColorSpace = @"Calibrated";
 
-static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
+CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (kRedComponentBrightness * r +
             kGreenComponentBrightness * g +
             kBlueComponentBrightness * b);
 }
 
 @implementation NSColor (iTerm)
+
++ (NSColor *)colorWithString:(NSString *)s {
+    NSData *data = [[[NSData alloc] initWithBase64Encoding:s] autorelease];
+    if (!data.length) {
+        return nil;
+    }
+    @try {
+        NSKeyedUnarchiver *decoder = [[[NSKeyedUnarchiver alloc] initForReadingWithData:data] autorelease];
+        NSColor *color = [[[NSColor alloc] initWithCoder:decoder] autorelease];
+        return color;
+    }
+    @catch (NSException *exception) {
+        NSLog(@"Failed to decode color from string %@", s);
+        DLog(@"Failed to decode color from string %@", s);
+        return nil;
+    }
+}
+
+- (NSString *)stringValue {
+    NSMutableData *data = [NSMutableData data];
+    NSKeyedArchiver *coder = [[[NSKeyedArchiver alloc] initForWritingWithMutableData:data] autorelease];
+    coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
+    [self encodeWithCoder:coder];
+    [coder finishEncoding];
+    return [data base64Encoding];
+}
 
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
@@ -55,12 +82,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                alpha:1];
 }
 
-+ (NSColor *)calibratedColorWithRed:(double)r
-                              green:(double)g
-                               blue:(double)b
-                              alpha:(double)a
-                perceivedBrightness:(CGFloat)t
-                   towardComponents:(CGFloat *)baseColorComponents {
++ (void)getComponents:(CGFloat *)result
+      forColorWithRed:(CGFloat)r
+                green:(CGFloat)g
+                 blue:(CGFloat)b
+                alpha:(CGFloat)a
+  perceivedBrightness:(CGFloat)t {
     /*
      Given:
      a vector c [c1, c2, c3] (the starting color)
@@ -119,11 +146,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // p can be out of range for e.g., division by 0.
     p = MIN(1, MAX(0, p));
 
-    const CGFloat x1 = p * e1 + (1 - p) * c1;
-    const CGFloat x2 = p * e2 + (1 - p) * c2;
-    const CGFloat x3 = p * e3 + (1 - p) * c3;
-
-    return [NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a];
+    result[0] = p * e1 + (1 - p) * c1;
+    result[1] = p * e2 + (1 - p) * c2;
+    result[2] = p * e3 + (1 - p) * c3;
+    result[3] = a;
 }
 
 + (NSColor *)colorForAnsi256ColorIndex:(int)index {
@@ -147,11 +173,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return [srgb colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
 }
 
-+ (NSColor*)colorWithComponents:(double *)mainComponents
-    withContrastAgainstComponents:(double *)otherComponents
-                  minimumContrast:(CGFloat)minimumContrast
-                          mutedBy:(double)muting
-                 towardComponents:(CGFloat *)baseColorComponents {
++ (void)getComponents:(CGFloat *)result
+        forComponents:(CGFloat *)mainComponents
+  withContrastAgainstComponents:(CGFloat *)otherComponents
+                minimumContrast:(CGFloat)minimumContrast {
     const double r = mainComponents[0];
     const double g = mainComponents[1];
     const double b = mainComponents[2];
@@ -166,50 +191,41 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
 
     if (brightnessDiff < minimumContrast) {
-        // Muting defines the range of possible brightnesses; with more muting, text colors converge
-        // towards the default background color (called otherComponents here). To pick an allowable
-        // target brightness, we limit it to the range of brightnesses permitted by the muting
-        // level.
-        double minBrightness = PerceivedBrightness(baseColorComponents[0] * muting,
-                                                   baseColorComponents[1] * muting,
-                                                   baseColorComponents[2] * muting);
-        double maxBrightness = PerceivedBrightness(1 - muting + baseColorComponents[0] * muting,
-                                                   1 - muting + baseColorComponents[1] * muting,
-                                                   1 - muting + baseColorComponents[2] * muting);
-
-
         CGFloat error = fabs(brightnessDiff - minimumContrast);
         CGFloat targetBrightness = mainBrightness;
         if (mainBrightness < otherBrightness) {
+            // To increase contrast, return a color that's dimmer than mainComponents
             targetBrightness -= error;
-            if (targetBrightness < minBrightness) {
+            if (targetBrightness < 0) {
                 const double alternative = otherBrightness + minimumContrast;
                 const double baseContrast = otherBrightness;
-                const double altContrast = MIN(alternative, maxBrightness) - otherBrightness;
+                const double altContrast = MIN(alternative, 1) - otherBrightness;
                 if (altContrast > baseContrast) {
                     targetBrightness = alternative;
                 }
             }
         } else {
+            // To increase contrast, return a color that's brighter than mainComponents
             targetBrightness += error;
-            if (targetBrightness > maxBrightness) {
+            if (targetBrightness > 1) {
                 const double alternative = otherBrightness - minimumContrast;
-                const double baseContrast = maxBrightness - otherBrightness;
-                const double altContrast = otherBrightness - MAX(alternative, minBrightness);
+                const double baseContrast = 1 - otherBrightness;
+                const double altContrast = otherBrightness - MAX(alternative, 0);
                 if (altContrast > baseContrast) {
                     targetBrightness = alternative;
                 }
             }
         }
-        targetBrightness = MIN(MAX(minBrightness, targetBrightness), maxBrightness);
-        return [NSColor calibratedColorWithRed:r
-                                         green:g
-                                          blue:b
-                                         alpha:a
-                           perceivedBrightness:targetBrightness
-                              towardComponents:baseColorComponents];
+        targetBrightness = MIN(MAX(0, targetBrightness), 1);
+
+        [self getComponents:result
+            forColorWithRed:r
+                      green:g
+                       blue:b
+                      alpha:a
+        perceivedBrightness:targetBrightness];
     } else {
-        return nil;
+        memmove(result, mainComponents, sizeof(CGFloat) * 4);
     }
 }
 
@@ -262,19 +278,27 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
               kEncodedColorDictionaryAlphaComponent: @(alpha) };
 }
 
-- (NSColor *)colorMutedBy:(double)muting towards:(NSColor *)baseColor {
-    CGFloat r = [self redComponent];
-    CGFloat g = [self greenComponent];
-    CGFloat b = [self blueComponent];
+- (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background {
+    CGFloat a[4];
+    CGFloat b[4];
+    [self getComponents:a];
+    [background getComponents:b];
+    CGFloat x[4];
+    CGFloat alpha = a[3];
+    for (int i = 0; i < 3; i++) {
+        x[i] = a[i] * alpha + b[i] * (1 - alpha);
+    }
+    x[3] = b[3];
+    return [NSColor colorWithColorSpace:self.colorSpace components:x count:4];
+}
 
-    CGFloat baseR = [baseColor redComponent];
-    CGFloat baseG = [baseColor greenComponent];
-    CGFloat baseB = [baseColor blueComponent];
+- (CGColorRef)iterm_CGColor {
+    NSInteger numberOfComponents = [self numberOfComponents];
+    CGFloat components[numberOfComponents];
 
-    return [NSColor colorWithCalibratedRed:(1 - muting) * r + muting * baseR
-                                     green:(1 - muting) * g + muting * baseG
-                                      blue:(1 - muting) * b + muting * baseB
-                                     alpha:1.0];
+    CGColorSpaceRef colorSpace = [[self colorSpace] CGColorSpace];
+    [self getComponents:(CGFloat *)&components];
+    return (CGColorRef)[(id)CGColorCreate(colorSpace, components) autorelease];
 }
 
 @end

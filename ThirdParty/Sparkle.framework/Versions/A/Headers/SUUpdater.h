@@ -9,6 +9,7 @@
 #ifndef SUUPDATER_H
 #define SUUPDATER_H
 
+#import <Foundation/Foundation.h>
 #import "SUExport.h"
 #import "SUVersionComparisonProtocol.h"
 #import "SUVersionDisplayProtocol.h"
@@ -25,7 +26,7 @@
  */
 SU_EXPORT @interface SUUpdater : NSObject
 
-@property (weak) IBOutlet id<SUUpdaterDelegate> delegate;
+@property (unsafe_unretained) IBOutlet id<SUUpdaterDelegate> delegate;
 
 + (SUUpdater *)sharedUpdater;
 + (SUUpdater *)updaterForBundle:(NSBundle *)bundle;
@@ -45,6 +46,8 @@ SU_EXPORT @interface SUUpdater : NSObject
 @property (copy) NSURL *feedURL;
 
 @property (nonatomic, copy) NSString *userAgentString;
+
+@property (copy) NSDictionary *httpHeaders;
 
 @property BOOL sendsSystemProfile;
 
@@ -311,6 +314,14 @@ SU_EXPORT extern NSString *const SUUpdaterAppcastNotificationKey;
     \param item The appcast item corresponding to the update that was proposed to be installed.
  */
 - (void)updater:(SUUpdater *)updater didCancelInstallUpdateOnQuit:(SUAppcastItem *)item;
+
+/*!
+    Called after an update is aborted due to an error.
+
+    \param updater The SUUpdater instance.
+    \param error The error that caused the abort
+ */
+- (void)updater:(SUUpdater *)updater didAbortWithError:(NSError *)error;
 
 @end
 

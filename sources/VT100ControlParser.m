@@ -128,4 +128,8 @@
     }
 }
 
+- (void)startTmuxRecoveryMode {
+    [_dcsParser startTmuxRecoveryMode];
+}
+
 @end

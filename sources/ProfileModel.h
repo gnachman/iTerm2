@@ -55,6 +55,14 @@ typedef struct {
 + (NSString*)freshGuid;
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict;
 + (BOOL)migrated;
++ (NSAttributedString *)attributedStringForName:(NSString *)name
+                   highlightingMatchesForFilter:(NSString *)filter
+                              defaultAttributes:(NSDictionary *)defaultAttributes
+                          highlightedAttributes:(NSDictionary *)highlightedAttributes;
++ (NSArray *)attributedTagsForTags:(NSArray *)tags
+      highlightingMatchesForFilter:(NSString *)filter
+                 defaultAttributes:(NSDictionary *)defaultAttributes
+             highlightedAttributes:(NSDictionary *)highlightedAttributes;
 - (int)numberOfBookmarks;
 - (int)numberOfBookmarksWithFilter:(NSString*)filter;
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter;
