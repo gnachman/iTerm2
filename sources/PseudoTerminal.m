@@ -334,10 +334,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
         default:
             return (NSTitledWindowMask |
+                    NSFullSizeContentViewWindowMask |
                     NSClosableWindowMask |
                     NSMiniaturizableWindowMask |
                     NSResizableWindowMask |
                     NSTexturedBackgroundWindowMask);
+//            return (NSTitledWindowMask |
+//                    NSClosableWindowMask |
+//                    NSMiniaturizableWindowMask |
+//                    NSResizableWindowMask |
+//                    NSTexturedBackgroundWindowMask);
     }
 }
 
@@ -540,7 +546,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [myWindow setFrame:initialFrame display:NO];
     }
 
-    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
+//    [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
 
     DLog(@"Create window %@", myWindow);
 
@@ -586,6 +592,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     [self updateTabBarStyle];
     self.window.delegate = self;
+    
+    // Custom window things
+    NSButton *closeButton = [self.window standardWindowButton:NSWindowCloseButton];
+    closeButton.hidden = true;
+    
+    NSButton *minimizeButton = [self.window standardWindowButton:NSWindowMiniaturizeButton];
+    minimizeButton.hidden = true;
+    
+    NSButton *maximizeButton = [self.window standardWindowButton:NSWindowZoomButton];
+    maximizeButton.hidden = true;
+    
+    self.window.titlebarAppearsTransparent = true;
+
+    self.window.titleVisibility = NSWindowTitleHidden;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateWindowNumberVisibility:)
