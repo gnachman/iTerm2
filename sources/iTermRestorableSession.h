@@ -24,4 +24,7 @@ typedef NS_ENUM(NSInteger, iTermRestorableSessionGroup) {
 @property(nonatomic, retain) NSDictionary *arrangement;
 @property(nonatomic, assign) iTermRestorableSessionGroup group;
 
+// tab unique IDs of tabs that come before this one in the window.
+@property(nonatomic, copy) NSArray *predecessors;
+
 @end

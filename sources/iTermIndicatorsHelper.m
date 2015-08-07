@@ -224,6 +224,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 - (void)beginFlashingFullScreen {
     _fullScreenFlashStartTime = [NSDate timeIntervalSinceReferenceDate];
     [_delegate setNeedsDisplay:YES];
+    [self checkForFlashUpdate];
 }
 
 @end

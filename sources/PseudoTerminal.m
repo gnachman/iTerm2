@@ -1158,13 +1158,22 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 // Just like closeTab but skips the tmux code. Terminates sessions, removes the
 // tab, and closes the window if there are no tabs left.
-- (void)removeTab:(PTYTab *)aTab
-{
+- (void)removeTab:(PTYTab *)aTab {
     if (![aTab isTmuxTab]) {
         iTermRestorableSession *restorableSession = [[[iTermRestorableSession alloc] init] autorelease];
         restorableSession.sessions = [aTab sessions];
         restorableSession.terminalGuid = self.terminalGuid;
         restorableSession.tabUniqueId = aTab.uniqueId;
+        NSArray *tabs = [self tabs];
+        NSUInteger index = [tabs indexOfObject:aTab];
+        if (index != NSNotFound) {
+            NSMutableArray *predecessors = [NSMutableArray array];
+            for (NSUInteger i = 0; i < index; i++) {
+                [predecessors addObject:@([tabs[i] uniqueId])];
+            }
+            restorableSession.predecessors = predecessors;
+        }
+
         if (self.numberOfTabs == 1) {
             // Closing the last tab is equivalent to closing the window.
             restorableSession.arrangement = [self arrangement];
@@ -4176,8 +4185,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_contentView.tabBarControl setObjectCount:tab.objectCount forTabWithIdentifier:tab];
 }
 
-- (void)updateTabColors
-{
+- (void)updateTabColors {
     for (PTYTab *aTab in [self tabs]) {
         NSTabViewItem *tabViewItem = [aTab tabViewItem];
         PTYSession *aSession = [aTab activeSession];
@@ -4634,8 +4642,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             return;
         }
         if ([commands count] == 1) {
-            CommandHistoryEntry *entry = commands[0];
-            if ([entry.command isEqualToString:prefix]) {
+            CommandUse *commandUse = commands[0];
+            if ([commandUse.command isEqualToString:prefix]) {
                 [commandHistoryPopup close];
                 return;
             }
@@ -4791,7 +4799,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)addTabWithArrangement:(NSDictionary *)arrangement
                      uniqueId:(int)tabUniqueId
-                     sessions:(NSArray *)sessions {
+                     sessions:(NSArray *)sessions
+                 predecessors:(NSArray *)predecessors {
     NSDictionary *theMap = [PTYTab viewMapWithArrangement:arrangement sessions:sessions];
     if (!theMap) {
         // Can't do it. Just add each session as its own tab.
@@ -4812,7 +4821,32 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         PTYSession *session = theMap[theKey];
         assert([session revive]);  // TODO: This isn't guarantted
     }
-    [tab addToTerminal:self withArrangement:arrangement];
+
+    [self insertTab:tab atIndex:[self indexForTabWithPredecessors:predecessors]];
+    [tab didAddToTerminal:self withArrangement:arrangement];
+}
+
+- (NSUInteger)indexOfTabWithUniqueId:(int)uniqueId {
+    NSUInteger i = 0;
+    for (PTYTab *tab in self.tabs) {
+        if (tab.uniqueId == uniqueId) {
+            return i;
+        }
+        i++;
+    }
+    return NSNotFound;
+}
+
+- (int)indexForTabWithPredecessors:(NSArray *)predecessors {
+    int index = 0;
+    for (NSNumber *uniqueIdNumber in predecessors) {
+        int uniqueId = [uniqueIdNumber intValue];
+        NSUInteger theIndex = [self indexOfTabWithUniqueId:uniqueId];
+        if (theIndex != NSNotFound && theIndex + 1 > index) {
+            index = theIndex + 1;
+        }
+    }
+    return index;
 }
 
 - (PTYSession *)splitVertically:(BOOL)isVertical withProfile:(Profile *)profile {
@@ -5273,7 +5307,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // This works around an apparent bug in NSSplitView that causes dividers'
     // cursor rects to survive after the divider is gone.
     [[self window] resetCursorRects];
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
 - (float)minWidth
@@ -5287,8 +5321,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return minWidth;
 }
 
-- (void)appendTab:(PTYTab*)aTab
-{
+- (void)appendTab:(PTYTab*)aTab {
     [self insertTab:aTab atIndex:[_contentView.tabView numberOfTabViewItems]];
 }
 
@@ -5347,8 +5380,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return allSubstitutions;
 }
 
-- (NSArray*)tabs
-{
+- (NSArray*)tabs {
     int n = [_contentView.tabView numberOfTabViewItems];
     NSMutableArray *tabs = [NSMutableArray arrayWithCapacity:n];
     for (int i = 0; i < n; ++i) {
@@ -5845,9 +5877,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([self _haveTopBorder]) {
         ++contentSize.height;
     }
-    if (_contentView.divisionView) {
+    if (![_contentView tabBarShouldBeVisible] && self.divisionViewShouldBeVisible) {
         ++contentSize.height;
     }
+
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
 }
 
@@ -7159,5 +7192,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [self.currentSession.guid isEqualToString:guid];
 }
 
+- (NSArray *)toolbeltCommandUsesForCurrentSession {
+    return [self.currentSession commandUses];
+}
 
 @end

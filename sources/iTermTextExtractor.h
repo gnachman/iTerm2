@@ -97,22 +97,16 @@ typedef enum {
 // If |continuationChars| is non-nil and a character that should be ignored is found, its location
 // will be added to |continuationChars|. Currently the only skippable character is a \ in the
 // rightmost column when there is a software-drawn divider (see issue 3067).
-- (NSString *)contentInRange:(VT100GridWindowedRange)range
-                  nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
-                         pad:(BOOL)pad
-          includeLastNewline:(BOOL)includeLastNewline
-      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
-                cappedAtSize:(int)maxBytes
-            continuationChars:(NSMutableIndexSet *)continuationChars;
-
-// Like the above but does not skip continuation chars (backslash on the right edge of a software-
-// drawn boundary)
-- (NSString *)contentInRange:(VT100GridWindowedRange)range
-                  nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
-                         pad:(BOOL)pad
-          includeLastNewline:(BOOL)includeLastNewline
-      trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
-                cappedAtSize:(int)maxBytes;
+//
+// Returns an NSString* if |attributeProvider| is nil. Returns an NSAttributedString* otherwise.
+- (id)contentInRange:(VT100GridWindowedRange)range
+   attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
+          nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
+                 pad:(BOOL)pad
+  includeLastNewline:(BOOL)includeLastNewline
+    trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
+              cappedAtSize:(int)maxBytes
+         continuationChars:(NSMutableIndexSet *)continuationChars;
 
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 
@@ -130,10 +124,6 @@ typedef enum {
                      maxChars:(int)maxChars
             continuationChars:(NSMutableIndexSet *)continuationChars
           convertNullsToSpace:(BOOL)convertNullsToSpace;
-
-- (NSAttributedString *)attributedContentInRange:(VT100GridWindowedRange)range
-                                             pad:(BOOL)pad
-                               attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider;
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 

@@ -112,6 +112,10 @@
     return NO;
 }
 
+- (BOOL)textViewShouldShowMarkIndicators {
+    return YES;
+}
+
 - (int)optionKey {
     return 2;
 }
@@ -528,10 +532,8 @@
     XCTAssert([_methodsCalled[@"textViewPasteFileWithBase64Encoding"] intValue] == 1);
 }
 
-- (NSImage *)imageForInput:(NSString *)input
-                        hook:(void (^)(PTYTextView *))hook
-          profileOverrides:(NSDictionary *)profileOverrides
-                      size:(VT100GridSize)size {
+- (PTYSession *)sessionWithProfileOverrides:(NSDictionary *)profileOverrides
+                                       size:(VT100GridSize)size {
     PTYSession *session = [[[PTYSession alloc] init] autorelease];
     NSString* plistFile = [[NSBundle bundleForClass:[self class]]
                            pathForResource:@"DefaultBookmark"
@@ -555,6 +557,14 @@
     [session setBookmarkName:profile[KEY_NAME]];
     [session setName:profile[KEY_NAME]];
     [session setDefaultName:profile[KEY_NAME]];
+    return session;
+}
+
+- (NSImage *)imageForInput:(NSString *)input
+                        hook:(void (^)(PTYTextView *))hook
+          profileOverrides:(NSDictionary *)profileOverrides
+                      size:(VT100GridSize)size {
+    PTYSession *session = [self sessionWithProfileOverrides:profileOverrides size:size];
 
     [session synchronousReadTask:input];
     if (hook) {
@@ -1143,7 +1153,7 @@
                           name:NSStringFromSelector(_cmd)
                           hook:nil
               profileOverrides:@{ KEY_BACKGROUND_IMAGE_LOCATION: pathToImage,
-                                  KEY_BLEND: @0.1 }
+                                  KEY_BLEND: @0.3 }
                   createGolden:NO
                           size:VT100GridSizeMake(3, 1)];
 }
@@ -1207,7 +1217,7 @@
                               };
                           }
               profileOverrides:@{ KEY_BACKGROUND_IMAGE_LOCATION: pathToImage,
-                                  KEY_BLEND: @0.1,
+                                  KEY_BLEND: @0.3,
                                   KEY_TRANSPARENCY: @0 }
                   createGolden:NO
                           size:VT100GridSizeMake(3, 1)];
@@ -2267,6 +2277,100 @@
         _buffer[i].code = theIndex + '0';
     }
     return _buffer;
+}
+
+#pragma mark - Test selection
+
+- (void)testSelectedTextVeryBasic {
+    PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
+    _textView.dataSource = session.screen;
+    NSString *text = @"123456789";
+    [session synchronousReadTask:text];
+    [_textView selectAll:nil];
+    NSString *selectedText = [_textView selectedText];
+    XCTAssertEqualObjects(@"123456789\n", selectedText);
+}
+
+- (void)testSelectedTextWrappedLine {
+    PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
+    _textView.dataSource = session.screen;
+    NSString *text = @"123456789abc";
+    [session synchronousReadTask:text];
+    [_textView selectAll:nil];
+    NSString *selectedText = [_textView selectedText];
+    XCTAssertEqualObjects(text, selectedText);
+}
+
+- (void)testSelectedTextWrappedAttributedLinesDontGetNewlinesInserted {
+    PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
+    _textView.dataSource = session.screen;
+    NSString *text = @"123456789abcdefghi";
+    [session synchronousReadTask:text];
+    [_textView selectAll:nil];
+    NSAttributedString *selectedAttributedText = [_textView selectedTextAttributed:YES
+                                                                     cappedAtSize:0
+                                                                minimumLineNumber:0];
+    XCTAssertEqualObjects(text, selectedAttributedText.string);
+}
+
+- (void)testSelectedTextWithSizeCap {
+    PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
+    _textView.dataSource = session.screen;
+    NSString *text = @"123456789abc";
+    [session synchronousReadTask:text];
+    [_textView selectAll:nil];
+    NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:5 minimumLineNumber:0];
+    XCTAssertEqualObjects(@"12345", selectedText);
+}
+
+- (void)testSelectedTextWithMinimumLine {
+    PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
+    _textView.dataSource = session.screen;
+    NSString *text = @"blah\r\n12345";
+    [session synchronousReadTask:text];
+    [_textView selectAll:nil];
+    NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:0 minimumLineNumber:1];
+    XCTAssertEqualObjects(@"12345", selectedText);
+}
+
+- (void)testSelectedTextWithSizeCapAndMinimumLine {
+    PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
+    _textView.dataSource = session.screen;
+    NSString *text = @"blah\r\n12345";
+    [session synchronousReadTask:text];
+    [_textView selectAll:nil];
+    NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:2 minimumLineNumber:1];
+    XCTAssertEqualObjects(@"12", selectedText);
+}
+
+// TODO: Add more tests for every possible attribute.
+- (void)testSelectedAttributedTextIncludesBoldAttribute {
+    PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(20, 2)];
+    _textView.dataSource = session.screen;
+    NSString *text = @"regular\e[1mbold";
+    [session synchronousReadTask:text];
+    [_textView selectAll:nil];
+    NSAttributedString *selectedAttributedText = [_textView selectedTextAttributed:YES
+                                                                      cappedAtSize:11
+                                                                 minimumLineNumber:0];
+    XCTAssertEqualObjects(@"regularbold", selectedAttributedText.string);
+
+    NSRange range;
+    NSDictionary *regularAttributes = [selectedAttributedText attributesAtIndex:0
+                                                                 effectiveRange:&range];
+    XCTAssertEqual(range.location, 0);
+    const int kRegularLength = [@"regular" length];
+    XCTAssertEqual(range.length, kRegularLength);
+    XCTAssertEqualObjects(regularAttributes[NSFontAttributeName],
+                          [NSFont systemFontOfSize:[NSFont systemFontSize]]);
+
+    NSDictionary *boldAttributes = [selectedAttributedText attributesAtIndex:kRegularLength
+                                                                 effectiveRange:&range];
+    const int kBoldLength = [@"bold" length];
+    XCTAssertEqual(range.location, kRegularLength);
+    XCTAssertEqual(range.length, kBoldLength);
+    XCTAssertEqualObjects(boldAttributes[NSFontAttributeName],
+                          [NSFont boldSystemFontOfSize:[NSFont systemFontSize]]);
 }
 
 #pragma mark - PTYTextViewDelegate

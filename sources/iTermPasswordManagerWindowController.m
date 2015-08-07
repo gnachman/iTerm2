@@ -25,6 +25,7 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
     IBOutlet NSTableColumn *_accountNameColumn;
     IBOutlet NSTableColumn *_passwordColumn;
     IBOutlet NSButton *_removeButton;
+    IBOutlet NSButton *_editButton;
     IBOutlet NSButton *_enterPasswordButton;
     IBOutlet iTermSearchField *_searchField;
     NSArray *_accounts;
@@ -136,6 +137,15 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
     [SSKeychain deletePasswordForService:kServiceName account:selectedAccountName];
     [self reloadAccounts];
     [self passwordsDidChange];
+}
+
+- (IBAction)edit:(id)sender {
+    if ([_tableView selectedRow] >= 0) {
+        [_tableView editColumn:[[_tableView tableColumns] indexOfObject:_passwordColumn]
+                           row:[_tableView selectedRow]
+                     withEvent:nil
+                        select:YES];
+    }
 }
 
 - (IBAction)enterPassword:(id)sender {
@@ -272,8 +282,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
 
 - (BOOL)tableView:(NSTableView *)aTableView
 shouldEditTableColumn:(NSTableColumn *)aTableColumn
-              row:(NSInteger)rowIndex
-{
+              row:(NSInteger)rowIndex {
     if (aTableColumn == _accountNameColumn) {
         return YES;
     } else {
@@ -283,6 +292,7 @@ shouldEditTableColumn:(NSTableColumn *)aTableColumn
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
     [_removeButton setEnabled:([_tableView selectedRow] != -1)];
+    [_editButton setEnabled:([_tableView selectedRow] != -1)];
     if (_passwordBeingShown) {
         [self clearPasswordBeingShown];
         [_tableView reloadData];

@@ -12,6 +12,7 @@
 
 - (void)iterm_appendString:(NSString *)string;
 - (void)iterm_appendString:(NSString *)string withAttributes:(NSDictionary *)attributes;
+- (void)trimTrailingWhitespace;
 
 @end
 

@@ -122,11 +122,13 @@ const int kMaxResultContextWords = 4;
 
         VT100GridWindowedRange range = [textExtractor rangeForWordAt:VT100GridCoordMake(x, y)];
         NSString *s = [textExtractor contentInRange:range
+                                  attributeProvider:nil
                                          nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                 pad:NO
                                  includeLastNewline:NO
                              trimTrailingWhitespace:NO
-                                       cappedAtSize:-1];
+                                       cappedAtSize:-1
+                                  continuationChars:nil];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
             // Add only if not whitespace.
             AcLog(@"Add to context (%d/%d): %@", (int) [context count], (int) maxWords, s);
@@ -158,11 +160,13 @@ const int kMaxResultContextWords = 4;
         iTermTextExtractor *extractor = [self textExtractor];
         range = [extractor rangeForWordAt:VT100GridCoordMake(x, y)];
         NSString *s = [extractor contentInRange:range
+                              attributeProvider:nil
                                      nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                             pad:NO
                              includeLastNewline:NO
                          trimTrailingWhitespace:NO
-                                   cappedAtSize:-1];
+                                   cappedAtSize:-1
+                              continuationChars:nil];
         int maxWords = kMaxQueryContextWords;
         if ([s rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
             ++maxWords;
@@ -498,20 +502,24 @@ const int kMaxResultContextWords = 4;
             // Get the word that includes the match.
             range = [extractor rangeForWordAt:VT100GridCoordMake(startX, startY)];
             NSString *immutableWord = [extractor contentInRange:range
+                                              attributeProvider:nil
                                                      nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                             pad:NO
                                              includeLastNewline:NO
                                          trimTrailingWhitespace:NO
-                                                   cappedAtSize:-1];
+                                                   cappedAtSize:-1
+                                              continuationChars:nil];
             NSMutableString* firstWord = [NSMutableString stringWithString:immutableWord];
             while ([firstWord length] < [prefix_ length]) {
                 range = [extractor rangeForWordAt:range.coordRange.end];
                 NSString* part = [extractor contentInRange:range
+                                         attributeProvider:nil
                                                 nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                        pad:NO
                                         includeLastNewline:NO
                                     trimTrailingWhitespace:NO
-                                              cappedAtSize:-1];
+                                              cappedAtSize:-1
+                                         continuationChars:nil];
                 if ([part length] == 0) {
                     break;
                 }
@@ -540,11 +548,13 @@ const int kMaxResultContextWords = 4;
 
                     range = [extractor rangeForWordAt:VT100GridCoordMake(endX, endY)];
                     word = [extractor contentInRange:range
+                                   attributeProvider:nil
                                           nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                  pad:NO
                                   includeLastNewline:NO
                               trimTrailingWhitespace:NO
-                                        cappedAtSize:-1];
+                                        cappedAtSize:-1
+                                   continuationChars:nil];
                     AcLog(@"First candidate is at %@", VT100GridWindowedRangeDescription(range));
                     if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
                         // word after match is all whitespace. Grab the next word.
@@ -555,11 +565,13 @@ const int kMaxResultContextWords = 4;
                         if (range.coordRange.end.y < [screen numberOfLines]) {
                             range = [extractor rangeForWordAt:range.coordRange.end];
                             word = [extractor contentInRange:range
+                                           attributeProvider:nil
                                                   nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                          pad:NO
                                           includeLastNewline:NO
                                       trimTrailingWhitespace:NO
-                                                cappedAtSize:-1];
+                                                cappedAtSize:-1
+                                           continuationChars:nil];
                             if (!whitespaceBeforeCursor_) {
                                 // Prepend a space if one is needed
                                 word = [NSString stringWithFormat:@" %@", word];

@@ -14,6 +14,7 @@
     [_sessions release];
     [_terminalGuid release];
     [_arrangement release];
+    [_predecessors release];
     [super dealloc];
 }
 

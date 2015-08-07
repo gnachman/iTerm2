@@ -409,6 +409,9 @@
         <cocoa method="handleSplitHorizontallyWithSameProfile:" />
       </responds-to>
 
+      <property name="id" code="ID  " description="The unique identifier of the session." type="text" access="r">
+              <cocoa key="guid"/>
+      </property>
       <property name="is processing" code="Prcs" type="boolean"
           description="The session has received output recently.">
         <cocoa key="isProcessing" />

@@ -18,6 +18,7 @@
 // sequences) may occur prior to its termination and should be interpreted literally.
 
 #import "VT100DCSParser.h"
+#import "DebugLogging.h"
 #import "NSStringITerm.h"
 #import "VT100StateMachine.h"
 #import "VT100TmuxParser.h"
@@ -363,6 +364,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
                     token:(VT100Token *)result
                  encoding:(NSStringEncoding)encoding
                savedState:(NSMutableDictionary *)savedState {
+    DLog(@"DCS parser running");
     static NSString *const kOffset = @"offset";
     if (savedState[kOffset]) {
         iTermParserAdvanceMultiple(context, [savedState[kOffset] intValue]);
@@ -371,6 +373,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     result->type = VT100_WAIT;
     while (result->type == VT100_WAIT && iTermParserCanAdvance(context)) {
         if (_hook && !_hookFinished) {
+            DLog(@"Sending input to hook %@", _hook);
             _hookFinished = [_hook handleInput:context token:result];
         } else {
             [_stateMachine handleCharacter:iTermParserConsume(context)];

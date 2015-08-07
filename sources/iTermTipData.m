@@ -48,7 +48,7 @@
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0009": @{ kTipTitleKey: @"Captured Output",
-                        kTipBodyKey: @"iTerm2 can act like an IDE using the Captured Output feature. When it sees text matching a regular expression you define, like compiler errors, it shows the matchine lines in the Toolbelt. You can click to jump to the line in your terminal and double-click to perform an action like opening an editor to the line with the error.",
+                        kTipBodyKey: @"iTerm2 can act like an IDE using the Captured Output feature. When it sees text matching a regular expression you define, like compiler errors, it shows the matching lines in the Toolbelt. You can click to jump to the line in your terminal and double-click to perform an action like opening an editor to the line with the error.",
                         kTipUrlKey: @"https://iterm2.com/captured_output.html" },
 
             @"0010": @{ kTipTitleKey: @"Badges",

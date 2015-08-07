@@ -10,7 +10,7 @@
 
 #import "iTermToolbeltView.h"
 
-@class CommandHistoryEntry;
+@class CommandUse;
 
 @interface ToolCommandHistoryView : NSView <
   ToolbeltTool,
@@ -24,6 +24,6 @@
 - (id)initWithFrame:(NSRect)frame;
 - (void)shutdown;
 - (void)updateCommands;
-- (CommandHistoryEntry *)selectedEntry;
+- (CommandUse *)selectedCommandUse;
 
 @end

@@ -52,7 +52,7 @@
 // Return [[[self currentSession] textview] selectedText];
 - (NSString*)selectedText;
 
-// Return [textview selectedTextWithPad:NO]
+// Return [textview selectedText]
 - (NSString*)unpaddedSelectedText;
 
 // call [[[self currentSession] textview] copy:self];

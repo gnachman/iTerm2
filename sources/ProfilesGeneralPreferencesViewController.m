@@ -454,4 +454,8 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
     [_copyProfleToSession setEnabled:[_profiles hasSelection]];
 }
 
+- (void)profileTableRowSelected:(id)profileTable {
+    [self changeProfile:self];
+}
+
 @end

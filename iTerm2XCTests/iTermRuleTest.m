@@ -20,6 +20,12 @@
     iTermRule *_usernameHostname;  // username@hostname
     iTermRule *_usernameHostnamePath;  // username@hostname:path
     iTermRule *_usernameWildcardPath;  // username@*:path
+    iTermRule *_usernameWildcardStartPath;  // username@*hostname:path
+    iTermRule *_usernameWildcardEndPath;  // username@hostname*:path
+    iTermRule *_usernameWildcardStartEndPath;  // username@*hostname*:path
+    iTermRule *_usernameWildcardMiddlePath;  // username@host*name:path
+    iTermRule *_usernameWildcardAllPath;  // username@*host*name*:path
+    iTermRule *_usernameWildcardActualPath; // username@service*.*.hostname.com:path
     iTermRule *_hostnamePath;  // hostname:path
     iTermRule *_path;  // /path
     iTermRule *_malformed1;  // foo:bar@baz
@@ -34,6 +40,14 @@
     _usernameHostname = [iTermRule ruleWithString:@"username@hostname"];
     _usernameHostnamePath = [iTermRule ruleWithString:@"username@hostname:/path"];
     _usernameWildcardPath = [iTermRule ruleWithString:@"username@*:/path"];
+  
+    _usernameWildcardStartPath = [iTermRule ruleWithString:@"username@*hostname:/path"];
+    _usernameWildcardEndPath = [iTermRule ruleWithString:@"username@hostname*:/path"];
+    _usernameWildcardStartEndPath = [iTermRule ruleWithString:@"username@*hostname*:/path"];
+    _usernameWildcardMiddlePath = [iTermRule ruleWithString:@"username@host*name:/path"];
+    _usernameWildcardAllPath = [iTermRule ruleWithString:@"username@*host*name*:/path"];
+    _usernameWildcardActualPath = [iTermRule ruleWithString:@"username@service*.*.hostname.com:/path"];
+  
     _hostnamePath = [iTermRule ruleWithString:@"hostname:/path"];
     _path = [iTermRule ruleWithString:@"/path"];
     _malformed1 = [iTermRule ruleWithString:@"/foo:bar@baz"];
@@ -43,6 +57,12 @@
                 _usernameHostname,
                 _usernameHostnamePath,
                 _usernameWildcardPath,
+                _usernameWildcardStartPath,
+                _usernameWildcardEndPath,
+                _usernameWildcardStartEndPath,
+                _usernameWildcardMiddlePath,
+                _usernameWildcardAllPath,
+                _usernameWildcardActualPath,
                 _hostnamePath,
                 _path,
                 _malformed1 ];
@@ -90,8 +110,10 @@
                                                          username:@"username"
                                                              path:@"/path"];
     NSArray *expected = @[ _usernameHostnamePath, _usernameHostname, _hostnamePath, _hostname,
-                           _usernameWildcardPath, _username,
-                           _path ];
+                           _usernameWildcardStartPath, _usernameWildcardEndPath,
+                           _usernameWildcardStartEndPath, _usernameWildcardMiddlePath, _usernameWildcardAllPath,
+                           _usernameWildcardPath, _username, _path ];
+
     XCTAssertEqualObjects(rules, expected);
 }
 
@@ -103,6 +125,43 @@
                            _path ];
     XCTAssertEqualObjects(rules, expected);
 }
+
+- (void)testUsernameWildcardStartPath {
+  NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"service01.hostname"
+                                                       username:@"username"
+                                                           path:@"/path"];
+  NSArray *expected = @[ _usernameWildcardStartPath, _usernameWildcardStartEndPath, _usernameWildcardAllPath,
+                         _usernameWildcardPath, _username, _path ];
+  XCTAssertEqualObjects(rules, expected);
+}
+
+- (void)testUsernameWildcardEndPath {
+  NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname.com"
+                                                       username:@"username"
+                                                           path:@"/path"];
+  NSArray *expected = @[ _usernameWildcardEndPath, _usernameWildcardStartEndPath, _usernameWildcardAllPath,
+                         _usernameWildcardPath, _username, _path ];
+  XCTAssertEqualObjects(rules, expected);
+}
+
+- (void)testUsernameWildcardStartEndPath {
+  NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"service01.hostname.com"
+                                                       username:@"username"
+                                                           path:@"/path"];
+  NSArray *expected = @[ _usernameWildcardStartEndPath, _usernameWildcardAllPath,
+                         _usernameWildcardPath, _username, _path ];
+  XCTAssertEqualObjects(rules, expected);
+}
+
+- (void)testUsernameWildcardActualPath {
+  NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"service01.prod.hostname.com"
+                                                       username:@"username"
+                                                           path:@"/path"];
+  NSArray *expected = @[ _usernameWildcardStartEndPath, _usernameWildcardAllPath, _usernameWildcardActualPath,
+                         _usernameWildcardPath, _username, _path ];
+  XCTAssertEqualObjects(rules, expected);
+}
+
 
 - (void)testHostnamePath {
     NSArray *rules = [self matchingRulesSortedByScoreWithHostname:@"hostname"
