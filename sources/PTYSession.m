@@ -990,6 +990,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                             [[NSWorkspace sharedWorkspace] openURL:whyUrl];
                                                         }
                                                     }];
+    announcement.dismissOnKeyDown = YES;
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 }
 
@@ -4379,6 +4380,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)queueKeyDown:(NSEvent *)event {
     [_pasteHelper enqueueEvent:event];
+}
+
+- (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    if (_view.currentAnnouncement.dismissOnKeyDown) {
+        [_view.currentAnnouncement dismiss];
+        return NO;
+    } else {
+        return YES;
+    }
 }
 
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then

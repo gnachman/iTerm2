@@ -106,6 +106,7 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
                                                          style:kiTermAnnouncementViewStyleWarning
                                                    withActions:@[ @"Show It", @"Silence Warning" ]
                                                     completion:completion];
+    announcement.dismissOnKeyDown = YES;
     [aSession queueAnnouncement:announcement
                      identifier:kSuppressCaptureOutputToolNotVisibleWarning];
 }

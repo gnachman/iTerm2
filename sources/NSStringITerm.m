@@ -26,6 +26,7 @@
  */
 
 #import "DebugLogging.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"
 #import "RegexKitLite.h"
@@ -1040,32 +1041,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 - (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth {
     NSAttributedString *attributedString =
         [[[NSAttributedString alloc] initWithString:self attributes:attributes] autorelease];
-    if (![self length]) {
-        return 0;
-    }
-
-    NSSize size = NSMakeSize(maxWidth, FLT_MAX);
-    NSTextContainer *textContainer =
-        [[[NSTextContainer alloc] initWithContainerSize:size] autorelease];
-    NSTextStorage *textStorage =
-        [[[NSTextStorage alloc] initWithAttributedString:attributedString] autorelease];
-    NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
-
-    [layoutManager addTextContainer:textContainer];
-    [textStorage addLayoutManager:layoutManager];
-    [layoutManager setHyphenationFactor:0.0];
-    
-    // Force layout.
-    [layoutManager glyphRangeForTextContainer:textContainer];
-    
-    // Don't count space added for insertion point.
-    CGFloat height =
-        [layoutManager usedRectForTextContainer:textContainer].size.height;
-    const CGFloat extraLineFragmentHeight =
-        [layoutManager extraLineFragmentRect].size.height;
-    height -= MAX(0, extraLineFragmentHeight);
-
-    return height;
+    return [attributedString heightForWidth:maxWidth];
 }
 
 - (NSArray *)keyValuePair {
