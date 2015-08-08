@@ -461,6 +461,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     
     [[self realParentWindow] updateTabColors];
     [self recheckBlur];
+
+    if (!session.exited) {
+        [self setState:0 reset:kPTYTabDeadState];
+    }
+
 }
 
 // Do a depth-first search for a leaf with viewId==requestedId. Returns nil if not found under 'node'.
@@ -4311,8 +4316,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 
 #pragma mark - Private
 
-- (void)setLabelAttributesForDeadSession
-{
+- (void)setLabelAttributesForDeadSession {
     [self setState:kPTYTabDeadState reset:0];
 
     if ([self isProcessing]) {
