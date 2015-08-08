@@ -4404,8 +4404,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
 }
 
-- (void)resetLabelAttributesIfAppropriate
-{
+- (void)resetLabelAttributesIfAppropriate {
     BOOL amProcessing = [self isProcessing];
     BOOL shouldResetLabel = NO;
     for (PTYSession *aSession in [self sessions]) {
@@ -4424,8 +4423,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
     if (shouldResetLabel && [self isForegroundTab]) {
         [self setIsProcessing:NO];
-        [self setState:0 reset:(kPTYTabBellState |
-                                kPTYTabIdleState |
+        [self setState:0 reset:(kPTYTabIdleState |
                                 kPTYTabNewOutputState |
                                 kPTYTabDeadState)];
     }
