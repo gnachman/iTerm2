@@ -414,6 +414,8 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)sparkleWillRestartApp:(NSNotification *)notification {
+    [NSApp invalidateRestorableState];
+    [[NSApp windows] makeObjectsPerformSelector:@selector(invalidateRestorableState)];
     _sparkleRestarting = YES;
 }
 
