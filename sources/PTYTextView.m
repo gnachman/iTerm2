@@ -4690,8 +4690,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [NSAnimationContext beginGrouping];
     NSWindow *theWindow = [_findCursorWindow retain];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
-        [_findCursorWindow close];
-        [theWindow release];
+        [theWindow close];  // This sends release to the window
     }];
     [[_findCursorWindow animator] setAlphaValue:0];
     [NSAnimationContext endGrouping];
