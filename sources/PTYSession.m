@@ -1271,10 +1271,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (NSString *)sessionId {
-    return [NSString stringWithFormat:@"w%dt%dp%lu",
+    return [NSString stringWithFormat:@"w%dt%dp%lu:%@",
             [[_tab realParentWindow] number],
             _tab.tabNumberForItermSessionId,
-            (unsigned long)_tab.sessions.count];
+            (unsigned long)_tab.sessions.count,
+            self.guid];
 }
 
 - (void)startProgram:(NSString *)command
