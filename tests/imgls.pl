@@ -11,24 +11,27 @@
 # See function write_image() below to learn how to output an image, as per https://iterm2.com/images.html
 
 use v5.14;
-use utf8;
 use strict;
 use warnings;
-use diagnostics;
+#use diagnostics;
 
-binmode STDOUT, ':encoding(UTF-8)';
-binmode STDERR, ':encoding(UTF-8)';
+use utf8;
+
+use File::Basename;
+use File::Which;
+use Getopt::Long qw(:config no_permute pass_through require_order);
+use MIME::Base64;
+use IO::Handle;
 
 # use the faster Image::Size if avaialbe to calculate an image's size
 BEGIN {
     eval "require Image::Size";
 }
-use File::Basename;
-use MIME::Base64;
-use Getopt::Long qw(:config no_permute pass_through require_order);
-use IO::Handle;
+
 STDERR->autoflush(1);
 STDOUT->autoflush(1);
+binmode STDOUT, ':encoding(UTF-8)';
+binmode STDERR, ':encoding(UTF-8)';
 
 my $prog = basename $0;
 
@@ -62,6 +65,9 @@ sub write_image {
 }
 
 ### main code 
+
+my $php		= which('php');
+my $phpcmd	= q/$a = getimagesize("$argv[1]"); if ($a==FALSE) exit(1); else { echo $a[0] . "x" .$a[1]; exit(0); }/;
 
 # grab --width and --height comamnd line options if they exist
 my $result = GetOptions (
@@ -126,9 +132,8 @@ sub do_ls_cmd {
 	my ($w, $h) = Image::Size::imgsize($file);
 	$dims = join 'x', $w, $h	if defined $w and defined $h;
     }
-    else {
-	my $phpcmd = q/$a = getimagesize("$argv[1]"); if ($a==FALSE) exit(1); else { echo $a[0] . "x" .$a[1]; exit(0); }/;
-	$dims = qx/php -r '$phpcmd' '$file'/;
+    elsif ($php) {
+	$dims = qx/$php -r '$phpcmd' '$file'/;
     }
     if (-e $file and $dims) {
 	write_image $file;
@@ -156,7 +161,7 @@ sub get_image_bytes {
 
     $/ = undef;
     open (my $fh, "<", $file)
-	or die "Failed to open file $file for reading: $!";
+	or return undef;
     my $filebytes = <$fh>;
     chomp $filebytes;
     close $fh;
