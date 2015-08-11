@@ -1318,6 +1318,10 @@ static const int kDragThreshold = 3;
 }
 
 - (void)keyDown:(NSEvent*)event {
+    if (![_delegate textViewShouldAcceptKeyDownEvent:event]) {
+        return;
+    }
+
     if (!_selection.live) {
         // Remove selection when you type, unless the selection is live because it's handy to be
         // able to scroll up, click, hit a key, and then drag to select to (near) the end. See
@@ -4686,8 +4690,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [NSAnimationContext beginGrouping];
     NSWindow *theWindow = [_findCursorWindow retain];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
-        [_findCursorWindow close];
-        [theWindow release];
+        [theWindow close];  // This sends release to the window
     }];
     [[_findCursorWindow animator] setAlphaValue:0];
     [NSAnimationContext endGrouping];

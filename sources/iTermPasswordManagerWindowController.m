@@ -336,6 +336,9 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
     if ((id)[fieldEditor delegate] == _searchField) {
         [self reloadAccounts];
     }
+    if ([self numberOfRowsInTableView:_tableView] == 1) {
+        [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+    }
 }
 
 @end

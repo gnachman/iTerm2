@@ -125,7 +125,7 @@ static const CGFloat kButtonSize = 17;
             break;
     }
     NSColor *color = [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
-    NSImage *theImage = [[NSImage imageNamed:@"NSActionTemplate"] imageWithColor:color];
+    NSImage *theImage = [[NSImage imageNamed:@"Hamburger"] imageWithColor:color];
     [item setImage:theImage];
 }
 

@@ -15,6 +15,10 @@
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
+@interface NMSSHSession(iTerm)
+- (id)agent;
+@end
+
 static NSString *const kSCPFileErrorDomain = @"com.googlecode.iterm2.SCPFile";
 
 static NSError *SCPFileError(NSString *description) {
@@ -35,12 +39,19 @@ static NSError *SCPFileError(NSString *description) {
     BOOL _okToAdd;
     BOOL _downloading;
     dispatch_queue_t _queue;
+    NSString *_homeDirectory;
+    NSString *_userName;
+    NSString *_hostName;
 }
 
 - (id)init {
     self = [super init];
     if (self) {
         _queue = dispatch_queue_create("com.googlecode.iterm2.SCPFile", NULL);
+        _homeDirectory = [NSHomeDirectory() copy];
+        _userName = [NSUserName() copy];
+        _hostName = [[[NSHost currentHost] name] copy];
+
     }
     return self;
 }
@@ -49,6 +60,9 @@ static NSError *SCPFileError(NSString *description) {
     [_error release];
     [_destination release];
     dispatch_release(_queue);
+    [_homeDirectory release];
+    [_userName release];
+    [_hostName release];
     [super dealloc];
 }
 
@@ -187,9 +201,9 @@ static NSError *SCPFileError(NSString *description) {
 - (NSString *)filenameByExpandingMetasyntaticVariables:(NSString *)filename {
     filename = [filename stringByExpandingTildeInPath];
     NSDictionary *substitutions =
-        @{ @"%d": NSHomeDirectory(),
-           @"%u": NSUserName(),
-           @"%l": [[NSHost currentHost] name],
+        @{ @"%d": _homeDirectory,
+           @"%u": _userName,
+           @"%l": _hostName,
            @"%h": self.session.host,
            @"%r": self.session.username };
     for (NSString *metavar in substitutions) {
@@ -199,8 +213,12 @@ static NSError *SCPFileError(NSString *description) {
     return filename;
 }
 
-// This runs in a thread.
 - (void)performTransfer:(BOOL)isDownload {
+    [self performTransfer:isDownload agentAllowed:YES];
+}
+
+// This runs in a thread.
+- (void)performTransfer:(BOOL)isDownload agentAllowed:(BOOL)agentAllowed {
     NSString *baseName = [[self class] fileNameForPath:self.path.path];
     if (!baseName) {
         self.error = [NSString stringWithFormat:@"Invalid path: %@", self.path.path];
@@ -245,8 +263,15 @@ static NSError *SCPFileError(NSString *description) {
         });
         return;
     }
-    
-    [self.session connectToAgent];
+
+    BOOL didConnectToAgent = NO;
+    if (agentAllowed) {
+        [self.session connectToAgent];
+        // Check a private property to see if the connection to the agent was made.
+        if ([self.session respondsToSelector:@selector(agent)]) {
+            didConnectToAgent = [self.session agent] != nil;
+        }
+    }
 
     if (!self.session.isAuthorized) {
         NSArray *authTypes = [self.session supportedAuthenticationMethods];
@@ -256,6 +281,10 @@ static NSError *SCPFileError(NSString *description) {
         for (NSString *authType in authTypes) {
             if (self.stopped) {
                 NSLog(@"Break out of auth loop because stopped");
+                break;
+            }
+            if (!self.session.session) {
+                NSLog(@"Break out of auth loop because disconnected");
                 break;
             }
             if ([authType isEqualToString:@"password"]) {
@@ -334,6 +363,13 @@ static NSError *SCPFileError(NSString *description) {
             [[FileTransferManager sharedInstance] transferrableFileDidStopTransfer:self];
         });
         return;
+    }
+    if (!self.session.session && didConnectToAgent) {
+        // Try again without agent. I got into a state where using the agent prevented connections
+        // from going through.
+        [self.session disconnect];
+        self.session = nil;
+        [self performTransfer:isDownload agentAllowed:NO];
     }
     if (!self.session.isAuthorized) {
         __block NSError *error = [self lastError];

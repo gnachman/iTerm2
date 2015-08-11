@@ -6,6 +6,7 @@
 //
 //
 
+#import <Cocoa/Cocoa.h>
 #import "NSMutableAttributedString+iTerm.h"
 
 @implementation NSMutableAttributedString (iTerm)
@@ -41,6 +42,35 @@
 @end
 
 @implementation NSAttributedString (iTerm)
+
+- (CGFloat)heightForWidth:(CGFloat)maxWidth {
+    if (![self length]) {
+        return 0;
+    }
+
+    NSSize size = NSMakeSize(maxWidth, FLT_MAX);
+    NSTextContainer *textContainer =
+        [[[NSTextContainer alloc] initWithContainerSize:size] autorelease];
+    NSTextStorage *textStorage =
+        [[[NSTextStorage alloc] initWithAttributedString:self] autorelease];
+    NSLayoutManager *layoutManager = [[[NSLayoutManager alloc] init] autorelease];
+
+    [layoutManager addTextContainer:textContainer];
+    [textStorage addLayoutManager:layoutManager];
+    [layoutManager setHyphenationFactor:0.0];
+    
+    // Force layout.
+    [layoutManager glyphRangeForTextContainer:textContainer];
+    
+    // Don't count space added for insertion point.
+    CGFloat height =
+        [layoutManager usedRectForTextContainer:textContainer].size.height;
+    const CGFloat extraLineFragmentHeight =
+        [layoutManager extraLineFragmentRect].size.height;
+    height -= MAX(0, extraLineFragmentHeight);
+
+    return height;
+}
 
 - (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator {
     NSMutableIndexSet *indices = [NSMutableIndexSet indexSet];
