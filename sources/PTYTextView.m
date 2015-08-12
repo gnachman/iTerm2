@@ -3959,6 +3959,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (pasteNewline) {
                 // For cmd-drag, we append a newline.
                 [_delegate pasteString:@"\r"];
+            } else if (!cdToDirectory) {
+                [_delegate pasteString:@" "];
             }
             return YES;
         }
