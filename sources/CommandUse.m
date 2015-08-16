@@ -10,27 +10,25 @@
 #import "NSObject+iTerm.h"
 #import "VT100ScreenMark.h"
 
-NSString *const kCommandUseReleaseMarksInSession = @"kCommandUseReleaseMarksInSession";
+@interface CommandUse()
+@property(nonatomic, copy) NSString *markGuid;
+@end
 
 @implementation CommandUse
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_mark release];
     [_directory release];
     [_markGuid release];
+    [_command release];
     [super dealloc];
 }
 
 - (NSArray *)serializedValue {
-    if (_mark.guid) {
-        return @[ @(self.time),
-                  _directory ?: @"",
-                  _mark.guid ];
-    } else {
-        return @[ @(self.time),
-                  _directory ?: @"" ];
-    }
+    return @[ @(self.time),
+              _directory ?: @"",
+              _markGuid ?: @"",
+              _command ?: @"" ];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -38,23 +36,14 @@ NSString *const kCommandUseReleaseMarksInSession = @"kCommandUseReleaseMarksInSe
 }
 
 - (void)setMark:(VT100ScreenMark *)mark {
-    if (_mark.sessionGuid) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                        name:kCommandUseReleaseMarksInSession
-                                                      object:_mark.sessionGuid];
-    }
-    [_mark autorelease];
-    _mark = [mark retain];
-    if (_mark.sessionGuid) {
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(clearMark)
-                                                     name:kCommandUseReleaseMarksInSession
-                                                   object:_mark.sessionGuid];
-    }
+    self.markGuid = mark.guid;
 }
 
-- (void)clearMark {
-    self.mark = nil;
+- (VT100ScreenMark *)mark {
+    if (!self.markGuid) {
+        return nil;
+    }
+    return [VT100ScreenMark markWithGuid:self.markGuid];
 }
 
 + (instancetype)commandUseFromSerializedValue:(id)serializedValue {
@@ -67,7 +56,9 @@ NSString *const kCommandUseReleaseMarksInSession = @"kCommandUseReleaseMarksInSe
         if ([serializedValue count] > 2) {
             commandUse.markGuid = serializedValue[2];
         }
-
+        if ([serializedValue count] > 3 && [serializedValue[3] length] > 0) {
+            commandUse.command = serializedValue[3];
+        }
     } else if ([serializedValue isKindOfClass:[NSNumber class]]) {
         commandUse.time = [serializedValue doubleValue];
     }

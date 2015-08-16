@@ -232,8 +232,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     return label_;
 }
 
-- (BOOL)_emitResultFromX:(int)startX absY:(int)absY toX:(int)endX absY:(int)absEndY
-{
+- (BOOL)_emitResultFromX:(int)startX absY:(int)absY toX:(int)endX absY:(int)absEndY {
     // Don't add the same line twice.
     NSNumber* setObj = [NSNumber numberWithLongLong:absY];
     if ([matchLocations_ containsObject:setObj]) {
@@ -249,11 +248,13 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     iTermTextExtractor *extractor =
         [iTermTextExtractor textExtractorWithDataSource:textViewDataSource_];
     NSString* theContext = [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                                   attributeProvider:nil
                                           nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                                  pad:NO
                                   includeLastNewline:NO
                               trimTrailingWhitespace:YES
-                                        cappedAtSize:-1];
+                                        cappedAtSize:-1
+                                   continuationChars:nil];
     theContext = [theContext stringByReplacingOccurrencesOfString:@"\n"
                                                        withString:@" "];
     [results_ addObject:[[[GlobalSearchResult alloc] initWithInstance:self

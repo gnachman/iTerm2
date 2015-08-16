@@ -26,4 +26,6 @@ typedef enum {
 // view controller to break the cycle.
 - (void)willDismiss;
 
+- (void)addDismissOnKeyDownLabel;
+
 @end

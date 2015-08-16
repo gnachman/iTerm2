@@ -13,11 +13,11 @@
 static NSString *const kCommand = @"command";
 static NSString *const kUses = @"uses";
 static NSString *const kLastUsed = @"last used";
-static NSString *const kUseTimes = @"use times";
+static NSString *const kCommandUses = @"use times";  // The name is a historical artifact
 
 @interface CommandHistoryEntry () <NSCopying>
 
-@property(nonatomic, retain) NSMutableArray *useTimes;
+@property(nonatomic, retain) NSMutableArray *commandUses;
 
 @end
 
@@ -32,35 +32,38 @@ static NSString *const kUseTimes = @"use times";
     entry.command = dict[kCommand];
     entry.uses = [dict[kUses] intValue];
     entry.lastUsed = [dict[kLastUsed] doubleValue];
-    [entry setUseTimesFromSerializedArray:dict[kUseTimes]];
+    [entry setCommandUsesFromSerializedArray:dict[kCommandUses]];
+    for (CommandUse *commandUse in entry.commandUses) {
+        commandUse.command = entry.command;
+    }
     return entry;
 }
 
 - (id)init {
     self = [super init];
     if (self) {
-        _useTimes = [[NSMutableArray alloc] init];
+        _commandUses = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
 - (void)dealloc {
     [_command release];
-    [_useTimes release];
+    [_commandUses release];
     [super dealloc];
 }
 
-- (NSArray *)serializedUseTimes {
+- (NSArray *)serializedCommandUses {
     NSMutableArray *result = [NSMutableArray array];
-    for (CommandUse *use in self.useTimes) {
+    for (CommandUse *use in self.commandUses) {
         [result addObject:[use serializedValue]];
     }
     return result;
 }
 
-- (void)setUseTimesFromSerializedArray:(NSArray *)array {
+- (void)setCommandUsesFromSerializedArray:(NSArray *)array {
     for (NSArray *value in array) {
-        [self.useTimes addObject:[CommandUse commandUseFromSerializedValue:value]];
+        [self.commandUses addObject:[CommandUse commandUseFromSerializedValue:value]];
     }
 }
 
@@ -71,7 +74,7 @@ static NSString *const kUseTimes = @"use times";
     }
     dict[kUses] = @(self.uses);
     dict[kLastUsed] = @(self.lastUsed);
-    dict[kUseTimes] = [self serializedUseTimes];
+    dict[kCommandUses] = [self serializedCommandUses];
     return dict;
 }
 
@@ -86,12 +89,12 @@ static NSString *const kUseTimes = @"use times";
 }
 
 - (VT100ScreenMark *)lastMark {
-    CommandUse *use = [self.useTimes lastObject];
+    CommandUse *use = [self.commandUses lastObject];
     return use.mark;
 }
 
 - (NSString *)lastDirectory {
-    CommandUse *use = [self.useTimes lastObject];
+    CommandUse *use = [self.commandUses lastObject];
     return use.directory.length > 0 ? use.directory : nil;
 }
 
@@ -125,14 +128,19 @@ static NSString *const kUseTimes = @"use times";
     return [@(other.lastUsed) compare:@(self.lastUsed)];
 }
 
-- (id)copyWithZone:(NSZone *)zone {
+- (CommandHistoryEntry *)copyWithoutUses {
     CommandHistoryEntry *theCopy = [[CommandHistoryEntry alloc] init];
     theCopy.command = self.command;
     theCopy.uses = self.uses;
     theCopy.lastUsed = self.lastUsed;
-    theCopy.useTimes = [NSMutableArray array];
-    for (CommandUse *use in self.useTimes) {
-        [theCopy.useTimes addObject:[[use copy] autorelease]];
+    theCopy.commandUses = [NSMutableArray array];
+    return theCopy;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    CommandHistoryEntry *theCopy = [self copyWithoutUses];
+    for (CommandUse *use in self.commandUses) {
+        [theCopy.commandUses addObject:[[use copy] autorelease]];
     }
     return theCopy;
 }

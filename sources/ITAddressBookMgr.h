@@ -181,6 +181,7 @@
 #define KEY_PROMPT_CLOSE_DEPRECATED           @"Prompt Before Closing"  // Deprecated due to bad migration in 8/28 build
 #define KEY_PROMPT_CLOSE                      @"Prompt Before Closing 2"
 #define KEY_JOBS                              @"Jobs to Ignore"
+#define KEY_REDUCE_FLICKER                    @"Reduce Flicker"
 
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"

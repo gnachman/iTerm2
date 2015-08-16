@@ -56,7 +56,8 @@
     // get our current position in the stream
     datap = _stream + _streamOffset;
     datalen = _currentStreamLength - _streamOffset;
-    
+    DLog(@"Have %d bytes to parse", datalen);
+
     unsigned char *position = NULL;
     int length = 0;
     if (datalen == 0) {

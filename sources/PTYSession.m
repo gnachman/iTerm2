@@ -83,6 +83,9 @@ static NSString *const kSuppressAnnoyingBellOffer = @"NoSyncSuppressAnnyoingBell
 static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyingBellAutomatically";
 static NSString *const kReopenSessionWarningIdentifier = @"ReopenSessionAfterBrokenPipe";
 
+static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
+static NSString *const kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
+
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
 
@@ -338,6 +341,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
+
+    NSMutableArray *_commandUses;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -399,6 +404,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _hosts = [[NSMutableArray alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
+        _commandUses = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -482,6 +488,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_guid release];
     [_lastCommand release];
     [_substitutions release];
+    [_commandUses release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -953,6 +960,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [aSession.tmuxController sessionChangedTo:arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME]
                                         sessionId:[arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] intValue]];
     }
+
+    VT100RemoteHost *lastRemoteHost = aSession.screen.lastRemoteHost;
+    if (lastRemoteHost) {
+        [aSession screenCurrentHostDidChange:lastRemoteHost];
+    }
     return aSession;
 }
 
@@ -978,6 +990,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                             [[NSWorkspace sharedWorkspace] openURL:whyUrl];
                                                         }
                                                     }];
+    announcement.dismissOnKeyDown = YES;
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 }
 
@@ -1262,10 +1275,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (NSString *)sessionId {
-    return [NSString stringWithFormat:@"w%dt%dp%lu",
+    return [NSString stringWithFormat:@"w%dt%dp%lu:%@",
             [[_tab realParentWindow] number],
             _tab.tabNumberForItermSessionId,
-            (unsigned long)_tab.sessions.count];
+            (unsigned long)_tab.sessions.count,
+            self.guid];
 }
 
 - (void)startProgram:(NSString *)command
@@ -1548,9 +1562,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setDataSource:nil];
     [_textview setDelegate:nil];
     [_textview removeFromSuperview];
-    // Free refs to VT100ScreenMarks for this session in CommandUse objects.
-    [[NSNotificationCenter defaultCenter] postNotificationName:kCommandUseReleaseMarksInSession
-                                                        object:self.guid];
     _textview = nil;
 }
 
@@ -3778,9 +3789,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                withOffset:offset];
 }
 
-- (NSString*)unpaddedSelectedText
-{
-    return [_textview selectedTextWithPad:NO];
+- (NSString*)unpaddedSelectedText {
+    return [_textview selectedText];
 }
 
 - (void)copySelection {
@@ -4371,6 +4381,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)queueKeyDown:(NSEvent *)event {
     [_pasteHelper enqueueEvent:event];
+}
+
+- (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    if (_view.currentAnnouncement.dismissOnKeyDown) {
+        [_view.currentAnnouncement dismiss];
+        return NO;
+    } else {
+        return YES;
+    }
 }
 
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
@@ -6407,11 +6426,57 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [_variables removeObjectForKey:kVariableKeySessionUsername];
     }
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
+
+    [_commandUses autorelease];
+    _commandUses = [[[CommandHistory sharedInstance] commandUsesForHost:host] retain];
+
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
     NSString *path = [_screen workingDirectoryOnLine:line];
     [self tryAutoProfileSwitchWithHostname:host.hostname username:host.username path:path];
+
+    if (_xtermMouseReporting && self.terminal.mouseMode != MOUSE_REPORTING_NONE) {
+        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+        if ([number boolValue]) {
+            self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+        } else if (!number) {
+            [self offerToTurnOffMouseReportingOnHostChange];
+        }
+    }
+}
+
+- (void)offerToTurnOffMouseReportingOnHostChange {
+    NSString *title =
+        @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                    completion:^(int selection) {
+            switch (selection) {
+                case -2:  // Dismiss programmatically
+                    break;
+
+                case -1: // No
+                    break;
+
+                case 0: // Yes
+                    self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+                    break;
+
+                case 1: // Always
+                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                            forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+                    self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+                    break;
+
+                case 2: // Never
+                    [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                            forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+            }
+        }];
+    [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
 }
 
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
@@ -6482,11 +6547,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_screen];
     NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
+                                attributeProvider:nil
                                        nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                               pad:NO
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
-                                     cappedAtSize:-1];
+                                     cappedAtSize:-1
+                                continuationChars:nil];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
@@ -6513,9 +6580,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    return [[CommandHistory sharedInstance] autocompleteSuggestionsWithPartialCommand:trimmedCommand
-                                                                               onHost:host];
+    return [[CommandHistory sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
+                                                                     onHost:host];
 }
+
 - (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
     DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
     _shellIntegrationEverUsed = YES;
@@ -6794,6 +6862,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 }
             }];
     [self queueAnnouncement:announcement identifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
+}
+
+- (BOOL)screenShouldReduceFlicker {
+    return [iTermProfilePreferences boolForKey:KEY_REDUCE_FLICKER inProfile:self.profile];
 }
 
 #pragma mark - Announcements

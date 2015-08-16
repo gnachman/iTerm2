@@ -12,11 +12,13 @@
 
 - (void)iterm_appendString:(NSString *)string;
 - (void)iterm_appendString:(NSString *)string withAttributes:(NSDictionary *)attributes;
+- (void)trimTrailingWhitespace;
 
 @end
 
 @interface NSAttributedString (iTerm)
 
 - (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator;
+- (CGFloat)heightForWidth:(CGFloat)maxWidth;
 
 @end

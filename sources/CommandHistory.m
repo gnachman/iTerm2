@@ -9,6 +9,7 @@
 #import "CommandHistory.h"
 #import "CommandHistoryEntry.h"
 #import "iTermPreferences.h"
+#import "NSArray+iTerm.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
@@ -27,6 +28,7 @@ static const int kMaxCommandsToSavePerHost = 200;
 
 @implementation CommandHistory {
     NSString *_path;
+    NSMutableDictionary *_expandedCache;  // VT100RemoteHost key -> array of CommandUse
 }
 
 + (instancetype)sharedInstance {
@@ -52,6 +54,7 @@ static const int kMaxCommandsToSavePerHost = 200;
                                                    attributes:nil
                                                         error:NULL];
         _path = [[_path stringByAppendingPathComponent:@"commandhistory.plist"] copy];
+        _expandedCache = [[NSMutableDictionary alloc] init];
 
         [self loadCommandHistory];
     }
@@ -61,6 +64,8 @@ static const int kMaxCommandsToSavePerHost = 200;
 - (void)dealloc {
     [_hosts release];
     [_path release];
+    [_expandedCache release];
+
     [super dealloc];
 }
 
@@ -86,7 +91,7 @@ static const int kMaxCommandsToSavePerHost = 200;
         case NSAlertDefaultReturn:
             [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
             break;
-            
+
         case NSAlertOtherReturn:
             [firstResponder performSelector:selector withObject:self];
             break;
@@ -111,7 +116,7 @@ static const int kMaxCommandsToSavePerHost = 200;
             break;
         }
     }
-    
+
     if (!theEntry) {
         theEntry = [CommandHistoryEntry commandHistoryEntry];
         theEntry.command = command;
@@ -123,7 +128,11 @@ static const int kMaxCommandsToSavePerHost = 200;
     commandUse.time = theEntry.lastUsed;
     commandUse.mark = mark;
     commandUse.directory = directory;
-    [theEntry.useTimes addObject:commandUse];
+    commandUse.command = theEntry.command;
+    [theEntry.commandUses addObject:commandUse];
+
+    NSMutableArray *expanded = [self commandUsesForHost:host];
+    [expanded addObject:commandUse];
 
     if ([iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
         [NSKeyedArchiver archiveRootObject:[self dictionaryForEntries] toFile:_path];
@@ -138,6 +147,19 @@ static const int kMaxCommandsToSavePerHost = 200;
 
 - (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host {
+    NSArray *temp = [self commandHistoryEntriesWithPrefix:partialCommand onHost:host];
+    NSMutableArray *result = [NSMutableArray array];
+    for (CommandHistoryEntry *entry in temp) {
+        CommandUse *lastUse = [entry.commandUses lastObject];
+        if (lastUse) {
+            [result addObject:lastUse];
+        }
+    }
+    return result;
+}
+
+- (NSArray *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand
+                                      onHost:(VT100RemoteHost *)host {
     BOOL emptyPartialCommand = (partialCommand.length == 0);
     NSMutableArray *result = [NSMutableArray array];
     for (CommandHistoryEntry *entry in [self commandsForHost:host]) {
@@ -155,28 +177,50 @@ static const int kMaxCommandsToSavePerHost = 200;
             [result addObject:entry];
         }
     }
-    
+
     // TODO: Cache this.
     NSArray *sortedEntries = [result sortedArrayUsingSelector:@selector(compare:)];
     return [sortedEntries subarrayWithRange:NSMakeRange(0, MIN(kMaxResults, sortedEntries.count))];
 }
 
-- (NSArray *)entryArrayByExpandingAllUsesInEntryArray:(NSArray *)array {
+- (NSMutableArray *)commandUsesByExpandingEntries:(NSArray *)array {
     NSMutableArray *result = [NSMutableArray array];
     for (CommandHistoryEntry *entry in array) {
-        for (CommandUse *commandUse in entry.useTimes) {
-            CommandHistoryEntry *singleUseEntry = [[entry copy] autorelease];
-            [singleUseEntry.useTimes removeAllObjects];
-
-            [singleUseEntry.useTimes addObject:commandUse];
-            singleUseEntry.lastUsed = commandUse.time;
-            [result addObject:singleUseEntry];
+        for (CommandUse *commandUse in entry.commandUses) {
+            if (!commandUse.command) {
+                commandUse.command = entry.command;
+            }
+            [result addObject:commandUse];
         }
     }
-    return [result sortedArrayUsingSelector:@selector(compareUseTime:)];
+
+    // Sort result chronologically from earliest to latest
+    [result sortWithOptions:0 usingComparator:^NSComparisonResult(id obj1, id obj2) {
+        return [@([obj1 time]) compare:@([obj2 time])];
+    }];
+    return result;
+}
+
+- (NSMutableArray *)commandUsesForHost:(VT100RemoteHost *)host {
+    NSString *key = [self keyForHost:host];
+    if (!_expandedCache[key]) {
+        [self loadExpandedCacheForHost:host];
+    }
+    return _expandedCache[key];
 }
 
 #pragma mark - Private
+
+- (void)loadExpandedCacheForHost:(VT100RemoteHost *)host {
+    NSString *key = [self keyForHost:host];
+
+    NSArray *temp = [[CommandHistory sharedInstance] commandHistoryEntriesWithPrefix:@""
+                                                                              onHost:host];
+    NSMutableArray *expanded = [[CommandHistory sharedInstance] commandUsesByExpandingEntries:temp];
+
+    _expandedCache[key] = expanded;
+
+}
 
 - (NSString *)keyForHost:(VT100RemoteHost *)host {
     if (host) {
@@ -241,7 +285,7 @@ static const int kMaxCommandsToSavePerHost = 200;
     [_hosts release];
     _hosts = [[NSMutableDictionary alloc] init];
     [[NSFileManager defaultManager] removeItemAtPath:_path error:NULL];
-    
+
     [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
                                                         object:nil];
 }
@@ -260,7 +304,7 @@ static const int kMaxCommandsToSavePerHost = 200;
     NSArray *entries = _hosts[[self keyForHost:host]];
     // TODO: Create an index of markGuid's in command uses if this becomes a performance problem during restore.
     for (CommandHistoryEntry *entry in entries) {
-        for (CommandUse *use in entry.useTimes) {
+        for (CommandUse *use in entry.commandUses) {
             if ([use.markGuid isEqual:markGuid]) {
                 return use;
             }

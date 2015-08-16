@@ -120,16 +120,41 @@ NSString *const kMarkGuidKey = @"Guid";  // Not all kinds of marks have a guid
 
 @implementation VT100ScreenMark
 
++ (NSMapTable *)registry {
+    static NSMapTable *registry;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        registry = [[NSMapTable alloc] initWithKeyOptions:(NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality)
+                                             valueOptions:(NSPointerFunctionsOpaqueMemory | NSPointerFunctionsOpaquePersonality)
+                                                 capacity:1024];
+    });
+    return registry;
+}
+
++ (VT100ScreenMark *)markWithGuid:(NSString *)guid {
+    return [self.registry objectForKey:guid];
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [[self.class registry] setObject:self forKey:self.guid];
+    }
+    return self;
+}
+
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [super initWithDictionary:dict];
     if (self) {
         _isPrompt = [dict[kScreenMarkIsPrompt] boolValue];
         _guid = [dict[kMarkGuidKey] copy];
+        [[self.class registry] setObject:self forKey:self.guid];
     }
     return self;
 }
 
 - (void)dealloc {
+    [[self.class registry] removeObjectForKey:_guid];
     [_guid release];
     [super dealloc];
 }

@@ -54,6 +54,17 @@
                                                            }];
 }
 
+- (void)setDismissOnKeyDown:(BOOL)dismissOnKeyDown {
+    if (!dismissOnKeyDown || _dismissOnKeyDown) {
+        // Because of limitations in the view's implementation this can never be unset.
+        return;
+    }
+    _dismissOnKeyDown = dismissOnKeyDown;
+    if (dismissOnKeyDown) {
+        [(iTermAnnouncementView *)self.view addDismissOnKeyDownLabel];
+    }
+}
+
 - (void)dismiss {
     if (!_dismissing) {
         _dismissing = YES;

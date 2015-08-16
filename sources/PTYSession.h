@@ -289,6 +289,8 @@ typedef enum {
 // layout changes due to a user-initiated pane split.
 @property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;
 
+@property(nonatomic, readonly) NSArray *commandUses;
+
 #pragma mark - methods
 
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
@@ -502,7 +504,6 @@ typedef enum {
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
 
-- (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
 

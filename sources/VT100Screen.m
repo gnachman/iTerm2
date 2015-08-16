@@ -67,6 +67,7 @@ static const double kInterBellQuietPeriod = 0.1;
 
 @interface VT100Screen () <iTermTemporaryDoubleBufferedGridControllerDelegate, iTermMarkDelegate>
 @property(nonatomic, retain) VT100ScreenMark *lastCommandMark;
+@property(nonatomic, retain) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @end
 
 @implementation VT100Screen {
@@ -144,7 +145,6 @@ static const double kInterBellQuietPeriod = 0.1;
     NSMutableArray *inlineFileCodes_;
     VT100GridAbsCoord nextCommandOutputStart_;
     NSTimeInterval lastBell_;
-    iTermTemporaryDoubleBufferedGridController *_temporaryDoubleBuffer;
     BOOL _cursorVisible;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
     NSMutableIndexSet *_animatedLines;
@@ -180,10 +180,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                                                          kDefaultScreenRows)
                                               delegate:self];
         currentGrid_ = primaryGrid_;
-        if ([iTermAdvancedSettingsModel useDoubleBufferedGrid]) {
-            _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
-            _temporaryDoubleBuffer.delegate = self;
-        }
+        _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
+        _temporaryDoubleBuffer.delegate = self;
+
         maxScrollbackLines_ = kDefaultMaxScrollbackLines;
         tabStops_ = [[NSMutableSet alloc] init];
         [self setInitialTabStops];
@@ -211,8 +210,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [primaryGrid_ release];
     [altGrid_ release];
     [tabStops_ release];
@@ -237,8 +235,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [super dealloc];
 }
 
-- (NSString *)description
-{
+- (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p grid:%@>", [self class], self, currentGrid_];
 }
 
@@ -416,7 +413,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (void)resizeWidth:(int)new_width height:(int)new_height {
-    [_temporaryDoubleBuffer reset];
+    [self.temporaryDoubleBuffer reset];
 
     DLog(@"Resize session to %d height", new_height);
 
@@ -2093,11 +2090,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (BOOL)setUseSavedGridIfAvailable:(BOOL)useSavedGrid {
-    if (useSavedGrid && !realCurrentGrid_ && _temporaryDoubleBuffer.savedGrid) {
+    if (useSavedGrid && !realCurrentGrid_ && self.temporaryDoubleBuffer.savedGrid) {
         realCurrentGrid_ = [currentGrid_ retain];
         [currentGrid_ release];
-        currentGrid_ = [_temporaryDoubleBuffer.savedGrid retain];
-        _temporaryDoubleBuffer.drewSavedGrid = YES;
+        currentGrid_ = [self.temporaryDoubleBuffer.savedGrid retain];
+        self.temporaryDoubleBuffer.drewSavedGrid = YES;
         return YES;
     } else if (!useSavedGrid && realCurrentGrid_) {
         [currentGrid_ release];
@@ -3007,7 +3004,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         altGrid_ = [[VT100Grid alloc] initWithSize:primaryGrid_.size delegate:self];
     }
 
-    [_temporaryDoubleBuffer reset];
+    [self.temporaryDoubleBuffer reset];
     primaryGrid_.savedDefaultChar = [primaryGrid_ defaultChar];
     [self hideOnScreenNotesAndTruncateSpanners];
     currentGrid_ = altGrid_;
@@ -3050,7 +3047,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 - (void)terminalShowPrimaryBuffer {
     if (currentGrid_ == altGrid_) {
-        [_temporaryDoubleBuffer reset];
+        [self.temporaryDoubleBuffer reset];
         [delegate_ screenRemoveSelection];
         [self hideOnScreenNotesAndTruncateSpanners];
         currentGrid_ = primaryGrid_;
@@ -3446,9 +3443,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (visible != _cursorVisible) {
         _cursorVisible = visible;
         if (visible) {
-            [_temporaryDoubleBuffer reset];
+            [self.temporaryDoubleBuffer reset];
         } else {
-            [_temporaryDoubleBuffer start];
+            [self.temporaryDoubleBuffer start];
         }
     }
     [delegate_ screenSetCursorVisible:visible];
@@ -4452,6 +4449,14 @@ static void SwapInt(int *a, int *b) {
                 }
             }
         }
+    }
+}
+
+- (iTermTemporaryDoubleBufferedGridController *)temporaryDoubleBuffer {
+    if ([delegate_ screenShouldReduceFlicker]) {
+        return _temporaryDoubleBuffer;
+    } else {
+        return nil;
     }
 }
 

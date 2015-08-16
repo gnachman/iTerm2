@@ -1318,6 +1318,10 @@ static const int kDragThreshold = 3;
 }
 
 - (void)keyDown:(NSEvent*)event {
+    if (![_delegate textViewShouldAcceptKeyDownEvent:event]) {
+        return;
+    }
+
     if (!_selection.live) {
         // Remove selection when you type, unless the selection is live because it's handy to be
         // able to scroll up, click, hit a key, and then drag to select to (near) the end. See
@@ -2284,7 +2288,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
         DLog(@"drag and drop a selection");
         // Drag and drop a selection
-        NSString *theSelectedText = [self selectedTextWithPad:NO];
+        NSString *theSelectedText = [self selectedText];
         if ([theSelectedText length] > 0) {
             [self _dragText:theSelectedText forEvent:event];
             DLog(@"Mouse drag. selection=%@", _selection);
@@ -2826,29 +2830,36 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSString *)selectedText {
-    return [self selectedTextWithPad:NO];
+    return [self selectedTextCappedAtSize:0];
 }
 
-- (NSString *)selectedTextWithPad:(BOOL)pad {
-    return [self selectedTextWithPad:pad cappedAtSize:0];
-}
-
-- (NSString *)selectedTextWithPad:(BOOL)pad
-                     cappedAtSize:(int)maxBytes {
-    return [self selectedTextWithPad:pad cappedAtSize:maxBytes minimumLineNumber:0];
+- (NSString *)selectedTextCappedAtSize:(int)maxBytes {
+    return [self selectedTextAttributed:NO cappedAtSize:maxBytes minimumLineNumber:0];
 }
 
 // Does not include selected text on lines before |minimumLineNumber|.
-- (NSString *)selectedTextWithPad:(BOOL)pad
-                     cappedAtSize:(int)maxBytes
-                minimumLineNumber:(int)minimumLineNumber {
+// Returns an NSAttributedString* if |attributed|, or an NSString* if not.
+- (id)selectedTextAttributed:(BOOL)attributed
+                cappedAtSize:(int)maxBytes
+           minimumLineNumber:(int)minimumLineNumber {
     if (![_selection hasSelection]) {
         DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
     BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
     BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
-    NSMutableString *theSelectedText = [[NSMutableString alloc] init];
+    id theSelectedText;
+    NSDictionary *(^attributeProvider)(screen_char_t);
+    if (attributed) {
+        theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
+        attributeProvider = ^NSDictionary *(screen_char_t theChar) {
+            return [self charAttributes:theChar];
+        };
+    } else {
+        theSelectedText = [[[NSMutableString alloc] init] autorelease];
+        attributeProvider = nil;
+    }
+
     [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
         if (range.coordRange.end.y < minimumLineNumber) {
             return;
@@ -2866,71 +2877,63 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (cap != 0) {
             iTermTextExtractor *extractor =
                 [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-            NSString *content = [extractor contentInRange:range
-                                               nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
-                                                      pad:NO
-                                       includeLastNewline:copyLastNewline
-                                   trimTrailingWhitespace:trimWhitespace
-                                             cappedAtSize:cap];
-            [theSelectedText appendString:content];
+            id content = [extractor contentInRange:range
+                                 attributeProvider:attributeProvider
+                                        nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
+                                               pad:NO
+                                includeLastNewline:copyLastNewline
+                            trimTrailingWhitespace:trimWhitespace
+                                      cappedAtSize:cap
+                                 continuationChars:nil];
+            if (attributed) {
+                [theSelectedText appendAttributedString:content];
+            } else {
+                [theSelectedText appendString:content];
+            }
             if (eol && ![content hasSuffix:@"\n"]) {
-                [theSelectedText appendString:@"\n"];
+                if (attributed) {
+                    [theSelectedText iterm_appendString:@"\n"];
+                } else {
+                    [theSelectedText appendString:@"\n"];
+                }
             }
         }
     }];
     return theSelectedText;
 }
 
-- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad
-{
-    if (![_selection hasSelection]) {
-        DLog(@"startx < 0 so there is no selected text");
-        return nil;
-    }
-    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-    [_selection enumerateSelectedRanges:^(VT100GridWindowedRange range, BOOL *stop, BOOL eol) {
-        NSAttributedString *attributedString =
-            [extractor attributedContentInRange:range
-                                            pad:pad
-                              attributeProvider:^NSDictionary *(screen_char_t theChar) {
-                                  return [self charAttributes:theChar];
-                              }];
-        [result appendAttributedString:attributedString];
-        if (eol && ![[attributedString string] hasSuffix:@"\n"]) {
-            NSDictionary *attributes = [result attributesAtIndex:[result length] - 1
-                                                  effectiveRange:NULL];
-            NSAttributedString *newline =
-            [[[NSAttributedString alloc] initWithString:@"\n"
-                                             attributes:attributes] autorelease];
-            [result appendAttributedString:newline];
-        }
-    }];
-    return result;
+- (NSString *)selectedTextWithCappedAtSize:(int)maxBytes
+                         minimumLineNumber:(int)minimumLineNumber {
+    return [self selectedTextAttributed:NO
+                           cappedAtSize:maxBytes
+                      minimumLineNumber:minimumLineNumber];
 }
 
-- (NSString *)content
-{
+- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad {
+    return [self selectedTextAttributed:YES cappedAtSize:0 minimumLineNumber:0];
+}
+
+- (NSString *)content {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoordRange theRange = VT100GridCoordRangeMake(0,
                                                            0,
                                                            [_dataSource width],
                                                            [_dataSource numberOfLines] - 1);
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
+                   attributeProvider:nil
                           nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                  pad:NO
                   includeLastNewline:YES
               trimTrailingWhitespace:NO
-                        cappedAtSize:-1];
+                        cappedAtSize:-1
+                   continuationChars:nil];
 }
 
-- (void)splitTextViewVertically:(id)sender
-{
+- (void)splitTextViewVertically:(id)sender {
     [_delegate textViewSplitVertically:YES withProfileGuid:nil];
 }
 
-- (void)splitTextViewHorizontally:(id)sender
-{
+- (void)splitTextViewHorizontally:(id)sender {
     [_delegate textViewSplitVertically:NO withProfileGuid:nil];
 }
 
@@ -3151,9 +3154,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
 
+    NSFont *font = fontInfo.font;
+    if (!font) {
+        // Ordinarily fontInfo would never be nil, but it is in unit tests. It's useful to distinguish
+        // bold from regular in tests, so we ensure that attribute is correctly set in this test-only
+        // path.
+        const CGFloat size = [NSFont systemFontSize];
+        if (c.bold) {
+            font = [NSFont boldSystemFontOfSize:size];
+        } else {
+            font = [NSFont systemFontOfSize:size];
+        }
+    }
     return @{ NSForegroundColorAttributeName: fgColor,
               NSBackgroundColorAttributeName: bgColor,
-              NSFontAttributeName: fontInfo.font,
+              NSFontAttributeName: font,
               NSParagraphStyleAttributeName: paragraphStyle,
               NSUnderlineStyleAttributeName: @(underlineStyle) };
 }
@@ -3688,7 +3703,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Custom actions
     if ([_selection hasSelection] &&
         [_selection length] < kMaxSelectedTextLengthForCustomActions) {
-        NSString *selectedText = [self selectedTextWithPad:NO cappedAtSize:1024];
+        NSString *selectedText = [self selectedTextCappedAtSize:1024];
         if ([self addCustomActionsToMenu:theMenu matchingText:selectedText line:coord.y]) {
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
@@ -3944,6 +3959,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (pasteNewline) {
                 // For cmd-drag, we append a newline.
                 [_delegate pasteString:@"\r"];
+            } else if (!cdToDirectory) {
+                [_delegate pasteString:@" "];
             }
             return YES;
         }
@@ -4036,14 +4053,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                      [_dataSource width],
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
+                                       attributeProvider:nil
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO
                                       includeLastNewline:YES
                                   trimTrailingWhitespace:NO
-                                            cappedAtSize:-1]];
+                                            cappedAtSize:-1
+                                       continuationChars:nil]];
             break;
         case 1: // text selection
-            [self printContent:[self selectedTextWithPad:NO]];
+            [self printContent:[self selectedText]];
             break;
         case 2: // entire buffer
             [self printContent:[self content]];
@@ -4468,7 +4487,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)setBlend:(float)fVal {
-    _drawingHelper.blend = MIN(MAX(0.3, fVal), 1);
+    _drawingHelper.blend = MIN(MAX(0.05, fVal), 1);
     [self setNeedsDisplay:YES];
 }
 
@@ -4507,8 +4526,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // such large selections. In OS 10.9 this is called when opening the context menu, even though
     // it is deprecated by 10.9.
     NSString *copyString =
-        [self selectedTextWithPad:NO
-                     cappedAtSize:[iTermAdvancedSettingsModel maximumBytesToProvideToServices]];
+        [self selectedTextCappedAtSize:[iTermAdvancedSettingsModel maximumBytesToProvideToServices]];
 
     if (copyString && [copyString length] > 0) {
         [pboard declareTypes:@[ NSStringPboardType ] owner:self];
@@ -4674,8 +4692,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [NSAnimationContext beginGrouping];
     NSWindow *theWindow = [_findCursorWindow retain];
     [[NSAnimationContext currentContext] setCompletionHandler:^{
-        [_findCursorWindow close];
-        [theWindow release];
+        [theWindow close];  // This sends release to the window
     }];
     [[_findCursorWindow animator] setAlphaValue:0];
     [NSAnimationContext endGrouping];
@@ -4718,11 +4735,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     return [extractor contentInRange:range
+                   attributeProvider:nil
                           nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                  pad:YES
                   includeLastNewline:NO
               trimTrailingWhitespace:NO
-                        cappedAtSize:-1];
+                        cappedAtSize:-1
+                   continuationChars:nil];
 }
 
 #pragma mark - Semantic History Delegate
@@ -6291,9 +6310,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSString *)accessibilityHelperSelectedText {
-    return [self selectedTextWithPad:NO
-                        cappedAtSize:0
-                   minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
+    return [self selectedTextAttributed:NO
+                           cappedAtSize:0
+                      minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
 }
 
 - (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex {
