@@ -106,9 +106,9 @@ while (@ARGV) {
             print $path, ":\n";
         }
         while (readdir($dh)) {
-            next if /^\./ and not $lsa;                 	# skip dot files when -a is not specified
+            next if /^\./ and not $lsa;                         # skip dot files when -a is not specified
             if ($_ !~ /^\.\.?$/ and -d "$path/$_") {
-                push @ARGV, "$path/$_";                 	# handle directory recursion - processed after files
+                push @ARGV, "$path/$_";                         # handle directory recursion - processed after files
             }
             do_ls_cmd("$path/$_");
         }
@@ -136,13 +136,13 @@ sub do_ls_cmd {
         }
     }
     if ($dims) {
-	write_image $file;
-	printf "%11s ", $dims;					# append the image's dimensions
+        write_image $file;
+        printf "%11s ", $dims;                                  # append the image's dimensions
     }
     else {
-	printf "%s %11s ",
-	    ' ' x ($imgparams{'width'} =~ /^\d+$/ ?  $imgparams{'width'} : 3),
-	    ' ';
+        printf "%s %11s ",
+            ' ' x ($imgparams{'width'} =~ /^\d+$/ ?  $imgparams{'width'} : 3),
+            ' ';
     }
     system @lscmd, @lsopts, $file;
 }
@@ -166,3 +166,4 @@ sub get_image_bytes {
     return $filebytes;
 }
 
+# vim: set expandtab:
