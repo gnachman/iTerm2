@@ -1174,6 +1174,7 @@ static const int kMaxScreenRows = 4096;
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
             [delegate_ terminalDidFinishReceivingFile];
+            receivingFile_ = NO;
             return;
         } else {
             [delegate_ terminalFileReceiptEndedUnexpectedly];
