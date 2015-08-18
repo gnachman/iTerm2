@@ -139,6 +139,7 @@ typedef enum {
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;
+- (void)textViewToggleAnnotations;
 
 @end
 

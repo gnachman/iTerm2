@@ -4079,7 +4079,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [note makeFirstResponder];
 }
 
-- (void)showHideNotes {
+- (void)textViewToggleAnnotations {
     VT100GridCoordRange range =
         VT100GridCoordRangeMake(0,
                                 0,

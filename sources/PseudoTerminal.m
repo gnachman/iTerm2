@@ -4541,10 +4541,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
           contextInfo:nil];
 
     NSArray *mru = [Coprocess mostRecentlyUsedCommands];
-        [coprocessCommand_ removeAllItems];
-        if (mru.count) {
-                [coprocessCommand_ addItemsWithObjectValues:mru];
-        }
+    [coprocessCommand_ removeAllItems];
+    if (mru.count) {
+        [coprocessCommand_ addItemsWithObjectValues:mru];
+    }
     [NSApp runModalForWindow:coprocesssPanel_];
 
     [NSApp endSheet:coprocesssPanel_];
@@ -5310,10 +5310,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (IBAction)addNoteAtCursor:(id)sender {
     [[self currentSession] addNoteAtCursor];
-}
-
-- (IBAction)showHideNotes:(id)sender {
-    [[self currentSession] showHideNotes];
 }
 
 - (IBAction)nextMarkOrNote:(id)sender {
