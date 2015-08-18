@@ -19,5 +19,6 @@
 @interface NSAttributedString (iTerm)
 
 - (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator;
+- (CGFloat)heightForWidth:(CGFloat)maxWidth;
 
 @end

@@ -503,7 +503,6 @@ typedef enum {
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
 
-- (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
 

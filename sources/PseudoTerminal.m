@@ -5068,30 +5068,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-// Bump a frame so that it's within the screen's visible frame, if possible.
-- (NSRect)frame:(NSRect)frame byConstrainingToScreen:(NSScreen *)screen {
-    NSRect screenRect = screen.visibleFrameIgnoringHiddenDock;
-    if (frame.size.width > screenRect.size.width ||
-        frame.size.height > screenRect.size.height) {
-        return frame; // Sorry, can't be done.
-    }
-
-    if (NSContainsRect(screenRect, frame)) {
-        // Nothing to do.
-        return frame;
-    }
-
-    CGFloat xOver = NSMaxX(frame) - NSMaxX(screenRect);
-    CGFloat yOver = NSMaxY(frame) - NSMaxY(screenRect);
-    CGFloat xUnder = NSMinX(screenRect) - NSMinX(frame);
-    CGFloat yUnder = NSMinY(screenRect) - NSMinY(frame);
-
-    frame.origin.x += MAX(0, xUnder) - MAX(0, xOver);
-    frame.origin.y += MAX(0, yUnder) - MAX(0, yOver);
-
-    return frame;
-}
-
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize
 {
     PtyLog(@"fitWindowToTabSize %@", [NSValue valueWithSize:tabSize]);
@@ -5221,9 +5197,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
-    DLog(@"Before frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
-    frame = [self frame:frame byConstrainingToScreen:[[self window] screen]];
-    DLog(@"After frame:byConstrainingToScreen: %@", NSStringFromRect(frame));
     [[self window] setFrame:frame display:YES];
 
     if (bugFixView) {

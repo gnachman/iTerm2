@@ -7,6 +7,7 @@
 //
 
 #import "iTermAnnouncementView.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 
 static const CGFloat kMargin = 8;
@@ -249,20 +250,20 @@ static const CGFloat kMargin = 8;
 
     rect.size.width -= _buttonWidth;
     NSTextView *textView = [[[NSTextView alloc] initWithFrame:rect] autorelease];
-    textView.string = title;
+    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:12] };
+    NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:title
+                                                                            attributes:attributes] autorelease];
+    textView.textStorage.attributedString = attributedString;
     [textView setEditable:NO];
     textView.autoresizingMask = NSViewWidthSizable | NSViewMaxXMargin;
     textView.drawsBackground = NO;
 
-    NSFont *font = [NSFont systemFontOfSize:12];
-    [textView setFont:font];
     [textView setSelectable:NO];
 
     _textView = [textView retain];
-    NSDictionary *attributes = @{ NSFontAttributeName: _textView.font };
     CGFloat height = [title heightWithAttributes:attributes
                               constrainedToWidth:rect.size.width];
-    CGFloat maxHeight = [@"x\nx" heightWithAttributes:attributes constrainedToWidth:rect.size.width];
+    CGFloat maxHeight = [self maximumHeightForWidth:rect.size.width];
     height = MIN(height, maxHeight);
     textView.frame = NSMakeRect(rect.origin.x,
                                  floor((_internalView.frame.size.height - height) / 2),
@@ -297,13 +298,25 @@ static const CGFloat kMargin = 8;
     }
 }
 
+- (NSDictionary *)attributesForHeightMeasurement {
+    return @{ NSFontAttributeName: [NSFont systemFontOfSize:12] };
+}
+
+- (CGFloat)maximumHeightForWidth:(CGFloat)width {
+    NSDictionary *attributes = [self attributesForHeightMeasurement];
+    return [@"x\nx\nx" heightWithAttributes:attributes constrainedToWidth:width];
+}
+
+- (CGFloat)minimumHeightForWidth:(CGFloat)width {
+    NSDictionary *attributes = [self attributesForHeightMeasurement];
+    return [@"x" heightWithAttributes:attributes constrainedToWidth:width];
+}
+
 - (void)updateTextViewFrame {
     NSRect rect = _textView.frame;
-    NSDictionary *attributes = @{ NSFontAttributeName: _textView.font };
-    CGFloat height = [_textView.string heightWithAttributes:attributes
-                                         constrainedToWidth:rect.size.width];
-    CGFloat maxHeight = [@"x\nx" heightWithAttributes:attributes constrainedToWidth:rect.size.width];
-    CGFloat minHeight = [@"x" heightWithAttributes:attributes constrainedToWidth:rect.size.width];
+    CGFloat height = [_textView.attributedString heightForWidth:rect.size.width];
+    CGFloat maxHeight = [self maximumHeightForWidth:rect.size.width];
+    CGFloat minHeight = [self minimumHeightForWidth:rect.size.width];
     height = MAX(minHeight, MIN(height, maxHeight));
 
     NSRect textRect = NSMakeRect(rect.origin.x,
@@ -356,6 +369,16 @@ static const CGFloat kMargin = 8;
     if (_block) {
         _block([[sender selectedItem] tag]);
     }
+}
+
+- (void)addDismissOnKeyDownLabel {
+    NSMutableAttributedString *string = [_textView.attributedString mutableCopy];
+    NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
+                                  NSForegroundColorAttributeName: [NSColor darkGrayColor] };
+    NSAttributedString *notice = [[[NSAttributedString alloc] initWithString:@"\nPress any key to dismiss this message."
+                                                                  attributes:attributes] autorelease];
+    [string appendAttributedString:notice];
+    _textView.textStorage.attributedString = string;
 }
 
 @end

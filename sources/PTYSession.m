@@ -83,6 +83,9 @@ static NSString *const kSuppressAnnoyingBellOffer = @"NoSyncSuppressAnnyoingBell
 static NSString *const kSilenceAnnoyingBellAutomatically = @"NoSyncSilenceAnnoyingBellAutomatically";
 static NSString *const kReopenSessionWarningIdentifier = @"ReopenSessionAfterBrokenPipe";
 
+static NSString *const kTurnOffMouseReportingOnHostChangeUserDefaultsKey = @"NoSyncTurnOffMouseReportingOnHostChange";
+static NSString *const kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier = @"TurnOffMouseReportingOnHostChange";
+
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
 
@@ -987,6 +990,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                             [[NSWorkspace sharedWorkspace] openURL:whyUrl];
                                                         }
                                                     }];
+    announcement.dismissOnKeyDown = YES;
     [self queueAnnouncement:announcement identifier:kReopenSessionWarningIdentifier];
 }
 
@@ -1271,10 +1275,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (NSString *)sessionId {
-    return [NSString stringWithFormat:@"w%dt%dp%lu",
+    return [NSString stringWithFormat:@"w%dt%dp%lu:%@",
             [[_tab realParentWindow] number],
             _tab.tabNumberForItermSessionId,
-            (unsigned long)_tab.sessions.count];
+            (unsigned long)_tab.sessions.count,
+            self.guid];
 }
 
 - (void)startProgram:(NSString *)command
@@ -4378,6 +4383,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_pasteHelper enqueueEvent:event];
 }
 
+- (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    if (_view.currentAnnouncement.dismissOnKeyDown) {
+        [_view.currentAnnouncement dismiss];
+        return NO;
+    } else {
+        return YES;
+    }
+}
+
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event {
@@ -6421,6 +6435,48 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
     NSString *path = [_screen workingDirectoryOnLine:line];
     [self tryAutoProfileSwitchWithHostname:host.hostname username:host.username path:path];
+
+    if (_xtermMouseReporting && self.terminal.mouseMode != MOUSE_REPORTING_NONE) {
+        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+        if ([number boolValue]) {
+            self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+        } else if (!number) {
+            [self offerToTurnOffMouseReportingOnHostChange];
+        }
+    }
+}
+
+- (void)offerToTurnOffMouseReportingOnHostChange {
+    NSString *title =
+        @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:title
+                                                         style:kiTermAnnouncementViewStyleQuestion
+                                                   withActions:@[ @"Yes", @"Always", @"Never" ]
+                                                    completion:^(int selection) {
+            switch (selection) {
+                case -2:  // Dismiss programmatically
+                    break;
+
+                case -1: // No
+                    break;
+
+                case 0: // Yes
+                    self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+                    break;
+
+                case 1: // Always
+                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                            forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+                    self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+                    break;
+
+                case 2: // Never
+                    [[NSUserDefaults standardUserDefaults] setBool:NO
+                                                            forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+            }
+        }];
+    [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
 }
 
 - (void)tryAutoProfileSwitchWithHostname:(NSString *)hostname
