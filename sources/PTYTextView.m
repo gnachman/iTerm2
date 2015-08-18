@@ -721,7 +721,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
 }
 
-- (void)toggleShowTimestamps {
+- (void)toggleShowTimestamps:(id)sender {
     _drawingHelper.showTimestamps = !_drawingHelper.showTimestamps;
     [self setNeedsDisplay:YES];
 }
@@ -3218,8 +3218,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return YES;
 }
 
-- (BOOL)validateMenuItem:(NSMenuItem *)item
-{
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
     if ([item action] == @selector(paste:)) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
         // Check if there is a string type on the pasteboard
@@ -3241,6 +3240,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if ([item action] == @selector(showHideNotes:)) {
         item.state = [self anyAnnotationsAreVisible] ? NSOnState : NSOffState;
+        return YES;
+    }
+    if ([item action] == @selector(toggleShowTimestamps:)) {
+        item.state = _drawingHelper.showTimestamps ? NSOnState : NSOffState;
         return YES;
     }
 

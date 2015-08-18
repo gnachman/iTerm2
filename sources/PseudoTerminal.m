@@ -6367,8 +6367,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         result = ![[self currentSession] liveSession] && [[self currentSession] canInstantReplayPrev];
     } else if ([item action] == @selector(irNext:)) {
         result = [[self currentSession] canInstantReplayNext];
-    } else if ([item action] == @selector(toggleShowTimestamps:)) {
-        result = ([self currentSession] != nil);
     } else if ([item action] == @selector(toggleCursorGuide:)) {
       PTYSession *session = [self currentSession];
       [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
@@ -6453,11 +6451,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         return self.currentSession.textViewIsZoomedIn;
     }
     return result;
-}
-
-- (IBAction)toggleShowTimestamps:(id)sender
-{
-    [[self currentSession] toggleShowTimestamps];
 }
 
 - (IBAction)toggleAutoCommandHistory:(id)sender

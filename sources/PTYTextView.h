@@ -332,9 +332,6 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Remove underline indicating clickable URL.
 - (void)removeUnderline;
 
-// Toggles whether line timestamps are displayed.
-- (void)toggleShowTimestamps;
-
 // Update the scroll position and schedule a redraw. Returns true if anything
 // onscreen is blinking.
 - (BOOL)refresh;
