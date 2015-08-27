@@ -4042,10 +4042,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)toggleShowTimestamps {
-    [_textview toggleShowTimestamps];
-}
-
 - (VT100GridCoordRange)smartSelectionRangeAt:(VT100GridCoord)coord {
     if (coord.x < 0 || coord.y < 0 || coord.x >= _screen.width || coord.y >= _screen.height) {
         return VT100GridCoordRangeMake(0, 0, 0, 0);
@@ -4084,7 +4080,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [note makeFirstResponder];
 }
 
-- (void)showHideNotes {
+- (void)textViewToggleAnnotations {
     VT100GridCoordRange range =
         VT100GridCoordRangeMake(0,
                                 0,

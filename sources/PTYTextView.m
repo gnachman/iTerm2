@@ -721,7 +721,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
 }
 
-- (void)toggleShowTimestamps {
+- (void)toggleShowTimestamps:(id)sender {
     _drawingHelper.showTimestamps = !_drawingHelper.showTimestamps;
     [self setNeedsDisplay:YES];
 }
@@ -3048,6 +3048,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate textViewEditSession];
 }
 
+- (BOOL)anyAnnotationsAreVisible {
+    for (NSView *view in [self subviews]) {
+        if ([view isKindOfClass:[PTYNoteView class]]) {
+            if (!view.hidden) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
+- (void)showHideNotes:(id)sender {
+    [_delegate textViewToggleAnnotations];
+}
+
 - (void)toggleBroadcastingInput:(id)sender
 {
     [_delegate textViewToggleBroadcastingInput];
@@ -3203,8 +3218,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return YES;
 }
 
-- (BOOL)validateMenuItem:(NSMenuItem *)item
-{
+- (BOOL)validateMenuItem:(NSMenuItem *)item {
     if ([item action] == @selector(paste:)) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
         // Check if there is a string type on the pasteboard
@@ -3224,6 +3238,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self _broadcastToggleable]) {
         return YES;
     }
+    if ([item action] == @selector(showHideNotes:)) {
+        item.state = [self anyAnnotationsAreVisible] ? NSOnState : NSOffState;
+        return YES;
+    }
+    if ([item action] == @selector(toggleShowTimestamps:)) {
+        item.state = _drawingHelper.showTimestamps ? NSOnState : NSOffState;
+        return YES;
+    }
+
     if ([item action]==@selector(saveDocumentAs:)) {
         return [self isAnyCharSelected];
     } else if ([item action] == @selector(selectAll:) ||

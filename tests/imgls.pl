@@ -59,7 +59,7 @@ sub write_image {
             "\033", "]", "1337",                                                # image leadin sequence (OSC + 1337)
             join(';', map { $_ . '=' . $imgparams{$_} } keys %imgparams),       # semicolon separated pairs of param=value pairs
             encode_base64(get_image_bytes($file)),                              # base64 encoded image bytes
-            "\007";                                                             # end-of-encoding char (BEL = ^G)
+            "\007";                                                         # end-of-encoding char (BEL = ^G) and final NUL
 }
 
 ### main code 
@@ -106,9 +106,9 @@ while (@ARGV) {
             print $path, ":\n";
         }
         while (readdir($dh)) {
-            next if /^\./ and not $lsa;                 # skip dot files when -a is not specified
+            next if /^\./ and not $lsa;                         # skip dot files when -a is not specified
             if ($_ !~ /^\.\.?$/ and -d "$path/$_") {
-                push @ARGV, "$path/$_";                 # handle directory recursion - processed after files
+                push @ARGV, "$path/$_";                         # handle directory recursion - processed after files
             }
             do_ls_cmd("$path/$_");
         }
@@ -126,19 +126,18 @@ sub do_ls_cmd {
     # Get the image dimensions to suppliement the image and ls output.
     # Use Image::Size when available (non-stock), otherwise use PHP fallback method.
     my $dims;
-    if (Image::Size->can('imgsize')) {
-        my ($w, $h) = Image::Size::imgsize($file);
-        $dims = join 'x', $w, $h        if defined $w and defined $h;
+    if (-e $file and -r $file) {
+        if (Image::Size->can('imgsize')) {
+            my ($w, $h) = Image::Size::imgsize($file);
+            $dims = join 'x', $w, $h        if defined $w and defined $h;
+        }
+        elsif ($php) {
+            $dims = qx/$php -r '$phpcmd' '$file'/;
+        }
     }
-    elsif ($php) {
-        $dims = qx/$php -r '$phpcmd' '$file'/;
-    }
-    if (-e $file and $dims) {
+    if ($dims) {
         write_image $file;
-
-        my $cursor_up = "\033" . "[" . "A";      # CSI + A
-        # move the cursor up, and append the image's dimensions
-        printf "%s%11s ", $cursor_up, $dims;
+        printf "%11s ", $dims;                                  # append the image's dimensions
     }
     else {
         printf "%s %11s ",
@@ -146,7 +145,6 @@ sub do_ls_cmd {
             ' ';
     }
     system @lscmd, @lsopts, $file;
-    printf "\n"
 }
 
 sub usage {
@@ -168,3 +166,4 @@ sub get_image_bytes {
     return $filebytes;
 }
 
+# vim: set expandtab:

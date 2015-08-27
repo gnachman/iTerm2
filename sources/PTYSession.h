@@ -488,7 +488,6 @@ typedef enum {
 
 - (void)toggleShowTimestamps;
 - (void)addNoteAtCursor;
-- (void)showHideNotes;
 - (void)previousMarkOrNote;
 - (void)nextMarkOrNote;
 - (void)scrollToMark:(id<iTermMark>)mark;

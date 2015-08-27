@@ -4541,10 +4541,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
           contextInfo:nil];
 
     NSArray *mru = [Coprocess mostRecentlyUsedCommands];
-        [coprocessCommand_ removeAllItems];
-        if (mru.count) {
-                [coprocessCommand_ addItemsWithObjectValues:mru];
-        }
+    [coprocessCommand_ removeAllItems];
+    if (mru.count) {
+        [coprocessCommand_ addItemsWithObjectValues:mru];
+    }
     [NSApp runModalForWindow:coprocesssPanel_];
 
     [NSApp endSheet:coprocesssPanel_];
@@ -5283,10 +5283,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (IBAction)addNoteAtCursor:(id)sender {
     [[self currentSession] addNoteAtCursor];
-}
-
-- (IBAction)showHideNotes:(id)sender {
-    [[self currentSession] showHideNotes];
 }
 
 - (IBAction)nextMarkOrNote:(id)sender {
@@ -6371,8 +6367,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         result = ![[self currentSession] liveSession] && [[self currentSession] canInstantReplayPrev];
     } else if ([item action] == @selector(irNext:)) {
         result = [[self currentSession] canInstantReplayNext];
-    } else if ([item action] == @selector(toggleShowTimestamps:)) {
-        result = ([self currentSession] != nil);
     } else if ([item action] == @selector(toggleCursorGuide:)) {
       PTYSession *session = [self currentSession];
       [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
@@ -6457,11 +6451,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         return self.currentSession.textViewIsZoomedIn;
     }
     return result;
-}
-
-- (IBAction)toggleShowTimestamps:(id)sender
-{
-    [[self currentSession] toggleShowTimestamps];
 }
 
 - (IBAction)toggleAutoCommandHistory:(id)sender
