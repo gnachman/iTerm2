@@ -192,6 +192,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [_toolbelt shutdown];
     [_toolbelt release];
     _toolbelt = nil;
+    _delegate = nil;
 }
 
 - (BOOL)scrollbarShouldBeVisible {
