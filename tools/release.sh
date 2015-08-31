@@ -78,7 +78,7 @@ NEWFILES=""
 echo "Build deployment release"
 make clean
 make release
-Build Deployment "" "OS 10.6+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." "" "--deep"
+Build Deployment "" "OS 10.7+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." "" "--deep"
 
 #set -x
 
