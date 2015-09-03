@@ -2516,14 +2516,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            PtyLog(@"Window type = NORMAL");
-            // fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            PtyLog(@"Window type = LION");
-            if (![self lionFullScreen]) {
-                PtyLog(@"Window type = %d but it's not in lion fullscreen right now so not doing anything", windowType_);
+            PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
+            if ([self lionFullScreen]) {
+                PtyLog(@"Do nothing because we don't want to piss off El Capitan.");
                 break;
             }
+            // fall through
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
