@@ -29,4 +29,7 @@
 // respect initWithCapacity: for capacities over 16.
 - (void)addParsedTokensToVector:(CVector *)vector;
 
+// Reset all state.
+- (void)reset;
+
 @end

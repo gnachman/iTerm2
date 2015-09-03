@@ -292,7 +292,7 @@ static const int kMaxScreenRows = 4096;
     }
 }
 
-- (void)resetPreservingPrompt:(BOOL)preservePrompt {
+- (void)resetByUserRequest:(BOOL)userInitiated {
     self.cursorMode = NO;
     if (_columnMode) {
         [delegate_ terminalSetWidth:80];
@@ -326,7 +326,10 @@ static const int kMaxScreenRows = 4096;
         altSavedCursor_.lineDrawing[i] = NO;
     }
     [self resetSavedCursorPositions];
-    [delegate_ terminalResetPreservingPrompt:preservePrompt];
+    if (userInitiated) {
+        [_parser reset];
+    }
+    [delegate_ terminalResetPreservingPrompt:userInitiated];
 }
 
 - (void)setWraparoundMode:(BOOL)mode {
@@ -1408,7 +1411,7 @@ static const int kMaxScreenRows = 4096;
             break;
 
         case ANSI_RIS:
-            [self resetPreservingPrompt:NO];
+            [self resetByUserRequest:NO];
             break;
         case VT100CSI_SM:
         case VT100CSI_RM: {

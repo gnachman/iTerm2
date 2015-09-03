@@ -6276,10 +6276,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-// Send a reset to the current session's terminal.
-- (void)reset:(id)sender
-{
-    [[[self currentSession] terminal] resetPreservingPrompt:YES];
+// Reset all state associated with the terminal.
+- (void)reset:(id)sender {
+    [[[self currentSession] terminal] resetByUserRequest:YES];
     [[self currentSession] updateDisplay];
 }
 

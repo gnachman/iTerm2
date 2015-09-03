@@ -245,4 +245,12 @@
     }
 }
 
+- (void)reset {
+    @synchronized(self) {
+        [_savedStateForPartialParse removeAllObjects];
+        [self forceUnhookDCS];
+        [self clearStream];
+    }
+}
+
 @end

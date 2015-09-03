@@ -1954,7 +1954,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[self tab] updateLabelAttributes];
 
     if (_shouldRestart) {
-        [_terminal resetPreservingPrompt:NO];
+        [_terminal resetByUserRequest:NO];
         [self appendBrokenPipeMessage:@"Session Restarted"];
         [self replaceTerminatedShellWithNewInstance];
     } else if ([self autoClose]) {
