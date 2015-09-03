@@ -696,50 +696,137 @@ int decode_utf8_char(const unsigned char *datap,
     return [[prefix uppercaseString] stringByAppendingString:suffix];
 }
 
++ (instancetype)stringWithHumanReadableSize:(unsigned long long)value {
+    if (value < 1024) {
+        return nil;
+    }
+    unsigned long long num = value;
+    int pow = 0;
+    BOOL exact = YES;
+    while (num >= 1024 * 1024) {
+        pow++;
+        if (num % 1024 != 0) {
+            exact = NO;
+        }
+        num /= 1024;
+    }
+    // Show 2 fraction digits, always rounding downwards. Printf rounds floats to the nearest
+    // representable value, so do the calculation with integers until we get 100-fold the desired
+    // value, and then switch to float.
+    if (100 * num % 1024 != 0) {
+        exact = NO;
+    }
+    num = 100 * num / 1024;
+    NSArray *iecPrefixes = @[ @"Ki", @"Mi", @"Gi", @"Ti", @"Pi", @"Ei" ];
+    return [NSString stringWithFormat:@"%@%.2f %@",
+               exact ? @"" :@ "≈", (double)num / 100, iecPrefixes[pow]];
+}
+
 - (NSString *)hexOrDecimalConversionHelp {
     unsigned long long value;
+    BOOL mustBePositive = NO;
     BOOL decToHex;
+    BOOL is32bit;
     if ([self hasPrefix:@"0x"] && [self length] <= 18) {
         decToHex = NO;
         NSScanner *scanner = [NSScanner scannerWithString:self];
-        
         [scanner setScanLocation:2]; // bypass 0x
         if (![scanner scanHexLongLong:&value]) {
             return nil;
         }
+        is32bit = [self length] <= 10;
     } else {
         decToHex = YES;
-        value = [self longLongValue];
+        NSDecimalNumber *temp = [NSDecimalNumber decimalNumberWithString:self];
+        if ([temp isEqual:[NSDecimalNumber notANumber]]) {
+            return nil;
+        }
+        NSDecimalNumber *smallestSignedLongLong =
+            [NSDecimalNumber decimalNumberWithString:@"-9223372036854775808"];
+        NSDecimalNumber *largestUnsignedLongLong =
+            [NSDecimalNumber decimalNumberWithString:@"18446744073709551615"];
+        if ([temp doubleValue] > 0) {
+            if ([temp compare:largestUnsignedLongLong] == NSOrderedDescending) {
+                return nil;
+            }
+            mustBePositive = YES;
+            is32bit = ([temp compare:@2147483648LL] == NSOrderedAscending);
+        } else if ([temp compare:smallestSignedLongLong] == NSOrderedAscending) {
+            // Negative but smaller than a signed 64 bit can hold
+            return nil;
+        } else {
+            // Negative but fits in signed 64 bit
+            is32bit = ([temp compare:@-2147483649LL] == NSOrderedDescending);
+        }
+        value = [temp unsignedLongLongValue];
     }
-    if (!value) {
-        return nil;
-    }
-    
-    BOOL is32bit;
-    if (decToHex) {
-        is32bit = ((long long)value >= -2147483648LL && (long long)value <= 2147483647LL);
+
+    NSNumberFormatter *numberFormatter = [[[NSNumberFormatter alloc] init] autorelease];
+    numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+
+    NSString *humanReadableSize = [NSString stringWithHumanReadableSize:value];
+    if (humanReadableSize) {
+        humanReadableSize = [NSString stringWithFormat:@" (%@)", humanReadableSize];
     } else {
-        is32bit = [self length] <= 10;
+        humanReadableSize = @"";
     }
-    
+
     if (is32bit) {
         // Value fits in a signed 32-bit value, so treat it as such
-        int intValue = (int)value;
+        int intValue =
+        (int)value;
+        NSString *formattedDecimalValue = [numberFormatter stringFromNumber:@(intValue)];
         if (decToHex) {
-            return [NSString stringWithFormat:@"%d = 0x%x", intValue, intValue];
+            if (intValue < 0) {
+                humanReadableSize = @"";
+            }
+            return [NSString stringWithFormat:@"%@ = 0x%x%@",
+                       formattedDecimalValue, intValue, humanReadableSize];
         } else if (intValue >= 0) {
-            return [NSString stringWithFormat:@"0x%x = %d", intValue, intValue];
+            return [NSString stringWithFormat:@"0x%x = %@%@",
+                       intValue, formattedDecimalValue, humanReadableSize];
         } else {
-            return [NSString stringWithFormat:@"0x%x = %d or %u", intValue, intValue, intValue];
+            unsigned int unsignedIntValue = (unsigned int)value;
+            NSString *formattedUnsignedDecimalValue =
+                [numberFormatter stringFromNumber:@(unsignedIntValue)];
+            return [NSString stringWithFormat:@"0x%x = %@ or %@%@",
+                       intValue, formattedDecimalValue, formattedUnsignedDecimalValue,
+                       humanReadableSize];
         }
     } else {
         // 64-bit value
-        if (decToHex) {
-            return [NSString stringWithFormat:@"%lld = 0x%llx", value, value];
-        } else if ((long long)value >= 0) {
-            return [NSString stringWithFormat:@"0x%llx = %lld", value, value];
+        NSDecimalNumber *decimalNumber;
+        long long signedValue = value;
+        if (!mustBePositive && signedValue < 0) {
+            decimalNumber = [NSDecimalNumber decimalNumberWithMantissa:-signedValue
+                                                              exponent:0
+                                                            isNegative:YES];
         } else {
-            return [NSString stringWithFormat:@"0x%llx = %lld or %llu", value, value, value];
+            decimalNumber = [NSDecimalNumber decimalNumberWithMantissa:value
+                                                              exponent:0
+                                                            isNegative:NO];
+        }
+        NSString *formattedDecimalValue = [numberFormatter stringFromNumber:decimalNumber];
+        if (decToHex) {
+            if (!mustBePositive && signedValue < 0) {
+                humanReadableSize = @"";
+            }
+            return [NSString stringWithFormat:@"%@ = 0x%llx%@",
+                       formattedDecimalValue, value, humanReadableSize];
+        } else if (signedValue >= 0) {
+            return [NSString stringWithFormat:@"0x%llx = %@%@",
+                       value, formattedDecimalValue, humanReadableSize];
+        } else {
+            // Value is negative and converting hex to decimal.
+            NSDecimalNumber *unsignedDecimalNumber =
+                [NSDecimalNumber decimalNumberWithMantissa:value
+                                                  exponent:0
+                                                isNegative:NO];
+            NSString *formattedUnsignedDecimalValue =
+                [numberFormatter stringFromNumber:unsignedDecimalNumber];
+            return [NSString stringWithFormat:@"0x%llx = %@ or %@%@",
+                       value, formattedDecimalValue, formattedUnsignedDecimalValue,
+                       humanReadableSize];
         }
     }
 }
