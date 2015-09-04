@@ -193,10 +193,10 @@ static NSString *const kGridSizeKey = @"Size";
     self.cursorY = MIN(size_.height - 1, MAX(0, coord.y));
 }
 
-- (int)numberOfLinesUsed {
+- (int)numberOfNonEmptyLines {
     int numberOfLinesUsed = size_.height;
 
-    for(; numberOfLinesUsed > cursor_.y + 1; numberOfLinesUsed--) {
+    for(; numberOfLinesUsed > 0; numberOfLinesUsed--) {
         screen_char_t *line = [self screenCharsAtLineNumber:numberOfLinesUsed - 1];
         int i;
         for (i = 0; i < size_.width; i++) {
@@ -210,6 +210,10 @@ static NSString *const kGridSizeKey = @"Size";
     }
 
     return numberOfLinesUsed;
+}
+
+- (int)numberOfLinesUsed {
+    return MAX(MIN(size_.height, cursor_.y + 1), self.numberOfNonEmptyLines);
 }
 
 - (int)appendLines:(int)numLines

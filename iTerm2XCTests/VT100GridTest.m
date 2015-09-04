@@ -418,6 +418,8 @@ do { \
     XCTAssert([grid numberOfLinesUsed] == 2);
     grid.cursorY = 2;
     XCTAssert([grid numberOfLinesUsed] == 3);
+    grid.cursorY = 3;
+    XCTAssert([grid numberOfLinesUsed] == 4);
 
     grid = [self smallGrid];
     XCTAssert([grid numberOfLinesUsed] == 1);

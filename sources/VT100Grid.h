@@ -69,6 +69,9 @@
 // line the cursor is on.
 - (int)numberOfLinesUsed;
 
+// Like numberOfLinesUsed, but it doesn't care about where the cursor is.
+- (int)numberOfNonEmptyLines;
+
 // Append the first numLines to the given line buffer. Returns the number of lines appended.
 - (int)appendLines:(int)numLines
       toLineBuffer:(LineBuffer *)lineBuffer;
