@@ -427,6 +427,9 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
         case KEY_ACTION_TOGGLE_HOTKEY_WINDOW_PINNING:
             actionString = @"Toggle Hotkey Window Pinning";
             break;
+        case KEY_ACTION_UNDO:
+            actionString = @"Undo";
+            break;
         case KEY_ACTION_FIND_REGEX:
             actionString = [NSString stringWithFormat:@"Find Regex “%@”", auxText];
             break;

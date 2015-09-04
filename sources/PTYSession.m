@@ -2124,8 +2124,26 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[iTermController sharedInstance] reloadAllBookmarks];
 }
 
-+ (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu
-{
++ (BOOL)_recursiveSelectMenuWithSelector:(SEL)selector inMenu:(NSMenu *)menu {
+    for (NSMenuItem* item in [menu itemArray]) {
+        if (![item isEnabled] || [item isHidden]) {
+            continue;
+        }
+        if ([item hasSubmenu]) {
+            if ([PTYSession _recursiveSelectMenuWithSelector:selector inMenu:[item submenu]]) {
+                return YES;
+            }
+        } else if ([item action] == selector) {
+            [NSApp sendAction:[item action]
+                           to:[item target]
+                         from:item];
+            return YES;
+        }
+    }
+    return NO;
+}
+
++ (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu {
     for (NSMenuItem* item in [menu itemArray]) {
         if (![item isEnabled] || [item isHidden]) {
             continue;
@@ -2171,6 +2189,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
++ (void)selectMenuItemWithSelector:(SEL)theSelector {
+    if (![self _recursiveSelectMenuWithSelector:theSelector inMenu:[NSApp mainMenu]]) {
+        NSBeep();
+    }
+}
 
 + (void)selectMenuItem:(NSString*)theName
 {
@@ -4711,6 +4734,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                    forKey:kPreferenceKeyHotkeyAutoHides];
                 break;
             }
+            case KEY_ACTION_UNDO:
+                [PTYSession selectMenuItemWithSelector:@selector(undo:)];
+                break;
 
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
