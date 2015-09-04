@@ -2,13 +2,13 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="8.00">
 	<data>
 		<int key="IBDocument.SystemTarget">101000</int>
-		<string key="IBDocument.SystemVersion">14D131</string>
-		<string key="IBDocument.InterfaceBuilderVersion">7531</string>
-		<string key="IBDocument.AppKitVersion">1347.57</string>
+		<string key="IBDocument.SystemVersion">14F27</string>
+		<string key="IBDocument.InterfaceBuilderVersion">7706</string>
+		<string key="IBDocument.AppKitVersion">1348.17</string>
 		<string key="IBDocument.HIToolboxVersion">758.70</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">7531</string>
+			<string key="NS.object.0">7706</string>
 		</object>
 		<array key="IBDocument.IntegratedClassDependencies">
 			<string>NSCustomObject</string>
@@ -192,7 +192,7 @@
 							<object class="NSScroller" id="853761196">
 								<reference key="NSNextResponder" ref="1042498940"/>
 								<int key="NSvFlags">256</int>
-								<string key="NSFrame">{{402.99999922401497, 0}, {16, 0}}</string>
+								<string key="NSFrame">{{402.9999983962976, 0}, {16, 0}}</string>
 								<reference key="NSSuperview" ref="1042498940"/>
 								<bool key="NSEnabled">YES</bool>
 								<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
@@ -204,7 +204,7 @@
 							<object class="NSScroller" id="1004630433">
 								<reference key="NSNextResponder" ref="1042498940"/>
 								<int key="NSvFlags">256</int>
-								<string key="NSFrame">{{1, -16}, {417.99999922401497, 16}}</string>
+								<string key="NSFrame">{{1, -16}, {417.9999983962976, 16}}</string>
 								<reference key="NSSuperview" ref="1042498940"/>
 								<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
 								<string key="NSControlAction">_doScroller:</string>
@@ -229,7 +229,7 @@
 								<bool key="NSAutomaticallyAdjustsContentInsets">YES</bool>
 							</object>
 						</array>
-						<string key="NSFrame">{{30, 22}, {419.99999922401497, 0}}</string>
+						<string key="NSFrame">{{30, 22}, {419.9999983962976, 0}}</string>
 						<reference key="NSSuperview" ref="637978662"/>
 						<reference key="NSNextKeyView" ref="767991303"/>
 						<int key="NSsFlags">133746</int>
@@ -245,7 +245,7 @@
 					<object class="NSSearchField" id="990366382">
 						<reference key="NSNextResponder" ref="637978662"/>
 						<int key="NSvFlags">267</int>
-						<string key="NSFrame">{{131.99999922401497, 30}, {318, 22}}</string>
+						<string key="NSFrame">{{131.99999839629768, 30}, {318, 22}}</string>
 						<reference key="NSSuperview" ref="637978662"/>
 						<bool key="NSViewIsLayerTreeHost">YES</bool>
 						<bool key="NSEnabled">YES</bool>

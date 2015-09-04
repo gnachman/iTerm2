@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14E46" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7706" systemVersion="14F27" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7706"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
+        <customObject id="-2" userLabel="File's Owner" customClass="Î">
             <connections>
                 <outlet property="_advancedTabViewItem" destination="KyW-GB-ElH" id="D3N-Z7-BU3"/>
                 <outlet property="_advancedToolbarItem" destination="gtg-rw-6h8" id="fhX-IE-hiG"/>
@@ -750,7 +750,7 @@ Gw
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783" customClass="iTermTriggerTableView">
-                                    <rect key="frame" x="0.0" y="0.0" width="761" height="19"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="762" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -1126,7 +1126,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
-                                    <rect key="frame" x="0.0" y="0.0" width="533" height="19"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="532" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -1540,12 +1540,12 @@ DQ
                 <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
                 <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
                 <outlet property="_promptBeforeClosing" destination="5728" id="Xu7-bR-LX8"/>
+                <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
                 <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
                 <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
                 <outlet property="_undoTimeout" destination="ksA-qB-n6W" id="YVr-dx-p2r"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
                 <outlet property="view" destination="ayN-Cl-pQs" id="xvI-1B-ZWf"/>
-                <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
             </connections>
         </customObject>
         <customObject id="kOZ-HN-eXg" customClass="ProfilesKeysPreferencesViewController">
@@ -2766,14 +2766,15 @@ DQ
                 <popUpButton verticalHuggingPriority="750" id="4916">
                     <rect key="frame" x="324" y="172" width="221" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="No Title Bar" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="12" imageScaling="proportionallyDown" inset="2" selectedItem="REd-Hh-bME" id="4941">
+                    <popUpButtonCell key="cell" type="push" title="No Title Bar And Rounded" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="13" imageScaling="proportionallyDown" inset="2" selectedItem="eM3-Yo-dSt" id="4941">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
                         <menu key="menu" title="OtherViews" id="4942">
                             <items>
                                 <menuItem title="Normal" id="4945"/>
                                 <menuItem title="Fullscreen" tag="1" id="4944"/>
-                                <menuItem title="No Title Bar" state="on" tag="12" id="REd-Hh-bME"/>
+                                <menuItem title="No Title Bar" tag="12" id="REd-Hh-bME"/>
+                                <menuItem title="No Title Bar And Rounded" state="on" tag="13" id="eM3-Yo-dSt"/>
                                 <menuItem isSeparatorItem="YES" id="ohs-lg-RYo"/>
                                 <menuItem title="Full-Width Bottom of Screen" tag="5" id="4943"/>
                                 <menuItem title="Full-Width Top of Screen" tag="2" id="5591"/>

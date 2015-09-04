@@ -331,19 +331,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return NSBorderlessWindowMask;
+            
+        case WINDOW_TYPE_NO_TITLE_BAR_ROUNDED:
+            return NSTitledWindowMask | NSFullSizeContentViewWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask | NSTexturedBackgroundWindowMask;
 
         default:
             return (NSTitledWindowMask |
-                    NSFullSizeContentViewWindowMask |
                     NSClosableWindowMask |
                     NSMiniaturizableWindowMask |
                     NSResizableWindowMask |
                     NSTexturedBackgroundWindowMask);
-//            return (NSTitledWindowMask |
-//                    NSClosableWindowMask |
-//                    NSMiniaturizableWindowMask |
-//                    NSResizableWindowMask |
-//                    NSTexturedBackgroundWindowMask);
     }
 }
 
@@ -593,19 +590,33 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self updateTabBarStyle];
     self.window.delegate = self;
     
-    // Custom window things
-    NSButton *closeButton = [self.window standardWindowButton:NSWindowCloseButton];
-    closeButton.hidden = true;
+    // We need to check if the window is borderless and rounded, because if we call it above in the switch statement, it doesnt work
+    if(windowType == WINDOW_TYPE_NO_TITLE_BAR_ROUNDED) {
+        // Borderless rounded window
+        
+        // Hide the window title
+        [self window].titleVisibility = NSWindowTitleHidden;
+        
+        // Get the close button
+        NSButton *closeButton = [[self window] standardWindowButton:NSWindowCloseButton];
+        // Hide it
+        closeButton.hidden = true;
+        
+        // Get the minimize button
+        NSButton *minimizeButton = [[self window] standardWindowButton:NSWindowMiniaturizeButton];
+        // Hide it
+        minimizeButton.hidden = true;
+        
+        // Get the maximize button
+        NSButton *maximizeButton = [[self window] standardWindowButton:NSWindowZoomButton];
+        // Hide it
+        maximizeButton.hidden = true;
+        
+        // Hide the titlebar
+        [self window].titlebarAppearsTransparent = true;
+    }
     
-    NSButton *minimizeButton = [self.window standardWindowButton:NSWindowMiniaturizeButton];
-    minimizeButton.hidden = true;
-    
-    NSButton *maximizeButton = [self.window standardWindowButton:NSWindowZoomButton];
-    maximizeButton.hidden = true;
-    
-    self.window.titlebarAppearsTransparent = true;
-
-    self.window.titleVisibility = NSWindowTitleHidden;
+    NSLog(@"TITLE GONE AND ROUNDED");
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateWindowNumberVisibility:)
