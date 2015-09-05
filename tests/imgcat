@@ -1,11 +1,32 @@
 #!/bin/bash
 
+# tmux requires unrecognized OSC sequences to be wrapped with DCS tmux;
+# <sequence> ST, and for all ESCs in <sequence> to be replaced with ESC ESC. It
+# only accepts ESC backslash for ST.
+function print_osc() {
+    if [ x"$TERM" = "xscreen" ] ; then
+        printf "\033Ptmux;\033\033]"
+    else
+        printf "\033]"
+    fi
+}
+
+# More of the tmux workaround described above.
+function print_st() {
+    if [ x"$TERM" = "xscreen" ] ; then
+        printf "\a\033\\"
+    else
+        printf "\a"
+    fi
+}
+
 # print_image filename inline base64contents
 #   filename: Filename to convey to client
 #   inline: 0 or 1
 #   base64contents: Base64-encoded contents
 function print_image() {
-    printf '\033]1337;File='
+    print_osc
+    printf '1337;File='
     if [[ -n "$1" ]]; then
       printf 'name='`echo -n "$1" | base64`";"
     fi
@@ -19,7 +40,8 @@ function print_image() {
     printf ";inline=$2"
     printf ":"
     echo -n "$3"
-    printf '\a\n'
+    print_st
+    printf '\n'
 }
 
 function error() {
