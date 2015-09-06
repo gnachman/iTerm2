@@ -58,7 +58,7 @@ static const NSTimeInterval kFlashHoldTime = 1;
                 [self performBlock:^{
                     if (_cmdPressed) {
                         _showingBecauseCmdHeld = YES;
-                        self.flashing = YES;
+                        [self setFlashing:YES becauseCmdHeld:YES];
                     }
                     if (_cmdPressedDelayedPerform.completed) {
                         _cmdPressedDelayedPerform = nil;
@@ -69,7 +69,7 @@ static const NSTimeInterval kFlashHoldTime = 1;
         _cmdPressedDelayedPerform.canceled = YES;
         _cmdPressedDelayedPerform = nil;
         if (_showingBecauseCmdHeld) {
-            self.flashing = NO;
+            [self setFlashing:NO becauseCmdHeld:YES];
             _showingBecauseCmdHeld = NO;
         }
     }
@@ -79,8 +79,14 @@ static const NSTimeInterval kFlashHoldTime = 1;
     return self.flashState != kFlashOff;
 }
 
-- (void)setFlashing:(BOOL)flashing {
-    if (![_itermTabBarDelegate iTermTabBarShouldFlash]) {
+- (void)setFlashing:(BOOL)flashing becauseCmdHeld:(BOOL)becauseCmdHeld {
+    BOOL shouldFlash;
+    if (becauseCmdHeld) {
+        shouldFlash = [_itermTabBarDelegate iTermTabBarShouldFlashBecauseCmdHeld];
+    } else {
+        shouldFlash = [_itermTabBarDelegate iTermTabBarShouldFlashAutomatically];
+    }
+    if (!shouldFlash) {
         if (!flashing && self.flashState != kFlashOff) {
             // Quickly stop flash.
             self.alphaValue = 1;
@@ -161,8 +167,10 @@ static const NSTimeInterval kFlashHoldTime = 1;
 }
 
 - (void)updateFlashing {
-    if ([self flashing] && ![_itermTabBarDelegate iTermTabBarShouldFlash]) {
-        self.flashing = NO;
+    if ([self flashing] &&
+        ![_itermTabBarDelegate iTermTabBarShouldFlashAutomatically] &&
+        ![_itermTabBarDelegate iTermTabBarShouldFlashBecauseCmdHeld]) {
+        [self setFlashing:NO becauseCmdHeld:NO];
     }
 }
 
