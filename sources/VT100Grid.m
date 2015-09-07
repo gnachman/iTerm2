@@ -252,7 +252,11 @@ static NSString *const kGridSizeKey = @"Size";
             [lineBuffer setCursor:currentLineLength];
         }
 
-        const BOOL isPartial = (continuation != EOL_HARD) || (i == size_.height - 1);
+        // NOTE: When I initially wrote the session restoration code, there was
+        // an '|| (i == size.height)' conjunction. It caused issue 3788 so I
+        // removed it. Unfortunately, I can't recall why it was added in the
+        // first place.
+        const BOOL isPartial = (continuation != EOL_HARD);
         [lineBuffer appendLine:line
                         length:currentLineLength
                        partial:isPartial
