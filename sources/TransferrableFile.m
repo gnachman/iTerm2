@@ -24,6 +24,14 @@
     return self;
 }
 
+- (NSString *)protocolName {
+    assert(false);
+}
+
+- (NSString *)authRequestor {
+    assert(false);
+}
+
 - (NSString *)displayName {
     assert(false);
 }

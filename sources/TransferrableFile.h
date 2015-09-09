@@ -29,6 +29,10 @@ typedef enum {
 @property(atomic, retain) TransferrableFile *successor;
 @property(atomic, assign) BOOL hasPredecessor;
 
+// These two are only needed for keyboard-interactive auth
+- (NSString *)protocolName;
+- (NSString *)authRequestor;
+
 - (NSString *)displayName;
 - (NSString *)shortName;
 - (NSString *)subheading;

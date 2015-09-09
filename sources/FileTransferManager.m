@@ -326,12 +326,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 // value entered.
 - (NSString *)transferrableFile:(TransferrableFile *)transferrableFile
       keyboardInteractivePrompt:(NSString *)prompt {
-    NSString *text = [NSString stringWithFormat:@"%@: %@", [transferrableFile displayName], prompt];
+    NSString *text = [NSString stringWithFormat:@"Authenticate %@", transferrableFile.authRequestor];
     NSAlert *alert = [NSAlert alertWithMessageText:text
                                      defaultButton:@"OK"
                                    alternateButton:@"Cancel"
                                        otherButton:nil
-                         informativeTextWithFormat:@""];
+                         informativeTextWithFormat:@"Please enter the %@ for %@ to begin %@.",
+                                                       prompt, transferrableFile.authRequestor,
+                                                       transferrableFile.protocolName];
     
     NSSecureTextField *input =
         [[[NSSecureTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
@@ -350,14 +352,13 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
 // Shows message, returns YES if OK, NO if Cancel
 - (BOOL)transferrableFile:(TransferrableFile *)transferrableFile
+                    title:(NSString *)title
            confirmMessage:(NSString *)message {
-    NSString *text = [NSString stringWithFormat:@"%@: %@", [transferrableFile displayName],
-                         message];
-    NSAlert *alert = [NSAlert alertWithMessageText:text
+    NSAlert *alert = [NSAlert alertWithMessageText:title
                                      defaultButton:@"OK"
                                    alternateButton:@"Cancel"
                                        otherButton:nil
-                         informativeTextWithFormat:@""];
+                         informativeTextWithFormat:@"%@", message];
     
     [alert layout];
     NSInteger button = [alert runModal];
