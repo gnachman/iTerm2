@@ -154,5 +154,8 @@ DEFINE_BOOL(noSyncTipsDisabled, NO, @"Tip of the Day: Disable the Tip of the Day
 #pragma mark - Badge
 DEFINE_STRING(badgeFont, @"Helvetica", @"Badge: Font to use for the badge.");
 DEFINE_BOOL(badgeFontIsBold, YES, @"Badge: Make the badge font bold.");
-
+DEFINE_FLOAT(badgeMaxWidthPercent, 0.5, @"Badge: Maximum width of the badge\nAs a percentage of the width of the terminal, between 1% and 100%.");
+DEFINE_FLOAT(badgeMaxHeightPercent, 0.2, @"Badge: Maximum height of the badge\nThis is a percentage of the height of the terminal, between 1% and 100%.");
+DEFINE_INT(badgeHorizontalMargin, 10, @"Badge: Margin: Horizontal\nHow much space to leave between the right edge of the badge and the right edge of the terminal.");
+DEFINE_INT(badgeVerticalMargin, 10, @"Badge: Margin: Vertical\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
 @end

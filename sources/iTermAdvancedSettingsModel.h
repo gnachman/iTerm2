@@ -109,5 +109,9 @@
 
 + (NSString *)badgeFont;
 + (BOOL)badgeFontIsBold;
++ (double)badgeMaxWidthPercent;
++ (double)badgeMaxHeightPercent;
++ (int)badgeHorizontalMargin;
++ (int)badgeVerticalMargin;
 
 @end

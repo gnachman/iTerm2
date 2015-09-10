@@ -161,9 +161,11 @@
 
 // Max size of image in points within the containing view.
 - (NSSize)maxSize {
+    double maxWidth = MIN(1.0, MAX(0.01, [iTermAdvancedSettingsModel badgeMaxWidthPercent]));
+    double maxHeight = MIN(1.0, MAX(0.01, [iTermAdvancedSettingsModel badgeMaxHeightPercent]));
     NSSize maxSize = _viewSize;
-    maxSize.width *= 0.5;
-    maxSize.height *= 0.2;
+    maxSize.width *= maxWidth;
+    maxSize.height *= maxHeight;
     return maxSize;
 }
 
