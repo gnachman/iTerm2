@@ -151,4 +151,8 @@ DEFINE_BOOL(disallowCopyEmptyString, NO, @"Pasteboard: Disallow copying empty st
 
 DEFINE_BOOL(noSyncTipsDisabled, NO, @"Tip of the Day: Disable the Tip of the Day?");
 
+#pragma mark - Badge
+DEFINE_STRING(badgeFont, @"Helvetica", @"Badge: Font to use for the badge.");
+DEFINE_BOOL(badgeFontIsBold, YES, @"Badge: Make the badge font bold.");
+
 @end

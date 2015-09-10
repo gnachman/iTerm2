@@ -107,4 +107,7 @@
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)profilesWindowJoinsActiveSpace;
 
++ (NSString *)badgeFont;
++ (BOOL)badgeFontIsBold;
+
 @end
