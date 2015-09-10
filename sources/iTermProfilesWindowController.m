@@ -24,6 +24,7 @@
 
 #import "iTermProfilesWindowController.h"
 #import "ProfileModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "PreferencePanel.h"
@@ -74,7 +75,9 @@ typedef enum {
 
     if (self) {
         [[self window] setDelegate:self];
-        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
+        if ([iTermAdvancedSettingsModel profilesWindowJoinsActiveSpace]) {
+            [[self window] setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
+        }
         [tableView_ setDelegate:self];
         [tableView_ allowMultipleSelections];
         [tableView_ multiColumns];
