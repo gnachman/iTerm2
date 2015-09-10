@@ -14,6 +14,7 @@
 - (NSMenu *)menu;
 - (void)close;
 - (void)beginDrag;
+- (BOOL)sessionTitleViewIsFirstResponder;
 
 @end
 
