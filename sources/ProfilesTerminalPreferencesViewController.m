@@ -70,9 +70,17 @@
                    type:kPreferenceInfoTypeCheckbox];
     
     [self populateEncodings];
-    [self defineControl:_characterEncoding
-                    key:KEY_CHARACTER_ENCODING
-                   type:kPreferenceInfoTypePopup];
+    info = [self defineControl:_characterEncoding
+                           key:KEY_CHARACTER_ENCODING
+                          type:kPreferenceInfoTypePopup];
+    info.onUpdate = ^BOOL() {
+        // Unfortunately, character encoding should have been stored as a NSUInteger all along :(
+        // See notes in PTYSession for more details.
+        NSInteger tag = [self intForKey:info.key];
+        tag &= 0xffffffff;
+        [_characterEncoding selectItemWithTag:tag];
+        return YES;
+    };
     
     // It's a combobox, but we can safely treat it as a string text field.
     [self defineControl:_terminalType
