@@ -2985,7 +2985,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)setEncoding:(NSStringEncoding)encoding
 {
-    [_terminal setEncoding:encoding];
+    [_terminal setEncoding:(encoding & 0xffffffff)];
 }
 
 
