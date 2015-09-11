@@ -3419,6 +3419,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout {
+    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f",
+         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout);
     if (_exited) {
         return;
     }
@@ -3426,14 +3428,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (!_timerRunning && [_updateTimer isValid]) {
         if (_lastTimeout == kSlowTimerIntervalSec && timeout == kFastTimerIntervalSec) {
             // Don't go from slow to fast
+            DLog(@"  declining to go from slow to fast");
             return;
         }
         if (_lastTimeout == timeout) {
             // No change? No point.
+            DLog(@"  declining; no change");
             return;
         }
         if (timeout > kSlowTimerIntervalSec && timeout > _lastTimeout) {
             // This is a longer timeout than the existing one, and is background/blink.
+            DLog(@"  declining to use a longer timeout when new frequency is blink.");
             return;
         }
     }
@@ -3446,18 +3451,23 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     _timeOfLastScheduling = now;
     _lastTimeout = timeout;
 
+    static const NSTimeInterval kMinimumDelay = 1 / 60.0;
+    DLog(@"  scheduling timer to run in %f sec", MAX(kMinimumDelay, timeout - timeSinceLastUpdate));
+    
 #if 0
     // TODO: Try this. It solves the bug where we don't redraw properly during live resize.
     // I'm worried about the possible side effects it might have since there's no way to 
     // know all the tracking event loops.
-    _updateTimer = [[NSTimer timerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
+    _updateTimer = [[NSTimer timerWithTimeInterval:MAX(kMinimumDelay,
+                                                       timeout - timeSinceLastUpdate)
                                             target:self
                                           selector:@selector(updateDisplay)
                                           userInfo:[NSNumber numberWithFloat:(float)timeout]
                                            repeats:NO] retain];
     [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
 #else
-    _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
+    _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(kMinimumDelay,
+                                                                timeout - timeSinceLastUpdate)
                                                      target:self
                                                    selector:@selector(updateDisplay)
                                                    userInfo:[NSNumber numberWithFloat:(float)timeout]
