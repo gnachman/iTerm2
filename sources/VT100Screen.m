@@ -416,7 +416,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self.temporaryDoubleBuffer reset];
 
     DLog(@"Resize session to %dx%d", new_width, new_height);
-
+    DLog(@"Before:\n%@", [self compactLineDumpWithHistoryAndContinuationMarks]);
+         
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
@@ -542,6 +543,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
              newHeight:new_height];
+    DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
     // regardless of whether we were in the alt screen, as it's simply the set
@@ -613,7 +615,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
-
+    DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
+    
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
     if (wasShowingAltScreen) {
@@ -806,6 +809,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     [self reloadMarkCache];
     [delegate_ screenSizeDidChange];
+    DLog(@"After:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
 }
 
 - (void)reloadMarkCache {
@@ -1592,8 +1596,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
-    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]
-                                                                                 andContinuationMarks:YES]];
+    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ debugString]];
     if ([string length]) {
         [string appendString:@"\n - end of history -\n"];
     }
