@@ -4,7 +4,7 @@
 # <sequence> ST, and for all ESCs in <sequence> to be replaced with ESC ESC. It
 # only accepts ESC backslash for ST.
 function print_osc() {
-    if [ x"$TERM" = "xscreen" ] ; then
+    if [[ $TERM == screen* ]] ; then
         printf "\033Ptmux;\033\033]"
     else
         printf "\033]"
@@ -13,7 +13,7 @@ function print_osc() {
 
 # More of the tmux workaround described above.
 function print_st() {
-    if [ x"$TERM" = "xscreen" ] ; then
+    if [[ $TERM == screen* ]] ; then
         printf "\a\033\\"
     else
         printf "\a"
