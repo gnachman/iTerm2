@@ -135,8 +135,8 @@
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
     NSArray *fonts = [[NSFontManager sharedFontManager] availableFontFamilies];
     NSString *fontName = [iTermAdvancedSettingsModel badgeFont];
-    NSFont * font;
-    if( ! [fonts containsObject:fontName]) {
+    NSFont *font;
+    if(![fonts containsObject:fontName]) {
       fontName = @"Helvetica";
     }
     font = [NSFont fontWithName:fontName size:pointSize];
@@ -161,8 +161,8 @@
 
 // Max size of image in points within the containing view.
 - (NSSize)maxSize {
-    double maxWidth = MIN(1.0, MAX(0.01, [iTermAdvancedSettingsModel badgeMaxWidthPercent]));
-    double maxHeight = MIN(1.0, MAX(0.01, [iTermAdvancedSettingsModel badgeMaxHeightPercent]));
+    double maxWidth = MIN(1.0, MAX(0.01, [iTermAdvancedSettingsModel badgeMaxWidthFraction]));
+    double maxHeight = MIN(1.0, MAX(0.0, [iTermAdvancedSettingsModel badgeMaxHeightFraction]));
     NSSize maxSize = _viewSize;
     maxSize.width *= maxWidth;
     maxSize.height *= maxHeight;

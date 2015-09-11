@@ -582,8 +582,8 @@ static const int kBadgeMargin = 4;
     NSSize textViewSize = _frame.size;
     NSSize visibleSize = _scrollViewDocumentVisibleRect.size;
     NSSize imageSize = image.size;
-    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - [iTermAdvancedSettingsModel badgeHorizontalMargin],
-                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight + [iTermAdvancedSettingsModel badgeVerticalMargin],
+    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - [iTermAdvancedSettingsModel badgeRightMargin],
+                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight + [iTermAdvancedSettingsModel badgeTopMargin],
                                     imageSize.width,
                                     imageSize.height);
     NSRect intersection = NSIntersectionRect(rect, destination);
@@ -601,7 +601,7 @@ static const int kBadgeMargin = 4;
              fraction:1
        respectFlipped:YES
                 hints:nil];
-    imageSize.width += kBadgeMargin + [iTermAdvancedSettingsModel badgeHorizontalMargin];
+    imageSize.width += kBadgeMargin + [iTermAdvancedSettingsModel badgeRightMargin];
 
     return imageSize;
 }
