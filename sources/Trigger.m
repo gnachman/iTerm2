@@ -6,6 +6,7 @@
 //
 
 #import "Trigger.h"
+#import "DebugLogging.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
@@ -48,6 +49,10 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p regex=%@ param=%@>",
+               NSStringFromClass(self.class), self, self.regex, self.param];
+}
 - (NSString *)action
 {
     return NSStringFromClass([self class]);
@@ -133,6 +138,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
                                         const NSRange *capturedRanges,
                                         volatile BOOL *const stopEnumerating) {
                                _lastLineNumber = lineNumber;
+                               DLog(@"Trigger %@ matched string %@", self, s);
                                if (![self performActionWithCapturedStrings:capturedStrings
                                                             capturedRanges:capturedRanges
                                                               captureCount:captureCount
