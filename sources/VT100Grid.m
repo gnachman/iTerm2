@@ -1273,8 +1273,7 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
-                  maxLinesToRestore:(int)maxLines
-{
+                  maxLinesToRestore:(int)maxLines {
     // Move scrollback lines into screen
     int numLinesInLineBuffer = [lineBuffer numLinesWithWidth:size_.width];
     int destLineNumber;
@@ -1298,8 +1297,13 @@ static NSString *const kGridSizeKey = @"Size";
             int tempCursor = cursor_.x;
             foundCursor = [lineBuffer getCursorInLastLineWithWidth:size_.width atX:&tempCursor];
             if (foundCursor) {
-                [self setCursor:VT100GridCoordMake(tempCursor % size_.width,
-                                                   destLineNumber + tempCursor / size_.width)];
+                VT100GridCoord newCursorCoord = VT100GridCoordMake(tempCursor % size_.width,
+                                                                   destLineNumber + tempCursor / size_.width);
+                if (tempCursor / size_.width > 0 && newCursorCoord.x == 0) {
+                    newCursorCoord.x = size_.width;
+                    newCursorCoord.y -= 1;
+                }
+                [self setCursor:newCursorCoord];
             }
         }
         int cont;
@@ -1337,7 +1341,7 @@ static NSString *const kGridSizeKey = @"Size";
 - (void)clampCursorPositionToValid
 {
     if (cursor_.x >= size_.width) {
-        self.cursorX = size_.width - 1;
+        self.cursorX = size_.width;
     }
     if (cursor_.y >= size_.height) {
         self.cursorY = size_.height - 1;

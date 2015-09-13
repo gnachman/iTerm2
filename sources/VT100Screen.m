@@ -416,8 +416,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self.temporaryDoubleBuffer reset];
 
     DLog(@"Resize session to %dx%d", new_width, new_height);
-    DLog(@"Before:\n%@", [self compactLineDumpWithHistoryAndContinuationMarks]);
-         
+    DLog(@"Before:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
+    DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
@@ -809,7 +809,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     [self reloadMarkCache];
     [delegate_ screenSizeDidChange];
-    DLog(@"After:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
+    DLog(@"After:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
+    DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
 }
 
 - (void)reloadMarkCache {
@@ -1137,6 +1138,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         screen_char_t continuation;
         if (len) {
             continuation = line[len - 1];
+            continuation.code = EOL_HARD;
         } else {
             memset(&continuation, 0, sizeof(continuation));
         }
@@ -1596,15 +1598,21 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
-    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ debugString]];
-    if ([string length]) {
-        [string appendString:@"\n - end of history -\n"];
-    }
-    [string appendString:[currentGrid_ compactLineDumpWithContinuationMarks]];
-
+    NSMutableString *string =
+        [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:self.width andContinuationMarks:YES]];
     NSMutableArray *lines = [[[string componentsSeparatedByString:@"\n"] mutableCopy] autorelease];
+    long long absoluteLineNumber = self.totalScrollbackOverflow;
     for (int i = 0; i < lines.count; i++) {
-        lines[i] = [NSString stringWithFormat:@"%8lld: %@", self.totalScrollbackOverflow + i, lines[i]];
+        lines[i] = [NSString stringWithFormat:@"%8lld:        %@", absoluteLineNumber++, lines[i]];
+    }
+
+    if ([string length]) {
+        [lines addObject:@"- end of history -"];
+    }
+    NSString *gridDump = [currentGrid_ compactLineDumpWithContinuationMarks];
+    NSArray *gridLines = [gridDump componentsSeparatedByString:@"\n"];
+    for (int i = 0; i < gridLines.count; i++) {
+        [lines addObject:[NSString stringWithFormat:@"%8lld (%04d): %@", absoluteLineNumber++, i, gridLines[i]]];
     }
     return [lines componentsJoinedByString:@"\n"];
 }

@@ -508,4 +508,8 @@
     return NO;
 }
 
+- (NSArray *)toolbeltCommandUsesForCurrentSession {
+    return @[];
+}
+
 @end

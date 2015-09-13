@@ -1974,13 +1974,13 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100Screen *screen = [self screenWithWidth:6 height:4];
     [screen setHistory:lines];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
-               @"abcdef\n"
-               @"ghijkl\n"
-               @"mnop..\n"
-               @"qrstuv\n"
-               @"wxyz..\n"
-               @"012345\n"
-               @"6.....\n"
+               @"abcdef+\n"
+               @"ghijkl!\n"
+               @"mnop..!\n"
+               @"qrstuv+\n"
+               @"wxyz..!\n"
+               @"012345+\n"
+               @"6.....!\n"
                @"ABC...!\n"
                @"DEFGHI+\n"
                @"JKL...!\n"
@@ -3766,7 +3766,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"....!"]);
     [screen terminalScrollUp:1];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
-               @"abcd\n"
+               @"abcd+\n"
                @"efg.!\n"
                @"hij.!\n"
                @"....!\n"
@@ -3782,8 +3782,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"....!"]);
     [screen terminalScrollUp:2];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
-               @"abcd\n"
-               @"efg.\n"
+               @"abcd+\n"
+               @"efg.!\n"
                @"hij.!\n"
                @"....!\n"
                @"....!\n"
