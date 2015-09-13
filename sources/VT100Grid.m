@@ -1300,6 +1300,7 @@ static NSString *const kGridSizeKey = @"Size";
                 VT100GridCoord newCursorCoord = VT100GridCoordMake(tempCursor % size_.width,
                                                                    destLineNumber + tempCursor / size_.width);
                 if (tempCursor / size_.width > 0 && newCursorCoord.x == 0) {
+                    // Allow the cursor to enter the right margin.
                     newCursorCoord.x = size_.width;
                     newCursorCoord.y -= 1;
                 }
@@ -1341,6 +1342,7 @@ static NSString *const kGridSizeKey = @"Size";
 - (void)clampCursorPositionToValid
 {
     if (cursor_.x >= size_.width) {
+        // Allow the cursor to enter the right margin.
         self.cursorX = size_.width;
     }
     if (cursor_.y >= size_.height) {
