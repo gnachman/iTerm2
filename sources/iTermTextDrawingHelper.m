@@ -715,10 +715,6 @@ static const int kBadgeRightMargin = 10;
                 atCellOrigin:(NSPoint)startPoint
                         font:(NSFont *)font
                        width:(CGFloat)runWidth {
-    [[NSColor redColor] set];
-    NSRectFill(NSMakeRect(startPoint.x,
-               (startPoint.y + _cellSize.height + font.descender), runWidth, 0.5));
-    
     [color set];
     NSRectFill(NSMakeRect(startPoint.x,
                           (startPoint.y +
