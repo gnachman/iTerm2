@@ -615,8 +615,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         // Hide the titlebar
         [self window].titlebarAppearsTransparent = true;
     }
-    
-    NSLog(@"TITLE GONE AND ROUNDED");
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(updateWindowNumberVisibility:)
