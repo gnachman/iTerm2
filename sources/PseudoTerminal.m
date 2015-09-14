@@ -541,7 +541,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     [myWindow setHasShadow:(windowType == WINDOW_TYPE_NORMAL)];
-
+    [myWindow _setContentHasShadow:NO];
+    
     DLog(@"Create window %@", myWindow);
 
     PtyLog(@"finishInitializationWithSmartLayout - new window is at %p", myWindow);

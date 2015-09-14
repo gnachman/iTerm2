@@ -72,6 +72,11 @@
     return [self scrollerStyle] == NSScrollerStyleLegacy;
 }
 
+- (void)drawRect:(NSRect)dirtyRect {
+    [super drawRect:dirtyRect];
+    [[NSColor redColor] set];
+    NSRectFill(NSMakeRect(0, 0, 100, 100));
+}
 @end
 
 @implementation PTYScrollView {
