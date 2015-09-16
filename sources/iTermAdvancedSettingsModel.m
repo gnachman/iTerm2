@@ -156,6 +156,6 @@ DEFINE_STRING(badgeFont, @"Helvetica", @"Badge: Font to use for the badge.");
 DEFINE_BOOL(badgeFontIsBold, YES, @"Badge: Should the badge render in bold type?");
 DEFINE_FLOAT(badgeMaxWidthFraction, 0.5, @"Badge: Maximum width of the badge\nAs a fraction of the width of the terminal, between 0 and 1.0.");
 DEFINE_FLOAT(badgeMaxHeightFraction, 0.2, @"Badge: Maximum height of the badge\nAs a fraction of the height of the terminal, between 0 and 1.0.");
-DEFINE_INT(badgeRightMargin, 10, @"Badge: Margin: Right\nHow much space to leave between the right edge of the badge and the right edge of the terminal.");
-DEFINE_INT(badgeTopMargin, 10, @"Badge: Margin: Top\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
+DEFINE_INT(badgeRightMargin, 10, @"Badge: Right Margin\nHow much space to leave between the right edge of the badge and the right edge of the terminal.");
+DEFINE_INT(badgeTopMargin, 10, @"Badge: Top Margin\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
 @end

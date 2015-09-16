@@ -136,11 +136,11 @@
     NSArray *fonts = [[NSFontManager sharedFontManager] availableFontFamilies];
     NSString *fontName = [iTermAdvancedSettingsModel badgeFont];
     NSFont *font;
-    if(![fonts containsObject:fontName]) {
+    if (![fonts containsObject:fontName]) {
       fontName = @"Helvetica";
     }
     font = [NSFont fontWithName:fontName size:pointSize];
-    if( [iTermAdvancedSettingsModel badgeFontIsBold] ) {
+    if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
       font = [fontManager convertFont:font
                           toHaveTrait:NSBoldFontMask];
     }
