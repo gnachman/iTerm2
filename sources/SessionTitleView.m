@@ -199,6 +199,24 @@ static const CGFloat kButtonSize = 17;
 {
     NSColor *tabColor = delegate_.tabColor;
     if (tabColor) {
+        CGFloat hue = tabColor.hueComponent;
+        CGFloat saturation = tabColor.saturationComponent;
+        CGFloat brightness = tabColor.brightnessComponent;
+        iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        switch (preferredStyle) {
+            case TAB_STYLE_LIGHT:
+                tabColor = [NSColor colorWithCalibratedHue:hue
+                                                saturation:saturation * .5
+                                                brightness:MAX(0.7, brightness)
+                                                     alpha:1];
+                break;
+            case TAB_STYLE_DARK:
+                tabColor = [NSColor colorWithCalibratedHue:hue
+                                                saturation:saturation * .75
+                                                brightness:MIN(0.3, brightness)
+                                                     alpha:1];
+                break;
+        }
         if ([delegate_ sessionTitleViewIsFirstResponder]) {
             [tabColor set];
         } else {
