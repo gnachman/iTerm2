@@ -415,8 +415,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)resizeWidth:(int)new_width height:(int)new_height {
     [self.temporaryDoubleBuffer reset];
 
-    DLog(@"Resize session to %d height", new_height);
-
+    DLog(@"Resize session to %dx%d", new_width, new_height);
+    DLog(@"Before:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
+    DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
     if (commandStartX_ != -1) {
         [delegate_ screenCommandDidEndWithRange:[self commandRange]];
         commandStartX_ = commandStartY_ = -1;
@@ -542,6 +543,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
           toScrollback:linebuffer_
         withUsedHeight:[primaryGrid_ numberOfLinesUsed]
              newHeight:new_height];
+    DLog(@"History after appending screen to scrollback:\n%@", [linebuffer_ debugString]);
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
     // regardless of whether we were in the alt screen, as it's simply the set
@@ -613,7 +615,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [currentGrid_ restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : linebuffer_
                               withDefaultChar:[currentGrid_ defaultChar]
                             maxLinesToRestore:[linebuffer_ numLinesWithWidth:currentGrid_.size.width]];
-
+    DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
+    
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
     if (wasShowingAltScreen) {
@@ -806,6 +809,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     [self reloadMarkCache];
     [delegate_ screenSizeDidChange];
+    DLog(@"After:\n%@", [currentGrid_ compactLineDumpWithContinuationMarks]);
+    DLog(@"Cursor at %d,%d", currentGrid_.cursorX, currentGrid_.cursorY);
 }
 
 - (void)reloadMarkCache {
@@ -1133,6 +1138,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         screen_char_t continuation;
         if (len) {
             continuation = line[len - 1];
+            continuation.code = EOL_HARD;
         } else {
             memset(&continuation, 0, sizeof(continuation));
         }
@@ -1147,7 +1153,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     int n = [temp numLinesWithWidth:currentGrid_.size.width];
     int numberOfConsecutiveEmptyLines = 0;
     for (int i = 0; i < n; i++) {
-        ScreenCharArray *line = [temp wrappedLineAtIndex:i width:currentGrid_.size.width];
+        ScreenCharArray *line = [temp wrappedLineAtIndex:i
+                                                   width:currentGrid_.size.width
+                                            continuation:NULL];
         if (line.eol == EOL_HARD) {
             [self stripTrailingSpaceFromLine:line];
             if (line.length == 0) {
@@ -1570,7 +1578,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (NSString *)compactLineDumpWithHistory {
-    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]]];
+    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]
+                                                                                 andContinuationMarks:NO]];
     if ([string length]) {
         [string appendString:@"\n"];
     }
@@ -1579,7 +1588,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarks {
-    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]]];
+    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]
+                                                                                 andContinuationMarks:YES]];
     if ([string length]) {
         [string appendString:@"\n"];
     }
@@ -1588,15 +1598,21 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
-    NSMutableString *string = [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:[self width]]];
-    if ([string length]) {
-        [string appendString:@"\n"];
-    }
-    [string appendString:[currentGrid_ compactLineDumpWithContinuationMarks]];
-
+    NSMutableString *string =
+        [NSMutableString stringWithString:[linebuffer_ compactLineDumpWithWidth:self.width andContinuationMarks:YES]];
     NSMutableArray *lines = [[[string componentsSeparatedByString:@"\n"] mutableCopy] autorelease];
+    long long absoluteLineNumber = self.totalScrollbackOverflow;
     for (int i = 0; i < lines.count; i++) {
-        lines[i] = [NSString stringWithFormat:@"%8lld: %@", self.totalScrollbackOverflow + i, lines[i]];
+        lines[i] = [NSString stringWithFormat:@"%8lld:        %@", absoluteLineNumber++, lines[i]];
+    }
+
+    if ([string length]) {
+        [lines addObject:@"- end of history -"];
+    }
+    NSString *gridDump = [currentGrid_ compactLineDumpWithContinuationMarks];
+    NSArray *gridLines = [gridDump componentsSeparatedByString:@"\n"];
+    for (int i = 0; i < gridLines.count; i++) {
+        [lines addObject:[NSString stringWithFormat:@"%8lld (%04d): %@", absoluteLineNumber++, i, gridLines[i]]];
     }
     return [lines componentsJoinedByString:@"\n"];
 }
@@ -3705,8 +3721,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (int)appendScreen:(VT100Grid *)grid
         toScrollback:(LineBuffer *)lineBufferToUse
       withUsedHeight:(int)usedHeight
-           newHeight:(int)newHeight
-{
+           newHeight:(int)newHeight {
     int n;
     if (grid.size.height - newHeight >= usedHeight) {
         // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
@@ -3724,8 +3739,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
             n = grid.size.height;
         }
     }
-    [grid appendLines:n
-         toLineBuffer:lineBufferToUse];
+    [grid appendLines:n toLineBuffer:lineBufferToUse];
 
     return n;
 }

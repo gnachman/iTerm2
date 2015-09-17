@@ -2981,6 +2981,15 @@ static NSString* FormatRect(NSRect r) {
     NSSize tmuxSize = NSMakeSize((int) (rootSizeChars.width + charsDiff.width),
                                  (int) (rootSizeChars.height + charsDiff.height));
 
+    DLog(@"tmuxSize: rootSizeChars=%@, targetSizePixels=%@, rootSizePixels=%@, sizeDiff=%@, charSize=%@, charsDiff=%@, tmuxSize=%@",
+         NSStringFromSize(rootSizeChars),
+         NSStringFromSize(targetSizePixels),
+         NSStringFromSize(rootSizePixels),
+         NSStringFromSize(sizeDiff),
+         NSStringFromSize(charSize),
+         NSStringFromSize(charsDiff),
+         NSStringFromSize(tmuxSize));
+
     return tmuxSize;
 }
 

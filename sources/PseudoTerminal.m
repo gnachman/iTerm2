@@ -2518,11 +2518,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
-            if ([self lionFullScreen]) {
-                PtyLog(@"Do nothing because we don't want to piss off El Capitan.");
-                break;
-            }
-            // fall through
+            PtyLog(@"Do nothing because we don't want to piss off El Capitan.");
+            break;
+
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
@@ -2564,7 +2562,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     [self maybeHideHotkeyWindow];
 
-    _contentView.tabBarControl.flashing = NO;
+    [_contentView.tabBarControl setFlashing:NO becauseCmdHeld:NO];
     _contentView.tabBarControl.cmdPressed = NO;
 
     if ([[pbHistoryView window] isVisible] ||
@@ -2578,7 +2576,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
           __FILE__, __LINE__, aNotification);
 
     if (_fullScreen) {
-        _contentView.tabBarControl.flashing = NO;
+        [_contentView.tabBarControl setFlashing:NO becauseCmdHeld:NO];
         [self showMenuBar];
     }
     // update the cursor
@@ -3664,7 +3662,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     DLog(@"Did select tab view %@", tabViewItem);
-    _contentView.tabBarControl.flashing = YES;
+    [_contentView.tabBarControl setFlashing:YES becauseCmdHeld:NO];
 
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
@@ -5872,7 +5870,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([self _haveTopBorder]) {
         ++contentSize.height;
     }
-    if (![_contentView tabBarShouldBeVisible] && self.divisionViewShouldBeVisible) {
+    if (self.divisionViewShouldBeVisible) {
         ++contentSize.height;
     }
 
@@ -6755,7 +6753,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             }
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        isUTF8 = ([profile[KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
         [self setName:name forSession:aSession];
         // Start the command
         [self startProgram:cmd
@@ -6808,12 +6806,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 #pragma mark - iTermTabBarControlViewDelegate
 
-- (BOOL)iTermTabBarShouldFlash {
-    return ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
-            [self anyFullScreen] &&
+- (BOOL)eligibleForFullScreenTabBarToFlash {
+    return ([self anyFullScreen] &&
             !exitingLionFullscreen_ &&
             !fullscreenTabs_ &&
             ![[[self currentSession] textview] isFindingCursor]);
+}
+
+- (BOOL)iTermTabBarShouldFlashAutomatically {
+    return ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
+            [self eligibleForFullScreenTabBarToFlash]);
+}
+
+- (BOOL)iTermTabBarShouldFlashBecauseCmdHeld {
+    return [self eligibleForFullScreenTabBarToFlash];
 }
 
 - (NSTimeInterval)iTermTabBarCmdPressDuration {
@@ -7008,7 +7014,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             pwd = NSHomeDirectory();
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        BOOL isUTF8 = ([profile[KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        BOOL isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
         [self setName:[name stringByPerformingSubstitutions:substitutions]
            forSession:aSession];

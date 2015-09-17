@@ -105,5 +105,6 @@
 + (int)triggerRadius;
 + (BOOL)useOpenDirectory;
 + (BOOL)disallowCopyEmptyString;
++ (BOOL)profilesWindowJoinsActiveSpace;
 
 @end

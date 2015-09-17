@@ -403,8 +403,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 #pragma mark - iTermTabBarControlViewDelegate
 
-- (BOOL)iTermTabBarShouldFlash {
-    return [_delegate iTermTabBarShouldFlash];
+- (BOOL)iTermTabBarShouldFlashAutomatically {
+    return [_delegate iTermTabBarShouldFlashAutomatically];
+}
+
+- (BOOL)iTermTabBarShouldFlashBecauseCmdHeld {
+    return [_delegate iTermTabBarShouldFlashBecauseCmdHeld];
 }
 
 - (NSTimeInterval)iTermTabBarCmdPressDuration {

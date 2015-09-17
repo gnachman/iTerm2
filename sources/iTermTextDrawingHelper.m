@@ -704,15 +704,25 @@ static const int kBadgeRightMargin = 10;
 
     // Draw underline
     if (currentRun->attrs.underline) {
-        [currentRun->attrs.color set];
-        NSRectFill(NSMakeRect(startPoint.x,
-                              (startPoint.y +
-                               _cellSize.height +
-                               currentRun->attrs.fontInfo.font.descender -
-                               currentRun->attrs.fontInfo.font.underlinePosition),
-                              runWidth,
-                              0.5));
+        [self drawUnderlineOfColor:currentRun->attrs.color
+                      atCellOrigin:startPoint
+                              font:currentRun->attrs.fontInfo.font
+                             width:runWidth];
     }
+}
+
+- (void)drawUnderlineOfColor:(NSColor *)color
+                atCellOrigin:(NSPoint)startPoint
+                        font:(NSFont *)font
+                       width:(CGFloat)runWidth {
+    [color set];
+    NSRectFill(NSMakeRect(startPoint.x,
+                          (startPoint.y +
+                              _cellSize.height +
+                              font.descender -
+                              font.underlinePosition),
+                          runWidth,
+                          font.underlineThickness));
 }
 
 // Note: caller must nil out _selectedFont after the graphics context becomes invalid.
@@ -1046,13 +1056,10 @@ static const int kBadgeRightMargin = 10;
             }
 
             // Draw an underline.
-            NSColor *foregroundColor = [self defaultTextColor];
-            [foregroundColor set];
-            NSRect s = NSMakeRect(x,
-                                  y + _cellSize.height - 1,
-                                  charsInLine * _cellSize.width,
-                                  1);
-            NSRectFill(s);
+            [self drawUnderlineOfColor:[self defaultTextColor]
+                          atCellOrigin:NSMakePoint(x, y)
+                                  font:run->attrs.fontInfo.font
+                                 width:charsInLine * _cellSize.width];
 
             // Save the cursor's cell coords
             if (i <= cursorIndex && i + charsInLine > cursorIndex) {
@@ -1341,11 +1348,6 @@ static const int kBadgeRightMargin = 10;
             drawable = NO;
         }
 
-        if (theLine[i].underline || inUnderlinedRange) {
-            // This is not as fast as possible, but is nice and simple. Always draw underlined text
-            // even if it's just a blank.
-            drawable = YES;
-        }
         // Set all other common attributes.
         if (doubleWidth) {
             thisCharAdvance = _cellSize.width * 2;
@@ -1789,37 +1791,43 @@ static const int kBadgeRightMargin = 10;
                                 matches:nil
                                 storage:storage];
     if (run) {
-        CGFloat underlineOffset = ceil(run->attrs.fontInfo.font.underlinePosition);
         CRun *head = run;
+        NSFont *theFont = nil;
         // If an override color is given, change the runs' colors.
         if (overrideColor) {
             while (run) {
+                if (run->attrs.fontInfo.font) {
+                    theFont = [[run->attrs.fontInfo.font retain] autorelease];
+                }
                 CRunAttrsSetColor(&run->attrs, run->storage, overrideColor);
                 run = run->next;
             }
         }
         [self drawRunsAt:point run:head storage:storage context:ctx];
-        CRunFree(head);
 
         // draw underline
-        if (screenChar.underline && screenChar.code) {
+        if (screenChar.underline && screenChar.code && theFont) {
+            NSColor *underlineColor = nil;
             if (overrideColor) {
-                [overrideColor set];
+                underlineColor = overrideColor;
             } else {
-                [[_delegate drawingHelperColorForCode:screenChar.foregroundColor
-                                                green:screenChar.fgGreen
-                                                 blue:screenChar.fgBlue
-                                            colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
-                                                 bold:screenChar.bold
-                                                faint:screenChar.faint
-                                         isBackground:_reverseVideo] set];
+                underlineColor =
+                    [_delegate drawingHelperColorForCode:screenChar.foregroundColor
+                                                   green:screenChar.fgGreen
+                                                    blue:screenChar.fgBlue
+                                               colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
+                                                    bold:screenChar.bold
+                                                   faint:screenChar.faint
+                                            isBackground:_reverseVideo];
             }
 
-            NSRectFill(NSMakeRect(point.x,
-                                  point.y + _cellSize.height + underlineOffset,
-                                  doubleWidth ? _cellSize.width * 2 : _cellSize.width,
-                                  0.5));
+            [self drawUnderlineOfColor:underlineColor
+                          atCellOrigin:point
+                                  font:theFont
+                                 width:doubleWidth ? _cellSize.width * 2 : _cellSize.width];
         }
+
+        CRunFree(head);
     }
 }
 

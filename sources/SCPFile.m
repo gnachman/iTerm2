@@ -66,12 +66,11 @@ static NSError *SCPFileError(NSString *description) {
     [super dealloc];
 }
 
-// In NMSSH 2.0, -[NMSSHSession lastError] crashes if there is no rawSession.
-// When upgrading, remove this method (the bug was fixed in January, 2014).
 - (NSError *)lastError {
   if (self.session.rawSession) {
     return self.session.lastError;
   } else {
+    // The reported error is meaningless without a raw session.
     return nil;
   }
 }
@@ -95,7 +94,7 @@ static NSError *SCPFileError(NSString *description) {
 }
 
 - (NSString *)displayName {
-    return [NSString stringWithFormat:@"scp %@@%@:%@", _path.username, _path.hostname, _path.path];
+    return [NSString stringWithFormat:@"Secure copy\nUser name: %@\nHost: %@\nFile: %@", _path.username, _path.hostname, _path.path];
 }
 
 - (NSString *)shortName {
@@ -112,6 +111,14 @@ static NSError *SCPFileError(NSString *description) {
         return nil;
     }
     return [components lastObject];
+}
+
+- (NSString *)authRequestor {
+    return [NSString stringWithFormat:@"%@@%@", _path.username, _path.hostname];
+}
+
+- (NSString *)protocolName {
+    return @"secure copy";
 }
 
 // This runs in a thread.
@@ -181,6 +188,7 @@ static NSError *SCPFileError(NSString *description) {
     NSString *appSupport = [fileManager applicationSupportDirectory];
     NSArray *paths = @[ [appSupport stringByAppendingPathExtension:@"iTerm/ssh_config"],
                         [@"~/.ssh/ssh_config" stringByExpandingTildeInPath],
+                        [@"~/.ssh/config" stringByExpandingTildeInPath],
                         @"/etc/ssh/ssh_config",
                         @"/etc/ssh_config" ];
     NSMutableArray *configs = [NSMutableArray array];
@@ -291,7 +299,7 @@ static NSError *SCPFileError(NSString *description) {
                 __block NSString *password;
                 dispatch_sync(dispatch_get_main_queue(), ^() {
                     password = [[FileTransferManager sharedInstance] transferrableFile:self
-                                                             keyboardInteractivePrompt:@"Password:"];
+                                                             keyboardInteractivePrompt:@"password"];
                 });
                 if (self.stopped || !password) {
                     break;
@@ -336,7 +344,7 @@ static NSError *SCPFileError(NSString *description) {
                     if ([self privateKeyIsEncrypted:keyPath]) {
                         dispatch_sync(dispatch_get_main_queue(), ^() {
                             NSString *prompt =
-                                [NSString stringWithFormat:@"Passphrase for private key “%@”:",
+                                [NSString stringWithFormat:@"passphrase for private key “%@”:",
                                     keyPath];
                             password = [[FileTransferManager sharedInstance] transferrableFile:self
                                                                      keyboardInteractivePrompt:prompt];
@@ -577,9 +585,11 @@ static NSError *SCPFileError(NSString *description) {
     __block BOOL result = NO;
     dispatch_sync(dispatch_get_main_queue(), ^(void) {
         _okToAdd = NO;
-        NSString *message;
+        NSString *message = nil;
+        NSString *title = @"Notice";  // The default value should never be used.
         switch ([self.session knownHostStatusInFiles:nil]) {
             case NMSSHKnownHostStatusFailure:
+                title = [NSString stringWithFormat:@"Problem connecting to %@", session.host];
                 message = [NSString stringWithFormat:@"Could not read the known_hosts file.\n"
                                                      @"As a result, the autenticity of host '%@' can't be established."
                                                      @"DSA key fingerprint is %@. Connect anyway?",
@@ -592,24 +602,27 @@ static NSError *SCPFileError(NSString *description) {
                 break;
 
             case NMSSHKnownHostStatusMismatch:
+                title = @"Warning!";
                 message =
-                    [NSString stringWithFormat:@"REMOTE HOST IDENTIFICATION HAS CHANGED!\n"
-                                               @"The DSA key fingerprint of host '%@' has changed. It is %@.\n"
+                    [NSString stringWithFormat:@"REMOTE HOST IDENTIFICATION HAS CHANGED!\n\n"
+                                               @"The DSA key fingerprint of host '%@' has changed. It is %@.\n\n"
                                                @"Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n"
                                                @"It is also possible that a host key has just been changed.\nConnect anyway?",
                      session.host, fingerprint];
                 break;
                 
             case NMSSHKnownHostStatusNotFound:
+                title = [NSString stringWithFormat:@"First time connecting to %@", session.host];
                 message =
-                    [NSString stringWithFormat:@"The authenticity of host '%@' can't be established.\n"
-                                               @"DSA key fingerprint is %@.\nConnect anyay?",
+                    [NSString stringWithFormat:@"The authenticity of host '%@' can't be established.\n\n"
+                                               @"DSA key fingerprint is %@.\n\nConnect anyay?",
                         session.host, fingerprint];
                 _okToAdd = YES;
                 break;
         }
         if (message) {
             result = [[FileTransferManager sharedInstance] transferrableFile:self
+                                                                       title:title
                                                               confirmMessage:message];
         }
     });

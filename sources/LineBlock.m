@@ -498,6 +498,7 @@ int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL may
             }
             if (continuationPtr) {
                 *continuationPtr = metadata_[i].continuation;
+                continuationPtr->code = *includesEndOfLine;
             }
             return buffer_start + prev + offset;
         }

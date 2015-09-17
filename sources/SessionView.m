@@ -606,6 +606,10 @@ static NSDate* lastResizeDate_;
 
 #pragma mark SessionTitleViewDelegate
 
+- (BOOL)sessionTitleViewIsFirstResponder {
+    return _session.textview.window.firstResponder == _session.textview;
+}
+
 - (NSColor *)tabColor {
     return _session.tabColor;
 }

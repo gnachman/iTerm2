@@ -249,14 +249,26 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (NSString *)compactLineDumpWithWidth:(int)width {
+- (NSString *)compactLineDumpWithWidth:(int)width andContinuationMarks:(BOOL)continuationMarks {
     NSMutableString *s = [NSMutableString string];
     int n = [self numLinesWithWidth:width];
     for (int i = 0; i < n; i++) {
-        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width];
+        screen_char_t continuation;
+        ScreenCharArray *line = [self wrappedLineAtIndex:i width:width continuation:&continuation];
         [s appendFormat:@"%@", ScreenCharArrayToStringDebug(line.line, line.length)];
         for (int j = line.length; j < width; j++) {
             [s appendString:@"."];
+        }
+        if (continuationMarks) {
+            if (continuation.code == EOL_HARD) {
+                [s appendString:@"!"];
+            } else if (continuation.code == EOL_SOFT) {
+                [s appendString:@"+"];
+            } else if (continuation.code == EOL_DWC) {
+                [s appendString:@">"];
+            } else {
+                [s appendString:@"?"];
+            }
         }
         if (i < n - 1) {
             [s appendString:@"\n"];
@@ -267,7 +279,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)dumpWrappedToWidth:(int)width
 {
-    NSLog(@"%@", [self compactLineDumpWithWidth:width]);
+    NSLog(@"%@", [self compactLineDumpWithWidth:width andContinuationMarks:NO]);
 }
 
 - (void)appendLine:(screen_char_t*)buffer
@@ -462,8 +474,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum width:(int)width
-{
+- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
+                                  width:(int)width
+                           continuation:(screen_char_t *)continuation {
     int line = lineNum;
     int i;
     ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
@@ -484,7 +497,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                                  lineNum:&line
                                               lineLength:&length
                                        includesEndOfLine:&eol
-                                            continuation:NULL];
+                                            continuation:continuation];
         if (result.line) {
             result.length = length;
             result.eol = eol;
@@ -902,7 +915,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (position.absolutePosition == [self lastPos] + droppedChars) {
         VT100GridCoord result;
         result.y = [self numLinesWithWidth:width] - 1;
-        ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y width:width];
+        ScreenCharArray *lastLine = [self wrappedLineAtIndex:result.y
+                                                       width:width
+                                                continuation:NULL];
         result.x = lastLine.length;
         if (position.yOffset > 0) {
             result.x = 0;

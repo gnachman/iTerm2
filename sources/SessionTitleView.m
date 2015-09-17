@@ -151,16 +151,20 @@ static const CGFloat kButtonSize = 17;
     [delegate_ close];
 }
 
-- (NSColor *)dimmedColor:(NSColor *)origColor
-{
++ (NSColor *)colorByDimmingColor:(NSColor *)origColor byDimmingAmount:(double)dimmingAmount {
     NSColor *color = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     double r = [color redComponent];
     double g = [color greenComponent];
     double b = [color blueComponent];
-    double alpha = 1 - dimmingAmount_;
-    r = alpha * r + (1 - alpha) * 0.85;
-    g = alpha * g + (1 - alpha) * 0.85;
-    b = alpha * b + (1 - alpha) * 0.85;
+    double alpha = 1 - dimmingAmount;
+    
+    // Biases the input color by 1-alpha toward gray of (basis, basis, basis).
+    double basis = 0.15;
+
+    r = alpha * r + (1 - alpha) * basis;
+    g = alpha * g + (1 - alpha) * basis;
+    b = alpha * b + (1 - alpha) * basis;
+
     return [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
 }
 
@@ -169,7 +173,7 @@ static const CGFloat kButtonSize = 17;
     CGFloat whiteLevel = 0;
     switch (preferredStyle) {
         case TAB_STYLE_LIGHT:
-            if (dimmingAmount_ > 0) {
+            if (![delegate_ sessionTitleViewIsFirstResponder]) {
                 // Not selected
                 whiteLevel = 0.58;
             } else {
@@ -178,9 +182,9 @@ static const CGFloat kButtonSize = 17;
             }
             break;
         case TAB_STYLE_DARK:
-            if (dimmingAmount_ > 0) {
+            if (![delegate_ sessionTitleViewIsFirstResponder]) {
                 // Not selected
-                whiteLevel = 0.22;
+                whiteLevel = 0.18;
             } else {
                 // selected
                 whiteLevel = 0.27;
@@ -195,7 +199,11 @@ static const CGFloat kButtonSize = 17;
 {
     NSColor *tabColor = delegate_.tabColor;
     if (tabColor) {
-        [[self dimmedColor:tabColor] set];
+        if ([delegate_ sessionTitleViewIsFirstResponder]) {
+            [tabColor set];
+        } else {
+            [[SessionTitleView colorByDimmingColor:tabColor byDimmingAmount:0.3] set];
+        }
     } else {
         [[self dimmedBackgroundColor] set];
     }
@@ -265,7 +273,7 @@ static const CGFloat kButtonSize = 17;
         case TAB_STYLE_DARK:
             if (dimmingAmount_ > 0) {
                 // Not selected
-                whiteLevel = 0.4;
+                whiteLevel = 0.6;
             } else {
                 // selected
                 whiteLevel = 0.8;

@@ -252,7 +252,11 @@ static NSString *const kGridSizeKey = @"Size";
             [lineBuffer setCursor:currentLineLength];
         }
 
-        const BOOL isPartial = (continuation != EOL_HARD) || (i == size_.height - 1);
+        // NOTE: When I initially wrote the session restoration code, there was
+        // an '|| (i == size.height)' conjunction. It caused issue 3788 so I
+        // removed it. Unfortunately, I can't recall why it was added in the
+        // first place.
+        const BOOL isPartial = (continuation != EOL_HARD);
         [lineBuffer appendLine:line
                         length:currentLineLength
                        partial:isPartial
@@ -1269,8 +1273,7 @@ static NSString *const kGridSizeKey = @"Size";
 
 - (void)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
-                  maxLinesToRestore:(int)maxLines
-{
+                  maxLinesToRestore:(int)maxLines {
     // Move scrollback lines into screen
     int numLinesInLineBuffer = [lineBuffer numLinesWithWidth:size_.width];
     int destLineNumber;
@@ -1294,8 +1297,14 @@ static NSString *const kGridSizeKey = @"Size";
             int tempCursor = cursor_.x;
             foundCursor = [lineBuffer getCursorInLastLineWithWidth:size_.width atX:&tempCursor];
             if (foundCursor) {
-                [self setCursor:VT100GridCoordMake(tempCursor % size_.width,
-                                                   destLineNumber + tempCursor / size_.width)];
+                VT100GridCoord newCursorCoord = VT100GridCoordMake(tempCursor % size_.width,
+                                                                   destLineNumber + tempCursor / size_.width);
+                if (tempCursor / size_.width > 0 && newCursorCoord.x == 0) {
+                    // Allow the cursor to enter the right margin.
+                    newCursorCoord.x = size_.width;
+                    newCursorCoord.y -= 1;
+                }
+                [self setCursor:newCursorCoord];
             }
         }
         int cont;
@@ -1333,7 +1342,8 @@ static NSString *const kGridSizeKey = @"Size";
 - (void)clampCursorPositionToValid
 {
     if (cursor_.x >= size_.width) {
-        self.cursorX = size_.width - 1;
+        // Allow the cursor to enter the right margin.
+        self.cursorX = size_.width;
     }
     if (cursor_.y >= size_.height) {
         self.cursorY = size_.height - 1;

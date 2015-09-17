@@ -6,6 +6,7 @@
 //
 
 #import "ScriptTrigger.h"
+#import "DebugLogging.h"
 #import "RegexKitLite.h"
 #import "NSStringITerm.h"
 #include <sys/types.h>
@@ -47,6 +48,7 @@
 + (void)runCommand:(NSString *)command
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    DLog(@"Invoking command %@", command);
     system([command UTF8String]);
     [pool drain];
 }

@@ -93,8 +93,10 @@
 
 // Like the above but with a saner way of holding the returned data. Callers are advised not
 // to modify the screen_char_t's returned, but the ScreenCharArray is otherwise safe to
-// mutate.
-- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum width:(int)width;
+// mutate. |continuation| is optional and if set will be filled in with the continuation character.
+- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
+                                  width:(int)width
+                           continuation:(screen_char_t *)continuation;
 
 // Copy up to width chars from the last line into *ptr. The last line will be removed or
 // truncated from the buffer. Sets *includesEndOfLine to true if this line should have a
@@ -165,7 +167,7 @@
 
 - (NSString *)debugString;
 - (void)dumpWrappedToWidth:(int)width;
-- (NSString *)compactLineDumpWithWidth:(int)width;
+- (NSString *)compactLineDumpWithWidth:(int)width andContinuationMarks:(BOOL)continuationMarks;
 
 - (int)numberOfDroppedBlocks;
 // Absolute block number of last block.
