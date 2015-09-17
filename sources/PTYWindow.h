@@ -52,3 +52,10 @@
 
 @end
 
+@interface PTYWindow (Private)
+
+// Private NSWindow method, needed to avoid ghosting when using transparency.
+- (BOOL)_setContentHasShadow:(BOOL)contentHasShadow;
+
+@end
+
