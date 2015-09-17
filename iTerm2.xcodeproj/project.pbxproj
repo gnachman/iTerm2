@@ -750,6 +750,13 @@
 		A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A60D85A81A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
 		A60D85A91A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */; };
+		A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
+		A6184F8A1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
+		A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
+		A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6184F8F1BAB458B0088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184F881BAB3ED70088EF3C /* ColorPicker.framework */; };
 		A61ABBBB1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBBC1AE5F38C004656C2 /* NSDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */; };
 		A61ABBC21AE5F54A004656C2 /* NSMutableDictionary+Profile.h in Headers */ = {isa = PBXBuildFile; fileRef = A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */; };
@@ -1628,6 +1635,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */,
 				A605D4B419CF796F00D40343 /* NMSSH.framework in CopyFiles */,
 				1D6EDB0219AEA20D005A7799 /* Sparkle.framework in CopyFiles */,
 				1D6EDB0319AEA20D005A7799 /* Growl.framework in CopyFiles */,
@@ -1640,6 +1648,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */,
 				A605D4B319CF796800D40343 /* NMSSH.framework in CopyFiles */,
 				1DAAE592180FAD9A0061611B /* Growl.framework in CopyFiles */,
 				1DAAE593180FAD9A0061611B /* Sparkle.framework in CopyFiles */,
@@ -1652,6 +1661,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */,
 				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
 				5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */,
@@ -2099,6 +2109,7 @@
 		A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenDirectory.framework; path = System/Library/Frameworks/OpenDirectory.framework; sourceTree = SDKROOT; };
 		A60D85A61A3A8105003AEE22 /* NSPasteboard+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSPasteboard+iTerm.h"; sourceTree = "<group>"; };
 		A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPasteboard+iTerm.m"; sourceTree = "<group>"; };
+		A6184F881BAB3ED70088EF3C /* ColorPicker.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ColorPicker.framework; path = ColorPicker/ColorPicker.framework; sourceTree = "<group>"; };
 		A61ABBB91AE5F38C004656C2 /* NSDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Profile.h"; sourceTree = "<group>"; };
 		A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Profile.m"; sourceTree = "<group>"; };
 		A61ABBC01AE5F54A004656C2 /* NSMutableDictionary+Profile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableDictionary+Profile.h"; sourceTree = "<group>"; };
@@ -2652,6 +2663,7 @@
 				A624231219CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
 				1D6EDAF519AEA20D005A7799 /* Security.framework in Frameworks */,
 				1D6EDAF819AEA20D005A7799 /* ScriptingBridge.framework in Frameworks */,
+				A6184F8B1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				1D6EDAF919AEA20D005A7799 /* AppKit.framework in Frameworks */,
 				1D6EDAFB19AEA20D005A7799 /* libncurses.dylib in Frameworks */,
 				1D6EDAFC19AEA20D005A7799 /* Carbon.framework in Frameworks */,
@@ -2667,6 +2679,7 @@
 				A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */,
 				A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */,
 				A624231E19CF6E2400182C08 /* Growl.framework in Frameworks */,
+				A6184F8A1BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				1DFA7C9F1923F77C00DF1410 /* Security.framework in Frameworks */,
 				1D78B561183EEB9700014D49 /* ScriptingBridge.framework in Frameworks */,
 				1D9A55B9180FA93000B42CE9 /* AddressBook.framework in Frameworks */,
@@ -2699,6 +2712,7 @@
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				A624231419CF6B1600182C08 /* Growl.framework in Frameworks */,
+				A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
 				A624231019CF6B0C00182C08 /* Sparkle.framework in Frameworks */,
@@ -2711,6 +2725,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6184F8F1BAB458B0088EF3C /* ColorPicker.framework in Frameworks */,
 				A6C764161B45C77100E3C992 /* libSSKeychain.a in Frameworks */,
 				A6C760451B45C4CF00E3C992 /* Cocoa.framework in Frameworks */,
 				A6C763D91B45C69900E3C992 /* Growl.framework in Frameworks */,
@@ -3617,6 +3632,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A6184F881BAB3ED70088EF3C /* ColorPicker.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
 				1DD39AD6180B8118004E56D5 /* Cocoa.framework */,
@@ -6046,6 +6062,7 @@
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -6107,6 +6124,7 @@
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -6170,6 +6188,7 @@
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -6231,6 +6250,7 @@
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -6289,6 +6309,7 @@
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
@@ -6361,6 +6382,7 @@
 					"$(inherited)",
 					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -6431,6 +6453,7 @@
 					"$(inherited)",
 					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -6494,6 +6517,7 @@
 					"$(inherited)",
 					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -6557,6 +6581,7 @@
 					"$(inherited)",
 					/Users/gnachman/iTerm2,
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -6765,6 +6790,7 @@
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -6814,6 +6840,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -6855,6 +6882,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -6896,6 +6924,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -7115,6 +7144,7 @@
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -7180,6 +7210,7 @@
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -7241,6 +7272,7 @@
 					"$(SRCROOT)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/ThirdParty",
+					"$(PROJECT_DIR)/ColorPicker",
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;

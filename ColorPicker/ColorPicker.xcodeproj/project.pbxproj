@@ -16,11 +16,11 @@
 		A6184ED51BA874190088EF3C /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6184ED31BA874190088EF3C /* MainMenu.xib */; };
 		A6184EEA1BA8742F0088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184EA81BA874020088EF3C /* ColorPicker.framework */; };
 		A6184EEB1BA8743B0088EF3C /* ColorPicker.framework in Resources */ = {isa = PBXBuildFile; fileRef = A6184EA81BA874020088EF3C /* ColorPicker.framework */; };
-		A6184EEE1BA876390088EF3C /* CPKMainViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EEC1BA876390088EF3C /* CPKMainViewController.h */; };
+		A6184EEE1BA876390088EF3C /* CPKMainViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EEC1BA876390088EF3C /* CPKMainViewController.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184EEF1BA876390088EF3C /* CPKMainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EED1BA876390088EF3C /* CPKMainViewController.m */; };
 		A6184EF21BA876E50088EF3C /* CPKRGBView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EF01BA876E50088EF3C /* CPKRGBView.h */; };
 		A6184EF31BA876E50088EF3C /* CPKRGBView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EF11BA876E50088EF3C /* CPKRGBView.m */; };
-		A6184EF61BA87A770088EF3C /* CPKPopover.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EF41BA87A770088EF3C /* CPKPopover.h */; };
+		A6184EF61BA87A770088EF3C /* CPKPopover.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EF41BA87A770088EF3C /* CPKPopover.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184EF71BA87A770088EF3C /* CPKPopover.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EF51BA87A770088EF3C /* CPKPopover.m */; };
 		A6184EF91BA8801D0088EF3C /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184EF81BA8801D0088EF3C /* AppKit.framework */; };
 		A6184EFA1BA880300088EF3C /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184EF81BA8801D0088EF3C /* AppKit.framework */; };
@@ -38,7 +38,7 @@
 		A6184F171BA8E87B0088EF3C /* CPKFavorite.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F151BA8E87B0088EF3C /* CPKFavorite.m */; };
 		A6184F1A1BA8F40C0088EF3C /* CPKEyedropperWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F181BA8F40C0088EF3C /* CPKEyedropperWindow.h */; };
 		A6184F1B1BA8F40C0088EF3C /* CPKEyedropperWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F191BA8F40C0088EF3C /* CPKEyedropperWindow.m */; };
-		A6184F1E1BA90BB40088EF3C /* CPKColorWell.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F1C1BA90BB40088EF3C /* CPKColorWell.h */; };
+		A6184F1E1BA90BB40088EF3C /* CPKColorWell.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F1C1BA90BB40088EF3C /* CPKColorWell.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184F1F1BA90BB40088EF3C /* CPKColorWell.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F1D1BA90BB40088EF3C /* CPKColorWell.m */; };
 		A6184F221BA911980088EF3C /* CPKEyedropperView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F201BA911980088EF3C /* CPKEyedropperView.h */; };
 		A6184F231BA911980088EF3C /* CPKEyedropperView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F211BA911980088EF3C /* CPKEyedropperView.m */; };
@@ -53,7 +53,7 @@
 		A6184F501BA9EA410088EF3C /* CPKKDTreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F4E1BA9EA410088EF3C /* CPKKDTreeNode.m */; };
 		A6184F531BA9EA7D0088EF3C /* CPKKDTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F511BA9EA7D0088EF3C /* CPKKDTree.h */; };
 		A6184F541BA9EA7D0088EF3C /* CPKKDTree.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F521BA9EA7D0088EF3C /* CPKKDTree.m */; };
-		A6184F571BAA06DC0088EF3C /* CPKSwatchView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F551BAA06DC0088EF3C /* CPKSwatchView.h */; };
+		A6184F571BAA06DC0088EF3C /* CPKSwatchView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F551BAA06DC0088EF3C /* CPKSwatchView.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184F581BAA06DC0088EF3C /* CPKSwatchView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F561BAA06DC0088EF3C /* CPKSwatchView.m */; };
 		A6184F5C1BAA083F0088EF3C /* SwatchCheckerboard.png in Resources */ = {isa = PBXBuildFile; fileRef = A6184F5A1BAA083F0088EF3C /* SwatchCheckerboard.png */; };
 		A6184F5D1BAA083F0088EF3C /* SwatchCheckerboard@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6184F5B1BAA083F0088EF3C /* SwatchCheckerboard@2x.png */; };
@@ -839,6 +839,7 @@
 				A6184EC01BA874020088EF3C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		A6184EC11BA874020088EF3C /* Build configuration list for PBXNativeTarget "ColorPickerTests" */ = {
 			isa = XCConfigurationList;
@@ -847,6 +848,7 @@
 				A6184EC31BA874020088EF3C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		A6184EE21BA874190088EF3C /* Build configuration list for PBXNativeTarget "ColorPickerDemo" */ = {
 			isa = XCConfigurationList;
@@ -855,6 +857,7 @@
 				A6184EE41BA874190088EF3C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
