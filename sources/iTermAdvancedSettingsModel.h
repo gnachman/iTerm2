@@ -107,4 +107,11 @@
 + (BOOL)disallowCopyEmptyString;
 + (BOOL)profilesWindowJoinsActiveSpace;
 
++ (NSString *)badgeFont;
++ (BOOL)badgeFontIsBold;
++ (double)badgeMaxWidthFraction;
++ (double)badgeMaxHeightFraction;
++ (int)badgeRightMargin;
++ (int)badgeTopMargin;
+
 @end
