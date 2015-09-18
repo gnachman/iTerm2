@@ -377,7 +377,8 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
-                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr {
+                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
+                                 trimWhitespace:(BOOL)trimWhitespace {
     BOOL workingDirectoryIsOk = [self.fileManager fileExistsAtPathLocally:workingDirectory];
     if (!workingDirectoryIsOk) {
         DLog(@"Working directory %@ is a network share or doesn't exist. Not using it for context.",
@@ -438,7 +439,12 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
         // Do not search more than 10 chunks forward to avoid starving leftward search.
         for (int j = 0; j < [afterChunks count] && j < 10; j++) {
             [possiblePath appendString:afterChunks[j]];
-            NSString *trimmedPath = [possiblePath stringByTrimmingCharactersInSet:whitespaceCharset];
+            NSString *trimmedPath;
+            if (trimWhitespace) {
+                trimmedPath = [possiblePath stringByTrimmingCharactersInSet:whitespaceCharset];
+            } else {
+                trimmedPath = possiblePath;
+            }
             if ([paths containsObject:[NSString stringWithString:trimmedPath]]) {
                 continue;
             }
@@ -451,11 +457,15 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
                 }
                 if (exists) {
                     if (charsTakenFromPrefixPtr) {
-                        if ([afterChunks[j] length] == 0) {
-                            // trimmedPath is trim(left + afterChunks[j]). If afterChunks[j] is empty
-                            // then we don't want to count trailing whitespace from left in the chars
-                            // taken from prefix.
-                            *charsTakenFromPrefixPtr = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
+                        if (trimWhitespace) {
+                            if ([afterChunks[j] length] == 0) {
+                                // trimmedPath is trim(left + afterChunks[j]). If afterChunks[j] is empty
+                                // then we don't want to count trailing whitespace from left in the chars
+                                // taken from prefix.
+                                *charsTakenFromPrefixPtr = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
+                            } else {
+                                *charsTakenFromPrefixPtr = left.length;
+                            }
                         } else {
                             *charsTakenFromPrefixPtr = left.length;
                         }

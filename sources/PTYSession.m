@@ -2398,7 +2398,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
                                                               suffix:@""
                                                     workingDirectory:workingDirectory
-                                                charsTakenFromPrefix:&charsTakenFromPrefix];
+                                                charsTakenFromPrefix:&charsTakenFromPrefix
+                                                      trimWhitespace:YES];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
         if ([_textview openSemanticHistoryPath:filename

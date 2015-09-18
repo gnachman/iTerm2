@@ -5166,7 +5166,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self.semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
                                                                    suffix:possibleFilePart2
                                                          workingDirectory:workingDirectory
-                                                     charsTakenFromPrefix:&fileCharsTaken];
+                                                     charsTakenFromPrefix:&fileCharsTaken
+                                                           trimWhitespace:NO];
 
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
