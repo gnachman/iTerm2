@@ -2,6 +2,11 @@
 #import "CPKKDTree.h"
 #import <math.h>
 
+// Picking a color with a different hue will cause silly results. With a multiplier of 1, #fefb67
+// gets named "Hit Pink". So we use this to make hues span 0-5 while saturation and brightness each
+// take values in 0-1. We will rarely find a nearest neighbor with a significantly different hue.
+static const CGFloat kHueMultiplier = 5;
+
 @interface CPKColorNamer ()
 @property(nonatomic) CPKKDTree *tree;
 @end
@@ -53,7 +58,7 @@
                                                           blue:b / 255.0
                                                          alpha:1];
 
-                        [self.tree addObject:name forKey:@[ @(color.hueComponent),
+                        [self.tree addObject:name forKey:@[ @(color.hueComponent * kHueMultiplier),
                                                             @(color.saturationComponent),
                                                             @(color.brightnessComponent)]];
                     }
@@ -66,7 +71,7 @@
 }
 
 - (NSString *)nameForColor:(NSColor *)color {
-    NSString *baseName = [self.tree nearestNeighborTo:@[ @(color.hueComponent),
+    NSString *baseName = [self.tree nearestNeighborTo:@[ @(color.hueComponent * kHueMultiplier),
                                                          @(color.saturationComponent),
                                                          @(color.brightnessComponent) ]];
     if (color.alphaComponent < 0.99) {

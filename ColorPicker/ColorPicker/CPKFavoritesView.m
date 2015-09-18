@@ -208,8 +208,13 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
     }
     for (NSInteger i = 0; i < gFavorites.count; i++) {
         if ([[gFavorites[i] color] isApproximatelyEqualToColor:color]) {
+            // Temporarily remove the block pointer to avoid notifying the client of this change,
+            // since they initiated it.
+            void (^saved)(NSColor *) = _selectionDidChangeBlock;
+            _selectionDidChangeBlock = nil;
             [self.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:i]
                         byExtendingSelection:NO];
+            _selectionDidChangeBlock = saved;
             [self.tableView scrollRowToVisible:i];
             return;
         }
