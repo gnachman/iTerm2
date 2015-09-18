@@ -11,5 +11,6 @@
 @interface iTermColorWell : NSControl
 
 @property(nonatomic, retain) NSColor *color;
+@property(nonatomic, assign) BOOL alphaAllowed;
 
 @end

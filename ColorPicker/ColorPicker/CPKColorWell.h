@@ -10,6 +10,9 @@
 @property(nonatomic, copy) void (^colorDidChange)(NSColor *);
 
 /** User can adjust alpha value. */
-@property(nonatomic) BOOL alphaAllowed;
+@property(nonatomic, assign) BOOL alphaAllowed;
+
+/** Color well is disabled? */
+@property(nonatomic, assign) BOOL disabled;
 
 @end

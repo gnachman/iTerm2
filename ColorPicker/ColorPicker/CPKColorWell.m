@@ -4,6 +4,7 @@
 
 @interface CPKColorWell() <NSPopoverDelegate>
 @property(nonatomic) BOOL open;
+@property(nonatomic) CPKPopover *popover;
 @end
 
 @implementation CPKColorWell
@@ -14,9 +15,9 @@
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
-    if (theEvent.clickCount == 1) {
+    if (!_disabled && theEvent.clickCount == 1) {
         __weak __typeof(self) weakSelf = self;
-        CPKPopover *popover =
+        self.popover =
             [CPKPopover presentRelativeToRect:self.bounds
                                        ofView:self
                                 preferredEdge:CGRectMinYEdge
@@ -30,20 +31,39 @@
                                [weakSelf setNeedsDisplay:YES];
                            }];
         self.open = YES;
-        popover.delegate = self;
+        self.popover.delegate = self;
     }
 }
 
 - (void)setOpen:(BOOL)open {
     _open = open;
-    self.borderColor = open ? [NSColor whiteColor] : [NSColor grayColor];
+    [self updateBorderColor];
+}
+
+- (void)updateBorderColor {
+    if (self.disabled) {
+        self.borderColor = [NSColor grayColor];
+    } else if (self.open) {
+        self.borderColor = [NSColor whiteColor];
+    } else {
+        self.borderColor = [NSColor darkGrayColor];
+    }
     [self setNeedsDisplay:YES];
+}
+
+- (void)setDisabled:(BOOL)disabled {
+    _disabled = disabled;
+    [self updateBorderColor];
+    if (disabled && self.popover) {
+        [self.popover performClose:self];
+    }
 }
 
 #pragma mark - NSPopoverDelegate
 
 - (void)popoverWillClose:(NSNotification *)notification {
     self.open = NO;
+    self.popover = nil;
 }
 
 @end

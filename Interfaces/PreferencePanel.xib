@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14E46" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14F27" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
@@ -1540,12 +1540,12 @@ DQ
                 <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
                 <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
                 <outlet property="_promptBeforeClosing" destination="5728" id="Xu7-bR-LX8"/>
+                <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
                 <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
                 <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
                 <outlet property="_undoTimeout" destination="ksA-qB-n6W" id="YVr-dx-p2r"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
                 <outlet property="view" destination="ayN-Cl-pQs" id="xvI-1B-ZWf"/>
-                <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
             </connections>
         </customObject>
         <customObject id="kOZ-HN-eXg" customClass="ProfilesKeysPreferencesViewController">
@@ -1960,6 +1960,9 @@ DQ
                 <customView id="A9a-sA-67D" customClass="iTermColorWell">
                     <rect key="frame" x="284" y="202" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
+                    </userDefinedRuntimeAttributes>
                 </customView>
                 <customView id="2273" customClass="iTermColorWell">
                     <rect key="frame" x="102" y="254" width="32" height="21"/>
@@ -2038,6 +2041,9 @@ DQ
                 <customView id="Yny-j0-8Wk" customClass="iTermColorWell">
                     <rect key="frame" x="284" y="73" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
+                    </userDefinedRuntimeAttributes>
                 </customView>
                 <slider verticalHuggingPriority="750" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
                     <rect key="frame" x="139" y="18" width="179" height="20"/>
