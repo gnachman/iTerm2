@@ -7,6 +7,7 @@
 //
 
 #import "iTermPreferencesBaseViewController.h"
+#import "iTermColorWell.h"
 #import "iTermPreferences.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -269,7 +270,7 @@ static NSString *const kKey = @"key";
             assert(false);  // Must use onChange() only.
 
         case kPreferenceInfoTypeColorWell: {
-            assert([info.control isKindOfClass:[NSColorWell class]]);
+            assert([info.control isKindOfClass:[iTermColorWell class]]);
             NSColorWell *colorWell = (NSColorWell *)info.control;
             NSDictionary *dict = (NSDictionary *)[self objectForKey:info.key];
             if (dict) {

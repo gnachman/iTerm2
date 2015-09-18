@@ -8,6 +8,7 @@
 
 #import "ProfilesColorsPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTermColorWell.h"
 #import "iTermProfilePreferences.h"
 #import "NSColor+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -18,32 +19,32 @@ static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPre
 static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
 @implementation ProfilesColorsPreferencesViewController {
-    IBOutlet NSColorWell *_ansi0Color;
-    IBOutlet NSColorWell *_ansi1Color;
-    IBOutlet NSColorWell *_ansi2Color;
-    IBOutlet NSColorWell *_ansi3Color;
-    IBOutlet NSColorWell *_ansi4Color;
-    IBOutlet NSColorWell *_ansi5Color;
-    IBOutlet NSColorWell *_ansi6Color;
-    IBOutlet NSColorWell *_ansi7Color;
-    IBOutlet NSColorWell *_ansi8Color;
-    IBOutlet NSColorWell *_ansi9Color;
-    IBOutlet NSColorWell *_ansi10Color;
-    IBOutlet NSColorWell *_ansi11Color;
-    IBOutlet NSColorWell *_ansi12Color;
-    IBOutlet NSColorWell *_ansi13Color;
-    IBOutlet NSColorWell *_ansi14Color;
-    IBOutlet NSColorWell *_ansi15Color;
-    IBOutlet NSColorWell *_foregroundColor;
-    IBOutlet NSColorWell *_backgroundColor;
-    IBOutlet NSColorWell *_boldColor;
-    IBOutlet NSColorWell *_linkColor;
-    IBOutlet NSColorWell *_selectionColor;
-    IBOutlet NSColorWell *_selectedTextColor;
-    IBOutlet NSColorWell *_cursorColor;
-    IBOutlet NSColorWell *_cursorTextColor;
-    IBOutlet NSColorWell *_tabColor;
-    IBOutlet NSColorWell *_badgeColor;
+    IBOutlet iTermColorWell *_ansi0Color;
+    IBOutlet iTermColorWell *_ansi1Color;
+    IBOutlet iTermColorWell *_ansi2Color;
+    IBOutlet iTermColorWell *_ansi3Color;
+    IBOutlet iTermColorWell *_ansi4Color;
+    IBOutlet iTermColorWell *_ansi5Color;
+    IBOutlet iTermColorWell *_ansi6Color;
+    IBOutlet iTermColorWell *_ansi7Color;
+    IBOutlet iTermColorWell *_ansi8Color;
+    IBOutlet iTermColorWell *_ansi9Color;
+    IBOutlet iTermColorWell *_ansi10Color;
+    IBOutlet iTermColorWell *_ansi11Color;
+    IBOutlet iTermColorWell *_ansi12Color;
+    IBOutlet iTermColorWell *_ansi13Color;
+    IBOutlet iTermColorWell *_ansi14Color;
+    IBOutlet iTermColorWell *_ansi15Color;
+    IBOutlet iTermColorWell *_foregroundColor;
+    IBOutlet iTermColorWell *_backgroundColor;
+    IBOutlet iTermColorWell *_boldColor;
+    IBOutlet iTermColorWell *_linkColor;
+    IBOutlet iTermColorWell *_selectionColor;
+    IBOutlet iTermColorWell *_selectedTextColor;
+    IBOutlet iTermColorWell *_cursorColor;
+    IBOutlet iTermColorWell *_cursorTextColor;
+    IBOutlet iTermColorWell *_tabColor;
+    IBOutlet iTermColorWell *_badgeColor;
 
     IBOutlet NSTextField *_cursorColorLabel;
     IBOutlet NSTextField *_cursorTextColorLabel;
@@ -57,7 +58,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSMenu *_presetsMenu;
 
     IBOutlet NSButton *_useGuide;
-    IBOutlet NSColorWell *_guideColor;
+    IBOutlet iTermColorWell *_guideColor;
 
     IBOutlet NSPopUpButton *_presetsPopupButton;
 }
@@ -139,7 +140,10 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     NSDictionary *colorWellDictionary = [self colorWellDictionary];
     for (NSString *key in colorWellDictionary) {
-        [self defineControl:colorWellDictionary[key] key:key type:kPreferenceInfoTypeColorWell];
+        iTermColorWell *colorWell = colorWellDictionary[key];
+        [self defineControl:colorWell key:key type:kPreferenceInfoTypeColorWell];
+        colorWell.action = @selector(settingChanged:);
+        colorWell.target = self;
     }
 
     PreferenceInfo *info;

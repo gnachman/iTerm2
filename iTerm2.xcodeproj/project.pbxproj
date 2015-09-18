@@ -527,6 +527,8 @@
 		1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */; };
 		1D825600146881EC007CAE78 /* PointerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FE146881EC007CAE78 /* PointerController.h */; };
 		1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D825602146B258A007CAE78 /* EventMonitorView.h */; };
+		1D84918D1BAC8716004A9AB3 /* iTermColorWell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D84918B1BAC8716004A9AB3 /* iTermColorWell.h */; };
+		1D84918E1BAC8716004A9AB3 /* iTermColorWell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D84918C1BAC8716004A9AB3 /* iTermColorWell.m */; };
 		1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D85D1D81306687700A3E998 /* RegexKitLite.h */; };
 		1D891E43190724DB0053C4BB /* MarkTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D891E41190724DB0053C4BB /* MarkTrigger.h */; };
 		1D8B8A141806038F00C2DC25 /* VT100Grid.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8B8A121806038F00C2DC25 /* VT100Grid.h */; };
@@ -1842,6 +1844,8 @@
 		1D8255FF146881EC007CAE78 /* PointerController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PointerController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D825602146B258A007CAE78 /* EventMonitorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = EventMonitorView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D825603146B258A007CAE78 /* EventMonitorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = EventMonitorView.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D84918B1BAC8716004A9AB3 /* iTermColorWell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorWell.h; sourceTree = "<group>"; };
+		1D84918C1BAC8716004A9AB3 /* iTermColorWell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorWell.m; sourceTree = "<group>"; };
 		1D85D1D81306687700A3E998 /* RegexKitLite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegexKitLite.h; sourceTree = "<group>"; };
 		1D85D1DA1306687700A3E998 /* RegexKitLite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegexKitLite.m; sourceTree = "<group>"; };
 		1D891E41190724DB0053C4BB /* MarkTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = MarkTrigger.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3433,6 +3437,8 @@
 				1DDC09421B4DB9A600B1A910 /* iTermClearView.m */,
 				A667F3951B4F71AE00705186 /* iTermSavePanel.h */,
 				A667F3961B4F71AE00705186 /* iTermSavePanel.m */,
+				1D84918B1BAC8716004A9AB3 /* iTermColorWell.h */,
+				1D84918C1BAC8716004A9AB3 /* iTermColorWell.m */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -4685,6 +4691,7 @@
 				1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */,
 				A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */,
 				1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */,
+				1D84918D1BAC8716004A9AB3 /* iTermColorWell.h in Headers */,
 				A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */,
 				1D29732714082676004C5DBE /* MovePaneController.h in Headers */,
 				1D891E43190724DB0053C4BB /* MarkTrigger.h in Headers */,
@@ -5624,6 +5631,7 @@
 				A667F38C1B48AEF200705186 /* NSApplication+iTerm.m in Sources */,
 				A6C763CE1B45C53A00E3C992 /* main.m in Sources */,
 				1D1F8C1C1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
+				1D84918E1BAC8716004A9AB3 /* iTermColorWell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
