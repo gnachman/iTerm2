@@ -139,7 +139,7 @@
                         kTipBodyKey: @"If you want the visual bell to flash the whole screen instead of show a bell icon, you can turn that on in “Prefs > Advanced.”" },
 
             @"0033": @{ kTipTitleKey: @"Tab Menu",
-                        kTipBodyKey: @"Right click on a tab to change its color, close tabs to the right, or to close all other tabs." },
+                        kTipBodyKey: @"Right click on a tab to change its color, close tabs after it, or to close all other tabs." },
 
             @"0034": @{ kTipTitleKey: @"Tags",
                         kTipBodyKey: @"You can assign tags to your profiles, and by clicking “Tags>” anywhere you see a list of profiles you can browse those tags." },

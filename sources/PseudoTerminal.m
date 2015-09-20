@@ -4077,7 +4077,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:@"Close Tabs to the Right"
+        NSString *title;
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+            title = @"Close Tabs Below";
+        } else {
+            title = @"Close Tabs to the Right";
+        }
+        item = [[[NSMenuItem alloc] initWithTitle:title
                                            action:@selector(closeTabsToTheRight:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
