@@ -4806,10 +4806,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                     data = [_terminal.output keyDelete];
                     break;
                 case NSHomeFunctionKey:
-                    data = [_terminal.output keyHome:modflag];
+                    data = [_terminal.output keyHome:modflag screenlikeTerminal:self.isTmuxClient];
                     break;
                 case NSEndFunctionKey:
-                    data = [_terminal.output keyEnd:modflag];
+                    data = [_terminal.output keyEnd:modflag screenlikeTerminal:self.isTmuxClient];
                     break;
                 case NSPageUpFunctionKey:
                     data = [_terminal.output keyPageUp:modflag];

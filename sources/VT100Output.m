@@ -194,8 +194,11 @@ typedef enum {
                     modflag:modflag];
 }
 
-- (NSData *)keyHome:(unsigned int)modflag
-{
+- (NSData *)keyHome:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike {
+    if (screenlike) {
+        const char *bytes = "\033[1~";
+        return [NSData dataWithBytes:bytes length:strlen(bytes)];
+    }
     return [self specialKey:TERMINFO_KEY_HOME
                   cursorMod:CURSOR_MOD_HOME
                   cursorSet:CURSOR_SET_HOME
@@ -203,8 +206,12 @@ typedef enum {
                     modflag:modflag];
 }
 
-- (NSData *)keyEnd:(unsigned int)modflag
+- (NSData *)keyEnd:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike
 {
+    if (screenlike) {
+        const char *bytes = "\033[4~";
+        return [NSData dataWithBytes:bytes length:strlen(bytes)];
+    }
     return [self specialKey:TERMINFO_KEY_END
                   cursorMod:CURSOR_MOD_END
                   cursorSet:CURSOR_SET_END

@@ -32,8 +32,8 @@ typedef enum {
 - (NSData *)keyArrowDown:(unsigned int)modflag;
 - (NSData *)keyArrowLeft:(unsigned int)modflag;
 - (NSData *)keyArrowRight:(unsigned int)modflag;
-- (NSData *)keyHome:(unsigned int)modflag;
-- (NSData *)keyEnd:(unsigned int)modflag;
+- (NSData *)keyHome:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike;
+- (NSData *)keyEnd:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike;
 - (NSData *)keyInsert;
 - (NSData *)keyDelete;
 - (NSData *)keyBackspace;
