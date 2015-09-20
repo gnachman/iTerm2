@@ -1123,9 +1123,9 @@ static const int kBadgeMargin = 4;
 - (NSRect)cursorFrame {
     const int rowNumber = _cursorCoord.y + _numberOfLines - _gridSize.height;
     return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + MARGIN),
-                      rowNumber * _cellSize.height,
+                      rowNumber * _cellSize.height + (_cellSize.height - _cellSizeWithoutSpacing.height),
                       MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
-                      _cellSize.height);
+                      _cellSizeWithoutSpacing.height);
 }
 
 - (void)drawCursor {
