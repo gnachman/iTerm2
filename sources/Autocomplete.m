@@ -128,7 +128,8 @@ const int kMaxResultContextWords = 4;
                                  includeLastNewline:NO
                              trimTrailingWhitespace:NO
                                        cappedAtSize:-1
-                                  continuationChars:nil];
+                                  continuationChars:nil
+                                             coords:nil];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
             // Add only if not whitespace.
             AcLog(@"Add to context (%d/%d): %@", (int) [context count], (int) maxWords, s);
@@ -166,7 +167,8 @@ const int kMaxResultContextWords = 4;
                              includeLastNewline:NO
                          trimTrailingWhitespace:NO
                                    cappedAtSize:-1
-                              continuationChars:nil];
+                              continuationChars:nil
+                                         coords:nil];
         int maxWords = kMaxQueryContextWords;
         if ([s rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
             ++maxWords;
@@ -508,7 +510,8 @@ const int kMaxResultContextWords = 4;
                                              includeLastNewline:NO
                                          trimTrailingWhitespace:NO
                                                    cappedAtSize:-1
-                                              continuationChars:nil];
+                                              continuationChars:nil
+                                                         coords:nil];
             NSMutableString* firstWord = [NSMutableString stringWithString:immutableWord];
             while ([firstWord length] < [prefix_ length]) {
                 range = [extractor rangeForWordAt:range.coordRange.end];
@@ -519,7 +522,8 @@ const int kMaxResultContextWords = 4;
                                         includeLastNewline:NO
                                     trimTrailingWhitespace:NO
                                               cappedAtSize:-1
-                                         continuationChars:nil];
+                                         continuationChars:nil
+                                                    coords:nil];
                 if ([part length] == 0) {
                     break;
                 }
@@ -554,7 +558,8 @@ const int kMaxResultContextWords = 4;
                                   includeLastNewline:NO
                               trimTrailingWhitespace:NO
                                         cappedAtSize:-1
-                                   continuationChars:nil];
+                                   continuationChars:nil
+                                              coords:nil];
                     AcLog(@"First candidate is at %@", VT100GridWindowedRangeDescription(range));
                     if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
                         // word after match is all whitespace. Grab the next word.
@@ -571,7 +576,8 @@ const int kMaxResultContextWords = 4;
                                           includeLastNewline:NO
                                       trimTrailingWhitespace:NO
                                                 cappedAtSize:-1
-                                           continuationChars:nil];
+                                           continuationChars:nil
+                                                      coords:nil];
                             if (!whitespaceBeforeCursor_) {
                                 // Prepend a space if one is needed
                                 word = [NSString stringWithFormat:@" %@", word];

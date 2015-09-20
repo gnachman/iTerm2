@@ -6597,7 +6597,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
                                      cappedAtSize:-1
-                                continuationChars:nil];
+                                continuationChars:nil
+                                           coords:nil];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
