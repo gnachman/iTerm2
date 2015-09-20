@@ -2121,6 +2121,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            cmdPressed &&
                            [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
 
+    // Reset _mouseDragged; it won't be needed again and we don't want it to get stuck like in
+    // issue 3766.
+    _mouseDragged = NO;
+
     // Send mouse up event to host if xterm mouse reporting is on
     if ([self reportMouseEvent:event]) {
         if (willFollowLink) {
