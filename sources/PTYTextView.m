@@ -214,11 +214,8 @@ static const int kDragThreshold = 3;
     iTermFindOnPageHelper *_findOnPageHelper;
     iTermTextViewAccessibilityHelper *_accessibilityHelper;
     iTermBadgeLabel *_badgeLabel;
-}
 
-
-+ (void)initialize {
-    [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
+    iTermNSKeyBindingEmulator *_keyBindingEmulator;
 }
 
 - (id)initWithFrame:(NSRect)frameRect {
@@ -318,6 +315,7 @@ static const int kDragThreshold = 3;
         _accessibilityHelper.delegate = self;
 
         _badgeLabel = [[iTermBadgeLabel alloc] init];
+        _keyBindingEmulator = [[iTermNSKeyBindingEmulator alloc] init];
     }
     return self;
 }
@@ -372,6 +370,7 @@ static const int kDragThreshold = 3;
     [_drawingHelper release];
     [_accessibilityHelper release];
     [_badgeLabel release];
+    [_keyBindingEmulator release];
 
     [super dealloc];
 }
@@ -1374,11 +1373,25 @@ static const int kDragThreshold = 3;
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
 
-    if ([[iTermNSKeyBindingEmulator sharedInstance] handlesEvent:event]) {
+    NSMutableArray *eventsToHandle = [NSMutableArray array];
+    if ([_keyBindingEmulator handlesEvent:event extraEvents:eventsToHandle]) {
         DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
         [self interpretKeyEvents:@[ event ]];
         return;
     }
+    [eventsToHandle addObject:event];
+    for (NSEvent *event in eventsToHandle) {
+        [self handleKeyDownEvent:event];
+    }
+}
+
+- (void)handleKeyDownEvent:(NSEvent *)event {
+    id delegate = [self delegate];
+    unsigned int modflag = [event modifierFlags];
+    unsigned short keyCode = [event keyCode];
+    BOOL prev = [self hasMarkedText];
+    BOOL rightAltPressed = (modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask;
+    BOOL leftAltPressed = (modflag & NSAlternateKeyMask) == NSAlternateKeyMask && !rightAltPressed;
 
     // Should we process the event immediately in the delegate?
     if ((!prev) &&
