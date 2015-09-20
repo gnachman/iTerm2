@@ -129,7 +129,7 @@ CRUN_INLINE CRun *CRunAppendNewString(CRun *run,
     CRunAppendSelfString(newRun, string, key, advance);
     run->next = newRun;
     if (attrs->imageCode) {
-        run->numImageCells++;
+        newRun->numImageCells = 1;
     }
     return newRun;
 }
