@@ -113,5 +113,6 @@
 + (double)badgeMaxHeightFraction;
 + (int)badgeRightMargin;
 + (int)badgeTopMargin;
++ (BOOL)noSyncReplaceProfileWarning;
 
 @end
