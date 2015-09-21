@@ -8,6 +8,7 @@
 
 #import "AppearancePreferencesViewController.h"
 #import "PreferencePanel.h"
+#import "iTermTextDrawingHelper.h"
 
 @implementation AppearancePreferencesViewController {
     // This is actually the tab style. See TAB_STYLE_XXX defines.
@@ -68,6 +69,15 @@
 
     // Disable transparency in fullscreen by default.
     IBOutlet NSButton *_disableFullscreenTransparency;
+    
+    // The text field that contains the user inputted value for the terminals horizontal margin
+    IBOutlet NSTextField *_horizontalMarginField;
+    
+    // The text field that contains the user inputted value for the terminals vertical margin
+    IBOutlet NSTextField *_verticalMarginField;
+}
+- (IBAction)verticalTextEntered:(id)sender {
+    iTermTextDrawingHelper.VMARGIN = 300;
 }
 
 - (void)awakeFromNib {

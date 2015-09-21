@@ -17,6 +17,8 @@
 // Number of pixels margin on the top.
 #define VMARGIN 2
 
+int *VMARGIN-INT;
+
 @class iTermColorMap;
 @class iTermFindOnPageHelper;
 @class iTermSelection;

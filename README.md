@@ -1,4 +1,8 @@
-This site hosts code for <a href="https://iterm2.com">iTerm2</a>.
+# iTerm2 Rounded and Padded
+A custom fork of iTerm2 that has a borderless and rounded window.
 
-<a href="https://iterm2.com/bugs">File a bug report here!</a> Issues are on <a href="https://gitlab.com/gnachman/iterm2/issues">Gitlab</a> because Github doesn't support issue attachments.
 
+### Known issues
+
+- 1 pixel tall white strip across top of window
+- Transparency is broken
