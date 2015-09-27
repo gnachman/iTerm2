@@ -4916,7 +4916,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
            performSetup:(BOOL)performSetup
 {
     NSView *scrollView;
-    NSColor *tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
+    NSColor *tabColor;
+    if (newSession.tabColor) {
+        // The new session came with a tab color of its own so don't inherit.
+        tabColor = newSession.tabColor;
+    } else {
+        // Inherit from tab.
+        tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
+    }
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
