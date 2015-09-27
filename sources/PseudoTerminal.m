@@ -4246,7 +4246,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)openPasswordManagerToAccountName:(NSString *)name {
+- (void)openPasswordManagerToAccountName:(NSString *)name
+                               inSession:(PTYSession *)session {
+    [session reveal];
     if (self.window.sheets.count > 0) {
         return;
     }

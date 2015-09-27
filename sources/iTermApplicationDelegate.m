@@ -742,14 +742,16 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)openPasswordManager:(id)sender {
-    [self openPasswordManagerToAccountName:nil];
+    [self openPasswordManagerToAccountName:nil inSession:nil];
 }
 
-- (void)openPasswordManagerToAccountName:(NSString *)name {
-    PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-
+- (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
+    id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
+    if (session) {
+        term = session.tab.realParentWindow;
+    }
     if (term) {
-        return [term openPasswordManagerToAccountName:name];
+        return [term openPasswordManagerToAccountName:name inSession:session];
     } else {
         if (!_passwordManagerWindowController) {
             _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];

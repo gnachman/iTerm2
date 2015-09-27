@@ -31,7 +31,9 @@
 #import <Carbon/Carbon.h>
 #import "DebugLogging.h"
 
+@class PTYSession;
 @class PseudoTerminal;
+
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kMultiLinePasteWarningUserDefaultsKey;
 extern NSString *const kSavedArrangementDidChangeNotification;
@@ -131,7 +133,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (NSMenu *)downloadsMenu;
 - (NSMenu *)uploadsMenu;
 
-- (void)openPasswordManagerToAccountName:(NSString *)name;
+- (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
 
 - (PseudoTerminal *)currentTerminal;
 - (NSArray*)terminals;
