@@ -77,7 +77,8 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 //   [semanticHistoryController pathOfExistingFileFoundWithPrefix:@"cat et"
 //                                                         suffix:@"c/passwd > /dev/null"
 //                                               workingDirectory:@"/"
-//                                           charsTakenFromPrefix:&n]
+//                                           charsTakenFromPrefix:&n
+//                                                 trimWhitespace:NO]
 // will return @"etc/passwd". *n will be set to 2.
 //
 // Note that the result may be a relative path. To get the full path,
@@ -87,15 +88,21 @@ extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 //   [semanticHistoryController pathOfExistingFileFoundWithPrefix:@"at Object.<anonymous> (/priva"
 //                                                         suffix:@"te/tmp/test_iterm_node.js:1:69)"
 //                                               workingDirectory:@"/"
-//                                           charsTakenFromPrefix:&n]
+//                                           charsTakenFromPrefix:&n
+//                                                 trimWhitespace:NO]
 //
 // Will return "(/private/tmp/test_iterm_node.js:1:60)". It is suitable to pass this to
 // getFullPath:workingDirectory:lineNumber:, which will remove the parens and extract the line
 // number, returning just the filename component.
+//
+// Whitespace trimming is useful if you don't mind this method returning a path even if
+// beforeStringIn is all whitespace and afterStringIn has a whitespace prefix. In that case, the
+// result of |charsTakenFromPrefixPtr| will be 0, and it's not suitable for highlighting a match.
 - (NSString *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
                                          suffix:(NSString *)afterStringIn
                                workingDirectory:(NSString *)workingDirectory
-                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr;
+                           charsTakenFromPrefix:(int *)charsTakenFromPrefixPtr
+                                 trimWhitespace:(BOOL)trimWhitespace;
 
 #pragma mark - Testing
 

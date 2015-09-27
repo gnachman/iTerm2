@@ -12,6 +12,7 @@
 #import "iTermController.h"
 #import "iTermFlippedView.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTermProfilePreferences.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
 #import "PreferencePanel.h"
@@ -499,6 +500,15 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
 
 - (IBAction)copyToProfile:(id)sender {
     Profile *sourceProfile = [self selectedProfile];
+    NSString *title =
+        [NSString stringWithFormat:@"Replace profile “%@” with the current session's settings?",
+            [iTermProfilePreferences stringForKey:KEY_NAME inProfile:sourceProfile]];
+    if ([iTermWarning showWarningWithTitle:title
+                                   actions:@[ @"Replace", @"Cancel" ]
+                                 identifier:@"NoSyncReplaceProfileWarning"
+                               silenceable:kiTermWarningTypePermanentlySilenceable] == kiTermWarningSelection1) {
+        return;
+    }
     NSString* sourceGuid = sourceProfile[KEY_GUID];
     if (!sourceGuid) {
         return;

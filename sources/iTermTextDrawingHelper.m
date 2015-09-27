@@ -27,7 +27,6 @@
 #import "VT100Terminal.h"  // TODO: Remove this dependency
 
 static const int kBadgeMargin = 4;
-static const int kBadgeRightMargin = 10;
 
 @interface iTermTextDrawingHelper() <iTermCursorDelegate>
 @end
@@ -583,8 +582,8 @@ static const int kBadgeRightMargin = 10;
     NSSize textViewSize = _frame.size;
     NSSize visibleSize = _scrollViewDocumentVisibleRect.size;
     NSSize imageSize = image.size;
-    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - kBadgeRightMargin,
-                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight,
+    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - [iTermAdvancedSettingsModel badgeRightMargin],
+                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight + [iTermAdvancedSettingsModel badgeTopMargin],
                                     imageSize.width,
                                     imageSize.height);
     NSRect intersection = NSIntersectionRect(rect, destination);
@@ -602,7 +601,8 @@ static const int kBadgeRightMargin = 10;
              fraction:1
        respectFlipped:YES
                 hints:nil];
-    imageSize.width += kBadgeMargin + kBadgeRightMargin;
+    imageSize.width += kBadgeMargin + [iTermAdvancedSettingsModel badgeRightMargin];
+
     return imageSize;
 }
 
@@ -1123,9 +1123,9 @@ static const int kBadgeRightMargin = 10;
 - (NSRect)cursorFrame {
     const int rowNumber = _cursorCoord.y + _numberOfLines - _gridSize.height;
     return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + MARGIN),
-                      rowNumber * _cellSize.height,
+                      rowNumber * _cellSize.height + (_cellSize.height - _cellSizeWithoutSpacing.height),
                       MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
-                      _cellSize.height);
+                      _cellSizeWithoutSpacing.height);
 }
 
 - (void)drawCursor {

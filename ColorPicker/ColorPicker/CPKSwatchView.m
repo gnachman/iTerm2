@@ -1,0 +1,48 @@
+#import "CPKSwatchView.h"
+#import "NSObject+CPK.h"
+
+@implementation CPKSwatchView
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        self.cornerRadius = 3;
+        self.borderColor = [NSColor grayColor];
+    }
+    return self;
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    [super drawRect:dirtyRect];
+
+    NSRect rect = self.bounds;
+    rect.origin.x += 0.5;
+    rect.origin.y += 0.5;
+    rect.size.width -= 1;
+    rect.size.height -= 1;
+    
+    NSBezierPath *path = [NSBezierPath bezierPathWithRoundedRect:rect
+                                                         xRadius:self.cornerRadius
+                                                         yRadius:self.cornerRadius];
+    [NSGraphicsContext saveGraphicsState];
+    [path addClip];
+
+    [[NSColor colorWithPatternImage:[self cpk_imageNamed:@"SwatchCheckerboard"]] set];
+    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(1, 2)];
+    NSRectFill(rect);
+
+    [self.color set];
+    NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
+
+    [NSGraphicsContext restoreGraphicsState];
+
+    [self.borderColor set];
+    [path stroke];
+}
+
+- (void)setColor:(NSColor *)color {
+    _color = color;
+    [self setNeedsDisplay:YES];
+}
+
+@end

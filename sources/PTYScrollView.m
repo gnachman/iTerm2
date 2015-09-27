@@ -31,10 +31,21 @@
 
 #import <Cocoa/Cocoa.h>
 
+@interface PTYScroller()
+@property(nonatomic) CGFloat accumulatedDeltaY;
+@end
+
 @implementation PTYScroller
 
 + (BOOL)isCompatibleWithOverlayScrollers {
     return YES;
+}
+
+- (void)setUserScroll:(BOOL)userScroll {
+    if (!userScroll && _userScroll) {
+        _accumulatedDeltaY = 0;
+    }
+    _userScroll = userScroll;
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
@@ -112,25 +123,32 @@
                [NSValue valueWithRect:[self documentVisibleRect]]];
 }
 
+static CGFloat RoundTowardZero(CGFloat value) {
+    if (value > 0) {
+        return floor(value);
+    } else {
+        return ceil(value);
+    }
+}
+
 - (void)scrollWheel:(NSEvent *)theEvent {
     NSRect scrollRect;
 
     scrollRect = [self documentVisibleRect];
 
-    CGFloat delta = [theEvent deltaY];
-    // Make sure that a very small scroll event moves by at least one line.
-    if (fabs(delta) < 1) {
-        if (delta > 0) {
-            delta = 1;
-        } else if (delta < 0) {
-            delta = -1;
-        } else {
-            // The delta could be 0 in case of touchpad scrolling.
-            delta = 0;
-        }
+    CGFloat delta = theEvent.scrollingDeltaY;
+    if (theEvent.hasPreciseScrollingDeltas) {
+        delta /= self.verticalLineScroll;
     }
 
-    scrollRect.origin.y -= delta * [self verticalLineScroll];
+    PTYScroller *verticalScroller = (PTYScroller *)[self verticalScroller];
+    verticalScroller.accumulatedDeltaY += delta;
+
+    if (fabs(verticalScroller.accumulatedDeltaY) >= 1) {
+        CGFloat roundedAccumulatedDelta = RoundTowardZero(verticalScroller.accumulatedDeltaY);
+        scrollRect.origin.y -= roundedAccumulatedDelta * [self verticalLineScroll];
+        verticalScroller.accumulatedDeltaY = verticalScroller.accumulatedDeltaY - roundedAccumulatedDelta;
+    }
     [[self documentView] scrollRectToVisible:scrollRect];
 
     [self detectUserScroll];

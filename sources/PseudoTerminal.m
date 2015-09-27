@@ -548,6 +548,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self setWindow:myWindow];
     [myWindow release];
 
+    // This had been in iTerm2 for years and was removed, but I can't tell why. Issue 3833 reveals
+    // that it is still needed, at least on OS 10.9.
+    if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
+        [myWindow _setContentHasShadow:NO];
+    }
+
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
     _contentView =
         [[[iTermRootTerminalView alloc] initWithFrame:[self.window.contentView frame]
@@ -708,7 +714,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 #if ENABLE_SHORTCUT_ACCESSORY
     [_shortcutAccessoryViewController release];
 #endif
+    [_didEnterLionFullscreen release];
     [super dealloc];
+}
+
++ (BOOL)useElCapitanFullScreenLogic {
+    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
 }
 
 - (BOOL)tabBarVisibleOnTop {
@@ -1944,6 +1955,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS]) {
         desiredColumns_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] intValue];
     }
+    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
+    NSRect rect;
+    rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
+    rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+    rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+    rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+
+    // 10.11 starts you off with a tiny little frame. I don't know why they do
+    // that, but this fixes it.
+    if ([[self class] useElCapitanFullScreenLogic] &&
+        windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        [[self window] setFrame:rect display:YES];
+    }
+
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary *viewMap = nil;
         if (sessions) {
@@ -1960,17 +1985,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
-    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     if (windowType == WINDOW_TYPE_NORMAL ||
         windowType == WINDOW_TYPE_NO_TITLE_BAR) {
         // The window may have changed size while adding tab bars, etc.
-        NSRect rect;
-        rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
-        rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
         // TODO: for window type top, set width to screen width.
-        rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-        rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
-
         [[self window] setFrame:rect display:YES];
     }
 
@@ -3014,6 +3032,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
+- (BOOL)togglingLionFullScreen {
+    return togglingLionFullScreen_;
+}
+
 - (IBAction)toggleFullScreenMode:(id)sender
 {
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
@@ -3361,6 +3383,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     [self saveTmuxWindowOrigins];
     [self.window makeFirstResponder:self.currentSession.textview];
+    if (_didEnterLionFullscreen) {
+        _didEnterLionFullscreen(self);
+        [_didEnterLionFullscreen release];
+        _didEnterLionFullscreen = nil;
+    }
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -4071,7 +4098,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:@"Close Tabs to the Right"
+        NSString *title;
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+            title = @"Close Tabs Below";
+        } else {
+            title = @"Close Tabs to the Right";
+        }
+        item = [[[NSMenuItem alloc] initWithTitle:title
                                            action:@selector(closeTabsToTheRight:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];

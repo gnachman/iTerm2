@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14E46" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7706" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7706"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
@@ -1540,12 +1540,12 @@ DQ
                 <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
                 <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
                 <outlet property="_promptBeforeClosing" destination="5728" id="Xu7-bR-LX8"/>
+                <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
                 <outlet property="_removeJob" destination="5669" id="YFO-c0-Vq2"/>
                 <outlet property="_sendCodeWhenIdle" destination="5697" id="dJR-J9-XOR"/>
                 <outlet property="_undoTimeout" destination="ksA-qB-n6W" id="YVr-dx-p2r"/>
                 <outlet property="delegate" destination="HVI-63-mNz" id="ctD-Hw-Es8"/>
                 <outlet property="view" destination="ayN-Cl-pQs" id="xvI-1B-ZWf"/>
-                <outlet property="_reduceFlicker" destination="Flt-We-Y3i" id="gLN-is-gOD"/>
             </connections>
         </customObject>
         <customObject id="kOZ-HN-eXg" customClass="ProfilesKeysPreferencesViewController">
@@ -1914,24 +1914,14 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="17" id="2285" userLabel="Color Well - Background">
+                <customView id="2285" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="228" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="T8S-gg-Gfq"/>
-                        <outlet property="nextKeyView" destination="2272" id="5221"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="20" id="2277" userLabel="Color Well - Selected Text">
+                </customView>
+                <customView id="2277" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="228" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="L6O-KZ-SQs"/>
-                        <outlet property="nextKeyView" destination="2280" id="5224"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <textField verticalHuggingPriority="750" id="2275">
                     <rect key="frame" x="159" y="256" width="119" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -1941,15 +1931,10 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="18" id="2272" userLabel="Color Well - Bold">
+                <customView id="2272" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="202" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="yls-5S-uHx"/>
-                        <outlet property="nextKeyView" destination="2282" id="5222"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <textField verticalHuggingPriority="750" id="inA-QL-S7K">
                     <rect key="frame" x="8" y="178" width="84" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -1959,15 +1944,10 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="18" id="O31-5M-Une" userLabel="Color Well - Bold">
+                <customView id="O31-5M-Une" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="176" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="shd-Fc-IsJ"/>
-                        <outlet property="nextKeyView" destination="2282" id="gx3-Ol-EtI"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <textField verticalHuggingPriority="750" id="Pyw-da-Q1y">
                     <rect key="frame" x="159" y="204" width="119" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -1977,24 +1957,17 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="18" id="A9a-sA-67D" userLabel="Color Well - Bold" customClass="iTermAlphaColorWell">
+                <customView id="A9a-sA-67D" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="202" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="fXv-j9-in3"/>
-                        <outlet property="nextKeyView" destination="2282" id="r7v-pe-IZe"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="16" id="2273" userLabel="Color Well - Foreground">
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
+                    </userDefinedRuntimeAttributes>
+                </customView>
+                <customView id="2273" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="254" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="WNO-d4-D1A"/>
-                        <outlet property="nextKeyView" destination="2285" id="5220"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <textField verticalHuggingPriority="750" id="2274">
                     <rect key="frame" x="159" y="230" width="119" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2004,15 +1977,10 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="22" id="Wzz-9B-zqB" userLabel="Color Well - Tab Color">
+                <customView id="Wzz-9B-zqB" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="176" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="pMs-Qp-NpT"/>
-                        <outlet property="nextKeyView" destination="4889" id="xUe-BA-6t3"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <textField verticalHuggingPriority="750" id="2281">
                     <rect key="frame" x="8" y="230" width="84" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2022,15 +1990,10 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="19" id="2282" userLabel="Color Well - Selection">
+                <customView id="2282" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="254" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="c2g-ED-Dyy"/>
-                        <outlet property="nextKeyView" destination="2277" id="5223"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <button id="j7F-r8-oes">
                     <rect key="frame" x="195" y="177" width="83" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2062,15 +2025,10 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="22" id="2278" userLabel="Color Well - Cursor Text">
+                <customView id="2278" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="45" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="ZGM-jy-ShL"/>
-                        <outlet property="nextKeyView" destination="4889" id="5226"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <textField verticalHuggingPriority="750" id="22f-BB-uj3">
                     <rect key="frame" x="8" y="20" width="128" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2080,15 +2038,13 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="22" id="Yny-j0-8Wk" userLabel="Color Well - Guide" customClass="iTermAlphaColorWell">
+                <customView id="Yny-j0-8Wk" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="73" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="gl9-zb-oJF"/>
-                        <outlet property="nextKeyView" destination="4889" id="b5D-at-tyb"/>
-                    </connections>
-                </colorWell>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
+                    </userDefinedRuntimeAttributes>
+                </customView>
                 <slider verticalHuggingPriority="750" id="evF-qt-9wo" userLabel="Horizontal Slider - Cursor Boost">
                     <rect key="frame" x="139" y="18" width="179" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2129,15 +2085,10 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <colorWell tag="21" id="2280" userLabel="Color Well - Cursor">
+                <customView id="2280" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="73" width="32" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="F5B-Or-dI6"/>
-                        <outlet property="nextKeyView" destination="2278" id="5225"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <button id="Rpk-o3-4ec">
                     <rect key="frame" x="173" y="74" width="105" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -2150,150 +2101,70 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="kw5-A8-LVc"/>
                     </connections>
                 </button>
-                <colorWell id="2286" userLabel="Color Well - Normal Red">
+                <customView id="2286" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="211" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="ApS-dl-hbo"/>
-                        <outlet property="nextKeyView" destination="2295" id="5232"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="1" id="2287" userLabel="Color Well - Normal Green">
+                </customView>
+                <customView id="2287" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="185" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="QpA-yn-xh4"/>
-                        <outlet property="nextKeyView" destination="2300" id="5236"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="3" id="2288" userLabel="Color Well - Normal Blue">
+                </customView>
+                <customView id="2288" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="133" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="Mds-Pa-R7P"/>
-                        <outlet property="nextKeyView" destination="2299" id="5240"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="2" id="2289" userLabel="Color Well - Normal Yellow">
+                </customView>
+                <customView id="2289" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="159" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="Bo9-KW-Vhp"/>
-                        <outlet property="nextKeyView" destination="2294" id="5238"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="4" id="2290" userLabel="Color Well - Normal Magenta">
+                </customView>
+                <customView id="2290" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="107" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="Sg9-KW-bCK"/>
-                        <outlet property="nextKeyView" destination="2298" id="5242"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="5" id="2291" userLabel="Color Well - Normal Cyan">
+                </customView>
+                <customView id="2291" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="81" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="Inx-PX-CQQ"/>
-                        <outlet property="nextKeyView" destination="2296" id="5244"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="7" id="2292" userLabel="Color Well - Bright Black">
+                </customView>
+                <customView id="2292" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="237" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="ArE-jS-1Rr"/>
-                        <outlet property="nextKeyView" destination="2286" id="5231"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="6" id="2293" userLabel="Color Well - Normal White">
+                </customView>
+                <customView id="2293" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="55" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="9S3-gr-M8v"/>
-                        <outlet property="nextKeyView" destination="2301" id="5246"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="10" id="2294" userLabel="Color Well - Bright Yellow">
+                </customView>
+                <customView id="2294" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="159" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="mWq-PP-fni"/>
-                        <outlet property="nextKeyView" destination="2288" id="5239"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="8" id="2295" userLabel="Color Well - Bright Red">
+                </customView>
+                <customView id="2295" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="211" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="TGp-lK-BhK"/>
-                        <outlet property="nextKeyView" destination="2287" id="5233"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="14" id="2296" userLabel="Color Well - Bright Cyan">
+                </customView>
+                <customView id="2296" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="81" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="CZb-oG-Z3y"/>
-                        <outlet property="nextKeyView" destination="2293" id="5245"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="13" id="2297" userLabel="Color Well - Normal Black">
+                </customView>
+                <customView id="2297" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="237" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="0Yj-x9-oCB"/>
-                        <outlet property="nextKeyView" destination="2292" id="5230"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="12" id="2298" userLabel="Color Well - Bright Magenta">
+                </customView>
+                <customView id="2298" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="107" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="F8a-bG-7t7"/>
-                        <outlet property="nextKeyView" destination="2291" id="5243"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="11" id="2299" userLabel="Color Well - Bright Blue">
+                </customView>
+                <customView id="2299" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="133" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="7de-PA-Dwh"/>
-                        <outlet property="nextKeyView" destination="2290" id="5241"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="9" id="2300" userLabel="Color Well - Bright Green">
+                </customView>
+                <customView id="2300" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="185" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="LSy-D5-f6E"/>
-                        <outlet property="nextKeyView" destination="2289" id="5237"/>
-                    </connections>
-                </colorWell>
-                <colorWell tag="15" id="2301" userLabel="Color Well - Bright White">
+                </customView>
+                <customView id="2301" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="55" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <color key="color" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
-                    <connections>
-                        <action selector="settingChanged:" target="p8i-eM-oBc" id="zAw-KW-fK0"/>
-                        <outlet property="nextKeyView" destination="2100" id="5247"/>
-                    </connections>
-                </colorWell>
+                </customView>
                 <textField verticalHuggingPriority="750" id="2344">
                     <rect key="frame" x="381" y="239" width="55" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -5457,7 +5328,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                <rect key="frame" x="0.0" y="0.0" width="849" height="19"/>
+                                <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>

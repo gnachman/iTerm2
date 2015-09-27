@@ -32,7 +32,7 @@ static const CGFloat kButtonSize = 17;
     NSString *title_;
     NSTextField *label_;
     NSButton *closeButton_;
-    NSPopUpButton *menuButton_;
+    NSButton *menuButton_;
     NSObject<SessionTitleViewDelegate> *delegate_;
     double dimmingAmount_;
 }
@@ -65,27 +65,22 @@ static const CGFloat kButtonSize = 17;
         // Popup buttons want to have huge margins on the sides. This one look best right up against
         // the right margin, though. So I'll make it as small as it can be and then push it right so
         // some of it is clipped.
-        menuButton_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 36, 16.0) pullsDown:YES];
-        [(NSPopUpButtonCell *)[menuButton_ cell] setBezeled:NO];
-        [[menuButton_ cell] setArrowPosition:NSPopUpNoArrow];
-        [menuButton_ setBordered:NO];
-        [menuButton_ addItemWithTitle:@""];
-        NSMenuItem *item = [menuButton_ itemAtIndex:0];
-        [self setImagesForActionItem:item];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(popupWillOpen:)
-                                                     name:NSPopUpButtonWillPopUpNotification
-                                                   object:menuButton_];
+        menuButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 14, 14)];
+        menuButton_.bordered = NO;
+        menuButton_.image = [NSImage imageNamed:@"Hamburger"];
+        menuButton_.imagePosition = NSImageOnly;
+        menuButton_.target = self;
+        menuButton_.action = @selector(openMenu:);
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(modifierShortcutDidChange:)
                                                      name:kPSMModifierChangedNotification
                                                    object:nil];
-        [menuButton_ addItemWithTitle:@"Foo"];
 
-        menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.frame.size.width + 6,
-                                       (frame.size.height - menuButton_.frame.size.height) / 2 + 1,
-                                       menuButton_.frame.size.width,
-                                       menuButton_.frame.size.height);
+        menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.image.size.width - 6,
+                                       (frame.size.height - menuButton_.image.size.height) / 2,
+                                       menuButton_.image.size.width,
+                                       menuButton_.image.size.height);
         [menuButton_ setAutoresizingMask:NSViewMinXMargin];
         [self addSubview:menuButton_];
 
@@ -113,37 +108,14 @@ static const CGFloat kButtonSize = 17;
     return self;
 }
 
-- (void)setImagesForActionItem:(NSMenuItem *)item {
-    iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
-    CGFloat whiteLevel = 0;
-    switch (preferredStyle) {
-        case TAB_STYLE_LIGHT:
-            whiteLevel = 0.45;
-            break;
-        case TAB_STYLE_DARK:
-            whiteLevel = 0.45;
-            break;
-    }
-    NSColor *color = [NSColor colorWithCalibratedWhite:whiteLevel alpha:1];
-    NSImage *theImage = [[NSImage imageNamed:@"Hamburger"] imageWithColor:color];
-    [item setImage:theImage];
-}
-
 - (void)dealloc {
     [title_ release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
 
-- (void)popupWillOpen:(NSNotification *)notification
-{
-    if ([notification object] == menuButton_) {
-        NSMenu *menu = [delegate_ menu];
-        NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""] autorelease];
-        [menu insertItem:item atIndex:0];
-        [self setImagesForActionItem:item];
-        [menuButton_ setMenu:menu];
-    }
+- (void)openMenu:(id)sender {
+    [NSMenu popUpContextMenu:delegate_.menu withEvent:[NSApp currentEvent] forView:sender];
 }
 
 - (void)close:(id)sender
@@ -199,6 +171,24 @@ static const CGFloat kButtonSize = 17;
 {
     NSColor *tabColor = delegate_.tabColor;
     if (tabColor) {
+        CGFloat hue = tabColor.hueComponent;
+        CGFloat saturation = tabColor.saturationComponent;
+        CGFloat brightness = tabColor.brightnessComponent;
+        iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+        switch (preferredStyle) {
+            case TAB_STYLE_LIGHT:
+                tabColor = [NSColor colorWithCalibratedHue:hue
+                                                saturation:saturation * .5
+                                                brightness:MAX(0.7, brightness)
+                                                     alpha:1];
+                break;
+            case TAB_STYLE_DARK:
+                tabColor = [NSColor colorWithCalibratedHue:hue
+                                                saturation:saturation * .75
+                                                brightness:MIN(0.3, brightness)
+                                                     alpha:1];
+                break;
+        }
         if ([delegate_ sessionTitleViewIsFirstResponder]) {
             [tabColor set];
         } else {

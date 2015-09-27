@@ -2398,7 +2398,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
                                                               suffix:@""
                                                     workingDirectory:workingDirectory
-                                                charsTakenFromPrefix:&charsTakenFromPrefix];
+                                                charsTakenFromPrefix:&charsTakenFromPrefix
+                                                      trimWhitespace:YES];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
         if ([_textview openSemanticHistoryPath:filename
@@ -4805,10 +4806,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                     data = [_terminal.output keyDelete];
                     break;
                 case NSHomeFunctionKey:
-                    data = [_terminal.output keyHome:modflag];
+                    data = [_terminal.output keyHome:modflag screenlikeTerminal:self.isTmuxClient];
                     break;
                 case NSEndFunctionKey:
-                    data = [_terminal.output keyEnd:modflag];
+                    data = [_terminal.output keyEnd:modflag screenlikeTerminal:self.isTmuxClient];
                     break;
                 case NSPageUpFunctionKey:
                     data = [_terminal.output keyPageUp:modflag];
@@ -6596,7 +6597,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
                                      cappedAtSize:-1
-                                continuationChars:nil];
+                                continuationChars:nil
+                                           coords:nil];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];

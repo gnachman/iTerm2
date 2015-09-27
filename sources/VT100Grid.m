@@ -1693,7 +1693,7 @@ static NSString *const kGridSizeKey = @"Size";
 - (void)clearLineData:(NSMutableData *)line {
     int length = (int)([line length] / sizeof(screen_char_t));
     // Clear length+1 so that continuation is set properly
-    [self clearScreenChars:[line mutableBytes] inRange:VT100GridRangeMake(0, length + 1)];
+    [self clearScreenChars:[line mutableBytes] inRange:VT100GridRangeMake(0, length)];
     screen_char_t *chars = (screen_char_t *)[line mutableBytes];
     int width = [line length] / sizeof(screen_char_t) - 1;
     chars[width].code = EOL_HARD;
