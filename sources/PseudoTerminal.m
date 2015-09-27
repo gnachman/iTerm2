@@ -714,7 +714,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 #if ENABLE_SHORTCUT_ACCESSORY
     [_shortcutAccessoryViewController release];
 #endif
+    [_didEnterLionFullscreen release];
     [super dealloc];
+}
+
++ (BOOL)useElCapitanFullScreenLogic {
+    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
 }
 
 - (BOOL)tabBarVisibleOnTop {
@@ -1950,6 +1955,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS]) {
         desiredColumns_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] intValue];
     }
+    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
+    NSRect rect;
+    rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
+    rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+    rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+    rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+
+    // 10.11 starts you off with a tiny little frame. I don't know why they do
+    // that, but this fixes it.
+    if ([[self class] useElCapitanFullScreenLogic] &&
+        windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        [[self window] setFrame:rect display:YES];
+    }
+
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary *viewMap = nil;
         if (sessions) {
@@ -1966,17 +1985,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
-    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     if (windowType == WINDOW_TYPE_NORMAL ||
         windowType == WINDOW_TYPE_NO_TITLE_BAR) {
         // The window may have changed size while adding tab bars, etc.
-        NSRect rect;
-        rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
-        rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
         // TODO: for window type top, set width to screen width.
-        rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-        rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
-
         [[self window] setFrame:rect display:YES];
     }
 
@@ -3020,6 +3032,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
+- (BOOL)togglingLionFullScreen {
+    return togglingLionFullScreen_;
+}
+
 - (IBAction)toggleFullScreenMode:(id)sender
 {
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
@@ -3367,6 +3383,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     [self saveTmuxWindowOrigins];
     [self.window makeFirstResponder:self.currentSession.textview];
+    if (_didEnterLionFullscreen) {
+        _didEnterLionFullscreen(self);
+        [_didEnterLionFullscreen release];
+        _didEnterLionFullscreen = nil;
+    }
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification

@@ -35,6 +35,14 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
   PTYWindowDelegateProtocol,
   WindowControllerInterface>
 
+// Called when entering fullscreen has finished.
+// Used to make restoring fullscreen windows work on 10.11.
+@property(nonatomic, copy) void (^didEnterLionFullscreen)(PseudoTerminal *);
+
+// Is this window in the process of becoming fullscreen?
+// Used to make restoring fullscreen windows work on 10.11.
+@property(nonatomic, readonly) BOOL togglingLionFullScreen;
+
 // Up to one window may be the hotkey window, which is toggled with the system-wide
 // hotkey.
 @property(nonatomic, assign) BOOL isHotKeyWindow;
