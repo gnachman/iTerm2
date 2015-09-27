@@ -201,11 +201,6 @@ static const int kDragThreshold = 3;
     // Size of the documentVisibleRect when the badge was set.
     NSSize _badgeDocumentVisibleRectSize;
 
-    // For focus follows mouse. This flag remembers if the cursor entered this view while the app
-    // was inactive. If it's set when the app becomes active, then make this view the first
-    // responder.
-    BOOL _makeFirstResponderWhenAppBecomesActive;
-
     iTermIndicatorsHelper *_indicatorsHelper;
 
     // Show a background indicator when in broadcast input mode
@@ -279,10 +274,6 @@ static const int kDragThreshold = 3;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(hostnameLookupSucceeded:)
                                                      name:kHostnameLookupSucceeded
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(applicationDidBecomeActive:)
-                                                     name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
 
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
@@ -1754,7 +1745,6 @@ static const int kDragThreshold = 3;
 }
 
 - (void)mouseExited:(NSEvent *)event {
-    _makeFirstResponderWhenAppBecomesActive = NO;
     [self updateUnderlinedURLs:event];
 }
 
@@ -1772,13 +1762,11 @@ static const int kDragThreshold = 3;
         } else if ([[[NSApp keyWindow] windowController] respondsToSelector:@selector(disableFocusFollowsMouse)]) {
             obj = [[NSApp keyWindow] windowController];
         }
-        if (![obj disableFocusFollowsMouse]) {
+        if ([NSApp isActive] && ![obj disableFocusFollowsMouse]) {
             [[self window] makeKeyWindow];
         }
         if ([self isInKeyWindow]) {
             [_delegate textViewDidBecomeFirstResponder];
-        } else {
-            _makeFirstResponderWhenAppBecomesActive = YES;
         }
     }
 }
@@ -5584,15 +5572,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         _numTouches = 0;
     }
-}
-
-- (void)applicationDidBecomeActive:(NSNotification *)notification {
-    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        if (_makeFirstResponderWhenAppBecomesActive) {
-            [[self window] makeFirstResponder:self];
-        }
-    }
-    _makeFirstResponderWhenAppBecomesActive = NO;
 }
 
 - (void)_settingsChanged:(NSNotification *)notification

@@ -1248,8 +1248,7 @@ static BOOL hasBecomeActive = NO;
                                               forKey:@"Secure Input"];
 }
 
-- (void)applicationDidBecomeActive:(NSNotification *)aNotification
-{
+- (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     hasBecomeActive = YES;
     if (secureInputDesired_) {
         if (EnableSecureEventInput() != noErr) {
@@ -1258,6 +1257,26 @@ static BOOL hasBecomeActive = NO;
     }
     // Set the state of the control to the new true state.
     [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
+
+    // If focus follows mouse is on, find the textview under the cursor and make it first responder.
+    // Make its window key.
+    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+        NSRect mouseRect = {
+            .origin = [NSEvent mouseLocation],
+            .size = { 0, 0 }
+        };
+        for (NSWindow *window in [NSApp orderedWindows]) {
+            NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
+            if ([window isKindOfClass:[PTYWindow class]]) {
+                NSView *view = [window.contentView hitTest:pointInWindow];
+                if ([view isKindOfClass:[PTYTextView class]]) {
+                    [window makeKeyAndOrderFront:nil];
+                    [window makeFirstResponder:view];
+                    break;
+                }
+            }
+        }
+    }
 }
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification

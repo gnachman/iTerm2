@@ -1,5 +1,3 @@
-// -*- mode:objc -*-
-// $Id: iTermApplicationDelegate.h,v 1.21 2006-11-21 19:24:29 yfabian Exp $
 /*
  **  iTermApplicationDelegate.h
  **
