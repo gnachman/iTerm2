@@ -26,6 +26,7 @@
  */
 
 #import "DebugLogging.h"
+#import "NSData+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"
@@ -527,18 +528,8 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSString *)stringByBase64DecodingStringWithEncoding:(NSStringEncoding)encoding {
-    const char *buffer = [self UTF8String];
-    int destLength = apr_base64_decode_len(buffer);
-    if (destLength <= 0) {
-        return nil;
-    }
-    
-    NSMutableData *data = [NSMutableData dataWithLength:destLength];
-    char *decodedBuffer = [data mutableBytes];
-    int resultLength = apr_base64_decode(decodedBuffer, buffer);
-    return [[[NSString alloc] initWithBytes:decodedBuffer
-                                     length:resultLength
-                                   encoding:encoding] autorelease];
+    return [[[NSString alloc] initWithData:[NSData dataWithBase64EncodedString:self]
+                                  encoding:encoding] autorelease];
 }
 
 - (NSString *)stringByTrimmingTrailingWhitespace {
