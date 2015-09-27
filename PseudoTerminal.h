@@ -263,6 +263,14 @@ NSWindowDelegate,
     int desiredRows_, desiredColumns_;
 }
 
+// Called when entering fullscreen has finished.
+// Used to make restoring fullscreen windows work on 10.11.
+@property(nonatomic, copy) void (^didEnterLionFullscreen)(PseudoTerminal *);
+
+// Is this window in the process of becoming fullscreen?
+// Used to make restoring fullscreen windows work on 10.11.
+@property(nonatomic, readonly) BOOL togglingLionFullScreen;
+
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
                   screenFrames:(NSArray *)frames;
 

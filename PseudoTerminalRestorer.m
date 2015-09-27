@@ -8,11 +8,13 @@
 // This ifndef affects only the Leopard configuration.
 
 #import "PseudoTerminalRestorer.h"
+
 #import "PseudoTerminal.h"
 #import "iTermController.h"
 
 static NSMutableArray *queuedBlocks;
 typedef void (^VoidBlock)(void);
+static BOOL gWaitingForFullScreen;
 
 @implementation PseudoTerminalRestorer
 
@@ -20,6 +22,39 @@ typedef void (^VoidBlock)(void);
 + (BOOL)willOpenWindows
 {
     return queuedBlocks.count > 0;
+}
+
++ (BOOL)useElCapitanFullScreenLogic {
+    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
+}
+
+// The windows must be open one iteration of mainloop after the application
+// finishes launching. Otherwise, on OS 10.7, non-lion-style fullscreen windows
+// open but the menu bar stays up.
++ (void)runQueuedBlocks_10_10_andEarlier {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0),
+                   dispatch_get_current_queue(),
+                   ^{
+                       for (VoidBlock block in queuedBlocks) {
+                           block();
+                       }
+                       [queuedBlocks release];
+                       queuedBlocks = nil;
+                   });
+}
+
+// 10.11 wants this to happen right away.
++ (void)runQueuedBlocks_10_11_andLater {
+    while (queuedBlocks.count) {
+        if (gWaitingForFullScreen) {
+            return;
+        }
+        VoidBlock block = [queuedBlocks firstObject];
+        block();
+        [queuedBlocks removeObjectAtIndex:0];
+    }
+    [queuedBlocks release];
+    queuedBlocks = nil;
 }
 
 // The windows must be open one iteration of mainloop after the application
@@ -74,8 +109,27 @@ typedef void (^VoidBlock)(void);
                                afterDelay:0];
                     break;
             }
-            completionHandler([term window], nil);
-            [[iTermController sharedInstance] addInTerminals:term];
+
+            if (![self useElCapitanFullScreenLogic] || !term.togglingLionFullScreen) {
+                // In 10.10 or earlier, or 10.11 and a nonfullscreen window.
+                completionHandler([term window], nil);
+                [[iTermController sharedInstance] addInTerminals:term];
+            } else {
+                // 10.11 and this is a fullscreen window.
+                // Keep any more blocks from running until this window finishes entering fullscreen.
+                gWaitingForFullScreen = YES;
+
+                [completionHandler retain];
+                term.didEnterLionFullscreen = ^(PseudoTerminal *theTerm) {
+                    // Finished entering fullscreen. Run the completion handler
+                    // and open more windows.
+                    completionHandler([theTerm window], nil);
+                    [completionHandler release];
+                    [[iTermController sharedInstance] addInTerminals:term];
+                    gWaitingForFullScreen = NO;
+                    [PseudoTerminalRestorer runQueuedBlocks];
+                };
+            }
         };
         [queuedBlocks addObject:[[theBlock copy] autorelease]];
     } else {
