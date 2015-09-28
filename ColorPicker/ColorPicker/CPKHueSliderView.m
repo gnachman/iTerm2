@@ -1,4 +1,5 @@
 #import "CPKHueSliderView.h"
+#import "NSColor+CPK.h"
 #import "NSObject+CPK.h"
 
 @interface CPKHueSliderView ()
@@ -15,10 +16,10 @@
         NSMutableArray *colors = [NSMutableArray array];
         int parts = 20;
         for (int i = 0; i <= parts; i++) {
-            [colors addObject:[NSColor colorWithHue:(double)i / (double)parts
-                                         saturation:1
-                                         brightness:1
-                                              alpha:1]];
+            [colors addObject:[NSColor cpk_colorWithHue:(double)i / (double)parts
+                                             saturation:1
+                                             brightness:1
+                                                  alpha:1]];
         }
         self.gradient = [[NSGradient alloc] initWithColors:colors];
     }

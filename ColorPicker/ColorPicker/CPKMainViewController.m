@@ -6,6 +6,7 @@
 #import "CPKFavoritesView.h"
 #import "CPKFlippedView.h"
 #import "CPKRGBView.h"
+#import "NSColor+CPK.h"
 
 const CGFloat kDesiredWidth = 220;
 const CGFloat kFavoritesHeight = 100;
@@ -33,7 +34,7 @@ static const CGFloat kBottomMargin = 8;
     if (self) {
         _block = [block copy];
         if (!color) {
-            color = [NSColor colorWithRed:0 green:0 blue:0 alpha:0];
+            color = [NSColor cpk_colorWithRed:0 green:0 blue:0 alpha:0];
         }
         if (!alphaAllowed) {
             color = [color colorWithAlphaComponent:1];

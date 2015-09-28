@@ -1,4 +1,5 @@
 #import "CPKEyedropperView.h"
+#import "NSColor+CPK.h"
 
 @implementation CPKEyedropperView
 
@@ -69,7 +70,7 @@
     expandedFrame.size.height += yMargin * 2;
 
     path = [NSBezierPath bezierPathWithRoundedRect:expandedFrame xRadius:3 yRadius:3];
-    [[NSColor colorWithWhite:0 alpha:0.8] set];
+    [[NSColor cpk_colorWithWhite:0 alpha:0.8] set];
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
     [path fill];
 

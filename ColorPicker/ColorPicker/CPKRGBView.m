@@ -2,6 +2,7 @@
 #import "CPKHSBGradientView.h"
 #import "CPKHueSliderView.h"
 #import "CPKAlphaSliderView.h"
+#import "NSColor+CPK.h"
 
 static const CGFloat kLeftMargin = 8;
 static const CGFloat kRightMargin = 8;
@@ -173,10 +174,10 @@ static const CGFloat kMarginBetweenSliders = 8;
 }
 
 - (void)setHue:(CGFloat)newHue {
-    _selectedColor = [NSColor colorWithHue:newHue
-                                saturation:self.selectedColor.saturationComponent
-                                brightness:self.selectedColor.brightnessComponent
-                                     alpha:self.selectedColor.alphaComponent];
+    _selectedColor = [NSColor cpk_colorWithHue:newHue
+                                    saturation:self.selectedColor.saturationComponent
+                                    brightness:self.selectedColor.brightnessComponent
+                                         alpha:self.selectedColor.alphaComponent];
     self.alphaSliderView.color = _selectedColor;
     [self.alphaSliderView setNeedsDisplay:YES];
     self.gradientView.hue = newHue;
@@ -188,10 +189,10 @@ static const CGFloat kMarginBetweenSliders = 8;
 }
 
 - (void)setAlpha:(CGFloat)newAlpha {
-    _selectedColor = [NSColor colorWithHue:self.selectedColor.hueComponent
-                                saturation:self.selectedColor.saturationComponent
-                                brightness:self.selectedColor.brightnessComponent
-                                     alpha:newAlpha];
+    _selectedColor = [NSColor cpk_colorWithHue:self.selectedColor.hueComponent
+                                    saturation:self.selectedColor.saturationComponent
+                                    brightness:self.selectedColor.brightnessComponent
+                                         alpha:newAlpha];
     [self updateTextFieldsForColor:self.selectedColor];
     self.block(self.selectedColor);
 }
@@ -268,37 +269,37 @@ static const CGFloat kMarginBetweenSliders = 8;
         }
     } else if (textField == self.redTextField) {
         if (isInteger) {
-            self.selectedColor = [NSColor colorWithRed:i / 255.0
-                                                 green:_selectedColor.greenComponent
-                                                  blue:_selectedColor.blueComponent
-                                                 alpha:_selectedColor.alphaComponent];
+            self.selectedColor = [NSColor cpk_colorWithRed:i / 255.0
+                                                     green:_selectedColor.greenComponent
+                                                      blue:_selectedColor.blueComponent
+                                                     alpha:_selectedColor.alphaComponent];
         } else {
             self.selectedColor = _selectedColor;
         }
     } else if (textField == self.greenTextField) {
         if (isInteger) {
-            self.selectedColor = [NSColor colorWithRed:_selectedColor.redComponent
-                                                 green:i / 255.0
-                                                  blue:_selectedColor.blueComponent
-                                                 alpha:_selectedColor.alphaComponent];
+            self.selectedColor = [NSColor cpk_colorWithRed:_selectedColor.redComponent
+                                                     green:i / 255.0
+                                                      blue:_selectedColor.blueComponent
+                                                     alpha:_selectedColor.alphaComponent];
         } else {
             self.selectedColor = _selectedColor;
         }
     } else if (textField == self.blueTextField) {
         if (isInteger) {
-            self.selectedColor = [NSColor colorWithRed:_selectedColor.redComponent
-                                                 green:_selectedColor.greenComponent
-                                                  blue:i / 255.0
-                                                 alpha:_selectedColor.alphaComponent];
+            self.selectedColor = [NSColor cpk_colorWithRed:_selectedColor.redComponent
+                                                     green:_selectedColor.greenComponent
+                                                      blue:i / 255.0
+                                                     alpha:_selectedColor.alphaComponent];
         } else {
             self.selectedColor = _selectedColor;
         }
     } else if (self.alphaAllowed && textField == self.alphaTextField) {
         if (isInteger) {
-            self.selectedColor = [NSColor colorWithRed:_selectedColor.redComponent
-                                                 green:_selectedColor.greenComponent
-                                                  blue:_selectedColor.blueComponent
-                                                 alpha:i / 255.0];
+            self.selectedColor = [NSColor cpk_colorWithRed:_selectedColor.redComponent
+                                                     green:_selectedColor.greenComponent
+                                                      blue:_selectedColor.blueComponent
+                                                     alpha:i / 255.0];
         } else {
             self.selectedColor = _selectedColor;
         }
@@ -329,10 +330,10 @@ static const CGFloat kMarginBetweenSliders = 8;
         return nil;
     }
 
-    return [NSColor colorWithRed:r / 255.0
-                           green:g / 255.0
-                            blue:b / 255.0
-                           alpha:_selectedColor.alphaComponent];
+    return [NSColor cpk_colorWithRed:r / 255.0
+                               green:g / 255.0
+                                blue:b / 255.0
+                               alpha:_selectedColor.alphaComponent];
 }
 
 @end
