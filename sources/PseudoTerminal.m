@@ -2536,17 +2536,28 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
-            PtyLog(@"Do nothing because we don't want to piss off El Capitan.");
+            if ([self updateSessionScrollbars]) {
+                PtyLog(@"Fitting tabs to window because scrollbars changed.");
+                [self fitTabsToWindow];
+            }
             break;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
+                // This is necessary when restoring a traditional fullscreen window while scrollbars are
+                // forced on systemwide.
+                BOOL changedScrollBars = [self updateSessionScrollbars];
+                NSRect originalFrame = self.window.frame;
                 PtyLog(@"set window to screen's frame");
                 if (windowType_ == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
                     [[self window] setFrame:[self traditionalFullScreenFrameForScreen:screen] display:YES];
                 } else {
                     [[self window] setFrame:[screen frame] display:YES];
+                }
+                if (changedScrollBars && NSEqualSizes(self.window.frame.size, originalFrame.size)) {
+                    DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
+                    [self fitTabsToWindow];
                 }
             }
             break;
@@ -3082,14 +3093,25 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)updateSessionScrollbars
-{
+// Returns YES if a change was made.
+- (BOOL)updateSessionScrollbars {
+    BOOL changed = NO;
     for (PTYSession *aSession in [self allSessions]) {
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
+        if (aSession.scrollview.hasVerticalScroller != hasScrollbar) {
+            changed = YES;
+        }
         [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
-        [[aSession scrollview] setScrollerStyle:[self scrollerStyle]];
+        
+        NSScrollerStyle style = [self scrollerStyle];
+        if (aSession.scrollview.scrollerStyle != style) {
+            changed = YES;
+        }
+        [[aSession scrollview] setScrollerStyle:style];
         [[aSession textview] updateScrollerForBackgroundColor];
     }
+    
+    return changed;
 }
 
 - (NSUInteger)styleMask {
