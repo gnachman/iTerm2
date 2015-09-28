@@ -1781,6 +1781,12 @@ static const int kBadgeMargin = 4;
               overrideColor:(NSColor *)overrideColor
                     context:(CGContextRef)ctx
             backgroundColor:(NSColor *)backgroundColor {
+    // Offset the point by the vertical spacing. The point is derived from the box cursor's frame,
+    // which is different than the top of the row (the cursor doesn't get taller as vertical spacing
+    // is added, or shorter as it is removed). Text still wants to be rendered relative to the top
+    // of the row including spacing, though.
+    point.y -= (_cellSize.height - _cellSizeWithoutSpacing.height);
+
     CRunStorage *storage = [CRunStorage cRunStorageWithCapacity:1];
     // Draw the characters.
     CRun *run = [self constructTextRuns:&screenChar
