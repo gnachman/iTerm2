@@ -42,7 +42,7 @@
 //   - Store an unlimited or a fixed number of wrapped lines
 // The implementation uses an array of small blocks that hold a few kb of unwrapped lines. Each
 // block caches some information to speed up repeated lookups with the same screen width.
-@interface LineBuffer : NSObject <NSCopying> 
+@interface LineBuffer : NSObject <NSCopying>
 
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 

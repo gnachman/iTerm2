@@ -2434,10 +2434,16 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 - (void)scrollScreenIntoHistory {
     // Scroll the top lines of the screen into history, up to and including the last non-
     // empty line.
+    LineBuffer *lineBuffer;
+    if (currentGrid_ == altGrid_ && !self.saveToScrollbackInAlternateScreen) {
+        lineBuffer = nil;
+    } else {
+        lineBuffer = linebuffer_;
+    }
     const int n = [currentGrid_ numberOfNonEmptyLines];
     for (int i = 0; i < n; i++) {
         [self incrementOverflowBy:
-            [currentGrid_ scrollWholeScreenUpIntoLineBuffer:linebuffer_
+            [currentGrid_ scrollWholeScreenUpIntoLineBuffer:lineBuffer
                                         unlimitedScrollback:unlimitedScrollback_]];
     }
 }
