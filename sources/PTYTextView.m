@@ -2275,16 +2275,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
 
-    if (_mouseDownOnImage && dragThresholdMet) {
-        [self _dragImage:_imageBeingClickedOn forEvent:event];
-    } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
-        DLog(@"drag and drop a selection");
-        // Drag and drop a selection
-        NSString *theSelectedText = [self selectedText];
-        if ([theSelectedText length] > 0) {
-            [self _dragText:theSelectedText forEvent:event];
-            DLog(@"Mouse drag. selection=%@", _selection);
-            return;
+    // It's ok to drag if Cmd is not required to be pressed or Cmd is pressed.
+    BOOL okToDrag = (![iTermAdvancedSettingsModel requireCmdForDraggingText] ||
+                     ([event modifierFlags] & NSCommandKeyMask));
+    if (okToDrag) {
+        if (_mouseDownOnImage && dragThresholdMet) {
+            [self _dragImage:_imageBeingClickedOn forEvent:event];
+        } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
+            DLog(@"drag and drop a selection");
+            // Drag and drop a selection
+            NSString *theSelectedText = [self selectedText];
+            if ([theSelectedText length] > 0) {
+                [self _dragText:theSelectedText forEvent:event];
+                DLog(@"Mouse drag. selection=%@", _selection);
+                return;
+            }
         }
     }
 
