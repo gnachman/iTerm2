@@ -47,5 +47,9 @@
 - (void)detectUserScroll;
 - (BOOL)isLegacyScroller;
 
+// Accumulate vertical scroll from the event. If it's enough to scroll one or more lines, deduct
+// that from the total and return the number of rows to scroll by. The result will always be an
+// integer.
+- (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent;
 
 @end

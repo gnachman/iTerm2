@@ -32,6 +32,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface PTYScroller()
+// Total number of rows scrolled by. Will always be in (-1, 1).
 @property(nonatomic) CGFloat accumulatedDeltaY;
 @end
 
@@ -131,11 +132,7 @@ static CGFloat RoundTowardZero(CGFloat value) {
     }
 }
 
-- (void)scrollWheel:(NSEvent *)theEvent {
-    NSRect scrollRect;
-
-    scrollRect = [self documentVisibleRect];
-
+- (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent {
     CGFloat delta = theEvent.scrollingDeltaY;
     if (theEvent.hasPreciseScrollingDeltas) {
         delta /= self.verticalLineScroll;
@@ -143,12 +140,21 @@ static CGFloat RoundTowardZero(CGFloat value) {
 
     PTYScroller *verticalScroller = (PTYScroller *)[self verticalScroller];
     verticalScroller.accumulatedDeltaY += delta;
-
+    CGFloat amount = 0;
     if (fabs(verticalScroller.accumulatedDeltaY) >= 1) {
-        CGFloat roundedAccumulatedDelta = RoundTowardZero(verticalScroller.accumulatedDeltaY);
-        scrollRect.origin.y -= roundedAccumulatedDelta * [self verticalLineScroll];
-        verticalScroller.accumulatedDeltaY = verticalScroller.accumulatedDeltaY - roundedAccumulatedDelta;
+        amount = RoundTowardZero(verticalScroller.accumulatedDeltaY);
+        verticalScroller.accumulatedDeltaY = verticalScroller.accumulatedDeltaY - amount;
     }
+    return amount;
+}
+
+- (void)scrollWheel:(NSEvent *)theEvent {
+    NSRect scrollRect;
+
+    scrollRect = [self documentVisibleRect];
+
+    CGFloat amount = [self accumulateVerticalScrollFromEvent:theEvent];
+    scrollRect.origin.y -= amount * [self verticalLineScroll];
     [[self documentView] scrollRectToVisible:scrollRect];
 
     [self detectUserScroll];

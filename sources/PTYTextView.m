@@ -1574,8 +1574,11 @@ static const int kDragThreshold = 3;
 
     if ([self scrollWheelShouldSendArrowForEvent:event at:point]) {
         DLog(@"Scroll wheel sending arrow key");
+
+        PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
+        CGFloat deltaY = [scrollView accumulateVerticalScrollFromEvent:event];
+
         NSData *arrowKeyData = nil;
-        CGFloat deltaY = [event deltaY];
         if (deltaY > 0) {
             arrowKeyData = [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
         } else if (deltaY < 0) {
