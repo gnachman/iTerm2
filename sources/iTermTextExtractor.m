@@ -535,7 +535,8 @@ static const int kNumCharsToSearchForDivider = 8;
                                        // Is a backslash at the right edge of a window.
                                        // no-op
                                    } else {
-                                       NSString* string = CharToStr(theChar.code, theChar.complexChar);
+                                       NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @""
+                                       ;
                                        [joinedLines insertString:string atIndex:0];
                                        for (int i = 0; i < [string length]; i++) {
                                          [coords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
@@ -684,7 +685,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                   [continuationChars addIndex:[self indexForCoord:coord width:width]];
                               } else {
                                   // Normal character.
-                                  appendString(ScreenCharToStr(&theChar), theChar, coord);
+                                  appendString(ScreenCharToStr(&theChar) ?: @"", theChar, coord);
                               }
                           }
                           return [result length] >= maxBytes;

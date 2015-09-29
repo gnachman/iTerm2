@@ -179,7 +179,10 @@ int ExpandScreenChar(screen_char_t* sct, unichar* dest) {
         *dest = sct->code;
         return 1;
     }
-    assert(value);
+    if (!value) {
+        // This can happen if state restoration goes awry.
+        return 0;
+    }
     [value getCharacters:dest];
     return (int)[value length];
 }
