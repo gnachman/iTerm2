@@ -83,6 +83,7 @@
 
 - (void)willReloadProfile {
     [self removeNamelessHosts];
+    [self closeTriggersSheet:nil];
 }
 
 - (void)reloadProfile {
