@@ -1,7 +1,7 @@
 #import "CPKPopover.h"
 #import "CPKMainViewController.h"
 
-@interface CPKPopover()
+@interface CPKPopover() <NSPopoverDelegate>
 @property(nonatomic) CPKMainViewController *mainViewController;
 @end
 
@@ -23,11 +23,21 @@
     [popover showRelativeToRect:positioningRect
                          ofView:positioningView
                   preferredEdge:preferredEdge];
+    // See note in class comment.
+    popover.delegate = popover;
     return popover;
 }
 
 - (NSColor *)selectedColor {
     return self.mainViewController.selectedColor;
+}
+
+#pragma mark - NSPopoverDelegate
+
+- (void)popoverWillClose:(NSNotification *)notification {
+    if (self.willClose) {
+        self.willClose();
+    }
 }
 
 @end

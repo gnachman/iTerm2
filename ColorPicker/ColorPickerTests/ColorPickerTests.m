@@ -36,7 +36,7 @@ const NSInteger kMaxValue = 10;
 }
 
 - (NSArray *)randomPointsWithSeed:(NSInteger)seed {
-    srand(seed);
+    srand((unsigned int)seed);
     const NSInteger kMaxPoints = 50;
     NSInteger numPoints = 1 + abs(rand()) % kMaxPoints;
     NSMutableArray *points = [NSMutableArray array];
