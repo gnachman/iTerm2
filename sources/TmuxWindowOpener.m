@@ -311,7 +311,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
                 DLog(@"Use original window %@", term);
             }
             if (!term) {
-                term = [[iTermController sharedInstance] openWindow];
+                term = [[iTermController sharedInstance] openWindowUsingProfile:[PTYTab tmuxBookmark]];
                 DLog(@"Opened a new window %@", term);
             }
         }

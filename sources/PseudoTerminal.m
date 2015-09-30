@@ -308,6 +308,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     BOOL _haveDelayedEnterFullScreenMode;
 
     BOOL _parameterPanelCanceled;
+
+    // Number of tabs since last change.
+    NSInteger _previousNumberOfTabs;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -4057,6 +4060,18 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self updateTabColors];
     [self _updateTabObjectCounts];
 
+    if (_contentView.tabView.numberOfTabViewItems == 1 &&
+        _previousNumberOfTabs == 0 &&
+        [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT inProfile:self.currentSession.profile] &&
+        !_contentView.shouldShowToolbelt) {
+        // This is the first tab of a new window. Open the toolbelt if that's what the profile
+        // wants. You can't open the toolbelt until there is at least one session, so that's why
+        // it's done here instead of in finishInitializationWithSmartLayout.
+        [self toggleToolbeltVisibility:self];
+    }
+
+    _previousNumberOfTabs = _contentView.tabView.numberOfTabViewItems;
+
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
     [self invalidateRestorableState];
 }
@@ -7110,12 +7125,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             [self insertSession:object atIndex:[_contentView.tabView numberOfTabViewItems]];
         } else {
             [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];
-        }
-        if ([self numberOfTabs] == 1 &&
-            [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT
-                                      inProfile:object.profile] &&
-            !_contentView.shouldShowToolbelt) {
-            [self toggleToolbeltVisibility:self];
         }
     }
     [[self currentTab] numberOfSessionsDidChange];
