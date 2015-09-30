@@ -144,6 +144,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         [self defineControl:colorWell key:key type:kPreferenceInfoTypeColorWell];
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
+        colorWell.continuous = YES;
     }
 
     PreferenceInfo *info;

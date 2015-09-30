@@ -16,9 +16,8 @@
 #import "GrowlTrigger.h"
 #import "HighlightTrigger.h"
 #import "ITAddressBookMgr.h"
+#import "iTermColorWell.h"
 #import "iTermNoColorAccessoryButton.h"
-#import "iTermTwoColorWellsCell.h"
-#import "iTermTriggerTableView.h"
 #import "MarkTrigger.h"
 #import "NSColor+iTerm.h"
 #import "PasswordTrigger.h"
@@ -28,7 +27,16 @@
 #import "StopTrigger.h"
 #import "Trigger.h"
 
-static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerControllerPasteboardType";
+static NSString *const kiTermTriggerControllerPasteboardType =
+    @"kiTermTriggerControllerPasteboardType";
+
+static NSString *const kRegexColumnIdentifier = @"kRegexColumnIdentifier";
+static NSString *const kParameterColumnIdentifier = @"kParameterColumnIdentifier";
+static NSString *const kTextColorWellIdentifier = @"kTextColorWellIdentifier";
+static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellIdentifier";
+
+@interface TriggerController() <NSTextFieldDelegate>
+@end
 
 @implementation TriggerController {
     NSArray *_triggers;
@@ -37,7 +45,6 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
     IBOutlet NSTableColumn *_partialLineColumn;
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSTableColumn *_parametersColumn;
-    int _currentWellNumber;
 }
 
 - (id)init {
@@ -197,83 +204,27 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
     [_tableView reloadData];
 }
 
+- (NSTextField *)labelWithString:(NSString *)string origin:(NSPoint)origin {
+    NSTextField *textField = [[[NSTextField alloc] initWithFrame:NSMakeRect(origin.x,
+                                                                            origin.y,
+                                                                            0,
+                                                                            0)] autorelease];
+    [textField setBezeled:NO];
+    [textField setDrawsBackground:NO];
+    [textField setEditable:NO];
+    [textField setSelectable:NO];
+    textField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    textField.textColor = [NSColor blackColor];
+    textField.stringValue = string;
+    [textField sizeToFit];
+
+    return textField;
+}
+
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
     return [[self triggerDictionariesForCurrentProfile] count];
-}
-
-- (id)tableView:(NSTableView *)aTableView
-          objectValueForTableColumn:(NSTableColumn *)aTableColumn
-            row:(NSInteger)rowIndex {
-    if (rowIndex >= [self numberOfRowsInTableView:aTableView]) {
-        // Sanity check.
-        return nil;
-    }
-    NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][rowIndex];
-    if (aTableColumn == _regexColumn) {
-        return triggerDictionary[kTriggerRegexKey];
-    } else if (aTableColumn == _partialLineColumn) {
-        return triggerDictionary[kTriggerPartialLineKey];
-    } else if (aTableColumn == _parametersColumn) {
-        NSString *action = triggerDictionary[kTriggerActionKey];
-        Trigger *triggerObj = [self triggerWithAction:action];
-        if ([triggerObj takesParameter]) {
-            id param = triggerDictionary[kTriggerParameterKey];
-            if ([triggerObj paramIsPopupButton]) {
-                if (!param) {
-                    // Force popup buttons to have the first item selected by default
-                    return @([triggerObj defaultIndex]);
-                } else {
-                    return @([triggerObj indexForObject:param]);
-                }
-            } else {
-                return param;
-            }
-        } else {
-            return @"";
-        }
-    } else {
-        NSString *action = triggerDictionary[kTriggerActionKey];
-        int theIndex = [self indexOfAction:action];
-        return @(theIndex);
-    }
-}
-
-- (void)tableView:(NSTableView *)aTableView
-   setObjectValue:(id)anObject
-   forTableColumn:(NSTableColumn *)aTableColumn
-              row:(NSInteger)rowIndex {
-    NSMutableDictionary *triggerDictionary = [[[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy] autorelease];
-
-    if (aTableColumn == _regexColumn) {
-        triggerDictionary[kTriggerRegexKey] = anObject;
-    } else if (aTableColumn == _partialLineColumn) {
-        triggerDictionary[kTriggerPartialLineKey] = anObject;
-    } else if (aTableColumn == _parametersColumn) {
-        Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
-        if ([triggerObj paramIsPopupButton]) {
-            id parameter = [triggerObj objectAtIndex:[anObject intValue]];
-            if (parameter) {
-                triggerDictionary[kTriggerParameterKey] = parameter;
-            } else {
-                [triggerDictionary removeObjectForKey:kTriggerParameterKey];
-            }
-        } else {
-            triggerDictionary[kTriggerParameterKey] = anObject;
-        }
-    } else {
-        // Action column
-        int index = [anObject intValue];
-        Trigger *theTrigger = _triggers[index];
-        triggerDictionary[kTriggerActionKey] = [theTrigger action];
-        [triggerDictionary removeObjectForKey:kTriggerParameterKey];
-        Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
-        if ([triggerObj paramIsPopupButton]) {
-            triggerDictionary[kTriggerParameterKey] = [triggerObj defaultPopupParameterObject];
-        }
-    }
-    [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
 }
 
 #pragma mark Drag/Drop
@@ -344,43 +295,99 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
     return NO;
 }
 
-- (NSCell *)tableView:(NSTableView *)tableView
-      dataCellForTableColumn:(NSTableColumn *)tableColumn
+- (NSView *)tableView:(NSTableView *)tableView
+   viewForTableColumn:(NSTableColumn *)tableColumn
                   row:(NSInteger)row {
+    NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][row];
     if (tableColumn == _actionColumn) {
-        NSPopUpButtonCell *cell =
-            [[[NSPopUpButtonCell alloc] initTextCell:[[_triggers[0] class] title] pullsDown:NO] autorelease];
+        NSPopUpButton *popUpButton = [[[NSPopUpButton alloc] init] autorelease];
+        [popUpButton setTitle:[[_triggers[0] class] title]];
+        popUpButton.bordered = NO;
         for (int i = 0; i < [self numberOfTriggers]; i++) {
-            [cell addItemWithTitle:[[_triggers[i] class] title]];
+            [popUpButton addItemWithTitle:[[_triggers[i] class] title]];
         }
+        NSString *action = triggerDictionary[kTriggerActionKey];
+        [popUpButton selectItemAtIndex:[self indexOfAction:action]];
+        popUpButton.target = self;
+        popUpButton.action = @selector(actionDidChange:);
 
-        [cell setBordered:NO];
-
-        return cell;
+        return popUpButton;
     } else if (tableColumn == _regexColumn) {
-        NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"regex"] autorelease];
-        [cell setEditable:YES];
-        return cell;
+        NSDictionary *triggerDictionary = [self triggerDictionariesForCurrentProfile][row];
+        NSTextField *textField =
+            [[[NSTextField alloc] initWithFrame:NSMakeRect(0,
+                                                           0,
+                                                           tableColumn.width,
+                                                           self.tableView.rowHeight)] autorelease];
+        textField.stringValue = triggerDictionary[kTriggerRegexKey] ?: @"";
+        textField.editable = YES;
+        textField.selectable = YES;
+        textField.bordered = NO;
+        textField.drawsBackground = NO;
+        textField.delegate = self;
+        textField.identifier = kRegexColumnIdentifier;
+
+        return textField;
     } else if (tableColumn == _partialLineColumn) {
-        NSButtonCell *cell = [[[NSButtonCell alloc] init] autorelease];
-        [cell setTitle:nil];
-        [cell setButtonType:NSSwitchButton];
-        return cell;
+        NSButton *checkbox = [[[NSButton alloc] initWithFrame:NSZeroRect] autorelease];
+        [checkbox sizeToFit];
+        [checkbox setButtonType:NSSwitchButton];
+        checkbox.title = @"";
+        checkbox.state = [triggerDictionary[kTriggerPartialLineKey] boolValue] ? NSOnState : NSOffState;
+        checkbox.target = self;
+        checkbox.action = @selector(instantDidChange:);
+        return checkbox;
     } else if (tableColumn == _parametersColumn) {
         NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
         Trigger *trigger = [self triggerWithAction:triggerDicts[row][kTriggerActionKey]];
         trigger.param = triggerDicts[row][kTriggerParameterKey];
         if ([trigger takesParameter]) {
             if ([trigger paramIsTwoColorWells]) {
-                iTermTwoColorWellsCell *cell = [[[iTermTwoColorWellsCell alloc] init] autorelease];
-                cell.textColor = [trigger textColor];
-                cell.backgroundColor = [trigger backgroundColor];
-                [cell setBordered:NO];
-                return cell;
+                NSView *container = [[[NSView alloc] initWithFrame:NSMakeRect(0,
+                                                                              0,
+                                                                              tableColumn.width,
+                                                                              _tableView.rowHeight)] autorelease];
+                CGFloat x = 4;
+                NSTextField *label = [self labelWithString:@"Text:" origin:NSMakePoint(x, 0)];
+                [container addSubview:label];
+                x += label.frame.size.width;
+                const CGFloat kWellWidth = 30;
+                iTermColorWell *well =
+                    [[[iTermColorWell alloc] initWithFrame:NSMakeRect(x,
+                                                                    0,
+                                                                    kWellWidth,
+                                                                    _tableView.rowHeight)] autorelease];
+                well.continuous = NO;
+                x += kWellWidth;
+                well.color = trigger.textColor;
+                [container addSubview:well];
+                well.target = self;
+                well.action = @selector(colorWellDidChange:);
+                well.identifier = kTextColorWellIdentifier;
+
+                x += 10;
+                label = [self labelWithString:@"Background:" origin:NSMakePoint(x, 0)];
+                [container addSubview:label];
+                x += label.frame.size.width;
+                well =
+                    [[[iTermColorWell alloc] initWithFrame:NSMakeRect(x,
+                                                                      0,
+                                                                      kWellWidth,
+                                                                      _tableView.rowHeight)] autorelease];
+                well.continuous = NO;
+                well.color = trigger.backgroundColor;
+                [container addSubview:well];
+                well.target = self;
+                well.action = @selector(colorWellDidChange:);
+                well.identifier = kBackgroundColorWellIdentifier;
+
+                return container;
             } else if ([trigger paramIsPopupButton]) {
-                NSPopUpButtonCell *cell = [[[NSPopUpButtonCell alloc] initTextCell:@""
-                                                                         pullsDown:NO] autorelease];
-                NSMenu *theMenu = [cell menu];
+                NSPopUpButton *popUpButton = [[[NSPopUpButton alloc] init] autorelease];
+                [popUpButton setTitle:@""];
+                popUpButton.bordered = NO;
+
+                NSMenu *theMenu = popUpButton.menu;
                 BOOL isFirst = YES;
                 for (NSDictionary *items in [trigger groupedMenuItemsForPopupButton]) {
                     if (!isFirst) {
@@ -397,45 +404,44 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
                         }
                     }
                 }
-                [cell setBordered:NO];
-                return cell;
+
+                id param = triggerDictionary[kTriggerParameterKey];
+                if (!param) {
+                    // Force popup buttons to have the first item selected by default
+                    [popUpButton selectItemAtIndex:trigger.defaultIndex];
+                } else {
+                    [popUpButton selectItemAtIndex:[trigger indexForObject:param]];
+                }
+                popUpButton.target = self;
+                popUpButton.action = @selector(parameterPopUpButtonDidChange:);
+
+                return popUpButton;
             } else {
                 // If not a popup button, then text by default.
-                NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
-                [cell setPlaceholderString:[trigger paramPlaceholder]];
-                [cell setEditable:YES];
-                return cell;
+                NSTextField *textField =
+                    [[[NSTextField alloc] initWithFrame:NSMakeRect(0,
+                                                                   0,
+                                                                   tableColumn.width,
+                                                                   self.tableView.rowHeight)] autorelease];
+                textField.stringValue = triggerDictionary[kTriggerParameterKey] ?: @"";
+                textField.editable = YES;
+                textField.selectable = YES;
+                textField.bordered = NO;
+                textField.drawsBackground = NO;
+                textField.delegate = self;
+                textField.identifier = kParameterColumnIdentifier;
+
+                return textField;
             }
         } else {
-            NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
-            [cell setPlaceholderString:@""];
-            [cell setEditable:NO];
-            return cell;
+            return [[NSView alloc] initWithFrame:NSZeroRect];
         }
     }
     return nil;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
-    _currentWellNumber = -1;
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
-}
-
-- (void)twoColorWellsCellDidOpenPickerForWellNumber:(int)wellNumber {
-    _currentWellNumber = wellNumber;
-    NSColor *currentColor = self.currentColor;
-    if (currentColor) {
-        [[NSColorPanel sharedColorPanel] setColor:self.currentColor];
-    }
-    [_tableView setNeedsDisplay];
-}
-
-- (NSNumber *)currentWellForCell {
-    return @(_currentWellNumber);
-}
-
-- (IBAction)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.iterm2.com/triggers.html"]];
 }
 
 #pragma mark NSWindowDelegate
@@ -448,40 +454,26 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
     }
 }
 
-#pragma mark - NSResponder
+#pragma mark - Actions
 
-- (void)changeColor:(id)sender {
-    [self setColor:[sender color]];
+- (IBAction)help:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.iterm2.com/triggers.html"]];
 }
 
-- (NSColor *)currentColor {
+- (void)colorWellDidChange:(iTermColorWell *)colorWell {
     NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
-    NSInteger row = _tableView.selectedRow;
-    if (row < 0 || row >= triggerDicts.count) {
-        return nil;
-    }
-    NSMutableDictionary *triggerDictionary = [[[self triggerDictionariesForCurrentProfile][row] mutableCopy] autorelease];
-    HighlightTrigger *trigger = (HighlightTrigger *)[HighlightTrigger triggerFromDict:triggerDictionary];
-    if (_currentWellNumber == 0) {
-        return trigger.textColor;
-    } else if (_currentWellNumber == 1) {
-        return trigger.backgroundColor;
-    }
-    return nil;
-}
-
-- (void)setColor:(NSColor *)color {
-    NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
-    NSInteger row = _tableView.selectedRow;
+    NSInteger row = [_tableView rowForView:colorWell.superview];
     if (row < 0 || row >= triggerDicts.count) {
         return;
     }
-    NSMutableDictionary *triggerDictionary = [[[self triggerDictionariesForCurrentProfile][row] mutableCopy] autorelease];
-    HighlightTrigger *trigger = (HighlightTrigger *)[HighlightTrigger triggerFromDict:triggerDictionary];
-    if (_currentWellNumber == 0) {
-        trigger.textColor = color;
-    } else if (_currentWellNumber == 1) {
-        trigger.backgroundColor = color;
+    NSMutableDictionary *triggerDictionary =
+        [[[self triggerDictionariesForCurrentProfile][row] mutableCopy] autorelease];
+    HighlightTrigger *trigger =
+        (HighlightTrigger *)[HighlightTrigger triggerFromDict:triggerDictionary];
+    if ([colorWell.identifier isEqual:kTextColorWellIdentifier]) {
+        trigger.textColor = colorWell.color;
+    } else {
+        trigger.backgroundColor = colorWell.color;
     }
     if (trigger.param) {
         triggerDictionary[kTriggerParameterKey] = trigger.param;
@@ -489,12 +481,73 @@ static NSString *const kiTermTriggerControllerPasteboardType = @"kiTermTriggerCo
         [triggerDictionary removeObjectForKey:kTriggerParameterKey];
     }
     [self setTriggerDictionary:triggerDictionary forRow:row];
-
-    [_tableView reloadData];
 }
 
-- (void)noColorChosen:(id)sender {
-    [self setColor:nil];
+- (void)instantDidChange:(NSButton *)checkbox {
+    NSArray *triggerDicts = [self triggerDictionariesForCurrentProfile];
+    NSInteger row = [_tableView rowForView:checkbox];
+    if (row < 0 || row >= triggerDicts.count) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary =
+        [[[self triggerDictionariesForCurrentProfile][row] mutableCopy] autorelease];
+    triggerDictionary[kTriggerPartialLineKey] =
+        checkbox.state == NSOnState ? @(YES) : @(NO);
+    [self setTriggerDictionary:triggerDictionary forRow:row];
+}
+
+- (void)actionDidChange:(NSPopUpButton *)sender {
+    NSInteger rowIndex = [_tableView rowForView:sender];
+    if (rowIndex < 0) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary =
+        [[[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy] autorelease];
+    NSInteger index = [sender indexOfSelectedItem];
+    Trigger *theTrigger = _triggers[index];
+    triggerDictionary[kTriggerActionKey] = [theTrigger action];
+    [triggerDictionary removeObjectForKey:kTriggerParameterKey];
+    Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
+    if ([triggerObj paramIsPopupButton]) {
+        triggerDictionary[kTriggerParameterKey] = [triggerObj defaultPopupParameterObject];
+    }
+    [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
+}
+
+- (void)parameterPopUpButtonDidChange:(NSPopUpButton *)sender {
+    NSInteger rowIndex = [_tableView rowForView:sender];
+    if (rowIndex < 0) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary =
+        [[[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy] autorelease];
+    Trigger *triggerObj = [self triggerWithAction:triggerDictionary[kTriggerActionKey]];
+    id parameter = [triggerObj objectAtIndex:[sender indexOfSelectedItem]];
+    if (parameter) {
+        triggerDictionary[kTriggerParameterKey] = parameter;
+    } else {
+        [triggerDictionary removeObjectForKey:kTriggerParameterKey];
+    }
+    [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
+}
+
+#pragma mark - NSTextFieldDelegate
+
+- (void)controlTextDidEndEditing:(NSNotification *)obj {
+    NSTextField *textField = [obj object];
+    NSInteger rowIndex = [_tableView rowForView:textField];
+    if (rowIndex < 0) {
+        return;
+    }
+    NSMutableDictionary *triggerDictionary =
+        [[[self triggerDictionariesForCurrentProfile][rowIndex] mutableCopy] autorelease];
+    if ([textField.identifier isEqual:kRegexColumnIdentifier]) {
+        triggerDictionary[kTriggerRegexKey] = [textField stringValue];
+        [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
+    } else if ([textField.identifier isEqual:kParameterColumnIdentifier]) {
+        triggerDictionary[kTriggerParameterKey] = [textField stringValue];
+        [self setTriggerDictionary:triggerDictionary forRow:rowIndex];
+    }
 }
 
 @end

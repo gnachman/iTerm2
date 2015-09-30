@@ -458,7 +458,7 @@ error:
         }
     } else {
         if (![command hasPrefix:@"%"] && ![iTermAdvancedSettingsModel tolerateUnrecognizedTmuxCommands]) {
-            [delegate_ tmuxPrintLine:@"Unrecognized command from tmux. Did your ssh session die?. The command was:"];
+            [delegate_ tmuxPrintLine:@"Unrecognized command from tmux. Did your ssh session die? The command was:"];
             [delegate_ tmuxPrintLine:command];
             [self hostDisconnected];
         } else {

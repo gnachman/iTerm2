@@ -629,8 +629,6 @@
 		1DB40AA21B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */; };
 		1DB40AA81B221088005B83C7 /* iTermTwoColorWellsCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AA61B221088005B83C7 /* iTermTwoColorWellsCell.h */; };
 		1DB40AA91B221088005B83C7 /* iTermTwoColorWellsCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AA61B221088005B83C7 /* iTermTwoColorWellsCell.h */; };
-		1DB40AAF1B221117005B83C7 /* iTermTriggerTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AAD1B221117005B83C7 /* iTermTriggerTableView.h */; };
-		1DB40AB01B221117005B83C7 /* iTermTriggerTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AAD1B221117005B83C7 /* iTermTriggerTableView.h */; };
 		1DB40AB51B27B577005B83C7 /* PTYTabDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */; };
 		1DB40AB61B27B577005B83C7 /* PTYTabDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */; };
 		1DB67CED14850D53005849A1 /* TmuxWindowOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */; };
@@ -1351,7 +1349,6 @@
 		A6C763471B45C52B00E3C992 /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED99112EDF923005E49ED /* iTermSearchField.m */; };
 		A6C763481B45C52B00E3C992 /* iTermShortcutInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D373E4818F3613600773D3E /* iTermShortcutInputView.m */; };
 		A6C763491B45C52B00E3C992 /* iTermTabBarControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */; };
-		A6C7634A1B45C52B00E3C992 /* iTermTriggerTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB40AAE1B221117005B83C7 /* iTermTriggerTableView.m */; };
 		A6C7634B1B45C52B00E3C992 /* iTermTwoColorWellsCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB40AA71B221088005B83C7 /* iTermTwoColorWellsCell.m */; };
 		A6C7634C1B45C52B00E3C992 /* PasteView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9116F03E5400B7FCE9 /* PasteView.m */; };
 		A6C7634D1B45C52B00E3C992 /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
@@ -1954,8 +1951,6 @@
 		1DB40AA01B221028005B83C7 /* iTermNoColorAccessoryButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNoColorAccessoryButton.m; sourceTree = "<group>"; };
 		1DB40AA61B221088005B83C7 /* iTermTwoColorWellsCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTwoColorWellsCell.h; sourceTree = "<group>"; };
 		1DB40AA71B221088005B83C7 /* iTermTwoColorWellsCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTwoColorWellsCell.m; sourceTree = "<group>"; };
-		1DB40AAD1B221117005B83C7 /* iTermTriggerTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTriggerTableView.h; sourceTree = "<group>"; };
-		1DB40AAE1B221117005B83C7 /* iTermTriggerTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTriggerTableView.m; sourceTree = "<group>"; };
 		1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYTabDelegate.h; sourceTree = "<group>"; };
 		1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowOpener.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxWindowOpener.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2948,7 +2943,6 @@
 				1DA76A031B30892900CB272A /* iTermTipWindowController.h */,
 				A667F38D1B49FC2E00705186 /* iTermToolbeltSplitView.h */,
 				1DE8DC871415513A00F83147 /* iTermToolbeltView.h */,
-				1DB40AAD1B221117005B83C7 /* iTermTriggerTableView.h */,
 				1DB40AA61B221088005B83C7 /* iTermTwoColorWellsCell.h */,
 				A6E713B818FCCDD1008D94DD /* iTermURLSchemeController.h */,
 				A6099B0318D6B0FD00081FA9 /* iTermWarning.h */,
@@ -3423,7 +3417,6 @@
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D373E4818F3613600773D3E /* iTermShortcutInputView.m */,
 				A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */,
-				1DB40AAE1B221117005B83C7 /* iTermTriggerTableView.m */,
 				1DB40AA71B221088005B83C7 /* iTermTwoColorWellsCell.m */,
 				1D085F9116F03E5400B7FCE9 /* PasteView.m */,
 				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
@@ -4369,7 +4362,6 @@
 				A6B3A7441AC89DED008E8D4E /* NSCharacterSet+iTerm.h in Headers */,
 				1D6ED90B19AEA20D005A7799 /* NSColor+Scripting.h in Headers */,
 				1D6ED90C19AEA20D005A7799 /* TransferrableFile.h in Headers */,
-				1DB40AB01B221117005B83C7 /* iTermTriggerTableView.h in Headers */,
 				1D6ED90D19AEA20D005A7799 /* Coprocess.h in Headers */,
 				1D6ED90E19AEA20D005A7799 /* SendTextTrigger.h in Headers */,
 				1DA76A201B308AD000CB272A /* iTermTipCardViewController.h in Headers */,
@@ -4675,7 +4667,6 @@
 				1D624BDD1386E0FA00111319 /* GTMDefines.h in Headers */,
 				A68A3119186E2F54007F550F /* PopupModel.h in Headers */,
 				A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */,
-				1DB40AAF1B221117005B83C7 /* iTermTriggerTableView.h in Headers */,
 				A699BAE618C8394700D425A7 /* CVector.h in Headers */,
 				1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */,
 				1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */,
@@ -5856,7 +5847,6 @@
 				A6C763591B45C52B00E3C992 /* iTermOpenQuicklyWindow.m in Sources */,
 				A6C763DC1B45C6DD00E3C992 /* PSMOverflowPopUpButton.m in Sources */,
 				A6C763521B45C52B00E3C992 /* iTermOpenQuicklyItem.m in Sources */,
-				A6C7634A1B45C52B00E3C992 /* iTermTriggerTableView.m in Sources */,
 				A6C763351B45C52B00E3C992 /* iTermPasteSpecialViewController.m in Sources */,
 				A6C7635A1B45C52B00E3C992 /* iTermOpenQuicklyWindowController.m in Sources */,
 				A6C7632C1B45C52B00E3C992 /* TemporaryNumberAllocator.m in Sources */,

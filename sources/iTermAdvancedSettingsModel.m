@@ -113,7 +113,7 @@ DEFINE_BOOL(disableWindowSizeSnap, NO, @"Windows: Terminal windows resize smooth
 DEFINE_BOOL(profilesWindowJoinsActiveSpace, NO, @"Windows: If the Profiles window is open, it always moves to join the active Space.\nYou must restart iTerm2 for a change in this setting to take effect.");
 
 #pragma mark tmux
-DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will end the session.");
+DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session.");
 DEFINE_BOOL(noSyncNewWindowOrTabFromTmuxOpensTmux, NO, @"Tmux Integration: Suppress alert asking what kind of tab/window to open in tmux integration.");
 
 #pragma mark Warnings
