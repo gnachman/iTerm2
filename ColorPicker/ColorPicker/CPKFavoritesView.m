@@ -88,17 +88,17 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
 
 - (NSArray *)cannedFavorites {
     return
-    @[ [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:1] name:@"Black"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:1] name:@"10% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.2 green:0.2 blue:0.2 alpha:1] name:@"20% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.3 green:0.3 blue:0.3 alpha:1] name:@"30% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.4 green:0.4 blue:0.4 alpha:1] name:@"40% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1] name:@"50% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.6 green:0.6 blue:0.6 alpha:1] name:@"60% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.7 green:0.7 blue:0.7 alpha:1] name:@"70% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.8 green:0.8 blue:0.8 alpha:1] name:@"80% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:0.9 green:0.9 blue:0.9 alpha:1] name:@"90% Gray"],
-       [CPKFavorite favoriteWithColor:[NSColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:1] name:@"White"] ];
+    @[ [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.0 green:0.0 blue:0.0 alpha:1] name:@"Black"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.1 green:0.1 blue:0.1 alpha:1] name:@"10% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.2 green:0.2 blue:0.2 alpha:1] name:@"20% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.3 green:0.3 blue:0.3 alpha:1] name:@"30% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.4 green:0.4 blue:0.4 alpha:1] name:@"40% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.5 green:0.5 blue:0.5 alpha:1] name:@"50% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.6 green:0.6 blue:0.6 alpha:1] name:@"60% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.7 green:0.7 blue:0.7 alpha:1] name:@"70% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.8 green:0.8 blue:0.8 alpha:1] name:@"80% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:0.9 green:0.9 blue:0.9 alpha:1] name:@"90% Gray"],
+       [CPKFavorite favoriteWithColor:[NSColor cpk_colorWithRed:1.0 green:1.0 blue:1.0 alpha:1] name:@"White"] ];
 }
 
 - (CPKFavorite *)favoriteForRow:(NSInteger)row {

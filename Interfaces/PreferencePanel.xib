@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7531" systemVersion="14F27" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7706" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7531"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7706"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreferencePanel">
@@ -1914,11 +1914,11 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="2285" customClass="iTermColorWell">
+                <customView id="2285" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="228" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2277" customClass="iTermColorWell">
+                <customView id="2277" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="228" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -1931,7 +1931,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="2272" customClass="iTermColorWell">
+                <customView id="2272" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="202" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -1944,7 +1944,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="O31-5M-Une" customClass="iTermColorWell">
+                <customView id="O31-5M-Une" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="176" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -1957,14 +1957,14 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="A9a-sA-67D" customClass="iTermColorWell">
+                <customView id="A9a-sA-67D" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="202" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <userDefinedRuntimeAttributes>
                         <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
                     </userDefinedRuntimeAttributes>
                 </customView>
-                <customView id="2273" customClass="iTermColorWell">
+                <customView id="2273" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="254" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -1977,7 +1977,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="Wzz-9B-zqB" customClass="iTermColorWell">
+                <customView id="Wzz-9B-zqB" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="176" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -1990,7 +1990,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="2282" customClass="iTermColorWell">
+                <customView id="2282" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="254" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -2025,7 +2025,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="2278" customClass="iTermColorWell">
+                <customView id="2278" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="45" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -2038,7 +2038,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="Yny-j0-8Wk" customClass="iTermColorWell">
+                <customView id="Yny-j0-8Wk" customClass="CPKColorWell">
                     <rect key="frame" x="284" y="73" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <userDefinedRuntimeAttributes>
@@ -2085,7 +2085,7 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <customView id="2280" customClass="iTermColorWell">
+                <customView id="2280" customClass="CPKColorWell">
                     <rect key="frame" x="102" y="73" width="32" height="20"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -2101,67 +2101,67 @@ DQ
                         <outlet property="nextKeyView" destination="4896" id="kw5-A8-LVc"/>
                     </connections>
                 </button>
-                <customView id="2286" customClass="iTermColorWell">
+                <customView id="2286" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="211" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2287" customClass="iTermColorWell">
+                <customView id="2287" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="185" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2288" customClass="iTermColorWell">
+                <customView id="2288" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="133" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2289" customClass="iTermColorWell">
+                <customView id="2289" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="159" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2290" customClass="iTermColorWell">
+                <customView id="2290" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="107" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2291" customClass="iTermColorWell">
+                <customView id="2291" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="81" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2292" customClass="iTermColorWell">
+                <customView id="2292" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="237" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2293" customClass="iTermColorWell">
+                <customView id="2293" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="55" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2294" customClass="iTermColorWell">
+                <customView id="2294" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="159" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2295" customClass="iTermColorWell">
+                <customView id="2295" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="211" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2296" customClass="iTermColorWell">
+                <customView id="2296" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="81" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2297" customClass="iTermColorWell">
+                <customView id="2297" customClass="CPKColorWell">
                     <rect key="frame" x="442" y="237" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2298" customClass="iTermColorWell">
+                <customView id="2298" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="107" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2299" customClass="iTermColorWell">
+                <customView id="2299" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="133" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2300" customClass="iTermColorWell">
+                <customView id="2300" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="185" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="2301" customClass="iTermColorWell">
+                <customView id="2301" customClass="CPKColorWell">
                     <rect key="frame" x="507" y="55" width="32" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </customView>
@@ -5328,7 +5328,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                <rect key="frame" x="0.0" y="0.0" width="849" height="19"/>
+                                <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <size key="intercellSpacing" width="3" height="2"/>
                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>

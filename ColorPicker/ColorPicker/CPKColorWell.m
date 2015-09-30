@@ -2,12 +2,25 @@
 #import "CPKPopover.h"
 #import "NSObject+CPK.h"
 
-@interface CPKColorWell() <NSPopoverDelegate>
+@interface CPKColorWellView : CPKSwatchView
+
+/** Block invoked when the user changes the color. */
+@property(nonatomic, copy) void (^colorDidChange)(NSColor *);
+
+/** User can adjust alpha value. */
+@property(nonatomic, assign) BOOL alphaAllowed;
+
+/** Color well is disabled? */
+@property(nonatomic, assign) BOOL disabled;
+
+@end
+
+@interface CPKColorWellView() <NSPopoverDelegate>
 @property(nonatomic) BOOL open;
 @property(nonatomic) CPKPopover *popover;
 @end
 
-@implementation CPKColorWell
+@implementation CPKColorWellView
 
 - (void)awakeFromNib {
     self.cornerRadius = 3;
@@ -71,6 +84,46 @@
     }
     self.open = NO;
     self.popover = nil;
+}
+
+@end
+
+@implementation CPKColorWell {
+  CPKColorWellView *_view;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+  return [super initWithCoder:coder];
+}
+
+- (void)awakeFromNib {
+  _view = [[CPKColorWellView alloc] initWithFrame:self.bounds];
+  [self addSubview:_view];
+  _view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+  self.autoresizesSubviews = YES;
+  _view.alphaAllowed = _alphaAllowed;
+  __weak __typeof(self) weakSelf = self;
+  _view.colorDidChange = ^(NSColor *color) {
+    [weakSelf sendAction:weakSelf.action to:weakSelf.target];
+  };
+}
+
+- (NSColor *)color {
+  return _view.color;
+}
+
+- (void)setColor:(NSColor *)color {
+  _view.color = color;
+}
+
+- (void)setAlphaAllowed:(BOOL)alphaAllowed {
+  _alphaAllowed = alphaAllowed;
+  _view.alphaAllowed = alphaAllowed;
+}
+
+- (void)setEnabled:(BOOL)enabled {
+  [super setEnabled:enabled];
+  _view.disabled = !enabled;
 }
 
 @end

@@ -254,6 +254,8 @@ typedef enum {
 // Enable or disable transparency support for a window.
 - (void)toggleUseTransparency:(id)sender;
 
+- (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
+
 #pragma mark - Instant replay
 
 // Begin instant replay on a session.

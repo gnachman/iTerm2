@@ -1,5 +1,6 @@
 #import "CPKColorNamer.h"
 #import "CPKKDTree.h"
+#import "NSColor+CPK.h"
 #import <math.h>
 
 // Picking a color with a different hue will cause silly results. With a multiplier of 1, #fefb67
@@ -53,10 +54,10 @@ static const CGFloat kHueMultiplier = 5;
                         int g = (value >> 8) & 0xff;
                         int b = (value >> 0) & 0xff;
 
-                        NSColor *color = [NSColor colorWithRed:r / 255.0
-                                                         green:g / 255.0
-                                                          blue:b / 255.0
-                                                         alpha:1];
+                        NSColor *color = [NSColor cpk_colorWithRed:r / 255.0
+                                                             green:g / 255.0
+                                                              blue:b / 255.0
+                                                             alpha:1];
 
                         [self.tree addObject:name forKey:@[ @(color.hueComponent * kHueMultiplier),
                                                             @(color.saturationComponent),

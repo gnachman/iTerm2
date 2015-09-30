@@ -18,6 +18,7 @@
 
 static NSMutableArray *queuedBlocks;
 typedef void (^VoidBlock)(void);
+static BOOL gWaitingForFullScreen;
 
 @implementation PseudoTerminalRestorer
 
@@ -25,10 +26,23 @@ typedef void (^VoidBlock)(void);
     return queuedBlocks.count > 0;
 }
 
++ (BOOL)useElCapitanFullScreenLogic {
+    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
+}
+
++ (void)runQueuedBlocks {
+    if ([self useElCapitanFullScreenLogic]) {
+        [self runQueuedBlocks_10_11_andLater];
+    } else {
+      [self runQueuedBlocks_10_10_andEarlier];
+    }
+}
+
 // The windows must be open one iteration of mainloop after the application
 // finishes launching. Otherwise, on OS 10.7, non-lion-style fullscreen windows
 // open but the menu bar stays up.
-+ (void)runQueuedBlocks {
++ (void)runQueuedBlocks_10_10_andEarlier {
+    DLog(@"runQueuedBlocks (<=10.10) starting");
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0),
                    dispatch_get_current_queue(),
                    ^{
@@ -38,6 +52,25 @@ typedef void (^VoidBlock)(void);
                        [queuedBlocks release];
                        queuedBlocks = nil;
                    });
+}
+
+// 10.11 wants this to happen right away.
++ (void)runQueuedBlocks_10_11_andLater {
+    DLog(@"runQueuedBlocks (10.11+) starting");
+    while (queuedBlocks.count) {
+        if (gWaitingForFullScreen) {
+            DLog(@"waiting for fullscreen");
+            return;
+        }
+        DLog(@"Running queued block...");
+        VoidBlock block = [queuedBlocks firstObject];
+        block();
+        [queuedBlocks removeObjectAtIndex:0];
+        DLog(@"Finished running queued block");
+    }
+    DLog(@"Ran all queued blocks");
+    [queuedBlocks release];
+    queuedBlocks = nil;
 }
 
 + (void)restoreWindowWithIdentifier:(NSString *)identifier
@@ -94,6 +127,7 @@ typedef void (^VoidBlock)(void);
             DLog(@"PseudoTerminalRestorer block running for id %@", identifier);
             DLog(@"Creating term");
             PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
+            DLog(@"Create a new terminal %@", term);
             if (!term) {
                 DLog(@"Failed to create term");
                 completionHandler(nil, nil);
@@ -120,9 +154,30 @@ typedef void (^VoidBlock)(void);
             }
 
             DLog(@"Invoking completion handler");
-            completionHandler([term window], nil);
-            DLog(@"Registering terminal window");
-            [[iTermController sharedInstance] addTerminalWindow:term];
+            if (![self useElCapitanFullScreenLogic] || !term.togglingLionFullScreen) {
+                // In 10.10 or earlier, or 10.11 and a nonfullscreen window.
+                completionHandler([term window], nil);
+                DLog(@"Registering terminal window");
+                [[iTermController sharedInstance] addTerminalWindow:term];
+            } else {
+                // 10.11 and this is a fullscreen window.
+                // Keep any more blocks from running until this window finishes entering fullscreen.
+                gWaitingForFullScreen = YES;
+                DLog(@"Set gWaitingForFullScreen=YES and set callback on %@", term);
+
+                [completionHandler retain];
+                term.didEnterLionFullscreen = ^(PseudoTerminal *theTerm) {
+                    // Finished entering fullscreen. Run the completion handler
+                    // and open more windows.
+                    DLog(@"%@ finished entering fullscreen, running completion handler", theTerm);
+                    completionHandler([theTerm window], nil);
+                    [completionHandler release];
+                    DLog(@"Registering terminal window");
+                    [[iTermController sharedInstance] addTerminalWindow:term];
+                    gWaitingForFullScreen = NO;
+                    [PseudoTerminalRestorer runQueuedBlocks];
+                };
+            }
             DLog(@"Done running block for id %@", identifier);
         };
         DLog(@"Queueing block to run");

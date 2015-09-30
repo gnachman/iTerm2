@@ -96,7 +96,7 @@
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt;
-- (PseudoTerminal *)openWindow;
+- (PseudoTerminal *)openWindowUsingProfile:(Profile *)profile;
 
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
 // new session/tab to the window; otherwise the bookmark is used in conjunction with the optional

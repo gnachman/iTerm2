@@ -1,4 +1,5 @@
 #import "CPKHSBGradientView.h"
+#import "NSColor+CPK.h"
 #import "NSObject+CPK.h"
 
 @interface CPKHSBGradientView()
@@ -62,17 +63,17 @@
 }
 
 - (NSColor *)startingColorAt:(CGFloat)fraction {
-    return [NSColor colorWithHue:self.hue
-                      saturation:0
-                      brightness:fraction
-                           alpha:1];
+    return [NSColor cpk_colorWithHue:self.hue
+                          saturation:0
+                          brightness:fraction
+                               alpha:1];
 }
 
 - (NSColor *)endingColorAt:(CGFloat)fraction {
-    return [NSColor colorWithHue:self.hue
-                      saturation:1
-                      brightness:fraction
-                           alpha:1];
+    return [NSColor cpk_colorWithHue:self.hue
+                          saturation:1
+                          brightness:fraction
+                               alpha:1];
 }
 
 - (CGFloat)saturationAtPoint:(NSPoint)point {
@@ -109,10 +110,10 @@
 }
 
 - (NSColor *)selectedColor {
-    return [NSColor colorWithHue:self.hue
-                      saturation:self.selectedSaturation
-                      brightness:self.selectedBrightness
-                           alpha:1];
+    return [NSColor cpk_colorWithHue:self.hue
+                          saturation:self.selectedSaturation
+                          brightness:self.selectedBrightness
+                               alpha:1];
 }
 
 - (BOOL)isFlipped {

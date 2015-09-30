@@ -3,20 +3,12 @@
 
 /**
  * Shows a color well. When clicked, it opens a popover with a color picker attached to it.
+ * TODO(georgen): Use an NSCell subclass. Currently this control doesn't do a lot of what you'd
+ * expect a control to do because it doesn't have a cell.
  */
-@interface CPKColorWell : CPKSwatchView
+@interface CPKColorWell : NSControl
 
-/** Block invoked when the user changes the color. */
-@property(nonatomic, copy) void (^colorDidChange)(NSColor *);
-@property(nonatomic, copy) void (^popoverWillClose)(NSColor *);
-
-/** User can adjust alpha value. */
+@property(nonatomic, retain) NSColor *color;
 @property(nonatomic, assign) BOOL alphaAllowed;
-
-/** Color well is disabled? */
-@property(nonatomic, assign) BOOL disabled;
-
-/** Force the popover to open. */
-- (void)openPopOver;
 
 @end

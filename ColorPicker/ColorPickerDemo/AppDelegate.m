@@ -11,9 +11,8 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     self.colorWell.color = [NSColor blackColor];
-    self.colorWell.colorDidChange = ^(NSColor *color) {
-        self.loremIpsum.textColor = color;
-    };
+    self.colorWell.target = self;
+    self.colorWell.action = @selector(colorDidChange:);
 
     self.viewController = [[CPKMainViewController alloc] initWithBlock:^(NSColor *color) {
         self.loremIpsum.textColor = color;
@@ -26,5 +25,8 @@
     self.viewController.view.frame = frame;
 }
 
+- (void)colorDidChange:(id)sender {
+    self.loremIpsum.textColor = [sender color];
+}
 
 @end

@@ -25,6 +25,7 @@
     if (resultLength <= 0) {
         return nil;
     }
+    [data setLength:resultLength];
     return data;
 }
 

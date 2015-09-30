@@ -7,13 +7,14 @@
 //
 
 #import "iTermPreferencesBaseViewController.h"
-#import "iTermColorWell.h"
 #import "iTermPreferences.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
+
+#import <ColorPicker/ColorPicker.h>
 
 static NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChangeFromOtherPanel";
 
@@ -270,8 +271,8 @@ static NSString *const kKey = @"key";
             assert(false);  // Must use onChange() only.
 
         case kPreferenceInfoTypeColorWell: {
-            assert([info.control isKindOfClass:[iTermColorWell class]]);
-            NSColorWell *colorWell = (NSColorWell *)info.control;
+            assert([info.control isKindOfClass:[CPKColorWell class]]);
+            CPKColorWell *colorWell = (CPKColorWell *)info.control;
             NSDictionary *dict = (NSDictionary *)[self objectForKey:info.key];
             if (dict) {
                 assert([dict isKindOfClass:[NSDictionary class]]);

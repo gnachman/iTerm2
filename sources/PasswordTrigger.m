@@ -92,7 +92,8 @@
     iTermApplicationDelegate *delegate =
         (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
     [delegate openPasswordManagerToAccountName:[self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                                                         count:captureCount]];
+                                                                                         count:captureCount]
+                                     inSession:aSession];
     return YES;
 }
 

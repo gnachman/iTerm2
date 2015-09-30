@@ -2765,20 +2765,25 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (NSString*)formattedName:(NSString*)base
 {
-    NSString *prefix = _tmuxController ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
-
+    if (_tmuxController) {
+        // There won't be a valid job name, and the profile name is always tmux, so just show the
+        // window name. This is confusing: this refers to the name of a tmux window, which is
+        // equivalent to an iTerm2 tab. It is reported to us by tmux. We ignore the base name
+        // because the real name comes from the server and that's all we care about.
+        return [NSString stringWithFormat:@"↣ %@", [[self tab] tmuxWindowName]];
+    }
     BOOL baseIsBookmarkName = [base isEqualToString:_bookmarkName];
     if ([iTermPreferences boolForKey:kPreferenceKeyShowJobName] && _jobName) {
         if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
-            return [NSString stringWithFormat:@"%@%@", prefix, [self jobName]];
+            return [NSString stringWithFormat:@"%@", [self jobName]];
         } else {
-            return [NSString stringWithFormat:@"%@%@ (%@)", prefix, base, [self jobName]];
+            return [NSString stringWithFormat:@"%@ (%@)", base, [self jobName]];
         }
     } else {
         if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
-            return [NSString stringWithFormat:@"%@Shell", prefix];
+            return @"Shell";
         } else {
-            return [NSString stringWithFormat:@"%@%@", prefix, base];
+            return base;
         }
     }
 }
@@ -4806,10 +4811,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                     data = [_terminal.output keyDelete];
                     break;
                 case NSHomeFunctionKey:
-                    data = [_terminal.output keyHome:modflag];
+                    data = [_terminal.output keyHome:modflag screenlikeTerminal:self.isTmuxClient];
                     break;
                 case NSEndFunctionKey:
-                    data = [_terminal.output keyEnd:modflag];
+                    data = [_terminal.output keyEnd:modflag screenlikeTerminal:self.isTmuxClient];
                     break;
                 case NSPageUpFunctionKey:
                     data = [_terminal.output keyPageUp:modflag];
@@ -6597,7 +6602,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
                                      cappedAtSize:-1
-                                continuationChars:nil];
+                                continuationChars:nil
+                                           coords:nil];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];

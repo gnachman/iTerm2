@@ -201,11 +201,6 @@ static const int kDragThreshold = 3;
     // Size of the documentVisibleRect when the badge was set.
     NSSize _badgeDocumentVisibleRectSize;
 
-    // For focus follows mouse. This flag remembers if the cursor entered this view while the app
-    // was inactive. If it's set when the app becomes active, then make this view the first
-    // responder.
-    BOOL _makeFirstResponderWhenAppBecomesActive;
-
     iTermIndicatorsHelper *_indicatorsHelper;
 
     // Show a background indicator when in broadcast input mode
@@ -279,10 +274,6 @@ static const int kDragThreshold = 3;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(hostnameLookupSucceeded:)
                                                      name:kHostnameLookupSucceeded
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(applicationDidBecomeActive:)
-                                                     name:NSApplicationDidBecomeActiveNotification
                                                    object:nil];
 
         _semanticHistoryController = [[iTermSemanticHistoryController alloc] init];
@@ -1583,8 +1574,11 @@ static const int kDragThreshold = 3;
 
     if ([self scrollWheelShouldSendArrowForEvent:event at:point]) {
         DLog(@"Scroll wheel sending arrow key");
+
+        PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
+        CGFloat deltaY = [scrollView accumulateVerticalScrollFromEvent:event];
+
         NSData *arrowKeyData = nil;
-        CGFloat deltaY = [event deltaY];
         if (deltaY > 0) {
             arrowKeyData = [_dataSource.terminal.output keyArrowUp:event.modifierFlags];
         } else if (deltaY < 0) {
@@ -1754,7 +1748,6 @@ static const int kDragThreshold = 3;
 }
 
 - (void)mouseExited:(NSEvent *)event {
-    _makeFirstResponderWhenAppBecomesActive = NO;
     [self updateUnderlinedURLs:event];
 }
 
@@ -1772,13 +1765,11 @@ static const int kDragThreshold = 3;
         } else if ([[[NSApp keyWindow] windowController] respondsToSelector:@selector(disableFocusFollowsMouse)]) {
             obj = [[NSApp keyWindow] windowController];
         }
-        if (![obj disableFocusFollowsMouse]) {
+        if ([NSApp isActive] && ![obj disableFocusFollowsMouse]) {
             [[self window] makeKeyWindow];
         }
         if ([self isInKeyWindow]) {
             [_delegate textViewDidBecomeFirstResponder];
-        } else {
-            _makeFirstResponderWhenAppBecomesActive = YES;
         }
     }
 }
@@ -2121,6 +2112,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            cmdPressed &&
                            [iTermPreferences boolForKey:kPreferenceKeyCmdClickOpensURLs]);
 
+    // Reset _mouseDragged; it won't be needed again and we don't want it to get stuck like in
+    // issue 3766.
+    _mouseDragged = NO;
+
     // Send mouse up event to host if xterm mouse reporting is on
     if ([self reportMouseEvent:event]) {
         if (willFollowLink) {
@@ -2283,16 +2278,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
 
-    if (_mouseDownOnImage && dragThresholdMet) {
-        [self _dragImage:_imageBeingClickedOn forEvent:event];
-    } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
-        DLog(@"drag and drop a selection");
-        // Drag and drop a selection
-        NSString *theSelectedText = [self selectedText];
-        if ([theSelectedText length] > 0) {
-            [self _dragText:theSelectedText forEvent:event];
-            DLog(@"Mouse drag. selection=%@", _selection);
-            return;
+    // It's ok to drag if Cmd is not required to be pressed or Cmd is pressed.
+    BOOL okToDrag = (![iTermAdvancedSettingsModel requireCmdForDraggingText] ||
+                     ([event modifierFlags] & NSCommandKeyMask));
+    if (okToDrag) {
+        if (_mouseDownOnImage && dragThresholdMet) {
+            [self _dragImage:_imageBeingClickedOn forEvent:event];
+        } else if (_mouseDownOnSelection == YES && dragThresholdMet) {
+            DLog(@"drag and drop a selection");
+            // Drag and drop a selection
+            NSString *theSelectedText = [self selectedText];
+            if ([theSelectedText length] > 0) {
+                [self _dragText:theSelectedText forEvent:event];
+                DLog(@"Mouse drag. selection=%@", _selection);
+                return;
+            }
         }
     }
 
@@ -2389,13 +2389,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                   respectHardNewlines:NO
                                                              maxChars:kMaxSemanticHistoryPrefixOrSuffix
                                                     continuationChars:nil
-                                                  convertNullsToSpace:YES];
+                                                  convertNullsToSpace:YES
+                                                               coords:nil];
                 NSString *extendedSuffix = [extractor wrappedStringAt:coord
                                                               forward:YES
                                                   respectHardNewlines:NO
                                                              maxChars:kMaxSemanticHistoryPrefixOrSuffix
                                                     continuationChars:nil
-                                                  convertNullsToSpace:YES];
+                                                  convertNullsToSpace:YES
+                                                               coords:nil];
                 if (![self openSemanticHistoryPath:action.string
                                   workingDirectory:action.workingDirectory
                                             prefix:extendedPrefix
@@ -2884,7 +2886,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 includeLastNewline:copyLastNewline
                             trimTrailingWhitespace:trimWhitespace
                                       cappedAtSize:cap
-                                 continuationChars:nil];
+                                 continuationChars:nil
+                                            coords:nil];
             if (attributed) {
                 [theSelectedText appendAttributedString:content];
             } else {
@@ -2926,7 +2929,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   includeLastNewline:YES
               trimTrailingWhitespace:NO
                         cappedAtSize:-1
-                   continuationChars:nil];
+                   continuationChars:nil
+                              coords:nil];
 }
 
 - (void)splitTextViewVertically:(id)sender {
@@ -4082,7 +4086,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                       includeLastNewline:YES
                                   trimTrailingWhitespace:NO
                                             cappedAtSize:-1
-                                       continuationChars:nil]];
+                                       continuationChars:nil
+                                                  coords:nil]];
             break;
         case 1: // text selection
             [self printContent:[self selectedText]];
@@ -4764,7 +4769,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                   includeLastNewline:NO
               trimTrailingWhitespace:NO
                         cappedAtSize:-1
-                   continuationChars:nil];
+                   continuationChars:nil
+                              coords:nil];
 }
 
 #pragma mark - Semantic History Delegate
@@ -5128,19 +5134,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     [extractor restrictToLogicalWindowIncludingCoord:coord];
     NSMutableIndexSet *continuationCharsCoords = [NSMutableIndexSet indexSet];
+    NSMutableArray *prefixCoords = [NSMutableArray array];
     NSString *prefix = [extractor wrappedStringAt:coord
                                           forward:NO
                               respectHardNewlines:respectHardNewlines
                                          maxChars:kMaxSemanticHistoryPrefixOrSuffix
                                 continuationChars:continuationCharsCoords
-                              convertNullsToSpace:NO];
+                              convertNullsToSpace:NO
+                                           coords:prefixCoords];
 
+    NSMutableArray *suffixCoords = [NSMutableArray array];
     NSString *suffix = [extractor wrappedStringAt:coord
                                           forward:YES
                               respectHardNewlines:respectHardNewlines
                                          maxChars:kMaxSemanticHistoryPrefixOrSuffix
                                 continuationChars:continuationCharsCoords
-                              convertNullsToSpace:NO];
+                              convertNullsToSpace:NO
+                                           coords:suffixCoords];
 
     NSString *possibleFilePart1 =
         [prefix substringIncludingOffset:[prefix length] - 1
@@ -5171,19 +5181,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Don't consider / to be a valid filename because it's useless and single/double slashes are
     // pretty common.
-    if (filename &&
+    if (filename.length > 0 &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
         DLog(@"Accepting filename from brute force search: %@", filename);
         // If you clicked on an existing filename, use it.
         URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
         VT100GridWindowedRange range;
 
-        range.coordRange.start = [extractor coord:coord
-                                             plus:-fileCharsTaken
-                                   skippingCoords:continuationCharsCoords];
-        range.coordRange.end = [extractor coord:range.coordRange.start
-                                           plus:filename.length
-                                 skippingCoords:continuationCharsCoords];
+        if (prefixCoords.count > 0 && fileCharsTaken > 0) {
+            NSInteger i = MAX(0, (NSInteger)prefixCoords.count - fileCharsTaken);
+            range.coordRange.start = [prefixCoords[i] gridCoordValue];
+        } else {
+            // Everything is coming from the suffix (e.g., when mouse is on first char of filename)
+            range.coordRange.start = [suffixCoords[0] gridCoordValue];
+        }
+        VT100GridCoord lastCoord;
+        NSInteger i = (NSInteger)filename.length - fileCharsTaken - 1;
+        // Ensure we don't run off the end of suffixCoords if something unexpected happens.
+        i = MIN((NSInteger)suffixCoords.count - 1, i);
+        if (i >= 0) {
+            lastCoord = [suffixCoords[i] gridCoordValue];
+        } else {
+            // This shouldn't happen, but better safe than sorry
+            lastCoord = [[prefixCoords lastObject] gridCoordValue];
+        }
+        range.coordRange.end = [extractor successorOfCoord:lastCoord];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
 
@@ -5278,10 +5300,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         VT100GridWindowedRange range;
         range.coordRange.start = [extractor coord:coord
                                              plus:-(prefixChars - urlRange.location)
-                                   skippingCoords:continuationCharsCoords];
+                                   skippingCoords:continuationCharsCoords
+                                          forward:NO];
         range.coordRange.end = [extractor coord:range.coordRange.start
                                            plus:urlRange.length
-                                 skippingCoords:continuationCharsCoords];
+                                 skippingCoords:continuationCharsCoords
+                                        forward:YES];
         range.columnWindow = extractor.logicalWindow;
         action.range = range;
         return action;
@@ -5556,15 +5580,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         _numTouches = 0;
     }
-}
-
-- (void)applicationDidBecomeActive:(NSNotification *)notification {
-    if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
-        if (_makeFirstResponderWhenAppBecomesActive) {
-            [[self window] makeFirstResponder:self];
-        }
-    }
-    _makeFirstResponderWhenAppBecomesActive = NO;
 }
 
 - (void)_settingsChanged:(NSNotification *)notification

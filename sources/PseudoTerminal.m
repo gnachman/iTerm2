@@ -308,6 +308,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     BOOL _haveDelayedEnterFullScreenMode;
 
     BOOL _parameterPanelCanceled;
+
+    // Number of tabs since last change.
+    NSInteger _previousNumberOfTabs;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -714,7 +717,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 #if ENABLE_SHORTCUT_ACCESSORY
     [_shortcutAccessoryViewController release];
 #endif
+    [_didEnterLionFullscreen release];
     [super dealloc];
+}
+
++ (BOOL)useElCapitanFullScreenLogic {
+    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
 }
 
 - (BOOL)tabBarVisibleOnTop {
@@ -1950,6 +1958,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS]) {
         desiredColumns_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] intValue];
     }
+    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
+    NSRect rect;
+    rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
+    rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+    rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+    rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+
+    // 10.11 starts you off with a tiny little frame. I don't know why they do
+    // that, but this fixes it.
+    if ([[self class] useElCapitanFullScreenLogic] &&
+        windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        [[self window] setFrame:rect display:YES];
+    }
+
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary *viewMap = nil;
         if (sessions) {
@@ -1966,17 +1988,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
-    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     if (windowType == WINDOW_TYPE_NORMAL ||
         windowType == WINDOW_TYPE_NO_TITLE_BAR) {
         // The window may have changed size while adding tab bars, etc.
-        NSRect rect;
-        rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
-        rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
         // TODO: for window type top, set width to screen width.
-        rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-        rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
-
         [[self window] setFrame:rect display:YES];
     }
 
@@ -2524,17 +2539,28 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         case WINDOW_TYPE_NO_TITLE_BAR:
         case WINDOW_TYPE_LION_FULL_SCREEN:
             PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
-            PtyLog(@"Do nothing because we don't want to piss off El Capitan.");
+            if ([self updateSessionScrollbars]) {
+                PtyLog(@"Fitting tabs to window because scrollbars changed.");
+                [self fitTabsToWindow];
+            }
             break;
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
+                // This is necessary when restoring a traditional fullscreen window while scrollbars are
+                // forced on systemwide.
+                BOOL changedScrollBars = [self updateSessionScrollbars];
+                NSRect originalFrame = self.window.frame;
                 PtyLog(@"set window to screen's frame");
                 if (windowType_ == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
                     [[self window] setFrame:[self traditionalFullScreenFrameForScreen:screen] display:YES];
                 } else {
                     [[self window] setFrame:[screen frame] display:YES];
+                }
+                if (changedScrollBars && NSEqualSizes(self.window.frame.size, originalFrame.size)) {
+                    DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
+                    [self fitTabsToWindow];
                 }
             }
             break;
@@ -3020,6 +3046,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
+- (BOOL)togglingLionFullScreen {
+    return togglingLionFullScreen_;
+}
+
 - (IBAction)toggleFullScreenMode:(id)sender
 {
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
@@ -3066,14 +3096,25 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)updateSessionScrollbars
-{
+// Returns YES if a change was made.
+- (BOOL)updateSessionScrollbars {
+    BOOL changed = NO;
     for (PTYSession *aSession in [self allSessions]) {
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
+        if (aSession.scrollview.hasVerticalScroller != hasScrollbar) {
+            changed = YES;
+        }
         [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
-        [[aSession scrollview] setScrollerStyle:[self scrollerStyle]];
+        
+        NSScrollerStyle style = [self scrollerStyle];
+        if (aSession.scrollview.scrollerStyle != style) {
+            changed = YES;
+        }
+        [[aSession scrollview] setScrollerStyle:style];
         [[aSession textview] updateScrollerForBackgroundColor];
     }
+    
+    return changed;
 }
 
 - (NSUInteger)styleMask {
@@ -3367,6 +3408,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     [self saveTmuxWindowOrigins];
     [self.window makeFirstResponder:self.currentSession.textview];
+    if (_didEnterLionFullscreen) {
+        _didEnterLionFullscreen(self);
+        [_didEnterLionFullscreen release];
+        _didEnterLionFullscreen = nil;
+    }
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -4014,6 +4060,18 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self updateTabColors];
     [self _updateTabObjectCounts];
 
+    if (_contentView.tabView.numberOfTabViewItems == 1 &&
+        _previousNumberOfTabs == 0 &&
+        [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT inProfile:self.currentSession.profile] &&
+        !_contentView.shouldShowToolbelt) {
+        // This is the first tab of a new window. Open the toolbelt if that's what the profile
+        // wants. You can't open the toolbelt until there is at least one session, so that's why
+        // it's done here instead of in finishInitializationWithSmartLayout.
+        [self toggleToolbeltVisibility:self];
+    }
+
+    _previousNumberOfTabs = _contentView.tabView.numberOfTabViewItems;
+
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
     [self invalidateRestorableState];
 }
@@ -4077,7 +4135,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:@"Close Tabs to the Right"
+        NSString *title;
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+            title = @"Close Tabs Below";
+        } else {
+            title = @"Close Tabs to the Right";
+        }
+        item = [[[NSMenuItem alloc] initWithTitle:title
                                            action:@selector(closeTabsToTheRight:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
@@ -4252,7 +4316,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)openPasswordManagerToAccountName:(NSString *)name {
+- (void)openPasswordManagerToAccountName:(NSString *)name
+                               inSession:(PTYSession *)session {
+    [session reveal];
     if (self.window.sheets.count > 0) {
         return;
     }
@@ -4887,7 +4953,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
            performSetup:(BOOL)performSetup
 {
     NSView *scrollView;
-    NSColor *tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
+    NSColor *tabColor;
+    if (newSession.tabColor) {
+        // The new session came with a tab color of its own so don't inherit.
+        tabColor = newSession.tabColor;
+    } else {
+        // Inherit from tab.
+        tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
+    }
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
@@ -7052,12 +7125,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             [self insertSession:object atIndex:[_contentView.tabView numberOfTabViewItems]];
         } else {
             [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];
-        }
-        if ([self numberOfTabs] == 1 &&
-            [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT
-                                      inProfile:object.profile] &&
-            !_contentView.shouldShowToolbelt) {
-            [self toggleToolbeltVisibility:self];
         }
     }
     [[self currentTab] numberOfSessionsDidChange];

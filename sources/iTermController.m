@@ -50,6 +50,7 @@
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
 #import "iTermWarning.h"
 #include <objc/runtime.h>
@@ -1065,17 +1066,15 @@ static BOOL initDone = NO;
     return aDict;
 }
 
-- (PseudoTerminal *)openWindow
-{
-    Profile *bookmark = [self defaultBookmark];
-    [iTermController switchToSpaceInBookmark:bookmark];
-    PseudoTerminal *term;
-    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                             windowType:WINDOW_TYPE_NORMAL
-                                        savedWindowType:WINDOW_TYPE_NORMAL
-                                                 screen:[bookmark objectForKey:KEY_SCREEN] ? [[bookmark objectForKey:KEY_SCREEN] intValue] : -1
-                                               isHotkey:NO] autorelease];
-    if ([[bookmark objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+- (PseudoTerminal *)openWindowUsingProfile:(Profile *)profile {
+    [iTermController switchToSpaceInBookmark:profile];
+    PseudoTerminal *term =
+        [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                          windowType:[iTermProfilePreferences intForKey:KEY_WINDOW_TYPE inProfile:profile]
+                                     savedWindowType:WINDOW_TYPE_NORMAL
+                                              screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
+                                            isHotkey:NO] autorelease];
+    if ([iTermProfilePreferences boolForKey:KEY_HIDE_AFTER_OPENING inProfile:profile]) {
         [term hideAfterOpening];
     }
     [self addTerminalWindow:term];
