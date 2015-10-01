@@ -299,7 +299,7 @@ const int kMaxResultContextWords = 4;
         // TODO: This is kind of sketchy. We need to look at text before the prefix and lower the score if not much of the prefix was matched.
         double score = [self scoreResultNumber:[self _timestampToResultNumber:[entry timestamp]]
                                   queryContext:context_
-                                 resultContext:[NSArray arrayWithObjects:nil]
+                                 resultContext:@[]
                            joiningPrefixLength:[prefix_ length]
                                           word:word];
         PopupEntry* e = [PopupEntry entryWithString:word 

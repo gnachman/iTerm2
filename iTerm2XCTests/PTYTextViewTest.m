@@ -467,6 +467,13 @@
     return nil;
 }
 
+- (void)textViewToggleAnnotations {
+}
+
+- (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    return YES;
+}
+
 - (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
     return NO;
 }
@@ -2288,7 +2295,7 @@
     [session synchronousReadTask:text];
     [_textView selectAll:nil];
     NSString *selectedText = [_textView selectedText];
-    XCTAssertEqualObjects(@"123456789\n", selectedText);
+    XCTAssertEqualObjects(@"123456789\n\n", selectedText);
 }
 
 - (void)testSelectedTextWrappedLine {
@@ -2298,7 +2305,7 @@
     [session synchronousReadTask:text];
     [_textView selectAll:nil];
     NSString *selectedText = [_textView selectedText];
-    XCTAssertEqualObjects(text, selectedText);
+    XCTAssertEqualObjects([text stringByAppendingString:@"\n"], selectedText);
 }
 
 - (void)testSelectedTextWrappedAttributedLinesDontGetNewlinesInserted {
@@ -2310,7 +2317,7 @@
     NSAttributedString *selectedAttributedText = [_textView selectedTextAttributed:YES
                                                                      cappedAtSize:0
                                                                 minimumLineNumber:0];
-    XCTAssertEqualObjects(text, selectedAttributedText.string);
+    XCTAssertEqualObjects([text stringByAppendingString:@"\n"], selectedAttributedText.string);
 }
 
 - (void)testSelectedTextWithSizeCap {
@@ -2330,7 +2337,7 @@
     [session synchronousReadTask:text];
     [_textView selectAll:nil];
     NSString *selectedText = [_textView selectedTextAttributed:NO cappedAtSize:0 minimumLineNumber:1];
-    XCTAssertEqualObjects(@"12345", selectedText);
+    XCTAssertEqualObjects(@"12345\n", selectedText);
 }
 
 - (void)testSelectedTextWithSizeCapAndMinimumLine {

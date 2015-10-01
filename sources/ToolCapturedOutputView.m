@@ -24,6 +24,7 @@ static const CGFloat kMargin = 4;
 @interface ToolCapturedOutputView() <
     ToolbeltTool,
     NSMenuDelegate,
+    NSSearchFieldDelegate,
     NSTextFieldDelegate>
 @end
 

@@ -1007,8 +1007,8 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         kSpecialCharacterDoubleQuote,      // \"      double quote
         kSpecialCharacterControlKey,       // \<C-W>  Control key
         kSpecialCharacterMetaKey,          // \<M-W>  Meta key
-    } SpecialCharacter;
-    
+    };
+
     NSDictionary *regexes =
         @{ @"^(([0-7]{3}))": @(kSpecialCharacterThreeDigitOctal),
            @"^(([0-7]{2}))(?:[^0-8]|$)": @(kSpecialCharacterTwoDigitOctal),

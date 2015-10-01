@@ -41,6 +41,13 @@
 
 const double GLOBAL_SEARCH_MARGIN = 10;
 
+@interface GlobalSearch() <
+    NSSearchFieldDelegate,
+    NSTableViewDataSource,
+    NSTableViewDelegate,
+    NSTextFieldDelegate>
+@end
+
 @interface GlobalSearchInstance : NSObject
 {
     PTYTextView* textView_;
@@ -326,7 +333,14 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 @end
 
-@implementation GlobalSearch
+@implementation GlobalSearch {
+    IBOutlet iTermSearchField* searchField_;
+    IBOutlet NSTableView* tableView_;
+    NSTimer* timer_;
+    NSMutableArray* searches_;
+    NSMutableArray* combinedResults_;
+    id<GlobalSearchDelegate> delegate_;
+}
 
 - (void)awakeFromNib
 {

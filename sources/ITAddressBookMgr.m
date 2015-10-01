@@ -74,7 +74,7 @@
             ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
             // Have only old-style bookmarks. Load them and convert them to new-style
             // bookmarks.
-            [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:[NSArray arrayWithObjects:nil]];
+            [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:@[]];
             [prefs removeObjectForKey:KEY_DEPRECATED_BOOKMARKS];
             [prefs setObject:[[ProfileModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
             [[ProfileModel sharedInstance] removeAllBookmarks];

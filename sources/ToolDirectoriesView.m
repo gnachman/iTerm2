@@ -19,6 +19,9 @@ static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
 static const CGFloat kHelpMargin = 5;
 
+@interface ToolDirectoriesView() <NSSearchFieldDelegate>
+@end
+
 @implementation ToolDirectoriesView {
     NSScrollView *scrollView_;
     NSTableView *tableView_;

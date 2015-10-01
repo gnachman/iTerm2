@@ -18,6 +18,9 @@ static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
 static const CGFloat kHelpMargin = 5;
 
+@interface ToolCommandHistoryView() <NSSearchFieldDelegate>
+@end
+
 @implementation ToolCommandHistoryView {
     NSScrollView *scrollView_;
     NSTableView *tableView_;
@@ -244,12 +247,12 @@ static const CGFloat kHelpMargin = 5;
     if (selectedIndex < 0) {
         return;
     }
-    CommandHistoryEntry* entry = filteredEntries_[selectedIndex];
+    CommandUse *entry = filteredEntries_[selectedIndex];
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text = entry.command;
     if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask)) {
-        if (entry.lastDirectory) {
-            text = [@"cd " stringByAppendingString:entry.lastDirectory];
+        if (entry.directory) {
+            text = [@"cd " stringByAppendingString:entry.directory];
         } else {
             return;
         }
@@ -275,7 +278,7 @@ static const CGFloat kHelpMargin = 5;
         filteredEntries_ = [entries retain];
     } else {
         NSMutableArray *array = [NSMutableArray array];
-        for (CommandHistoryEntry *entry in entries) {
+        for (CommandUse *entry in entries) {
             if ([entry.command rangeOfString:searchField_.stringValue].location != NSNotFound) {
                 [array addObject:entry];
             }

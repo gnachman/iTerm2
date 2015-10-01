@@ -121,7 +121,7 @@
                                                 hints:nil];
     NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithCGImage:cgImage] autorelease];
     [imageRep setSize:self.size];
-    return [imageRep representationUsingType:fileType properties:nil];
+    return [imageRep representationUsingType:fileType properties:@{}];
 }
 
 - (NSData *)rawPixelsInRGBColorSpace {

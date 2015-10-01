@@ -283,6 +283,9 @@ const CGFloat kEdgeWidth = 3;
 
 @end
 
+@interface FindViewController()<NSSearchFieldDelegate>
+@end
+
 @implementation FindViewController {
     IBOutlet NSSearchField* findBarTextField_;
     // These pointers are just "prototypes" and do not refer to any actual menu
@@ -329,8 +332,7 @@ const CGFloat kEdgeWidth = 3;
     gDefaultRegex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
 }
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
         previousFindString_ = [[NSMutableString alloc] init];

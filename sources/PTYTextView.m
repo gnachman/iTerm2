@@ -3132,7 +3132,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [pboard declareTypes:types owner:self];
     if (copyAttributedString) {
         NSData *RTFData = [copyAttributedString RTFFromRange:NSMakeRange(0, [copyAttributedString length])
-                                          documentAttributes:nil];
+                                          documentAttributes:@{}];
         [pboard setData:RTFData forType:NSRTFPboardType];
     }
     // I used to do
@@ -3447,8 +3447,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // This method is called by control-click or by clicking the gear icon in the session title bar.
 // Two-finger tap (or presumably right click with a mouse) would go through mouseUp->
 // PointerController->openContextMenuWithEvent.
-- (NSMenu *)menuForEvent:(NSEvent *)theEvent
-{
+- (NSMenu *)menuForEvent:(NSEvent *)theEvent {
     if (theEvent) {
         // Control-click
         if ([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu]) {
@@ -3457,8 +3456,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return [self contextMenuWithEvent:theEvent];
     } else {
         // Gear icon in session title view.
-        return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
+        return [self titleBarMenu];
     }
+}
+
+- (NSMenu *)titleBarMenu {
+    return [self menuAtCoord:VT100GridCoordMake(-1, -1)];
 }
 
 - (void)saveImageAs:(id)sender {
@@ -3515,7 +3518,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
         if (!data) {
             NSBitmapImageRep *rep = [imageInfo.image bitmapImageRep];
-            data = [rep representationUsingType:fileType properties:nil];
+            data = [rep representationUsingType:fileType properties:@{}];
         }
         [data writeToFile:filename atomically:NO];
     }

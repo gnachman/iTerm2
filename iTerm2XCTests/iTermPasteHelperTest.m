@@ -75,7 +75,7 @@ static const double kFloatingPointTolerance = 0.00001;
     [[PasteboardHistory sharedInstance] clear];
     _warningBlock = [^NSModalResponse(NSAlert *alert, NSString *identifier) {
         if ([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]) {
-            return NSAlertDefaultReturn;
+            return 1;  /* deprecated NSAlertDefaultReturn; */
         }
         XCTAssert(false);
     } copy];
@@ -252,7 +252,7 @@ static const double kFloatingPointTolerance = 0.00001;
     _warningBlock = [^NSModalResponse(NSAlert *alert, NSString *identifier) {
         XCTAssert([identifier isEqualToString:kMultiLinePasteWarningUserDefaultsKey]);
         warned = YES;
-        return NSAlertDefaultReturn;
+        return 1;  /* deprecated NSAlertDefaultReturn; */
     } copy];
 
     // Check cr newline

@@ -449,6 +449,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // A text badge shown in the top right of the window
 - (void)setBadgeLabel:(NSString *)badgeLabel;
 
+// Menu for session title bar hamburger button
+- (NSMenu *)titleBarMenu;
+
 #pragma mark - Testing only
 
 - (id)selectedTextAttributed:(BOOL)attributed

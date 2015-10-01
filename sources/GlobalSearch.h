@@ -49,15 +49,7 @@
 
 @end
 
-@interface GlobalSearch : NSViewController <NSTextFieldDelegate, NSTableViewDataSource, NSTableViewDelegate>
-{
-    IBOutlet iTermSearchField* searchField_;
-    IBOutlet NSTableView* tableView_;
-    NSTimer* timer_;
-    NSMutableArray* searches_;
-    NSMutableArray* combinedResults_;
-    id<GlobalSearchDelegate> delegate_;
-}
+@interface GlobalSearch : NSViewController
 
 - (void)awakeFromNib;
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;

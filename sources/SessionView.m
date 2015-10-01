@@ -615,7 +615,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (NSMenu *)menu {
-    return [[_session textview] menuForEvent:nil];
+    return [[_session textview] titleBarMenu];
 }
 
 - (void)close {

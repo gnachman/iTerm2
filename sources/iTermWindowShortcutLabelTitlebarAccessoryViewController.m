@@ -47,7 +47,6 @@
         _label.attributedStringValue = [[[NSAttributedString alloc] initWithString:[@(_ordinal) stringValue]
                                                                         attributes:attributes] autorelease];
     } else {
-        _label.attributedStringValue = nil;
         _label.stringValue = [NSString stringWithFormat:@"%@%d", mods, _ordinal];
     }
 }

@@ -486,7 +486,6 @@ typedef enum {
 - (BOOL)isCompatibleWith:(PTYSession *)otherSession;
 - (void)setTmuxPane:(int)windowPane;
 
-- (void)toggleShowTimestamps;
 - (void)addNoteAtCursor;
 - (void)previousMarkOrNote;
 - (void)nextMarkOrNote;

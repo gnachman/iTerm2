@@ -463,7 +463,7 @@ static int MyForkPty(int *amaster,
     if (args != nil) {
         int i;
         for (i = 0; i < max; ++i) {
-            argv[i + 1] = [[args objectAtIndex:i] cString];
+            argv[i + 1] = [args[i] UTF8String];
         }
     }
     argv[max + 1] = NULL;

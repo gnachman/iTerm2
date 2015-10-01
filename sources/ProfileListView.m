@@ -40,7 +40,7 @@ const int kInterWidgetMargin = 10;
 const CGFloat kTagsViewWidth = 0;  // TODO: remember this for each superview
 const CGFloat kDefaultTagsWidth = 80;
 
-@interface ProfileListView () <ProfileTagsViewDelegate>
+@interface ProfileListView () <NSSearchFieldDelegate, ProfileTagsViewDelegate>
 @end
 
 @implementation ProfileListView {
@@ -263,7 +263,7 @@ const CGFloat kDefaultTagsWidth = 80;
     // reloaded. This will cause a sync so it must be done after pushing the
     // local ordering to the underlying model.
     if ([[tableView_ sortDescriptors] count] > 0) {
-        [tableView_ setSortDescriptors:[NSArray arrayWithObjects:nil]];
+        [tableView_ setSortDescriptors:@[]];
     }
 
     // The underlying model doesn't post a change notification for each bookmark
@@ -299,7 +299,7 @@ const CGFloat kDefaultTagsWidth = 80;
     NSString *trimmedSearchString = [[searchField_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     NSString *searchStringPlusTag = [NSString stringWithFormat:@"%@ tag:%@", trimmedSearchString, tag];
     [searchField_ setStringValue:[searchStringPlusTag stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
-    [self controlTextDidChange:nil];
+    [self controlTextDidChange:[NSNotification notificationWithName:NSControlTextDidChangeNotification object:nil]];
 }
 
 - (void)_addTags:(NSArray*)tags toSearchField:(NSSearchField*)searchField
@@ -807,10 +807,10 @@ const CGFloat kDefaultTagsWidth = 80;
     }
 }
 
-- (void)eraseQuery
-{
+- (void)eraseQuery {
     [searchField_ setStringValue:@""];
-    [self controlTextDidChange:nil];
+    [self controlTextDidChange:[NSNotification notificationWithName:NSControlTextDidChangeNotification
+                                                             object:nil]];
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize

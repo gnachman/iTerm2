@@ -109,7 +109,8 @@
     // Select the first item.
     if (self.model.items.count) {
         [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
-        [self tableViewSelectionDidChange:nil];
+        [self tableViewSelectionDidChange:[NSNotification notificationWithName:NSTableViewSelectionDidChangeNotification
+                                                                        object:nil]];
     }
 
     [self performSelector:@selector(resizeWindowAnimatedToFrame:)

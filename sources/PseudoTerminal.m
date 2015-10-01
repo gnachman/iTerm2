@@ -3375,7 +3375,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     zooming_ = NO;
     if (wasZooming) {
         // Reached zoom size. Update size.
-        [self windowDidResize:nil];
+        [self windowDidResize:[NSNotification notificationWithName:NSWindowDidResizeNotification
+                                                            object:nil]];
     }
     if (postponedTmuxTabLayoutChange_) {
         [self tmuxTabLayoutDidChange:YES];

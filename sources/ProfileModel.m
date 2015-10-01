@@ -312,7 +312,7 @@ int gMigrated;
         [newBookmark setObject:@"Bookmark" forKey:KEY_NAME];
     }
     if (![newBookmark objectForKey:KEY_TAGS]) {
-        [newBookmark setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
+        [newBookmark setObject:@[] forKey:KEY_TAGS];
     }
     if (![newBookmark objectForKey:KEY_CUSTOM_COMMAND]) {
         [newBookmark setObject:@"No" forKey:KEY_CUSTOM_COMMAND];

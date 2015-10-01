@@ -100,12 +100,14 @@ static const CGFloat kMargin = 4;
 - (void)textDidEndEditing:(NSNotification *)aNotification {
     [self setIntValue:[self intValue]];
     id<NSComboBoxDelegate> comboBoxDelegate = (id<NSComboBoxDelegate>)[self delegate];
-    [comboBoxDelegate comboBoxSelectionIsChanging:nil];
+    [comboBoxDelegate comboBoxSelectionIsChanging:[NSNotification notificationWithName:NSComboBoxSelectionIsChangingNotification
+                                                                                object:nil]];
 }
 
 - (void)textDidChange:(NSNotification *)notification {
     id<NSComboBoxDelegate> comboBoxDelegate = (id<NSComboBoxDelegate>)[self delegate];
-    [comboBoxDelegate comboBoxSelectionIsChanging:nil];
+    [comboBoxDelegate comboBoxSelectionIsChanging:[NSNotification notificationWithName:NSComboBoxSelectionIsChangingNotification
+                                                                                object:nil]];
 }
 
 - (void)sizeToFit {
