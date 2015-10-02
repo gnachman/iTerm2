@@ -2401,7 +2401,7 @@
 					"-licucore",
 				);
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.10;
+				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;

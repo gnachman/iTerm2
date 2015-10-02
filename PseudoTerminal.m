@@ -227,6 +227,15 @@ NSString *sessionsKey = @"sessions";
 @end
 @implementation PseudoTerminal
 
+- (void)setDidEnterLionFullscreen:(PseudoTerminalDidEnterLionFullScreenBlock)block {
+    [_didEnterLionFullscreen autorelease];
+    _didEnterLionFullscreen = [block copy];
+}
+
+- (PseudoTerminalDidEnterLionFullScreenBlock)didEnterLionFullscreen {
+    return _didEnterLionFullscreen;
+}
+
 - (id)initWithSmartLayout:(BOOL)smartLayout
                windowType:(int)windowType
                    screen:(int)screenNumber
@@ -2055,6 +2064,10 @@ NSString *sessionsKey = @"sessions";
 {
     PtyLog(@"%s(%d):-[PseudoTerminal windowWillResize: obj=%p, proposedFrameSize width = %f; height = %f]",
            __FILE__, __LINE__, [self window], proposedFrameSize.width, proposedFrameSize.height);
+
+    if (self.togglingLionFullScreen || self.lionFullScreen) {
+        return proposedFrameSize;
+    }
 
     // Find the session for the current pane of the current tab.
     PTYTab* tab = [self currentTab];
