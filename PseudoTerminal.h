@@ -261,11 +261,15 @@ NSWindowDelegate,
 	// For top/left/bottom of screen windows, this is the size it really wants to be.
 	// Initialized to -1 in -init and then set to the size of the first session forever.
     int desiredRows_, desiredColumns_;
+
+    void (^_didEnterLionFullscreen)(PseudoTerminal *);
 }
 
 // Called when entering fullscreen has finished.
 // Used to make restoring fullscreen windows work on 10.11.
-@property(nonatomic, copy) void (^didEnterLionFullscreen)(PseudoTerminal *);
+typedef void (^PseudoTerminalDidEnterLionFullScreenBlock)(PseudoTerminal *);
+- (PseudoTerminalDidEnterLionFullScreenBlock)didEnterLionFullscreen;
+- (void)setDidEnterLionFullscreen:(PseudoTerminalDidEnterLionFullScreenBlock)block;
 
 // Is this window in the process of becoming fullscreen?
 // Used to make restoring fullscreen windows work on 10.11.

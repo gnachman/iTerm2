@@ -227,6 +227,15 @@ NSString *sessionsKey = @"sessions";
 @end
 @implementation PseudoTerminal
 
+- (void)setDidEnterLionFullscreen:(PseudoTerminalDidEnterLionFullScreenBlock)block {
+    [_didEnterLionFullscreen autorelease];
+    _didEnterLionFullscreen = [block copy];
+}
+
+- (PseudoTerminalDidEnterLionFullScreenBlock)didEnterLionFullscreen {
+    return _didEnterLionFullscreen;
+}
+
 - (id)initWithSmartLayout:(BOOL)smartLayout
                windowType:(int)windowType
                    screen:(int)screenNumber
