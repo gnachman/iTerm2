@@ -28,6 +28,9 @@
 
 static const int kBadgeMargin = 4;
 
+extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
+extern int CGContextGetFontSmoothingStyle(CGContextRef);
+
 @interface iTermTextDrawingHelper() <iTermCursorDelegate>
 @end
 
@@ -657,10 +660,23 @@ static const int kBadgeMargin = 4;
                run:(CRun *)run
            storage:(CRunStorage *)storage
            context:(CGContextRef)ctx {
+    const BOOL thinText = [iTermAdvancedSettingsModel extraThinText];
+    int savedFontSmoothingStyle = 0;
+    if (thinText) {
+        // This seems to be available at least on 10.8 and later. The only reference to it is in
+        // WebKit. This causes text to render just a little lighter, which looks nicer.
+        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
+        CGContextSetFontSmoothingStyle(ctx, 16);
+    }
+
     CGContextSetTextDrawingMode(ctx, kCGTextFill);
     while (run) {
         [self drawRun:run ctx:ctx initialPoint:initialPoint storage:storage];
         run = run->next;
+    }
+
+    if (thinText) {
+        CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
     }
 }
 
