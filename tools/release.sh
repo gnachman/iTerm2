@@ -39,6 +39,7 @@ function Build {
   codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Growl.framework"
   codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/NMSSH.framework"
   codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/Sparkle.framework"
+  codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app/Contents/Frameworks/ColorPicker.framework"
   codesign -s "Developer ID Application: GEORGE NACHMAN" -f "build/$BUILDTYPE/iTerm2.app"
   codesign --verify --verbose "build/$BUILDTYPE/iTerm2.app" || die "Signature not verified"
   pushd "build/$BUILDTYPE"
