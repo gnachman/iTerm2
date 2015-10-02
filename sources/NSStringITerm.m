@@ -990,7 +990,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 }
 
 - (NSString *)stringByExpandingVimSpecialCharacters {
-    typedef enum {
+    enum {
         kSpecialCharacterThreeDigitOctal,  // \...    three-digit octal number (e.g., "\316")
         kSpecialCharacterTwoDigitOctal,    // \..     two-digit octal number (must be followed by non-digit)
         kSpecialCharacterOneDigitOctal,    // \.      one-digit octal number (must be followed by non-digit)

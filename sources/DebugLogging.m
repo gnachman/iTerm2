@@ -12,11 +12,11 @@
 
 #include <sys/time.h>
 
+static NSString *const kDebugLogFilename = @"/tmp/debuglog.txt";
+static NSString* gDebugLogHeader = nil;
 static NSMutableString* gDebugLogStr = nil;
-static NSMutableString* gDebugLogStr2 = nil;
 static NSRecursiveLock *gDebugLogLock = nil;
 BOOL gDebugLogging = NO;
-int gDebugLogFile = -1;
 
 static void WriteDebugLogHeader() {
   NSMutableString *windows = [NSMutableString string];
@@ -40,9 +40,8 @@ static void WriteDebugLogHeader() {
                       (long long)[[NSDate date] timeIntervalSince1970],
                       [[NSApplication sharedApplication] keyWindow],
                       windows];
-  NSData* data = [header dataUsingEncoding:NSUTF8StringEncoding];
-  int written = write(gDebugLogFile, [data bytes], [data length]);
-  assert(written == [data length]);
+  [gDebugLogHeader release];
+  gDebugLogHeader = [header copy];
 }
 
 static void WriteDebugLogFooter() {
@@ -55,30 +54,25 @@ static void WriteDebugLogFooter() {
      (int)[window isKeyWindow],
      [window.contentView iterm_recursiveDescription]];
   }
-  NSString *header = [NSString stringWithFormat:
+  NSString *footer = [NSString stringWithFormat:
                       @"------ BEGIN FOOTER -----\n"
                       @"Windows: %@\n",
                       windows];
-  NSData* data = [header dataUsingEncoding:NSUTF8StringEncoding];
-  int written = write(gDebugLogFile, [data bytes], [data length]);
-  assert(written == [data length]);
-}
-
-static void SwapDebugLog() {
-    [gDebugLogLock lock];
-    NSMutableString* temp;
-    temp = gDebugLogStr;
-    gDebugLogStr = gDebugLogStr2;
-    gDebugLogStr2 = temp;
-    [gDebugLogLock unlock];
+  [gDebugLogStr appendString:footer];
 }
 
 static void FlushDebugLog() {
     [gDebugLogLock lock];
-    NSData* data = [gDebugLogStr dataUsingEncoding:NSUTF8StringEncoding];
-    size_t written = write(gDebugLogFile, [data bytes], [data length]);
-    assert(written == [data length]);
+    NSMutableString *log = [NSMutableString string];
+    [log appendString:gDebugLogHeader ?: @""];
+    WriteDebugLogFooter();
+    [log appendString:gDebugLogStr ?: @""];
+
+    [log writeToFile:kDebugLogFilename atomically:NO encoding:NSUTF8StringEncoding error:nil];
+
     [gDebugLogStr setString:@""];
+    [gDebugLogHeader release];
+    gDebugLogHeader = nil;
     [gDebugLogLock unlock];
 }
 
@@ -99,9 +93,10 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
             (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
-        if ([gDebugLogStr length] > 100000000) {
-            SwapDebugLog();
-            [gDebugLogStr2 setString:@""];
+        static const NSInteger kMaxLogSize = 100000000;
+        if ([gDebugLogStr length] > kMaxLogSize) {
+            [gDebugLogStr replaceCharactersInRange:NSMakeRange(0, kMaxLogSize / 2)
+                                        withString:@"*GIANT LOG TRUNCATED*\n"];
         }
         [gDebugLogLock unlock];
     }
@@ -114,11 +109,11 @@ static void StartDebugLogging() {
         gDebugLogLock = [[NSRecursiveLock alloc] init];
     });
     [gDebugLogLock lock];
-    gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
-    WriteDebugLogHeader();
+    [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
+                                              error:nil];
     gDebugLogStr = [[NSMutableString alloc] init];
-    gDebugLogStr2 = [[NSMutableString alloc] init];
     gDebugLogging = !gDebugLogging;
+    WriteDebugLogHeader();
     [gDebugLogLock unlock];
 }
 
@@ -131,25 +126,18 @@ void TurnOnDebugLoggingSilently(void) {
 void ToggleDebugLogging(void) {
     if (!gDebugLogging) {
         NSRunAlertPanel(@"Debug Logging Enabled",
-                        @"Writing to /tmp/debuglog.txt",
+                        @"Please reproduce the bug. Then toggle debug logging again to save the log.",
                         @"OK", nil, nil);
         StartDebugLogging();
     } else {
         [gDebugLogLock lock];
         gDebugLogging = !gDebugLogging;
-        SwapDebugLog();
         FlushDebugLog();
-        SwapDebugLog();
-        FlushDebugLog();
-        WriteDebugLogFooter();
 
-        close(gDebugLogFile);
-        gDebugLogFile=-1;
         NSRunAlertPanel(@"Debug Logging Stopped",
-                        @"Please compress and send /tmp/debuglog.txt to the developers.",
+                        @"Please send /tmp/debuglog.txt to the developers.",
                         @"OK", nil, nil);
         [gDebugLogStr release];
-        [gDebugLogStr2 release];
         [gDebugLogLock unlock];
     }
 }
