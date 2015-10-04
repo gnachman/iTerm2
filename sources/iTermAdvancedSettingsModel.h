@@ -17,6 +17,7 @@
 + (BOOL)alternateMouseScroll;
 + (BOOL)traditionalVisualBell;
 + (double)hotkeyTermAnimationDuration;
++ (BOOL)hotkeyWindowFloatsAboveOtherWindows;
 + (NSString *)searchCommand;
 + (double)antiIdleTimerPeriod;
 + (BOOL)dockIconTogglesWindow;
