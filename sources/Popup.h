@@ -23,6 +23,7 @@
 // Return YES if the delegate handles it, NO if Popup should handle it.
 - (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue;
 - (void)popupWillClose:(Popup *)popup;
+- (BOOL)popupWindowIsInHotkeyWindow;
 
 @end
 

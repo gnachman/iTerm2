@@ -54,8 +54,7 @@
     shutdown_ = YES;
 }
 
-- (void)setParentWindow:(NSWindow*)parentWindow
-{
+- (void)setParentWindow:(NSWindow*)parentWindow {
     [parentWindow_ autorelease];
     parentWindow_ = [parentWindow retain];
 }

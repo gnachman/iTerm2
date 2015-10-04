@@ -6966,6 +6966,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [[self tab] realParentWindow];
 }
 
+- (BOOL)popupWindowIsInHotkeyWindow {
+    return self.tab.realParentWindow.isHotKeyWindow;
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }

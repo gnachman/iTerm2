@@ -2,6 +2,7 @@
 
 #import "Popup.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "NSWindow+PSM.h"
 #import "PopupEntry.h"
 #import "PopupModel.h"
@@ -93,11 +94,15 @@
     return YES;
 }
 
-- (void)popWithDelegate:(id<PopupDelegate>)delegate
-{
+- (void)popWithDelegate:(id<PopupDelegate>)delegate {
     self.delegate = delegate;
-    
+
     [[self window] setParentWindow:delegate.popupWindowController.window];
+    if (delegate.popupWindowIsInHotkeyWindow &&
+        [iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
+        self.window.level = NSPopUpMenuWindowLevel;
+    }
+
     self.window.alphaValue = 0;
     [self showWindow:delegate.popupWindowController];
     [[self window] makeKeyAndOrderFront:delegate.popupWindowController];

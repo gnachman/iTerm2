@@ -170,6 +170,11 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         }
     }
     if (term) {
+        if ([iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
+            term.window.level = NSFloatingWindowLevel;
+        } else {
+            term.window.level = NSNormalWindowLevel;
+        }
         [term setIsHotKeyWindow:YES];
 
         [[term window] setAlphaValue:0];
