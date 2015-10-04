@@ -38,6 +38,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_useNonAsciiFont;
     IBOutlet NSButton *_asciiAntiAliased;
     IBOutlet NSButton *_nonasciiAntiAliased;
+    IBOutlet NSButton *_thinStrokes;
 
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
@@ -82,6 +83,10 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self defineControl:_useBoldFont
                     key:KEY_USE_BOLD_FONT
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_thinStrokes
+                    key:KEY_THIN_STROKES
                    type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_useBrightBold
@@ -173,10 +178,8 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 }
 
 - (void)updateWarnings {
-    [_normalFontWantsAntialiasing setHidden:(!self.normalFont.futureShouldAntialias ||
-                                             [self boolForKey:KEY_ASCII_ANTI_ALIASED])];
-    [_nonasciiFontWantsAntialiasing setHidden:(!self.nonAsciiFont.futureShouldAntialias ||
-                                               [self boolForKey:KEY_NONASCII_ANTI_ALIASED])];
+    [_normalFontWantsAntialiasing setHidden:!self.normalFont.futureShouldAntialias];
+    [_nonasciiFontWantsAntialiasing setHidden:!self.nonAsciiFont.futureShouldAntialias];
 }
 
 

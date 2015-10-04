@@ -115,6 +115,5 @@
 + (int)badgeTopMargin;
 + (BOOL)noSyncReplaceProfileWarning;
 + (BOOL)requireCmdForDraggingText;
-+ (BOOL)extraThinText;
 
 @end

@@ -192,6 +192,7 @@ typedef enum {
 @property(nonatomic, assign) float transparency;
 @property(nonatomic, assign) float blend;
 @property(nonatomic, assign) BOOL useBoldFont;
+@property(nonatomic, assign) BOOL thinStrokes;
 @property(nonatomic, assign) BOOL useItalicFont;
 
 @property(nonatomic, readonly) BOOL logging;
