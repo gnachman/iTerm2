@@ -660,9 +660,8 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                run:(CRun *)run
            storage:(CRunStorage *)storage
            context:(CGContextRef)ctx {
-    const BOOL thinText = [iTermAdvancedSettingsModel extraThinText];
     int savedFontSmoothingStyle = 0;
-    if (thinText) {
+    if (_thinStrokes) {
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
         savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
@@ -675,7 +674,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         run = run->next;
     }
 
-    if (thinText) {
+    if (_thinStrokes) {
         CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
     }
 }

@@ -234,6 +234,9 @@
 // Draw mark indicators?
 @property(nonatomic, assign) BOOL drawMarkIndicators;
 
+// Use light font smoothing?
+@property(nonatomic) BOOL thinStrokes;
+
 // Updates self.blinkingFound.
 - (void)drawTextViewContentInRect:(NSRect)rect
                          rectsPtr:(const NSRect *)rectArray

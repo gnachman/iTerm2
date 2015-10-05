@@ -551,9 +551,13 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];
 }
 
-- (void)setUseBoldFont:(BOOL)boldFlag
-{
+- (void)setUseBoldFont:(BOOL)boldFlag {
     _useBoldFont = boldFlag;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setThinStrokes:(BOOL)thinStrokes {
+    _thinStrokes = thinStrokes;
     [self setNeedsDisplay:YES];
 }
 
@@ -1099,6 +1103,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.transparencyAlpha = [self transparencyAlpha];
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
     _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
+    _drawingHelper.thinStrokes = _thinStrokes;
 
     const NSRect *rectArray;
     NSInteger rectCount;

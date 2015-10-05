@@ -2614,12 +2614,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // update the cursor
     [[[self currentSession] textview] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
-    if (![self lionFullScreen]) {
-        // Don't dim Lion fullscreen because you can't see the window when it's not key.
-        for (PTYSession* aSession in [self allSessions]) {
-            [[aSession view] setBackgroundDimmed:YES];
-        }
+
+    // Note that if you have multiple displays you can see a lion fullscreen window when it's
+    // not key.
+    for (PTYSession* aSession in [self allSessions]) {
+        [[aSession view] setBackgroundDimmed:YES];
     }
+
     for (PTYSession* aSession in [self allSessions]) {
         [aSession setFocused:NO];
     }
