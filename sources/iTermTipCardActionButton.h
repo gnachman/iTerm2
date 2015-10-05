@@ -32,6 +32,7 @@ typedef NS_ENUM(NSInteger, iTermTipCardActionButtonAnimationState) {
 
 // Label
 @property(nonatomic, copy) NSString *title;
+@property(nonatomic, copy) NSString *shortcut;
 
 // 22x22pt icon
 @property(nonatomic, retain) NSImage *icon;

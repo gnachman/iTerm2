@@ -9,6 +9,7 @@
 
 #import "iTermTipWindowController.h"
 
+#import "GTMCarbonEvent.h"
 #import "iTermTip.h"
 #import "iTermTipCardActionButton.h"
 #import "iTermTipCardViewController.h"
@@ -60,6 +61,8 @@ static const CGFloat kWindowWidth = 400;
 
     // Cards that are animating out. In practice this can have up to 1 element.
     NSMutableArray *_exitingCardViewControllers;
+
+    GTMCarbonHotKey *_hotkey;
 }
 
 - (instancetype)initWithTip:(id)tip {
@@ -112,6 +115,7 @@ static const CGFloat kWindowWidth = 400;
                            }];
     }
     [card addActionWithTitle:kDismissTipTitle
+                    shortcut:@"⎋"
                         icon:[NSImage imageNamed:@"Dismiss"]
                        block:^(id sendingCard) {
                            [self dismiss];
@@ -224,6 +228,20 @@ static const CGFloat kWindowWidth = 400;
 
     // Animate in the window.
     [self present];
+
+    if (!_hotkey) {
+        _hotkey = [[[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler]
+                          registerHotKey:kVK_Escape
+                          modifiers:0
+                          target:self
+                          action:@selector(dismissByKeyboard:)
+                          userInfo:nil
+                          whenPressed:YES] retain];
+    }
+}
+
+- (void)dismissByKeyboard:(id)sender {
+    [self dismiss];
 }
 
 // Update the card's size.
@@ -271,6 +289,11 @@ static const CGFloat kWindowWidth = 400;
 #pragma mark - User Actions
 
 - (void)dismiss {
+    if (_hotkey) {
+        [[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler] unregisterHotKey:_hotkey];
+        [_hotkey release];
+        _hotkey = nil;
+    }
     [self animateOut];
     [_delegate tipWindowDismissed];
 }

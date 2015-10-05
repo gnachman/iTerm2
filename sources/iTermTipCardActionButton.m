@@ -47,6 +47,11 @@ static const CGFloat kStandardButtonHeight = 34;
 
 @end
 
+@interface iTermTipCardActionButton()
+@property(nonatomic, copy) NSString *titleValue;
+@property(nonatomic, copy) NSString *shortcutValue;
+@end
+
 @implementation iTermTipCardActionButton {
     CGFloat _desiredHeight;
     BOOL _isHighlighted;
@@ -101,6 +106,8 @@ static const CGFloat kStandardButtonHeight = 34;
 - (void)dealloc {
     [_block release];
     [_icon release];
+    [_titleValue release];
+    [_shortcutValue release];
     [super dealloc];
 }
 
@@ -110,12 +117,50 @@ static const CGFloat kStandardButtonHeight = 34;
 }
 
 - (void)setTitle:(NSString *)title {
-    _textField.stringValue = title;
+    self.titleValue = title;
+    [self updateTitle];
+}
+
+- (void)updateTitle {
+    CGFloat width = NSWidth(self.bounds) - NSMinX(_textField.frame);
+    NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    paragraphStyle.alignment = NSLeftTextAlignment;
+
+    // For inscrutable reasons, putting the tab stop all the way at the right edge of the field
+    // doesn't work--the tab seems to be ignored.
+    NSTextTab *tab = [[[NSTextTab alloc] initWithTextAlignment:NSTextAlignmentRight
+                                                      location:width - 8
+                                                       options:@{ }] autorelease];
+    paragraphStyle.tabStops = @[ tab ];
+    NSString *string = [NSString stringWithFormat:@"%@\t%@",
+                                                  self.titleValue ?: @"",
+                                                  self.shortcutValue ?: @""];
+    NSDictionary *attributes = @{ NSParagraphStyleAttributeName: paragraphStyle };
+    NSAttributedString *attributedString =
+        [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
+    _textField.attributedStringValue = attributedString;
     [_textField sizeToFit];
+    NSRect rect = _textField.frame;
+    rect.size.width = width;
+    _textField.frame = rect;
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    [super setFrameSize:newSize];
+    [self updateTitle];
+}
+
+- (void)setShortcut:(NSString *)shortcut {
+    self.shortcutValue = shortcut;
+    [self updateTitle];
 }
 
 - (NSString *)title {
-    return _textField.stringValue;
+    return self.titleValue;
+}
+
+- (NSString *)shortcut {
+    return self.shortcutValue;
 }
 
 // This assumes the icon is 22x22

@@ -155,6 +155,13 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
 - (iTermTipCardActionButton *)addActionWithTitle:(NSString *)title
                                             icon:(NSImage *)image
                                            block:(void (^)(id card))block {
+    return [self addActionWithTitle:title shortcut:nil icon:image block:block];
+}
+
+- (iTermTipCardActionButton *)addActionWithTitle:(NSString *)title
+                                        shortcut:(NSString *)shortcut
+                                            icon:(NSImage *)image
+                                           block:(void (^)(id card))block {
     if (!_actionButtons) {
         _actionButtons = [[NSMutableArray alloc] init];
     }
@@ -162,6 +169,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     iTermTipCardActionButton *button = [[[iTermTipCardActionButton alloc] initWithFrame:NSMakeRect(kButtonSideInset, 0, _container.bounds.size.width - kButtonSideInset * 2, 0)] autorelease];
     button.autoresizingMask = 0;
     button.title = title;
+    button.shortcut = shortcut;
     [button setIcon:image];
     button.block = block;
     button.target = self;
