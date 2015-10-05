@@ -485,7 +485,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                 return textField;
             }
         } else {
-            return [[NSView alloc] initWithFrame:NSZeroRect];
+            return [[[NSView alloc] initWithFrame:NSZeroRect] autorelease];
         }
     }
     return nil;

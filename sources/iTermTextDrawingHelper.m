@@ -1067,14 +1067,14 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                                         storage:storage];
             if (run) {
                 [self drawRunsAt:NSMakePoint(x, y) run:run storage:storage context:ctx];
+
+                // Draw an underline.
+                [self drawUnderlineOfColor:[self defaultTextColor]
+                              atCellOrigin:NSMakePoint(x, y)
+                                      font:run->attrs.fontInfo.font
+                                     width:charsInLine * _cellSize.width];
                 CRunFree(run);
             }
-
-            // Draw an underline.
-            [self drawUnderlineOfColor:[self defaultTextColor]
-                          atCellOrigin:NSMakePoint(x, y)
-                                  font:run->attrs.fontInfo.font
-                                 width:charsInLine * _cellSize.width];
 
             // Save the cursor's cell coords
             if (i <= cursorIndex && i + charsInLine > cursorIndex) {

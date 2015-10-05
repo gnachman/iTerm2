@@ -21,6 +21,7 @@
     int fileDescriptor = mkstemps(tempFileNameCString, suffix.length);
 
     if (fileDescriptor == -1) {
+        free(tempFileNameCString);
         return nil;
     }
     close(fileDescriptor);

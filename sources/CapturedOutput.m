@@ -31,7 +31,7 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
         capturedOutput.values = dict[kCapturedOutputValuesKey];
         capturedOutput.triggerDigest = dict[kCapturedOutputTriggerHashKey];
         capturedOutput.state = [dict[kCapturedOutputStateKey] boolValue];
-        capturedOutput.markGuid = [dict[kCapturedOutputMarkGuidKey] autorelease];
+        capturedOutput.markGuid = [[dict[kCapturedOutputMarkGuidKey] copy] autorelease];
     }
     return capturedOutput;
 }

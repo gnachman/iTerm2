@@ -4294,7 +4294,7 @@ static void SwapInt(int *a, int *b) {
     NSMutableDictionary *dict = [[[temp dictionary] mutableCopy] autorelease];
     static NSString *const kScreenStateTabStopsKey = @"Tab Stops";
     dict[kScreenStateKey] =
-        @{ kScreenStateTabStopsKey: [tabStops_ allObjects],
+        @{ kScreenStateTabStopsKey: [tabStops_ allObjects] ?: @[],
            kScreenStateTerminalKey: [terminal_ stateDictionary],
            kScreenStateLineDrawingModeKey: @[ @(charsetUsesLineDrawingMode_[0]),
                                               @(charsetUsesLineDrawingMode_[1]),

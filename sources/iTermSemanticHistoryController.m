@@ -127,7 +127,7 @@ NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey = @"semanticHist
     NSString *executable = [bundlePath stringByAppendingPathComponent:@"Contents/MacOS"];
     executable = [executable stringByAppendingPathComponent:
                             [bundle objectForInfoDictionaryKey:(id)kCFBundleExecutableKey]];
-    if (bundle && executable) {
+    if (bundle && executable && path) {
         DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, path);
         [self launchTaskWithPath:executable arguments:@[ executable, path ] wait:NO];
     }

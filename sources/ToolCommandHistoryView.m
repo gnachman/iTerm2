@@ -30,6 +30,7 @@ static const CGFloat kHelpMargin = 5;
     iTermSearchField *searchField_;
     NSFont *boldFont_;
     NSButton *help_;
+    NSMutableParagraphStyle *_paragraphStyle;
 }
 
 @synthesize tableView = tableView_;
@@ -37,6 +38,9 @@ static const CGFloat kHelpMargin = 5;
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        _paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+        _paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
+
         searchField_ = [[iTermSearchField alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, 1)];
         [searchField_ sizeToFit];
         searchField_.autoresizingMask = NSViewWidthSizable;
@@ -124,6 +128,7 @@ static const CGFloat kHelpMargin = 5;
     [scrollView_ release];
     [boldFont_ release];
     [filteredEntries_ release];
+    [_paragraphStyle release];
     [super dealloc];
 }
 
@@ -181,18 +186,16 @@ static const CGFloat kHelpMargin = 5;
         // Contents
         NSString *value = [commandUse.command stringByReplacingOccurrencesOfString:@"\n"
                                                                         withString:@" "];
-        NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-        paragraphStyle.lineBreakMode = NSLineBreakByTruncatingTail;
 
         iTermToolWrapper *wrapper = self.toolWrapper;
         if (commandUse.mark &&
             [wrapper.delegate.delegate toolbeltCurrentSessionHasGuid:commandUse.mark.sessionGuid]) {
             return [[[NSAttributedString alloc] initWithString:value
                                                    attributes:@{ NSFontAttributeName: boldFont_,
-                                                                 NSParagraphStyleAttributeName: paragraphStyle }] autorelease];
+                                                                 NSParagraphStyleAttributeName: _paragraphStyle }] autorelease];
         } else {
             return [[[NSAttributedString alloc] initWithString:value
-                                                    attributes:@{ NSParagraphStyleAttributeName: paragraphStyle }] autorelease];
+                                                    attributes:@{ NSParagraphStyleAttributeName: _paragraphStyle }] autorelease];
         }
     }
 }
