@@ -4995,8 +4995,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];
     }
-    newSession.tabColor = tabColor;
-    [self updateTabColors];
+    if (targetSession.isDivorced) {
+        // We assign directly to isDivorced because we know the GUID is unique and in sessions
+        // instance and the original guid is already set. _bookmarkToSplit took care of that.
+        newSession.isDivorced = YES;
+    }
+    if (![newSession.tabColor isEqual:tabColor] && newSession.tabColor != tabColor) {
+        newSession.tabColor = tabColor;
+        [self updateTabColors];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"
                                                         object:self
                                                       userInfo:nil];
@@ -5049,7 +5056,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // Get the bookmark this session was originally created with. But look it up from its GUID because
     // it might have changed since it was copied into originalProfile when the bookmark was
     // first created.
-    Profile* originalBookmark = [[self currentSession] originalProfile];
+    PTYSession *sourceSession = self.currentSession;
+    Profile* originalBookmark = [sourceSession originalProfile];
     if (originalBookmark && [originalBookmark objectForKey:KEY_GUID]) {
         theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[originalBookmark objectForKey:KEY_GUID]];
     }
@@ -5069,6 +5077,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (!theBookmark) {
         theBookmark = [[ProfileModel sharedInstance] defaultBookmark];
     }
+
+    if (sourceSession.isDivorced) {
+        // Don't want to have two divorced sessions with the same guid. Allocate a new sessions
+        // instance bookmark with a unique GUID.
+        NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
+        temp[KEY_GUID] = [ProfileModel freshGuid];
+        [[ProfileModel sessionsInstance] addBookmark:temp];
+        theBookmark = temp;
+    }
+
     return theBookmark;
 }
 

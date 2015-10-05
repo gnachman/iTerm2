@@ -208,7 +208,8 @@ typedef enum {
 
 // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
 // in this bookmark may happen indepentendly of the persistent bookmark.
-@property(nonatomic, readonly) BOOL isDivorced;
+// You should usually not assign to this; instead use divorceAddressBookEntryFromPreferences.
+@property(nonatomic, assign) BOOL isDivorced;
 
 @property(nonatomic, readonly) NSString *jobName;
 

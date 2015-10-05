@@ -162,7 +162,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, readwrite) NSTimeInterval lastOutput;
-@property(nonatomic, readwrite) BOOL isDivorced;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
@@ -3719,8 +3718,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return guid;
     }
     _isDivorced = YES;
+    DLog(@"Remove profile with guid %@ from sessions instance", guid);
     [[ProfileModel sessionsInstance] removeProfileWithGuid:guid];
-    [[ProfileModel sessionsInstance] addBookmark:bookmark];
+    DLog(@"Set profile %@ divorced, add to sessions instance", bookmark[KEY_GUID]);
+    [[ProfileModel sessionsInstance] addBookmark:[[bookmark copy] autorelease]];
 
     NSString *existingOriginalGuid = bookmark[KEY_ORIGINAL_GUID];
     if (!existingOriginalGuid ||
@@ -3734,6 +3735,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Allocate a new guid for this bookmark.
     guid = [ProfileModel freshGuid];
+    DLog(@"Allocating a new guid for this profile. The new guid is %@", guid);
     [[ProfileModel sessionsInstance] setObject:guid
                                         forKey:KEY_GUID
                                     inBookmark:bookmark];
