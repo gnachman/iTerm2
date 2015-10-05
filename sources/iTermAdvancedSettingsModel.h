@@ -115,5 +115,6 @@
 + (int)badgeTopMargin;
 + (BOOL)noSyncReplaceProfileWarning;
 + (BOOL)requireCmdForDraggingText;
++ (double)tabAutoShowHoldTime;
 
 @end
