@@ -77,7 +77,6 @@ extern NSString *const kPreferenceKeyHideTabBar;
 extern NSString *const kPreferenceKeyHideTabNumber;
 extern NSString *const kPreferenceKeyHideTabCloseButton;
 extern NSString *const kPreferenceKeyHideTabActivityIndicator;
-extern NSString *const kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen;
 extern NSString *const kPreferenceKeyShowPaneTitles;
 extern NSString *const kPreferenceKeyHideMenuBarInFullscreen;
 extern NSString *const kPreferenceKeyFlashTabBarInFullscreen;

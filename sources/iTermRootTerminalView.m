@@ -407,14 +407,6 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     return [_delegate iTermTabBarShouldFlashAutomatically];
 }
 
-- (BOOL)iTermTabBarShouldFlashBecauseCmdHeld {
-    return [_delegate iTermTabBarShouldFlashBecauseCmdHeld];
-}
-
-- (NSTimeInterval)iTermTabBarCmdPressDuration {
-    return [_delegate iTermTabBarCmdPressDuration];
-}
-
 - (void)iTermTabBarWillBeginFlash {
     [_delegate iTermTabBarWillBeginFlash];
 }

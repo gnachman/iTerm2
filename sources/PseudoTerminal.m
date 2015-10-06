@@ -2594,7 +2594,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     [self maybeHideHotkeyWindow];
 
-    [_contentView.tabBarControl setFlashing:NO becauseCmdHeld:NO];
+    [_contentView.tabBarControl setFlashing:NO];
     _contentView.tabBarControl.cmdPressed = NO;
 
     if ([[pbHistoryView window] isVisible] ||
@@ -2608,7 +2608,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
           __FILE__, __LINE__, aNotification);
 
     if (_fullScreen) {
-        [_contentView.tabBarControl setFlashing:NO becauseCmdHeld:NO];
+        [_contentView.tabBarControl setFlashing:NO];
         [self showMenuBar];
     }
     // update the cursor
@@ -3717,7 +3717,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     DLog(@"Did select tab view %@", tabViewItem);
-    [_contentView.tabBarControl setFlashing:YES becauseCmdHeld:NO];
+    [_contentView.tabBarControl setFlashing:YES];
 
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
@@ -6000,7 +6000,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         }
     }
 
-    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask);
+    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSCommandKeyMask) == NSCommandKeyMask);
 }
 
 // Change position of window widgets.
@@ -6916,14 +6916,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (BOOL)iTermTabBarShouldFlashAutomatically {
     return ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
             [self eligibleForFullScreenTabBarToFlash]);
-}
-
-- (BOOL)iTermTabBarShouldFlashBecauseCmdHeld {
-    return [self eligibleForFullScreenTabBarToFlash];
-}
-
-- (NSTimeInterval)iTermTabBarCmdPressDuration {
-    return [iTermPreferences floatForKey:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen];
 }
 
 - (void)iTermTabBarWillBeginFlash {

@@ -11,9 +11,7 @@
 // NOTE: The delegate should nil out of itermTabBarDelegate when it gets dealloced; we may live on because of delayed performs.
 @protocol iTermTabBarControlViewDelegate
 
-- (BOOL)iTermTabBarShouldFlashBecauseCmdHeld;
 - (BOOL)iTermTabBarShouldFlashAutomatically;
-- (NSTimeInterval)iTermTabBarCmdPressDuration;
 - (void)iTermTabBarWillBeginFlash;
 - (void)iTermTabBarDidFinishFlash;
 
@@ -33,9 +31,7 @@
 // Indicates if the tab bar is currently flashing.
 - (BOOL)flashing;
 
-// Start or stop flashing. We take care of fading. The |becauseCmdHeld|
-// argument is used to select the correct delegate call to determine if the tab
-// bar really should flash.
-- (void)setFlashing:(BOOL)flashing becauseCmdHeld:(BOOL)becauseCmdHeld;
+// Start or stop flashing. We take care of fading.
+- (void)setFlashing:(BOOL)flashing;
 
 @end

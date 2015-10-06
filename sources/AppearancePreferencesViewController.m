@@ -28,9 +28,6 @@
     // Hide activity indicator.
     IBOutlet NSButton *_hideActivityIndicator;
 
-    // Delay before showing tabs in fullscreen mode.
-    IBOutlet NSSlider *_fsTabDelay;
-
     // Show per-pane title bar with split panes.
     IBOutlet NSButton *_showPaneTitles;
 
@@ -103,10 +100,6 @@
                            key:kPreferenceKeyHideTabActivityIndicator
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
-
-    [self defineControl:_fsTabDelay
-                    key:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen
-                   type:kPreferenceInfoTypeSlider];
 
     info = [self defineControl:_showPaneTitles
                            key:kPreferenceKeyShowPaneTitles
