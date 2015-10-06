@@ -391,5 +391,8 @@
                                                    height:rows];
 }
 
+- (NSString *)profileName {
+  return self.profile[KEY_NAME];
+}
 
 @end

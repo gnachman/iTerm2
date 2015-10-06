@@ -27,5 +27,6 @@
 @property(nonatomic, retain) NSColor *ansiBrightMagentaColor;
 @property(nonatomic, retain) NSColor *ansiBrightCyanColor;
 @property(nonatomic, retain) NSColor *ansiBrightWhiteColor;
+@property(nonatomic, readonly) NSString *profileName;
 
 @end
