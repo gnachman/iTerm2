@@ -2774,7 +2774,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="4BA-kr-358">
-                    <rect key="frame" x="283" y="305" width="258" height="18"/>
+                    <rect key="frame" x="283" y="305" width="269" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Draw anti-aliased text with thin strokes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4SR-DD-VTM">
