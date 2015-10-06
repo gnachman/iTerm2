@@ -117,7 +117,8 @@ static const CGFloat kHelpMargin = 5;
                                                  selector:@selector(commandHistoryDidChange:)
                                                      name:kCommandHistoryDidChangeNotificationName
                                                    object:nil];
-        [self updateCommands];
+        // It doesn't seem to scroll far enough unless you use a delayed perform.
+        [tableView_ performSelector:@selector(scrollToEndOfDocument:) withObject:nil afterDelay:0];
     }
     return self;
 }
@@ -186,6 +187,22 @@ static const CGFloat kHelpMargin = 5;
         // Contents
         NSString *value = [commandUse.command stringByReplacingOccurrencesOfString:@"\n"
                                                                         withString:@" "];
+
+        if (commandUse.code.integerValue) {
+            static dispatch_once_t onceToken;
+            static BOOL egg;
+            dispatch_once(&onceToken, ^{
+                NSCalendar *calendar = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] autorelease];
+                NSDateComponents *components = [calendar components:(NSMonthCalendarUnit | NSDayCalendarUnit) fromDate:[NSDate date]];
+                egg = (components.month == 4 && components.day == 1);
+            });
+
+            if (egg) {
+                value = [@"💩 " stringByAppendingString:value];
+            } else {
+                value = [@"🚫 " stringByAppendingString:value];
+            }
+        }
 
         iTermToolWrapper *wrapper = self.toolWrapper;
         if (commandUse.mark &&

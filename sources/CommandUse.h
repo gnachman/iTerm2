@@ -24,6 +24,9 @@
 // This is used to figure out which mark matches this command use when deserializing marks.
 @property(nonatomic, readonly) NSString *markGuid;
 
+// Optional status code. Unset implies code 0.
+@property(nonatomic, retain) NSNumber *code;
+
 + (instancetype)commandUseFromSerializedValue:(NSArray *)serializedValue;
 - (NSArray *)serializedValue;
 

@@ -34,6 +34,10 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
        inDirectory:(NSString *)directory
           withMark:(VT100ScreenMark *)mark;
 
+- (void)setStatusOfCommandAtMark:(VT100ScreenMark *)mark
+                          onHost:(VT100RemoteHost *)remoteHost
+                              to:(int)status;
+
 - (NSArray *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand
                                       onHost:(VT100RemoteHost *)host;
 

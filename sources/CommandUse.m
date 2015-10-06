@@ -21,6 +21,7 @@
     [_directory release];
     [_markGuid release];
     [_command release];
+    [_code release];
     [super dealloc];
 }
 
@@ -28,7 +29,8 @@
     return @[ @(self.time),
               _directory ?: @"",
               _markGuid ?: @"",
-              _command ?: @"" ];
+              _command ?: @"",
+              _code ?: [NSNull null] ];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -58,6 +60,9 @@
         }
         if ([serializedValue count] > 3 && [serializedValue[3] length] > 0) {
             commandUse.command = serializedValue[3];
+        }
+        if ([serializedValue count] > 4 && ![serializedValue[4] isKindOfClass:[NSNull class]]) {
+            commandUse.code = serializedValue[4];
         }
     } else if ([serializedValue isKindOfClass:[NSNumber class]]) {
         commandUse.time = [serializedValue doubleValue];

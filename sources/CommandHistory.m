@@ -141,6 +141,19 @@ static const int kMaxCommandsToSavePerHost = 200;
                                                         object:nil];
 }
 
+- (void)setStatusOfCommandAtMark:(VT100ScreenMark *)mark
+                          onHost:(VT100RemoteHost *)remoteHost
+                              to:(int)status {
+    CommandUse *commandUse = [[CommandHistory sharedInstance] commandUseWithMarkGuid:mark.guid
+                                                                              onHost:remoteHost];
+    // If the status is 0 and commandUse doesn't have a code set, do nothing. This saves some time
+    // in the common case.
+    if (commandUse.code.intValue != status) {
+        commandUse.code = @(status);
+        [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName object:nil];
+    }
+}
+
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host {
     return [[self commandsForHost:host] count] > 0;
 }

@@ -3574,6 +3574,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         mark.code = returnCode;
+        VT100RemoteHost *remoteHost = [self remoteHostOnLine:[self numberOfLines]];
+        [[CommandHistory sharedInstance] setStatusOfCommandAtMark:mark
+                                                           onHost:remoteHost
+                                                               to:returnCode];
         [delegate_ screenNeedsRedraw];
     } else {
         DLog(@"No last command mark found.");
