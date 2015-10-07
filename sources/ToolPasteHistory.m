@@ -132,8 +132,15 @@ static const CGFloat kMargin = 4;
         return [NSDateFormatter compactDateDifferenceStringFromDate:entry->timestamp];
     } else {
         // Contents
-        NSString* value = [[entry mainValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-        return value;
+        NSString* value = [[entry mainValue] stringByReplacingOccurrencesOfString:@"\n"
+                                                                       withString:@" "];
+        // Don't return an insanely long value to avoid performance issues.
+        const NSUInteger kMaxLength = 256;
+        if (value.length > kMaxLength) {
+            return [value substringToIndex:kMaxLength];
+        } else {
+            return value;
+        }
     }
 }
 
