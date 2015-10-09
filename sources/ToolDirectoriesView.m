@@ -230,6 +230,9 @@ static const CGFloat kHelpMargin = 5;
     } else {
         text = entry.path;
     }
+    if (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
+        text = [text stringByAppendingString:@"\n"];
+    }
     [wrapper.delegate.delegate toolbeltInsertText:text];
 }
 

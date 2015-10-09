@@ -7241,6 +7241,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)toolbeltInsertText:(NSString *)text {
     [[[self currentSession] textview] insertText:text];
+    [[self currentSession] takeFocus];
 }
 
 - (VT100RemoteHost *)toolbeltCurrentHost {
