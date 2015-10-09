@@ -2515,7 +2515,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5148">
-                    <rect key="frame" x="283" y="285" width="154" height="18"/>
+                    <rect key="frame" x="283" y="305" width="154" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Blinking text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
@@ -2528,7 +2528,7 @@ DQ
                     </connections>
                 </button>
                 <button id="6400">
-                    <rect key="frame" x="283" y="265" width="134" height="18"/>
+                    <rect key="frame" x="283" y="285" width="134" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Italic text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
@@ -2774,7 +2774,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="4BA-kr-358">
-                    <rect key="frame" x="283" y="305" width="269" height="18"/>
+                    <rect key="frame" x="282" y="264" width="269" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Draw anti-aliased text with thin strokes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4SR-DD-VTM">
@@ -5744,7 +5744,7 @@ DQ
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6206" id="6091">
-                                <rect key="frame" x="0.0" y="0.0" width="849" height="228"/>
+                                <rect key="frame" x="0.0" y="0.0" width="849" height="19"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <animations/>
                                 <size key="intercellSpacing" width="3" height="2"/>
