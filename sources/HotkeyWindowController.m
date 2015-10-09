@@ -288,6 +288,12 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             rollingIn_ = YES;
         }
     }
+    if([iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
+        hotkeyTerm.window.level = NSFloatingWindowLevel;
+    }
+    else {
+        hotkeyTerm.window.level = NSNormalWindowLevel;
+    }
 }
 
 - (void)createHiddenHotkeyWindow {

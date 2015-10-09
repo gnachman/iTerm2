@@ -83,6 +83,7 @@ DEFINE_BOOL(requireCmdForDraggingText, NO, @"Terminal: To drag images or selecte
 #pragma mark Hotkey
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of the hotkey window animation.");
 DEFINE_BOOL(dockIconTogglesWindow, NO, @"Hotkey: If the only window is a hotkey window, then clicking the dock icon shows or hides it.");
+DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, @"Hotkey: The hotkey window floats above other windows even when iTerm is in the background.");
 
 #pragma mark General
 DEFINE_STRING(searchCommand, @"http://google.com/search?q=%@", @"General: Template for URL of search engine.\niTerm2 replaces the string “%@” with the text to search for. Query parameter percent escaping is used.");
