@@ -4648,9 +4648,10 @@ DQ
                     <animations/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="5629"/>
                 </imageView>
-                <popUpButton toolTip="A tmux server has multiple virtual windows. This setting determines how they are presented with attaching." verticalHuggingPriority="750" id="6337">
+                <popUpButton verticalHuggingPriority="750" id="6337">
                     <rect key="frame" x="356" y="129" width="361" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">A tmux server has multiple virtual windows. When you attach to a tmux server, these virtual windows can be presented as windows or tabs. This setting determines how they should appear in iTerm2.</string>
                     <animations/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="6338">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
