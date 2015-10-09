@@ -4648,7 +4648,7 @@ DQ
                     <animations/>
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="5629"/>
                 </imageView>
-                <popUpButton toolTip="A tmux server has multiple virtual windows. This setting determines how hey are presented with attaching." verticalHuggingPriority="750" id="6337">
+                <popUpButton toolTip="A tmux server has multiple virtual windows. This setting determines how they are presented with attaching." verticalHuggingPriority="750" id="6337">
                     <rect key="frame" x="356" y="129" width="361" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
