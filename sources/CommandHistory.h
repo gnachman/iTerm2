@@ -38,20 +38,20 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
                           onHost:(VT100RemoteHost *)remoteHost
                               to:(int)status;
 
-- (NSArray *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand
+- (NSArray<iTermCommandHistoryEntryMO *> *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand
                                       onHost:(VT100RemoteHost *)host;
 
-// Returns an array of CommandUse
-- (NSArray *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host;
 
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host;
 
 - (void)eraseHistory;
 
-- (CommandUse *)commandUseWithMarkGuid:(NSString *)markGuid onHost:(VT100RemoteHost *)host;
+- (iTermCommandHistoryCommandUseMO *)commandUseWithMarkGuid:(NSString *)markGuid
+                                                     onHost:(VT100RemoteHost *)host;
 
-- (NSMutableArray *)commandUsesForHost:(VT100RemoteHost *)host;
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUsesForHost:(VT100RemoteHost *)host;
 
 #pragma mark - Testing
 

@@ -510,7 +510,7 @@
     return NO;
 }
 
-- (NSArray *)toolbeltCommandUsesForCurrentSession {
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return @[];
 }
 

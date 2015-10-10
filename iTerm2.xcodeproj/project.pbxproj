@@ -1514,6 +1514,39 @@
 		A6CEDA6219988A7300BB57EC /* LogoShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6CEDA5E19988A7300BB57EC /* LogoShadow.png */; };
 		A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD0185D2587005DC94B /* URLAction.h */; };
 		A6CFDAD7185D53C2005DC94B /* AsyncHostLookupController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */; };
+		A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; settings = {ASSET_TAGS = (); }; };
+		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; settings = {ASSET_TAGS = (); }; };
+		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; settings = {ASSET_TAGS = (); }; };
+		A6D22B251BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B191BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B261BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B191BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B271BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1A1BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B281BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1A1BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B291BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1A1BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B2A1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B1B1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B2B1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B1B1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B2C1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1C1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B2D1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1C1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B2E1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1C1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B2F1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B1D1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B301BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B1D1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B311BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1E1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B321BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1E1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B331BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B1E1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B341BC98CFB004084E0 /* iTermCommandHistoryMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B1F1BC98CFB004084E0 /* iTermCommandHistoryMO.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B351BC98CFB004084E0 /* iTermCommandHistoryMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B1F1BC98CFB004084E0 /* iTermCommandHistoryMO.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B361BC98CFB004084E0 /* iTermCommandHistoryMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B201BC98CFB004084E0 /* iTermCommandHistoryMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B371BC98CFB004084E0 /* iTermCommandHistoryMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B201BC98CFB004084E0 /* iTermCommandHistoryMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B381BC98CFB004084E0 /* iTermCommandHistoryMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B201BC98CFB004084E0 /* iTermCommandHistoryMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B391BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B211BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B3A1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B211BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B3B1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B221BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B3C1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B221BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B3D1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B221BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B3E1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B231BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B3F1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D22B231BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h */; settings = {ASSET_TAGS = (); }; };
+		A6D22B401BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B411BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B421BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */; settings = {ASSET_TAGS = (); }; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E525DD1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
@@ -2501,6 +2534,19 @@
 		A6CFDAD1185D2587005DC94B /* URLAction.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = URLAction.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6CFDAD5185D53C2005DC94B /* AsyncHostLookupController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = AsyncHostLookupController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6CFDAD6185D53C2005DC94B /* AsyncHostLookupController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = AsyncHostLookupController.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6D22A421BC8BE6B004084E0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
+		A6D22B191BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "iTermCommandHistoryEntryMO+CoreDataProperties.h"; path = "sources/NSManagedObjects/iTermCommandHistoryEntryMO+CoreDataProperties.h"; sourceTree = "<group>"; };
+		A6D22B1A1BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "iTermCommandHistoryEntryMO+CoreDataProperties.m"; path = "sources/NSManagedObjects/iTermCommandHistoryEntryMO+CoreDataProperties.m"; sourceTree = "<group>"; };
+		A6D22B1B1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermCommandHistoryEntryMO.h; path = sources/NSManagedObjects/iTermCommandHistoryEntryMO.h; sourceTree = "<group>"; };
+		A6D22B1C1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermCommandHistoryEntryMO.m; path = sources/NSManagedObjects/iTermCommandHistoryEntryMO.m; sourceTree = "<group>"; };
+		A6D22B1D1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "iTermCommandHistoryMO+CoreDataProperties.h"; path = "sources/NSManagedObjects/iTermCommandHistoryMO+CoreDataProperties.h"; sourceTree = "<group>"; };
+		A6D22B1E1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "iTermCommandHistoryMO+CoreDataProperties.m"; path = "sources/NSManagedObjects/iTermCommandHistoryMO+CoreDataProperties.m"; sourceTree = "<group>"; };
+		A6D22B1F1BC98CFB004084E0 /* iTermCommandHistoryMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermCommandHistoryMO.h; path = sources/NSManagedObjects/iTermCommandHistoryMO.h; sourceTree = "<group>"; };
+		A6D22B201BC98CFB004084E0 /* iTermCommandHistoryMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermCommandHistoryMO.m; path = sources/NSManagedObjects/iTermCommandHistoryMO.m; sourceTree = "<group>"; };
+		A6D22B211BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "iTermCommandHistoryCommandUseMO+CoreDataProperties.h"; path = "sources/NSManagedObjects/iTermCommandHistoryCommandUseMO+CoreDataProperties.h"; sourceTree = "<group>"; };
+		A6D22B221BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "iTermCommandHistoryCommandUseMO+CoreDataProperties.m"; path = "sources/NSManagedObjects/iTermCommandHistoryCommandUseMO+CoreDataProperties.m"; sourceTree = "<group>"; };
+		A6D22B231BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermCommandHistoryCommandUseMO.h; path = sources/NSManagedObjects/iTermCommandHistoryCommandUseMO.h; sourceTree = "<group>"; };
+		A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermCommandHistoryCommandUseMO.m; path = sources/NSManagedObjects/iTermCommandHistoryCommandUseMO.m; sourceTree = "<group>"; };
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
@@ -2738,6 +2784,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6D22A701BC8C27E004084E0 /* NSManagedObjects */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1D03D42519144B8E0049EB8F /* ThirdParty */,
@@ -3217,6 +3264,7 @@
 			children = (
 				A67D0D951A2EE248003A8B35 /* iTerm2 Help */,
 				93A6FEF910685E9900A5F905 /* dsa_pub.pem */,
+				A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */,
 			);
 			name = "Other Assets";
 			sourceTree = "<group>";
@@ -4037,6 +4085,25 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		A6D22A701BC8C27E004084E0 /* NSManagedObjects */ = {
+			isa = PBXGroup;
+			children = (
+				A6D22B191BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.h */,
+				A6D22B1A1BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m */,
+				A6D22B1B1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.h */,
+				A6D22B1C1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m */,
+				A6D22B1D1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.h */,
+				A6D22B1E1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m */,
+				A6D22B1F1BC98CFB004084E0 /* iTermCommandHistoryMO.h */,
+				A6D22B201BC98CFB004084E0 /* iTermCommandHistoryMO.m */,
+				A6D22B211BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h */,
+				A6D22B221BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m */,
+				A6D22B231BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h */,
+				A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */,
+			);
+			name = NSManagedObjects;
+			sourceTree = "<group>";
+		};
 		A6E74764188C6A2A005355CF /* Expose */ = {
 			isa = PBXGroup;
 			children = (
@@ -4188,6 +4255,7 @@
 				1D6ED87F19AEA20D005A7799 /* VT100StringParser.h in Headers */,
 				1D6ED88019AEA20D005A7799 /* PSMTabDragWindow.h in Headers */,
 				1D6ED88119AEA20D005A7799 /* NSImage+iTerm.h in Headers */,
+				A6D22B261BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				1D6ED88219AEA20D005A7799 /* iTermGrowlDelegate.h in Headers */,
 				1D6ED88319AEA20D005A7799 /* iTermOpenQuicklyTableCellView.h in Headers */,
 				1D6ED88419AEA20D005A7799 /* iTermAnnouncementView.h in Headers */,
@@ -4198,6 +4266,7 @@
 				A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */,
 				1D6ED88919AEA20D005A7799 /* IntervalTree.h in Headers */,
 				1D6ED88A19AEA20D005A7799 /* iTermNSKeyBindingEmulator.h in Headers */,
+				A6D22B2B1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.h in Headers */,
 				1D6ED88B19AEA20D005A7799 /* NSColor+iTerm.h in Headers */,
 				A6E77FA21A2A8A5A009B1CB6 /* NSData+iTerm.h in Headers */,
 				1D6ED88C19AEA20D005A7799 /* CGSCursor.h in Headers */,
@@ -4210,11 +4279,13 @@
 				1D6ED89119AEA20D005A7799 /* CGSDisplays.h in Headers */,
 				1D6ED89219AEA20D005A7799 /* TransferrableFileMenuItemView.h in Headers */,
 				1D6ED89319AEA20D005A7799 /* VT100LineInfo.h in Headers */,
+				A6D22B301BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.h in Headers */,
 				1D6ED89419AEA20D005A7799 /* GeneralPreferencesViewController.h in Headers */,
 				1D6ED89519AEA20D005A7799 /* CGSHotKeys.h in Headers */,
 				1D6ED89619AEA20D005A7799 /* CGSInternal.h in Headers */,
 				1D6ED89719AEA20D005A7799 /* CGSMisc.h in Headers */,
 				1D6ED89819AEA20D005A7799 /* AATreeNode.h in Headers */,
+				A6D22B3F1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				1D6ED89919AEA20D005A7799 /* AATree.h in Headers */,
 				1D6ED89A19AEA20D005A7799 /* CGSNotifications.h in Headers */,
 				1D6ED89B19AEA20D005A7799 /* iTermColorMap.h in Headers */,
@@ -4273,6 +4344,7 @@
 				1D6ED8C819AEA20D005A7799 /* CommandHistory.h in Headers */,
 				1D6ED8C919AEA20D005A7799 /* UKSystemInfo.h in Headers */,
 				1D6ED8CA19AEA20D005A7799 /* iTermWarning.h in Headers */,
+				A6D22B3A1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				1D6ED8CB19AEA20D005A7799 /* ProfilesColorsPreferencesViewController.h in Headers */,
 				1D6ED8CC19AEA20D005A7799 /* iTermPasteHelper.h in Headers */,
 				1D6ED8CD19AEA20D005A7799 /* iTermExpose.h in Headers */,
@@ -4303,6 +4375,7 @@
 				1D6ED8E319AEA20D005A7799 /* iTermOpenQuicklyTableRowView.h in Headers */,
 				1D6ED8E419AEA20D005A7799 /* GTMTypeCasting.h in Headers */,
 				1D6ED8E519AEA20D005A7799 /* FontSizeEstimator.h in Headers */,
+				A6D22B351BC98CFB004084E0 /* iTermCommandHistoryMO.h in Headers */,
 				1D6ED8E619AEA20D005A7799 /* VT100Grid.h in Headers */,
 				1D6ED8E719AEA20D005A7799 /* WindowArrangements.h in Headers */,
 				1D6ED8E819AEA20D005A7799 /* KeysPreferencesViewController.h in Headers */,
@@ -4495,6 +4568,7 @@
 			files = (
 				A6CFDAD2185D2587005DC94B /* URLAction.h in Headers */,
 				A6CFDAD7185D53C2005DC94B /* AsyncHostLookupController.h in Headers */,
+				A6D22B391BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				1D78B55E183EE1C000014D49 /* LineBufferPosition.h in Headers */,
 				A65B72781B2BF2D200F947A7 /* iTermProfilesPanel.h in Headers */,
 				1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */,
@@ -4575,6 +4649,7 @@
 				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
 				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
 				1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */,
+				A6D22B2A1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.h in Headers */,
 				1D5FDD771208E8F000C46BA3 /* CGSWorkspace.h in Headers */,
 				1DFA7C9A1923EDD900DF1410 /* iTermPasswordManagerWindowController.h in Headers */,
 				1D72439011F416F300BD4924 /* LineBuffer.h in Headers */,
@@ -4602,6 +4677,7 @@
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
 				1DB40AA11B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */,
 				1DA76A061B30892900CB272A /* iTermTipWindowController.h in Headers */,
+				A6D22B2F1BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.h in Headers */,
 				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
 				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
 				1DB40AA81B221088005B83C7 /* iTermTwoColorWellsCell.h in Headers */,
@@ -4637,6 +4713,7 @@
 				1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */,
 				A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */,
 				A6A13AB618C33FC500B241ED /* VT100Parser.h in Headers */,
+				A6D22B3E1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				1DAED28812E9395E005E49ED /* GlobalSearch.h in Headers */,
 				A67F57BE1B01A08800B4F135 /* iTermAnimatedImageInfo.h in Headers */,
 				1DAED99212EDF923005E49ED /* iTermSearchField.h in Headers */,
@@ -4669,6 +4746,7 @@
 				A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */,
 				1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */,
 				A6B70FCD1986FB39007A4284 /* PTYSession+Scripting.h in Headers */,
+				A6D22B251BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				1D29732714082676004C5DBE /* MovePaneController.h in Headers */,
 				1D891E43190724DB0053C4BB /* MarkTrigger.h in Headers */,
 				1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */,
@@ -4701,6 +4779,7 @@
 				A68A30F8186D150B007F550F /* SCPPath.h in Headers */,
 				1D9DDD92142E5AC600275650 /* CoprocessTrigger.h in Headers */,
 				A60D85A81A3A8105003AEE22 /* NSPasteboard+iTerm.h in Headers */,
+				A6D22B341BC98CFB004084E0 /* iTermCommandHistoryMO.h in Headers */,
 				A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */,
 				A663012F19D0864C004AF81C /* SCEventListenerProtocol.h in Headers */,
 				A6C7DE5D19A469D6001E5C75 /* NSColor+Scripting.h in Headers */,
@@ -5576,7 +5655,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				A6C763CF1B45C53B00E3C992 /* main.m in Sources */,
+				A6D22B291BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m in Sources */,
+				A6D22B331BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m in Sources */,
+				A6D22B2E1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m in Sources */,
+				A6D22B421BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */,
+				A6D22B3D1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */,
 				1D1F8C1E1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
+				A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
+				A6D22B381BC98CFB004084E0 /* iTermCommandHistoryMO.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5584,9 +5670,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6D22B371BC98CFB004084E0 /* iTermCommandHistoryMO.m in Sources */,
+				A6D22B3C1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */,
 				90A1E13B186F9EA4003EC3E8 /* AppleScriptTest.m in Sources */,
+				A6D22B281BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m in Sources */,
 				A6C763FE1B45C72F00E3C992 /* iTermTests.m in Sources */,
+				A6D22B2D1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m in Sources */,
+				A6D22B321BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m in Sources */,
 				1D1F8C1D1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
+				A6D22B411BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */,
+				A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5603,9 +5696,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6D22B361BC98CFB004084E0 /* iTermCommandHistoryMO.m in Sources */,
+				A6D22B3B1BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */,
 				A667F38C1B48AEF200705186 /* NSApplication+iTerm.m in Sources */,
+				A6D22B271BC98CFB004084E0 /* iTermCommandHistoryEntryMO+CoreDataProperties.m in Sources */,
 				A6C763CE1B45C53A00E3C992 /* main.m in Sources */,
+				A6D22B2C1BC98CFB004084E0 /* iTermCommandHistoryEntryMO.m in Sources */,
+				A6D22B311BC98CFB004084E0 /* iTermCommandHistoryMO+CoreDataProperties.m in Sources */,
 				1D1F8C1C1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
+				A6D22B401BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */,
+				A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7456,6 +7556,19 @@
 			defaultConfigurationName = Default;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				A6D22A421BC8BE6B004084E0 /* Model.xcdatamodel */,
+			);
+			currentVersion = A6D22A421BC8BE6B004084E0 /* Model.xcdatamodel */;
+			path = Model.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 0464AB0C006CD2EC7F000001 /* Project object */;
 }

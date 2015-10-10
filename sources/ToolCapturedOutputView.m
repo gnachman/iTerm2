@@ -128,7 +128,7 @@ static const CGFloat kMargin = 4;
 - (void)updateCapturedOutput {
     iTermToolWrapper *wrapper = self.toolWrapper;
     ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];
-    CommandUse *commandUse = [commandHistoryView selectedCommandUse];
+    iTermCommandHistoryCommandUseMO *commandUse = [commandHistoryView selectedCommandUse];
     VT100ScreenMark *mark;
     NSArray *theArray;
     if (commandUse) {

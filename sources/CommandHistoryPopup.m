@@ -61,14 +61,14 @@
     _partialCommandLength = partialCommand.length;
     for (id obj in commands) {
         CommandHistoryPopupEntry *popupEntry = [[[CommandHistoryPopupEntry alloc] init] autorelease];
-        if ([obj isKindOfClass:[CommandUse class]]) {
-            CommandUse *commandUse = obj;
+        if ([obj isKindOfClass:[iTermCommandHistoryCommandUseMO class]]) {
+            iTermCommandHistoryCommandUseMO *commandUse = obj;
             popupEntry.command = commandUse.command;
-            popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:commandUse.time];
+            popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:commandUse.time.doubleValue];
         } else {
-            CommandHistoryEntry *entry = obj;
+            iTermCommandHistoryEntryMO *entry = obj;
             popupEntry.command = entry.command;
-            popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.lastUsed];
+            popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.timeOfLastUse.doubleValue];
         }
         [popupEntry setMainValue:popupEntry.command];
         [[self unfilteredModel] addObject:popupEntry];

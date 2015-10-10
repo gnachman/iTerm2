@@ -341,7 +341,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
 
-    NSMutableArray *_commandUses;
+    NSArray<iTermCommandHistoryCommandUseMO *> *_commandUses;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -403,7 +403,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _hosts = [[NSMutableArray alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
-        _commandUses = [[NSMutableArray alloc] init];
+        _commandUses = [[NSArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"

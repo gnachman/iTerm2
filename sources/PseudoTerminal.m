@@ -4706,15 +4706,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
         }
-        NSArray *commands = [commandHistoryPopup commandsForHost:[session currentHost]
-                                                  partialCommand:prefix
-                                                          expand:NO];
+        NSArray<iTermCommandHistoryCommandUseMO *> *commands = [commandHistoryPopup commandsForHost:[session currentHost]
+                                                                                     partialCommand:prefix
+                                                                                             expand:NO];
         if (![commands count]) {
             [commandHistoryPopup close];
             return;
         }
         if ([commands count] == 1) {
-            CommandUse *commandUse = commands[0];
+            iTermCommandHistoryCommandUseMO *commandUse = commands[0];
             if ([commandUse.command isEqualToString:prefix]) {
                 [commandHistoryPopup close];
                 return;
@@ -7272,7 +7272,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [self.currentSession.guid isEqualToString:guid];
 }
 
-- (NSArray *)toolbeltCommandUsesForCurrentSession {
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return [self.currentSession commandUses];
 }
 

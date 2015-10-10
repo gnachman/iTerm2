@@ -4456,8 +4456,9 @@ static void SwapInt(int *a, int *b) {
                 VT100ScreenMark *screenMark = (VT100ScreenMark *)object;
                 if (screenMark.command) {
                     // Find the matching object in command history and link it.
-                    CommandUse *commandUse = [[CommandHistory sharedInstance] commandUseWithMarkGuid:screenMark.guid
-                                                                                              onHost:lastRemoteHost];
+                    iTermCommandHistoryCommandUseMO *commandUse =
+                        [[CommandHistory sharedInstance] commandUseWithMarkGuid:screenMark.guid
+                                                                         onHost:lastRemoteHost];
                     commandUse.mark = screenMark;
                 }
                 if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {

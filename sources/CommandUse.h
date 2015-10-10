@@ -6,28 +6,19 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
+#import "NSManagedObjects/iTermCommandHistoryCommandUseMO.h"
 
+@class iTermCommandHistoryCommandUseMO;
 @class VT100ScreenMark;
 
-@interface CommandUse : NSObject <NSCopying>
-
-@property(nonatomic, assign) NSTimeInterval time;
-
-// Optional.
-@property(nonatomic, retain) NSString *command;
-
+@interface iTermCommandHistoryCommandUseMO (CommandUse)
 // Setting this actually sets the markGuid.
 @property(nonatomic, retain) VT100ScreenMark *mark;
-@property(nonatomic, retain) NSString *directory;
 
-// This is used to figure out which mark matches this command use when deserializing marks.
-@property(nonatomic, readonly) NSString *markGuid;
-
-// Optional status code. Unset implies code 0.
-@property(nonatomic, retain) NSNumber *code;
-
-+ (instancetype)commandUseFromSerializedValue:(NSArray *)serializedValue;
-- (NSArray *)serializedValue;
++ (instancetype)commandHistoryCommandUseInContext:(NSManagedObjectContext *)context;
++ (NSString *)entityName;
++ (instancetype)commandHistoryCommandUseFromDeprecatedSerialization:(id)serializedValue
+                                                          inContext:(NSManagedObjectContext *)context;
 
 @end

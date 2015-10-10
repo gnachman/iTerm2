@@ -37,6 +37,7 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class VT100Screen;
 @class VT100Terminal;
 @class iTermColorMap;
+@class iTermCommandHistoryCommandUseMO;
 @class iTermController;
 @class iTermGrowlDelegate;
 
@@ -291,7 +292,7 @@ typedef enum {
 // layout changes due to a user-initiated pane split.
 @property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;
 
-@property(nonatomic, readonly) NSArray *commandUses;
+@property(nonatomic, readonly) NSArray<iTermCommandHistoryCommandUseMO *> *commandUses;
 
 #pragma mark - methods
 

@@ -7,38 +7,45 @@
 //
 
 #import "CommandUse.h"
+#import "NSManagedObjects/iTermCommandHistoryCommandUseMO.h"
 #import "NSObject+iTerm.h"
 #import "VT100ScreenMark.h"
 
-@interface CommandUse()
-@property(nonatomic, copy) NSString *markGuid;
-@end
+@implementation iTermCommandHistoryCommandUseMO (CommandUse)
 
-@implementation CommandUse
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_directory release];
-    [_markGuid release];
-    [_command release];
-    [_code release];
-    [super dealloc];
++ (instancetype)commandHistoryCommandUseInContext:(NSManagedObjectContext *)context {
+    return [NSEntityDescription insertNewObjectForEntityForName:self.entityName
+                                         inManagedObjectContext:context];
 }
 
-- (NSArray *)serializedValue {
-    return @[ @(self.time),
-              _directory ?: @"",
-              _markGuid ?: @"",
-              _command ?: @"",
-              _code ?: [NSNull null] ];
++ (NSString *)entityName {
+    return @"CommandHistoryCommandUse";
 }
 
-- (id)copyWithZone:(NSZone *)zone {
-    return [[[self class] commandUseFromSerializedValue:[self serializedValue]] retain];
-}
++ (instancetype)commandHistoryCommandUseFromDeprecatedSerialization:(id)serializedValue
+                                                          inContext:(NSManagedObjectContext *)context {
+    iTermCommandHistoryCommandUseMO *managedObject = [self commandHistoryCommandUseInContext:context];
+    if ([serializedValue isKindOfClass:[NSArray class]]) {
+        managedObject.time = serializedValue[0];
+        if ([serializedValue count] > 1 && ![serializedValue[1] isKindOfClass:[NSNull class]]) {
+            managedObject.directory = serializedValue[1];
+        }
+        if ([serializedValue count] > 2 && ![serializedValue[2] isKindOfClass:[NSNull class]]) {
+            managedObject.markGuid = serializedValue[2];
+        }
+        if ([serializedValue count] > 3 &&
+            ![serializedValue[3] isKindOfClass:[NSNull class]] &&
+            [serializedValue[3] length] > 0) {
+            managedObject.command = serializedValue[3];
+        }
+        if ([serializedValue count] > 4 && ![serializedValue[4] isKindOfClass:[NSNull class]]) {
+            managedObject.code = serializedValue[4];
+        }
+    } else if ([serializedValue isKindOfClass:[NSNumber class]]) {
+        managedObject.time = serializedValue;
+    }
 
-- (void)setMark:(VT100ScreenMark *)mark {
-    self.markGuid = mark.guid;
+    return managedObject;
 }
 
 - (VT100ScreenMark *)mark {
@@ -48,26 +55,8 @@
     return [VT100ScreenMark markWithGuid:self.markGuid];
 }
 
-+ (instancetype)commandUseFromSerializedValue:(id)serializedValue {
-    CommandUse *commandUse = [[[CommandUse alloc] init] autorelease];
-    if ([serializedValue isKindOfClass:[NSArray class]]) {
-        commandUse.time = [serializedValue[0] doubleValue];
-        if ([serializedValue count] > 1) {
-            commandUse.directory = serializedValue[1];
-        }
-        if ([serializedValue count] > 2) {
-            commandUse.markGuid = serializedValue[2];
-        }
-        if ([serializedValue count] > 3 && [serializedValue[3] length] > 0) {
-            commandUse.command = serializedValue[3];
-        }
-        if ([serializedValue count] > 4 && ![serializedValue[4] isKindOfClass:[NSNull class]]) {
-            commandUse.code = serializedValue[4];
-        }
-    } else if ([serializedValue isKindOfClass:[NSNumber class]]) {
-        commandUse.time = [serializedValue doubleValue];
-    }
-    return commandUse;
+- (void)setMark:(VT100ScreenMark *)mark {
+    self.markGuid = mark.guid;
 }
 
 @end
