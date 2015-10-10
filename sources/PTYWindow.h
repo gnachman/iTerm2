@@ -42,8 +42,8 @@
 - (void)enableBlur:(double)radius;
 - (void)disableBlur;
 
-- (int)screenNumber;
-- (BOOL)isTogglingLionFullScreen;
+@property (readonly) int screenNumber;
+@property (readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
 
 - (void)setRestoreState:(NSObject *)restoreState;
 

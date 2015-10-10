@@ -80,7 +80,7 @@ enum {
     }
 }
 
-- (id)initWithType:(iTermMouseCursorType)cursorType {
+- (instancetype)initWithType:(iTermMouseCursorType)cursorType {
     switch (cursorType) {
         case iTermMouseCursorTypeIBeamWithCircle:
             self = [super initWithImage:[NSImage imageNamed:@"IBarCursorXMR"]

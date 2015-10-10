@@ -25,7 +25,7 @@
 // This guid will always appear in the model even if it doesn't match the filter.
 @property(nonatomic, copy) NSString *lockedGuid;
 
-- (id)initWithModel:(ProfileModel*)model;
+- (instancetype)initWithModel:(ProfileModel*)model;
 @property (copy) NSArray *sortDescriptors;
 
 // Cause the underlying model to have the visible bookmarks in the same order as

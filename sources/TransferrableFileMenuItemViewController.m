@@ -18,7 +18,7 @@ static const CGFloat kCollapsedHeight = 51;
     BOOL _hasOpenedMenu;
 }
 
-- (id)initWithTransferrableFile:(TransferrableFile *)transferrableFile {
+- (instancetype)initWithTransferrableFile:(TransferrableFile *)transferrableFile {
     self = [super init];
     if (self) {
         _transferrableFile = [transferrableFile retain];

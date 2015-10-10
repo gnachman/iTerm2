@@ -45,7 +45,7 @@
     }
 }
 
-- (id)initWithWindowNibName:(NSString *)windowNibName
+- (instancetype)initWithWindowNibName:(NSString *)windowNibName
 {
     self = [super initWithWindowNibName:windowNibName];
     if (self) {

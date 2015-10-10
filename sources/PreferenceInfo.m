@@ -20,7 +20,7 @@
     return info;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _range = NSMakeRange(0, INT_MAX);

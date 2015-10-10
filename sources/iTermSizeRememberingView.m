@@ -12,7 +12,7 @@
   NSSize _originalSize;
 }
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     _originalSize = frame.size;
     return self;

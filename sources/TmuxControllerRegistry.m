@@ -21,7 +21,7 @@ NSString *const kTmuxControllerRegistryDidChange = @"kTmuxControllerRegistryDidC
     return instance;
 }
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {
@@ -56,7 +56,7 @@ NSString *const kTmuxControllerRegistryDidChange = @"kTmuxControllerRegistryDidC
                                                         object:client];
 }
 
-- (int)numberOfClients {
+- (NSInteger)numberOfClients {
     return controllers_.count;
 }
 

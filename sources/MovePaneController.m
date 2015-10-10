@@ -30,7 +30,7 @@
     return inst;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         isMove_ = YES;

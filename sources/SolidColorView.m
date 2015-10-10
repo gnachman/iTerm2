@@ -8,7 +8,9 @@
 #import "SolidColorView.h"
 
 @implementation SolidColorView
-- (id)initWithFrame:(NSRect)frame color:(NSColor*)color
+@synthesize color = color_;
+
+- (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color
 {
     self = [super initWithFrame:frame];
     if (self) {
@@ -34,11 +36,6 @@
     [color_ autorelease];
     color_ = [color retain];
     [self setNeedsDisplay:YES];
-}
-
-- (NSColor*)color
-{
-    return color_;
 }
 
 - (BOOL)isFlipped

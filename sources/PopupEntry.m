@@ -19,7 +19,7 @@
 @synthesize score = score_;
 @synthesize prefix = prefix_;
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {

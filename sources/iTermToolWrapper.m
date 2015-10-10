@@ -37,7 +37,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
     NSButton *_closeButton;
 }
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         _title = [[NSTextField alloc] initWithFrame:NSMakeRect(kCloseButtonLeftMargin + kButtonSize,

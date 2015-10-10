@@ -100,14 +100,14 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // windowType: Describes constraints on the window's initial frame and border, and more.
 // screen: An index into [NSScreen screens], or -1 to let the system pick a
 //   screen.
-- (id)initWithSmartLayout:(BOOL)smartLayout
+- (instancetype)initWithSmartLayout:(BOOL)smartLayout
                windowType:(iTermWindowType)windowType
           savedWindowType:(iTermWindowType)savedWindowType
                    screen:(int)screenIndex;
 
 // isHotkey indicates if this is a hotkey window, which recieves special
 // treatment and must be unique.
-- (id)initWithSmartLayout:(BOOL)smartLayout
+- (instancetype)initWithSmartLayout:(BOOL)smartLayout
                windowType:(iTermWindowType)windowType
           savedWindowType:(iTermWindowType)savedWindowType
                    screen:(int)screenNumber

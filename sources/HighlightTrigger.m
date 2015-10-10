@@ -174,7 +174,7 @@ enum {
     return [NSArray arrayWithObjects:fgbg, fg, bg, nil];
 }
 
-- (int)indexOfTag:(int)theTag
+- (NSInteger)indexOfTag:(NSInteger)theTag
 {
     int i = 0;
     BOOL isFirst = YES;
@@ -193,7 +193,7 @@ enum {
     return -1;
 }
 
-- (int)tagAtIndex:(int)theIndex
+- (NSInteger)tagAtIndex:(NSInteger)theIndex
 {
     int i = 0;
     BOOL isFirst = YES;

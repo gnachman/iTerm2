@@ -344,7 +344,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (id)initWithWindowNibName:(NSString *)windowNibName {
+- (instancetype)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
     if (self) {
         self.autoCommandHistorySessionGuid = nil;
@@ -352,7 +352,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return self;
 }
 
-- (id)initWithSmartLayout:(BOOL)smartLayout
+- (instancetype)initWithSmartLayout:(BOOL)smartLayout
                windowType:(iTermWindowType)windowType
           savedWindowType:(iTermWindowType)savedWindowType
                    screen:(int)screenNumber {
@@ -363,7 +363,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                             isHotkey:NO];
 }
 
-- (id)initWithSmartLayout:(BOOL)smartLayout
+- (instancetype)initWithSmartLayout:(BOOL)smartLayout
                windowType:(iTermWindowType)windowType
           savedWindowType:(iTermWindowType)savedWindowType
                    screen:(int)screenNumber

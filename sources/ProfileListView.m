@@ -62,13 +62,13 @@ const CGFloat kDefaultTagsWidth = 80;
     CGFloat lastTagsWidth_;
 }
 
-- (id)initWithFrame:(NSRect)frameRect
+- (instancetype)initWithFrame:(NSRect)frameRect
 {
     return [self initWithFrame:frameRect model:[ProfileModel sharedInstance]];
 }
 
 // This is the designated initializer.
-- (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource
+- (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource
 {
     self = [super initWithFrame:frameRect];
     if (self) {

@@ -44,7 +44,7 @@
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super initWithWindowNibName:@"iTermOpenQuicklyWindowController"];
     if (self) {
         _model = [[iTermOpenQuicklyModel alloc] init];

@@ -92,7 +92,7 @@
     NSTimer *timer_;
 }
 
-- (id)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
+- (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
     self = [super initWithFrame:frame];
     if (self) {
         [self setHasVerticalScroller:hasVerticalScroller inInit:YES];

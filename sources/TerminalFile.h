@@ -19,7 +19,7 @@ NSString *const kTerminalFileShouldStopNotification;
 // You must call -download after initWithName:size: to enter starting status.
 // A nil name opens a save panel.
 // A size of -1 means the size is unknown.
-- (id)initWithName:(NSString *)name size:(int)size;
+- (instancetype)initWithName:(NSString *)name size:(int)size;
 
 // Appends data to a file in transferring status. Enters transferring status.
 - (void)appendData:(NSString *)data;

@@ -105,7 +105,7 @@ typedef enum {
     char *_keyStrings[TERMINFO_KEYS];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         self.termTypeIsValid = YES;

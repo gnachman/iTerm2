@@ -65,7 +65,7 @@ static const CGFloat kStandardButtonHeight = 34;
     return [NSColor colorWithCalibratedRed:0.25 green:0.25 blue:0.75 alpha:1];
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
         _desiredHeight = kStandardButtonHeight;

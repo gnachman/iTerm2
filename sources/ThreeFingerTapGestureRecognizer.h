@@ -13,7 +13,7 @@
 // This is the designated initializer. On a three-finger tap, the selector will be performed on
 // target. The target is not retained. The selector will take one argument, an NSEvent corresponding
 // to the last touch ending.
-- (id)initWithTarget:(NSView *)target selector:(SEL)selector;
+- (instancetype)initWithTarget:(NSView *)target selector:(SEL)selector;
 
 // Target must call this in its dealloc method.
 - (void)disconnectTarget;

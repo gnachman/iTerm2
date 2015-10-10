@@ -22,7 +22,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 
 @implementation TerminalFile
 
-- (id)initWithName:(NSString *)name size:(int)size {
+- (instancetype)initWithName:(NSString *)name size:(int)size {
     self = [super init];
     if (self) {
         if (!name) {

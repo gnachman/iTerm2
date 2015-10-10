@@ -21,7 +21,7 @@
 // For testing
 @property(nonatomic, readonly) NSTableView *tableView;
 
-- (id)initWithFrame:(NSRect)frame;
+- (instancetype)initWithFrame:(NSRect)frame;
 - (void)shutdown;
 - (void)updateCommands;
 - (CommandUse *)selectedCommandUse;

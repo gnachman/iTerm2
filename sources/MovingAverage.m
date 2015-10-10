@@ -13,7 +13,7 @@
 @synthesize alpha = _alpha;
 @synthesize value = _value;
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _alpha = 0.5;

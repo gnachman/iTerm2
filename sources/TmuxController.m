@@ -22,14 +22,14 @@
 #import "TmuxWindowOpener.h"
 #import "TSVParser.h"
 
-NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
-NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
-NSString *kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
-NSString *kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
-NSString *kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
-NSString *kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
-NSString *kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
-NSString *kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
+NSString *const kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
+NSString *const kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
+NSString *const kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
+NSString *const kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
+NSString *const kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
+NSString *const kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
+NSString *const kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
+NSString *const kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
 
 // Unsupported global options:
 static NSString *const kAggressiveResize = @"aggressive-resize";
@@ -85,7 +85,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 @synthesize sessionId = sessionId_;
 
-- (id)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName
+- (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName
 {
     self = [super init];
     if (self) {

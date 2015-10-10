@@ -195,7 +195,7 @@ static const int kMaxScreenRows = 4096;
 
 #pragma mark - Instance methods
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _output = [[VT100Output alloc] init];

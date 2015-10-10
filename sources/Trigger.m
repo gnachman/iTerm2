@@ -41,7 +41,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return trigger;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _lastLineNumber = -1;
@@ -189,21 +189,21 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return [[self title] compare:[other title]];
 }
 
-- (int)indexOfTag:(int)theTag
+- (NSInteger)indexOfTag:(NSInteger)theTag
 {
     return theTag;
 }
 
-- (int)tagAtIndex:(int)theIndex
+- (NSInteger)tagAtIndex:(NSInteger)theIndex
 {
     return 0;
 }
 
-- (int)indexForObject:(id)object {
+- (NSInteger)indexForObject:(id)object {
     return [self indexOfTag:[object intValue]];
 }
 
-- (id)objectAtIndex:(int)index {
+- (id)objectAtIndex:(NSInteger)index {
     int tag = [self tagAtIndex:index];
     if (tag < 0) {
         return nil;

@@ -74,7 +74,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     IBOutlet NSTableColumn *_parametersColumn;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         NSMutableArray *triggers = [NSMutableArray array];

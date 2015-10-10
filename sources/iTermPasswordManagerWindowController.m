@@ -52,7 +52,7 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
     return [[array sortedArrayUsingSelector:@selector(compare:)] retain];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [self initWithWindowNibName:@"iTermPasswordManager"];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self

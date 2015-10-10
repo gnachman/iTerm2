@@ -61,7 +61,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     NSMutableSet* matchLocations_;
 }
 
-- (id)initWithSession:(PTYSession *)session
+- (instancetype)initWithSession:(PTYSession *)session
            findString:(NSString*)findString
                 label:(NSString*)label;
 - (BOOL)more;
@@ -83,7 +83,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     long long absEndY_;
 }
 
-- (id)initWithInstance:(GlobalSearchInstance*)instance context:(NSString*)theContext x:(int)x absY:(long long)absY endX:(int)endX y:(long long)absEndY findString:(NSString*)findString;
+- (instancetype)initWithInstance:(GlobalSearchInstance*)instance context:(NSString*)theContext x:(int)x absY:(long long)absY endX:(int)endX y:(long long)absEndY findString:(NSString*)findString;
 - (NSString*)context;
 - (NSString*)findString;
 - (GlobalSearchInstance*)instance;
@@ -99,7 +99,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 @implementation GlobalSearchResult
 
-- (id)initWithInstance:(GlobalSearchInstance*)instance
+- (instancetype)initWithInstance:(GlobalSearchInstance*)instance
                context:(NSString*)theContext
                      x:(int)x
                   absY:(long long)absY
@@ -180,7 +180,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 @implementation GlobalSearchInstance
 
-- (id)initWithSession:(PTYSession *)session
+- (instancetype)initWithSession:(PTYSession *)session
             findString:(NSString*)findString
                  label:(NSString*)label
 {
@@ -354,7 +354,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     }
 }
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {

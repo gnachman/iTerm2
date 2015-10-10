@@ -13,10 +13,9 @@
     BOOL isFlipped_;
 }
 
-- (id)initWithFrame:(NSRect)frame color:(NSColor*)color;
+- (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color;
 - (void)drawRect:(NSRect)dirtyRect;
-- (void)setColor:(NSColor*)color;
-- (NSColor*)color;
+@property (nonatomic, retain) NSColor *color;
 - (void)setFlipped:(BOOL)value;
 
 @end

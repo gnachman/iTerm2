@@ -17,7 +17,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
 
 @implementation ToolNotes
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         filemanager_ = [[NSFileManager alloc] init];

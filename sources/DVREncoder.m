@@ -63,7 +63,7 @@ static long long now()
 
 @implementation DVREncoder
 
-- (id)initWithBuffer:(DVRBuffer*)buffer
+- (instancetype)initWithBuffer:(DVRBuffer*)buffer
 {
     self = [super init];
     if (self) {

@@ -291,7 +291,7 @@ static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s
 // This is not how you'd normally construct a string line, since it's supposed to come from screen
 // characters. It's useful if you need a string line that doesn't represent actual characters on
 // the screen, though.
-+ (iTermStringLine *)stringLineWithString:(NSString *)string;
++ (instancetype)stringLineWithString:(NSString *)string;
 
 - (instancetype)initWithScreenChars:(screen_char_t *)screenChars
                              length:(NSInteger)length;

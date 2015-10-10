@@ -15,21 +15,21 @@
 @class EquivalenceClassSet;
 
 // Posted when sessions change (names, addition, deletion)
-extern NSString *kTmuxControllerSessionsDidChange;
+extern NSString *const kTmuxControllerSessionsDidChange;
 // Posted after detaching
-extern NSString *kTmuxControllerDetachedNotification;
+extern NSString *const kTmuxControllerDetachedNotification;
 // Posted when a window changes.
-extern NSString *kTmuxControllerWindowsChangeNotification;
+extern NSString *const kTmuxControllerWindowsChangeNotification;
 // Posted when a window changes name
-extern NSString *kTmuxControllerWindowWasRenamed;
+extern NSString *const kTmuxControllerWindowWasRenamed;
 // Posted when a window opens
-extern NSString *kTmuxControllerWindowDidOpen;
+extern NSString *const kTmuxControllerWindowDidOpen;
 // Posted when a window closes
-extern NSString *kTmuxControllerWindowDidClose;
+extern NSString *const kTmuxControllerWindowDidClose;
 // Posted when the attached session changes
-extern NSString *kTmuxControllerAttachedSessionDidChange;
+extern NSString *const kTmuxControllerAttachedSessionDidChange;
 // Posted when a session changes name
-extern NSString *kTmuxControllerSessionWasRenamed;
+extern NSString *const kTmuxControllerSessionWasRenamed;
 
 @interface TmuxController : NSObject
 
@@ -41,7 +41,7 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 @property(nonatomic, readonly) NSString *clientName;
 @property(nonatomic, readonly) int sessionId;
 
-- (id)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName;
+- (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName;
 - (void)openWindowsInitial;
 - (void)openWindowWithId:(int)windowId
 			 intentional:(BOOL)intentional;
@@ -73,7 +73,7 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
 - (void)setClientSize:(NSSize)size;
-- (BOOL)hasOutstandingWindowResize;
+@property (readonly) BOOL hasOutstandingWindowResize;
 - (void)windowPane:(int)wp
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
@@ -95,7 +95,7 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 - (void)killWindowPane:(int)windowPane;
 - (void)killWindow:(int)window;
 - (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
-- (BOOL)isAttached;
+@property (readonly, getter=isAttached) BOOL attached;
 - (void)requestDetach;
 - (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName;
 - (void)linkWindowId:(int)windowId

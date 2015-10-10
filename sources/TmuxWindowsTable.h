@@ -44,7 +44,7 @@ extern NSString *kWindowPasteboardType;
 
 - (void)setWindows:(NSArray *)windows;
 - (void)setNameOfWindowWithId:(int)wid to:(NSString *)newName;
-- (NSArray *)names;
+- (NSArray<NSString*> *)names;
 - (void)updateEnabledStateOfButtons;
 - (void)reloadData;
 

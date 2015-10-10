@@ -269,7 +269,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // This is the designated initializer. The color map should have the
 // basic colors plus the 8-bit ansi colors set shortly after this is
 // called.
-- (id)initWithFrame:(NSRect)frame colorMap:(iTermColorMap *)colorMap;
+- (instancetype)initWithFrame:(NSRect)frame colorMap:(iTermColorMap *)colorMap;
 
 // Sets the "changed since last Exposé" flag to NO and returns its original value.
 - (BOOL)getAndResetChangedSinceLastExpose;

@@ -42,7 +42,7 @@ static const CGFloat kMargin = 4;
 
 @synthesize tableView = tableView_;
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         spareCell_ = [[self cell] retain];

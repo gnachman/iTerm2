@@ -40,7 +40,7 @@ static const int kMaxCommandsToSavePerHost = 200;
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _hosts = [[NSMutableDictionary alloc] init];

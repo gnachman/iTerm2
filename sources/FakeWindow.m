@@ -32,7 +32,7 @@
 
 @implementation FakeWindow
 
-- (id)initFromRealWindow:(NSWindowController<iTermWindowController> *)aTerm
+- (instancetype)initFromRealWindow:(NSWindowController<iTermWindowController> *)aTerm
                  session:(PTYSession*)aSession
 {
     self = [super init];

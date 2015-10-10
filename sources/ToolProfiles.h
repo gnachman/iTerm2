@@ -16,6 +16,6 @@
     NSPopUpButton *popup_;
 }
 
-- (id)initWithFrame:(NSRect)frame;
+- (instancetype)initWithFrame:(NSRect)frame;
 
 @end

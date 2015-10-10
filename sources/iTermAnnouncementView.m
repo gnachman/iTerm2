@@ -76,7 +76,7 @@ static const CGFloat kMargin = 8;
     return view;
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
         frameRect.size.height -= 10;

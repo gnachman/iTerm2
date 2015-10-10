@@ -43,7 +43,7 @@ static struct {
 
 @implementation iTermNSKeyBindingEmulator
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {

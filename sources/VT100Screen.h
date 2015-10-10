@@ -64,7 +64,7 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, readonly) NSIndexSet *animatedLines;
 
 // Designated initializer.
-- (id)initWithTerminal:(VT100Terminal *)terminal;
+- (instancetype)initWithTerminal:(VT100Terminal *)terminal;
 
 // Destructively sets the screen size.
 - (void)destructivelySetScreenWidth:(int)width height:(int)height;

@@ -25,7 +25,7 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];

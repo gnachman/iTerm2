@@ -41,7 +41,7 @@
 @property (nonatomic, assign) id<TmuxSessionsTableProtocol> delegate;
 
 - (void)setSessions:(NSArray *)names;
-- (NSString *)selectedSessionName;
+@property (readonly, copy) NSString *selectedSessionName;
 - (void)selectSessionWithName:(NSString *)name;
 
 #pragma mark Interface Builder actions

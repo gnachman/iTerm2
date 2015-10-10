@@ -17,7 +17,7 @@
     int maxEntries_;
 }
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {
@@ -27,7 +27,7 @@
     return self;
 }
 
-- (id)initWithMaxEntries:(int)maxEntries
+- (instancetype)initWithMaxEntries:(int)maxEntries
 {
     self = [super init];
     if (self) {

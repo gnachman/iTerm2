@@ -53,29 +53,28 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)setWidth:(int)width height:(int)height;
 - (void)stop;
 
-- (int)fd;
-- (pid_t)pid;
-- (int)status;
-- (NSString*)tty;
-- (NSString*)path;
-- (NSString*)getWorkingDirectory;
-- (NSString*)description;
+@property (readonly) int fd;
+@property (readonly) pid_t pid;
+@property (readonly) int status;
+@property (readonly, copy) NSString *tty;
+@property (readonly, copy) NSString *path;
+@property (readonly, copy) NSString *getWorkingDirectory;
+@property (readonly, copy) NSString *description;
 
 - (BOOL)startLoggingToFileWithPath:(NSString*)path shouldAppend:(BOOL)shouldAppend;
 - (void)stopLogging;
-- (BOOL)logging;
-- (BOOL)hasOutput;
+@property (readonly) BOOL logging;
+@property (readonly) BOOL hasOutput;
 
-- (BOOL)wantsRead;
-- (BOOL)wantsWrite;
+@property (readonly) BOOL wantsRead;
+@property (readonly) BOOL wantsWrite;
 - (void)brokenPipe;
 - (void)processRead;
 - (void)processWrite;
 
-- (void)setCoprocess:(Coprocess *)coprocess;
-- (Coprocess *)coprocess;
-- (BOOL)writeBufferHasRoom;
-- (BOOL)hasCoprocess;
+@property (retain) Coprocess *coprocess;
+@property (readonly) BOOL writeBufferHasRoom;
+@property (readonly) BOOL hasCoprocess;
 - (void)stopCoprocess;
 
 - (void)logData:(const char *)buffer length:(int)length;

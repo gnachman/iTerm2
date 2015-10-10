@@ -65,12 +65,12 @@ typedef enum {
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [self initWithWindowNibName:@"ProfilesWindow"];
     return self;
 }
 
-- (id)initWithWindowNibName:(NSString *)windowNibName {
+- (instancetype)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
 
     if (self) {

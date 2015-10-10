@@ -9,7 +9,7 @@
 
 @implementation ProfileModelWrapper
 
-- (id)initWithModel:(ProfileModel*)model
+- (instancetype)initWithModel:(ProfileModel*)model
 {
     self = [super init];
     if (self) {

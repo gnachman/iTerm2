@@ -24,7 +24,7 @@ static const NSInteger kRecycleDirectoryTag = 2;
     IBOutlet NSTextField* _paneDirectory;
 }
 
-- (id)init {
+- (instancetype)init {
     return [super initWithWindowNibName:@"AdvancedWorkingDirectoryWindow"];
 }
 

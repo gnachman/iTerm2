@@ -33,7 +33,7 @@
 
 @implementation DVR
 
-- (id)initWithBufferCapacity:(int)bytes
+- (instancetype)initWithBufferCapacity:(int)bytes
 {
     self = [super init];
     if (self) {

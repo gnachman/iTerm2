@@ -16,11 +16,11 @@ extern NSString *const kTmuxControllerRegistryDidChange;
     NSMutableDictionary *controllers_;  // client -> controller
 }
 
-+ (TmuxControllerRegistry *)sharedInstance;
++ (instancetype)sharedInstance;
 - (TmuxController *)controllerForClient:(NSString *)client;
 - (void)setController:(TmuxController *)controller forClient:(NSString *)client;
-- (int)numberOfClients;
+@property (readonly) NSInteger numberOfClients;
 - (NSString *)uniqueClientNameBasedOn:(NSString *)preferredName;
-- (NSArray *)clientNames;
+@property (readonly, copy) NSArray<NSString*> *clientNames;
 
 @end

@@ -19,7 +19,7 @@
 
 @implementation VT100ControlParser
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _dcsParser = [[VT100DCSParser alloc] init];

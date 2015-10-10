@@ -25,7 +25,7 @@
     IBOutlet NSTableColumn *_mainColumn;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super initWithWindowNibName:@"DirectoriesPopup"
                                tablePtr:nil
                                   model:[[[PopupModel alloc] init] autorelease]];

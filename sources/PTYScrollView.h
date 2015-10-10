@@ -42,7 +42,7 @@
 
 @interface PTYScrollView : NSScrollView
 
-- (id)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller;
+- (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller;
 - (void)scrollWheel:(NSEvent *)theEvent;
 - (void)detectUserScroll;
 - (BOOL)isLegacyScroller;

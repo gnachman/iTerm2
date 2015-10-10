@@ -18,6 +18,6 @@
     IBOutlet NSPopUpButton *connectionsButton_;
 }
 
-+ (TmuxDashboardController *)sharedInstance;
++ (instancetype)sharedInstance;
 
 @end

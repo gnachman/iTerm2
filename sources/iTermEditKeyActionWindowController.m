@@ -34,7 +34,7 @@
     iTermPasteSpecialViewController *_pasteSpecialViewController;
 }
 
-- (id)init {
+- (instancetype)init {
     return [super initWithWindowNibName:@"iTermEditKeyActionWindowController"];
 }
 

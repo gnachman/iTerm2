@@ -49,7 +49,7 @@ static NSString *const kDefaultNotification = @"Miscellaneous";
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         NSBundle *myBundle = [NSBundle bundleForClass:[iTermGrowlDelegate class]];

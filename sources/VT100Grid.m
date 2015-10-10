@@ -51,7 +51,7 @@ static NSString *const kGridSizeKey = @"Size";
 @synthesize cursor = cursor_;
 @synthesize delegate = delegate_;
 
-- (id)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate {
+- (instancetype)initWithSize:(VT100GridSize)size delegate:(id<VT100GridDelegate>)delegate {
     self = [super init];
     if (self) {
         delegate_ = delegate;

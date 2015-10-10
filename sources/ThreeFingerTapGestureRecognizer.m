@@ -19,7 +19,7 @@
     BOOL fired_;  // True if we just faked a three-finger click and future mouse clicks should be ignored.
 }
 
-- (id)initWithTarget:(NSView *)target selector:(SEL)selector {
+- (instancetype)initWithTarget:(NSView *)target selector:(SEL)selector {
     self = [super init];
     if (self) {
         target_ = target;

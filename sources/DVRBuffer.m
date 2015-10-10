@@ -31,7 +31,7 @@
 
 @implementation DVRBuffer
 
-- (id)initWithBufferCapacity:(long long)maxsize
+- (instancetype)initWithBufferCapacity:(long long)maxsize
 {
     self = [super init];
     if (self) {

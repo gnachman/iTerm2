@@ -25,7 +25,7 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
 @synthesize hasWrapped = hasWrapped_;
 @synthesize maxTime = maxTime_;
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         maxTime_ = kDefaultMaxTime;

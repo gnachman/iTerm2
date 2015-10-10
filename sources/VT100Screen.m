@@ -171,7 +171,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 @synthesize dvr = dvr_;
 @synthesize delegate = delegate_;
 
-- (id)initWithTerminal:(VT100Terminal *)terminal {
+- (instancetype)initWithTerminal:(VT100Terminal *)terminal {
     self = [super init];
     if (self) {
         assert(terminal);

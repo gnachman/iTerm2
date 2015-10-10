@@ -24,7 +24,7 @@
 @synthesize label = label_;
 @synthesize wasMaximized = wasMaximized_;
 
-- (id)initWithImage:(NSImage*)image
+- (instancetype)initWithImage:(NSImage*)image
               label:(NSString*)label
                 tab:(PTYTab*)tab
               frame:(NSRect)frame

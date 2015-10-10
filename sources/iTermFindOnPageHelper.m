@@ -55,7 +55,7 @@
     BOOL _findRegex;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _highlightMap = [[NSMutableDictionary alloc] init];

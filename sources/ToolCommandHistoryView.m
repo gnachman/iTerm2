@@ -35,7 +35,7 @@ static const CGFloat kHelpMargin = 5;
 
 @synthesize tableView = tableView_;
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         _paragraphStyle = [[NSMutableParagraphStyle alloc] init];

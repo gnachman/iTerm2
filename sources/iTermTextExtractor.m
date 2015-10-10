@@ -43,7 +43,7 @@ static const int kNumCharsToSearchForDivider = 8;
     return charset;
 }
 
-- (id)initWithDataSource:(id<PTYTextViewDataSource>)dataSource {
+- (instancetype)initWithDataSource:(id<PTYTextViewDataSource>)dataSource {
     self = [super init];
     if (self) {
         _dataSource = dataSource;

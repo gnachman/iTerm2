@@ -114,7 +114,7 @@ setup_tty_param(struct termios* term,
     int _socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _serverPid = (pid_t)-1;

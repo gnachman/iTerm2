@@ -27,7 +27,7 @@
 // }
 //
 // // Optional to impelement -init, but it must be the designated initializer.
-// - (id)init {
+// - (instancetype)init {
 //   ...
 // }
 //

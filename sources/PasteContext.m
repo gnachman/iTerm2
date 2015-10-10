@@ -16,7 +16,7 @@
     float delayBetweenCalls_;
 }
 
-- (id)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
+- (instancetype)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
                      defaultValue:(int)bytesPerCallDefault
          delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
                      defaultValue:(float)delayBetweenCallsDefault

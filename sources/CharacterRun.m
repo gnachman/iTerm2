@@ -15,7 +15,7 @@
     return [[[CRunStorage alloc] initWithCapacity:capacity] autorelease];
 }
 
-- (id)initWithCapacity:(int)capacity {
+- (instancetype)initWithCapacity:(int)capacity {
     self = [super init];
     if (self) {
         capacity = MAX(capacity, 1);

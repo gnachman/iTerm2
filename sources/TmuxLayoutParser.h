@@ -36,7 +36,7 @@ typedef NS_ENUM(NSInteger, LayoutNodeType) {
 
 @interface TmuxLayoutParser : NSObject
 
-+ (TmuxLayoutParser *)sharedInstance;
++ (instancetype)sharedInstance;
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout;
 - (NSMutableDictionary *)windowPane:(int)windowPane
                         inParseTree:(NSMutableDictionary *)parseTree;

@@ -35,7 +35,7 @@
 //    whenPressed - do we do it on key down or key up?
 //  Returns:
 //    a hotkey record, or nil on failure
-- (id)initWithHotKey:(EventHotKeyID)keyID
+- (instancetype)initWithHotKey:(EventHotKeyID)keyID
               target:(id)target
               action:(SEL)selector
             userInfo:(id)userInfo
@@ -93,7 +93,7 @@
 //  Returns:
 //    GTMCarbonEvent
 //
-- (id)initWithClass:(UInt32)inClass kind:(UInt32)kind {
+- (instancetype)initWithClass:(UInt32)inClass kind:(UInt32)kind {
   if ((self = [super init])) {
     verify_noerr(CreateEvent(kCFAllocatorDefault, inClass, kind,
                              0, kEventAttributeNone, &event_));
@@ -107,7 +107,7 @@
 //  Returns:
 //    GTMCarbonEvent
 //
-- (id)initWithEvent:(EventRef)event {
+- (instancetype)initWithEvent:(EventRef)event {
   if ((self = [super init])) {
     if (event) {
       event_ = RetainEvent(event);
@@ -519,7 +519,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(GTMCarbonEventDispatcherHandler,
 // to keep track of the hotkeys and commands that we handle.
 //  Returns:
 //    GTMCarbonApplication or nil on failure
-- (id)init {
+- (instancetype)init {
   if ((self = [super init])) {
     static EventTypeSpec events[] = {
       { kEventClassKeyboard, kEventHotKeyPressed },
@@ -668,7 +668,7 @@ CantCreateKey:
 //    whenPressed - do we do it on key down or key up?
 //  Returns:
 //    a hotkey record, or nil on failure
-- (id)initWithHotKey:(EventHotKeyID)keyID
+- (instancetype)initWithHotKey:(EventHotKeyID)keyID
               target:(id)target
               action:(SEL)selector
             userInfo:(id)userInfo

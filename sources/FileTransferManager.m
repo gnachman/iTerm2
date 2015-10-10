@@ -32,7 +32,7 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _files = [[NSMutableArray alloc] init];

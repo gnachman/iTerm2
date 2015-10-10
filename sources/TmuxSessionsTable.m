@@ -15,7 +15,7 @@ extern NSString *kWindowPasteboardType;
 
 @synthesize delegate = delegate_;
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {

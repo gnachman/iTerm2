@@ -23,7 +23,7 @@
     IBOutlet NSPopUpButton *_presetsPopup;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super initWithNibName:@"iTermKeyMapping" bundle:nil];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self

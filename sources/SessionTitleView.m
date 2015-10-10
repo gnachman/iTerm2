@@ -41,7 +41,7 @@ static const CGFloat kButtonSize = 17;
 @synthesize delegate = delegate_;
 @synthesize dimmingAmount = dimmingAmount_;
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         const double kMargin = 5;

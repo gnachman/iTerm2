@@ -20,7 +20,7 @@ static NSString* kParameterKey = @"parameter";
 @synthesize delegate = delegate_;
 @synthesize hasSelection = hasSelection_;
 
-- (id)initWithWindow:(NSWindow *)window
+- (instancetype)initWithWindow:(NSWindow *)window
 {
     self = [super initWithWindow:window];
     if (self) {

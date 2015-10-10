@@ -216,12 +216,12 @@ static const int kDragThreshold = 3;
     [iTermNSKeyBindingEmulator sharedInstance];  // Load and parse DefaultKeyBindings.dict if needed.
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     // Must call initWithFrame:colorMap:.
     assert(false);
 }
 
-- (id)initWithFrame:(NSRect)aRect colorMap:(iTermColorMap *)colorMap {
+- (instancetype)initWithFrame:(NSRect)aRect colorMap:(iTermColorMap *)colorMap {
     self = [super initWithFrame:aRect];
     if (self) {
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];

@@ -142,7 +142,7 @@ static BOOL initDone = NO;
     shared = nil;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
 
     if (self) {

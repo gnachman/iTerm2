@@ -65,7 +65,7 @@ static const CGFloat kMargin = 4;
     }
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
         [self setIntValue:kDefaultSignal];
@@ -175,7 +175,7 @@ static const CGFloat kMargin = 4;
 
 @implementation ToolJobs
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         names_ = [[NSMutableArray alloc] init];

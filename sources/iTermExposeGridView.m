@@ -22,7 +22,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     return [[[NSApplication sharedApplication] keyWindow] deepestScreen];
 }
 
-- (id)initWithFrame:(NSRect)frame
+- (instancetype)initWithFrame:(NSRect)frame
              images:(NSArray*)images
              labels:(NSArray*)labels
                tabs:(NSArray*)tabs

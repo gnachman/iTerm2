@@ -38,7 +38,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxWindowsDidChange;
 - (void)tmuxSession:(int)sessionId renamed:(NSString *)newName;
 - (NSSize)tmuxBookmarkSize;  // rows, cols
-- (int)tmuxNumHistoryLinesInBookmark;
+- (NSInteger)tmuxNumHistoryLinesInBookmark;
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging;
 - (void)tmuxPrintLine:(NSString *)line;
 - (NSWindowController<iTermWindowController> *)tmuxGatewayWindow;
@@ -72,7 +72,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 @property(nonatomic, assign) BOOL tmuxLogging;
 @property(nonatomic, readonly) NSWindowController<iTermWindowController> *window;
 
-- (id)initWithDelegate:(id<TmuxGatewayDelegate>)delegate;
+- (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate;
 
 // Returns any unconsumed data if tmux mode is exited.
 // The token must be TMUX_xxx.
@@ -106,6 +106,6 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane;
 - (void)detach;
-- (id<TmuxGatewayDelegate>)delegate;
+@property (readonly, assign) id<TmuxGatewayDelegate> delegate;
 
 @end

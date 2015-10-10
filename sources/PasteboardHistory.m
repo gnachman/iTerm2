@@ -81,7 +81,7 @@
     return instance;
 }
 
-- (id)initWithMaxEntries:(int)maxEntries
+- (instancetype)initWithMaxEntries:(int)maxEntries
 {
     self = [super init];
     if (self) {
@@ -203,7 +203,7 @@
 
 @implementation PasteboardHistoryWindowController
 
-- (id)init
+- (instancetype)init
 {
     self = [super initWithWindowNibName:@"PasteboardHistory" tablePtr:nil model:[[[PopupModel alloc] init] autorelease]];
     if (!self) {

@@ -45,10 +45,8 @@
 - (void)setRoot:(NSSplitView *)newRoot;
 
 - (NSRect)absoluteFrame;
-- (PTYSession*)activeSession;
-- (void)setActiveSession:(PTYSession*)session;
-- (NSTabViewItem *)tabViewItem;
-- (void)setTabViewItem:(NSTabViewItem *)theTabViewItem;
+@property (retain) PTYSession *activeSession;
+@property (retain) NSTabViewItem *tabViewItem;
 - (void)previousSession;
 - (void)nextSession;
 - (int)indexOfSessionView:(SessionView*)sessionView;
@@ -85,8 +83,7 @@
 // Tab number for display
 @property int objectCount;
 // Icon to display in tab
-- (NSImage *)icon;
-- (void)setIcon:(NSImage *)anIcon;
+@property (retain) NSImage *icon;
 // Should show busy indicator in tab?
 - (BOOL)isProcessing;
 - (BOOL)realIsProcessing;

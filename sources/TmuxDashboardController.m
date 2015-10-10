@@ -32,7 +32,7 @@
     return instance;
 }
 
-- (id)init
+- (instancetype)init
 {
     self = [super initWithWindowNibName:@"TmuxDashboard"];
     if (self) {

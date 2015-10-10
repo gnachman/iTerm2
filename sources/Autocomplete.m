@@ -70,7 +70,7 @@ const int kMaxResultContextWords = 4;
     return [iTermAdvancedSettingsModel autocompleteMaxOptions];
 }
 
-- (id)init
+- (instancetype)init
 {
     const int kMaxOptions = [AutocompleteView maxOptions];
     self = [super initWithWindowNibName:@"Autocomplete"

@@ -96,7 +96,7 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
     CGFloat _minWidth;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self

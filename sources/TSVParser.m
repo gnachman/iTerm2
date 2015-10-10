@@ -13,7 +13,7 @@
 @synthesize columns = columns_;
 @synthesize records = records_;
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {

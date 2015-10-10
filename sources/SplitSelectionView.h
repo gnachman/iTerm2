@@ -10,14 +10,14 @@
 
 #import <Cocoa/Cocoa.h>
 
-typedef enum {
+typedef NS_ENUM(NSInteger, SplitSessionHalf) {
     kNoHalf,
     kNorthHalf,
     kSouthHalf,
     kEastHalf,
     kWestHalf,
     kFullPane
-} SplitSessionHalf;
+};
 
 @class PTYSession;
 
@@ -44,7 +44,7 @@ typedef enum {
 // frame is the frame fo the parent view.
 // session is the session we overlay.
 // the delegate gets called when a selection is made.
-- (id)initAsCancelOnly:(BOOL)cancelOnly
+- (instancetype)initAsCancelOnly:(BOOL)cancelOnly
              withFrame:(NSRect)frame
            withSession:(PTYSession *)session
               delegate:(id<SplitSelectionViewDelegate>)delegate

@@ -121,7 +121,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
     return result;
 }
 
-- (id)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {

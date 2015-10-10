@@ -37,7 +37,7 @@ typedef enum {
     IBOutlet NSButton *_copyButton;
 }
 
-- (id)init {
+- (instancetype)init {
     return [super initWithWindowNibName:@"BulkCopyProfilePreferences"];
 }
 

@@ -19,7 +19,7 @@
 
 @synthesize cancelOnly = cancelOnly_;
 
-- (id)initWithFrame:(NSRect)frameRect
+- (instancetype)initWithFrame:(NSRect)frameRect
 {
     self = [super initWithFrame:frameRect];
     if (self) {
@@ -30,7 +30,7 @@
     return self;
 }
 
-- (id)initAsCancelOnly:(BOOL)cancelOnly
+- (instancetype)initAsCancelOnly:(BOOL)cancelOnly
              withFrame:(NSRect)frame
            withSession:(PTYSession *)session
               delegate:(id<SplitSelectionViewDelegate>)delegate

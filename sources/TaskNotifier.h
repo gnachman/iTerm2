@@ -9,7 +9,7 @@ extern NSString *const kTaskNotifierDidSpin;
 
 @interface TaskNotifier : NSObject
 
-+ (TaskNotifier*)sharedInstance;
++ (instancetype)sharedInstance;
 
 - (instancetype)init;
 

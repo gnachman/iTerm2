@@ -10,7 +10,7 @@
 
 @implementation ProfileTableRow
 
-- (id)initWithBookmark:(Profile*)bookmark underlyingModel:(ProfileModel*)newUnderlyingModel
+- (instancetype)initWithBookmark:(Profile*)bookmark underlyingModel:(ProfileModel*)newUnderlyingModel
 {
     self = [super init];
     if (self) {
