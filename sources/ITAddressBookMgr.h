@@ -227,11 +227,11 @@ typedef enum {
     WINDOW_TYPE_NO_TITLE_BAR = 12,
 } iTermWindowType;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermObjectType) {
   iTermWindowObject,
   iTermTabObject,
   iTermPaneObject,
-} iTermObjectType;
+};
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
 {

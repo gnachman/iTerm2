@@ -1549,7 +1549,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 
     // Set up the options bitmask and call findSubstring.
-    int opts = 0;
+    FindOptions opts = 0;
     if (!direction) {
         opts |= FindOptBackwards;
     }

@@ -126,7 +126,7 @@
 // Set up the find context. See FindContext.h for options bit values.
 - (void)prepareToSearchFor:(NSString*)substring
                 startingAt:(LineBufferPosition *)start
-                   options:(int)options
+                   options:(FindOptions)options
                withContext:(FindContext*)context;
 
 // Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize

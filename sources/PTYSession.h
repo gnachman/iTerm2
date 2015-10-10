@@ -50,11 +50,11 @@ static const float kFastTimerIntervalSec = 1.0 / 30.0;
 // TODO(georgen): There's room for improvement here.
 static const float kBackgroundSessionIntervalSec = 1;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, SplitSelectionMode) {
     kSplitSelectionModeOn,
     kSplitSelectionModeOff,
     kSplitSelectionModeCancel
-} SplitSelectionMode;
+};
 
 typedef enum {
     TMUX_NONE,

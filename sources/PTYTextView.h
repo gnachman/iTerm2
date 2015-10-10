@@ -35,12 +35,12 @@
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
 
 // Types of characters. Used when classifying characters for word selection.
-typedef enum {
+typedef NS_ENUM(NSInteger, PTYCharType) {
     CHARTYPE_WHITESPACE,  // whitespace chars or NUL
     CHARTYPE_WORDCHAR,    // Any character considered part of a word, including user-defined chars.
     CHARTYPE_DW_FILLER,   // Double-width character effluvia.
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
-} PTYCharType;
+};
 
 @protocol PTYTextViewDelegate <NSObject>
 

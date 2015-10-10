@@ -11,15 +11,15 @@
 
 @class VT100RemoteHost;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, ContextMenuActions) {
     kOpenFileContextMenuAction,
     kOpenUrlContextMenuAction,
     kRunCommandContextMenuAction,
     kRunCoprocessContextMenuAction,
     kSendTextContextMenuAction
-} ContextMenuActions;
+};
 
-@protocol ContextMenuActionPrefsDelegate
+@protocol ContextMenuActionPrefsDelegate <NSObject>
 
 - (void)contextMenuActionsChanged:(NSArray *)newActions;
 

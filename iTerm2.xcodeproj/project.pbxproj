@@ -2749,6 +2749,7 @@
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
+			usesTabs = 0;
 		};
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;

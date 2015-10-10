@@ -12,12 +12,12 @@
 @class TmuxController;
 @class VT100RemoteHost;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, BroadcastMode) {
     BROADCAST_OFF,
     BROADCAST_TO_ALL_PANES,
     BROADCAST_TO_ALL_TABS,
     BROADCAST_CUSTOM
-} BroadcastMode;
+};
 
 // This is a very basic interface, which is sufficient for simulating a window
 // controller for instant replay.

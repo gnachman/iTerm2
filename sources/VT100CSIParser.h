@@ -11,14 +11,14 @@
 #import "iTermParser.h"
 #import "VT100Token.h"
 
-typedef enum {
+typedef NS_ENUM(NSInteger, VT100CSIIncidentalType) {
     kIncidentalRingBell,
     kIncidentalBackspace,
     kIncidentalAppendTabAtCursor,
     kIncidentalLineFeed,
     kIncidentalCarriageReturn,
     kIncidentalDeleteCharacterAtCursor
-} VT100CSIIncidentalType;
+};
 
 NS_INLINE BOOL isCSI(unsigned char *code, int len) {
     return (len >= 2 && code[0] == VT100CC_ESC && (code[1] == '['));

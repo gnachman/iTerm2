@@ -11,12 +11,12 @@
 
 @class iTermImageInfo;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, URLActionType) {
     kURLActionOpenURL,
     kURLActionSmartSelectionAction,
     kURLActionOpenExistingFile,
     kURLActionOpenImage
-} URLActionType;
+};
 
 @interface URLAction : NSObject
 

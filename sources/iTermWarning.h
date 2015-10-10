@@ -6,18 +6,18 @@
 
 @end
 // The type of warning.
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermWarningType) {
     kiTermWarningTypePersistent,
     kiTermWarningTypePermanentlySilenceable,
     kiTermWarningTypeTemporarilySilenceable  // 10 minutes
-} iTermWarningType;
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermWarningSelection) {
     kiTermWarningSelection0,  // First passed-in action
     kiTermWarningSelection1,  // Second passed-in action
     kiTermWarningSelection2,  // Third passed-in action
     kItermWarningSelectionError,  // Something went wrong.
-} iTermWarningSelection;
+};
 
 @interface iTermWarning : NSObject
 

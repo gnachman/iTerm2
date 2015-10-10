@@ -45,12 +45,12 @@ extern NSString * const kTmuxGatewayErrorDomain;
 
 @end
 
-typedef enum {
+typedef NS_ENUM(NSInteger, ControlCommand) {
     CONTROL_COMMAND_OUTPUT,
     CONTROL_COMMAND_LAYOUT_CHANGE,
     CONTROL_COMMAND_WINDOWS_CHANGE,
     CONTROL_COMMAND_NOOP
-} ControlCommand;
+};
 
 @interface TmuxGateway : NSObject {
     NSObject<TmuxGatewayDelegate> *delegate_;  // weak

@@ -807,7 +807,7 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
 }
 
 static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_length, int start, int end,
-                      int options, int* resultLength, NSString* haystack, unichar* charHaystack,
+                      FindOptions options, int* resultLength, NSString* haystack, unichar* charHaystack,
                       int* deltas, int deltaOffset)
 {
     int apiOptions = 0;

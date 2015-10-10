@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-typedef enum {
+typedef NS_ENUM(NSInteger, PreferenceInfoType) {
     kPreferenceInfoTypeCheckbox,
     kPreferenceInfoTypeIntegerTextField,
     kPreferenceInfoTypeStringTextField,
@@ -17,7 +17,7 @@ typedef enum {
     kPreferenceInfoTypeTokenField,
     kPreferenceInfoTypeMatrix,
     kPreferenceInfoTypeColorWell,
-} PreferenceInfoType;
+};
 
 
 @interface PreferenceInfo : NSObject

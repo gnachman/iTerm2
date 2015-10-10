@@ -8,21 +8,23 @@
 
 #import <Foundation/Foundation.h>
 
-#define FindOptCaseInsensitive (1 << 0)
-#define FindOptBackwards       (1 << 1)
-#define FindOptRegex           (1 << 2)
-#define FindMultipleResults    (1 << 3)
+typedef NS_OPTIONS(NSUInteger, FindOptions) {
+    FindOptCaseInsensitive  = (1 << 0),
+    FindOptBackwards        = (1 << 1),
+    FindOptRegex            = (1 << 2),
+    FindMultipleResults     = (1 << 3)
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, FindContextStatus) {
     Searching,
     Matched,
     NotFound
-} FindContextStatus;
+};
 
 @interface FindContext : NSObject {
     int absBlockNum_;
     NSString* substring_;
-    int options_;
+    FindOptions options_;
     int dir_;
     int offset_;
     int stopAt_;
@@ -40,7 +42,7 @@ typedef enum {
 @property(nonatomic, copy) NSString *substring;
 
 // A bitwise OR of the options defined above.
-@property(nonatomic, assign) int options;
+@property(nonatomic, assign) FindOptions options;
 
 // 1: search forward. -1: search backward.
 @property(nonatomic, assign) int dir;

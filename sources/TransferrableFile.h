@@ -10,7 +10,7 @@
 
 @class TransferrableFile;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
     kTransferrableFileStatusUnstarted,
     kTransferrableFileStatusStarting,
     kTransferrableFileStatusTransferring,
@@ -18,7 +18,7 @@ typedef enum {
     kTransferrableFileStatusFinishedWithError,
     kTransferrableFileStatusCancelling,
     kTransferrableFileStatusCancelled
-} TransferrableFileStatus;
+};
 
 @interface TransferrableFile : NSObject
 

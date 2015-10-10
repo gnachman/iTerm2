@@ -28,11 +28,11 @@ extern NSString *kLayoutDictHistoryKey;       // Array of screen_char_t-filled N
 extern NSString *kLayoutDictAltHistoryKey;    // Alternate screen history
 extern NSString *kLayoutDictStateKey;         // see TmuxStateParser
 
-typedef enum {
+typedef NS_ENUM(NSInteger, LayoutNodeType) {
     kLeafLayoutNode,
     kHSplitLayoutNode,
     kVSplitLayoutNode
-} LayoutNodeType;
+};
 
 @interface TmuxLayoutParser : NSObject
 

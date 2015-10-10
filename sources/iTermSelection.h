@@ -11,14 +11,14 @@
 
 @class iTermSelection;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermSelectionMode) {
     kiTermSelectionModeCharacter,
     kiTermSelectionModeWord,
     kiTermSelectionModeLine,
     kiTermSelectionModeSmart,
     kiTermSelectionModeBox,
     kiTermSelectionModeWholeLine
-} iTermSelectionMode;
+};
 
 @protocol iTermSelectionDelegate <NSObject>
 

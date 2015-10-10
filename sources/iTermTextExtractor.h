@@ -11,7 +11,7 @@
 #import "ScreenChar.h"
 #import "SmartMatch.h"
 
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
     // Any kind of white space.
     kTextExtractorClassWhitespace,
 
@@ -24,14 +24,14 @@ typedef enum {
     // Non-alphanumeric, non-whitespace, non-word, not double-width filler.
     // Miscellaneous symbols, etc.
     kTextExtractorClassOther
-} iTermTextExtractorClass;
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
     kiTermTextExtractorNullPolicyFromStartToFirst,  // Ignore content prior to last null
     kiTermTextExtractorNullPolicyFromLastToEnd,  // Ignore content after last null
     kiTermTextExtractorNullPolicyTreatAsSpace,  // Treat midline nulls as spaces and a range of terminal nulls as a single space
     kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,  // Treat midline nulls as space and strip terminal nulls
-} iTermTextExtractorNullPolicy;
+};
 
 @interface iTermTextExtractor : NSObject
 

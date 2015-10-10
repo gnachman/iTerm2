@@ -10,12 +10,12 @@
 
 @class PTYNoteViewController;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, PTYNoteViewTipEdge) {
     kPTYNoteViewTipEdgeLeft,
     kPTYNoteViewTipEdgeTop,
     kPTYNoteViewTipEdgeRight,
     kPTYNoteViewTipEdgeBottom
-} PTYNoteViewTipEdge;
+};
 
 @protocol PTYNoteViewDelegate
 - (PTYNoteViewController *)noteViewController;
