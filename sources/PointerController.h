@@ -41,7 +41,7 @@
 
 @interface PointerController : NSObject
 
-@property (nonatomic, assign) NSObject<PointerControllerDelegate> *delegate;
+@property (nonatomic, assign) id<PointerControllerDelegate> delegate;
 
 - (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption;
 - (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches;

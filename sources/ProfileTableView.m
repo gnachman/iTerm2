@@ -29,7 +29,7 @@
     [super dealloc];
 }
 
-- (void)setMenuHandler:(NSObject<ProfileTableMenuHandler> *)handler
+- (void)setMenuHandler:(id<ProfileTableMenuHandler>)handler
 {
     handler_ = handler;
 }

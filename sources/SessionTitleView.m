@@ -33,7 +33,7 @@ static const CGFloat kButtonSize = 17;
     NSTextField *label_;
     NSButton *closeButton_;
     NSButton *menuButton_;
-    NSObject<SessionTitleViewDelegate> *delegate_;
+    id<SessionTitleViewDelegate> delegate_;
     double dimmingAmount_;
 }
 

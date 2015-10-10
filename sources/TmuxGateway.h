@@ -53,7 +53,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 };
 
 @interface TmuxGateway : NSObject {
-    NSObject<TmuxGatewayDelegate> *delegate_;  // weak
+    id<TmuxGatewayDelegate> delegate_;  // weak
 
     // Data from parsing an incoming command
     ControlCommand command_;
@@ -72,7 +72,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 @property(nonatomic, assign) BOOL tmuxLogging;
 @property(nonatomic, readonly) NSWindowController<iTermWindowController> *window;
 
-- (id)initWithDelegate:(NSObject<TmuxGatewayDelegate> *)delegate;
+- (id)initWithDelegate:(id<TmuxGatewayDelegate>)delegate;
 
 // Returns any unconsumed data if tmux mode is exited.
 // The token must be TMUX_xxx.
@@ -106,6 +106,6 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane;
 - (void)detach;
-- (NSObject<TmuxGatewayDelegate> *)delegate;
+- (id<TmuxGatewayDelegate>)delegate;
 
 @end

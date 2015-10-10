@@ -28,7 +28,7 @@ extern NSString *kWindowPasteboardType;
 
 @interface TmuxWindowsTable : NSObject <NSTableViewDelegate, NSTableViewDataSource> {
     NSMutableArray *model_;
-    NSObject<TmuxWindowsTableProtocol> *delegate_;  // weak
+    id<TmuxWindowsTableProtocol> delegate_;  // weak
     NSMutableArray *filteredModel_;
 
     IBOutlet NSTableView *tableView_;
@@ -40,7 +40,7 @@ extern NSString *kWindowPasteboardType;
     IBOutlet NSSearchField *searchField_;
 }
 
-@property (nonatomic, assign) NSObject<TmuxWindowsTableProtocol> *delegate;
+@property (nonatomic, assign) id<TmuxWindowsTableProtocol> delegate;
 
 - (void)setWindows:(NSArray *)windows;
 - (void)setNameOfWindowWithId:(int)wid to:(NSString *)newName;

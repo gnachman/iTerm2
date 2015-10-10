@@ -61,7 +61,7 @@
 @property (nonatomic, assign) id<ToolWrapperDelegate> delegate;
 
 - (void)relayout;
-- (NSObject<ToolbeltTool> *)tool;
+- (id<ToolbeltTool>)tool;
 - (void)removeToolSubviews;
 - (CGFloat)minimumHeight;
 

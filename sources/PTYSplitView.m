@@ -11,12 +11,12 @@
 
 @implementation PTYSplitView
 
-- (NSObject<PTYSplitViewDelegate> *)delegate
+- (id<PTYSplitViewDelegate>)delegate
 {
     return (NSObject<PTYSplitViewDelegate> *) [super delegate];
 }
 
-- (void)setDelegate:(NSObject<PTYSplitViewDelegate> *)delegate
+- (void)setDelegate:(id<PTYSplitViewDelegate>)delegate
 {
     [super setDelegate:delegate];
 }

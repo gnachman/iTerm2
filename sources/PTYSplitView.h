@@ -24,7 +24,7 @@
  * dragging a splitter finishes. */
 @interface PTYSplitView : NSSplitView
 
-- (NSObject<PTYSplitViewDelegate> *)delegate;
-- (void)setDelegate:(NSObject<PTYSplitViewDelegate> *)delegate;
+- (id<PTYSplitViewDelegate>)delegate;
+- (void)setDelegate:(id<PTYSplitViewDelegate>)delegate;
 
 @end

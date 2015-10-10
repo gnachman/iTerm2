@@ -136,11 +136,11 @@ static const CGFloat kCloseButtonLeftMargin = 5;
     [_title setEditable:NO];
 }
 
-- (NSObject<ToolbeltTool> *)tool {
+- (id<ToolbeltTool>)tool {
     if ([[_container subviews] count] == 0) {
         return nil;
     }
-    return (NSObject<ToolbeltTool> *)[[_container subviews] firstObject];
+    return (id<ToolbeltTool>)[[_container subviews] firstObject];
 }
 
 @end

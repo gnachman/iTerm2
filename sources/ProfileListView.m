@@ -52,7 +52,7 @@ const CGFloat kDefaultTagsWidth = 80;
     NSTableColumn* commandColumn_;
     NSTableColumn* shortcutColumn_;
     NSTableColumn* tagsColumn_;
-    NSObject<ProfileListViewDelegate> *delegate_;
+    id<ProfileListViewDelegate> delegate_;
     NSSet* selectedGuids_;
     BOOL debug;
     ProfileModelWrapper *dataSource_;

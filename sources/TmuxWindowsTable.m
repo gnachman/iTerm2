@@ -48,7 +48,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [super dealloc];
 }
 
-- (void)setDelegate:(NSObject<TmuxWindowsTableProtocol> *)delegate
+- (void)setDelegate:(id<TmuxWindowsTableProtocol>)delegate
 {
     delegate_ = delegate;
     [delegate_ reloadWindows];

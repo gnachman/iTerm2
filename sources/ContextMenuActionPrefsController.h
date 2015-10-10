@@ -32,11 +32,11 @@ typedef NS_ENUM(NSInteger, ContextMenuActions) {
     IBOutlet NSTableColumn *actionColumn_;
     IBOutlet NSTableColumn *parameterColumn_;
     NSMutableArray *model_;
-    NSObject<ContextMenuActionPrefsDelegate> *delegate_;
+    id<ContextMenuActionPrefsDelegate> delegate_;
     BOOL hasSelection_;
 }
 
-@property (nonatomic, assign) NSObject<ContextMenuActionPrefsDelegate> *delegate;
+@property (nonatomic, assign) id<ContextMenuActionPrefsDelegate> delegate;
 @property (nonatomic, assign) BOOL hasSelection;
 
 + (ContextMenuActions)actionForActionDict:(NSDictionary *)dict;
