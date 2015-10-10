@@ -145,11 +145,11 @@
 
 // Returns the position at the stat of the buffer
 // DEPRECATED
-- (int) firstPos;
+- (int) firstPos DEPRECATED_ATTRIBUTE;
 
 // Returns the position at the end of the buffer
 // DEPRECATED
-- (int) lastPos;
+- (int) lastPos DEPRECATED_ATTRIBUTE;
 
 - (LineBufferPosition *)firstPosition;
 - (LineBufferPosition *)lastPosition;
@@ -171,7 +171,7 @@
 
 - (int)numberOfDroppedBlocks;
 // Absolute block number of last block.
-- (int)largestAbsoluteBlockNumber;
+@property (readonly) int largestAbsoluteBlockNumber;
 
 // Returns a dictionary with the contents of the line buffer. If it is more than 10k lines @ 80 columns
 // then it is truncated. The data is a weak reference and will be invalid if the line buffer is

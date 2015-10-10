@@ -52,9 +52,8 @@
               index:(int)theIndex
        wasMaximized:(BOOL)wasMaximized;
 
-- (void)dealloc;
 - (NSRect)imageFrame:(NSSize)thumbSize;
-- (NSRect)originalFrame;
+@property (readonly) NSRect originalFrame;
 - (void)drawRect:(NSRect)rect;
 - (void)showLabel;
 - (NSTrackingRectTag)trackingRectTag;
@@ -63,24 +62,19 @@
 - (void)bringTabToFore;
 - (NSInteger)tabIndex;
 - (NSInteger)windowIndex;
-- (void)setImage:(NSImage*)newImage;
-- (void)setLabel:(NSString*)newLabel;
-- (NSString*)label;
-- (void)setTabObject:(id)tab;
-- (id)tabObject;
+@property (nonatomic, retain) NSImage *image;
+@property (nonatomic, retain) NSString *label;
+@property (assign) id tabObject;
 - (void)clear;
-- (void)setDirty:(BOOL)dirty;
-- (BOOL)dirty;
+@property BOOL dirty;
 - (void)setWindowIndex:(int)windowIndex tabIndex:(int)tabIndex;
 - (void)setHasResult:(BOOL)hasResult;
-- (NSImage*)image;
-- (void)setNormalFrame:(NSRect)normalFrame;
-- (NSRect)normalFrame;
-- (void)setFullSizeFrame:(NSRect)fullSizeFrame;
+@property NSRect normalFrame;
+@property NSRect fullSizeFrame;
 - (NSSize)origSize;
-- (int)index;
+@property (readonly) int index;
 - (PTYTab*)tab;
-- (BOOL)wasMaximized;
+@property (readonly) BOOL wasMaximized;
 - (void)onMouseExit;
 - (void)onMouseEnter;
 

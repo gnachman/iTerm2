@@ -11,8 +11,7 @@ extern NSString *const kTaskNotifierDidSpin;
 
 + (TaskNotifier*)sharedInstance;
 
-- (id)init;
-- (void)dealloc;
+- (instancetype)init;
 
 - (void)registerTask:(PTYTask*)task;
 - (void)deregisterTask:(PTYTask*)task;

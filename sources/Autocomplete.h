@@ -8,8 +8,7 @@
 
 @interface AutocompleteView : Popup
 
-- (id)init;
-- (void)dealloc;
+- (instancetype)init;
 
 - (void)onOpen;
 - (void)refresh;

@@ -10,17 +10,15 @@
 
 @class PopupEntry;
 
-@interface PopupModel : NSObject
+@interface PopupModel : NSObject <NSFastEnumeration>
 
-- (id)init;
-- (id)initWithMaxEntries:(int)maxEntries;
-- (void)dealloc;
-- (NSUInteger)count;
+- (instancetype)init;
+- (instancetype)initWithMaxEntries:(int)maxEntries;
+@property (readonly) NSUInteger count;
 - (void)removeAllObjects;
 - (void)addObject:(id)object;
 - (void)addHit:(PopupEntry*)object;
 - (id)objectAtIndex:(NSUInteger)index;
-- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
 - (NSUInteger)indexOfObject:(id)o;
 - (void)sortByScore;
 - (int)indexOfObjectWithMainValue:(NSString*)value;

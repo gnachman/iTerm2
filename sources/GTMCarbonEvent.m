@@ -24,7 +24,7 @@
 
 // Wrapper for all the info we need about a hotkey that we can store in a
 // Foundation storage class.
-@interface GTMCarbonHotKey (GTMCarbonHotKeyPrivate)
+@interface GTMCarbonHotKey ()
 
 // Create a HotKey record
 //  Arguments:
@@ -352,6 +352,7 @@ NSUInteger GTMCarbonToCocoaKeyModifiers(UInt32 inCarbonModifiers) {
 const OSType kGTMCarbonFrameworkSignature = 'GTM ';
 
 @implementation GTMCarbonEventHandler
+@synthesize delegate = delegate_;
 
 // Does our delegate respond to eventHandler:receivedEvent:handler:
 //
@@ -467,9 +468,6 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
 //
 // Returns:
 //   the delegate
-- (id)delegate {
-  return delegate_;
-}
 
 // Sets the delegate for the handler and caches whether it responds to
 // the eventHandler:receivedEvent:handler: selector for performance purposes.

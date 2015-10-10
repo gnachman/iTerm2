@@ -23,11 +23,9 @@
     double prevSearchHeight_;
 }
 
-- (id)initWithFrame:(NSRect)frameRect;
-- (void)dealloc;
-- (void)setGrid:(iTermExposeGridView*)grid;
-- (iTermExposeGridView*)grid;
-- (NSRect)searchFrame;
+- (instancetype)initWithFrame:(NSRect)frameRect;
+@property (nonatomic, assign) iTermExposeGridView *grid;
+@property (readonly) NSRect searchFrame;
 - (iTermExposeTabView*)resultView;
 - (PTYSession*)resultSession;
 

@@ -10,6 +10,7 @@
 #import "ScreenChar.h"
 
 @class iTermTextExtractor;
+@class iTermBoxedBackgroundColorRun;
 
 typedef struct {
     NSRange range;
@@ -42,7 +43,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 @property(nonatomic, assign) int line;
 
 // Array of iTermBoxedBackgroundColorRun objects.
-@property(nonatomic, retain) NSArray *array;
+@property(nonatomic, retain) NSArray<iTermBoxedBackgroundColorRun*> *array;
 
 // Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.
 // Fills in *anyBlinkPtr with YES if some character in the range is blinking.

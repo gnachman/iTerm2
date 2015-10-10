@@ -42,7 +42,7 @@ extern NSString *kSemanticHistoryCoprocessAction;
 + (NSString *)schemeForEditor:(NSString *)editor;
 + (BOOL)bundleIdIsEditor:(NSString *)bundleId;
 - (IBAction)actionChanged:(id)sender;
-- (NSDictionary *)prefs;
+@property (readonly) NSDictionary *prefs;
 - (void)setEnabled:(BOOL)enabled;
 
 @end

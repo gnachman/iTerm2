@@ -129,9 +129,6 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // The PTYWindow for this controller.
 - (PTYWindow*)ptyWindow;
 
-// Called on object deallocation.
-- (void)dealloc;
-
 // Fix the window frame for fullscreen, top, bottom windows.
 - (void)canonicalizeWindowFrame;
 

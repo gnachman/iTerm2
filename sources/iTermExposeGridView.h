@@ -23,14 +23,13 @@
 // Screen to use for Expose.
 + (NSScreen *)exposeScreen;
 
-- (id)initWithFrame:(NSRect)frame
+- (instancetype)initWithFrame:(NSRect)frame
              images:(NSArray*)images
              labels:(NSArray*)labels
                tabs:(NSArray*)tabs
              frames:(NSRect*)frames
        wasMaximized:(NSArray*)wasMaximized
            putOnTop:(int)topIndex;
-- (void)dealloc;
 - (void)updateTab:(PTYTab*)theTab;
 - (void)drawRect:(NSRect)rect;
 - (NSRect)tabOrigin:(PTYTab *)theTab visibleScreenFrame:(NSRect)visibleScreenFrame screenFrame:(NSRect)screenFrame;

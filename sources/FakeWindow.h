@@ -39,7 +39,7 @@
     BOOL scrollbarShouldBeVisible;
 }
 
-- (id)initFromRealWindow:(NSWindowController<iTermWindowController> *)aTerm
+- (instancetype)initFromRealWindow:(NSWindowController<iTermWindowController> *)aTerm
                  session:(PTYSession*)aSession;
 
 // PseudoTerminal should call this after adding the session to its tab view.

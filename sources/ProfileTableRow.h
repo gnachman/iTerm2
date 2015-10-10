@@ -19,8 +19,7 @@
     ProfileModel* underlyingModel;
 }
 
-- (id)initWithBookmark:(Profile*)bookmark underlyingModel:(ProfileModel*)underlyingModel;
-- (void)dealloc;
+- (instancetype)initWithBookmark:(Profile*)bookmark underlyingModel:(ProfileModel*)underlyingModel;
 - (Profile*)bookmark;
 
 @end

@@ -43,7 +43,7 @@ static const CGFloat kRGBColorCoefficient = 65535;
     }
 
     // And turn it into a NSColor.
-    RGBColor *rgbColor = (RGBColor *)data.bytes;
+    const RGBColor *rgbColor = (const RGBColor *)data.bytes;
     return [NSColor colorWithCalibratedRed:(CGFloat)rgbColor->red / kRGBColorCoefficient
                                      green:(CGFloat)rgbColor->green / kRGBColorCoefficient
                                       blue:(CGFloat)rgbColor->blue / kRGBColorCoefficient

@@ -18,9 +18,9 @@
 @property(nonatomic, assign) BOOL blockAtNewline;
 @property(nonatomic, assign) BOOL isBlocked;
 
-- (int)bytesPerCall;
+@property (readonly) int bytesPerCall;
 - (void)setBytesPerCall:(int)newBytesPerCall;
-- (float)delayBetweenCalls;
+@property (readonly) float delayBetweenCalls;
 - (void)setDelayBetweenCalls:(float)newDelayBetweenCalls;
 - (void)updateValues;
 

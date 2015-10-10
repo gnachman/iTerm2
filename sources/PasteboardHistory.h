@@ -52,9 +52,8 @@
     NSString* path_;
 }
 
-+ (PasteboardHistory*)sharedInstance;
-- (id)initWithMaxEntries:(int)maxEntries;
-- (void)dealloc;
++ (instancetype)sharedInstance;
+- (instancetype)initWithMaxEntries:(int)maxEntries;
 - (NSArray*)entries;
 - (void)save:(NSString*)value;
 
@@ -75,8 +74,7 @@
     NSTimer* minuteRefreshTimer_;
 }
 
-- (id)init;
-- (void)dealloc;
+- (instancetype)init;
 - (void)pasteboardHistoryDidChange:(id)sender;
 - (void)copyFromHistory;
 - (void)refresh;

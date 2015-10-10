@@ -34,7 +34,7 @@
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
 @class GTMCarbonHotKey;
-@class ItermGrowlDelegate;
+@class iTermGrowlDelegate;
 @protocol iTermWindowController;
 @class iTermRestorableSession;
 @class PasteboardHistory;
@@ -75,11 +75,10 @@
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
 - (PseudoTerminal*)keyTerminalWindow;
-- (BOOL)haveTmuxConnection;
+@property (readonly) BOOL haveTmuxConnection;
 - (PTYSession *)anyTmuxSession;
 
-- (int)keyWindowIndexMemo;
-- (void)setKeyWindowIndexMemo:(int)i;
+@property int keyWindowIndexMemo;
 
 - (PseudoTerminal*)terminalWithNumber:(int)n;
 - (PseudoTerminal *)terminalWithGuid:(NSString *)guid;
@@ -88,9 +87,9 @@
 - (void)saveWindowArrangement:(BOOL)allWindows;
 - (void)loadWindowArrangementWithName:(NSString *)theName;
 
-- (PTYSession *)sessionWithMostRecentSelection;
+@property (readonly, strong) PTYSession *sessionWithMostRecentSelection;
 
-- (PseudoTerminal *)currentTerminal;
+@property (nonatomic, assign) PseudoTerminal *currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
               withSelector:(SEL)selector
@@ -110,7 +109,7 @@
                          block:(PTYSession *(^)(PseudoTerminal *))block;
 - (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
-- (int)numberOfTerminals;
+@property (readonly) int numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
 - (void)irAdvance:(int)dir;
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
@@ -141,13 +140,11 @@
 - (iTermRestorableSession *)popRestorableSession;
 - (void)commitAndPopCurrentRestorableSession;
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
-- (BOOL)hasRestorableSession;
+@property (readonly) BOOL hasRestorableSession;
 - (void)killRestorableSessions;
 
-- (NSArray*)terminals;
+- (NSArray<PseudoTerminal*>*)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
-
-- (void)setCurrentTerminal:(PseudoTerminal *)aTerminal;
 
 void OnHotKeyEvent(void);
 

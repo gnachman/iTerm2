@@ -21,7 +21,7 @@
 - (void)startTimer;
 - (void)pauseTimer;
 - (void)resumeTimer;
-- (NSTimeInterval)timeSinceTimerStarted;
+@property (readonly) NSTimeInterval timeSinceTimerStarted;
 - (void)addValue:(double)value;
 - (BOOL)haveStartedTimer;
 

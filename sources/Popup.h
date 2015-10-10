@@ -31,8 +31,7 @@
 
 @property(nonatomic, assign) id<PopupDelegate> delegate;
 
-- (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
-- (void)dealloc;
+- (instancetype)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
 
 // Call this after initWithWindowNibName:tablePtr:model: if table was nil.
 - (void)setTableView:(NSTableView *)table;

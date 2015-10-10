@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ArrangementPreviewView.h"
 
-@interface WindowArrangements : NSViewController  {
+@interface WindowArrangements : NSViewController <NSTableViewDataSource, NSTableViewDelegate> {
     IBOutlet NSTableColumn *defaultColumn_;
     IBOutlet NSTableColumn *titleColumn_;
     IBOutlet NSTableView *tableView_;
@@ -21,11 +21,8 @@
 + (WindowArrangements *)sharedInstance;
 
 + (int)count;
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
 
 + (void)setArrangement:(NSArray *)arrangement withName:(NSString *)name;
-
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
 
 + (BOOL)hasWindowArrangement:(NSString *)name;
 
@@ -40,9 +37,5 @@
 
 - (IBAction)setDefault:(id)sender;
 - (IBAction)deleteSelectedArrangement:(id)sender;
-
-#pragma mark Delegate methods
-
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 
 @end

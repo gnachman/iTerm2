@@ -81,8 +81,7 @@ typedef enum {
     id sanityCheck;  // TODO(georgen): remove this after the source of corruption of index_ is found
 }
 
-- (id)initWithBufferCapacity:(long long)capacity;
-- (void)dealloc;
+- (instancetype)initWithBufferCapacity:(long long)capacity;
 
 // Reserve a chunk of memory. Returns true if blocks had to be freed to make room.
 // You can get a pointer to the reserved memory with -[scratch].
@@ -103,16 +102,16 @@ typedef enum {
 - (BOOL)hasSpaceAvailable:(long long)length;
 
 // Returns first/last used keys.
-- (long long)firstKey;
-- (long long)lastKey;
+@property (readonly) long long firstKey;
+@property (readonly) long long lastKey;
 
 // Look up an index entry by key.
 - (DVRIndexEntry*)entryForKey:(long long)key;
 
 // Total size of storage.
-- (long long)capacity;
+@property (readonly) long long capacity;
 
 // Are there no frames?
-- (BOOL)isEmpty;
+@property (readonly, getter=isEmpty) BOOL empty;
 @end
 

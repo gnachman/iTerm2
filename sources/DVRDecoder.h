@@ -48,8 +48,7 @@
     long long key_;
 }
 
-- (id)initWithBuffer:(DVRBuffer*)buffer;
-- (void)dealloc;
+- (instancetype)initWithBuffer:(DVRBuffer*)buffer;
 
 // Jump to a given timestamp, or the next available frame. Returns true on success.
 // Returns false if timestamp is later than the last timestamp or there are no frames.
@@ -58,7 +57,7 @@
 // Accessors for the most recent frame.
 - (char*)decodedFrame;
 - (int)length;
-- (long long)timestamp;
+@property (readonly) long long timestamp;
 - (DVRFrameInfo)info;
 
 // Advance to next frame.

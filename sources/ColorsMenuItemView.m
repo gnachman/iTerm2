@@ -27,6 +27,7 @@
 #import "ColorsMenuItemView.h"
 
 @implementation ColorsMenuItemView
+@synthesize color = color_;
 
 const int kNumberOfColors = 8;
 const int kColorAreaOffsetX = 20;
@@ -51,11 +52,6 @@ enum {
     kMenuItemPurple = 6,
     kMenuItemGray = 7
 };
-
-- (NSColor*)color
-{
-    return color_;
-}
 
 // Returns the color gradient corresponding to the color index.
 // These colours were chosen to appear similar to those in Aperture 3.

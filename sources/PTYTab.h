@@ -39,9 +39,9 @@
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
 
 // init/dealloc
-- (id)initWithSession:(PTYSession*)session;
-- (id)initWithRoot:(NSSplitView*)root;
-- (void)dealloc;
+- (instancetype)initWithSession:(PTYSession*)session;
+- (instancetype)initWithRoot:(NSSplitView*)root;
+
 - (void)setRoot:(NSSplitView *)newRoot;
 
 - (NSRect)absoluteFrame;
@@ -83,8 +83,7 @@
 - (int)realObjectCount;
 // These values are observed by PSMTTabBarControl:
 // Tab number for display
-- (int)objectCount;
-- (void)setObjectCount:(int)value;
+@property int objectCount;
 // Icon to display in tab
 - (NSImage *)icon;
 - (void)setIcon:(NSImage *)anIcon;

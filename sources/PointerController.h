@@ -47,7 +47,7 @@
 - (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches;
 - (void)swipeWithEvent:(NSEvent *)event;
 - (BOOL)eventEmulatesRightClick:(NSEvent *)event;
-- (BOOL)viewShouldTrackTouches;
+@property (readonly) BOOL viewShouldTrackTouches;
 - (void)notifyLeftMouseDown;
 
 @end

@@ -27,7 +27,7 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 
 + (void)showInformationalMessage;
 
-- (BOOL)commandHistoryHasEverBeenUsed;
+@property (readonly) BOOL commandHistoryHasEverBeenUsed;
 
 - (void)addCommand:(NSString *)command
             onHost:(VT100RemoteHost *)host

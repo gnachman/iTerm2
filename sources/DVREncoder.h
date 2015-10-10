@@ -53,8 +53,7 @@
     int reservation_;
 }
 
-- (id)initWithBuffer:(DVRBuffer*)buffer;
-- (void)dealloc;
+- (instancetype)initWithBuffer:(DVRBuffer*)buffer;
 
 // Encoded a frame into the DVRBuffer. Call -[reserve:] first.
 //   frameLines: An array of screen lines

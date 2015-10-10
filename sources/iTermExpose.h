@@ -33,7 +33,7 @@ extern const float kItermExposeThumbMargin;
 @class iTermExposeView;
 @class PTYTab;
 
-@interface iTermExpose : NSObject {
+@interface iTermExpose : NSObject <NSWindowDelegate> {
     NSWindow* window_;
     iTermExposeView* view_;
 }
@@ -44,7 +44,7 @@ extern const float kItermExposeThumbMargin;
 + (iTermExpose*)sharedInstance;
 - (void)showWindows:(BOOL)fade;
 - (NSWindow*)window;
-- (BOOL)isVisible;
+@property (readonly, getter=isVisible) BOOL visible;
 - (void)updateTab:(PTYTab*)theTab;
 - (void)computeLayout:(NSMutableArray *)images
                frames:(NSRect*)frames

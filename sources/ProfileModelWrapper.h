@@ -26,9 +26,7 @@
 @property(nonatomic, copy) NSString *lockedGuid;
 
 - (id)initWithModel:(ProfileModel*)model;
-- (void)dealloc;
-- (void)setSortDescriptors:(NSArray*)newSortDescriptors;
-- (NSArray*)sortDescriptors;
+@property (copy) NSArray *sortDescriptors;
 
 // Cause the underlying model to have the visible bookmarks in the same order as
 // they appear here. Only bookmarks matching the filter are pushed.
@@ -38,7 +36,7 @@
 - (void)sort;
 
 // These functions take the filter (set with setFilter) into account with respect to indices.
-- (int)numberOfBookmarks;
+@property (readonly) int numberOfBookmarks;
 - (ProfileTableRow*)profileTableRowAtIndex:(int)index;
 - (Profile*)profileAtIndex:(int)index;
 - (int)indexOfProfileWithGuid:(NSString*)guid;

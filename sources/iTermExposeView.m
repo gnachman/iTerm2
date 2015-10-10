@@ -11,6 +11,7 @@
 #import "iTermExpose.h"
 
 @implementation iTermExposeView
+@synthesize grid = grid_;
 
 - (id)initWithFrame:(NSRect)frameRect
 {
@@ -45,11 +46,6 @@
     [self addSubview:newGrid positioned:NSWindowBelow relativeTo:[search_ view]];
     [oldGrid release];
     grid_ = newGrid;
-}
-
-- (iTermExposeGridView*)grid
-{
-    return grid_;
 }
 
 - (NSRect)searchFrame

@@ -139,16 +139,16 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 - (void)moveUpByLines:(int)numLines;
 
 // Indicates if there is a non-empty selection.
-- (BOOL)hasSelection;
+@property (readonly) BOOL hasSelection;
 
 // Indicates if the selection contains the coordinate.
 - (BOOL)containsCoord:(VT100GridCoord)coord;
 
 // Length of the selection in characters.
-- (long long)length;
+@property (readonly) long long length;
 
 // Range from the earliest point to the latest point of all selection ranges.
-- (VT100GridCoordRange)spanningRange;
+@property (readonly) VT100GridCoordRange spanningRange;
 
 // Add a range to the set of selections.
 - (void)addSubSelection:(iTermSubSelection *)sub;

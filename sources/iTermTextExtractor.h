@@ -42,7 +42,7 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 + (NSCharacterSet *)wordSeparatorCharacterSet;
 
 + (instancetype)textExtractorWithDataSource:(id<PTYTextViewDataSource>)dataSource;
-- (id)initWithDataSource:(id<PTYTextViewDataSource>)dataSource;
+- (instancetype)initWithDataSource:(id<PTYTextViewDataSource>)dataSource;
 - (void)restrictToLogicalWindowIncludingCoord:(VT100GridCoord)coord;
 
 // Returns the range of a word (string of characters belonging to the same class) at a location. If

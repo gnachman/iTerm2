@@ -37,7 +37,7 @@ extern NSString *const kProfileSessionNameDidEndEditing;
 - (void)selectGeneralTab;
 
 // Size of tab view.
-- (NSSize)size;
+@property (readonly) NSSize size;
 
 - (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab;
 

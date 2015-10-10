@@ -35,8 +35,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, assign) BOOL isCoprocessOnly;
 @property(atomic, readonly) BOOL coprocessOnlyTaskIsDead;
 
-- (id)init;
-- (void)dealloc;
+- (instancetype)init;
 - (BOOL)hasBrokenPipe;
 - (NSString *)command;
 - (void)launchWithPath:(NSString*)progpath

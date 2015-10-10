@@ -61,7 +61,7 @@
   GrowlApplicationBridgeDelegate,
   NSUserNotificationCenterDelegate>
 
-+ (id)sharedInstance;
++ (instancetype)sharedInstance;
 
 // Generate a Growl message with no description and a notification type
 // of "Miscellaneous".

@@ -115,7 +115,7 @@ BOOL IsYosemiteOrLater(void) {
     // PseudoTerminal objects
     NSMutableArray *terminalWindows;
     id FRONT;
-    ItermGrowlDelegate *gd;
+    iTermGrowlDelegate *gd;
 
     int keyWindowIndexMemo_;
 

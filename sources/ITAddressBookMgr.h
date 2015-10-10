@@ -254,8 +254,7 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
 // Login command that leaves you in your home directory.
 + (NSString *)standardLoginCommand;
 
-- (id)init;
-- (void)dealloc;
+- (instancetype)init;
 - (void) locateBonjourServices;
 - (void)stopLocatingBonjourServices;
 - (void)copyProfileToBookmark:(NSMutableDictionary *)dict;

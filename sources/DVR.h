@@ -43,8 +43,7 @@
 // Allocates a circular buffer of the given size in bytes to store screen
 // contents. Somewhat more memory is used because there's some per-frame
 // storage, but it should be small in comparison.
-- (id)initWithBufferCapacity:(int)bytes;
-- (void)dealloc;
+- (instancetype)initWithBufferCapacity:(int)bytes;
 
 // Save the screen state into the DVR.
 //   frameLines: An array of screen lines that DVREncoder understands.
@@ -59,7 +58,7 @@
 - (void)releaseDecoder:(DVRDecoder*)decoder;
 
 // Get timestamp of first/last frame. Times are in microseconds since 1970.
-- (long long)lastTimeStamp;
-- (long long)firstTimeStamp;
+@property (readonly) long long lastTimeStamp;
+@property (readonly) long long firstTimeStamp;
 
 @end

@@ -14,13 +14,13 @@
     int size;
 }
 
-+ (IntRange *)rangeWithMin:(int)min limit:(int)limit;
-+ (IntRange *)rangeWithMin:(int)min size:(int)size;
++ (instancetype)rangeWithMin:(int)min limit:(int)limit;
++ (instancetype)rangeWithMin:(int)min size:(int)size;
 - (BOOL)isEqualToIntRange:(IntRange *)other;
 - (BOOL)intersectsRange:(IntRange *)other;
-- (IntRange *)intersectionWithRange:(IntRange *)other;
+- (instancetype)intersectionWithRange:(IntRange *)other;
 - (int)limit;
-- (NSArray *)rangesAfterSubtractingRange:(IntRange *)other;
+- (NSArray<IntRange*> *)rangesAfterSubtractingRange:(IntRange *)other;
 
 @end
 
@@ -28,8 +28,7 @@
     NSMutableArray *elements_;
 }
 
-- (id)init;
-- (void)dealloc;
+- (instancetype)init;
 - (void)setObject:(id)object forRange:(IntRange *)range;
 - (void)incrementNumbersBy:(int)amount inRange:(IntRange *)range;
 - (NSArray *)allValues;

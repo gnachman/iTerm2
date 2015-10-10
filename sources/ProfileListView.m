@@ -659,7 +659,7 @@ const CGFloat kDefaultTagsWidth = 80;
     [self setHasSelection:[selectedGuids_ count] > 0];
 }
 
-- (int)selectedRow
+- (NSInteger)selectedRow
 {
     return [tableView_ selectedRow];
 }
@@ -696,7 +696,7 @@ const CGFloat kDefaultTagsWidth = 80;
     [self selectRowIndex:theRow];
 }
 
-- (int)numberOfRows
+- (NSInteger)numberOfRows
 {
     return [dataSource_ numberOfBookmarks];
 }

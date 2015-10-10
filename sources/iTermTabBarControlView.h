@@ -29,9 +29,9 @@
 - (void)updateFlashing;
 
 // Indicates if the tab bar is currently flashing.
-- (BOOL)flashing;
+@property (nonatomic) BOOL flashing;
 
 // Start or stop flashing. We take care of fading.
-- (void)setFlashing:(BOOL)flashing;
+//- (void)setFlashing:(BOOL)flashing;
 
 @end

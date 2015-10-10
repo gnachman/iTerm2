@@ -23,6 +23,6 @@
 
 // Tries to guess, from the first bytes of data, what kind of image it is and
 // returns the corresponding UTI string constant. Not guaranteed to be correct.
-- (NSString *)uniformTypeIdentifierForImageData;
+@property (readonly) NSString *uniformTypeIdentifierForImageData;
 
 @end

@@ -34,7 +34,7 @@ extern CGFloat kiTermIndicatorStandardHeight;
 
 - (void)setIndicator:(NSString *)identifier visible:(BOOL)visible;
 - (void)beginFlashingIndicator:(NSString *)identifier;
-- (NSInteger)numberOfVisibleIndicators;
+@property (readonly) NSInteger numberOfVisibleIndicators;
 - (void)beginFlashingFullScreen;
 - (void)drawInFrame:(NSRect)frame;
 

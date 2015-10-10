@@ -29,8 +29,6 @@ typedef struct {
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
 - (LineBlock *)copy;
 
-- (void) dealloc;
-
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
 - (BOOL)appendLine:(screen_char_t*)buffer

@@ -23,7 +23,7 @@
 @property (nonatomic, assign) BOOL dragFailed;
 @property (nonatomic, assign) PTYSession *session;
 
-+ (MovePaneController *)sharedInstance;
++ (instancetype)sharedInstance;
 // Initiate click-to-move mode.
 - (void)movePane:(PTYSession *)session;
 

@@ -12,9 +12,9 @@
 {
 }
 
-- (BOOL)canBecomeKeyWindow;
+@property (readonly) BOOL canBecomeKeyWindow;
 - (void)keyDown:(NSEvent *)event;
-- (BOOL)disableFocusFollowsMouse;
+@property (readonly) BOOL disableFocusFollowsMouse;
 
 @end
 

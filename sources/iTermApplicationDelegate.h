@@ -118,7 +118,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)editCurrentSession:(id)sender;
 
 - (IBAction)toggleUseBackgroundPatternIndicator:(id)sender;
-- (BOOL)useBackgroundPatternIndicator;
+@property (readonly) BOOL useBackgroundPatternIndicator;
 
 - (void)makeHotKeyWindowKeyIfOpen;
 
@@ -126,7 +126,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 // Call this when the user has any nontrivial interaction with a session, such as typing in it or closing a window.
 - (void)userDidInteractWithASession;
-- (BOOL)warnBeforeMultiLinePaste;
+@property (readonly) BOOL warnBeforeMultiLinePaste;
 
 - (NSMenu *)downloadsMenu;
 - (NSMenu *)uploadsMenu;

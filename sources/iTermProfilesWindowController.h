@@ -38,9 +38,9 @@
     IBOutlet NSButton* toggleTagsButton_;
 }
 
-+ (iTermProfilesWindowController*)sharedInstance;
-- (id)init;
-- (id)initWithWindowNibName:(NSString *)windowNibName;
++ (instancetype)sharedInstance;
+- (instancetype)init;
+- (instancetype)initWithWindowNibName:(NSString *)windowNibName;
 - (IBAction)openBookmarkInHorizontalPane:(id)sender;
 - (IBAction)openBookmarkInVerticalPane:(id)sender;
 - (IBAction)openBookmarkInTab:(id)sender;

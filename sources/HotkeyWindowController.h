@@ -31,20 +31,20 @@
 // is decoded and updated from saveHotkeyWindowState.
 @property(nonatomic, retain) NSDictionary *restorableState;
 
-+ (id)sharedInstance;
++ (instancetype)sharedInstance;
 + (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window;
 
-- (BOOL)rollingInHotkeyTerm;
+@property (readonly) BOOL rollingInHotkeyTerm;
 - (void)showHotKeyWindow;
 - (void)createHiddenHotkeyWindow;
 - (void)doNotOrderOutWhenHidingHotkeyWindow;
 - (void)fastHideHotKeyWindow;
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm;
-- (BOOL)isHotKeyWindowOpen;
+@property (readonly, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
 - (PseudoTerminal*)hotKeyWindow;
 - (BOOL)eventIsHotkey:(NSEvent*)e;
 - (void)unregisterHotkey;
-- (BOOL)haveEventTap;
+@property (readonly) BOOL haveEventTap;
 - (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers;
 - (void)beginRemappingModifiers;
 - (void)stopEventTap;
@@ -55,11 +55,11 @@
 // Updates -restorableState and invalidates the app's restorable state.
 - (void)saveHotkeyWindowState;
 
-- (int)controlRemapping;
-- (int)leftOptionRemapping;
-- (int)rightOptionRemapping;
-- (int)leftCommandRemapping;
-- (int)rightCommandRemapping;
-- (BOOL)isAnyModifierRemapped;
+@property (readonly) int controlRemapping;
+@property (readonly) int leftOptionRemapping;
+@property (readonly) int rightOptionRemapping;
+@property (readonly) int leftCommandRemapping;
+@property (readonly) int rightCommandRemapping;
+@property (readonly, getter=isAnyModifierRemapped) BOOL anyModifierRemapped;
 
 @end

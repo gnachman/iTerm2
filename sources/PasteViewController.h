@@ -26,11 +26,11 @@
 
 @property (nonatomic, assign) __weak id<PasteViewControllerDelegate> delegate;
 
-- (id)initWithContext:(PasteContext *)pasteContext_
+- (instancetype)initWithContext:(PasteContext *)pasteContext_
                length:(int)length;
 
 - (IBAction)cancel:(id)sender;
-- (void)setRemainingLength:(int)remainingLength;
+@property (nonatomic) int remainingLength;
 - (void)updateFrame;
 - (void)close;
 

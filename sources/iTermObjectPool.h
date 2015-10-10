@@ -56,10 +56,10 @@
 
 @interface iTermObjectPool : NSObject
 
-- (id)initWithClass:(Class)theClass
+- (instancetype)initWithClass:(Class)theClass
         collections:(int)numCollections
       objectsPerCollection:(int)objectsPerCollection;
 
-- (iTermPooledObject *)pooledObject;
+@property (readonly) iTermPooledObject *pooledObject;
 
 @end

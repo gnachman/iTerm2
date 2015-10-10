@@ -59,15 +59,15 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 + (NSColor *)colorForAnsi256ColorIndex:(int)index;
 
 - (NSColor *)colorDimmedBy:(double)dimmingAmount towardsGrayLevel:(double)grayLevel;
-- (CGFloat)perceivedBrightness;
-- (BOOL)isDark;
+@property (readonly) CGFloat perceivedBrightness;
+@property (readonly) BOOL isDark;
 
-- (NSDictionary *)dictionaryValue;
-- (NSString *)stringValue;
+@property (readonly) NSDictionary *dictionaryValue;
+@property (readonly) NSString *stringValue;
 
 // Return the color you'd get by rendering self over background.
 - (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;
 
-- (CGColorRef)iterm_CGColor;
+- (CGColorRef)iterm_CGColor CF_RETURNS_NOT_RETAINED;
 
 @end
