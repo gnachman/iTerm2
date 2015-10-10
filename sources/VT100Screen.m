@@ -1,8 +1,32 @@
 ﻿#import "VT100Screen.h"
 
-sort: string comparison failed: Illegal byte sequence
-sort: Set LC_ALL='C' to work around the problem.
-sort: The strings compared were `\317\273\277#IMPORT "CAPTUREDOUTPUT.H"' and `#IMPORT "DEBUGLOGGING.H"'.
+#import "CapturedOutput.h"
+#import "DebugLogging.h"
+#import "DVR.h"
+#import "IntervalTree.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermColorMap.h"
+#import "iTermCommandHistoryController.h"
+#import "iTermExpose.h"
+#import "iTermGrowlDelegate.h"
+#import "iTermPreferences.h"
+#import "iTermSelection.h"
+#import "iTermTemporaryDoubleBufferedGridController.h"
+#import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSObject+iTerm.h"
+#import "PTYNoteViewController.h"
+#import "PTYTextView.h"
+#import "RegexKitLite.h"
+#import "SearchResult.h"
+#import "TmuxStateParser.h"
+#import "VT100RemoteHost.h"
+#import "VT100ScreenMark.h"
+#import "VT100WorkingDirectory.h"
+#import "VT100DCSParser.h"
+#import "VT100Token.h"
 
 #import <apr-1/apr_base64.h>
 #include <string.h>
