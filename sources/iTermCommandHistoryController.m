@@ -124,11 +124,11 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     assert(modelURL);
 
     NSManagedObjectModel *managedObjectModel =
-        [[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL];
+        [[[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL] autorelease];
     assert(managedObjectModel);
 
     NSPersistentStoreCoordinator *persistentStoreCoordinator =
-        [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:managedObjectModel];
+        [[[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:managedObjectModel] autorelease];
     assert(persistentStoreCoordinator);
     
     _managedObjectContext =
