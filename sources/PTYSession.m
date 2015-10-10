@@ -1,7 +1,5 @@
 #import "PTYSession.h"
 
-#import "CommandHistory.h"
-#import "CommandUse.h"
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
@@ -14,6 +12,8 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermColorMap.h"
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
+#import "iTermCommandHistoryController.h"
 #import "iTermController.h"
 #import "iTermDirectoriesModel.h"
 #import "iTermGrowlDelegate.h"
@@ -5530,9 +5530,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
     DLog(@"Fetching range of last command output...");
-    if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if (![[iTermCommandHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         DLog(@"Command history has never been used.");
-        [CommandHistory showInformationalMessage];
+        [iTermCommandHistoryController showInformationalMessage];
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         DLog(@"Returning cached range.");
@@ -5542,7 +5542,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)textViewCanSelectOutputOfLastCommand {
     // Return YES if command history has never been used so we can show the informational message.
-    return (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed] ||
+    return (![[iTermCommandHistoryController sharedInstance] commandHistoryHasEverBeenUsed] ||
             _screen.lastCommandOutputRange.start.x >= 0);
 
 }
@@ -6489,7 +6489,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 
     [_commandUses autorelease];
-    _commandUses = [[[CommandHistory sharedInstance] commandUsesForHost:host] retain];
+    _commandUses = [[[iTermCommandHistoryController sharedInstance] commandUsesForHost:host] retain];
 
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
@@ -6642,7 +6642,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    return [[CommandHistory sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
+    return [[iTermCommandHistoryController sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
                                                                      onHost:host];
 }
 
@@ -6682,7 +6682,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                  _lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
             mark.command = command;
-            [[CommandHistory sharedInstance] addCommand:trimmedCommand
+            [[iTermCommandHistoryController sharedInstance] addCommand:trimmedCommand
                                                  onHost:[_screen remoteHostOnLine:range.end.y]
                                             inDirectory:[_screen workingDirectoryOnLine:range.end.y]
                                                withMark:mark];

@@ -7,12 +7,14 @@
 //
 
 #import <Cocoa/Cocoa.h>
+
 #import "NSManagedObjects/iTermCommandHistoryCommandUseMO.h"
 
 @class iTermCommandHistoryCommandUseMO;
 @class VT100ScreenMark;
 
-@interface iTermCommandHistoryCommandUseMO (CommandUse)
+@interface iTermCommandHistoryCommandUseMO (Additions)
+
 // Setting this actually sets the markGuid.
 @property(nonatomic, retain) VT100ScreenMark *mark;
 

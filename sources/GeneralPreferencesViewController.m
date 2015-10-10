@@ -8,8 +8,8 @@
 
 #import "GeneralPreferencesViewController.h"
 
-#import "CommandHistory.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermCommandHistoryController.h"
 #import "iTermRemotePreferences.h"
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
@@ -182,7 +182,7 @@ enum {
     info.onChange = ^() {
         if (![iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
             [[PasteboardHistory sharedInstance] eraseHistory];
-            [[CommandHistory sharedInstance] eraseHistory];
+            [[iTermCommandHistoryController sharedInstance] eraseHistory];
         }
     };
 

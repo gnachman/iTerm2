@@ -7,8 +7,9 @@
 //
 
 #import "ToolCommandHistoryView.h"
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
+
+#import "iTermCommandHistoryController.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
 #import "NSTableColumn+iTerm.h"
@@ -291,7 +292,7 @@ static const CGFloat kHelpMargin = 5;
                         @"OK",
                         @"Cancel",
                         nil) == NSAlertDefaultReturn) {
-        [[CommandHistory sharedInstance] eraseHistory];
+        [[iTermCommandHistoryController sharedInstance] eraseHistory];
     }
 }
 

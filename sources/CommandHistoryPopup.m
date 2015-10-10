@@ -7,8 +7,9 @@
 //
 
 #import "CommandHistoryPopup.h"
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
+
+#import "iTermCommandHistoryController.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
 #import "NSDateFormatterExtras.h"
 #import "PopupModel.h"
 
@@ -48,7 +49,7 @@
 - (NSArray *)commandsForHost:(VT100RemoteHost *)host
               partialCommand:(NSString *)partialCommand
                       expand:(BOOL)expand {
-    CommandHistory *history = [CommandHistory sharedInstance];
+    iTermCommandHistoryController *history = [iTermCommandHistoryController sharedInstance];
     if (expand) {
         return [history autocompleteSuggestionsWithPartialCommand:partialCommand onHost:host];
     } else {

@@ -10,10 +10,10 @@
 
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
-#import "CommandUse.h"
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermSearchField.h"
-#import "iTermToolWrapper.h"
 #import "iTermToolbeltView.h"
+#import "iTermToolWrapper.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"

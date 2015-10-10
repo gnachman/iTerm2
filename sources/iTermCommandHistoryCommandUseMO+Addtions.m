@@ -6,12 +6,12 @@
 //
 //
 
-#import "CommandUse.h"
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "NSManagedObjects/iTermCommandHistoryCommandUseMO.h"
 #import "NSObject+iTerm.h"
 #import "VT100ScreenMark.h"
 
-@implementation iTermCommandHistoryCommandUseMO (CommandUse)
+@implementation iTermCommandHistoryCommandUseMO (Additions)
 
 + (instancetype)commandHistoryCommandUseInContext:(NSManagedObjectContext *)context {
     return [NSEntityDescription insertNewObjectForEntityForName:self.entityName

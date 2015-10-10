@@ -22,8 +22,8 @@
         <relationship name="uses" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CommandHistoryCommandUse" inverseName="entry" inverseEntity="CommandHistoryCommandUse" syncable="YES"/>
     </entity>
     <elements>
-        <element name="CommandHistory" positionX="-63" positionY="-18" width="128" height="90"/>
-        <element name="CommandHistoryEntry" positionX="-54" positionY="18" width="128" height="135"/>
-        <element name="CommandHistoryCommandUse" positionX="-36" positionY="45" width="128" height="135"/>
+        <element name="CommandHistory" positionX="0" positionY="0" width="0" height="0"/>
+        <element name="CommandHistoryCommandUse" positionX="0" positionY="0" width="0" height="0"/>
+        <element name="CommandHistoryEntry" positionX="0" positionY="0" width="0" height="0"/>
     </elements>
 </model>

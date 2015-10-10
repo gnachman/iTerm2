@@ -7,12 +7,13 @@
 //
 
 #import <Cocoa/Cocoa.h>
+
 #import "NSManagedObjects/iTermCommandHistoryEntryMO.h"
 
 @class VT100RemoteHost;
 @class VT100ScreenMark;
 
-@interface iTermCommandHistoryEntryMO (CommandHistoryEntry)
+@interface iTermCommandHistoryEntryMO (Additions)
 
 @property(nonatomic, readonly) VT100ScreenMark *lastMark;
 

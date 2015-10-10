@@ -1,17 +1,17 @@
 #include <wctype.h>
 #import "Autocomplete.h"
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
-#import "LineBuffer.h"
-#import "PTYTextView.h"
-#import "PasteboardHistory.h"
-#import "PopupModel.h"
-#import "SearchResult.h"
-#import "VT100Screen.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermCommandHistoryController.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
 #import "iTermTextExtractor.h"
-#import "iTermAdvancedSettingsModel.h"
+#import "LineBuffer.h"
+#import "PasteboardHistory.h"
+#import "PopupModel.h"
+#import "PTYTextView.h"
+#import "SearchResult.h"
+#import "VT100Screen.h"
 
 #define AcLog DLog
 

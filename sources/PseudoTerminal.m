@@ -3,8 +3,6 @@
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
 #import "ColorsMenuItemView.h"
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
 #import "CommandHistoryPopup.h"
 #import "Coprocess.h"
 #import "DirectoriesPopup.h"
@@ -19,6 +17,8 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermCommandHistoryController.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
 #import "iTermDirectoriesModel.h"
 #import "iTermFindCursorView.h"
@@ -4663,14 +4663,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (!commandHistoryPopup) {
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
     }
-    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if ([[iTermCommandHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         [commandHistoryPopup popWithDelegate:[self currentSession]];
         [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
                                                                 partialCommand:[[self currentSession] currentCommand]
                                                                         expand:YES]
                            partialCommand:[[self currentSession] currentCommand]];
     } else {
-        [CommandHistory showInformationalMessage];
+        [iTermCommandHistoryController showInformationalMessage];
     }
 }
 
@@ -4678,11 +4678,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (!_directoriesPopupWindowController) {
         _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];
     }
-    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if ([[iTermCommandHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         [_directoriesPopupWindowController popWithDelegate:[self currentSession]];
         [_directoriesPopupWindowController loadDirectoriesForHost:[[self currentSession] currentHost]];
     } else {
-        [CommandHistory showInformationalMessage];
+        [iTermCommandHistoryController showInformationalMessage];
     }
 }
 
@@ -6471,7 +6471,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSOnState : NSOffState];
         result = YES;
     } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
-        result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
+        result = [[iTermCommandHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
                 [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSOnState : NSOffState];
@@ -6505,12 +6505,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] screen] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {
-        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        if (![[iTermCommandHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
-        return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
+        return [[iTermCommandHistoryController sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(openDirectories:)) {
-        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        if (![[iTermCommandHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
         return [[iTermDirectoriesModel sharedInstance] haveEntriesForHost:[[self currentSession] currentHost]];

@@ -7,8 +7,9 @@
 //
 
 #import "ProfilesTerminalPreferencesViewController.h"
-#import "CommandHistory.h"
+
 #import "ITAddressBookMgr.h"
+#import "iTermCommandHistoryController.h"
 #import "iTermController.h"
 
 @implementation ProfilesTerminalPreferencesViewController {
@@ -194,7 +195,7 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 #pragma mark - Action
 
 - (IBAction)help:(id)sender {
-    [CommandHistory showInformationalMessage];
+    [iTermCommandHistoryController showInformationalMessage];
 }
 
 - (IBAction)showFilterAlertsPanel:(id)sender {

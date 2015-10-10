@@ -1,31 +1,8 @@
 ﻿#import "VT100Screen.h"
-#import "CapturedOutput.h"
-#import "CommandHistory.h"
-#import "DebugLogging.h"
-#import "DVR.h"
-#import "IntervalTree.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "iTermColorMap.h"
-#import "iTermExpose.h"
-#import "iTermGrowlDelegate.h"
-#import "iTermPreferences.h"
-#import "iTermSelection.h"
-#import "iTermTemporaryDoubleBufferedGridController.h"
-#import "NSArray+iTerm.h"
-#import "NSColor+iTerm.h"
-#import "NSData+iTerm.h"
-#import "NSDictionary+iTerm.h"
-#import "NSObject+iTerm.h"
-#import "PTYNoteViewController.h"
-#import "PTYTextView.h"
-#import "RegexKitLite.h"
-#import "SearchResult.h"
-#import "TmuxStateParser.h"
-#import "VT100RemoteHost.h"
-#import "VT100ScreenMark.h"
-#import "VT100WorkingDirectory.h"
-#import "VT100DCSParser.h"
-#import "VT100Token.h"
+
+sort: string comparison failed: Illegal byte sequence
+sort: Set LC_ALL='C' to work around the problem.
+sort: The strings compared were `\317\273\277#IMPORT "CAPTUREDOUTPUT.H"' and `#IMPORT "DEBUGLOGGING.H"'.
 
 #import <apr-1/apr_base64.h>
 #include <string.h>
@@ -3575,7 +3552,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         DLog(@"FinalTerm: setting code on mark %@", mark);
         mark.code = returnCode;
         VT100RemoteHost *remoteHost = [self remoteHostOnLine:[self numberOfLines]];
-        [[CommandHistory sharedInstance] setStatusOfCommandAtMark:mark
+        [[iTermCommandHistoryController sharedInstance] setStatusOfCommandAtMark:mark
                                                            onHost:remoteHost
                                                                to:returnCode];
         [delegate_ screenNeedsRedraw];
@@ -4457,7 +4434,7 @@ static void SwapInt(int *a, int *b) {
                 if (screenMark.command) {
                     // Find the matching object in command history and link it.
                     iTermCommandHistoryCommandUseMO *commandUse =
-                        [[CommandHistory sharedInstance] commandUseWithMarkGuid:screenMark.guid
+                        [[iTermCommandHistoryController sharedInstance] commandUseWithMarkGuid:screenMark.guid
                                                                          onHost:lastRemoteHost];
                     commandUse.mark = screenMark;
                 }

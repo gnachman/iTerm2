@@ -7,9 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <XCTest/XCTest.h>
-#import "CommandHistory.h"
 #import "iTermApplication.h"
+#import "iTermCommandHistoryController.h"
 #import "iTermController.h"
 #import "iTermDirectoriesModel.h"
 #import "iTermRootTerminalView.h"
@@ -20,6 +19,7 @@
 #import "ToolDirectoriesView.h"
 #import "Trigger.h"
 #import "VT100RemoteHost.h"
+#import <XCTest/XCTest.h>
 
 @interface iTermToolbeltTest : XCTestCase<iTermToolbeltViewDelegate>
 @property(nonatomic, retain) NSString *currentDir;
@@ -44,7 +44,7 @@
     VT100RemoteHost *host = [[[VT100RemoteHost alloc] init] autorelease];
     host.hostname = @"hostname";
     host.username = @"user";
-    [[CommandHistory sharedInstance] eraseHistoryForHost:host];
+    [[iTermCommandHistoryController sharedInstance] eraseHistoryForHost:host];
 
     // Erase directory history for the remotehost we test with.
     [[iTermDirectoriesModel sharedInstance] eraseHistoryForHost:host];

@@ -6,12 +6,13 @@
 //
 //
 
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
+#import "iTermCommandHistoryController.h"
+
+#import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
-#import "NSManagedObjects/iTermCommandHistoryMO.h"
 #import "NSManagedObjects/iTermCommandHistoryEntryMO.h"
+#import "NSManagedObjects/iTermCommandHistoryMO.h"
 #import "PreferencePanel.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
@@ -59,7 +60,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 }
 
 @end
-@implementation CommandHistory {
+@implementation iTermCommandHistoryController {
     NSMutableDictionary<NSString *, iTermCommandHistoryMO *> *_historyByHost;
     
     // Keys are remote host keys, "user@hostname".
@@ -246,7 +247,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
                           onHost:(VT100RemoteHost *)remoteHost
                               to:(int)status {
     iTermCommandHistoryCommandUseMO *commandUse =
-        [[CommandHistory sharedInstance] commandUseWithMarkGuid:mark.guid
+        [[iTermCommandHistoryController sharedInstance] commandUseWithMarkGuid:mark.guid
                                                          onHost:remoteHost];
     // If the status is 0 and commandUse doesn't have a code set, do nothing. This saves some time
     // in the common case.
@@ -327,10 +328,10 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     NSString *key = host.key ?: @"";
 
     NSArray<iTermCommandHistoryEntryMO *> *temp =
-        [[CommandHistory sharedInstance] commandHistoryEntriesWithPrefix:@""
-                                                                  onHost:host];
+        [[iTermCommandHistoryController sharedInstance] commandHistoryEntriesWithPrefix:@""
+                                                                                 onHost:host];
     NSMutableArray<iTermCommandHistoryCommandUseMO *> *expanded =
-        [[CommandHistory sharedInstance] commandUsesByExpandingEntries:temp];
+        [[iTermCommandHistoryController sharedInstance] commandUsesByExpandingEntries:temp];
 
     _expandedCache[key] = expanded;
 

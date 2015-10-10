@@ -6,10 +6,11 @@
 //
 //
 
-#import "CommandHistoryEntry.h"
-#import "CommandUse.h"
-#import "NSManagedObjects/iTermCommandHistoryEntryMO.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
+
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "NSManagedObjects/iTermCommandHistoryCommandUseMO.h"
+#import "NSManagedObjects/iTermCommandHistoryEntryMO.h"
 
 // Keys for serializing an entry
 static NSString *const kCommand = @"command";
@@ -17,7 +18,7 @@ static NSString *const kUses = @"uses";
 static NSString *const kLastUsed = @"last used";
 static NSString *const kCommandUses = @"use times";  // The name is a historical artifact
 
-@implementation iTermCommandHistoryEntryMO (CommandHistoryEntry)
+@implementation iTermCommandHistoryEntryMO (iTermCommandHistoryController)
 
 + (instancetype)commandHistoryEntryInContext:(NSManagedObjectContext *)context {
     return [NSEntityDescription insertNewObjectForEntityForName:self.entityName

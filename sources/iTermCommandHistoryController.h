@@ -1,5 +1,5 @@
 //
-//  CommandHistory.h
+//  iTermCommandHistoryController.h
 //  iTerm
 //
 //  Created by George Nachman on 1/6/14.
@@ -7,7 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "CommandUse.h"
+
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
 
 extern NSString *const kCommandHistoryDidChangeNotificationName;
 
@@ -21,7 +22,7 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 
 @end
 
-@interface CommandHistory : NSObject
+@interface iTermCommandHistoryController : NSObject
 
 + (instancetype)sharedInstance;
 
