@@ -29,7 +29,7 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 
-@protocol FindViewControllerDelegate
+@protocol FindViewControllerDelegate <NSObject>
 
 // Returns true if there is a text area to search.
 - (BOOL)canSearch;

@@ -10,7 +10,7 @@
 
 @class PasteContext;
 
-@protocol PasteViewControllerDelegate
+@protocol PasteViewControllerDelegate <NSObject>
 
 - (void)pasteViewControllerDidCancel;
 

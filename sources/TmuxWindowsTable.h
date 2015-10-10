@@ -11,7 +11,7 @@
 
 extern NSString *kWindowPasteboardType;
 
-@protocol TmuxWindowsTableProtocol
+@protocol TmuxWindowsTableProtocol <NSObject>
 
 - (void)reloadWindows;
 - (void)renameWindowWithId:(int)windowId toName:(NSString *)newName;

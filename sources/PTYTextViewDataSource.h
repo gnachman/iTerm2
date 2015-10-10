@@ -12,7 +12,7 @@
 @class VT100ScreenMark;
 @class VT100Terminal;
 
-@protocol PTYTextViewDataSource
+@protocol PTYTextViewDataSource <NSObject>
 
 - (VT100Terminal *)terminal;
 - (int)numberOfLines;

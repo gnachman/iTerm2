@@ -21,7 +21,7 @@ extern const int kTmuxGatewayCommandWantsData;
 
 extern NSString * const kTmuxGatewayErrorDomain;
 
-@protocol TmuxGatewayDelegate
+@protocol TmuxGatewayDelegate <NSObject>
 
 - (TmuxController *)tmuxController;
 - (void)tmuxUpdateLayoutForWindow:(int)windowId

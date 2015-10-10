@@ -9,7 +9,7 @@
 #import "PSMTabBarControl.h"
 
 // NOTE: The delegate should nil out of itermTabBarDelegate when it gets dealloced; we may live on because of delayed performs.
-@protocol iTermTabBarControlViewDelegate
+@protocol iTermTabBarControlViewDelegate <NSObject>
 
 - (BOOL)iTermTabBarShouldFlashAutomatically;
 - (void)iTermTabBarWillBeginFlash;

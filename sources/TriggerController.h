@@ -10,7 +10,7 @@
 
 @class TriggerController;
 
-@protocol TriggerDelegate
+@protocol TriggerDelegate <NSObject>
 - (void)triggerChanged:(TriggerController *)controller newValue:(NSArray *)value;
 @end
 

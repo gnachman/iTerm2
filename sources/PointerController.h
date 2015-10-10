@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol PointerControllerDelegate
+@protocol PointerControllerDelegate <NSObject>
 
 - (void)pasteFromClipboardWithEvent:(NSEvent *)event;
 - (void)pasteFromSelectionWithEvent:(NSEvent *)event;

@@ -14,7 +14,7 @@
 @class PTYSession;
 @class PTYTab;
 
-@protocol iTermExposeTabViewDelegate
+@protocol iTermExposeTabViewDelegate <NSObject>
 
 - (void)onSelection:(iTermExposeTabView*)theView session:(PTYSession*)theSession;
 

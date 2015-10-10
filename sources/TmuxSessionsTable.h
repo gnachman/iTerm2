@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 
-@protocol TmuxSessionsTableProtocol
+@protocol TmuxSessionsTableProtocol <NSObject>
 
 - (NSArray *)sessions;
 - (void)renameSessionWithName:(NSString *)oldName toName:(NSString *)newName;

@@ -7,7 +7,7 @@
 
 #import <AppKit/AppKit.h>
 
-@protocol ProfileTableMenuHandler
+@protocol ProfileTableMenuHandler <NSObject>
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent;
 

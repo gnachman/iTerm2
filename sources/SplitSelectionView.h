@@ -21,7 +21,7 @@ typedef enum {
 
 @class PTYSession;
 
-@protocol SplitSelectionViewDelegate
+@protocol SplitSelectionViewDelegate <NSObject>
 
 // dest will be null when canceling.
 - (void)didSelectDestinationSession:(PTYSession *)dest

@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol SessionTitleViewDelegate
+@protocol SessionTitleViewDelegate <NSObject>
 
 - (NSColor *)tabColor;
 - (NSMenu *)menu;

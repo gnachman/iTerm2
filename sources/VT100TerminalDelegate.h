@@ -32,7 +32,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
     kVT100TerminalUnitsAuto,
 };
 
-@protocol VT100TerminalDelegate
+@protocol VT100TerminalDelegate <NSObject>
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary.
 - (void)terminalAppendString:(NSString *)string;
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData;

@@ -12,7 +12,7 @@
 @class CapturedOutput;
 @protocol iTermMark;
 
-@protocol iTermMarkDelegate
+@protocol iTermMarkDelegate <NSObject>
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark;
 @end
 

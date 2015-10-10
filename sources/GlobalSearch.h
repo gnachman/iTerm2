@@ -40,7 +40,7 @@
 @class iTermSearchField;
 @class PTYSession;
 
-@protocol GlobalSearchDelegate
+@protocol GlobalSearchDelegate <NSObject>
 
 - (void)globalSearchSelectionChangedToSession:(PTYSession*)theSession;
 - (void)globalSearchOpenSelection;

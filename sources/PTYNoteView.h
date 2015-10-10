@@ -17,7 +17,7 @@ typedef NS_ENUM(NSInteger, PTYNoteViewTipEdge) {
     kPTYNoteViewTipEdgeBottom
 };
 
-@protocol PTYNoteViewDelegate
+@protocol PTYNoteViewDelegate <NSObject>
 - (PTYNoteViewController *)noteViewController;
 - (void)killNote;
 @end

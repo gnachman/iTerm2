@@ -15,7 +15,7 @@ extern NSString * const PTYNoteViewControllerShouldUpdatePosition;
 
 @class PTYNoteViewController;
 
-@protocol PTYNoteViewControllerDelegate
+@protocol PTYNoteViewControllerDelegate <NSObject>
 - (void)noteDidRequestRemoval:(PTYNoteViewController *)note;
 - (void)noteDidEndEditing:(PTYNoteViewController *)note;
 @end

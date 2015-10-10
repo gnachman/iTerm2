@@ -32,7 +32,7 @@ extern NSString *const kSemanticHistoryPrefixSubstitutionKey;
 extern NSString *const kSemanticHistorySuffixSubstitutionKey;
 extern NSString *const kSemanticHistoryWorkingDirectorySubstitutionKey;
 
-@protocol iTermSemanticHistoryControllerDelegate
+@protocol iTermSemanticHistoryControllerDelegate <NSObject>
 - (void)semanticHistoryLaunchCoprocessWithCommand:(NSString *)command;
 @end
 

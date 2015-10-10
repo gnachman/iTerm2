@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 // First responders can implement these methods to find out about what the cell is doing.
-@protocol iTermTwoColorWellsCellResponder
+@protocol iTermTwoColorWellsCellResponder <NSObject>
 
 @optional
 - (void)twoColorWellsCellDidOpenPickerForWellNumber:(int)wellNumber;

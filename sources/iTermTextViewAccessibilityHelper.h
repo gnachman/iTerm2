@@ -13,7 +13,7 @@
 // accessibility, as opposed to actual line numbers in the terminal. The 0th
 // line in accessibility space may be the Nth line in the terminal, or the 0th
 // line if accessibility space is at least as large as the terminal.
-@protocol iTermTextViewAccessibilityHelperDelegate
+@protocol iTermTextViewAccessibilityHelperDelegate <NSObject>
 
 // Return an array of characters for a line number in accessibility-space.
 - (screen_char_t *)accessibilityHelperLineAtIndex:(int)accessibilityIndex;

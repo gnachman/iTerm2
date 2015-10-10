@@ -11,7 +11,7 @@
 
 @class iTermAnnouncementViewController;
 
-@protocol iTermAnnouncementDelegate
+@protocol iTermAnnouncementDelegate <NSObject>
 - (void)announcementWillDismiss:(iTermAnnouncementViewController *)announcement;
 @end
 

@@ -11,7 +11,7 @@
 
 @class SmartSelectionController;
 
-@protocol SmartSelectionDelegate
+@protocol SmartSelectionDelegate <NSObject>
 - (void)smartSelectionChanged:(SmartSelectionController *)controller;
 @end
 
