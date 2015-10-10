@@ -266,7 +266,7 @@
 {
     NSDictionary* data = [node objectForKey:@"Data"];
 
-    if ([data objectForKey:KEY_COMMAND]) {
+    if ([data objectForKey:KEY_COMMAND_LINE]) {
         // Not just a folder if it has a command.
         NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:data];
         [self copyProfileToBookmark:temp];
@@ -394,7 +394,7 @@
                                                @"Terminal Profiles");
     [aDict setObject:aName forKey: KEY_NAME];
     [aDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
-    [aDict setObject:@"" forKey: KEY_COMMAND];
+    [aDict setObject:@"" forKey: KEY_COMMAND_LINE];
     [aDict setObject:aName forKey: KEY_DESCRIPTION];
     [aDict setObject:kProfilePreferenceInitialDirectoryHomeValue
               forKey:KEY_CUSTOM_DIRECTORY];
@@ -422,7 +422,7 @@
         optionalPortArg = [NSString stringWithFormat:@"-p %d ", port];
     }
     [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@", serviceType, optionalPortArg, ipAddressString]
-                    forKey:KEY_COMMAND];
+                    forKey:KEY_COMMAND_LINE];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
     [newBookmark setObject:kProfilePreferenceInitialDirectoryHomeValue
@@ -440,7 +440,7 @@
         [newBookmark setObject:[NSString stringWithFormat:@"%@-sftp", serviceName] forKey:KEY_NAME];
         [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
         [newBookmark setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
-        [newBookmark setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
+        [newBookmark setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND_LINE];
         [[ProfileModel sharedInstance] addBookmark:newBookmark];
     }
 #endif
@@ -609,7 +609,7 @@
 {
     BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
-        return [bookmark objectForKey:KEY_COMMAND];
+        return [bookmark objectForKey:KEY_COMMAND_LINE];
     } else {
         return [ITAddressBookMgr loginShellCommandForBookmark:bookmark
                                                 forObjectType:objectType];

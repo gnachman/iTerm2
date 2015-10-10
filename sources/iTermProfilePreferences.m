@@ -110,7 +110,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SHORTCUT: [NSNull null],
                   KEY_TAGS: [NSNull null],
                   KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeLoginShellValue,
-                  KEY_COMMAND: @"",
+                  KEY_COMMAND_LINE: @"",
                   KEY_INITIAL_TEXT: @"",
                   KEY_CUSTOM_DIRECTORY: kProfilePreferenceInitialDirectoryHomeValue,
                   KEY_WORKING_DIRECTORY: @"",

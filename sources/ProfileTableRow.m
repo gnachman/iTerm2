@@ -54,7 +54,7 @@
 
 - (NSString*)command
 {
-    return [[self bookmark] objectForKey:KEY_COMMAND];
+    return [[self bookmark] objectForKey:KEY_COMMAND_LINE];
 }
 
 - (NSString*)guid

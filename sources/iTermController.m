@@ -1119,12 +1119,12 @@ static BOOL initDone = NO;
             if ([urlRep host]) {
                 [tempString appendString:[urlRep host]];
             }
-            [tempDict setObject:tempString forKey:KEY_COMMAND];
+            [tempDict setObject:tempString forKey:KEY_COMMAND_LINE];
             [tempDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
             aDict = tempDict;
         } else if ([urlType compare:@"ftp" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithFormat:@"ftp %@", url];
-            [tempDict setObject:tempString forKey:KEY_COMMAND];
+            [tempDict setObject:tempString forKey:KEY_COMMAND_LINE];
             [tempDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
             aDict = tempDict;
         } else if ([urlType compare:@"telnet" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
@@ -1136,7 +1136,7 @@ static BOOL initDone = NO;
                 [tempString appendString:[urlRep host]];
                 if ([urlRep port]) [tempString appendFormat:@" %@", [urlRep port]];
             }
-            [tempDict setObject:tempString forKey:KEY_COMMAND];
+            [tempDict setObject:tempString forKey:KEY_COMMAND_LINE];
             [tempDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
             aDict = tempDict;
         }

@@ -480,7 +480,7 @@ NSString *const kProfileSessionNameDidEndEditing = @"kProfileSessionNameDidEndEd
         [newDict removeObjectForKey:KEY_BONJOUR_GROUP];
         [newDict removeObjectForKey:KEY_BONJOUR_SERVICE];
         [newDict removeObjectForKey:KEY_BONJOUR_SERVICE_ADDRESS];
-        newDict[KEY_COMMAND] = @"";
+        newDict[KEY_COMMAND_LINE] = @"";
         newDict[KEY_INITIAL_TEXT] = @"";
         newDict[KEY_CUSTOM_COMMAND] = @"No";
         newDict[KEY_WORKING_DIRECTORY] = @"";

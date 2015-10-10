@@ -3,8 +3,6 @@
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
 #import "ColorsMenuItemView.h"
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
 #import "CommandHistoryPopup.h"
 #import "Coprocess.h"
 #import "DirectoriesPopup.h"
@@ -19,8 +17,8 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
-#import "iTermDirectoriesModel.h"
 #import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
@@ -32,6 +30,7 @@
 #import "iTermProfilesWindowController.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
+#import "iTermShellHistoryController.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
 #import "iTermURLSchemeController.h"
@@ -4663,14 +4662,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (!commandHistoryPopup) {
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
     }
-    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         [commandHistoryPopup popWithDelegate:[self currentSession]];
         [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
                                                                 partialCommand:[[self currentSession] currentCommand]
                                                                         expand:YES]
                            partialCommand:[[self currentSession] currentCommand]];
     } else {
-        [CommandHistory showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessage];
     }
 }
 
@@ -4678,11 +4677,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (!_directoriesPopupWindowController) {
         _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];
     }
-    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         [_directoriesPopupWindowController popWithDelegate:[self currentSession]];
         [_directoriesPopupWindowController loadDirectoriesForHost:[[self currentSession] currentHost]];
     } else {
-        [CommandHistory showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessage];
     }
 }
 
@@ -4706,15 +4705,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
         }
-        NSArray *commands = [commandHistoryPopup commandsForHost:[session currentHost]
-                                                  partialCommand:prefix
-                                                          expand:NO];
+        NSArray<iTermCommandHistoryCommandUseMO *> *commands = [commandHistoryPopup commandsForHost:[session currentHost]
+                                                                                     partialCommand:prefix
+                                                                                             expand:NO];
         if (![commands count]) {
             [commandHistoryPopup close];
             return;
         }
         if ([commands count] == 1) {
-            CommandUse *commandUse = commands[0];
+            iTermCommandHistoryCommandUseMO *commandUse = commands[0];
             if ([commandUse.command isEqualToString:prefix]) {
                 [commandHistoryPopup close];
                 return;
@@ -6471,7 +6470,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSOnState : NSOffState];
         result = YES;
     } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
-        result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
+        result = [[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
                 [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSOnState : NSOffState];
@@ -6505,15 +6504,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] screen] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {
-        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
-        return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
+        return [[iTermShellHistoryController sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(openDirectories:)) {
-        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
-        return [[iTermDirectoriesModel sharedInstance] haveEntriesForHost:[[self currentSession] currentHost]];
+        return [[iTermShellHistoryController sharedInstance] haveDirectoriesForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(movePaneDividerDown:)) {
         int height = [[[self currentSession] textview] lineHeight];
         return [[self currentTab] canMoveCurrentSessionDividerBy:height
@@ -6971,7 +6970,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         // Create a modified profile to run "command".
         NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
         temp[KEY_CUSTOM_COMMAND] = @"Yes";
-        temp[KEY_COMMAND] = command;
+        temp[KEY_COMMAND_LINE] = command;
         profile = temp;
 
     } else if (substitutions.count && profile[KEY_NAME]) {
@@ -7272,7 +7271,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [self.currentSession.guid isEqualToString:guid];
 }
 
-- (NSArray *)toolbeltCommandUsesForCurrentSession {
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return [self.currentSession commandUses];
 }
 

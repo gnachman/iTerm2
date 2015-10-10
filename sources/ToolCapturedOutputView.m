@@ -10,10 +10,10 @@
 
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
-#import "CommandUse.h"
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermSearchField.h"
-#import "iTermToolWrapper.h"
 #import "iTermToolbeltView.h"
+#import "iTermToolWrapper.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -128,7 +128,7 @@ static const CGFloat kMargin = 4;
 - (void)updateCapturedOutput {
     iTermToolWrapper *wrapper = self.toolWrapper;
     ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];
-    CommandUse *commandUse = [commandHistoryView selectedCommandUse];
+    iTermCommandHistoryCommandUseMO *commandUse = [commandHistoryView selectedCommandUse];
     VT100ScreenMark *mark;
     NSArray *theArray;
     if (commandUse) {

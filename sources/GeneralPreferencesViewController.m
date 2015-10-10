@@ -8,9 +8,9 @@
 
 #import "GeneralPreferencesViewController.h"
 
-#import "CommandHistory.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermRemotePreferences.h"
+#import "iTermShellHistoryController.h"
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
 
@@ -180,10 +180,7 @@ enum {
                            key:kPreferenceKeySavePasteAndCommandHistory
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() {
-        if (![iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
-            [[PasteboardHistory sharedInstance] eraseHistory];
-            [[CommandHistory sharedInstance] eraseHistory];
-        }
+        [[iTermShellHistoryController sharedInstance] backingStoreTypeDidChange];
     };
 
     [self defineControl:_enableBonjour

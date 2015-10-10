@@ -1,7 +1,5 @@
 #import "PTYSession.h"
 
-#import "CommandHistory.h"
-#import "CommandUse.h"
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
@@ -14,19 +12,21 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermColorMap.h"
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
-#import "iTermDirectoriesModel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermRecentDirectoryMO.h"
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
 #import "iTermSavePanel.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
+#import "iTermShellHistoryController.h"
 #import "iTermTextExtractor.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -340,8 +340,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
-
-    NSMutableArray *_commandUses;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -403,7 +401,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _hosts = [[NSMutableArray alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
-        _commandUses = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -487,7 +484,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_guid release];
     [_lastCommand release];
     [_substitutions release];
-    [_commandUses release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -5530,9 +5526,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
     DLog(@"Fetching range of last command output...");
-    if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         DLog(@"Command history has never been used.");
-        [CommandHistory showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessage];
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         DLog(@"Returning cached range.");
@@ -5542,7 +5538,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)textViewCanSelectOutputOfLastCommand {
     // Return YES if command history has never been used so we can show the informational message.
-    return (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed] ||
+    return (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed] ||
             _screen.lastCommandOutputRange.start.x >= 0);
 
 }
@@ -6488,9 +6484,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 
-    [_commandUses autorelease];
-    _commandUses = [[[CommandHistory sharedInstance] commandUsesForHost:host] retain];
-
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
@@ -6505,6 +6498,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [self offerToTurnOffMouseReportingOnHostChange];
         }
     }
+}
+
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
+    return [[iTermShellHistoryController sharedInstance] commandUsesForHost:self.currentHost];
 }
 
 - (void)offerToTurnOffMouseReportingOnHostChange {
@@ -6642,7 +6639,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    return [[CommandHistory sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
+    return [[iTermShellHistoryController sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
                                                                      onHost:host];
 }
 
@@ -6682,7 +6679,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                  _lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
             mark.command = command;
-            [[CommandHistory sharedInstance] addCommand:trimmedCommand
+            [[iTermShellHistoryController sharedInstance] addCommand:trimmedCommand
                                                  onHost:[_screen remoteHostOnLine:range.end.y]
                                             inDirectory:[_screen workingDirectoryOnLine:range.end.y]
                                                withMark:mark];
@@ -6849,9 +6846,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
     BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
                    [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
-    [[iTermDirectoriesModel sharedInstance] recordUseOfPath:directory
-                                                     onHost:[_screen remoteHostOnLine:line]
-                                                   isChange:!isSame];
+    [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
+                                                           onHost:[_screen remoteHostOnLine:line]
+                                                         isChange:!isSame];
     self.lastDirectory = directory;
     self.lastRemoteHost = remoteHost;
 }
