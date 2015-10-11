@@ -126,6 +126,9 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     [super dealloc];
 }
 
+// Note: setting vacuum to YES forces it to use the on-disk sqlite database. This allows you to
+// vacuum a database after changing the setting to in-memory. It doesn't make sense to vacuum RAM,
+// after all.
 - (BOOL)initializeCoreDataWithRetry:(BOOL)retry vacuum:(BOOL)vacuum {
     NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"Model" withExtension:@"momd"];
     assert(modelURL);
@@ -150,12 +153,12 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     // need to wait for it to finish before -loadCommandHistory could be called.
     NSError *error = nil;
     NSString *storeType;
-    if ([self saveToDisk]) {
+    if ([self saveToDisk] || vacuum) {
         storeType = NSSQLiteStoreType;
     } else {
         storeType = NSInMemoryStoreType;
     }
-    // TODO: Handle migrating store types when the preference changes.
+
     NSDictionary *options = @{};
     if (vacuum) {
         options = @{ NSSQLiteManualVacuumOption: @YES };
