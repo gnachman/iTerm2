@@ -61,5 +61,7 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 - (NSTimeInterval)now;
 - (BOOL)saveToDisk;
 - (NSString *)databaseFilenamePrefix;
+- (BOOL)finishInitialization;
+- (instancetype)initPartially;
 
 @end

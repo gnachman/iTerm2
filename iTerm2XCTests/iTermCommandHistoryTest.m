@@ -10,6 +10,7 @@
 #import "iTermCommandHistoryController.h"
 #import "iTermCommandHistoryEntryMO.h"
 #import "iTermCommandHistoryMO.h"
+#import "NSStringITerm.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 
@@ -19,15 +20,35 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 @interface iTermCommandHistoryControllerForTesting : iTermCommandHistoryController
 @property(nonatomic) NSTimeInterval currentTime;
+@property(nonatomic, copy) NSString *guid;
+
+- (instancetype)initWithGuid:(NSString *)guid NS_DESIGNATED_INITIALIZER;
+
 @end
 
 @implementation iTermCommandHistoryControllerForTesting
 
+- (instancetype)initWithGuid:(NSString *)guid {
+    self = [super initPartially];
+    if (self) {
+        self.guid = guid;
+        if (![self finishInitialization]) {
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_guid release];
+    [super dealloc];
+}
+
 - (NSString *)pathForFileNamed:(NSString *)name {
     if ([name isEqualTo:@"commandhistory.plist"]) {
-        return kFakeCommandHistoryPlistPath;
+        return [kFakeCommandHistoryPlistPath stringByAppendingString:self.guid];
     } else {
-        return kSqlitePathForTest;
+        return [kSqlitePathForTest stringByAppendingString:self.guid];
     }
 }
 
@@ -45,7 +66,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 @end
 
-@interface iTermCommandHistoryControllerWithRAMStoreForTesting : iTermCommandHistoryController
+@interface iTermCommandHistoryControllerWithRAMStoreForTesting : iTermCommandHistoryControllerForTesting
 @end
 
 @implementation iTermCommandHistoryControllerWithRAMStoreForTesting
@@ -62,10 +83,12 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 @implementation iTermCommandHistoryTest {
     NSTimeInterval _now;
+    NSString *_guid;
 }
 
 - (void)setUp {
-    [[NSFileManager defaultManager] removeItemAtPath:kSqlitePathForTest error:nil];
+    _guid = [NSString uuid];
+    [[NSFileManager defaultManager] removeItemAtPath:[kSqlitePathForTest stringByAppendingString:_guid] error:nil];
 }
 
 - (void)testSuccessfulMigration {
@@ -135,18 +158,20 @@ static NSTimeInterval kDefaultTime = 10000000;
                      }
                  ]
            };
-    [NSKeyedArchiver archiveRootObject:dictionary toFile:kFakeCommandHistoryPlistPath];
+    NSString *plistPath = [kFakeCommandHistoryPlistPath stringByAppendingString:_guid];
+    [NSKeyedArchiver archiveRootObject:dictionary toFile:plistPath];
 
-    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:kFakeCommandHistoryPlistPath isDirectory:nil]);
+    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:plistPath isDirectory:nil]);
     iTermCommandHistoryController *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
-    XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:kFakeCommandHistoryPlistPath isDirectory:nil]);
-    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:kSqlitePathForTest isDirectory:nil]);
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+    XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:plistPath isDirectory:nil]);
+    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:[kSqlitePathForTest stringByAppendingString:_guid]
+                                                   isDirectory:nil]);
 
     for (int iteration = 0; iteration < 2; iteration++) {
         if (iteration == 1) {
             // Re-create the history controller to verify that values can be loaded
-            historyController = [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+            historyController = [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
         }
         for (NSString *key in dictionary) {
             VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
@@ -206,7 +231,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testAddFirstCommandOnNewHost {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     const NSTimeInterval now = 1000000;
     historyController.currentTime = now;
 
@@ -244,7 +269,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testAddAdditionalUseOfCommand {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     const NSTimeInterval time1 = 1000000;
     const NSTimeInterval time2 = 1000001;
     historyController.currentTime = time1;
@@ -303,7 +328,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testSetStatusOfCommand {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     const NSTimeInterval now = 1000000;
     historyController.currentTime = now;
 
@@ -381,7 +406,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testSearchEntriesByPrefix {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [self addEntriesWithCommonPrefixes:historyController];
     NSArray *entries;
     entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
@@ -396,7 +421,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testSearchUsesByPrefix {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [self addEntriesWithCommonPrefixes:historyController];
     NSArray *uses;
     uses = [historyController autocompleteSuggestionsWithPartialCommand:@"" onHost:remoteHost];
@@ -421,7 +446,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testHaveCommandsForHost {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
     
@@ -435,7 +460,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testEraseHistoryForHost {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     
     // Add command for first host
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
@@ -469,14 +494,14 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual([[historyController commandUsesForHost:remoteHost2] count], 1);
 
     // Create a new history controller and make sure the change persists.
-    historyController = [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    historyController = [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost2]);
 }
 
 - (void)testEraseHistoryWhenSavingToDisk {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     [historyController addCommand:@"command"
                            onHost:remoteHost
@@ -487,13 +512,13 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
     XCTAssertEqual([[historyController commandUsesForHost:remoteHost] count], 0);
     
-    historyController = [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    historyController = [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
 }
 
 - (void)testInMemoryStoreIsEvanescent {
     iTermCommandHistoryControllerWithRAMStoreForTesting *historyController =
-        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     [historyController addCommand:@"command"
                            onHost:remoteHost
@@ -502,13 +527,13 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
     
     historyController =
-        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] initWithGuid:_guid] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
 }
 
 - (void)testEraseHistoryInMemoryOnly {
     iTermCommandHistoryControllerWithRAMStoreForTesting *historyController =
-        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     [historyController addCommand:@"command"
                            onHost:remoteHost
@@ -521,7 +546,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testFindCommandUseByMark {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     const NSTimeInterval now = 1000000;
     historyController.currentTime = now;
 
@@ -557,7 +582,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testGetAllUsesForHost {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [self addEntriesWithCommonPrefixes:historyController];
     NSArray *uses;
     uses = [historyController commandUsesForHost:remoteHost];
@@ -566,20 +591,20 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testCorruptDatabase {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [self addEntriesWithCommonPrefixes:historyController];
     [historyController addCommand:@"command"
                            onHost:remoteHost
                       inDirectory:@"directory"
                          withMark:[[[VT100ScreenMark alloc] init] autorelease]];
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
-    NSMutableData *data = [NSMutableData dataWithContentsOfFile:kSqlitePathForTest];
+    NSMutableData *data = [NSMutableData dataWithContentsOfFile:[kSqlitePathForTest stringByAppendingString:_guid]];
     for (int i = 1024; i < data.length; i += 16) {
         ((char *)data.mutableBytes)[i] = i & 0xff;
     }
-    [data writeToFile:kSqlitePathForTest atomically:NO];
+    [data writeToFile:[kSqlitePathForTest stringByAppendingString:_guid] atomically:NO];
 
-    historyController = [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    historyController = [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
     [historyController addCommand:@"command"
                            onHost:remoteHost
@@ -590,7 +615,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 - (void)testOldDataRemoved {
     iTermCommandHistoryControllerForTesting *historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     
     // Just old enough to be removed
@@ -611,7 +636,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual(entries.count, 2);
 
     historyController =
-        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 1);
     XCTAssertEqualObjects([entries[0] command], @"command2");

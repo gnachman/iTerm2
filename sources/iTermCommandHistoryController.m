@@ -80,16 +80,27 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 - (id)init {
     self = [super init];
     if (self) {
-        if (![self initializeCoreDataWithRetry:YES vacuum:NO]) {
-            [self release];
+        if (![self finishInitialization]) {
             return nil;
         }
-        _historyByHost = [[NSMutableDictionary alloc] init];
-        _expandedCache = [[NSMutableDictionary alloc] init];
-
-        [self loadCommandHistory];
     }
     return self;
+}
+
+- (instancetype)initPartially {
+    return [super init];
+}
+
+- (BOOL)finishInitialization {
+    if (![self initializeCoreDataWithRetry:YES vacuum:NO]) {
+        [self release];
+        return NO;
+    }
+    _historyByHost = [[NSMutableDictionary alloc] init];
+    _expandedCache = [[NSMutableDictionary alloc] init];
+    
+    [self loadCommandHistory];
+    return YES;
 }
 
 - (NSString *)pathForFileNamed:(NSString *)name {
