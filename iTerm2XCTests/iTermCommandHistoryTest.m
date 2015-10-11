@@ -15,6 +15,7 @@
 
 static NSString *const kFakeCommandHistoryPlistPath = @"/tmp/fake_command_history.plist";
 static NSString *const kSqlitePathForTest = @"/tmp/test_command_history.sqlite";
+static NSTimeInterval kDefaultTime = 10000000;
 
 @interface iTermCommandHistoryControllerForTesting : iTermCommandHistoryController
 @property(nonatomic) NSTimeInterval currentTime;
@@ -30,11 +31,31 @@ static NSString *const kSqlitePathForTest = @"/tmp/test_command_history.sqlite";
     }
 }
 
+- (NSString *)databaseFilenamePrefix {
+    return @"test_command_history.sqlite";
+}
+
 - (NSTimeInterval)now {
-    return self.currentTime;
+    return self.currentTime ?: kDefaultTime;
+}
+
+- (BOOL)saveToDisk {
+    return YES;
 }
 
 @end
+
+@interface iTermCommandHistoryControllerWithRAMStoreForTesting : iTermCommandHistoryController
+@end
+
+@implementation iTermCommandHistoryControllerWithRAMStoreForTesting
+
+- (BOOL)saveToDisk {
+    return NO;
+}
+
+@end
+
 @interface iTermCommandHistoryTest : XCTestCase
 
 @end
@@ -45,7 +66,6 @@ static NSString *const kSqlitePathForTest = @"/tmp/test_command_history.sqlite";
 
 - (void)setUp {
     [[NSFileManager defaultManager] removeItemAtPath:kSqlitePathForTest error:nil];
-
 }
 
 - (void)testSuccessfulMigration {
@@ -328,6 +348,7 @@ static NSString *const kSqlitePathForTest = @"/tmp/test_command_history.sqlite";
 - (NSArray *)commandWithCommonPrefixes {
     return @[ @"abc", @"abcd", @"a", @"bcd", @"", @"abc" ];
 }
+
 - (VT100RemoteHost *)addEntriesWithCommonPrefixes:(iTermCommandHistoryControllerForTesting *)historyController {
     const NSTimeInterval now = 1000000;
     historyController.currentTime = now;
@@ -375,7 +396,7 @@ static NSString *const kSqlitePathForTest = @"/tmp/test_command_history.sqlite";
 
 - (void)testSearchUsesByPrefix {
     iTermCommandHistoryControllerForTesting *historyController =
-    [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
     VT100RemoteHost *remoteHost = [self addEntriesWithCommonPrefixes:historyController];
     NSArray *uses;
     uses = [historyController autocompleteSuggestionsWithPartialCommand:@"" onHost:remoteHost];
@@ -396,7 +417,204 @@ static NSString *const kSqlitePathForTest = @"/tmp/test_command_history.sqlite";
     XCTAssertEqual(uses.count, 1);
     uses = [historyController autocompleteSuggestionsWithPartialCommand:@"c" onHost:remoteHost];
     XCTAssertEqual(uses.count, 0);
+}
+
+- (void)testHaveCommandsForHost {
+    iTermCommandHistoryControllerForTesting *historyController =
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
     
+    [historyController addCommand:@"command"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
+}
+
+- (void)testEraseHistoryForHost {
+    iTermCommandHistoryControllerForTesting *historyController =
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    
+    // Add command for first host
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    remoteHost.username = @"user1";
+    remoteHost.hostname = @"host1";
+    [historyController addCommand:@"command"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    
+    // Add command for second host
+    VT100RemoteHost *remoteHost2 = [[[VT100RemoteHost alloc] init] autorelease];
+    remoteHost2.username = @"user2";
+    remoteHost2.hostname = @"host2";
+    [historyController addCommand:@"command"
+                           onHost:remoteHost2
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    
+    // Ensure both are present.
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost2]);
+    
+    // Erase first host.
+    [historyController eraseHistoryForHost:remoteHost];
+    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+    
+    // Make sure first host's data is gone but second host's remains.
+    XCTAssertEqual([[historyController commandUsesForHost:remoteHost] count], 0);
+    XCTAssert([historyController haveCommandsForHost:remoteHost2]);
+    XCTAssertEqual([[historyController commandUsesForHost:remoteHost2] count], 1);
+
+    // Create a new history controller and make sure the change persists.
+    historyController = [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost2]);
+}
+
+- (void)testEraseHistoryWhenSavingToDisk {
+    iTermCommandHistoryControllerForTesting *historyController =
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    [historyController addCommand:@"command"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
+    [historyController eraseHistory];
+    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+    XCTAssertEqual([[historyController commandUsesForHost:remoteHost] count], 0);
+    
+    historyController = [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+}
+
+- (void)testInMemoryStoreIsEvanescent {
+    iTermCommandHistoryControllerWithRAMStoreForTesting *historyController =
+        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] init] autorelease];
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    [historyController addCommand:@"command"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
+    
+    historyController =
+        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] init] autorelease];
+    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+}
+
+- (void)testEraseHistoryInMemoryOnly {
+    iTermCommandHistoryControllerWithRAMStoreForTesting *historyController =
+        [[[iTermCommandHistoryControllerWithRAMStoreForTesting alloc] init] autorelease];
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    [historyController addCommand:@"command"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
+    [historyController eraseHistory];
+    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+}
+
+- (void)testFindCommandUseByMark {
+    iTermCommandHistoryControllerForTesting *historyController =
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    const NSTimeInterval now = 1000000;
+    historyController.currentTime = now;
+
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    remoteHost.username = @"user1";
+    remoteHost.hostname = @"host1";
+    
+    NSArray *entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
+    XCTAssertEqual(entries.count, 0);
+    
+    VT100ScreenMark *mark = [[[VT100ScreenMark alloc] init] autorelease];
+    [historyController addCommand:@"command1"
+                           onHost:remoteHost
+                      inDirectory:@"/directory1"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    [historyController addCommand:@"command1"
+                           onHost:remoteHost
+                      inDirectory:@"/directory2"
+                         withMark:mark];
+    [historyController addCommand:@"command1"
+                           onHost:remoteHost
+                      inDirectory:@"/directory3"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    [historyController addCommand:@"command2"
+                           onHost:remoteHost
+                      inDirectory:@"/directory3"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    
+    iTermCommandHistoryCommandUseMO *use = [historyController commandUseWithMarkGuid:mark.guid
+                                                                              onHost:remoteHost];
+    XCTAssertEqualObjects(use.directory, @"/directory2");
+}
+
+- (void)testGetAllUsesForHost {
+    iTermCommandHistoryControllerForTesting *historyController =
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    VT100RemoteHost *remoteHost = [self addEntriesWithCommonPrefixes:historyController];
+    NSArray *uses;
+    uses = [historyController commandUsesForHost:remoteHost];
+    XCTAssertEqual(uses.count, self.commandWithCommonPrefixes.count);
+}
+
+- (void)testCorruptDatabase {
+    iTermCommandHistoryControllerForTesting *historyController =
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    VT100RemoteHost *remoteHost = [self addEntriesWithCommonPrefixes:historyController];
+    [historyController addCommand:@"command"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
+    NSMutableData *data = [NSMutableData dataWithContentsOfFile:kSqlitePathForTest];
+    for (int i = 1024; i < data.length; i += 16) {
+        ((char *)data.mutableBytes)[i] = i & 0xff;
+    }
+    [data writeToFile:kSqlitePathForTest atomically:NO];
+
+    historyController = [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+    [historyController addCommand:@"command"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
+}
+
+- (void)testOldDataRemoved {
+    iTermCommandHistoryControllerForTesting *historyController =
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    
+    // Just old enough to be removed
+    historyController.currentTime = kDefaultTime - (60 * 60 * 24 * 90 + 1);
+    [historyController addCommand:@"command1"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    
+    // Should stay
+    historyController.currentTime = kDefaultTime;
+    [historyController addCommand:@"command2"
+                           onHost:remoteHost
+                      inDirectory:@"directory"
+                         withMark:[[[VT100ScreenMark alloc] init] autorelease]];
+    NSArray<iTermCommandHistoryEntryMO *> *entries =
+        [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
+    XCTAssertEqual(entries.count, 2);
+
+    historyController =
+        [[[iTermCommandHistoryControllerForTesting alloc] init] autorelease];
+    entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
+    XCTAssertEqual(entries.count, 1);
+    XCTAssertEqualObjects([entries[0] command], @"command2");
 }
 
 @end

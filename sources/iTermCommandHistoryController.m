@@ -18,7 +18,7 @@
 #import "VT100ScreenMark.h"
 
 NSString *const kCommandHistoryDidChangeNotificationName = @"kCommandHistoryDidChangeNotificationName";
-NSString *const kCommandHistoryHasEverBeenUsed = @"kCommandHistoryHasEverBeenUsed";
+NSString *const kCommandHistoryHasEverBeenUsed = @"NoSyncCommandHistoryHasEverBeenUsed";
 
 static const int kMaxResults = 200;
 
@@ -80,7 +80,10 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 - (id)init {
     self = [super init];
     if (self) {
-        [self initializeCoreData];
+        if (![self initializeCoreDataWithRetry:YES]) {
+            [self release];
+            return nil;
+        }
         _historyByHost = [[NSMutableDictionary alloc] init];
         _expandedCache = [[NSMutableDictionary alloc] init];
 
@@ -108,8 +111,12 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     return [self pathForFileNamed:@"commandhistory.plist"];
 }
 
+- (NSString *)databaseFilenamePrefix {
+    return @"CommandHistory.sqlite";
+}
+
 - (NSString *)pathToDatabase {
-    return [self pathForFileNamed:@"CommandHistory.sqlite"];
+    return [self pathForFileNamed:self.databaseFilenamePrefix];
 }
 
 - (void)dealloc {
@@ -119,7 +126,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     [super dealloc];
 }
 
-- (void)initializeCoreData {
+- (BOOL)initializeCoreDataWithRetry:(BOOL)retry {
     NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"Model" withExtension:@"momd"];
     assert(modelURL);
 
@@ -143,20 +150,69 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     // need to wait for it to finish before -loadCommandHistory could be called.
     NSError *error = nil;
     NSString *storeType;
-    if ([iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
+    if ([self saveToDisk]) {
         storeType = NSSQLiteStoreType;
     } else {
         storeType = NSInMemoryStoreType;
     }
     // TODO: Handle migrating store types when the preference changes.
-    NSPersistentStore *store = [persistentStoreCoordinator addPersistentStoreWithType:storeType
-                                                                        configuration:nil
-                                                                                  URL:storeURL
-                                                                              options:0
-                                                                                error:&error];
-    assert(store);
+    
+    [persistentStoreCoordinator addPersistentStoreWithType:storeType
+                                             configuration:nil
+                                                       URL:storeURL
+                                                   options:0
+                                                     error:&error];
+    if (error) {
+        NSLog(@"Got an exception when opening the command history database: %@", error);
+        if (![self saveToDisk]) {
+            NSLog(@"This is an in-memory database, it should not fail.");
+            return NO;
+        }
+        if (!retry) {
+            NSLog(@"Giving up");
+            return NO;
+        }
+        
+        NSLog(@"Deleting the presumably corrupt file and trying again");
+        NSError *removeError = nil;
+        [self deleteDatabase];
+        if (removeError) {
+            NSLog(@"Failed to delete corrupt database: %@", removeError);
+            return NO;
+        }
+        
+        NSLog(@"Trying again...");
+        [_managedObjectContext release];
+        _managedObjectContext = nil;
+        return [self initializeCoreDataWithRetry:NO];
+    }
+    
+    return YES;
 }
 
+- (BOOL)saveToDisk {
+    return [iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory];
+}
+
+- (BOOL)deleteDatabase {
+    NSString *path = [[self pathToDatabase] stringByDeletingLastPathComponent];
+    NSDirectoryEnumerator<NSString *> *enumerator =
+        [[NSFileManager defaultManager] enumeratorAtPath:path];
+    BOOL foundAny = NO;
+    BOOL anyErrors = NO;
+    for (NSString *filename in enumerator) {
+        if ([filename hasPrefix:[self databaseFilenamePrefix]]) {
+            NSError *error = nil;
+            [[NSFileManager defaultManager] removeItemAtPath:[path stringByAppendingPathComponent:filename]
+                                                       error:&error];
+            if (error) {
+                anyErrors = YES;
+            }
+            foundAny = YES;
+        }
+    }
+    return foundAny && !anyErrors;
+}
 
 #pragma mark - APIs
 
@@ -347,26 +403,26 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     return [_managedObjectContext executeFetchRequest:fetchRequest error:&error];
 }
 
-- (void)removeOldData {
+- (BOOL)removeOldData {
     NSFetchRequest *fetchRequest = [[[NSFetchRequest alloc] init] autorelease];
     [fetchRequest setEntity:[NSEntityDescription entityForName:[iTermCommandHistoryCommandUseMO entityName]
                                         inManagedObjectContext:_managedObjectContext]];
     NSPredicate *predicate =
-        [NSPredicate predicateWithFormat:@"time < %f",
-            [NSDate timeIntervalSinceReferenceDate] - kMaxTimeToRememberCommands];
+        [NSPredicate predicateWithFormat:@"time < %f", [self now] - kMaxTimeToRememberCommands];
     [fetchRequest setPredicate:predicate];
     NSError *error = nil;
     NSArray<iTermCommandHistoryCommandUseMO *> *results =
         [_managedObjectContext executeFetchRequest:fetchRequest error:&error];
     for (iTermCommandHistoryCommandUseMO *commandUse in results) {
         iTermCommandHistoryEntryMO *entry = commandUse.entry;
-        [_managedObjectContext deleteObject:commandUse];
+        [entry removeUsesObject:commandUse];
         
         if (entry.uses.count == 0) {
             [_managedObjectContext deleteObject:entry];
         }
     }
     [self save];
+    return results.count > 0;
 }
 
 - (void)loadCommandHistory {
@@ -375,7 +431,9 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
         [self migrateFromPlistToCoreData];
         managedObjects = [self managedObjects];
     }
-    [self removeOldData];
+    if ([self removeOldData]) {
+        managedObjects = [self managedObjects];
+    }
     for (iTermCommandHistoryMO *history in managedObjects) {
         _historyByHost[history.hostKey] = history;
     }
@@ -416,6 +474,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 
 - (void)eraseHistory {
     [_historyByHost removeAllObjects];
+    [_expandedCache removeAllObjects];
     [[NSFileManager defaultManager] removeItemAtPath:self.pathToDeprecatedPlist error:NULL];
 
     NSFetchRequest *fetchRequest = [[[NSFetchRequest alloc] init] autorelease];
@@ -437,6 +496,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     if (managedObject) {
         [_managedObjectContext deleteObject:managedObject];
         [_historyByHost removeObjectForKey:key];
+        [_expandedCache removeObjectForKey:key];
         [self save];
     }
 }

@@ -52,6 +52,20 @@ static NSString *const kCommandUses = @"use times";  // The name is a historical
 
 }
 
+// Core data is a piece of garbage. The generated code throws an exception when there's a
+// one-to-many relationship. These methods route around the damage.
+// http://stackoverflow.com/questions/7385439/exception-thrown-in-nsorderedset-generated-accessors
+- (void)removeUsesObject:(iTermCommandHistoryCommandUseMO *)value {
+    if (![self.uses containsObject:value]) {
+        return;
+    }
+    NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:[self.uses indexOfObject:value]];
+    NSString *const key = @"uses";
+    [self willChange:NSKeyValueChangeRemoval valuesAtIndexes:indexSet forKey:key];
+    [[self primitiveValueForKey:key] removeObject:value];
+    [self didChange:NSKeyValueChangeRemoval valuesAtIndexes:indexSet forKey:key];
+}
+
 - (void)addUsesObject:(iTermCommandHistoryCommandUseMO *)value {
     if ([self.uses containsObject:value]) {
         return;
