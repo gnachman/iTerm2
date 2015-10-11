@@ -58,5 +58,6 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 
 - (void)eraseHistoryForHost:(VT100RemoteHost *)host;
 - (NSString *)pathForFileNamed:(NSString *)name;
+- (NSTimeInterval)now;
 
 @end

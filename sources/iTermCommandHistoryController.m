@@ -203,6 +203,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
         commandHistory = [iTermCommandHistoryMO commandHistoryInContext:_managedObjectContext];
         commandHistory.hostname = host.hostname;
         commandHistory.username = host.username;
+        _historyByHost[host.key ?: @""] = commandHistory;
     }
 
     iTermCommandHistoryEntryMO *theEntry = nil;
@@ -220,7 +221,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     }
     
     theEntry.numberOfUses = @(theEntry.numberOfUses.integerValue + 1);
-    theEntry.timeOfLastUse = @([NSDate timeIntervalSinceReferenceDate]);
+    theEntry.timeOfLastUse = @([self now]);
     
     iTermCommandHistoryCommandUseMO *commandUse =
         [iTermCommandHistoryCommandUseMO commandHistoryCommandUseInContext:_managedObjectContext];
@@ -231,6 +232,10 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     [theEntry addUsesObject:commandUse];
 
     [self save];
+}
+
+- (NSTimeInterval)now {
+    return [NSDate timeIntervalSinceReferenceDate];
 }
 
 - (void)save {
@@ -247,8 +252,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
                           onHost:(VT100RemoteHost *)remoteHost
                               to:(int)status {
     iTermCommandHistoryCommandUseMO *commandUse =
-        [[iTermCommandHistoryController sharedInstance] commandUseWithMarkGuid:mark.guid
-                                                         onHost:remoteHost];
+        [self commandUseWithMarkGuid:mark.guid onHost:remoteHost];
     // If the status is 0 and commandUse doesn't have a code set, do nothing. This saves some time
     // in the common case.
     if (commandUse && commandUse.code.intValue != status) {
@@ -328,10 +332,9 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     NSString *key = host.key ?: @"";
 
     NSArray<iTermCommandHistoryEntryMO *> *temp =
-        [[iTermCommandHistoryController sharedInstance] commandHistoryEntriesWithPrefix:@""
-                                                                                 onHost:host];
+        [self commandHistoryEntriesWithPrefix:@"" onHost:host];
     NSMutableArray<iTermCommandHistoryCommandUseMO *> *expanded =
-        [[iTermCommandHistoryController sharedInstance] commandUsesByExpandingEntries:temp];
+        [self commandUsesByExpandingEntries:temp];
 
     _expandedCache[key] = expanded;
 
