@@ -340,8 +340,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
-
-    NSArray<iTermCommandHistoryCommandUseMO *> *_commandUses;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -403,7 +401,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _hosts = [[NSMutableArray alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
-        _commandUses = [[NSArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -487,7 +484,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_guid release];
     [_lastCommand release];
     [_substitutions release];
-    [_commandUses release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -6488,9 +6484,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 
-    [_commandUses autorelease];
-    _commandUses = [[[iTermCommandHistoryController sharedInstance] commandUsesForHost:host] retain];
-
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
@@ -6505,6 +6498,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [self offerToTurnOffMouseReportingOnHostChange];
         }
     }
+}
+
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
+    return [[[iTermCommandHistoryController sharedInstance] commandUsesForHost:self.currentHost] retain];
 }
 
 - (void)offerToTurnOffMouseReportingOnHostChange {

@@ -64,7 +64,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     NSMutableDictionary<NSString *, iTermCommandHistoryMO *> *_historyByHost;
     
     // Keys are remote host keys, "user@hostname".
-    NSMutableDictionary<NSString *, NSArray<iTermCommandHistoryCommandUseMO *> *> *_expandedCache;
+    NSMutableDictionary<NSString *, NSMutableArray<iTermCommandHistoryCommandUseMO *> *> *_expandedCache;
     NSManagedObjectContext *_managedObjectContext;
 }
 
@@ -80,7 +80,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 - (id)init {
     self = [super init];
     if (self) {
-        if (![self initializeCoreDataWithRetry:YES]) {
+        if (![self initializeCoreDataWithRetry:YES vacuum:NO]) {
             [self release];
             return nil;
         }
@@ -104,7 +104,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
                               withIntermediateDirectories:YES
                                                attributes:nil
                                                     error:NULL];
-    return path;
+    return [path stringByAppendingPathComponent:name];
 }
 
 - (NSString *)pathToDeprecatedPlist {
@@ -126,7 +126,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     [super dealloc];
 }
 
-- (BOOL)initializeCoreDataWithRetry:(BOOL)retry {
+- (BOOL)initializeCoreDataWithRetry:(BOOL)retry vacuum:(BOOL)vacuum {
     NSURL *modelURL = [[NSBundle mainBundle] URLForResource:@"Model" withExtension:@"momd"];
     assert(modelURL);
 
@@ -156,11 +156,14 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
         storeType = NSInMemoryStoreType;
     }
     // TODO: Handle migrating store types when the preference changes.
-    
+    NSDictionary *options = @{};
+    if (vacuum) {
+        options = @{ NSSQLiteManualVacuumOption: @YES };
+    }
     [persistentStoreCoordinator addPersistentStoreWithType:storeType
                                              configuration:nil
                                                        URL:storeURL
-                                                   options:0
+                                                   options:options
                                                      error:&error];
     if (error) {
         NSLog(@"Got an exception when opening the command history database: %@", error);
@@ -253,13 +256,14 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
        inDirectory:(NSString *)directory
           withMark:(VT100ScreenMark *)mark {
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kCommandHistoryHasEverBeenUsed];
-    
-    iTermCommandHistoryMO *commandHistory = _historyByHost[host.key ?: @""];
+
+    NSString *key = host.key ?: @"";
+    iTermCommandHistoryMO *commandHistory = _historyByHost[key];
     if (!commandHistory) {
         commandHistory = [iTermCommandHistoryMO commandHistoryInContext:_managedObjectContext];
         commandHistory.hostname = host.hostname;
         commandHistory.username = host.username;
-        _historyByHost[host.key ?: @""] = commandHistory;
+        _historyByHost[key] = commandHistory;
     }
 
     iTermCommandHistoryEntryMO *theEntry = nil;
@@ -287,6 +291,9 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
     commandUse.command = theEntry.command;
     [theEntry addUsesObject:commandUse];
 
+    if (_expandedCache[key]) {
+        [_expandedCache[key] addObject:commandUse];
+    }
     [self save];
 }
 
@@ -487,7 +494,19 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
         [_managedObjectContext deleteObject:history];
     }
     [self save];
-    // TODO: Make sure entries and uses get removed too
+
+    // We have to vacuum to erase history in journals.
+    [_managedObjectContext release];
+    _managedObjectContext = nil;
+    [self initializeCoreDataWithRetry:YES vacuum:YES];
+    [_managedObjectContext release];
+    _managedObjectContext = nil;
+
+    // Now delete the files, just to be safe.
+    [self deleteDatabase];
+    
+    // Reinitialize so we can go on with life.
+    [self initializeCoreDataWithRetry:YES vacuum:NO];
 }
 
 - (void)eraseHistoryForHost:(VT100RemoteHost *)host {
