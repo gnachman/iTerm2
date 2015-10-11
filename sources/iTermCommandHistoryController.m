@@ -190,7 +190,7 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
         NSLog(@"Trying again...");
         [_managedObjectContext release];
         _managedObjectContext = nil;
-        return [self initializeCoreDataWithRetry:NO];
+        return [self initializeCoreDataWithRetry:NO vacuum:vacuum];
     }
     
     return YES;
