@@ -6,7 +6,7 @@
         <relationship name="entries" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="CommandHistoryEntry" inverseName="remoteHost" inverseEntity="CommandHistoryEntry" syncable="YES"/>
     </entity>
     <entity name="CommandHistoryCommandUse" representedClassName="iTermCommandHistoryCommandUseMO" syncable="YES">
-        <attribute name="code" optional="YES" attributeType="Integer 32" defaultValueString="0" syncable="YES"/>
+        <attribute name="code" optional="YES" attributeType="Integer 32" syncable="YES"/>
         <attribute name="command" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="directory" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="markGuid" optional="YES" attributeType="String" syncable="YES"/>
@@ -22,8 +22,8 @@
         <relationship name="uses" optional="YES" toMany="YES" deletionRule="Cascade" ordered="YES" destinationEntity="CommandHistoryCommandUse" inverseName="entry" inverseEntity="CommandHistoryCommandUse" syncable="YES"/>
     </entity>
     <elements>
-        <element name="CommandHistory" positionX="0" positionY="0" width="0" height="0"/>
-        <element name="CommandHistoryCommandUse" positionX="0" positionY="0" width="0" height="0"/>
-        <element name="CommandHistoryEntry" positionX="0" positionY="0" width="0" height="0"/>
+        <element name="CommandHistory" positionX="0" positionY="0" width="128" height="90"/>
+        <element name="CommandHistoryCommandUse" positionX="0" positionY="0" width="128" height="135"/>
+        <element name="CommandHistoryEntry" positionX="0" positionY="0" width="128" height="135"/>
     </elements>
 </model>

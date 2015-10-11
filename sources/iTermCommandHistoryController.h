@@ -40,7 +40,7 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
                               to:(int)status;
 
 - (NSArray<iTermCommandHistoryEntryMO *> *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand
-                                      onHost:(VT100RemoteHost *)host;
+                                                                    onHost:(VT100RemoteHost *)host;
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
                                                 onHost:(VT100RemoteHost *)host;
@@ -57,5 +57,6 @@ extern NSString *const kCommandHistoryDidChangeNotificationName;
 #pragma mark - Testing
 
 - (void)eraseHistoryForHost:(VT100RemoteHost *)host;
+- (NSString *)pathForFileNamed:(NSString *)name;
 
 @end

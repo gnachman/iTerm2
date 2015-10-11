@@ -32,8 +32,8 @@ static NSString *const kCommandUses = @"use times";  // The name is a historical
 + (instancetype)commandHistoryEntryFromDeprecatedDictionary:(NSDictionary *)dict
                                                   inContext:(NSManagedObjectContext *)context {
     iTermCommandHistoryEntryMO *managedObject =
-    [NSEntityDescription insertNewObjectForEntityForName:@"CommandHistoryEntry"
-                                  inManagedObjectContext:context];
+        [NSEntityDescription insertNewObjectForEntityForName:@"CommandHistoryEntry"
+                                      inManagedObjectContext:context];
     managedObject.command = dict[kCommand];
     managedObject.timeOfLastUse = dict[kLastUsed];
     managedObject.numberOfUses = dict[kUses];
@@ -50,6 +50,17 @@ static NSString *const kCommandUses = @"use times";  // The name is a historical
 
     return managedObject;
 
+}
+
+- (void)addUsesObject:(iTermCommandHistoryCommandUseMO *)value {
+    if ([self.uses containsObject:value]) {
+        return;
+    }
+    NSIndexSet *indexSet = [NSIndexSet indexSetWithIndex:self.uses.count];
+    NSString *const key = @"uses";
+    [self willChange:NSKeyValueChangeInsertion valuesAtIndexes:indexSet forKey:key];
+    [[self primitiveValueForKey:key] addObject:value];
+    [self didChange:NSKeyValueChangeInsertion valuesAtIndexes:indexSet forKey:key];
 }
 
 - (VT100ScreenMark *)lastMark {

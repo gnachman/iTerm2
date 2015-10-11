@@ -367,12 +367,12 @@ static const NSTimeInterval kMaxTimeToRememberCommands = 60 * 60 * 24 * 90;
 }
 
 - (void)loadCommandHistory {
-    [self removeOldData];
     NSArray *managedObjects = [self managedObjects];
     if (!managedObjects.count) {
         [self migrateFromPlistToCoreData];
         managedObjects = [self managedObjects];
     }
+    [self removeOldData];
     for (iTermCommandHistoryMO *history in managedObjects) {
         _historyByHost[history.hostKey] = history;
     }

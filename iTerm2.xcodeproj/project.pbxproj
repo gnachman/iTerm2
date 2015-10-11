@@ -1547,6 +1547,7 @@
 		A6D22B401BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */; settings = {ASSET_TAGS = (); }; };
 		A6D22B411BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */; settings = {ASSET_TAGS = (); }; };
 		A6D22B421BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */; settings = {ASSET_TAGS = (); }; };
+		A6D22B441BC9D368004084E0 /* iTermCommandHistoryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D22B431BC9D368004084E0 /* iTermCommandHistoryTest.m */; settings = {ASSET_TAGS = (); }; };
 		A6DF401C1897607E00F05947 /* NSTextField+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E525DD1A9C5730007B898E /* VT100StateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E525DA1A9C5730007B898E /* VT100StateMachine.h */; };
@@ -2547,6 +2548,7 @@
 		A6D22B221BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "iTermCommandHistoryCommandUseMO+CoreDataProperties.m"; path = "sources/NSManagedObjects/iTermCommandHistoryCommandUseMO+CoreDataProperties.m"; sourceTree = "<group>"; };
 		A6D22B231BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermCommandHistoryCommandUseMO.h; path = sources/NSManagedObjects/iTermCommandHistoryCommandUseMO.h; sourceTree = "<group>"; };
 		A6D22B241BC98CFB004084E0 /* iTermCommandHistoryCommandUseMO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermCommandHistoryCommandUseMO.m; path = sources/NSManagedObjects/iTermCommandHistoryCommandUseMO.m; sourceTree = "<group>"; };
+		A6D22B431BC9D368004084E0 /* iTermCommandHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermCommandHistoryTest.m; sourceTree = "<group>"; };
 		A6DF401A1897607E00F05947 /* NSTextField+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextField+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextField+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6DF7B711A5BA33900D96409 /* iTermParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermParser.h; sourceTree = "<group>"; };
@@ -4058,6 +4060,7 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				A6D22B431BC9D368004084E0 /* iTermCommandHistoryTest.m */,
 				A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */,
 				A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */,
 				A6BDB04B1B45EC3A00F511E6 /* iTermNSStringCategoryTest.m */,
@@ -6039,6 +6042,7 @@
 				A6BDB04A1B45EBD900F511E6 /* VT100CSIParserTest.m in Sources */,
 				A6BDB0481B45EB7F00F511E6 /* iTermIntervalTreeTest.m in Sources */,
 				A6A51A401B45CEA9007891F3 /* VT100DCSParserTest.m in Sources */,
+				A6D22B441BC9D368004084E0 /* iTermCommandHistoryTest.m in Sources */,
 				A6BDB0B71B45FEF700F511E6 /* iTermPasteHelperTest.m in Sources */,
 				A6BDB0411B45E8BA00F511E6 /* VT100XtermParserTest.m in Sources */,
 				A6BDB0421B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m in Sources */,
