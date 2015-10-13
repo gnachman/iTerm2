@@ -64,7 +64,7 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 // Just like commandHistoryEntriesWithPrefix:onHost, but returns command uses rather than entries.
 // Only the most recent use is returned.
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
-                                                onHost:(VT100RemoteHost *)host;
+                                                                                   onHost:(VT100RemoteHost *)host;
 
 // Is there any command history for this host?
 - (BOOL)haveCommandsForHost:(VT100RemoteHost *)host;
