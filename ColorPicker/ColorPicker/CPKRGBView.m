@@ -255,7 +255,7 @@ static const CGFloat kMarginBetweenSliders = 8;
 
 #pragma mark - NSControlTextEditingDelegate
 
-- (void)controlTextDidEndEditing:(NSNotification *)obj {
+- (void)controlTextDidChange:(NSNotification *)obj {
     NSTextField *textField = [obj object];
     NSScanner *scanner = [NSScanner scannerWithString:textField.stringValue];
     int i;
@@ -264,8 +264,6 @@ static const CGFloat kMarginBetweenSliders = 8;
         NSColor *color = [self colorWithHexString:self.hexTextField.stringValue];
         if (color) {
             self.selectedColor = color;
-        } else {
-            self.selectedColor = _selectedColor;
         }
     } else if (textField == self.redTextField) {
         if (isInteger) {
@@ -273,8 +271,6 @@ static const CGFloat kMarginBetweenSliders = 8;
                                                      green:_selectedColor.greenComponent
                                                       blue:_selectedColor.blueComponent
                                                      alpha:_selectedColor.alphaComponent];
-        } else {
-            self.selectedColor = _selectedColor;
         }
     } else if (textField == self.greenTextField) {
         if (isInteger) {
@@ -282,8 +278,6 @@ static const CGFloat kMarginBetweenSliders = 8;
                                                      green:i / 255.0
                                                       blue:_selectedColor.blueComponent
                                                      alpha:_selectedColor.alphaComponent];
-        } else {
-            self.selectedColor = _selectedColor;
         }
     } else if (textField == self.blueTextField) {
         if (isInteger) {
@@ -291,8 +285,6 @@ static const CGFloat kMarginBetweenSliders = 8;
                                                      green:_selectedColor.greenComponent
                                                       blue:i / 255.0
                                                      alpha:_selectedColor.alphaComponent];
-        } else {
-            self.selectedColor = _selectedColor;
         }
     } else if (self.alphaAllowed && textField == self.alphaTextField) {
         if (isInteger) {
@@ -300,8 +292,6 @@ static const CGFloat kMarginBetweenSliders = 8;
                                                      green:_selectedColor.greenComponent
                                                       blue:_selectedColor.blueComponent
                                                      alpha:i / 255.0];
-        } else {
-            self.selectedColor = _selectedColor;
         }
     }
 }
@@ -315,14 +305,7 @@ static const CGFloat kMarginBetweenSliders = 8;
     int r;
     int g;
     int b;
-    if (hexString.length == 3) {
-        r = (value >> 8) & 0x0f;
-        r |= r << 4;
-        g = (value >> 4) & 0x0f;
-        g |= g << 4;
-        b = (value >> 0) & 0x0f;
-        b |= b << 4;
-    } else if (hexString.length == 6) {
+    if (hexString.length == 6) {
         r = (value >> 16) & 0xff;
         g = (value >> 8) & 0xff;
         b = (value >> 0) & 0xff;

@@ -60,11 +60,11 @@
     self.popover =
         [CPKPopover presentRelativeToRect:presentationRect
                                    ofView:presentingView
-                            preferredEdge:CGRectMinYEdge
+                            preferredEdge:NSRectEdgeMinY
                              initialColor:self.color
                              alphaAllowed:self.alphaAllowed
                        selectionDidChange:^(NSColor *color) {
-                           self.selectedColor = color;
+                           weakSelf.selectedColor = color;
                            if (weakSelf.delegate.isContinuous) {
                                weakSelf.color = color;
                                if (weakSelf.colorDidChange) {
@@ -78,6 +78,7 @@
         if (weakSelf.willClosePopover) {
             weakSelf.willClosePopover(weakSelf.color);
         }
+        weakSelf.color = weakSelf.selectedColor;
         weakSelf.open = NO;
         weakSelf.popover = nil;
     };

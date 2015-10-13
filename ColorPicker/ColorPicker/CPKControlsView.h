@@ -17,10 +17,16 @@
 /** Block called when user clicks on the eyedropper. */
 @property(nonatomic, copy) void (^startPickingBlock)();
 
+/** Block called when user clicks the escape hatch. */
+@property(nonatomic, copy) void (^toggleNativePickerBlock)(BOOL);
+
 /** Reports this view's nominal height */
 + (CGFloat)desiredHeight;
 
 /** Updates the swatch color. */
 - (void)setSwatchColor:(NSColor *)color;
+
+/** Call this when the color panel closes. */
+- (void)colorPanelDidClose;
 
 @end

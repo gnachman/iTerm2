@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1D3368861BCDB60700D3B564 /* EscapeHatch.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368841BCDB60700D3B564 /* EscapeHatch.png */; settings = {ASSET_TAGS = (); }; };
+		1D3368871BCDB60700D3B564 /* EscapeHatch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368851BCDB60700D3B564 /* EscapeHatch@2x.png */; settings = {ASSET_TAGS = (); }; };
+		1D33688B1BCDB62100D3B564 /* ActiveEscapeHatch.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368891BCDB62100D3B564 /* ActiveEscapeHatch.png */; settings = {ASSET_TAGS = (); }; };
+		1D33688C1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D33688A1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png */; settings = {ASSET_TAGS = (); }; };
 		A6184EAE1BA874020088EF3C /* ColorPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EAD1BA874020088EF3C /* ColorPicker.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184EB41BA874020088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184EA81BA874020088EF3C /* ColorPicker.framework */; };
 		A6184EBB1BA874020088EF3C /* ColorPickerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EBA1BA874020088EF3C /* ColorPickerTests.m */; };
@@ -93,6 +97,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1D3368841BCDB60700D3B564 /* EscapeHatch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = EscapeHatch.png; path = Images.xcassets/EscapeHatch/EscapeHatch.png; sourceTree = "<group>"; };
+		1D3368851BCDB60700D3B564 /* EscapeHatch@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "EscapeHatch@2x.png"; path = "Images.xcassets/EscapeHatch/EscapeHatch@2x.png"; sourceTree = "<group>"; };
+		1D3368891BCDB62100D3B564 /* ActiveEscapeHatch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ActiveEscapeHatch.png; path = Images.xcassets/ActiveEscapeHatch/ActiveEscapeHatch.png; sourceTree = "<group>"; };
+		1D33688A1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ActiveEscapeHatch@2x.png"; path = "Images.xcassets/ActiveEscapeHatch/ActiveEscapeHatch@2x.png"; sourceTree = "<group>"; };
 		A6184EA81BA874020088EF3C /* ColorPicker.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ColorPicker.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6184EAC1BA874020088EF3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A6184EAD1BA874020088EF3C /* ColorPicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorPicker.h; sourceTree = "<group>"; };
@@ -107,9 +115,9 @@
 		A6184ED11BA874190088EF3C /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		A6184ED41BA874190088EF3C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		A6184EEC1BA876390088EF3C /* CPKMainViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKMainViewController.h; sourceTree = "<group>"; };
-		A6184EED1BA876390088EF3C /* CPKMainViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKMainViewController.m; sourceTree = "<group>"; };
+		A6184EED1BA876390088EF3C /* CPKMainViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CPKMainViewController.m; sourceTree = "<group>"; };
 		A6184EF01BA876E50088EF3C /* CPKRGBView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKRGBView.h; sourceTree = "<group>"; };
-		A6184EF11BA876E50088EF3C /* CPKRGBView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKRGBView.m; sourceTree = "<group>"; };
+		A6184EF11BA876E50088EF3C /* CPKRGBView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CPKRGBView.m; sourceTree = "<group>"; };
 		A6184EF41BA87A770088EF3C /* CPKPopover.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKPopover.h; sourceTree = "<group>"; };
 		A6184EF51BA87A770088EF3C /* CPKPopover.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKPopover.m; sourceTree = "<group>"; };
 		A6184EF81BA8801D0088EF3C /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -128,7 +136,7 @@
 		A6184F181BA8F40C0088EF3C /* CPKEyedropperWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKEyedropperWindow.h; sourceTree = "<group>"; };
 		A6184F191BA8F40C0088EF3C /* CPKEyedropperWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKEyedropperWindow.m; sourceTree = "<group>"; };
 		A6184F1C1BA90BB40088EF3C /* CPKColorWell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKColorWell.h; sourceTree = "<group>"; };
-		A6184F1D1BA90BB40088EF3C /* CPKColorWell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKColorWell.m; sourceTree = "<group>"; };
+		A6184F1D1BA90BB40088EF3C /* CPKColorWell.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CPKColorWell.m; sourceTree = "<group>"; };
 		A6184F201BA911980088EF3C /* CPKEyedropperView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKEyedropperView.h; sourceTree = "<group>"; };
 		A6184F211BA911980088EF3C /* CPKEyedropperView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKEyedropperView.m; sourceTree = "<group>"; };
 		A6184F2F1BA9D5700088EF3C /* Add.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Add.png; sourceTree = "<group>"; };
@@ -193,6 +201,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1D3368831BCDB5F600D3B564 /* EscapeHatch */ = {
+			isa = PBXGroup;
+			children = (
+				1D3368841BCDB60700D3B564 /* EscapeHatch.png */,
+				1D3368851BCDB60700D3B564 /* EscapeHatch@2x.png */,
+			);
+			name = EscapeHatch;
+			sourceTree = "<group>";
+		};
+		1D3368881BCDB61200D3B564 /* ActiveEscapeHatch */ = {
+			isa = PBXGroup;
+			children = (
+				1D3368891BCDB62100D3B564 /* ActiveEscapeHatch.png */,
+				1D33688A1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png */,
+			);
+			name = ActiveEscapeHatch;
+			sourceTree = "<group>";
+		};
 		A6184E9E1BA874020088EF3C = {
 			isa = PBXGroup;
 			children = (
@@ -313,6 +339,8 @@
 		A6184F2D1BA9D55D0088EF3C /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D3368881BCDB61200D3B564 /* ActiveEscapeHatch */,
+				1D3368831BCDB5F600D3B564 /* EscapeHatch */,
 				A6184F831BAA93F50088EF3C /* ActiveEyedropper */,
 				A6184F7E1BAA928A0088EF3C /* Eyedropper */,
 				A6184F2E1BA9D5700088EF3C /* Add */,
@@ -532,16 +560,20 @@
 				A6184F421BA9D5700088EF3C /* SelectedColorIndicator@2x.png in Resources */,
 				A6184F821BAA928A0088EF3C /* Eyedropper@2x.png in Resources */,
 				A6184F3E1BA9D5700088EF3C /* Add@2x.png in Resources */,
+				1D3368871BCDB60700D3B564 /* EscapeHatch@2x.png in Resources */,
 				A6184F6D1BAA15B80088EF3C /* SelectionIndicator.png in Resources */,
 				A6184F811BAA928A0088EF3C /* Eyedropper.png in Resources */,
 				A6184F3D1BA9D5700088EF3C /* Add.png in Resources */,
 				A6184F6E1BAA15B80088EF3C /* SelectionIndicator@2x.png in Resources */,
 				A6184F871BAA93F50088EF3C /* ActiveEyedropper@2x.png in Resources */,
 				A6184F5D1BAA083F0088EF3C /* SwatchCheckerboard@2x.png in Resources */,
+				1D33688B1BCDB62100D3B564 /* ActiveEscapeHatch.png in Resources */,
 				A6184F5C1BAA083F0088EF3C /* SwatchCheckerboard.png in Resources */,
+				1D3368861BCDB60700D3B564 /* EscapeHatch.png in Resources */,
 				A6184F761BAA2AC60088EF3C /* Remove@2x.png in Resources */,
 				A6184F411BA9D5700088EF3C /* SelectedColorIndicator.png in Resources */,
 				A6184F861BAA93F50088EF3C /* ActiveEyedropper.png in Resources */,
+				1D33688C1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png in Resources */,
 				A6184F481BA9D75B0088EF3C /* colors.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
