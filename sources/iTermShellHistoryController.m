@@ -143,7 +143,12 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 }
 
 - (NSString *)pathToDatabase {
-    return [self pathForFileNamed:self.databaseFilenamePrefix];
+    NSString *path = [self pathForFileNamed:self.databaseFilenamePrefix];
+    if (!self.shouldSaveToDisk) {
+        // For migration to work the in-memory path must be different than the on-disk path.
+        path = [path stringByAppendingString:@".ram"];
+    }
+    return path;
 }
 
 #pragma mark - Core Data
@@ -295,16 +300,17 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 // Returns YES if a migration was attempted.
 - (BOOL)migrateFromPlistToCoreData {
     BOOL attempted = NO;
-    if ([self migrateCommandHistoryFromPlistToCoreData]) {
+    NSMutableDictionary *records = [NSMutableDictionary dictionary];
+    if ([self migrateCommandHistoryFromPlistToCoreData:records]) {
         attempted = YES;
     }
-    if ([self migrateDirectoriesFromPlistToCoreData]) {
+    if ([self migrateDirectoriesFromPlistToCoreData:records]) {
         attempted = YES;
     }
     return attempted;
 }
 
-- (BOOL)migrateDirectoriesFromPlistToCoreData {
+- (BOOL)migrateDirectoriesFromPlistToCoreData:(NSMutableDictionary *)records {
     NSString *path = [self pathToDeprecatedDirectoriesPlist];
     if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil]) {
         return NO;
@@ -315,9 +321,10 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
         if (parts.count != 2) {
             continue;
         }
-        iTermHostRecordMO *hostRecord = _records[host];
+        iTermHostRecordMO *hostRecord = records[host];
         if (!hostRecord) {
             hostRecord = [iTermHostRecordMO hostRecordInContext:_managedObjectContext];
+            records[host] = hostRecord;
         }
         hostRecord.username = parts[0];
         hostRecord.hostname = parts[1];
@@ -338,7 +345,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     return YES;
 }
 
-- (BOOL)migrateCommandHistoryFromPlistToCoreData {
+- (BOOL)migrateCommandHistoryFromPlistToCoreData:(NSMutableDictionary *)records {
     NSString *path = [self pathToDeprecatedCommandHistoryPlist];
     if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil]) {
         return NO;
@@ -349,9 +356,10 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
         if (parts.count != 2) {
             continue;
         }
-        iTermHostRecordMO *hostRecord = _records[host];
+        iTermHostRecordMO *hostRecord = records[host];
         if (!hostRecord) {
             hostRecord = [iTermHostRecordMO hostRecordInContext:_managedObjectContext];
+            records[host] = hostRecord;
         }
         hostRecord.username = parts[0];
         hostRecord.hostname = parts[1];
@@ -402,26 +410,32 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 }
 
 - (void)backingStoreTypeDidChange {
-    if (!self.shouldSaveToDisk) {
-        [self eraseCommandHistory:YES directories:YES];
+    NSPersistentStore *store =
+        _managedObjectContext.persistentStoreCoordinator.persistentStores.firstObject;
+    NSString *storeType = self.shouldSaveToDisk ? NSSQLiteStoreType : NSInMemoryStoreType;
+    if ([store.type isEqualToString:storeType]) {
+        // No change
+        return;
     }
 
-    [_managedObjectContext release];
-    _managedObjectContext = nil;
-    [self initializeCoreDataWithRetry:YES vacuum:NO];
+    // Change the store to the new type
+    NSError *error = nil;
+    [_managedObjectContext.persistentStoreCoordinator migratePersistentStore:store
+                                                                       toURL:[NSURL fileURLWithPath:[self pathToDatabase]]
+                                                                     options:@{}
+                                                                    withType:storeType
+                                                                       error:&error];
+    if (error) {
+        NSLog(@"Failed to migrate to on-disk storage: %@", error);
+        // Do it the hard way.
+        [_managedObjectContext release];
+        _managedObjectContext = nil;
+        [self initializeCoreDataWithRetry:YES vacuum:NO];
+    }
 
-    // Reload everything.
-    [_records removeAllObjects];
-    [_expandedCache removeAllObjects];
-    [_tree release];
-    _tree = [[iTermDirectoryTree alloc] init];
-    [self loadObjectGraph];
-
-    if (!_initializing) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kDirectoriesDidChangeNotificationName
-                                                            object:nil];
-        [[NSNotificationCenter defaultCenter] postNotificationName:kCommandHistoryDidChangeNotificationName
-                                                            object:nil];
+    // Erase files containing user data.
+    if (!self.shouldSaveToDisk) {
+        [self deleteDatabase];
     }
 }
 
@@ -691,8 +705,8 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     for (iTermCommandHistoryCommandUseMO *commandUse in results) {
         iTermCommandHistoryEntryMO *entry = commandUse.entry;
         [entry removeUsesObject:commandUse];
-        
-        if (entry.uses.count == 0) {
+
+        if (entry && entry.uses.count == 0) {
             [_managedObjectContext deleteObject:entry];
         }
     }

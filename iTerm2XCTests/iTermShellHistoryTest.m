@@ -622,6 +622,69 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 #pragma mark - Generic
 
+// There was a bug where migrating directories would stop on migrated commands. This tests migrating
+// both to ensure this isn't an issue.
+- (void)testCommandHistoryAndDirectoryMigration {
+  _now = kDefaultTime;
+
+  NSDictionary *commandDictionary =
+        @{
+            @"user1@host1":
+               @[
+                   @{
+                       @"command": @"command1",
+                       @"uses": @10,
+                       @"last used": @(_now),
+                       @"use times":
+                           @[
+                               @[ @(_now),
+                                  @"/path1",
+                                  @"mark-guid-1",
+                                  @"command1",
+                                ],
+                            ]
+                    }
+                ],
+         };
+    NSString *commandPlistPath = [kFakeCommandHistoryPlistPath stringByAppendingString:_guid];
+    [NSKeyedArchiver archiveRootObject:commandDictionary toFile:commandPlistPath];
+    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:commandPlistPath isDirectory:nil]);
+
+    NSDictionary *directoryDictionary =
+        @{
+            @"user1@host1":
+               @[
+                   @{
+                       @"path": @"/abc/def/ghi/good",
+                       @"use count": @5,
+                       @"last use": @(_now),
+                       @"starred": @NO,
+                    },
+                ]
+         };
+    NSString *directoriesPlistPath = [kFakeDirectoriesPlistPath stringByAppendingString:_guid];
+    [NSKeyedArchiver archiveRootObject:directoryDictionary toFile:directoriesPlistPath];
+    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
+
+    iTermShellHistoryController *historyController =
+        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+
+    XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:commandPlistPath isDirectory:nil]);
+    XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
+
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    remoteHost.username = @"user1";
+    remoteHost.hostname = @"host1";
+    NSArray<iTermCommandHistoryEntryMO *> *actualEntries =
+        [historyController commandHistoryEntriesWithPrefix:@""
+                                                    onHost:remoteHost];
+    XCTAssertEqual(1, actualEntries.count);
+
+    NSArray<iTermRecentDirectoryMO *> *actualDirectories =
+        [historyController directoriesSortedByScoreOnHost:remoteHost];
+    XCTAssertEqual(1, actualDirectories.count);
+}
+
 - (void)testCorruptDatabase {
     iTermShellHistoryControllerForTesting *historyController =
         [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
