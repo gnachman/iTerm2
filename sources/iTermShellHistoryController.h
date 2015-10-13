@@ -107,7 +107,6 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 - (void)eraseDirectoriesForHost:(VT100RemoteHost *)host;
 - (NSString *)pathForFileNamed:(NSString *)name;
 - (NSTimeInterval)now;
-- (BOOL)saveToDisk;
 - (NSString *)databaseFilenamePrefix;
 - (BOOL)finishInitialization;
 - (instancetype)initPartially;

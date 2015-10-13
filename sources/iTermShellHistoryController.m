@@ -175,7 +175,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     // need to wait for it to finish before -loadCommandHistory could be called.
     NSError *error = nil;
     NSString *storeType;
-    if ([self saveToDisk] || vacuum) {
+    if ([self shouldSaveToDisk] || vacuum) {
         _savingToDisk = YES;
         storeType = NSSQLiteStoreType;
     } else {
@@ -196,7 +196,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
                                                      error:&error];
     if (error) {
         NSLog(@"Got an exception when opening the command history database: %@", error);
-        if (![self saveToDisk]) {
+        if (![self shouldSaveToDisk]) {
             NSLog(@"This is an in-memory database, it should not fail.");
             return NO;
         }
@@ -257,7 +257,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     }
 }
 
-- (BOOL)saveToDisk {
+- (BOOL)shouldSaveToDisk {
     return [iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory];
 }
 
@@ -402,7 +402,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 }
 
 - (void)backingStoreTypeDidChange {
-    if (!self.saveToDisk) {
+    if (!self.shouldSaveToDisk) {
         [self eraseCommandHistory:YES directories:YES];
     }
 
