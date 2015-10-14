@@ -109,6 +109,15 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Was the append property used on the last selection?
 @property(nonatomic, assign) BOOL appending;
 
+// Indicates if there is a non-empty selection.
+@property(nonatomic, readonly) BOOL hasSelection;
+
+// Length of the selection in characters.
+@property(nonatomic, readonly) long long length;
+
+// Range from the earliest point to the latest point of all selection ranges.
+@property(nonatomic, readonly) VT100GridCoordRange spanningRange;
+
 // Returns the debugging name for a selection mode.
 + (NSString *)nameForMode:(iTermSelectionMode)mode;
 
@@ -138,17 +147,8 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Subtract numLines from y coordinates.
 - (void)moveUpByLines:(int)numLines;
 
-// Indicates if there is a non-empty selection.
-@property (readonly) BOOL hasSelection;
-
 // Indicates if the selection contains the coordinate.
 - (BOOL)containsCoord:(VT100GridCoord)coord;
-
-// Length of the selection in characters.
-@property (readonly) long long length;
-
-// Range from the earliest point to the latest point of all selection ranges.
-@property (readonly) VT100GridCoordRange spanningRange;
 
 // Add a range to the set of selections.
 - (void)addSubSelection:(iTermSubSelection *)sub;

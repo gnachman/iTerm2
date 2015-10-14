@@ -36,21 +36,15 @@
 
 #define kPasteboardHistoryDidChange @"PasteboardHistoryDidChange"
 
-@interface PasteboardEntry : PopupEntry {
-    @public
-    NSDate* timestamp;
-}
+@interface PasteboardEntry : PopupEntry
+
+@property(nonatomic, retain) NSDate *timestamp;
 
 + (PasteboardEntry*)entryWithString:(NSString *)s score:(double)score;
-- (NSDate*)timestamp;
 
 @end
 
-@interface PasteboardHistory : NSObject {
-    NSMutableArray* entries_;
-    int maxEntries_;
-    NSString* path_;
-}
+@interface PasteboardHistory : NSObject
 
 + (instancetype)sharedInstance;
 - (instancetype)initWithMaxEntries:(int)maxEntries;
@@ -69,12 +63,7 @@
 @end
 
 @interface PasteboardHistoryWindowController : Popup
-{
-    IBOutlet NSTableView* table_;
-    NSTimer* minuteRefreshTimer_;
-}
 
-- (instancetype)init;
 - (void)pasteboardHistoryDidChange:(id)sender;
 - (void)copyFromHistory;
 - (void)refresh;

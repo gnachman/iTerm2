@@ -23,7 +23,6 @@
 
 @class GTMCarbonEventHandler;
 @class GTMCarbonHotKey;
-@protocol GTMCarbonEventHandlerDelegate;
 
 // Objective C wrapper for a Carbon Event
 @interface GTMCarbonEvent : NSObject <NSCopying> {
@@ -37,71 +36,70 @@
 //  Returns:
 //    Autoreleased GTMCarbonEvent
 //
-+ (instancetype)eventWithClass:(UInt32)inClass kind:(UInt32)kind;
++ (id)eventWithClass:(UInt32)inClass kind:(UInt32)kind;
 
 //  Create an event based on |event|. Retains |event|.
 //
 //  Returns:
 //    Autoreleased GTMCarbonEvent
 //
-+ (instancetype)eventWithEvent:(EventRef)event;
++ (id)eventWithEvent:(EventRef)event;
 
 //  Create an event based on the event currently being handled.
 //
 //  Returns:
 //    Autoreleased GTMCarbonEvent
 //
-+ (instancetype)currentEvent;
++ (id)currentEvent;
 
 //  Create an event of class |inClass| and kind |inKind|
 //
 //  Returns:
 //    GTMCarbonEvent
 //
-- (instancetype)initWithClass:(UInt32)inClass kind:(UInt32)kind;
+- (id)initWithClass:(UInt32)inClass kind:(UInt32)kind;
 
 //  Create an event based on |event|. Retains |event|.
 //
 //  Returns:
 //    GTMCarbonEvent
 //
-- (instancetype)initWithEvent:(EventRef)event;
+- (id)initWithEvent:(EventRef)event;
 
 //  Get the event's class.
 //
 //  Returns:
 //    event class
 //
-@property (readonly) UInt32 eventClass;
+- (UInt32)eventClass;
 
 //  Get the event's kind.
 //
 //  Returns:
 //    event kind
 //
-@property (readonly) UInt32 eventKind;
+- (UInt32)eventKind;
 
 //  Set the event's time.
 //
 //  Arguments:
 //    time - the time you want associated with the event
 //
-@property EventTime time;
-//- (void)setTime:(EventTime)eventTime;
+- (void)setTime:(EventTime)eventTime;
 
 //  Get the event's time.
 //
 //  Returns:
 //    the time associated with the event
 //
-//- (EventTime)time;
+- (EventTime)time;
 
 //  Get the event's eventref for passing to other carbon functions.
 //
 //  Returns:
 //    the event ref associated with the event
 //
-@property (readonly) EventRef event;
+- (EventRef)event;
 
 //  Sets (or adds) a parameter to an event. Try not to use this function
 //  directly. Look at the PARAM_TEMPLATE_DECL/DEFN macros below.
@@ -280,33 +278,32 @@ GTM_EXTERN NSUInteger GTMCarbonToCocoaKeyModifiers(UInt32 inCarbonModifiers);
 // Returns:
 //   The event target ref.
 //
-@property (readonly) EventTargetRef eventTarget;
+- (EventTargetRef)eventTarget;
 
 // Gets the underlying EventHandlerRef for that this class wraps.
 //
 // Returns:
 //   The EventHandlerRef this class wraps.
 //
-@property (readonly) EventHandlerRef eventHandler;
+- (EventHandlerRef)eventHandler;
 
 // Gets the delegate for the handler
 //
 // Returns:
 //   the delegate
-@property (nonatomic, assign) id<GTMCarbonEventHandlerDelegate> delegate;
-//- (id)delegate;
+- (id)delegate;
 
 // Sets the delegate for the handler
 //
 // Arguments:
 //   delegate - the delegate to set to
-//- (void)setDelegate:(id)delegate;
+- (void)setDelegate:(id)delegate;
 
 @end
 
 // Category for methods that a delegate of GTMCarbonEventHandlerDelegate may
 // want to implement.
-@protocol GTMCarbonEventHandlerDelegate <NSObject>
+@interface NSObject (GTMCarbonEventHandlerDelegate)
 
 // If a delegate implements this method it gets called before every event
 // that the handler gets sent. If it returns anything but eventNotHandledErr,
@@ -413,3 +410,4 @@ GTM_EXTERN const OSType kGTMCarbonFrameworkSignature;
 - (EventHotKeyRef)hotKeyRef;
 - (BOOL)onKeyDown;
 @end
+

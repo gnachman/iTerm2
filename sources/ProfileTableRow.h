@@ -14,24 +14,26 @@
 //
 // It implements a KeyValueCoding so that sort descriptors will work.
 @interface ProfileTableRow : NSObject
-{
-    NSString* guid;
-    ProfileModel* underlyingModel;
-}
+
+@property(nonatomic, readonly) Profile *bookmark;
 
 - (instancetype)initWithBookmark:(Profile*)bookmark underlyingModel:(ProfileModel*)underlyingModel;
-- (Profile*)bookmark;
 
 @end
 
 @interface ProfileTableRow (KeyValueCoding)
 // We need ascending order to sort default before not-default so we can't use
 // anything senible like BOOL or "Yes"/"No" because they'd sort wrong.
-typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
-- (NSNumber*)default;
-- (NSString*)name;
-- (NSString*)shortcut;
-- (NSString*)command;
-- (NSString*)guid;
+typedef NS_ENUM(NSInteger, BookmarkRowIsDefault) {
+    IsDefault = 1,
+    IsNotDefault = 2
+};
+
+- (NSNumber *)default;
+@property(nonatomic, readonly) NSString *name;
+@property(nonatomic, readonly) NSString *shortcut;
+@property(nonatomic, readonly) NSString *command;
+@property(nonatomic, readonly) NSString *guid;
+
 @end
 

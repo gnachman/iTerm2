@@ -21,8 +21,7 @@ static const CGFloat kRowHeight = 21;
 
 @implementation ProfileTagsView
 
-- (instancetype)initWithFrame:(NSRect)frame
-{
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         _scrollView = [[NSScrollView alloc] initWithFrame:self.bounds];

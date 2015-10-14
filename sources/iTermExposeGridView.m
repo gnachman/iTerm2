@@ -12,7 +12,11 @@
 #import "iTermExpose.h"
 #import "iTermExposeTabView.h"
 
-@implementation iTermExposeGridView
+@implementation iTermExposeGridView {
+    iTermExposeTabView* focused_;
+    NSRect* frames_;
+    NSImage* cache_;  // background image
+}
 
 static BOOL SizesEqual(NSSize a, NSSize b) {
     return (int)a.width == (int)b.width && (int)a.height == (int)b.height;
@@ -263,7 +267,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     NSInteger tabIndex, windowIndex;
     tabIndex = [[theTab realParentWindow] indexOfTab:theTab];
     assert(tabIndex != NSNotFound);
-    windowIndex = [[[iTermController sharedInstance] terminals] indexOfObjectIdenticalTo:(PseudoTerminal*)[theTab realParentWindow]];
+    windowIndex = [[[iTermController sharedInstance] terminals] indexOfObjectIdenticalTo:(PseudoTerminal *)[theTab realParentWindow]];
     for (iTermExposeTabView* aView in [self subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
             if ([aView tabIndex] == tabIndex &&

@@ -26,15 +26,9 @@ typedef NS_ENUM(NSInteger, ContextMenuActions) {
 @end
 
 
-@interface ContextMenuActionPrefsController : NSWindowController <NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource> {
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSTableColumn *titleColumn_;
-    IBOutlet NSTableColumn *actionColumn_;
-    IBOutlet NSTableColumn *parameterColumn_;
-    NSMutableArray *model_;
-    id<ContextMenuActionPrefsDelegate> delegate_;
-    BOOL hasSelection_;
-}
+@interface ContextMenuActionPrefsController : NSWindowController <
+
+NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource>
 
 @property (nonatomic, assign) id<ContextMenuActionPrefsDelegate> delegate;
 @property (nonatomic, assign) BOOL hasSelection;

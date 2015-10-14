@@ -29,7 +29,40 @@
 #import "DVRBuffer.h"
 
 
-@implementation DVRBuffer
+@implementation DVRBuffer {
+    // Points to start of large circular buffer.
+    char* store_;
+    
+    // Points into store_ after -[reserve:] is called.
+    char* scratch_;
+    
+    // Total size of storage in bytes.
+    long long capacity_;
+    
+    // Maps a frame key number to DVRIndexEntry*.
+    NSMutableDictionary* index_;
+    
+    // First key in index.
+    long long firstKey_;
+    
+    // Next key number to add to index.
+    long long nextKey_;
+    
+    // begin may be before or after end. If "-" is an allocated byte and "." is
+    // a free byte then you can have one of two cases:
+    //
+    // begin------end.....
+    // ----end....begin---
+    
+    // Beginning of circular buffer's used region.
+    long long begin_;
+    
+    // Non-inclusive end of circular buffer's used regino.
+    long long end_;
+    
+    // this must always equal index_.
+    id sanityCheck;  // TODO(georgen): remove this after the source of corruption of index_ is found
+}
 
 - (instancetype)initWithBufferCapacity:(long long)maxsize
 {

@@ -33,6 +33,20 @@
 @property(nonatomic, readonly) int tabNumberForItermSessionId;
 @property(nonatomic, assign) id<PTYTabDelegate> delegate;
 
+@property(nonatomic, retain) PTYSession *activeSession;
+@property(nonatomic, retain) NSTabViewItem *tabViewItem;
+
+// These values are observed by PSMTTabBarControl:
+// Tab number for display
+@property(nonatomic, assign) int objectCount;
+// Icon to display in tab
+@property(nonatomic, retain) NSImage *icon;
+
+// Size we should report to fit the current layout
+@property(nonatomic, readonly) NSSize tmuxSize;
+@property(nonatomic, readonly) NSSize maxTmuxSize;
+@property(nonatomic, copy) NSString *tmuxWindowName;
+
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup
 // activities, their contents can be rescued.
@@ -45,8 +59,6 @@
 - (void)setRoot:(NSSplitView *)newRoot;
 
 - (NSRect)absoluteFrame;
-@property (retain) PTYSession *activeSession;
-@property (retain) NSTabViewItem *tabViewItem;
 - (void)previousSession;
 - (void)nextSession;
 - (int)indexOfSessionView:(SessionView*)sessionView;
@@ -79,11 +91,6 @@
 - (PTYSession *)sessionWithViewId:(int)viewId;
 
 - (int)realObjectCount;
-// These values are observed by PSMTTabBarControl:
-// Tab number for display
-@property int objectCount;
-// Icon to display in tab
-@property (retain) NSImage *icon;
 // Should show busy indicator in tab?
 - (BOOL)isProcessing;
 - (BOOL)realIsProcessing;
@@ -176,11 +183,7 @@
            hSpacing:(double)hs
            vSpacing:(double)vs;
 
-// Size we should report to fit the current layout
-@property (readonly) NSSize tmuxSize;
 // Size we are given the current layout
-@property (readonly) NSSize maxTmuxSize;
-@property (copy) NSString *tmuxWindowName;
 
 - (int)tmuxWindow;
 @property (readonly, getter=isTmuxTab) BOOL tmuxTab;

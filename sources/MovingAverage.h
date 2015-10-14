@@ -17,11 +17,11 @@
 
 @property (nonatomic, assign) double alpha;  // Initialized to 0.5. Small values make updates affect the moving average more.
 @property (nonatomic, assign) double value;
+@property (nonatomic, readonly) NSTimeInterval timeSinceTimerStarted;
 
 - (void)startTimer;
 - (void)pauseTimer;
 - (void)resumeTimer;
-@property (readonly) NSTimeInterval timeSinceTimerStarted;
 - (void)addValue:(double)value;
 - (BOOL)haveStartedTimer;
 

@@ -24,9 +24,7 @@
 
 @end
 
-@interface IntervalMap : NSObject {
-    NSMutableArray *elements_;
-}
+@interface IntervalMap : NSObject 
 
 - (instancetype)init;
 - (void)setObject:(id)object forRange:(IntRange *)range;

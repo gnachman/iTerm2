@@ -11,19 +11,18 @@
 
 NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
-@interface TmuxWindowsTable (Private)
-
-- (NSArray *)selectedWindowNames;
-- (NSArray *)selectedWindowIds;
-- (NSArray *)selectedWindowIdsAsStrings;
-- (BOOL)allSelectedWindowsAreOpen;
-- (BOOL)anySelectedWindowIsOpen;
-- (NSArray *)filteredModel;
-- (void)resetFilteredModel;
-
-@end
-
-@implementation TmuxWindowsTable
+@implementation TmuxWindowsTable {
+    NSMutableArray *model_;
+    NSMutableArray *filteredModel_;
+    
+    IBOutlet NSTableView *tableView_;
+    IBOutlet NSButton *addWindowButton_;
+    IBOutlet NSButton *removeWindowButton_;
+    IBOutlet NSButton *openInTabsButton_;
+    IBOutlet NSButton *openInWindowsButton_;
+    IBOutlet NSButton *hideWindowButton_;
+    IBOutlet NSSearchField *searchField_;
+}
 
 @synthesize delegate = delegate_;
 
@@ -77,7 +76,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [tableView_ reloadData];
 }
 
-- (NSArray *)names
+- (NSArray<NSString *> *)names
 {
     NSMutableArray *names = [NSMutableArray array];
     for (NSArray *tuple in model_) {
@@ -214,9 +213,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     }
 }
 
-@end
-
-@implementation TmuxWindowsTable (Private)
+#pragma mark - Private
 
 - (NSArray *)selectedWindowIdsAsStrings
 {

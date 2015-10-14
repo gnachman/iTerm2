@@ -10,6 +10,10 @@
 
 @interface NSData (iTerm)
 
+// Tries to guess, from the first bytes of data, what kind of image it is and
+// returns the corresponding UTI string constant. Not guaranteed to be correct.
+@property(nonatomic, readonly) NSString *uniformTypeIdentifierForImageData;
+
   // Base-64 decodes string and returns data or nil.
 + (NSData *)dataWithBase64EncodedString:(NSString *)string;
 
@@ -20,9 +24,5 @@
 - (BOOL)containsAsciiCharacterInSet:(NSCharacterSet *)asciiSet;
 
 - (BOOL)hasPrefixOfBytes:(char *)bytes length:(int)length;
-
-// Tries to guess, from the first bytes of data, what kind of image it is and
-// returns the corresponding UTI string constant. Not guaranteed to be correct.
-@property (readonly) NSString *uniformTypeIdentifierForImageData;
 
 @end

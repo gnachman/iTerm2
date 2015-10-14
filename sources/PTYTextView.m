@@ -4600,7 +4600,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self addSubview:blue];
 
     // Set up layer's initial state
-    blue.layer.backgroundColor = [[NSColor blueColor] iterm_CGColor];
+    blue.layer.backgroundColor = [[NSColor blueColor] CGColor];
     blue.layer.opaque = NO;
     blue.layer.opacity = 0.75;
 

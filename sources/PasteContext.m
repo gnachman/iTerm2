@@ -11,9 +11,7 @@
 
 @implementation PasteContext {
     NSString *bytesPerCallKey_;
-    int bytesPerCall_;
     NSString *delayBetweenCallsKey_;
-    float delayBetweenCalls_;
 }
 
 @synthesize delayBetweenCalls = delayBetweenCalls_;

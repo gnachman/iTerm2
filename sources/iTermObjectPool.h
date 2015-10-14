@@ -60,6 +60,6 @@
         collections:(int)numCollections
       objectsPerCollection:(int)objectsPerCollection;
 
-@property (readonly) iTermPooledObject *pooledObject;
+@property(nonatomic, readonly) iTermPooledObject *pooledObject;
 
 @end

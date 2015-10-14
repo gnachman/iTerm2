@@ -11,7 +11,7 @@
 + (instancetype)intervalWithLocation:(long long)location length:(long long)length;
 + (Interval *)maxInterval;
 // One more than the largest value in the interval.
-@property (readonly) long long limit;
+@property(nonatomic, readonly) long long limit;
 - (BOOL)intersects:(Interval *)other;
 - (BOOL)isEqualToInterval:(Interval *)interval;
 
@@ -43,7 +43,7 @@
 @property(nonatomic, retain) NSMutableArray *entries;
 
 // Largest limit of all entries
-@property (readonly) long long maxLimit;
+@property(nonatomic, readonly) long long maxLimit;
 
 // Interval including intervals of all entries at this entry exactly
 - (Interval *)spanningInterval;
@@ -55,6 +55,9 @@
     int _count;
 }
 
+@property(nonatomic, readonly) NSInteger count;
+@property(nonatomic, readonly) NSString *debugString;
+
 // Deserialize
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 
@@ -63,7 +66,6 @@
 - (void)removeObject:(id<IntervalTreeObject>)object;
 - (NSArray<IntervalTreeObject> *)objectsInInterval:(Interval *)interval;
 - (NSArray<IntervalTreeObject> *)allObjects;
-@property (readonly) NSInteger count;
 - (BOOL)containsObject:(id<IntervalTreeObject>)object;
 
 // Returns the object with the highest limit
@@ -89,7 +91,6 @@
 - (NSEnumerator<IntervalTreeObject> *)forwardLimitEnumerator;
 
 - (void)sanityCheck;
-@property (readonly, copy) NSString *debugString;
 
 // Serialize, adding offset to interval locations (useful for taking the tail
 // of an interval tree).

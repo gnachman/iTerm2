@@ -43,8 +43,7 @@ NSString *const kTaskNotifierDidSpin = @"kTaskNotifierDidSpin";
     return instance;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         deadpool = [[NSMutableSet alloc] init];

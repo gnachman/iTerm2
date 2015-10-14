@@ -42,7 +42,10 @@ const float kItermExposeThumbMargin = 25;
 @interface iTermExpose () <NSWindowDelegate>
 @end
 
-@implementation iTermExpose
+@implementation iTermExpose {
+    NSWindow* window_;
+    iTermExposeView* view_;
+}
 
 + (NSString*)labelForTab:(PTYTab*)aTab windowNumber:(int)i tabNumber:(int)j
 {
@@ -82,8 +85,7 @@ const float kItermExposeThumbMargin = 25;
     }
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         // If anything changes, we exit because there isn't yet code to

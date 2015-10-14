@@ -121,8 +121,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
     return result;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         inputBuffer_ = [[NSMutableData alloc] init];

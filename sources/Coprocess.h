@@ -44,7 +44,7 @@
 - (BOOL)wantToWrite;
 - (void)mainProcessDidTerminate;
 - (void)terminate;
-@property (readonly) int readFileDescriptor;  // for reading
-@property (readonly) int writeFileDescriptor;  // for writing
+@property(nonatomic, readonly) int readFileDescriptor;  // for reading
+@property(nonatomic, readonly) int writeFileDescriptor;  // for writing
 
 @end

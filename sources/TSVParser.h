@@ -8,11 +8,7 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface TSVDocument : NSObject {
-    NSMutableArray *columns_;
-    NSMutableArray *records_;
-    NSMutableDictionary *map_;
-}
+@interface TSVDocument : NSObject
 
 @property (nonatomic, retain) NSMutableArray *columns;
 @property (nonatomic, readonly) NSMutableArray *records;

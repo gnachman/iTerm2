@@ -13,7 +13,17 @@
 #import "iTermExposeView.h"
 #import "PseudoTerminal.h"
 
-@implementation iTermExposeTabView
+@implementation iTermExposeTabView {
+    NSInteger tabIndex_;
+    NSInteger windowIndex_;
+    BOOL showLabel_;
+    NSTrackingRectTag trackingRectTag_;
+    BOOL highlight_;
+    id<iTermExposeTabViewDelegate> delegate_;
+    BOOL hasResult_;
+    NSSize origSize_;
+}
+
 @synthesize tabObject = tabObject_;
 @synthesize dirty = dirty_;
 @synthesize originalFrame = originalFrame_;
@@ -32,8 +42,7 @@
         normalFrame:(NSRect)normalFrame
            delegate:(id<iTermExposeTabViewDelegate>)delegate
               index:(int)theIndex
-       wasMaximized:(BOOL)wasMaximized
-{
+       wasMaximized:(BOOL)wasMaximized {
     self = [super initWithFrame:frame];
     if (self) {
         wasMaximized_ = wasMaximized;
@@ -41,7 +50,7 @@
         label_ = [label retain];
         tabIndex_ = [[tab realParentWindow] indexOfTab:tab];
         assert(tabIndex_ != NSNotFound);
-        windowIndex_ = [[[iTermController sharedInstance] terminals] indexOfObjectIdenticalTo:(PseudoTerminal*)[tab realParentWindow]];
+        windowIndex_ = [[[iTermController sharedInstance] terminals] indexOfObjectIdenticalTo:(PseudoTerminal *)[tab realParentWindow]];
         fullSizeFrame_ = fullSizeFrame;
         normalFrame_ = normalFrame;
         showLabel_ = NO;

@@ -25,13 +25,11 @@
 // Set to yes when cmd pressed, no when released. We take care of the timing.
 @property(nonatomic, assign) BOOL cmdPressed;
 
+// Getter indicates if the tab bar is currently flashing. Setting starts or
+// stops flashing. We take care of fading.
+@property(nonatomic, assign) BOOL flashing;
+
 // Call this when the result of iTermTabBarShouldFlash would change.
 - (void)updateFlashing;
-
-// Indicates if the tab bar is currently flashing.
-@property (nonatomic) BOOL flashing;
-
-// Start or stop flashing. We take care of fading.
-//- (void)setFlashing:(BOOL)flashing;
 
 @end

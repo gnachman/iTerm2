@@ -47,7 +47,9 @@
 + (double)titleHeight;
 + (NSDate*)lastResizeDate;
 + (void)windowDidResize;
+
 - (instancetype)initWithFrame:(NSRect)frame session:(PTYSession*)session;
+
 - (void)setDimmed:(BOOL)isDimmed;
 - (FindViewController*)findViewController;
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed;

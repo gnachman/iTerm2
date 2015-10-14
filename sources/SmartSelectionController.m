@@ -32,7 +32,14 @@ static NSString *gPrecisionKeys[] = {
     kVeryHighPrecision
 };
 
-@implementation SmartSelectionController
+@implementation SmartSelectionController {
+    IBOutlet NSTableView *tableView_;
+    IBOutlet NSTableColumn *regexColumn_;
+    IBOutlet NSTableColumn *notesColumn_;
+    IBOutlet NSTableColumn *precisionColumn_;
+    IBOutlet ContextMenuActionPrefsController *contextMenuPrefsController_;
+    IBOutlet NSButton *logDebugInfo_;
+}
 
 @synthesize guid = guid_;
 @synthesize hasSelection = hasSelection_;

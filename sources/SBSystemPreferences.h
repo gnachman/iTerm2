@@ -8,16 +8,18 @@
 
 @class SBSystemPreferencesApplication, SBSystemPreferencesDocument, SBSystemPreferencesWindow, SBSystemPreferencesPane, SBSystemPreferencesAnchor;
 
-typedef NS_ENUM(OSType, SBSystemPreferencesSaveOptions) {
+enum SBSystemPreferencesSaveOptions {
 	SBSystemPreferencesSaveOptionsYes = 'yes ' /* Save the file. */,
 	SBSystemPreferencesSaveOptionsNo = 'no  ' /* Do not save the file. */,
 	SBSystemPreferencesSaveOptionsAsk = 'ask ' /* Ask the user whether or not to save the file. */
 };
+typedef enum SBSystemPreferencesSaveOptions SBSystemPreferencesSaveOptions;
 
-typedef NS_ENUM(OSType, SBSystemPreferencesPrintingErrorHandling) {
+enum SBSystemPreferencesPrintingErrorHandling {
 	SBSystemPreferencesPrintingErrorHandlingStandard = 'lwst' /* Standard PostScript error handling */,
 	SBSystemPreferencesPrintingErrorHandlingDetailed = 'lwdt' /* print a detailed report of PostScript errors */
 };
+typedef enum SBSystemPreferencesPrintingErrorHandling SBSystemPreferencesPrintingErrorHandling;
 
 
 

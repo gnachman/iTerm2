@@ -21,6 +21,12 @@ extern NSString *const kEncodedColorDictionaryCalibratedColorSpace;
 
 @interface NSColor (iTerm)
 
+@property(nonatomic, readonly) CGFloat perceivedBrightness;
+@property(nonatomic, readonly) BOOL isDark;
+
+@property(nonatomic, readonly) NSDictionary *dictionaryValue;
+@property(nonatomic, readonly) NSString *stringValue;
+
 CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
 + (NSColor *)colorWithString:(NSString *)s;
@@ -59,15 +65,8 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 + (NSColor *)colorForAnsi256ColorIndex:(int)index;
 
 - (NSColor *)colorDimmedBy:(double)dimmingAmount towardsGrayLevel:(double)grayLevel;
-@property (readonly) CGFloat perceivedBrightness;
-@property (readonly) BOOL isDark;
-
-@property (readonly) NSDictionary *dictionaryValue;
-@property (readonly) NSString *stringValue;
 
 // Return the color you'd get by rendering self over background.
 - (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;
-
-- (CGColorRef)iterm_CGColor CF_RETURNS_NOT_RETAINED;
 
 @end

@@ -9,12 +9,10 @@
 #import <Cocoa/Cocoa.h>
 
 @interface iTermExposeWindow : NSWindow
-{
-}
 
-@property (readonly) BOOL canBecomeKeyWindow;
+@property(nonatomic, readonly) BOOL disableFocusFollowsMouse;
+
 - (void)keyDown:(NSEvent *)event;
-@property (readonly) BOOL disableFocusFollowsMouse;
 
 @end
 

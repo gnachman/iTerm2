@@ -61,10 +61,30 @@ static long long now()
 @end
 
 
-@implementation DVREncoder
+@implementation DVREncoder {
+    // Underlying buffer to write to. Not owned by us.
+    DVRBuffer* buffer_;
+    
+    // The last encoded frame.
+    NSMutableData* lastFrame_;
+    
+    // Info from the last frame.
+    DVRFrameInfo lastInfo_;
+    
+    // Number of frames. Used to ensure key frames are encoded every so often.
+    int count_;
+    
+    // Used to ensure that reserve is called before appendFrame.
+    BOOL haveReservation_;
+    
+    // Used to ensure a key frame is encoded before the circular buffer wraps.
+    long long bytesSinceLastKeyFrame_;
+    
+    // Number of bytes reserved.
+    int reservation_;
+}
 
-- (instancetype)initWithBuffer:(DVRBuffer*)buffer
-{
+- (instancetype)initWithBuffer:(DVRBuffer *)buffer {
     self = [super init];
     if (self) {
         buffer_ = [buffer retain];

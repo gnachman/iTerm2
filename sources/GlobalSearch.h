@@ -50,9 +50,6 @@
 
 @interface GlobalSearch : NSViewController <NSTableViewDataSource>
 
-- (void)awakeFromNib;
-- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
-- (void)controlTextDidChange:(NSNotification *)aNotification;
 - (void)setDelegate:(id<GlobalSearchDelegate>)delegate;
 - (int)numResults;
 - (void)abort;

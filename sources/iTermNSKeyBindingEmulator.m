@@ -43,8 +43,7 @@ static struct {
 
 @implementation iTermNSKeyBindingEmulator
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,

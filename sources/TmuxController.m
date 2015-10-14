@@ -85,8 +85,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 @synthesize sessionId = sessionId_;
 
-- (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName
-{
+- (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName {
     self = [super init];
     if (self) {
         gateway_ = [gateway retain];

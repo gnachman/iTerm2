@@ -174,8 +174,7 @@ enum {
     return [NSArray arrayWithObjects:fgbg, fg, bg, nil];
 }
 
-- (NSInteger)indexOfTag:(NSInteger)theTag
-{
+- (NSInteger)indexOfTag:(NSInteger)theTag {
     int i = 0;
     BOOL isFirst = YES;
     for (NSDictionary *dict in [self groupedMenuItemsForPopupButton]) {
@@ -193,8 +192,7 @@ enum {
     return -1;
 }
 
-- (NSInteger)tagAtIndex:(NSInteger)theIndex
-{
+- (NSInteger)tagAtIndex:(NSInteger)theIndex {
     int i = 0;
     BOOL isFirst = YES;
     for (NSDictionary *dict in [self groupedMenuItemsForPopupButton]) {

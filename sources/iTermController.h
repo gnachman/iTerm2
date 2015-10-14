@@ -34,7 +34,6 @@
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
 @class GTMCarbonHotKey;
-@class iTermGrowlDelegate;
 @protocol iTermWindowController;
 @class iTermRestorableSession;
 @class PasteboardHistory;
@@ -51,6 +50,12 @@
 @property(nonatomic, assign) BOOL applicationIsQuitting;
 @property(nonatomic, readonly) BOOL willRestoreWindowsAtNextLaunch;
 @property(nonatomic, readonly) BOOL shouldLeaveSessionsRunningOnQuit;
+@property(nonatomic, readonly) BOOL haveTmuxConnection;
+@property(nonatomic, assign) int keyWindowIndexMemo;
+@property(nonatomic, readonly, strong) PTYSession *sessionWithMostRecentSelection;
+@property(nonatomic, nonatomic, assign) PseudoTerminal *currentTerminal;
+@property(nonatomic, readonly) int numberOfTerminals;
+@property(nonatomic, readonly) BOOL hasRestorableSession;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
@@ -75,10 +80,8 @@
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
 - (PseudoTerminal*)keyTerminalWindow;
-@property (readonly) BOOL haveTmuxConnection;
 - (PTYSession *)anyTmuxSession;
 
-@property int keyWindowIndexMemo;
 
 - (PseudoTerminal*)terminalWithNumber:(int)n;
 - (PseudoTerminal *)terminalWithGuid:(NSString *)guid;
@@ -87,9 +90,6 @@
 - (void)saveWindowArrangement:(BOOL)allWindows;
 - (void)loadWindowArrangementWithName:(NSString *)theName;
 
-@property (readonly, strong) PTYSession *sessionWithMostRecentSelection;
-
-@property (nonatomic, assign) PseudoTerminal *currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
               withSelector:(SEL)selector
@@ -109,7 +109,6 @@
                          block:(PTYSession *(^)(PseudoTerminal *))block;
 - (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
-@property (readonly) int numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
 - (void)irAdvance:(int)dir;
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
@@ -140,10 +139,9 @@
 - (iTermRestorableSession *)popRestorableSession;
 - (void)commitAndPopCurrentRestorableSession;
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
-@property (readonly) BOOL hasRestorableSession;
 - (void)killRestorableSessions;
 
-- (NSArray<PseudoTerminal*>*)terminals;
+- (NSArray<PseudoTerminal *>*)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
 
 void OnHotKeyEvent(void);

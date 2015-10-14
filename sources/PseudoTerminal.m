@@ -353,9 +353,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(iTermWindowType)windowType
-          savedWindowType:(iTermWindowType)savedWindowType
-                   screen:(int)screenNumber {
+                         windowType:(iTermWindowType)windowType
+                    savedWindowType:(iTermWindowType)savedWindowType
+                             screen:(int)screenNumber {
     return [self initWithSmartLayout:smartLayout
                           windowType:windowType
                      savedWindowType:savedWindowType
@@ -364,11 +364,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(iTermWindowType)windowType
-          savedWindowType:(iTermWindowType)savedWindowType
-                   screen:(int)screenNumber
-                 isHotkey:(BOOL)isHotkey
-{
+                         windowType:(iTermWindowType)windowType
+                    savedWindowType:(iTermWindowType)savedWindowType
+                             screen:(int)screenNumber
+                           isHotkey:(BOOL)isHotkey {
     self = [self initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
     if (self) {

@@ -8,13 +8,14 @@
 #import "TSVParser.h"
 
 
-@implementation TSVDocument
+@implementation TSVDocument {
+    NSMutableDictionary *map_;
+}
 
 @synthesize columns = columns_;
 @synthesize records = records_;
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         records_ = [[NSMutableArray alloc] init];

@@ -55,7 +55,17 @@ typedef enum {
 @end
 
 
-@implementation iTermProfilesWindowController
+@implementation iTermProfilesWindowController {
+    IBOutlet ProfileListView* tableView_;
+    IBOutlet NSSegmentedControl* actions_;
+    IBOutlet NSButton* horizontalPaneButton_;
+    IBOutlet NSButton* verticalPaneButton_;
+    IBOutlet NSButton* tabButton_;
+    IBOutlet NSButton* windowButton_;
+    IBOutlet NSButton* closeAfterOpeningBookmark_;
+    IBOutlet NSButton* newTabsInNewWindowButton_;
+    IBOutlet NSButton* toggleTagsButton_;
+}
 
 + (iTermProfilesWindowController*)sharedInstance {
     static iTermProfilesWindowController* instance;

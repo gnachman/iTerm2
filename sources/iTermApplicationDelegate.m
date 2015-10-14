@@ -652,9 +652,7 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-// init
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         // Add ourselves as an observer for notifications.

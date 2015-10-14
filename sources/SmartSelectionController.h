@@ -16,17 +16,7 @@
 @end
 
 
-@interface SmartSelectionController : NSWindowController <ContextMenuActionPrefsDelegate> {
-    NSString *guid_;
-    BOOL hasSelection_;
-    IBOutlet id<SmartSelectionDelegate> delegate_;  // weak
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSTableColumn *regexColumn_;
-    IBOutlet NSTableColumn *notesColumn_;
-    IBOutlet NSTableColumn *precisionColumn_;
-    IBOutlet ContextMenuActionPrefsController *contextMenuPrefsController_;
-    IBOutlet NSButton *logDebugInfo_;
-}
+@interface SmartSelectionController : NSWindowController <ContextMenuActionPrefsDelegate>
 
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic, assign) BOOL hasSelection;

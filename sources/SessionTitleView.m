@@ -29,12 +29,9 @@ static const CGFloat kButtonSize = 17;
 @end
 
 @implementation SessionTitleView {
-    NSString *title_;
     NSTextField *label_;
     NSButton *closeButton_;
     NSButton *menuButton_;
-    id<SessionTitleViewDelegate> delegate_;
-    double dimmingAmount_;
 }
 
 @synthesize title = title_;

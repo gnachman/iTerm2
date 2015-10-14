@@ -129,7 +129,7 @@ static const CGFloat kMargin = 4;
     PasteboardEntry* entry = pasteHistory_.entries[rowIndex];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
-        return [NSDateFormatter compactDateDifferenceStringFromDate:entry->timestamp];
+        return [NSDateFormatter compactDateDifferenceStringFromDate:entry.timestamp];
     } else {
         // Contents
         NSString* value = [[entry mainValue] stringByReplacingOccurrencesOfString:@"\n"

@@ -24,7 +24,7 @@
 
 // Wrapper for all the info we need about a hotkey that we can store in a
 // Foundation storage class.
-@interface GTMCarbonHotKey ()
+@interface GTMCarbonHotKey (GTMCarbonHotKeyPrivate)
 
 // Create a HotKey record
 //  Arguments:
@@ -35,7 +35,7 @@
 //    whenPressed - do we do it on key down or key up?
 //  Returns:
 //    a hotkey record, or nil on failure
-- (instancetype)initWithHotKey:(EventHotKeyID)keyID
+- (id)initWithHotKey:(EventHotKeyID)keyID
               target:(id)target
               action:(SEL)selector
             userInfo:(id)userInfo
@@ -93,7 +93,7 @@
 //  Returns:
 //    GTMCarbonEvent
 //
-- (instancetype)initWithClass:(UInt32)inClass kind:(UInt32)kind {
+- (id)initWithClass:(UInt32)inClass kind:(UInt32)kind {
   if ((self = [super init])) {
     verify_noerr(CreateEvent(kCFAllocatorDefault, inClass, kind,
                              0, kEventAttributeNone, &event_));
@@ -107,7 +107,7 @@
 //  Returns:
 //    GTMCarbonEvent
 //
-- (instancetype)initWithEvent:(EventRef)event {
+- (id)initWithEvent:(EventRef)event {
   if ((self = [super init])) {
     if (event) {
       event_ = RetainEvent(event);
@@ -352,7 +352,6 @@ NSUInteger GTMCarbonToCocoaKeyModifiers(UInt32 inCarbonModifiers) {
 const OSType kGTMCarbonFrameworkSignature = 'GTM ';
 
 @implementation GTMCarbonEventHandler
-@synthesize delegate = delegate_;
 
 // Does our delegate respond to eventHandler:receivedEvent:handler:
 //
@@ -468,6 +467,9 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
 //
 // Returns:
 //   the delegate
+- (id)delegate {
+  return delegate_;
+}
 
 // Sets the delegate for the handler and caches whether it responds to
 // the eventHandler:receivedEvent:handler: selector for performance purposes.
@@ -519,7 +521,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(GTMCarbonEventDispatcherHandler,
 // to keep track of the hotkeys and commands that we handle.
 //  Returns:
 //    GTMCarbonApplication or nil on failure
-- (instancetype)init {
+- (id)init {
   if ((self = [super init])) {
     static EventTypeSpec events[] = {
       { kEventClassKeyboard, kEventHotKeyPressed },
@@ -668,7 +670,7 @@ CantCreateKey:
 //    whenPressed - do we do it on key down or key up?
 //  Returns:
 //    a hotkey record, or nil on failure
-- (instancetype)initWithHotKey:(EventHotKeyID)keyID
+- (id)initWithHotKey:(EventHotKeyID)keyID
               target:(id)target
               action:(SEL)selector
             userInfo:(id)userInfo
@@ -751,6 +753,7 @@ CantCreateKey:
 }
 
 @end
+
 
 
 

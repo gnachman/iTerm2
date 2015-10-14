@@ -16,7 +16,7 @@ typedef struct {
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
-@interface LineBlock : NSObject
+@interface LineBlock : NSObject <NSCopying>
 
 // Once this is set to true, it stays true. If double width characters are
 // possibly present then a slower algorithm is used to count the number of
@@ -25,9 +25,9 @@ typedef struct {
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 @property(nonatomic, readonly) int numberOfCharacters;
 
-- (LineBlock*)initWithRawBufferSize: (int) size;
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
-- (LineBlock *)copy;
+
+- (instancetype)initWithRawBufferSize:(int)size;
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
@@ -58,10 +58,10 @@ typedef struct {
 
 
 // Get the number of lines in this block at a given screen width.
-- (int)getNumLinesWithWrapWidth: (int) width;
+- (int)getNumLinesWithWrapWidth:(int)width;
 
 // Returns whether getNumLinesWithWrapWidth will be fast.
-- (BOOL)hasCachedNumLinesForWidth: (int) width;
+- (BOOL)hasCachedNumLinesForWidth:(int)width;
 
 // Returns true if the last line is incomplete.
 - (BOOL)hasPartial;
@@ -81,7 +81,7 @@ typedef struct {
 - (BOOL)isEmpty;
 
 // Grow the buffer.
-- (void)changeBufferSize: (int) capacity;
+- (void)changeBufferSize:(int)capacity;
 
 // Get the size of the raw buffer.
 - (int)rawBufferSize;
@@ -93,13 +93,13 @@ typedef struct {
 - (int)startOffset;
 
 // Return the length of a raw (unwrapped) line
-- (int)getRawLineLength: (int) linenum;
+- (int)getRawLineLength:(int)linenum;
 
 // Remove extra space from the end of the buffer. Future appends will fail.
 - (void)shrinkToFit;
 
 // Return a raw line
-- (screen_char_t *)rawLine: (int) linenum;
+- (screen_char_t *)rawLine:(int)linenum;
 
 // NSLog the contents of the block. For debugging.
 - (void)dump:(int)rawOffset;

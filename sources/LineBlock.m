@@ -154,7 +154,7 @@ NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
     [super dealloc];
 }
 
-- (LineBlock *)copy {
+- (LineBlock *)copyWithZone:(NSZone *)zone {
     LineBlock *theCopy = [[LineBlock alloc] init];
     theCopy->raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * buffer_size);
     memmove(theCopy->raw_buffer, raw_buffer, sizeof(screen_char_t) * buffer_size);

@@ -31,7 +31,9 @@
 
 @property(nonatomic, assign) id<PopupDelegate> delegate;
 
-- (instancetype)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
+- (instancetype)initWithWindowNibName:(NSString*)nibName
+                             tablePtr:(NSTableView**)table
+                                model:(PopupModel*)model;
 
 // Call this after initWithWindowNibName:tablePtr:model: if table was nil.
 - (void)setTableView:(NSTableView *)table;
@@ -72,8 +74,6 @@
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
 - (int)convertIndex:(int)i;
 - (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry isSelected:(BOOL)isSelected;
-- (void)windowDidResignKey:(NSNotification *)aNotification;
-- (void)windowDidBecomeKey:(NSNotification *)aNotification;
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
 - (BOOL)_word:(NSString*)temp matchesFilter:(NSString*)filter;
 
