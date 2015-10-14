@@ -8,23 +8,17 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface Coprocess : NSObject {
-    pid_t pid_;  // -1 after termination
-    int outputFd_;
-    int inputFd_;
-    NSMutableData *outputBuffer_;
-    NSMutableData *inputBuffer_;
-    BOOL eof_;
-    BOOL mute_;
-}
+@interface Coprocess : NSObject
 
-@property (nonatomic, assign) pid_t pid;
-@property (nonatomic, assign) int outputFd;  // for writing
-@property (nonatomic, assign) int inputFd;  // for reading
-@property (nonatomic, readonly) NSMutableData *outputBuffer;
-@property (nonatomic, readonly) NSMutableData *inputBuffer;
-@property (nonatomic, assign) BOOL eof;
-@property (nonatomic, assign) BOOL mute;
+@property(nonatomic, assign) pid_t pid;  // -1 after termination
+@property(nonatomic, assign) int outputFd;  // for writing
+@property(nonatomic, assign) int inputFd;  // for reading
+@property(nonatomic, readonly) NSMutableData *outputBuffer;
+@property(nonatomic, readonly) NSMutableData *inputBuffer;
+@property(nonatomic, assign) BOOL eof;
+@property(nonatomic, assign) BOOL mute;
+@property(nonatomic, readonly) int readFileDescriptor;  // for reading
+@property(nonatomic, readonly) int writeFileDescriptor;  // for writing
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command;
 
@@ -44,7 +38,5 @@
 - (BOOL)wantToWrite;
 - (void)mainProcessDidTerminate;
 - (void)terminate;
-@property (readonly) int readFileDescriptor;  // for reading
-@property (readonly) int writeFileDescriptor;  // for writing
 
 @end

@@ -278,7 +278,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     NSMutableArray *results = [NSMutableArray array];
     more_ = [textViewDataSource_ continueFindAllResults:results inContext:findContext_];
     for (SearchResult *result in results) {
-        [self _emitResultFromX:result->startX absY:result->absStartY toX:result->endX absY:result->absEndY];
+        [self _emitResultFromX:result.startX absY:result.absStartY toX:result.endX absY:result.absEndY];
     }
     // TODO Test this! It used to use the deprecated API.
     return results.count;

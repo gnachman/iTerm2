@@ -15,18 +15,13 @@
 // key-value coding and can be sorted by the columns relevant to
 // BookmarkListView.
 @interface ProfileModelWrapper : NSObject
-{
-    ProfileModel* underlyingModel;
-    NSMutableArray* bookmarks;
-    NSMutableString* filter;
-    NSArray* sortDescriptors;
-}
 
 // This guid will always appear in the model even if it doesn't match the filter.
 @property(nonatomic, copy) NSString *lockedGuid;
+@property(nonatomic, copy) NSArray *sortDescriptors;
+@property(nonatomic, readonly) int numberOfBookmarks;  // Filtered bookmarks only
 
 - (instancetype)initWithModel:(ProfileModel*)model;
-@property (copy) NSArray *sortDescriptors;
 
 // Cause the underlying model to have the visible bookmarks in the same order as
 // they appear here. Only bookmarks matching the filter are pushed.
@@ -36,7 +31,6 @@
 - (void)sort;
 
 // These functions take the filter (set with setFilter) into account with respect to indices.
-@property (readonly) int numberOfBookmarks;
 - (ProfileTableRow*)profileTableRowAtIndex:(int)index;
 - (Profile*)profileAtIndex:(int)index;
 - (int)indexOfProfileWithGuid:(NSString*)guid;

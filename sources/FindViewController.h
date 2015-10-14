@@ -78,7 +78,7 @@
 
 
 @interface FindViewController : NSViewController <NSTextFieldDelegate>
-- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
+
 - (void)close;
 - (void)open;
 - (void)makeVisible;

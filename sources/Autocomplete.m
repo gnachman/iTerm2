@@ -492,10 +492,10 @@ const int kMaxResultContextWords = 4;
             ++n;
             SearchResult* result = [findResults_ objectAtIndex:0];
 
-            startX = result->startX;
-            startY = result->absStartY - [screen totalScrollbackOverflow];
-            endX = result->endX;
-            endY = result->absEndY - [screen totalScrollbackOverflow];
+            startX = result.startX;
+            startY = result.absStartY - [screen totalScrollbackOverflow];
+            endX = result.endX;
+            endY = result.absEndY - [screen totalScrollbackOverflow];
 
             [findResults_ removeObjectAtIndex:0];
 

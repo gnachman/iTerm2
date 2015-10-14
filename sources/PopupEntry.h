@@ -10,10 +10,11 @@
 
 @interface PopupEntry : NSObject
 
+@property(nonatomic, assign) double score;
+@property(nonatomic, copy) NSString *prefix;
+@property(nonatomic, copy) NSString *mainValue;
+
 + (PopupEntry*)entryWithString:(NSString*)s score:(double)score;
-@property double score;
-@property (copy) NSString *prefix;
-@property (copy) NSString *mainValue;
 - (BOOL)isEqual:(id)o;
 - (NSComparisonResult)compare:(id)otherObject;
 // Update the hit multiplier for a new hit and return its new value

@@ -21,19 +21,7 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
     NotFound
 };
 
-@interface FindContext : NSObject {
-    int absBlockNum_;
-    NSString* substring_;
-    FindOptions options_;
-    int dir_;
-    int offset_;
-    int stopAt_;
-    FindContextStatus status_;
-    int matchLength_;
-    NSMutableArray* results_;
-    BOOL hasWrapped_;
-    NSTimeInterval maxTime_;
-};
+@interface FindContext : NSObject
 
 // Current absolute block number being searched.
 @property(nonatomic, assign) int absBlockNum;

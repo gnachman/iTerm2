@@ -1,9 +1,11 @@
 #import "EquivalenceClassSet.h"
 
-@implementation EquivalenceClassSet
+@implementation EquivalenceClassSet {
+    NSMutableDictionary *index_;
+    NSMutableDictionary *classes_;
+}
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         index_ = [[NSMutableDictionary alloc] init];

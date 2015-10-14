@@ -58,8 +58,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     return [[[TmuxWindowOpener alloc] init] autorelease];
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         histories_ = [[NSMutableDictionary alloc] init];

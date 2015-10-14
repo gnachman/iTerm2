@@ -36,14 +36,14 @@
 
 @interface PTYWindow : NSWindow
 
+@property(nonatomic, readonly) int screenNumber;
+@property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
+
 - (void)smartLayout;
 - (void)setLayoutDone;
 
 - (void)enableBlur:(double)radius;
 - (void)disableBlur;
-
-@property (readonly) int screenNumber;
-@property (readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
 
 - (void)setRestoreState:(NSObject *)restoreState;
 

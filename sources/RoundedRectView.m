@@ -10,8 +10,7 @@
 
 @implementation RoundedRectView
 
-- (instancetype)initWithFrame:(NSRect)frame
-{
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         // TODO(georgen): Make these values settable

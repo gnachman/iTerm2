@@ -35,6 +35,21 @@ extern NSString *kCoprocessStatusChangeNotification;
 @property(atomic, assign) BOOL isCoprocessOnly;
 @property(atomic, readonly) BOOL coprocessOnlyTaskIsDead;
 
+@property(atomic, readonly) int fd;
+@property(atomic, readonly) pid_t pid;
+@property(atomic, readonly) int status;
+@property(atomic, readonly) NSString *tty;
+@property(atomic, readonly) NSString *path;
+@property(atomic, readonly) NSString *getWorkingDirectory;
+@property(atomic, readonly) NSString *description;
+@property(atomic, readonly) BOOL logging;
+@property(atomic, readonly) BOOL hasOutput;
+@property(atomic, readonly) BOOL wantsRead;
+@property(atomic, readonly) BOOL wantsWrite;
+@property(atomic, retain) Coprocess *coprocess;
+@property(atomic, readonly) BOOL writeBufferHasRoom;
+@property(atomic, readonly) BOOL hasCoprocess;
+
 - (instancetype)init;
 - (BOOL)hasBrokenPipe;
 - (NSString *)command;
@@ -53,28 +68,13 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)setWidth:(int)width height:(int)height;
 - (void)stop;
 
-@property (readonly) int fd;
-@property (readonly) pid_t pid;
-@property (readonly) int status;
-@property (readonly, copy) NSString *tty;
-@property (readonly, copy) NSString *path;
-@property (readonly, copy) NSString *getWorkingDirectory;
-@property (readonly, copy) NSString *description;
 
 - (BOOL)startLoggingToFileWithPath:(NSString*)path shouldAppend:(BOOL)shouldAppend;
 - (void)stopLogging;
-@property (readonly) BOOL logging;
-@property (readonly) BOOL hasOutput;
-
-@property (readonly) BOOL wantsRead;
-@property (readonly) BOOL wantsWrite;
 - (void)brokenPipe;
 - (void)processRead;
 - (void)processWrite;
 
-@property (retain) Coprocess *coprocess;
-@property (readonly) BOOL writeBufferHasRoom;
-@property (readonly) BOOL hasCoprocess;
 - (void)stopCoprocess;
 
 - (void)logData:(const char *)buffer length:(int)length;

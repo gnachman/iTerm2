@@ -28,13 +28,7 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
                                half:(SplitSessionHalf)half;
 @end
 
-@interface SplitSelectionView : NSView {
-    BOOL cancelOnly_;
-    SplitSessionHalf half_;
-    NSTrackingArea *trackingArea_;
-    PTYSession *session_;  // weak
-    id<SplitSelectionViewDelegate> delegate_;  // weak
-}
+@interface SplitSelectionView : NSView 
 
 @property (nonatomic, assign) BOOL cancelOnly;
 
@@ -45,10 +39,10 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
 // session is the session we overlay.
 // the delegate gets called when a selection is made.
 - (instancetype)initAsCancelOnly:(BOOL)cancelOnly
-             withFrame:(NSRect)frame
-           withSession:(PTYSession *)session
-              delegate:(id<SplitSelectionViewDelegate>)delegate
-                  move:(BOOL)move;
+                       withFrame:(NSRect)frame
+                     withSession:(PTYSession *)session
+                        delegate:(id<SplitSelectionViewDelegate>)delegate
+                            move:(BOOL)move;
 
 // Update the selected half for a drag at the given point
 - (void)updateAtPoint:(NSPoint)point;

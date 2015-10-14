@@ -33,8 +33,7 @@
 @synthesize size;
 @synthesize baseline;
 
-- (instancetype)initWithSize:(NSSize)s baseline:(double)b
-{
+- (instancetype)initWithSize:(NSSize)s baseline:(double)b {
     self = [super init];
     if (self) {
         size = s;

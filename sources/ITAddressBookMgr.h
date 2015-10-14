@@ -223,7 +223,7 @@ typedef enum {
     WINDOW_TYPE_TOP_PARTIAL = 9,
     WINDOW_TYPE_LEFT_PARTIAL = 10,
     WINDOW_TYPE_RIGHT_PARTIAL = 11,
-    
+
     WINDOW_TYPE_NO_TITLE_BAR = 12,
 } iTermWindowType;
 
@@ -234,17 +234,6 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
 };
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
-{
-    NSNetServiceBrowser *sshBonjourBrowser;
-    NSNetServiceBrowser *ftpBonjourBrowser;
-    NSNetServiceBrowser *telnetBonjourBrowser;
-    NSMutableArray *bonjourServices;
-}
-
-
-@end
-
-@interface ITAddressBookMgr (Private)
 
 + (id)sharedInstance;
 + (NSDictionary*)encodeColor:(NSColor*)origColor;
@@ -253,29 +242,12 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
 + (NSString *)shellLauncherCommand;
 // Login command that leaves you in your home directory.
 + (NSString *)standardLoginCommand;
-
-- (instancetype)init;
-- (void) locateBonjourServices;
-- (void)stopLocatingBonjourServices;
-- (void)copyProfileToBookmark:(NSMutableDictionary *)dict;
-- (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)array;
-
-// These two are deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
 + (NSFont *)fontWithDesc:(NSString *)fontDesc;
+
+// This is deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
 + (NSString*)descFromFont:(NSFont*)font;
-- (void)setBookmarks:(NSArray*)newBookmarksArray defaultGuid:(NSString*)guid;
-- (ProfileModel*)model;
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didFindService:(NSNetService *)aNetService moreComing:(BOOL)moreComing;
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing;
-- (void)netServiceDidResolveAddress:(NSNetService *)sender;
-- (void)netService:(NSNetService *)aNetService didNotResolve:(NSDictionary *)errorDict;
-- (void)netServiceWillResolve:(NSNetService *)aNetService;
-- (void)netServiceDidStop:(NSNetService *)aNetService;
-- (NSString*) getBonjourServiceType:(NSString*)aType;
-+ (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
-							forObjectType:(iTermObjectType)objectType;
 + (NSString*)bookmarkCommand:(Profile*)bookmark
-			   forObjectType:(iTermObjectType)objectType;
+               forObjectType:(iTermObjectType)objectType;
 + (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark
                         forObjectType:(iTermObjectType)objectType;
 

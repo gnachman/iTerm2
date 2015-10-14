@@ -35,14 +35,15 @@ extern NSString *kSemanticHistoryCoprocessAction;
 
 @interface iTermSemanticHistoryPrefsController : NSObject
 
-@property (nonatomic, copy) NSString *guid;
-@property (nonatomic, assign) IBOutlet id<iTermSemanticHistoryPrefsControllerDelegate> delegate;
+@property(nonatomic, copy) NSString *guid;
+@property(nonatomic, assign) IBOutlet id<iTermSemanticHistoryPrefsControllerDelegate> delegate;
+@property(nonatomic, readonly) NSDictionary *prefs;
 
 + (NSString *)bestEditor;
 + (NSString *)schemeForEditor:(NSString *)editor;
 + (BOOL)bundleIdIsEditor:(NSString *)bundleId;
+
 - (IBAction)actionChanged:(id)sender;
-@property (readonly) NSDictionary *prefs;
 - (void)setEnabled:(BOOL)enabled;
 
 @end

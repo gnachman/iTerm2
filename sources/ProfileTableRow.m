@@ -8,10 +8,13 @@
 #import "ProfileTableRow.h"
 #import "ITAddressBookMgr.h"
 
-@implementation ProfileTableRow
+@implementation ProfileTableRow {
+    NSString* guid;
+    ProfileModel* underlyingModel;
+}
 
-- (instancetype)initWithBookmark:(Profile*)bookmark underlyingModel:(ProfileModel*)newUnderlyingModel
-{
+- (instancetype)initWithBookmark:(Profile*)bookmark
+                 underlyingModel:(ProfileModel*)newUnderlyingModel {
     self = [super init];
     if (self) {
         guid = [[bookmark objectForKey:KEY_GUID] retain];

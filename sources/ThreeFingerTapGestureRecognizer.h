@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface ThreeFingerTapGestureRecognizer : NSObject 
+@interface ThreeFingerTapGestureRecognizer : NSObject
 
 // This is the designated initializer. On a three-finger tap, the selector will be performed on
 // target. The target is not retained. The selector will take one argument, an NSEvent corresponding

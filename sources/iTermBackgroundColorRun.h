@@ -9,8 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "ScreenChar.h"
 
-@class iTermTextExtractor;
 @class iTermBoxedBackgroundColorRun;
+@class iTermTextExtractor;
 
 typedef struct {
     NSRange range;
@@ -42,7 +42,6 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 // Line number to draw at (row - scrollbackOverflow)
 @property(nonatomic, assign) int line;
 
-// Array of iTermBoxedBackgroundColorRun objects.
 @property(nonatomic, retain) NSArray<iTermBoxedBackgroundColorRun*> *array;
 
 // Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.

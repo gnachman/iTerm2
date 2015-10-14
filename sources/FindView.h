@@ -27,9 +27,5 @@
 
 #import <Cocoa/Cocoa.h>
 
-
 @interface FindView : NSView
-
-- (void)drawRect:(NSRect)rect;
-
 @end

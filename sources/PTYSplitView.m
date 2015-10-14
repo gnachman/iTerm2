@@ -11,15 +11,7 @@
 
 @implementation PTYSplitView
 
-- (id<PTYSplitViewDelegate>)delegate
-{
-    return (NSObject<PTYSplitViewDelegate> *) [super delegate];
-}
-
-- (void)setDelegate:(id<PTYSplitViewDelegate>)delegate
-{
-    [super setDelegate:delegate];
-}
+@dynamic delegate;
 
 - (NSColor *)dividerColor {
     iTermPreferencesTabStyle preferredStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];

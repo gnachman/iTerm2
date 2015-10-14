@@ -8,14 +8,11 @@
 #import <Cocoa/Cocoa.h>
 
 @interface SolidColorView : NSView
-{
-    NSColor* color_;
-    BOOL isFlipped_;
-}
+
+@property(nonatomic, retain) NSColor *color;
 
 - (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color;
 - (void)drawRect:(NSRect)dirtyRect;
-@property (nonatomic, retain) NSColor *color;
 - (void)setFlipped:(BOOL)value;
 
 @end

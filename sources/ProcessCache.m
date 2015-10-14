@@ -86,8 +86,7 @@ NSString *PID_INFO_NAME = @"name";
     // The analyzer flags this as a leak but it's really just a singleton.
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         pidInfoCache_ = [[NSMutableDictionary alloc] init];

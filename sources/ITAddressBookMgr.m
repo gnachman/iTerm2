@@ -49,11 +49,13 @@
 @end
 
 @implementation ITAddressBookMgr {
-  SCEvents *_events;
+    SCEvents *_events;
+    NSNetServiceBrowser *sshBonjourBrowser;
+    NSNetServiceBrowser *ftpBonjourBrowser;
+    NSNetServiceBrowser *telnetBonjourBrowser;
+    NSMutableArray *bonjourServices;
 }
-
-+ (id)sharedInstance
-{
++ (id)sharedInstance {
     static ITAddressBookMgr* shared = nil;
 
     if (!shared) {
@@ -63,8 +65,7 @@
     return shared;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];

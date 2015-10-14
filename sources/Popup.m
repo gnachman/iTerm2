@@ -43,8 +43,7 @@
     BOOL reloading_;
 }
 
-- (instancetype)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model
-{
+- (instancetype)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model {
     self = [super initWithWindowNibName:nibName];
     if (self) {
         [self window];

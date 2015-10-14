@@ -14,6 +14,6 @@
 @property(nonatomic, copy) Profile *profile;
 
 // An array of keys that may be changed in self.profile. All take string values.
-@property (readonly) NSArray<NSString*> *allKeys;
+@property(nonatomic, readonly) NSArray<NSString *> *allKeys;
 
 @end

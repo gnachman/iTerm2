@@ -2109,10 +2109,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                    inContext:ctx]);
     XCTAssert(results.count == 1);
     SearchResult *range = results[0];
-    XCTAssert(range->startX == 0);
-    XCTAssert(range->absStartY == 5);
-    XCTAssert(range->endX == 3);
-    XCTAssert(range->absEndY == 5);
+    XCTAssert(range.startX == 0);
+    XCTAssert(range.absStartY == 5);
+    XCTAssert(range.endX == 3);
+    XCTAssert(range.absEndY == 5);
 
     // Make sure there's nothing else to find
     [results removeAllObjects];
@@ -2139,10 +2139,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                    inContext:ctx]);
     XCTAssert(results.count == 1);
     range = results[0];
-    XCTAssert(range->startX == 0);
-    XCTAssert(range->absStartY == 8);
-    XCTAssert(range->endX == 3);
-    XCTAssert(range->absEndY == 8);
+    XCTAssert(range.startX == 0);
+    XCTAssert(range.absStartY == 8);
+    XCTAssert(range.endX == 3);
+    XCTAssert(range.absEndY == 8);
 
     // Make sure there's nothing else to find
     [results removeAllObjects];

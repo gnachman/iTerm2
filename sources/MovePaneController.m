@@ -16,6 +16,12 @@
 @implementation MovePaneController {
     // If set then moving pane; otherwise swapping.
     BOOL isMove_;
+
+    // The session being moved.
+    PTYSession *session_;  // weak
+
+    BOOL dragFailed_;
+    BOOL didSplit_;
 }
 
 @synthesize dragFailed = dragFailed_;

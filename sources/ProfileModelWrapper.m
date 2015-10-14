@@ -7,7 +7,12 @@
 
 #import "ProfileModelWrapper.h"
 
-@implementation ProfileModelWrapper
+@implementation ProfileModelWrapper {
+    ProfileModel* underlyingModel;
+    NSMutableArray* bookmarks;
+    NSMutableString* filter;
+    NSArray* sortDescriptors;
+}
 
 - (instancetype)initWithModel:(ProfileModel*)model
 {

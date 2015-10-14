@@ -39,7 +39,7 @@ static NSString *const kCommandUses = @"use times";  // The name is a historical
     return entry;
 }
 
-- (instancetype)init {
+- (id)init {
     self = [super init];
     if (self) {
         _commandUses = [[NSMutableArray alloc] init];

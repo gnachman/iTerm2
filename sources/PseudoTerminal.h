@@ -101,17 +101,17 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // screen: An index into [NSScreen screens], or -1 to let the system pick a
 //   screen.
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(iTermWindowType)windowType
-          savedWindowType:(iTermWindowType)savedWindowType
-                   screen:(int)screenIndex;
+                         windowType:(iTermWindowType)windowType
+                    savedWindowType:(iTermWindowType)savedWindowType
+                             screen:(int)screenIndex;
 
 // isHotkey indicates if this is a hotkey window, which recieves special
 // treatment and must be unique.
 - (instancetype)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(iTermWindowType)windowType
-          savedWindowType:(iTermWindowType)savedWindowType
-                   screen:(int)screenNumber
-                 isHotkey:(BOOL)isHotkey;
+                         windowType:(iTermWindowType)windowType
+                    savedWindowType:(iTermWindowType)savedWindowType
+                             screen:(int)screenNumber
+                           isHotkey:(BOOL)isHotkey;
 
 // If a PseudoTerminal is created with -init (such as happens with AppleScript)
 // this must be called before it is used.

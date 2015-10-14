@@ -15,6 +15,6 @@ extern NSString *const kProfileLegacyDynamicTag;
 
 // Profile has the tag "Dynamic" or "dynamic" (deprecated) or a tag that begins
 // with "Dynamic/".
-@property (readonly) BOOL profileIsDynamic;
+@property(nonatomic, readonly) BOOL profileIsDynamic;
 
 @end

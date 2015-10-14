@@ -10,16 +10,16 @@
 
 @interface PasteContext : NSObject
 
+@property(nonatomic, assign) int bytesPerCall;
+@property(nonatomic, assign) float delayBetweenCalls;
+@property(nonatomic, assign) BOOL blockAtNewline;
+@property(nonatomic, assign) BOOL isBlocked;
+
 - (instancetype)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
                      defaultValue:(int)bytesPerCallDefault
          delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
                      defaultValue:(float)delayBetweenCallsDefault;
 
-@property(nonatomic, assign) BOOL blockAtNewline;
-@property(nonatomic, assign) BOOL isBlocked;
-
-@property int bytesPerCall;
-@property float delayBetweenCalls;
 - (void)updateValues;
 
 @end

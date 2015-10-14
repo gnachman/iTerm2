@@ -27,8 +27,7 @@
     int _partialCommandLength;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super initWithWindowNibName:@"CommandHistoryPopup"
                                tablePtr:nil
                                   model:[[[PopupModel alloc] init] autorelease]];

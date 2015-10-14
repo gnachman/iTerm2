@@ -14,9 +14,6 @@
 @end
 
 @interface ProfileTableView : NSTableView
-{
-    id<ProfileTableMenuHandler> handler_;
-}
 
 - (void)setMenuHandler:(id<ProfileTableMenuHandler>)handler;
 

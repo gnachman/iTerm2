@@ -7,16 +7,23 @@
 
 #import "SolidColorView.h"
 
-@implementation SolidColorView
+@implementation SolidColorView {
+    BOOL isFlipped_;
+}
+
 @synthesize color = color_;
 
-- (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color
-{
+- (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color {
     self = [super initWithFrame:frame];
     if (self) {
         color_ = [color retain];
     }
     return self;
+}
+
+- (void)dealloc {
+    [color_ release];
+    [super dealloc];
 }
 
 - (NSString *)description {
@@ -48,9 +55,4 @@
     isFlipped_ = value;
 }
 
-- (void)dealloc
-{
-    [color_ release];
-    [super dealloc];
-}
 @end

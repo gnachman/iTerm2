@@ -31,10 +31,14 @@
 #import "DVRIndexEntry.h"
 #include <sys/time.h>
 
-@implementation DVR
+@implementation DVR {
+    DVRBuffer* buffer_;
+    int capacity_;
+    NSMutableArray* decoders_;
+    DVREncoder* encoder_;
+}
 
-- (instancetype)initWithBufferCapacity:(int)bytes
-{
+- (instancetype)initWithBufferCapacity:(int)bytes {
     self = [super init];
     if (self) {
         buffer_ = [DVRBuffer alloc];

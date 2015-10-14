@@ -40,6 +40,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 @property(nonatomic, assign) BOOL ambiguousIsDoubleWidth;
 @property(nonatomic, readonly) NSString *clientName;
 @property(nonatomic, readonly) int sessionId;
+@property(nonatomic, readonly) BOOL hasOutstandingWindowResize;
+@property(nonatomic, readonly, getter=isAttached) BOOL attached;
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName;
 - (void)openWindowsInitial;
@@ -73,7 +75,6 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
 - (void)setClientSize:(NSSize)size;
-@property (readonly) BOOL hasOutstandingWindowResize;
 - (void)windowPane:(int)wp
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
@@ -95,7 +96,6 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)killWindowPane:(int)windowPane;
 - (void)killWindow:(int)window;
 - (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
-@property (readonly, getter=isAttached) BOOL attached;
 - (void)requestDetach;
 - (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName;
 - (void)linkWindowId:(int)windowId

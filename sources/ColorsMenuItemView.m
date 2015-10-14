@@ -26,8 +26,11 @@
 
 #import "ColorsMenuItemView.h"
 
+@interface ColorsMenuItemView()
+@property(nonatomic, retain) NSColor *color;
+@end
+
 @implementation ColorsMenuItemView
-@synthesize color = color_;
 
 const int kNumberOfColors = 8;
 const int kColorAreaOffsetX = 20;
@@ -53,12 +56,16 @@ enum {
     kMenuItemGray = 7
 };
 
+- (void)dealloc {
+    [_color release];
+    [super dealloc];
+}
+
 // Returns the color gradient corresponding to the color index.
-// These colours were chosen to appear similar to those in Aperture 3.
+// These colors were chosen to appear similar to those in Aperture 3.
 // Based on http://cocoatricks.com/2010/07/a-label-color-picker-menu-item-2/
 
-- (NSGradient *)gradientForColorIndex:(NSInteger)colorIndex
-{
+- (NSGradient *)gradientForColorIndex:(NSInteger)colorIndex {
     NSGradient *gradient = nil;
 
     switch (colorIndex) {
@@ -173,28 +180,28 @@ enum {
                 colorIndex >= 0 && colorIndex < kNumberOfColors) {
             switch (colorIndex) {
                 case kMenuItemDefault:
-                    color_ = nil;
+                    self.color = nil;
                     break;
                 case kMenuItemRed:
-                    color_ = [NSColor colorWithDeviceRed:251.0/255.0 green:107.0/255.0 blue:98.0/255.0 alpha:1.0];
+                    self.color = [NSColor colorWithDeviceRed:251.0/255.0 green:107.0/255.0 blue:98.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemOrange:
-                    color_ = [NSColor colorWithDeviceRed:246.0/255.0 green:172.0/255.0 blue:71.0/255.0 alpha:1.0];
+                    self.color = [NSColor colorWithDeviceRed:246.0/255.0 green:172.0/255.0 blue:71.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemYellow:
-                    color_ = [NSColor colorWithDeviceRed:240.0/255.0 green:220.0/255.0 blue:79.0/255.0 alpha:1.0];
+                    self.color = [NSColor colorWithDeviceRed:240.0/255.0 green:220.0/255.0 blue:79.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemGreen:
-                    color_ = [NSColor colorWithDeviceRed:181.0/255.0 green:215.0/255.0 blue:73.0/255.0 alpha:1.0];
+                    self.color = [NSColor colorWithDeviceRed:181.0/255.0 green:215.0/255.0 blue:73.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemBlue:
-                    color_ = [NSColor colorWithDeviceRed:95.0/255.0 green:163.0/255.0 blue:248.0/255.0 alpha:1.0];
+                    self.color = [NSColor colorWithDeviceRed:95.0/255.0 green:163.0/255.0 blue:248.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemPurple:
-                    color_ = [NSColor colorWithDeviceRed:193.0/255.0 green:142.0/255.0 blue:217.0/255.0 alpha:1.0];
+                    self.color = [NSColor colorWithDeviceRed:193.0/255.0 green:142.0/255.0 blue:217.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemGray:
-                    color_ = [NSColor colorWithDeviceRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:1.0];
+                    self.color = [NSColor colorWithDeviceRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:1.0];
                     break;
             }
             // perform the menu action (set the color)

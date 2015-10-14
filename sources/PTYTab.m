@@ -2683,7 +2683,7 @@ static NSString* FormatRect(NSRect r) {
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName
 {
     [tmuxWindowName_ autorelease];
-    tmuxWindowName_ = [tmuxWindowName retain];
+    tmuxWindowName_ = [tmuxWindowName copy];
     [[self realParentWindow] setWindowTitle];
 }
 

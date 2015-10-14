@@ -14,10 +14,10 @@ const int kMaxOutputBufferSize = 1024;
 static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
 @implementation Coprocess {
-  // When this is set, writing is no longer an option (probably because the
-  // coprocess terminated).  This is different than eof_, which indicates that
-  // reading is no longer an option and the coprocess is well and truly dead.
-  BOOL writePipeClosed_;
+    // When this is set, writing is no longer an option (probably because the
+    // coprocess terminated).  This is different than eof_, which indicates that
+    // reading is no longer an option and the coprocess is well and truly dead.
+    BOOL writePipeClosed_;
 }
 
 @synthesize pid = pid_;
@@ -121,8 +121,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
     return result;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         inputBuffer_ = [[NSMutableData alloc] init];

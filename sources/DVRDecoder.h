@@ -31,22 +31,8 @@
 #import "DVRBuffer.h"
 
 @interface DVRDecoder : NSObject
-{
-    // Circular buffer not owned by us.
-    DVRBuffer* buffer_;
 
-    // Most recent frame's metadata.
-    DVRFrameInfo info_;
-
-    // Most recent frame.
-    char* frame_;
-
-    // Length of frame.
-    int length_;
-
-    // Most recent frame's key (not timestamp).
-    long long key_;
-}
+@property(nonatomic, readonly) long long timestamp;
 
 - (instancetype)initWithBuffer:(DVRBuffer*)buffer;
 
@@ -57,7 +43,6 @@
 // Accessors for the most recent frame.
 - (char*)decodedFrame;
 - (int)length;
-@property (readonly) long long timestamp;
 - (DVRFrameInfo)info;
 
 // Advance to next frame.

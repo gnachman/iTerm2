@@ -4137,10 +4137,10 @@ static void SwapInt(int *a, int *b) {
 
                     XYRange* xyrange = [allPositions objectAtIndex:k];
 
-                    result->startX = xyrange->xStart;
-                    result->endX = xyrange->xEnd;
-                    result->absStartY = xyrange->yStart + [self totalScrollbackOverflow];
-                    result->absEndY = xyrange->yEnd + [self totalScrollbackOverflow];
+                    result.startX = xyrange->xStart;
+                    result.endX = xyrange->xEnd;
+                    result.absStartY = xyrange->yStart + [self totalScrollbackOverflow];
+                    result.absEndY = xyrange->yEnd + [self totalScrollbackOverflow];
 
                     [results addObject:result];
                     [result release];

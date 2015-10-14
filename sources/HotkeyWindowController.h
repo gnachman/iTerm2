@@ -30,21 +30,28 @@
 // often ordered out, and ordered-out windows are not saved. This is assigned to when the app state
 // is decoded and updated from saveHotkeyWindowState.
 @property(nonatomic, retain) NSDictionary *restorableState;
+@property(nonatomic, readonly) BOOL rollingInHotkeyTerm;
+@property(nonatomic, readonly, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
+@property(nonatomic, readonly) BOOL haveEventTap;
+@property(nonatomic, readonly) int controlRemapping;
+@property(nonatomic, readonly) int leftOptionRemapping;
+@property(nonatomic, readonly) int rightOptionRemapping;
+@property(nonatomic, readonly) int leftCommandRemapping;
+@property(nonatomic, readonly) int rightCommandRemapping;
+@property(nonatomic, readonly, getter=isAnyModifierRemapped) BOOL anyModifierRemapped;
+
 
 + (instancetype)sharedInstance;
 + (void)closeWindowReturningToHotkeyWindowIfPossible:(NSWindow *)window;
 
-@property (readonly) BOOL rollingInHotkeyTerm;
 - (void)showHotKeyWindow;
 - (void)createHiddenHotkeyWindow;
 - (void)doNotOrderOutWhenHidingHotkeyWindow;
 - (void)fastHideHotKeyWindow;
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm;
-@property (readonly, getter=isHotKeyWindowOpen) BOOL hotKeyWindowOpen;
 - (PseudoTerminal*)hotKeyWindow;
 - (BOOL)eventIsHotkey:(NSEvent*)e;
 - (void)unregisterHotkey;
-@property (readonly) BOOL haveEventTap;
 - (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers;
 - (void)beginRemappingModifiers;
 - (void)stopEventTap;
@@ -55,11 +62,5 @@
 // Updates -restorableState and invalidates the app's restorable state.
 - (void)saveHotkeyWindowState;
 
-@property (readonly) int controlRemapping;
-@property (readonly) int leftOptionRemapping;
-@property (readonly) int rightOptionRemapping;
-@property (readonly) int leftCommandRemapping;
-@property (readonly) int rightCommandRemapping;
-@property (readonly, getter=isAnyModifierRemapped) BOOL anyModifierRemapped;
 
 @end
