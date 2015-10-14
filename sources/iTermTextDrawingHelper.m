@@ -1804,7 +1804,13 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     CRunStorage *storage = [CRunStorage cRunStorageWithCapacity:1];
     // Draw the characters.
-    CRun *run = [self constructTextRuns:&screenChar
+    screen_char_t temp[2];
+    temp[0] = screenChar;
+    memset(temp + 1, 0, sizeof(temp[1]));
+    if (doubleWidth) {
+        temp[1].code = DWC_RIGHT;
+    }
+    CRun *run = [self constructTextRuns:temp
                                     row:row
                                selected:NO
                              indexRange:NSMakeRange(0, 1)

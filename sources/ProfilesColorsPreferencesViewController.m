@@ -146,6 +146,16 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
         colorWell.action = @selector(settingChanged:);
         colorWell.target = self;
         colorWell.continuous = YES;
+        colorWell.willClosePopover = ^() {
+            // NSSearchField remembers who was first responder before it gained
+            // first responder status. That is the popover at this time. When
+            // the app becomes inactive, the search field makes the previous
+            // first responder the new first responder. The search field is not
+            // smart and doesn't realize the popover has been deallocated. So
+            // this changes its conception of who was the previous first
+            // responder and prevents the crash.
+            [self.view.window makeFirstResponder:nil];
+        };
     }
 
     PreferenceInfo *info;
