@@ -14,7 +14,7 @@
 @property(nonatomic, readonly) int currentFrame;
 
 - (instancetype)initWithData:(NSData *)data;
-@property (readonly, strong) NSImage *currentImage;
+@property (readonly) NSImage *currentImage;
 - (NSImage *)imageForFrame:(int)frame;
 
 @end

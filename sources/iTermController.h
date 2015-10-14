@@ -87,7 +87,7 @@
 - (void)saveWindowArrangement:(BOOL)allWindows;
 - (void)loadWindowArrangementWithName:(NSString *)theName;
 
-@property (readonly, strong) PTYSession *sessionWithMostRecentSelection;
+@property (readonly) PTYSession *sessionWithMostRecentSelection;
 
 @property (nonatomic, assign) PseudoTerminal *currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
