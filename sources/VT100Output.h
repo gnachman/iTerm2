@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "VT100GridTypes.h"
 
-typedef enum {
+typedef NS_ENUM(int, MouseButtonNumber) {
     // X11 button number
     MOUSE_BUTTON_LEFT = 0,       // left button
     MOUSE_BUTTON_MIDDLE = 1,     // middle button
@@ -9,7 +9,7 @@ typedef enum {
     MOUSE_BUTTON_NONE = 3,       // no button pressed - for 1000/1005/1015 mode
     MOUSE_BUTTON_SCROLLDOWN = 4, // scroll down
     MOUSE_BUTTON_SCROLLUP = 5    // scroll up
-} MouseButtonNumber;
+};
 
 typedef NS_ENUM(NSInteger, MouseFormat) {
     MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode (limited to 223 rows/cols)

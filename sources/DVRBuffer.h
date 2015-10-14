@@ -39,10 +39,10 @@ enum {
 
 // Types of frames that DVREncoder and DVRDecoder use.
 struct timeval;
-typedef enum {
+typedef NS_ENUM(NSInteger, DVRFrameType) {
     DVRFrameTypeKeyFrame,
     DVRFrameTypeDiffFrame
-} DVRFrameType;
+};
 
 @interface DVRBuffer : NSObject
 
