@@ -53,8 +53,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 // Is Sparkle in the process of restarting us?
 @property(nonatomic, readonly) BOOL sparkleRestarting;
 
-@property (readonly) BOOL useBackgroundPatternIndicator;
-@property (readonly) BOOL warnBeforeMultiLinePaste;
+@property(nonatomic, readonly) BOOL useBackgroundPatternIndicator;
+@property(nonatomic, readonly) BOOL warnBeforeMultiLinePaste;
 
 - (void)awakeFromNib;
 

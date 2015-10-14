@@ -41,8 +41,6 @@ static NSString *kCommandIsLastInList = @"lastInList";
     // set.
     BOOL disconnected_;
 
-    id<TmuxGatewayDelegate> delegate_;  // weak
-
     // Data from parsing an incoming command
     ControlCommand command_;
 

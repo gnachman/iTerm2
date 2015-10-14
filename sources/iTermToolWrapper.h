@@ -56,10 +56,10 @@
 
 @interface iTermToolWrapper : NSView
 
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, readonly) __weak NSView *container;
-@property (nonatomic, assign) id<ToolWrapperDelegate> delegate;
-@property (nonatomic, readonly) id<ToolbeltTool> tool;
+@property(nonatomic, copy) NSString *name;
+@property(nonatomic, readonly) __weak NSView *container;
+@property(nonatomic, assign) id<ToolWrapperDelegate> delegate;
+@property(nonatomic, readonly) id<ToolbeltTool> tool;
 
 - (void)relayout;
 - (void)removeToolSubviews;

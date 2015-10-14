@@ -7,11 +7,11 @@
 // Negative locations have special meaning. Don't use them.
 @property(nonatomic, assign) long long location;
 @property(nonatomic, assign) long long length;
+@property(nonatomic, readonly) long long limit;
 
 + (instancetype)intervalWithLocation:(long long)location length:(long long)length;
 + (Interval *)maxInterval;
 // One more than the largest value in the interval.
-@property(nonatomic, readonly) long long limit;
 - (BOOL)intersects:(Interval *)other;
 - (BOOL)isEqualToInterval:(Interval *)interval;
 
@@ -50,10 +50,7 @@
 
 @end
 
-@interface IntervalTree : NSObject <AATreeDelegate> {
-    AATree *_tree;
-    int _count;
-}
+@interface IntervalTree : NSObject <AATreeDelegate>
 
 @property(nonatomic, readonly) NSInteger count;
 @property(nonatomic, readonly) NSString *debugString;

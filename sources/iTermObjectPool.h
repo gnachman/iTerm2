@@ -56,10 +56,10 @@
 
 @interface iTermObjectPool : NSObject
 
+@property(nonatomic, readonly) iTermPooledObject *pooledObject;
+
 - (instancetype)initWithClass:(Class)theClass
         collections:(int)numCollections
       objectsPerCollection:(int)objectsPerCollection;
-
-@property(nonatomic, readonly) iTermPooledObject *pooledObject;
 
 @end

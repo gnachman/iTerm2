@@ -307,7 +307,10 @@ static NSString *const kIntervalLengthKey = @"Length";
 
 @end
 
-@implementation IntervalTree
+@implementation IntervalTree {
+    AATree *_tree;
+    int _count;
+}
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [self init];

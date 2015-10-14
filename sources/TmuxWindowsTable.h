@@ -26,7 +26,7 @@ extern NSString *kWindowPasteboardType;
 
 @end
 
-@interface TmuxWindowsTable : NSObject <NSTableViewDelegate, NSTableViewDataSource> 
+@interface TmuxWindowsTable : NSObject <NSTableViewDelegate, NSTableViewDataSource>
 
 @property (nonatomic, assign) id<TmuxWindowsTableProtocol> delegate;
 

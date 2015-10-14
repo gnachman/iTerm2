@@ -26,7 +26,6 @@
 
 @interface IntervalMap : NSObject 
 
-- (instancetype)init;
 - (void)setObject:(id)object forRange:(IntRange *)range;
 - (void)incrementNumbersBy:(int)amount inRange:(IntRange *)range;
 - (NSArray *)allValues;

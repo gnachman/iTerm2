@@ -15,14 +15,14 @@
 
 @interface iTermExposeView : NSView <GlobalSearchDelegate>
 
-@property (nonatomic, assign) iTermExposeGridView *grid;
-@property (readonly) NSRect searchFrame;
+@property(nonatomic, assign) iTermExposeGridView *grid;
+@property(nonatomic, readonly) NSRect searchFrame;
 
-- (instancetype)initWithFrame:(NSRect)frameRect;
-- (iTermExposeTabView*)resultView;
-- (PTYSession*)resultSession;
+- (iTermExposeTabView *)resultView;
+- (PTYSession *)resultSession;
 
 #pragma mark GlobalSearchDelegate
+
 - (void)globalSearchSelectionChangedToSession:(PTYSession*)theSession;
 - (void)globalSearchOpenSelection;
 - (void)globalSearchViewDidResize:(NSRect)origSize;

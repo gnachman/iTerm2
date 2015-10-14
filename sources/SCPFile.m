@@ -44,7 +44,7 @@ static NSError *SCPFileError(NSString *description) {
     NSString *_hostName;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _queue = dispatch_queue_create("com.googlecode.iterm2.SCPFile", NULL);

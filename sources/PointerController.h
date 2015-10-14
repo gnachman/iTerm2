@@ -41,8 +41,8 @@
 
 @interface PointerController : NSObject
 
-@property (nonatomic, assign) id<PointerControllerDelegate> delegate;
-@property (nonatomic, readonly) BOOL viewShouldTrackTouches;
+@property(nonatomic, assign) id<PointerControllerDelegate> delegate;
+@property(nonatomic, readonly) BOOL viewShouldTrackTouches;
 
 - (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption;
 - (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches;

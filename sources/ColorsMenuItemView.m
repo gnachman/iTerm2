@@ -56,8 +56,13 @@ enum {
     kMenuItemGray = 7
 };
 
+- (void)dealloc {
+    [_color release];
+    [super dealloc];
+}
+
 // Returns the color gradient corresponding to the color index.
-// These colours were chosen to appear similar to those in Aperture 3.
+// These colors were chosen to appear similar to those in Aperture 3.
 // Based on http://cocoatricks.com/2010/07/a-label-color-picker-menu-item-2/
 
 - (NSGradient *)gradientForColorIndex:(NSInteger)colorIndex {
