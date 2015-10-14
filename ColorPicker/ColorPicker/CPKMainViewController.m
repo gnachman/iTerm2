@@ -58,10 +58,7 @@ static const CGFloat kBottomMargin = 8;
     __weak __typeof(self) weakSelf = self;
     self.rgbView = [[CPKRGBView alloc] initWithFrame:self.view.bounds
                                                block: ^(NSColor *color) {
-                                                   weakSelf.selectedColor = color;
-                                                   weakSelf.controlsView.swatchColor = color;
-                                                   _block(color);
-                                                   [weakSelf.favoritesView selectColor:color];
+                                                   [weakSelf selectColor:color];
                                                }
                                                color:_selectedColor
                                         alphaAllowed:self.alphaAllowed];
@@ -182,6 +179,13 @@ static const CGFloat kBottomMargin = 8;
 - (void)colorPanelDidClose:(NSNotification *)notification {
     [self.controlsView colorPanelDidClose];
     self.colorPanel = nil;
+}
+
+- (void)selectColor:(NSColor *)color {
+    self.selectedColor = color;
+    self.controlsView.swatchColor = color;
+    _block(color);
+    [self.favoritesView selectColor:color];
 }
 
 @end

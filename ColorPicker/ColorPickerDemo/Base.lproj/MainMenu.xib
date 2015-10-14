@@ -16,6 +16,7 @@
             <connections>
                 <outlet property="colorWell" destination="MuN-WJ-BSh" id="4ny-mc-o9u"/>
                 <outlet property="loremIpsum" destination="q6V-rV-d7b" id="IKg-5n-F76"/>
+                <outlet property="nativeColorWell" destination="shh-pD-JOT" id="sEJ-eC-EbT"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
@@ -701,6 +702,10 @@
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
+                    <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="shh-pD-JOT">
+                        <rect key="frame" x="234" y="212" width="44" height="23"/>
+                        <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    </colorWell>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vGh-Vt-M6V" customClass="CPKColorWell">
                         <rect key="frame" x="397" y="313" width="53" height="27"/>
                         <userDefinedRuntimeAttributes>

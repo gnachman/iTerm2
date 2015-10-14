@@ -4,6 +4,7 @@
 @interface AppDelegate ()
 
 @property (weak) IBOutlet NSWindow *window;
+@property (weak) IBOutlet NSColorWell *nativeColorWell;
 @property (nonatomic) CPKMainViewController *viewController;
 @end
 
