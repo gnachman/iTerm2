@@ -27,17 +27,10 @@
 
 @interface TmuxSessionsTable : NSObject <NSTableViewDelegate, NSTableViewDataSource>
 
-@property (nonatomic, assign) id<TmuxSessionsTableProtocol> delegate;
+@property(nonatomic, assign) id<TmuxSessionsTableProtocol> delegate;
+@property(nonatomic, readonly) NSString *selectedSessionName;
 
 - (void)setSessions:(NSArray *)names;
-@property (readonly, copy) NSString *selectedSessionName;
 - (void)selectSessionWithName:(NSString *)name;
-
-#pragma mark Interface Builder actions
-
-- (IBAction)addSession:(id)sender;
-- (IBAction)removeSession:(id)sender;
-- (IBAction)attach:(id)sender;
-- (IBAction)detach:(id)sender;
 
 @end

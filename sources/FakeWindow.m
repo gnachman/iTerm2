@@ -8,7 +8,7 @@
  **
  **  Project: iTerm2
  **
- **  Description: Shell window that takes over for a session during instant 
+ **  Description: Shell window that takes over for a session during instant
  **  replay.
  **
  **  This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@
 @implementation FakeWindow {
     // FakeWindow always has exactly one session.
     PTYSession* session;
-    
+
     // Saved state from old window.
     BOOL isFullScreen;
     BOOL isLionFullScreen;
@@ -41,7 +41,7 @@
     NSRect frame;
     NSScreen* screen;
     NSWindowController<iTermWindowController> * realWindow;
-    
+
     // Changes the session has initiated that will be delayed and performed
     // in -[rejoin:].
     BOOL hasPendingBlurChange;
@@ -54,7 +54,7 @@
     int pendingH;
     BOOL hasPendingSetWindowTitle;
     BOOL hasPendingResetTempTitle;
-    
+
     BOOL scrollbarShouldBeVisible;
 }
 

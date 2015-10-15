@@ -8,10 +8,10 @@
 
 #import "MovingAverage.h"
 
-@implementation MovingAverage
-
-@synthesize alpha = _alpha;
-@synthesize value = _value;
+@implementation MovingAverage {
+    NSTimeInterval _time;  // Time when -startTimer was called, or 0 if stopped.
+    NSTimeInterval _timePaused;  // Time at which -pauseTimer was called.
+}
 
 - (instancetype)init {
     self = [super init];

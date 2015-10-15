@@ -42,7 +42,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 // Line number to draw at (row - scrollbackOverflow)
 @property(nonatomic, assign) int line;
 
-@property(nonatomic, retain) NSArray<iTermBoxedBackgroundColorRun*> *array;
+@property(nonatomic, retain) NSArray<iTermBoxedBackgroundColorRun *> *array;
 
 // Creates a new autoreleased iTermBackgroundColorRunsInLine object that's ready to use.
 // Fills in *anyBlinkPtr with YES if some character in the range is blinking.

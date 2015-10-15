@@ -40,7 +40,7 @@
                      forKey:[self.columns objectAtIndex:i]];
         }
     }
-    
+
     NSNumber *n = [map_ objectForKey:fieldName];
     int i = [n intValue];
     if (n && i < [record count]) {

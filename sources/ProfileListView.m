@@ -62,20 +62,18 @@ const CGFloat kDefaultTagsWidth = 80;
     CGFloat lastTagsWidth_;
 }
 
-- (instancetype)initWithFrame:(NSRect)frameRect
-{
+- (instancetype)initWithFrame:(NSRect)frameRect {
     return [self initWithFrame:frameRect model:[ProfileModel sharedInstance]];
 }
 
 // This is the designated initializer.
-- (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource
-{
+- (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource {
     self = [super initWithFrame:frameRect];
     if (self) {
         margin_ = kInterWidgetMargin;
         [self setUnderlyingDatasource:dataSource];
         debug = NO;
-        
+
         NSRect frame = [self frame];
         NSRect searchFieldFrame;
         searchFieldFrame.origin.x = 0;
@@ -87,7 +85,7 @@ const CGFloat kDefaultTagsWidth = 80;
         [searchField_ setDelegate:self];
         [self addSubview:searchField_];
         self.delegate = nil;
-        
+
         // Split view ------------------------------------------------------------------------------
         NSRect splitViewFrame = NSMakeRect(0,
                                            0,
@@ -98,7 +96,7 @@ const CGFloat kDefaultTagsWidth = 80;
         splitView_.autoresizesSubviews = NO;
         splitView_.delegate = self;
         [self addSubview:splitView_];
-        
+
         // Scroll view -----------------------------------------------------------------------------
         NSRect scrollViewFrame;
         scrollViewFrame.origin.x = kTagsViewWidth + kInterWidgetMargin;
@@ -107,7 +105,7 @@ const CGFloat kDefaultTagsWidth = 80;
         scrollViewFrame.size.height = splitViewFrame.size.height;
         scrollView_ = [[NSScrollView alloc] initWithFrame:scrollViewFrame];
         [scrollView_ setHasVerticalScroller:YES];
-        
+
         // Table view ------------------------------------------------------------------------------
         NSRect tableViewFrame;
         tableViewFrame.origin.x = 0;
@@ -146,20 +144,20 @@ const CGFloat kDefaultTagsWidth = 80;
         selectedGuids_ = [[NSMutableSet alloc] init];
 
         [tableView_ setDoubleAction:@selector(onDoubleClick:)];
-        
+
         NSTableHeaderView* header = [[[NSTableHeaderView alloc] init] autorelease];
         [tableView_ setHeaderView:header];
         [[tableColumn_ headerCell] setStringValue:@"Profile Name"];
-        
+
         [tableView_ sizeLastColumnToFit];
-        
+
         [searchField_ setArrowHandler:tableView_];
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(dataChangeNotification:)
                                                      name:kReloadAddressBookNotification
                                                    object:nil];
-        
+
         // Tags view -------------------------------------------------------------------------------
         NSRect tagsViewFrame = NSMakeRect(0, 0, kTagsViewWidth, splitViewFrame.size.height);
         lastTagsWidth_ = kDefaultTagsWidth;
@@ -438,7 +436,7 @@ const CGFloat kDefaultTagsWidth = 80;
     }
     if ([sortDescriptors count] > 0) {
         NSSortDescriptor* primarySortDesc = [sortDescriptors objectAtIndex:0];
-        [aTableView setIndicatorImage:([primarySortDesc ascending] ? 
+        [aTableView setIndicatorImage:([primarySortDesc ascending] ?
                                        [NSImage imageNamed:@"NSAscendingSortIndicator"] :
                                        [NSImage imageNamed:@"NSDescendingSortIndicator"])
                         inTableColumn:[aTableView tableColumnWithIdentifier:[primarySortDesc key]]];
@@ -585,8 +583,7 @@ const CGFloat kDefaultTagsWidth = 80;
 }
 
 // Delegate methods
-- (void)tableView:(NSTableView *)aTableView didClickTableColumn:(NSTableColumn *)aTableColumn 
-{
+- (void)tableView:(NSTableView *)aTableView didClickTableColumn:(NSTableColumn *)aTableColumn {
     NSMutableArray* newSortDescriptors = [NSMutableArray arrayWithArray:[tableView_ sortDescriptors]];
     BOOL done = NO;
     BOOL ascending = YES;
@@ -608,7 +605,7 @@ const CGFloat kDefaultTagsWidth = 80;
     if (!done) {
         // This column was not previously sorted. Add it to the head of the array.
         [newSortDescriptors insertObject:[[[NSSortDescriptor alloc] initWithKey:[aTableColumn identifier]
-                                                                      ascending:YES] autorelease] 
+                                                                      ascending:YES] autorelease]
                                  atIndex:0];
     }
     [tableView_ setSortDescriptors:newSortDescriptors];
@@ -659,8 +656,7 @@ const CGFloat kDefaultTagsWidth = 80;
     [self setHasSelection:[selectedGuids_ count] > 0];
 }
 
-- (NSInteger)selectedRow
-{
+- (NSInteger)selectedRow {
     return [tableView_ selectedRow];
 }
 
@@ -696,8 +692,7 @@ const CGFloat kDefaultTagsWidth = 80;
     [self selectRowIndex:theRow];
 }
 
-- (NSInteger)numberOfRows
-{
+- (NSInteger)numberOfRows {
     return [dataSource_ numberOfBookmarks];
 }
 

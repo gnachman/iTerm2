@@ -24,7 +24,7 @@
  * @param aKey				The key the node is bound to.
  * @result					An initialized node.
  */ 
-- (instancetype)initWithData:(id)aDataObject boundToKey:(id)aKey;
+- (id) initWithData:(id)aDataObject boundToKey:(id)aKey;
 
 
 /*!

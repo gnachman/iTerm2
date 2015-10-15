@@ -1,4 +1,3 @@
-
 //
 //  iTermTextDrawingHelper.m
 //  iTerm2

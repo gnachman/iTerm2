@@ -13,7 +13,4 @@
 
 @interface ToolPasteHistory : NSView <ToolbeltTool, NSTableViewDataSource, NSTableViewDelegate>
 
-- (instancetype)initWithFrame:(NSRect)frame;
-- (void)shutdown;
-
 @end

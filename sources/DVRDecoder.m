@@ -45,16 +45,16 @@
 @implementation DVRDecoder {
     // Circular buffer not owned by us.
     DVRBuffer* buffer_;
-    
+
     // Most recent frame's metadata.
     DVRFrameInfo info_;
-    
+
     // Most recent frame.
     char* frame_;
-    
+
     // Length of frame.
     int length_;
-    
+
     // Most recent frame's key (not timestamp).
     long long key_;
 }

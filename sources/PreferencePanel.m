@@ -160,7 +160,7 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
 }
 
 - (instancetype)initWithProfileModel:(ProfileModel*)model
-    editCurrentSessionMode:(BOOL)editCurrentSessionMode {
+              editCurrentSessionMode:(BOOL)editCurrentSessionMode {
     self = [super initWithWindowNibName:@"PreferencePanel"];
     if (self) {
         _profileModel = model;

@@ -29,11 +29,12 @@ typedef NS_ENUM(NSInteger, BookmarkRowIsDefault) {
     IsNotDefault = 2
 };
 
-- (NSNumber *)default;
 @property(nonatomic, readonly) NSString *name;
 @property(nonatomic, readonly) NSString *shortcut;
 @property(nonatomic, readonly) NSString *command;
 @property(nonatomic, readonly) NSString *guid;
+
+- (NSNumber *)default;
 
 @end
 

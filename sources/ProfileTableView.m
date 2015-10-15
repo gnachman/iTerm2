@@ -31,8 +31,7 @@
     [super dealloc];
 }
 
-- (void)setMenuHandler:(id<ProfileTableMenuHandler>)handler
-{
+- (void)setMenuHandler:(id<ProfileTableMenuHandler>)handler {
     handler_ = handler;
 }
 

@@ -9,13 +9,12 @@
 #import "PasteContext.h"
 #import "iTermAdvancedSettingsModel.h"
 
-@implementation PasteContext {
-    NSString *bytesPerCallKey_;
-    NSString *delayBetweenCallsKey_;
-}
+@interface PasteContext ()
+@property(nonatomic, copy) NSString *bytesPerCallKey;
+@property(nonatomic, copy) NSString *delayBetweenCallsKey;
+@end
 
-@synthesize delayBetweenCalls = delayBetweenCalls_;
-@synthesize bytesPerCall = bytesPerCall_;
+@implementation PasteContext
 
 - (instancetype)initWithBytesPerCallPrefKey:(NSString*)bytesPerCallKey
                      defaultValue:(int)bytesPerCallDefault
@@ -24,44 +23,36 @@
 {
     self = [super init];
     if (self) {
-        bytesPerCallKey_ = [bytesPerCallKey copy];
-        bytesPerCall_ = bytesPerCallDefault;
-        delayBetweenCallsKey_ = [delayBetweenCallsKey copy];
-        delayBetweenCalls_ = delayBetweenCallsDefault;
+        _bytesPerCallKey = [bytesPerCallKey copy];
+        _bytesPerCall = bytesPerCallDefault;
+        _delayBetweenCallsKey = [delayBetweenCallsKey copy];
+        _delayBetweenCalls = delayBetweenCallsDefault;
         [self updateValues];
     }
     return self;
 }
 
 - (void)updateValues {
-    if (bytesPerCallKey_ && [[NSUserDefaults standardUserDefaults] objectForKey:bytesPerCallKey_]) {
-        bytesPerCall_ = [[NSUserDefaults standardUserDefaults] integerForKey:bytesPerCallKey_];
+    if (_bytesPerCallKey && [[NSUserDefaults standardUserDefaults] objectForKey:_bytesPerCallKey]) {
+        _bytesPerCall = [[NSUserDefaults standardUserDefaults] integerForKey:_bytesPerCallKey];
     }
-    if (delayBetweenCallsKey_ && [[NSUserDefaults standardUserDefaults] objectForKey:delayBetweenCallsKey_]) {
-        delayBetweenCalls_ = [[NSUserDefaults standardUserDefaults] floatForKey:delayBetweenCallsKey_];
+    if (_delayBetweenCallsKey && [[NSUserDefaults standardUserDefaults] objectForKey:_delayBetweenCallsKey]) {
+        _delayBetweenCalls = [[NSUserDefaults standardUserDefaults] floatForKey:_delayBetweenCallsKey];
     }
-}
-
-- (int)bytesPerCall {
-    return bytesPerCall_;
 }
 
 - (void)setBytesPerCall:(int)newBytesPerCall {
-    bytesPerCall_ = newBytesPerCall;
-    if (bytesPerCallKey_) {
-        [[NSUserDefaults standardUserDefaults] setInteger:bytesPerCall_ forKey:bytesPerCallKey_];
+    _bytesPerCall = newBytesPerCall;
+    if (_bytesPerCallKey) {
+        [[NSUserDefaults standardUserDefaults] setInteger:_bytesPerCall forKey:_bytesPerCallKey];
     }
 }
 
-- (float)delayBetweenCalls {
-    return delayBetweenCalls_;
-}
-
 - (void)setDelayBetweenCalls:(float)newDelayBetweenCalls {
-    delayBetweenCalls_ = newDelayBetweenCalls;
-    if (delayBetweenCallsKey_) {
+    _delayBetweenCalls = newDelayBetweenCalls;
+    if (_delayBetweenCallsKey) {
         [[NSUserDefaults standardUserDefaults] setFloat:newDelayBetweenCalls
-                                                 forKey:delayBetweenCallsKey_];
+                                                 forKey:_delayBetweenCallsKey];
     }
 }
 

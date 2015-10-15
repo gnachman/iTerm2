@@ -62,8 +62,7 @@
     return [iTermAdvancedSettingsModel pasteHistoryMaxOptions];
 }
 
-+ (PasteboardHistory*)sharedInstance
-{
++ (PasteboardHistory*)sharedInstance {
     static PasteboardHistory *instance;
     if (!instance) {
         int maxEntries = [PasteboardHistory maxEntries];
@@ -80,8 +79,7 @@
     return instance;
 }
 
-- (instancetype)initWithMaxEntries:(int)maxEntries
-{
+- (instancetype)initWithMaxEntries:(int)maxEntries {
     self = [super init];
     if (self) {
         maxEntries_ = maxEntries;
@@ -111,8 +109,7 @@
     return entries_;
 }
 
-- (NSDictionary*)_entriesToDict
-{
+- (NSDictionary*)_entriesToDict {
     NSMutableArray *a = [[[NSMutableArray alloc] init] autorelease];
 
     for (PasteboardEntry *entry in entries_) {
@@ -123,8 +120,7 @@
     return [NSDictionary dictionaryWithObject:a forKey:PBHKEY_ENTRIES];
 }
 
-- (void)_addDictToEntries:(NSDictionary*)dict
-{
+- (void)_addDictToEntries:(NSDictionary*)dict {
     NSArray *a = [dict objectForKey:PBHKEY_ENTRIES];
     for (NSDictionary *d in a) {
         double timestamp = [[d objectForKey:PBHKEY_TIMESTAMP] doubleValue];
@@ -205,8 +201,7 @@
     NSTimer *minuteRefreshTimer_;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super initWithWindowNibName:@"PasteboardHistory" tablePtr:nil model:[[[PopupModel alloc] init] autorelease]];
     if (!self) {
         return nil;
@@ -232,8 +227,7 @@
     [self refresh];
 }
 
-- (void)copyFromHistory
-{
+- (void)copyFromHistory {
     [[self unfilteredModel] removeAllObjects];
     for (PasteboardEntry *e in [[PasteboardHistory sharedInstance] entries]) {
         [[self unfilteredModel] addObject:e];
@@ -268,8 +262,7 @@
     [self setDelegate:nil];
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
+- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
     PasteboardEntry *entry = [[self model] objectAtIndex:[self convertIndex:rowIndex]];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
@@ -280,8 +273,7 @@
     }
 }
 
-- (void)rowSelected:(id)sender
-{
+- (void)rowSelected:(id)sender {
     if ([table_ selectedRow] >= 0) {
         PasteboardEntry *entry = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
         NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];

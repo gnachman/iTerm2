@@ -25,6 +25,9 @@ extern NSString *const kProfileSessionNameDidEndEditing;
 
 @property(nonatomic, assign) IBOutlet id<ProfilePreferencesViewControllerDelegate> delegate;
 
+// Size of tab view.
+@property(nonatomic, readonly) NSSize size;
+
 - (void)layoutSubviewsForEditCurrentSessionMode;
 
 - (Profile *)selectedProfile;
@@ -35,9 +38,6 @@ extern NSString *const kProfileSessionNameDidEndEditing;
 
 - (void)changeFont:(id)fontManager;
 - (void)selectGeneralTab;
-
-// Size of tab view.
-@property(nonatomic, readonly) NSSize size;
 
 - (void)openToProfileWithGuid:(NSString *)guid selectGeneralTab:(BOOL)selectGeneralTab;
 

@@ -4316,7 +4316,7 @@ static void SwapInt(int *a, int *b) {
            kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_lastCommandOutputRange],
            kScreenStateShellIntegrationInstalledKey: @(_shellIntegrationInstalled),
            kScreenStateLastCommandMarkKey: _lastCommandMark.guid ?: [NSNull null],
-           kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue,
+           kScreenStatePrimaryGridStateKey: primaryGrid_.dictionaryValue ?: [NSNull null],
            kScreenStateAlternateGridStateKey: primaryGrid_.dictionaryValue ?: [NSNull null],
            kScreenStateNumberOfLinesDroppedKey: @(linesDroppedForBrevity)
            };

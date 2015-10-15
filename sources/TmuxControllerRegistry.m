@@ -24,8 +24,7 @@ NSString *const kTmuxControllerRegistryDidChange = @"kTmuxControllerRegistryDidC
     return instance;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         controllers_ = [[NSMutableDictionary alloc] init];

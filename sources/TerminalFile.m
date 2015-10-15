@@ -27,7 +27,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
     if (self) {
         if (!name) {
             NSSavePanel *panel = [NSSavePanel savePanel];
-            
+
             if ([panel legacyRunModalForDirectory:[self downloadsDirectory] file:@"" types:nil]) {
                 _localPath = [[panel legacyFilename] copy];
                 _filename = [[_localPath lastPathComponent] copy];
@@ -143,7 +143,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
                                  didFinishTransmissionWithError:[self errorWithDescription:@"Failed to write file to disk."]];
         return;
     }
-    
+
     [[FileTransferManager sharedInstance] transferrableFile:self didFinishTransmissionWithError:nil];
     return;
 

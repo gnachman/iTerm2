@@ -32,6 +32,11 @@
 @property(nonatomic, assign) NSRect fullSizeFrame;
 @property(nonatomic, readonly) int index;
 @property(nonatomic, readonly) BOOL wasMaximized;
+@property(nonatomic, assign) NSTrackingRectTag trackingRectTag;
+@property(nonatomic, readonly) PTYTab *tab;
+@property(nonatomic, readonly) NSSize origSize;
+@property(nonatomic, readonly) NSInteger tabIndex;
+@property(nonatomic, readonly) NSInteger windowIndex;
 
 - (instancetype)initWithImage:(NSImage*)image
                         label:(NSString*)label
@@ -43,20 +48,13 @@
                         index:(int)theIndex
                  wasMaximized:(BOOL)wasMaximized;
 
-- (NSRect)imageFrame:(NSSize)thumbSize;
-- (void)drawRect:(NSRect)rect;
-- (void)showLabel;
-- (NSTrackingRectTag)trackingRectTag;
-- (void)setTrackingRectTag:(NSTrackingRectTag)tag;
 - (void)moveToTop;
-- (void)bringTabToFore;
-- (NSInteger)tabIndex;
-- (NSInteger)windowIndex;
-- (void)clear;
 - (void)setWindowIndex:(int)windowIndex tabIndex:(int)tabIndex;
+- (void)clear;
 - (void)setHasResult:(BOOL)hasResult;
-- (NSSize)origSize;
-- (PTYTab*)tab;
+- (void)bringTabToFore;
+- (NSRect)imageFrame:(NSSize)thumbSize;
+- (void)showLabel;
 - (void)onMouseExit;
 - (void)onMouseEnter;
 

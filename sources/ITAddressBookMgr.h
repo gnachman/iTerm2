@@ -206,7 +206,7 @@ typedef enum {
     WINDOW_TYPE_NORMAL = 0,
     WINDOW_TYPE_TRADITIONAL_FULL_SCREEN = 1,  // Pre-Lion fullscreen
     // note: 2 is out of order below
-    
+
     // Type 3 is deprecated and used to be used internally to create a
     // fullscreen window during toggling.
 
@@ -245,7 +245,7 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
 + (NSFont *)fontWithDesc:(NSString *)fontDesc;
 
 // This is deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
-+ (NSString*)descFromFont:(NSFont*)font;
++ (NSString*)descFromFont:(NSFont*)font __attribute__((deprecated));
 + (NSString*)bookmarkCommand:(Profile*)bookmark
                forObjectType:(iTermObjectType)objectType;
 + (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark

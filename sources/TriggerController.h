@@ -14,7 +14,7 @@
 - (void)triggerChanged:(TriggerController *)controller newValue:(NSArray *)value;
 @end
 
-@interface TriggerController : NSWindowController <NSWindowDelegate> 
+@interface TriggerController : NSWindowController <NSWindowDelegate>
 
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic, assign) BOOL hasSelection;

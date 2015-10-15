@@ -657,8 +657,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 - (void)prepareToSearchFor:(NSString*)substring
                 startingAt:(LineBufferPosition *)start
                    options:(FindOptions)options
-               withContext:(FindContext*)context
-{
+               withContext:(FindContext*)context {
     context.substring = substring;
     context.options = options;
     if (options & FindOptBackwards) {

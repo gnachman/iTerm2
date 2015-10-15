@@ -12,7 +12,7 @@
 
 @class TmuxController;
 
-@interface TmuxDashboardController : NSWindowController <TmuxSessionsTableProtocol, TmuxWindowsTableProtocol> 
+@interface TmuxDashboardController : NSWindowController <TmuxSessionsTableProtocol, TmuxWindowsTableProtocol>
 
 + (instancetype)sharedInstance;
 

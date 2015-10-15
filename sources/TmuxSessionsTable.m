@@ -14,7 +14,7 @@ extern NSString *kWindowPasteboardType;
 @implementation TmuxSessionsTable {
     NSMutableArray *model_;
     BOOL canAttachToSelectedSession_;
-    
+
     IBOutlet NSTableColumn *checkColumn_;
     IBOutlet NSTableColumn *nameColumn_;
     IBOutlet NSTableView *tableView_;

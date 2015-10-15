@@ -11,11 +11,6 @@
 #import "iTermToolbeltView.h"
 #import "ProfileListView.h"
 
-@interface ToolProfiles : NSView <ToolbeltTool, ProfileListViewDelegate> {
-    ProfileListView *listView_;
-    NSPopUpButton *popup_;
-}
-
-- (instancetype)initWithFrame:(NSRect)frame;
+@interface ToolProfiles : NSView <ToolbeltTool, ProfileListViewDelegate>
 
 @end

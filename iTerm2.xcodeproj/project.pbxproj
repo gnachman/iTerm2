@@ -624,8 +624,6 @@
 		1DB40A431B1FDC80005B83C7 /* NoColor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DB40A3F1B1FDC75005B83C7 /* NoColor@2x.png */; };
 		1DB40AA11B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */; };
 		1DB40AA21B221028005B83C7 /* iTermNoColorAccessoryButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */; };
-		1DB40AA81B221088005B83C7 /* iTermTwoColorWellsCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AA61B221088005B83C7 /* iTermTwoColorWellsCell.h */; };
-		1DB40AA91B221088005B83C7 /* iTermTwoColorWellsCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AA61B221088005B83C7 /* iTermTwoColorWellsCell.h */; };
 		1DB40AB51B27B577005B83C7 /* PTYTabDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */; };
 		1DB40AB61B27B577005B83C7 /* PTYTabDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */; };
 		1DB67CED14850D53005849A1 /* TmuxWindowOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */; };
@@ -1344,7 +1342,6 @@
 		A6C763471B45C52B00E3C992 /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED99112EDF923005E49ED /* iTermSearchField.m */; };
 		A6C763481B45C52B00E3C992 /* iTermShortcutInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D373E4818F3613600773D3E /* iTermShortcutInputView.m */; };
 		A6C763491B45C52B00E3C992 /* iTermTabBarControlView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */; };
-		A6C7634B1B45C52B00E3C992 /* iTermTwoColorWellsCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB40AA71B221088005B83C7 /* iTermTwoColorWellsCell.m */; };
 		A6C7634C1B45C52B00E3C992 /* PasteView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9116F03E5400B7FCE9 /* PasteView.m */; };
 		A6C7634D1B45C52B00E3C992 /* PTYNoteView.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4099183B3AA7003A6A6D /* PTYNoteView.m */; };
 		A6C7634E1B45C52B00E3C992 /* RoundedRectView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */; };
@@ -1942,8 +1939,6 @@
 		1DB40A3F1B1FDC75005B83C7 /* NoColor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NoColor@2x.png"; path = "images/NoColor@2x.png"; sourceTree = "<group>"; };
 		1DB40A9F1B221028005B83C7 /* iTermNoColorAccessoryButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermNoColorAccessoryButton.h; sourceTree = "<group>"; };
 		1DB40AA01B221028005B83C7 /* iTermNoColorAccessoryButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNoColorAccessoryButton.m; sourceTree = "<group>"; };
-		1DB40AA61B221088005B83C7 /* iTermTwoColorWellsCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTwoColorWellsCell.h; sourceTree = "<group>"; };
-		1DB40AA71B221088005B83C7 /* iTermTwoColorWellsCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermTwoColorWellsCell.m; sourceTree = "<group>"; };
 		1DB40AB41B27B577005B83C7 /* PTYTabDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYTabDelegate.h; sourceTree = "<group>"; };
 		1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowOpener.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxWindowOpener.m; sourceTree = "<group>"; tabWidth = 4; };
@@ -2934,7 +2929,6 @@
 				1DA76A031B30892900CB272A /* iTermTipWindowController.h */,
 				A667F38D1B49FC2E00705186 /* iTermToolbeltSplitView.h */,
 				1DE8DC871415513A00F83147 /* iTermToolbeltView.h */,
-				1DB40AA61B221088005B83C7 /* iTermTwoColorWellsCell.h */,
 				A6E713B818FCCDD1008D94DD /* iTermURLSchemeController.h */,
 				A6099B0318D6B0FD00081FA9 /* iTermWarning.h */,
 				A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */,
@@ -3408,7 +3402,6 @@
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D373E4818F3613600773D3E /* iTermShortcutInputView.m */,
 				A6C537BD1938374600A08C18 /* iTermTabBarControlView.m */,
-				1DB40AA71B221088005B83C7 /* iTermTwoColorWellsCell.m */,
 				1D085F9116F03E5400B7FCE9 /* PasteView.m */,
 				A63F4099183B3AA7003A6A6D /* PTYNoteView.m */,
 				1D085F9D16F137D900B7FCE9 /* RoundedRectView.m */,
@@ -4252,7 +4245,6 @@
 				1D6ED8B619AEA20D005A7799 /* PTYWindow+Scripting.h in Headers */,
 				1D6ED8B719AEA20D005A7799 /* PasswordTrigger.h in Headers */,
 				1D6ED8B819AEA20D005A7799 /* AppearancePreferencesViewController.h in Headers */,
-				1DB40AA91B221088005B83C7 /* iTermTwoColorWellsCell.h in Headers */,
 				1D6ED8B919AEA20D005A7799 /* iTermExposeView.h in Headers */,
 				1D6ED8BA19AEA20D005A7799 /* PasteboardHistory.h in Headers */,
 				1D6ED8BB19AEA20D005A7799 /* NSDateFormatterExtras.h in Headers */,
@@ -4605,7 +4597,6 @@
 				1DA76A061B30892900CB272A /* iTermTipWindowController.h in Headers */,
 				1DF8006F18F34CAB00722B35 /* NSPopUpButton+iTerm.h in Headers */,
 				A69B4585196F8EA100F5444D /* iTermOpenQuicklyWindowController.h in Headers */,
-				1DB40AA81B221088005B83C7 /* iTermTwoColorWellsCell.h in Headers */,
 				A6C7DE52199F3087001E5C75 /* PTYWindow+Scripting.h in Headers */,
 				1D468F041B06A79000226083 /* StopTrigger.h in Headers */,
 				A66A1FA81A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h in Headers */,
@@ -5927,7 +5918,6 @@
 				A6C763C61B45C52B00E3C992 /* VT100State.m in Sources */,
 				A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */,
 				A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */,
-				A6C7634B1B45C52B00E3C992 /* iTermTwoColorWellsCell.m in Sources */,
 				A6C762B51B45C52B00E3C992 /* NSEvent+iTerm.m in Sources */,
 				A6C763E61B45C70100E3C992 /* SCEvents.m in Sources */,
 			);

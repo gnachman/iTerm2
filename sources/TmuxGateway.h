@@ -52,7 +52,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
     CONTROL_COMMAND_NOOP
 };
 
-@interface TmuxGateway : NSObject 
+@interface TmuxGateway : NSObject
 
 // Should all protocol-level input be logged to the gateway's session?
 @property(nonatomic, assign) BOOL tmuxLogging;

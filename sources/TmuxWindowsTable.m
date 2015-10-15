@@ -26,8 +26,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 @synthesize delegate = delegate_;
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         model_ = [[NSMutableArray alloc] init];
@@ -47,8 +46,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [super dealloc];
 }
 
-- (void)setDelegate:(id<TmuxWindowsTableProtocol>)delegate
-{
+- (void)setDelegate:(id<TmuxWindowsTableProtocol>)delegate {
     delegate_ = delegate;
     [delegate_ reloadWindows];
     [self updateEnabledStateOfButtons];
@@ -76,8 +74,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [tableView_ reloadData];
 }
 
-- (NSArray<NSString *> *)names
-{
+- (NSArray<NSString *> *)names {
     NSMutableArray *names = [NSMutableArray array];
     for (NSArray *tuple in model_) {
         [names addObject:[tuple objectAtIndex:0]];
@@ -101,7 +98,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 - (void)reloadData
 {
-	[tableView_ reloadData];
+        [tableView_ reloadData];
 }
 
 #pragma mark Interface Builder actions
@@ -217,12 +214,12 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 - (NSArray *)selectedWindowIdsAsStrings
 {
-	NSArray *ids = [self selectedWindowIds];
+        NSArray *ids = [self selectedWindowIds];
     NSMutableArray *result = [NSMutableArray array];
-	for (NSString *n in ids) {
-		[result addObject:n];
-	}
-	return result;
+        for (NSString *n in ids) {
+                [result addObject:n];
+        }
+        return result;
 }
 
 - (NSArray *)selectedWindowIds

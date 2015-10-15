@@ -33,17 +33,11 @@
 
 @property(nonatomic, assign) BOOL userScroll;
 
-+ (BOOL)isCompatibleWithOverlayScrollers;
-- (void)mouseDown: (NSEvent *)theEvent;
-- (void)trackScrollButtons:(NSEvent *)theEvent;
-- (void)trackKnob:(NSEvent *)theEvent;
-
 @end
 
 @interface PTYScrollView : NSScrollView
 
 - (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller;
-- (void)scrollWheel:(NSEvent *)theEvent;
 - (void)detectUserScroll;
 - (BOOL)isLegacyScroller;
 

@@ -123,8 +123,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                        name:(NSString *)name
                        size:(NSSize)size
                      layout:(NSString *)layout
-                 affinities:(NSArray *)affinities
-{
+                 affinities:(NSSet *)affinities {
     DLog(@"openWindowWithIndex:%d name:%@ affinities:%@", windowIndex, name, affinities);
     NSNumber *n = [NSNumber numberWithInt:windowIndex];
     if ([pendingWindowOpens_ containsObject:n]) {
@@ -232,8 +231,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 }
 
-- (NSArray *)savedAffinitiesForWindow:(int)wid
-{
+- (NSSet<NSObject<NSCopying> *> *)savedAffinitiesForWindow:(int)wid {
     return [affinities_ valuesEqualTo:[NSString stringWithInt:wid]];
 }
 
@@ -1203,10 +1201,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                         object:self.sessions];
 }
 
-- (void)listedWindowsToOpenOne:(NSString *)response forWindowIdAndAffinities:(NSArray *)values
-{
+- (void)listedWindowsToOpenOne:(NSString *)response forWindowIdAndAffinities:(NSArray *)values {
     NSNumber *windowId = [values objectAtIndex:0];
-    NSArray *affinities = [values objectAtIndex:1];
+    NSSet *affinities = [values objectAtIndex:1];
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
     if (!doc) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for list windows request: %@",

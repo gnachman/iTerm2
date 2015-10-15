@@ -27,12 +27,12 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 }
 
 - (instancetype)initWithFrame:(NSRect)frame
-             images:(NSArray*)images
-             labels:(NSArray*)labels
-               tabs:(NSArray*)tabs
-             frames:(NSRect*)frames
-       wasMaximized:(NSArray*)wasMaximized
-           putOnTop:(int)topIndex
+                       images:(NSArray*)images
+                       labels:(NSArray*)labels
+                         tabs:(NSArray*)tabs
+                       frames:(NSRect*)frames
+                 wasMaximized:(NSArray*)wasMaximized
+                     putOnTop:(int)topIndex
 {
     self = [super initWithFrame:frame];
     if (self) {
@@ -45,7 +45,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
         [self setAlphaValue:0];
         [[self animator] setAlphaValue:1];
         const int n = [images count];
-        
+
         iTermExposeTabView* selectedView = nil;
         for (int i = 0; i < n; i++) {
             PTYTab* theTab = [tabs objectAtIndex:i];
@@ -95,7 +95,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     for (iTermExposeTabView* tabView in [self subviews]) {
         [tabView setDirty:YES];
     }
-    
+
     BOOL anythingLeft = NO;
     int w = 0;
     for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
@@ -146,7 +146,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     NSRect origin = [[[theTab realParentWindow] currentTab] absoluteFrame];
     origin.origin.y -= visibleScreenFrame.origin.y;
     origin.origin.x -= visibleScreenFrame.origin.x;
-    
+
     origin.origin.y -= origin.size.height + screenFrame.origin.y + kItermExposeThumbMargin;
     origin.origin.x -= kItermExposeThumbMargin;
     origin.size.width += 2*kItermExposeThumbMargin;
@@ -194,7 +194,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
                                       center.y - origSize.height / 2,
                                       origSize.width,
                                       origSize.height);
-    
+
     // rewrite fullSizeFrame so it fits entirely in visibleScreenFrame and is as
     // large as possible.
     double scale = 1;
@@ -206,19 +206,19 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     }
     fullSizeFrame.size.width = round(fullSizeFrame.size.width * scale);
     fullSizeFrame.size.height  = round(fullSizeFrame.size.height * scale);
-    
+
     fullSizeFrame.origin.x = MAX(fullSizeFrame.origin.x,
                                  visibleScreenFrame.origin.x);
     fullSizeFrame.origin.y = MAX(fullSizeFrame.origin.y,
                                  visibleScreenFrame.origin.y);
-    
+
     if (fullSizeFrame.origin.x + fullSizeFrame.size.width > visibleScreenFrame.origin.x + visibleScreenFrame.size.width) {
         fullSizeFrame.origin.x = (visibleScreenFrame.origin.x + visibleScreenFrame.size.width) - fullSizeFrame.size.width;
     }
     if (fullSizeFrame.origin.y + fullSizeFrame.size.height > visibleScreenFrame.origin.y + visibleScreenFrame.size.height) {
         fullSizeFrame.origin.y = (visibleScreenFrame.origin.y + visibleScreenFrame.size.height) - fullSizeFrame.size.height;
     }
-    
+
     return fullSizeFrame;
 }
 
@@ -234,16 +234,16 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     NSRect tabRect = [self tabOrigin:theTab
                   visibleScreenFrame:visibleScreenFrame
                          screenFrame:screenFrame];
-    
+
     NSSize origSize = [self zoomedSize:tabRect.size
                              thumbSize:dest.size
                            screenFrame:screenFrame];
-    
+
     NSRect fullSizeFrame = [self zoomedFrame:dest
                                         size:origSize
                           visibleScreenFrame:NSMakeRect(0, 0, visibleScreenFrame.size.width, visibleScreenFrame.size.height)];
     //NSLog(@"initial zoomedFrame of %@ in %@ is %@", FormatRect(dest), FormatRect(visibleScreenFrame), FormatRect(fullSizeFrame));
-    
+
     iTermExposeTabView* aView = [[iTermExposeTabView alloc] initWithImage:theImage
                                                                     label:theLabel
                                                                       tab:theTab
@@ -330,7 +330,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     NSRect rect = [aView imageFrame:viewRect.size];
     rect.origin.x += viewRect.origin.x;
     rect.origin.y += viewRect.origin.y;
-    
+
     NSTrackingRectTag oldTag = [aView trackingRectTag];
     if (oldTag) {
         [self removeTrackingRect:oldTag];

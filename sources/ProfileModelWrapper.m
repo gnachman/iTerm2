@@ -14,8 +14,7 @@
     NSArray* sortDescriptors;
 }
 
-- (instancetype)initWithModel:(ProfileModel*)model
-{
+- (instancetype)initWithModel:(ProfileModel*)model {
     self = [super init];
     if (self) {
         underlyingModel = model;

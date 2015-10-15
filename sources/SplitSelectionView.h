@@ -28,7 +28,7 @@ typedef NS_ENUM(NSInteger, SplitSessionHalf) {
                                half:(SplitSessionHalf)half;
 @end
 
-@interface SplitSelectionView : NSView 
+@interface SplitSelectionView : NSView
 
 @property (nonatomic, assign) BOOL cancelOnly;
 

@@ -48,12 +48,11 @@
     [e _setDefaultValues];
     [e setMainValue:s];
     [e setScore:score];
-    
+
     return e;
 }
 
-- (double)advanceHitMult
-{
+- (double)advanceHitMult {
     _hitMultiplier *= 0.8;
     return _hitMultiplier;
 }

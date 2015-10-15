@@ -50,8 +50,9 @@
 
 @interface GlobalSearch : NSViewController <NSTableViewDataSource>
 
+@property(nonatomic, readonly) int numResults;
+
 - (void)setDelegate:(id<GlobalSearchDelegate>)delegate;
-- (int)numResults;
 - (void)abort;
 
 @end

@@ -16,7 +16,7 @@
 
 @end
 
-@interface PasteViewController : NSViewController 
+@interface PasteViewController : NSViewController
 
 @property(nonatomic, assign) id<PasteViewControllerDelegate> delegate;
 @property(nonatomic, assign) int remainingLength;

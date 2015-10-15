@@ -10,9 +10,6 @@
 
 @interface HighlightTrigger : Trigger
 
-@property(nonatomic, readonly) BOOL takesParameter;
-@property(nonatomic, readonly) BOOL paramIsPopupButton;
-
 + (NSString *)title;
 
 @end

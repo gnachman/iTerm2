@@ -34,10 +34,10 @@
 }
 
 - (instancetype)initAsCancelOnly:(BOOL)cancelOnly
-             withFrame:(NSRect)frame
-           withSession:(PTYSession *)session
-              delegate:(id<SplitSelectionViewDelegate>)delegate
-                  move:(BOOL)move {
+                       withFrame:(NSRect)frame
+                     withSession:(PTYSession *)session
+                        delegate:(id<SplitSelectionViewDelegate>)delegate
+                            move:(BOOL)move {
     self = [self initWithFrame:frame];
     if (self) {
         cancelOnly_ = cancelOnly;
