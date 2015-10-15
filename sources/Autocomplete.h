@@ -8,16 +8,12 @@
 
 @interface AutocompleteView : Popup
 
-- (instancetype)init;
-
 - (void)onOpen;
 - (void)refresh;
 - (void)onClose;
 - (void)rowSelected:(id)sender;
 - (void)more;
 - (void)less;
-- (void)_populateMore:(id)sender;
-- (void)_doPopulateMore;
 
 // Add a bunch of CommandHistoryEntry's. 'context' gives the prefix that
 // generated the entries.
