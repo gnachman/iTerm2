@@ -189,27 +189,12 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return [[self title] compare:[other title]];
 }
 
-- (NSInteger)indexOfTag:(NSInteger)theTag
-{
-    return theTag;
-}
-
-- (NSInteger)tagAtIndex:(NSInteger)theIndex
-{
-    return 0;
-}
-
 - (NSInteger)indexForObject:(id)object {
-    return [self indexOfTag:[object intValue]];
+    return [object intValue];
 }
 
 - (id)objectAtIndex:(NSInteger)index {
-    int tag = [self tagAtIndex:index];
-    if (tag < 0) {
-        return nil;
-    } else {
-        return @(tag);
-    }
+    return @(index);
 }
 
 - (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict

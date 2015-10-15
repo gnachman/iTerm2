@@ -35,10 +35,10 @@ enum {
     return YES;
 }
 
-- (NSInteger)indexOfTag:(NSInteger)theTag {
+- (NSInteger)indexForObject:(id)object {
     int i = 0;
     for (NSNumber *n in [self objectsSortedByValueInDict:[self menuItemsForPoupupButton]]) {
-        if ([n intValue] == theTag) {
+        if ([n isEqual:object]) {
             return i;
         }
         i++;
@@ -46,16 +46,16 @@ enum {
     return -1;
 }
 
-- (NSInteger)tagAtIndex:(NSInteger)index {
+- (id)objectAtIndex:(NSInteger)index {
     int i = 0;
 
     for (NSNumber *n in [self objectsSortedByValueInDict:[self menuItemsForPoupupButton]]) {
         if (i == index) {
-            return [n intValue];
+            return n;
         }
         i++;
     }
-    return -1;
+    return nil;
 }
 
 - (NSDictionary *)menuItemsForPoupupButton
@@ -90,7 +90,7 @@ enum {
 }
 
 - (int)defaultIndex {
-    return [self indexOfTag:kBounceTriggerParamTagBounceUntilFocus];
+    return [self indexForObject:@(kBounceTriggerParamTagBounceUntilFocus)];
 }
 
 @end
