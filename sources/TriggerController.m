@@ -354,6 +354,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                                                            0,
                                                            tableColumn.width,
                                                            self.tableView.rowHeight)] autorelease];
+        textField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
         textField.stringValue = triggerDictionary[kTriggerRegexKey] ?: @"";
         textField.editable = YES;
         textField.selectable = YES;
@@ -474,6 +475,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                                                                    0,
                                                                    tableColumn.width,
                                                                    self.tableView.rowHeight)] autorelease];
+                textField.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
                 textField.stringValue = triggerDictionary[kTriggerParameterKey] ?: @"";
                 textField.editable = YES;
                 textField.selectable = YES;
