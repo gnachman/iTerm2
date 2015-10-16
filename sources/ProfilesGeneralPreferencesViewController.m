@@ -107,7 +107,7 @@ static const NSInteger kInitialDirectoryTypeAdvancedTag = 3;
                  update:^BOOL { [self updateCommandType]; return YES; }];
     
     info = [self defineControl:_customCommand
-                           key:KEY_COMMAND
+                           key:KEY_COMMAND_LINE
                           type:kPreferenceInfoTypeStringTextField];
     info.shouldBeEnabled = ^BOOL {
         return [_commandType.selectedCell tag] == kCommandTypeCustomTag;

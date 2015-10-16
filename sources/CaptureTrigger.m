@@ -9,9 +9,9 @@
 #import "CaptureTrigger.h"
 
 #import "CapturedOutput.h"
-#import "CommandHistory.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermShellHistoryController.h"
 #import "iTermToolbeltView.h"
 #import "PTYSession.h"
 #import "PTYTab.h"

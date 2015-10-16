@@ -1,17 +1,17 @@
 #include <wctype.h>
 #import "Autocomplete.h"
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
+#import "iTermAdvancedSettingsModel.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
+#import "iTermController.h"
+#import "iTermShellHistoryController.h"
+#import "iTermTextExtractor.h"
 #import "LineBuffer.h"
-#import "PTYTextView.h"
 #import "PasteboardHistory.h"
 #import "PopupModel.h"
+#import "PTYTextView.h"
 #import "SearchResult.h"
 #import "VT100Screen.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermController.h"
-#import "iTermTextExtractor.h"
-#import "iTermAdvancedSettingsModel.h"
 
 #define AcLog DLog
 
@@ -661,10 +661,11 @@ const int kMaxResultContextWords = 4;
     [self reloadData:YES];
 }
 
-- (void)addCommandEntries:(NSArray *)entries context:(NSString *)context {
+- (void)addCommandEntries:(NSArray<iTermCommandHistoryEntryMO *> *)entries
+                  context:(NSString *)context {
     int i = 0;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    for (CommandHistoryEntry *entry in entries) {
+    for (iTermCommandHistoryEntryMO *entry in entries) {
         if (![entry.command hasPrefix:context]) {
             continue;
         }
@@ -684,10 +685,10 @@ const int kMaxResultContextWords = 4;
                                           word:command];
         
         // Boost the score for more uses of the command
-        score *= sqrt(entry.uses);
+        score *= sqrt(entry.numberOfUses.integerValue);
         
         // Divide the score by sqrt(the number of days since last use).
-        NSTimeInterval timeSinceLastUse = now - entry.lastUsed;
+        NSTimeInterval timeSinceLastUse = now - entry.timeOfLastUse.doubleValue;
         score /= MAX(1, sqrt(timeSinceLastUse / (24 * 60 * 60.0)));
         
         score = MIN(10, score);  // Limit score of commands so really relevant context has a chance.

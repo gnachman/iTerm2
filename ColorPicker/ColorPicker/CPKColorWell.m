@@ -5,9 +5,11 @@
 @protocol CPKColorWellViewDelegate
 @property(nonatomic, readonly) void (^willOpenPopover)();
 @property(nonatomic, readonly) void (^willClosePopover)();
+
 - (NSRect)presentationRect;
 - (NSView *)presentingView;
 - (BOOL)isContinuous;
+- (void)colorChangedByDrag:(NSColor *)color;
 @end
 
 /** This really should be an NSCell. It provides the implementation of the CPKColorWell. */
@@ -26,7 +28,7 @@
 
 @end
 
-@interface CPKColorWellView() <NSPopoverDelegate>
+@interface CPKColorWellView() <NSDraggingDestination, NSDraggingSource, NSPopoverDelegate>
 @property(nonatomic) BOOL open;
 @property(nonatomic) CPKPopover *popover;
 @property(nonatomic, copy) void (^willClosePopover)(NSColor *);
@@ -41,6 +43,26 @@
 
 @implementation CPKColorWellView
 
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        [self colorWellViewCommonInit];
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        [self colorWellViewCommonInit];
+    }
+    return self;
+}
+
+- (void)colorWellViewCommonInit {
+    [self registerForDraggedTypes:@[ NSPasteboardTypeColor ]];
+}
+
 - (void)awakeFromNib {
     self.cornerRadius = 3;
     self.open = NO;
@@ -48,10 +70,90 @@
 
 // Use mouseDown so this will work in a NSTableView.
 - (void)mouseDown:(NSEvent *)theEvent {
-    if (!_disabled && !self.open && theEvent.clickCount == 1) {
+    if (!self.delegate.isContinuous && theEvent.clickCount == 1) {
+        [self openPopOver];
+    }
+}
+
+- (void)mouseUp:(NSEvent *)theEvent {
+    if (self.delegate.isContinuous && theEvent.clickCount == 1) {
+        [self openPopOver];
+    }
+}
+
+- (void)openPopOver {
+    if (!_disabled && !self.open) {
         [self openPopOverRelativeToRect:_delegate.presentationRect
                                  ofView:_delegate.presentingView];
     }
+}
+
+- (void)mouseDragged:(NSEvent *)theEvent {
+    NSColor *color = self.selectedColor ?: [NSColor clearColor];
+    NSDraggingItem *dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter:color];
+
+    dragItem.imageComponentsProvider = ^NSArray<NSDraggingImageComponent *> *(void) {
+        NSDraggingImageComponent *imageComponent =
+            [NSDraggingImageComponent draggingImageComponentWithKey:NSDraggingImageComponentIconKey];
+
+        NSImage *snapshot = [[NSImage alloc] initWithSize:self.frame.size];
+        [snapshot lockFocus];
+        [self drawRect:self.bounds];
+        [snapshot unlockFocus];
+
+        imageComponent.contents = snapshot;
+        imageComponent.frame = self.bounds;
+
+        return @[ imageComponent ];
+    };
+    [self beginDraggingSessionWithItems:@[ dragItem ]
+                                  event:theEvent
+                                 source:self];
+}
+
+#pragma mark - NSDraggingDestination
+
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
+    __block NSDragOperation operation = NSDragOperationNone;
+    [sender enumerateDraggingItemsWithOptions:0
+                                      forView:self
+                                      classes:@[ [NSColor class] ]
+                                searchOptions:@{}
+                                   usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+                                       NSColor *color = draggingItem.item;
+                                       if (color) {
+                                           operation = NSDragOperationGeneric;
+                                           *stop = YES;
+                                       }
+                                   }];
+    return operation;
+}
+
+- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender {
+    __block BOOL ok = NO;
+    [sender enumerateDraggingItemsWithOptions:0
+                                      forView:self
+                                      classes:@[ [NSColor class] ]
+                                searchOptions:@{}
+                                   usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+                                       NSColor *color = draggingItem.item;
+                                       if (color) {
+                                           self.popover.selectedColor = color;
+                                           self.selectedColor = color;
+                                           [self.delegate colorChangedByDrag:color];
+
+                                           ok = YES;
+                                           *stop = YES;
+                                       }
+                                   }];
+    return ok;
+}
+
+
+#pragma mark - NSDraggingSource
+
+- (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    return NSDragOperationGeneric;
 }
 
 - (void)openPopOverRelativeToRect:(NSRect)presentationRect ofView:(NSView *)presentingView {
@@ -60,11 +162,11 @@
     self.popover =
         [CPKPopover presentRelativeToRect:presentationRect
                                    ofView:presentingView
-                            preferredEdge:CGRectMinYEdge
+                            preferredEdge:NSRectEdgeMinY
                              initialColor:self.color
                              alphaAllowed:self.alphaAllowed
                        selectionDidChange:^(NSColor *color) {
-                           self.selectedColor = color;
+                           weakSelf.selectedColor = color;
                            if (weakSelf.delegate.isContinuous) {
                                weakSelf.color = color;
                                if (weakSelf.colorDidChange) {
@@ -78,6 +180,7 @@
         if (weakSelf.willClosePopover) {
             weakSelf.willClosePopover(weakSelf.color);
         }
+        weakSelf.color = weakSelf.selectedColor;
         weakSelf.open = NO;
         weakSelf.popover = nil;
     };
@@ -190,6 +293,11 @@
 
 - (NSView *)presentingView {
   return self;
+}
+
+- (void)colorChangedByDrag:(NSColor *)color {
+    [self setColor:color];
+    [self sendAction:self.action to:self.target];
 }
 
 @end

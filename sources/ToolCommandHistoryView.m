@@ -7,8 +7,9 @@
 //
 
 #import "ToolCommandHistoryView.h"
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
+
+#import "iTermShellHistoryController.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
 #import "NSTableColumn+iTerm.h"
@@ -26,7 +27,7 @@ static const CGFloat kHelpMargin = 5;
     NSTableView *tableView_;
     NSButton *clear_;
     BOOL shutdown_;
-    NSArray *filteredEntries_;
+    NSArray<iTermCommandHistoryCommandUseMO *> *filteredEntries_;
     iTermSearchField *searchField_;
     NSFont *boldFont_;
     NSButton *help_;
@@ -179,10 +180,11 @@ static const CGFloat kHelpMargin = 5;
 - (id)tableView:(NSTableView *)aTableView
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
             row:(NSInteger)rowIndex {
-    CommandUse *commandUse = filteredEntries_[rowIndex];
+    iTermCommandHistoryCommandUseMO *commandUse = filteredEntries_[rowIndex];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
-        return [NSDateFormatter compactDateDifferenceStringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:commandUse.time]];
+        return [NSDateFormatter compactDateDifferenceStringFromDate:
+                   [NSDate dateWithTimeIntervalSinceReferenceDate:commandUse.time.doubleValue]];
     } else {
         // Contents
         NSString *value = [commandUse.command stringByReplacingOccurrencesOfString:@"\n"
@@ -217,7 +219,7 @@ static const CGFloat kHelpMargin = 5;
     }
 }
 
-- (CommandUse *)selectedCommandUse {
+- (iTermCommandHistoryCommandUseMO *)selectedCommandUse {
     NSInteger row = [tableView_ selectedRow];
     if (row != -1) {
         return filteredEntries_[row];
@@ -227,7 +229,7 @@ static const CGFloat kHelpMargin = 5;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
-    CommandUse *commandUse = [self selectedCommandUse];
+    iTermCommandHistoryCommandUseMO *commandUse = [self selectedCommandUse];
 
     if (commandUse.mark) {
         iTermToolWrapper *wrapper = self.toolWrapper;
@@ -267,12 +269,12 @@ static const CGFloat kHelpMargin = 5;
     if (selectedIndex < 0) {
         return;
     }
-    CommandUse *entry = filteredEntries_[selectedIndex];
+    iTermCommandHistoryCommandUseMO *commandUse = filteredEntries_[selectedIndex];
     iTermToolWrapper *wrapper = self.toolWrapper;
-    NSString *text = entry.command;
+    NSString *text = commandUse.command;
     if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask)) {
-        if (entry.directory) {
-            text = [@"cd " stringByAppendingString:entry.directory];
+        if (commandUse.directory) {
+            text = [@"cd " stringByAppendingString:commandUse.directory];
         } else {
             return;
         }
@@ -283,25 +285,25 @@ static const CGFloat kHelpMargin = 5;
     [wrapper.delegate.delegate toolbeltInsertText:text];
 }
 
-- (void)clear:(id)sender
-{
+- (void)clear:(id)sender {
     if (NSRunAlertPanel(@"Erase Command History",
                         @"Command history for all hosts will be erased. Continue?",
                         @"OK",
                         @"Cancel",
                         nil) == NSAlertDefaultReturn) {
-        [[CommandHistory sharedInstance] eraseHistory];
+        [[iTermShellHistoryController sharedInstance] eraseCommandHistory:YES directories:NO];
     }
 }
 
 - (void)computeFilteredEntries {
     [filteredEntries_ release];
-    NSArray *entries = [self.toolWrapper.delegate.delegate toolbeltCommandUsesForCurrentSession];
+    NSArray<iTermCommandHistoryCommandUseMO *> *entries =
+        [self.toolWrapper.delegate.delegate toolbeltCommandUsesForCurrentSession];
     if (searchField_.stringValue.length == 0) {
         filteredEntries_ = [entries retain];
     } else {
-        NSMutableArray *array = [NSMutableArray array];
-        for (CommandUse *entry in entries) {
+        NSMutableArray<iTermCommandHistoryCommandUseMO *> *array = [NSMutableArray array];
+        for (iTermCommandHistoryCommandUseMO *entry in entries) {
             if ([entry.command rangeOfString:searchField_.stringValue].location != NSNotFound) {
                 [array addObject:entry];
             }

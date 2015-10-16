@@ -7,7 +7,9 @@
 //
 
 #import "DirectoriesPopup.h"
-#import "iTermDirectoriesModel.h"
+#import "iTermRecentDirectoryMO.h"
+#import "iTermRecentDirectoryMO+Additions.h"
+#import "iTermShellHistoryController.h"
 #import "NSDateFormatterExtras.h"
 #import "PopupModel.h"
 
@@ -44,7 +46,7 @@
 
 - (void)loadDirectoriesForHost:(VT100RemoteHost *)host {
     [[self unfilteredModel] removeAllObjects];
-    for (iTermDirectoryEntry *entry in [[iTermDirectoriesModel sharedInstance] entriesSortedByScoreOnHost:host]) {
+    for (iTermRecentDirectoryMO *entry in [[iTermShellHistoryController sharedInstance] directoriesSortedByScoreOnHost:host]) {
         DirectoriesPopupEntry *popupEntry = [[[DirectoriesPopupEntry alloc] init] autorelease];
         popupEntry.entry = entry;
         [popupEntry setMainValue:popupEntry.entry.path];
@@ -59,7 +61,7 @@
     DirectoriesPopupEntry* entry = [[self model] objectAtIndex:[self convertIndex:rowIndex]];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
-        return [NSDateFormatter dateDifferenceStringFromDate:entry.entry.lastUse];
+        return [NSDateFormatter dateDifferenceStringFromDate:[NSDate dateWithTimeIntervalSinceReferenceDate:entry.entry.lastUse.doubleValue]];
     } else {
         // Contents
         return [super tableView:aTableView objectValueForTableColumn:aTableColumn row:rowIndex];
@@ -77,9 +79,12 @@
 - (NSAttributedString *)shrunkToFitAttributedString:(NSAttributedString *)attributedString
                                             inEntry:(DirectoriesPopupEntry *)entry
                                      baseAttributes:(NSDictionary *)baseAttributes {
+    NSIndexSet *indexes =
+        [[iTermShellHistoryController sharedInstance] abbreviationSafeIndexesInRecentDirectory:entry.entry];
     return [entry.entry attributedStringForTableColumn:_mainColumn
                                basedOnAttributedString:attributedString
-                                        baseAttributes:baseAttributes];
+                                        baseAttributes:baseAttributes
+                            abbreviationSafeComponents:indexes];
 }
 
 - (NSString *)truncatedMainValueForEntry:(DirectoriesPopupEntry *)entry {

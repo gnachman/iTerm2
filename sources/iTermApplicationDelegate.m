@@ -979,6 +979,7 @@ static BOOL hasBecomeActive = NO;
     return ([aMenu autorelease]);
 }
 
+
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification
 {
     DLog(@"******** Become Active");

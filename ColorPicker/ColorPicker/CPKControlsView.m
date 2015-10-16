@@ -13,6 +13,8 @@ static const CGFloat kBottomMargin = 8;
 @property(nonatomic) NSButton *addFavorite;
 @property(nonatomic) NSButton *removeFavorite;
 @property(nonatomic) NSButton *eyedropperMode;
+@property(nonatomic) NSButton *escapeHatch;
+@property(nonatomic) BOOL useSystemColorPicker;
 @property(nonatomic) CPKSwatchView *swatch;
 @end
 
@@ -41,14 +43,21 @@ static const CGFloat kBottomMargin = 8;
         [self.eyedropperMode setTarget:self];
         [self.eyedropperMode setAction:@selector(eyedropperMode:)];
 
-        origin = NSMakePoint(NSMaxX(self.eyedropperMode.frame) + kMarginBetweenButtonsAndSwatch,
+        origin = NSMakePoint(NSMaxX(self.eyedropperMode.frame) + kMarginBetweenButtons,
+                             kTopMargin);
+        self.escapeHatch = [self addButtonWithImage:[self cpk_imageNamed:@"EscapeHatch"]
+                                             origin:origin];
+        [self.escapeHatch setTarget:self];
+        [self.escapeHatch setAction:@selector(escapeHatch:)];
+
+        origin = NSMakePoint(NSMaxX(self.escapeHatch.frame) + kMarginBetweenButtonsAndSwatch,
                              kTopMargin);
         self.swatch =
-            [[CPKSwatchView alloc] initWithFrame:NSMakeRect(NSMaxX(self.eyedropperMode.frame) +
+            [[CPKSwatchView alloc] initWithFrame:NSMakeRect(NSMaxX(self.escapeHatch.frame) +
                                                                 kMarginBetweenButtonsAndSwatch,
                                                             kTopMargin,
                                                             NSWidth(frameRect) -
-                                                                NSMaxX(self.eyedropperMode.frame) -
+                                                                NSMaxX(self.escapeHatch.frame) -
                                                                 kMarginBetweenButtonsAndSwatch -
                                                                 kRightMargin,
                                                             NSHeight(self.addFavorite.frame))];
@@ -88,6 +97,17 @@ static const CGFloat kBottomMargin = 8;
     return YES;
 }
 
+- (void)colorPanelDidClose {
+  self.useSystemColorPicker = NO;
+}
+
+- (void)setUseSystemColorPicker:(BOOL)useSystemColorPicker {
+  _useSystemColorPicker = useSystemColorPicker;
+    self.escapeHatch.image =
+        self.useSystemColorPicker ? [self cpk_imageNamed:@"ActiveEscapeHatch"] :
+                                    [self cpk_imageNamed:@"EscapeHatch"];
+}
+
 #pragma mark - Actions
 
 - (void)addFavorite:(id)sender {
@@ -110,6 +130,13 @@ static const CGFloat kBottomMargin = 8;
             self.eyedropperMode.image = [self cpk_imageNamed:@"Eyedropper"];
         });
     }
+}
+
+- (void)escapeHatch:(id)sender {
+  if (_toggleNativePickerBlock) {
+    self.useSystemColorPicker = !self.useSystemColorPicker;
+    _toggleNativePickerBlock(self.useSystemColorPicker);
+  }
 }
 
 @end

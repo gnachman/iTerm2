@@ -7,10 +7,11 @@
 //
 
 #import "ProfilesAdvancedPreferencesViewController.h"
-#import "CommandHistory.h"
+
 #import "ITAddressBookMgr.h"
 #import "iTermProfilePreferences.h"
 #import "iTermSemanticHistoryPrefsController.h"
+#import "iTermShellHistoryController.h"
 #import "iTermWarning.h"
 #import "NSTextField+iTerm.h"
 #import "PointerPreferencesViewController.h"
@@ -197,7 +198,7 @@
 }
 
 - (IBAction)help:(id)sender {
-    [CommandHistory showInformationalMessage];
+    [iTermShellHistoryController showInformationalMessage];
 }
 
 - (void)removeBoundHostOnRow:(NSInteger)rowIndex {

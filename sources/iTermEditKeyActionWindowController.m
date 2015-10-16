@@ -348,11 +348,12 @@
     }
     if (animated) {
         [self retain];
-        [self.window retain];
+        
+        [self.window retain];  // Ignore analyzer warning on this line (autorelaesed in block)
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.window setFrame:rect display:YES animate:YES];
             [self autorelease];
-            [self.window autorelease];
+            [self.window autorelease];  // Ignore analyzer warning on this line (retained before block)
         });
     } else {
         [self.window setFrame:rect display:YES animate:NO];

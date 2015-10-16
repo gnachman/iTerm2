@@ -12,6 +12,7 @@
 @class iTermMark;
 @class VT100RemoteHost;
 @class ToolCommandHistoryView;
+@class iTermCommandHistoryCommandUseMO;
 @class iTermToolWrapper;
 @class VT100ScreenMark;
 
@@ -26,7 +27,7 @@
 - (void)toolbeltDidSelectMark:(iTermMark *)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
-- (NSArray *)toolbeltCommandUsesForCurrentSession;
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession;
 
 @end
 

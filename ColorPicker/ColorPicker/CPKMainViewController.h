@@ -25,4 +25,7 @@
                         color:(NSColor *)color
                  alphaAllowed:(BOOL)alphaAllowed;
 
+// Changes the selected color.
+- (void)selectColor:(NSColor *)color;
+
 @end

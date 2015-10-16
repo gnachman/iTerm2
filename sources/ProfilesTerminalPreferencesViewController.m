@@ -7,9 +7,10 @@
 //
 
 #import "ProfilesTerminalPreferencesViewController.h"
-#import "CommandHistory.h"
+
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
+#import "iTermShellHistoryController.h"
 
 @implementation ProfilesTerminalPreferencesViewController {
     IBOutlet NSTextField *_numScrollbackLines;
@@ -194,7 +195,7 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 #pragma mark - Action
 
 - (IBAction)help:(id)sender {
-    [CommandHistory showInformationalMessage];
+    [iTermShellHistoryController showInformationalMessage];
 }
 
 - (IBAction)showFilterAlertsPanel:(id)sender {

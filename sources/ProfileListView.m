@@ -562,7 +562,7 @@ const CGFloat kDefaultTagsWidth = 80;
         if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
             theString = @"Login shell";
         } else {
-            theString = [bookmark objectForKey:KEY_COMMAND];
+            theString = [bookmark objectForKey:KEY_COMMAND_LINE];
         }
         return [self attributedStringForString:theString
                                       selected:[[tableView_ selectedRowIndexes] containsIndex:rowIndex]];

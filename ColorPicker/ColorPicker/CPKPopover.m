@@ -32,6 +32,10 @@
     return self.mainViewController.selectedColor;
 }
 
+- (void)setSelectedColor:(NSColor *)selectedColor {
+  [self.mainViewController selectColor:selectedColor];
+}
+
 #pragma mark - NSPopoverDelegate
 
 - (void)popoverWillClose:(NSNotification *)notification {
