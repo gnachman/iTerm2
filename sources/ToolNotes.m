@@ -47,6 +47,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         textView_.automaticQuoteSubstitutionEnabled = NO;
         textView_.automaticDataDetectionEnabled = NO;
         textView_.automaticLinkDetectionEnabled = NO;
+        textView_.smartInsertDeleteEnabled = NO;
 
         [scrollview setDocumentView:textView_];
                 
