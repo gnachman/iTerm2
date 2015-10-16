@@ -299,22 +299,33 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 
 // Returns YES if a migration was attempted.
 - (BOOL)migrateFromPlistToCoreData {
-    BOOL attempted = NO;
-    NSMutableDictionary *records = [NSMutableDictionary dictionary];
-    if ([self migrateCommandHistoryFromPlistToCoreData:records]) {
-        attempted = YES;
+    BOOL migrateCommands = [self shouldMigrateCommands];
+    BOOL migrateDirectories = [self shouldMigrateDirectories];
+    if (migrateCommands || migrateDirectories) {
+        NSMutableDictionary *records = [NSMutableDictionary dictionary];
+        [self loadObjectGraphIntoDictionary:records];
+        if (migrateCommands) {
+            [self migrateCommandHistoryFromPlistToCoreData:records];
+        }
+        if (migrateDirectories) {
+            [self migrateDirectoriesFromPlistToCoreData:records];
+        }
     }
-    if ([self migrateDirectoriesFromPlistToCoreData:records]) {
-        attempted = YES;
-    }
-    return attempted;
+    return migrateCommands || migrateDirectories;
+}
+
+- (BOOL)shouldMigrateDirectories {
+    NSString *path = [self pathToDeprecatedDirectoriesPlist];
+    return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil];
+}
+
+- (BOOL)shouldMigrateCommands {
+    NSString *path = [self pathToDeprecatedCommandHistoryPlist];
+    return [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil];
 }
 
 - (BOOL)migrateDirectoriesFromPlistToCoreData:(NSMutableDictionary *)records {
     NSString *path = [self pathToDeprecatedDirectoriesPlist];
-    if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil]) {
-        return NO;
-    }
     NSDictionary *archive = [NSKeyedUnarchiver unarchiveObjectWithFile:path];
     for (NSString *host in archive) {
         NSArray *parts = [host componentsSeparatedByString:@"@"];
@@ -347,10 +358,7 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 
 - (BOOL)migrateCommandHistoryFromPlistToCoreData:(NSMutableDictionary *)records {
     NSString *path = [self pathToDeprecatedCommandHistoryPlist];
-    if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:nil]) {
-        return NO;
-    }
-    NSDictionary *archive = [NSKeyedUnarchiver unarchiveObjectWithFile:self.pathToDeprecatedCommandHistoryPlist];
+    NSDictionary *archive = [NSKeyedUnarchiver unarchiveObjectWithFile:path];
     for (NSString *host in archive) {
         NSArray *parts = [host componentsSeparatedByString:@"@"];
         if (parts.count != 2) {
@@ -733,11 +741,18 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
     return results.count > 0 || directories.count > 0;
 }
 
-- (void)loadObjectGraph {
+- (void)loadObjectGraphIntoDictionary:(NSMutableDictionary *)records {
     NSArray *managedObjects = [self managedObjects];
-    [_expandedCache removeAllObjects];
     for (iTermHostRecordMO *hostRecord in managedObjects) {
-        _records[hostRecord.hostKey] = hostRecord;
+        records[hostRecord.hostKey] = hostRecord;
+    }
+}
+
+- (void)loadObjectGraph {
+    [self loadObjectGraphIntoDictionary:_records];
+    [_expandedCache removeAllObjects];
+    for (NSString *hostKey in _records) {
+        iTermHostRecordMO *hostRecord = _records[hostKey];
         for (iTermRecentDirectoryMO *directory in hostRecord.directories) {
             [_tree addPath:directory.path];
         }

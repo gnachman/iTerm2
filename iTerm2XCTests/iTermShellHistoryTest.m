@@ -74,7 +74,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 @implementation iTermShellHistoryControllerWithRAMStoreForTesting
 
-- (BOOL)saveToDisk {
+- (BOOL)shouldSaveToDisk {
     return NO;
 }
 
@@ -685,6 +685,116 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual(1, actualDirectories.count);
 }
 
+// If you migrate from plist when there's already a Core Data database, it should just merge it
+// in without causing duplicate host records.
+- (void)testNoDuplicateHostRecordsAfterDoubleMigration {
+  _now = kDefaultTime;
+
+  NSDictionary *commandDictionary =
+        @{
+            @"user1@host1":
+               @[
+                   @{
+                       @"command": @"command1",
+                       @"uses": @10,
+                       @"last used": @(_now),
+                       @"use times":
+                           @[
+                               @[ @(_now),
+                                  @"/path1",
+                                  @"mark-guid-1",
+                                  @"command1",
+                                ],
+                            ]
+                    }
+                ],
+         };
+    NSString *commandPlistPath = [kFakeCommandHistoryPlistPath stringByAppendingString:_guid];
+    [NSKeyedArchiver archiveRootObject:commandDictionary toFile:commandPlistPath];
+    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:commandPlistPath isDirectory:nil]);
+
+    NSDictionary *directoryDictionary =
+        @{
+            @"user1@host1":
+               @[
+                   @{
+                       @"path": @"/abc/def/ghi/good1",
+                       @"use count": @5,
+                       @"last use": @(_now),
+                       @"starred": @NO,
+                    },
+                ]
+         };
+    NSString *directoriesPlistPath = [kFakeDirectoriesPlistPath stringByAppendingString:_guid];
+    [NSKeyedArchiver archiveRootObject:directoryDictionary toFile:directoriesPlistPath];
+    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
+
+    iTermShellHistoryController *historyController =
+        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+
+    XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:commandPlistPath isDirectory:nil]);
+    XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Second migration.
+    NSDictionary *commandDictionary2 =
+        @{
+            @"user1@host1":
+               @[
+                   @{
+                       @"command": @"command2",
+                       @"uses": @10,
+                       @"last used": @(_now),
+                       @"use times":
+                           @[
+                               @[ @(_now),
+                                  @"/path1",
+                                  @"mark-guid-1",
+                                  @"command1",
+                                ],
+                            ]
+                    }
+                ],
+         };
+    [NSKeyedArchiver archiveRootObject:commandDictionary2 toFile:commandPlistPath];
+    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:commandPlistPath isDirectory:nil]);
+
+    NSDictionary *directoryDictionary2 =
+        @{
+            @"user1@host1":
+               @[
+                   @{
+                       @"path": @"/abc/def/ghi/good2",
+                       @"use count": @5,
+                       @"last use": @(_now),
+                       @"starred": @NO,
+                    },
+                ]
+         };
+    [NSKeyedArchiver archiveRootObject:directoryDictionary2 toFile:directoriesPlistPath];
+    XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
+
+    historyController =
+        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+
+    XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:commandPlistPath isDirectory:nil]);
+    XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Make sure things are sane.
+    VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
+    remoteHost.username = @"user1";
+    remoteHost.hostname = @"host1";
+    NSArray<iTermCommandHistoryEntryMO *> *actualEntries =
+        [historyController commandHistoryEntriesWithPrefix:@""
+                                                    onHost:remoteHost];
+    XCTAssertEqual(2, actualEntries.count);
+
+    NSArray<iTermRecentDirectoryMO *> *actualDirectories =
+        [historyController directoriesSortedByScoreOnHost:remoteHost];
+    XCTAssertEqual(2, actualDirectories.count);
+}
+
 - (void)testCorruptDatabase {
     iTermShellHistoryControllerForTesting *historyController =
         [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
@@ -1034,11 +1144,11 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 
-    // Initial value is saved to disk. Flip it to RAM. Should erase everything.
+    // Initial value is saved to disk. Flip it to RAM. Should lose no data.
     historyController.shouldSaveToDisk = @NO;
     [historyController backingStoreTypeDidChange];
-    XCTAssertFalse([historyController haveDirectoriesForHost:remoteHost]);
-    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+    XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 
     [historyController recordUseOfPath:@"/test2/path2" onHost:remoteHost isChange:YES];
     [historyController addCommand:@"command1"
@@ -1046,23 +1156,23 @@ static NSTimeInterval kDefaultTime = 10000000;
                       inDirectory:@"/directory1"
                          withMark:mark];
 
-    // Back to disk. Should lose everything.
+    // Back to disk. Should lose no data.
     historyController.shouldSaveToDisk = @YES;
     [historyController backingStoreTypeDidChange];
-    XCTAssertFalse([historyController haveDirectoriesForHost:remoteHost]);
-    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+    XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 
-    // Back to RAM. Everything should still be gone.
+    // Back to RAM.
     historyController.shouldSaveToDisk = @NO;
     [historyController backingStoreTypeDidChange];
-    XCTAssertFalse([historyController haveDirectoriesForHost:remoteHost]);
-    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+    XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 
-    // Back to disk. Everything should still be gone.
+    // Back to disk.
     historyController.shouldSaveToDisk = @YES;
     [historyController backingStoreTypeDidChange];
-    XCTAssertFalse([historyController haveDirectoriesForHost:remoteHost]);
-    XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
+    XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
+    XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 }
 
 @end
