@@ -235,7 +235,7 @@ const int kInterWidgetMargin = 10;
     [tableView_ setMenuHandler:self];
     [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:kProfileTableViewDataType]];
     normalRowHeight_ = 21;
-    rowHeightWithTags_ = 29;
+    rowHeightWithTags_ = 32;
     [tableView_ setRowHeight:rowHeightWithTags_];
     [tableView_ setAllowsColumnResizing:YES];
     [tableView_ setAllowsColumnReordering:YES];
