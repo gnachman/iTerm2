@@ -14,7 +14,7 @@
 "WANT_TO_SEND_CRASH_SEND_LATER" = "Send Later";
 
 /* URL of CGI script which we'll send the log to: */
-"CRASH_REPORT_CGI_URL" = "http://www.iterm2.com/crashreportform.php";
+"CRASH_REPORT_CGI_URL" = "https://www.iterm2.com/crashreportform.php";
 
 /* Title of error window: */
 "COULDNT_SEND_CRASH_REPORT_ERROR" = "Couldn't submit crash report";

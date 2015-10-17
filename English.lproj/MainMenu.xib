@@ -74,7 +74,7 @@
 								</object>
 								<object class="NSMenuItem" id="588397465">
 									<reference key="NSMenu" ref="839803824"/>
-									<string key="NSTitle">Check For Update...</string>
+									<string key="NSTitle">Check For Updates…</string>
 									<string key="NSKeyEquiv"/>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
