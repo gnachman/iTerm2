@@ -9,6 +9,7 @@
 #import "TerminalFile.h"
 #import "FileTransferManager.h"
 #import "FutureMethods.h"
+#import "RegexKitLite.h"
 #import <apr-1/apr_base64.h>
 
 NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopNotification";
@@ -21,12 +22,12 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 
 @implementation TerminalFile
 
-- (id)initWithName:(NSString *)name size:(int)size {
+- (instancetype)initWithName:(NSString *)name size:(int)size {
     self = [super init];
     if (self) {
         if (!name) {
             NSSavePanel *panel = [NSSavePanel savePanel];
-            
+
             if ([panel legacyRunModalForDirectory:[self downloadsDirectory] file:@"" types:nil]) {
                 _localPath = [[panel legacyFilename] copy];
                 _filename = [[_localPath lastPathComponent] copy];
@@ -102,6 +103,10 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 - (void)appendData:(NSString *)data {
     if (self.data) {
         self.status = kTransferrableFileStatusTransferring;
+
+        // This keeps apr_base64_decode_len accurate.
+        data = [data stringByReplacingOccurrencesOfRegex:@"[\r\n]" withString:@""];
+
         [self.data appendString:data];
         self.bytesTransferred = apr_base64_decode_len([self.data UTF8String]);
         if (self.fileSize >= 0) {
@@ -138,7 +143,7 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
                                  didFinishTransmissionWithError:[self errorWithDescription:@"Failed to write file to disk."]];
         return;
     }
-    
+
     [[FileTransferManager sharedInstance] transferrableFile:self didFinishTransmissionWithError:nil];
     return;
 

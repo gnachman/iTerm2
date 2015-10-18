@@ -52,6 +52,7 @@ DEFINE_INT(optimumTabWidth, 175, @"Tabs: Preferred tab width when tabs are equal
 DEFINE_BOOL(addNewTabAtEndOfTabs, YES, @"Tabs: Add new tabs at the end of the tab bar, not next to current tab.");
 DEFINE_BOOL(navigatePanesInReadingOrder, YES, @"Tabs: Next Pane and Previous Pane commands use reading order, not the time of last use.");
 DEFINE_BOOL(eliminateCloseButtons, NO, @"Tabs: Eliminate close buttons from tabs, even on mouse-over.");
+DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, @"Tabs: How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes. This setting gives the time in seconds for it to remain visible.");
 
 #pragma mark Mouse
 DEFINE_BOOL(alternateMouseScroll, NO, @"Mouse: Scroll wheel sends arrow keys when in alternate screen mode.");
@@ -77,10 +78,12 @@ DEFINE_BOOL(noSyncSilenceAnnoyingBellAutomatically, NO, @"Terminal: Automaticall
 DEFINE_BOOL(restoreWindowContents, YES, @"Terminal: Restore window contents at startup.\nThis requires “System Prefs>General>Close windows when quitting an app” to be off.");
 DEFINE_INT(numberOfLinesForAccessibility, 1000, @"Terminal: Maximum number of lines of history to expose to Accessibility.\nAccessibility APIs can make iTerm2 slow. In order to limit the effect, you can restrict the number of lines in each session that are visible to accessibility. The last lines of each session will be made accessible.");
 DEFINE_INT(triggerRadius, 3, @"Terminal: Number of screen lines to match against trigger regular expressions.\nTrigger regular expressions are matched against the last logical line of text when a newline is received. A search is performed to find the start of the line. Since very long lines would cause performance problems, the search (and consequently the regular expression match, highlighting, and so on) is limited to this many screen lines.");
+DEFINE_BOOL(requireCmdForDraggingText, NO, @"Terminal: To drag images or selected text, you must hold ⌘. This prevents accidental drags.");
 
 #pragma mark Hotkey
 DEFINE_FLOAT(hotkeyTermAnimationDuration, 0.25, @"Hotkey: Duration in seconds of the hotkey window animation.");
 DEFINE_BOOL(dockIconTogglesWindow, NO, @"Hotkey: If the only window is a hotkey window, then clicking the dock icon shows or hides it.");
+DEFINE_BOOL(hotkeyWindowFloatsAboveOtherWindows, NO, @"Hotkey: The hotkey window floats above other windows even when another application is active.\nYou must disable “Prefs > Keys > Hotkey window hides when focus is lost” for this setting to be effective.");
 
 #pragma mark General
 DEFINE_STRING(searchCommand, @"http://google.com/search?q=%@", @"General: Template for URL of search engine.\niTerm2 replaces the string “%@” with the text to search for. Query parameter percent escaping is used.");
@@ -110,9 +113,10 @@ DEFINE_BOOL(killJobsInServersOnQuit, YES, @"Session Restoration: User-initiated 
 DEFINE_BOOL(openFileInNewWindows, NO, @"Windows: Open files in new windows, not new tabs.\nThis affects shell scripts opened from Finder, for example.");
 DEFINE_BOOL(rememberWindowPositions, YES, @"Windows: Remember window locations even after the windows are closed.\nWhen a new window is opened, one of the recorded locations is used.");
 DEFINE_BOOL(disableWindowSizeSnap, NO, @"Windows: Terminal windows resize smoothly.\nDisables snapping to character grid. Holding Control will temporarily disable snap-to-grid.");
+DEFINE_BOOL(profilesWindowJoinsActiveSpace, NO, @"Windows: If the Profiles window is open, it always moves to join the active Space.\nYou must restart iTerm2 for a change in this setting to take effect.");
 
 #pragma mark tmux
-DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will end the session.");
+DEFINE_BOOL(tolerateUnrecognizedTmuxCommands, YES, @"Tmux Integration: Tolerate unrecognized commands from server.\nNormally, an unknown command from tmux will not end the session.");
 DEFINE_BOOL(noSyncNewWindowOrTabFromTmuxOpensTmux, NO, @"Tmux Integration: Suppress alert asking what kind of tab/window to open in tmux integration.");
 
 #pragma mark Warnings
@@ -135,6 +139,7 @@ DEFINE_BOOL(closingTmuxWindowKillsTmuxWindows, NO, @"Warnings: Suppress kill/hid
 DEFINE_BOOL(closingTmuxTabKillsTmuxWindows, NO, @"Warnings: Suppress kill/hide dialog when closing a tmux tab.");
 DEFINE_BOOL(aboutToPasteTabs, NO, @"Warnings: Suppress warning about pasting tabs with offer to convert them to spaces.");
 DEFINE_BOOL(noSyncDoNotWarnBeforeMultilinePaste, NO, @"Warnings: Suppress warning about pasting multiple lines (or a line ending in a newline).");
+DEFINE_BOOL(noSyncReplaceProfileWarning, NO, @"Warnings: Suppress warning about copying a session's settings over a Profile");
 
 #pragma mark Pasteboard
 DEFINE_BOOL(trimWhitespaceOnCopy, YES, @"Pasteboard: Trim whitespace when copying to pasteboard.");
@@ -150,4 +155,11 @@ DEFINE_BOOL(disallowCopyEmptyString, NO, @"Pasteboard: Disallow copying empty st
 
 DEFINE_BOOL(noSyncTipsDisabled, NO, @"Tip of the Day: Disable the Tip of the Day?");
 
+#pragma mark - Badge
+DEFINE_STRING(badgeFont, @"Helvetica", @"Badge: Font to use for the badge.");
+DEFINE_BOOL(badgeFontIsBold, YES, @"Badge: Should the badge render in bold type?");
+DEFINE_FLOAT(badgeMaxWidthFraction, 0.5, @"Badge: Maximum width of the badge\nAs a fraction of the width of the terminal, between 0 and 1.0.");
+DEFINE_FLOAT(badgeMaxHeightFraction, 0.2, @"Badge: Maximum height of the badge\nAs a fraction of the height of the terminal, between 0 and 1.0.");
+DEFINE_INT(badgeRightMargin, 10, @"Badge: Right Margin\nHow much space to leave between the right edge of the badge and the right edge of the terminal.");
+DEFINE_INT(badgeTopMargin, 10, @"Badge: Top Margin\nHow much space to leave between the top edge of the badge and the top edge of the terminal.");
 @end

@@ -47,7 +47,7 @@ const NSUInteger kAllModifiers = (NSControlKeyMask |
 
 @dynamic delegate;
 
-- (id)initWithFrame:(NSRect)aRect {
+- (instancetype)initWithFrame:(NSRect)aRect {
     self = [super initWithFrame:aRect];
     if (self) {
         _tabViewItemsInMRUOrder = [[NSMutableArray alloc] init];

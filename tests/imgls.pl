@@ -59,7 +59,7 @@ sub write_image {
             "\033", "]", "1337",                                                # image leadin sequence (OSC + 1337)
             join(';', map { $_ . '=' . $imgparams{$_} } keys %imgparams),       # semicolon separated pairs of param=value pairs
             encode_base64(get_image_bytes($file)),                              # base64 encoded image bytes
-            "\007\000";                                                         # end-of-encoding char (BEL = ^G) and final NUL
+            "\007";                                                         # end-of-encoding char (BEL = ^G) and final NUL
 }
 
 ### main code 

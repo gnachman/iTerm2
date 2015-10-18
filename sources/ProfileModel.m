@@ -312,13 +312,13 @@ int gMigrated;
         [newBookmark setObject:@"Bookmark" forKey:KEY_NAME];
     }
     if (![newBookmark objectForKey:KEY_TAGS]) {
-        [newBookmark setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
+        [newBookmark setObject:@[] forKey:KEY_TAGS];
     }
     if (![newBookmark objectForKey:KEY_CUSTOM_COMMAND]) {
         [newBookmark setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
     }
-    if (![newBookmark objectForKey:KEY_COMMAND]) {
-        [newBookmark setObject:@"/bin/bash --login" forKey:KEY_COMMAND];
+    if (![newBookmark objectForKey:KEY_COMMAND_LINE]) {
+        [newBookmark setObject:@"/bin/bash --login" forKey:KEY_COMMAND_LINE];
     }
     if (![newBookmark objectForKey:KEY_GUID]) {
         [newBookmark setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
@@ -450,7 +450,7 @@ int gMigrated;
         ![[a objectForKey:KEY_SHORTCUT] isEqualToString:[b objectForKey:KEY_SHORTCUT]] ||
         ![[a objectForKey:KEY_TAGS] isEqualToArray:[b objectForKey:KEY_TAGS]] ||
         ![[a objectForKey:KEY_GUID] isEqualToString:[b objectForKey:KEY_GUID]] ||
-        ![[a objectForKey:KEY_COMMAND] isEqualToString:[b objectForKey:KEY_COMMAND]] ||
+        ![[a objectForKey:KEY_COMMAND_LINE] isEqualToString:[b objectForKey:KEY_COMMAND_LINE]] ||
         ![[a objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:[b objectForKey:KEY_CUSTOM_COMMAND]]) {
         return YES;
     } else {

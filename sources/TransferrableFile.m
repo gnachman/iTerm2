@@ -15,13 +15,21 @@
     TransferrableFile *_successor;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _status = kTransferrableFileStatusUnstarted;
         _fileSize = -1;
     }
     return self;
+}
+
+- (NSString *)protocolName {
+    assert(false);
+}
+
+- (NSString *)authRequestor {
+    assert(false);
 }
 
 - (NSString *)displayName {

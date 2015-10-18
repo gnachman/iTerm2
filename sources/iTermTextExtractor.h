@@ -11,7 +11,7 @@
 #import "ScreenChar.h"
 #import "SmartMatch.h"
 
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
     // Any kind of white space.
     kTextExtractorClassWhitespace,
 
@@ -24,14 +24,14 @@ typedef enum {
     // Non-alphanumeric, non-whitespace, non-word, not double-width filler.
     // Miscellaneous symbols, etc.
     kTextExtractorClassOther
-} iTermTextExtractorClass;
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
     kiTermTextExtractorNullPolicyFromStartToFirst,  // Ignore content prior to last null
     kiTermTextExtractorNullPolicyFromLastToEnd,  // Ignore content after last null
     kiTermTextExtractorNullPolicyTreatAsSpace,  // Treat midline nulls as spaces and a range of terminal nulls as a single space
     kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,  // Treat midline nulls as space and strip terminal nulls
-} iTermTextExtractorNullPolicy;
+};
 
 @interface iTermTextExtractor : NSObject
 
@@ -42,7 +42,7 @@ typedef enum {
 + (NSCharacterSet *)wordSeparatorCharacterSet;
 
 + (instancetype)textExtractorWithDataSource:(id<PTYTextViewDataSource>)dataSource;
-- (id)initWithDataSource:(id<PTYTextViewDataSource>)dataSource;
+- (instancetype)initWithDataSource:(id<PTYTextViewDataSource>)dataSource;
 - (void)restrictToLogicalWindowIncludingCoord:(VT100GridCoord)coord;
 
 // Returns the range of a word (string of characters belonging to the same class) at a location. If
@@ -83,9 +83,11 @@ typedef enum {
 
 // Advances coord by a positive or negative delta, staying within the column window, if any. Any
 // indices in |coordsToSkip| will not count against delta.
+// Forward disambiguates the direction to skip over |coordsToSkip| if delta is zero.
 - (VT100GridCoord)coord:(VT100GridCoord)coord
                    plus:(int)delta
-         skippingCoords:(NSIndexSet *)coordsToSkip;
+         skippingCoords:(NSIndexSet *)coordsToSkip
+                forward:(BOOL)forward;
 
 // block should return YES to stop searching and use the coordinate it was passed as the result.
 - (VT100GridCoord)searchFrom:(VT100GridCoord)start
@@ -99,6 +101,9 @@ typedef enum {
 // rightmost column when there is a software-drawn divider (see issue 3067).
 //
 // Returns an NSString* if |attributeProvider| is nil. Returns an NSAttributedString* otherwise.
+//
+// If |coords| is non-nil it will be filled with NSValue*s in 1:1 correspondence with characters in
+// the return value, giving VT100GridCoord's with their provenance.
 - (id)contentInRange:(VT100GridWindowedRange)range
    attributeProvider:(NSDictionary *(^)(screen_char_t))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
@@ -106,7 +111,8 @@ typedef enum {
   includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
-         continuationChars:(NSMutableIndexSet *)continuationChars;
+         continuationChars:(NSMutableIndexSet *)continuationChars
+              coords:(NSMutableArray *)coords;
 
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 
@@ -116,14 +122,18 @@ typedef enum {
 // returned up to/from |coord|. If not, then 10 lines are returned.
 // If |continuationChars| is not empty, then it can specify a set of characters (such as \) which
 // may occur before the right edge when there is a software-drawn boundary which should be ignored.
-// See comment at -contentInRange:nullPolicy:pad:includeLastNewline:trimTrailingWhitespace:cappedAtSize:continuationChars:
+// See comment at -contentInRange:nullPolicy:pad:includeLastNewline:trimTrailingWhitespace:cappedAtSize:continuationChars:coords:
 // If |convertNullToSpace| is YES then the string does not stop at a NULL character.
+//
+// If |coords| is non-nil it will be filled with NSValue*s in 1:1 correspondence with characters in
+// the return value, giving VT100GridCoord's with their provenance.
 - (NSString *)wrappedStringAt:(VT100GridCoord)coord
                       forward:(BOOL)forward
           respectHardNewlines:(BOOL)respectHardNewlines
                      maxChars:(int)maxChars
             continuationChars:(NSMutableIndexSet *)continuationChars
-          convertNullsToSpace:(BOOL)convertNullsToSpace;
+          convertNullsToSpace:(BOOL)convertNullsToSpace
+                       coords:(NSMutableArray *)coords;
 
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 

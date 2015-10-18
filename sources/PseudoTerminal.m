@@ -3,8 +3,6 @@
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
 #import "ColorsMenuItemView.h"
-#import "CommandHistory.h"
-#import "CommandHistoryEntry.h"
 #import "CommandHistoryPopup.h"
 #import "Coprocess.h"
 #import "DirectoriesPopup.h"
@@ -19,8 +17,8 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermController.h"
-#import "iTermDirectoriesModel.h"
 #import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
 #import "iTermGrowlDelegate.h"
@@ -32,6 +30,7 @@
 #import "iTermProfilesWindowController.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
+#import "iTermShellHistoryController.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
 #import "iTermURLSchemeController.h"
@@ -308,6 +307,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     BOOL _haveDelayedEnterFullScreenMode;
 
     BOOL _parameterPanelCanceled;
+
+    // Number of tabs since last change.
+    NSInteger _previousNumberOfTabs;
 }
 
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement {
@@ -341,7 +343,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (id)initWithWindowNibName:(NSString *)windowNibName {
+- (instancetype)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
     if (self) {
         self.autoCommandHistorySessionGuid = nil;
@@ -349,10 +351,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return self;
 }
 
-- (id)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(iTermWindowType)windowType
-          savedWindowType:(iTermWindowType)savedWindowType
-                   screen:(int)screenNumber {
+- (instancetype)initWithSmartLayout:(BOOL)smartLayout
+                         windowType:(iTermWindowType)windowType
+                    savedWindowType:(iTermWindowType)savedWindowType
+                             screen:(int)screenNumber {
     return [self initWithSmartLayout:smartLayout
                           windowType:windowType
                      savedWindowType:savedWindowType
@@ -360,12 +362,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                             isHotkey:NO];
 }
 
-- (id)initWithSmartLayout:(BOOL)smartLayout
-               windowType:(iTermWindowType)windowType
-          savedWindowType:(iTermWindowType)savedWindowType
-                   screen:(int)screenNumber
-                 isHotkey:(BOOL)isHotkey
-{
+- (instancetype)initWithSmartLayout:(BOOL)smartLayout
+                         windowType:(iTermWindowType)windowType
+                    savedWindowType:(iTermWindowType)savedWindowType
+                             screen:(int)screenNumber
+                           isHotkey:(BOOL)isHotkey {
     self = [self initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
     if (self) {
@@ -548,6 +549,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self setWindow:myWindow];
     [myWindow release];
 
+    // This had been in iTerm2 for years and was removed, but I can't tell why. Issue 3833 reveals
+    // that it is still needed, at least on OS 10.9.
+    if ([myWindow respondsToSelector:@selector(_setContentHasShadow:)]) {
+        [myWindow _setContentHasShadow:NO];
+    }
+
     _fullScreen = (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN);
     _contentView =
         [[[iTermRootTerminalView alloc] initWithFrame:[self.window.contentView frame]
@@ -708,7 +715,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 #if ENABLE_SHORTCUT_ACCESSORY
     [_shortcutAccessoryViewController release];
 #endif
+    [_didEnterLionFullscreen release];
     [super dealloc];
+}
+
++ (BOOL)useElCapitanFullScreenLogic {
+    return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
 }
 
 - (BOOL)tabBarVisibleOnTop {
@@ -1944,6 +1956,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS]) {
         desiredColumns_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] intValue];
     }
+    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
+    NSRect rect;
+    rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
+    rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+    rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+    rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+
+    // 10.11 starts you off with a tiny little frame. I don't know why they do
+    // that, but this fixes it.
+    if ([[self class] useElCapitanFullScreenLogic] &&
+        windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        [[self window] setFrame:rect display:YES];
+    }
+
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
         NSDictionary *viewMap = nil;
         if (sessions) {
@@ -1960,17 +1986,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     hidingToolbeltShouldResizeWindow_ = [arrangement[TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW] boolValue];
     hidingToolbeltShouldResizeWindowInitialized_ = YES;
 
-    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     if (windowType == WINDOW_TYPE_NORMAL ||
         windowType == WINDOW_TYPE_NO_TITLE_BAR) {
         // The window may have changed size while adding tab bars, etc.
-        NSRect rect;
-        rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
-        rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
         // TODO: for window type top, set width to screen width.
-        rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-        rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
-
         [[self window] setFrame:rect display:YES];
     }
 
@@ -2516,22 +2535,30 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
         case WINDOW_TYPE_NORMAL:
         case WINDOW_TYPE_NO_TITLE_BAR:
-            PtyLog(@"Window type = NORMAL");
-            // fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
-            PtyLog(@"Window type = LION");
-            if (![self lionFullScreen]) {
-                PtyLog(@"Window type = %d but it's not in lion fullscreen right now so not doing anything", windowType_);
-                break;
+            PtyLog(@"Window type = NORMAL, NO_TITLE_BAR, or LION_FULL_SCREEN");
+            if ([self updateSessionScrollbars]) {
+                PtyLog(@"Fitting tabs to window because scrollbars changed.");
+                [self fitTabsToWindow];
             }
+            break;
+
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
+                // This is necessary when restoring a traditional fullscreen window while scrollbars are
+                // forced on systemwide.
+                BOOL changedScrollBars = [self updateSessionScrollbars];
+                NSRect originalFrame = self.window.frame;
                 PtyLog(@"set window to screen's frame");
                 if (windowType_ == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
                     [[self window] setFrame:[self traditionalFullScreenFrameForScreen:screen] display:YES];
                 } else {
                     [[self window] setFrame:[screen frame] display:YES];
+                }
+                if (changedScrollBars && NSEqualSizes(self.window.frame.size, originalFrame.size)) {
+                    DLog(@"Fitting tabs to window when canonicalizing fullscreen window because of scrollbar change");
+                    [self fitTabsToWindow];
                 }
             }
             break;
@@ -2565,7 +2592,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     [self maybeHideHotkeyWindow];
 
-    _contentView.tabBarControl.flashing = NO;
+    [_contentView.tabBarControl setFlashing:NO];
     _contentView.tabBarControl.cmdPressed = NO;
 
     if ([[pbHistoryView window] isVisible] ||
@@ -2579,18 +2606,19 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
           __FILE__, __LINE__, aNotification);
 
     if (_fullScreen) {
-        _contentView.tabBarControl.flashing = NO;
+        [_contentView.tabBarControl setFlashing:NO];
         [self showMenuBar];
     }
     // update the cursor
     [[[self currentSession] textview] refresh];
     [[[self currentSession] textview] setNeedsDisplay:YES];
-    if (![self lionFullScreen]) {
-        // Don't dim Lion fullscreen because you can't see the window when it's not key.
-        for (PTYSession* aSession in [self allSessions]) {
-            [[aSession view] setBackgroundDimmed:YES];
-        }
+
+    // Note that if you have multiple displays you can see a lion fullscreen window when it's
+    // not key.
+    for (PTYSession* aSession in [self allSessions]) {
+        [[aSession view] setBackgroundDimmed:YES];
     }
+
     for (PTYSession* aSession in [self allSessions]) {
         [aSession setFocused:NO];
     }
@@ -2717,11 +2745,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return lionFullScreen_;
 }
 
-- (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize
-{
+- (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize {
     PtyLog(@"%s(%d):-[PseudoTerminal windowWillResize: obj=%p, proposedFrameSize width = %f; height = %f]",
            __FILE__, __LINE__, [self window], proposedFrameSize.width, proposedFrameSize.height);
-
+    if (self.togglingLionFullScreen || self.lionFullScreen) {
+        return proposedFrameSize;
+    }
     // Find the session for the current pane of the current tab.
     PTYTab* tab = [self currentTab];
     PTYSession* session = [tab activeSession];
@@ -3017,6 +3046,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
+- (BOOL)togglingLionFullScreen {
+    return togglingLionFullScreen_;
+}
+
 - (IBAction)toggleFullScreenMode:(id)sender
 {
     DLog(@"toggleFullScreenMode:. window type is %d", windowType_);
@@ -3063,14 +3096,25 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)updateSessionScrollbars
-{
+// Returns YES if a change was made.
+- (BOOL)updateSessionScrollbars {
+    BOOL changed = NO;
     for (PTYSession *aSession in [self allSessions]) {
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
+        if (aSession.scrollview.hasVerticalScroller != hasScrollbar) {
+            changed = YES;
+        }
         [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
-        [[aSession scrollview] setScrollerStyle:[self scrollerStyle]];
+        
+        NSScrollerStyle style = [self scrollerStyle];
+        if (aSession.scrollview.scrollerStyle != style) {
+            changed = YES;
+        }
+        [[aSession scrollview] setScrollerStyle:style];
         [[aSession textview] updateScrollerForBackgroundColor];
     }
+    
+    return changed;
 }
 
 - (NSUInteger)styleMask {
@@ -3331,7 +3375,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     zooming_ = NO;
     if (wasZooming) {
         // Reached zoom size. Update size.
-        [self windowDidResize:nil];
+        [self windowDidResize:[NSNotification notificationWithName:NSWindowDidResizeNotification
+                                                            object:nil]];
     }
     if (postponedTmuxTabLayoutChange_) {
         [self tmuxTabLayoutDidChange:YES];
@@ -3364,6 +3409,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     [self saveTmuxWindowOrigins];
     [self.window makeFirstResponder:self.currentSession.textview];
+    if (_didEnterLionFullscreen) {
+        _didEnterLionFullscreen(self);
+        [_didEnterLionFullscreen release];
+        _didEnterLionFullscreen = nil;
+    }
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -3665,7 +3715,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem {
     DLog(@"Did select tab view %@", tabViewItem);
-    _contentView.tabBarControl.flashing = YES;
+    [_contentView.tabBarControl setFlashing:YES];
 
     if (self.autoCommandHistorySessionGuid) {
         [self hideAutoCommandHistory];
@@ -4011,6 +4061,18 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self updateTabColors];
     [self _updateTabObjectCounts];
 
+    if (_contentView.tabView.numberOfTabViewItems == 1 &&
+        _previousNumberOfTabs == 0 &&
+        [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT inProfile:self.currentSession.profile] &&
+        !_contentView.shouldShowToolbelt) {
+        // This is the first tab of a new window. Open the toolbelt if that's what the profile
+        // wants. You can't open the toolbelt until there is at least one session, so that's why
+        // it's done here instead of in finishInitializationWithSmartLayout.
+        [self toggleToolbeltVisibility:self];
+    }
+
+    _previousNumberOfTabs = _contentView.tabView.numberOfTabViewItems;
+
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
     [self invalidateRestorableState];
 }
@@ -4074,7 +4136,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     if ([_contentView.tabView numberOfTabViewItems] > 1) {
-        item = [[[NSMenuItem alloc] initWithTitle:@"Close Tabs to the Right"
+        NSString *title;
+        if ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab) {
+            title = @"Close Tabs Below";
+        } else {
+            title = @"Close Tabs to the Right";
+        }
+        item = [[[NSMenuItem alloc] initWithTitle:title
                                            action:@selector(closeTabsToTheRight:)
                                     keyEquivalent:@""] autorelease];
         [item setRepresentedObject:tabViewItem];
@@ -4249,7 +4317,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)openPasswordManagerToAccountName:(NSString *)name {
+- (void)openPasswordManagerToAccountName:(NSString *)name
+                               inSession:(PTYSession *)session {
+    [session reveal];
     if (self.window.sheets.count > 0) {
         return;
     }
@@ -4541,10 +4611,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
           contextInfo:nil];
 
     NSArray *mru = [Coprocess mostRecentlyUsedCommands];
-        [coprocessCommand_ removeAllItems];
-        if (mru.count) {
-                [coprocessCommand_ addItemsWithObjectValues:mru];
-        }
+    [coprocessCommand_ removeAllItems];
+    if (mru.count) {
+        [coprocessCommand_ addItemsWithObjectValues:mru];
+    }
     [NSApp runModalForWindow:coprocesssPanel_];
 
     [NSApp endSheet:coprocesssPanel_];
@@ -4591,14 +4661,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (!commandHistoryPopup) {
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
     }
-    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         [commandHistoryPopup popWithDelegate:[self currentSession]];
         [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
                                                                 partialCommand:[[self currentSession] currentCommand]
                                                                         expand:YES]
                            partialCommand:[[self currentSession] currentCommand]];
     } else {
-        [CommandHistory showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessage];
     }
 }
 
@@ -4606,11 +4676,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (!_directoriesPopupWindowController) {
         _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];
     }
-    if ([[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         [_directoriesPopupWindowController popWithDelegate:[self currentSession]];
         [_directoriesPopupWindowController loadDirectoriesForHost:[[self currentSession] currentHost]];
     } else {
-        [CommandHistory showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessage];
     }
 }
 
@@ -4634,15 +4704,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         if (!commandHistoryPopup) {
             commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] init];
         }
-        NSArray *commands = [commandHistoryPopup commandsForHost:[session currentHost]
-                                                  partialCommand:prefix
-                                                          expand:NO];
+        NSArray<iTermCommandHistoryCommandUseMO *> *commands = [commandHistoryPopup commandsForHost:[session currentHost]
+                                                                                     partialCommand:prefix
+                                                                                             expand:NO];
         if (![commands count]) {
             [commandHistoryPopup close];
             return;
         }
         if ([commands count] == 1) {
-            CommandUse *commandUse = commands[0];
+            iTermCommandHistoryCommandUseMO *commandUse = commands[0];
             if ([commandUse.command isEqualToString:prefix]) {
                 [commandHistoryPopup close];
                 return;
@@ -4884,7 +4954,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
            performSetup:(BOOL)performSetup
 {
     NSView *scrollView;
-    NSColor *tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
+    NSColor *tabColor;
+    if (newSession.tabColor) {
+        // The new session came with a tab color of its own so don't inherit.
+        tabColor = newSession.tabColor;
+    } else {
+        // Inherit from tab.
+        tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
+    }
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
@@ -4916,8 +4993,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];
     }
-    newSession.tabColor = tabColor;
-    [self updateTabColors];
+    if (targetSession.isDivorced) {
+        // We assign directly to isDivorced because we know the GUID is unique and in sessions
+        // instance and the original guid is already set. _bookmarkToSplit took care of that.
+        newSession.isDivorced = YES;
+    }
+    if (![newSession.tabColor isEqual:tabColor] && newSession.tabColor != tabColor) {
+        newSession.tabColor = tabColor;
+        [self updateTabColors];
+    }
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange"
                                                         object:self
                                                       userInfo:nil];
@@ -4970,7 +5054,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // Get the bookmark this session was originally created with. But look it up from its GUID because
     // it might have changed since it was copied into originalProfile when the bookmark was
     // first created.
-    Profile* originalBookmark = [[self currentSession] originalProfile];
+    PTYSession *sourceSession = self.currentSession;
+    Profile* originalBookmark = [sourceSession originalProfile];
     if (originalBookmark && [originalBookmark objectForKey:KEY_GUID]) {
         theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[originalBookmark objectForKey:KEY_GUID]];
     }
@@ -4990,6 +5075,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if (!theBookmark) {
         theBookmark = [[ProfileModel sharedInstance] defaultBookmark];
     }
+
+    if (sourceSession.isDivorced) {
+        // Don't want to have two divorced sessions with the same guid. Allocate a new sessions
+        // instance bookmark with a unique GUID.
+        NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
+        temp[KEY_GUID] = [ProfileModel freshGuid];
+        [[ProfileModel sessionsInstance] addBookmark:temp];
+        theBookmark = temp;
+    }
+
     return theBookmark;
 }
 
@@ -5283,10 +5378,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (IBAction)addNoteAtCursor:(id)sender {
     [[self currentSession] addNoteAtCursor];
-}
-
-- (IBAction)showHideNotes:(id)sender {
-    [[self currentSession] showHideNotes];
 }
 
 - (IBAction)nextMarkOrNote:(id)sender {
@@ -5877,7 +5968,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([self _haveTopBorder]) {
         ++contentSize.height;
     }
-    if (![_contentView tabBarShouldBeVisible] && self.divisionViewShouldBeVisible) {
+    if (self.divisionViewShouldBeVisible) {
         ++contentSize.height;
     }
 
@@ -5907,7 +5998,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         }
     }
 
-    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask);
+    _contentView.tabBarControl.cmdPressed = ((modifierFlags & NSCommandKeyMask) == NSCommandKeyMask);
 }
 
 // Change position of window widgets.
@@ -6281,10 +6372,9 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-// Send a reset to the current session's terminal.
-- (void)reset:(id)sender
-{
-    [[[self currentSession] terminal] resetPreservingPrompt:YES];
+// Reset all state associated with the terminal.
+- (void)reset:(id)sender {
+    [[[self currentSession] terminal] resetByUserRequest:YES];
     [[self currentSession] updateDisplay];
 }
 
@@ -6371,8 +6461,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         result = ![[self currentSession] liveSession] && [[self currentSession] canInstantReplayPrev];
     } else if ([item action] == @selector(irNext:)) {
         result = [[self currentSession] canInstantReplayNext];
-    } else if ([item action] == @selector(toggleShowTimestamps:)) {
-        result = ([self currentSession] != nil);
     } else if ([item action] == @selector(toggleCursorGuide:)) {
       PTYSession *session = [self currentSession];
       [item setState:session.highlightCursorLine ? NSOnState : NSOffState];
@@ -6381,7 +6469,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [item setState:[[iTermController sharedInstance] selectionRespectsSoftBoundaries] ? NSOnState : NSOffState];
         result = YES;
     } else if ([item action] == @selector(toggleAutoCommandHistory:)) {
-        result = [[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed];
+        result = [[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
                 [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSOnState : NSOffState];
@@ -6415,15 +6503,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] screen] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {
-        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
-        return [[CommandHistory sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
+        return [[iTermShellHistoryController sharedInstance] haveCommandsForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(openDirectories:)) {
-        if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+        if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
-        return [[iTermDirectoriesModel sharedInstance] haveEntriesForHost:[[self currentSession] currentHost]];
+        return [[iTermShellHistoryController sharedInstance] haveDirectoriesForHost:[[self currentSession] currentHost]];
     } else if ([item action] == @selector(movePaneDividerDown:)) {
         int height = [[[self currentSession] textview] lineHeight];
         return [[self currentTab] canMoveCurrentSessionDividerBy:height
@@ -6457,11 +6545,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         return self.currentSession.textViewIsZoomedIn;
     }
     return result;
-}
-
-- (IBAction)toggleShowTimestamps:(id)sender
-{
-    [[self currentSession] toggleShowTimestamps];
 }
 
 - (IBAction)toggleAutoCommandHistory:(id)sender
@@ -6768,7 +6851,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             }
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        isUTF8 = ([profile[KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
         [self setName:name forSession:aSession];
         // Start the command
         [self startProgram:cmd
@@ -6821,16 +6904,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 #pragma mark - iTermTabBarControlViewDelegate
 
-- (BOOL)iTermTabBarShouldFlash {
-    return ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
-            [self anyFullScreen] &&
+- (BOOL)eligibleForFullScreenTabBarToFlash {
+    return ([self anyFullScreen] &&
             !exitingLionFullscreen_ &&
             !fullscreenTabs_ &&
             ![[[self currentSession] textview] isFindingCursor]);
 }
 
-- (NSTimeInterval)iTermTabBarCmdPressDuration {
-    return [iTermPreferences floatForKey:kPreferenceKeyTimeToHoldCmdToShowTabsInFullScreen];
+- (BOOL)iTermTabBarShouldFlashAutomatically {
+    return ([iTermPreferences boolForKey:kPreferenceKeyFlashTabBarInFullscreen] &&
+            [self eligibleForFullScreenTabBarToFlash]);
 }
 
 - (void)iTermTabBarWillBeginFlash {
@@ -6886,7 +6969,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         // Create a modified profile to run "command".
         NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
         temp[KEY_CUSTOM_COMMAND] = @"Yes";
-        temp[KEY_COMMAND] = command;
+        temp[KEY_COMMAND_LINE] = command;
         profile = temp;
 
     } else if (substitutions.count && profile[KEY_NAME]) {
@@ -7021,7 +7104,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             pwd = NSHomeDirectory();
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        BOOL isUTF8 = ([profile[KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        BOOL isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
         [self setName:[name stringByPerformingSubstitutions:substitutions]
            forSession:aSession];
@@ -7053,12 +7136,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             [self insertSession:object atIndex:[_contentView.tabView numberOfTabViewItems]];
         } else {
             [self insertSession:object atIndex:[self indexOfTab:[self currentTab]] + 1];
-        }
-        if ([self numberOfTabs] == 1 &&
-            [iTermProfilePreferences boolForKey:KEY_OPEN_TOOLBELT
-                                      inProfile:object.profile] &&
-            !_contentView.shouldShowToolbelt) {
-            [self toggleToolbeltVisibility:self];
         }
     }
     [[self currentTab] numberOfSessionsDidChange];
@@ -7162,6 +7239,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (void)toolbeltInsertText:(NSString *)text {
     [[[self currentSession] textview] insertText:text];
+    [[self currentSession] takeFocus];
 }
 
 - (VT100RemoteHost *)toolbeltCurrentHost {
@@ -7192,7 +7270,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [self.currentSession.guid isEqualToString:guid];
 }
 
-- (NSArray *)toolbeltCommandUsesForCurrentSession {
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return [self.currentSession commandUses];
 }
 

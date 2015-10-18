@@ -846,6 +846,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return nil;
 }
 
+- (BOOL)screenShouldReduceFlicker {
+    return NO;
+}
+
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
@@ -1970,13 +1974,13 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     VT100Screen *screen = [self screenWithWidth:6 height:4];
     [screen setHistory:lines];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
-               @"abcdef\n"
-               @"ghijkl\n"
-               @"mnop..\n"
-               @"qrstuv\n"
-               @"wxyz..\n"
-               @"012345\n"
-               @"6.....\n"
+               @"abcdef+\n"
+               @"ghijkl!\n"
+               @"mnop..!\n"
+               @"qrstuv+\n"
+               @"wxyz..!\n"
+               @"012345+\n"
+               @"6.....!\n"
                @"ABC...!\n"
                @"DEFGHI+\n"
                @"JKL...!\n"
@@ -2105,10 +2109,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                    inContext:ctx]);
     XCTAssert(results.count == 1);
     SearchResult *range = results[0];
-    XCTAssert(range->startX == 0);
-    XCTAssert(range->absStartY == 5);
-    XCTAssert(range->endX == 3);
-    XCTAssert(range->absEndY == 5);
+    XCTAssert(range.startX == 0);
+    XCTAssert(range.absStartY == 5);
+    XCTAssert(range.endX == 3);
+    XCTAssert(range.absEndY == 5);
 
     // Make sure there's nothing else to find
     [results removeAllObjects];
@@ -2135,10 +2139,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                    inContext:ctx]);
     XCTAssert(results.count == 1);
     range = results[0];
-    XCTAssert(range->startX == 0);
-    XCTAssert(range->absStartY == 8);
-    XCTAssert(range->endX == 3);
-    XCTAssert(range->absEndY == 8);
+    XCTAssert(range.startX == 0);
+    XCTAssert(range.absStartY == 8);
+    XCTAssert(range.endX == 3);
+    XCTAssert(range.absEndY == 8);
 
     // Make sure there's nothing else to find
     [results removeAllObjects];
@@ -3762,7 +3766,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"....!"]);
     [screen terminalScrollUp:1];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
-               @"abcd\n"
+               @"abcd+\n"
                @"efg.!\n"
                @"hij.!\n"
                @"....!\n"
@@ -3778,8 +3782,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                @"....!"]);
     [screen terminalScrollUp:2];
     XCTAssert([[screen compactLineDumpWithHistoryAndContinuationMarks] isEqualToString:
-               @"abcd\n"
-               @"efg.\n"
+               @"abcd+\n"
+               @"efg.!\n"
                @"hij.!\n"
                @"....!\n"
                @"....!\n"

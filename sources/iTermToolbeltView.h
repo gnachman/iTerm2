@@ -36,7 +36,7 @@ extern NSString *const kToolbeltShouldHide;
 + (int)numberOfVisibleTools;
 + (BOOL)shouldShowTool:(NSString *)name;
 
-- (id)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate;
+- (instancetype)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate;
 
 // Stop timers, etc., releasing any internal references to self.
 - (void)shutdown;

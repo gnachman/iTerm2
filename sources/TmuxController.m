@@ -22,14 +22,14 @@
 #import "TmuxWindowOpener.h"
 #import "TSVParser.h"
 
-NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
-NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
-NSString *kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
-NSString *kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
-NSString *kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
-NSString *kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
-NSString *kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
-NSString *kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
+NSString *const kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
+NSString *const kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
+NSString *const kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
+NSString *const kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
+NSString *const kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
+NSString *const kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
+NSString *const kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
+NSString *const kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
 
 // Unsupported global options:
 static NSString *const kAggressiveResize = @"aggressive-resize";
@@ -85,8 +85,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 @synthesize sessionId = sessionId_;
 
-- (id)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName
-{
+- (instancetype)initWithGateway:(TmuxGateway *)gateway clientName:(NSString *)clientName {
     self = [super init];
     if (self) {
         gateway_ = [gateway retain];
@@ -124,8 +123,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                        name:(NSString *)name
                        size:(NSSize)size
                      layout:(NSString *)layout
-                 affinities:(NSArray *)affinities
-{
+                 affinities:(NSSet *)affinities {
     DLog(@"openWindowWithIndex:%d name:%@ affinities:%@", windowIndex, name, affinities);
     NSNumber *n = [NSNumber numberWithInt:windowIndex];
     if ([pendingWindowOpens_ containsObject:n]) {
@@ -233,8 +231,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 }
 
-- (NSArray *)savedAffinitiesForWindow:(int)wid
-{
+- (NSSet<NSObject<NSCopying> *> *)savedAffinitiesForWindow:(int)wid {
     return [affinities_ valuesEqualTo:[NSString stringWithInt:wid]];
 }
 
@@ -1204,10 +1201,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                         object:self.sessions];
 }
 
-- (void)listedWindowsToOpenOne:(NSString *)response forWindowIdAndAffinities:(NSArray *)values
-{
+- (void)listedWindowsToOpenOne:(NSString *)response forWindowIdAndAffinities:(NSArray *)values {
     NSNumber *windowId = [values objectAtIndex:0];
-    NSArray *affinities = [values objectAtIndex:1];
+    NSSet *affinities = [values objectAtIndex:1];
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
     if (!doc) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for list windows request: %@",

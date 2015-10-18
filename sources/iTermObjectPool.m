@@ -14,7 +14,7 @@
 
 @interface iTermPooledObject ()
 
-- (id)initWithPool:(iTermObjectPool *)pool collectionNumber:(int)collectionNumber;
+- (instancetype)initWithPool:(iTermObjectPool *)pool collectionNumber:(int)collectionNumber;
 - (int)poolCollectionNumber;
 
 @end
@@ -24,7 +24,7 @@
     int _collectionNumber;
 }
 
-- (id)initWithPool:(iTermObjectPool *)pool collectionNumber:(int)collectionNumber {
+- (instancetype)initWithPool:(iTermObjectPool *)pool collectionNumber:(int)collectionNumber {
     self = [super init];
     if (self) {
         _pool = pool;
@@ -70,7 +70,7 @@ typedef struct {
     Class _class;
 }
 
-- (id)initWithClass:(Class)theClass
+- (instancetype)initWithClass:(Class)theClass
         collections:(int)numCollections
       objectsPerCollection:(int)objectsPerCollection {
     self = [super init];

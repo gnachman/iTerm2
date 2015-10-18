@@ -192,6 +192,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     [_toolbelt shutdown];
     [_toolbelt release];
     _toolbelt = nil;
+    _delegate = nil;
 }
 
 - (BOOL)scrollbarShouldBeVisible {
@@ -402,12 +403,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 #pragma mark - iTermTabBarControlViewDelegate
 
-- (BOOL)iTermTabBarShouldFlash {
-    return [_delegate iTermTabBarShouldFlash];
-}
-
-- (NSTimeInterval)iTermTabBarCmdPressDuration {
-    return [_delegate iTermTabBarCmdPressDuration];
+- (BOOL)iTermTabBarShouldFlashAutomatically {
+    return [_delegate iTermTabBarShouldFlashAutomatically];
 }
 
 - (void)iTermTabBarWillBeginFlash {

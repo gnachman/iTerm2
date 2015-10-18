@@ -10,10 +10,10 @@
 
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
-#import "CommandUse.h"
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermSearchField.h"
-#import "iTermToolWrapper.h"
 #import "iTermToolbeltView.h"
+#import "iTermToolWrapper.h"
 #import "NSTableColumn+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -24,6 +24,7 @@ static const CGFloat kMargin = 4;
 @interface ToolCapturedOutputView() <
     ToolbeltTool,
     NSMenuDelegate,
+    NSSearchFieldDelegate,
     NSTextFieldDelegate>
 @end
 
@@ -41,11 +42,11 @@ static const CGFloat kMargin = 4;
 
 @synthesize tableView = tableView_;
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         spareCell_ = [[self cell] retain];
-        
+
         help_ = [[NSButton alloc] initWithFrame:CGRectZero];
         [help_ setBezelStyle:NSHelpButtonBezelStyle];
         [help_ setButtonType:NSMomentaryPushInButton];
@@ -106,7 +107,7 @@ static const CGFloat kMargin = 4;
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
         [self relayout];
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(capturedOutputDidChange:)
                                                      name:kPTYSessionCapturedOutputDidChange
@@ -127,7 +128,7 @@ static const CGFloat kMargin = 4;
 - (void)updateCapturedOutput {
     iTermToolWrapper *wrapper = self.toolWrapper;
     ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];
-    CommandUse *commandUse = [commandHistoryView selectedCommandUse];
+    iTermCommandHistoryCommandUseMO *commandUse = [commandHistoryView selectedCommandUse];
     VT100ScreenMark *mark;
     NSArray *theArray;
     if (commandUse) {
@@ -177,7 +178,7 @@ static const CGFloat kMargin = 4;
                                          frame.size.width - help_.frame.size.width - kMargin,
                                          searchField_.frame.size.height);
     searchField_.frame = searchFieldFrame;
-    
+
     // Help button
     help_.frame = NSMakeRect(frame.size.width - help_.frame.size.width,
                              1,

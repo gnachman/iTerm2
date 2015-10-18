@@ -1,5 +1,3 @@
-// -*- mode:objc -*-
-// $Id: iTermApplicationDelegate.h,v 1.21 2006-11-21 19:24:29 yfabian Exp $
 /*
  **  iTermApplicationDelegate.h
  **
@@ -31,7 +29,9 @@
 #import <Carbon/Carbon.h>
 #import "DebugLogging.h"
 
+@class PTYSession;
 @class PseudoTerminal;
+
 extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 extern NSString *const kMultiLinePasteWarningUserDefaultsKey;
 extern NSString *const kSavedArrangementDidChangeNotification;
@@ -52,6 +52,9 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 // Is Sparkle in the process of restarting us?
 @property(nonatomic, readonly) BOOL sparkleRestarting;
+
+@property(nonatomic, readonly) BOOL useBackgroundPatternIndicator;
+@property(nonatomic, readonly) BOOL warnBeforeMultiLinePaste;
 
 - (void)awakeFromNib;
 
@@ -118,7 +121,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)editCurrentSession:(id)sender;
 
 - (IBAction)toggleUseBackgroundPatternIndicator:(id)sender;
-- (BOOL)useBackgroundPatternIndicator;
 
 - (void)makeHotKeyWindowKeyIfOpen;
 
@@ -126,12 +128,11 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
 // Call this when the user has any nontrivial interaction with a session, such as typing in it or closing a window.
 - (void)userDidInteractWithASession;
-- (BOOL)warnBeforeMultiLinePaste;
 
 - (NSMenu *)downloadsMenu;
 - (NSMenu *)uploadsMenu;
 
-- (void)openPasswordManagerToAccountName:(NSString *)name;
+- (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session;
 
 - (PseudoTerminal *)currentTerminal;
 - (NSArray*)terminals;

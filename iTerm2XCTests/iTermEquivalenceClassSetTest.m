@@ -21,7 +21,7 @@
 	NSNumber *n3 = [NSNumber numberWithInt:12];
 	EquivalenceClassSet *e = [[[EquivalenceClassSet alloc] init] autorelease];
 	[e setValue:n1 equalToValue:n2];
-	NSArray *ec = [e valuesEqualTo:n1];
+	NSSet *ec = [e valuesEqualTo:n1];
 	XCTAssert(ec.count == 2);
 	XCTAssert([ec containsObject:n1]);
 	XCTAssert([ec containsObject:n2]);
@@ -41,7 +41,7 @@
 	EquivalenceClassSet *e = [[[EquivalenceClassSet alloc] init] autorelease];
 	[e setValue:n1 equalToValue:n2];
 	[e setValue:n1 equalToValue:n2];
-	NSArray *ec = [e valuesEqualTo:n1];
+	NSSet *ec = [e valuesEqualTo:n1];
 	XCTAssert(ec.count == 2);
 	XCTAssert([ec containsObject:n1]);
 	XCTAssert([ec containsObject:n2]);
@@ -56,7 +56,7 @@
 	[e setValue:n1 equalToValue:n2];
 	[e setValue:n3 equalToValue:n4];
 
-	NSArray *ec = [e valuesEqualTo:n1];
+	NSSet *ec = [e valuesEqualTo:n1];
 	XCTAssert(ec.count == 2);
 	XCTAssert([ec containsObject:n1]);
 	XCTAssert([ec containsObject:n2]);
@@ -82,7 +82,7 @@
 	EquivalenceClassSet *e = [[[EquivalenceClassSet alloc] init] autorelease];
 	[e setValue:n1 equalToValue:n2];
 	[e setValue:n1 equalToValue:n3];
-	NSArray *ec = [e valuesEqualTo:n1];
+	NSSet *ec = [e valuesEqualTo:n1];
 	XCTAssert(ec.count == 3);
 	XCTAssert([ec containsObject:n1]);
 	XCTAssert([ec containsObject:n2]);
@@ -96,7 +96,7 @@
 	EquivalenceClassSet *e = [[[EquivalenceClassSet alloc] init] autorelease];
 	[e setValue:n1 equalToValue:n2];
 	[e setValue:n3 equalToValue:n1];
-	NSArray *ec = [e valuesEqualTo:n1];
+	NSSet *ec = [e valuesEqualTo:n1];
 	XCTAssert(ec.count == 3);
 	XCTAssert([ec containsObject:n1]);
 	XCTAssert([ec containsObject:n2]);
@@ -111,7 +111,7 @@
 	[e setValue:n1 equalToValue:n2];
 	[e setValue:n3 equalToValue:n1];
 	[e removeValue:n2];
-	NSArray *ec = [e valuesEqualTo:n1];
+	NSSet *ec = [e valuesEqualTo:n1];
 	XCTAssert(ec.count == 2);
 	XCTAssert([ec containsObject:n1]);
 	XCTAssert([ec containsObject:n3]);
@@ -123,7 +123,7 @@
 	EquivalenceClassSet *e = [[[EquivalenceClassSet alloc] init] autorelease];
 	[e setValue:n1 equalToValue:n2];
 	[e removeValue:n2];
-	NSArray *ec = [e valuesEqualTo:n1];
+	NSSet *ec = [e valuesEqualTo:n1];
 	XCTAssert(!ec);
 }
 

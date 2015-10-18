@@ -9,30 +9,30 @@
 #import <Foundation/Foundation.h>
 #import "VT100Token.h"
 
-typedef enum {
+typedef NS_ENUM(NSInteger, MouseMode) {
     MOUSE_REPORTING_NONE = -1,
     MOUSE_REPORTING_NORMAL = 0,
     MOUSE_REPORTING_HILITE = 1,
     MOUSE_REPORTING_BUTTON_MOTION = 2,
     MOUSE_REPORTING_ALL_MOTION = 3,
-} MouseMode;
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, VT100TerminalSemanticTextType) {
     kVT100TerminalSemanticTextTypeFilename = 1,
     kVT100TerminalSemanticTextTypeDirectory = 2,
     kVT100TerminalSemanticTextTypeProcessId = 3,
 
     kVT100TerminalSemanticTextTypeMax
-} VT100TerminalSemanticTextType;
+};
 
-typedef enum {
+typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
     kVT100TerminalUnitsCells,
     kVT100TerminalUnitsPixels,
     kVT100TerminalUnitsPercentage,
     kVT100TerminalUnitsAuto,
-} VT100TerminalUnits;
+};
 
-@protocol VT100TerminalDelegate
+@protocol VT100TerminalDelegate <NSObject>
 // Append a string at the cursor's position and advance the cursor, scrolling if necessary.
 - (void)terminalAppendString:(NSString *)string;
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData;

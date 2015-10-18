@@ -25,12 +25,12 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         ProfileModel *profileModel = [ProfileModel sharedInstance];
-        
+
         // read in the handlers by converting the index back to bookmarks
         _urlHandlersByGuid = [[NSMutableDictionary alloc] init];
         NSDictionary *tempDict = [userDefaults objectForKey:kUrlHandlersUserDefaultsKey];

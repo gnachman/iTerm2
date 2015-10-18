@@ -11,7 +11,19 @@
 // Default max time per iteration of search.
 static const NSTimeInterval kDefaultMaxTime = 0.1;
 
-@implementation FindContext
+@implementation FindContext {
+    int absBlockNum_;
+    NSString* substring_;
+    FindOptions options_;
+    int dir_;
+    int offset_;
+    int stopAt_;
+    FindContextStatus status_;
+    int matchLength_;
+    NSMutableArray* results_;
+    BOOL hasWrapped_;
+    NSTimeInterval maxTime_;
+}
 
 @synthesize absBlockNum = absBlockNum_;
 @synthesize substring = substring_;
@@ -25,7 +37,7 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
 @synthesize hasWrapped = hasWrapped_;
 @synthesize maxTime = maxTime_;
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         maxTime_ = kDefaultMaxTime;

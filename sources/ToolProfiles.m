@@ -15,9 +15,12 @@ static const int kVerticalMargin = 5;
 static const int kMargin = 0;
 static const int kPopupHeight = 26;
 
-@implementation ToolProfiles
+@implementation ToolProfiles {
+    ProfileListView *listView_;
+    NSPopUpButton *popup_;
+}
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         listView_ = [[ProfileListView alloc] initWithFrame:NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin)];

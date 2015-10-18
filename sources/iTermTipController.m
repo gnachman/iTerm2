@@ -18,6 +18,9 @@ static NSString *const kUnshowableTipsKey = @"NoSyncTipsToNotShow";
 static NSString *const kLastTipTimeKey = @"NoSyncLastTipTime";
 static NSString *const kTipsDisabledKey = @"NoSyncTipsDisabled";  // There's an advanced pref with the same name.
 static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
+static NSString *const kTimeOfFirstLaunchOfVersionWithTip = @"NoSyncTimeOfFirstLaunchOfVersionWithTip";
+static NSString *const kPermissionToShowTip = @"NoSyncPermissionToShowTip";
+static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPerDay;
 
 @interface iTermTipController()<iTermTipWindowDelegate>
 @property(nonatomic, retain) NSDictionary *tips;
@@ -66,18 +69,39 @@ static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
 }
 
 - (void)applicationDidFinishLaunching {
-    [self preventTipFor48HoursForNewInstallsIfNeeded];
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    NSTimeInterval timeOfFirstLaunchOfVersionWithTip =
+        [[NSUserDefaults standardUserDefaults] doubleForKey:kTimeOfFirstLaunchOfVersionWithTip];
+    if (!timeOfFirstLaunchOfVersionWithTip) {
+        [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate]
+                                                  forKey:kTimeOfFirstLaunchOfVersionWithTip];
+    } else {
+        if (![self haveAskedForPermission] &&
+            now - timeOfFirstLaunchOfVersionWithTip > kMinDelayBeforeAskingForPermission &&
+            ![[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
+            [self askForPermission];
+        }
+    }
+
     [self tryToShowTip];
 }
 
-// If this is the first time kLastTipTimeKey has been seen (a new install or upgrade) then set it
-// to 24 hours from now. That means a tip won't show up for at least 48 hours so we don't bombard
-// new users with too many things.
-- (void)preventTipFor48HoursForNewInstallsIfNeeded {
-    if (![[NSUserDefaults standardUserDefaults] objectForKey:kLastTipTimeKey]) {
-        NSTimeInterval tomorrow = [NSDate timeIntervalSinceReferenceDate] + kSecondsPerDay;
-        [[NSUserDefaults standardUserDefaults] setDouble:tomorrow forKey:kLastTipTimeKey];
-    }
+- (BOOL)havePermission {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kPermissionToShowTip];
+}
+
+- (BOOL)haveAskedForPermission {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kPermissionToShowTip] != nil;
+}
+
+- (void)askForPermission {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"See Tips of the Day?";
+    alert.informativeText = @"iTerm2 can show you a Tip of the Day message help you learn about its many features. Are you interested?";
+    [alert addButtonWithTitle:@"Yes"];
+    [alert addButtonWithTitle:@"No"];
+    BOOL havePermission = ([alert runModal] == NSAlertFirstButtonReturn);
+    [[NSUserDefaults standardUserDefaults] setBool:havePermission forKey:kPermissionToShowTip];
 }
 
 - (void)tryToShowTip {
@@ -85,7 +109,9 @@ static const NSTimeInterval kSecondsPerDay = 24 * 60 * 60;
     [self showTipForKey:[[self.tips.allKeys sortedArrayUsingSelector:@selector(compare:)] firstObject]];
     return;
 #endif
-
+    if (![self havePermission]) {
+        return;
+    }
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
         return;
     }

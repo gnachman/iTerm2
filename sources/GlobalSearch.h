@@ -30,8 +30,7 @@
 #import "FutureMethods.h"
 
 @interface GlobalSearchView : NSView
-{
-}
+
 
 - (void)drawRect:(NSRect)rect;
 
@@ -40,7 +39,7 @@
 @class iTermSearchField;
 @class PTYSession;
 
-@protocol GlobalSearchDelegate
+@protocol GlobalSearchDelegate <NSObject>
 
 - (void)globalSearchSelectionChangedToSession:(PTYSession*)theSession;
 - (void)globalSearchOpenSelection;
@@ -49,27 +48,11 @@
 
 @end
 
-@interface GlobalSearch : NSViewController <NSTextFieldDelegate, NSTableViewDataSource, NSTableViewDelegate>
-{
-    IBOutlet iTermSearchField* searchField_;
-    IBOutlet NSTableView* tableView_;
-    NSTimer* timer_;
-    NSMutableArray* searches_;
-    NSMutableArray* combinedResults_;
-    id<GlobalSearchDelegate> delegate_;
-}
+@interface GlobalSearch : NSViewController <NSTableViewDataSource>
 
-- (void)awakeFromNib;
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
-- (void)dealloc;
-- (void)controlTextDidChange:(NSNotification *)aNotification;
+@property(nonatomic, readonly) int numResults;
+
 - (void)setDelegate:(id<GlobalSearchDelegate>)delegate;
-- (int)numResults;
 - (void)abort;
-
-#pragma mark NSTableView dataSource
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 
 @end

@@ -6,6 +6,7 @@
 //
 
 #import "Trigger.h"
+#import "DebugLogging.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 #import "ScreenChar.h"
@@ -40,7 +41,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return trigger;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _lastLineNumber = -1;
@@ -48,6 +49,10 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p regex=%@ param=%@>",
+               NSStringFromClass(self.class), self, self.regex, self.param];
+}
 - (NSString *)action
 {
     return NSStringFromClass([self class]);
@@ -133,6 +138,7 @@ NSString * const kTriggerPartialLineKey = @"partial";
                                         const NSRange *capturedRanges,
                                         volatile BOOL *const stopEnumerating) {
                                _lastLineNumber = lineNumber;
+                               DLog(@"Trigger %@ matched string %@", self, s);
                                if (![self performActionWithCapturedStrings:capturedStrings
                                                             capturedRanges:capturedRanges
                                                               captureCount:captureCount
@@ -183,27 +189,12 @@ NSString * const kTriggerPartialLineKey = @"partial";
     return [[self title] compare:[other title]];
 }
 
-- (int)indexOfTag:(int)theTag
-{
-    return theTag;
+- (NSInteger)indexForObject:(id)object {
+    return [object intValue];
 }
 
-- (int)tagAtIndex:(int)theIndex
-{
-    return 0;
-}
-
-- (int)indexForObject:(id)object {
-    return [self indexOfTag:[object intValue]];
-}
-
-- (id)objectAtIndex:(int)index {
-    int tag = [self tagAtIndex:index];
-    if (tag < 0) {
-        return nil;
-    } else {
-        return @(tag);
-    }
+- (id)objectAtIndex:(NSInteger)index {
+    return @(index);
 }
 
 - (NSArray *)objectsSortedByValueInDict:(NSDictionary *)dict

@@ -46,6 +46,7 @@
 
 // Shows message, returns YES if OK, NO if Cancel
 - (BOOL)transferrableFile:(TransferrableFile *)transferrableFile
+                    title:(NSString *)title
            confirmMessage:(NSString *)message;
 
 @end

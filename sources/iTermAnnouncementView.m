@@ -76,7 +76,7 @@ static const CGFloat kMargin = 8;
     return view;
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
         frameRect.size.height -= 10;
@@ -372,7 +372,7 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)addDismissOnKeyDownLabel {
-    NSMutableAttributedString *string = [_textView.attributedString mutableCopy];
+    NSMutableAttributedString *string = [[_textView.attributedString mutableCopy] autorelease];
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
                                   NSForegroundColorAttributeName: [NSColor darkGrayColor] };
     NSAttributedString *notice = [[[NSAttributedString alloc] initWithString:@"\nPress any key to dismiss this message."

@@ -17,7 +17,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
 
 @implementation ToolNotes
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         filemanager_ = [[NSFileManager alloc] init];
@@ -42,6 +42,13 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [[textView_ textContainer] setWidthTracksTextView:YES];
         [textView_ setDelegate:self];
         [textView_ readRTFDFromFile:[self filename]];
+        textView_.automaticSpellingCorrectionEnabled = NO;
+        textView_.automaticDashSubstitutionEnabled = NO;
+        textView_.automaticQuoteSubstitutionEnabled = NO;
+        textView_.automaticDataDetectionEnabled = NO;
+        textView_.automaticLinkDetectionEnabled = NO;
+        textView_.smartInsertDeleteEnabled = NO;
+
         [scrollview setDocumentView:textView_];
                 
         [self addSubview:scrollview];

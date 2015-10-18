@@ -9,11 +9,11 @@
 #import "Popup.h"
 #import "PopupEntry.h"
 
-@class iTermDirectoryEntry;
+@class iTermRecentDirectoryMO;
 @class VT100RemoteHost;
 
 @interface DirectoriesPopupEntry : PopupEntry
-@property(nonatomic, retain) iTermDirectoryEntry *entry;
+@property(nonatomic, retain) iTermRecentDirectoryMO *entry;
 @end
 
 @interface DirectoriesPopupWindowController : Popup

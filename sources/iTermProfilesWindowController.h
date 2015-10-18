@@ -26,21 +26,10 @@
 #import "ProfileListView.h"
 #import "FutureMethods.h"
 
-@interface iTermProfilesWindowController : NSWindowController <ProfileListViewDelegate, NSWindowDelegate> {
-    IBOutlet ProfileListView* tableView_;
-    IBOutlet NSSegmentedControl* actions_;
-    IBOutlet NSButton* horizontalPaneButton_;
-    IBOutlet NSButton* verticalPaneButton_;
-    IBOutlet NSButton* tabButton_;
-    IBOutlet NSButton* windowButton_;
-    IBOutlet NSButton* closeAfterOpeningBookmark_;
-    IBOutlet NSButton* newTabsInNewWindowButton_;
-    IBOutlet NSButton* toggleTagsButton_;
-}
+@interface iTermProfilesWindowController : NSWindowController <ProfileListViewDelegate, NSWindowDelegate>
 
-+ (iTermProfilesWindowController*)sharedInstance;
-- (id)init;
-- (id)initWithWindowNibName:(NSString *)windowNibName;
++ (instancetype)sharedInstance;
+
 - (IBAction)openBookmarkInHorizontalPane:(id)sender;
 - (IBAction)openBookmarkInVerticalPane:(id)sender;
 - (IBAction)openBookmarkInTab:(id)sender;

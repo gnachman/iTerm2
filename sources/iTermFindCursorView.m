@@ -40,7 +40,7 @@ const double kFindCursorHoleRadius = 30;
     [super dealloc];
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
 
     if (self) {
@@ -98,7 +98,7 @@ const double kFindCursorHoleRadius = 30;
     [super dealloc];
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
 
     if (self) {

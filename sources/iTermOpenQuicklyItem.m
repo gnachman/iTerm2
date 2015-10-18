@@ -16,7 +16,7 @@
 
 @implementation iTermOpenQuicklySessionItem
 
-- (id)init {
+- (instancetype)init {
   self = [super init];
   if (self) {
     _logoGenerator = [[iTermLogoGenerator alloc] init];

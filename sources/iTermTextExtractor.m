@@ -43,7 +43,7 @@ static const int kNumCharsToSearchForDivider = 8;
     return charset;
 }
 
-- (id)initWithDataSource:(id<PTYTextViewDataSource>)dataSource {
+- (instancetype)initWithDataSource:(id<PTYTextViewDataSource>)dataSource {
     self = [super init];
     if (self) {
         _dataSource = dataSource;
@@ -414,7 +414,8 @@ static const int kNumCharsToSearchForDivider = 8;
 
 - (VT100GridCoord)coord:(VT100GridCoord)coord
                    plus:(int)n
-         skippingCoords:(NSIndexSet *)coordsToSkip {
+         skippingCoords:(NSIndexSet *)coordsToSkip
+                forward:(BOOL)forward {
     int left = _logicalWindow.length >= 0 ? _logicalWindow.location : 0;
     int right = [self xLimit];
     int span = right - left;
@@ -426,9 +427,14 @@ static const int kNumCharsToSearchForDivider = 8;
         coord.x += n;
         n = 0;
         if (coord.x >= left && coord.x < right) {
-            coord.x += [self numberOfCoordsInIndexSet:coordsToSkip
-                                              between:coord
-                                                  and:prevCoord];
+            int extra = [self numberOfCoordsInIndexSet:coordsToSkip
+                                               between:coord
+                                                   and:prevCoord];
+            if (forward) {
+                coord.x += extra;
+            } else {
+                coord.x -= extra;
+            }
         }
         // If n was negative, move it right and up until it's legal.
         if (coord.x < left) {
@@ -529,7 +535,8 @@ static const int kNumCharsToSearchForDivider = 8;
                                        // Is a backslash at the right edge of a window.
                                        // no-op
                                    } else {
-                                       NSString* string = CharToStr(theChar.code, theChar.complexChar);
+                                       NSString* string = CharToStr(theChar.code, theChar.complexChar) ?: @""
+                                       ;
                                        [joinedLines insertString:string atIndex:0];
                                        for (int i = 0; i < [string length]; i++) {
                                          [coords insertObject:[NSValue valueWithGridCoord:charCoord] atIndex:0];
@@ -612,20 +619,22 @@ static const int kNumCharsToSearchForDivider = 8;
   includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
-         continuationChars:(NSMutableIndexSet *)continuationChars {
+         continuationChars:(NSMutableIndexSet *)continuationChars
+              coords:(NSMutableArray *)coords {
     DLog(@"Find selected text in range %@ pad=%d, includeLastNewline=%d, trim=%d",
          VT100GridWindowedRangeDescription(windowedRange), (int)pad, (int)includeLastNewline,
          (int)trimSelectionTrailingSpaces);
     __block id result;
     // Appends a string to |result|, either attributed or not, as appropriate.
-    void (^appendString)(NSString *string, screen_char_t theChar) =
-        ^void(NSString *string, screen_char_t theChar) {
+    void (^appendString)(NSString *, screen_char_t, VT100GridCoord) =
+        ^void(NSString *string, screen_char_t theChar, VT100GridCoord coord) {
             if (attributeProvider) {
                 [result iterm_appendString:string
                             withAttributes:attributeProvider(theChar)];
             } else {
                 [result appendString:string];
             }
+            [coords addObject:[NSValue valueWithGridCoord:coord]];
         };
 
     if (attributeProvider) {
@@ -646,7 +655,7 @@ static const int kNumCharsToSearchForDivider = 8;
                               // Convert orphan tab fillers (those without a subsequent
                               // tab character) into spaces.
                               if ([tabFillerOrphans containsIndex:coord.x]) {
-                                  appendString(@" ", theChar);
+                                  appendString(@" ", theChar, coord);
                               }
                           } else if (theChar.code == 0 && !theChar.complexChar) {
                               // This is only reached for midline nulls; nulls at the end of the
@@ -654,12 +663,13 @@ static const int kNumCharsToSearchForDivider = 8;
                               switch (nullPolicy) {
                                   case kiTermTextExtractorNullPolicyFromLastToEnd:
                                       [result deleteCharactersInRange:NSMakeRange(0, [result length])];
+                                      [coords removeAllObjects];
                                       break;
                                   case kiTermTextExtractorNullPolicyFromStartToFirst:
                                       return YES;
                                   case kiTermTextExtractorNullPolicyTreatAsSpace:
                                   case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
-                                      appendString(@" ", theChar);
+                                      appendString(@" ", theChar, coord);
                                       break;
                               }
                           } else if (theChar.code != DWC_RIGHT &&
@@ -675,7 +685,7 @@ static const int kNumCharsToSearchForDivider = 8;
                                   [continuationChars addIndex:[self indexForCoord:coord width:width]];
                               } else {
                                   // Normal character.
-                                  appendString(ScreenCharToStr(&theChar), theChar);
+                                  appendString(ScreenCharToStr(&theChar) ?: @"", theChar, coord);
                               }
                           }
                           return [result length] >= maxBytes;
@@ -683,20 +693,31 @@ static const int kNumCharsToSearchForDivider = 8;
                        eolBlock:^BOOL(unichar code, int numPreceedingNulls, int line) {
                            tabFillerOrphans =
                                [self tabFillerOrphansOnRow:line + 1];
+                           int right;
+                           if (windowedRange.columnWindow.length) {
+                               right = windowedRange.columnWindow.location + windowedRange.columnWindow.length;
+                           } else {
+                               right = width;
+                           }
                            // If there is no text after this, insert a hard line break.
                            if (pad) {
                                for (int i = 0; i < numPreceedingNulls; i++) {
-                                   appendString(@" ", [self defaultChar]);
+                                   VT100GridCoord coord =
+                                      VT100GridCoordMake(right - numPreceedingNulls + i, line);
+                                   appendString(@" ", [self defaultChar], coord);
                                }
                            } else if (numPreceedingNulls > 0) {
                                switch (nullPolicy) {
                                    case kiTermTextExtractorNullPolicyFromLastToEnd:
                                        [result deleteCharactersInRange:NSMakeRange(0, [result length])];
+                                       [coords removeAllObjects];
                                        break;
                                    case kiTermTextExtractorNullPolicyFromStartToFirst:
                                        return YES;
                                    case kiTermTextExtractorNullPolicyTreatAsSpace:
-                                       appendString(@" ", [self defaultChar]);
+                                       appendString(@" ",
+                                                    [self defaultChar],
+                                                    VT100GridCoordMake(right - 1, line));
                                        break;
                                    case kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal:
                                        break;
@@ -705,15 +726,23 @@ static const int kNumCharsToSearchForDivider = 8;
                            if (code == EOL_HARD &&
                                (includeLastNewline || line < windowedRange.coordRange.end.y)) {
                                if (trimSelectionTrailingSpaces) {
+                                   NSInteger lengthBeforeTrimming = [result length];
                                    [result trimTrailingWhitespace];
+                                   [coords removeObjectsInRange:NSMakeRange([result length],
+                                                                            lengthBeforeTrimming - [result length])];
                                }
-                               appendString(@"\n", [self defaultChar]);
+                               appendString(@"\n",
+                                            [self defaultChar],
+                                            VT100GridCoordMake(right, line));
                            }
                            return [result length] >= maxBytes;
-                           }];
+                       }];
 
     if (trimSelectionTrailingSpaces) {
+        NSInteger lengthBeforeTrimming = [result length];
         [result trimTrailingWhitespace];
+        [coords removeObjectsInRange:NSMakeRange([result length],
+                                                 lengthBeforeTrimming - [result length])];
     }
     return result;
 }
@@ -803,7 +832,8 @@ static const int kNumCharsToSearchForDivider = 8;
           respectHardNewlines:(BOOL)respectHardNewlines
                      maxChars:(int)maxChars
             continuationChars:(NSMutableIndexSet *)continuationChars
-          convertNullsToSpace:(BOOL)convertNullsToSpace {
+          convertNullsToSpace:(BOOL)convertNullsToSpace
+                       coords:(NSMutableArray *)coords {
     if ([self hasLogicalWindow]) {
         respectHardNewlines = NO;
     }
@@ -848,7 +878,8 @@ static const int kNumCharsToSearchForDivider = 8;
               includeLastNewline:NO
           trimTrailingWhitespace:NO
                     cappedAtSize:maxChars
-               continuationChars:continuationChars];
+               continuationChars:continuationChars
+                          coords:coords];
     if (!respectHardNewlines) {
         content = [content stringByReplacingOccurrencesOfString:@"\n" withString:@""];
     }

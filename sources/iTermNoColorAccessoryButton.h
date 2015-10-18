@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 // First responders may implement methods in this protocol.
-@protocol iTermNoColorAccessoryButtonResponder
+@protocol iTermNoColorAccessoryButtonResponder <NSObject>
 @optional
 - (void)noColorChosen:(id)sender;
 @end

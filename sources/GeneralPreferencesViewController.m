@@ -8,9 +8,9 @@
 
 #import "GeneralPreferencesViewController.h"
 
-#import "CommandHistory.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermRemotePreferences.h"
+#import "iTermShellHistoryController.h"
 #import "PasteboardHistory.h"
 #import "WindowArrangements.h"
 
@@ -108,7 +108,7 @@ enum {
     IBOutlet NSButton *_autoHideTmuxClientSession;
 }
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -180,10 +180,7 @@ enum {
                            key:kPreferenceKeySavePasteAndCommandHistory
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() {
-        if (![iTermPreferences boolForKey:kPreferenceKeySavePasteAndCommandHistory]) {
-            [[PasteboardHistory sharedInstance] eraseHistory];
-            [[CommandHistory sharedInstance] eraseHistory];
-        }
+        [[iTermShellHistoryController sharedInstance] backingStoreTypeDidChange];
     };
 
     [self defineControl:_enableBonjour

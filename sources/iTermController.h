@@ -34,7 +34,6 @@
 #define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
 
 @class GTMCarbonHotKey;
-@class ItermGrowlDelegate;
 @protocol iTermWindowController;
 @class iTermRestorableSession;
 @class PasteboardHistory;
@@ -51,6 +50,12 @@
 @property(nonatomic, assign) BOOL applicationIsQuitting;
 @property(nonatomic, readonly) BOOL willRestoreWindowsAtNextLaunch;
 @property(nonatomic, readonly) BOOL shouldLeaveSessionsRunningOnQuit;
+@property(nonatomic, readonly) BOOL haveTmuxConnection;
+@property(nonatomic, assign) int keyWindowIndexMemo;
+@property(nonatomic, readonly, strong) PTYSession *sessionWithMostRecentSelection;
+@property(nonatomic, nonatomic, assign) PseudoTerminal *currentTerminal;
+@property(nonatomic, readonly) int numberOfTerminals;
+@property(nonatomic, readonly) BOOL hasRestorableSession;
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
@@ -75,11 +80,8 @@
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
 - (PseudoTerminal*)keyTerminalWindow;
-- (BOOL)haveTmuxConnection;
 - (PTYSession *)anyTmuxSession;
 
-- (int)keyWindowIndexMemo;
-- (void)setKeyWindowIndexMemo:(int)i;
 
 - (PseudoTerminal*)terminalWithNumber:(int)n;
 - (PseudoTerminal *)terminalWithGuid:(NSString *)guid;
@@ -88,15 +90,12 @@
 - (void)saveWindowArrangement:(BOOL)allWindows;
 - (void)loadWindowArrangementWithName:(NSString *)theName;
 
-- (PTYSession *)sessionWithMostRecentSelection;
-
-- (PseudoTerminal *)currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
                 startingAt:(int)startingAt;
-- (PseudoTerminal *)openWindow;
+- (PseudoTerminal *)openWindowUsingProfile:(Profile *)profile;
 
 // Super-flexible way to create a new window or tab. If |block| is given then it is used to add a
 // new session/tab to the window; otherwise the bookmark is used in conjunction with the optional
@@ -110,7 +109,6 @@
                          block:(PTYSession *(^)(PseudoTerminal *))block;
 - (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;
 - (PTYTextView*)frontTextView;
-- (int)numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
 - (void)irAdvance:(int)dir;
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
@@ -141,13 +139,10 @@
 - (iTermRestorableSession *)popRestorableSession;
 - (void)commitAndPopCurrentRestorableSession;
 - (void)pushCurrentRestorableSession:(iTermRestorableSession *)session;
-- (BOOL)hasRestorableSession;
 - (void)killRestorableSessions;
 
-- (NSArray*)terminals;
+- (NSArray<PseudoTerminal *>*)terminals;
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow;
-
-- (void)setCurrentTerminal:(PseudoTerminal *)aTerminal;
 
 void OnHotKeyEvent(void);
 

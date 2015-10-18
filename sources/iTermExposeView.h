@@ -14,24 +14,15 @@
 @class PTYSEssion;
 
 @interface iTermExposeView : NSView <GlobalSearchDelegate>
-{
-    // Not explicitly retained, but a subview.
-    iTermExposeGridView* grid_;
-    GlobalSearch* search_;
-    iTermExposeTabView* resultView_;
-    PTYSession* resultSession_;
-    double prevSearchHeight_;
-}
 
-- (id)initWithFrame:(NSRect)frameRect;
-- (void)dealloc;
-- (void)setGrid:(iTermExposeGridView*)grid;
-- (iTermExposeGridView*)grid;
-- (NSRect)searchFrame;
-- (iTermExposeTabView*)resultView;
-- (PTYSession*)resultSession;
+@property(nonatomic, assign) iTermExposeGridView *grid;
+@property(nonatomic, readonly) NSRect searchFrame;
+
+- (iTermExposeTabView *)resultView;
+- (PTYSession *)resultSession;
 
 #pragma mark GlobalSearchDelegate
+
 - (void)globalSearchSelectionChangedToSession:(PTYSession*)theSession;
 - (void)globalSearchOpenSelection;
 - (void)globalSearchViewDidResize:(NSRect)origSize;

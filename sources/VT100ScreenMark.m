@@ -11,6 +11,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringiTerm.h"
+#import "ScreenChar.h"
 
 NSString *const kMarkCodeKey = @"Code";
 NSString *const kMarkCommandKey = @"Command";
@@ -205,6 +206,18 @@ NSString *const kMarkGuidKey = @"Guid";  // Not all kinds of marks have a guid
     NSMutableDictionary *dict = [[[super dictionaryValue] mutableCopy] autorelease];
     dict[kMarkGuidKey] = self.guid;
     return dict;
+}
+
+@end
+
+@implementation iTermImageMark
+
+- (void)dealloc {
+    if (_imageCode) {
+        ReleaseImage(_imageCode.integerValue);
+        [_imageCode release];
+    }
+    [super dealloc];
 }
 
 @end

@@ -11,24 +11,22 @@
 
 NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
-@interface TmuxWindowsTable (Private)
-
-- (NSArray *)selectedWindowNames;
-- (NSArray *)selectedWindowIds;
-- (NSArray *)selectedWindowIdsAsStrings;
-- (BOOL)allSelectedWindowsAreOpen;
-- (BOOL)anySelectedWindowIsOpen;
-- (NSArray *)filteredModel;
-- (void)resetFilteredModel;
-
-@end
-
-@implementation TmuxWindowsTable
+@implementation TmuxWindowsTable {
+    NSMutableArray *model_;
+    NSMutableArray *filteredModel_;
+    
+    IBOutlet NSTableView *tableView_;
+    IBOutlet NSButton *addWindowButton_;
+    IBOutlet NSButton *removeWindowButton_;
+    IBOutlet NSButton *openInTabsButton_;
+    IBOutlet NSButton *openInWindowsButton_;
+    IBOutlet NSButton *hideWindowButton_;
+    IBOutlet NSSearchField *searchField_;
+}
 
 @synthesize delegate = delegate_;
 
-- (id)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         model_ = [[NSMutableArray alloc] init];
@@ -48,8 +46,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [super dealloc];
 }
 
-- (void)setDelegate:(NSObject<TmuxWindowsTableProtocol> *)delegate
-{
+- (void)setDelegate:(id<TmuxWindowsTableProtocol>)delegate {
     delegate_ = delegate;
     [delegate_ reloadWindows];
     [self updateEnabledStateOfButtons];
@@ -77,8 +74,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [tableView_ reloadData];
 }
 
-- (NSArray *)names
-{
+- (NSArray<NSString *> *)names {
     NSMutableArray *names = [NSMutableArray array];
     for (NSArray *tuple in model_) {
         [names addObject:[tuple objectAtIndex:0]];
@@ -102,7 +98,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 - (void)reloadData
 {
-	[tableView_ reloadData];
+        [tableView_ reloadData];
 }
 
 #pragma mark Interface Builder actions
@@ -214,18 +210,16 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     }
 }
 
-@end
-
-@implementation TmuxWindowsTable (Private)
+#pragma mark - Private
 
 - (NSArray *)selectedWindowIdsAsStrings
 {
-	NSArray *ids = [self selectedWindowIds];
+        NSArray *ids = [self selectedWindowIds];
     NSMutableArray *result = [NSMutableArray array];
-	for (NSString *n in ids) {
-		[result addObject:n];
-	}
-	return result;
+        for (NSString *n in ids) {
+                [result addObject:n];
+        }
+        return result;
 }
 
 - (NSArray *)selectedWindowIds

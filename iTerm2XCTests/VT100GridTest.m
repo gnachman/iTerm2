@@ -418,6 +418,8 @@ do { \
     XCTAssert([grid numberOfLinesUsed] == 2);
     grid.cursorY = 2;
     XCTAssert([grid numberOfLinesUsed] == 3);
+    grid.cursorY = 3;
+    XCTAssert([grid numberOfLinesUsed] == 4);
 
     grid = [self smallGrid];
     XCTAssert([grid numberOfLinesUsed] == 1);
@@ -1673,17 +1675,6 @@ do { \
             @"...."]);
     XCTAssert(grid.cursorX == 0);
     XCTAssert(grid.cursorY == 1);
-}
-
-- (void)testClampCursorPositionToValid {
-    // It's hard to test this method because the grid class keeps the cursor position valid.
-    // However, it will allow the cursor to be in the width'th column, while clamp... keeps it
-    // < width.
-    VT100Grid *grid = [self smallGrid];
-    grid.cursorX = 2;
-    XCTAssert(grid.cursorX == 2);
-    [grid clampCursorPositionToValid];
-    XCTAssert(grid.cursorX == 1);
 }
 
 - (void)testRectsForRun {

@@ -265,8 +265,10 @@
 - (NSColor *)textColorDefaultSelected:(BOOL)selected {
     if (selected) {
         return [NSColor blackColor];
-    } else {
+    } else if ([self isYosemiteOrLater]) {
         return [NSColor colorWithSRGBRed:101/255.0 green:100/255.0 blue:101/255.0 alpha:1];
+    } else {
+        return [NSColor colorWithSRGBRed:80/255.0 green:100/255.0 blue:101/255.0 alpha:1];
     }
 }
 
@@ -348,9 +350,20 @@
             return [NSColor windowBackgroundColor];
         }
     } else {
-        CGFloat value = 196/255.0 - highlightAmount * 0.1;
-        return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
+        if ([self isYosemiteOrLater]) {
+            CGFloat value = 196/255.0 - highlightAmount * 0.1;
+            return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
+            return [NSColor redColor];
+        } else {
+            // 10.9 and earlier needs a darker color to look good
+            CGFloat value = 0.6 - highlightAmount * 0.1;
+            return [NSColor colorWithSRGBRed:value green:value blue:value alpha:1];
+        }
     }
+}
+
+- (BOOL)isYosemiteOrLater {
+    return NSClassFromString(@"NSVisualEffectView") != nil;
 }
 
 - (void)drawHorizontalLineInFrame:(NSRect)rect y:(CGFloat)y {

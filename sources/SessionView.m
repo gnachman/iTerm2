@@ -65,7 +65,7 @@ static NSDate* lastResizeDate_;
     _announcements = [[NSMutableArray alloc] init];
 }
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         [self _initCommon];
@@ -80,7 +80,7 @@ static NSDate* lastResizeDate_;
     return self;
 }
 
-- (id)initWithFrame:(NSRect)frame session:(PTYSession*)session {
+- (instancetype)initWithFrame:(NSRect)frame session:(PTYSession*)session {
     self = [self initWithFrame:frame];
     if (self) {
         [self _initCommon];
@@ -606,12 +606,16 @@ static NSDate* lastResizeDate_;
 
 #pragma mark SessionTitleViewDelegate
 
+- (BOOL)sessionTitleViewIsFirstResponder {
+    return _session.textview.window.firstResponder == _session.textview;
+}
+
 - (NSColor *)tabColor {
     return _session.tabColor;
 }
 
 - (NSMenu *)menu {
-    return [[_session textview] menuForEvent:nil];
+    return [[_session textview] titleBarMenu];
 }
 
 - (void)close {

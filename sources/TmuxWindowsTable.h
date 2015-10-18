@@ -11,7 +11,7 @@
 
 extern NSString *kWindowPasteboardType;
 
-@protocol TmuxWindowsTableProtocol
+@protocol TmuxWindowsTableProtocol <NSObject>
 
 - (void)reloadWindows;
 - (void)renameWindowWithId:(int)windowId toName:(NSString *)newName;
@@ -26,25 +26,13 @@ extern NSString *kWindowPasteboardType;
 
 @end
 
-@interface TmuxWindowsTable : NSObject <NSTableViewDelegate, NSTableViewDataSource> {
-    NSMutableArray *model_;
-    NSObject<TmuxWindowsTableProtocol> *delegate_;  // weak
-    NSMutableArray *filteredModel_;
+@interface TmuxWindowsTable : NSObject <NSTableViewDelegate, NSTableViewDataSource>
 
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSButton *addWindowButton_;
-    IBOutlet NSButton *removeWindowButton_;
-    IBOutlet NSButton *openInTabsButton_;
-    IBOutlet NSButton *openInWindowsButton_;
-    IBOutlet NSButton *hideWindowButton_;
-    IBOutlet NSSearchField *searchField_;
-}
-
-@property (nonatomic, assign) NSObject<TmuxWindowsTableProtocol> *delegate;
+@property (nonatomic, assign) id<TmuxWindowsTableProtocol> delegate;
 
 - (void)setWindows:(NSArray *)windows;
 - (void)setNameOfWindowWithId:(int)wid to:(NSString *)newName;
-- (NSArray *)names;
+- (NSArray<NSString *> *)names;
 - (void)updateEnabledStateOfButtons;
 - (void)reloadData;
 

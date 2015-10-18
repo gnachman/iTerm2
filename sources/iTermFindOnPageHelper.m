@@ -55,7 +55,7 @@
     BOOL _findRegex;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _highlightMap = [[NSMutableDictionary alloc] init];
@@ -211,7 +211,7 @@
 }
 
 - (void)addSearchResult:(SearchResult *)searchResult width:(int)width {
-    for (long long y = searchResult->absStartY; y <= searchResult->absEndY; y++) {
+    for (long long y = searchResult.absStartY; y <= searchResult.absEndY; y++) {
         NSNumber* key = [NSNumber numberWithLongLong:y];
         NSMutableData* data = _highlightMap[key];
         BOOL set = NO;
@@ -222,12 +222,12 @@
             set = YES;
         }
         char* b = [data mutableBytes];
-        int lineEndX = MIN(searchResult->endX + 1, width);
-        int lineStartX = searchResult->startX;
-        if (searchResult->absEndY > y) {
+        int lineEndX = MIN(searchResult.endX + 1, width);
+        int lineStartX = searchResult.startX;
+        if (searchResult.absEndY > y) {
             lineEndX = width;
         }
-        if (y > searchResult->absStartY) {
+        if (y > searchResult.absStartY) {
             lineStartX = 0;
         }
         for (int i = lineStartX; i < lineEndX; i++) {
@@ -276,16 +276,16 @@
     int i = start;
     for (int j = 0; !found && j < [_searchResults count]; j++) {
         SearchResult* r = [_searchResults objectAtIndex:i];
-        long long pos = r->startX + (long long)r->absStartY * width;
+        long long pos = r.startX + (long long)r.absStartY * width;
         if (!found &&
             ((maxPos >= 0 && pos <= maxPos) ||
              (minPos >= 0 && pos >= minPos))) {
                 found = YES;
                 selectedRange =
-                    VT100GridCoordRangeMake(r->startX,
-                                            r->absStartY - overflowAdjustment,
-                                            r->endX + 1,  // half-open
-                                            r->absEndY - overflowAdjustment);
+                    VT100GridCoordRangeMake(r.startX,
+                                            r.absStartY - overflowAdjustment,
+                                            r.endX + 1,  // half-open
+                                            r.absEndY - overflowAdjustment);
                 [_delegate findOnPageSelectRange:selectedRange wrapped:NO];
             }
         i += stride;
@@ -296,10 +296,10 @@
         SearchResult* r = [_searchResults objectAtIndex:start];
         found = YES;
         selectedRange =
-            VT100GridCoordRangeMake(r->startX,
-                                    r->absStartY - overflowAdjustment,
-                                    r->endX + 1,  // half-open
-                                    r->absEndY - overflowAdjustment);
+            VT100GridCoordRangeMake(r.startX,
+                                    r.absStartY - overflowAdjustment,
+                                    r.endX + 1,  // half-open
+                                    r.absEndY - overflowAdjustment);
         [_delegate findOnPageSelectRange:selectedRange wrapped:YES];
         [_delegate findOnPageDidWrapForwards:forward];
     }

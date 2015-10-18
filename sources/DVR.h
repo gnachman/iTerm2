@@ -33,18 +33,15 @@
 #import "DVREncoder.h"
 
 @interface DVR : NSObject
-{
-    DVRBuffer* buffer_;
-    int capacity_;
-    NSMutableArray* decoders_;
-    DVREncoder* encoder_;
-}
+
+// Get timestamp of first/last frame. Times are in microseconds since 1970.
+@property(nonatomic, readonly) long long lastTimeStamp;
+@property(nonatomic, readonly) long long firstTimeStamp;
 
 // Allocates a circular buffer of the given size in bytes to store screen
 // contents. Somewhat more memory is used because there's some per-frame
 // storage, but it should be small in comparison.
-- (id)initWithBufferCapacity:(int)bytes;
-- (void)dealloc;
+- (instancetype)initWithBufferCapacity:(int)bytes;
 
 // Save the screen state into the DVR.
 //   frameLines: An array of screen lines that DVREncoder understands.
@@ -57,9 +54,5 @@
 
 // frees a decoder allocated with -[getDecoder].
 - (void)releaseDecoder:(DVRDecoder*)decoder;
-
-// Get timestamp of first/last frame. Times are in microseconds since 1970.
-- (long long)lastTimeStamp;
-- (long long)firstTimeStamp;
 
 @end

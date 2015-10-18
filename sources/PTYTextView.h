@@ -35,12 +35,12 @@
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
 
 // Types of characters. Used when classifying characters for word selection.
-typedef enum {
+typedef NS_ENUM(NSInteger, PTYCharType) {
     CHARTYPE_WHITESPACE,  // whitespace chars or NUL
     CHARTYPE_WORDCHAR,    // Any character considered part of a word, including user-defined chars.
     CHARTYPE_DW_FILLER,   // Double-width character effluvia.
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
-} PTYCharType;
+};
 
 @protocol PTYTextViewDelegate <NSObject>
 
@@ -139,6 +139,7 @@ typedef enum {
 
 // Is it possible to restart this session?
 - (BOOL)isRestartable;
+- (void)textViewToggleAnnotations;
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event;
 
 @end
@@ -174,6 +175,9 @@ typedef enum {
 
 // Use a different font for bold, if available?
 @property(nonatomic, assign) BOOL useBoldFont;
+
+// Draw text with light font smoothing?
+@property(nonatomic, assign) BOOL thinStrokes;
 
 // Use a bright version of the text color for bold text?
 @property(nonatomic, assign) BOOL useBrightBold;
@@ -265,7 +269,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // This is the designated initializer. The color map should have the
 // basic colors plus the 8-bit ansi colors set shortly after this is
 // called.
-- (id)initWithFrame:(NSRect)frame colorMap:(iTermColorMap *)colorMap;
+- (instancetype)initWithFrame:(NSRect)frame colorMap:(iTermColorMap *)colorMap;
 
 // Sets the "changed since last Exposé" flag to NO and returns its original value.
 - (BOOL)getAndResetChangedSinceLastExpose;
@@ -330,9 +334,6 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Remove underline indicating clickable URL.
 - (void)removeUnderline;
-
-// Toggles whether line timestamps are displayed.
-- (void)toggleShowTimestamps;
 
 // Update the scroll position and schedule a redraw. Returns true if anything
 // onscreen is blinking.
@@ -450,6 +451,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // A text badge shown in the top right of the window
 - (void)setBadgeLabel:(NSString *)badgeLabel;
+
+// Menu for session title bar hamburger button
+- (NSMenu *)titleBarMenu;
 
 #pragma mark - Testing only
 

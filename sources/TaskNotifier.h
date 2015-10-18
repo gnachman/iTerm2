@@ -9,13 +9,10 @@ extern NSString *const kTaskNotifierDidSpin;
 
 @interface TaskNotifier : NSObject
 
-+ (TaskNotifier*)sharedInstance;
++ (instancetype)sharedInstance;
 
-- (id)init;
-- (void)dealloc;
-
-- (void)registerTask:(PTYTask*)task;
-- (void)deregisterTask:(PTYTask*)task;
+- (void)registerTask:(PTYTask *)task;
+- (void)deregisterTask:(PTYTask *)task;
 
 - (void)unblock;
 - (void)run;

@@ -21,18 +21,18 @@
 
 @end
 
-typedef enum {
+typedef NS_ENUM(NSInteger, DcsTermcapTerminfoRequestName) {
     kDcsTermcapTerminfoRequestUnrecognizedName,
     kDcsTermcapTerminfoRequestTerminalName,
     kDcsTermcapTerminfoRequestiTerm2ProfileName,
     kDcsTermcapTerminfoRequestTerminfoName
-} DcsTermcapTerminfoRequestName;
+};
 
 NS_INLINE BOOL isDCS(unsigned char *code, int len) {
     return (len >= 2 && code[0] == VT100CC_ESC && code[1] == 'P');
 }
 
-typedef enum {
+typedef NS_ENUM(NSInteger, VT100DCSState) {
     // Initial state
     kVT100DCSStateEntry,
 
@@ -56,7 +56,7 @@ typedef enum {
 
     // Reading final byte or bytes.
     kVT100DCSStatePassthrough
-} VT100DCSState;
+};
 
 @interface VT100DCSParser : NSObject
 

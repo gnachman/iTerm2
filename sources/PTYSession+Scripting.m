@@ -13,10 +13,10 @@
     }
     id classDescription = [NSClassDescription classDescriptionForClass:[PTYTab class]];
 
-    return [[NSUniqueIDSpecifier alloc] initWithContainerClassDescription:classDescription
-                                                       containerSpecifier:[self.tab objectSpecifier]
-                                                                      key:@"sessions"
-                                                                 uniqueID:self.guid];
+  return [[[NSUniqueIDSpecifier alloc] initWithContainerClassDescription:classDescription
+                                                      containerSpecifier:[self.tab objectSpecifier]
+                                                                     key:@"sessions"
+                                                                uniqueID:self.guid] autorelease];
 }
 
 // Handlers for supported commands:
@@ -391,5 +391,8 @@
                                                    height:rows];
 }
 
+- (NSString *)profileName {
+  return self.profile[KEY_NAME];
+}
 
 @end

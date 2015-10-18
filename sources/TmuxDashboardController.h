@@ -12,12 +12,8 @@
 
 @class TmuxController;
 
-@interface TmuxDashboardController : NSWindowController <TmuxSessionsTableProtocol, TmuxWindowsTableProtocol> {
-    IBOutlet TmuxSessionsTable *sessionsTable_;
-    IBOutlet TmuxWindowsTable *windowsTable_;
-    IBOutlet NSPopUpButton *connectionsButton_;
-}
+@interface TmuxDashboardController : NSWindowController <TmuxSessionsTableProtocol, TmuxWindowsTableProtocol>
 
-+ (TmuxDashboardController *)sharedInstance;
++ (instancetype)sharedInstance;
 
 @end

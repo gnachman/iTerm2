@@ -42,30 +42,28 @@
 
 + (PasteboardEntry*)entryWithString:(NSString *)s score:(double)score
 {
-    PasteboardEntry* e = [[[PasteboardEntry alloc] init] autorelease];
+    PasteboardEntry *e = [[[PasteboardEntry alloc] init] autorelease];
     [e setMainValue:s];
     [e setScore:score];
     [e setPrefix:@""];
     return e;
 }
 
-- (NSDate*)timestamp
-{
-    return timestamp;
-}
-
 @end
 
-@implementation PasteboardHistory
+@implementation PasteboardHistory {
+    NSMutableArray *entries_;
+    int maxEntries_;
+    NSString *path_;
+}
 
 + (int)maxEntries
 {
     return [iTermAdvancedSettingsModel pasteHistoryMaxOptions];
 }
 
-+ (PasteboardHistory*)sharedInstance
-{
-    static PasteboardHistory* instance;
++ (PasteboardHistory*)sharedInstance {
+    static PasteboardHistory *instance;
     if (!instance) {
         int maxEntries = [PasteboardHistory maxEntries];
         // MaxPasteHistoryEntries is a legacy thing. I'm not removing it because it's a security
@@ -81,8 +79,7 @@
     return instance;
 }
 
-- (id)initWithMaxEntries:(int)maxEntries
-{
+- (instancetype)initWithMaxEntries:(int)maxEntries {
     self = [super init];
     if (self) {
         maxEntries_ = maxEntries;
@@ -112,25 +109,23 @@
     return entries_;
 }
 
-- (NSDictionary*)_entriesToDict
-{
-    NSMutableArray* a = [[[NSMutableArray alloc] init] autorelease];
+- (NSDictionary*)_entriesToDict {
+    NSMutableArray *a = [[[NSMutableArray alloc] init] autorelease];
 
-    for (PasteboardEntry* entry in entries_) {
+    for (PasteboardEntry *entry in entries_) {
         [a addObject:[NSDictionary dictionaryWithObjectsAndKeys:[entry mainValue], PBHKEY_VALUE,
-                      [NSNumber numberWithDouble:[entry->timestamp timeIntervalSinceReferenceDate]], PBHKEY_TIMESTAMP,
+                      [NSNumber numberWithDouble:[entry.timestamp timeIntervalSinceReferenceDate]], PBHKEY_TIMESTAMP,
                       nil]];
     }
     return [NSDictionary dictionaryWithObject:a forKey:PBHKEY_ENTRIES];
 }
 
-- (void)_addDictToEntries:(NSDictionary*)dict
-{
-    NSArray* a = [dict objectForKey:PBHKEY_ENTRIES];
-    for (NSDictionary* d in a) {
+- (void)_addDictToEntries:(NSDictionary*)dict {
+    NSArray *a = [dict objectForKey:PBHKEY_ENTRIES];
+    for (NSDictionary *d in a) {
         double timestamp = [[d objectForKey:PBHKEY_TIMESTAMP] doubleValue];
-        PasteboardEntry* entry = [PasteboardEntry entryWithString:[d objectForKey:PBHKEY_VALUE] score:timestamp];
-        entry->timestamp = [[NSDate alloc] initWithTimeIntervalSinceReferenceDate:timestamp];
+        PasteboardEntry *entry = [PasteboardEntry entryWithString:[d objectForKey:PBHKEY_VALUE] score:timestamp];
+        entry.timestamp = [NSDate dateWithTimeIntervalSinceReferenceDate:timestamp];
         [entries_ addObject:entry];
     }
 }
@@ -167,7 +162,7 @@
 
     // Remove existing duplicate value.
     for (int i = 0; i < [entries_ count]; ++i) {
-        PasteboardEntry* entry = [entries_ objectAtIndex:i];
+        PasteboardEntry *entry = [entries_ objectAtIndex:i];
         if ([[entry mainValue] isEqualToString:value]) {
             [entries_ removeObjectAtIndex:i];
             break;
@@ -177,7 +172,7 @@
     // If the last value is a prefix of this value then remove it. This prevents
     // pressing tab in the findbar from filling the history with various
     // versions of the same thing.
-    PasteboardEntry* lastEntry;
+    PasteboardEntry *lastEntry;
     if ([entries_ count] > 0) {
         lastEntry = [entries_ objectAtIndex:[entries_ count] - 1];
         if ([value hasPrefix:[lastEntry mainValue]]) {
@@ -186,8 +181,8 @@
     }
 
     // Append this value.
-    PasteboardEntry* entry = [PasteboardEntry entryWithString:value score:[[NSDate date] timeIntervalSince1970]];
-    entry->timestamp = [[NSDate alloc] init];
+    PasteboardEntry *entry = [PasteboardEntry entryWithString:value score:[[NSDate date] timeIntervalSince1970]];
+    entry.timestamp = [NSDate date];
     [entries_ addObject:entry];
     if ([entries_ count] > maxEntries_) {
         [entries_ removeObjectAtIndex:0];
@@ -201,10 +196,12 @@
 
 @end
 
-@implementation PasteboardHistoryWindowController
+@implementation PasteboardHistoryWindowController {
+    IBOutlet NSTableView *table_;
+    NSTimer *minuteRefreshTimer_;
+}
 
-- (id)init
-{
+- (instancetype)init {
     self = [super initWithWindowNibName:@"PasteboardHistory" tablePtr:nil model:[[[PopupModel alloc] init] autorelease]];
     if (!self) {
         return nil;
@@ -230,10 +227,9 @@
     [self refresh];
 }
 
-- (void)copyFromHistory
-{
+- (void)copyFromHistory {
     [[self unfilteredModel] removeAllObjects];
-    for (PasteboardEntry* e in [[PasteboardHistory sharedInstance] entries]) {
+    for (PasteboardEntry *e in [[PasteboardHistory sharedInstance] entries]) {
         [[self unfilteredModel] addObject:e];
     }
 }
@@ -266,23 +262,21 @@
     [self setDelegate:nil];
 }
 
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
-{
-    PasteboardEntry* entry = [[self model] objectAtIndex:[self convertIndex:rowIndex]];
+- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
+    PasteboardEntry *entry = [[self model] objectAtIndex:[self convertIndex:rowIndex]];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
-        return [NSDateFormatter dateDifferenceStringFromDate:entry->timestamp];
+        return [NSDateFormatter dateDifferenceStringFromDate:entry.timestamp];
     } else {
         // Contents
         return [super tableView:aTableView objectValueForTableColumn:aTableColumn row:rowIndex];
     }
 }
 
-- (void)rowSelected:(id)sender
-{
+- (void)rowSelected:(id)sender {
     if ([table_ selectedRow] >= 0) {
-        PasteboardEntry* entry = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
-        NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
+        PasteboardEntry *entry = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
+        NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];
         [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
         [thePasteboard setString:[entry mainValue] forType:NSStringPboardType];
         [[[iTermController sharedInstance] frontTextView] paste:nil];

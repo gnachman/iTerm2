@@ -58,8 +58,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     return [[[TmuxWindowOpener alloc] init] autorelease];
 }
 
-- (id)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         histories_ = [[NSMutableDictionary alloc] init];
@@ -311,7 +310,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
                 DLog(@"Use original window %@", term);
             }
             if (!term) {
-                term = [[iTermController sharedInstance] openWindow];
+                term = [[iTermController sharedInstance] openWindowUsingProfile:[PTYTab tmuxBookmark]];
                 DLog(@"Opened a new window %@", term);
             }
         }

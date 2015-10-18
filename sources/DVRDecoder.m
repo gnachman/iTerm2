@@ -42,10 +42,24 @@
 
 @end
 
-@implementation DVRDecoder
+@implementation DVRDecoder {
+    // Circular buffer not owned by us.
+    DVRBuffer* buffer_;
 
-- (id)initWithBuffer:(DVRBuffer*)buffer
-{
+    // Most recent frame's metadata.
+    DVRFrameInfo info_;
+
+    // Most recent frame.
+    char* frame_;
+
+    // Length of frame.
+    int length_;
+
+    // Most recent frame's key (not timestamp).
+    long long key_;
+}
+
+- (instancetype)initWithBuffer:(DVRBuffer *)buffer {
     self = [super init];
     if (self) {
         buffer_ = buffer;

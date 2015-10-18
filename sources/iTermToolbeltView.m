@@ -128,7 +128,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 #pragma mark - NSObject
 
-- (id)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate {
+- (instancetype)initWithFrame:(NSRect)frame delegate:(id<iTermToolbeltViewDelegate>)delegate {
     self = [super initWithFrame:frame];
     if (self) {
         _delegate = delegate;

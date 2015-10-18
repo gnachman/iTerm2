@@ -31,10 +31,22 @@
 
 #import <Cocoa/Cocoa.h>
 
+@interface PTYScroller()
+// Total number of rows scrolled by. Will always be in (-1, 1).
+@property(nonatomic) CGFloat accumulatedDeltaY;
+@end
+
 @implementation PTYScroller
 
 + (BOOL)isCompatibleWithOverlayScrollers {
     return YES;
+}
+
+- (void)setUserScroll:(BOOL)userScroll {
+    if (!userScroll && _userScroll) {
+        _accumulatedDeltaY = 0;
+    }
+    _userScroll = userScroll;
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
@@ -80,7 +92,7 @@
     NSTimer *timer_;
 }
 
-- (id)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
+- (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller {
     self = [super initWithFrame:frame];
     if (self) {
         [self setHasVerticalScroller:hasVerticalScroller inInit:YES];
@@ -112,25 +124,37 @@
                [NSValue valueWithRect:[self documentVisibleRect]]];
 }
 
+static CGFloat RoundTowardZero(CGFloat value) {
+    if (value > 0) {
+        return floor(value);
+    } else {
+        return ceil(value);
+    }
+}
+
+- (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent {
+    CGFloat delta = theEvent.scrollingDeltaY;
+    if (theEvent.hasPreciseScrollingDeltas) {
+        delta /= self.verticalLineScroll;
+    }
+
+    PTYScroller *verticalScroller = (PTYScroller *)[self verticalScroller];
+    verticalScroller.accumulatedDeltaY += delta;
+    CGFloat amount = 0;
+    if (fabs(verticalScroller.accumulatedDeltaY) >= 1) {
+        amount = RoundTowardZero(verticalScroller.accumulatedDeltaY);
+        verticalScroller.accumulatedDeltaY = verticalScroller.accumulatedDeltaY - amount;
+    }
+    return amount;
+}
+
 - (void)scrollWheel:(NSEvent *)theEvent {
     NSRect scrollRect;
 
     scrollRect = [self documentVisibleRect];
 
-    CGFloat delta = [theEvent deltaY];
-    // Make sure that a very small scroll event moves by at least one line.
-    if (fabs(delta) < 1) {
-        if (delta > 0) {
-            delta = 1;
-        } else if (delta < 0) {
-            delta = -1;
-        } else {
-            // The delta could be 0 in case of touchpad scrolling.
-            delta = 0;
-        }
-    }
-
-    scrollRect.origin.y -= delta * [self verticalLineScroll];
+    CGFloat amount = [self accumulateVerticalScrollFromEvent:theEvent];
+    scrollRect.origin.y -= amount * [self verticalLineScroll];
     [[self documentView] scrollRectToVisible:scrollRect];
 
     [self detectUserScroll];

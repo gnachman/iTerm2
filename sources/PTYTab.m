@@ -218,7 +218,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 }
 
 // init/dealloc
-- (id)initWithSession:(PTYSession*)session {
+- (instancetype)initWithSession:(PTYSession*)session {
     self = [super init];
     PtyLog(@"PTYTab initWithSession %p", self);
     if (self) {
@@ -276,7 +276,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 // This is used when restoring a window arrangement. A tree of splits and
 // sessionviews is passed in but the sessionviews don't have sessions yet.
-- (id)initWithRoot:(NSSplitView*)root
+- (instancetype)initWithRoot:(NSSplitView*)root
 {
     self = [super init];
     PtyLog(@"PTYTab initWithRoot %p", self);
@@ -2683,7 +2683,7 @@ static NSString* FormatRect(NSRect r) {
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName
 {
     [tmuxWindowName_ autorelease];
-    tmuxWindowName_ = [tmuxWindowName retain];
+    tmuxWindowName_ = [tmuxWindowName copy];
     [[self realParentWindow] setWindowTitle];
 }
 
@@ -2980,6 +2980,15 @@ static NSString* FormatRect(NSRect r) {
     // The character size closest to the target.
     NSSize tmuxSize = NSMakeSize((int) (rootSizeChars.width + charsDiff.width),
                                  (int) (rootSizeChars.height + charsDiff.height));
+
+    DLog(@"tmuxSize: rootSizeChars=%@, targetSizePixels=%@, rootSizePixels=%@, sizeDiff=%@, charSize=%@, charsDiff=%@, tmuxSize=%@",
+         NSStringFromSize(rootSizeChars),
+         NSStringFromSize(targetSizePixels),
+         NSStringFromSize(rootSizePixels),
+         NSStringFromSize(sizeDiff),
+         NSStringFromSize(charSize),
+         NSStringFromSize(charsDiff),
+         NSStringFromSize(tmuxSize));
 
     return tmuxSize;
 }

@@ -64,7 +64,7 @@
 - (void)setForeground24BitColor:(NSColor *)color;
 
 - (void)resetCharset;
-- (void)resetPreservingPrompt:(BOOL)preservePrompt;
+- (void)resetByUserRequest:(BOOL)preservePrompt;
 
 
 - (void)setDisableSmcupRmcup:(BOOL)value;

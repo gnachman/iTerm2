@@ -18,7 +18,7 @@ const CGFloat rightMargin = 5;
 
 @implementation TransferrableFileMenuItemView
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
         _progressIndicator = [[iTermProgressIndicator alloc] initWithFrame:NSMakeRect(5,

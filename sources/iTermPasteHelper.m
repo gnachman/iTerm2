@@ -48,7 +48,7 @@ const int kNumberOfSpacesPerTabNoConversion = -1;
     return controlSet;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _eventQueue = [[NSMutableArray alloc] init];

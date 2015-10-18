@@ -10,7 +10,7 @@
 
 @class TransferrableFile;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
     kTransferrableFileStatusUnstarted,
     kTransferrableFileStatusStarting,
     kTransferrableFileStatusTransferring,
@@ -18,7 +18,7 @@ typedef enum {
     kTransferrableFileStatusFinishedWithError,
     kTransferrableFileStatusCancelling,
     kTransferrableFileStatusCancelled
-} TransferrableFileStatus;
+};
 
 @interface TransferrableFile : NSObject
 
@@ -28,6 +28,10 @@ typedef enum {
 @property(atomic, assign) int fileSize;  // -1 if unknown
 @property(atomic, retain) TransferrableFile *successor;
 @property(atomic, assign) BOOL hasPredecessor;
+
+// These two are only needed for keyboard-interactive auth
+- (NSString *)protocolName;
+- (NSString *)authRequestor;
 
 - (NSString *)displayName;
 - (NSString *)shortName;

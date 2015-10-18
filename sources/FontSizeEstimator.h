@@ -38,6 +38,6 @@
 @property (nonatomic, assign) NSSize size;
 @property (nonatomic, assign) double baseline;
 
-+ (id)fontSizeEstimatorForFont:(NSFont *)aFont;
++ (instancetype)fontSizeEstimatorForFont:(NSFont *)aFont;
 
 @end

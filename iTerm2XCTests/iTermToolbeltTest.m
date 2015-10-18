@@ -7,12 +7,10 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <XCTest/XCTest.h>
-#import "CommandHistory.h"
 #import "iTermApplication.h"
 #import "iTermController.h"
-#import "iTermDirectoriesModel.h"
 #import "iTermRootTerminalView.h"
+#import "iTermShellHistoryController.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "ToolCapturedOutputView.h"
@@ -20,6 +18,7 @@
 #import "ToolDirectoriesView.h"
 #import "Trigger.h"
 #import "VT100RemoteHost.h"
+#import <XCTest/XCTest.h>
 
 @interface iTermToolbeltTest : XCTestCase<iTermToolbeltViewDelegate>
 @property(nonatomic, retain) NSString *currentDir;
@@ -44,10 +43,10 @@
     VT100RemoteHost *host = [[[VT100RemoteHost alloc] init] autorelease];
     host.hostname = @"hostname";
     host.username = @"user";
-    [[CommandHistory sharedInstance] eraseHistoryForHost:host];
+    [[iTermShellHistoryController sharedInstance] eraseCommandHistoryForHost:host];
 
     // Erase directory history for the remotehost we test with.
-    [[iTermDirectoriesModel sharedInstance] eraseHistoryForHost:host];
+    [[iTermShellHistoryController sharedInstance] eraseDirectoriesForHost:host];
 
     // Create a window and save convenience pointers to its various bits.
     _session = [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
@@ -254,9 +253,9 @@
                                     objectValueForTableColumn:tool.tableView.tableColumns[0]
                                                           row:1] ];
 
-    // First one should be bold.
+    // TODO(georgen): Test that the first one should be bold.
     XCTAssert([values[0] isKindOfClass:[NSAttributedString class]]);
-    XCTAssert([values[1] isKindOfClass:[NSString class]]);
+    XCTAssert([values[1] isKindOfClass:[NSAttributedString class]]);
 
     // Select tab 1 and get its two commands from the table view.
     [_windowController.tabView selectTabViewItemAtIndex:1];
@@ -267,8 +266,8 @@
                            objectValueForTableColumn:tool.tableView.tableColumns[0]
                                                  row:1] ];
 
-    // Second one should be bold.
-    XCTAssert([values[0] isKindOfClass:[NSString class]]);
+    // TODO(georgen): Test that the second one should be bold.
+    XCTAssert([values[0] isKindOfClass:[NSAttributedString class]]);
     XCTAssert([values[1] isKindOfClass:[NSAttributedString class]]);
 }
 
@@ -321,7 +320,8 @@
 
     ToolCommandHistoryView *tool =
         (ToolCommandHistoryView *)[_view.toolbelt toolWithName:kCommandHistoryToolName];
-    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:tool.tableView.numberOfRows - 1]
+                byExtendingSelection:NO];
 
     tool.toolWrapper.delegate.delegate = self;
     [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:tool.tableView];
@@ -336,7 +336,8 @@
 
     ToolCommandHistoryView *tool =
         (ToolCommandHistoryView *)[_view.toolbelt toolWithName:kCommandHistoryToolName];
-    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
+    [tool.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:tool.tableView.numberOfRows - 1]
+                byExtendingSelection:NO];
 
     tool.toolWrapper.delegate.delegate = self;
     iTermApplication *app = (iTermApplication *)[NSApplication sharedApplication];
@@ -345,7 +346,7 @@
     app.fakeCurrentEvent = [NSEvent eventWithCGEvent:fakeEvent];
     CFRelease(fakeEvent);
 
-    [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:tool.tableView];
+    [tool.tableView.delegate performSelector:tool.tableView.doubleAction withObject:tool.tableView.target];
     XCTAssertEqualObjects(_insertedText, [@"cd " stringByAppendingString:_currentDir]);
 }
 
@@ -506,6 +507,10 @@
 
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid {
     return NO;
+}
+
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
+    return @[];
 }
 
 @end

@@ -59,47 +59,30 @@
 
 @property(nonatomic, readonly) BOOL tagsVisible;
 @property(nonatomic, assign) IBOutlet id<ProfileListViewDelegate> delegate;
+@property(nonatomic, readonly) NSInteger numberOfRows;
+@property(nonatomic, readonly) NSSet<NSString*> *selectedGuids;
+@property(nonatomic, readonly) BOOL hasSelection;
 
-- (id)initWithFrame:(NSRect)frameRect;
-- (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
-- (void)dealloc;
+// Don't use these if you've called allowMultipleSelections.
+@property(nonatomic, readonly) NSInteger selectedRow;
+@property(nonatomic, readonly) NSString *selectedGuid;
+
+- (instancetype)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
 - (ProfileModelWrapper*)dataSource;
 - (void)setUnderlyingDatasource:(ProfileModel*)dataSource;
 - (void)focusSearchField;
 - (BOOL)searchFieldHasText;
 
-// Drag drop
-- (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard;
-- (NSDragOperation)tableView:(NSTableView*)tv validateDrop:(id <NSDraggingInfo>)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)op;
-- (BOOL)tableView:(NSTableView *)aTableView acceptDrop:(id <NSDraggingInfo>)info
-              row:(NSInteger)row dropOperation:(NSTableViewDropOperation)operation;
 
-
-// DataSource methods
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
-- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex;
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
-- (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
-
-// Delegate methods
-- (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
-
-// Don't use this if you've called allowMultipleSelections.
-- (int)selectedRow;
 - (void)reloadData;
 - (void)selectRowIndex:(int)theIndex;
 - (void)selectRowByGuid:(NSString*)guid;
-- (int)numberOfRows;
 - (void)clearSearchField;
 - (void)allowEmptySelection;
 - (void)allowMultipleSelections;
 - (void)deselectAll;
 - (void)multiColumns;
 
-// Don't use this if you've called allowMultipleSelections
-- (NSString*)selectedGuid;
-- (NSSet*)selectedGuids;
-- (BOOL)hasSelection;
 - (NSArray *)orderedSelectedGuids;
 - (void)dataChangeNotification:(id)sender;
 - (void)onDoubleClick:(id)sender;

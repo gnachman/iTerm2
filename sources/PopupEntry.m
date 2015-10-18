@@ -8,16 +8,12 @@
 
 #import "PopupEntry.h"
 
-@implementation PopupEntry
-{
-    NSString* s_;
-    NSString* prefix_;
-    double score_;
-    double hitMultiplier_;
+@implementation PopupEntry {
+    double _score;
+    double _hitMultiplier;
 }
 
-- (id)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         [self _setDefaultValues];
@@ -27,20 +23,20 @@
 
 - (void)dealloc
 {
-    [s_ release];
-    [prefix_ release];
+    [_mainValue release];
+    [_prefix release];
     [super dealloc];
 }
 
 - (NSString *)description
 {
     return [NSString stringWithFormat:@"<%@: %p s=%@ prefix=%@ score=%f hitMult=%f>",
-            [self class], self, s_, prefix_, score_, hitMultiplier_];
+            [self class], self, _mainValue, _prefix, _score, _hitMultiplier];
 }
 
 - (void)_setDefaultValues
 {
-    hitMultiplier_ = 1;
+    _hitMultiplier = 1;
     [self setMainValue:@""];
     [self setScore:0];
     [self setPrefix:@""];
@@ -52,35 +48,13 @@
     [e _setDefaultValues];
     [e setMainValue:s];
     [e setScore:score];
-    
+
     return e;
 }
 
-- (NSString*)mainValue
-{
-    return s_;
-}
-
-- (void)setScore:(double)score
-{
-    score_ = score;
-}
-
-- (void)setMainValue:(NSString*)s
-{
-    [s_ autorelease];
-    s_ = [s retain];
-}
-
-- (double)advanceHitMult
-{
-    hitMultiplier_ *= 0.8;
-    return hitMultiplier_;
-}
-
-- (double)score
-{
-    return score_;
+- (double)advanceHitMult {
+    _hitMultiplier *= 0.8;
+    return _hitMultiplier;
 }
 
 - (BOOL)isEqual:(id)o
@@ -94,18 +68,7 @@
 
 - (NSComparisonResult)compare:(id)otherObject
 {
-    return [[NSNumber numberWithDouble:score_] compare:[NSNumber numberWithDouble:[otherObject score]]];
-}
-
-- (void)setPrefix:(NSString*)prefix
-{
-    [prefix_ autorelease];
-    prefix_ = [prefix retain];
-}
-
-- (NSString*)prefix
-{
-    return prefix_;
+    return [[NSNumber numberWithDouble:_score] compare:[NSNumber numberWithDouble:[otherObject score]]];
 }
 
 @end

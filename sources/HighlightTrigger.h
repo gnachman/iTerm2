@@ -11,7 +11,5 @@
 @interface HighlightTrigger : Trigger
 
 + (NSString *)title;
-- (BOOL)takesParameter;
-- (BOOL)paramIsPopupButton;
 
 @end

@@ -18,7 +18,7 @@ static const CGFloat kCollapsedHeight = 51;
     BOOL _hasOpenedMenu;
 }
 
-- (id)initWithTransferrableFile:(TransferrableFile *)transferrableFile {
+- (instancetype)initWithTransferrableFile:(TransferrableFile *)transferrableFile {
     self = [super init];
     if (self) {
         _transferrableFile = [transferrableFile retain];
@@ -180,8 +180,7 @@ static const CGFloat kCollapsedHeight = 51;
         case kTransferrableFileStatusFinishedSuccessfully:
             return @"Finished";
         case kTransferrableFileStatusFinishedWithError:
-            return [NSString stringWithFormat:@"Failed with error: %@",
-                    [_transferrableFile error]];
+            return [NSString stringWithFormat:@"Failed with error “%@”", [_transferrableFile error]];
         case kTransferrableFileStatusCancelling:
             return @"Waiting to cancel";
         case kTransferrableFileStatusCancelled:
@@ -198,15 +197,15 @@ static const CGFloat kCollapsedHeight = 51;
         extra = [NSString stringWithFormat:@"\nLocal path: %@",
                        _transferrableFile.localPath];
     }
-    NSString *text = [NSString stringWithFormat:@"%@\nStatus: %@%@",
+    NSString *text = [NSString stringWithFormat:@"%@\n\nStatus: %@%@",
                       [_transferrableFile displayName],
                       [self stringForStatus:_transferrableFile.status],
                       extra];
-    NSAlert *alert = [NSAlert alertWithMessageText:text
+    NSAlert *alert = [NSAlert alertWithMessageText:@"File Transfer Summary"
                                      defaultButton:@"OK"
                                    alternateButton:nil
                                        otherButton:nil
-                         informativeTextWithFormat:@""];
+                         informativeTextWithFormat:@"%@", text];
     
     [alert layout];
     [alert runModal];

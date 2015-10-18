@@ -12,18 +12,12 @@
 @class PTYTab;
 @class PTYSession;
 @class SessionView;
-@interface MovePaneController : NSObject <SplitSelectionViewDelegate> {
-    // The session being moved.
-    PTYSession *session_;  // weak
-
-    BOOL dragFailed_;
-    BOOL didSplit_;
-}
+@interface MovePaneController : NSObject <SplitSelectionViewDelegate>
 
 @property (nonatomic, assign) BOOL dragFailed;
 @property (nonatomic, assign) PTYSession *session;
 
-+ (MovePaneController *)sharedInstance;
++ (instancetype)sharedInstance;
 // Initiate click-to-move mode.
 - (void)movePane:(PTYSession *)session;
 

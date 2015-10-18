@@ -33,19 +33,17 @@
 
 @property(nonatomic, assign) BOOL userScroll;
 
-+ (BOOL)isCompatibleWithOverlayScrollers;
-- (void)mouseDown: (NSEvent *)theEvent;
-- (void)trackScrollButtons:(NSEvent *)theEvent;
-- (void)trackKnob:(NSEvent *)theEvent;
-
 @end
 
 @interface PTYScrollView : NSScrollView
 
-- (id)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller;
-- (void)scrollWheel:(NSEvent *)theEvent;
+- (instancetype)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller;
 - (void)detectUserScroll;
 - (BOOL)isLegacyScroller;
 
+// Accumulate vertical scroll from the event. If it's enough to scroll one or more lines, deduct
+// that from the total and return the number of rows to scroll by. The result will always be an
+// integer.
+- (CGFloat)accumulateVerticalScrollFromEvent:(NSEvent *)theEvent;
 
 @end

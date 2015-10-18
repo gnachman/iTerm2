@@ -10,7 +10,7 @@
 
 #import "iTermToolbeltView.h"
 
-@class CommandUse;
+@class iTermCommandHistoryCommandUseMO;
 
 @interface ToolCommandHistoryView : NSView <
   ToolbeltTool,
@@ -21,9 +21,9 @@
 // For testing
 @property(nonatomic, readonly) NSTableView *tableView;
 
-- (id)initWithFrame:(NSRect)frame;
+- (instancetype)initWithFrame:(NSRect)frame;
 - (void)shutdown;
 - (void)updateCommands;
-- (CommandUse *)selectedCommandUse;
+- (iTermCommandHistoryCommandUseMO *)selectedCommandUse;
 
 @end

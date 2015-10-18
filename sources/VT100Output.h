@@ -11,12 +11,12 @@ typedef enum {
     MOUSE_BUTTON_SCROLLUP = 5    // scroll up
 } MouseButtonNumber;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, MouseFormat) {
     MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode (limited to 223 rows/cols)
     MOUSE_FORMAT_XTERM_EXT = 1,   // UTF-8 1005 mode (does not pass through luit unchanged)
     MOUSE_FORMAT_URXVT = 2,       // rxvt's 1015 mode (outputs csi codes, that if echoed to the term, mess up the display)
     MOUSE_FORMAT_SGR = 3          // SGR 1006 mode (preferred)
-} MouseFormat;
+};
 
 // This class produces data to send for special keys (arrow keys, function keys, etc.)
 // It has a small amount of state that is copied from VT100Terminal. This object is 1:1 with
@@ -32,8 +32,8 @@ typedef enum {
 - (NSData *)keyArrowDown:(unsigned int)modflag;
 - (NSData *)keyArrowLeft:(unsigned int)modflag;
 - (NSData *)keyArrowRight:(unsigned int)modflag;
-- (NSData *)keyHome:(unsigned int)modflag;
-- (NSData *)keyEnd:(unsigned int)modflag;
+- (NSData *)keyHome:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike;
+- (NSData *)keyEnd:(unsigned int)modflag screenlikeTerminal:(BOOL)screenlike;
 - (NSData *)keyInsert;
 - (NSData *)keyDelete;
 - (NSData *)keyBackspace;

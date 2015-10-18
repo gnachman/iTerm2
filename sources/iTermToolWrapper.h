@@ -12,6 +12,7 @@
 @class iTermMark;
 @class VT100RemoteHost;
 @class ToolCommandHistoryView;
+@class iTermCommandHistoryCommandUseMO;
 @class iTermToolWrapper;
 @class VT100ScreenMark;
 
@@ -26,22 +27,22 @@
 - (void)toolbeltDidSelectMark:(iTermMark *)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
-- (NSArray *)toolbeltCommandUsesForCurrentSession;
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession;
 
 @end
 
-@protocol ToolWrapperDelegate
+@protocol ToolWrapperDelegate <NSObject>
 
 @property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
+@property(nonatomic, readonly) BOOL haveOnlyOneTool;
+@property(nonatomic, readonly) ToolCommandHistoryView *commandHistoryView;
 
-- (BOOL)haveOnlyOneTool;
 - (void)hideToolbelt;
 - (void)toggleShowToolWithName:(NSString *)theName;
-- (ToolCommandHistoryView *)commandHistoryView;
 
 @end
 
-@protocol ToolbeltTool
+@protocol ToolbeltTool <NSObject>
 - (CGFloat)minimumHeight;
 
 @optional
@@ -56,13 +57,13 @@
 
 @interface iTermToolWrapper : NSView
 
-@property (nonatomic, copy) NSString *name;
-@property (nonatomic, readonly) __weak NSView *container;
-@property (nonatomic, assign) id<ToolWrapperDelegate> delegate;
+@property(nonatomic, copy) NSString *name;
+@property(nonatomic, readonly) __weak NSView *container;
+@property(nonatomic, assign) id<ToolWrapperDelegate> delegate;
+@property(nonatomic, readonly) id<ToolbeltTool> tool;
+@property(nonatomic, readonly) CGFloat minimumHeight;
 
 - (void)relayout;
-- (NSObject<ToolbeltTool> *)tool;
 - (void)removeToolSubviews;
-- (CGFloat)minimumHeight;
 
 @end

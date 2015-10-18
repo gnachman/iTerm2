@@ -17,7 +17,7 @@
 
 @synthesize timestamp = timestamp_;
 
-- (id)initWithWidth:(int)width {
+- (instancetype)initWithWidth:(int)width {
     self = [super init];
     if (self) {
         width_ = width;

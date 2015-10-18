@@ -42,17 +42,10 @@ extern NSString * const kTriggerPartialLineKey;
 // Returns an array of NSDictionaries mapping NSNumber(tag) -> NSString(title)
 - (NSArray *)groupedMenuItemsForPopupButton;
 
-// Index of "tag" in menu; inverse of tagAtIndex.
-// Deprecated
-- (int)indexOfTag:(int)theTag;
-// Tag at "index" in menu.
-// Deprecated
-- (int)tagAtIndex:(int)index;
-
 // Index of represented object (usually a NSNumber tag, but could be something else)
-- (int)indexForObject:(id)object;
+- (NSInteger)indexForObject:(id)object;
 // Represented object (usually a NSNumber tag, but could be something else) at an index.
-- (id)objectAtIndex:(int)index;
+- (id)objectAtIndex:(NSInteger)index;
 
 // Utility that returns keys sorted by values for a tag/represented object dict
 // (i.e., an element of groupedMenuItemsForPopupButton)

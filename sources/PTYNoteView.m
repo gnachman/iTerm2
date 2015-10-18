@@ -35,7 +35,7 @@ const CGFloat kDragAreaSize = 5;
 @synthesize delegate = delegate_;
 @synthesize backgroundColor = backgroundColor_;
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         backgroundColor_ = [[self defaultBackgroundColor] retain];

@@ -23,6 +23,7 @@
 // Return YES if the delegate handles it, NO if Popup should handle it.
 - (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue;
 - (void)popupWillClose:(Popup *)popup;
+- (BOOL)popupWindowIsInHotkeyWindow;
 
 @end
 
@@ -30,8 +31,9 @@
 
 @property(nonatomic, assign) id<PopupDelegate> delegate;
 
-- (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
-- (void)dealloc;
+- (instancetype)initWithWindowNibName:(NSString*)nibName
+                             tablePtr:(NSTableView**)table
+                                model:(PopupModel*)model;
 
 // Call this after initWithWindowNibName:tablePtr:model: if table was nil.
 - (void)setTableView:(NSTableView *)table;
@@ -72,8 +74,6 @@
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
 - (int)convertIndex:(int)i;
 - (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry isSelected:(BOOL)isSelected;
-- (void)windowDidResignKey:(NSNotification *)aNotification;
-- (void)windowDidBecomeKey:(NSNotification *)aNotification;
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
 - (BOOL)_word:(NSString*)temp matchesFilter:(NSString*)filter;
 

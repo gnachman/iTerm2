@@ -27,7 +27,9 @@
 #import "VT100Terminal.h"  // TODO: Remove this dependency
 
 static const int kBadgeMargin = 4;
-static const int kBadgeRightMargin = 10;
+
+extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
+extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
 @interface iTermTextDrawingHelper() <iTermCursorDelegate>
 @end
@@ -583,8 +585,8 @@ static const int kBadgeRightMargin = 10;
     NSSize textViewSize = _frame.size;
     NSSize visibleSize = _scrollViewDocumentVisibleRect.size;
     NSSize imageSize = image.size;
-    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - kBadgeRightMargin,
-                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight,
+    NSRect destination = NSMakeRect(textViewSize.width - imageSize.width - [iTermAdvancedSettingsModel badgeRightMargin],
+                                    textViewSize.height - visibleSize.height + kiTermIndicatorStandardHeight + [iTermAdvancedSettingsModel badgeTopMargin],
                                     imageSize.width,
                                     imageSize.height);
     NSRect intersection = NSIntersectionRect(rect, destination);
@@ -602,7 +604,8 @@ static const int kBadgeRightMargin = 10;
              fraction:1
        respectFlipped:YES
                 hints:nil];
-    imageSize.width += kBadgeMargin + kBadgeRightMargin;
+    imageSize.width += kBadgeMargin + [iTermAdvancedSettingsModel badgeRightMargin];
+
     return imageSize;
 }
 
@@ -657,10 +660,22 @@ static const int kBadgeRightMargin = 10;
                run:(CRun *)run
            storage:(CRunStorage *)storage
            context:(CGContextRef)ctx {
+    int savedFontSmoothingStyle = 0;
+    if (_thinStrokes) {
+        // This seems to be available at least on 10.8 and later. The only reference to it is in
+        // WebKit. This causes text to render just a little lighter, which looks nicer.
+        savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
+        CGContextSetFontSmoothingStyle(ctx, 16);
+    }
+
     CGContextSetTextDrawingMode(ctx, kCGTextFill);
     while (run) {
         [self drawRun:run ctx:ctx initialPoint:initialPoint storage:storage];
         run = run->next;
+    }
+
+    if (_thinStrokes) {
+        CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
     }
 }
 
@@ -704,12 +719,25 @@ static const int kBadgeRightMargin = 10;
 
     // Draw underline
     if (currentRun->attrs.underline) {
-        [currentRun->attrs.color set];
-        NSRectFill(NSMakeRect(startPoint.x,
-                              startPoint.y + _cellSize.height + ceil(currentRun->attrs.fontInfo.font.underlinePosition),
-                              runWidth,
-                              0.5));
+        [self drawUnderlineOfColor:currentRun->attrs.color
+                      atCellOrigin:startPoint
+                              font:currentRun->attrs.fontInfo.font
+                             width:runWidth];
     }
+}
+
+- (void)drawUnderlineOfColor:(NSColor *)color
+                atCellOrigin:(NSPoint)startPoint
+                        font:(NSFont *)font
+                       width:(CGFloat)runWidth {
+    [color set];
+    NSRectFill(NSMakeRect(startPoint.x,
+                          (startPoint.y +
+                              _cellSize.height +
+                              font.descender -
+                              font.underlinePosition),
+                          runWidth,
+                          font.underlineThickness));
 }
 
 // Note: caller must nil out _selectedFont after the graphics context becomes invalid.
@@ -1039,17 +1067,14 @@ static const int kBadgeRightMargin = 10;
                                         storage:storage];
             if (run) {
                 [self drawRunsAt:NSMakePoint(x, y) run:run storage:storage context:ctx];
+
+                // Draw an underline.
+                [self drawUnderlineOfColor:[self defaultTextColor]
+                              atCellOrigin:NSMakePoint(x, y)
+                                      font:run->attrs.fontInfo.font
+                                     width:charsInLine * _cellSize.width];
                 CRunFree(run);
             }
-
-            // Draw an underline.
-            NSColor *foregroundColor = [self defaultTextColor];
-            [foregroundColor set];
-            NSRect s = NSMakeRect(x,
-                                  y + _cellSize.height - 1,
-                                  charsInLine * _cellSize.width,
-                                  1);
-            NSRectFill(s);
 
             // Save the cursor's cell coords
             if (i <= cursorIndex && i + charsInLine > cursorIndex) {
@@ -1113,9 +1138,9 @@ static const int kBadgeRightMargin = 10;
 - (NSRect)cursorFrame {
     const int rowNumber = _cursorCoord.y + _numberOfLines - _gridSize.height;
     return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + MARGIN),
-                      rowNumber * _cellSize.height,
+                      rowNumber * _cellSize.height + (_cellSize.height - _cellSizeWithoutSpacing.height),
                       MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
-                      _cellSize.height);
+                      _cellSizeWithoutSpacing.height);
 }
 
 - (void)drawCursor {
@@ -1338,11 +1363,6 @@ static const int kBadgeRightMargin = 10;
             drawable = NO;
         }
 
-        if (theLine[i].underline || inUnderlinedRange) {
-            // This is not as fast as possible, but is nice and simple. Always draw underlined text
-            // even if it's just a blank.
-            drawable = YES;
-        }
         // Set all other common attributes.
         if (doubleWidth) {
             thisCharAdvance = _cellSize.width * 2;
@@ -1776,9 +1796,21 @@ static const int kBadgeRightMargin = 10;
               overrideColor:(NSColor *)overrideColor
                     context:(CGContextRef)ctx
             backgroundColor:(NSColor *)backgroundColor {
+    // Offset the point by the vertical spacing. The point is derived from the box cursor's frame,
+    // which is different than the top of the row (the cursor doesn't get taller as vertical spacing
+    // is added, or shorter as it is removed). Text still wants to be rendered relative to the top
+    // of the row including spacing, though.
+    point.y -= (_cellSize.height - _cellSizeWithoutSpacing.height);
+
     CRunStorage *storage = [CRunStorage cRunStorageWithCapacity:1];
     // Draw the characters.
-    CRun *run = [self constructTextRuns:&screenChar
+    screen_char_t temp[2];
+    temp[0] = screenChar;
+    memset(temp + 1, 0, sizeof(temp[1]));
+    if (doubleWidth) {
+        temp[1].code = DWC_RIGHT;
+    }
+    CRun *run = [self constructTextRuns:temp
                                     row:row
                                selected:NO
                              indexRange:NSMakeRange(0, 1)
@@ -1786,37 +1818,43 @@ static const int kBadgeRightMargin = 10;
                                 matches:nil
                                 storage:storage];
     if (run) {
-        CGFloat underlineOffset = ceil(run->attrs.fontInfo.font.underlinePosition);
         CRun *head = run;
+        NSFont *theFont = nil;
         // If an override color is given, change the runs' colors.
         if (overrideColor) {
             while (run) {
+                if (run->attrs.fontInfo.font) {
+                    theFont = [[run->attrs.fontInfo.font retain] autorelease];
+                }
                 CRunAttrsSetColor(&run->attrs, run->storage, overrideColor);
                 run = run->next;
             }
         }
         [self drawRunsAt:point run:head storage:storage context:ctx];
-        CRunFree(head);
 
         // draw underline
-        if (screenChar.underline && screenChar.code) {
+        if (screenChar.underline && screenChar.code && theFont) {
+            NSColor *underlineColor = nil;
             if (overrideColor) {
-                [overrideColor set];
+                underlineColor = overrideColor;
             } else {
-                [[_delegate drawingHelperColorForCode:screenChar.foregroundColor
-                                                green:screenChar.fgGreen
-                                                 blue:screenChar.fgBlue
-                                            colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
-                                                 bold:screenChar.bold
-                                                faint:screenChar.faint
-                                         isBackground:_reverseVideo] set];
+                underlineColor =
+                    [_delegate drawingHelperColorForCode:screenChar.foregroundColor
+                                                   green:screenChar.fgGreen
+                                                    blue:screenChar.fgBlue
+                                               colorMode:screenChar.foregroundColorMode  // TODO: Test this if it's not alternate
+                                                    bold:screenChar.bold
+                                                   faint:screenChar.faint
+                                            isBackground:_reverseVideo];
             }
 
-            NSRectFill(NSMakeRect(point.x,
-                                  point.y + _cellSize.height + underlineOffset,
-                                  doubleWidth ? _cellSize.width * 2 : _cellSize.width,
-                                  0.5));
+            [self drawUnderlineOfColor:underlineColor
+                          atCellOrigin:point
+                                  font:theFont
+                                 width:doubleWidth ? _cellSize.width * 2 : _cellSize.width];
         }
+
+        CRunFree(head);
     }
 }
 

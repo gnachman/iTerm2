@@ -84,7 +84,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     return result;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _data = [[NSMutableString alloc] init];

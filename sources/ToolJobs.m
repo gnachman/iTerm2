@@ -65,7 +65,7 @@ static const CGFloat kMargin = 4;
     }
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
         [self setIntValue:kDefaultSignal];
@@ -100,12 +100,14 @@ static const CGFloat kMargin = 4;
 - (void)textDidEndEditing:(NSNotification *)aNotification {
     [self setIntValue:[self intValue]];
     id<NSComboBoxDelegate> comboBoxDelegate = (id<NSComboBoxDelegate>)[self delegate];
-    [comboBoxDelegate comboBoxSelectionIsChanging:nil];
+    [comboBoxDelegate comboBoxSelectionIsChanging:[NSNotification notificationWithName:NSComboBoxSelectionIsChangingNotification
+                                                                                object:nil]];
 }
 
 - (void)textDidChange:(NSNotification *)notification {
     id<NSComboBoxDelegate> comboBoxDelegate = (id<NSComboBoxDelegate>)[self delegate];
-    [comboBoxDelegate comboBoxSelectionIsChanging:nil];
+    [comboBoxDelegate comboBoxSelectionIsChanging:[NSNotification notificationWithName:NSComboBoxSelectionIsChangingNotification
+                                                                                object:nil]];
 }
 
 - (void)sizeToFit {
@@ -173,7 +175,7 @@ static const CGFloat kMargin = 4;
 
 @implementation ToolJobs
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         names_ = [[NSMutableArray alloc] init];

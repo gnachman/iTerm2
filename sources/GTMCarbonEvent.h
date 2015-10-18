@@ -410,3 +410,4 @@ GTM_EXTERN const OSType kGTMCarbonFrameworkSignature;
 - (EventHotKeyRef)hotKeyRef;
 - (BOOL)onKeyDown;
 @end
+

@@ -40,6 +40,12 @@
                                             icon:(NSImage *)image
                                            block:(void (^)(id card))block;
 
+// The shortcut is merely an indicator. It's up to the caller to register a hotkey and handle it.
+- (iTermTipCardActionButton *)addActionWithTitle:(NSString *)title
+                                        shortcut:(NSString *)shortcut
+                                            icon:(NSImage *)image
+                                           block:(void (^)(id card))block;
+
 // Returns the action button with |title| or nil.
 - (iTermTipCardActionButton *)actionWithTitle:(NSString *)title;
 

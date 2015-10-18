@@ -12,7 +12,7 @@
 @class CapturedOutput;
 @protocol iTermMark;
 
-@protocol iTermMarkDelegate
+@protocol iTermMarkDelegate <NSObject>
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark;
 @end
 
@@ -63,4 +63,9 @@
 // Invisible marks used for keep track of the location of captured output.
 @interface iTermCapturedOutputMark : iTermMark
 @property(nonatomic, copy) NSString *guid;
+@end
+
+// Invisible marks used to record where images are located so they can be freed.
+@interface iTermImageMark : iTermMark
+@property(nonatomic, retain) NSNumber *imageCode;
 @end

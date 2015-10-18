@@ -8,21 +8,22 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol SessionTitleViewDelegate
+@protocol SessionTitleViewDelegate <NSObject>
 
 - (NSColor *)tabColor;
 - (NSMenu *)menu;
 - (void)close;
 - (void)beginDrag;
+- (BOOL)sessionTitleViewIsFirstResponder;
 
 @end
 
 
 @interface SessionTitleView : NSView
 
-@property (nonatomic, copy) NSString *title;
-@property (nonatomic, assign) NSObject<SessionTitleViewDelegate> *delegate;
-@property (nonatomic, assign) double dimmingAmount;
-@property (nonatomic, assign) int ordinal;
+@property(nonatomic, copy) NSString *title;
+@property(nonatomic, assign) id<SessionTitleViewDelegate> delegate;
+@property(nonatomic, assign) double dimmingAmount;
+@property(nonatomic, assign) int ordinal;
 
 @end

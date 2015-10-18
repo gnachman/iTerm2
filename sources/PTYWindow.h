@@ -36,19 +36,26 @@
 
 @interface PTYWindow : NSWindow
 
+@property(nonatomic, readonly) int screenNumber;
+@property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
+
 - (void)smartLayout;
 - (void)setLayoutDone;
 
 - (void)enableBlur:(double)radius;
 - (void)disableBlur;
 
-- (int)screenNumber;
-- (BOOL)isTogglingLionFullScreen;
-
 - (void)setRestoreState:(NSObject *)restoreState;
 
 // Returns the approximate fraction of this window that is occluded by other windows in this app.
 - (double)approximateFractionOccluded;
+
+@end
+
+@interface PTYWindow (Private)
+
+// Private NSWindow method, needed to avoid ghosting when using transparency.
+- (BOOL)_setContentHasShadow:(BOOL)contentHasShadow;
 
 @end
 

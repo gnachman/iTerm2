@@ -11,6 +11,6 @@
 @interface NSFont (iTerm)
 
 // Encoded font name, suitable for storing in a profile.
-- (NSString *)stringValue;
+@property(nonatomic, readonly) NSString *stringValue;
 
 @end

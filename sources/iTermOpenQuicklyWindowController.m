@@ -44,7 +44,7 @@
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super initWithWindowNibName:@"iTermOpenQuicklyWindowController"];
     if (self) {
         _model = [[iTermOpenQuicklyModel alloc] init];
@@ -76,7 +76,7 @@
     contentView.wantsLayer = YES;
     contentView.layer.cornerRadius = 6;
     contentView.layer.masksToBounds = YES;
-    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] iterm_CGColor];
+    contentView.layer.borderColor = [[NSColor colorWithCalibratedRed:0.75 green:0.75 blue:0.75 alpha:1] CGColor];
     contentView.layer.borderWidth = 1;
 }
 
@@ -109,7 +109,8 @@
     // Select the first item.
     if (self.model.items.count) {
         [_table selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
-        [self tableViewSelectionDidChange:nil];
+        [self tableViewSelectionDidChange:[NSNotification notificationWithName:NSTableViewSelectionDidChangeNotification
+                                                                        object:nil]];
     }
 
     [self performSelector:@selector(resizeWindowAnimatedToFrame:)

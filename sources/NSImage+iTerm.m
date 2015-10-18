@@ -97,7 +97,7 @@
   CGContextDrawImage(context, rect, [self CGImageForProposedRect:NULL context:nil hints:nil]);
 
   // Now draw over it with |color|.
-  CGContextSetFillColorWithColor(context, [color iterm_CGColor]);
+  CGContextSetFillColorWithColor(context, [color CGColor]);
   CGContextSetBlendMode(context, kCGBlendModeSourceAtop);
   CGContextFillRect(context, rect);
 
@@ -121,7 +121,7 @@
                                                 hints:nil];
     NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithCGImage:cgImage] autorelease];
     [imageRep setSize:self.size];
-    return [imageRep representationUsingType:fileType properties:nil];
+    return [imageRep representationUsingType:fileType properties:@{}];
 }
 
 - (NSData *)rawPixelsInRGBColorSpace {

@@ -14,10 +14,10 @@ const int kMaxOutputBufferSize = 1024;
 static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
 @implementation Coprocess {
-  // When this is set, writing is no longer an option (probably because the
-  // coprocess terminated).  This is different than eof_, which indicates that
-  // reading is no longer an option and the coprocess is well and truly dead.
-  BOOL writePipeClosed_;
+    // When this is set, writing is no longer an option (probably because the
+    // coprocess terminated).  This is different than eof_, which indicates that
+    // reading is no longer an option and the coprocess is well and truly dead.
+    BOOL writePipeClosed_;
 }
 
 @synthesize pid = pid_;
@@ -30,25 +30,28 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 
 + (void)addCommandToMostRecentlyUsed:(NSString *)command
 {
-        NSArray *oldMru = [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
-        NSMutableArray *newMru;
-        if (oldMru) {
-                newMru = [[oldMru mutableCopy] autorelease];
-        } else {
-                newMru = [NSMutableArray array];
-        }
-        [newMru removeObject:command];
-        [newMru insertObject:command atIndex:0];
-        const int kMaxMru = 20;
-        while (newMru.count > kMaxMru) {
-                [newMru removeLastObject];
-        }
-        [[NSUserDefaults standardUserDefaults] setObject:newMru forKey:kCoprocessMruKey];
+    if (!command) {
+        return;
+    }
+    NSArray *oldMru = [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
+    NSMutableArray *newMru;
+    if (oldMru) {
+        newMru = [[oldMru mutableCopy] autorelease];
+    } else {
+        newMru = [NSMutableArray array];
+    }
+    [newMru removeObject:command];
+    [newMru insertObject:command atIndex:0];
+    const int kMaxMru = 20;
+    while (newMru.count > kMaxMru) {
+        [newMru removeLastObject];
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:newMru forKey:kCoprocessMruKey];
 }
 
 + (NSArray *)mostRecentlyUsedCommands
 {
-        return [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
+    return [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
 }
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
@@ -118,8 +121,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
     return result;
 }
 
-- (id)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         inputBuffer_ = [[NSMutableData alloc] init];

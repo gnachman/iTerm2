@@ -139,8 +139,8 @@ typedef enum {
     int index;  // Index of bookmark
 }
 
-+ (BookmarkJournalEntry*)journalWithAction:(JournalAction)action
-                                  bookmark:(Profile*)bookmark
-                                     model:(ProfileModel*)model;
++ (instancetype)journalWithAction:(JournalAction)action
+                         bookmark:(Profile*)bookmark
+                            model:(ProfileModel*)model;
 
 @end

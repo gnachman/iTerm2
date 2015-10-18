@@ -7,14 +7,21 @@
 
 #import "SolidColorView.h"
 
-@implementation SolidColorView
-- (id)initWithFrame:(NSRect)frame color:(NSColor*)color
-{
+@implementation SolidColorView {
+    BOOL _isFlipped;
+}
+
+- (instancetype)initWithFrame:(NSRect)frame color:(NSColor*)color {
     self = [super initWithFrame:frame];
     if (self) {
-        color_ = [color retain];
+        _color = [color retain];
     }
     return self;
+}
+
+- (void)dealloc {
+    [_color release];
+    [super dealloc];
 }
 
 - (NSString *)description {
@@ -22,38 +29,24 @@
             [self class], self, NSStringFromRect(self.frame), @(self.isHidden), @(self.alphaValue)];
 }
 
-- (void)drawRect:(NSRect)dirtyRect
-{
-    [color_ setFill];
+- (void)drawRect:(NSRect)dirtyRect {
+    [_color setFill];
     NSRectFill(dirtyRect);
     [super drawRect:dirtyRect];
 }
 
-- (void)setColor:(NSColor*)color
-{
-    [color_ autorelease];
-    color_ = [color retain];
+- (void)setColor:(NSColor*)color {
+    [_color autorelease];
+    _color = [color retain];
     [self setNeedsDisplay:YES];
 }
 
-- (NSColor*)color
-{
-    return color_;
+- (BOOL)isFlipped {
+    return _isFlipped;
 }
 
-- (BOOL)isFlipped
-{
-    return isFlipped_;
+- (void)setFlipped:(BOOL)value {
+    _isFlipped = value;
 }
 
-- (void)setFlipped:(BOOL)value
-{
-    isFlipped_ = value;
-}
-
-- (void)dealloc
-{
-    [color_ release];
-    [super dealloc];
-}
 @end

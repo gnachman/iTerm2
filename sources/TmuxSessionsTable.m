@@ -11,12 +11,21 @@
 
 extern NSString *kWindowPasteboardType;
 
-@implementation TmuxSessionsTable
+@implementation TmuxSessionsTable {
+    NSMutableArray *model_;
+    BOOL canAttachToSelectedSession_;
+
+    IBOutlet NSTableColumn *checkColumn_;
+    IBOutlet NSTableColumn *nameColumn_;
+    IBOutlet NSTableView *tableView_;
+    IBOutlet NSButton *attachButton_;
+    IBOutlet NSButton *detachButton_;
+    IBOutlet NSButton *removeButton_;
+}
 
 @synthesize delegate = delegate_;
 
-- (id)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         model_ = [[NSMutableArray alloc] init];
@@ -36,8 +45,7 @@ extern NSString *kWindowPasteboardType;
     [super dealloc];
 }
 
-- (void)setDelegate:(NSObject<TmuxSessionsTableProtocol> *)delegate
-{
+- (void)setDelegate:(id<TmuxSessionsTableProtocol>)delegate {
     delegate_ = delegate;
     [self setSessions:[delegate_ sessions]];
 }

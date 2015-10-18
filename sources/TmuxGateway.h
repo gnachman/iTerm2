@@ -21,7 +21,7 @@ extern const int kTmuxGatewayCommandWantsData;
 
 extern NSString * const kTmuxGatewayErrorDomain;
 
-@protocol TmuxGatewayDelegate
+@protocol TmuxGatewayDelegate <NSObject>
 
 - (TmuxController *)tmuxController;
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
@@ -38,41 +38,28 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxWindowsDidChange;
 - (void)tmuxSession:(int)sessionId renamed:(NSString *)newName;
 - (NSSize)tmuxBookmarkSize;  // rows, cols
-- (int)tmuxNumHistoryLinesInBookmark;
+- (NSInteger)tmuxNumHistoryLinesInBookmark;
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging;
 - (void)tmuxPrintLine:(NSString *)line;
 - (NSWindowController<iTermWindowController> *)tmuxGatewayWindow;
 
 @end
 
-typedef enum {
+typedef NS_ENUM(NSInteger, ControlCommand) {
     CONTROL_COMMAND_OUTPUT,
     CONTROL_COMMAND_LAYOUT_CHANGE,
     CONTROL_COMMAND_WINDOWS_CHANGE,
     CONTROL_COMMAND_NOOP
-} ControlCommand;
+};
 
-@interface TmuxGateway : NSObject {
-    NSObject<TmuxGatewayDelegate> *delegate_;  // weak
-
-    // Data from parsing an incoming command
-    ControlCommand command_;
-
-    NSMutableArray *commandQueue_;  // NSMutableDictionary objects
-    NSMutableString *currentCommandResponse_;
-    NSMutableDictionary *currentCommand_;  // Set between %begin and %end
-    NSMutableData *currentCommandData_;
-
-    BOOL detachSent_;
-    BOOL acceptNotifications_;  // Initially NO. When YES, respond to notifications.
-    NSMutableString *strayMessages_;
-}
+@interface TmuxGateway : NSObject
 
 // Should all protocol-level input be logged to the gateway's session?
 @property(nonatomic, assign) BOOL tmuxLogging;
 @property(nonatomic, readonly) NSWindowController<iTermWindowController> *window;
+@property(nonatomic, readonly) id<TmuxGatewayDelegate> delegate;
 
-- (id)initWithDelegate:(NSObject<TmuxGatewayDelegate> *)delegate;
+- (instancetype)initWithDelegate:(id<TmuxGatewayDelegate>)delegate;
 
 // Returns any unconsumed data if tmux mode is exited.
 // The token must be TMUX_xxx.
@@ -106,6 +93,5 @@ typedef enum {
 
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane;
 - (void)detach;
-- (NSObject<TmuxGatewayDelegate> *)delegate;
 
 @end

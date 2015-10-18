@@ -631,13 +631,14 @@
     NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"one two three four five six "
                                                                             suffix:@"seven eight nine ten eleven"
                                                                   workingDirectory:kWorkingDirectory
-                                                              charsTakenFromPrefix:&numCharsFromPrefix];
+                                                              charsTakenFromPrefix:&numCharsFromPrefix
+                                                                    trimWhitespace:NO];
     XCTAssert([kRelativeFilename isEqualToString:path]);
     XCTAssert(numCharsFromPrefix == [@"five six " length]);
 }
 
 // This test simulates what happens if you select a full line (including hard eol) and do Open Selection.
-// The prefix will end in whitespace (maybe) and a newline.
+// The prefix will end in whitespace (maybe) and a newline. This test uses whitespace trimming.
 - (void)testPathOfExistingFileIgnoringLeadingAndTrailingWhitespaceAndNewlines {
   int numCharsFromPrefix;
   NSString *kWorkingDirectory = @"/directory";
@@ -648,7 +649,8 @@
   NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"five six seven eight \r\n"
                                                                           suffix:@""
                                                                 workingDirectory:kWorkingDirectory
-                                                            charsTakenFromPrefix:&numCharsFromPrefix];
+                                                            charsTakenFromPrefix:&numCharsFromPrefix
+                                                                  trimWhitespace:YES];
   XCTAssert([kRelativeFilename isEqualToString:path]);
   XCTAssert(numCharsFromPrefix == [@"five six seven eight" length]);
 }
@@ -663,7 +665,8 @@
     NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"one two three four (five six "
                                                                             suffix:@"seven eight) nine ten eleven"
                                                                   workingDirectory:kWorkingDirectory
-                                                              charsTakenFromPrefix:&numCharsFromPrefix];
+                                                              charsTakenFromPrefix:&numCharsFromPrefix
+                                                                    trimWhitespace:NO];
     XCTAssert([@"five six seven eight" isEqualToString:path]);
     XCTAssert(numCharsFromPrefix == [@"five six " length]);
 }
@@ -678,7 +681,8 @@
     NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"one two three four five six "
                                                                             suffix:@"seven eight:123:456 nine ten eleven"
                                                                   workingDirectory:kWorkingDirectory
-                                                              charsTakenFromPrefix:&numCharsFromPrefix];
+                                                              charsTakenFromPrefix:&numCharsFromPrefix
+                                                                    trimWhitespace:NO];
     XCTAssert([@"five six seven eight:123:456" isEqualToString:path]);
     XCTAssert(numCharsFromPrefix == [@"five six " length]);
 }
@@ -693,7 +697,8 @@
     NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"one two three four (five.six\t"
                                                                             suffix:@"seven eight:123:456). nine ten eleven"
                                                                   workingDirectory:kWorkingDirectory
-                                                              charsTakenFromPrefix:&numCharsFromPrefix];
+                                                              charsTakenFromPrefix:&numCharsFromPrefix
+                                                                    trimWhitespace:NO];
     XCTAssert([@"five.six\tseven eight:123:456" isEqualToString:path]);
     XCTAssert(numCharsFromPrefix == [@"five.six\t" length]);
 }
@@ -709,7 +714,24 @@
     NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"one two three four five six "
                                                                             suffix:@"seven eight nine ten eleven"
                                                                   workingDirectory:kWorkingDirectory
-                                                              charsTakenFromPrefix:&numCharsFromPrefix];
+                                                              charsTakenFromPrefix:&numCharsFromPrefix
+                                                                    trimWhitespace:NO];
+    XCTAssert(path == nil);
+}
+
+// Regression test for issue 3841.
+- (void)testLeadingWhitespaceIgnoredWithoutTrimming {
+    int numCharsFromPrefix;
+    NSString *kWorkingDirectory = @"/directory";
+    NSString *kRelativeFilename = @"test.txt";
+    NSString *kFilename = [kWorkingDirectory stringByAppendingPathComponent:kRelativeFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    [_semanticHistoryController.fakeFileManager.directories addObject:kWorkingDirectory];
+    NSString *path = [_semanticHistoryController pathOfExistingFileFoundWithPrefix:@"     "
+                                                                            suffix:@"  test.txt"
+                                                                  workingDirectory:kWorkingDirectory
+                                                              charsTakenFromPrefix:&numCharsFromPrefix
+                                                                    trimWhitespace:NO];
     XCTAssert(path == nil);
 }
 

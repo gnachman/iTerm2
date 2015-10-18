@@ -1,7 +1,5 @@
 #import "PTYSession.h"
 
-#import "CommandHistory.h"
-#import "CommandUse.h"
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
@@ -14,19 +12,21 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermColorMap.h"
+#import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
-#import "iTermDirectoriesModel.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermMouseCursor.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
+#import "iTermRecentDirectoryMO.h"
 #import "iTermRestorableSession.h"
 #import "iTermRule.h"
 #import "iTermSavePanel.h"
 #import "iTermSelection.h"
 #import "iTermSemanticHistoryController.h"
+#import "iTermShellHistoryController.h"
 #import "iTermTextExtractor.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -162,7 +162,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, readwrite) NSTimeInterval lastOutput;
-@property(nonatomic, readwrite) BOOL isDivorced;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
@@ -341,8 +340,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Synthetic sessions are used for "zoom in" and DVR, and their closing cannot be undone.
     BOOL _synthetic;
-
-    NSMutableArray *_commandUses;
 }
 
 + (void)registerSessionInArrangement:(NSDictionary *)arrangement {
@@ -363,7 +360,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [gRegisteredSessionContents removeAllObjects];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _triggerLineNumber = -1;
@@ -404,7 +401,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _hosts = [[NSMutableArray alloc] init];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
-        _commandUses = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(windowResized)
                                                      name:@"iTermWindowDidResize"
@@ -488,7 +484,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_guid release];
     [_lastCommand release];
     [_substitutions release];
-    [_commandUses release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -1157,7 +1152,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             pwd = NSHomeDirectory();
         }
     }
-    isUTF8 = ([profile[KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+    isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
     [[[self tab] realParentWindow] setName:theName forSession:self];
 
@@ -1954,7 +1949,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[self tab] updateLabelAttributes];
 
     if (_shouldRestart) {
-        [_terminal resetPreservingPrompt:NO];
+        [_terminal resetByUserRequest:NO];
         [self appendBrokenPipeMessage:@"Session Restarted"];
         [self replaceTerminatedShellWithNewInstance];
     } else if ([self autoClose]) {
@@ -2124,8 +2119,26 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[iTermController sharedInstance] reloadAllBookmarks];
 }
 
-+ (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu
-{
++ (BOOL)_recursiveSelectMenuWithSelector:(SEL)selector inMenu:(NSMenu *)menu {
+    for (NSMenuItem* item in [menu itemArray]) {
+        if (![item isEnabled] || [item isHidden]) {
+            continue;
+        }
+        if ([item hasSubmenu]) {
+            if ([PTYSession _recursiveSelectMenuWithSelector:selector inMenu:[item submenu]]) {
+                return YES;
+            }
+        } else if ([item action] == selector) {
+            [NSApp sendAction:[item action]
+                           to:[item target]
+                         from:item];
+            return YES;
+        }
+    }
+    return NO;
+}
+
++ (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu {
     for (NSMenuItem* item in [menu itemArray]) {
         if (![item isEnabled] || [item isHidden]) {
             continue;
@@ -2171,6 +2184,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
++ (void)selectMenuItemWithSelector:(SEL)theSelector {
+    if (![self _recursiveSelectMenuWithSelector:theSelector inMenu:[NSApp mainMenu]]) {
+        NSBeep();
+    }
+}
 
 + (void)selectMenuItem:(NSString*)theName
 {
@@ -2375,7 +2393,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [semanticHistoryController pathOfExistingFileFoundWithPrefix:selection
                                                               suffix:@""
                                                     workingDirectory:workingDirectory
-                                                charsTakenFromPrefix:&charsTakenFromPrefix];
+                                                charsTakenFromPrefix:&charsTakenFromPrefix
+                                                      trimWhitespace:YES];
     if (filename &&
         ![[filename stringByReplacingOccurrencesOfString:@"//" withString:@"/"] isEqualToString:@"/"]) {
         if ([_textview openSemanticHistoryPath:filename
@@ -2645,6 +2664,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // bold 
     [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
                                                    inProfile:aDict]];
+    self.thinStrokes = [iTermProfilePreferences boolForKey:KEY_THIN_STROKES inProfile:aDict];
+
     [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
                                                           inProfile:aDict]];
 
@@ -2681,7 +2702,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                       inProfile:aDict]
                    nonAscii:[iTermProfilePreferences boolForKey:KEY_NONASCII_ANTI_ALIASED
                                                       inProfile:aDict]];
-    [self setEncoding:[iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
+    
+    // Unfortunately, this preference has been saved as a 32-bit int for a while, although it should
+    // be an unsigned 64 bit. Luckily, 32 bits happens to be enough so far, since enabling 64-bit
+    // storage is in the profile prefs system is somewhat involved. For now, hack off the sign
+    // extension.
+    [self setEncodingFromSInt32:[iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
@@ -2736,20 +2762,25 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (NSString*)formattedName:(NSString*)base
 {
-    NSString *prefix = _tmuxController ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
-
+    if (_tmuxController) {
+        // There won't be a valid job name, and the profile name is always tmux, so just show the
+        // window name. This is confusing: this refers to the name of a tmux window, which is
+        // equivalent to an iTerm2 tab. It is reported to us by tmux. We ignore the base name
+        // because the real name comes from the server and that's all we care about.
+        return [NSString stringWithFormat:@"↣ %@", [[self tab] tmuxWindowName]];
+    }
     BOOL baseIsBookmarkName = [base isEqualToString:_bookmarkName];
     if ([iTermPreferences boolForKey:kPreferenceKeyShowJobName] && _jobName) {
         if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
-            return [NSString stringWithFormat:@"%@%@", prefix, [self jobName]];
+            return [NSString stringWithFormat:@"%@", [self jobName]];
         } else {
-            return [NSString stringWithFormat:@"%@%@ (%@)", prefix, base, [self jobName]];
+            return [NSString stringWithFormat:@"%@ (%@)", base, [self jobName]];
         }
     } else {
         if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
-            return [NSString stringWithFormat:@"%@Shell", prefix];
+            return @"Shell";
         } else {
-            return [NSString stringWithFormat:@"%@%@", prefix, base];
+            return base;
         }
     }
 }
@@ -2960,8 +2991,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_terminal encoding];
 }
 
-- (void)setEncoding:(NSStringEncoding)encoding
-{
+// See note at call site about why this exists.
+- (void)setEncodingFromSInt32:(int)intEncoding {
+    NSStringEncoding encoding = intEncoding;
+    encoding &= 0xffffffff;
+    [self setEncoding:encoding];
+}
+
+- (void)setEncoding:(NSStringEncoding)encoding {
     [_terminal setEncoding:encoding];
 }
 
@@ -3065,6 +3102,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)setUseBoldFont:(BOOL)boldFlag
 {
     [_textview setUseBoldFont:boldFlag];
+}
+
+- (BOOL)thinStrokes {
+    return _textview.thinStrokes;
+}
+
+- (void)setThinStrokes:(BOOL)thinStrokes {
+    _textview.thinStrokes = thinStrokes;
 }
 
 - (BOOL)useItalicFont
@@ -3385,6 +3430,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout {
+    DLog(@"scheduleUpdateIn:%f timerRunning=%@ updateTimer.isValue=%@ lastTimeout=%f",
+         timeout, @(_timerRunning), @(_updateTimer.isValid), _lastTimeout);
     if (_exited) {
         return;
     }
@@ -3392,14 +3439,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (!_timerRunning && [_updateTimer isValid]) {
         if (_lastTimeout == kSlowTimerIntervalSec && timeout == kFastTimerIntervalSec) {
             // Don't go from slow to fast
+            DLog(@"  declining to go from slow to fast");
             return;
         }
         if (_lastTimeout == timeout) {
             // No change? No point.
+            DLog(@"  declining; no change");
             return;
         }
         if (timeout > kSlowTimerIntervalSec && timeout > _lastTimeout) {
             // This is a longer timeout than the existing one, and is background/blink.
+            DLog(@"  declining to use a longer timeout when new frequency is blink.");
             return;
         }
     }
@@ -3412,18 +3462,23 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     _timeOfLastScheduling = now;
     _lastTimeout = timeout;
 
+    static const NSTimeInterval kMinimumDelay = 1 / 60.0;
+    DLog(@"  scheduling timer to run in %f sec", MAX(kMinimumDelay, timeout - timeSinceLastUpdate));
+    
 #if 0
     // TODO: Try this. It solves the bug where we don't redraw properly during live resize.
     // I'm worried about the possible side effects it might have since there's no way to 
     // know all the tracking event loops.
-    _updateTimer = [[NSTimer timerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
+    _updateTimer = [[NSTimer timerWithTimeInterval:MAX(kMinimumDelay,
+                                                       timeout - timeSinceLastUpdate)
                                             target:self
                                           selector:@selector(updateDisplay)
                                           userInfo:[NSNumber numberWithFloat:(float)timeout]
                                            repeats:NO] retain];
     [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
 #else
-    _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(0, timeout - timeSinceLastUpdate)
+    _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(kMinimumDelay,
+                                                                timeout - timeSinceLastUpdate)
                                                      target:self
                                                    selector:@selector(updateDisplay)
                                                    userInfo:[NSNumber numberWithFloat:(float)timeout]
@@ -3659,8 +3714,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return guid;
     }
     _isDivorced = YES;
+    DLog(@"Remove profile with guid %@ from sessions instance", guid);
     [[ProfileModel sessionsInstance] removeProfileWithGuid:guid];
-    [[ProfileModel sessionsInstance] addBookmark:bookmark];
+    DLog(@"Set profile %@ divorced, add to sessions instance", bookmark[KEY_GUID]);
+    [[ProfileModel sessionsInstance] addBookmark:[[bookmark copy] autorelease]];
 
     NSString *existingOriginalGuid = bookmark[KEY_ORIGINAL_GUID];
     if (!existingOriginalGuid ||
@@ -3674,6 +3731,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Allocate a new guid for this bookmark.
     guid = [ProfileModel freshGuid];
+    DLog(@"Allocating a new guid for this profile. The new guid is %@", guid);
     [[ProfileModel sessionsInstance] setObject:guid
                                         forKey:KEY_GUID
                                     inBookmark:bookmark];
@@ -4042,10 +4100,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)toggleShowTimestamps {
-    [_textview toggleShowTimestamps];
-}
-
 - (VT100GridCoordRange)smartSelectionRangeAt:(VT100GridCoord)coord {
     if (coord.x < 0 || coord.y < 0 || coord.x >= _screen.width || coord.y >= _screen.height) {
         return VT100GridCoordRangeMake(0, 0, 0, 0);
@@ -4084,7 +4138,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [note makeFirstResponder];
 }
 
-- (void)showHideNotes {
+- (void)textViewToggleAnnotations {
     VT100GridCoordRange range =
         VT100GridCoordRangeMake(0,
                                 0,
@@ -4322,15 +4376,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                           [[dict objectForKey:KEY_ROWS] intValue]);
 }
 
-- (int)tmuxNumHistoryLinesInBookmark
-{
-        NSDictionary *dict = [PTYTab tmuxBookmark];
+- (NSInteger)tmuxNumHistoryLinesInBookmark {
+    NSDictionary *dict = [PTYTab tmuxBookmark];
     if ([[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]) {
-                // 10M is close enough to infinity to be indistinguishable.
-                return 10 * 1000 * 1000;
-        } else {
-                return [[dict objectForKey:KEY_SCROLLBACK_LINES] intValue];
-        }
+        // 10M is close enough to infinity to be indistinguishable.
+        return 10 * 1000 * 1000;
+    } else {
+        return [[dict objectForKey:KEY_SCROLLBACK_LINES] integerValue];
+    }
 }
 
 - (NSString*)encodingName
@@ -4715,6 +4768,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                    forKey:kPreferenceKeyHotkeyAutoHides];
                 break;
             }
+            case KEY_ACTION_UNDO:
+                [PTYSession selectMenuItemWithSelector:@selector(undo:)];
+                break;
 
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
@@ -4762,10 +4818,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                     data = [_terminal.output keyDelete];
                     break;
                 case NSHomeFunctionKey:
-                    data = [_terminal.output keyHome:modflag];
+                    data = [_terminal.output keyHome:modflag screenlikeTerminal:self.isTmuxClient];
                     break;
                 case NSEndFunctionKey:
-                    data = [_terminal.output keyEnd:modflag];
+                    data = [_terminal.output keyEnd:modflag screenlikeTerminal:self.isTmuxClient];
                     break;
                 case NSPageUpFunctionKey:
                     data = [_terminal.output keyPageUp:modflag];
@@ -5469,9 +5525,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (VT100GridAbsCoordRange)textViewRangeOfLastCommandOutput {
     DLog(@"Fetching range of last command output...");
-    if (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed]) {
+    if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         DLog(@"Command history has never been used.");
-        [CommandHistory showInformationalMessage];
+        [iTermShellHistoryController showInformationalMessage];
         return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     } else {
         DLog(@"Returning cached range.");
@@ -5481,7 +5537,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (BOOL)textViewCanSelectOutputOfLastCommand {
     // Return YES if command history has never been used so we can show the informational message.
-    return (![[CommandHistory sharedInstance] commandHistoryHasEverBeenUsed] ||
+    return (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed] ||
             _screen.lastCommandOutputRange.start.x >= 0);
 
 }
@@ -6427,9 +6483,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     [self dismissAnnouncementWithIdentifier:kShellIntegrationOutOfDateAnnouncementIdentifier];
 
-    [_commandUses autorelease];
-    _commandUses = [[[CommandHistory sharedInstance] commandUsesForHost:host] retain];
-
     [[[self tab] realParentWindow] sessionHostDidChange:self to:host];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
@@ -6444,6 +6497,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [self offerToTurnOffMouseReportingOnHostChange];
         }
     }
+}
+
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
+    return [[iTermShellHistoryController sharedInstance] commandUsesForHost:self.currentHost];
 }
 
 - (void)offerToTurnOffMouseReportingOnHostChange {
@@ -6553,7 +6610,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                includeLastNewline:NO
                            trimTrailingWhitespace:NO
                                      cappedAtSize:-1
-                                continuationChars:nil];
+                                continuationChars:nil
+                                           coords:nil];
     NSRange newline = [command rangeOfString:@"\n"];
     if (newline.location != NSNotFound) {
         command = [command substringToIndex:newline.location];
@@ -6580,7 +6638,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    return [[CommandHistory sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
+    return [[iTermShellHistoryController sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
                                                                      onHost:host];
 }
 
@@ -6620,7 +6678,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                  _lastPromptLine - [_screen totalScrollbackOverflow], mark, command);
             mark.command = command;
-            [[CommandHistory sharedInstance] addCommand:trimmedCommand
+            [[iTermShellHistoryController sharedInstance] addCommand:trimmedCommand
                                                  onHost:[_screen remoteHostOnLine:range.end.y]
                                             inDirectory:[_screen workingDirectoryOnLine:range.end.y]
                                                withMark:mark];
@@ -6787,9 +6845,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
     BOOL isSame = ([directory isEqualToString:_lastDirectory] &&
                    [remoteHost isEqualToRemoteHost:_lastRemoteHost]);
-    [[iTermDirectoriesModel sharedInstance] recordUseOfPath:directory
-                                                     onHost:[_screen remoteHostOnLine:line]
-                                                   isChange:!isSame];
+    [[iTermShellHistoryController sharedInstance] recordUseOfPath:directory
+                                                           onHost:[_screen remoteHostOnLine:line]
+                                                         isChange:!isSame];
     self.lastDirectory = directory;
     self.lastRemoteHost = remoteHost;
 }
@@ -6902,6 +6960,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (NSWindowController *)popupWindowController {
     return [[self tab] realParentWindow];
+}
+
+- (BOOL)popupWindowIsInHotkeyWindow {
+    return self.tab.realParentWindow.isHotKeyWindow;
 }
 
 - (VT100Screen *)popupVT100Screen {

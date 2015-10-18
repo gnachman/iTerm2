@@ -143,7 +143,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     }
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _subSelections = [[NSMutableArray alloc] init];

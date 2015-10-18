@@ -33,22 +33,59 @@
 @property(nonatomic, readonly) int tabNumberForItermSessionId;
 @property(nonatomic, assign) id<PTYTabDelegate> delegate;
 
+@property(nonatomic, retain) PTYSession *activeSession;
+@property(nonatomic, retain) NSTabViewItem *tabViewItem;
+
+// These values are observed by PSMTTabBarControl:
+// Tab number for display
+@property(nonatomic, assign) int objectCount;
+// Icon to display in tab
+@property(nonatomic, retain) NSImage *icon;
+
+// Size we should report to fit the current layout
+@property(nonatomic, readonly) NSSize tmuxSize;
+@property(nonatomic, readonly) NSSize maxTmuxSize;
+@property(nonatomic, copy) NSString *tmuxWindowName;
+@property (readonly, getter=isTmuxTab) BOOL tmuxTab;
+
 // Save the contents of all sessions. Used during window restoration so that if
 // the sessions are later restored from a saved arrangement during startup
 // activities, their contents can be rescued.
 + (void)registerSessionsInArrangement:(NSDictionary *)arrangement;
 
++ (NSDictionary *)tmuxBookmark;
+
++ (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
+
++ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
+                        inTerminal:(NSWindowController<iTermWindowController> *)term
+                   hasFlexibleView:(BOOL)hasFlexible
+                           viewMap:(NSDictionary *)viewMap;
+
++ (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
+                    inTerminal:(NSWindowController<iTermWindowController> *)term
+               hasFlexibleView:(BOOL)hasFlexible
+                       viewMap:(NSDictionary *)viewMap;
+
++ (NSDictionary *)viewMapWithArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions;
+
++ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
+                       inTerminal:(NSWindowController<iTermWindowController> *)term
+                       tmuxWindow:(int)tmuxWindow
+                   tmuxController:(TmuxController *)tmuxController;
+
++ (void)setTmuxFont:(NSFont *)font
+       nonAsciiFont:(NSFont *)nonAsciiFont
+           hSpacing:(double)hs
+           vSpacing:(double)vs;
+
 // init/dealloc
-- (id)initWithSession:(PTYSession*)session;
-- (id)initWithRoot:(NSSplitView*)root;
-- (void)dealloc;
+- (instancetype)initWithSession:(PTYSession*)session;
+- (instancetype)initWithRoot:(NSSplitView*)root;
+
 - (void)setRoot:(NSSplitView *)newRoot;
 
 - (NSRect)absoluteFrame;
-- (PTYSession*)activeSession;
-- (void)setActiveSession:(PTYSession*)session;
-- (NSTabViewItem *)tabViewItem;
-- (void)setTabViewItem:(NSTabViewItem *)theTabViewItem;
 - (void)previousSession;
 - (void)nextSession;
 - (int)indexOfSessionView:(SessionView*)sessionView;
@@ -67,7 +104,6 @@
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 - (NSSize)sessionSizeForViewSize:(PTYSession *)aSession;
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession;
-+ (NSDictionary *)tmuxBookmark;
 // Fit session views to scroll views.
 // This is useful for a tmux tab where scrollviews sizes are not tightly coupled to the
 // SessionView size because autoresizing is turned off. When something changes, such as
@@ -81,13 +117,6 @@
 - (PTYSession *)sessionWithViewId:(int)viewId;
 
 - (int)realObjectCount;
-// These values are observed by PSMTTabBarControl:
-// Tab number for display
-- (int)objectCount;
-- (void)setObjectCount:(int)value;
-// Icon to display in tab
-- (NSImage *)icon;
-- (void)setIcon:(NSImage *)anIcon;
 // Should show busy indicator in tab?
 - (BOOL)isProcessing;
 - (BOOL)realIsProcessing;
@@ -136,23 +165,9 @@
 - (NSSize)_recursiveMinSize:(NSSplitView*)node;
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 
-+ (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
-
 // A viewMap maps a session's unique ID to a SessionView. Views in the
 // arrangement with matching session unique IDs will be assigned those
 // SessionView's.
-+ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
-                        inTerminal:(NSWindowController<iTermWindowController> *)term
-                   hasFlexibleView:(BOOL)hasFlexible
-                           viewMap:(NSDictionary *)viewMap;
-
-+ (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
-                    inTerminal:(NSWindowController<iTermWindowController> *)term
-               hasFlexibleView:(BOOL)hasFlexible
-                       viewMap:(NSDictionary *)viewMap;
-
-+ (NSDictionary *)viewMapWithArrangement:(NSDictionary *)arrangement sessions:(NSArray *)sessions;
-
 - (void)updateFlexibleViewColors;
 - (NSDictionary*)arrangement;
 
@@ -171,24 +186,9 @@
 - (void)resizeViewsInViewHierarchy:(NSView *)view
                       forNewLayout:(NSMutableDictionary *)parseTree;
 - (void)reloadTmuxLayout;
-+ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
-                       inTerminal:(NSWindowController<iTermWindowController> *)term
-                       tmuxWindow:(int)tmuxWindow
-                   tmuxController:(TmuxController *)tmuxController;
-+ (void)setTmuxFont:(NSFont *)font
-       nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(double)hs
-           vSpacing:(double)vs;
-
-// Size we should report to fit the current layout
-- (NSSize)tmuxSize;
 // Size we are given the current layout
-- (NSSize)maxTmuxSize;
-- (NSString *)tmuxWindowName;
-- (void)setTmuxWindowName:(NSString *)tmuxWindowName;
 
 - (int)tmuxWindow;
-- (BOOL)isTmuxTab;
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
        tmuxController:(TmuxController *)tmuxController;
 // Returns true if the tmux layout is too large for the window to accommodate.

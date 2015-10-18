@@ -10,15 +10,15 @@
 
 @class TriggerController;
 
-@protocol TriggerDelegate
+@protocol TriggerDelegate <NSObject>
 - (void)triggerChanged:(TriggerController *)controller newValue:(NSArray *)value;
 @end
 
-@interface TriggerController : NSWindowController <NSWindowDelegate> 
+@interface TriggerController : NSWindowController <NSWindowDelegate>
 
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic, assign) BOOL hasSelection;
-@property (nonatomic, assign) IBOutlet NSObject<TriggerDelegate> *delegate;
+@property (nonatomic, assign) IBOutlet id<TriggerDelegate> delegate;
 @property (nonatomic, readonly) NSTableView *tableView;
 
 - (void)windowWillOpen;

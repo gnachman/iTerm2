@@ -16,11 +16,15 @@ static float kAnimationDuration = 0.25;
 
 @implementation PasteViewController {
     IBOutlet NSTextField *_label;
+    IBOutlet NSProgressIndicator *progressIndicator_;
+    int totalLength_;
+    PasteContext *pasteContext_;
 }
 
 @synthesize delegate = delegate_;
+@synthesize remainingLength = remainingLength_;
 
-- (id)initWithContext:(PasteContext *)pasteContext
+- (instancetype)initWithContext:(PasteContext *)pasteContext
                length:(int)length {
     self = [super initWithNibName:@"PasteView" bundle:nil];
     if (self) {

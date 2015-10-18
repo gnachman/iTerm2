@@ -10,7 +10,7 @@
 
 @interface NSArray (iTerm)
 
-- (NSArray *)objectsOfClasses:(NSArray *)classes;
+- (NSArray *)objectsOfClasses:(NSArray<Class> *)classes;
 - (NSAttributedString *)attributedComponentsJoinedByAttributedString:(NSAttributedString *)joiner;
 
 // Returns an array where each object in self is replaced with block(object).

@@ -27,14 +27,12 @@
 #import <Cocoa/Cocoa.h>
 
 @interface ColorsMenuItemView : NSView
-{
-    NSColor* color_;
-}
+
+@property(nonatomic, readonly) NSColor *color;
 
 - (NSGradient *)gradientForColorIndex:(NSInteger)colorIndex;
 - (void)drawRect:(NSRect)rect;
 - (void)mouseUp:(NSEvent*) event;
-- (NSColor*)color;
 
 @end
 

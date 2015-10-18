@@ -8,8 +8,10 @@
 
 #import "ToolDirectoriesView.h"
 
-#import "iTermDirectoriesModel.h"
+#import "iTermRecentDirectoryMO.h"
+#import "iTermRecentDirectoryMO+Additions.h"
 #import "iTermSearchField.h"
+#import "iTermShellHistoryController.h"
 #import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
 #import "NSTableColumn+iTerm.h"
@@ -19,13 +21,16 @@ static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 5;
 static const CGFloat kHelpMargin = 5;
 
+@interface ToolDirectoriesView() <NSSearchFieldDelegate>
+@end
+
 @implementation ToolDirectoriesView {
     NSScrollView *scrollView_;
     NSTableView *tableView_;
     NSButton *clear_;
     BOOL shutdown_;
-    NSArray *entries_;
-    NSArray *filteredEntries_;
+    NSArray<iTermRecentDirectoryMO *> *entries_;
+    NSArray<iTermRecentDirectoryMO *> *filteredEntries_;
     iTermSearchField *searchField_;
     NSFont *boldFont_;
     NSMenu *menu_;
@@ -34,7 +39,7 @@ static const CGFloat kHelpMargin = 5;
 
 @synthesize tableView = tableView_;
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         searchField_ = [[iTermSearchField alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, 1)];
@@ -172,15 +177,18 @@ static const CGFloat kHelpMargin = 5;
             tableColumn:(NSTableColumn *)tableColumn
                     row:(NSInteger)row
           mouseLocation:(NSPoint)mouseLocation {
-    iTermDirectoryEntry *entry = filteredEntries_[row];
+    iTermRecentDirectoryMO *entry = filteredEntries_[row];
     return entry.path;
 }
 
 - (id)tableView:(NSTableView *)aTableView
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
             row:(NSInteger)rowIndex {
-    iTermDirectoryEntry *entry = filteredEntries_[rowIndex];
-    return [entry attributedStringForTableColumn:aTableColumn];
+    iTermRecentDirectoryMO *entry = filteredEntries_[rowIndex];
+    NSIndexSet *indexes =
+        [[iTermShellHistoryController sharedInstance] abbreviationSafeIndexesInRecentDirectory:entry];
+    return [entry attributedStringForTableColumn:aTableColumn
+                      abbreviationSafeComponents:indexes];
 }
 
 - (void)directoriesDidChange:(id)sender {
@@ -191,8 +199,9 @@ static const CGFloat kHelpMargin = 5;
     [entries_ autorelease];
     iTermToolWrapper *wrapper = self.toolWrapper;
     VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
-    NSArray *entries = [[iTermDirectoriesModel sharedInstance] entriesSortedByScoreOnHost:host];
-    NSArray *reversed = [[entries reverseObjectEnumerator] allObjects];
+    NSArray<iTermRecentDirectoryMO *> *entries =
+        [[iTermShellHistoryController sharedInstance] directoriesSortedByScoreOnHost:host];
+    NSArray<iTermRecentDirectoryMO *> *reversed = [[entries reverseObjectEnumerator] allObjects];
     entries_ = [reversed retain];
     [tableView_ reloadData];
 
@@ -219,13 +228,16 @@ static const CGFloat kHelpMargin = 5;
     if (selectedIndex < 0) {
         return;
     }
-    iTermDirectoryEntry* entry = filteredEntries_[selectedIndex];
+    iTermRecentDirectoryMO *entry = filteredEntries_[selectedIndex];
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text;
     if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
         text = [@"cd " stringByAppendingString:entry.path];
     } else {
         text = entry.path;
+    }
+    if (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
+        text = [text stringByAppendingString:@"\n"];
     }
     [wrapper.delegate.delegate toolbeltInsertText:text];
 }
@@ -236,7 +248,7 @@ static const CGFloat kHelpMargin = 5;
                         @"OK",
                         @"Cancel",
                         nil) == NSAlertDefaultReturn) {
-        [[iTermDirectoriesModel sharedInstance] eraseHistory];
+        [[iTermShellHistoryController sharedInstance] eraseCommandHistory:NO directories:YES];
     }
 }
 
@@ -246,7 +258,7 @@ static const CGFloat kHelpMargin = 5;
         filteredEntries_ = [entries_ retain];
     } else {
         NSMutableArray *array = [NSMutableArray array];
-        for (iTermDirectoryEntry *entry in entries_) {
+        for (iTermRecentDirectoryMO *entry in entries_) {
             if ([entry.path rangeOfString:searchField_.stringValue
                                   options:NSCaseInsensitiveSearch].location != NSNotFound) {
                 [array addObject:entry];
@@ -272,15 +284,15 @@ static const CGFloat kHelpMargin = 5;
 - (void)toggleStar:(id)sender {
     NSInteger index = [tableView_ clickedRow];
     if (index >= 0) {
-        iTermDirectoryEntry *entry = filteredEntries_[index];
-        entry.starred = !entry.starred;
-        [[iTermDirectoriesModel sharedInstance] save];
+        iTermRecentDirectoryMO *entry = filteredEntries_[index];
+        [[iTermShellHistoryController sharedInstance] setDirectory:entry
+                                                           starred:!entry.starred.boolValue];
     }
     [self updateDirectories];
 }
 
 - (void)help:(id)sender {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://iterm2.com/shell_integration.html"]];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/shell_integration.html"]];
 }
 
 @end

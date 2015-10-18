@@ -12,9 +12,9 @@
 @interface iTermAnimatedImageInfo : NSObject
 
 @property(nonatomic, readonly) int currentFrame;
+@property(nonatomic, readonly) NSImage *currentImage;
 
 - (instancetype)initWithData:(NSData *)data;
-- (NSImage *)currentImage;
 - (NSImage *)imageForFrame:(int)frame;
 
 @end

@@ -7,10 +7,14 @@
 
 #import "ProfileModelWrapper.h"
 
-@implementation ProfileModelWrapper
+@implementation ProfileModelWrapper {
+    ProfileModel* underlyingModel;
+    NSMutableArray* bookmarks;
+    NSMutableString* filter;
+    NSArray* sortDescriptors;
+}
 
-- (id)initWithModel:(ProfileModel*)model
-{
+- (instancetype)initWithModel:(ProfileModel*)model {
     self = [super init];
     if (self) {
         underlyingModel = model;

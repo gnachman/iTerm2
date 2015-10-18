@@ -24,7 +24,7 @@
     BOOL _dcsHooked;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _totalStreamLength = kDefaultStreamSize;
@@ -242,6 +242,14 @@
     @synchronized(self) {
         [_controlParser startTmuxRecoveryMode];
         _dcsHooked = YES;
+    }
+}
+
+- (void)reset {
+    @synchronized(self) {
+        [_savedStateForPartialParse removeAllObjects];
+        [self forceUnhookDCS];
+        [self clearStream];
     }
 }
 

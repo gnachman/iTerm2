@@ -42,7 +42,7 @@
 #define KEY_NAME                        @"Name"
 #define KEY_DESCRIPTION                 @"Description"
 #define KEY_CUSTOM_COMMAND              @"Custom Command"
-#define KEY_COMMAND                     @"Command"
+#define KEY_COMMAND_LINE                @"Command"
 #define KEY_INITIAL_TEXT                @"Initial Text"
 #define KEY_CUSTOM_DIRECTORY            @"Custom Directory"  // values are Yes, No, Recycle
 #define KEY_WORKING_DIRECTORY           @"Working Directory"
@@ -122,6 +122,7 @@
 #define KEY_CURSOR_TYPE            @"Cursor Type"
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED
 #define KEY_USE_BOLD_FONT          @"Use Bold Font"
+#define KEY_THIN_STROKES           @"Thin Strokes"
 #define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"
 #define KEY_USE_ITALIC_FONT        @"Use Italic Font"
 #define KEY_TRANSPARENCY           @"Transparency"
@@ -205,7 +206,7 @@ typedef enum {
     WINDOW_TYPE_NORMAL = 0,
     WINDOW_TYPE_TRADITIONAL_FULL_SCREEN = 1,  // Pre-Lion fullscreen
     // note: 2 is out of order below
-    
+
     // Type 3 is deprecated and used to be used internally to create a
     // fullscreen window during toggling.
 
@@ -222,28 +223,17 @@ typedef enum {
     WINDOW_TYPE_TOP_PARTIAL = 9,
     WINDOW_TYPE_LEFT_PARTIAL = 10,
     WINDOW_TYPE_RIGHT_PARTIAL = 11,
-    
+
     WINDOW_TYPE_NO_TITLE_BAR = 12,
 } iTermWindowType;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, iTermObjectType) {
   iTermWindowObject,
   iTermTabObject,
   iTermPaneObject,
-} iTermObjectType;
+};
 
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
-{
-    NSNetServiceBrowser *sshBonjourBrowser;
-    NSNetServiceBrowser *ftpBonjourBrowser;
-    NSNetServiceBrowser *telnetBonjourBrowser;
-    NSMutableArray *bonjourServices;
-}
-
-
-@end
-
-@interface ITAddressBookMgr (Private)
 
 + (id)sharedInstance;
 + (NSDictionary*)encodeColor:(NSColor*)origColor;
@@ -252,30 +242,12 @@ typedef enum {
 + (NSString *)shellLauncherCommand;
 // Login command that leaves you in your home directory.
 + (NSString *)standardLoginCommand;
-
-- (id)init;
-- (void)dealloc;
-- (void) locateBonjourServices;
-- (void)stopLocatingBonjourServices;
-- (void)copyProfileToBookmark:(NSMutableDictionary *)dict;
-- (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)array;
-
-// These two are deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
 + (NSFont *)fontWithDesc:(NSString *)fontDesc;
-+ (NSString*)descFromFont:(NSFont*)font;
-- (void)setBookmarks:(NSArray*)newBookmarksArray defaultGuid:(NSString*)guid;
-- (ProfileModel*)model;
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didFindService:(NSNetService *)aNetService moreComing:(BOOL)moreComing;
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing;
-- (void)netServiceDidResolveAddress:(NSNetService *)sender;
-- (void)netService:(NSNetService *)aNetService didNotResolve:(NSDictionary *)errorDict;
-- (void)netServiceWillResolve:(NSNetService *)aNetService;
-- (void)netServiceDidStop:(NSNetService *)aNetService;
-- (NSString*) getBonjourServiceType:(NSString*)aType;
-+ (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
-							forObjectType:(iTermObjectType)objectType;
+
+// This is deprecated in favor of -[NSString fontValue] and -[NSFont stringValue].
++ (NSString*)descFromFont:(NSFont*)font __attribute__((deprecated));
 + (NSString*)bookmarkCommand:(Profile*)bookmark
-			   forObjectType:(iTermObjectType)objectType;
+               forObjectType:(iTermObjectType)objectType;
 + (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark
                         forObjectType:(iTermObjectType)objectType;
 

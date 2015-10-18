@@ -13,37 +13,39 @@
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
+#import <ColorPicker/ColorPicker.h>
+
 NSString *const kCustomColorPresetsKey = @"Custom Color Presets";
 static NSString *const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
 static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery";
 
 @implementation ProfilesColorsPreferencesViewController {
-    IBOutlet NSColorWell *_ansi0Color;
-    IBOutlet NSColorWell *_ansi1Color;
-    IBOutlet NSColorWell *_ansi2Color;
-    IBOutlet NSColorWell *_ansi3Color;
-    IBOutlet NSColorWell *_ansi4Color;
-    IBOutlet NSColorWell *_ansi5Color;
-    IBOutlet NSColorWell *_ansi6Color;
-    IBOutlet NSColorWell *_ansi7Color;
-    IBOutlet NSColorWell *_ansi8Color;
-    IBOutlet NSColorWell *_ansi9Color;
-    IBOutlet NSColorWell *_ansi10Color;
-    IBOutlet NSColorWell *_ansi11Color;
-    IBOutlet NSColorWell *_ansi12Color;
-    IBOutlet NSColorWell *_ansi13Color;
-    IBOutlet NSColorWell *_ansi14Color;
-    IBOutlet NSColorWell *_ansi15Color;
-    IBOutlet NSColorWell *_foregroundColor;
-    IBOutlet NSColorWell *_backgroundColor;
-    IBOutlet NSColorWell *_boldColor;
-    IBOutlet NSColorWell *_linkColor;
-    IBOutlet NSColorWell *_selectionColor;
-    IBOutlet NSColorWell *_selectedTextColor;
-    IBOutlet NSColorWell *_cursorColor;
-    IBOutlet NSColorWell *_cursorTextColor;
-    IBOutlet NSColorWell *_tabColor;
-    IBOutlet NSColorWell *_badgeColor;
+    IBOutlet CPKColorWell *_ansi0Color;
+    IBOutlet CPKColorWell *_ansi1Color;
+    IBOutlet CPKColorWell *_ansi2Color;
+    IBOutlet CPKColorWell *_ansi3Color;
+    IBOutlet CPKColorWell *_ansi4Color;
+    IBOutlet CPKColorWell *_ansi5Color;
+    IBOutlet CPKColorWell *_ansi6Color;
+    IBOutlet CPKColorWell *_ansi7Color;
+    IBOutlet CPKColorWell *_ansi8Color;
+    IBOutlet CPKColorWell *_ansi9Color;
+    IBOutlet CPKColorWell *_ansi10Color;
+    IBOutlet CPKColorWell *_ansi11Color;
+    IBOutlet CPKColorWell *_ansi12Color;
+    IBOutlet CPKColorWell *_ansi13Color;
+    IBOutlet CPKColorWell *_ansi14Color;
+    IBOutlet CPKColorWell *_ansi15Color;
+    IBOutlet CPKColorWell *_foregroundColor;
+    IBOutlet CPKColorWell *_backgroundColor;
+    IBOutlet CPKColorWell *_boldColor;
+    IBOutlet CPKColorWell *_linkColor;
+    IBOutlet CPKColorWell *_selectionColor;
+    IBOutlet CPKColorWell *_selectedTextColor;
+    IBOutlet CPKColorWell *_cursorColor;
+    IBOutlet CPKColorWell *_cursorTextColor;
+    IBOutlet CPKColorWell *_tabColor;
+    IBOutlet CPKColorWell *_badgeColor;
 
     IBOutlet NSTextField *_cursorColorLabel;
     IBOutlet NSTextField *_cursorTextColorLabel;
@@ -57,7 +59,7 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSMenu *_presetsMenu;
 
     IBOutlet NSButton *_useGuide;
-    IBOutlet NSColorWell *_guideColor;
+    IBOutlet CPKColorWell *_guideColor;
 
     IBOutlet NSPopUpButton *_presetsPopupButton;
 }
@@ -139,7 +141,21 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     NSDictionary *colorWellDictionary = [self colorWellDictionary];
     for (NSString *key in colorWellDictionary) {
-        [self defineControl:colorWellDictionary[key] key:key type:kPreferenceInfoTypeColorWell];
+        CPKColorWell *colorWell = colorWellDictionary[key];
+        [self defineControl:colorWell key:key type:kPreferenceInfoTypeColorWell];
+        colorWell.action = @selector(settingChanged:);
+        colorWell.target = self;
+        colorWell.continuous = YES;
+        colorWell.willClosePopover = ^() {
+            // NSSearchField remembers who was first responder before it gained
+            // first responder status. That is the popover at this time. When
+            // the app becomes inactive, the search field makes the previous
+            // first responder the new first responder. The search field is not
+            // smart and doesn't realize the popover has been deallocated. So
+            // this changes its conception of who was the previous first
+            // responder and prevents the crash.
+            [self.view.window makeFirstResponder:nil];
+        };
     }
 
     PreferenceInfo *info;

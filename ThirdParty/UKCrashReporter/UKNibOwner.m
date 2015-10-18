@@ -34,25 +34,26 @@
 
 -(id)	init
 {
-	if( (self = [super init]) )
-	{
-		topLevelObjects = [[NSMutableArray alloc] init];
-		NSDictionary*	ent = [NSDictionary dictionaryWithObjectsAndKeys:
-									self, @"NSOwner",
-									topLevelObjects, @"NSTopLevelObjects",
-									nil];
-		NSBundle*		mainB = [NSBundle mainBundle];
-		[mainB loadNibFile: [self nibFilename]
-							externalNameTable: ent withZone: [self zone]];	// We're responsible for releasing the top-level objects in the NIB (our view, right now).
-		if( [topLevelObjects count] == 0 )
-		{
-			NSLog(@"%@: Couldn't find NIB file \"%@.nib\".", NSStringFromClass([self class]),[self nibFilename]);
-			[self autorelease];
-			return nil;
-		}
-	}
-	
-	return self;
+    if( (self = [super init]) )
+    {
+        NSBundle*		mainB = [NSBundle mainBundle];
+        NSArray *temp = nil;
+        [mainB loadNibNamed:[self nibFilename]
+                      owner:self
+            topLevelObjects:&temp];
+        topLevelObjects = [[NSMutableArray alloc] init];
+        if (temp) {
+            [topLevelObjects addObjectsFromArray:temp];
+        }
+        if( [topLevelObjects count] == 0 )
+        {
+            NSLog(@"%@: Couldn't find NIB file \"%@.nib\".", NSStringFromClass([self class]),[self nibFilename]);
+            [self autorelease];
+            return nil;
+        }
+    }
+    
+    return self;
 }
 
 

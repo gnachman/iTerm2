@@ -9,10 +9,9 @@
 #import "PSMTabBarControl.h"
 
 // NOTE: The delegate should nil out of itermTabBarDelegate when it gets dealloced; we may live on because of delayed performs.
-@protocol iTermTabBarControlViewDelegate
+@protocol iTermTabBarControlViewDelegate <NSObject>
 
-- (BOOL)iTermTabBarShouldFlash;
-- (NSTimeInterval)iTermTabBarCmdPressDuration;
+- (BOOL)iTermTabBarShouldFlashAutomatically;
 - (void)iTermTabBarWillBeginFlash;
 - (void)iTermTabBarDidFinishFlash;
 
@@ -23,11 +22,12 @@
 
 @property(nonatomic, assign) id<iTermTabBarControlViewDelegate> itermTabBarDelegate;
 
-// Set to yes to begin flashing if allowed. We take care of fading in/out appropriately.
-@property(nonatomic, assign) BOOL flashing;
-
 // Set to yes when cmd pressed, no when released. We take care of the timing.
 @property(nonatomic, assign) BOOL cmdPressed;
+
+// Getter indicates if the tab bar is currently flashing. Setting starts or
+// stops flashing. We take care of fading.
+@property(nonatomic, assign) BOOL flashing;
 
 // Call this when the result of iTermTabBarShouldFlash would change.
 - (void)updateFlashing;

@@ -8,13 +8,14 @@
 #import "TSVParser.h"
 
 
-@implementation TSVDocument
+@implementation TSVDocument {
+    NSMutableDictionary *map_;
+}
 
 @synthesize columns = columns_;
 @synthesize records = records_;
 
-- (id)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         records_ = [[NSMutableArray alloc] init];
@@ -39,7 +40,7 @@
                      forKey:[self.columns objectAtIndex:i]];
         }
     }
-    
+
     NSNumber *n = [map_ objectForKey:fieldName];
     int i = [n intValue];
     if (n && i < [record count]) {

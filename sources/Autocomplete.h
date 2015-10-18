@@ -6,10 +6,9 @@
 #import "LineBuffer.h"
 #import "Popup.h"
 
-@interface AutocompleteView : Popup
+@class iTermCommandHistoryEntryMO;
 
-- (id)init;
-- (void)dealloc;
+@interface AutocompleteView : Popup
 
 - (void)onOpen;
 - (void)refresh;
@@ -17,12 +16,10 @@
 - (void)rowSelected:(id)sender;
 - (void)more;
 - (void)less;
-- (void)_populateMore:(id)sender;
-- (void)_doPopulateMore;
 
-// Add a bunch of CommandHistoryEntry's. 'context' gives the prefix that
+// Add a bunch of iTermCommandHistoryEntryMO*s. 'context' gives the prefix that
 // generated the entries.
-- (void)addCommandEntries:(NSArray *)entries context:(NSString *)context;
+- (void)addCommandEntries:(NSArray<iTermCommandHistoryEntryMO *> *)entries context:(NSString *)context;
 
 @end
 

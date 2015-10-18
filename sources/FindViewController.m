@@ -55,7 +55,7 @@ const CGFloat kEdgeWidth = 3;
     BOOL _needsAnimation;
 }
 
-- (id)initTextCell:(NSString *)aString  {
+- (instancetype)initTextCell:(NSString *)aString  {
     self = [super initTextCell:aString];
     if (self) {
         _alphaMultiplier = 1;
@@ -63,7 +63,7 @@ const CGFloat kEdgeWidth = 3;
     return self;
 }
 
-- (id)initWithCoder:(NSCoder *)aDecoder {
+- (instancetype)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder];
     if (self) {
         _alphaMultiplier = 1;
@@ -71,7 +71,7 @@ const CGFloat kEdgeWidth = 3;
     return self;
 }
 
-- (id)initImageCell:(NSImage *)image {
+- (instancetype)initImageCell:(NSImage *)image {
     self = [super initImageCell:image];
     if (self) {
         _alphaMultiplier = 1;
@@ -268,7 +268,7 @@ const CGFloat kEdgeWidth = 3;
 
 @implementation FindState
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _string = [@"" retain];
@@ -281,6 +281,9 @@ const CGFloat kEdgeWidth = 3;
     [super dealloc];
 }
 
+@end
+
+@interface FindViewController()<NSSearchFieldDelegate>
 @end
 
 @implementation FindViewController {
@@ -329,8 +332,7 @@ const CGFloat kEdgeWidth = 3;
     gDefaultRegex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
 }
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
         previousFindString_ = [[NSMutableString alloc] init];

@@ -21,7 +21,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 @implementation IntervalTreeForwardLimitEnumerator
 @synthesize previousLimit = previousLimit_;
 
-- (id)initWithTree:(IntervalTree *)tree {
+- (instancetype)initWithTree:(IntervalTree *)tree {
     self = [super init];
     if (self) {
         tree_ = [tree retain];
@@ -75,7 +75,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 
 @synthesize previousLimit = previousLimit_;
 
-- (id)initWithTree:(IntervalTree *)tree {
+- (instancetype)initWithTree:(IntervalTree *)tree {
     self = [super init];
     if (self) {
         tree_ = [tree retain];
@@ -130,7 +130,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 
 @synthesize previousLocation = previousLocation_;
 
-- (id)initWithTree:(IntervalTree *)tree {
+- (instancetype)initWithTree:(IntervalTree *)tree {
     self = [super init];
     if (self) {
         tree_ = [tree retain];
@@ -275,7 +275,7 @@ static NSString *const kIntervalLengthKey = @"Length";
             entriesString];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _entries = [[NSMutableArray alloc] init];
@@ -307,7 +307,10 @@ static NSString *const kIntervalLengthKey = @"Length";
 
 @end
 
-@implementation IntervalTree
+@implementation IntervalTree {
+    AATree *_tree;
+    int _count;
+}
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [self init];
@@ -319,7 +322,7 @@ static NSString *const kIntervalLengthKey = @"Length";
             if (intervalDict && objectDict && className) {
                 Class theClass = NSClassFromString(className);
                 if ([theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
-                    id<IntervalTreeObject> object = [[theClass alloc] initWithDictionary:objectDict];
+                    id<IntervalTreeObject> object = [[[theClass alloc] initWithDictionary:objectDict] autorelease];
                     Interval *interval = [Interval intervalWithDictionary:intervalDict];
                     [self addObject:object withInterval:interval];
                 }
@@ -329,7 +332,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     return self;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _tree = [[AATree alloc] initWithKeyComparator:^(NSNumber *key1, NSNumber *key2) {

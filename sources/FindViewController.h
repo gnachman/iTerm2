@@ -29,7 +29,7 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 
-@protocol FindViewControllerDelegate
+@protocol FindViewControllerDelegate <NSObject>
 
 // Returns true if there is a text area to search.
 - (BOOL)canSearch;
@@ -78,8 +78,7 @@
 
 
 @interface FindViewController : NSViewController <NSTextFieldDelegate>
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
-- (void)dealloc;
+
 - (void)close;
 - (void)open;
 - (void)makeVisible;

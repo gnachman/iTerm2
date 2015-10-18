@@ -42,9 +42,12 @@
 //   - Store an unlimited or a fixed number of wrapped lines
 // The implementation uses an array of small blocks that hold a few kb of unwrapped lines. Each
 // block caches some information to speed up repeated lookups with the same screen width.
-@interface LineBuffer : NSObject <NSCopying> 
+@interface LineBuffer : NSObject <NSCopying>
 
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
+
+// Absolute block number of last block.
+@property(nonatomic, readonly) int largestAbsoluteBlockNumber;
 
 - (LineBuffer*)initWithBlockSize:(int)bs;
 - (LineBuffer *)initWithDictionary:(NSDictionary *)dictionary;
@@ -56,7 +59,7 @@
 
 // Call this immediately after init. Otherwise the buffer will hold unlimited lines (until you
 // run out of memory).
-- (void) setMaxLines: (int) maxLines;
+- (void)setMaxLines:(int)maxLines;
 
 // Add a line to the buffer. Set partial to true if there's more coming for this line:
 // that is to say, this buffer contains only a prefix or infix of the entire line.
@@ -76,7 +79,7 @@
 // Returns the number of lines in the buffer that overflowed max_lines.
 //
 // NOTE: This invalidates the cursor position.
-- (int) dropExcessLinesWithWidth: (int) width;
+- (int)dropExcessLinesWithWidth:(int)width;
 
 // Returns the timestamp associated with a line when wrapped to the specified width.
 - (NSTimeInterval)timestampForLineNumber:(int)lineNum width:(int)width;
@@ -93,8 +96,10 @@
 
 // Like the above but with a saner way of holding the returned data. Callers are advised not
 // to modify the screen_char_t's returned, but the ScreenCharArray is otherwise safe to
-// mutate.
-- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum width:(int)width;
+// mutate. |continuation| is optional and if set will be filled in with the continuation character.
+- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
+                                  width:(int)width
+                           continuation:(screen_char_t *)continuation;
 
 // Copy up to width chars from the last line into *ptr. The last line will be removed or
 // truncated from the buffer. Sets *includesEndOfLine to true if this line should have a
@@ -106,25 +111,25 @@
                   continuation:(screen_char_t *)continuationPtr;
 
 // Get the number of buffer lines at a given width.
-- (int) numLinesWithWidth: (int) width;
+- (int)numLinesWithWidth:(int)width;
 
 // Save the cursor position. Call this just before appending the line the cursor is in. 
 // x gives the offset from the start of the next line appended. The cursor position is
 // invalidated if dropExcessLinesWithWidth is called.
-- (void) setCursor: (int) x;
+- (void)setCursor:(int)x;
 
 // If the last wrapped line has the cursor, return true and set *x to its horizontal position.
 // 0 <= *x <= width (if *x == width then the cursor is actually on the next line).
 // Call this just before popAndCopyLastLineInto:width:includesEndOfLine:timestamp:continuation.
-- (BOOL) getCursorInLastLineWithWidth: (int) width atX: (int*) x;
+- (BOOL)getCursorInLastLineWithWidth:(int)width atX:(int*)x;
 
 // Print the raw lines to the console for debugging.
-- (void) dump;
+- (void)dump;
 
 // Set up the find context. See FindContext.h for options bit values.
 - (void)prepareToSearchFor:(NSString*)substring
                 startingAt:(LineBufferPosition *)start
-                   options:(int)options
+                   options:(FindOptions)options
                withContext:(FindContext*)context;
 
 // Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize
@@ -133,7 +138,7 @@
 
 // Convert a position (as returned by findSubstring) into an x,y position.
 // Returns TRUE if the conversion was successful, false if the position was out of bounds.
-- (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y;
+- (BOOL)convertPosition:(int)position withWidth:(int)width toX:(int*)x toY:(int*)y;
 
 // Returns an array of XYRange values
 - (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width;
@@ -143,11 +148,11 @@
 
 // Returns the position at the stat of the buffer
 // DEPRECATED
-- (int) firstPos;
+- (int)firstPos DEPRECATED_ATTRIBUTE;
 
 // Returns the position at the end of the buffer
 // DEPRECATED
-- (int) lastPos;
+- (int)lastPos DEPRECATED_ATTRIBUTE;
 
 - (LineBufferPosition *)firstPosition;
 - (LineBufferPosition *)lastPosition;
@@ -165,11 +170,9 @@
 
 - (NSString *)debugString;
 - (void)dumpWrappedToWidth:(int)width;
-- (NSString *)compactLineDumpWithWidth:(int)width;
+- (NSString *)compactLineDumpWithWidth:(int)width andContinuationMarks:(BOOL)continuationMarks;
 
 - (int)numberOfDroppedBlocks;
-// Absolute block number of last block.
-- (int)largestAbsoluteBlockNumber;
 
 // Returns a dictionary with the contents of the line buffer. If it is more than 10k lines @ 80 columns
 // then it is truncated. The data is a weak reference and will be invalid if the line buffer is

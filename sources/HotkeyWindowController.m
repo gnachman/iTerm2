@@ -170,6 +170,11 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         }
     }
     if (term) {
+        if ([iTermAdvancedSettingsModel hotkeyWindowFloatsAboveOtherWindows]) {
+            term.window.level = NSFloatingWindowLevel;
+        } else {
+            term.window.level = NSNormalWindowLevel;
+        }
         [term setIsHotKeyWindow:YES];
 
         [[term window] setAlphaValue:0];
@@ -328,8 +333,11 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 }
 
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm {
-    for (NSWindow *sheet in hotkeyTerm.window.sheets) {
-        [NSApp endSheet:sheet];
+    // This used to iterate over hotkeyTerm.window.sheets, which seemed to
+    // work, but sheets wasn't defined prior to 10.9. Consider going back to
+    // that technique if this doesn't work well.
+    while (hotkeyTerm.window.attachedSheet) {
+        [NSApp endSheet:hotkeyTerm.window.attachedSheet];
     }
     HKWLog(@"Hide hotkey window.");
     if ([[hotkeyTerm window] isVisible]) {

@@ -27,7 +27,7 @@
 // }
 //
 // // Optional to impelement -init, but it must be the designated initializer.
-// - (id)init {
+// - (instancetype)init {
 //   ...
 // }
 //
@@ -56,10 +56,10 @@
 
 @interface iTermObjectPool : NSObject
 
-- (id)initWithClass:(Class)theClass
-        collections:(int)numCollections
-      objectsPerCollection:(int)objectsPerCollection;
+@property(nonatomic, readonly) iTermPooledObject *pooledObject;
 
-- (iTermPooledObject *)pooledObject;
+- (instancetype)initWithClass:(Class)theClass
+                  collections:(int)numCollections
+         objectsPerCollection:(int)objectsPerCollection;
 
 @end

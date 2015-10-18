@@ -10,7 +10,7 @@
 
 @interface NSEvent (iTerm)
 
-- (NSEvent *)mouseUpEventFromGesture;
-- (NSEvent *)mouseDownEventFromGesture;
+@property(nonatomic, readonly) NSEvent *mouseUpEventFromGesture;
+@property(nonatomic, readonly) NSEvent *mouseDownEventFromGesture;
 
 @end

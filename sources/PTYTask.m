@@ -114,7 +114,7 @@ setup_tty_param(struct termios* term,
     int _socketFd;  // File descriptor for unix domain socket connected to server. Only safe to close after server is dead.
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _serverPid = (pid_t)-1;
@@ -463,7 +463,7 @@ static int MyForkPty(int *amaster,
     if (args != nil) {
         int i;
         for (i = 0; i < max; ++i) {
-            argv[i + 1] = [[args objectAtIndex:i] cString];
+            argv[i + 1] = [args[i] UTF8String];
         }
     }
     argv[max + 1] = NULL;

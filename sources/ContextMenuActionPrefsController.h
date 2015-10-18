@@ -11,32 +11,25 @@
 
 @class VT100RemoteHost;
 
-typedef enum {
+typedef NS_ENUM(NSInteger, ContextMenuActions) {
     kOpenFileContextMenuAction,
     kOpenUrlContextMenuAction,
     kRunCommandContextMenuAction,
     kRunCoprocessContextMenuAction,
     kSendTextContextMenuAction
-} ContextMenuActions;
+};
 
-@protocol ContextMenuActionPrefsDelegate
+@protocol ContextMenuActionPrefsDelegate <NSObject>
 
 - (void)contextMenuActionsChanged:(NSArray *)newActions;
 
 @end
 
 
-@interface ContextMenuActionPrefsController : NSWindowController <NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource> {
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSTableColumn *titleColumn_;
-    IBOutlet NSTableColumn *actionColumn_;
-    IBOutlet NSTableColumn *parameterColumn_;
-    NSMutableArray *model_;
-    NSObject<ContextMenuActionPrefsDelegate> *delegate_;
-    BOOL hasSelection_;
-}
+@interface ContextMenuActionPrefsController : NSWindowController <
+    NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource>
 
-@property (nonatomic, assign) NSObject<ContextMenuActionPrefsDelegate> *delegate;
+@property (nonatomic, assign) id<ContextMenuActionPrefsDelegate> delegate;
 @property (nonatomic, assign) BOOL hasSelection;
 
 + (ContextMenuActions)actionForActionDict:(NSDictionary *)dict;

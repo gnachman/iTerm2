@@ -24,6 +24,7 @@
 
 #import "iTermProfilesWindowController.h"
 #import "ProfileModel.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "PreferencePanel.h"
@@ -54,7 +55,17 @@ typedef enum {
 @end
 
 
-@implementation iTermProfilesWindowController
+@implementation iTermProfilesWindowController {
+    IBOutlet ProfileListView* tableView_;
+    IBOutlet NSSegmentedControl* actions_;
+    IBOutlet NSButton* horizontalPaneButton_;
+    IBOutlet NSButton* verticalPaneButton_;
+    IBOutlet NSButton* tabButton_;
+    IBOutlet NSButton* windowButton_;
+    IBOutlet NSButton* closeAfterOpeningBookmark_;
+    IBOutlet NSButton* newTabsInNewWindowButton_;
+    IBOutlet NSButton* toggleTagsButton_;
+}
 
 + (iTermProfilesWindowController*)sharedInstance {
     static iTermProfilesWindowController* instance;
@@ -64,17 +75,19 @@ typedef enum {
     return instance;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [self initWithWindowNibName:@"ProfilesWindow"];
     return self;
 }
 
-- (id)initWithWindowNibName:(NSString *)windowNibName {
+- (instancetype)initWithWindowNibName:(NSString *)windowNibName {
     self = [super initWithWindowNibName:windowNibName];
 
     if (self) {
         [[self window] setDelegate:self];
-        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
+        if ([iTermAdvancedSettingsModel profilesWindowJoinsActiveSpace]) {
+            [[self window] setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
+        }
         [tableView_ setDelegate:self];
         [tableView_ allowMultipleSelections];
         [tableView_ multiColumns];

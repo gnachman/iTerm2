@@ -11,26 +11,16 @@
 
 @class SmartSelectionController;
 
-@protocol SmartSelectionDelegate
+@protocol SmartSelectionDelegate <NSObject>
 - (void)smartSelectionChanged:(SmartSelectionController *)controller;
 @end
 
 
-@interface SmartSelectionController : NSWindowController <ContextMenuActionPrefsDelegate> {
-    NSString *guid_;
-    BOOL hasSelection_;
-    IBOutlet NSObject<SmartSelectionDelegate> *delegate_;  // weak
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSTableColumn *regexColumn_;
-    IBOutlet NSTableColumn *notesColumn_;
-    IBOutlet NSTableColumn *precisionColumn_;
-    IBOutlet ContextMenuActionPrefsController *contextMenuPrefsController_;
-    IBOutlet NSButton *logDebugInfo_;
-}
+@interface SmartSelectionController : NSWindowController <ContextMenuActionPrefsDelegate>
 
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic, assign) BOOL hasSelection;
-@property (nonatomic, assign) NSObject<SmartSelectionDelegate> *delegate;
+@property (nonatomic, assign) id<SmartSelectionDelegate> delegate;
 
 + (BOOL)logDebugInfo;
 + (double)precisionInRule:(NSDictionary *)rule;

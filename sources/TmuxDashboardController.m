@@ -21,10 +21,13 @@
 
 @end
 
-@implementation TmuxDashboardController
+@implementation TmuxDashboardController {
+    IBOutlet TmuxSessionsTable *sessionsTable_;
+    IBOutlet TmuxWindowsTable *windowsTable_;
+    IBOutlet NSPopUpButton *connectionsButton_;
+}
 
-+ (TmuxDashboardController *)sharedInstance
-{
++ (TmuxDashboardController *)sharedInstance {
     static TmuxDashboardController *instance;
     if (!instance) {
         instance = [[TmuxDashboardController alloc] init];
@@ -32,8 +35,7 @@
     return instance;
 }
 
-- (id)init
-{
+- (instancetype)init {
     self = [super initWithWindowNibName:@"TmuxDashboard"];
     if (self) {
         [self window];

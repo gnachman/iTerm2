@@ -14,11 +14,10 @@
     BOOL shutdown_;
 }
 
-- (id)initWithContentRect:(NSRect)contentRect
-                styleMask:(NSUInteger)aStyle
-                  backing:(NSBackingStoreType)bufferingType
-                    defer:(BOOL)flag
-{
+- (instancetype)initWithContentRect:(NSRect)contentRect
+                          styleMask:(NSUInteger)aStyle
+                            backing:(NSBackingStoreType)bufferingType
+                              defer:(BOOL)flag {
     self = [super initWithContentRect:contentRect
                             styleMask:NSBorderlessWindowMask
                               backing:bufferingType
@@ -54,8 +53,7 @@
     shutdown_ = YES;
 }
 
-- (void)setParentWindow:(NSWindow*)parentWindow
-{
+- (void)setParentWindow:(NSWindow*)parentWindow {
     [parentWindow_ autorelease];
     parentWindow_ = [parentWindow retain];
 }

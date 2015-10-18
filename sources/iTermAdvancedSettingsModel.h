@@ -17,6 +17,7 @@
 + (BOOL)alternateMouseScroll;
 + (BOOL)traditionalVisualBell;
 + (double)hotkeyTermAnimationDuration;
++ (BOOL)hotkeyWindowFloatsAboveOtherWindows;
 + (NSString *)searchCommand;
 + (double)antiIdleTimerPeriod;
 + (BOOL)dockIconTogglesWindow;
@@ -105,5 +106,16 @@
 + (int)triggerRadius;
 + (BOOL)useOpenDirectory;
 + (BOOL)disallowCopyEmptyString;
++ (BOOL)profilesWindowJoinsActiveSpace;
+
++ (NSString *)badgeFont;
++ (BOOL)badgeFontIsBold;
++ (double)badgeMaxWidthFraction;
++ (double)badgeMaxHeightFraction;
++ (int)badgeRightMargin;
++ (int)badgeTopMargin;
++ (BOOL)noSyncReplaceProfileWarning;
++ (BOOL)requireCmdForDraggingText;
++ (double)tabAutoShowHoldTime;
 
 @end

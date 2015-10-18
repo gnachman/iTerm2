@@ -8,6 +8,7 @@
 
 #import "iTermBadgeLabel.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 
 @interface iTermBadgeLabel()
 @property(nonatomic, retain) NSImage *image;
@@ -132,8 +133,18 @@
 // Attributed string attributes for a given font point size.
 - (NSDictionary *)attributesWithPointSize:(CGFloat)pointSize {
     NSFontManager *fontManager = [NSFontManager sharedFontManager];
-    NSFont *font = [fontManager convertFont:[NSFont fontWithName:@"Helvetica" size:pointSize]
-                                toHaveTrait:NSBoldFontMask];
+    NSArray *fonts = [[NSFontManager sharedFontManager] availableFontFamilies];
+    NSString *fontName = [iTermAdvancedSettingsModel badgeFont];
+    NSFont *font;
+    if (![fonts containsObject:fontName]) {
+      fontName = @"Helvetica";
+    }
+    font = [NSFont fontWithName:fontName size:pointSize];
+    if ([iTermAdvancedSettingsModel badgeFontIsBold]) {
+      font = [fontManager convertFont:font
+                          toHaveTrait:NSBoldFontMask];
+    }
+
     NSDictionary *attributes = @{ NSFontAttributeName: font,
                                   NSForegroundColorAttributeName: _fillColor,
                                   NSParagraphStyleAttributeName: _paragraphStyle };
@@ -150,9 +161,11 @@
 
 // Max size of image in points within the containing view.
 - (NSSize)maxSize {
+    double maxWidth = MIN(1.0, MAX(0.01, [iTermAdvancedSettingsModel badgeMaxWidthFraction]));
+    double maxHeight = MIN(1.0, MAX(0.0, [iTermAdvancedSettingsModel badgeMaxHeightFraction]));
     NSSize maxSize = _viewSize;
-    maxSize.width *= 0.5;
-    maxSize.height *= 0.2;
+    maxSize.width *= maxWidth;
+    maxSize.height *= maxHeight;
     return maxSize;
 }
 

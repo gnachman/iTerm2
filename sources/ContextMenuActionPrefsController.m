@@ -15,23 +15,25 @@ static NSString* kTitleKey = @"title";
 static NSString* kActionKey = @"action";
 static NSString* kParameterKey = @"parameter";
 
-@implementation ContextMenuActionPrefsController
+@implementation ContextMenuActionPrefsController {
+    IBOutlet NSTableView *_tableView;
+    IBOutlet NSTableColumn *_titleColumn;
+    IBOutlet NSTableColumn *_actionColumn;
+    IBOutlet NSTableColumn *_parameterColumn;
+    NSMutableArray *_model;
+}
 
-@synthesize delegate = delegate_;
-@synthesize hasSelection = hasSelection_;
-
-- (id)initWithWindow:(NSWindow *)window
-{
+- (instancetype)initWithWindow:(NSWindow *)window {
     self = [super initWithWindow:window];
     if (self) {
-        model_ = [[NSMutableArray alloc] init];
+        _model = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
 - (void)dealloc
 {
-    [model_ release];
+    [_model release];
     [super dealloc];
 }
 
@@ -107,7 +109,7 @@ static NSString* kParameterKey = @"parameter";
 
 - (IBAction)ok:(id)sender
 {
-    [delegate_ contextMenuActionsChanged:model_];
+    [_delegate contextMenuActionsChanged:_model];
 }
 
 - (IBAction)add:(id)sender
@@ -116,15 +118,15 @@ static NSString* kParameterKey = @"parameter";
                                    @"", kTitleKey,
                                    [NSNumber numberWithInt:kOpenFileContextMenuAction], kActionKey,
                                    nil];
-    [model_ addObject:defaultAction];
-    [tableView_ reloadData];
+    [_model addObject:defaultAction];
+    [_tableView reloadData];
 }
 
 - (IBAction)remove:(id)sender
 {
-    [tableView_ reloadData];
-    [model_ removeObjectAtIndex:[tableView_ selectedRow]];
-    [tableView_ reloadData];
+    [_tableView reloadData];
+    [_model removeObjectAtIndex:[_tableView selectedRow]];
+    [_tableView reloadData];
 }
 
 - (void)setActions:(NSArray *)newActions
@@ -132,25 +134,25 @@ static NSString* kParameterKey = @"parameter";
     if (!newActions) {
         newActions = [NSMutableArray array];
     }
-    [model_ autorelease];
-    model_ = [newActions mutableCopy];
-    [tableView_ reloadData];
+    [_model autorelease];
+    _model = [newActions mutableCopy];
+    [_tableView reloadData];
 }
 
 #pragma mark NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
-    return [model_ count];
+    return [_model count];
 }
 
 - (NSString *)keyForColumn:(NSTableColumn *)aTableColumn
 {
-    if (aTableColumn == titleColumn_) {
+    if (aTableColumn == _titleColumn) {
         return kTitleKey;
-    } else if (aTableColumn == actionColumn_) {
+    } else if (aTableColumn == _actionColumn) {
         return kActionKey;
-    } else if (aTableColumn == parameterColumn_) {
+    } else if (aTableColumn == _parameterColumn) {
         return kParameterKey;
     } else {
         return nil;
@@ -160,7 +162,7 @@ static NSString* kParameterKey = @"parameter";
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
     NSString *key = [self keyForColumn:aTableColumn];
-    NSDictionary *row = [model_ objectAtIndex:rowIndex];
+    NSDictionary *row = [_model objectAtIndex:rowIndex];
     return key ? [row objectForKey:key] : nil;
 }
 
@@ -168,9 +170,9 @@ static NSString* kParameterKey = @"parameter";
 {
     NSString *key = [self keyForColumn:aTableColumn];
     if (key) {
-        NSMutableDictionary *temp = [[[model_ objectAtIndex:rowIndex] mutableCopy] autorelease];
+        NSMutableDictionary *temp = [[[_model objectAtIndex:rowIndex] mutableCopy] autorelease];
         [temp setObject:anObject forKey:key];
-        [model_ replaceObjectAtIndex:rowIndex withObject:temp];
+        [_model replaceObjectAtIndex:rowIndex withObject:temp];
         [aTableView reloadData];
     }
 }
@@ -192,7 +194,7 @@ static NSString* kParameterKey = @"parameter";
                                     @"Enter text" ];
 
 
-    if (tableColumn == titleColumn_) {
+    if (tableColumn == _titleColumn) {
         NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
         [cell setPlaceholderString:@"Enter Title"];
         [cell setEditable:YES];
@@ -200,7 +202,7 @@ static NSString* kParameterKey = @"parameter";
         [cell setLineBreakMode:NSLineBreakByTruncatingTail];
 
         return cell;
-    } else if (tableColumn == actionColumn_) {
+    } else if (tableColumn == _actionColumn) {
         NSPopUpButtonCell *cell =
             [[[NSPopUpButtonCell alloc] initTextCell:[actionNames objectAtIndex:0] pullsDown:NO] autorelease];
         for (int i = 0; i < actionNames.count; i++) {
@@ -212,8 +214,8 @@ static NSString* kParameterKey = @"parameter";
         [cell setBordered:NO];
 
         return cell;
-    } else if (tableColumn == parameterColumn_) {
-        NSDictionary *actionDict = [model_ objectAtIndex:row];
+    } else if (tableColumn == _parameterColumn) {
+        NSDictionary *actionDict = [_model objectAtIndex:row];
         int actionNum = [[actionDict objectForKey:kActionKey] intValue];
         NSString *placeholder = [paramPlaceholders objectAtIndex:actionNum];
         if (placeholder.length) {
@@ -241,14 +243,14 @@ static NSString* kParameterKey = @"parameter";
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
-    self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
+    self.hasSelection = [_tableView numberOfSelectedRows] > 0;
 }
 
 #pragma mark NSWindowDelegate
 
 - (void)windowWillClose:(NSNotification *)notification
 {
-    [tableView_ reloadData];
+    [_tableView reloadData];
 }
 
 @end

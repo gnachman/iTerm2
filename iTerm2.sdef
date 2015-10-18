@@ -518,6 +518,10 @@
         <cocoa key="guid" />
       </property>
 
+      <property name="profile name" code="Pfnm" description="The session's profile name" type="text" access="r">
+        <cocoa key="profileName"/>
+      </property>
+
     </class>
 
   </suite>

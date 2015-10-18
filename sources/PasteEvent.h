@@ -16,7 +16,7 @@ typedef NS_ENUM(NSInteger, iTermTabTransformTags) {
 };
 
 // These flags are used on the tags in menu items.
-typedef NS_OPTIONS(int, PTYSessionPasteFlags) {
+typedef NS_OPTIONS(unsigned int, PTYSessionPasteFlags) {
     kPTYSessionPasteEscapingSpecialCharacters = (1 << 0),
     kPTYSessionPasteSlowly = (1 << 1),
     kPTYSessionPasteWithShellEscapedTabs = (1 << 2)
@@ -54,7 +54,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPasteFlags) {
 @property(nonatomic, assign) iTermTabTransformTags tabTransform;
 @property(nonatomic, assign) int spacesPerTab;
 
-+ (PasteEvent *)pasteEventWithString:(NSString *)string
++ (instancetype)pasteEventWithString:(NSString *)string
                                flags:(iTermPasteFlags)flags
                     defaultChunkSize:(int)defaultChunkSize
                             chunkKey:(NSString *)chunkKey

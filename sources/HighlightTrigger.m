@@ -174,8 +174,7 @@ enum {
     return [NSArray arrayWithObjects:fgbg, fg, bg, nil];
 }
 
-- (int)indexOfTag:(int)theTag
-{
+- (NSInteger)indexForObject:(id)object {
     int i = 0;
     BOOL isFirst = YES;
     for (NSDictionary *dict in [self groupedMenuItemsForPopupButton]) {
@@ -184,7 +183,7 @@ enum {
         }
         isFirst = NO;
         for (NSNumber *n in [self objectsSortedByValueInDict:dict]) {
-            if ([n intValue] == theTag) {
+            if ([n isEqual:object]) {
                 return i;
             }
             i++;
@@ -193,8 +192,7 @@ enum {
     return -1;
 }
 
-- (int)tagAtIndex:(int)theIndex
-{
+- (id)objectAtIndex:(NSInteger)theIndex {
     int i = 0;
     BOOL isFirst = YES;
     for (NSDictionary *dict in [self groupedMenuItemsForPopupButton]) {
@@ -204,12 +202,12 @@ enum {
         isFirst = NO;
         for (NSNumber *n in [self objectsSortedByValueInDict:dict]) {
             if (i == theIndex) {
-                return [n intValue];
+                return n;
             }
             i++;
         }
     }
-    return -1;
+    return nil;
 }
 
 - (NSDictionary *)dictionaryWithForegroundColor:(NSColor *)foreground

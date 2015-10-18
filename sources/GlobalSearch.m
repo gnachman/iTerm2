@@ -41,6 +41,13 @@
 
 const double GLOBAL_SEARCH_MARGIN = 10;
 
+@interface GlobalSearch() <
+    NSSearchFieldDelegate,
+    NSTableViewDataSource,
+    NSTableViewDelegate,
+    NSTextFieldDelegate>
+@end
+
 @interface GlobalSearchInstance : NSObject
 {
     PTYTextView* textView_;
@@ -54,10 +61,9 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     NSMutableSet* matchLocations_;
 }
 
-- (id)initWithSession:(PTYSession *)session
+- (instancetype)initWithSession:(PTYSession *)session
            findString:(NSString*)findString
                 label:(NSString*)label;
-- (void)dealloc;
 - (BOOL)more;
 - (NSArray*)results;
 - (NSString*)label;
@@ -77,8 +83,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     long long absEndY_;
 }
 
-- (id)initWithInstance:(GlobalSearchInstance*)instance context:(NSString*)theContext x:(int)x absY:(long long)absY endX:(int)endX y:(long long)absEndY findString:(NSString*)findString;
-- (void)dealloc;
+- (instancetype)initWithInstance:(GlobalSearchInstance*)instance context:(NSString*)theContext x:(int)x absY:(long long)absY endX:(int)endX y:(long long)absEndY findString:(NSString*)findString;
 - (NSString*)context;
 - (NSString*)findString;
 - (GlobalSearchInstance*)instance;
@@ -94,7 +99,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 @implementation GlobalSearchResult
 
-- (id)initWithInstance:(GlobalSearchInstance*)instance
+- (instancetype)initWithInstance:(GlobalSearchInstance*)instance
                context:(NSString*)theContext
                      x:(int)x
                   absY:(long long)absY
@@ -175,7 +180,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 @implementation GlobalSearchInstance
 
-- (id)initWithSession:(PTYSession *)session
+- (instancetype)initWithSession:(PTYSession *)session
             findString:(NSString*)findString
                  label:(NSString*)label
 {
@@ -254,7 +259,8 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                                   includeLastNewline:NO
                               trimTrailingWhitespace:YES
                                         cappedAtSize:-1
-                                   continuationChars:nil];
+                                   continuationChars:nil
+                                              coords:nil];
     theContext = [theContext stringByReplacingOccurrencesOfString:@"\n"
                                                        withString:@" "];
     [results_ addObject:[[[GlobalSearchResult alloc] initWithInstance:self
@@ -272,7 +278,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     NSMutableArray *results = [NSMutableArray array];
     more_ = [textViewDataSource_ continueFindAllResults:results inContext:findContext_];
     for (SearchResult *result in results) {
-        [self _emitResultFromX:result->startX absY:result->absStartY toX:result->endX absY:result->absEndY];
+        [self _emitResultFromX:result.startX absY:result.absStartY toX:result.endX absY:result.absEndY];
     }
     // TODO Test this! It used to use the deprecated API.
     return results.count;
@@ -325,7 +331,14 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 
 @end
 
-@implementation GlobalSearch
+@implementation GlobalSearch {
+    IBOutlet iTermSearchField* searchField_;
+    IBOutlet NSTableView* tableView_;
+    NSTimer* timer_;
+    NSMutableArray* searches_;
+    NSMutableArray* combinedResults_;
+    id<GlobalSearchDelegate> delegate_;
+}
 
 - (void)awakeFromNib
 {
@@ -341,7 +354,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     }
 }
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {

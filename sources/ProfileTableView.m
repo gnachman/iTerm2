@@ -7,7 +7,9 @@
 
 #import "ProfileTableView.h"
 
-@implementation ProfileTableView
+@implementation ProfileTableView {
+    id<ProfileTableMenuHandler> handler_;
+}
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
@@ -29,8 +31,7 @@
     [super dealloc];
 }
 
-- (void)setMenuHandler:(NSObject<ProfileTableMenuHandler> *)handler
-{
+- (void)setMenuHandler:(id<ProfileTableMenuHandler>)handler {
     handler_ = handler;
 }
 

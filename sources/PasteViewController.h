@@ -10,27 +10,21 @@
 
 @class PasteContext;
 
-@protocol PasteViewControllerDelegate
+@protocol PasteViewControllerDelegate <NSObject>
 
 - (void)pasteViewControllerDidCancel;
 
 @end
 
-@interface PasteViewController : NSViewController {
-    IBOutlet NSProgressIndicator *progressIndicator_;
-    int totalLength_;
-    int remainingLength_;
-    PasteContext *pasteContext_;
-    __weak id<PasteViewControllerDelegate> delegate_;
-}
+@interface PasteViewController : NSViewController
 
-@property (nonatomic, assign) __weak id<PasteViewControllerDelegate> delegate;
+@property(nonatomic, assign) id<PasteViewControllerDelegate> delegate;
+@property(nonatomic, assign) int remainingLength;
 
-- (id)initWithContext:(PasteContext *)pasteContext_
-               length:(int)length;
+- (instancetype)initWithContext:(PasteContext *)pasteContext_
+                         length:(int)length;
 
 - (IBAction)cancel:(id)sender;
-- (void)setRemainingLength:(int)remainingLength;
 - (void)updateFrame;
 - (void)close;
 
