@@ -14,6 +14,7 @@ const CGFloat kFavoritesHeight = 100;
 static const CGFloat kLeftMargin = 8;
 static const CGFloat kRightMargin = 8;
 static const CGFloat kBottomMargin = 8;
+static NSInteger gSystemColorPickerReferenceCount = 0;
 
 @interface CPKMainViewController ()
 @property(nonatomic, copy) void (^block)(NSColor *);
@@ -22,7 +23,6 @@ static const CGFloat kBottomMargin = 8;
 @property(nonatomic) CPKRGBView *rgbView;
 @property(nonatomic) CPKControlsView *controlsView;
 @property(nonatomic) CPKFavoritesView *favoritesView;
-@property(nonatomic) NSColorPanel *colorPanel;
 @property(nonatomic) BOOL alphaAllowed;
 @end
 
@@ -98,22 +98,9 @@ static const CGFloat kBottomMargin = 8;
             weakSelf.rgbView.selectedColor = color;
         }
     };
-    self.controlsView.toggleNativePickerBlock = ^(BOOL open) {
-        if (open) {
-            weakSelf.colorPanel = [NSColorPanel sharedColorPanel];
-            weakSelf.colorPanel.showsAlpha = weakSelf.alphaAllowed;
-            weakSelf.colorPanel.color = weakSelf.selectedColor;
-            [weakSelf.colorPanel setTarget:weakSelf];
-            [weakSelf.colorPanel setAction:@selector(colorPanelColorDidChange:)];
-            [weakSelf.colorPanel orderFront:nil];
-            NSRect frame = weakSelf.colorPanel.frame;
-            frame.origin = self.view.window.frame.origin;
-            [weakSelf.colorPanel setFrame:frame display:YES];
-        } else {
-            weakSelf.colorPanel = [NSColorPanel sharedColorPanel];
-            weakSelf.colorPanel.target = nil;
-            [weakSelf.colorPanel orderOut:nil];
-            weakSelf.colorPanel = nil;
+    self.controlsView.useNativeColorPicker = ^() {
+        if (weakSelf.block) {
+            weakSelf.block(nil);
         }
     };
     self.favoritesView =
@@ -148,37 +135,9 @@ static const CGFloat kBottomMargin = 8;
     return kFavoritesHeight;
 }
 
-- (void)viewWillDisappear {
-    __weak NSColorPanel *colorPanel = self.colorPanel;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [colorPanel setTarget:nil];
-        [colorPanel orderOut:nil];
-    });
-    self.colorPanel = nil;
-}
-
-- (void)colorPanelColorDidChange:(id)sender {
-    NSColorPanel *colorPanel = [NSColorPanel sharedColorPanel];
-    self.rgbView.selectedColor = [colorPanel color];
-}
-
-- (void)setColorPanel:(NSColorPanel *)colorPanel {
-    if (colorPanel) {
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(colorPanelDidClose:)
-                                                     name:NSWindowWillCloseNotification
-                                                   object:_colorPanel];
-    } else {
-        [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                        name:NSWindowWillCloseNotification
-                                                      object:_colorPanel];
-    }
-    _colorPanel = colorPanel;
-}
-
-- (void)colorPanelDidClose:(NSNotification *)notification {
-    [self.controlsView colorPanelDidClose];
-    self.colorPanel = nil;
+- (void)viewDidAppear {
+    self.controlsView.useSystemColorPicker =
+        [[NSUserDefaults standardUserDefaults] boolForKey:kCPKUseSystemColorPicker];
 }
 
 - (void)selectColor:(NSColor *)color {

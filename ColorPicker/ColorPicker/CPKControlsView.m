@@ -8,13 +8,13 @@ static const CGFloat kLeftMargin = 8;
 static const CGFloat kRightMargin = 8;
 static const CGFloat kTopMargin = 0;
 static const CGFloat kBottomMargin = 8;
+NSString *const kCPKUseSystemColorPicker = @"kCPKUseSystemColorPicker";
 
 @interface CPKControlsView()
 @property(nonatomic) NSButton *addFavorite;
 @property(nonatomic) NSButton *removeFavorite;
 @property(nonatomic) NSButton *eyedropperMode;
 @property(nonatomic) NSButton *escapeHatch;
-@property(nonatomic) BOOL useSystemColorPicker;
 @property(nonatomic) CPKSwatchView *swatch;
 @end
 
@@ -62,7 +62,6 @@ static const CGFloat kBottomMargin = 8;
                                                                 kRightMargin,
                                                             NSHeight(self.addFavorite.frame))];
         [self addSubview:self.swatch];
-
     }
     return self;
 }
@@ -102,10 +101,19 @@ static const CGFloat kBottomMargin = 8;
 }
 
 - (void)setUseSystemColorPicker:(BOOL)useSystemColorPicker {
-  _useSystemColorPicker = useSystemColorPicker;
+    if (useSystemColorPicker == _useSystemColorPicker) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setBool:useSystemColorPicker
+                                            forKey:kCPKUseSystemColorPicker];
+    _useSystemColorPicker = useSystemColorPicker;
     self.escapeHatch.image =
         self.useSystemColorPicker ? [self cpk_imageNamed:@"ActiveEscapeHatch"] :
                                     [self cpk_imageNamed:@"EscapeHatch"];
+    if (_useNativeColorPicker) {
+        __weak __typeof(self) weakSelf = self;
+        weakSelf.useNativeColorPicker(useSystemColorPicker);
+    }
 }
 
 #pragma mark - Actions
@@ -133,10 +141,7 @@ static const CGFloat kBottomMargin = 8;
 }
 
 - (void)escapeHatch:(id)sender {
-  if (_toggleNativePickerBlock) {
     self.useSystemColorPicker = !self.useSystemColorPicker;
-    _toggleNativePickerBlock(self.useSystemColorPicker);
-  }
 }
 
 @end

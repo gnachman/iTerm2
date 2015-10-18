@@ -1,5 +1,8 @@
 #import <Cocoa/Cocoa.h>
 
+// User defaults key with BOOL value.
+extern NSString *const kCPKUseSystemColorPicker;
+
 /**
  * Draws a row of controls: add favorite, remove favorite, pick color, and swatch.
  */
@@ -17,8 +20,14 @@
 /** Block called when user clicks on the eyedropper. */
 @property(nonatomic, copy) void (^startPickingBlock)();
 
-/** Block called when user clicks the escape hatch. */
-@property(nonatomic, copy) void (^toggleNativePickerBlock)(BOOL);
+/** Replace popover with native color picker. */
+@property(nonatomic, copy) void (^useNativeColorPicker)();
+
+/**
+ * Use the system color picker? Setting this to YES opens the picker and adjusts the icon to
+ * indicate it's active.
+ */
+@property(nonatomic) BOOL useSystemColorPicker;
 
 /** Reports this view's nominal height */
 + (CGFloat)desiredHeight;

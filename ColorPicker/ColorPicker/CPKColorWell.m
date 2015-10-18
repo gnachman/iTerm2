@@ -1,4 +1,5 @@
 #import "CPKColorWell.h"
+#import "CPKControlsView.h"
 #import "CPKPopover.h"
 #import "NSObject+CPK.h"
 
@@ -32,6 +33,8 @@
 @property(nonatomic) BOOL open;
 @property(nonatomic) CPKPopover *popover;
 @property(nonatomic, copy) void (^willClosePopover)(NSColor *);
+@property(nonatomic, weak) NSView *savedPresentingView;
+@property(nonatomic) NSRect savedPresentationRect;
 
 // The most recently selected color from the picker. Differs from self.color if
 // the control is not continuous (self.color is the swatch color).
@@ -156,7 +159,49 @@
     return NSDragOperationGeneric;
 }
 
+- (void)colorPanelColorDidChange:(id)sender {
+    [self.delegate colorChangedByDrag:[sender color]];
+}
+
+- (void)useColorPicker:(id)sender {
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:kCPKUseSystemColorPicker];
+    [[NSColorPanel sharedColorPanel] close];
+    [[NSColorPanel sharedColorPanel] setAccessoryView:nil];
+    if (self.savedPresentingView.window) {
+        [self openPopOverRelativeToRect:self.savedPresentationRect ofView:self.savedPresentingView];
+    }
+}
+
+- (void)showSystemColorPicker {
+    NSColorPanel *colorPanel = [NSColorPanel sharedColorPanel];
+    
+    // Add an accessory view to use ColorPicker.
+    NSImage *image = [self cpk_imageNamed:@"ActiveEscapeHatch"];
+    NSRect frame;
+    frame.origin = NSZeroPoint;
+    frame.size = image.size;
+    NSButton *button = [[NSButton alloc] initWithFrame:frame];
+    button.bordered = NO;
+    button.image = image;
+    button.imagePosition = NSImageOnly;
+    [button setTarget:self];
+    [button setAction:@selector(useColorPicker:)];
+    colorPanel.accessoryView = button;
+    
+    [colorPanel setTarget:self];
+    [colorPanel setAction:@selector(colorPanelColorDidChange:)];
+    [colorPanel orderFront:nil];
+    colorPanel.showsAlpha = self.alphaAllowed;
+    colorPanel.color = self.selectedColor;
+}
+
 - (void)openPopOverRelativeToRect:(NSRect)presentationRect ofView:(NSView *)presentingView {
+    self.savedPresentationRect = presentationRect;
+    self.savedPresentingView = presentingView;
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kCPKUseSystemColorPicker]) {
+        [self showSystemColorPicker];
+        return;
+    }
     __weak __typeof(self) weakSelf = self;
     self.selectedColor = self.color;
     self.popover =
@@ -166,6 +211,11 @@
                              initialColor:self.color
                              alphaAllowed:self.alphaAllowed
                        selectionDidChange:^(NSColor *color) {
+                           if (!color) {
+                               [weakSelf.popover close];
+                               [self showSystemColorPicker];
+                               return;
+                           }
                            weakSelf.selectedColor = color;
                            if (weakSelf.delegate.isContinuous) {
                                weakSelf.color = color;
