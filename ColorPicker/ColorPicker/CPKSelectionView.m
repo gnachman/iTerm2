@@ -1,6 +1,6 @@
-#import "CPKRGBView.h"
-#import "CPKHSBGradientView.h"
-#import "CPKHueSliderView.h"
+#import "CPKSelectionView.h"
+#import "CPKColorComponentSliderView.h"
+#import "CPKGradientView.h"
 #import "CPKAlphaSliderView.h"
 #import "NSColor+CPK.h"
 
@@ -8,8 +8,9 @@ static const CGFloat kLeftMargin = 8;
 static const CGFloat kRightMargin = 8;
 static const CGFloat kTopMargin = 8;
 static const CGFloat kGradientHeight = 120;
-static const CGFloat kMarginBetweenGradientAndHueSlider = 8;
-static const CGFloat kHueSliderHeight = 24;
+static const CGFloat kMarginBetweenGradientAndColorComponentSlider = 8;
+static const CGFloat kMarginBetweenPopupButtonAndGradient = 2;
+static const CGFloat kColorComponentSliderHeight = 24;
 static const CGFloat kAlphaSliderHeight = 12;
 static const CGFloat kMarginBetweenTextFields = 4;
 static const CGFloat kMarginBetweenLastSliderAndTextFields = 8;
@@ -18,9 +19,19 @@ static const CGFloat kMarginBetweenTextFieldAndLabel = 0;
 static const CGFloat kBottomMargin = 0;
 static const CGFloat kMarginBetweenSliders = 8;
 
-@interface CPKRGBView() <NSTextFieldDelegate>
-@property(nonatomic) CPKHSBGradientView *gradientView;
-@property(nonatomic) CPKHueSliderView *hueSliderView;
+typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
+    kCPKRGBViewModeHSBWithHueSliderTag,
+    kCPKRGBViewModeHSBWithBrightnessSliderTag,
+    kCPKRGBViewModeHSBWithSaturationSliderTag,
+    kCPKRGBViewModeRGBWithRedSliderTag,
+    kCPKRGBViewModeRGBWithGreenSliderTag,
+    kCPKRGBViewModeRGBWithBlueSliderTag,
+};
+
+@interface CPKSelectionView() <NSTextFieldDelegate>
+@property(nonatomic) NSPopUpButton *modeButton;
+@property(nonatomic) CPKGradientView *gradientView;
+@property(nonatomic) CPKColorComponentSliderView *colorComponentSliderView;
 @property(nonatomic) CPKAlphaSliderView *alphaSliderView;
 @property(nonatomic, copy) void (^block)(NSColor *);
 @property(nonatomic) NSTextField *hexTextField;
@@ -32,7 +43,7 @@ static const CGFloat kMarginBetweenSliders = 8;
 @property(nonatomic) BOOL alphaAllowed;
 @end
 
-@implementation CPKRGBView
+@implementation CPKSelectionView
 
 - (instancetype)initWithFrame:(NSRect)frameRect
                         block:(void (^)(NSColor *))block
@@ -45,28 +56,59 @@ static const CGFloat kMarginBetweenSliders = 8;
         _selectedColor = color;
         self.alphaAllowed = alphaAllowed;
 
-        NSRect frame = NSMakeRect(kLeftMargin,
-                                  kTopMargin,
-                                  NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                                  kGradientHeight);
-        __weak __typeof(self) weakSelf = self;
-        self.gradientView =
-            [[CPKHSBGradientView alloc] initWithFrame:frame
-                                                block:^(NSColor *newColor) {
-                                                    [weakSelf setColorFromGradient:newColor];
-                                                }];
+        NSRect frame;
+        frame = NSMakeRect(kLeftMargin,
+                           kTopMargin,
+                           NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                           0);
+        self.modeButton = [[NSPopUpButton alloc] initWithFrame:frame];
+        [self.modeButton setTarget:self];
+        [self.modeButton setAction:@selector(modeDidChange:)];
+
+        [self.modeButton addItemWithTitle:@"HSB with Hue Slider"];
+        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithHueSliderTag];
+        [self.modeButton addItemWithTitle:@"HSB with Brightness Slider"];
+        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithBrightnessSliderTag];
+        [self.modeButton addItemWithTitle:@"HSB with Saturation Slider"];
+        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithSaturationSliderTag];
+
+        [self.modeButton addItemWithTitle:@"RGB with Red Slider"];
+        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithRedSliderTag];
+        [self.modeButton addItemWithTitle:@"RGB with Green Slider"];
+        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithGreenSliderTag];
+        [self.modeButton addItemWithTitle:@"RGB with Blue Slider"];
+        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithBlueSliderTag];
+        
+        [self.modeButton sizeToFit];
+        frame = self.modeButton.frame;
+        frame.size.width = NSWidth(frameRect) - kRightMargin - kLeftMargin;
+        self.modeButton.frame = frame;
 
         frame = NSMakeRect(kLeftMargin,
-                           NSMaxY(self.gradientView.frame) + kMarginBetweenGradientAndHueSlider,
+                           NSMaxY(self.modeButton.frame) + kMarginBetweenPopupButtonAndGradient,
                            NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                           kHueSliderHeight);
+                           kGradientHeight);
+        __weak __typeof(self) weakSelf = self;
+        self.gradientView =
+            [[CPKGradientView alloc] initWithFrame:frame
+                                              type:kCPKGradientViewTypeSaturationBrightness
+                                             block:^(NSColor *newColor) {
+                                                 [weakSelf setColorFromGradient:newColor];
+                                             }];
 
-        self.hueSliderView = [[CPKHueSliderView alloc] initWithFrame:frame
-                                                                 hue:color.hueComponent
-                                                               block:^(CGFloat newHue) {
-                                                                   [weakSelf setHue:newHue];
-                                                               }];
-        CGFloat y = NSMaxY(self.hueSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+        frame = NSMakeRect(kLeftMargin,
+                           NSMaxY(self.gradientView.frame) + kMarginBetweenGradientAndColorComponentSlider,
+                           NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                           kColorComponentSliderHeight);
+
+        self.colorComponentSliderView =
+            [[CPKColorComponentSliderView alloc] initWithFrame:frame
+                                                         color:color
+                                                          type:kCPKColorComponentSliderTypeHue
+                                                         block:^(CGFloat newValue) {
+                                                             [weakSelf setSliderValue:newValue];
+                                                         }];
+        CGFloat y = NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
 
         if (alphaAllowed) {
             frame.origin.y = NSMaxY(frame) + kMarginBetweenSliders;
@@ -81,8 +123,6 @@ static const CGFloat kMarginBetweenSliders = 8;
         }
 
         self.gradientView.selectedColor = color;
-
-
 
         CGFloat x = NSMaxX(self.frame) - kRightMargin;
         if (alphaAllowed) {
@@ -127,8 +167,9 @@ static const CGFloat kMarginBetweenSliders = 8;
         self.hexTextField.delegate = self;
 
         [self updateTextFieldsForColor:color];
-        self.subviews = @[ self.gradientView,
-                           self.hueSliderView,
+        self.subviews = @[ self.modeButton,
+                           self.gradientView,
+                           self.colorComponentSliderView,
                            self.hexTextField,
                            self.redTextField,
                            self.greenTextField,
@@ -173,14 +214,53 @@ static const CGFloat kMarginBetweenSliders = 8;
     return YES;
 }
 
-- (void)setHue:(CGFloat)newHue {
-    _selectedColor = [NSColor cpk_colorWithHue:newHue
-                                    saturation:self.selectedColor.saturationComponent
-                                    brightness:self.selectedColor.brightnessComponent
-                                         alpha:self.selectedColor.alphaComponent];
+- (void)setSliderValue:(CGFloat)newValue {
+    switch (self.modeButton.selectedTag) {
+        case kCPKRGBViewModeHSBWithHueSliderTag:
+            _selectedColor = [NSColor cpk_colorWithHue:newValue
+                                            saturation:self.selectedColor.saturationComponent
+                                            brightness:self.selectedColor.brightnessComponent
+                                                 alpha:self.selectedColor.alphaComponent];
+            self.gradientView.hue = newValue;
+            break;
+        case kCPKRGBViewModeHSBWithSaturationSliderTag:
+            _selectedColor = [NSColor cpk_colorWithHue:self.selectedColor.hueComponent
+                                            saturation:newValue
+                                            brightness:self.selectedColor.brightnessComponent
+                                                 alpha:self.selectedColor.alphaComponent];
+            self.gradientView.saturation = newValue;
+            break;
+        case kCPKRGBViewModeHSBWithBrightnessSliderTag:
+            _selectedColor = [NSColor cpk_colorWithHue:self.selectedColor.hueComponent
+                                            saturation:self.selectedColor.saturationComponent
+                                            brightness:newValue
+                                                 alpha:self.selectedColor.alphaComponent];
+            self.gradientView.brightness = newValue;
+            break;
+        case kCPKRGBViewModeRGBWithRedSliderTag:
+            _selectedColor = [NSColor cpk_colorWithRed:newValue
+                                                 green:self.selectedColor.greenComponent
+                                                  blue:self.selectedColor.blueComponent
+                                                 alpha:self.selectedColor.alphaComponent];
+            self.gradientView.red = newValue;
+            break;
+        case kCPKRGBViewModeRGBWithGreenSliderTag:
+            _selectedColor = [NSColor cpk_colorWithRed:self.selectedColor.redComponent
+                                                 green:newValue
+                                                  blue:self.selectedColor.blueComponent
+                                                 alpha:self.selectedColor.alphaComponent];
+            self.gradientView.green = newValue;
+            break;
+        case kCPKRGBViewModeRGBWithBlueSliderTag:
+            _selectedColor = [NSColor cpk_colorWithRed:self.selectedColor.redComponent
+                                                 green:self.selectedColor.greenComponent
+                                                  blue:newValue
+                                                 alpha:self.selectedColor.alphaComponent];
+            self.gradientView.blue = newValue;
+            break;
+    }
     self.alphaSliderView.color = _selectedColor;
     [self.alphaSliderView setNeedsDisplay:YES];
-    self.gradientView.hue = newHue;
     dispatch_async(dispatch_get_main_queue(), ^{
         [_gradientView setNeedsDisplay:YES];
     });
@@ -204,6 +284,7 @@ static const CGFloat kMarginBetweenSliders = 8;
     } else {
         _selectedColor = newColor;
     }
+    [self.colorComponentSliderView setGradientColor:newColor];
     self.alphaSliderView.color = newColor;
     [self.alphaSliderView setNeedsDisplay:YES];
     [self updateTextFieldsForColor:_selectedColor];
@@ -216,8 +297,7 @@ static const CGFloat kMarginBetweenSliders = 8;
     }
     _selectedColor = selectedColor;
     [self.gradientView setSelectedColor:selectedColor];
-    self.hueSliderView.selectedValue = selectedColor.hueComponent;
-    [self.hueSliderView setNeedsDisplay:YES];
+    self.colorComponentSliderView.color = selectedColor;
     self.alphaSliderView.color = selectedColor;
     self.alphaSliderView.selectedValue = selectedColor.alphaComponent;
     [self.alphaSliderView setNeedsDisplay:YES];
@@ -317,6 +397,37 @@ static const CGFloat kMarginBetweenSliders = 8;
                                green:g / 255.0
                                 blue:b / 255.0
                                alpha:_selectedColor.alphaComponent];
+}
+
+- (void)modeDidChange:(id)sender {
+    switch ((CPKRGBViewMode) self.modeButton.selectedTag) {
+        case kCPKRGBViewModeHSBWithHueSliderTag:
+            self.colorComponentSliderView.type = kCPKColorComponentSliderTypeHue;
+            self.gradientView.type = kCPKGradientViewTypeSaturationBrightness;
+            break;
+        case kCPKRGBViewModeHSBWithSaturationSliderTag:
+            self.colorComponentSliderView.type = kCPKColorComponentSliderTypeSaturation;
+            self.gradientView.type = kCPKGradientViewTypeBrightnessHue;
+            break;
+        case kCPKRGBViewModeHSBWithBrightnessSliderTag:
+            self.colorComponentSliderView.type = kCPKColorComponentSliderTypeBrightness;
+            self.gradientView.type = kCPKGradientViewTypeHueSaturation;
+            break;
+        case kCPKRGBViewModeRGBWithRedSliderTag:
+            self.colorComponentSliderView.type = kCPKColorComponentSliderTypeRed;
+            self.gradientView.type = kCPKGradientViewTypeGreenBlue;
+            break;
+        case kCPKRGBViewModeRGBWithGreenSliderTag:
+            self.colorComponentSliderView.type = kCPKColorComponentSliderTypeGreen;
+            self.gradientView.type = kCPKGradientViewTypeBlueRed;
+            break;
+        case kCPKRGBViewModeRGBWithBlueSliderTag:
+            self.colorComponentSliderView.type = kCPKColorComponentSliderTypeBlue;
+            self.gradientView.type = kCPKGradientViewTypeRedGreen;
+            break;
+    }
+    self.gradientView.selectedColor = self.selectedColor;
+    self.colorComponentSliderView.color = self.selectedColor;
 }
 
 @end

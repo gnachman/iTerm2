@@ -22,16 +22,16 @@
 		A6184EEB1BA8743B0088EF3C /* ColorPicker.framework in Resources */ = {isa = PBXBuildFile; fileRef = A6184EA81BA874020088EF3C /* ColorPicker.framework */; };
 		A6184EEE1BA876390088EF3C /* CPKMainViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EEC1BA876390088EF3C /* CPKMainViewController.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184EEF1BA876390088EF3C /* CPKMainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EED1BA876390088EF3C /* CPKMainViewController.m */; };
-		A6184EF21BA876E50088EF3C /* CPKRGBView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EF01BA876E50088EF3C /* CPKRGBView.h */; };
-		A6184EF31BA876E50088EF3C /* CPKRGBView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EF11BA876E50088EF3C /* CPKRGBView.m */; };
+		A6184EF21BA876E50088EF3C /* CPKSelectionView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EF01BA876E50088EF3C /* CPKSelectionView.h */; };
+		A6184EF31BA876E50088EF3C /* CPKSelectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EF11BA876E50088EF3C /* CPKSelectionView.m */; };
 		A6184EF61BA87A770088EF3C /* CPKPopover.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EF41BA87A770088EF3C /* CPKPopover.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184EF71BA87A770088EF3C /* CPKPopover.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EF51BA87A770088EF3C /* CPKPopover.m */; };
 		A6184EF91BA8801D0088EF3C /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184EF81BA8801D0088EF3C /* AppKit.framework */; };
 		A6184EFA1BA880300088EF3C /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184EF81BA8801D0088EF3C /* AppKit.framework */; };
-		A6184EFD1BA8814B0088EF3C /* CPKHSBGradientView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EFB1BA8814B0088EF3C /* CPKHSBGradientView.h */; };
-		A6184EFE1BA8814B0088EF3C /* CPKHSBGradientView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EFC1BA8814B0088EF3C /* CPKHSBGradientView.m */; };
-		A6184F011BA883A70088EF3C /* CPKHueSliderView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EFF1BA883A70088EF3C /* CPKHueSliderView.h */; };
-		A6184F021BA883A70088EF3C /* CPKHueSliderView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F001BA883A70088EF3C /* CPKHueSliderView.m */; };
+		A6184EFD1BA8814B0088EF3C /* CPKGradientView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EFB1BA8814B0088EF3C /* CPKGradientView.h */; };
+		A6184EFE1BA8814B0088EF3C /* CPKGradientView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EFC1BA8814B0088EF3C /* CPKGradientView.m */; };
+		A6184F011BA883A70088EF3C /* CPKColorComponentSliderView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EFF1BA883A70088EF3C /* CPKColorComponentSliderView.h */; };
+		A6184F021BA883A70088EF3C /* CPKColorComponentSliderView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F001BA883A70088EF3C /* CPKColorComponentSliderView.m */; };
 		A6184F0A1BA8BCFC0088EF3C /* CPKFavoritesView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F081BA8BCFC0088EF3C /* CPKFavoritesView.h */; };
 		A6184F0B1BA8BCFC0088EF3C /* CPKFavoritesView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184F091BA8BCFC0088EF3C /* CPKFavoritesView.m */; };
 		A6184F0E1BA8C3560088EF3C /* CPKControlsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184F0C1BA8C3560088EF3C /* CPKControlsView.h */; };
@@ -116,15 +116,15 @@
 		A6184ED41BA874190088EF3C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		A6184EEC1BA876390088EF3C /* CPKMainViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKMainViewController.h; sourceTree = "<group>"; };
 		A6184EED1BA876390088EF3C /* CPKMainViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CPKMainViewController.m; sourceTree = "<group>"; };
-		A6184EF01BA876E50088EF3C /* CPKRGBView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKRGBView.h; sourceTree = "<group>"; };
-		A6184EF11BA876E50088EF3C /* CPKRGBView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CPKRGBView.m; sourceTree = "<group>"; };
+		A6184EF01BA876E50088EF3C /* CPKSelectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKSelectionView.h; sourceTree = "<group>"; };
+		A6184EF11BA876E50088EF3C /* CPKSelectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = CPKSelectionView.m; sourceTree = "<group>"; };
 		A6184EF41BA87A770088EF3C /* CPKPopover.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKPopover.h; sourceTree = "<group>"; };
 		A6184EF51BA87A770088EF3C /* CPKPopover.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKPopover.m; sourceTree = "<group>"; };
 		A6184EF81BA8801D0088EF3C /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
-		A6184EFB1BA8814B0088EF3C /* CPKHSBGradientView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKHSBGradientView.h; sourceTree = "<group>"; };
-		A6184EFC1BA8814B0088EF3C /* CPKHSBGradientView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKHSBGradientView.m; sourceTree = "<group>"; };
-		A6184EFF1BA883A70088EF3C /* CPKHueSliderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKHueSliderView.h; sourceTree = "<group>"; };
-		A6184F001BA883A70088EF3C /* CPKHueSliderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKHueSliderView.m; sourceTree = "<group>"; };
+		A6184EFB1BA8814B0088EF3C /* CPKGradientView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKGradientView.h; sourceTree = "<group>"; };
+		A6184EFC1BA8814B0088EF3C /* CPKGradientView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKGradientView.m; sourceTree = "<group>"; };
+		A6184EFF1BA883A70088EF3C /* CPKColorComponentSliderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKColorComponentSliderView.h; sourceTree = "<group>"; };
+		A6184F001BA883A70088EF3C /* CPKColorComponentSliderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKColorComponentSliderView.m; sourceTree = "<group>"; };
 		A6184F081BA8BCFC0088EF3C /* CPKFavoritesView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKFavoritesView.h; sourceTree = "<group>"; };
 		A6184F091BA8BCFC0088EF3C /* CPKFavoritesView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CPKFavoritesView.m; sourceTree = "<group>"; };
 		A6184F0C1BA8C3560088EF3C /* CPKControlsView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPKControlsView.h; sourceTree = "<group>"; };
@@ -246,6 +246,8 @@
 				A6184EAD1BA874020088EF3C /* ColorPicker.h */,
 				A6184F621BAA12890088EF3C /* CPKAlphaSliderView.h */,
 				A6184F631BAA12890088EF3C /* CPKAlphaSliderView.m */,
+				A6184EFF1BA883A70088EF3C /* CPKColorComponentSliderView.h */,
+				A6184F001BA883A70088EF3C /* CPKColorComponentSliderView.m */,
 				A6184F491BA9D7740088EF3C /* CPKColorNamer.h */,
 				A6184F4A1BA9D7740088EF3C /* CPKColorNamer.m */,
 				A6184F1C1BA90BB40088EF3C /* CPKColorWell.h */,
@@ -262,10 +264,8 @@
 				A6184F091BA8BCFC0088EF3C /* CPKFavoritesView.m */,
 				A6184F101BA8D65B0088EF3C /* CPKFlippedView.h */,
 				A6184F111BA8D65B0088EF3C /* CPKFlippedView.m */,
-				A6184EFB1BA8814B0088EF3C /* CPKHSBGradientView.h */,
-				A6184EFC1BA8814B0088EF3C /* CPKHSBGradientView.m */,
-				A6184EFF1BA883A70088EF3C /* CPKHueSliderView.h */,
-				A6184F001BA883A70088EF3C /* CPKHueSliderView.m */,
+				A6184EFB1BA8814B0088EF3C /* CPKGradientView.h */,
+				A6184EFC1BA8814B0088EF3C /* CPKGradientView.m */,
 				A6184F511BA9EA7D0088EF3C /* CPKKDTree.h */,
 				A6184F521BA9EA7D0088EF3C /* CPKKDTree.m */,
 				A6184F4D1BA9EA410088EF3C /* CPKKDTreeNode.h */,
@@ -274,8 +274,8 @@
 				A6184EED1BA876390088EF3C /* CPKMainViewController.m */,
 				A6184EF41BA87A770088EF3C /* CPKPopover.h */,
 				A6184EF51BA87A770088EF3C /* CPKPopover.m */,
-				A6184EF01BA876E50088EF3C /* CPKRGBView.h */,
-				A6184EF11BA876E50088EF3C /* CPKRGBView.m */,
+				A6184EF01BA876E50088EF3C /* CPKSelectionView.h */,
+				A6184EF11BA876E50088EF3C /* CPKSelectionView.m */,
 				A6184F771BAA5E1A0088EF3C /* CPKSliderView.h */,
 				A6184F781BAA5E1A0088EF3C /* CPKSliderView.m */,
 				A6184F551BAA06DC0088EF3C /* CPKSwatchView.h */,
@@ -432,7 +432,7 @@
 			files = (
 				A6184EAE1BA874020088EF3C /* ColorPicker.h in Headers */,
 				A6184F571BAA06DC0088EF3C /* CPKSwatchView.h in Headers */,
-				A6184EFD1BA8814B0088EF3C /* CPKHSBGradientView.h in Headers */,
+				A6184EFD1BA8814B0088EF3C /* CPKGradientView.h in Headers */,
 				A6184EEE1BA876390088EF3C /* CPKMainViewController.h in Headers */,
 				A6184F791BAA5E1A0088EF3C /* CPKSliderView.h in Headers */,
 				A6184F711BAA20510088EF3C /* NSColor+CPK.h in Headers */,
@@ -442,9 +442,9 @@
 				A6184F1E1BA90BB40088EF3C /* CPKColorWell.h in Headers */,
 				A6184F0E1BA8C3560088EF3C /* CPKControlsView.h in Headers */,
 				A6184F161BA8E87B0088EF3C /* CPKFavorite.h in Headers */,
-				A6184EF21BA876E50088EF3C /* CPKRGBView.h in Headers */,
+				A6184EF21BA876E50088EF3C /* CPKSelectionView.h in Headers */,
 				A6184F221BA911980088EF3C /* CPKEyedropperView.h in Headers */,
-				A6184F011BA883A70088EF3C /* CPKHueSliderView.h in Headers */,
+				A6184F011BA883A70088EF3C /* CPKColorComponentSliderView.h in Headers */,
 				A6184F641BAA12890088EF3C /* CPKAlphaSliderView.h in Headers */,
 				A6184F4F1BA9EA410088EF3C /* CPKKDTreeNode.h in Headers */,
 				A6184F121BA8D65B0088EF3C /* CPKFlippedView.h in Headers */,
@@ -605,17 +605,17 @@
 				A6184F1F1BA90BB40088EF3C /* CPKColorWell.m in Sources */,
 				A6184F131BA8D65B0088EF3C /* CPKFlippedView.m in Sources */,
 				A6184EF71BA87A770088EF3C /* CPKPopover.m in Sources */,
-				A6184F021BA883A70088EF3C /* CPKHueSliderView.m in Sources */,
+				A6184F021BA883A70088EF3C /* CPKColorComponentSliderView.m in Sources */,
 				A6184EEF1BA876390088EF3C /* CPKMainViewController.m in Sources */,
 				A6184F501BA9EA410088EF3C /* CPKKDTreeNode.m in Sources */,
 				A6184F611BAA0BC30088EF3C /* NSObject+CPK.m in Sources */,
 				A6184F541BA9EA7D0088EF3C /* CPKKDTree.m in Sources */,
 				A6184F0B1BA8BCFC0088EF3C /* CPKFavoritesView.m in Sources */,
 				A6184F721BAA20510088EF3C /* NSColor+CPK.m in Sources */,
-				A6184EF31BA876E50088EF3C /* CPKRGBView.m in Sources */,
+				A6184EF31BA876E50088EF3C /* CPKSelectionView.m in Sources */,
 				A6184F4C1BA9D7740088EF3C /* CPKColorNamer.m in Sources */,
 				A6184F0F1BA8C3560088EF3C /* CPKControlsView.m in Sources */,
-				A6184EFE1BA8814B0088EF3C /* CPKHSBGradientView.m in Sources */,
+				A6184EFE1BA8814B0088EF3C /* CPKGradientView.m in Sources */,
 				A6184F7A1BAA5E1A0088EF3C /* CPKSliderView.m in Sources */,
 				A6184F171BA8E87B0088EF3C /* CPKFavorite.m in Sources */,
 				A6184F581BAA06DC0088EF3C /* CPKSwatchView.m in Sources */,
