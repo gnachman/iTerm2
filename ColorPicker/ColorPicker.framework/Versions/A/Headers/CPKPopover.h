@@ -9,7 +9,7 @@
 @interface CPKPopover : NSPopover
 
 /** Reflects the final selected color. Setter changes color in open popover. */
-@property(nonatomic) NSColor *selectedColor;
+@property(nonatomic, strong) NSColor *selectedColor;
 
 /** Called before popover closes. */
 @property(nonatomic, copy) void (^willClose)();
