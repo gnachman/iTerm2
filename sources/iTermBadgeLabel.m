@@ -120,14 +120,21 @@
     [image lockFocus];
     NSMutableDictionary *temp = [[attributes mutableCopy] autorelease];
     temp[NSStrokeWidthAttributeName] = @-2;
-    temp[NSStrokeColorAttributeName] =
-        [_backgroundColor colorWithAlphaComponent:_fillColor.alphaComponent];
+    temp[NSStrokeColorAttributeName] = [_backgroundColor colorWithAlphaComponent:1];
     [_stringValue drawWithRect:NSMakeRect(0, 0, sizeWithFont.width, sizeWithFont.height)
                        options:NSStringDrawingUsesLineFragmentOrigin
                     attributes:temp];
     [image unlockFocus];
 
-    return image;
+    NSImage *reducedAlphaImage = [[[NSImage alloc] initWithSize:sizeWithFont] autorelease];
+    [reducedAlphaImage lockFocus];
+    [image drawInRect:NSMakeRect(0, 0, image.size.width, image.size.height)
+             fromRect:NSZeroRect
+            operation:NSCompositeSourceOver
+             fraction:_fillColor.alphaComponent];
+    [reducedAlphaImage unlockFocus];
+
+    return reducedAlphaImage;
 }
 
 // Attributed string attributes for a given font point size.

@@ -2238,7 +2238,7 @@
 		A667F38D1B49FC2E00705186 /* iTermToolbeltSplitView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermToolbeltSplitView.h; sourceTree = "<group>"; };
 		A667F38E1B49FC2E00705186 /* iTermToolbeltSplitView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltSplitView.m; sourceTree = "<group>"; };
 		A667F3911B4CC8BA00705186 /* iTermBadgeLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermBadgeLabel.h; sourceTree = "<group>"; };
-		A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBadgeLabel.m; sourceTree = "<group>"; };
+		A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermBadgeLabel.m; sourceTree = "<group>"; };
 		A667F3951B4F71AE00705186 /* iTermSavePanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSavePanel.h; sourceTree = "<group>"; };
 		A667F3961B4F71AE00705186 /* iTermSavePanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSavePanel.m; sourceTree = "<group>"; };
 		A66A1FA61A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermWindowShortcutLabelTitlebarAccessoryViewController.h; sourceTree = "<group>"; };
