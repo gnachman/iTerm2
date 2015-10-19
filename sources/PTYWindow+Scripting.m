@@ -16,6 +16,7 @@
 
     NSArray *windows = [[iTermApplication sharedApplication] orderedWindows];
     anIndex = [windows indexOfObjectIdenticalTo:self];
+    NSLog(@"The ordered windows are %@. Returning index %@ for %@", windows, @(anIndex), self);
     if (anIndex != NSNotFound) {
         containerRef = [NSApp objectSpecifier];
         classDescription = [NSClassDescription classDescriptionForClass:[NSApp class]];

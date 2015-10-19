@@ -17,6 +17,7 @@
 @implementation iTermNewWindowCommand
 
 - (id)performDefaultImplementation {
+  NSLog(@"Executing new window command");
     NSString *profileName = self.directParameter;
     Profile *profile;
     if (!profileName) {
@@ -42,6 +43,8 @@
                                                      makeKey:YES
                                                      command:command
                                                        block:nil];
+      NSLog(@"The newly created window is %@. The app's windows are %@", session.tab.realParentWindow.window,
+            [NSApp orderedWindows]);
         return session.tab.realParentWindow.window;
     }
     return nil;
