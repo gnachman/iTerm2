@@ -3700,11 +3700,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([self _haveShortSelection]) {
         NSString *text = [self selectedText];
-        NSString *conversion = [text hexOrDecimalConversionHelp];
-        if (conversion) {
+        NSArray<NSString *> *synonyms = [text helpfulSynonyms];
+        for (NSString *conversion in synonyms) {
             NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
             theItem.title = conversion;
             [theMenu addItem:theItem];
+        }
+        if (synonyms.count) {
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
     }
