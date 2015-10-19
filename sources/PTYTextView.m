@@ -1674,7 +1674,7 @@ static const int kDragThreshold = 3;
 // Update range of underlined chars indicating cmd-clicakble url.
 - (void)updateUnderlinedURLs:(NSEvent *)event
 {
-    if ([event modifierFlags] & NSCommandKeyMask) {
+    if (([event modifierFlags] & NSCommandKeyMask) && self.window.isKeyWindow) {
         NSPoint screenPoint = [NSEvent mouseLocation];
         NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
                                                                             screenPoint.y,
