@@ -6,7 +6,7 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
-        self.cornerRadius = 3;
+        self.cornerRadius = 2;
         self.borderColor = [NSColor grayColor];
     }
     return self;
@@ -28,7 +28,8 @@
     [path addClip];
 
     [[NSColor colorWithPatternImage:[self cpk_imageNamed:@"SwatchCheckerboard"]] set];
-    [[NSGraphicsContext currentContext] setPatternPhase:NSMakePoint(1, 2)];
+    NSRect offset = [self convertRect:self.bounds toView:nil];
+    [[NSGraphicsContext currentContext] setPatternPhase:offset.origin];
     NSRectFill(rect);
 
     [self.color set];

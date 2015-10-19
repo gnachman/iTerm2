@@ -9,7 +9,7 @@
 static const CGFloat kLeftMargin = 8;
 static const CGFloat kRightMargin = 8;
 static const CGFloat kTopMargin = 8;
-static const CGFloat kGradientHeight = 120;
+static const CGFloat kGradientHeight = 128;
 static const CGFloat kMarginBetweenGradientAndColorComponentSlider = 8;
 static const CGFloat kMarginBetweenPopupButtonAndGradient = 2;
 static const CGFloat kColorComponentSliderHeight = 24;
@@ -189,7 +189,8 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         self.hslRgbTextFieldSwitch.imagePosition = NSImageOnly;
         self.hslRgbTextFieldSwitch.target = self;
         self.hslRgbTextFieldSwitch.action = @selector(toggleHslRgbTextFields:);
-        
+        self.hslRgbTextFieldSwitch.toolTip = @"Switch between RGB and HSB values.";
+
         [self createTextFieldsIncludingAlpha:alphaAllowed atY:y rightMargin:rgbImage.size.width];
         [self updateTextFieldsForColor:color];
 
@@ -208,7 +209,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
             [self addLabel:@"A" belowView:self.alphaTextField toContainer:self];
         }
         [self addSubview:self.hexTextField];
-        [self addLabel:@"RGBA Hex" belowView:self.hexTextField toContainer:self];
+        [self addLabel:@"RGB Hex" belowView:self.hexTextField toContainer:self];
 
         self.desiredHeight = NSMaxY(self.rgbTextFields.frame) + kBottomMargin;
 
@@ -646,26 +647,26 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 
 - (void)updateTextFieldsForColor:(NSColor *)color {
     self.hexTextField.stringValue = [NSString stringWithFormat:@"%02x%02x%02x",
-                                        (int)(color.redComponent * 255),
-                                        (int)(color.greenComponent * 255),
-                                        (int)(color.blueComponent * 255)];
+                                        (int)round(color.redComponent * 255),
+                                        (int)round(color.greenComponent * 255),
+                                        (int)round(color.blueComponent * 255)];
     self.redTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)(color.redComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)round(color.redComponent * 255)];
     self.greenTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)(color.greenComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)round(color.greenComponent * 255)];
     self.blueTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)(color.blueComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)round(color.blueComponent * 255)];
 
     self.hueTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)(color.hueComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)round(color.hueComponent * 255)];
     self.saturationTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)(color.saturationComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)round(color.saturationComponent * 255)];
     self.brightnessTextField.stringValue =
-        [NSString stringWithFormat:@"%d", (int)(color.brightnessComponent * 255)];
+        [NSString stringWithFormat:@"%d", (int)round(color.brightnessComponent * 255)];
     
     if (self.alphaAllowed) {
         self.alphaTextField.stringValue =
-            [NSString stringWithFormat:@"%d", (int)(color.alphaComponent * 255)];
+            [NSString stringWithFormat:@"%d",(int)round(color.alphaComponent * 255)];
     }
 }
 
