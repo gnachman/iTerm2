@@ -65,19 +65,19 @@
         switch (self.type) {
             case kCPKColorComponentSliderTypeHue:
                 [colors addObject:[NSColor cpk_colorWithHue:(double)i / (double)parts
-                                                 saturation:1
-                                                 brightness:1
+                                                 saturation:self.color.saturationComponent
+                                                 brightness:self.color.brightnessComponent
                                                       alpha:1]];
                 break;
             case kCPKColorComponentSliderTypeSaturation:
                 [colors addObject:[NSColor cpk_colorWithHue:self.color.hueComponent
                                                  saturation:(double)i / (double)parts
-                                                 brightness:1
+                                                 brightness:self.color.brightnessComponent
                                                       alpha:1]];
                 break;
             case kCPKColorComponentSliderTypeBrightness:
                 [colors addObject:[NSColor cpk_colorWithHue:self.color.hueComponent
-                                                 saturation:1
+                                                 saturation:self.color.saturationComponent
                                                  brightness:(double)i / (double)parts
                                                       alpha:1]];
                 break;

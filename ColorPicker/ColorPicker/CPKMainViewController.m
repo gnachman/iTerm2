@@ -8,7 +8,7 @@
 #import "CPKSelectionView.h"
 #import "NSColor+CPK.h"
 
-const CGFloat kDesiredWidth = 220;
+const CGFloat kDesiredWidth = 272;
 const CGFloat kFavoritesHeight = 100;
 
 static const CGFloat kLeftMargin = 8;
