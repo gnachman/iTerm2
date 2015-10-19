@@ -784,17 +784,31 @@ int decode_utf8_char(const unsigned char *datap,
 
 - (NSString *)timestampConversionHelp {
     static const NSUInteger kTimestampLength = 10;
-    if (self.length == kTimestampLength && [self hasPrefix:@"1"]) {
+    static const NSUInteger kJavaTimestampLength = 13;
+    if ((self.length == kTimestampLength ||
+         self.length == kJavaTimestampLength) &&
+        [self hasPrefix:@"1"]) {
         for (int i = 0; i < kTimestampLength; i++) {
             if (!isdigit([self characterAtIndex:i])) {
                 return nil;
             }
         }
         NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:@"yyyyMMMd hh:mm:ss z"
+        // doubles run out of precision at 2^53. The largest Java timestamp we will convert is less
+        // than 2^41, so this is fine.
+        NSTimeInterval timestamp = [self doubleValue];
+        NSString *template;
+        if (self.length == kJavaTimestampLength) {
+            // Convert milliseconds to seconds
+            timestamp /= 1000.0;
+            template = @"yyyyMMMd hh:mm:ss.SSS z";
+        } else {
+            template = @"yyyyMMMd hh:mm:ss z";
+        }
+        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:template
                                                            options:0
                                                             locale:[NSLocale currentLocale]]];
-        return [fmt stringFromDate:[NSDate dateWithTimeIntervalSince1970:[self integerValue]]];
+        return [fmt stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
     } else {
         return nil;
     }
