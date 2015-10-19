@@ -6954,7 +6954,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 #pragma mark - PopupDelegate
 
-- (void)popupWillClose:(Popup *)popup {
+- (void)popupWillClose:(iTermPopupWindowController *)popup {
     [[[self tab] realParentWindow] popupWillClose:popup];
 }
 

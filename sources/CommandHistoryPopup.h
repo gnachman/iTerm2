@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "Popup.h"
+#import "iTermPopupWindowController.h"
 #import "PopupEntry.h"
 
 @class VT100RemoteHost;
@@ -17,7 +17,7 @@
 @property(nonatomic, retain) NSDate *date;
 @end
 
-@interface CommandHistoryPopupWindowController : Popup
+@interface CommandHistoryPopupWindowController : iTermPopupWindowController
 
 // Returns uses if expand is NO or entries if it is YES.
 - (NSArray *)commandsForHost:(VT100RemoteHost *)host

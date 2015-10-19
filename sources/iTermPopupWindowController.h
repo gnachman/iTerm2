@@ -1,5 +1,5 @@
 //
-//  Popup.h
+//  iTermPopupWindowController.h
 //  iTerm
 //
 //  Created by George Nachman on 11/4/10.
@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class Popup;
+@class iTermPopupWindowController;
 @class PopupModel;
 @class PopupEntry;
 @class PTYTextView;
@@ -22,12 +22,12 @@
 - (void)popupInsertText:(NSString *)text;
 // Return YES if the delegate handles it, NO if Popup should handle it.
 - (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue;
-- (void)popupWillClose:(Popup *)popup;
+- (void)popupWillClose:(iTermPopupWindowController *)popup;
 - (BOOL)popupWindowIsInHotkeyWindow;
 
 @end
 
-@interface Popup : NSWindowController
+@interface iTermPopupWindowController : NSWindowController
 
 @property(nonatomic, assign) id<PopupDelegate> delegate;
 

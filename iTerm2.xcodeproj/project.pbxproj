@@ -250,7 +250,7 @@
 		1D6ED8BD19AEA20D005A7799 /* ProfilesGeneralPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E713AB18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h */; };
 		1D6ED8BE19AEA20D005A7799 /* FileTransferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EA186D150A007F550F /* FileTransferManager.h */; };
 		1D6ED8BF19AEA20D005A7799 /* DebugLogging.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD39B18180B82F5004E56D5 /* DebugLogging.h */; };
-		1D6ED8C019AEA20D005A7799 /* Popup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* Popup.h */; };
+		1D6ED8C019AEA20D005A7799 /* iTermPopupWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* iTermPopupWindowController.h */; };
 		1D6ED8C119AEA20D005A7799 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D6ED8C219AEA20D005A7799 /* PTYTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E802C129DA45A00F3D71E /* PTYTab.h */; };
 		1D6ED8C319AEA20D005A7799 /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
@@ -666,7 +666,7 @@
 		1DD39B7B180B8842004E56D5 /* libicucore.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DD39B7A180B8842004E56D5 /* libicucore.dylib */; };
 		1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */; };
 		1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD6707514934ADE008E4361 /* PTYSplitView.h */; };
-		1DD736411283C2FA009B7829 /* Popup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* Popup.h */; };
+		1DD736411283C2FA009B7829 /* iTermPopupWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* iTermPopupWindowController.h */; };
 		1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */; };
 		1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDC093D1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h */; };
 		1DDC09401B4DB97500B1A910 /* iTermRoundedCornerScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DDC093E1B4DB97500B1A910 /* iTermRoundedCornerScrollView.m */; };
@@ -1383,7 +1383,7 @@
 		A6C7635C1B45C52B00E3C992 /* CommandHistoryPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */; };
 		A6C7635D1B45C52B00E3C992 /* DirectoriesPopup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D03D41E191419080049EB8F /* DirectoriesPopup.m */; };
 		A6C7635E1B45C52B00E3C992 /* PasteboardHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C18801275D22900461E55 /* PasteboardHistory.m */; };
-		A6C7635F1B45C52B00E3C992 /* Popup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD736401283C2FA009B7829 /* Popup.m */; };
+		A6C7635F1B45C52B00E3C992 /* iTermPopupWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD736401283C2FA009B7829 /* iTermPopupWindowController.m */; };
 		A6C763601B45C52B00E3C992 /* PopupEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A310E186E2EDA007F550F /* PopupEntry.m */; };
 		A6C763611B45C52B00E3C992 /* PopupModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3118186E2F54007F550F /* PopupModel.m */; };
 		A6C763621B45C52B00E3C992 /* PopupWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A3113186E2F14007F550F /* PopupWindow.m */; };
@@ -2020,8 +2020,8 @@
 		1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxDashboardController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DD6707514934ADE008E4361 /* PTYSplitView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = PTYSplitView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DD6707614934ADE008E4361 /* PTYSplitView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = PTYSplitView.m; sourceTree = "<group>"; tabWidth = 4; };
-		1DD7363F1283C2FA009B7829 /* Popup.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = Popup.h; sourceTree = "<group>"; tabWidth = 4; };
-		1DD736401283C2FA009B7829 /* Popup.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = Popup.m; sourceTree = "<group>"; tabWidth = 4; };
+		1DD7363F1283C2FA009B7829 /* iTermPopupWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPopupWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
+		1DD736401283C2FA009B7829 /* iTermPopupWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPopupWindowController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermExpose.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DDBC61D12E2BCDC00BC3868 /* iTermExpose.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExpose.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DDC093D1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRoundedCornerScrollView.h; sourceTree = "<group>"; };
@@ -3024,7 +3024,7 @@
 				1D8255FE146881EC007CAE78 /* PointerController.h */,
 				1DFA9D6E18F3A30F008ADC98 /* PointerPreferencesViewController.h */,
 				1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */,
-				1DD7363F1283C2FA009B7829 /* Popup.h */,
+				1DD7363F1283C2FA009B7829 /* iTermPopupWindowController.h */,
 				A68A310D186E2EDA007F550F /* PopupEntry.h */,
 				A68A3117186E2F54007F550F /* PopupModel.h */,
 				A68A3112186E2F14007F550F /* PopupWindow.h */,
@@ -3592,8 +3592,8 @@
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
 				1DC13AC218864E2200034DAE /* CommandHistoryPopup.m */,
 				1D03D41E191419080049EB8F /* DirectoriesPopup.m */,
+				1DD736401283C2FA009B7829 /* iTermPopupWindowController.m */,
 				1D7C18801275D22900461E55 /* PasteboardHistory.m */,
-				1DD736401283C2FA009B7829 /* Popup.m */,
 				A68A310E186E2EDA007F550F /* PopupEntry.m */,
 				A68A3118186E2F54007F550F /* PopupModel.m */,
 				A68A3113186E2F14007F550F /* PopupWindow.m */,
@@ -4332,7 +4332,7 @@
 				1D6ED8BD19AEA20D005A7799 /* ProfilesGeneralPreferencesViewController.h in Headers */,
 				1D6ED8BE19AEA20D005A7799 /* FileTransferManager.h in Headers */,
 				1D6ED8BF19AEA20D005A7799 /* DebugLogging.h in Headers */,
-				1D6ED8C019AEA20D005A7799 /* Popup.h in Headers */,
+				1D6ED8C019AEA20D005A7799 /* iTermPopupWindowController.h in Headers */,
 				1D6ED8C119AEA20D005A7799 /* TextViewWrapper.h in Headers */,
 				1D6ED8C219AEA20D005A7799 /* PTYTab.h in Headers */,
 				1D6ED8C319AEA20D005A7799 /* SessionView.h in Headers */,
@@ -4690,7 +4690,7 @@
 				A6E713AD18F7CF73008D94DD /* ProfilesGeneralPreferencesViewController.h in Headers */,
 				A68A30F4186D150A007F550F /* FileTransferManager.h in Headers */,
 				1DD39B1A180B82F5004E56D5 /* DebugLogging.h in Headers */,
-				1DD736411283C2FA009B7829 /* Popup.h in Headers */,
+				1DD736411283C2FA009B7829 /* iTermPopupWindowController.h in Headers */,
 				1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */,
 				1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */,
 				1D2E813112A18F7500F3D71E /* SessionView.h in Headers */,
@@ -6016,7 +6016,7 @@
 				A6C7630F1B45C52B00E3C992 /* iTermColorMap.m in Sources */,
 				A6C763561B45C52B00E3C992 /* iTermOpenQuicklyTableView.m in Sources */,
 				A62C3B2C1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.m in Sources */,
-				A6C7635F1B45C52B00E3C992 /* Popup.m in Sources */,
+				A6C7635F1B45C52B00E3C992 /* iTermPopupWindowController.m in Sources */,
 				A62C3A8E1BCAE08300B5629D /* iTermDirectoryTree.m in Sources */,
 				A6C763AB1B45C52B00E3C992 /* AlertTrigger.m in Sources */,
 				A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */,

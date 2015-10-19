@@ -811,7 +811,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)popupWillClose:(Popup *)popup {
+- (void)popupWillClose:(iTermPopupWindowController *)popup {
     if (popup == pbHistoryView) {
         [pbHistoryView autorelease];
         pbHistoryView = nil;

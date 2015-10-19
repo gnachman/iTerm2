@@ -1,6 +1,6 @@
 // Base classes for popup windows like autocomplete and pasteboardhistory.
 
-#import "Popup.h"
+#import "iTermPopupWindowController.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSWindow+PSM.h"
@@ -9,11 +9,13 @@
 #import "PopupWindow.h"
 #import "PTYTextView.h"
 #import "VT100Screen.h"
+
+#import <QuartzCore/QuartzCore.h>
 #include <wctype.h>
 
 #define PopLog DLog
 
-@implementation Popup {
+@implementation iTermPopupWindowController {
     // Subclass-owned tableview.
     NSTableView* tableView_;
     
@@ -102,14 +104,41 @@
         self.window.level = NSPopUpMenuWindowLevel;
     }
 
-    self.window.alphaValue = 0;
-    [self showWindow:delegate.popupWindowController];
-    [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
+    static const NSTimeInterval kAnimationDuration = 0.15;
+    NSView *theView = self.window.contentView.subviews.firstObject;
+    if ([theView isKindOfClass:[NSScrollView class]] &&
+        [theView respondsToSelector:@selector(allowsVibrancy)]) {
+        // This animation is only tested on 10.10.
 
-    [NSAnimationContext beginGrouping];
-    [[NSAnimationContext currentContext] setDuration:0.15];
-    self.window.animator.alphaValue = 1;
-    [NSAnimationContext endGrouping];
+        theView.wantsLayer = YES;
+        [theView makeBackingLayer];
+
+        [CATransaction begin];
+        [CATransaction setAnimationDuration:1];
+
+        CATransform3D initialTransform = CATransform3DMakeScale(0, 0, 1);
+        CATransform3D finalTransform = CATransform3DIdentity;
+
+        CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"transform"];
+        animation.fromValue = (id)[NSValue valueWithCATransform3D:initialTransform];
+        animation.toValue = (id)[NSValue valueWithCATransform3D:finalTransform];
+        animation.duration = kAnimationDuration;
+        animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn];
+        animation.removedOnCompletion = YES;
+        [theView.layer addAnimation:animation forKey:@"transform"];
+        [CATransaction commit];
+        [self showWindow:delegate.popupWindowController];
+        [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
+    } else {
+        self.window.alphaValue = 0;
+        [self showWindow:delegate.popupWindowController];
+        [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
+
+        [NSAnimationContext beginGrouping];
+        [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
+        self.window.animator.alphaValue = 1;
+        [NSAnimationContext endGrouping];
+    }
 }
 
 - (PopupModel*)unfilteredModel
