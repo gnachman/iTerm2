@@ -143,7 +143,6 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL _shellIntegrationInstalled;
 
     NSDictionary *inlineFileInfo_;  // Keys are kInlineFileXXX
-    NSMutableArray *inlineFileCodes_;
     VT100GridAbsCoord nextCommandOutputStart_;
     NSTimeInterval lastBell_;
     BOOL _cursorVisible;
@@ -225,10 +224,6 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [markCache_ release];
     [inlineFileInfo_ release];
     [_lastCommandMark release];
-    for (NSNumber *code in inlineFileCodes_) {
-        ReleaseImage([code intValue]);
-    }
-    [inlineFileCodes_ release];
     _temporaryDoubleBuffer.delegate = nil;
     [_temporaryDoubleBuffer reset];
     [_temporaryDoubleBuffer release];
@@ -3338,8 +3333,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     currentGrid_.cursorX = currentGrid_.cursorX + width + 1;
 
+    // Add a mark after the image. When the mark gets freed, it will release the image's memory.
     SetDecodedImage(c.code, image, data);
-    [inlineFileCodes_ addObject:@(c.code)];
+    long long absLine = (self.totalScrollbackOverflow +
+                         [self numberOfScrollbackLines] +
+                         currentGrid_.cursor.y + 1);
+    iTermImageMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
+                                                       oneLine:YES
+                                                       ofClass:[iTermImageMark class]];
+    mark.imageCode = @(c.code);
     [delegate_ screenNeedsRedraw];
 }
 

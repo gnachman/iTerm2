@@ -64,3 +64,8 @@
 @interface iTermCapturedOutputMark : iTermMark
 @property(nonatomic, copy) NSString *guid;
 @end
+
+// Invisible marks used to record where images are located so they can be freed.
+@interface iTermImageMark : iTermMark
+@property(nonatomic, retain) NSNumber *imageCode;
+@end
