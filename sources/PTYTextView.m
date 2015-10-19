@@ -1104,6 +1104,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
     _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
     _drawingHelper.thinStrokes = _thinStrokes;
+    _drawingHelper.showSearchingCursor = _showSearchingCursor;
 
     const NSRect *rectArray;
     NSInteger rectCount;

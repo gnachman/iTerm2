@@ -316,6 +316,10 @@
         return;
     }
     // Escape
+    [self closePopupWindow];
+}
+
+- (void)closePopupWindow {
     [[self window] close];
     [self onClose];
 }

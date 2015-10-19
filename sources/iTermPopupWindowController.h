@@ -24,6 +24,7 @@
 - (BOOL)popupHandleSelector:(SEL)selector string:(NSString *)string currentValue:(NSString *)currentValue;
 - (void)popupWillClose:(iTermPopupWindowController *)popup;
 - (BOOL)popupWindowIsInHotkeyWindow;
+- (void)popupIsSearching:(BOOL)searching;
 
 @end
 
@@ -34,6 +35,9 @@
 - (instancetype)initWithWindowNibName:(NSString*)nibName
                              tablePtr:(NSTableView**)table
                                 model:(PopupModel*)model;
+
+// Programatically close the window.
+- (void)closePopupWindow;
 
 // Call this after initWithWindowNibName:tablePtr:model: if table was nil.
 - (void)setTableView:(NSTableView *)table;

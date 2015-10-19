@@ -4750,8 +4750,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [[commandHistoryPopup window] isVisible] && [self.autoCommandHistorySessionGuid isEqualToString:session.guid];
 }
 
-- (IBAction)openAutocomplete:(id)sender
-{
+- (IBAction)openAutocomplete:(id)sender {
     if (!autocompleteView) {
         autocompleteView = [[AutocompleteView alloc] init];
     }
