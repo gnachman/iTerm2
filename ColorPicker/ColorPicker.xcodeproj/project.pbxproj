@@ -77,6 +77,10 @@
 		A6184F821BAA928A0088EF3C /* Eyedropper@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6184F801BAA928A0088EF3C /* Eyedropper@2x.png */; };
 		A6184F861BAA93F50088EF3C /* ActiveEyedropper.png in Resources */ = {isa = PBXBuildFile; fileRef = A6184F841BAA93F50088EF3C /* ActiveEyedropper.png */; };
 		A6184F871BAA93F50088EF3C /* ActiveEyedropper@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6184F851BAA93F50088EF3C /* ActiveEyedropper@2x.png */; };
+		A662E7901BD4932A00B79B8B /* HSB.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E78E1BD4932A00B79B8B /* HSB.png */; settings = {ASSET_TAGS = (); }; };
+		A662E7911BD4932A00B79B8B /* HSB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E78F1BD4932A00B79B8B /* HSB@2x.png */; settings = {ASSET_TAGS = (); }; };
+		A662E7941BD4933A00B79B8B /* RGB.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7921BD4933A00B79B8B /* RGB.png */; settings = {ASSET_TAGS = (); }; };
+		A662E7951BD4933A00B79B8B /* RGB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7931BD4933A00B79B8B /* RGB@2x.png */; settings = {ASSET_TAGS = (); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -170,6 +174,10 @@
 		A6184F801BAA928A0088EF3C /* Eyedropper@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Eyedropper@2x.png"; sourceTree = "<group>"; };
 		A6184F841BAA93F50088EF3C /* ActiveEyedropper.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ActiveEyedropper.png; sourceTree = "<group>"; };
 		A6184F851BAA93F50088EF3C /* ActiveEyedropper@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ActiveEyedropper@2x.png"; sourceTree = "<group>"; };
+		A662E78E1BD4932A00B79B8B /* HSB.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = HSB.png; path = Images.xcassets/HSB/HSB.png; sourceTree = "<group>"; };
+		A662E78F1BD4932A00B79B8B /* HSB@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "HSB@2x.png"; path = "Images.xcassets/HSB/HSB@2x.png"; sourceTree = "<group>"; };
+		A662E7921BD4933A00B79B8B /* RGB.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = RGB.png; path = Images.xcassets/RGB/RGB.png; sourceTree = "<group>"; };
+		A662E7931BD4933A00B79B8B /* RGB@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "RGB@2x.png"; path = "Images.xcassets/RGB/RGB@2x.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -339,6 +347,8 @@
 		A6184F2D1BA9D55D0088EF3C /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				A662E78B1BD492F600B79B8B /* HSB */,
+				A662E78A1BD492F200B79B8B /* RGB */,
 				1D3368881BCDB61200D3B564 /* ActiveEscapeHatch */,
 				1D3368831BCDB5F600D3B564 /* EscapeHatch */,
 				A6184F831BAA93F50088EF3C /* ActiveEyedropper */,
@@ -421,6 +431,24 @@
 			);
 			name = ActiveEyedropper;
 			path = Images.xcassets/ActiveEyedropper;
+			sourceTree = "<group>";
+		};
+		A662E78A1BD492F200B79B8B /* RGB */ = {
+			isa = PBXGroup;
+			children = (
+				A662E7921BD4933A00B79B8B /* RGB.png */,
+				A662E7931BD4933A00B79B8B /* RGB@2x.png */,
+			);
+			name = RGB;
+			sourceTree = "<group>";
+		};
+		A662E78B1BD492F600B79B8B /* HSB */ = {
+			isa = PBXGroup;
+			children = (
+				A662E78E1BD4932A00B79B8B /* HSB.png */,
+				A662E78F1BD4932A00B79B8B /* HSB@2x.png */,
+			);
+			name = HSB;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -562,11 +590,15 @@
 				A6184F3E1BA9D5700088EF3C /* Add@2x.png in Resources */,
 				1D3368871BCDB60700D3B564 /* EscapeHatch@2x.png in Resources */,
 				A6184F6D1BAA15B80088EF3C /* SelectionIndicator.png in Resources */,
+				A662E7911BD4932A00B79B8B /* HSB@2x.png in Resources */,
+				A662E7941BD4933A00B79B8B /* RGB.png in Resources */,
+				A662E7951BD4933A00B79B8B /* RGB@2x.png in Resources */,
 				A6184F811BAA928A0088EF3C /* Eyedropper.png in Resources */,
 				A6184F3D1BA9D5700088EF3C /* Add.png in Resources */,
 				A6184F6E1BAA15B80088EF3C /* SelectionIndicator@2x.png in Resources */,
 				A6184F871BAA93F50088EF3C /* ActiveEyedropper@2x.png in Resources */,
 				A6184F5D1BAA083F0088EF3C /* SwatchCheckerboard@2x.png in Resources */,
+				A662E7901BD4932A00B79B8B /* HSB.png in Resources */,
 				1D33688B1BCDB62100D3B564 /* ActiveEscapeHatch.png in Resources */,
 				A6184F5C1BAA083F0088EF3C /* SwatchCheckerboard.png in Resources */,
 				1D3368861BCDB60700D3B564 /* EscapeHatch.png in Resources */,
