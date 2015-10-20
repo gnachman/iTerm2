@@ -52,7 +52,7 @@ DEFINE_INT(optimumTabWidth, 175, @"Tabs: Preferred tab width when tabs are equal
 DEFINE_BOOL(addNewTabAtEndOfTabs, YES, @"Tabs: Add new tabs at the end of the tab bar, not next to current tab.");
 DEFINE_BOOL(navigatePanesInReadingOrder, YES, @"Tabs: Next Pane and Previous Pane commands use reading order, not the time of last use.");
 DEFINE_BOOL(eliminateCloseButtons, NO, @"Tabs: Eliminate close buttons from tabs, even on mouse-over.");
-DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, @"Tabs: How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes. This setting gives the time in seconds for it to remain visible.");
+DEFINE_FLOAT(tabAutoShowHoldTime, 1.0, @"Tabs: How long in seconds to show tabs in fullscreen.\nThe tab bar appears briefly in fullscreen when the number of tabs changes or you switch tabs. This setting gives the time in seconds for it to remain visible.");
 
 #pragma mark Mouse
 DEFINE_BOOL(alternateMouseScroll, NO, @"Mouse: Scroll wheel sends arrow keys when in alternate screen mode.");
