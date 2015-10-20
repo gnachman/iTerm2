@@ -4,7 +4,7 @@
 #import "ProfileModel.h"
 #import "PTYTabDelegate.h"
 
-@class Popup;
+@class iTermPopupWindowController;
 @class PSMTabBarControl;
 @class PTYSession;
 @class PTYTab;
@@ -164,7 +164,7 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Show or hide this window's toolbelt.
 - (IBAction)toggleToolbeltVisibility:(id)sender;
 
-- (void)popupWillClose:(Popup *)popup;
+- (void)popupWillClose:(iTermPopupWindowController *)popup;
 
 - (void)toggleFullScreenMode:(id)sender;
 

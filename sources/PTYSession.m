@@ -6954,7 +6954,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 #pragma mark - PopupDelegate
 
-- (void)popupWillClose:(Popup *)popup {
+- (void)popupIsSearching:(BOOL)searching {
+    _textview.showSearchingCursor = searching;
+    [_textview setNeedsDisplayInRect:_textview.cursorFrame];
+}
+
+- (void)popupWillClose:(iTermPopupWindowController *)popup {
     [[[self tab] realParentWindow] popupWillClose:popup];
 }
 

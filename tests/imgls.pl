@@ -59,7 +59,7 @@ sub write_image {
             "\033", "]", "1337",                                                # image leadin sequence (OSC + 1337)
             join(';', map { $_ . '=' . $imgparams{$_} } keys %imgparams),       # semicolon separated pairs of param=value pairs
             encode_base64(get_image_bytes($file)),                              # base64 encoded image bytes
-            "\007";                                                         # end-of-encoding char (BEL = ^G) and final NUL
+            "\007";                                                             # end-of-encoding char (BEL = ^G)
 }
 
 ### main code 
@@ -132,7 +132,7 @@ sub do_ls_cmd {
             $dims = join 'x', $w, $h        if defined $w and defined $h;
         }
         elsif ($php) {
-            $dims = qx/$php -r '$phpcmd' '$file'/;
+            $dims = get_cmd_output($php, '-r', $phpcmd, $file);
         }
     }
     if ($dims) {
@@ -166,4 +166,35 @@ sub get_image_bytes {
     return $filebytes;
 }
 
-# vim: set expandtab:
+sub get_cmd_output {
+    my $prog = shift;
+
+    use English;
+    my ($ret, $pid);
+    die "Can't fork: $!" unless defined($pid = open(KID, "-|"));
+    if ($pid) {           # parent
+        $ret .= $_       while <KID>;
+        close KID;
+        return $ret;
+    }
+    else {
+        my @temp     = ($EUID, $EGID);
+        my $orig_uid = $UID;
+        my $orig_gid = $GID;
+        $EUID = $UID;
+        $EGID = $GID;
+        # Drop privileges
+        $UID  = $orig_uid;
+        $GID  = $orig_gid;
+        # Make sure privs are really gone
+        ($EUID, $EGID) = @temp;
+        die "Can't drop privileges"
+            unless $UID == $EUID  && $GID eq $EGID;
+        $ENV{PATH} = "/bin:/usr/bin"; # Minimal PATH.
+    # Consider sanitizing the environment even more.
+        exec $prog, @_,
+            or warn "Failed to run $prog: $!";
+    }
+}
+
+# vim: set expandtab

@@ -2,13 +2,13 @@
 // likely suffixes. Selecting one appends it, and you can search the list Quicksilver-style.
 
 #import <Cocoa/Cocoa.h>
+#import "iTermPopupWindowController.h"
 #import "PTYSession.h"
 #import "LineBuffer.h"
-#import "Popup.h"
 
 @class iTermCommandHistoryEntryMO;
 
-@interface AutocompleteView : Popup
+@interface AutocompleteView : iTermPopupWindowController
 
 - (void)onOpen;
 - (void)refresh;

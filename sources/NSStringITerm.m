@@ -31,6 +31,7 @@
 #import "NSStringITerm.h"
 #import "NSCharacterSet+iTerm.h"
 #import "RegexKitLite.h"
+#import "ScreenChar.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
 #import <wctype.h>
@@ -711,6 +712,106 @@ int decode_utf8_char(const unsigned char *datap,
     NSArray *iecPrefixes = @[ @"Ki", @"Mi", @"Gi", @"Ti", @"Pi", @"Ei" ];
     return [NSString stringWithFormat:@"%@%.2f %@",
                exact ? @"" :@ "≈", (double)num / 100, iecPrefixes[pow]];
+}
+
+- (NSArray<NSString *> *)helpfulSynonyms {
+    NSMutableArray *array = [NSMutableArray array];
+    NSString *hexOrDecimalConversion = [self hexOrDecimalConversionHelp];
+    if (hexOrDecimalConversion) {
+        [array addObject:hexOrDecimalConversion];
+    }
+    NSString *timestampConversion = [self timestampConversionHelp];
+    if (timestampConversion) {
+        [array addObject:timestampConversion];
+    }
+    NSString *utf8Help = [self utf8Help];
+    if (utf8Help) {
+        [array addObject:utf8Help];
+    }
+    if (array.count) {
+        return array;
+    } else {
+        return nil;
+    }
+}
+
+- (NSString *)utf8Help {
+    if (self.length == 0) {
+        return nil;
+    }
+    unichar baseChar = [self characterAtIndex:0];
+    if (baseChar < 128 && self.length == 1) {
+        // No help for ASCII
+        return nil;
+    }
+    NSData *data = [self dataUsingEncoding:NSUTF32StringEncoding];
+    const int *characters = (int *)data.bytes;
+    int numCharacters = data.length / 4;
+    BOOL foundBase = NO;
+    for (NSUInteger i = 0; i < numCharacters; i++) {
+        if (characters[i] == 0xfeff) {
+            // Ignore byte order mark
+            continue;
+        }
+        if (foundBase) {
+            if (!IsCombiningMark(characters[i])) {
+                return nil;
+            }
+        } else {
+            foundBase = YES;
+        }
+    }
+
+    NSMutableArray *byteStrings = [NSMutableArray array];
+    const char *utf8 = [self UTF8String];
+    for (size_t i = 0; utf8[i]; i++) {
+        [byteStrings addObject:[NSString stringWithFormat:@"0x%02x", utf8[i] & 0xff]];
+    }
+    NSString *utf8String = [byteStrings componentsJoinedByString:@" "];
+
+    NSMutableArray *ucs32Strings = [NSMutableArray array];
+    for (NSUInteger i = 1; i < numCharacters; i++) {
+        if (characters[i] == 0xfeff) {
+            // Ignore byte order mark
+            continue;
+        }
+        [ucs32Strings addObject:[NSString stringWithFormat:@"U+%04x", characters[i]]];
+    }
+    NSString *ucs32String = [ucs32Strings componentsJoinedByString:@" "];
+
+    return [NSString stringWithFormat:@"“%@” = %@ = %@ (UTF-8)", self, ucs32String, utf8String];
+}
+
+- (NSString *)timestampConversionHelp {
+    static const NSUInteger kTimestampLength = 10;
+    static const NSUInteger kJavaTimestampLength = 13;
+    if ((self.length == kTimestampLength ||
+         self.length == kJavaTimestampLength) &&
+        [self hasPrefix:@"1"]) {
+        for (int i = 0; i < kTimestampLength; i++) {
+            if (!isdigit([self characterAtIndex:i])) {
+                return nil;
+            }
+        }
+        NSDateFormatter *fmt = [[[NSDateFormatter alloc] init] autorelease];
+        // doubles run out of precision at 2^53. The largest Java timestamp we will convert is less
+        // than 2^41, so this is fine.
+        NSTimeInterval timestamp = [self doubleValue];
+        NSString *template;
+        if (self.length == kJavaTimestampLength) {
+            // Convert milliseconds to seconds
+            timestamp /= 1000.0;
+            template = @"yyyyMMMd hh:mm:ss.SSS z";
+        } else {
+            template = @"yyyyMMMd hh:mm:ss z";
+        }
+        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:template
+                                                           options:0
+                                                            locale:[NSLocale currentLocale]]];
+        return [fmt stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
+    } else {
+        return nil;
+    }
 }
 
 - (NSString *)hexOrDecimalConversionHelp {
