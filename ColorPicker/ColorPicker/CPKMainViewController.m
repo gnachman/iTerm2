@@ -5,22 +5,21 @@
 #import "CPKFavorite.h"
 #import "CPKFavoritesView.h"
 #import "CPKFlippedView.h"
-#import "CPKRGBView.h"
+#import "CPKSelectionView.h"
 #import "NSColor+CPK.h"
 
-const CGFloat kDesiredWidth = 220;
+const CGFloat kDesiredWidth = 272;
 const CGFloat kFavoritesHeight = 100;
 
 static const CGFloat kLeftMargin = 8;
 static const CGFloat kRightMargin = 8;
 static const CGFloat kBottomMargin = 8;
-static NSInteger gSystemColorPickerReferenceCount = 0;
 
 @interface CPKMainViewController ()
 @property(nonatomic, copy) void (^block)(NSColor *);
 @property(nonatomic) NSColor *selectedColor;
 @property(nonatomic) CGFloat desiredHeight;
-@property(nonatomic) CPKRGBView *rgbView;
+@property(nonatomic) CPKSelectionView *rgbView;
 @property(nonatomic) CPKControlsView *controlsView;
 @property(nonatomic) CPKFavoritesView *favoritesView;
 @property(nonatomic) BOOL alphaAllowed;
@@ -56,12 +55,12 @@ static NSInteger gSystemColorPickerReferenceCount = 0;
     self.view.autoresizesSubviews = NO;
 
     __weak __typeof(self) weakSelf = self;
-    self.rgbView = [[CPKRGBView alloc] initWithFrame:self.view.bounds
-                                               block: ^(NSColor *color) {
-                                                   [weakSelf selectColor:color];
-                                               }
-                                               color:_selectedColor
-                                        alphaAllowed:self.alphaAllowed];
+    self.rgbView = [[CPKSelectionView alloc] initWithFrame:self.view.bounds
+                                                     block: ^(NSColor *color) {
+                                                         [weakSelf selectColor:color];
+                                                     }
+                                                     color:_selectedColor
+                                              alphaAllowed:self.alphaAllowed];
     [self.rgbView sizeToFit];
 
     self.controlsView =

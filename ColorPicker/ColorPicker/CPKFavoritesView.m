@@ -257,7 +257,7 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
     [info enumerateDraggingItemsWithOptions:0
                                     forView:tableView
                                     classes:@[ [CPKFavorite class] ]
-                              searchOptions:nil
+                              searchOptions:@{ }
                                  usingBlock:^(NSDraggingItem *draggingItem,
                                               NSInteger idx,
                                               BOOL *stop) {
@@ -294,7 +294,7 @@ NSString *const kCPFavoritesUserDefaultsKey = @"kCPFavoritesUserDefaultsKey";
     [info enumerateDraggingItemsWithOptions:0
                                     forView:self.tableView
                                     classes:@[ [CPKFavorite class] ]
-                              searchOptions:nil
+                              searchOptions:@{ }
                                  usingBlock:^(NSDraggingItem *draggingItem,
                                               NSInteger idx,
                                               BOOL *stop) {
