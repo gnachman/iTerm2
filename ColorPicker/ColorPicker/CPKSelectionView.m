@@ -23,9 +23,10 @@ static const CGFloat kBottomMargin = 4;
 static const CGFloat kMarginBetweenSliders = 8;
 static const CGFloat kMarginBetweenComponentSliders = 0;
 static const CGFloat kComponentSlidersTopMargin = 14;
+static const CGFloat kExtraRightMarginForTextFieldSwitch = 2;
 
-static NSString *const kCPKSelectionViewShowHSLTextFieldsKey =
-    @"kCPKSelectionViewShowHSLTextFieldsKey";
+static NSString *const kCPKSelectionViewShowHSBTextFieldsKey =
+    @"kCPKSelectionViewShowHSBTextFieldsKey";
 
 static NSString *const kCPKSelectionViewPreferredModeKey =
     @"kCPKSelectionViewPreferredModeKey";
@@ -179,7 +180,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         self.gradientView.selectedColor = color;
 
         NSImage *rgbImage = [self cpk_imageNamed:@"RGB"];
-        frame = NSMakeRect(NSMaxX(frameRect) - rgbImage.size.width - kRightMargin + kMarginBetweenTextFields,
+        frame = NSMakeRect(NSMaxX(frameRect) - rgbImage.size.width - kRightMargin + kMarginBetweenTextFields - kExtraRightMarginForTextFieldSwitch,
                            y,
                            rgbImage.size.width,
                            rgbImage.size.height);
@@ -213,7 +214,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 
         self.desiredHeight = NSMaxY(self.rgbTextFields.frame) + kBottomMargin;
 
-        [self setTextFieldsRGB:![[NSUserDefaults standardUserDefaults] boolForKey:kCPKSelectionViewShowHSLTextFieldsKey]];
+        [self setTextFieldsRGB:![[NSUserDefaults standardUserDefaults] boolForKey:kCPKSelectionViewShowHSBTextFieldsKey]];
         // Update for the default mode
         [self modeDidChange:self.modeButton];
         self.block = block;
@@ -223,8 +224,8 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 
 - (void)setTextFieldsRGB:(BOOL)rgb {
     [[NSUserDefaults standardUserDefaults] setBool:!rgb
-                                            forKey:kCPKSelectionViewShowHSLTextFieldsKey];
-    NSImage *image = [self cpk_imageNamed:rgb ? @"RGB" : @"HSB"];
+                                            forKey:kCPKSelectionViewShowHSBTextFieldsKey];
+    NSImage *image = [self cpk_imageNamed:rgb ? @"HSB" : @"RGB"];
     self.hslRgbTextFieldSwitch.image = image;
     self.rgbTextFields.hidden = !rgb;
     self.hsbTextFields.hidden = rgb;
@@ -780,43 +781,31 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         case kCPKRGBViewModeHSBWithHueSliderTag:
             self.colorComponentSliderView.type = kCPKColorComponentSliderTypeHue;
             self.gradientView.type = kCPKGradientViewTypeSaturationBrightness;
-            self.hsbTextFields.hidden = NO;
-            self.rgbTextFields.hidden = YES;
             [self showGradientAndColorComponentSlider];
             break;
         case kCPKRGBViewModeHSBWithSaturationSliderTag:
             self.colorComponentSliderView.type = kCPKColorComponentSliderTypeSaturation;
             self.gradientView.type = kCPKGradientViewTypeBrightnessHue;
-            self.hsbTextFields.hidden = NO;
-            self.rgbTextFields.hidden = YES;
             [self showGradientAndColorComponentSlider];
             break;
         case kCPKRGBViewModeHSBWithBrightnessSliderTag:
             self.colorComponentSliderView.type = kCPKColorComponentSliderTypeBrightness;
             self.gradientView.type = kCPKGradientViewTypeHueSaturation;
-            self.hsbTextFields.hidden = NO;
-            self.rgbTextFields.hidden = YES;
             [self showGradientAndColorComponentSlider];
             break;
         case kCPKRGBViewModeRGBWithRedSliderTag:
             self.colorComponentSliderView.type = kCPKColorComponentSliderTypeRed;
             self.gradientView.type = kCPKGradientViewTypeGreenBlue;
-            self.hsbTextFields.hidden = YES;
-            self.rgbTextFields.hidden = NO;
             [self showGradientAndColorComponentSlider];
             break;
         case kCPKRGBViewModeRGBWithGreenSliderTag:
             self.colorComponentSliderView.type = kCPKColorComponentSliderTypeGreen;
             self.gradientView.type = kCPKGradientViewTypeBlueRed;
-            self.hsbTextFields.hidden = YES;
-            self.rgbTextFields.hidden = NO;
             [self showGradientAndColorComponentSlider];
             break;
         case kCPKRGBViewModeRGBWithBlueSliderTag:
             self.colorComponentSliderView.type = kCPKColorComponentSliderTypeBlue;
             self.gradientView.type = kCPKGradientViewTypeRedGreen;
-            self.hsbTextFields.hidden = YES;
-            self.rgbTextFields.hidden = NO;
             [self showGradientAndColorComponentSlider];
             break;
         case kCPKRGBViewModeHSBSliders:
@@ -830,9 +819,6 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
             self.gradientView.hidden = YES;
             self.colorComponentSliderView.hidden = YES;
 
-            self.hsbTextFields.hidden = YES;
-            self.rgbTextFields.hidden = NO;
-            
             [self updateSliderGradients];
             break;
         case kCPKRGBViewModeRGBSliders:
@@ -846,9 +832,6 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
             self.gradientView.hidden = YES;
             self.colorComponentSliderView.hidden = YES;
 
-            self.hsbTextFields.hidden = NO;
-            self.rgbTextFields.hidden = YES;
-            
             [self updateSliderGradients];
             break;
     }
