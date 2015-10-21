@@ -72,6 +72,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
     IBOutlet NSTableColumn *_partialLineColumn;
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSTableColumn *_parametersColumn;
+    IBOutlet NSButton *_removeTriggerButton;
 }
 
 - (instancetype)init {
@@ -231,6 +232,8 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 - (IBAction)removeTrigger:(id)sender {
     assert(_tableView.selectedRow >= 0);
     [self setTriggerDictionary:nil forRow:[_tableView selectedRow] reloadData:YES];
+    self.hasSelection = [_tableView numberOfSelectedRows] > 0;
+    _removeTriggerButton.enabled = self.hasSelection;
 }
 
 - (void)setGuid:(NSString *)guid {
@@ -495,6 +498,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
 
 - (void)tableViewSelectionDidChange:(NSNotification *)notification {
     self.hasSelection = [_tableView numberOfSelectedRows] > 0;
+    _removeTriggerButton.enabled = self.hasSelection;
 }
 
 #pragma mark NSWindowDelegate

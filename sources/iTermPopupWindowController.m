@@ -1,6 +1,6 @@
 // Base classes for popup windows like autocomplete and pasteboardhistory.
 
-#import "Popup.h"
+#import "iTermPopupWindowController.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSWindow+PSM.h"
@@ -9,11 +9,13 @@
 #import "PopupWindow.h"
 #import "PTYTextView.h"
 #import "VT100Screen.h"
+
+#import <QuartzCore/QuartzCore.h>
 #include <wctype.h>
 
 #define PopLog DLog
 
-@implementation Popup {
+@implementation iTermPopupWindowController {
     // Subclass-owned tableview.
     NSTableView* tableView_;
     
@@ -102,12 +104,13 @@
         self.window.level = NSPopUpMenuWindowLevel;
     }
 
+    static const NSTimeInterval kAnimationDuration = 0.15;
     self.window.alphaValue = 0;
     [self showWindow:delegate.popupWindowController];
     [[self window] makeKeyAndOrderFront:delegate.popupWindowController];
 
     [NSAnimationContext beginGrouping];
-    [[NSAnimationContext currentContext] setDuration:0.15];
+    [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     self.window.animator.alphaValue = 1;
     [NSAnimationContext endGrouping];
 }
@@ -287,6 +290,10 @@
         return;
     }
     // Escape
+    [self closePopupWindow];
+}
+
+- (void)closePopupWindow {
     [[self window] close];
     [self onClose];
 }

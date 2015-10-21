@@ -43,14 +43,19 @@
 
 - (NSRect)indicatorFrame {
     NSRect frame =
-    NSMakeRect(self.selectedValue * NSWidth(self.bounds) -
-               NSWidth(self.indicatorView.bounds) / 2,
-               NSHeight(self.bounds) - NSHeight(self.indicatorView.bounds) - 1,
-               NSWidth(self.indicatorView.bounds),
-               NSHeight(self.indicatorView.bounds));
+        NSMakeRect(self.selectedValue * NSWidth(self.bounds) -
+                   NSWidth(self.indicatorView.bounds) / 2,
+                   NSHeight(self.bounds) - NSHeight(self.indicatorView.bounds) - 1,
+                   NSWidth(self.indicatorView.bounds),
+                   NSHeight(self.indicatorView.bounds));
     frame.origin.x = MIN(MAX(0, NSMinX(frame)), NSWidth(self.bounds) - NSWidth(frame));
     frame.origin.y = MIN(MAX(0, NSMinY(frame)), NSHeight(self.bounds) - NSHeight(frame));
     return frame;
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    self.indicatorView.frame = [self indicatorFrame];
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {

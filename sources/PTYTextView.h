@@ -260,6 +260,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // For tests.
 @property(nonatomic, readonly) NSRect cursorFrame;
 
+// Change the cursor to indicate that a search is being performed.
+@property(nonatomic, assign) BOOL showSearchingCursor;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont

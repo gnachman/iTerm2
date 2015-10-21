@@ -1104,6 +1104,7 @@ static const int kDragThreshold = 3;
     _drawingHelper.now = [NSDate timeIntervalSinceReferenceDate];
     _drawingHelper.drawMarkIndicators = [_delegate textViewShouldShowMarkIndicators];
     _drawingHelper.thinStrokes = _thinStrokes;
+    _drawingHelper.showSearchingCursor = _showSearchingCursor;
 
     const NSRect *rectArray;
     NSInteger rectCount;
@@ -1673,7 +1674,7 @@ static const int kDragThreshold = 3;
 // Update range of underlined chars indicating cmd-clicakble url.
 - (void)updateUnderlinedURLs:(NSEvent *)event
 {
-    if ([event modifierFlags] & NSCommandKeyMask) {
+    if (([event modifierFlags] & NSCommandKeyMask) && self.window.isKeyWindow) {
         NSPoint screenPoint = [NSEvent mouseLocation];
         NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(screenPoint.x,
                                                                             screenPoint.y,
@@ -3700,11 +3701,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     if ([self _haveShortSelection]) {
         NSString *text = [self selectedText];
-        NSString *conversion = [text hexOrDecimalConversionHelp];
-        if (conversion) {
+        NSArray<NSString *> *synonyms = [text helpfulSynonyms];
+        for (NSString *conversion in synonyms) {
             NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
             theItem.title = conversion;
             [theMenu addItem:theItem];
+        }
+        if (synonyms.count) {
             [theMenu addItem:[NSMenuItem separatorItem]];
         }
     }

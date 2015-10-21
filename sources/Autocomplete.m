@@ -180,7 +180,8 @@ const int kMaxResultContextWords = 4;
 
         [self appendContextAtX:range.coordRange.start.x
                              y:range.coordRange.start.y
-                          into:context_ maxWords:maxWords];
+                          into:context_
+                      maxWords:maxWords];
         if (maxWords > kMaxQueryContextWords) {
             if ([context_ count] > 0) {
                 [prefix_ setString:[context_ objectAtIndex:0]];
@@ -320,8 +321,8 @@ const int kMaxResultContextWords = 4;
     }
 }
 
-- (void)refresh
-{
+- (void)refresh {
+    [self.delegate popupIsSearching:YES];
     [[self unfilteredModel] removeAllObjects];
     findContext_.substring = nil;
     VT100Screen* screen = [[self delegate] popupVT100Screen];
@@ -348,8 +349,8 @@ const int kMaxResultContextWords = 4;
     [self _doPopulateMore];
 }
 
-- (void)onClose
-{
+- (void)onClose {
+    [self.delegate popupIsSearching:NO];
     [stack_ removeAllObjects];
     [moreText_ release];
     moreText_ = nil;
@@ -659,6 +660,13 @@ const int kMaxResultContextWords = 4;
     } while (more_ || [findResults_ count] > 0);
     AcLog(@"While loop exited. Nothing more to do.");
     [self reloadData:YES];
+    if (!populateTimer_) {
+        if (self.unfilteredModel.count == 0) {
+            [self closePopupWindow];
+        } else {
+            [self.delegate popupIsSearching:NO];
+        }
+    }
 }
 
 - (void)addCommandEntries:(NSArray<iTermCommandHistoryEntryMO *> *)entries

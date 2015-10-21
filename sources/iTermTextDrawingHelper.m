@@ -1184,6 +1184,27 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                      focused:((_isInKeyWindow && _textViewIsActiveSession) || _shouldDrawFilledInCursor)
                        coord:_cursorCoord
                   cellHeight:_cellSize.height];
+        if (_showSearchingCursor) {
+            NSImage *image = [NSImage imageNamed:@"SearchCursor"];
+            if (image) {
+                NSRect imageRect = rect;
+                CGFloat aspectRatio = image.size.height / image.size.width;
+                imageRect.size.height = imageRect.size.width * aspectRatio;
+                if (imageRect.size.height > rect.size.height) {
+                    imageRect.size.height = rect.size.height;
+                    imageRect.size.width = rect.size.height / aspectRatio;
+                }
+                imageRect.origin.y += (rect.size.height - imageRect.size.height) / 2;
+                imageRect.origin.x += (rect.size.width - imageRect.size.width) / 2;
+
+                [image drawInRect:imageRect
+                         fromRect:NSZeroRect
+                        operation:NSCompositeSourceOver
+                         fraction:1
+                   respectFlipped:YES
+                            hints:nil];
+            }
+        }
     }
 
     _oldCursorPosition = _cursorCoord;
