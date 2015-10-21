@@ -283,7 +283,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     BOOL _tmuxTitleOutOfSync;
 
     NSInteger _requestAttentionId;  // Last request-attention identifier
-    VT100ScreenMark *_lastMark;
+    iTermMark *_lastMark;
 
     VT100GridCoordRange _commandRange;
     long long _lastPromptLine;  // Line where last prompt began
@@ -6132,8 +6132,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (id)markAddedAtLine:(int)line ofClass:(Class)markClass {
     [_textview refresh];  // In case text was appended
-    if (_lastMark.command && !_lastMark.endDate) {
-        _lastMark.endDate = [NSDate date];
+    if ([_lastMark isKindOfClass:[VT100ScreenMark class]]) {
+        VT100ScreenMark *screenMark = (VT100ScreenMark *)_lastMark;
+        if (screenMark.command && !screenMark.endDate) {
+            screenMark.endDate = [NSDate date];
+        }
     }
     [_lastMark release];
     _lastMark = [[_screen addMarkStartingAtAbsoluteLine:[_screen totalScrollbackOverflow] + line

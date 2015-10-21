@@ -10,6 +10,7 @@
 
 #import "CapturedOutput.h"
 #import "CaptureTrigger.h"
+#import "iTermCapturedOutputMark.h"
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermSearchField.h"
 #import "iTermToolbeltView.h"

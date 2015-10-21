@@ -11,6 +11,7 @@
 #import "CapturedOutput.h"
 #import "iTermAnnouncementViewController.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermCapturedOutputMark.h"
 #import "iTermShellHistoryController.h"
 #import "iTermToolbeltView.h"
 #import "PTYSession.h"

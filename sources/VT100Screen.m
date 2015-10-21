@@ -5,9 +5,11 @@
 #import "DVR.h"
 #import "IntervalTree.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
+#import "iTermImageMark.h"
 #import "iTermPreferences.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
@@ -1917,8 +1919,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass {
     id<iTermMark> mark = [[[markClass alloc] init] autorelease];
-    mark.delegate = self;
-    mark.sessionGuid = [delegate_ screenSessionGuid];
+    if ([mark isKindOfClass:[VT100ScreenMark class]]) {
+        VT100ScreenMark *screenMark = mark;
+        screenMark.delegate = self;
+        screenMark.sessionGuid = [delegate_ screenSessionGuid];
+    }
     int nonAbsoluteLine = line - [self totalScrollbackOverflow];
     VT100GridCoordRange range;
     if (oneLine) {
@@ -4440,23 +4445,20 @@ static void SwapInt(int *a, int *b) {
     NSMutableDictionary *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
     for (NSArray *objects in [intervalTree forwardLimitEnumerator]) {
         for (id<IntervalTreeObject> object in objects) {
-            if ([object isKindOfClass:[iTermMark class]]) {
-                iTermMark *mark = (iTermMark *)object;
-                mark.delegate = self;
+            if ([object isKindOfClass:[VT100RemoteHost class]]) {
+                lastRemoteHost = object;
+            } else if ([object isKindOfClass:[VT100ScreenMark class]]) {
+                VT100ScreenMark *screenMark = (VT100ScreenMark *)object;
+                screenMark.delegate = self;
                 // If |capturedOutput| is not empty then this mark is a command, some of whose output
                 // was captured. The iTermCapturedOutputMarks will come later so save the GUIDs we need
                 // in markGuidToCapturedOutput and they'll get backfilled when found.
-                for (CapturedOutput *capturedOutput in mark.capturedOutput) {
+                for (CapturedOutput *capturedOutput in screenMark.capturedOutput) {
                     [capturedOutput setKnownTriggers:triggers];
                     if (capturedOutput.markGuid) {
                         markGuidToCapturedOutput[capturedOutput.markGuid] = capturedOutput;
                     }
                 }
-            }
-            if ([object isKindOfClass:[VT100RemoteHost class]]) {
-                lastRemoteHost = object;
-            } else if ([object isKindOfClass:[VT100ScreenMark class]]) {
-                VT100ScreenMark *screenMark = (VT100ScreenMark *)object;
                 if (screenMark.command) {
                     // Find the matching object in command history and link it.
                     iTermCommandHistoryCommandUseMO *commandUse =
