@@ -19,7 +19,6 @@ static const CGFloat kMarginBetweenLastSliderAndTextFields = 8;
 static const CGFloat kColorTextFieldWidth = 32;
 static const CGFloat kMarginBetweenTextFieldAndLabel = 0;
 static const CGFloat kBottomMargin = 4;
-static const CGFloat kMarginBetweenSliders = 8;
 static const CGFloat kMarginBetweenComponentSliders = 4;
 static const CGFloat kMarginBetweenPopupButtonAndSliders = 2;
 static const CGFloat kExtraRightMarginForTextFieldSwitch = 2;
@@ -791,6 +790,15 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     self.alphaSliderView.color = selectedColor;
     self.alphaSliderView.selectedValue = selectedColor.alphaComponent;
     [self.alphaSliderView setNeedsDisplay:YES];
+
+    self.redSliderView.color = selectedColor;
+    self.greenSliderView.color = selectedColor;
+    self.blueSliderView.color = selectedColor;
+
+    self.hueSliderView.color = selectedColor;
+    self.saturationSliderView.color = selectedColor;
+    self.brightnessSliderView.color = selectedColor;
+
     dispatch_async(dispatch_get_main_queue(), ^{
         [_gradientView setNeedsDisplay:YES];
     });
