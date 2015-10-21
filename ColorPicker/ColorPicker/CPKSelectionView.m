@@ -62,8 +62,6 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 @property(nonatomic) CPKAlphaSliderView *alphaSliderView;
 @property(nonatomic, copy) void (^block)(NSColor *);
 
-@property(nonatomic) NSTextField *hexTextField;
-
 @property(nonatomic) NSView *rgbTextFields;
 @property(nonatomic) NSView *hsbTextFields;
 
@@ -75,11 +73,30 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 @property(nonatomic) NSTextField *saturationTextField;
 @property(nonatomic) NSTextField *brightnessTextField;
 
+@property(nonatomic) NSTextField *hexTextField;
+
+// Slider labels
+@property(nonatomic) NSTextField *hueLabel;
+@property(nonatomic) NSTextField *saturationLabel;
+@property(nonatomic) NSTextField *brightnessLabel;
+@property(nonatomic) NSTextField *redLabel;
+@property(nonatomic) NSTextField *greenLabel;
+@property(nonatomic) NSTextField *blueLabel;
+
+// Text field labels
+@property(nonatomic) NSTextField *hueTextFieldLabel;
+@property(nonatomic) NSTextField *saturationTextFieldLabel;
+@property(nonatomic) NSTextField *brightnessTextFieldLabel;
+@property(nonatomic) NSTextField *redTextFieldLabel;
+@property(nonatomic) NSTextField *greenTextFieldLabel;
+@property(nonatomic) NSTextField *blueTextFieldLabel;
+@property(nonatomic) NSTextField *alphaTextFieldLabel;
+@property(nonatomic) NSTextField *rgbHexTextFieldLabel;
+
 @property(nonatomic) NSTextField *alphaTextField;
 
 @property(nonatomic) NSButton *hslRgbTextFieldSwitch;
 
-@property(nonatomic) CGFloat desiredHeight;
 @property(nonatomic) BOOL alphaAllowed;
 @end
 
@@ -96,130 +113,459 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         _selectedColor = color;
         self.alphaAllowed = alphaAllowed;
 
-        NSRect frame;
-        frame = NSMakeRect(kLeftMargin,
-                           kTopMargin,
-                           NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                           0);
-        self.modeButton = [[NSPopUpButton alloc] initWithFrame:frame];
-        [self.modeButton setTarget:self];
-        [self.modeButton setAction:@selector(modeDidChange:)];
+        [self createSubviews];
 
-        [self.modeButton addItemWithTitle:@"HSB with Hue Slider"];
-        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithHueSliderTag];
-        [self.modeButton addItemWithTitle:@"HSB with Brightness Slider"];
-        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithBrightnessSliderTag];
-        [self.modeButton addItemWithTitle:@"HSB with Saturation Slider"];
-        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithSaturationSliderTag];
-
-        [self.modeButton.menu addItem:[NSMenuItem separatorItem]];
-
-        [self.modeButton addItemWithTitle:@"RGB with Red Slider"];
-        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithRedSliderTag];
-        [self.modeButton addItemWithTitle:@"RGB with Green Slider"];
-        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithGreenSliderTag];
-        [self.modeButton addItemWithTitle:@"RGB with Blue Slider"];
-        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithBlueSliderTag];
-
-        [self.modeButton.menu addItem:[NSMenuItem separatorItem]];
-
-        [self.modeButton addItemWithTitle:@"HSB Sliders"];
-        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBSliders];
-        [self.modeButton addItemWithTitle:@"RGB Sliders"];
-        [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBSliders];
-
-        if ([[NSUserDefaults standardUserDefaults] objectForKey:kCPKSelectionViewPreferredModeKey]) {
-            [self.modeButton selectItemWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:kCPKSelectionViewPreferredModeKey]];
-        }
-        [self.modeButton sizeToFit];
-        frame = self.modeButton.frame;
-        frame.size.width = NSWidth(frameRect) - kRightMargin - kLeftMargin;
-        self.modeButton.frame = frame;
-
-        // Create containers for sliders
-        [self createSlidersWithColor:color];
-
-        __weak __typeof(self) weakSelf = self;
-        frame = NSMakeRect(kLeftMargin,
-                           NSMaxY(self.modeButton.frame) + kMarginBetweenPopupButtonAndGradient,
-                           NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                           kGradientHeight);
-        self.gradientView =
-            [[CPKGradientView alloc] initWithFrame:frame
-                                              type:kCPKGradientViewTypeSaturationBrightness
-                                             block:^(NSColor *newColor) {
-                                                 [weakSelf setColorFromGradient:newColor];
-                                             }];
-
-        frame = NSMakeRect(kLeftMargin,
-                           NSMaxY(self.gradientView.frame) + kMarginBetweenGradientAndColorComponentSlider,
-                           NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                           kColorComponentSliderHeight);
-
-        self.colorComponentSliderView =
-            [[CPKColorComponentSliderView alloc] initWithFrame:frame
-                                                         color:color
-                                                          type:kCPKColorComponentSliderTypeHue
-                                                         block:^(CGFloat newValue) {
-                                                             [weakSelf setSliderValue:newValue];
-                                                         }];
-        CGFloat y = NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
-
-        if (alphaAllowed) {
-            frame.origin.y = NSMaxY(frame) + kMarginBetweenSliders;
-            frame.size.height = kAlphaSliderHeight;
-            self.alphaSliderView = [[CPKAlphaSliderView alloc] initWithFrame:frame
-                                                                       alpha:color.alphaComponent
-                                                                       color:color
-                                                                       block:^(CGFloat newAlpha) {
-                    [weakSelf setAlpha:newAlpha];
-                }];
-            y = NSMaxY(self.alphaSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
-        }
-
-        self.gradientView.selectedColor = color;
-
-        NSImage *rgbImage = [self cpk_imageNamed:@"RGB"];
-        frame = NSMakeRect(NSMaxX(frameRect) - rgbImage.size.width - kRightMargin + kMarginBetweenTextFields - kExtraRightMarginForTextFieldSwitch,
-                           y,
-                           rgbImage.size.width,
-                           rgbImage.size.height);
-        self.hslRgbTextFieldSwitch = [[NSButton alloc] initWithFrame:frame];
-        self.hslRgbTextFieldSwitch.bordered = NO;
-        self.hslRgbTextFieldSwitch.image = rgbImage;
-        self.hslRgbTextFieldSwitch.imagePosition = NSImageOnly;
-        self.hslRgbTextFieldSwitch.target = self;
-        self.hslRgbTextFieldSwitch.action = @selector(toggleHslRgbTextFields:);
-        self.hslRgbTextFieldSwitch.toolTip = @"Switch between RGB and HSB values.";
-
-        [self createTextFieldsIncludingAlpha:alphaAllowed atY:y rightMargin:rgbImage.size.width];
-        [self updateTextFieldsForColor:color];
-
-        self.subviews = @[ self.modeButton,
-                           self.hsbSliders,
-                           self.rgbSliders,
-                           self.gradientView,
-                           self.colorComponentSliderView,
-                           self.hexTextField,
-                           self.rgbTextFields,
-                           self.hsbTextFields,
-                           self.hslRgbTextFieldSwitch ];
-        if (alphaAllowed) {
-            [self addSubview:self.alphaTextField];
-            [self addSubview:self.alphaSliderView];
-            [self addLabel:@"A" belowView:self.alphaTextField toContainer:self];
-        }
-        [self addSubview:self.hexTextField];
-        [self addLabel:@"RGB Hex" belowView:self.hexTextField toContainer:self];
-
-        self.desiredHeight = NSMaxY(self.rgbTextFields.frame) + kBottomMargin;
-
-        [self setTextFieldsRGB:![[NSUserDefaults standardUserDefaults] boolForKey:kCPKSelectionViewShowHSBTextFieldsKey]];
-        // Update for the default mode
-        [self modeDidChange:self.modeButton];
         self.block = block;
     }
     return self;
+}
+
+- (void)createSubviews {
+    [self createModeButton];
+    
+    [self createSlidersWithColor:_selectedColor];
+    
+    __weak __typeof(self) weakSelf = self;
+    self.gradientView =
+    [[CPKGradientView alloc] initWithFrame:NSZeroRect
+                                      type:kCPKGradientViewTypeSaturationBrightness
+                                     block:^(NSColor *newColor) {
+                                         [weakSelf setColorFromGradient:newColor];
+                                     }];
+    
+    self.colorComponentSliderView =
+        [[CPKColorComponentSliderView alloc] initWithFrame:NSZeroRect
+                                                     color:_selectedColor
+                                                      type:kCPKColorComponentSliderTypeHue
+                                                     block:^(CGFloat newValue) {
+                                                         [weakSelf setSliderValue:newValue];
+                                                     }];
+    
+    if (_alphaAllowed) {
+        self.alphaSliderView = [[CPKAlphaSliderView alloc] initWithFrame:NSZeroRect
+                                                                   alpha:_selectedColor.alphaComponent
+                                                                   color:_selectedColor
+                                                                   block:^(CGFloat newAlpha) {
+                                                                       [weakSelf setAlpha:newAlpha];
+                                                                   }];
+    }
+    
+    self.gradientView.selectedColor = _selectedColor;
+    
+    NSImage *rgbImage = [self cpk_imageNamed:@"RGB"];
+    self.hslRgbTextFieldSwitch = [[NSButton alloc] initWithFrame:NSZeroRect];
+    self.hslRgbTextFieldSwitch.bordered = NO;
+    self.hslRgbTextFieldSwitch.image = rgbImage;
+    self.hslRgbTextFieldSwitch.imagePosition = NSImageOnly;
+    self.hslRgbTextFieldSwitch.target = self;
+    self.hslRgbTextFieldSwitch.action = @selector(toggleHslRgbTextFields:);
+    self.hslRgbTextFieldSwitch.toolTip = @"Switch between RGB and HSB values.";
+    
+    [self createTextFieldsIncludingAlpha:_alphaAllowed];
+    [self updateTextFieldsForColor:_selectedColor];
+    
+    self.subviews = @[ self.modeButton,
+                       self.hsbSliders,
+                       self.rgbSliders,
+                       self.gradientView,
+                       self.colorComponentSliderView,
+                       self.hexTextField,
+                       self.rgbTextFields,
+                       self.hsbTextFields,
+                       self.hslRgbTextFieldSwitch ];
+    if (_alphaAllowed) {
+        [self addSubview:self.alphaTextField];
+        [self addSubview:self.alphaTextFieldLabel];
+        [self addSubview:self.alphaSliderView];
+    }
+    [self addSubview:self.hexTextField];
+    self.rgbHexTextFieldLabel = [self addLabel:@"RGB Hex" belowView:self.hexTextField toContainer:self];
+    [self setTextFieldsRGB:![[NSUserDefaults standardUserDefaults] boolForKey:kCPKSelectionViewShowHSBTextFieldsKey]];
+    // Update for the default mode
+    [self modeDidChange:self.modeButton];
+}
+
+- (void)createModeButton {
+    self.modeButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect];
+    [self.modeButton setTarget:self];
+    [self.modeButton setAction:@selector(modeDidChange:)];
+    
+    [self.modeButton addItemWithTitle:@"HSB with Hue Slider"];
+    [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithHueSliderTag];
+    [self.modeButton addItemWithTitle:@"HSB with Brightness Slider"];
+    [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithBrightnessSliderTag];
+    [self.modeButton addItemWithTitle:@"HSB with Saturation Slider"];
+    [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBWithSaturationSliderTag];
+    
+    [self.modeButton.menu addItem:[NSMenuItem separatorItem]];
+    
+    [self.modeButton addItemWithTitle:@"RGB with Red Slider"];
+    [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithRedSliderTag];
+    [self.modeButton addItemWithTitle:@"RGB with Green Slider"];
+    [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithGreenSliderTag];
+    [self.modeButton addItemWithTitle:@"RGB with Blue Slider"];
+    [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBWithBlueSliderTag];
+    
+    [self.modeButton.menu addItem:[NSMenuItem separatorItem]];
+    
+    [self.modeButton addItemWithTitle:@"HSB Sliders"];
+    [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeHSBSliders];
+    [self.modeButton addItemWithTitle:@"RGB Sliders"];
+    [self.modeButton.menu.itemArray.lastObject setTag:kCPKRGBViewModeRGBSliders];
+    
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kCPKSelectionViewPreferredModeKey]) {
+        [self.modeButton selectItemWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:kCPKSelectionViewPreferredModeKey]];
+    }
+}
+
+- (void)createSlidersWithColor:(NSColor *)color {
+    __weak __typeof(self) weakSelf = self;
+    self.rgbSliders = [[CPKFlippedView alloc] initWithFrame:NSZeroRect];
+    self.hsbSliders = [[CPKFlippedView alloc] initWithFrame:NSZeroRect];
+
+    // Create HSB sliders
+    self.hueSliderView =
+        [[CPKColorComponentSliderView alloc] initWithFrame:NSZeroRect
+                                                     color:color
+                                                      type:kCPKColorComponentSliderTypeHue
+                                                     block:^(CGFloat newValue) {
+                                                         [weakSelf updateSelectedColorFromHSBSliders];
+                                                     }];
+    self.hueLabel = [self labelWithTitle:@"Hue" origin:NSZeroPoint];
+    [self.hsbSliders addSubview:self.hueSliderView];
+    [self.hsbSliders addSubview:self.hueLabel];
+
+    self.saturationSliderView =
+        [[CPKColorComponentSliderView alloc] initWithFrame:NSZeroRect
+                                                     color:color
+                                                      type:kCPKColorComponentSliderTypeSaturation
+                                                     block:^(CGFloat newValue) {
+                                                         [weakSelf updateSelectedColorFromHSBSliders];
+                                                     }];
+    self.saturationLabel = [self labelWithTitle:@"Saturation" origin:NSZeroPoint];
+    [self.hsbSliders addSubview:self.saturationSliderView];
+    [self.hsbSliders addSubview:self.saturationLabel];
+
+    self.brightnessSliderView =
+        [[CPKColorComponentSliderView alloc] initWithFrame:NSZeroRect
+                                                     color:color
+                                                      type:kCPKColorComponentSliderTypeBrightness
+                                                     block:^(CGFloat newValue) {
+                                                         [weakSelf updateSelectedColorFromHSBSliders];
+                                                     }];
+    self.brightnessLabel = [self labelWithTitle:@"Brightness" origin:NSZeroPoint];
+    [self.hsbSliders addSubview:self.brightnessSliderView];
+    [self.hsbSliders addSubview:self.brightnessLabel];
+
+
+    // Create RGB sliders
+    self.redSliderView =
+        [[CPKColorComponentSliderView alloc] initWithFrame:NSZeroRect
+                                                     color:color
+                                                      type:kCPKColorComponentSliderTypeRed
+                                                     block:^(CGFloat newValue) {
+                                                         [weakSelf updateSelectedColorFromRGBSliders];
+
+                                                     }];
+    self.redLabel = [self labelWithTitle:@"Red" origin:NSZeroPoint];
+    [self.rgbSliders addSubview:self.redSliderView];
+    [self.rgbSliders addSubview:self.redLabel];
+
+    self.greenSliderView =
+        [[CPKColorComponentSliderView alloc] initWithFrame:NSZeroRect
+                                                     color:color
+                                                      type:kCPKColorComponentSliderTypeGreen
+                                                     block:^(CGFloat newValue) {
+                                                         [weakSelf updateSelectedColorFromRGBSliders];
+                                                     }];
+    self.greenLabel = [self labelWithTitle:@"Green" origin:NSZeroPoint];
+    [self.rgbSliders addSubview:self.greenSliderView];
+    [self.rgbSliders addSubview:self.greenLabel];
+
+    self.blueSliderView =
+        [[CPKColorComponentSliderView alloc] initWithFrame:NSZeroRect
+                                                     color:color
+                                                      type:kCPKColorComponentSliderTypeBlue
+                                                     block:^(CGFloat newValue) {
+                                                         [weakSelf updateSelectedColorFromRGBSliders];
+                                                     }];
+    self.blueLabel = [self labelWithTitle:@"Blue" origin:NSZeroPoint];
+    [self.rgbSliders addSubview:self.blueSliderView];
+    [self.rgbSliders addSubview:self.blueLabel];
+
+    self.hsbSliders.hidden = YES;
+    self.rgbSliders.hidden = YES;
+}
+
+- (void)createTextFieldsIncludingAlpha:(BOOL)alphaAllowed {
+    // Create Alpha text field
+    if (alphaAllowed) {
+        self.alphaTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+        self.alphaTextField.delegate = self;
+    }
+    
+    // Create text field containers
+    self.rgbTextFields = [[CPKFlippedView alloc] initWithFrame:NSZeroRect];
+    self.hsbTextFields = [[CPKFlippedView alloc] initWithFrame:NSZeroRect];
+    
+    // Create HSB text fields
+    self.brightnessTextField =[[NSTextField alloc] initWithFrame:NSZeroRect];
+    self.brightnessTextField.delegate = self;
+
+    self.saturationTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    self.saturationTextField.delegate = self;
+
+    self.hueTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    self.hueTextField.delegate = self;
+
+    // Create RGB text fields
+    self.blueTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    self.blueTextField.delegate = self;
+
+    self.greenTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    self.greenTextField.delegate = self;
+
+    self.redTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    self.redTextField.delegate = self;
+
+    self.hexTextField = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    
+    self.hexTextField.delegate = self;
+    
+    self.hsbTextFields.subviews = @[ self.hueTextField,
+                                     self.brightnessTextField,
+                                     self.saturationTextField ];
+    self.rgbTextFields.subviews = @[ self.redTextField,
+                                     self.greenTextField,
+                                     self.blueTextField ];
+
+    self.redTextFieldLabel = [self addLabel:@"R" belowView:self.redTextField toContainer:self.rgbTextFields];
+    self.greenTextFieldLabel = [self addLabel:@"G" belowView:self.greenTextField toContainer:self.rgbTextFields];
+    self.blueTextFieldLabel = [self addLabel:@"B" belowView:self.blueTextField toContainer:self.rgbTextFields];
+    self.hueTextFieldLabel = [self addLabel:@"H" belowView:self.hueTextField toContainer:self.hsbTextFields];
+    self.saturationTextFieldLabel = [self addLabel:@"S" belowView:self.saturationTextField toContainer:self.hsbTextFields];
+    self.brightnessTextFieldLabel = [self addLabel:@"B" belowView:self.brightnessTextField toContainer:self.hsbTextFields];
+    if (self.alphaAllowed) {
+        self.alphaTextFieldLabel = [self addLabel:@"A" belowView:self.alphaTextField toContainer:self];
+    }
+
+    self.rgbTextFields.hidden = YES;
+    self.hsbTextFields.hidden = NO;
+}
+
+- (void)layoutSubviews {
+    NSRect frameRect = self.frame;
+    NSRect frame;
+    frame = NSMakeRect(kLeftMargin,
+                       kTopMargin,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       0);
+    self.modeButton.frame = frame;
+    [self.modeButton sizeToFit];
+    frame = self.modeButton.frame;
+    frame.size.width = NSWidth(frameRect) - kRightMargin - kLeftMargin;
+    self.modeButton.frame = frame;
+    
+    frame = NSMakeRect(kLeftMargin,
+                       NSMaxY(self.modeButton.frame) + kMarginBetweenPopupButtonAndGradient,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       kGradientHeight);
+    self.gradientView.frame = frame;
+    
+    frame = NSMakeRect(kLeftMargin,
+                       NSMaxY(self.gradientView.frame) + kMarginBetweenGradientAndColorComponentSlider,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       kColorComponentSliderHeight);
+    
+    self.colorComponentSliderView.frame = frame;
+    CGFloat y = NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+    
+    if (self.alphaAllowed) {
+        frame.origin.y = NSMaxY(frame) + kMarginBetweenSliders;
+        frame.size.height = kAlphaSliderHeight;
+        self.alphaSliderView.frame = frame;
+        y = NSMaxY(self.alphaSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+    }
+
+    NSImage *rgbImage = [self cpk_imageNamed:@"RGB"];
+    frame = NSMakeRect(NSMaxX(frameRect) - rgbImage.size.width - kRightMargin + kMarginBetweenTextFields - kExtraRightMarginForTextFieldSwitch,
+                       y,
+                       rgbImage.size.width,
+                       rgbImage.size.height);
+    self.hslRgbTextFieldSwitch.frame = frame;
+    
+    [self layoutSliders];
+    [self layoutTextFields];
+}
+
+- (void)layoutSliders {
+    NSRect frameRect = self.frame;
+    NSRect frame;
+    frame = NSMakeRect(kLeftMargin,
+                       NSMaxY(self.modeButton.frame) + kComponentSlidersTopMargin,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       kColorComponentSliderHeight * 3 + kLabelHeight * 3 + kMarginBetweenComponentSliders * 2);
+    self.rgbSliders.frame = frame;
+    self.hsbSliders.frame = frame;
+    frame.size.height = kColorComponentSliderHeight;
+    frame.origin = NSZeroPoint;
+    self.hueSliderView.frame = frame;
+    frame.origin.y += kColorComponentSliderHeight;
+    self.hueLabel.frame = NSMakeRect(frame.origin.x,
+                                     frame.origin.y,
+                                     0,
+                                     kLabelHeight);
+    frame = NSMakeRect(0,
+                       NSMaxY(frame) + kMarginBetweenComponentSliders,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       kColorComponentSliderHeight);
+    self.saturationSliderView.frame = frame;
+    frame.origin.y += kColorComponentSliderHeight;
+    self.saturationLabel.frame = frame;
+    frame = NSMakeRect(0,
+                       NSMaxY(frame) + kMarginBetweenComponentSliders,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       kColorComponentSliderHeight);
+    self.brightnessSliderView.frame = frame;
+    frame.origin.y += kColorComponentSliderHeight;
+    self.brightnessLabel.frame = frame;
+
+    // Lay out RGB sliders
+    frame = NSMakeRect(0,
+                       0,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       kColorComponentSliderHeight);
+    self.redSliderView.frame = frame;
+    frame.origin.y += kColorComponentSliderHeight;
+    self.redLabel.frame = frame;
+    
+    frame = NSMakeRect(0,
+                       NSMaxY(frame) + kMarginBetweenComponentSliders,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       kColorComponentSliderHeight);
+    self.greenSliderView.frame = frame;
+    frame.origin.y += kColorComponentSliderHeight;
+    self.greenLabel.frame = frame;
+
+    frame = NSMakeRect(0,
+                       NSMaxY(frame) + kMarginBetweenComponentSliders,
+                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                       kColorComponentSliderHeight);
+    self.blueSliderView.frame = frame;
+    frame.origin.y += kColorComponentSliderHeight;
+    self.blueLabel.frame = frame;
+}
+
+- (void)layoutLabel:(NSTextField *)label belowView:(NSView *)view {
+    [label sizeToFit];
+    label.frame = NSMakeRect(NSMinX(view.frame),
+                             NSMaxY(view.frame) + kMarginBetweenTextFieldAndLabel,
+                             NSWidth(view.frame),
+                             NSHeight(label.frame));
+}
+
+- (void)layoutTextFields {
+    CGFloat y = NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+    NSImage *rgbImage = [self cpk_imageNamed:@"RGB"];
+    const CGFloat rightMargin = rgbImage.size.width;
+    CGFloat x = NSMaxX(self.frame) - kRightMargin - rightMargin;
+    if (self.alphaAllowed) {
+        y = NSMaxY(self.alphaSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+        self.alphaTextField.frame = NSMakeRect(x - kColorTextFieldWidth,
+                                               y,
+                                               kColorTextFieldWidth,
+                                               0);
+        [self layoutHeightOfTextField:self.alphaTextField];
+        x -= self.alphaTextField.frame.size.width + kMarginBetweenTextFields;
+    }
+    
+    // Lay out text field containers
+    const CGFloat textFieldsContainerWidth = kColorTextFieldWidth * 3 + kMarginBetweenTextFields * 2;
+    self.rgbTextFields.frame = NSMakeRect(x - textFieldsContainerWidth,
+                                          y,
+                                          textFieldsContainerWidth,
+                                          0);
+    self.hsbTextFields.frame = self.rgbTextFields.frame;
+    
+    // Lay out HSB text fields
+    x = textFieldsContainerWidth;
+    self.brightnessTextField.frame = NSMakeRect(x - kColorTextFieldWidth,
+                                                0,
+                                                kColorTextFieldWidth,
+                                                0);
+    x -= self.brightnessTextField.frame.size.width + kMarginBetweenTextFields;
+
+    self.saturationTextField.frame = NSMakeRect(x - kColorTextFieldWidth,
+                                                0,
+                                                kColorTextFieldWidth,
+                                                0);
+    x -= self.saturationTextField.frame.size.width + kMarginBetweenTextFields;
+
+    self.hueTextField.frame = NSMakeRect(x - kColorTextFieldWidth,
+                                         0,
+                                         kColorTextFieldWidth,
+                                         0);
+    x -= self.hueTextField.frame.size.width + kMarginBetweenTextFields;
+
+    // Lay out RGB text fields
+    x = textFieldsContainerWidth;
+    self.blueTextField.frame = NSMakeRect(x - kColorTextFieldWidth,
+                                          0,
+                                          kColorTextFieldWidth,
+                                          0);
+    x -= self.blueTextField.frame.size.width + kMarginBetweenTextFields;
+
+    self.greenTextField.frame = NSMakeRect(x - kColorTextFieldWidth,
+                                           0,
+                                           kColorTextFieldWidth,
+                                           0);
+    x -= self.greenTextField.frame.size.width + kMarginBetweenTextFields;
+
+    self.redTextField.frame = NSMakeRect(x - kColorTextFieldWidth,
+                                         0,
+                                         kColorTextFieldWidth,
+                                         0);
+    x -= self.redTextField.frame.size.width + kMarginBetweenTextFields;
+
+    self.hexTextField.frame = NSMakeRect(kLeftMargin,
+                                         y,
+                                         NSMinX(self.rgbTextFields.frame) -
+                                             kLeftMargin -
+                                             kMarginBetweenTextFields,
+                                         0);
+    
+    [self layoutHeightOfTextField:self.redTextField];
+    [self layoutHeightOfTextField:self.greenTextField];
+    [self layoutHeightOfTextField:self.blueTextField];
+
+    [self layoutHeightOfTextField:self.hueTextField];
+    [self layoutHeightOfTextField:self.saturationTextField];
+    [self layoutHeightOfTextField:self.brightnessTextField];
+
+    [self layoutHeightOfTextField:self.hexTextField];
+
+    [self layoutLabel:self.rgbHexTextFieldLabel belowView:self.hexTextField];
+    [self layoutLabel:self.redTextFieldLabel belowView:self.redTextField];
+    [self layoutLabel:self.greenTextFieldLabel belowView:self.greenTextField];
+    [self layoutLabel:self.blueTextFieldLabel belowView:self.blueTextField];
+    [self layoutLabel:self.hueTextFieldLabel belowView:self.hueTextField];
+    [self layoutLabel:self.saturationTextFieldLabel belowView:self.saturationTextField];
+    [self layoutLabel:self.brightnessTextFieldLabel belowView:self.brightnessTextField];
+    if (self.alphaAllowed) {
+        [self layoutLabel:self.alphaTextFieldLabel belowView:self.alphaTextField];
+    }
+
+    NSRect frame = self.rgbTextFields.frame;
+    frame.size.height = NSMaxY(self.redTextFieldLabel.frame);
+    self.rgbTextFields.frame = frame;
+    self.hsbTextFields.frame = frame;
+}
+
+- (void)layoutHeightOfTextField:(NSTextField *)textField {
+    NSRect frame = textField.frame;
+    [textField sizeToFit];
+    frame.size.height = textField.frame.size.height;
+    textField.frame = frame;
 }
 
 - (void)setTextFieldsRGB:(BOOL)rgb {
@@ -233,247 +579,6 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 
 - (void)toggleHslRgbTextFields:(id)sender {
     [self setTextFieldsRGB:self.rgbTextFields.hidden];
-}
-
-- (void)createSlidersWithColor:(NSColor *)color {
-    NSRect frameRect = self.frame;
-    
-    __weak __typeof(self) weakSelf = self;
-    NSRect frame;
-    frame = NSMakeRect(kLeftMargin,
-                       NSMaxY(self.modeButton.frame) + kComponentSlidersTopMargin,
-                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                       kColorComponentSliderHeight * 3 + kLabelHeight * 3 + kMarginBetweenComponentSliders * 2);
-    self.rgbSliders = [[CPKFlippedView alloc] initWithFrame:frame];
-    self.hsbSliders = [[CPKFlippedView alloc] initWithFrame:frame];
-
-    // Create HSB sliders
-    frame.size.height = kColorComponentSliderHeight;
-    frame.origin = NSZeroPoint;
-    NSTextField *label;
-    self.hueSliderView =
-        [[CPKColorComponentSliderView alloc] initWithFrame:frame
-                                                     color:color
-                                                      type:kCPKColorComponentSliderTypeHue
-                                                     block:^(CGFloat newValue) {
-                                                         [weakSelf updateSelectedColorFromHSBSliders];
-                                                     }];
-    frame.origin.y += kColorComponentSliderHeight;
-    label = [self labelWithTitle:@"Hue" origin:frame.origin];
-    [self.hsbSliders addSubview:self.hueSliderView];
-    [self.hsbSliders addSubview:label];
-
-    frame = NSMakeRect(0,
-                       NSMaxY(frame) + kMarginBetweenComponentSliders,
-                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                       kColorComponentSliderHeight);
-    self.saturationSliderView =
-        [[CPKColorComponentSliderView alloc] initWithFrame:frame
-                                                     color:color
-                                                      type:kCPKColorComponentSliderTypeSaturation
-                                                     block:^(CGFloat newValue) {
-                                                         [weakSelf updateSelectedColorFromHSBSliders];
-                                                     }];
-    frame.origin.y += kColorComponentSliderHeight;
-    label = [self labelWithTitle:@"Saturation" origin:frame.origin];
-    [self.hsbSliders addSubview:self.saturationSliderView];
-    [self.hsbSliders addSubview:label];
-
-    frame = NSMakeRect(0,
-                       NSMaxY(frame) + kMarginBetweenComponentSliders,
-                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                       kColorComponentSliderHeight);
-    self.brightnessSliderView =
-        [[CPKColorComponentSliderView alloc] initWithFrame:frame
-                                                     color:color
-                                                      type:kCPKColorComponentSliderTypeBrightness
-                                                     block:^(CGFloat newValue) {
-                                                         [weakSelf updateSelectedColorFromHSBSliders];
-                                                     }];
-
-    frame.origin.y += kColorComponentSliderHeight;
-    label = [self labelWithTitle:@"Brightness" origin:frame.origin];
-    [self.hsbSliders addSubview:self.brightnessSliderView];
-    [self.hsbSliders addSubview:label];
-
-
-    // Create RGB sliders
-    frame = NSMakeRect(0,
-                       0,
-                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                       kColorComponentSliderHeight);
-    self.redSliderView =
-        [[CPKColorComponentSliderView alloc] initWithFrame:frame
-                                                     color:color
-                                                      type:kCPKColorComponentSliderTypeRed
-                                                     block:^(CGFloat newValue) {
-                                                         [weakSelf updateSelectedColorFromRGBSliders];
-
-                                                     }];
-    frame.origin.y += kColorComponentSliderHeight;
-    label = [self labelWithTitle:@"Red" origin:frame.origin];
-    [self.rgbSliders addSubview:self.redSliderView];
-    [self.rgbSliders addSubview:label];
-
-    frame = NSMakeRect(0,
-                       NSMaxY(frame) + kMarginBetweenComponentSliders,
-                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                       kColorComponentSliderHeight);
-    self.greenSliderView =
-        [[CPKColorComponentSliderView alloc] initWithFrame:frame
-                                                     color:color
-                                                      type:kCPKColorComponentSliderTypeGreen
-                                                     block:^(CGFloat newValue) {
-                                                         [weakSelf updateSelectedColorFromRGBSliders];
-                                                     }];
-    frame.origin.y += kColorComponentSliderHeight;
-    label = [self labelWithTitle:@"Green" origin:frame.origin];
-    [self.rgbSliders addSubview:self.greenSliderView];
-    [self.rgbSliders addSubview:label];
-
-    frame = NSMakeRect(0,
-                       NSMaxY(frame) + kMarginBetweenComponentSliders,
-                       NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                       kColorComponentSliderHeight);
-    self.blueSliderView =
-        [[CPKColorComponentSliderView alloc] initWithFrame:frame
-                                                     color:color
-                                                      type:kCPKColorComponentSliderTypeBlue
-                                                     block:^(CGFloat newValue) {
-                                                         [weakSelf updateSelectedColorFromRGBSliders];
-                                                     }];
-    frame.origin.y += kColorComponentSliderHeight;
-    label = [self labelWithTitle:@"Blue" origin:frame.origin];
-    [self.rgbSliders addSubview:self.blueSliderView];
-    [self.rgbSliders addSubview:label];
-
-    self.hsbSliders.hidden = YES;
-    self.rgbSliders.hidden = YES;
-}
-
-- (void)createTextFieldsIncludingAlpha:(BOOL)alphaAllowed
-                                   atY:(CGFloat)y
-                           rightMargin:(CGFloat)rightMargin {
-    // Create Alpha text field
-    CGFloat x = NSMaxX(self.frame) - kRightMargin - rightMargin;
-    if (alphaAllowed) {
-        self.alphaTextField =
-            [[NSTextField alloc] initWithFrame:NSMakeRect(x - kColorTextFieldWidth,
-                                                          y,
-                                                          kColorTextFieldWidth,
-                                                          0)];
-        self.alphaTextField.delegate = self;
-        x -= self.alphaTextField.frame.size.width + kMarginBetweenTextFields;
-    }
-    
-    // Create text field containers
-    const CGFloat textFieldsContainerWidth = kColorTextFieldWidth * 3 + kMarginBetweenTextFields * 2;
-    self.rgbTextFields = [[CPKFlippedView alloc] initWithFrame:NSMakeRect(x - textFieldsContainerWidth,
-                                                                          y,
-                                                                          textFieldsContainerWidth,
-                                                                          0)];
-    self.hsbTextFields = [[CPKFlippedView alloc] initWithFrame:self.rgbTextFields.frame];
-    
-    // Create HSB text fields
-    x = textFieldsContainerWidth;
-    self.brightnessTextField =
-        [[NSTextField alloc] initWithFrame:NSMakeRect(x - kColorTextFieldWidth,
-                                                      0,
-                                                      kColorTextFieldWidth,
-                                                      0)];
-    self.brightnessTextField.delegate = self;
-    x -= self.brightnessTextField.frame.size.width + kMarginBetweenTextFields;
-
-    self.saturationTextField =
-        [[NSTextField alloc] initWithFrame:NSMakeRect(x - kColorTextFieldWidth,
-                                                      0,
-                                                      kColorTextFieldWidth,
-                                                      0)];
-    self.saturationTextField.delegate = self;
-    x -= self.saturationTextField.frame.size.width + kMarginBetweenTextFields;
-
-    self.hueTextField = [[NSTextField alloc] initWithFrame:NSMakeRect(x - kColorTextFieldWidth,
-                                                                      0,
-                                                                      kColorTextFieldWidth,
-                                                                      0)];
-    self.hueTextField.delegate = self;
-    x -= self.hueTextField.frame.size.width + kMarginBetweenTextFields;
-
-    // Create RGB text fields
-    x = textFieldsContainerWidth;
-    self.blueTextField =
-        [[NSTextField alloc] initWithFrame:NSMakeRect(x - kColorTextFieldWidth,
-                                                      0,
-                                                      kColorTextFieldWidth,
-                                                      0)];
-    self.blueTextField.delegate = self;
-    x -= self.blueTextField.frame.size.width + kMarginBetweenTextFields;
-
-    self.greenTextField =
-        [[NSTextField alloc] initWithFrame:NSMakeRect(x - kColorTextFieldWidth,
-                                                      0,
-                                                      kColorTextFieldWidth,
-                                                      0)];
-    self.greenTextField.delegate = self;
-    x -= self.greenTextField.frame.size.width + kMarginBetweenTextFields;
-
-    self.redTextField = [[NSTextField alloc] initWithFrame:NSMakeRect(x - kColorTextFieldWidth,
-                                                                      0,
-                                                                      kColorTextFieldWidth,
-                                                                      0)];
-    self.redTextField.delegate = self;
-    x -= self.redTextField.frame.size.width + kMarginBetweenTextFields;
-
-    self.hexTextField =
-        [[NSTextField alloc] initWithFrame:NSMakeRect(kLeftMargin,
-                                                      y,
-                                                      NSMinX(self.rgbTextFields.frame) -
-                                                          kLeftMargin -
-                                                          kMarginBetweenTextFields,
-                                                      0)];
-    
-    NSMutableArray *fields = [@[ self.hexTextField,
-                                 self.hueTextField,
-                                 self.brightnessTextField,
-                                 self.saturationTextField,
-                                 self.redTextField,
-                                 self.greenTextField,
-                                 self.blueTextField ] mutableCopy];
-    if (self.alphaTextField) {
-        [fields addObject:self.alphaTextField];
-    }
-    for (NSTextField *textField in fields) {
-        NSRect oldFrame = textField.frame;
-        [textField sizeToFit];
-        NSRect fittedFrame = textField.frame;
-        fittedFrame.size.width = oldFrame.size.width;
-        textField.frame = fittedFrame;
-    }
-
-    self.hexTextField.delegate = self;
-    
-    self.hsbTextFields.subviews = @[ self.hueTextField,
-                                     self.brightnessTextField,
-                                     self.saturationTextField ];
-    self.rgbTextFields.subviews = @[ self.redTextField,
-                                     self.greenTextField,
-                                     self.blueTextField ];
-
-    [self addLabel:@"R" belowView:self.redTextField toContainer:self.rgbTextFields];
-    [self addLabel:@"G" belowView:self.greenTextField toContainer:self.rgbTextFields];
-    [self addLabel:@"B" belowView:self.blueTextField toContainer:self.rgbTextFields];
-    [self addLabel:@"H" belowView:self.hueTextField toContainer:self.hsbTextFields];
-    [self addLabel:@"S" belowView:self.saturationTextField toContainer:self.hsbTextFields];
-    NSTextField *label;
-    label = [self addLabel:@"B" belowView:self.brightnessTextField toContainer:self.hsbTextFields];
-    
-    NSRect frame = self.rgbTextFields.frame;
-    frame.size.height = NSMaxY(label.frame);
-    self.rgbTextFields.frame = frame;
-    self.hsbTextFields.frame = frame;
-    
-    self.rgbTextFields.hidden = YES;
-    self.hsbTextFields.hidden = NO;
 }
 
 - (NSTextField *)labelWithTitle:(NSString *)string origin:(NSPoint)origin {
@@ -494,11 +599,8 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 - (NSTextField *)addLabel:(NSString *)string
                 belowView:(NSView *)view
               toContainer:(NSView *)container {
-    NSTextField *label = [self labelWithTitle:string origin:NSMakePoint(NSMinX(view.frame),
-                                                                        NSMaxY(view.frame) + kMarginBetweenTextFieldAndLabel)];
-    NSRect frame = label.frame;
-    frame.size.width = NSWidth(view.frame);
-    label.frame = frame;
+    NSTextField *label = [self labelWithTitle:string origin:NSZeroPoint];
+    [self layoutLabel:label belowView:view];
     label.alignment = NSCenterTextAlignment;
     [container addSubview:label];
     return label;
@@ -672,11 +774,16 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 }
 
 - (void)sizeToFit {
+    [self layoutSubviews];
     NSRect frame = NSMakeRect(NSMinX(self.frame),
                               NSMinY(self.frame),
                               NSWidth(self.bounds),
-                              _desiredHeight);
+                              [self desiredHeight]);
     self.frame = frame;
+}
+
+- (CGFloat)desiredHeight {
+    return NSMaxY(self.rgbTextFields.frame) + kBottomMargin;
 }
 
 #pragma mark - NSControlTextEditingDelegate
@@ -838,6 +945,8 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     self.gradientView.selectedColor = self.selectedColor;
     self.colorComponentSliderView.color = self.selectedColor;
     [self setNeedsDisplay:YES];
+    
+    [self.delegate selectionViewContentSizeDidChange];
 }
 
 @end

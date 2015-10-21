@@ -1,5 +1,9 @@
 #import <Cocoa/Cocoa.h>
 
+@protocol CPKSelectionViewDelegate <NSObject>
+- (void)selectionViewContentSizeDidChange;
+@end
+
 /**
  * A collection of views to facilitate selecting a color. Shows a 2-D gradient, a slider, a hex RGB
  * text field, and separate red, green, and blue text fields.
@@ -20,6 +24,8 @@
                         block:(void (^)(NSColor *))block
                         color:(NSColor *)color
                  alphaAllowed:(BOOL)alphaAllowed;
+
+@property(nonatomic, weak) id<CPKSelectionViewDelegate> delegate;
 
 /** Adjusts the frame's size to fit its contents exactly. */
 - (void)sizeToFit;
