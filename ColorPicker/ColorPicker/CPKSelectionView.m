@@ -13,7 +13,6 @@ static const CGFloat kGradientHeight = 128;
 static const CGFloat kMarginBetweenGradientAndColorComponentSlider = 8;
 static const CGFloat kMarginBetweenPopupButtonAndGradient = 2;
 static const CGFloat kColorComponentSliderHeight = 24;
-static const CGFloat kLabelHeight = 24;
 static const CGFloat kAlphaSliderHeight = 12;
 static const CGFloat kMarginBetweenTextFields = 4;
 static const CGFloat kMarginBetweenLastSliderAndTextFields = 8;
@@ -21,8 +20,8 @@ static const CGFloat kColorTextFieldWidth = 32;
 static const CGFloat kMarginBetweenTextFieldAndLabel = 0;
 static const CGFloat kBottomMargin = 4;
 static const CGFloat kMarginBetweenSliders = 8;
-static const CGFloat kMarginBetweenComponentSliders = 0;
-static const CGFloat kComponentSlidersTopMargin = 14;
+static const CGFloat kMarginBetweenComponentSliders = 4;
+static const CGFloat kMarginBetweenPopupButtonAndSliders = 2;
 static const CGFloat kExtraRightMarginForTextFieldSwitch = 2;
 
 static NSString *const kCPKSelectionViewShowHSBTextFieldsKey =
@@ -378,22 +377,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                        kColorComponentSliderHeight);
     
     self.colorComponentSliderView.frame = frame;
-    CGFloat y = NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
-    
-    if (self.alphaAllowed) {
-        frame.origin.y = NSMaxY(frame) + kMarginBetweenSliders;
-        frame.size.height = kAlphaSliderHeight;
-        self.alphaSliderView.frame = frame;
-        y = NSMaxY(self.alphaSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
-    }
 
-    NSImage *rgbImage = [self cpk_imageNamed:@"RGB"];
-    frame = NSMakeRect(NSMaxX(frameRect) - rgbImage.size.width - kRightMargin + kMarginBetweenTextFields - kExtraRightMarginForTextFieldSwitch,
-                       y,
-                       rgbImage.size.width,
-                       rgbImage.size.height);
-    self.hslRgbTextFieldSwitch.frame = frame;
-    
     [self layoutSliders];
     [self layoutTextFields];
 }
@@ -401,33 +385,40 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 - (void)layoutSliders {
     NSRect frameRect = self.frame;
     NSRect frame;
+    const CGFloat labelHeight = NSHeight(self.redLabel.frame);
     frame = NSMakeRect(kLeftMargin,
-                       NSMaxY(self.modeButton.frame) + kComponentSlidersTopMargin,
+                       NSMaxY(self.modeButton.frame) + kMarginBetweenPopupButtonAndSliders,
                        NSWidth(frameRect) - kRightMargin - kLeftMargin,
-                       kColorComponentSliderHeight * 3 + kLabelHeight * 3 + kMarginBetweenComponentSliders * 2);
+                       kColorComponentSliderHeight * 3 +
+                           labelHeight * 3 +
+                           kMarginBetweenComponentSliders * 2);
     self.rgbSliders.frame = frame;
     self.hsbSliders.frame = frame;
+
+    // Lay out HSB sliders
     frame.size.height = kColorComponentSliderHeight;
     frame.origin = NSZeroPoint;
     self.hueSliderView.frame = frame;
     frame.origin.y += kColorComponentSliderHeight;
-    self.hueLabel.frame = NSMakeRect(frame.origin.x,
-                                     frame.origin.y,
-                                     0,
-                                     kLabelHeight);
+    frame.size.height = labelHeight;
+    self.hueLabel.frame = frame;
+
     frame = NSMakeRect(0,
                        NSMaxY(frame) + kMarginBetweenComponentSliders,
                        NSWidth(frameRect) - kRightMargin - kLeftMargin,
                        kColorComponentSliderHeight);
     self.saturationSliderView.frame = frame;
     frame.origin.y += kColorComponentSliderHeight;
+    frame.size.height = labelHeight;
     self.saturationLabel.frame = frame;
+
     frame = NSMakeRect(0,
                        NSMaxY(frame) + kMarginBetweenComponentSliders,
                        NSWidth(frameRect) - kRightMargin - kLeftMargin,
                        kColorComponentSliderHeight);
     self.brightnessSliderView.frame = frame;
     frame.origin.y += kColorComponentSliderHeight;
+    frame.size.height = labelHeight;
     self.brightnessLabel.frame = frame;
 
     // Lay out RGB sliders
@@ -437,6 +428,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                        kColorComponentSliderHeight);
     self.redSliderView.frame = frame;
     frame.origin.y += kColorComponentSliderHeight;
+    frame.size.height = labelHeight;
     self.redLabel.frame = frame;
     
     frame = NSMakeRect(0,
@@ -445,6 +437,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                        kColorComponentSliderHeight);
     self.greenSliderView.frame = frame;
     frame.origin.y += kColorComponentSliderHeight;
+    frame.size.height = labelHeight;
     self.greenLabel.frame = frame;
 
     frame = NSMakeRect(0,
@@ -453,7 +446,34 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                        kColorComponentSliderHeight);
     self.blueSliderView.frame = frame;
     frame.origin.y += kColorComponentSliderHeight;
+    frame.size.height = labelHeight;
     self.blueLabel.frame = frame;
+
+    // Alpha
+    if (self.alphaAllowed) {
+        switch ((CPKRGBViewMode) self.modeButton.selectedTag) {
+            case kCPKRGBViewModeHSBWithHueSliderTag:
+            case kCPKRGBViewModeHSBWithSaturationSliderTag:
+            case kCPKRGBViewModeHSBWithBrightnessSliderTag:
+            case kCPKRGBViewModeRGBWithRedSliderTag:
+            case kCPKRGBViewModeRGBWithGreenSliderTag:
+            case kCPKRGBViewModeRGBWithBlueSliderTag:
+                frame = NSMakeRect(kLeftMargin,
+                                   NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields,
+                                   NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                                   kAlphaSliderHeight);
+                break;
+
+            case kCPKRGBViewModeHSBSliders:
+            case kCPKRGBViewModeRGBSliders:
+                frame = NSMakeRect(kLeftMargin,
+                                   NSMaxY(self.rgbSliders.frame) + kMarginBetweenLastSliderAndTextFields,
+                                   NSWidth(frameRect) - kRightMargin - kLeftMargin,
+                                   kAlphaSliderHeight);
+                break;
+        }
+        self.alphaSliderView.frame = frame;
+    }
 }
 
 - (void)layoutLabel:(NSTextField *)label belowView:(NSView *)view {
@@ -559,6 +579,36 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     frame.size.height = NSMaxY(self.redTextFieldLabel.frame);
     self.rgbTextFields.frame = frame;
     self.hsbTextFields.frame = frame;
+
+    // Lay out rgb/hsb text field switch
+    if (self.alphaAllowed) {
+        y = NSMaxY(self.alphaSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+    } else {
+        switch ((CPKRGBViewMode) self.modeButton.selectedTag) {
+            case kCPKRGBViewModeHSBWithHueSliderTag:
+            case kCPKRGBViewModeHSBWithSaturationSliderTag:
+            case kCPKRGBViewModeHSBWithBrightnessSliderTag:
+            case kCPKRGBViewModeRGBWithRedSliderTag:
+            case kCPKRGBViewModeRGBWithGreenSliderTag:
+            case kCPKRGBViewModeRGBWithBlueSliderTag:
+                y = NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+                break;
+
+            case kCPKRGBViewModeHSBSliders:
+            case kCPKRGBViewModeRGBSliders:
+                y = NSMaxY(self.rgbSliders.frame) + kMarginBetweenLastSliderAndTextFields;
+                break;
+        }
+    }
+
+    frame = NSMakeRect(NSMaxX(self.frame) -
+                           rgbImage.size.width -
+                           kRightMargin + kMarginBetweenTextFields -
+                           kExtraRightMarginForTextFieldSwitch,
+                       y,
+                       rgbImage.size.width,
+                       rgbImage.size.height);
+    self.hslRgbTextFieldSwitch.frame = frame;
 }
 
 - (void)layoutHeightOfTextField:(NSTextField *)textField {
@@ -586,7 +636,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         [[NSTextField alloc] initWithFrame:NSMakeRect(origin.x,
                                                       origin.y,
                                                       0,
-                                                      kLabelHeight)];
+                                                      0)];
     label.bezeled = NO;
     label.drawsBackground = NO;
     label.editable = NO;
@@ -945,7 +995,8 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
     self.gradientView.selectedColor = self.selectedColor;
     self.colorComponentSliderView.color = self.selectedColor;
     [self setNeedsDisplay:YES];
-    
+
+    [self layoutSubviews];
     [self.delegate selectionViewContentSizeDidChange];
 }
 

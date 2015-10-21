@@ -8,18 +8,18 @@
 #import "CPKSelectionView.h"
 #import "NSColor+CPK.h"
 
-const CGFloat kDesiredWidth = 272;
-const CGFloat kFavoritesHeight = 100;
+static const CGFloat kDesiredWidth = 272;
+static const CGFloat kDesiredHeight = 387;
 
 static const CGFloat kLeftMargin = 8;
 static const CGFloat kRightMargin = 8;
 static const CGFloat kBottomMargin = 8;
 
-@interface CPKMainViewController ()
+@interface CPKMainViewController ()<CPKSelectionViewDelegate>
 @property(nonatomic, copy) void (^block)(NSColor *);
 @property(nonatomic) NSColor *selectedColor;
 @property(nonatomic) CGFloat desiredHeight;
-@property(nonatomic) CPKSelectionView *rgbView;
+@property(nonatomic) CPKSelectionView *selectionView;
 @property(nonatomic) CPKControlsView *controlsView;
 @property(nonatomic) CPKFavoritesView *favoritesView;
 @property(nonatomic) BOOL alphaAllowed;
@@ -55,17 +55,18 @@ static const CGFloat kBottomMargin = 8;
     self.view.autoresizesSubviews = NO;
 
     __weak __typeof(self) weakSelf = self;
-    self.rgbView = [[CPKSelectionView alloc] initWithFrame:self.view.bounds
-                                                     block: ^(NSColor *color) {
-                                                         [weakSelf selectColor:color];
-                                                     }
-                                                     color:_selectedColor
-                                              alphaAllowed:self.alphaAllowed];
-    [self.rgbView sizeToFit];
+    self.selectionView = [[CPKSelectionView alloc] initWithFrame:self.view.bounds
+                                                           block: ^(NSColor *color) {
+                                                               [weakSelf selectColor:color];
+                                                           }
+                                                           color:_selectedColor
+                                                    alphaAllowed:self.alphaAllowed];
+    self.selectionView.delegate = self;
+    [self.selectionView sizeToFit];
 
     self.controlsView =
         [[CPKControlsView alloc] initWithFrame:NSMakeRect(0,
-                                                          NSMaxY(self.rgbView.frame),
+                                                          NSMaxY(self.selectionView.frame),
                                                           kDesiredWidth,
                                                           [CPKControlsView desiredHeight])];
     self.controlsView.swatchColor = _selectedColor;
@@ -94,7 +95,7 @@ static const CGFloat kBottomMargin = 8;
     self.controlsView.startPickingBlock = ^() {
         NSColor *color = [CPKEyedropperWindow pickColor];
         if (color) {
-            weakSelf.rgbView.selectedColor = color;
+            weakSelf.selectionView.selectedColor = color;
         }
     };
     self.controlsView.useNativeColorPicker = ^() {
@@ -109,7 +110,7 @@ static const CGFloat kBottomMargin = 8;
                                                            [self favoritesViewHeight])];
     self.favoritesView.selectionDidChangeBlock = ^(NSColor *newColor) {
         if (newColor) {
-            weakSelf.rgbView.selectedColor = newColor;
+            weakSelf.selectionView.selectedColor = newColor;
             weakSelf.controlsView.removeEnabled = YES;
         } else {
             weakSelf.controlsView.removeEnabled = NO;
@@ -118,7 +119,7 @@ static const CGFloat kBottomMargin = 8;
 
     self.desiredHeight = NSMaxY(self.favoritesView.frame) + kBottomMargin;
 
-    self.view.subviews = @[ self.rgbView,
+    self.view.subviews = @[ self.selectionView,
                             self.controlsView,
                             self.favoritesView ];
 
@@ -131,7 +132,7 @@ static const CGFloat kBottomMargin = 8;
 }
 
 - (CGFloat)favoritesViewHeight {
-    return kFavoritesHeight;
+    return kDesiredHeight - NSMaxY(self.controlsView.frame);
 }
 
 - (void)viewDidAppear {
@@ -144,6 +145,21 @@ static const CGFloat kBottomMargin = 8;
     self.controlsView.swatchColor = color;
     _block(color);
     [self.favoritesView selectColor:color];
+}
+
+#pragma mark - CPKSelectionViewDelegate
+
+- (void)selectionViewContentSizeDidChange {
+    [self.selectionView sizeToFit];
+    self.controlsView.frame = NSMakeRect(0,
+                                         NSMaxY(self.selectionView.frame),
+                                         kDesiredWidth,
+                                         [CPKControlsView desiredHeight]);
+
+    self.favoritesView.frame = NSMakeRect(kLeftMargin,
+                                          NSMaxY(self.controlsView.frame),
+                                          kDesiredWidth - kLeftMargin - kRightMargin,
+                                          [self favoritesViewHeight]);
 }
 
 @end

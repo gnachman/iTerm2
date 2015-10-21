@@ -70,6 +70,11 @@
     return frame;
 }
 
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+    [super resizeSubviewsWithOldSize:oldSize];
+    self.indicatorView.frame = [self indicatorFrame];
+}
+
 - (NSColor *)startingColorAt:(CGFloat)fraction {
     switch (self.type) {
         case kCPKGradientViewTypeSaturationBrightness:
