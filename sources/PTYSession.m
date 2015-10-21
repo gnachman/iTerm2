@@ -3745,7 +3745,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition
 {
-    VT100ScreenMark *mark = nil;
+    iTermMark *mark = nil;
     if (_lastMark && [_screen markIsValid:_lastMark]) {
         mark = _lastMark;
     } else {

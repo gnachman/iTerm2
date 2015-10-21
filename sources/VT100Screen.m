@@ -1911,7 +1911,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 }
 
-- (BOOL)markIsValid:(VT100ScreenMark *)mark {
+- (BOOL)markIsValid:(iTermMark *)mark {
     return [intervalTree_ containsObject:mark];
 }
 
