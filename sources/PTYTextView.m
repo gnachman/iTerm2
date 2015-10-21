@@ -1858,6 +1858,10 @@ static const int kDragThreshold = 3;
     }
 }
 
+- (void)pressureChangeWithEvent:(NSEvent *)event {
+    [pointer_ pressureChangeWithEvent:event];
+}
+
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event {
     DLog(@"mouseDownImpl: called");

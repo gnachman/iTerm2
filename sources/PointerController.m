@@ -18,6 +18,9 @@
     // If the mouse-down occurred while xterm mouse reporting was on, then when
     // the mouse-up is received, act as though the option key was not pressed.
     BOOL ignoreOption_;
+
+    // Last-seen force touch stage.
+    NSInteger _previousStage;
 }
 
 @synthesize delegate = delegate_;
@@ -148,9 +151,7 @@
     mouseDownButton_ = 0;
 }
 
-
-- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption
-{
+- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption {
     // A double left click plus an immediate right click reports a triple right
     // click! So we keep our own click count and use the lower of the OS's
     // value and ours. Theirs is lower when the time between clicks is long.
@@ -167,8 +168,10 @@
                     withTouches:numTouches] != nil;
 }
 
-- (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches
-{
+- (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches {
+    if ([event respondsToSelector:@selector(stage)]) {
+        _previousStage = event.stage;
+    }
     NSString *argument = [self argumentForEvent:event
                                          clicks:clicks_
                                     withTouches:numTouches];
@@ -181,6 +184,21 @@
         return YES;
     } else {
         return NO;
+    }
+}
+
+- (void)pressureChangeWithEvent:(NSEvent *)event {
+    if ([event respondsToSelector:@selector(stage)]) {
+        if (event.stage == 2 && _previousStage < 2) {
+            NSString *action = [PointerPrefsController actionForGesture:kForceTouchSingleClick
+                                                              modifiers:[event modifierFlags]];
+            NSString *argument = [PointerPrefsController argumentForGesture:kForceTouchSingleClick
+                                                                  modifiers:[event modifierFlags]];
+            if (action) {
+                [self performAction:action forEvent:event withArgument:argument];
+            }
+        }
+        _previousStage = event.stage;
     }
 }
 

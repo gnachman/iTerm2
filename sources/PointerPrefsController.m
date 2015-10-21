@@ -33,10 +33,12 @@ static const int kMinGestureTag = 10;
 #define kThreeFingerSwipeLeftGestureTag 12
 #define kThreeFingerSwipeUpGestureTag 13
 #define kThreeFingerSwipeDownGestureTag 14
+#define kForceTouchSingleClickTag 15
 
 static NSString *kButtonSchema = @"Button";  // First field of action key
 static NSString *kGestureSchema = @"Gesture";  // First field of action key
 
+NSString *kForceTouchSingleClick = @"ForceTouchSingleClick";  // Single finger force touch
 NSString *kThreeFingerClickGesture = @"ThreeFingerClick";  // Second field of action key (gesture type)
 NSString *kThreeFingerSwipeRight = @"ThreeFingerSwipeRight";  // Second field of action key (gesture type)
 NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second field of action key (gesture type)
@@ -117,9 +119,32 @@ typedef enum {
 + (BOOL)keyIsThreeFingerTap:(NSString *)key;
 @end
 
-@implementation PointerPrefsController
+@implementation PointerPrefsController {
+    IBOutlet NSTableView *tableView_;
+    IBOutlet NSTableColumn *buttonColumn_;
+    IBOutlet NSTableColumn *actionColumn_;
 
-@synthesize hasSelection = hasSelection_;
+    IBOutlet NSPanel *panel_;
+    IBOutlet NSTextField *editButtonLabel_;
+    IBOutlet NSPopUpButton *editButton_;
+    IBOutlet NSTextField *editModifiersLabel_;
+    IBOutlet NSButton *editModifiersCommand_;
+    IBOutlet NSButton *editModifiersOption_;
+    IBOutlet NSButton *editModifiersShift_;
+    IBOutlet NSButton *editModifiersControl_;
+    IBOutlet NSTextField *editActionLabel_;
+    IBOutlet NSPopUpButton *editAction_;
+    IBOutlet NSTextField *editClickTypeLabel_;
+    IBOutlet NSPopUpButton *editClickType_;
+    IBOutlet NSTextField *editArgumentLabel_;
+    IBOutlet NSPopUpButton *editArgumentButton_;
+    IBOutlet NSTextField *editArgumentField_;
+
+    IBOutlet NSButton *ok_;
+    IBOutlet NSButton *remove_;
+
+    NSString *origKey_;
+}
 
 - (void)dealloc
 {
@@ -282,13 +307,12 @@ typedef enum {
 
 + (NSDictionary *)gestureNamesDict
 {
-    NSDictionary *names = [NSDictionary dictionaryWithObjectsAndKeys:
-                           @"Three-finger Tap", kThreeFingerClickGesture,
-                           @"Three-finger Swipe Right", kThreeFingerSwipeRight,
-                           @"Three-finger Swipe Left", kThreeFingerSwipeLeft,
-                           @"Three-finger Swipe Up", kThreeFingerSwipeUp,
-                           @"Three-finger Swipe Down", kThreeFingerSwipeDown,
-                           nil];
+    NSDictionary *names = @{ kThreeFingerClickGesture: @"Three-finger Tap",
+                             kThreeFingerSwipeRight: @"Three-finger Swipe Right",
+                             kThreeFingerSwipeLeft: @"Three-finger Swipe Left",
+                             kThreeFingerSwipeUp: @"Three-finger Swipe Up",
+                             kThreeFingerSwipeDown: @"Three-finger Swipe Down",
+                             kForceTouchSingleClick: @"Force Touch Single Click" };
     return names;
 }
 
@@ -306,13 +330,12 @@ typedef enum {
 
 + (int)tagForGestureIdentifier:(NSString *)ident
 {
-    NSArray *keys = [NSArray arrayWithObjects:
-                     kThreeFingerClickGesture,
-                     kThreeFingerSwipeRight,
-                     kThreeFingerSwipeLeft,
-                     kThreeFingerSwipeUp,
-                     kThreeFingerSwipeDown,
-                     nil];
+    NSArray *keys = @[ kThreeFingerClickGesture,
+                       kThreeFingerSwipeRight,
+                       kThreeFingerSwipeLeft,
+                       kThreeFingerSwipeUp,
+                       kThreeFingerSwipeDown,
+                       kForceTouchSingleClick ];
 
     NSUInteger i = [keys indexOfObject:ident];
     if (i == NSNotFound) {
@@ -346,6 +369,8 @@ typedef enum {
             return kThreeFingerSwipeUp;
         case kThreeFingerSwipeDownGestureTag:
             return kThreeFingerSwipeDown;
+        case kForceTouchSingleClickTag:
+            return kForceTouchSingleClick;
         default:
             return [NSString stringWithFormat:@"Bad tag %d", tag];
     }

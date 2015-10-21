@@ -41,35 +41,10 @@ extern NSString *kThreeFingerSwipeRight;
 extern NSString *kThreeFingerSwipeLeft;
 extern NSString *kThreeFingerSwipeUp;
 extern NSString *kThreeFingerSwipeDown;
+extern NSString *kForceTouchSingleClick;
 
 // This manages the tableview and associated buttons and controls for managing pointer actions.
-@interface PointerPrefsController : NSObject {
-    IBOutlet NSTableView *tableView_;
-    IBOutlet NSTableColumn *buttonColumn_;
-    IBOutlet NSTableColumn *actionColumn_;
-
-    IBOutlet NSPanel *panel_;
-    IBOutlet NSTextField *editButtonLabel_;
-    IBOutlet NSPopUpButton *editButton_;
-    IBOutlet NSTextField *editModifiersLabel_;
-    IBOutlet NSButton *editModifiersCommand_;
-    IBOutlet NSButton *editModifiersOption_;
-    IBOutlet NSButton *editModifiersShift_;
-    IBOutlet NSButton *editModifiersControl_;
-    IBOutlet NSTextField *editActionLabel_;
-    IBOutlet NSPopUpButton *editAction_;
-    IBOutlet NSTextField *editClickTypeLabel_;
-    IBOutlet NSPopUpButton *editClickType_;
-    IBOutlet NSTextField *editArgumentLabel_;
-    IBOutlet NSPopUpButton *editArgumentButton_;
-    IBOutlet NSTextField *editArgumentField_;
-
-    IBOutlet NSButton *ok_;
-    IBOutlet NSButton *remove_;
-
-    NSString *origKey_;
-    BOOL hasSelection_;
-}
+@interface PointerPrefsController : NSObject
 
 @property (nonatomic, assign) BOOL hasSelection;
 

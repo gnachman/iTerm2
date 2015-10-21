@@ -46,6 +46,7 @@
 
 - (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches ignoreOption:(BOOL)ignoreOption;
 - (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches;
+- (void)pressureChangeWithEvent:(NSEvent *)event;
 - (void)swipeWithEvent:(NSEvent *)event;
 - (BOOL)eventEmulatesRightClick:(NSEvent *)event;
 - (void)notifyLeftMouseDown;
