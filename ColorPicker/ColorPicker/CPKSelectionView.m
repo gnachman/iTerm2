@@ -484,7 +484,7 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
 }
 
 - (void)layoutTextFields {
-    CGFloat y = NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+    CGFloat y;
     NSImage *rgbImage = [self cpk_imageNamed:@"RGB"];
     const CGFloat rightMargin = rgbImage.size.width;
     CGFloat x = NSMaxX(self.frame) - kRightMargin - rightMargin;
@@ -496,6 +496,25 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
                                                0);
         [self layoutHeightOfTextField:self.alphaTextField];
         x -= self.alphaTextField.frame.size.width + kMarginBetweenTextFields;
+    } else {
+        switch ((CPKRGBViewMode) self.modeButton.selectedTag) {
+            case kCPKRGBViewModeHSBWithHueSliderTag:
+            case kCPKRGBViewModeHSBWithSaturationSliderTag:
+            case kCPKRGBViewModeHSBWithBrightnessSliderTag:
+            case kCPKRGBViewModeRGBWithRedSliderTag:
+            case kCPKRGBViewModeRGBWithGreenSliderTag:
+            case kCPKRGBViewModeRGBWithBlueSliderTag:
+                y = NSMaxY(self.colorComponentSliderView.frame) + kMarginBetweenLastSliderAndTextFields;
+                break;
+
+            case kCPKRGBViewModeHSBSliders:
+                y = NSMaxY(self.hsbSliders.frame) + kMarginBetweenLastSliderAndTextFields;
+                break;
+
+            case kCPKRGBViewModeRGBSliders:
+                y = NSMaxY(self.rgbSliders.frame) + kMarginBetweenLastSliderAndTextFields;
+                break;
+        }
     }
     
     // Lay out text field containers
