@@ -40,6 +40,7 @@ extern NSString *const kPTYSessionCapturedOutputDidChange;
 @class iTermCommandHistoryCommandUseMO;
 @class iTermController;
 @class iTermGrowlDelegate;
+@class iTermQuickLookController;
 
 // The time period for just blinking is in -[iTermAdvancedSettingsModel timeBetweenBlinks].
 // Timer period when receiving lots of data.
@@ -293,6 +294,9 @@ typedef enum {
 @property(nonatomic, assign) BOOL sessionIsSeniorToTmuxSplitPane;
 
 @property(nonatomic, readonly) NSArray<iTermCommandHistoryCommandUseMO *> *commandUses;
+
+// If we want to show quicklook this will not be nil.
+@property(nonatomic, readonly) iTermQuickLookController *quickLookController;
 
 #pragma mark - methods
 

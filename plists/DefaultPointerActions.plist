@@ -32,10 +32,5 @@
     <key>Action</key>
     <string>kPrevWindowPointerAction</string>
   </dict>
-  <key>Gesture,ForceTouchSingleClick,,</key>
-  <dict>
-    <key>Action</key>
-    <string>kOpenTargetPointerAction</string>
-  </dict>
 </dict>
 </plist>

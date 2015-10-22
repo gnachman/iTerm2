@@ -17,6 +17,7 @@
 @class CRunStorage;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
+@class iTermQuickLookController;
 @class iTermSelection;
 @protocol iTermSemanticHistoryControllerDelegate;
 @class MovingAverage;
@@ -262,6 +263,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Change the cursor to indicate that a search is being performed.
 @property(nonatomic, assign) BOOL showSearchingCursor;
+
+@property(nonatomic, readonly) iTermQuickLookController *quickLookController;
 
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.

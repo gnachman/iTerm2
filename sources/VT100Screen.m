@@ -1861,6 +1861,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     if (!remoteHost.username || !remoteHost.hostname) {
         return nil;
     }
+    if (remoteHost.isLocalhost) {
+        return nil;
+    }
     NSString *workingDirectory = [self workingDirectoryOnLine:line];
     if (!workingDirectory) {
         return nil;

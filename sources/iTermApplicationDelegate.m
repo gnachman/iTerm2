@@ -44,6 +44,7 @@
 #import "iTermProfilesWindowController.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermRestorableSession.h"
+#import "iTermQuickLookController.h"
 #import "iTermTipController.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
@@ -61,7 +62,10 @@
 #import "Sparkle/SUUpdater.h"
 #import "ToastWindowController.h"
 #import "VT100Terminal.h"
+
+#import <Quartz/Quartz.h>
 #import <objc/runtime.h>
+
 #include "iTermFileDescriptorClient.h"
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1744,6 +1748,11 @@ static BOOL hasBecomeActive = NO;
 
 - (void)currentSessionDidChange {
     [_passwordManagerWindowController update];
+    QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
+    PseudoTerminal *currentWindow = [[iTermController sharedInstance] currentTerminal];
+    if (panel.currentController == currentWindow) {
+        [currentWindow.currentSession.quickLookController takeControl];
+    }
 }
 
 - (PseudoTerminal *)currentTerminal {

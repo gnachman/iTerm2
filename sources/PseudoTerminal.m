@@ -73,6 +73,8 @@
 
 #include <unistd.h>
 
+@class QLPreviewPanel;
+
 NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kPseudoTerminalStateRestorationWindowArrangementKey = @"ptyarrangement";
 
@@ -7271,6 +7273,20 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return [self.currentSession commandUses];
+}
+
+#pragma mark - Quick Look panel support
+
+- (BOOL)acceptsPreviewPanelControl:(QLPreviewPanel *)panel {
+    return self.currentSession.quickLookController != nil;
+}
+
+- (void)beginPreviewPanelControl:(QLPreviewPanel *)panel {
+    [self.currentSession.quickLookController beginPreviewPanelControl:panel];
+}
+
+- (void)endPreviewPanelControl:(QLPreviewPanel *)panel {
+    [self.currentSession.quickLookController endPreviewPanelControl:panel];
 }
 
 @end

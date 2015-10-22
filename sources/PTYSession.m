@@ -6507,6 +6507,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [[iTermShellHistoryController sharedInstance] commandUsesForHost:self.currentHost];
 }
 
+- (iTermQuickLookController *)quickLookController {
+    return _textview.quickLookController;
+}
+
 - (void)offerToTurnOffMouseReportingOnHostChange {
     NSString *title =
         @"Looks like mouse reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";

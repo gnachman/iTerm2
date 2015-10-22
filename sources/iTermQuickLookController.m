@@ -17,33 +17,28 @@
 @implementation iTermQuickLookController
 
 - (void)dealloc {
-  QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
-  if (panel.delegate == self) {
-    panel.delegate = nil;
-  }
-  if (panel.dataSource == self) {
-    panel.dataSource = nil;
-  }
   [_files release];
   [super dealloc];
 }
 
-- (void)addFile:(NSString *)path {
+- (void)addURL:(NSURL *)url {
   if (!_files) {
     _files = [[NSMutableArray alloc] init];
   }
-  [_files addObject:[NSURL fileURLWithPath:path]];
+  [_files addObject:url];
 }
 
-- (void)showWithSourceRect:(NSRect)sourceRect {
+- (void)showWithSourceRect:(NSRect)sourceRect controller:(id)controller {
   self.sourceRect = sourceRect;
-  BOOL alreadyExisted = [QLPreviewPanel sharedPreviewPanelExists];
   QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
-  panel.delegate = self;
-  panel.dataSource = self;
-  if (alreadyExisted) {
+  if (panel.currentController == controller) {
+    panel.dataSource = self;
+    panel.delegate = self;
     [panel reloadData];
+  } else {
+    [panel updateController];
   }
+
   [panel makeKeyAndOrderFront:nil];
 }
 
@@ -52,6 +47,15 @@
   if ([panel isVisible] &&
       [panel delegate] == self) {
     [panel orderOut:nil];
+  }
+}
+
+- (void)takeControl {
+  QLPreviewPanel *panel = [QLPreviewPanel sharedPreviewPanel];
+  if (panel.delegate != self || panel.dataSource != self) {
+    panel.delegate = self;
+    panel.dataSource = self;
+    [panel reloadData];
   }
 }
 
@@ -91,6 +95,15 @@
                       contentRect:(NSRect *)contentRect {
   NSURL *url = [item previewItemURL];
   return [[NSWorkspace sharedWorkspace] iconForFile:url.path];
+}
+
+- (void)beginPreviewPanelControl:(QLPreviewPanel *)panel {
+  panel.delegate = self;
+  panel.dataSource = self;
+  [panel reloadData];
+}
+
+- (void)endPreviewPanelControl:(QLPreviewPanel *)panel {
 }
 
 @end

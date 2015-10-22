@@ -2428,10 +2428,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 break;
             }
 
-            case kURLActionOpenImage: {
+            case kURLActionOpenImage:
                 DLog(@"Open image");
                 [[NSWorkspace sharedWorkspace] openFile:[(iTermImageInfo *)action.identifier nameForNewSavedTempFile]];
-            }
+                break;
+
+            case kURLActionSecureCopyFile:
+                DLog(@"Secure copy file.");
+                [self downloadFileAtSecureCopyPath:action.identifier
+                                       displayName:action.string
+                                    locationInView:action.range.coordRange];
+                break;
         }
     }
 }
@@ -2571,12 +2578,34 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)quickLookWithEvent:(NSEvent *)event {
-    // Perform default action.
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     URLAction *urlAction = [self urlActionForClickAtX:clickPoint.x y:clickPoint.y];
-    if (urlAction.fullPath) {
-        self.quickLookController = [[iTermQuickLookController alloc] init];
-        [self.quickLookController addFile:urlAction.fullPath];
+    if (!urlAction) {
+        return;
+    }
+    NSURL *url = nil;
+    switch (urlAction.actionType) {
+        case kURLActionSecureCopyFile:
+            url = [urlAction.identifier URL];
+            break;
+
+        case kURLActionOpenExistingFile:
+            url = [NSURL fileURLWithPath:urlAction.fullPath];
+            break;
+
+        case kURLActionOpenImage:
+            url = [NSURL fileURLWithPath:[urlAction.identifier nameForNewSavedTempFile]];
+            break;
+
+        case kURLActionOpenURL:
+            url = [NSURL fileURLWithPath:urlAction.string];
+            break;
+
+        case kURLActionSmartSelectionAction:
+            break;
+    }
+
+    if (url) {
         NSPoint windowPoint = event.locationInWindow;
         NSRect windowRect = NSMakeRect(windowPoint.x - _charWidth / 2,
                                        windowPoint.y - _lineHeight / 2,
@@ -2584,7 +2613,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                        _lineHeight);
 
         NSRect screenRect = [self.window convertRectToScreen:windowRect];
-        [self.quickLookController showWithSourceRect:screenRect];
+        self.quickLookController = [[iTermQuickLookController alloc] init];
+        [self.quickLookController addURL:url];
+        [self.quickLookController showWithSourceRect:screenRect controller:self.window.delegate];
     }
 }
 
@@ -3024,20 +3055,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     scpPath = [_dataSource scpPathForFile:parts[0] onLine:_selection.lastRange.coordRange.start.y];
+    VT100GridCoordRange range = _selection.lastRange.coordRange;
+
+    [self downloadFileAtSecureCopyPath:scpPath displayName:selectedText locationInView:range];
+}
+
+- (void)downloadFileAtSecureCopyPath:(SCPPath *)scpPath
+                         displayName:(NSString *)name
+                      locationInView:(VT100GridCoordRange)range {
     [_delegate startDownloadOverSCP:scpPath];
 
     NSDictionary *attributes =
         @{ NSForegroundColorAttributeName: [self selectedTextColor],
            NSBackgroundColorAttributeName: [self selectionBackgroundColor],
            NSFontAttributeName: _primaryFont.font };
-    NSSize size = [selectedText sizeWithAttributes:attributes];
+    NSSize size = [name sizeWithAttributes:attributes];
     size.height = _lineHeight;
     NSImage* image = [[[NSImage alloc] initWithSize:size] autorelease];
     [image lockFocus];
-    [selectedText drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
+    [name drawAtPoint:NSMakePoint(0, 0) withAttributes:attributes];
     [image unlockFocus];
 
-    VT100GridCoordRange range = _selection.lastRange.coordRange;
     NSRect windowRect = [self convertRect:NSMakeRect(range.start.x * _charWidth + MARGIN,
                                                      range.start.y * _lineHeight,
                                                      0,
@@ -5326,29 +5364,47 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL openable = (url && [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:url] != nil);
     DLog(@"There seems to be a scheme. ruledOut=%d", (int)openable);
 
+    VT100GridWindowedRange range;
+    range.coordRange.start = [extractor coord:coord
+                                         plus:-(prefixChars - urlRange.location)
+                               skippingCoords:continuationCharsCoords
+                                      forward:NO];
+    range.coordRange.end = [extractor coord:range.coordRange.start
+                                       plus:urlRange.length
+                             skippingCoords:continuationCharsCoords
+                                    forward:YES];
+    range.columnWindow = extractor.logicalWindow;
+
     if ([self stringLooksLikeURL:[originalMatch substringWithRange:urlRange]] &&
          openable) {
         DLog(@"%@ looks like a URL and it's not ruled out based on scheme. Go for it.",
              [originalMatch substringWithRange:urlRange]);
         URLAction *action = [URLAction urlActionToOpenURL:subUrl];
-
-        VT100GridWindowedRange range;
-        range.coordRange.start = [extractor coord:coord
-                                             plus:-(prefixChars - urlRange.location)
-                                   skippingCoords:continuationCharsCoords
-                                          forward:NO];
-        range.coordRange.end = [extractor coord:range.coordRange.start
-                                           plus:urlRange.length
-                                 skippingCoords:continuationCharsCoords
-                                        forward:YES];
-        range.columnWindow = extractor.logicalWindow;
         action.range = range;
         return action;
     } else {
         DLog(@"%@ is either not plausibly a URL or was ruled out based on scheme. Fail.",
              [originalMatch substringWithRange:urlRange]);
-        return nil;
     }
+
+    // See if we can conjure up a secure copy path.
+    smartMatch = [self smartSelectAtX:x
+                                    y:y
+                                   to:&smartRange
+                     ignoringNewlines:[iTermAdvancedSettingsModel ignoreHardNewlinesInURLs]
+                       actionRequired:NO
+                      respectDividers:[[iTermController sharedInstance] selectionRespectsSoftBoundaries]];
+    if (smartMatch) {
+        SCPPath *scpPath = [_dataSource scpPathForFile:[smartMatch.components firstObject]
+                                                onLine:y];
+        if (scpPath) {
+            URLAction *action = [URLAction urlActionToSecureCopyFile:scpPath];
+            action.range = range;
+            return action;
+        }
+    }
+
+    return nil;
 }
 
 - (void)hostnameLookupFailed:(NSNotification *)notification {

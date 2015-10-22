@@ -13,6 +13,9 @@
 @property(nonatomic, copy) NSString *hostname;
 @property(nonatomic, copy) NSString *username;
 
+// Tries to guess if this is the local host.
+@property(nonatomic, readonly) BOOL isLocalhost;
+
 - (BOOL)isEqualToRemoteHost:(VT100RemoteHost *)other;
 
 // Returns username@hostname.

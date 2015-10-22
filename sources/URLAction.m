@@ -8,6 +8,7 @@
 
 #import "URLAction.h"
 #import "iTermImageInfo.h"
+#import "SCPPath.h"
 
 @interface URLAction ()
 
@@ -21,6 +22,14 @@
 
 + (instancetype)urlAction {
     return [[[self alloc] init] autorelease];
+}
+
++ (instancetype)urlActionToSecureCopyFile:(SCPPath *)scpPath {
+    URLAction *action = [self urlAction];
+    action.string = scpPath.stringValue;
+    action.actionType = kURLActionSecureCopyFile;
+    action.identifier = scpPath;
+    return action;
 }
 
 + (instancetype)urlActionToOpenURL:(NSString *)filename {

@@ -191,7 +191,9 @@
 
 - (BOOL)pressureChangeWithEvent:(NSEvent *)event {
     if ([event respondsToSelector:@selector(stage)]) {
-        if (event.stage == 2 && _previousStage < 2) {
+        NSInteger previousStage = _previousStage;
+        _previousStage = event.stage;
+        if (event.stage == 2 && previousStage < 2) {
             NSString *action = [PointerPrefsController actionForGesture:kForceTouchSingleClick
                                                               modifiers:[event modifierFlags]];
             NSString *argument = [PointerPrefsController argumentForGesture:kForceTouchSingleClick
@@ -203,7 +205,6 @@
                 [self performAction:kQuickLookAction forEvent:event withArgument:nil];
             }
         }
-        _previousStage = event.stage;
     }
     return NO;
 }

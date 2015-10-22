@@ -10,12 +10,14 @@
 #import "VT100GridTypes.h"
 
 @class iTermImageInfo;
+@class SCPPath;
 
 typedef NS_ENUM(NSInteger, URLActionType) {
     kURLActionOpenURL,
     kURLActionSmartSelectionAction,
     kURLActionOpenExistingFile,
-    kURLActionOpenImage
+    kURLActionOpenImage,
+    kURLActionSecureCopyFile,
 };
 
 @interface URLAction : NSObject
@@ -27,7 +29,8 @@ typedef NS_ENUM(NSInteger, URLActionType) {
 // For images, this is the filename. See |identifier| for the ImageInfo.
 @property(nonatomic, readonly) NSString *string;
 
-// Extra info. Currently only used for images (holds the ImageInfo).
+// Extra info. For kURLActionOpenImage, this holds an image. For kURLActionSecureCopyFile, this
+// holds an SCPPath.
 @property(nonatomic, readonly) id identifier;
 
 // Always set. The range of |string| on screen.
@@ -55,5 +58,6 @@ typedef NS_ENUM(NSInteger, URLActionType) {
                                             onString:(NSString *)content;
 + (instancetype)urlActionToOpenExistingFile:(NSString *)filename;
 + (instancetype)urlActionToOpenImage:(iTermImageInfo *)imageInfo;
++ (instancetype)urlActionToSecureCopyFile:(SCPPath *)scpPath;
 
 @end
