@@ -171,9 +171,7 @@
 }
 
 - (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches {
-    if ([event respondsToSelector:@selector(stage)]) {
-        _previousStage = event.stage;
-    }
+    _previousStage = 0;
     NSString *argument = [self argumentForEvent:event
                                          clicks:clicks_
                                     withTouches:numTouches];
