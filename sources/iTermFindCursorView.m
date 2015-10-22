@@ -7,6 +7,8 @@
 //
 
 #import "iTermFindCursorView.h"
+#import "NSBezierPath+iTerm.h"
+#import "NSDate+iTerm.h"
 #import <QuartzCore/QuartzCore.h>
 
 // Delay before teardown.
@@ -119,6 +121,22 @@ const double kFindCursorHoleRadius = 30;
 - (void)setCursorPosition:(NSPoint)cursorPosition {
     [super setCursorPosition:cursorPosition];
     _emitterLayer.emitterPosition = cursorPosition;
+
+    CAShapeLayer *mask = [[CAShapeLayer alloc] init];
+
+    NSBezierPath *outerPath = [NSBezierPath bezierPathWithRect:self.bounds];
+    outerPath.windingRule = NSEvenOddWindingRule;
+
+    NSBezierPath *path = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(cursorPosition.x - 20,
+                                                                           cursorPosition.y - 20,
+                                                                           40,
+                                                                           40)];
+    [outerPath appendBezierPath:path];
+
+    mask.fillRule = kCAFillRuleEvenOdd;
+    mask.path = [outerPath iterm_CGPath];
+    mask.fillColor = [[NSColor blackColor] CGColor];
+    self.layer.mask = mask;
 }
 
 #pragma mark - Private methods
@@ -193,12 +211,10 @@ const double kFindCursorHoleRadius = 30;
 }
 
 + (instancetype)allocWithZone:(struct _NSZone *)zone {
-    static int count;
-    ++count;
-    if (count % 2) {
-        return [iTermFindCursorViewStarsImpl alloc];
-    } else {
+    if ([NSDate isAprilFools]) {
         return [iTermFindCursorViewArrowImpl alloc];
+    } else {
+        return [iTermFindCursorViewStarsImpl alloc];
     }
 }
 

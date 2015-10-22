@@ -12,6 +12,7 @@
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermSearchField.h"
 #import "NSDateFormatterExtras.h"
+#import "NSDate+iTerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "PTYSession.h"
 
@@ -191,15 +192,7 @@ static const CGFloat kHelpMargin = 5;
                                                                         withString:@" "];
 
         if (commandUse.code.integerValue) {
-            static dispatch_once_t onceToken;
-            static BOOL egg;
-            dispatch_once(&onceToken, ^{
-                NSCalendar *calendar = [[[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar] autorelease];
-                NSDateComponents *components = [calendar components:(NSMonthCalendarUnit | NSDayCalendarUnit) fromDate:[NSDate date]];
-                egg = (components.month == 4 && components.day == 1);
-            });
-
-            if (egg) {
+            if ([NSDate isAprilFools]) {
                 value = [@"💩 " stringByAppendingString:value];
             } else {
                 value = [@"🚫 " stringByAppendingString:value];

@@ -48,6 +48,8 @@
 		1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E802C129DA45A00F3D71E /* PTYTab.h */; };
 		1D2E813112A18F7500F3D71E /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
 		1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */; };
+		1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D300BA81BD9A8BB002043F7 /* NSDate+iTerm.h */; settings = {ASSET_TAGS = (); }; };
+		1D300BAB1BD9A8BB002043F7 /* NSDate+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D300BA91BD9A8BB002043F7 /* NSDate+iTerm.m */; settings = {ASSET_TAGS = (); }; };
 		1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D31BC63142D33CA001F7ECB /* TriggerController.h */; };
 		1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
@@ -1765,6 +1767,8 @@
 		1D2E813012A18F7500F3D71E /* SessionView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SessionView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFontPanel.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFontPanel.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D300BA81BD9A8BB002043F7 /* NSDate+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+iTerm.h"; sourceTree = "<group>"; };
+		1D300BA91BD9A8BB002043F7 /* NSDate+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+iTerm.m"; sourceTree = "<group>"; };
 		1D31BC63142D33CA001F7ECB /* TriggerController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TriggerController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D31BC64142D33CA001F7ECB /* TriggerController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TriggerController.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D36155312CBF33E00803EA9 /* ScreenChar.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ScreenChar.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3663,6 +3667,8 @@
 				A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */,
 				A667F3891B48AEF200705186 /* NSApplication+iTerm.h */,
 				A667F38A1B48AEF200705186 /* NSApplication+iTerm.m */,
+				1D300BA81BD9A8BB002043F7 /* NSDate+iTerm.h */,
+				1D300BA91BD9A8BB002043F7 /* NSDate+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -4957,6 +4963,7 @@
 				A6C760471B45C4CF00E3C992 /* SSKeychain.h in Headers */,
 				A62C3B3E1BD40DC900B5629D /* iTermCapturedOutputMark.h in Headers */,
 				A62C3B2D1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.h in Headers */,
+				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
 				A62C3B421BD40E7C00B5629D /* iTermImageMark.h in Headers */,
 				A62C3B2B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,
@@ -5965,6 +5972,7 @@
 				A6C7631A1B45C52B00E3C992 /* iTermProfileSearchToken.m in Sources */,
 				A6C762FB1B45C52B00E3C992 /* FileTransferManager.m in Sources */,
 				A6C762B81B45C52B00E3C992 /* NSImage+iTerm.m in Sources */,
+				1D300BAB1BD9A8BB002043F7 /* NSDate+iTerm.m in Sources */,
 				A6C762E61B45C52B00E3C992 /* VT100Grid.m in Sources */,
 				A6C763981B45C52B00E3C992 /* TmuxControllerRegistry.m in Sources */,
 				A6C763A61B45C52B00E3C992 /* ToolJobs.m in Sources */,
