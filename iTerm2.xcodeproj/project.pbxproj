@@ -690,6 +690,8 @@
 		1DE922EA1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E91AC370DC00965876 /* BackgroundStripes@2x.png */; };
 		1DE922EB1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E91AC370DC00965876 /* BackgroundStripes@2x.png */; };
 		1DE922EC1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DE922E91AC370DC00965876 /* BackgroundStripes@2x.png */; };
+		1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DECF9691BD948CC00E75FEB /* iTermQuickLookController.h */; settings = {ASSET_TAGS = (); }; };
+		1DECF96C1BD948CC00E75FEB /* iTermQuickLookController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DECF96A1BD948CC00E75FEB /* iTermQuickLookController.m */; settings = {ASSET_TAGS = (); }; };
 		1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */; };
 		1DEDF56919C917FD005B023A /* new-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56719C917FD005B023A /* new-tab.png */; };
 		1DEDF56A19C917FD005B023A /* new-tab.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DEDF56719C917FD005B023A /* new-tab.png */; };
@@ -2059,6 +2061,8 @@
 		1DEB29301288885700B2CB9F /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
 		1DEB29371288887100B2CB9F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		1DECF9691BD948CC00E75FEB /* iTermQuickLookController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermQuickLookController.h; sourceTree = "<group>"; };
+		1DECF96A1BD948CC00E75FEB /* iTermQuickLookController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermQuickLookController.m; sourceTree = "<group>"; };
 		1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SessionTitleView.h; sourceTree = "<group>"; tabWidth = 4; };
 		1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = SessionTitleView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1DEDF56719C917FD005B023A /* new-tab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "new-tab.png"; path = "images/new-tab.png"; sourceTree = "<group>"; };
@@ -4009,6 +4013,8 @@
 				A6CFDAD1185D2587005DC94B /* URLAction.m */,
 				A667F3911B4CC8BA00705186 /* iTermBadgeLabel.h */,
 				A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */,
+				1DECF9691BD948CC00E75FEB /* iTermQuickLookController.h */,
+				1DECF96A1BD948CC00E75FEB /* iTermQuickLookController.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -4960,6 +4966,7 @@
 				A667F3931B4CC8BA00705186 /* iTermBadgeLabel.h in Headers */,
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				A62C3B351BCC265F00B5629D /* iTermHostRecordMO+Additions.h in Headers */,
+				1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */,
 				1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */,
 				A62C3B291BCC24AB00B5629D /* iTermHostRecordMO.h in Headers */,
 				A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */,
@@ -5992,6 +5999,7 @@
 				A6C763211B45C52B00E3C992 /* iTermURLSchemeController.m in Sources */,
 				A6C763C51B45C52B00E3C992 /* VT100Parser.m in Sources */,
 				A62C3B2A1BCC24AB00B5629D /* iTermHostRecordMO.m in Sources */,
+				1DECF96C1BD948CC00E75FEB /* iTermQuickLookController.m in Sources */,
 				A6C7637F1B45C52B00E3C992 /* ProfilesSessionPreferencesViewController.m in Sources */,
 				A6C763251B45C52B00E3C992 /* PasteContext.m in Sources */,
 				A6C7633C1B45C52B00E3C992 /* ColorsMenuItemView.m in Sources */,

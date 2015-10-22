@@ -71,6 +71,7 @@ NSString *kNewHorizontalSplitWithProfilePointerAction = @"kNewHorizontalSplitWit
 NSString *kSelectNextPanePointerAction = @"kSelectNextPanePointerAction";
 NSString *kSelectPreviousPanePointerAction = @"kSelectPreviousPanePointerAction";
 NSString *kExtendSelectionPointerAction = @"kExtendSelectionPointerAction";
+NSString *kQuickLookAction = @"kQuickLookAction";
 
 typedef enum {
     kNoArg,
@@ -408,6 +409,7 @@ typedef enum {
                            @"New Tab With Profile…", kNewTabWithProfilePointerAction,
                            @"New Vertical Split With Profile…", kNewVerticalSplitWithProfilePointerAction,
                            @"New Horizontal Split With Profile…", kNewHorizontalSplitWithProfilePointerAction,
+                           @"QuickLook", kQuickLookAction,
                            @"Select Next Pane", kSelectNextPanePointerAction,
                            @"Select Previous Pane", kSelectPreviousPanePointerAction,
                            nil];

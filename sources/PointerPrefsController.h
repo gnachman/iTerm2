@@ -35,6 +35,7 @@ extern NSString *kNewHorizontalSplitWithProfilePointerAction;
 extern NSString *kSelectNextPanePointerAction;
 extern NSString *kSelectPreviousPanePointerAction;
 extern NSString *kExtendSelectionPointerAction;
+extern NSString *kQuickLookAction;
 
 extern NSString *kThreeFingerClickGesture;
 extern NSString *kThreeFingerSwipeRight;

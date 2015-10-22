@@ -82,6 +82,8 @@
         [delegate_ selectPreviousPaneWithEvent:event];
     } else if ([action isEqualToString:kExtendSelectionPointerAction]) {
         [delegate_ extendSelectionWithEvent:event];
+    } else if ([action isEqualToString:kQuickLookAction]) {
+        [delegate_ quickLookWithEvent:event];
     }
 }
 
@@ -187,7 +189,7 @@
     }
 }
 
-- (void)pressureChangeWithEvent:(NSEvent *)event {
+- (BOOL)pressureChangeWithEvent:(NSEvent *)event {
     if ([event respondsToSelector:@selector(stage)]) {
         if (event.stage == 2 && _previousStage < 2) {
             NSString *action = [PointerPrefsController actionForGesture:kForceTouchSingleClick
@@ -196,10 +198,14 @@
                                                                   modifiers:[event modifierFlags]];
             if (action) {
                 [self performAction:action forEvent:event withArgument:argument];
+                return YES;
+            } else {
+                [self performAction:kQuickLookAction forEvent:event withArgument:nil];
             }
         }
         _previousStage = event.stage;
     }
+    return NO;
 }
 
 - (void)swipeWithEvent:(NSEvent *)event

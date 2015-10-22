@@ -22,6 +22,7 @@
 #import "iTermMouseCursor.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermPreferences.h"
+#import "iTermQuickLookController.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
 #import "iTermShellHistoryController.h"
@@ -108,7 +109,7 @@ static const int kDragThreshold = 3;
 @property(nonatomic, retain) iTermSemanticHistoryController *semanticHistoryController;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
 @property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
-
+@property(nonatomic, retain) iTermQuickLookController *quickLookController;
 @end
 
 
@@ -363,7 +364,8 @@ static const int kDragThreshold = 3;
     [_drawingHelper release];
     [_accessibilityHelper release];
     [_badgeLabel release];
-
+    [_quickLookController close];
+    [_quickLookController release];
     [super dealloc];
 }
 
@@ -2565,6 +2567,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
         [_selection beginExtendingSelectionAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
         [_selection endLiveSelection];
+    }
+}
+
+- (void)quickLookWithEvent:(NSEvent *)event {
+    // Perform default action.
+    NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
+    URLAction *urlAction = [self urlActionForClickAtX:clickPoint.x y:clickPoint.y];
+    if (urlAction.fullPath) {
+        self.quickLookController = [[iTermQuickLookController alloc] init];
+        [self.quickLookController addFile:urlAction.fullPath];
+        NSPoint windowPoint = event.locationInWindow;
+        NSRect windowRect = NSMakeRect(windowPoint.x - _charWidth / 2,
+                                       windowPoint.y - _lineHeight / 2,
+                                       _charWidth,
+                                       _lineHeight);
+
+        NSRect screenRect = [self.window convertRectToScreen:windowRect];
+        [self.quickLookController showWithSourceRect:screenRect];
     }
 }
 
