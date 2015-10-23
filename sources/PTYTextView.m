@@ -1,3 +1,5 @@
+#define ENABLE_WEBKIT_POPOVER 0
+
 #import "PTYTextView.h"
 
 #import "AsyncHostLookupController.h"
@@ -2612,7 +2614,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             prefs.javaScriptCanOpenWindowsAutomatically = NO;
             configuration.preferences = prefs;
             configuration.processPool = [[WKProcessPool alloc] init];
-            WKUserContentController *userContentController = [[[WKUserContentController alloc] init] autorelease];
+            WKUserContentController *userContentController =
+                [[[WKUserContentController alloc] init] autorelease];
             configuration.userContentController = userContentController;
             configuration.websiteDataStore = [WKWebsiteDataStore defaultDataStore];
             WKWebView *webView = [[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
@@ -2626,12 +2629,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                      event.locationInWindow.y - _lineHeight / 2,
                                      _charWidth,
                                      _lineHeight);
-            rect = [self.window.contentView convertRect:rect fromView:nil];
+            rect = [self convertRect:rect fromView:nil];
             popover.behavior = NSPopoverBehaviorSemitransient;
             [popover showRelativeToRect:rect
-                                 ofView:self.window.contentView
+                                 ofView:self
                           preferredEdge:NSRectEdgeMinY];
-            NSURLRequest *request = [[[NSURLRequest alloc] initWithURL:[NSURL URLWithString:urlAction.string]] autorelease];
+            NSURLRequest *request =
+                [[[NSURLRequest alloc] initWithURL:[NSURL URLWithString:urlAction.string]] autorelease];
             [webView loadRequest:request];
             return;
 #else
