@@ -1269,6 +1269,9 @@ static BOOL hasBecomeActive = NO;
             .size = { 0, 0 }
         };
         for (NSWindow *window in [NSApp orderedWindows]) {
+            if (!window.isOnActiveSpace) {
+                continue;
+            }
             NSPoint pointInWindow = [window convertRectFromScreen:mouseRect].origin;
             if ([window isKindOfClass:[PTYWindow class]]) {
                 NSView *view = [window.contentView hitTest:pointInWindow];
