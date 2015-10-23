@@ -64,6 +64,10 @@
 #include <math.h>
 #include <sys/time.h>
 
+#if ENABLE_WEBKIT_POPOVER
+#import <WebKit/WebKit.h>
+#endif
+
 static const int kMaxSelectedTextLengthForCustomActions = 400;
 static const int kMaxSemanticHistoryPrefixOrSuffix = 2000;
 
@@ -2597,9 +2601,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             url = [NSURL fileURLWithPath:[urlAction.identifier nameForNewSavedTempFile]];
             break;
 
-        case kURLActionOpenURL:
-            url = [NSURL fileURLWithPath:urlAction.string];
+        case kURLActionOpenURL: {
+#if ENABLE_WEBKIT_POPOVER
+            // The following code is a proof of concept and isn't well tested. But it is cool.
+            WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+            configuration.applicationNameForUserAgent = @"iTerm2";
+            WKPreferences *prefs = [[[WKPreferences alloc] init] autorelease];
+            prefs.javaEnabled = NO;
+            prefs.javaScriptEnabled = YES;
+            prefs.javaScriptCanOpenWindowsAutomatically = NO;
+            configuration.preferences = prefs;
+            configuration.processPool = [[WKProcessPool alloc] init];
+            WKUserContentController *userContentController = [[[WKUserContentController alloc] init] autorelease];
+            configuration.userContentController = userContentController;
+            configuration.websiteDataStore = [WKWebsiteDataStore defaultDataStore];
+            WKWebView *webView = [[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
+                                                    configuration:configuration];
+            NSPopover *popover = [[NSPopover alloc] init];
+            NSViewController *viewController = [[NSViewController alloc] init];
+            viewController.view = webView;
+            popover.contentViewController = viewController;
+            popover.contentSize = webView.frame.size;
+            NSRect rect = NSMakeRect(event.locationInWindow.x - _charWidth / 2,
+                                     event.locationInWindow.y - _lineHeight / 2,
+                                     _charWidth,
+                                     _lineHeight);
+            rect = [self.window.contentView convertRect:rect fromView:nil];
+            popover.behavior = NSPopoverBehaviorSemitransient;
+            [popover showRelativeToRect:rect
+                                 ofView:self.window.contentView
+                          preferredEdge:NSRectEdgeMinY];
+            NSURLRequest *request = [[[NSURLRequest alloc] initWithURL:[NSURL URLWithString:urlAction.string]] autorelease];
+            [webView loadRequest:request];
+            return;
+#else
+            url = [NSURL URLWithString:urlAction.string];
             break;
+#endif  // ENABLE_WEBKIT_POPOVER
+        }
 
         case kURLActionSmartSelectionAction:
             break;
