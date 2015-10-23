@@ -16,6 +16,12 @@
 
 @implementation iTermQuickLookController
 
++ (void)dismissSharedPanel {
+  if ([[QLPreviewPanel sharedPreviewPanel] isVisible]) {
+    [[QLPreviewPanel sharedPreviewPanel] orderOut:nil];
+  }
+}
+
 - (void)dealloc {
   [_files release];
   [super dealloc];
