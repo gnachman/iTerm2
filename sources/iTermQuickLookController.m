@@ -14,6 +14,11 @@
 @property(nonatomic, assign) NSRect sourceRect;
 @end
 
+@interface QLPreviewPanel()
+// Private API
+- (void)setPositionNearPreviewItem:(id<QLPreviewItem>)item;
+@end
+
 @implementation iTermQuickLookController
 
 + (void)dismissSharedPanel {
@@ -43,6 +48,12 @@
     [panel reloadData];
   } else {
     [panel updateController];
+  }
+
+  // This undocumented API makes the quicklook window appear beneath the cursor. It doesn't seem
+  // to matter what the item is. NSURL implements QLPreviewItem so it's as good as anything.
+  if ([panel respondsToSelector:@selector(setPositionNearPreviewItem:)]) {
+    [panel setPositionNearPreviewItem:[NSURL URLWithString:@"http://example.com/"]];
   }
 
   [panel makeKeyAndOrderFront:nil];
