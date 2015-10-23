@@ -6168,7 +6168,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return buttonNumber;
 }
 
-// Returns YES if the click was reported.
+// Returns YES if the mouse event should not be handled natively.
 - (BOOL)reportMouseEvent:(NSEvent *)event {
     NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
 

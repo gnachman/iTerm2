@@ -59,6 +59,7 @@ DEFINE_BOOL(alternateMouseScroll, NO, @"Mouse: Scroll wheel sends arrow keys whe
 DEFINE_BOOL(pinchToChangeFontSizeDisabled, NO, @"Mouse: Disable changing font size in response to a pinch gesture.");
 DEFINE_BOOL(useSystemCursorWhenPossible, NO, @"Mouse: Use system cursor icons when possible.");
 DEFINE_BOOL(alwaysAcceptFirstMouse, NO, @"Mouse: Always accept first mouse event on terminal windows.\nThis means clicks will work the same when iTerm2 is active as when it’s inactive.");
+DEFINE_BOOL(doubleReportScrollWheel, NO, @"Mouse: Double-report scroll wheel events to work around tmux scrolling bug.");
 
 #pragma mark Terminal
 DEFINE_BOOL(traditionalVisualBell, NO, @"Terminal: Visual bell flashes the whole screen, not just a bell icon.");

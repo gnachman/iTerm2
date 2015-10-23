@@ -117,5 +117,6 @@
 + (BOOL)noSyncReplaceProfileWarning;
 + (BOOL)requireCmdForDraggingText;
 + (double)tabAutoShowHoldTime;
++ (BOOL)doubleReportScrollWheel;
 
 @end

@@ -5504,12 +5504,22 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
                     if (deltaY != 0) {
+                        if ([iTermAdvancedSettingsModel doubleReportScrollWheel]) {
+                            // This works around what I believe is a bug in tmux or a bug in
+                            // how users use tmux. See the thread on tmux-users with subject
+                            // "Mouse wheel events and server_client_assume_paste--the perfect storm of bugs?".
+                            [self writeTask:[_terminal.output mousePress:button
+                                                           withModifiers:modifiers
+                                                                      at:coord]];
+                        }
                         [self writeTask:[_terminal.output mousePress:button
                                                        withModifiers:modifiers
                                                                   at:coord]];
-                        return YES;
                     }
-                    break;
+                    // If deltaY is 0 we still return YES because the
+                    // scrollview moves anyway (likely because our caller is
+                    // not using the high-precision wheel API).
+                    return YES;
 
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HILITE:
