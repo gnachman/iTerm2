@@ -510,7 +510,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             NSPoint origin2 = [self rootRelativeOriginOfSession:obj2];
             if (useTrueReadingOrder) {
                 // True reading order--top to bottom, then left to right.
-                if ((int)origin1.y == (int)origin2.y) {
+                if (fabs(origin1.y - origin2.y) < 1) {
                     return [@(origin1.x) compare:@(origin2.x)];
                 } else {
                     return [@(origin1.y) compare:@(origin2.y)];
@@ -518,7 +518,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             } else {
                 // Inverted reading order. Left to right, then top to bottom.
                 // Generally makes more sense when the root split is vertical.
-                if ((int)origin1.x == (int)origin2.x) {
+                if (fabs(origin1.x - origin2.x) < 1) {
                     return [@(origin1.y) compare:@(origin2.y)];
                 } else {
                     return [@(origin1.x) compare:@(origin2.x)];
