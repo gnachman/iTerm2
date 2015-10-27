@@ -2294,6 +2294,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
+    [iTermQuickLookController dismissSharedPanel];
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
 #endif

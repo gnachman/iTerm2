@@ -13,6 +13,8 @@
 // Simplifies displaying a QuickLook panel.
 @interface iTermQuickLookController : NSObject
 
++ (void)dismissSharedPanel;
+
 // Add a file to the list of files to display in the quicklook. You must call this before
 // showWithSourceRect and not after.
 - (void)addURL:(NSURL *)url;
