@@ -479,8 +479,7 @@ static const int kDragThreshold = 3;
     return YES;
 }
 
-- (BOOL)becomeFirstResponder
-{
+- (BOOL)becomeFirstResponder {
     [_delegate textViewDidBecomeFirstResponder];
     return YES;
 }
@@ -1941,14 +1940,7 @@ static const int kDragThreshold = 3;
     dragOk_ = YES;
     if (cmdPressed) {
         if (frontTextView != self) {
-            if ([NSApp keyWindow] == [self window]) {
-                // A cmd-click in an inactive pane in the active window behaves like a click that
-                // doesn't make the pane active.
-                DLog(@"Cmd-click in acitve pane in active window. Set mouseDown=YES.");
-                _mouseDown = YES;
-                cmdPressed = NO;
-                _mouseDownWasFirstMouse = YES;
-            } else {
+            if ([NSApp keyWindow] != [self window]) {
                 // A cmd-click in in inactive window makes the pane active.
                 DLog(@"Cmd-click in inactive window");
                 _mouseDownWasFirstMouse = YES;
@@ -2160,11 +2152,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
     }
 
-    if (!(cmdActuallyPressed && _mouseDownWasFirstMouse)) {
-        // Make ourselves the first responder except in the case where you cmd-clicked in an
-        // inactive pane in a key window. We use cmdActuallyPressed instead of cmdPressed because
-        // on first-mouse cmdPressed gets unset so this function generally behaves like it got a
-        // plain click (this is the exception).
+    if (!cmdActuallyPressed) {
+        // Make ourselves the first responder except on cmd-click. A cmd-click on a non-key window
+        // gets treated as a click that doesn't raise the window. A cmd-click in an inactive pane
+        // in the key window shouldn't make it first responder, but still gets treated as cmd-click.
+        //
+        // We use cmdActuallyPressed instead of cmdPressed because on first-mouse cmdPressed gets
+        // unset so this function generally behaves like it got a plain click (this is the exception).
         [[self window] makeFirstResponder:self];
     }
 
