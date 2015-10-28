@@ -10,12 +10,21 @@
 
 @class PSMTabBarCell;
 
-@interface PSMTabDragWindow : NSWindow {
-	PSMTabBarCell *_cell;
-	NSImageView *_imageView;
-}
-+ (PSMTabDragWindow *)dragWindowWithTabBarCell:(PSMTabBarCell *)cell image:(NSImage *)image styleMask:(unsigned int)styleMask;
+@interface PSMTabDragWindow : NSWindow
 
-- (id)initWithTabBarCell:(PSMTabBarCell *)cell image:(NSImage *)image styleMask:(unsigned int)styleMask;
-- (NSImage *)image;
+@property(nonatomic, readonly) NSImage *image;
+
++ (PSMTabDragWindow *)dragWindowWithTabBarCell:(PSMTabBarCell *)cell
+                                         image:(NSImage *)image
+                                     styleMask:(unsigned int)styleMask;
+
+- (instancetype)initWithTabBarCell:(PSMTabBarCell *)cell
+                             image:(NSImage *)image
+                         styleMask:(unsigned int)styleMask;
+
+- (void)fadeToAlpha:(CGFloat)alpha
+           duration:(NSTimeInterval)duration
+         completion:(void (^)())completion;
+- (void)setImageOpacity:(CGFloat)alpha;
+
 @end

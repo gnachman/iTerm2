@@ -8,51 +8,116 @@
 
 #import "PSMTabDragWindow.h"
 #import "PSMTabBarCell.h"
+#import <Quartz/Quartz.h>
 
-@implementation PSMTabDragWindow
+// A window's content view won't be transparent if it has a layer. This view exists simply to
+// contain an image view whose layer has variable opacity.
+@interface PSMClearView : NSView
+@end
 
-+ (PSMTabDragWindow *)dragWindowWithTabBarCell:(PSMTabBarCell *)cell image:(NSImage *)image styleMask:(unsigned int)styleMask
-{
-    return [[[PSMTabDragWindow alloc] initWithTabBarCell:cell image:image styleMask:styleMask] autorelease];
+@implementation PSMClearView
+
+- (void)drawRect:(NSRect)dirtyRect {
+    [super drawRect:dirtyRect];
+
+    [[NSColor clearColor] set];
+    NSRectFill(self.bounds);
 }
 
-- (id)initWithTabBarCell:(PSMTabBarCell *)cell image:(NSImage *)image styleMask:(unsigned int)styleMask
-{
-    if ( (self = [super initWithContentRect:NSMakeRect(0, 0, 0, 0) styleMask:styleMask backing:NSBackingStoreBuffered defer:NO]) ) {
+@end
+
+@implementation PSMTabDragWindow {
+    PSMTabBarCell *_cell;
+    NSImageView *_imageView;  // weak
+}
+
++ (PSMTabDragWindow *)dragWindowWithTabBarCell:(PSMTabBarCell *)cell
+                                         image:(NSImage *)image
+                                     styleMask:(unsigned int)styleMask {
+    return [[[PSMTabDragWindow alloc] initWithTabBarCell:cell
+                                                   image:image
+                                               styleMask:styleMask] autorelease];
+}
+
+- (instancetype)initWithTabBarCell:(PSMTabBarCell *)cell
+                             image:(NSImage *)image
+                         styleMask:(unsigned int)styleMask {
+    self = [super initWithContentRect:NSZeroRect
+                            styleMask:styleMask
+                              backing:NSBackingStoreBuffered
+                                defer:NO];
+    if (self) {
+        NSRect frame = NSMakeRect(0,
+                                  0,
+                                  self.frame.size.width,
+                                  self.frame.size.height);
         _cell = [cell retain];
-        _imageView = [[[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease];
-        [self setContentView:_imageView];
+        _imageView = [[[NSImageView alloc] initWithFrame:frame] autorelease];
+        _imageView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        _imageView.wantsLayer = YES;
+        [_imageView makeBackingLayer];
+
+        PSMClearView *clearView = [[[PSMClearView alloc] initWithFrame:frame] autorelease];
+        [clearView addSubview:_imageView];
+        clearView.autoresizesSubviews = YES;
+
+        [self setContentView:clearView];
         [self setLevel:NSStatusWindowLevel];
         [self setIgnoresMouseEvents:YES];
         [self setOpaque:NO];
-        
+
         [_imageView setImage:image];
-        
-        //Set the size of the window to be the exact size of the drag image
+
+        // Set the size of the window to be the exact size of the drag image
         NSSize imageSize = [image size];
         NSRect windowFrame = [self frame];
-        
+
         windowFrame.origin.y += windowFrame.size.height - imageSize.height;
         windowFrame.size = imageSize;
-        
+
         if (styleMask | NSBorderlessWindowMask) {
             windowFrame.size.height += 22;
         }
-        
+
         [self setFrame:windowFrame display:YES];
     }
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [_cell release];
     [super dealloc];
 }
 
-- (NSImage *)image
-{
-    return [[self contentView] image];
+- (NSImage *)image {
+    return _imageView.image;
+}
+
+- (void)fadeToAlpha:(CGFloat)alpha
+           duration:(NSTimeInterval)duration
+         completion:(void (^)())completion {
+    [CATransaction begin];
+    if (completion) {
+        [CATransaction setCompletionBlock:^{
+            completion();
+        }];
+    }
+
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
+    CALayer *layer = _imageView.layer.presentationLayer;
+    animation.fromValue = @(layer.opacity);
+    animation.toValue = (id)@(alpha);
+    animation.duration = duration;
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn];
+    [_imageView.layer addAnimation:animation forKey:@"opacity"];
+    [CATransaction commit];
+
+    _imageView.layer.opacity = alpha;
+}
+
+- (void)setImageOpacity:(CGFloat)alpha {
+    _imageView.layer.opacity = alpha;
+    [_imageView.layer removeAllAnimations];
 }
 
 @end
