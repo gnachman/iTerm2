@@ -31,6 +31,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermShortcutInputView.h"
+#import "NSArray+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -206,6 +207,12 @@
     } else {
         return [super currentEvent];
     }
+}
+
+- (NSArray *)orderedTerminalWindows {
+    return [[self orderedWindows] filteredArrayUsingBlock:^BOOL(id anObject) {
+        return [anObject isKindOfClass:[PTYWindow class]];
+    }];
 }
 
 @end

@@ -14,7 +14,7 @@
 
     NSScriptObjectSpecifier *containerRef;
 
-    NSArray *windows = [[iTermApplication sharedApplication] orderedWindows];
+    NSArray *windows = [[iTermApplication sharedApplication] orderedTerminalWindows];
     anIndex = [windows indexOfObjectIdenticalTo:self];
     if (anIndex != NSNotFound) {
         containerRef = [NSApp objectSpecifier];
@@ -23,7 +23,7 @@
         return [[[NSIndexSpecifier alloc]
                    initWithContainerClassDescription:classDescription
                                   containerSpecifier:containerRef
-                                                 key:@"orderedWindows"
+                                                 key:@"orderedTerminalWindows"
                                                index:anIndex] autorelease];
     } else {
         return nil;

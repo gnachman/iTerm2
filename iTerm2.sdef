@@ -96,7 +96,7 @@
       <property name="version" code="vers" type="text" access="r" 
         description="The version of the application."/> 
       <element type="window" access="r"> 
-        <cocoa key="orderedWindows"/> 
+        <cocoa key="orderedTerminalWindows"/> 
       </element> 
     </class> 
     <class name="window" code="cwin" description="A window."> 

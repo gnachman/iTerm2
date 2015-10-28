@@ -16,6 +16,10 @@
 // Returns an array where each object in self is replaced with block(object).
 - (NSArray *)mapWithBlock:(id (^)(id anObject))block;
 
+// Returns those elements of the array for which block(element) returns YES.
+// block is called on every element in order.
+- (NSArray *)filteredArrayUsingBlock:(BOOL (^)(id anObject))block;
+
 @end
 
 @interface NSMutableArray (iTerm)
