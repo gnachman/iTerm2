@@ -441,7 +441,7 @@ static NSDate* lastResizeDate_;
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"iTermDragPanePBType"] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-            if (_session.tab.sessions.count == 1) {
+            if (_session.tab.sessions.count == 1 && !_session.tab.realParentWindow.anyFullScreen) {
                 // If you dragged a session from a tab with split panes onto itself then do nothing.
                 // But if you drag a session onto itself in a tab WITHOUT split panes, then move the
                 // whole window.

@@ -107,7 +107,7 @@ while (@ARGV) {
         }
         while (readdir($dh)) {
             next if /^\./ and not $lsa;                         # skip dot files when -a is not specified
-            if ($_ !~ /^\.\.?$/ and -d "$path/$_") {
+            if ($recurse and $_ !~ /^\.\.?$/ and -d "$path/$_") {
                 push @ARGV, "$path/$_";                         # handle directory recursion - processed after files
             }
             do_ls_cmd("$path/$_");

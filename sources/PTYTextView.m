@@ -86,7 +86,9 @@ static const int kMaxSemanticHistoryPrefixOrSuffix = 2000;
 //   `-----'  :      :
 static const double kCharWidthFractionOffset = 0.35;
 
-const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+static const NSUInteger kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+static const NSUInteger kRectangularSelectionModifiers = (NSCommandKeyMask | NSAlternateKeyMask);
+static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelectionModifiers | NSControlKeyMask);
 
 // Notifications posted when hostname lookups finish. Notifications are used to
 // avoid dangling references.
@@ -477,8 +479,7 @@ static const int kDragThreshold = 3;
     return YES;
 }
 
-- (BOOL)becomeFirstResponder
-{
+- (BOOL)becomeFirstResponder {
     [_delegate textViewDidBecomeFirstResponder];
     return YES;
 }
@@ -1626,7 +1627,7 @@ static const int kDragThreshold = 3;
     BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         changed = [self setCursor:[NSCursor openHandCursor]];
-    } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
+    } else if (([event modifierFlags] & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
         changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
         changed = [self setCursor:[NSCursor pointingHandCursor]];
@@ -1939,14 +1940,7 @@ static const int kDragThreshold = 3;
     dragOk_ = YES;
     if (cmdPressed) {
         if (frontTextView != self) {
-            if ([NSApp keyWindow] == [self window]) {
-                // A cmd-click in an inactive pane in the active window behaves like a click that
-                // doesn't make the pane active.
-                DLog(@"Cmd-click in acitve pane in active window. Set mouseDown=YES.");
-                _mouseDown = YES;
-                cmdPressed = NO;
-                _mouseDownWasFirstMouse = YES;
-            } else {
+            if ([NSApp keyWindow] != [self window]) {
                 // A cmd-click in in inactive window makes the pane active.
                 DLog(@"Cmd-click in inactive window");
                 _mouseDownWasFirstMouse = YES;
@@ -2008,7 +2002,7 @@ static const int kDragThreshold = 3;
     } else if (clickCount < 2) {
         // single click
         iTermSelectionMode mode;
-        if (altPressed && cmdPressed) {
+        if ((event.modifierFlags & kRectangularSelectionModifierMask) == kRectangularSelectionModifiers) {
             mode = kiTermSelectionModeBox;
         } else {
             mode = kiTermSelectionModeCharacter;
@@ -2158,11 +2152,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
     }
 
-    if (!(cmdActuallyPressed && _mouseDownWasFirstMouse)) {
-        // Make ourselves the first responder except in the case where you cmd-clicked in an
-        // inactive pane in a key window. We use cmdActuallyPressed instead of cmdPressed because
-        // on first-mouse cmdPressed gets unset so this function generally behaves like it got a
-        // plain click (this is the exception).
+    if (!cmdActuallyPressed) {
+        // Make ourselves the first responder except on cmd-click. A cmd-click on a non-key window
+        // gets treated as a click that doesn't raise the window. A cmd-click in an inactive pane
+        // in the key window shouldn't make it first responder, but still gets treated as cmd-click.
+        //
+        // We use cmdActuallyPressed instead of cmdPressed because on first-mouse cmdPressed gets
+        // unset so this function generally behaves like it got a plain click (this is the exception).
         [[self window] makeFirstResponder:self];
     }
 

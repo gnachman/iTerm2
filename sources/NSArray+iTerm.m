@@ -43,6 +43,16 @@
     return temp;
 }
 
+- (NSArray *)filteredArrayUsingBlock:(BOOL (^)(id anObject))block {
+    NSIndexSet *indexes = [self indexesOfObjectsPassingTest:^BOOL(id  _Nonnull obj,
+                                                                  NSUInteger idx,
+                                                                  BOOL * _Nonnull stop) {
+        return block(obj);
+    }];
+    return [self objectsAtIndexes:indexes];
+}
+
+
 @end
 
 @implementation NSMutableArray (iTerm)

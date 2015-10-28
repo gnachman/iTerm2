@@ -40,4 +40,7 @@
 - (void)sendEvent:(NSEvent *)anEvent;
 - (iTermApplicationDelegate *)delegate;
 
+// Like orderedWindows, but only PTYWindow objects are returned.
+- (NSArray *)orderedTerminalWindows;
+
 @end
