@@ -3857,14 +3857,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (BOOL)tabView:(NSTabView*)aTabView
     shouldDropTabViewItem:(NSTabViewItem *)tabViewItem
-                 inTabBar:(PSMTabBarControl *)aTabBarControl
-{
-    if ([aTabBarControl tabView] &&  // nil -> tab dropping outside any existing tabbar to create a new window
-        [[aTabBarControl tabView] indexOfTabViewItem:tabViewItem] != NSNotFound) {
+                 inTabBar:(PSMTabBarControl *)aTabBarControl {
+    if (![aTabBarControl tabView]) {
+        // Tab dropping outside any existing tabbar to create a new window.
+        return [iTermAdvancedSettingsModel allowDragOfTabIntoNewWindow];
+    } else if ([[aTabBarControl tabView] indexOfTabViewItem:tabViewItem] != NSNotFound) {
         // Dropping a tab in its own tabbar when it's the only tab causes the
         // window to disappear, so disallow that one case.
         return [[aTabBarControl tabView] numberOfTabViewItems] > 1;
     } else {
+        // Drop in tab bar of another window.
         return YES;
     }
 }

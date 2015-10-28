@@ -202,27 +202,18 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
     NSImage *imageToDrag;
     NSRect draggingRect;
 
-    if ([control delegate] &&
-        [[control delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
-        [[control delegate] tabView:[control tabView] shouldDropTabViewItem:[[self draggedCell] representedObject] inTabBar:nil]) {
-        _dragTabWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:cell image:dragImage styleMask:NSBorderlessWindowMask] retain];
-        [_dragTabWindow setAlphaValue:kPSMTabDragWindowAlpha];
-        [_dragTabWindow orderFront:nil];
+    _dragTabWindow = [[PSMTabDragWindow dragWindowWithTabBarCell:cell image:dragImage styleMask:NSBorderlessWindowMask] retain];
+    [_dragTabWindow setAlphaValue:kPSMTabDragWindowAlpha];
+    [_dragTabWindow orderFront:nil];
 
-        cellFrame.origin.y -= cellFrame.size.height;
+    cellFrame.origin.y -= cellFrame.size.height;
 
-        imageToDrag = [[[NSImage alloc] initWithSize:NSMakeSize(1, 1)] autorelease];
-        draggingRect = NSMakeRect(cellFrame.origin.x,
-                                  cellFrame.origin.y,
-                                  1,
-                                  1);
-    } else {
-        imageToDrag = dragImage;
-        draggingRect = NSMakeRect(cellFrame.origin.x,
-                                  cellFrame.origin.y,
-                                  dragImage.size.width,
-                                  dragImage.size.height);
-    }
+    imageToDrag = [[[NSImage alloc] initWithSize:NSMakeSize(1, 1)] autorelease];
+    draggingRect = NSMakeRect(cellFrame.origin.x,
+                              cellFrame.origin.y,
+                              1,
+                              1);
+
     NSDraggingItem *dragItem = [[[NSDraggingItem alloc] initWithPasteboardWriter:pbItem] autorelease];
     [dragItem setDraggingFrame:draggingRect contents:imageToDrag];
     NSDraggingSession *draggingSession = [control beginDraggingSessionWithItems:@[ dragItem ]

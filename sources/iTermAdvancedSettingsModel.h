@@ -118,5 +118,6 @@
 + (BOOL)requireCmdForDraggingText;
 + (double)tabAutoShowHoldTime;
 + (BOOL)doubleReportScrollWheel;
++ (BOOL)allowDragOfTabIntoNewWindow;
 
 @end
