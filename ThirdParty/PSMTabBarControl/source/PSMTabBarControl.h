@@ -195,6 +195,10 @@ enum {
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item;
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
 
+// Used for dragging
+- (id)cellForPoint:(NSPoint)point cellFrame:(NSRectPointer)outFrame;
+- (PSMTabBarCell *)lastVisibleTab;
+
 // iTerm add-ons
 - (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;

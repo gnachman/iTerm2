@@ -17,28 +17,19 @@
 
 #define kPSMTabDragAnimationSteps 8
 #define kPSMTabDragWindowAlpha 0.75
-#define PI 3.1417
 
 @interface PSMTabDragAssistant : NSObject
 
+@property(nonatomic, retain) PSMTabBarControl *sourceTabBar;
+@property(nonatomic, retain) PSMTabBarControl *destinationTabBar;
+@property(nonatomic, retain) PSMTabBarCell *draggedCell;
+@property(nonatomic, assign) int draggedCellIndex;  // For snap-back
+@property(nonatomic, assign) BOOL isDragging;
+@property(nonatomic, assign) NSPoint currentMouseLoc;
+@property(nonatomic, retain) PSMTabBarCell *targetCell;
+
 // Creation/destruction
 + (PSMTabDragAssistant *)sharedDragAssistant;
-
-// Accessors
-- (PSMTabBarControl *)sourceTabBar;
-- (void)setSourceTabBar:(PSMTabBarControl *)tabBar;
-- (PSMTabBarControl *)destinationTabBar;
-- (void)setDestinationTabBar:(PSMTabBarControl *)tabBar;
-- (PSMTabBarCell *)draggedCell;
-- (void)setDraggedCell:(PSMTabBarCell *)cell;
-- (int)draggedCellIndex;
-- (void)setDraggedCellIndex:(int)value;
-- (BOOL)isDragging;
-- (void)setIsDragging:(BOOL)value;
-- (NSPoint)currentMouseLoc;
-- (void)setCurrentMouseLoc:(NSPoint)point;
-- (PSMTabBarCell *)targetCell;
-- (void)setTargetCell:(PSMTabBarCell *)cell;
 
 // Functionality
 - (void)startAnimationWithOrientation:(PSMTabBarOrientation)orientation width:(CGFloat)width;
@@ -52,25 +43,5 @@
 
 - (void)draggingBeganAt:(NSPoint)aPoint;
 - (void)draggingMovedTo:(NSPoint)aPoint;
-
-// Animation
-- (void)animateDrag:(NSTimer *)timer;
-- (void)calculateDragAnimationForTabBar:(PSMTabBarControl *)control;
-
-// Placeholder
-- (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control withDraggedCell:(PSMTabBarCell *)cell;
-- (void)distributePlaceholdersInTabBar:(PSMTabBarControl *)control;
-- (void)removeAllPlaceholdersFromTabBar:(PSMTabBarControl *)control;
-
-@end
-
-@interface PSMTabBarControl (DragAccessors)
-
-- (id<PSMTabStyle>)style;
-- (NSMutableArray *)cells;
-- (void)setControlView:(id)view;
-- (id)cellForPoint:(NSPoint)point cellFrame:(NSRectPointer)outFrame;
-- (PSMTabBarCell *)lastVisibleTab;
-- (int)numberOfVisibleTabs;
 
 @end

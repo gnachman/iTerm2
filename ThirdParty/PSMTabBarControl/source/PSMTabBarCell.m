@@ -66,9 +66,9 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
         _tabColor = nil;
         _modifierString = [@"" copy];
         if (value) {
-            [self setCurrentStep:(kPSMTabDragAnimationSteps - 1)];
+            self.animationProgress = 1;
         } else {
-            [self setCurrentStep:0];
+            self.animationProgress = 0;
         }
     }
     return self;
@@ -134,16 +134,8 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]]; // binding notice is too fast
 }
 
-- (void)setCurrentStep:(int)value {
-    if (value < 0) {
-        value = 0;
-    }
-
-    if (value > (kPSMTabDragAnimationSteps - 1)) {
-        value = (kPSMTabDragAnimationSteps - 1);
-    }
-
-    _currentStep = value;
+- (CGFloat)animationProgress {
+    return MIN(1, MAX(0, _animationProgress));
 }
 
 #pragma mark - Bindings
@@ -269,7 +261,6 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     if ([aCoder allowsKeyedCoding]) {
         [aCoder encodeRect:_frame forKey:@"frame"];
         [aCoder encodeSize:_stringSize forKey:@"stringSize"];
-        [aCoder encodeInt:_currentStep forKey:@"currentStep"];
         [aCoder encodeBool:_isPlaceholder forKey:@"isPlaceholder"];
         [aCoder encodeInt:_tabState forKey:@"tabState"];
         [aCoder encodeInt:_closeButtonTrackingTag forKey:@"closeButtonTrackingTag"];
@@ -292,7 +283,6 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
             _frame = [aDecoder decodeRectForKey:@"frame"];
             NSLog(@"decoding cell");
             _stringSize = [aDecoder decodeSizeForKey:@"stringSize"];
-            _currentStep = [aDecoder decodeIntForKey:@"currentStep"];
             _isPlaceholder = [aDecoder decodeBoolForKey:@"isPlaceholder"];
             _tabState = [aDecoder decodeIntForKey:@"tabState"];
             _closeButtonTrackingTag = [aDecoder decodeIntForKey:@"closeButtonTrackingTag"];
