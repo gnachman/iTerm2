@@ -3819,6 +3819,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [_selection setLastRange:newRange mode:mode];
     }
 
+    VT100GridCoordRange range = _selection.lastRange.coordRange;
+    int start = range.start.y;
+    int end = range.end.y;
+    static const NSInteger kExtraLinesToMakeVisible = 2;
+    switch (endpoint) {
+        case kPTYTextViewSelectionEndpointStart:
+            end = start;
+            start = MAX(0, start - kExtraLinesToMakeVisible);
+            break;
+
+        case kPTYTextViewSelectionEndpointEnd:
+            start = end;
+            end += kExtraLinesToMakeVisible + 1;  // plus one because of the excess region
+            break;
+    }
+
+    [self scrollLineNumberRangeIntoView:VT100GridRangeMake(start, end - start)];
+
     // Copy to pasteboard if needed.
     if ([iTermPreferences boolForKey:kPreferenceKeySelectionCopiesText]) {
         [self copySelectionAccordingToUserPreferences];
