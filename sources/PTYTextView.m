@@ -3737,8 +3737,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
                 // Move end to the right
                 case kPTYTextViewSelectionExtensionDirectionRight: {
+                    VT100GridCoord endCoord = VT100GridWindowedRangeEnd(existingRange);
                     VT100GridCoord coordAfterEnd =
-                        [extractor successorOfCoordSkippingContiguousNulls:VT100GridWindowedRangeEnd(existingRange)];
+                        [extractor successorOfCoordSkippingContiguousNulls:endCoord];
                     switch (unit) {
                         case kPTYTextViewSelectionExtensionUnitCharacter: {
                             VT100GridWindowedRange rangeWithCharacterAfterEnd = existingRange;
@@ -3747,8 +3748,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             break;
                         }
                         case kPTYTextViewSelectionExtensionUnitWord: {
-                            VT100GridWindowedRange rangeWithWordAfterEnd =
-                                [extractor rangeForWordAt:coordAfterEnd];
+                            VT100GridWindowedRange rangeWithWordAfterEnd;
+                            if (endCoord.x > VT100GridRangeMax(existingRange.columnWindow)) {
+                                rangeWithWordAfterEnd = [extractor rangeForWordAt:coordAfterEnd];
+                            } else {
+                                rangeWithWordAfterEnd = [extractor rangeForWordAt:endCoord];
+                            }
                             rangeWithWordAfterEnd.coordRange.start = existingRange.coordRange.start;
                             rangeWithWordAfterEnd.columnWindow = existingRange.columnWindow;
                             newRange = rangeWithWordAfterEnd;
