@@ -177,4 +177,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Serialized.
 - (NSDictionary *)dictionaryValueWithYOffset:(int)yOffset;
 
+// Utility methods
+- (BOOL)coord:(VT100GridCoord)a isBeforeCoord:(VT100GridCoord)b;
+
 @end

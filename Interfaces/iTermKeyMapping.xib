@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6250" systemVersion="14A389" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15A284" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6250"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermKeyMappingViewController">
@@ -24,14 +25,15 @@
                     <rect key="frame" x="0.0" y="33" width="525" height="246"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <clipView key="contentView" id="0Ig-8x-G8g">
-                        <rect key="frame" x="1" y="17" width="523" height="228"/>
+                        <rect key="frame" x="1" y="0.0" width="523" height="245"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveName="KeyBingingTable" headerView="9am-Ja-chV" id="ba5-LU-f2s">
-                                <rect key="frame" x="0.0" y="0.0" width="523" height="19"/>
+                                <rect key="frame" x="0.0" y="0.0" width="523" height="228"/>
                                 <autoresizingMask key="autoresizingMask"/>
+                                <animations/>
                                 <size key="intercellSpacing" width="3" height="2"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 <tableViewGridLines key="gridStyleMask" vertical="YES" horizontal="YES"/>
                                 <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                 <tableColumns>
@@ -68,19 +70,24 @@
                                 </connections>
                             </tableView>
                         </subviews>
+                        <animations/>
                         <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                     </clipView>
+                    <animations/>
                     <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="dX4-0X-Caj">
                         <rect key="frame" x="-100" y="-100" width="266" height="15"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <animations/>
                     </scroller>
                     <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="B0m-r4-UO4">
                         <rect key="frame" x="508" y="17" width="16" height="228"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <animations/>
                     </scroller>
                     <tableHeaderView key="headerView" id="9am-Ja-chV">
                         <rect key="frame" x="0.0" y="0.0" width="523" height="17"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <animations/>
                     </tableHeaderView>
                     <connections>
                         <outlet property="nextKeyView" destination="D4A-qx-BsH" id="0Lx-JL-HpM"/>
@@ -89,6 +96,7 @@
                 <button id="D4A-qx-BsH">
                     <rect key="frame" x="0.0" y="3" width="21" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="jzp-Du-pvI">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
@@ -101,6 +109,7 @@
                 <button id="csN-Fw-hKk">
                     <rect key="frame" x="20" y="3" width="20" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" borderStyle="border" inset="2" id="h8l-hr-iTp">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
@@ -113,6 +122,7 @@
                 <popUpButton id="G8O-KW-SKT">
                     <rect key="frame" x="39" y="3" width="144" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <animations/>
                     <popUpButtonCell key="cell" type="square" title="Load Preset..." bezelStyle="shadowlessSquare" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" selectedItem="0rv-a0-ans" id="Tmb-OS-Cqe">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="menu"/>
@@ -129,6 +139,7 @@
                     </connections>
                 </popUpButton>
             </subviews>
+            <animations/>
         </customView>
     </objects>
     <resources>

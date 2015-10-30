@@ -79,7 +79,12 @@ typedef NS_ENUM(NSInteger, iTermTextExtractorNullPolicy) {
 
 // Returns next/previous coordinate. Returns first/last legal coord if none exists.
 - (VT100GridCoord)successorOfCoord:(VT100GridCoord)coord;
+// Won't go past the end of the line while skipping nulls.
+- (VT100GridCoord)successorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord;
+
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord;
+// Won't go past the start of the line while skipping nulls.
+- (VT100GridCoord)predecessorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord;
 
 // Advances coord by a positive or negative delta, staying within the column window, if any. Any
 // indices in |coordsToSkip| will not count against delta.

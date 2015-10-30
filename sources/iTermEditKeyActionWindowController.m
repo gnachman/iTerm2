@@ -25,6 +25,7 @@
     IBOutlet NSTextField *_parameter;
     IBOutlet NSTextField *_parameterLabel;
     IBOutlet NSPopUpButton *_profilePopup;
+    IBOutlet NSPopUpButton *_selectionMovementUnit;
     IBOutlet NSPopUpButton *_menuToSelectPopup;
     IBOutlet NSTextField *_profileLabel;
     IBOutlet NSTextField *_colorPresetsLabel;
@@ -75,6 +76,9 @@
     }
     if (!_colorPresetsPopup.isHidden) {
         [_colorPresetsPopup loadColorPresetsSelecting:self.parameterValue];
+    }
+    if (!_selectionMovementUnit.isHidden) {
+        [_selectionMovementUnit selectItemWithTag:[self.parameterValue integerValue]];
     }
 
     if (self.action == KEY_ACTION_PASTE_SPECIAL ||
@@ -145,6 +149,7 @@
             [[_parameter cell] setPlaceholderString:@"ex: 0x7f 0x20"];
             [_parameterLabel setHidden:YES];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -159,6 +164,7 @@
             [[_parameter cell] setPlaceholderString:@"Enter value to send"];
             [_parameterLabel setHidden:YES];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -172,6 +178,7 @@
             [[_parameter cell] setPlaceholderString:@"Enter command to run"];
             [_parameterLabel setHidden:YES];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -185,6 +192,7 @@
             [[_parameter cell] setPlaceholderString:@"Enter name of menu item"];
             [_parameterLabel setHidden:YES];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_menuToSelectPopup setHidden:NO];
             [_profileLabel setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -199,6 +207,7 @@
             [_parameterLabel setHidden:NO];
             [_parameterLabel setStringValue:@"Esc+"];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -215,6 +224,7 @@
             [_parameter setHidden:YES];
             [_profileLabel setHidden:NO];
             [_profilePopup setHidden:NO];
+            [_selectionMovementUnit setHidden:YES];
             [_parameterLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -227,6 +237,7 @@
             [_parameter setHidden:YES];
             [_profileLabel setHidden:YES];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_parameterLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -243,6 +254,7 @@
             [_parameterLabel setHidden:NO];
             [_parameterLabel setStringValue:@"Modifier remapping disabled: type the actual key combo you want to affect."];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             [_colorPresetsLabel setHidden:YES];
@@ -255,6 +267,7 @@
             [[_parameter cell] setPlaceholderString:@"Regular Expression"];
             [_parameterLabel setHidden:YES];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -268,6 +281,7 @@
             [_parameter setHidden:YES];
             [_parameterLabel setHidden:YES];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -276,11 +290,29 @@
             [self setPasteSpecialHidden:NO];
             break;
 
+        case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
+        case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
+        case KEY_ACTION_MOVE_START_OF_SELECTION_LEFT:
+        case KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT:
+            [_parameter setHidden:YES];
+            [_parameter setStringValue:@""];
+            [_parameterLabel setHidden:YES];
+            [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:NO];
+            [_profileLabel setHidden:YES];
+            [_menuToSelectPopup setHidden:YES];
+            _shortcutField.disableKeyRemapping = NO;
+            [_colorPresetsLabel setHidden:YES];
+            [_colorPresetsPopup setHidden:YES];
+            [self setPasteSpecialHidden:YES];
+            break;
+
         default:
             [_parameter setHidden:YES];
             [_parameter setStringValue:@""];
             [_parameterLabel setHidden:YES];
             [_profilePopup setHidden:YES];
+            [_selectionMovementUnit setHidden:YES];
             [_profileLabel setHidden:YES];
             [_menuToSelectPopup setHidden:YES];
             _shortcutField.disableKeyRemapping = NO;
@@ -299,7 +331,8 @@
             !_menuToSelectPopup.isHidden ||
             !_colorPresetsPopup.isHidden ||
             !_pasteSpecialViewContainer.isHidden ||
-            !_parameterLabel.isHidden);
+            !_parameterLabel.isHidden ||
+            !_selectionMovementUnit.isHidden);
 }
 
 - (void)updateFrameAnimated:(BOOL)animated {
@@ -446,6 +479,13 @@
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
         case KEY_ACTION_PASTE_SPECIAL:
             self.parameterValue = [_pasteSpecialViewController stringEncodedSettings];
+            break;
+
+        case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
+        case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
+        case KEY_ACTION_MOVE_START_OF_SELECTION_LEFT:
+        case KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT:
+            self.parameterValue = [@(_selectionMovementUnit.selectedTag) description];
             break;
 
         default:

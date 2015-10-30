@@ -4773,6 +4773,27 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 [PTYSession selectMenuItemWithSelector:@selector(undo:)];
                 break;
 
+            case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
+                [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
+                                     inDirection:kPTYTextViewSelectionExtensionDirectionLeft
+                                              by:[keyBindingText integerValue]];
+                break;
+            case KEY_ACTION_MOVE_END_OF_SELECTION_RIGHT:
+                [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointEnd
+                                     inDirection:kPTYTextViewSelectionExtensionDirectionRight
+                                              by:[keyBindingText integerValue]];
+                break;
+            case KEY_ACTION_MOVE_START_OF_SELECTION_LEFT:
+                [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
+                                     inDirection:kPTYTextViewSelectionExtensionDirectionLeft
+                                              by:[keyBindingText integerValue]];
+                break;
+            case KEY_ACTION_MOVE_START_OF_SELECTION_RIGHT:
+                [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
+                                     inDirection:kPTYTextViewSelectionExtensionDirectionRight
+                                              by:[keyBindingText integerValue]];
+                break;
+
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
                 break;

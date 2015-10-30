@@ -374,6 +374,23 @@ static const int kNumCharsToSearchForDivider = 8;
     return coord;
 }
 
+- (VT100GridCoord)successorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord {
+    do {
+        coord.x++;
+        int xLimit = [self xLimit];
+        if (coord.x >= xLimit) {
+            coord.x = _logicalWindow.location;
+            coord.y++;
+            if (coord.y >= [_dataSource numberOfLines]) {
+                return VT100GridCoordMake(xLimit - 1, [_dataSource numberOfLines] - 1);
+            } else {
+                return coord;
+            }
+        }
+    } while ([self characterAt:coord].code == 0);
+    return coord;
+}
+
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
     coord.x--;
     if (coord.x < _logicalWindow.location) {
@@ -383,7 +400,35 @@ static const int kNumCharsToSearchForDivider = 8;
             return VT100GridCoordMake(_logicalWindow.location, 0);
         }
     }
+
     return coord;
+}
+
+- (VT100GridCoord)predecessorOfCoordSkippingContiguousNulls:(VT100GridCoord)coord {
+    int moved = 0;
+    VT100GridCoord prev;
+    do {
+        prev = coord;
+        coord.x--;
+        if (coord.x == _logicalWindow.location) {
+            return coord;
+        }
+        if (coord.x < _logicalWindow.location) {
+            coord.x = [self xLimit] - 1;
+            coord.y--;
+            if (coord.y < 0) {
+                return VT100GridCoordMake(_logicalWindow.location, 0);
+            } else if (moved > 0) {
+                return coord;
+            }
+        }
+        moved++;
+    } while ([self characterAt:coord].code == 0);
+    if (moved > 1) {
+        return prev;
+    } else {
+        return coord;
+    }
 }
 
 // Returns an integer that uniquely identifies a coordinate in a grid with the passed-in |width|.

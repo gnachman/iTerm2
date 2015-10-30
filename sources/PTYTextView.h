@@ -43,6 +43,22 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 };
 
+typedef NS_ENUM(NSInteger, PTYTextViewSelectionEndpoint) {
+    kPTYTextViewSelectionEndpointStart,
+    kPTYTextViewSelectionEndpointEnd
+};
+
+typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionDirection) {
+    kPTYTextViewSelectionExtensionDirectionLeft,
+    kPTYTextViewSelectionExtensionDirectionRight
+};
+
+typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
+    kPTYTextViewSelectionExtensionUnitCharacter,
+    kPTYTextViewSelectionExtensionUnitWord,
+    kPTYTextViewSelectionExtensionUnitLine,
+};
+
 @protocol PTYTextViewDelegate <NSObject>
 
 - (BOOL)xtermMouseReporting;
@@ -460,6 +476,10 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 // Menu for session title bar hamburger button
 - (NSMenu *)titleBarMenu;
+
+- (void)moveSelectionEndpoint:(PTYTextViewSelectionEndpoint)endpoint
+                  inDirection:(PTYTextViewSelectionExtensionDirection)direction
+                           by:(PTYTextViewSelectionExtensionUnit)unit;
 
 #pragma mark - Testing only
 
