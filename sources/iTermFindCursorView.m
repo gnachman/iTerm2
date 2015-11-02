@@ -27,8 +27,69 @@ const double kFindCursorHoleRadius = 30;
 @interface iTermFindCursorViewArrowImpl : iTermFindCursorView
 @end
 
+@interface iTermFindCursorViewSpotlightImpl : iTermFindCursorView
+@end
+
 #pragma mark - Concrete implementations
 
+@implementation iTermFindCursorViewSpotlightImpl
+
++ (instancetype)allocWithZone:(struct _NSZone *)zone {
+    return NSAllocateObject([self class], 0, zone);
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect {
+    self = [super initWithFrame:frameRect];
+
+    if (self) {
+        [self setWantsLayer:YES];
+        self.layer.delegate = self;
+        self.layer.opacity = 0.7;
+        [self.layer setNeedsDisplay];
+    }
+    return self;
+}
+
+// drawLayer:inContext: only gets called if drawRect: is implemented. wtf.
+- (void)drawRect:(CGRect)rect {
+}
+
+- (void)drawLayer:(CALayer *)layer
+        inContext:(CGContextRef)ctx {
+    NSGraphicsContext *savedContext = [NSGraphicsContext currentContext];
+    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithCGContext:ctx
+                                                                                 flipped:NO]];
+
+    NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]
+                                                     endingColor:[NSColor blackColor]];
+    NSPoint relativeCursorPosition = NSMakePoint(2 * (self.cursorPosition.x / self.frame.size.width - 0.5),
+                                                 2 * (self.cursorPosition.y / self.frame.size.height - 0.5));
+    NSRect rect = NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height);
+    [grad drawInRect:rect relativeCenterPosition:relativeCursorPosition];
+    [grad release];
+
+    double x = self.cursorPosition.x;
+    double y = self.cursorPosition.y;
+
+    const double focusRadius = kFindCursorHoleRadius;
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
+    NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(x - focusRadius,
+                                                                             y - focusRadius,
+                                                                             focusRadius * 2,
+                                                                             focusRadius * 2)];
+    [[NSColor clearColor] set];
+    [circle fill];
+
+    [NSGraphicsContext setCurrentContext:savedContext];
+}
+
+- (void)setCursorPosition:(NSPoint)cursorPosition {
+    [super setCursorPosition:cursorPosition];
+    [self.layer setNeedsDisplay];
+}
+
+
+@end
 @implementation iTermFindCursorViewArrowImpl {
     CALayer *_arrowLayer;
 }
@@ -212,9 +273,14 @@ const double kFindCursorHoleRadius = 30;
 
 + (instancetype)allocWithZone:(struct _NSZone *)zone {
     if ([NSDate isAprilFools]) {
-        return [iTermFindCursorViewArrowImpl alloc];
+        static int i;
+        if (i++ % 2) {
+            return [iTermFindCursorViewArrowImpl alloc];
+        } else {
+            return [iTermFindCursorViewStarsImpl alloc];
+        }
     } else {
-        return [iTermFindCursorViewStarsImpl alloc];
+        return [iTermFindCursorViewSpotlightImpl alloc];
     }
 }
 
