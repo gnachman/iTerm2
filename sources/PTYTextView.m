@@ -5052,6 +5052,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)beginFindCursor:(BOOL)hold {
     _drawingHelper.cursorVisible = YES;
+    [self setNeedsDisplayInRect:self.cursorFrame];
     if (!_findCursorView) {
         [self createFindCursorWindow];
     }
