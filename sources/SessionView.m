@@ -179,13 +179,16 @@ static NSDate* lastResizeDate_;
     }
 }
 
-// See comments in -[PTYTextView updateTrackingAreas] about why this is done.
+// It's very expensive for PTYTextView to own its own tracking events because its frame changes
+// constantly, plus it can miss mouse exit events and spurious mouse enter events (issue 3345).
+// I beleive it also caused hangs (issue 3974).
 - (void)updateTrackingAreas {
     if ([self window]) {
         int trackingOptions;
         trackingOptions = (NSTrackingMouseEnteredAndExited |
                            NSTrackingActiveAlways |
-                           NSTrackingEnabledDuringMouseDrag);
+                           NSTrackingEnabledDuringMouseDrag |
+                           NSTrackingMouseMoved);
         while (self.trackingAreas.count) {
             [self removeTrackingArea:self.trackingAreas[0]];
         }
@@ -203,6 +206,10 @@ static NSDate* lastResizeDate_;
 
 - (void)mouseExited:(NSEvent *)theEvent {
     [[_session textview] mouseEntered:theEvent];
+}
+
+- (void)mouseMoved:(NSEvent *)theEvent {
+    [[_session textview] mouseMoved:theEvent];
 }
 
 - (void)rightMouseDown:(NSEvent*)event {

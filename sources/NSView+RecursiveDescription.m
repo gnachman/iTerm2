@@ -12,12 +12,13 @@
 
 - (NSString *)recursiveDescriptionWithPrefix:(NSString *)prefix {
   NSMutableString *s = [NSMutableString string];
-  [s appendFormat:@"%@%@ frame=%@ hidden=%@ alphaValue=%0.2f\n",
+  [s appendFormat:@"%@%@ frame=%@ hidden=%@ alphaValue=%0.2f tracking_areas=%@\n",
       prefix,
       self,
       [NSValue valueWithRect:self.frame],
       self.isHidden ? @"YES" : @"no",
-      self.alphaValue];
+      self.alphaValue,
+      self.trackingAreas.count ? self.trackingAreas : @"none"];
   for (NSView *view in [self subviews]) {
     [s appendString:[view recursiveDescriptionWithPrefix:[prefix stringByAppendingString:@"|   "]]];
   }

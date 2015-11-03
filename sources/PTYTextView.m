@@ -1,4 +1,4 @@
-#define ENABLE_WEBKIT_POPOVER 0
+mo#define ENABLE_WEBKIT_POPOVER 0
 
 #import "PTYTextView.h"
 
@@ -489,38 +489,6 @@ static const int kDragThreshold = 3;
         [self removeAllTrackingAreas];
     }
     [super viewWillMoveToWindow:win];
-}
-
-- (void)viewDidMoveToWindow {
-    [self updateTrackingAreas];
-}
-
-- (void)updateTrackingAreas {
-    if ([self window]) {
-        // Do we want to track mouse motions?
-        // Historical note:
-        //   Enter and exit events are tracked by the superview and passed down
-        //   to us because our frame changes all the time. When our frame
-        //   changes, this method is called, which causes mouseExit's to be
-        //   missed and spurious mouseEnter's to be called. See issue 3345.
-        // Now, we always track because we want the mouse to become an arrow when
-        // over an image.
-        if (self.trackingAreas.count &&
-            NSEqualRects([self.trackingAreas[0] rect], self.visibleRect)) {
-            // Nothing would change.
-            return;
-        }
-        [self removeAllTrackingAreas];
-        NSInteger trackingOptions = (NSTrackingInVisibleRect |
-                                     NSTrackingActiveAlways |
-                                     NSTrackingMouseMoved);
-        NSTrackingArea *trackingArea =
-            [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
-                                          options:trackingOptions
-                                            owner:self
-                                         userInfo:nil] autorelease];
-        [self addTrackingArea:trackingArea];
-    }
 }
 
 // TODO: Not sure if this is used.
@@ -1660,7 +1628,6 @@ static const int kDragThreshold = 3;
     }
     self.currentUnderlineHostname = nil;
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
-    [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
 - (BOOL)canOpenURL:(NSString *)aURLString onLine:(int)line {
@@ -1744,7 +1711,6 @@ static const int kDragThreshold = 3;
     }
 
     [self setNeedsDisplay:YES];  // It would be better to just display the underlined/formerly underlined area.
-    [self updateTrackingAreas];  // Cause mouseMoved to be (not) called on movement if cmd is down (up).
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent {
