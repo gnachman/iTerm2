@@ -32,3 +32,46 @@ CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFun
 // Does this font look bad without anti-aliasing? Relies on a private method.
 - (BOOL)futureShouldAntialias;
 @end
+
+@interface FutureWKWebViewConfiguration : NSObject
+@end
+
+@interface FutureWKPreferences : NSObject
+@end
+
+@interface FutureWKProcessPool : NSObject
+@end
+
+@interface FutureWKUserContentController : NSObject
+@end
+
+@interface FutureWKWebsiteDataStore : NSObject
++ (instancetype)defaultDataStore;
+@end
+
+@interface FutureWKWebView : NSView
+@end
+
+@interface FutureWKPreferences (Future)
+- (void)setJavaEnabled:(BOOL)javaEnabled;
+- (void)setJavaScriptEnabled:(BOOL)javaScriptEnabled;
+- (void)setJavaScriptCanOpenWindowsAutomatically:(BOOL)javaScriptCanOpenWindowsAutomatically;
+@end
+
+@interface FutureWKWebViewConfiguration (Future)
+- (void)setApplicationNameForUserAgent:(NSString *)applicationNameForUserAgent;
+- (void)setPreferences:(FutureWKPreferences *)preferences;
+- (void)setProcessPool:(FutureWKProcessPool *)processPool;
+- (void)setUserContentController:(FutureWKUserContentController *)userContentController;
+- (void)setWebsiteDataStore:(FutureWKWebsiteDataStore *)dataStore;
+@end
+
+@interface FutureWKWebView (Future)
+- (instancetype)initWithFrame:(NSRect)frame
+                configuration:(FutureWKWebViewConfiguration *)configuration;
+
+- (void)loadRequest:(NSURLRequest *)request;
+
+- (NSURL *)URL;
+@end
+

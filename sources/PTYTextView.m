@@ -1,5 +1,3 @@
-mo#define ENABLE_WEBKIT_POPOVER 0
-
 #import "PTYTextView.h"
 
 #import "AsyncHostLookupController.h"
@@ -32,6 +30,7 @@ mo#define ENABLE_WEBKIT_POPOVER 0
 #import "iTermTextExtractor.h"
 #import "iTermTextViewAccessibilityHelper.h"
 #import "iTermURLSchemeController.h"
+#import "iTermWebViewWrapperViewController.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
 #import "MovingAverage.h"
@@ -62,13 +61,13 @@ mo#define ENABLE_WEBKIT_POPOVER 0
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
 #import "WindowControllerInterface.h"
+
+#import <CoreServices/CoreServices.h>
 #import <QuartzCore/QuartzCore.h>
 #include <math.h>
 #include <sys/time.h>
 
-#if ENABLE_WEBKIT_POPOVER
 #import <WebKit/WebKit.h>
-#endif
 
 static const int kMaxSelectedTextLengthForCustomActions = 400;
 static const int kMaxSemanticHistoryPrefixOrSuffix = 2000;
@@ -821,7 +820,7 @@ static const int kDragThreshold = 3;
     // Keep correct selection highlighted
     [_selection moveUpByLines:scrollbackOverflow];
     [_oldSelection moveUpByLines:scrollbackOverflow];
-    
+
     // Keep the user's current scroll position.
     NSScrollView *scrollView = [self enclosingScrollView];
     BOOL canSkipRedraw = NO;
@@ -838,7 +837,7 @@ static const int kDragThreshold = 3;
         }
         [self scrollRectToVisible:scrollRect];
     }
-    
+
     // NOTE: I used to use scrollRect:by: here, and it is faster, but it is
     // absolutely a lost cause as far as correctness goes. When drawRect
     // gets called it needs to take that scrolling (which would happen
@@ -846,14 +845,14 @@ static const int kDragThreshold = 3;
     // getting that right. I don't *think* it's a meaningful performance issue.
     // Because of a bug, we were always drawing the whole screen anyway. And if
     // the screen has scrolled by less than its height, input is coming in
-    // slowly anyway.    
+    // slowly anyway.
     if (!canSkipRedraw) {
         [self setNeedsDisplay:YES];
     }
-    
+
     // Move subviews up
     [self updateNoteViewFrames];
-    
+
     NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
 }
 
@@ -1755,6 +1754,11 @@ static const int kDragThreshold = 3;
     }
 }
 
+- (NSPoint)pointForCoord:(VT100GridCoord)coord {
+    return NSMakePoint(MARGIN + coord.x * _charWidth,
+                       coord.y * _lineHeight);
+}
+
 - (VT100GridCoord)coordForPointInWindow:(NSPoint)point {
     // TODO: Merge this function with windowLocationToRowCol.
     NSPoint p = [self windowLocationToRowCol:point allowRightMarginOverflow:NO];
@@ -2545,10 +2549,81 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (void)showDefinitionForWordAt:(NSPoint)clickPoint {
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    VT100GridWindowedRange range =
+        [extractor rangeForWordAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)];
+    NSAttributedString *word = [extractor contentInRange:range
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar) {
+                                           return [self charAttributes:theChar];
+                                       }
+                                              nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
+                                                     pad:NO
+                                      includeLastNewline:NO
+                                  trimTrailingWhitespace:YES
+                                            cappedAtSize:_dataSource.width
+                                       continuationChars:nil
+                                                  coords:nil];
+    if (word.length) {
+        NSPoint point = [self pointForCoord:range.coordRange.start];
+        point.y += _lineHeight;
+        NSDictionary *attributes = [word attributesAtIndex:0 effectiveRange:nil];
+        if (attributes[NSFontAttributeName]) {
+            NSFont *font = attributes[NSFontAttributeName];
+            point.y += font.descender;
+        }
+        [self showDefinitionForAttributedString:word
+                                        atPoint:point];
+    }
+}
+
+- (BOOL)showWebkitPopoverAtPoint:(NSPoint)pointInWindow url:(NSURL *)url {
+    FutureWKWebViewConfiguration *configuration = [[FutureWKWebViewConfiguration alloc] init];
+    if (configuration) {
+        // If you get here, it's OS 10.10 or newer.
+        configuration.applicationNameForUserAgent = @"iTerm2";
+        FutureWKPreferences *prefs = [[[FutureWKPreferences alloc] init] autorelease];
+        prefs.javaEnabled = NO;
+        prefs.javaScriptEnabled = YES;
+        prefs.javaScriptCanOpenWindowsAutomatically = NO;
+        configuration.preferences = prefs;
+        configuration.processPool = [[FutureWKProcessPool alloc] init];
+        FutureWKUserContentController *userContentController =
+            [[[FutureWKUserContentController alloc] init] autorelease];
+        configuration.userContentController = userContentController;
+        configuration.websiteDataStore = [FutureWKWebsiteDataStore defaultDataStore];
+        FutureWKWebView *webView = [[FutureWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
+                                                            configuration:configuration];
+
+        NSURLRequest *request =
+            [[[NSURLRequest alloc] initWithURL:url] autorelease];
+        [webView loadRequest:request];
+
+        NSPopover *popover = [[NSPopover alloc] init];
+        NSViewController *viewController = [[iTermWebViewWrapperViewController alloc] initWithWebView:webView];
+        popover.contentViewController = viewController;
+        popover.contentSize = viewController.view.frame.size;
+        NSRect rect = NSMakeRect(pointInWindow.x - _charWidth / 2,
+                                 pointInWindow.y - _lineHeight / 2,
+                                 _charWidth,
+                                 _lineHeight);
+        rect = [self convertRect:rect fromView:nil];
+        popover.behavior = NSPopoverBehaviorSemitransient;
+        [popover showRelativeToRect:rect
+                             ofView:self
+                      preferredEdge:NSRectEdgeMinY];
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+
 - (void)quickLookWithEvent:(NSEvent *)event {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:YES];
     URLAction *urlAction = [self urlActionForClickAtX:clickPoint.x y:clickPoint.y];
     if (!urlAction) {
+        [self showDefinitionForWordAt:clickPoint];
         return;
     }
     NSURL *url = nil;
@@ -2566,44 +2641,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             break;
 
         case kURLActionOpenURL: {
-#if ENABLE_WEBKIT_POPOVER
-            // The following code is a proof of concept and isn't well tested. But it is cool.
-            WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-            configuration.applicationNameForUserAgent = @"iTerm2";
-            WKPreferences *prefs = [[[WKPreferences alloc] init] autorelease];
-            prefs.javaEnabled = NO;
-            prefs.javaScriptEnabled = YES;
-            prefs.javaScriptCanOpenWindowsAutomatically = NO;
-            configuration.preferences = prefs;
-            configuration.processPool = [[WKProcessPool alloc] init];
-            WKUserContentController *userContentController =
-                [[[WKUserContentController alloc] init] autorelease];
-            configuration.userContentController = userContentController;
-            configuration.websiteDataStore = [WKWebsiteDataStore defaultDataStore];
-            WKWebView *webView = [[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
-                                                    configuration:configuration];
-            NSPopover *popover = [[NSPopover alloc] init];
-            NSViewController *viewController = [[NSViewController alloc] init];
-            viewController.view = webView;
-            popover.contentViewController = viewController;
-            popover.contentSize = webView.frame.size;
-            NSRect rect = NSMakeRect(event.locationInWindow.x - _charWidth / 2,
-                                     event.locationInWindow.y - _lineHeight / 2,
-                                     _charWidth,
-                                     _lineHeight);
-            rect = [self convertRect:rect fromView:nil];
-            popover.behavior = NSPopoverBehaviorSemitransient;
-            [popover showRelativeToRect:rect
-                                 ofView:self
-                          preferredEdge:NSRectEdgeMinY];
-            NSURLRequest *request =
-                [[[NSURLRequest alloc] initWithURL:[NSURL URLWithString:urlAction.string]] autorelease];
-            [webView loadRequest:request];
-            return;
-#else
             url = [NSURL URLWithString:urlAction.string];
+            if (url && [self showWebkitPopoverAtPoint:event.locationInWindow url:url]) {
+                return;
+            }
             break;
-#endif  // ENABLE_WEBKIT_POPOVER
         }
 
         case kURLActionSmartSelectionAction:
@@ -3234,7 +3276,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                     faint:NO
                              isBackground:YES];
     fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
-    
+
     int underlineStyle = c.underline ? (NSUnderlineStyleSingle | NSUnderlineByWordMask) : 0;
 
     BOOL isItalic = c.italic;
