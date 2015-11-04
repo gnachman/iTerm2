@@ -28,6 +28,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
+#import "iTermQuickLookController.h"
 #import "iTermRootTerminalView.h"
 #import "iTermSelection.h"
 #import "iTermShellHistoryController.h"
@@ -2294,6 +2295,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
+    DLog(@"windowDidBecomeKey:%@", aNotification);
+
     [iTermQuickLookController dismissSharedPanel];
 #if ENABLE_SHORTCUT_ACCESSORY
     _shortcutAccessoryViewController.isMain = YES;
@@ -2303,8 +2306,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     [[[NSApplication sharedApplication] dockTile] setBadgeLabel:@""];
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
-    PtyLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
-          __FILE__, __LINE__, aNotification);
 
     [[iTermController sharedInstance] setCurrentTerminal:self];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
@@ -4955,8 +4956,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                  before:(BOOL)before
           addingSession:(PTYSession*)newSession
           targetSession:(PTYSession*)targetSession
-           performSetup:(BOOL)performSetup
-{
+           performSetup:(BOOL)performSetup {
+    [self.currentSession.textview refuseFirstResponderAtCurrentMouseLocation];
     NSView *scrollView;
     NSColor *tabColor;
     if (newSession.tabColor) {

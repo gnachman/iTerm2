@@ -217,6 +217,8 @@ static const int kDragThreshold = 3;
     iTermFindOnPageHelper *_findOnPageHelper;
     iTermTextViewAccessibilityHelper *_accessibilityHelper;
     iTermBadgeLabel *_badgeLabel;
+
+    NSPoint _mouseLocationToRefuseFirstResponderAt;
 }
 
 
@@ -232,6 +234,7 @@ static const int kDragThreshold = 3;
 - (instancetype)initWithFrame:(NSRect)aRect colorMap:(iTermColorMap *)colorMap {
     self = [super initWithFrame:aRect];
     if (self) {
+        [self resetMouseLocationToRefuseFirstResponderAt];
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];
         _drawingHelper.delegate = self;
 
@@ -472,8 +475,15 @@ static const int kDragThreshold = 3;
     DLog(@"%@ Cancel touch. numTouches_ -> %d", self, _numTouches);
 }
 
-- (BOOL)resignFirstResponder
-{
+- (void)refuseFirstResponderAtCurrentMouseLocation {
+    _mouseLocationToRefuseFirstResponderAt = [NSEvent mouseLocation];
+}
+
+- (void)resetMouseLocationToRefuseFirstResponderAt {
+    _mouseLocationToRefuseFirstResponderAt = NSMakePoint(DBL_MAX, DBL_MAX);
+}
+
+- (BOOL)resignFirstResponder {
     [self removeUnderline];
     return YES;
 }
@@ -1728,6 +1738,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)mouseExited:(NSEvent *)event {
+    [self resetMouseLocationToRefuseFirstResponderAt];
     [self updateUnderlinedURLs:event];
 }
 
@@ -1745,11 +1756,13 @@ static const int kDragThreshold = 3;
         } else if ([[[NSApp keyWindow] windowController] respondsToSelector:@selector(disableFocusFollowsMouse)]) {
             obj = [[NSApp keyWindow] windowController];
         }
-        if ([NSApp isActive] && ![obj disableFocusFollowsMouse]) {
-            [[self window] makeKeyWindow];
-        }
-        if ([self isInKeyWindow]) {
-            [_delegate textViewDidBecomeFirstResponder];
+        if (!NSEqualPoints(_mouseLocationToRefuseFirstResponderAt, [NSEvent mouseLocation])) {
+            if ([NSApp isActive] && ![obj disableFocusFollowsMouse]) {
+                [[self window] makeKeyWindow];
+            }
+            if ([self isInKeyWindow]) {
+                [_delegate textViewDidBecomeFirstResponder];
+            }
         }
     }
 }
@@ -2210,6 +2223,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)mouseMoved:(NSEvent *)event {
+    [self resetMouseLocationToRefuseFirstResponderAt];
     [self updateUnderlinedURLs:event];
     [self reportMouseEvent:event];
     [self updateCursor:event];

@@ -205,7 +205,7 @@ static NSDate* lastResizeDate_;
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {
-    [[_session textview] mouseEntered:theEvent];
+    [[_session textview] mouseExited:theEvent];
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {

@@ -5422,8 +5422,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [[self tab] hasMaximizedPane];
 }
 
-- (void)textViewDidBecomeFirstResponder
-{
+- (void)textViewDidBecomeFirstResponder {
     [[self tab] setActiveSession:self];
 }
 

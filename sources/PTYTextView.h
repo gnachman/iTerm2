@@ -481,6 +481,14 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
                   inDirection:(PTYTextViewSelectionExtensionDirection)direction
                            by:(PTYTextViewSelectionExtensionUnit)unit;
 
+// For focus follows mouse. Allows a new split pane to become focused even though the mouse pointer
+// is elsewhere. Records the mouse position. Refuses first responder as long as the mouse doesn't
+// move.
+- (void)refuseFirstResponderAtCurrentMouseLocation;
+
+// Undoes -refuseFirstResponderAtCurrentMouseLocation.
+- (void)resetMouseLocationToRefuseFirstResponderAt;
+
 #pragma mark - Testing only
 
 - (id)selectedTextAttributed:(BOOL)attributed
