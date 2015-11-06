@@ -18,11 +18,11 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
     int dir_;
     int offset_;
     int stopAt_;
-    FindContextStatus status_;
     int matchLength_;
     NSMutableArray* results_;
     BOOL hasWrapped_;
     NSTimeInterval maxTime_;
+    NSArray *_stack;
 }
 
 @synthesize absBlockNum = absBlockNum_;
@@ -31,11 +31,11 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
 @synthesize dir = dir_;
 @synthesize offset = offset_;
 @synthesize stopAt = stopAt_;
-@synthesize status = status_;
 @synthesize matchLength = matchLength_;
 @synthesize results = results_;
 @synthesize hasWrapped = hasWrapped_;
 @synthesize maxTime = maxTime_;
+@synthesize status = status_;
 
 - (instancetype)init {
     self = [super init];
@@ -48,7 +48,14 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
 - (void)dealloc {
     [results_ release];
     [substring_ release];
+    [_synchronousContext release];
     [super dealloc];
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    FindContext *theCopy = [[FindContext alloc] init];
+    [theCopy copyFromFindContext:self];
+    return theCopy;
 }
 
 - (void)copyFromFindContext:(FindContext *)other {

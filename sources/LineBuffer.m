@@ -74,6 +74,16 @@ static const int kLineBufferVersion = 1;
     long long droppedChars;
 }
 
++ (dispatch_queue_t)searchQueue {
+    static dispatch_once_t onceToken;
+    static dispatch_queue_t queue;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.googlecode.iterm2.LineBuffer.searchQueue",
+                                      DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
 // Append a block
 - (LineBlock*) _addBlockOfSize: (int) size
 {
@@ -592,8 +602,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (BOOL) getCursorInLastLineWithWidth: (int) width atX: (int*) x
-{
+- (BOOL)getCursorInLastLineWithWidth:(int)width atX:(int*)x {
     int total_raw_lines = 0;
     int i;
     for (i = 0; i < [blocks count]; ++i) {
@@ -602,17 +611,16 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = [blocks lastObject];
-        int last_line_length = [block getRawLineLength: ([block numEntries]-1)];
-        screen_char_t* lastRawLine = [block rawLine: ([block numEntries]-1)];
-        int num_overflow_lines = NumberOfFullLines(lastRawLine,
-                                                   last_line_length,
-                                                   width,
-                                                   _mayHaveDoubleWidthCharacter);
-        int min_x = OffsetOfWrappedLine(lastRawLine,
-                                        num_overflow_lines,
-                                        last_line_length,
-                                        width,
-                                        _mayHaveDoubleWidthCharacter);
+        int last_line_length = [block getRawLineLength:([block numEntries]-1)];
+        screen_char_t* lastRawLine = [block rawLine:([block numEntries]-1)];
+        int num_overflow_lines = [block numberOfFullLinesAtAddress:lastRawLine
+                                                          ofLength:last_line_length
+                                                             width:width];
+        int min_x = [block offsetOfWrappedLineNumber:num_overflow_lines
+                                            ofLength:last_line_length
+                                           atAddress:lastRawLine
+                                               width:width];
+
         //int num_overflow_lines = (last_line_length-1) / width;
         //int min_x = num_overflow_lines * width;
         int max_x = min_x + width;  // inclusive because the cursor wraps to the next line on the last line in the buffer
@@ -670,15 +678,16 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if ([self _findPosition:start inBlock:&absBlockNum inOffset:&offset]) {
         context.offset = offset;
         context.absBlockNum = absBlockNum + num_dropped_blocks;
+        NSLog(@"prepareToSearch: Set status to Searching");
         context.status = Searching;
     } else {
+        NSLog(@"prepareToSearch: Set status to NotFound");
         context.status = NotFound;
     }
     context.results = [NSMutableArray array];
 }
 
-- (void)findSubstring:(FindContext*)context stopAt:(int)stopAt
-{
+- (void)findSubstring:(FindContext*)context {
     if (context.dir > 0) {
         // Search forwards
         if (context.absBlockNum < num_dropped_blocks) {
@@ -689,6 +698,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         if (context.absBlockNum - num_dropped_blocks >= [blocks count]) {
             // Got to bottom
             // NSLog(@"Got to bottom");
+            NSLog(@"findSubstring: Set status to NotFound");
             context.status = NotFound;
             return;
         }
@@ -698,6 +708,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             // Got to top
             // NSLog(@"Got to top");
             context.status = NotFound;
+            NSLog(@"findSubstring: Set status to NotFound");
             return;
         }
     }
@@ -716,21 +727,63 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         } else {
             // This block has scrolled off.
             // NSLog(@"offset=%d, block's startOffset=%d. give up", context.offset, [block startOffset]);
+            NSLog(@"findSubstring: Set status to NotFound");
             context.status = NotFound;
             return;
         }
     }
 
-    // NSLog(@"search block %d starting at offset %d", context.absBlockNum - num_dropped_blocks, context.offset);
+    block.shouldSearchSynchronously = YES; // TODO REMOVE THIS!!!
+    if (block.shouldSearchSynchronously) {
+        LineBlock *blockCopy = [block copy];
+        [self retain];
+        [context retain];
+        FindContext *contextCopy = [context copy];
+        NSLog(@"findSubstring: Set status to SearchingSynchronously");
+        context.status = SearchingSynchronously;
 
-    [block findSubstring:context.substring
-                 options:context.options
-                atOffset:context.offset
-                 results:context.results
-         multipleResults:((context.options & FindMultipleResults) != 0)];
+        NSLog(@"Dispatch onto background thread");
+        dispatch_async([LineBuffer searchQueue], ^{
+            NSLog(@"   background thread running with substring %@", contextCopy.substring);
+            [blockCopy findSubstring:contextCopy.substring
+                             options:contextCopy.options
+                            atOffset:contextCopy.offset
+                             results:contextCopy.results
+                     multipleResults:((contextCopy.options & FindMultipleResults) != 0)];
+            NSLog(@"  findSubstring finished, dispatching back to main queue");
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                NSLog(@"Back on main thread.");
+                if (context.status == SearchingSynchronously) {
+                    NSLog(@"Processing results of search");
+                    [self processResultsOfSearchInContext:contextCopy];
+                    context.synchronousContext = contextCopy;
+                    context.status = SynchronousSearchFinished;
+                } else {
+                    NSLog(@"** Status was changed out from under us");
+                }
+
+                [blockCopy release];
+                [contextCopy release];
+                [context autorelease];
+                [self autorelease];
+            });
+        });
+    } else {
+        [block findSubstring:context.substring
+                     options:context.options
+                    atOffset:context.offset
+                     results:context.results
+             multipleResults:((context.options & FindMultipleResults) != 0)];
+
+        [self processResultsOfSearchInContext:context];
+    }
+}
+
+- (void)processResultsOfSearchInContext:(FindContext *)context {
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
     int blockPosition = [self _blockPosition:context.absBlockNum - num_dropped_blocks];
+    int stopAt = context.dir > 0 ? self.lastPosition.absolutePosition - droppedChars : self.firstPosition.absolutePosition - droppedChars;
     for (ResultRange* range in context.results) {
         range->position += blockPosition;
         if (context.dir * (range->position - stopAt) > 0 ||
@@ -745,6 +798,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
     context.results = filtered;
     if ([filtered count] == 0 && haveOutOfRangeResults) {
+        NSLog(@"Process results: set status to NotFound");
         context.status = NotFound;
     }
 

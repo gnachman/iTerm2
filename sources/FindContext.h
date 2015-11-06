@@ -16,12 +16,14 @@ typedef NS_OPTIONS(NSUInteger, FindOptions) {
 };
 
 typedef NS_ENUM(NSInteger, FindContextStatus) {
-    Searching,
-    Matched,
-    NotFound
+    Searching,  // no results yet but try again
+    Matched,  // found results
+    NotFound,  // hit the end of the region to search with no results
+    SearchingSynchronously,  // search ongoing in another thread
+    SynchronousSearchFinished  // done searching synchronously, results are waiting
 };
 
-@interface FindContext : NSObject
+@interface FindContext : NSObject<NSCopying>
 
 // Current absolute block number being searched.
 @property(nonatomic, assign) int absBlockNum;
@@ -47,7 +49,7 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 // Matched: At least one result has been found. This context can be used to
 //   search again.
 // NotFound: No results were found and the end of the buffer was reached.
-@property(nonatomic, assign) FindContextStatus status;
+@property(atomic, assign) FindContextStatus status;
 @property(nonatomic, assign) int matchLength;
 
 // used for multiple results
@@ -60,6 +62,8 @@ typedef NS_ENUM(NSInteger, FindContextStatus) {
 
 // Estimate of fraction of work done.
 @property(nonatomic, assign) double progress;
+
+@property(atomic, retain) FindContext *synchronousContext;
 
 - (void)copyFromFindContext:(FindContext *)other;
 

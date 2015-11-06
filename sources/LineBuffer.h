@@ -134,7 +134,11 @@
 
 // Performs a search. Use prepareToSearchFor:startingAt:options:withContext: to initialize
 // the FindContext prior to calling this.
-- (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
+- (void)findSubstring:(FindContext*)context;
+
+// When the context's status is SynchronousSearchFinished, use this to update the context with
+// results.
+- (void)processResultsOfSearchInContext:(FindContext *)context;
 
 // Convert a position (as returned by findSubstring) into an x,y position.
 // Returns TRUE if the conversion was successful, false if the position was out of bounds.

@@ -4110,34 +4110,50 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (BOOL)continueFindResultsInContext:(FindContext*)context
-                             toArray:(NSMutableArray*)results
-{
+                             toArray:(NSMutableArray*)results {
+    if (context.status == SearchingSynchronously) {
+        // Try again later.
+        return YES;
+    }
+
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
     linesPushed = [currentGrid_ appendLines:[currentGrid_ numberOfLinesUsed]
                                toLineBuffer:linebuffer_];
 
     // Search one block.
-    int stopAt;
-    if (context.dir > 0) {
-        stopAt = [linebuffer_ lastPos];
-    } else {
-        stopAt = [linebuffer_ firstPos];
-    }
-
     struct timeval begintime;
     gettimeofday(&begintime, NULL);
     BOOL keepSearching = NO;
     int iterations = 0;
     int ms_diff = 0;
+    BOOL waitOnSynchronousSearch = NO;
+    BOOL updateFromSynchronous = NO;
     do {
+        updateFromSynchronous = NO;
         if (context.status == Searching) {
-            [linebuffer_ findSubstring:context stopAt:stopAt];
+            NSLog(@"Status is searching, beginning a new search");
+            [linebuffer_ findSubstring:context];
         }
 
         // Handle the current state
         switch (context.status) {
+            case SynchronousSearchFinished:
+                NSLog(@"Status is SynchronousSearchFinished. Copying synchronous context over context");
+                [context copyFromFindContext:context.synchronousContext];
+                context.synchronousContext = nil;
+                keepSearching = YES;
+                updateFromSynchronous = YES;
+                break;
+
+            case SearchingSynchronously:
+                NSLog(@"Status is SearchingSynchronously");
+                keepSearching = YES;
+                waitOnSynchronousSearch = YES;
+                break;
+
             case Matched: {
+                NSLog(@"Status is Matched");
                 // NSLog(@"matched");
                 // Found a match in the text.
                 NSArray *allPositions = [linebuffer_ convertPositions:context.results
@@ -4168,13 +4184,13 @@ static void SwapInt(int *a, int *b) {
             }
 
             case Searching:
-                // NSLog(@"searching");
+                NSLog(@"Status is Searching");
                 // No result yet but keep looking
                 keepSearching = YES;
                 break;
 
             case NotFound:
-                // NSLog(@"not found");
+                NSLog(@"Status is Not Found");
                 // Reached stopAt point with no match.
                 if (context.hasWrapped) {
                     [context reset];
@@ -4200,16 +4216,20 @@ static void SwapInt(int *a, int *b) {
         }
 
         struct timeval endtime;
-        if (keepSearching) {
+        if (keepSearching && !waitOnSynchronousSearch && !updateFromSynchronous) {
             gettimeofday(&endtime, NULL);
             ms_diff = (endtime.tv_sec - begintime.tv_sec) * 1000 +
             (endtime.tv_usec - begintime.tv_usec) / 1000;
             context.status = Searching;
         }
         ++iterations;
-    } while (keepSearching && ms_diff < context.maxTime * 1000);
+    } while (updateFromSynchronous || (keepSearching && ms_diff < context.maxTime * 1000 && !waitOnSynchronousSearch));
+    NSLog(@"Broke out of while loop");
 
     switch (context.status) {
+        case SearchingSynchronously:
+        case SynchronousSearchFinished:
+            break;
         case Searching: {
             int numDropped = [linebuffer_ numberOfDroppedBlocks];
             double current = context.absBlockNum - numDropped;
@@ -4230,6 +4250,8 @@ static void SwapInt(int *a, int *b) {
     // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
 
     [self popScrollbackLines:linesPushed];
+
+    NSLog(@"Returning from continueFindResultsInContext");
     return keepSearching;
 }
 

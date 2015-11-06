@@ -24,6 +24,7 @@ typedef struct {
 // that get wrapped to the next line.
 @property(nonatomic, assign) BOOL mayHaveDoubleWidthCharacter;
 @property(nonatomic, readonly) int numberOfCharacters;
+@property(nonatomic) BOOL shouldSearchSynchronously;
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
 
@@ -147,10 +148,9 @@ typedef struct {
 // |xxxxx|          |x     |        |xxxxxx|         |xxxxxx|
 // |xxxxx|                                           |x     |
 // |x    |
-int NumberOfFullLines(screen_char_t* buffer,
-                      int length,
-                      int width,
-                      BOOL mayHaveDoubleWidthCharacter);
+- (int)numberOfFullLinesAtAddress:(screen_char_t *)buffer
+                         ofLength:(int)length
+                            width:(int)width;
 
 
 // Finds a where the nth line begins after wrapping and returns its offset from the start of the
@@ -168,7 +168,10 @@ int NumberOfFullLines(screen_char_t* buffer,
 // |abcde|   <- line is short after wrapping
 // |XXzzzz|
 // The slow code for dealing with DWCs is run only if mayHaveDwc is YES.
-int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width, BOOL mayHaveDwc);
+- (int)offsetOfWrappedLineNumber:(int)n
+                        ofLength:(int)length
+                       atAddress:(screen_char_t *)p
+                           width:(int)width;
 
 // Returns a dictionary with the contents of this block. The data is a weak reference and will be
 // invalid if the block is changed.
