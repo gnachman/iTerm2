@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15A284" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <deployment version="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9059"/>
         <capability name="box content view" minToolsVersion="7.0"/>
     </dependencies>
     <objects>
@@ -170,7 +170,7 @@
                                     <menuItem title="Right Button" tag="1" id="6164">
                                         <modifierMask key="keyEquivalentModifierMask"/>
                                     </menuItem>
-                                    <menuItem title="Middle Button" state="on" tag="2" id="6268">
+                                    <menuItem title="Middle Button" tag="2" id="6268">
                                         <modifierMask key="keyEquivalentModifierMask"/>
                                     </menuItem>
                                     <menuItem title="Button #4" tag="3" id="6165">
@@ -3098,7 +3098,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="5365">
-                    <rect key="frame" x="165" y="276" width="61" height="11"/>
+                    <rect key="frame" x="164" y="276" width="62" height="11"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Large Radius" id="5366">
