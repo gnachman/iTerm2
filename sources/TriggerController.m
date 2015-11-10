@@ -23,6 +23,7 @@
 #import "ProfileModel.h"
 #import "ScriptTrigger.h"
 #import "SendTextTrigger.h"
+#import "SetDirectoryTrigger.h"
 #import "SetHostnameTrigger.h"
 #import "StopTrigger.h"
 #import "Trigger.h"
@@ -107,6 +108,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                              [HighlightTrigger class],
                              [MarkTrigger class],
                              [PasswordTrigger class],
+                             [SetDirectoryTrigger class],
                              [SetHostnameTrigger class],
                              [StopTrigger class] ];
 

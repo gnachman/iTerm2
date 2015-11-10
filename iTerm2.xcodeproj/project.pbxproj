@@ -684,6 +684,8 @@
 		1DDC09441B4DB9A600B1A910 /* iTermClearView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DDC09421B4DB9A600B1A910 /* iTermClearView.m */; };
 		1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE0C8431BF17397008ACBA9 /* SetHostnameTrigger.h */; settings = {ASSET_TAGS = (); }; };
 		1DE0C8461BF17397008ACBA9 /* SetHostnameTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */; settings = {ASSET_TAGS = (); }; };
+		1DE0C8491BF17E34008ACBA9 /* SetDirectoryTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE0C8471BF17E34008ACBA9 /* SetDirectoryTrigger.h */; settings = {ASSET_TAGS = (); }; };
+		1DE0C84A1BF17E34008ACBA9 /* SetDirectoryTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE0C8481BF17E34008ACBA9 /* SetDirectoryTrigger.m */; settings = {ASSET_TAGS = (); }; };
 		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
 		1DE5EBE8122B892900C736B0 /* iTermProfilesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */; };
 		1DE8DC891415513A00F83147 /* iTermToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* iTermToolbeltView.h */; };
@@ -2056,6 +2058,8 @@
 		1DDC09421B4DB9A600B1A910 /* iTermClearView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermClearView.m; sourceTree = "<group>"; };
 		1DE0C8431BF17397008ACBA9 /* SetHostnameTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SetHostnameTrigger.h; sourceTree = "<group>"; };
 		1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SetHostnameTrigger.m; sourceTree = "<group>"; };
+		1DE0C8471BF17E34008ACBA9 /* SetDirectoryTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SetDirectoryTrigger.h; sourceTree = "<group>"; };
+		1DE0C8481BF17E34008ACBA9 /* SetDirectoryTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SetDirectoryTrigger.m; sourceTree = "<group>"; };
 		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Autocomplete.h; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Autocomplete.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProfilesWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3598,6 +3602,8 @@
 				1D9DCBFD142D7BA60016228A /* Trigger.m */,
 				1DE0C8431BF17397008ACBA9 /* SetHostnameTrigger.h */,
 				1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */,
+				1DE0C8471BF17E34008ACBA9 /* SetDirectoryTrigger.h */,
+				1DE0C8481BF17E34008ACBA9 /* SetDirectoryTrigger.m */,
 			);
 			name = Triggers;
 			sourceTree = "<group>";
@@ -4997,6 +5003,7 @@
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
 				1D72A4D51BE9707A0042174A /* iTermWebViewWrapperViewController.h in Headers */,
 				A62C3B2F1BCC24AB00B5629D /* iTermRecentDirectoryMO+CoreDataProperties.h in Headers */,
+				1DE0C8491BF17E34008ACBA9 /* SetDirectoryTrigger.h in Headers */,
 				A62C3B311BCC24AB00B5629D /* iTermRecentDirectoryMO.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6067,6 +6074,7 @@
 				A6C7636C1B45C52B00E3C992 /* iTermEditKeyActionWindowController.m in Sources */,
 				A6C7639D1B45C52B00E3C992 /* TmuxSessionsTable.m in Sources */,
 				A6C763021B45C52B00E3C992 /* VT100RemoteHost.m in Sources */,
+				1DE0C84A1BF17E34008ACBA9 /* SetDirectoryTrigger.m in Sources */,
 				A6C763DE1B45C6DD00E3C992 /* PSMRolloverButton.m in Sources */,
 				A6C762EF1B45C52B00E3C992 /* DVR.m in Sources */,
 				A6C763071B45C52B00E3C992 /* CapturedOutput.m in Sources */,
