@@ -2761,8 +2761,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return (now - _lastOutput) < ([iTermAdvancedSettingsModel idleTimeSeconds] + 1);
 }
 
-- (NSString*)formattedName:(NSString*)base
-{
+- (NSString*)formattedName:(NSString*)base {
+    if ([self isTmuxGateway]) {
+        return [NSString stringWithFormat:@"[↣ %@ %@]", base, _tmuxController.clientName];
+    }
     if (_tmuxController) {
         // There won't be a valid job name, and the profile name is always tmux, so just show the
         // window name. This is confusing: this refers to the name of a tmux window, which is
