@@ -23,6 +23,7 @@
 #import "ProfileModel.h"
 #import "ScriptTrigger.h"
 #import "SendTextTrigger.h"
+#import "SetHostnameTrigger.h"
 #import "StopTrigger.h"
 #import "Trigger.h"
 
@@ -106,6 +107,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                              [HighlightTrigger class],
                              [MarkTrigger class],
                              [PasswordTrigger class],
+                             [SetHostnameTrigger class],
                              [StopTrigger class] ];
 
     return [allClasses sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
@@ -485,6 +487,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                 textField.bordered = NO;
                 textField.drawsBackground = NO;
                 textField.delegate = self;
+                textField.placeholderString = [trigger paramPlaceholder];
                 textField.identifier = kParameterColumnIdentifier;
 
                 return textField;

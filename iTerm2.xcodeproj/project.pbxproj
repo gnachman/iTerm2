@@ -682,6 +682,8 @@
 		1DDC09401B4DB97500B1A910 /* iTermRoundedCornerScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DDC093E1B4DB97500B1A910 /* iTermRoundedCornerScrollView.m */; };
 		1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDC09411B4DB9A600B1A910 /* iTermClearView.h */; };
 		1DDC09441B4DB9A600B1A910 /* iTermClearView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DDC09421B4DB9A600B1A910 /* iTermClearView.m */; };
+		1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE0C8431BF17397008ACBA9 /* SetHostnameTrigger.h */; settings = {ASSET_TAGS = (); }; };
+		1DE0C8461BF17397008ACBA9 /* SetHostnameTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */; settings = {ASSET_TAGS = (); }; };
 		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
 		1DE5EBE8122B892900C736B0 /* iTermProfilesWindowController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */; };
 		1DE8DC891415513A00F83147 /* iTermToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* iTermToolbeltView.h */; };
@@ -2052,6 +2054,8 @@
 		1DDC093E1B4DB97500B1A910 /* iTermRoundedCornerScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRoundedCornerScrollView.m; sourceTree = "<group>"; };
 		1DDC09411B4DB9A600B1A910 /* iTermClearView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermClearView.h; sourceTree = "<group>"; };
 		1DDC09421B4DB9A600B1A910 /* iTermClearView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermClearView.m; sourceTree = "<group>"; };
+		1DE0C8431BF17397008ACBA9 /* SetHostnameTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SetHostnameTrigger.h; sourceTree = "<group>"; };
+		1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SetHostnameTrigger.m; sourceTree = "<group>"; };
 		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Autocomplete.h; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Autocomplete.m; sourceTree = "<group>"; tabWidth = 4; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE5EBE6122B892900C736B0 /* iTermProfilesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProfilesWindowController.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -3592,6 +3596,8 @@
 				1D24C283142EF334006B246F /* SendTextTrigger.m */,
 				1D468F031B06A79000226083 /* StopTrigger.m */,
 				1D9DCBFD142D7BA60016228A /* Trigger.m */,
+				1DE0C8431BF17397008ACBA9 /* SetHostnameTrigger.h */,
+				1DE0C8441BF17397008ACBA9 /* SetHostnameTrigger.m */,
 			);
 			name = Triggers;
 			sourceTree = "<group>";
@@ -4973,6 +4979,7 @@
 				A62C3B421BD40E7C00B5629D /* iTermImageMark.h in Headers */,
 				A62C3B2B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,
+				1DE0C8451BF17397008ACBA9 /* SetHostnameTrigger.h in Headers */,
 				A62C3B231BCC24AB00B5629D /* iTermCommandHistoryEntryMO+CoreDataProperties.h in Headers */,
 				A62C3A911BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.h in Headers */,
 				1DDC093F1B4DB97500B1A910 /* iTermRoundedCornerScrollView.h in Headers */,
@@ -5975,6 +5982,7 @@
 				A6C762D41B45C52B00E3C992 /* LineBuffer.m in Sources */,
 				A6C762FC1B45C52B00E3C992 /* SCPFile.m in Sources */,
 				A6C763721B45C52B00E3C992 /* iTermRemotePreferences.m in Sources */,
+				1DE0C8461BF17397008ACBA9 /* SetHostnameTrigger.m in Sources */,
 				A6C7633A1B45C52B00E3C992 /* SplitPanel.m in Sources */,
 				A6C763921B45C52B00E3C992 /* iTermFileDescriptorClient.c in Sources */,
 				A6C7631A1B45C52B00E3C992 /* iTermProfileSearchToken.m in Sources */,

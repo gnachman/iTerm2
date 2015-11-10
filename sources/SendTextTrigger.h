@@ -13,6 +13,5 @@
 }
 
 + (NSString *)title;
-- (BOOL)takesParameter;
 
 @end
