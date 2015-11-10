@@ -42,24 +42,13 @@ const double kFindCursorHoleRadius = 30;
     self = [super initWithFrame:frameRect];
 
     if (self) {
-        [self setWantsLayer:YES];
-        self.layer.delegate = self;
-        self.layer.opacity = 0.7;
-        [self.layer setNeedsDisplay];
+        self.alphaValue = 0.7;
     }
     return self;
 }
 
 // drawLayer:inContext: only gets called if drawRect: is implemented. wtf.
-- (void)drawRect:(CGRect)rect {
-}
-
-- (void)drawLayer:(CALayer *)layer
-        inContext:(CGContextRef)ctx {
-    NSGraphicsContext *savedContext = [NSGraphicsContext currentContext];
-    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithCGContext:ctx
-                                                                                 flipped:NO]];
-
+- (void)drawRect:(CGRect)dirtyRect {
     NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]
                                                      endingColor:[NSColor blackColor]];
     NSPoint relativeCursorPosition = NSMakePoint(2 * (self.cursorPosition.x / self.frame.size.width - 0.5),
@@ -79,13 +68,11 @@ const double kFindCursorHoleRadius = 30;
                                                                              focusRadius * 2)];
     [[NSColor clearColor] set];
     [circle fill];
-
-    [NSGraphicsContext setCurrentContext:savedContext];
 }
 
 - (void)setCursorPosition:(NSPoint)cursorPosition {
     [super setCursorPosition:cursorPosition];
-    [self.layer setNeedsDisplay];
+    [self setNeedsDisplay:YES];
 }
 
 
@@ -272,7 +259,8 @@ const double kFindCursorHoleRadius = 30;
 }
 
 + (instancetype)allocWithZone:(struct _NSZone *)zone {
-    if ([NSDate isAprilFools]) {
+    if ([NSDate isAprilFools] && [[NSView class] instancesRespondToSelector:@selector(allowsVibrancy)]) {
+        // 10.10+ users get spiffy views on 4/1
         static int i;
         if (i++ % 2) {
             return [iTermFindCursorViewArrowImpl alloc];
