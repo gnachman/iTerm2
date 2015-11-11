@@ -18,28 +18,27 @@
 
 NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
 
-NSString *const kTmuxWindowOpenerWindowFlagStyle = @"WindowStyle";
-NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
+NSString *const kTmuxWindowOpenerWindowOptionStyle = @"WindowStyle";
+NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen";
 
-@interface TmuxWindowOpener (Private)
-
-- (id)appendRequestsForNode:(NSMutableDictionary *)node
-                    toArray:(NSMutableArray *)cmdList;
-- (void)decorateParseTree:(NSMutableDictionary *)parseTree;
-- (id)decorateWindowPane:(NSMutableDictionary *)parseTree;
-- (void)requestDidComplete;
-- (void)dumpHistoryResponse:(NSString *)response
-           paneAndAlternate:(NSArray *)info;
-- (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp;
-- (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
-                                                 alt:(BOOL)alternate;
-- (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp;
-- (void)appendRequestsForWindowPane:(NSNumber *)wp
-                            toArray:(NSMutableArray *)cmdList;
-
-@end
-
-@implementation TmuxWindowOpener
+@implementation TmuxWindowOpener {
+    int windowIndex_;
+    NSString *name_;
+    NSSize size_;
+    NSString *layout_;
+    int maxHistory_;
+    TmuxGateway *gateway_;
+    NSMutableDictionary *parseTree_;
+    int pendingRequests_;
+    TmuxController *controller_;  // weak
+    NSMutableDictionary *histories_;
+    NSMutableDictionary *altHistories_;
+    NSMutableDictionary *states_;
+    PTYTab *tabToUpdate_;
+    id target_;
+    SEL selector_;
+    BOOL ambiguousIsDoubleWidth_;
+}
 
 @synthesize windowIndex = windowIndex_;
 @synthesize name = name_;
@@ -53,8 +52,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
 @synthesize selector = selector_;
 @synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 
-+ (TmuxWindowOpener *)windowOpener
-{
++ (TmuxWindowOpener *)windowOpener {
     return [[[TmuxWindowOpener alloc] init] autorelease];
 }
 
@@ -68,8 +66,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [name_ release];
     [layout_ release];
     [gateway_ release];
@@ -79,12 +76,12 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     [altHistories_ release];
     [states_ release];
     [tabToUpdate_ release];
-    [_windowFlags release];
+    [_windowOptions release];
+    [_zoomed release];
     [super dealloc];
 }
 
-- (void)openWindows:(BOOL)initial
-{
+- (void)openWindows:(BOOL)initial {
     DLog(@"openWindows initial=%d", (int)initial);
     if (!self.layout) {
         DLog(@"Bad layout");
@@ -101,12 +98,19 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
                                                  callingSelector:@selector(appendRequestsForNode:toArray:)
                                                         onTarget:self
                                                       withObject:cmdList];
+    if (self.zoomed.boolValue) {
+        // Unzoom the window because there's no way to tell which window pane is zoomed in tmux 2.1.
+        // I submitted a patch to tmux (commit 531869bd92f0daff3cc3c3cc0ab273846f411dc8) to correct
+        // this. Once a fixed version of tmux is ubiquitous, I can improve this by respecting the
+        // tmux server's initial setting of the zoomed flag. This is a race condition because
+        // another client could change the window's zoom status at the same time, causing a mess.
+        [cmdList addObject:[self dictToToggleZoomForWindow]];
+    }
     DLog(@"Depth-first search of parse tree gives command list %@", cmdList);
     [gateway_ sendCommandList:cmdList initial:initial];
 }
 
-- (void)updateLayoutInTab:(PTYTab *)tab
-{
+- (void)updateLayoutInTab:(PTYTab *)tab {
     if (!self.layout) {
         DLog(@"Bad layout");
         return;
@@ -139,7 +143,8 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
         [gateway_ sendCommandList:cmdList];
     } else {
         [tab setTmuxLayout:self.parseTree
-             tmuxController:controller_];
+            tmuxController:controller_
+                    zoomed:_zoomed];
         if ([tab layoutIsTooLarge]) {
             // The tab's root splitter is larger than the window's tabview.
             // If there are no outstanding window resizes then setTmuxLayout:tmuxController:
@@ -155,15 +160,12 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     }
 }
 
-@end
-
-@implementation TmuxWindowOpener (Private)
+#pragma mark - Private
 
 // This is called for each window pane via a DFS. It sends all commands needed
 // to open a window.
 - (id)appendRequestsForNode:(NSMutableDictionary *)node
-                    toArray:(NSMutableArray *)cmdList
-{
+                    toArray:(NSMutableArray *)cmdList {
     NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
     DLog(@"Append requests for node: %@", node);
     [self appendRequestsForWindowPane:wp toArray:cmdList];
@@ -171,16 +173,25 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
 }
 
 - (void)appendRequestsForWindowPane:(NSNumber *)wp
-                            toArray:(NSMutableArray *)cmdList
-{
+                            toArray:(NSMutableArray *)cmdList {
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:NO]];
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
     [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
     [cmdList addObject:[self dictForGetPendingOutputForWindowPane:wp]];
 }
 
-- (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp
-{
+- (NSDictionary *)dictToToggleZoomForWindow {
+    ++pendingRequests_;
+    DLog(@"Increment pending requests to %d", pendingRequests_);
+    NSString *command = [NSString stringWithFormat:@"resize-pane -Z -t @%d", self.windowIndex];
+    return [gateway_ dictionaryForCommand:command
+                           responseTarget:self
+                         responseSelector:@selector(requestDidComplete)
+                           responseObject:nil
+                                    flags:0];
+}
+
+- (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
     NSString *command = [NSString stringWithFormat:@"capture-pane -p -P -C -t %%%d", [wp intValue]];
@@ -191,8 +202,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
                                     flags:kTmuxGatewayCommandWantsData];
 }
 
-- (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
-{
+- (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
     NSString *command = [NSString stringWithFormat:@"list-panes -t %%%d -F \"%@\"", [wp intValue],
@@ -205,8 +215,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
 }
 
  - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
-                        alt:(BOOL)alternate
-{
+                        alt:(BOOL)alternate {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
     NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ %@-t %%%d -S -%d",
@@ -224,8 +233,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
 // Command response handler for dump-history
 // info is an array: [window pane number, isAlternate flag]
 - (void)dumpHistoryResponse:(NSString *)response
-           paneAndAlternate:(NSArray *)info
-{
+           paneAndAlternate:(NSArray *)info {
     NSNumber *wp = [info objectAtIndex:0];
     NSNumber *alt = [info objectAtIndex:1];
     NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response
@@ -279,8 +287,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     [self requestDidComplete];
 }
 
-- (void)dumpStateResponse:(NSString *)response pane:(NSNumber *)wp
-{
+- (void)dumpStateResponse:(NSString *)response pane:(NSNumber *)wp {
     NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response
                                                                         forPaneId:[wp intValue]];
     [states_ setObject:state forKey:wp];
@@ -325,7 +332,8 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
         if (tabToUpdate_) {
             DLog(@"Updating existing tab");
             [tabToUpdate_ setTmuxLayout:parseTree
-                         tmuxController:controller_];
+                         tmuxController:controller_
+                                 zoomed:NO];
             if ([tabToUpdate_ layoutIsTooLarge]) {
                 [controller_ fitLayoutToWindows];
             }
@@ -352,9 +360,9 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
 
                 // Check the window flags
                 NSString *windowId = [NSString stringWithFormat:@"%d", windowIndex_];
-                NSDictionary *flags = _windowFlags[windowId];
-                NSString *style = flags[kTmuxWindowOpenerWindowFlagStyle];
-                BOOL wantFullScreen = [style isEqual:kTmuxWindowOpenerWindowFlagStyleValueFullScreen];
+                NSDictionary *flags = _windowOptions[windowId];
+                NSString *style = flags[kTmuxWindowOpenerWindowOptionStyle];
+                BOOL wantFullScreen = [style isEqual:kTmuxWindowOpenerWindowOptionStyleValueFullScreen];
                 BOOL isFullScreen = [term anyFullScreen];
                 if (wantFullScreen && !isFullScreen) {
                     [term toggleFullScreenMode:nil];
@@ -371,8 +379,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
 }
 
 // Add info from command responses to leaf nodes of parse tree.
-- (void)decorateParseTree:(NSMutableDictionary *)parseTree
-{
+- (void)decorateParseTree:(NSMutableDictionary *)parseTree {
     [[TmuxLayoutParser sharedInstance] depthFirstSearchParseTree:parseTree
                                                  callingSelector:@selector(decorateWindowPane:)
                                                         onTarget:self
@@ -380,8 +387,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
 }
 
 // Callback for DFS of parse tree from decorateParseTree:
-- (id)decorateWindowPane:(NSMutableDictionary *)parseTree
-{
+- (id)decorateWindowPane:(NSMutableDictionary *)parseTree {
     NSNumber *n = [parseTree objectForKey:kLayoutDictWindowPaneKey];
     if (!n) {
         return nil;

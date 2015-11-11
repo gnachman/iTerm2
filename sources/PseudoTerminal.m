@@ -1341,13 +1341,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_contentView.tabView nextTab:sender];
 }
 
-- (IBAction)previousPane:(id)sender
-{
+- (IBAction)previousPane:(id)sender {
     [[self currentTab] previousSession];
 }
 
-- (IBAction)nextPane:(id)sender
-{
+- (IBAction)nextPane:(id)sender {
     [[self currentTab] nextSession];
 }
 
@@ -1908,8 +1906,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
-                  name:(NSString *)name
-{
+                  name:(NSString *)name {
     [self beginTmuxOriginatedResize];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
                                      inTerminal:self

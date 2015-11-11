@@ -4235,10 +4235,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
                            layout:(NSString *)layout
-{
+                           zoomed:(NSNumber *)zoomed {
     PTYTab *tab = [_tmuxController window:windowId];
     if (tab) {
-        [_tmuxController setLayoutInTab:tab toLayout:layout];
+        [_tmuxController setLayoutInTab:tab toLayout:layout zoomed:zoomed];
     }
 }
 

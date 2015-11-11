@@ -29,21 +29,6 @@ NSString *kLayoutDictHistoryKey = @"history";
 NSString *kLayoutDictAltHistoryKey = @"alt-history";
 NSString *kLayoutDictStateKey = @"state";
 
-@interface TmuxLayoutParser ()
-
-- (LayoutNodeType)nodeTypeInLayout:(NSString *)layout range:(NSRange)range;
-- (NSMutableDictionary *)dictForLeafNodeInLayout:(NSString *)layout range:(NSRange)range;
-- (NSRange)rangeOfChildrenInLayout:(NSString *)layout
-                             range:(NSRange)range
-                              open:(NSString *)openChar
-                             close:(NSString *)closeChar;
-- (NSMutableDictionary *)splitDictWithType:(LayoutNodeType)nodeType;
-- (NSString *)splitOffFirstLayoutInLayoutArray:(NSString *)layouts rest:(NSMutableString *)rest;
-- (BOOL)parseLayoutArray:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree;
-- (BOOL)parseLayout:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree;
-
-@end
-
 @implementation TmuxLayoutParser
 
 + (TmuxLayoutParser *)sharedInstance
@@ -95,10 +80,16 @@ NSString *kLayoutDictStateKey = @"state";
         if ([[tree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
             // Add a do-nothing root splitter so that the root is always a splitter.
             NSMutableDictionary *oldRoot = tree;
-            tree = [[oldRoot mutableCopy]  autorelease];
-            [tree setObject:[NSNumber numberWithInt:kVSplitLayoutNode] forKey:kLayoutDictNodeType];
-            [tree setObject:[NSArray arrayWithObject:oldRoot] forKey:kLayoutDictChildrenKey];
+            tree = [[oldRoot mutableCopy] autorelease];
+            tree[kLayoutDictNodeType] = @(kVSplitLayoutNode);
+            tree[kLayoutDictChildrenKey] = @[ oldRoot ];
             [tree removeObjectForKey:kLayoutDictWindowPaneKey];
+        }
+        // Get the size of the window.
+        NSArray *components = [layout captureComponentsMatchedByRegex:@"^[0-9a-fA-F]{4},([0-9]+)x([0-9]+),[0-9]+,[0-9]+[\\[{]"];
+        if (components.count == 3) {
+            tree[kLayoutDictWidthKey] = @([components[1] intValue]);
+            tree[kLayoutDictHeightKey] = @([components[2] intValue]);
         }
         return [self coalescedTree:tree];
     } else {

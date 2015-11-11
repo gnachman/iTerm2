@@ -53,7 +53,8 @@ extern NSString *const kTmuxControllerSessionWasRenamed;
 - (void)hideWindow:(int)windowId;
 
 - (void)setLayoutInTab:(PTYTab *)tab
-                toLayout:(NSString *)layout;
+              toLayout:(NSString *)layout
+                zoomed:(NSNumber *)zoomed;
 - (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid;
 - (void)sessionsChanged;
 - (void)session:(int)sessionId renamedTo:(NSString *)newName;
