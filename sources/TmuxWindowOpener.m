@@ -105,8 +105,7 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
     [gateway_ sendCommandList:cmdList initial:initial];
 }
 
-- (void)updateLayoutInTab:(PTYTab *)tab
-{
+- (void)updateLayoutInTab:(PTYTab *)tab zoomed:(NSNumber *)zoomed {
     if (!self.layout) {
         DLog(@"Bad layout");
         return;
@@ -139,7 +138,8 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
         [gateway_ sendCommandList:cmdList];
     } else {
         [tab setTmuxLayout:self.parseTree
-             tmuxController:controller_];
+             tmuxController:controller_
+                    zoomed:zoomed];
         if ([tab layoutIsTooLarge]) {
             // The tab's root splitter is larger than the window's tabview.
             // If there are no outstanding window resizes then setTmuxLayout:tmuxController:
@@ -325,7 +325,8 @@ NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen = @"FullScreen";
         if (tabToUpdate_) {
             DLog(@"Updating existing tab");
             [tabToUpdate_ setTmuxLayout:parseTree
-                         tmuxController:controller_];
+                         tmuxController:controller_
+                                 zoomed:NO];
             if ([tabToUpdate_ layoutIsTooLarge]) {
                 [controller_ fitLayoutToWindows];
             }

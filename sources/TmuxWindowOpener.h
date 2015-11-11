@@ -55,6 +55,6 @@ extern NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen;
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;
-- (void)updateLayoutInTab:(PTYTab *)term;
+- (void)updateLayoutInTab:(PTYTab *)term zoomed:(NSNumber *)zoomed;
 
 @end

@@ -190,7 +190,8 @@
 
 - (int)tmuxWindow;
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
-       tmuxController:(TmuxController *)tmuxController;
+       tmuxController:(TmuxController *)tmuxController
+               zoomed:(NSNumber *)zoomed;
 // Returns true if the tmux layout is too large for the window to accommodate.
 - (BOOL)layoutIsTooLarge;
 - (TmuxController *)tmuxController;

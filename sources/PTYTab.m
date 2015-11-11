@@ -1908,8 +1908,12 @@ static NSString* FormatRect(NSRect r) {
         return NO;
     }
     NSSize temp = [self sessionSizeForViewSize:aSession];
-    int width = temp.width;
-    int height = temp.height;
+    return [self resizeSession:aSession toSize:VT100GridSizeMake(temp.width, temp.height)];
+}
+
+- (BOOL)resizeSession:(PTYSession *)aSession toSize:(VT100GridSize)newSize {
+    int width = newSize.width;
+    int height = newSize.height;
     if ([aSession rows] == height &&
         [aSession columns] == width) {
         PtyLog(@"PTYTab fitSessionToCurrentViewSize: noop");
@@ -1923,7 +1927,7 @@ static NSString* FormatRect(NSRect r) {
     [aSession setWidth:width height:height];
     PtyLog(@"fitSessionToCurrentViewSize -  calling setWidth:%d height:%d", width, height);
     [[aSession scrollview] setLineScroll:[[aSession textview] lineHeight]];
-    [[aSession scrollview] setPageScroll:2*[[aSession textview] lineHeight]];
+    [[aSession scrollview] setPageScroll:2 * [[aSession textview] lineHeight]];
     if ([aSession backgroundImagePath]) {
         [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
     }
@@ -3192,7 +3196,12 @@ static NSString* FormatRect(NSRect r) {
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
-       tmuxController:(TmuxController *)tmuxController {
+       tmuxController:(TmuxController *)tmuxController
+               zoomed:(NSNumber *)zoomed {
+    BOOL wasZoomed = isMaximized_;
+    if (isMaximized_) {
+        [self unmaximize];
+    }
     DLog(@"setTmuxLayout:tmuxController:");
     [PTYTab setSizesInTmuxParseTree:parseTree
                          inTerminal:realParentWindow_];
@@ -3213,6 +3222,11 @@ static NSString* FormatRect(NSRect r) {
     parseTree_ = [parseTree retain];
 
     [self activateJuniorSession];
+
+    const BOOL shouldZoom = zoomed ? zoomed.boolValue : wasZoomed;
+    if (shouldZoom) {
+        [self maximize];
+    }
 }
 
 // Find a session that is not "senior" to a tmux pane getting split by the user and make it
@@ -3268,15 +3282,11 @@ static NSString* FormatRect(NSRect r) {
     return isMaximized_;
 }
 
-- (void)maximize
-{
+- (void)maximize {
     for (PTYSession *session in [self sessions]) {
         session.savedRootRelativeOrigin = [self rootRelativeOriginOfSession:session];
     }
-    
-    if ([self isTmuxTab]) {
-        return;
-    }
+
     assert(!savedArrangement_);
     assert(!idMap_);
     assert(!isMaximized_);
@@ -3302,6 +3312,26 @@ static NSString* FormatRect(NSRect r) {
 
     [[root_ window] makeFirstResponder:[activeSession_ textview]];
     [realParentWindow_ invalidateRestorableState];
+
+    if ([self isTmuxTab]) {
+        VT100GridSize gridSize = VT100GridSizeMake([parseTree_[kLayoutDictWidthKey] intValue],
+                                                   [parseTree_[kLayoutDictHeightKey] intValue]);
+        [self resizeSession:self.activeSession toSize:gridSize];
+        [self fitSubviewsToRoot];
+        [self resizeTmuxSessionView:self.activeSession.view toGridSize:gridSize];
+    }
+}
+
+- (void)resizeTmuxSessionView:(SessionView *)sessionView toGridSize:(VT100GridSize)gridSize {
+    const BOOL showTitles = [iTermPreferences boolForKey:kPreferenceKeyShowPaneTitles];
+    NSSize size = [PTYTab _sessionSizeWithCellSize:[PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]]
+                                        dimensions:NSMakeSize(gridSize.width, gridSize.height)
+                                        showTitles:showTitles
+                                        inTerminal:self.realParentWindow];
+    NSRect frame;
+    frame.origin = sessionView.frame.origin;
+    frame.size = size;
+    sessionView.frame = frame;
 }
 
 - (void)unmaximize

@@ -38,6 +38,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_name}\t"
     "#{window_width}\t#{window_height}\t"
     "#{window_layout}\t"
+    "#{window_flags}\t"
     "#{?window_active,1,0}\"";
 
 
@@ -152,7 +153,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)setLayoutInTab:(PTYTab *)tab
-              toLayout:(NSString *)layout {
+              toLayout:(NSString *)layout
+                zoomed:(NSNumber *)zoomed {
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
     windowOpener.layout = layout;
@@ -165,7 +167,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.target = self;
     windowOpener.selector = @selector(windowDidOpen:);
     windowOpener.windowFlags = _windowFlags;
-    [windowOpener updateLayoutInTab:tab];
+    [windowOpener updateLayoutInTab:tab zoomed:zoomed];
 }
 
 - (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid {
@@ -227,7 +229,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
     return [NSArray arrayWithObjects:@"session_name", @"window_id",
             @"window_name", @"window_width", @"window_height",
-            @"window_layout", @"window_active", nil];
+            @"window_layout", @"window_flags", @"window_active", nil];
 
 }
 
@@ -1042,7 +1044,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                          responseSelector:NULL
                                            responseObject:nil
                                                     flags:0],
-                           [gateway_ dictionaryForCommand:@"list-windows -F \"#{window_id} #{window_layout}\""
+                           [gateway_ dictionaryForCommand:@"list-windows -F \"#{window_id} #{window_layout} #{window_flags}\""
                                            responseTarget:self
                                          responseSelector:@selector(parseListWindowsResponseAndUpdateLayouts:)
                                            responseObject:nil
@@ -1056,7 +1058,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                          responseSelector:NULL
                                            responseObject:nil
                                                     flags:0],
-                           [gateway_ dictionaryForCommand:@"list-windows -F \"#{window_id} #{window_layout}\""
+                           [gateway_ dictionaryForCommand:@"list-windows -F \"#{window_id} #{window_layout} #{window_flags}\""
                                            responseTarget:self
                                          responseSelector:@selector(parseListWindowsResponseAndUpdateLayouts:)
                                            responseObject:nil
@@ -1232,23 +1234,25 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if (numOutstandingWindowResizes_ > 0) {
         return;
     }
-    
+
     [self parseListWindowsResponseAndUpdateLayouts:response];
 }
 
 - (void)parseListWindowsResponseAndUpdateLayouts:(NSString *)response {
     NSArray *layoutStrings = [response componentsSeparatedByString:@"\n"];
     for (NSString *layoutString in layoutStrings) {
-        NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) (.*)"];
-        if ([components count] != 3) {
+        NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) ([^ ]+)(?: ([^ ]+))?"];
+        if ([components count] < 3) {
             NSLog(@"Bogus layout string: \"%@\"", layoutString);
         } else {
             int window = [[components objectAtIndex:1] intValue];
             NSString *layout = [components objectAtIndex:2];
             PTYTab *tab = [self window:window];
             if (tab) {
+                NSNumber *zoomed = components.count > 3 ? @([components[3] containsString:@"Z"]) : nil;
                 [[gateway_ delegate] tmuxUpdateLayoutForWindow:window
-                                                        layout:layout];
+                                                        layout:layout
+                                                        zoomed:zoomed];
             }
         }
     }
