@@ -993,8 +993,8 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         // High-quality but slow rendering, needed especially for multiple combining marks.
         [self drawStringWithCombiningMarksInRun:complexRun at:pos];
     } else {
-        // Faster (not fast, but faster) than drawStringWithCombiningMarksInRun. AFAICT this is only
-        // used for surrogate pairs, so it's a candidate for deletion.
+        // Faster (not fast, but faster) than drawStringWithCombiningMarksInRun. This is used for
+        // surrogate pairs and when drawing a simple run fails because a glyph couldn't be found.
         [self drawAttributedStringInRun:complexRun at:pos];
     }
 }
