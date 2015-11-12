@@ -255,6 +255,9 @@ static const int kMaxScreenRows = 4096;
 
     int r;
 
+    // NOTE: This seems to cause a memory leak. The setter for termTypeIsValid (below) has the
+    // side effect of copying various curses strings, and it depends on this. When I redo output,
+    // fix this disaster.
     setupterm((char *)[_termType UTF8String], fileno(stdout), &r);
     if (r != 1) {
         NSLog(@"Terminal type %s is not defined.", [_termType UTF8String]);
