@@ -285,29 +285,31 @@
 }
 
 - (void)load {
-    if (_view) {
-        return;
+  if (_view) {
+    return;
+  }
+  
+  // This makes target/action work on older OS versions.
+  [self setCell:[[NSActionCell alloc] init]];
+  _continuous = YES;
+  _view = [[CPKColorWellView alloc] initWithFrame:self.bounds];
+  _view.delegate = self;
+  [self addSubview:_view];
+  _view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+  self.autoresizesSubviews = YES;
+  _view.alphaAllowed = _alphaAllowed;
+  __weak __typeof(self) weakSelf = self;
+  _view.colorDidChange = ^(NSColor *color) {
+    [weakSelf sendAction:weakSelf.action to:weakSelf.target];
+  };
+  _view.willClosePopover = ^(NSColor *color) {
+    if (!weakSelf.continuous) {
+      [weakSelf sendAction:weakSelf.action to:weakSelf.target];
     }
-
-    _continuous = YES;
-    _view = [[CPKColorWellView alloc] initWithFrame:self.bounds];
-    _view.delegate = self;
-    [self addSubview:_view];
-    _view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    self.autoresizesSubviews = YES;
-    _view.alphaAllowed = _alphaAllowed;
-    __weak __typeof(self) weakSelf = self;
-    _view.colorDidChange = ^(NSColor *color) {
-        [weakSelf sendAction:weakSelf.action to:weakSelf.target];
-    };
-    _view.willClosePopover = ^(NSColor *color) {
-        if (!weakSelf.continuous) {
-            [weakSelf sendAction:weakSelf.action to:weakSelf.target];
-        }
-        if (weakSelf.willClosePopover) {
-            weakSelf.willClosePopover();
-        }
-    };
+    if (weakSelf.willClosePopover) {
+      weakSelf.willClosePopover();
+    }
+  };
 }
 
 - (NSColor *)color {

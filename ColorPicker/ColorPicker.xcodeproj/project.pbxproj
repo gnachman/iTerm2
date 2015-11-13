@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1D3368861BCDB60700D3B564 /* EscapeHatch.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368841BCDB60700D3B564 /* EscapeHatch.png */; settings = {ASSET_TAGS = (); }; };
-		1D3368871BCDB60700D3B564 /* EscapeHatch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368851BCDB60700D3B564 /* EscapeHatch@2x.png */; settings = {ASSET_TAGS = (); }; };
-		1D33688B1BCDB62100D3B564 /* ActiveEscapeHatch.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368891BCDB62100D3B564 /* ActiveEscapeHatch.png */; settings = {ASSET_TAGS = (); }; };
-		1D33688C1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D33688A1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png */; settings = {ASSET_TAGS = (); }; };
+		1D3368861BCDB60700D3B564 /* EscapeHatch.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368841BCDB60700D3B564 /* EscapeHatch.png */; };
+		1D3368871BCDB60700D3B564 /* EscapeHatch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368851BCDB60700D3B564 /* EscapeHatch@2x.png */; };
+		1D33688B1BCDB62100D3B564 /* ActiveEscapeHatch.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D3368891BCDB62100D3B564 /* ActiveEscapeHatch.png */; };
+		1D33688C1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D33688A1BCDB62100D3B564 /* ActiveEscapeHatch@2x.png */; };
 		A6184EAE1BA874020088EF3C /* ColorPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A6184EAD1BA874020088EF3C /* ColorPicker.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A6184EB41BA874020088EF3C /* ColorPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6184EA81BA874020088EF3C /* ColorPicker.framework */; };
 		A6184EBB1BA874020088EF3C /* ColorPickerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6184EBA1BA874020088EF3C /* ColorPickerTests.m */; };
@@ -77,10 +77,11 @@
 		A6184F821BAA928A0088EF3C /* Eyedropper@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6184F801BAA928A0088EF3C /* Eyedropper@2x.png */; };
 		A6184F861BAA93F50088EF3C /* ActiveEyedropper.png in Resources */ = {isa = PBXBuildFile; fileRef = A6184F841BAA93F50088EF3C /* ActiveEyedropper.png */; };
 		A6184F871BAA93F50088EF3C /* ActiveEyedropper@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6184F851BAA93F50088EF3C /* ActiveEyedropper@2x.png */; };
-		A662E7901BD4932A00B79B8B /* HSB.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E78E1BD4932A00B79B8B /* HSB.png */; settings = {ASSET_TAGS = (); }; };
-		A662E7911BD4932A00B79B8B /* HSB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E78F1BD4932A00B79B8B /* HSB@2x.png */; settings = {ASSET_TAGS = (); }; };
-		A662E7941BD4933A00B79B8B /* RGB.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7921BD4933A00B79B8B /* RGB.png */; settings = {ASSET_TAGS = (); }; };
-		A662E7951BD4933A00B79B8B /* RGB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7931BD4933A00B79B8B /* RGB@2x.png */; settings = {ASSET_TAGS = (); }; };
+		A628B0061BF5ACE800B68248 /* ColorPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6184EA81BA874020088EF3C /* ColorPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A662E7901BD4932A00B79B8B /* HSB.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E78E1BD4932A00B79B8B /* HSB.png */; };
+		A662E7911BD4932A00B79B8B /* HSB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E78F1BD4932A00B79B8B /* HSB@2x.png */; };
+		A662E7941BD4933A00B79B8B /* RGB.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7921BD4933A00B79B8B /* RGB.png */; };
+		A662E7951BD4933A00B79B8B /* RGB@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A662E7931BD4933A00B79B8B /* RGB@2x.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -99,6 +100,19 @@
 			remoteInfo = ColorPicker;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A628B0051BF5ACDD00B68248 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				A628B0061BF5ACE800B68248 /* ColorPicker.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		1D3368841BCDB60700D3B564 /* EscapeHatch.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = EscapeHatch.png; path = Images.xcassets/EscapeHatch/EscapeHatch.png; sourceTree = "<group>"; };
@@ -528,6 +542,7 @@
 				A6184EC41BA874190088EF3C /* Sources */,
 				A6184EC51BA874190088EF3C /* Frameworks */,
 				A6184EC61BA874190088EF3C /* Resources */,
+				A628B0051BF5ACDD00B68248 /* CopyFiles */,
 			);
 			buildRules = (
 			);
