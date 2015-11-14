@@ -86,7 +86,10 @@
     info = [self defineControl:_hideTab
                            key:kPreferenceKeyHideTabBar
                           type:kPreferenceInfoTypeInvertedCheckbox];
-    info.onChange = ^() { [self postRefreshNotification]; };
+    info.onChange = ^() {
+        [self postRefreshNotification];
+        [self updateFlashTabsVisibility];
+    };
 
     info = [self defineControl:_hideTabNumber
                            key:kPreferenceKeyHideTabNumber
@@ -116,6 +119,7 @@
     [self defineControl:_flashTabBarInFullscreenWhenSwitchingTabs
                     key:kPreferenceKeyFlashTabBarInFullscreen
                    type:kPreferenceInfoTypeCheckbox];
+    [self updateFlashTabsVisibility];
 
     info = [self defineControl:_showTabBarInFullscreen
                            key:kPreferenceKeyShowFullscreenTabBar
@@ -195,6 +199,16 @@
 - (void)showFullscreenTabsSettingDidChange:(NSNotification *)notification {
     _showTabBarInFullscreen.state =
         [iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSOnState : NSOffState;
+    [self updateFlashTabsVisibility];
+}
+
+- (void)updateFlashTabsVisibility {
+    // Enable flashing tabs in fullscreen when it's possible for the tab bar in fullscreen to be
+    // hidden: either it's not always visible or it's hidden when there's a single tab. The single-
+    // tab case is relevant when going from two tabs to one, which could be considered a "switch".
+    _flashTabBarInFullscreenWhenSwitchingTabs.enabled =
+        (![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ||
+         [iTermPreferences boolForKey:kPreferenceKeyHideTabBar]);
 }
 
 @end
