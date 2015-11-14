@@ -146,9 +146,6 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // [sender representedObject]. Used by menu items in the Bookmarks menu.
 - (void)newSessionInTabAtIndex:(id)sender;
 
-// Toggles visibility of fullscreen tab bar.
-- (void)toggleFullScreenTabBar;
-
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition;
 

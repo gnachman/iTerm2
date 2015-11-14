@@ -16,13 +16,13 @@
 
     // Tab position within window. See TAB_POSITION_XXX defines.
     IBOutlet NSPopUpButton *_tabPosition;
-    
+
     // Hide tab bar when there is only one session
     IBOutlet NSButton *_hideTab;
 
     // Remove tab number from tabs.
     IBOutlet NSButton *_hideTabNumber;
-    
+
     // Remove close button from tabs.
     IBOutlet NSButton *_hideTabCloseButton;
 
@@ -82,25 +82,25 @@
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [self postRefreshNotification]; };
 
-    
+
     info = [self defineControl:_hideTab
                            key:kPreferenceKeyHideTabBar
-                          type:kPreferenceInfoTypeCheckbox];
+                          type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
-    
+
     info = [self defineControl:_hideTabNumber
                            key:kPreferenceKeyHideTabNumber
-                          type:kPreferenceInfoTypeCheckbox];
+                          type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
-    
+
     info = [self defineControl:_hideTabCloseButton
                            key:kPreferenceKeyHideTabCloseButton
-                          type:kPreferenceInfoTypeCheckbox];
+                          type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
     info = [self defineControl:_hideActivityIndicator
                            key:kPreferenceKeyHideTabActivityIndicator
-                          type:kPreferenceInfoTypeCheckbox];
+                          type:kPreferenceInfoTypeInvertedCheckbox];
     info.onChange = ^() { [self postRefreshNotification]; };
 
     info = [self defineControl:_showPaneTitles
