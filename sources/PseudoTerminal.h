@@ -164,9 +164,6 @@ extern NSString *const kPseudoTerminalStateRestorationWindowArrangementKey;
 // Toggle non-Lion fullscreen mode.
 - (void)toggleTraditionalFullScreenMode;
 
-// accessor
-- (BOOL)fullScreenTabControl;
-
 // Should the tab bar be shown?
 - (BOOL)tabBarShouldBeVisible;
 

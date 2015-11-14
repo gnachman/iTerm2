@@ -7,6 +7,7 @@
 //
 
 #import "AppearancePreferencesViewController.h"
+#import "iTermApplicationDelegate.h"
 #import "PreferencePanel.h"
 
 @implementation AppearancePreferencesViewController {
@@ -35,6 +36,7 @@
     IBOutlet NSButton *_hideMenuBarInFullscreen;
 
     IBOutlet NSButton *_flashTabBarInFullscreenWhenSwitchingTabs;
+    IBOutlet NSButton *_showTabBarInFullscreen;
 
     // Show window number in title bar.
     IBOutlet NSButton *_windowNumber;
@@ -115,6 +117,19 @@
                     key:kPreferenceKeyFlashTabBarInFullscreen
                    type:kPreferenceInfoTypeCheckbox];
 
+    info = [self defineControl:_showTabBarInFullscreen
+                           key:kPreferenceKeyShowFullscreenTabBar
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kShowFullscreenTabsSettingDidChange
+                                                            object:nil];
+    };
+    // There's a menu item to change this setting. We want the control to reflect it.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(showFullscreenTabsSettingDidChange:)
+                                                 name:kShowFullscreenTabsSettingDidChange
+                                               object:nil];
+
     info = [self defineControl:_windowNumber
                            key:kPreferenceKeyShowWindowNumber
                           type:kPreferenceInfoTypeCheckbox];
@@ -166,10 +181,20 @@
     info.onChange = ^() { [self postRefreshNotification]; };
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [super dealloc];
+}
+
 - (void)postUpdateLabelsNotification {
     [[NSNotificationCenter defaultCenter] postNotificationName:kUpdateLabelsNotification
                                                         object:nil
                                                       userInfo:nil];
+}
+
+- (void)showFullscreenTabsSettingDidChange:(NSNotification *)notification {
+    _showTabBarInFullscreen.state =
+        [iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSOnState : NSOffState;
 }
 
 @end

@@ -112,6 +112,8 @@ NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode = @"BracketedPasteM
 
 NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStringTabStopSize";
 
+NSString *const kPreferenceKeyShowFullscreenTabBar = @"ShowFullScreenTabBar";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -257,6 +259,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyPasteSpecialBracketedPasteMode: @YES,
 
                   kPreferenceKeyPasteWarningNumberOfSpacesPerTab: @4,
+                  kPreferenceKeyShowFullscreenTabBar: @YES
               };
         [dict retain];
     }
