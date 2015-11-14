@@ -194,7 +194,7 @@ static BOOL hasBecomeActive = NO;
         return;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
-    // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
+    // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
     if (ranAutoLaunchScript == NO &&
         [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
         ranAutoLaunchScript = YES;

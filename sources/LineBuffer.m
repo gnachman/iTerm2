@@ -1081,6 +1081,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (LineBuffer *)newAppendOnlyCopy {
     LineBuffer *theCopy = [[LineBuffer alloc] init];
+    [theCopy->blocks release];
     theCopy->blocks = [[NSMutableArray alloc] initWithArray:blocks];
     LineBlock *lastBlock = [blocks lastObject];
     if (lastBlock) {
