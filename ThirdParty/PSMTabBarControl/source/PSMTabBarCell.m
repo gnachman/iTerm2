@@ -21,6 +21,7 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     NSSize _stringSize;
     PSMProgressIndicator *_indicator;
     NSTimeInterval _highlightChangeTime;
+    NSTimer *_delayedStringValueTimer;  // For bug 3957
 }
 
 #pragma mark - Creation/Destruction
@@ -105,6 +106,19 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
 
 - (void)setStringValue:(NSString *)aString {
     [super setStringValue:aString];
+    
+    if (!_delayedStringValueTimer) {
+        static const NSTimeInterval kStringValueSettingDelay = 0.1;
+        _delayedStringValueTimer = [NSTimer scheduledTimerWithTimeInterval:kStringValueSettingDelay
+                                                                    target:self
+                                                                  selector:@selector(updateStringValue:)
+                                                                  userInfo:nil
+                                                                   repeats:NO];
+    }
+}
+
+- (void)updateStringValue:(NSTimer *)timer {
+    _delayedStringValueTimer = nil;
     _stringSize = [[self attributedStringValue] size];
     // need to redisplay now - binding observation was too quick.
     [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]];

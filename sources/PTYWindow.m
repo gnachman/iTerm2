@@ -22,14 +22,15 @@
  */
 
 #import "iTerm.h"
+#import "FutureMethods.h"
+#import "iTermApplicationDelegate.h"
+#import "iTermController.h"
+#import "iTermDelayedTitleSetter.h"
+#import "iTermPreferences.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "PTYWindow.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
-#import "FutureMethods.h"
-#import "iTermController.h"
-#import "iTermApplicationDelegate.h"
-#import "iTermPreferences.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "objc/runtime.h"
 
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
@@ -50,11 +51,13 @@
     // True while in -[NSWindow toggleFullScreen:].
     BOOL isTogglingLionFullScreen_;
     NSObject *restoreState_;
+    iTermDelayedTitleSetter *_titleSetter;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [restoreState_ release];
+    _titleSetter.window = nil;
+    [_titleSetter release];
     [super dealloc];
 
 }
@@ -333,6 +336,14 @@ end:
     }
 
     return totalOcclusion;
+}
+
+- (void)delayedSetTitle:(NSString *)title {
+    if (!_titleSetter) {
+        _titleSetter = [[iTermDelayedTitleSetter alloc] init];
+        _titleSetter.window = self;
+    }
+    [_titleSetter setTitle:title];
 }
 
 @end

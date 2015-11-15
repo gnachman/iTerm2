@@ -1384,13 +1384,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 
-- (void)setWindowTitle
-{
+- (void)setWindowTitle {
     [self setWindowTitle:[self currentSessionName]];
 }
 
-- (void)setWindowTitle:(NSString *)title
-{
+- (void)setWindowTitle:(NSString *)title {
     if (title == nil) {
         // title can be nil during loadWindowArrangement
         title = @"";
@@ -1416,16 +1414,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         title = [NSString stringWithFormat:@"%@%@%@", windowNumber, title, tmuxId];
     }
 
-    // In bug 2593, we see a crazy thing where setting the window title right
-    // after a window is created causes it to have the wrong background color.
-    // A delay of 0 doesn't fix it. I'm at wit's end here, so this will have to
-    // do until a better explanation comes along. But during a live resize it
-    // has to be done immediately because the runloop doesn't get around to
-    // delayed performs until the live resize is done (bug 2812).
     if (liveResize_) {
-        [[self window] setTitle:title];
+        // During a live resize this has to be done immediately because the runloop doesn't get
+        // around to delayed performs until the live resize is done (bug 2812).
+        self.window.title = title;
     } else {
-        [[self window] performSelector:@selector(setTitle:) withObject:title afterDelay:0.1];
+        // See comments in iTermDelaydTitleSetter for why this is so.
+        [self.ptyWindow delayedSetTitle:title];
     }
 }
 
@@ -2791,7 +2786,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     if ([iTermAdvancedSettingsModel disableWindowSizeSnap]) {
         snapWidth = snapHeight = NO;
     }
-    
+
     // Compute proposed tab size (window minus decorations).
     NSSize decorationSize = [self windowDecorationSize];
     NSSize tabSize = NSMakeSize(proposedFrameSize.width - decorationSize.width,
@@ -3109,7 +3104,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             changed = YES;
         }
         [[aSession scrollview] setHasVerticalScroller:hasScrollbar];
-        
+
         NSScrollerStyle style = [self scrollerStyle];
         if (aSession.scrollview.scrollerStyle != style) {
             changed = YES;
@@ -3117,7 +3112,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [[aSession scrollview] setScrollerStyle:style];
         [[aSession textview] updateScrollerForBackgroundColor];
     }
-    
+
     return changed;
 }
 
@@ -5988,7 +5983,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 
     [_contentView.tabView cycleFlagsChanged:[theEvent modifierFlags]];
-    
+
     NSUInteger modifierFlags = [theEvent modifierFlags];
     if (!(modifierFlags & NSCommandKeyMask) &&
         [[[self currentSession] textview] isFindingCursor]) {
