@@ -4885,20 +4885,20 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 mode = [self rightOptionKey];
             }
 
-            NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0)?
-            [keystr dataUsingEncoding:NSUTF8StringEncoding]:
-            [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
+            NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
+                [keystr dataUsingEncoding:_terminal.encoding]:
+                [unmodkeystr dataUsingEncoding:_terminal.encoding];
             if (keydat != nil) {
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
             }
             if (mode == OPT_ESC) {
                 send_pchr = '\e';
-            } else if (mode == OPT_META && send_str != NULL) {
-                int i;
-                for (i = 0; i < send_strlen; ++i) {
-                    send_str[i] |= 0x80;
-                }
+            } else if (mode == OPT_META && send_str != NULL && send_strlen > 0) {
+                // I'm pretty sure this is a no-win situation when it comes to any encoding other
+                // than ASCII, but see here for some ideas about this mess:
+                // http://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/meta-bit.html
+                send_str[0] |= 0x80;
             }
         } else {
             DLog(@"PTYSession keyDown regular path");
