@@ -199,7 +199,8 @@
     
     NSImage *image = [self cpk_imageNamed:@"ActiveEscapeHatch"];
     NSRect frame;
-    frame.origin = NSZeroPoint;
+    const CGFloat kBottomMargin = 8;
+    frame.origin = NSMakePoint(0, kBottomMargin);
     frame.size = image.size;
     NSButton *button = [[NSButton alloc] initWithFrame:frame];
     button.bordered = NO;
@@ -222,7 +223,7 @@
         [container addSubview:button];
     }
     
-    container.frame = NSMakeRect(0, 0, NSMaxX(button.frame), NSMaxY(button.frame));
+    container.frame = NSMakeRect(0, 0, NSMaxX(button.frame), NSMaxY(button.frame) + kBottomMargin);
     colorPanel.accessoryView = container;
     
     [colorPanel setTarget:self];
