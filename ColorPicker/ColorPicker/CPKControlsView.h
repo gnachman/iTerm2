@@ -11,6 +11,9 @@ extern NSString *const kCPKUseSystemColorPicker;
 /** Should the "Remove Favorite" button be enabled? */
 @property(nonatomic) BOOL removeEnabled;
 
+/** Block called when you clicks on "No Color". */
+@property(nonatomic, copy) void (^selectNoColorBlock)();
+
 /** Block called when user clicks on "Add Favorite". */
 @property(nonatomic, copy) void (^addFavoriteBlock)();
 
@@ -31,6 +34,18 @@ extern NSString *const kCPKUseSystemColorPicker;
 
 /** Reports this view's nominal height */
 + (CGFloat)desiredHeight;
+
+/**
+ * Designated initializer.
+ *
+ * @param frameRect Initial frame
+ * @param noColorAllowed If set, a control to set "no color" will be added.
+ *
+ * @return Initialized instance.
+ */
+- (instancetype)initWithFrame:(NSRect)frameRect noColorAllowed:(BOOL)noColorAllowed NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)initWithCoder:(NSCoder *)coder NS_DESIGNATED_INITIALIZER;
 
 /** Updates the swatch color. */
 - (void)setSwatchColor:(NSColor *)color;

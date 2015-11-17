@@ -22,6 +22,9 @@
 /** User can adjust alpha value. */
 @property(nonatomic, assign) BOOL alphaAllowed;
 
+/** Use can choose to have no color. */
+@property(nonatomic, assign) BOOL noColorAllowed;
+
 /** Color well is disabled? */
 @property(nonatomic, assign) BOOL disabled;
 
@@ -44,7 +47,9 @@
 @interface CPKColorWell() <CPKColorWellViewDelegate>
 @end
 
-@implementation CPKColorWellView
+@implementation CPKColorWellView {
+    NSPoint _mouseDownLocation;
+}
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
@@ -73,6 +78,7 @@
 
 // Use mouseDown so this will work in a NSTableView.
 - (void)mouseDown:(NSEvent *)theEvent {
+    _mouseDownLocation = [self convertPoint:theEvent.locationInWindow fromView:nil];
     if (!self.delegate.isContinuous && theEvent.clickCount == 1) {
         [self openPopOver];
     }
@@ -92,6 +98,13 @@
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {
+    NSPoint location = [self convertPoint:theEvent.locationInWindow fromView:nil];
+    CGFloat distance = sqrt(pow(_mouseDownLocation.x - location.x, 2) +
+                            pow(_mouseDownLocation.y - location.y, 2));
+    const CGFloat kDragThreshold = 5;  // Minimum drag distance before initiating a drag.
+    if (distance < kDragThreshold) {
+        return;
+    }
     NSColor *color = self.selectedColor ?: [NSColor clearColor];
     NSDraggingItem *dragItem = [[NSDraggingItem alloc] initWithPasteboardWriter:color];
 
@@ -163,6 +176,10 @@
     [self.delegate colorChangedByDrag:[sender color]];
 }
 
+- (void)noColorChosenInSystemColorPicker:(id)sender {
+    [self colorPanelColorDidChange:nil];
+}
+
 - (void)useColorPicker:(id)sender {
     [[NSUserDefaults standardUserDefaults] setBool:NO forKey:kCPKUseSystemColorPicker];
     [[NSColorPanel sharedColorPanel] close];
@@ -173,9 +190,13 @@
 }
 
 - (void)showSystemColorPicker {
+    static const CGFloat kMarginBetweenAccessoryViews = 4;
+    
     NSColorPanel *colorPanel = [NSColorPanel sharedColorPanel];
     
     // Add an accessory view to use ColorPicker.
+    NSView *container = [[NSView alloc] init];
+    
     NSImage *image = [self cpk_imageNamed:@"ActiveEscapeHatch"];
     NSRect frame;
     frame.origin = NSZeroPoint;
@@ -186,13 +207,31 @@
     button.imagePosition = NSImageOnly;
     [button setTarget:self];
     [button setAction:@selector(useColorPicker:)];
-    colorPanel.accessoryView = button;
+    
+    [container addSubview:button];
+
+    if (self.noColorAllowed) {
+        frame.origin.x = NSMaxX(frame) + kMarginBetweenAccessoryViews;
+        button = [[NSButton alloc] initWithFrame:frame];
+        image = [self cpk_imageNamed:@"NoColor"];
+        button.bordered = NO;
+        button.image = image;
+        button.imagePosition = NSImageOnly;
+        [button setTarget:self];
+        [button setAction:@selector(noColorChosenInSystemColorPicker:)];
+        [container addSubview:button];
+    }
+    
+    container.frame = NSMakeRect(0, 0, NSMaxX(button.frame), NSMaxY(button.frame));
+    colorPanel.accessoryView = container;
     
     [colorPanel setTarget:self];
     [colorPanel setAction:@selector(colorPanelColorDidChange:)];
     [colorPanel orderFront:nil];
     colorPanel.showsAlpha = self.alphaAllowed;
-    colorPanel.color = self.selectedColor;
+    if (self.selectedColor) {
+        colorPanel.color = self.selectedColor;
+    }
 }
 
 - (void)openPopOverRelativeToRect:(NSRect)presentationRect ofView:(NSView *)presentingView {
@@ -204,18 +243,20 @@
     }
     __weak __typeof(self) weakSelf = self;
     self.selectedColor = self.color;
+    CPKMainViewControllerOptions options = 0;
+    if (self.alphaAllowed) {
+        options |= CPKMainViewControllerOptionsAlpha;
+    }
+    if (self.noColorAllowed) {
+        options |= CPKMainViewControllerOptionsNoColor;
+    }
     self.popover =
         [CPKPopover presentRelativeToRect:presentationRect
                                    ofView:presentingView
                             preferredEdge:NSRectEdgeMinY
                              initialColor:self.color
-                             alphaAllowed:self.alphaAllowed
+                                  options:options
                        selectionDidChange:^(NSColor *color) {
-                           if (!color) {
-                               [weakSelf.popover close];
-                               [self showSystemColorPicker];
-                               return;
-                           }
                            weakSelf.selectedColor = color;
                            if (weakSelf.delegate.isContinuous) {
                                weakSelf.color = color;
@@ -224,7 +265,11 @@
                                }
                            }
                            [weakSelf setNeedsDisplay:YES];
-                       }];
+                       }
+                     useSystemColorPicker:^() {
+                         [weakSelf.popover close];
+                         [self showSystemColorPicker];
+                     }];
     self.open = YES;
     self.popover.willClose = ^() {
         if (weakSelf.willClosePopover) {
@@ -285,31 +330,32 @@
 }
 
 - (void)load {
-  if (_view) {
-    return;
-  }
-  
-  // This makes target/action work on older OS versions.
-  [self setCell:[[NSActionCell alloc] init]];
-  _continuous = YES;
-  _view = [[CPKColorWellView alloc] initWithFrame:self.bounds];
-  _view.delegate = self;
-  [self addSubview:_view];
-  _view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-  self.autoresizesSubviews = YES;
-  _view.alphaAllowed = _alphaAllowed;
-  __weak __typeof(self) weakSelf = self;
-  _view.colorDidChange = ^(NSColor *color) {
-    [weakSelf sendAction:weakSelf.action to:weakSelf.target];
-  };
-  _view.willClosePopover = ^(NSColor *color) {
-    if (!weakSelf.continuous) {
-      [weakSelf sendAction:weakSelf.action to:weakSelf.target];
+    if (_view) {
+        return;
     }
-    if (weakSelf.willClosePopover) {
-      weakSelf.willClosePopover();
-    }
-  };
+    
+    // This makes target/action work on older OS versions.
+    [self setCell:[[NSActionCell alloc] init]];
+    _continuous = YES;
+    _view = [[CPKColorWellView alloc] initWithFrame:self.bounds];
+    _view.delegate = self;
+    [self addSubview:_view];
+    _view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    self.autoresizesSubviews = YES;
+    _view.alphaAllowed = _alphaAllowed;
+    _view.noColorAllowed = _noColorAllowed;
+    __weak __typeof(self) weakSelf = self;
+    _view.colorDidChange = ^(NSColor *color) {
+        [weakSelf sendAction:weakSelf.action to:weakSelf.target];
+    };
+    _view.willClosePopover = ^(NSColor *color) {
+        if (!weakSelf.continuous) {
+            [weakSelf sendAction:weakSelf.action to:weakSelf.target];
+        }
+        if (weakSelf.willClosePopover) {
+            weakSelf.willClosePopover();
+        }
+    };
 }
 
 - (NSColor *)color {
@@ -322,8 +368,13 @@
 }
 
 - (void)setAlphaAllowed:(BOOL)alphaAllowed {
-  _alphaAllowed = alphaAllowed;
-  _view.alphaAllowed = alphaAllowed;
+    _alphaAllowed = alphaAllowed;
+    _view.alphaAllowed = alphaAllowed;
+}
+
+- (void)setNoColorAllowed:(BOOL)noColorAllowed {
+    _noColorAllowed = noColorAllowed;
+    _view.noColorAllowed = noColorAllowed;
 }
 
 - (void)setEnabled:(BOOL)enabled {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15A284" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9059"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -15,6 +15,7 @@
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate">
             <connections>
                 <outlet property="colorWell" destination="MuN-WJ-BSh" id="4ny-mc-o9u"/>
+                <outlet property="continuousColorWell" destination="vGh-Vt-M6V" id="ZVz-al-ug3"/>
                 <outlet property="loremIpsum" destination="q6V-rV-d7b" id="IKg-5n-F76"/>
                 <outlet property="nativeColorWell" destination="shh-pD-JOT" id="sEJ-eC-EbT"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
@@ -681,7 +682,7 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MuN-WJ-BSh" customClass="CPKColorWell">
-                        <rect key="frame" x="324" y="313" width="53" height="27"/>
+                        <rect key="frame" x="20" y="138" width="53" height="27"/>
                         <animations/>
                         <userDefinedRuntimeAttributes>
                             <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
@@ -705,18 +706,39 @@
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="shh-pD-JOT">
-                        <rect key="frame" x="234" y="212" width="44" height="23"/>
-                        <animations/>
-                        <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                    </colorWell>
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vGh-Vt-M6V" customClass="CPKColorWell">
-                        <rect key="frame" x="397" y="313" width="53" height="27"/>
+                        <rect key="frame" x="20" y="103" width="53" height="27"/>
                         <animations/>
                         <userDefinedRuntimeAttributes>
                             <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
                         </userDefinedRuntimeAttributes>
+                        <connections>
+                            <action selector="colorDidChange:" target="Voe-Tx-rLC" id="mKb-MK-XEw"/>
+                        </connections>
                     </customView>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kbe-pR-13V">
+                        <rect key="frame" x="93" y="143" width="97" height="17"/>
+                        <animations/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Not continuous" id="sgt-Dh-9CS">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eTt-JD-s7O">
+                        <rect key="frame" x="93" y="108" width="73" height="17"/>
+                        <animations/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Continuous" id="ofK-av-xNb">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="shh-pD-JOT">
+                        <rect key="frame" x="20" y="72" width="44" height="23"/>
+                        <animations/>
+                        <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="0.39915780141843971" colorSpace="calibratedRGB"/>
+                    </colorWell>
                 </subviews>
                 <animations/>
             </view>

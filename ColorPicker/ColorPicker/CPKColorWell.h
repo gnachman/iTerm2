@@ -10,6 +10,7 @@
 
 @property(nonatomic, retain) NSColor *color;
 @property(nonatomic, assign) BOOL alphaAllowed;
+@property(nonatomic, assign) BOOL noColorAllowed;
 
 // Called just before popover opens.
 @property(nonatomic, copy) void (^willOpenPopover)();

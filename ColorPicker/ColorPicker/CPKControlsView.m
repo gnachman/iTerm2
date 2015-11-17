@@ -11,6 +11,7 @@ static const CGFloat kBottomMargin = 8;
 NSString *const kCPKUseSystemColorPicker = @"kCPKUseSystemColorPicker";
 
 @interface CPKControlsView()
+@property(nonatomic) NSButton *noColor;
 @property(nonatomic) NSButton *addFavorite;
 @property(nonatomic) NSButton *removeFavorite;
 @property(nonatomic) NSButton *eyedropperMode;
@@ -21,10 +22,29 @@ NSString *const kCPKUseSystemColorPicker = @"kCPKUseSystemColorPicker";
 @implementation CPKControlsView
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
+    return [self initWithFrame:frameRect noColorAllowed:NO];
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    return self;
+}
+
+- (instancetype)initWithFrame:(NSRect)frameRect noColorAllowed:(BOOL)noColorAllowed {
     self = [super initWithFrame:frameRect];
     if (self) {
+        CGFloat x = kLeftMargin;
+        if (noColorAllowed) {
+            self.noColor = [self addButtonWithImage:[self cpk_imageNamed:@"NoColor"]
+                                             origin:NSMakePoint(x, kTopMargin)];
+            self.noColor.toolTip = @"Select the absence of color";
+            [self.noColor setTarget:self];
+            [self.noColor setAction:@selector(selectNoColor:)];
+            x = NSMaxX(self.noColor.frame) + kMarginBetweenButtons;
+        }
+
         self.addFavorite = [self addButtonWithImage:[self cpk_imageNamed:@"Add"]
-                                             origin:NSMakePoint(kLeftMargin, kTopMargin)];
+                                             origin:NSMakePoint(x, kTopMargin)];
         self.addFavorite.toolTip = @"Save color as a Favorite";
         [self.addFavorite setTarget:self];
         [self.addFavorite setAction:@selector(addFavorite:)];
@@ -121,6 +141,10 @@ NSString *const kCPKUseSystemColorPicker = @"kCPKUseSystemColorPicker";
 }
 
 #pragma mark - Actions
+
+- (void)selectNoColor:(id)sender {
+    self.selectNoColorBlock();
+}
 
 - (void)addFavorite:(id)sender {
     if (_addFavoriteBlock) {

@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import "CPKMainViewController.h"
 
 /**
  * A popover that houses a color picker.
@@ -30,6 +31,14 @@
                         preferredEdge:(NSRectEdge)preferredEdge
                          initialColor:(NSColor *)color
                          alphaAllowed:(BOOL)alphaAllowed
-                selectionDidChange:(void (^)(NSColor *))block;
+                selectionDidChange:(void (^)(NSColor *))block DEPRECATED_ATTRIBUTE;
+
++ (instancetype)presentRelativeToRect:(NSRect)positioningRect
+                               ofView:(NSView *)positioningView
+                        preferredEdge:(NSRectEdge)preferredEdge
+                         initialColor:(NSColor *)color
+                              options:(CPKMainViewControllerOptions)options
+                   selectionDidChange:(void (^)(NSColor *))block
+                 useSystemColorPicker:(void (^)())useSystemColorPicker;
 
 @end

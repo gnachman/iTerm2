@@ -804,24 +804,27 @@ typedef NS_ENUM(NSInteger, CPKRGBViewMode) {
         selectedColor = [selectedColor colorWithAlphaComponent:1];
     }
     _selectedColor = selectedColor;
-    [self.gradientView setSelectedColor:selectedColor];
-    self.colorComponentSliderView.color = selectedColor;
-    self.alphaSliderView.color = selectedColor;
-    self.alphaSliderView.selectedValue = selectedColor.alphaComponent;
-    [self.alphaSliderView setNeedsDisplay:YES];
+    if (selectedColor) {
+        [self.gradientView setSelectedColor:selectedColor];
+        self.colorComponentSliderView.color = selectedColor;
+        self.alphaSliderView.color = selectedColor;
+        self.alphaSliderView.selectedValue = selectedColor.alphaComponent;
+        [self.alphaSliderView setNeedsDisplay:YES];
 
-    self.redSliderView.color = selectedColor;
-    self.greenSliderView.color = selectedColor;
-    self.blueSliderView.color = selectedColor;
+        self.redSliderView.color = selectedColor;
+        self.greenSliderView.color = selectedColor;
+        self.blueSliderView.color = selectedColor;
+        
+        self.hueSliderView.color = selectedColor;
+        self.saturationSliderView.color = selectedColor;
+        self.brightnessSliderView.color = selectedColor;
 
-    self.hueSliderView.color = selectedColor;
-    self.saturationSliderView.color = selectedColor;
-    self.brightnessSliderView.color = selectedColor;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [_gradientView setNeedsDisplay:YES];
+        });
+        [self updateTextFieldsForColor:self.selectedColor];
+    }
 
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [_gradientView setNeedsDisplay:YES];
-    });
-    [self updateTextFieldsForColor:self.selectedColor];
     self.block(selectedColor);
 }
 

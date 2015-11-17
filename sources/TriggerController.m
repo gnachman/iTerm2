@@ -400,6 +400,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                                                                       0,
                                                                       kWellWidth,
                                                                       _tableView.rowHeight)] autorelease];
+                well.noColorAllowed = YES;
                 well.continuous = NO;
                 well.tag = row;
                 x += kWellWidth;
@@ -424,6 +425,7 @@ static NSString *const kBackgroundColorWellIdentifier = @"kBackgroundColorWellId
                                                                          0,
                                                                          kWellWidth,
                                                                          _tableView.rowHeight)] autorelease];
+                well.noColorAllowed = YES;
                 well.continuous = NO;
                 well.color = trigger.backgroundColor;
                 well.tag = row;

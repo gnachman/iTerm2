@@ -27,18 +27,27 @@
     [NSGraphicsContext saveGraphicsState];
     [path addClip];
 
-    [[NSColor colorWithPatternImage:[self cpk_imageNamed:@"SwatchCheckerboard"]] set];
-    NSRect offset = [self convertRect:self.bounds toView:nil];
-    [[NSGraphicsContext currentContext] setPatternPhase:offset.origin];
-    NSRectFill(rect);
-
-    [self.color set];
-    NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
+    if (self.color) {
+        [[NSColor colorWithPatternImage:[self cpk_imageNamed:@"SwatchCheckerboard"]] set];
+        NSRect offset = [self convertRect:self.bounds toView:nil];
+        [[NSGraphicsContext currentContext] setPatternPhase:offset.origin];
+        NSRectFill(rect);
+        
+        [self.color set];
+        NSRectFillUsingOperation(self.bounds, NSCompositeSourceOver);
+    }
 
     [NSGraphicsContext restoreGraphicsState];
 
     [self.borderColor set];
     [path stroke];
+    
+    if (!self.color) {
+        path = [NSBezierPath bezierPath];
+        [path moveToPoint:NSMakePoint(NSMaxX(rect), NSMinY(rect))];
+        [path lineToPoint:NSMakePoint(NSMinX(rect), NSMaxY(rect))];
+        [path stroke];
+    }
 }
 
 - (void)setColor:(NSColor *)color {
