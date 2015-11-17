@@ -80,7 +80,6 @@ NSString *const kCurrentSessionDidChange = @"kCurrentSessionDidChange";
 NSString *const kPseudoTerminalStateRestorationWindowArrangementKey = @"ptyarrangement";
 
 static NSString *const kWindowNameFormat = @"iTerm Window %d";
-static NSString *const kShowFullscreenTabBarKey = @"ShowFullScreenTabBar";
 
 #define PtyLog DLog
 
@@ -221,7 +220,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     // True if this window was created by dragging a tab from another window.
     // Affects how its size is set when the number of tabview items changes.
     BOOL wasDraggedFromAnotherWindow_;
-    BOOL fullscreenTabs_;
 
     // In the process of zooming in Lion or later.
     BOOL zooming_;
@@ -602,7 +600,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                                  name:kUpdateLabelsNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_refreshTerminal:)
+                                             selector:@selector(refreshTerminal:)
                                                  name:kRefreshTerminalNotification
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -621,10 +619,13 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                              selector:@selector(hideToolbelt)
                                                  name:kToolbeltShouldHide
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateFullScreenTabBar:)
+                                                 name:kShowFullscreenTabsSettingDidChange
+                                               object:nil];
     PtyLog(@"set window inited");
     self.windowInitialized = YES;
     useTransparency_ = YES;
-    fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] boolForKey:kShowFullscreenTabBarKey];
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
     if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN) {
         [self hideMenuBar];
@@ -1266,14 +1267,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [[self currentSession] hasSavedScrollPosition];
 }
 
-- (void)toggleFullScreenTabBar
-{
-    fullscreenTabs_ = !fullscreenTabs_;
-    [_contentView.tabBarControl updateFlashing];
-    [[NSUserDefaults standardUserDefaults] setBool:fullscreenTabs_
-                                            forKey:kShowFullscreenTabBarKey];
-    [self repositionWidgets];
-    [self fitTabsToWindow];
+- (void)updateFullScreenTabBar:(NSNotification *)notification {
+    if ([self anyFullScreen]) {
+        [_contentView.tabBarControl updateFlashing];
+        [self repositionWidgets];
+        [self fitTabsToWindow];
+    }
 }
 
 - (IBAction)closeCurrentTab:(id)sender {
@@ -1341,13 +1340,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_contentView.tabView nextTab:sender];
 }
 
-- (IBAction)previousPane:(id)sender
-{
+- (IBAction)previousPane:(id)sender {
     [[self currentTab] previousSession];
 }
 
-- (IBAction)nextPane:(id)sender
-{
+- (IBAction)nextPane:(id)sender {
     [[self currentTab] nextSession];
 }
 
@@ -1908,8 +1905,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
-                  name:(NSString *)name
-{
+                  name:(NSString *)name {
     [self beginTmuxOriginatedResize];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
                                      inTerminal:self
@@ -5486,11 +5482,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return tabs;
 }
 
-- (BOOL)fullScreenTabControl
-{
-    return fullscreenTabs_;
-}
-
 - (NSDate *)lastResizeTime
 {
     return [NSDate dateWithTimeIntervalSince1970:lastResizeTime_];
@@ -5586,7 +5577,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         }
     }
     // Update dimming of panes.
-    [self _refreshTerminal:nil];
+    [self refreshTerminal:nil];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
@@ -5717,8 +5708,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (void)_refreshTerminal:(NSNotification *)aNotification {
-    PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
+- (void)refreshTerminal:(NSNotification *)aNotification {
+    PtyLog(@"refreshTerminal - calling fitWindowToTabs");
 
     [self updateTabBarStyle];
 
@@ -6912,7 +6903,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (BOOL)eligibleForFullScreenTabBarToFlash {
     return ([self anyFullScreen] &&
             !exitingLionFullscreen_ &&
-            !fullscreenTabs_ &&
+            ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] &&
             ![[[self currentSession] textview] isFindingCursor]);
 }
 

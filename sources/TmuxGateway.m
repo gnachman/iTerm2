@@ -180,7 +180,8 @@ error:
     int window = [[components objectAtIndex:1] intValue];
     NSString *layout = [components objectAtIndex:2];
     [delegate_ tmuxUpdateLayoutForWindow:window
-                                  layout:layout];
+                                  layout:layout
+                                  zoomed:nil];
 }
 
 - (void)broadcastWindowChange

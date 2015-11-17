@@ -11,31 +11,14 @@
 
 extern NSString * const kTmuxWindowOpenerStatePendingOutput;
 
-extern NSString *const kTmuxWindowOpenerWindowFlagStyle;
-extern NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen;
+extern NSString *const kTmuxWindowOpenerWindowOptionStyle;
+extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 
 @class TmuxGateway;
 @class TmuxController;
 @class PTYTab;
 
-@interface TmuxWindowOpener : NSObject <NSControlTextEditingDelegate> {
-    int windowIndex_;
-    NSString *name_;
-    NSSize size_;
-    NSString *layout_;
-    int maxHistory_;
-    TmuxGateway *gateway_;
-    NSMutableDictionary *parseTree_;
-    int pendingRequests_;
-    TmuxController *controller_;  // weak
-    NSMutableDictionary *histories_;
-    NSMutableDictionary *altHistories_;
-    NSMutableDictionary *states_;
-    PTYTab *tabToUpdate_;
-    id target_;
-    SEL selector_;
-    BOOL ambiguousIsDoubleWidth_;
-}
+@interface TmuxWindowOpener : NSObject <NSControlTextEditingDelegate>
 
 @property (nonatomic, assign) int windowIndex;
 @property (nonatomic, copy) NSString *name;
@@ -49,9 +32,11 @@ extern NSString *const kTmuxWindowOpenerWindowFlagStyleValueFullScreen;
 // Selector is called even if the window is already open and nothing is done.
 @property (nonatomic, assign) SEL selector;
 @property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
+// Nil means make no change, otherwise is a bool.
+@property (nonatomic, retain) NSNumber *zoomed;
 
 // Maps a window ID as a string to a dictionary of window flags (see WindowFlag constants above).
-@property (nonatomic, retain) NSDictionary *windowFlags;
+@property (nonatomic, retain) NSDictionary *windowOptions;
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;

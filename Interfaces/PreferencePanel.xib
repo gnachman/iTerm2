@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15A284" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9059"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
         <capability name="box content view" minToolsVersion="7.0"/>
     </dependencies>
     <objects>
@@ -1056,7 +1056,7 @@ DQ
                         </tableHeaderView>
                     </scrollView>
                     <button id="5840">
-                        <rect key="frame" x="20" y="18" width="24" height="24"/>
+                        <rect key="frame" x="20" y="18" width="24" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <animations/>
                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSAddTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5843">
@@ -1068,7 +1068,7 @@ DQ
                         </connections>
                     </button>
                     <button id="5841">
-                        <rect key="frame" x="43" y="18" width="24" height="24"/>
+                        <rect key="frame" x="43" y="18" width="24" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <animations/>
                         <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRemoveTemplate" imagePosition="only" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5842">
@@ -1081,7 +1081,7 @@ DQ
                         </connections>
                     </button>
                     <button id="5879">
-                        <rect key="frame" x="66" y="18" width="106" height="24"/>
+                        <rect key="frame" x="66" y="18" width="106" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <animations/>
                         <buttonCell key="cell" type="square" title="Load Defaults" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5880">
@@ -1093,7 +1093,7 @@ DQ
                         </connections>
                     </button>
                     <button id="6269">
-                        <rect key="frame" x="171" y="18" width="104" height="24"/>
+                        <rect key="frame" x="171" y="18" width="104" height="25"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <animations/>
                         <buttonCell key="cell" type="square" title="Edit Actions…" bezelStyle="shadowlessSquare" imagePosition="overlaps" alignment="center" state="on" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6270">
@@ -1403,6 +1403,7 @@ DQ
                 <outlet property="_jobName" destination="4530" id="e5c-sx-3cZ"/>
                 <outlet property="_showBookmarkName" destination="4531" id="3I8-Xv-sbC"/>
                 <outlet property="_showPaneTitles" destination="6051" id="n0P-0K-pxx"/>
+                <outlet property="_showTabBarInFullscreen" destination="e4x-7h-mzh" id="21B-SP-LU5"/>
                 <outlet property="_showWindowBorder" destination="5144" id="wpg-cZ-0wM"/>
                 <outlet property="_tabPosition" destination="4463" id="Rxp-XS-Fkx"/>
                 <outlet property="_tabStyle" destination="uFJ-bZ-kag" id="BZV-Cb-HaF"/>
@@ -4763,7 +4764,7 @@ DQ
                     <rect key="frame" x="18" y="212" width="263" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
-                    <buttonCell key="cell" type="check" title="Hide tab number" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
+                    <buttonCell key="cell" type="check" title="Show tab numbers" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4447">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -4776,7 +4777,7 @@ DQ
                     <rect key="frame" x="18" y="192" width="263" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
-                    <buttonCell key="cell" type="check" title="Hide tab close button" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRU-c6-tJK">
+                    <buttonCell key="cell" type="check" title="Show tab close buttons" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="GRU-c6-tJK">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -4789,7 +4790,7 @@ DQ
                     <rect key="frame" x="18" y="172" width="263" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
-                    <buttonCell key="cell" type="check" title="Hide tab activity indicator" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5375">
+                    <buttonCell key="cell" type="check" title="Show tab activity indicators" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5375">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -4812,10 +4813,10 @@ DQ
                     </connections>
                 </button>
                 <button id="4462">
-                    <rect key="frame" x="18" y="234" width="272" height="18"/>
+                    <rect key="frame" x="18" y="234" width="298" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
-                    <buttonCell key="cell" type="check" title="Hide tab bar when there is only one tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4499">
+                    <buttonCell key="cell" type="check" title="Show tab bar even when there is only one tab" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4499">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -5000,7 +5001,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="6049">
-                    <rect key="frame" x="18" y="118" width="44" height="17"/>
+                    <rect key="frame" x="18" y="100" width="44" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Panes" id="6050">
@@ -5050,7 +5051,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="6051">
-                    <rect key="frame" x="18" y="94" width="275" height="18"/>
+                    <rect key="frame" x="18" y="76" width="275" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Show per-pane title bar with split panes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6052">
@@ -5062,7 +5063,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="Gs7-G7-B8C">
-                    <rect key="frame" x="18" y="54" width="49" height="17"/>
+                    <rect key="frame" x="18" y="36" width="49" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Screen" id="MWf-jU-9g4">
@@ -5072,7 +5073,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="awA-hH-ziY">
-                    <rect key="frame" x="18" y="36" width="306" height="18"/>
+                    <rect key="frame" x="18" y="18" width="306" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">For this setting to take effect you must disable "Native full scren windows" in Prefs&gt;General. If this setting is enabled, the menu bar will remain visible. This is useful for multi-monitor systems.</string>
                     <animations/>
@@ -5123,6 +5124,19 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
+                <button id="e4x-7h-mzh">
+                    <rect key="frame" x="18" y="132" width="316" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
+                    <buttonCell key="cell" type="check" title="Show tab bar in fullscreen" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="UI6-As-YT2">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="wvi-ET-SJJ" id="b3q-r3-EVo"/>
+                        <outlet property="nextKeyView" destination="5330" id="qXr-pI-cHH"/>
+                    </connections>
+                </button>
             </subviews>
             <animations/>
             <point key="canvasLocation" x="-296" y="1224"/>

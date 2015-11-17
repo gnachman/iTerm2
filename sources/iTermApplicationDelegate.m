@@ -82,6 +82,7 @@ NSString *const kNonTerminalWindowBecameKeyNotification = @"kNonTerminalWindowBe
 static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
+NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";
@@ -193,7 +194,7 @@ static BOOL hasBecomeActive = NO;
         return;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
-    // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
+    // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
     if (ranAutoLaunchScript == NO &&
         [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
         ranAutoLaunchScript = YES;
@@ -836,9 +837,12 @@ static BOOL hasBecomeActive = NO;
 }
 
 // Action methods
-- (IBAction)toggleFullScreenTabBar:(id)sender
-{
-    [[[iTermController sharedInstance] currentTerminal] toggleFullScreenTabBar];
+- (IBAction)toggleFullScreenTabBar:(id)sender {
+    BOOL value = [iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar];
+    [iTermPreferences setBool:!value forKey:kPreferenceKeyShowFullscreenTabBar];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kShowFullscreenTabsSettingDidChange
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 - (BOOL)possiblyTmuxValueForWindow:(BOOL)isWindow {
@@ -1619,13 +1623,8 @@ static BOOL hasBecomeActive = NO;
                [menuItem action] == @selector(newSessionWithSameProfile:)) {
         return [[iTermController sharedInstance] currentTerminal] != nil;
     } else if ([menuItem action] == @selector(toggleFullScreenTabBar:)) {
-        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
-        if (!term || ![term anyFullScreen]) {
-            return NO;
-        } else {
-            [menuItem setState:[term fullScreenTabControl] ? NSOnState : NSOffState];
-            return YES;
-        }
+        [menuItem setState:[iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar] ? NSOnState : NSOffState];
+        return YES;
     } else if ([menuItem action] == @selector(toggleMultiLinePasteWarning:)) {
         menuItem.state = [self warnBeforeMultiLinePaste] ? NSOnState : NSOffState;
         return YES;

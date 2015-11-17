@@ -208,7 +208,8 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 }
 
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)numberOfAdditionalTabs {
-    if ([_delegate anyFullScreen] && !_delegate.fullScreenTabControl) {
+    if ([_delegate anyFullScreen] &&
+        ![iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
         return NO;
     }
     return ([self.tabView numberOfTabViewItems] + numberOfAdditionalTabs > 1 ||

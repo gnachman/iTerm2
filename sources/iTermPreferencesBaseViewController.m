@@ -124,7 +124,7 @@ static NSString *const kKey = @"key";
     if (info.willChange) {
         info.willChange();
     }
-    
+
     if (info.customSettingChangedHandler) {
         info.customSettingChangedHandler(sender);
     } else {
@@ -133,26 +133,30 @@ static NSString *const kKey = @"key";
                 [self setBool:([sender state] == NSOnState) forKey:info.key];
                 break;
 
+            case kPreferenceInfoTypeInvertedCheckbox:
+                [self setBool:([sender state] == NSOffState) forKey:info.key];
+                break;
+
             case kPreferenceInfoTypeIntegerTextField:
                 [self applyIntegerConstraints:info];
                 [self setInt:[sender separatorTolerantIntValue] forKey:info.key];
                 break;
-                
+
             case kPreferenceInfoTypeStringTextField:
                 [self setString:[sender stringValue] forKey:info.key];
                 break;
-                
+
             case kPreferenceInfoTypeTokenField:
                 [self setObject:[sender objectValue] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeMatrix:
                 assert(false);  // Must use a custom setting changed handler
-            
+
             case kPreferenceInfoTypePopup:
                 [self setInt:[sender selectedTag] forKey:info.key];
                 break;
-                
+
             case kPreferenceInfoTypeSlider:
                 [self setFloat:[sender doubleValue] forKey:info.key];
                 break;
@@ -176,7 +180,7 @@ static NSString *const kKey = @"key";
                                                             object:self
                                                           userInfo:@{ kKey: info.key }];
     }
-    
+
 }
 
 - (PreferenceInfo *)defineControl:(NSControl *)control
@@ -202,7 +206,7 @@ static NSString *const kKey = @"key";
         assert([self defaultValueForKey:key isCompatibleWithType:type]);
         assert(type != kPreferenceInfoTypeMatrix);  // Matrix type requires both.
     }
-    
+
     PreferenceInfo *info = [PreferenceInfo infoForPreferenceWithKey:key
                                                                type:type
                                                             control:control];
@@ -211,7 +215,7 @@ static NSString *const kKey = @"key";
     [_keyMap setObject:info forKey:control];
     [_keys addObject:key];
     [self updateValueForInfo:info];
-    
+
     return info;
 }
 
@@ -228,14 +232,21 @@ static NSString *const kKey = @"key";
             button.state = [self boolForKey:info.key] ? NSOnState : NSOffState;
             break;
         }
-            
+
+        case kPreferenceInfoTypeInvertedCheckbox: {
+            assert([info.control isKindOfClass:[NSButton class]]);
+            NSButton *button = (NSButton *)info.control;
+            button.state = [self boolForKey:info.key] ? NSOffState : NSOnState;
+            break;
+        }
+
         case kPreferenceInfoTypeIntegerTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.intValue = [self intForKey:info.key];
             break;
         }
-            
+
         case kPreferenceInfoTypeStringTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
@@ -258,7 +269,7 @@ static NSString *const kKey = @"key";
             [popup selectItemWithTag:[self intForKey:info.key]];
             break;
         }
-            
+
         case kPreferenceInfoTypeSlider: {
             assert([info.control isKindOfClass:[NSSlider class]]);
             NSSlider *slider = (NSSlider *)info.control;
@@ -279,7 +290,7 @@ static NSString *const kKey = @"key";
             }
             break;
         }
-            
+
         default:
             assert(false);
     }
@@ -323,7 +334,7 @@ static NSString *const kKey = @"key";
 - (int)intForString:(NSString *)s inRange:(NSRange)range
 {
     NSString *i = [s stringWithOnlyDigits];
-    
+
     int val = 0;
     if ([i length]) {
         val = [i intValue];

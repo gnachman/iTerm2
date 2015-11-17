@@ -112,6 +112,8 @@ NSString *const kPreferenceKeyPasteSpecialBracketedPasteMode = @"BracketedPasteM
 
 NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab = @"PasteTabToStringTabStopSize";
 
+NSString *const kPreferenceKeyShowFullscreenTabBar = @"ShowFullScreenTabBar";
+
 static NSMutableDictionary *gObservers;
 
 @implementation iTermPreferences
@@ -257,6 +259,7 @@ static NSMutableDictionary *gObservers;
                   kPreferenceKeyPasteSpecialBracketedPasteMode: @YES,
 
                   kPreferenceKeyPasteWarningNumberOfSpacesPerTab: @4,
+                  kPreferenceKeyShowFullscreenTabBar: @YES
               };
         [dict retain];
     }
@@ -280,6 +283,7 @@ static NSMutableDictionary *gObservers;
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
         case kPreferenceInfoTypeCheckbox:
+        case kPreferenceInfoTypeInvertedCheckbox:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     ([defaultValue intValue] == YES ||
                      [defaultValue intValue] == NO));

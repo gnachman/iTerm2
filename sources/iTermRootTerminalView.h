@@ -26,7 +26,6 @@ extern const CGFloat kLeftTabsWidth;
 - (BOOL)_haveLeftBorder;
 - (BOOL)_haveRightBorder;
 - (BOOL)anyFullScreen;
-- (BOOL)fullScreenTabControl;
 - (BOOL)exitingLionFullscreen;
 - (BOOL)divisionViewShouldBeVisible;
 - (NSWindow *)window;
