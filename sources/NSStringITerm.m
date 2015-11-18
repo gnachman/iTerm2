@@ -1420,7 +1420,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
-- (void)enumerateComposedCharacters:(void (^)(NSRange, unichar, NSString *))block {
+- (void)enumerateComposedCharacters:(void (^)(NSRange, unichar, NSString *, BOOL *))block {
     if (self.length == 0) {
         return;
     }
@@ -1432,7 +1432,11 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         if (range.length > 0) {
             unichar simple = range.length == 1 ? [self characterAtIndex:range.location] : 0;
             NSString *complexString = range.length == 1 ? nil : [self substringWithRange:range];
-            block(range, simple, complexString);
+            BOOL stop = NO;
+            block(range, simple, complexString, &stop);
+            if (stop) {
+                return;
+            }
         }
         index = NSMaxRange(range);
     } while (NSMaxRange(range) < self.length);
