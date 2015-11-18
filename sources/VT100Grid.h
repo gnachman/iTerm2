@@ -193,6 +193,9 @@
 // Returns a human-readable string with the screen contents and dirty lines interspersed.
 - (NSString *)debugString;
 
+// Returns a string for the character at |coord|.
+- (NSString *)stringForCharacterAt:(VT100GridCoord)coord;
+
 // Converts a run into one or more VT100GridRect NSValues.
 - (NSArray *)rectsForRun:(VT100GridRun)run;
 

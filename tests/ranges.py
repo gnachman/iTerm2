@@ -1,26 +1,20 @@
-#!/usr/bin/python2.4
+#!/usr/bin/python
 # Converts a file containing a list of hex values into C code representing the
 # ranges compactly.
-l1 = ""
-l2 = ""
+print """
+struct {
+    UTF32Char minVal;
+    UTF32Char maxVal;
+} ranges[] = {"""
 
 # length of the shortest allowed range
-threshold=7
 def p(a, b):
-    global l1
-    global l2
-    if abs(a-b) < threshold:
-      l = min(a,b)
-      for i in range(abs(a-b)+1):
-        l1 += "%s,\n" % hex(l + i)
-    else:
-      #      l2 += "{ %s, %s },\n" % (hex(a), hex(b))
-      l2 += "(unicode >= %s && unicode <= %s) ||\n" % (hex(a), hex(b))
+  return "{ %s, %s }, " % (hex(a), hex(b))
 
 values = []
 
 # put your filename here:
-f = open("ambiguous.txt", "r")
+f = open("CombiningMarks.txt", "r")
 linenum=0
 for line in f:
   linenum += 1
@@ -42,6 +36,8 @@ values.sort()
 
 prev = -1
 first = None
+line = "    "
+limit = 92
 for i in values:
   if first is None:
     first = i
@@ -49,12 +45,20 @@ for i in values:
     continue
 
   if i != prev + 1:
-    p(first, prev)
+    s = p(first, prev)
+    if len(line + s) > limit:
+      print line
+      line = "    "
+    line += s
     first = i
   prev = i
 
-p(first, prev)
-# prints single values first
-print l1
-# then prints ranges
-print l2
+s = p(first, prev)
+if len(line + s) > limit:
+  print line
+  line = "    "
+line += s
+
+print line
+print '};'
+
