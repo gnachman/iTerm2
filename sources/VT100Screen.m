@@ -967,10 +967,13 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
 
     VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
-    NSString *possiblyAugmentedString = string;
+    NSString *augmentedString = string;
     BOOL augmented = pred.x >= 0;
     if (augmented) {
-        possiblyAugmentedString = [[currentGrid_ stringForCharacterAt:pred] stringByAppendingString:string];
+        augmentedString = [[currentGrid_ stringForCharacterAt:pred] stringByAppendingString:string];
+    } else {
+        // Prepend a space so we can detect if the first character is a combining mark.
+        augmentedString = [@" " stringByAppendingString:string];
     }
 
     assert(terminal_);
@@ -978,7 +981,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // and combining marks, replace private codes with replacement characters, swallow zero-
     // width spaces, and set fg/bg colors and attributes.
     BOOL dwc = NO;
-    StringToScreenChars(possiblyAugmentedString,
+    StringToScreenChars(augmentedString,
                         buffer,
                         [terminal_ foregroundColorCode],
                         [terminal_ backgroundColorCode],
@@ -995,6 +998,11 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         bufferOffset++;
 
         // TODO: What if buffer[1] is a DWC_RIGHT because string[0] was a low surrogate?
+    } else if (!buffer[0].complexChar) {
+        // We infer that the first character in |string| was not a combining mark. If it were, it
+        // would have combined with the space we added to the start of |augmentedString|. Skip past
+        // the space.
+        bufferOffset++;
     }
 
     if (dwc) {
