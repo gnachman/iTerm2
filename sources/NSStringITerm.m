@@ -1423,6 +1423,24 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     }
 }
 
+- (void)enumerateComposedCharacters:(void (^)(NSRange, unichar, NSString *))block {
+    if (self.length == 0) {
+        return;
+    }
+    CFIndex index = 0;
+    NSRange range;
+    do {
+        CFRange tempRange = CFStringGetRangeOfComposedCharactersAtIndex((CFStringRef)self, index);
+        range = NSMakeRange(tempRange.location, tempRange.length);
+        if (range.length > 0) {
+            unichar simple = range.length == 1 ? [self characterAtIndex:range.location] : 0;
+            NSString *complexString = range.length == 1 ? nil : [self substringWithRange:range];
+            block(range, simple, complexString);
+        }
+        index = NSMaxRange(range);
+    } while (NSMaxRange(range) < self.length);
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

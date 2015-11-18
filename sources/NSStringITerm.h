@@ -199,6 +199,11 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // Only * is supported as a wildcard.
 - (BOOL)stringMatchesCaseInsensitiveGlobPattern:(NSString *)glob;
 
+// Call |block| for each composed character in the string. If it is a single base character or a
+// high surrogate, then |simple| will be valid and |complex| will be nil. Otherwise, |complex| will
+// be non-nil.
+- (void)enumerateComposedCharacters:(void (^)(NSRange range, unichar simple, NSString *complex))block;
+
 @end
 
 @interface NSMutableString (iTerm)

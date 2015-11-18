@@ -374,4 +374,18 @@
     return sAmbiguousWidth;
 }
 
++ (instancetype)zeroWidthSpaceCharacterSet {
+    static dispatch_once_t onceToken;
+    static NSCharacterSet *characterSet;
+    dispatch_once(&onceToken, ^{
+        NSString *string =
+            @"\ufeff"  // zero width no-break space
+            @"\u200b"  // zero width space
+            @"\u200c"  // zero width non-joiner
+            @"\u200d";  // zero width joiner
+        characterSet = [[NSCharacterSet characterSetWithCharactersInString:string] retain];
+    });
+    return characterSet;
+}
+
 @end

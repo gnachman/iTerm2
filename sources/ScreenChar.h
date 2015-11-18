@@ -324,6 +324,9 @@ int AppendToComplexChar(int key, unichar codePoint);
 // new composite.
 void BeginComplexChar(screen_char_t *screenChar, unichar combiningChar, BOOL useHFSPlusMapping);
 
+// Place a complex char in a screen char.
+void SetComplexCharInScreenChar(screen_char_t *screenChar, NSString *theString, BOOL useHFSPlusMapping);
+
 // Create or lookup & return the code for a complex char.
 int GetOrSetComplexChar(NSString* str);
 
@@ -383,6 +386,10 @@ void StringToScreenChars(NSString *s,
                          int *cursorIndex,
                          BOOL *foundDwc,
                          BOOL useHFSPlusMapping);
+
+// Copy attributes from fg and bg, and zero out other fields. Text attributes like bold, italic, etc.
+// come from fg.
+void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg);
 
 // Translates normal characters into graphics characters, as defined in charsets.h. Must not contain
 // complex characters.
