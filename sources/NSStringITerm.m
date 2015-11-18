@@ -739,29 +739,25 @@ int decode_utf8_char(const unsigned char *datap,
     if (self.length == 0) {
         return nil;
     }
-    unichar baseChar = [self characterAtIndex:0];
-    if (baseChar < 128 && self.length == 1) {
+
+    CFRange graphemeClusterRange = CFStringGetRangeOfComposedCharactersAtIndex((CFStringRef)self, 0);
+    if (graphemeClusterRange.location != 0 ||
+        graphemeClusterRange.length != self.length) {
+        // Only works for a single grapheme cluster.
+        return nil;
+    }
+
+    if ([self characterAtIndex:0] < 128 && self.length == 1) {
         // No help for ASCII
         return nil;
     }
+
+    // Convert to UCS-4
     NSData *data = [self dataUsingEncoding:NSUTF32StringEncoding];
     const int *characters = (int *)data.bytes;
     int numCharacters = data.length / 4;
-    BOOL foundBase = NO;
-    for (NSUInteger i = 0; i < numCharacters; i++) {
-        if (characters[i] == 0xfeff) {
-            // Ignore byte order mark
-            continue;
-        }
-        if (foundBase) {
-            if (!IsCombiningMark(characters[i])) {
-                return nil;
-            }
-        } else {
-            foundBase = YES;
-        }
-    }
 
+    // Output UTF-8 hex codes
     NSMutableArray *byteStrings = [NSMutableArray array];
     const char *utf8 = [self UTF8String];
     for (size_t i = 0; utf8[i]; i++) {
@@ -769,17 +765,18 @@ int decode_utf8_char(const unsigned char *datap,
     }
     NSString *utf8String = [byteStrings componentsJoinedByString:@" "];
 
-    NSMutableArray *ucs32Strings = [NSMutableArray array];
-    for (NSUInteger i = 1; i < numCharacters; i++) {
+    // Output UCS-4 hex codes
+    NSMutableArray *ucs4Strings = [NSMutableArray array];
+    for (NSUInteger i = 0; i < numCharacters; i++) {
         if (characters[i] == 0xfeff) {
             // Ignore byte order mark
             continue;
         }
-        [ucs32Strings addObject:[NSString stringWithFormat:@"U+%04x", characters[i]]];
+        [ucs4Strings addObject:[NSString stringWithFormat:@"U+%04x", characters[i]]];
     }
-    NSString *ucs32String = [ucs32Strings componentsJoinedByString:@" "];
+    NSString *ucs4String = [ucs4Strings componentsJoinedByString:@" "];
 
-    return [NSString stringWithFormat:@"“%@” = %@ = %@ (UTF-8)", self, ucs32String, utf8String];
+    return [NSString stringWithFormat:@"“%@” = %@ = %@ (UTF-8)", self, ucs4String, utf8String];
 }
 
 - (NSString *)timestampConversionHelp {
