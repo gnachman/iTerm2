@@ -968,9 +968,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
     VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
     NSString *augmentedString = string;
-    BOOL augmented = pred.x >= 0;
+    NSString *predecessorString = pred.x >= 0 ? [currentGrid_ stringForCharacterAt:pred] : nil;
+    BOOL augmented = predecessorString != nil;
     if (augmented) {
-        augmentedString = [[currentGrid_ stringForCharacterAt:pred] stringByAppendingString:string];
+        augmentedString = [predecessorString stringByAppendingString:string];
     } else {
         // Prepend a space so we can detect if the first character is a combining mark.
         augmentedString = [@" " stringByAppendingString:string];

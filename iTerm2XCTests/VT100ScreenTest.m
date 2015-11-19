@@ -1788,6 +1788,13 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         0x200d,
         'g',
         0x142,  // ambiguous width
+        0xD83D,  // High surrogate for 1F595 (middle finger)
+        0xDD95,  // Low surrogate for 1F595
+        0xD83C,  // High surrogate for 1F3FE (dark skin tone)
+        0xDFFE,  // Low surrogate for 1F3FE
+        'g',
+        0xD83C,  // High surrogate for 1F3FE (dark skin tone)
+        0xDFFE,  // Low surrogate for 1F3FE
     };
 
     NSMutableString *s = [NSMutableString stringWithCharacters:chars
@@ -1822,11 +1829,14 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     XCTAssert([ScreenCharToStr(line + 4) isEqualToString:@"Ｅ"]);
     XCTAssert(line[5].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + 6) isEqualToString:@"?"]);
+    XCTAssert([ScreenCharToStr(line + 6) isEqualToString:@"�"]);
     XCTAssert([ScreenCharToStr(line + 7) isEqualToString:@"g"]);
     XCTAssert([ScreenCharToStr(line + 8) isEqualToString:@"ł"]);
-    XCTAssert(line[9].code == 0);
 
+    XCTAssert([ScreenCharToStr(line + 9) isEqualToString:@"🖕🏾"]);
+    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
+    XCTAssert(line[12].code == 0);
     // Toggle ambiguousIsDoubleWidth_ and see if it works.
     screen = [self screenWithWidth:20 height:2];
     screen.delegate = (id<VT100ScreenDelegate>)self;
@@ -1857,11 +1867,15 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     XCTAssert([ScreenCharToStr(line + 6) isEqualToString:@"Ｅ"]);
     XCTAssert(line[7].code == DWC_RIGHT);
-    XCTAssert([ScreenCharToStr(line + 8) isEqualToString:@"?"]);
-    XCTAssert([ScreenCharToStr(line + 9) isEqualToString:@"g"]);
-    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"ł"]);
-    XCTAssert(line[11].code == DWC_RIGHT);
-    XCTAssert(line[12].code == 0);
+    XCTAssert([ScreenCharToStr(line + 8) isEqualToString:@"�"]);
+    XCTAssert(line[9].code == DWC_RIGHT);
+    XCTAssert([ScreenCharToStr(line + 10) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + 11) isEqualToString:@"ł"]);
+    XCTAssert(line[12].code == DWC_RIGHT);
+    XCTAssert([ScreenCharToStr(line + 13) isEqualToString:@"🖕🏾"]);
+    XCTAssert([ScreenCharToStr(line + 14) isEqualToString:@"g"]);
+    XCTAssert([ScreenCharToStr(line + 15) isEqualToString:@"🏾"]);  // Skin tone modifier only combines with certain emoji
+    XCTAssert(line[16].code == 0);
 
     // Test modifying character already at cursor with combining mark
     ambiguousIsDoubleWidth_ = NO;
@@ -1880,8 +1894,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     ambiguousIsDoubleWidth_ = NO;
     screen = [self screenWithWidth:20 height:2];
     screen.delegate = (id<VT100ScreenDelegate>)self;
-    unichar highSurrogate = 0xD800;
-    unichar lowSurrogate = 0xDD50;
+    const unichar highSurrogate = 0xD800;
+    const unichar lowSurrogate = 0xDD50;
     s = [NSMutableString stringWithCharacters:&highSurrogate length:1];
     [screen appendStringAtCursor:s];
     s = [NSMutableString stringWithCharacters:&lowSurrogate length:1];
@@ -1906,6 +1920,22 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
     a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
     e = @"�";
+    XCTAssert([a isEqualToString:e]);
+
+    // Test two high surrogates in a row.
+    screen = [self screenWithWidth:20 height:2];
+    screen.delegate = (id<VT100ScreenDelegate>)self;
+    s = [NSMutableString stringWithCharacters:&highSurrogate length:1];
+    [screen appendStringAtCursor:s];
+    [screen appendStringAtCursor:s];
+    line = [screen getLineAtScreenIndex:0];
+
+    a = [ScreenCharToStr(line + 0) decomposedStringWithCompatibilityMapping];
+    e = @"�";
+    XCTAssert([a isEqualToString:e]);
+
+    a = [ScreenCharToStr(line + 1) decomposedStringWithCompatibilityMapping];
+    e = [NSString stringWithCharacters:&highSurrogate length:1];
     XCTAssert([a isEqualToString:e]);
 }
 

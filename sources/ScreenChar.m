@@ -534,8 +534,14 @@ void StringToScreenChars(NSString *s,
                 // Ignore zero-width spacers.
                 return;
             } else if (baseBmpChar >= ITERM2_PRIVATE_BEGIN && baseBmpChar <= ITERM2_PRIVATE_END) {
-                // Convert private range characters into question marks.
-                baseBmpChar = '?';
+                // Convert private range characters into the replacement character.
+                baseBmpChar = UNICODE_REPLACEMENT_CHAR;
+            } else if (IsLowSurrogate(baseBmpChar)) {
+                // Low surrogate without high surrogate.
+                baseBmpChar = UNICODE_REPLACEMENT_CHAR;
+            } else if (IsHighSurrogate(baseBmpChar) && NSMaxRange(range) != s.length) {
+                // High surrogate not followed by low surrogate.
+                baseBmpChar = UNICODE_REPLACEMENT_CHAR;
             }
             buf[j].code = baseBmpChar;
             buf[j].complexChar = NO;

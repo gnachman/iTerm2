@@ -2550,7 +2550,7 @@
 		A6B70FCC1986FB39007A4284 /* PTYSession+Scripting.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "PTYSession+Scripting.m"; sourceTree = "<group>"; };
 		A6BDB03F1B45E8BA00F511E6 /* VT100XtermParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100XtermParserTest.m; sourceTree = "<group>"; };
 		A6BDB0401B45E8BA00F511E6 /* iTermEquivalenceClassSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermEquivalenceClassSetTest.m; sourceTree = "<group>"; };
-		A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenTest.m; sourceTree = "<group>"; };
+		A6BDB0431B45E8EE00F511E6 /* VT100ScreenTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenTest.m; sourceTree = "<group>"; };
 		A6BDB0451B45EAE700F511E6 /* VT100GridTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100GridTest.m; sourceTree = "<group>"; };
 		A6BDB0471B45EB7F00F511E6 /* iTermIntervalTreeTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntervalTreeTest.m; sourceTree = "<group>"; };
 		A6BDB0491B45EBD900F511E6 /* VT100CSIParserTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100CSIParserTest.m; sourceTree = "<group>"; };
