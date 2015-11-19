@@ -966,36 +966,15 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         buffer = staticBuffer;
     }
 
-    // Pick off leading combining marks and low surrogates and modify the
-    // character at the cursor position with them.
-    while ([string length] > 0 &&
-           (IsCombiningMark(firstChar) || IsLowSurrogate(firstChar))) {
-        VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
-        if (pred.x < 0 ||
-            ![currentGrid_ addCombiningChar:firstChar toCoord:pred]) {
-            // Combining mark will need to stand alone rather than combine
-            // because nothing precedes it.
-            if (IsCombiningMark(firstChar)) {
-                // Prepend a space to it so the combining mark has something
-                // to combine with.
-                string = [NSString stringWithFormat:@" %@", string];
-            } else {
-                // Got a low surrogate but can't find the matching high
-                // surrogate. Turn the low surrogate into a replacement
-                // char. This should never happen because decode_string
-                // ought to detect the broken unicode and substitute a
-                // replacement char.
-                string = [NSString stringWithFormat:@"%@%@",
-                          ReplacementString(),
-                          [string substringFromIndex:1]];
-            }
-            len = [string length];
-            break;
-        }
-        string = [string substringFromIndex:1];
-        if ([string length] > 0) {
-            firstChar = [string characterAtIndex:0];
-        }
+    VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
+    NSString *augmentedString = string;
+    NSString *predecessorString = pred.x >= 0 ? [currentGrid_ stringForCharacterAt:pred] : nil;
+    BOOL augmented = predecessorString != nil;
+    if (augmented) {
+        augmentedString = [predecessorString stringByAppendingString:string];
+    } else {
+        // Prepend a space so we can detect if the first character is a combining mark.
+        augmentedString = [@" " stringByAppendingString:string];
     }
 
     assert(terminal_);
@@ -1003,7 +982,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     // and combining marks, replace private codes with replacement characters, swallow zero-
     // width spaces, and set fg/bg colors and attributes.
     BOOL dwc = NO;
-    StringToScreenChars(string,
+    StringToScreenChars(augmentedString,
                         buffer,
                         [terminal_ foregroundColorCode],
                         [terminal_ backgroundColorCode],
@@ -1012,11 +991,26 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
                         NULL,
                         &dwc,
                         _useHFSPlusMapping);
+    ssize_t bufferOffset = 0;
+    if (augmented && len > 0) {
+        screen_char_t *theLine = [self getLineAtScreenIndex:pred.y];
+        theLine[pred.x].code = buffer[0].code;
+        theLine[pred.x].complexChar = buffer[0].complexChar;
+        bufferOffset++;
+
+        // TODO: What if buffer[1] is a DWC_RIGHT because string[0] was a low surrogate?
+    } else if (!buffer[0].complexChar) {
+        // We infer that the first character in |string| was not a combining mark. If it were, it
+        // would have combined with the space we added to the start of |augmentedString|. Skip past
+        // the space.
+        bufferOffset++;
+    }
+
     if (dwc) {
         linebuffer_.mayHaveDoubleWidthCharacter = dwc;
     }
-    [self appendScreenCharArrayAtCursor:buffer
-                                 length:len
+    [self appendScreenCharArrayAtCursor:buffer + bufferOffset
+                                 length:len - bufferOffset
                              shouldFree:(buffer == dynamicBuffer)];
 }
 
