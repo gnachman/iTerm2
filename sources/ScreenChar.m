@@ -376,6 +376,15 @@ BOOL StringContainsCombiningMark(NSString *s) {
     return result;
 }
 
+/*
+ * TODO: Use the standard functions for these things:
+ *
+ * CFStringIsSurrogateHighCharacter
+ * CFStringIsSurrogateLowCharacter
+ * CFStringGetLongCharacterForSurrogatePair
+ * CFStringGetSurrogatePairForLongCharacter
+ */
+
 UTF32Char DecodeSurrogatePair(unichar high, unichar low) {
     return 0x10000 + (high - 0xd800) * 0x400 + (low - 0xdc00);
 }
