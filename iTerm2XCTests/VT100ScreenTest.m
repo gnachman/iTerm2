@@ -1763,6 +1763,60 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     XCTAssert(line[0].backgroundColorMode == ColorModeNormal);
 }
 
+- (void)testAppendComposedCharactersPiecewise {
+    struct {
+        NSArray<NSNumber *> *codePoints;
+        NSString *expected;
+        BOOL doubleWidth;
+    } tests[] = {
+        {
+            @[ @'a', @0x301 ],  // a + accent
+            @"á",
+            NO
+        },
+        {
+            @[ @0xD800, @0xDD50 ],  // surrogate pair
+            @"𐅐",
+            NO
+        },
+        {
+            @[ @0xff25, @0x301 ],  // double-width e + accent
+            @"Ｅ́",
+            YES
+        },
+        /*
+         This test fails but you can't hit this case in real life, unless your terminal's encoding
+         is UTF-16. In UTF-8, surrogate pairs are not used, so they'll always appear together.
+        {
+            @[ @0xD83D, @0xDD95, @0xD83C, @0xDFFE ],  // Middle finger + dark skin tone
+            @"🖕🏾",
+            NO
+        },
+         */
+        {
+            @[ @0xfeff, @0xd83c, @0xdffe ],  // Zero width space + dark skin tone
+            @"🏾",
+            NO
+        }
+    };
+    for (size_t i = 0; i < sizeof(tests) / sizeof(*tests); i++) {
+        VT100Screen *screen = [self screenWithWidth:20 height:2];
+        screen.delegate = (id<VT100ScreenDelegate>)self;
+        for (NSNumber *code in tests[i].codePoints) {
+            unichar c = code.intValue;
+            [screen appendStringAtCursor:[NSString stringWithCharacters:&c length:1]];
+        }
+        screen_char_t *line = [screen getLineAtScreenIndex:0];
+        XCTAssertEqualObjects(ScreenCharToStr(line), tests[i].expected);
+
+        if (tests[i].doubleWidth) {
+            XCTAssertEqual(line[1].code, DWC_RIGHT);
+        } else {
+            XCTAssertEqual(line[1].code, 0);
+        }
+    }
+}
+
 - (void)testAppendStringAtCursorNonAscii {
     // Make sure colors and attrs are set properly
     VT100Screen *screen = [self screenWithWidth:20 height:2];
