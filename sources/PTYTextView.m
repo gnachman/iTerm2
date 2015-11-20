@@ -22,6 +22,7 @@
 #import "iTermMouseCursor.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermPreferences.h"
+#import "iTermPrintAccessoryViewController.h"
 #import "iTermQuickLookController.h"
 #import "iTermSelection.h"
 #import "iTermSelectionScrollHelper.h"
@@ -3038,14 +3039,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [self selectedTextAttributed:YES cappedAtSize:0 minimumLineNumber:0];
 }
 
+- (NSAttributedString *)attributedContent {
+    return [self contentWithAttributes:YES];
+}
+
 - (NSString *)content {
+    return [self contentWithAttributes:NO];
+}
+
+- (id)contentWithAttributes:(BOOL)attributes {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     VT100GridCoordRange theRange = VT100GridCoordRangeMake(0,
                                                            0,
                                                            [_dataSource width],
                                                            [_dataSource numberOfLines] - 1);
+    NSDictionary *(^attributeProvider)(screen_char_t) = nil;
+    if (attributes) {
+        attributeProvider =^NSDictionary *(screen_char_t theChar) {
+            return [self charAttributes:theChar];
+        };
+    }
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
-                   attributeProvider:nil
+                   attributeProvider:attributeProvider
                           nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                  pad:NO
                   includeLastNewline:YES
@@ -4486,7 +4501,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                                      [_dataSource width],
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
-                                       attributeProvider:nil
+                                       attributeProvider:^NSDictionary *(screen_char_t theChar) {
+                                           return [self charAttributes:theChar];
+                                       }
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO
                                       includeLastNewline:YES
@@ -4496,42 +4513,63 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                   coords:nil]];
             break;
         case 1: // text selection
-            [self printContent:[self selectedText]];
+            [self printContent:[self selectedAttributedTextWithPad:NO]];
             break;
         case 2: // entire buffer
-            [self printContent:[self content]];
+            [self printContent:[self attributedContent]];
             break;
     }
 }
 
-- (void)printContent:(NSString *)aString
-{
-    NSPrintInfo *aPrintInfo;
-
-    aPrintInfo = [NSPrintInfo sharedPrintInfo];
-    [aPrintInfo setHorizontalPagination: NSFitPagination];
-    [aPrintInfo setVerticalPagination: NSAutoPagination];
-    [aPrintInfo setVerticallyCentered: NO];
+- (void)printContent:(id)content {
+    NSPrintInfo *printInfo = [NSPrintInfo sharedPrintInfo];
+    [printInfo setHorizontalPagination:NSFitPagination];
+    [printInfo setVerticalPagination:NSAutoPagination];
+    [printInfo setVerticallyCentered:NO];
 
     // Create a temporary view with the contents, change to black on white, and
     // print it.
-    NSTextView *tempView;
-    NSMutableAttributedString *theContents;
+    NSRect frame = [[self enclosingScrollView] documentVisibleRect];
+    NSTextView *tempView =
+        [[[NSTextView alloc] initWithFrame:frame] autorelease];
 
-    tempView = [[NSTextView alloc] initWithFrame:[[self enclosingScrollView] documentVisibleRect]];
-    theContents = [[NSMutableAttributedString alloc] initWithString:aString];
-    [theContents addAttributes: [NSDictionary dictionaryWithObjectsAndKeys:
-        [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
-        [NSColor textColor], NSForegroundColorAttributeName,
-        [NSFont userFixedPitchFontOfSize: 0], NSFontAttributeName, NULL]
-                         range: NSMakeRange(0, [theContents length])];
-    [[tempView textStorage] setAttributedString: theContents];
-    [theContents release];
+    iTermPrintAccessoryViewController *accessory = nil;
+    NSAttributedString *attributedString;
+    NSDictionary *attributes =
+        @{ NSBackgroundColorAttributeName: [NSColor textBackgroundColor],
+           NSForegroundColorAttributeName: [NSColor textColor],
+           NSFontAttributeName: [NSFont userFixedPitchFontOfSize:0] };
+    if ([content isKindOfClass:[NSAttributedString class]]) {
+        attributedString = content;
+        accessory = [[[iTermPrintAccessoryViewController alloc] initWithNibName:@"iTermPrintAccessoryViewController"
+                                                                         bundle:nil] autorelease];
+        accessory.userDidChangeSetting = ^() {
+            NSAttributedString *theAttributedString = nil;
+            if (accessory.blackAndWhite) {
+                theAttributedString = [[[NSAttributedString alloc] initWithString:[content string]
+                                                                       attributes:attributes] autorelease];
+            } else {
+                theAttributedString = attributedString;
+            }
+            [[tempView textStorage] setAttributedString:theAttributedString];
+        };
+    } else {
+        attributedString = [[[NSAttributedString alloc] initWithString:content
+                                                            attributes:attributes] autorelease];
+    }
+    [[tempView textStorage] setAttributedString:attributedString];
 
     // Now print the temporary view.
-    [[NSPrintOperation printOperationWithView:tempView
-                                    printInfo:aPrintInfo] runOperation];
-    [tempView release];
+    NSPrintOperation *operation = [NSPrintOperation printOperationWithView:tempView printInfo:printInfo];
+    if (accessory) {
+        operation.printPanel.options = (NSPrintPanelShowsCopies |
+                                        NSPrintPanelShowsPaperSize |
+                                        NSPrintPanelShowsOrientation |
+                                        NSPrintPanelShowsScaling |
+                                        NSPrintPanelShowsPreview);
+        [operation.printPanel addAccessoryController:accessory];
+    }
+    [operation runOperation];
 }
 
 #pragma mark - NSTextInputClient

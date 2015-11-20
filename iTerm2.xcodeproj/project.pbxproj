@@ -94,6 +94,9 @@
 		1D48B379167E809D000046EE /* CharacterRun.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D48B377167E809D000046EE /* CharacterRun.h */; };
 		1D4983501912FC0B002E942D /* ToolDirectoriesView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D49834E1912FC0B002E942D /* ToolDirectoriesView.h */; };
 		1D4AE8FE14343A760092EB49 /* iTermSemanticHistoryPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */; };
+		1D4BAFEC1BFE77E4004FF52B /* iTermPrintAccessoryViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4BAFE91BFE77E4004FF52B /* iTermPrintAccessoryViewController.h */; };
+		1D4BAFED1BFE77E4004FF52B /* iTermPrintAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4BAFEA1BFE77E4004FF52B /* iTermPrintAccessoryViewController.m */; };
+		1D4BAFEE1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D4BAFEB1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
 		1D53FD15181C4B4B00524D4F /* FindContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D53FD13181C4B4B00524D4F /* FindContext.h */; };
 		1D5655C919AD2B1A001C460B /* PTYTab+Scripting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D5655C719AD2B1A001C460B /* PTYTab+Scripting.h */; };
@@ -1830,6 +1833,9 @@
 		1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ToolDirectoriesView.m; sourceTree = "<group>"; tabWidth = 4; };
 		1D4AE8FC14343A760092EB49 /* iTermSemanticHistoryPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermSemanticHistoryPrefsController.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D4AE8FD14343A760092EB49 /* iTermSemanticHistoryPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSemanticHistoryPrefsController.m; sourceTree = "<group>"; tabWidth = 4; };
+		1D4BAFE91BFE77E4004FF52B /* iTermPrintAccessoryViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermPrintAccessoryViewController.h; sourceTree = "<group>"; };
+		1D4BAFEA1BFE77E4004FF52B /* iTermPrintAccessoryViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPrintAccessoryViewController.m; sourceTree = "<group>"; };
+		1D4BAFEB1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = iTermPrintAccessoryViewController.xib; sourceTree = "<group>"; };
 		1D4F359F1813386600699FDF /* iTermCursor.h */ = {isa = PBXFileReference; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermCursor.h; sourceTree = "<group>"; tabWidth = 4; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
 		1D53FD13181C4B4B00524D4F /* FindContext.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = FindContext.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -4102,6 +4108,9 @@
 				A63F4094183B398C003A6A6D /* PTYNoteViewController.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1D085FA116F138A000B7FCE9 /* ToastWindowController.m */,
+				1D4BAFE91BFE77E4004FF52B /* iTermPrintAccessoryViewController.h */,
+				1D4BAFEA1BFE77E4004FF52B /* iTermPrintAccessoryViewController.m */,
+				1D4BAFEB1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -4885,6 +4894,7 @@
 				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 				1D8CE03D195A143100FE1BEE /* iTermRule.h in Headers */,
 				D3CE2D4E1A00936F0098ED99 /* PSMDarkTabStyle.h in Headers */,
+				1D4BAFEC1BFE77E4004FF52B /* iTermPrintAccessoryViewController.h in Headers */,
 				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
 				A68A310F186E2EDA007F550F /* PopupEntry.h in Headers */,
 				1DC13AC318864E2200034DAE /* CommandHistoryPopup.h in Headers */,
@@ -5555,6 +5565,7 @@
 				A6B70FC119830F0D007A4284 /* NewOutput.png in Resources */,
 				1DA76A0B1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
+				1D4BAFEE1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				9D737D6017495B4100B3334D /* PrefsGeneral@2x.png in Resources */,
 				A65B72AC1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
@@ -5772,6 +5783,7 @@
 				A6C763CE1B45C53A00E3C992 /* main.m in Sources */,
 				1D1F8C1C1A32616A00167161 /* AMIndeterminateProgressIndicator.m in Sources */,
 				A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
+				1D4BAFED1BFE77E4004FF52B /* iTermPrintAccessoryViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
