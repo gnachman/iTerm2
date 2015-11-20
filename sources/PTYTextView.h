@@ -380,7 +380,8 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 // Saving/printing
 - (void)saveDocumentAs:(id)sender;
 - (void)print:(id)sender;
-- (void)printContent:(NSString *)aString;
+// aString is either an NSString or an NSAttributedString.
+- (void)printContent:(id)aString;
 
 // Begins a new search. You may need to call continueFind repeatedly after this.
 - (void)findString:(NSString*)aString

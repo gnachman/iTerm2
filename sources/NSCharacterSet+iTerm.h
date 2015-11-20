@@ -18,4 +18,7 @@
 // Ambiguous-width characters.
 + (instancetype)ambiguousWidthCharacterSet;
 
+// Zero-width spaces.
++ (instancetype)zeroWidthSpaceCharacterSet;
+
 @end

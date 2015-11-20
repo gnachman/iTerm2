@@ -1848,6 +1848,23 @@ static NSString *const kGridSizeKey = @"Size";
     return YES;
 }
 
+- (NSString *)stringForCharacterAt:(VT100GridCoord)coord {
+    screen_char_t *theLine = [self screenCharsAtLineNumber:coord.y];
+    if (!theLine) {
+        return nil;
+    }
+    screen_char_t theChar = theLine[coord.x];
+    if (theChar.code == 0 && !theChar.complexChar) {
+        return nil;
+    }
+    if (theChar.complexChar) {
+        return ComplexCharToStr(theChar.code);
+    } else {
+        return [NSString stringWithFormat:@"%C", theChar.code];
+    }
+}
+
+
 #ifdef VERBOSE_STRING
 static void DumpBuf(screen_char_t* p, int n) {
     for (int i = 0; i < n; ++i) {
