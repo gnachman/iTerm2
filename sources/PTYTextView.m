@@ -1961,6 +1961,7 @@ static const int kDragThreshold = 3;
 
     if ([self reportMouseEvent:event]) {
         DLog(@"Returning because mouse event reported.");
+        [_selection clearSelection];
         return NO;
     }
 
