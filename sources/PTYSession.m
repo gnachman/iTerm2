@@ -4867,8 +4867,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 send_strlen = [data length];
             } else if (keystr != nil) {
                 NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
-                [keystr dataUsingEncoding:NSUTF8StringEncoding] :
-                [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
+                    [keystr dataUsingEncoding:NSUTF8StringEncoding] :
+                    [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
             }
@@ -4903,14 +4903,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         } else {
             DLog(@"PTYSession keyDown regular path");
             // Regular path for inserting a character from a keypress.
-            int max = [keystr length];
-            NSData *data=nil;
+            NSData *data = nil;
 
-            if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
+            if (keystr.length != 1 || [keystr characterAtIndex:0] > 0x7f) {
                 DLog(@"PTYSession keyDown non-ascii");
-                data = [keystr dataUsingEncoding:[_terminal encoding]];
+                data = [keystr dataUsingEncoding:_terminal.encoding];
             } else {
                 DLog(@"PTYSession keyDown ascii");
+                // Commit a00a9385b2ed722315ff4d43e2857180baeac2b4 in old-iterm suggests this is
+                // necessary for some Japanese input sources, but is vague.
                 data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
             }
 
@@ -5610,7 +5611,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     if ([text length] > 0) {
         NSString *aString = [NSString stringWithFormat:@"\e%@", text];
-        [self writeTask:[aString dataUsingEncoding:NSUTF8StringEncoding]];
+        [self writeTask:[aString dataUsingEncoding:_terminal.encoding]];
     }
 }
 
@@ -5649,7 +5650,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
         temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
         temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
-        [self writeTask:[temp dataUsingEncoding:NSUTF8StringEncoding]];
+        [self writeTask:[temp dataUsingEncoding:_terminal.encoding]];
     }
 }
 
