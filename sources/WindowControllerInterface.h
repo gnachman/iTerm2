@@ -53,9 +53,6 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 // Disable blur for window.
 - (void)disableBlur;
 
-// Is the window title transient?
-- (BOOL)tempTitle;
-
 // Force the window size to change to be just large enough to fit this session.
 - (void)fitWindowToTab:(PTYTab*)tab;
 
@@ -67,9 +64,6 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 
 // Set the window title to the name of the current session.
 - (void)setWindowTitle;
-
-// Set the window title to non-transient.
-- (void)resetTempTitle;
 
 // Return the foreground tab
 - (PTYTab*)currentTab;
@@ -167,6 +161,11 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)popupWillClose:(iTermPopupWindowController *)popup;
 
 - (void)toggleFullScreenMode:(id)sender;
+
+// Is the window title transient?
+- (void)clearTransientTitle;
+- (BOOL)isShowingTransientTitle;
+
 
 #pragma mark - Tabs
 

@@ -168,6 +168,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *badgeFormat;
 @property(nonatomic, retain) NSMutableDictionary *variables;
+// The name of the foreground job at the moment as best we can tell.
+@property(nonatomic, copy) NSString *jobName;
 
 // Info about what happens when the program is run so it can be restarted after
 // a broken pipe if the user so chooses.
@@ -247,9 +249,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Is the update timer's callback currently running?
     BOOL _timerRunning;
-
-    // The name of the foreground job at the moment as best we can tell.
-    NSString *_jobName;
 
     // Time session was created
     NSDate *_creationDate;
@@ -456,7 +455,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_antiIdleTimer invalidate];
     [_antiIdleTimer release];
     [_updateTimer invalidate];
-    [_updateTimer release];
     [_originalProfile release];
     [_liveSession release];
     [_tmuxGateway release];
@@ -484,6 +482,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_guid release];
     [_lastCommand release];
     [_substitutions release];
+    [_jobName release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (_dvrDecoder) {
@@ -502,7 +501,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)cancelTimers {
     [_updateTimer invalidate];
+    _updateTimer = nil;
     [_antiIdleTimer invalidate];
+    _antiIdleTimer = nil;
 }
 
 - (void)setLiveSession:(PTYSession *)liveSession {
@@ -1208,8 +1209,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return x;
 }
 
-- (NSArray *)childJobNames
-{
+- (NSArray *)childJobNames {
     int skip = 0;
     pid_t thePid = [_shell pid];
     if ([[[ProcessCache sharedInstance] getNameOfPid:thePid isForeground:nil] isEqualToString:@"login"]) {
@@ -1519,7 +1519,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     [_updateTimer invalidate];
-    [_updateTimer release];
     _updateTimer = nil;
 
     [_pasteHelper abort];
@@ -2773,11 +2772,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         return [NSString stringWithFormat:@"↣ %@", [[self tab] tmuxWindowName]];
     }
     BOOL baseIsBookmarkName = [base isEqualToString:_bookmarkName];
-    if ([iTermPreferences boolForKey:kPreferenceKeyShowJobName] && _jobName) {
+    if ([iTermPreferences boolForKey:kPreferenceKeyShowJobName] && self.jobName) {
         if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
-            return [NSString stringWithFormat:@"%@", [self jobName]];
+            return [NSString stringWithFormat:@"%@", self.jobName];
         } else {
-            return [NSString stringWithFormat:@"%@ (%@)", base, [self jobName]];
+            return [NSString stringWithFormat:@"%@ (%@)", base, self.jobName];
         }
     } else {
         if (baseIsBookmarkName && ![iTermPreferences boolForKey:kPreferenceKeyShowProfileName]) {
@@ -3355,6 +3354,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
+- (void)updateDisplayTimerDidFire:(NSTimer *)timer {
+    _updateTimer = nil;
+    [self updateDisplay];
+}
+
 - (void)updateDisplay {
     _timerRunning = YES;
     BOOL anotherUpdateNeeded = [NSApp isActive];
@@ -3370,36 +3374,28 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         anotherUpdateNeeded |= [[self tab] updateLabelAttributes];
     }
 
+    static const NSTimeInterval kUpdateTitlePeriod = 0.7;
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if ([[self tab] activeSession] == self) {
         // Update window info for the active tab.
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        if (!_jobName ||
-            now >= (_lastUpdate + 0.7)) {
+        if (!self.jobName ||
+            now >= (_lastUpdate + kUpdateTitlePeriod)) {
             // It has been more than 700ms since the last time we were here or
-            // the job doesn't have a name
-            if ([[self tab] isForegroundTab] && [[[self tab] parentWindow] tempTitle]) {
-                // Revert to the permanent tab title.
-                [[[self tab] parentWindow] setWindowTitle];
-                [[[self tab] parentWindow] resetTempTitle];
-            } else {
-                // Update the job name in the tab title.
-                NSString* oldName = _jobName;
-                _jobName = [[_shell currentJob:NO] copy];
-                if (![oldName isEqualToString:_jobName]) {
-                    [[self tab] nameOfSession:self didChangeTo:[self name]];
-                    [[[self tab] parentWindow] setWindowTitle];
-                }
-                [oldName release];
-            }
+            // the job doesn't have a name.
+            [self updateTitles];
             _lastUpdate = now;
-        } else if (now < _lastUpdate + 0.7) {
+        } else if (now < _lastUpdate + kUpdateTitlePeriod) {
             // If it's been less than 700ms keep updating.
             anotherUpdateNeeded = YES;
         }
+    } else {
+        self.jobName = [_shell currentJob:NO];
+        [self.view setTitle:self.name];
     }
 
     anotherUpdateNeeded |= [_textview refresh];
-    anotherUpdateNeeded |= [[[self tab] parentWindow] tempTitle];
+    anotherUpdateNeeded |= self.tab.realParentWindow.isShowingTransientTitle;
     BOOL animating = _textview.getAndResetDrawingAnimatedImageFlag;
     anotherUpdateNeeded |= animating;
 
@@ -3413,7 +3409,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
         }
     } else {
-        [_updateTimer release];
+        [_updateTimer invalidate];
         _updateTimer = nil;
     }
 
@@ -3423,6 +3419,22 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     [self checkPartialLineTriggers];
     _timerRunning = NO;
+}
+
+// Update the tab, session view, and window title.
+- (void)updateTitles {
+    NSString *newJobName = [_shell currentJob:NO];
+    // Update the job name in the tab title.
+    if (!(newJobName == self.jobName || [newJobName isEqualToString:self.jobName])) {
+        self.jobName = newJobName;
+        [[self tab] nameOfSession:self didChangeTo:[self name]];
+        [self.view setTitle:self.name];
+    }
+    
+    if (self.tab.isForegroundTab) {
+        // Revert to the permanent tab title.
+        [[[self tab] parentWindow] setWindowTitle];
+    }
 }
 
 - (void)refreshAndStartTimerIfNeeded
@@ -3458,7 +3470,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     [_updateTimer invalidate];
-    [_updateTimer release];
+    _updateTimer = nil;
 
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval timeSinceLastUpdate = now - _timeOfLastScheduling;
@@ -3472,20 +3484,20 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // TODO: Try this. It solves the bug where we don't redraw properly during live resize.
     // I'm worried about the possible side effects it might have since there's no way to 
     // know all the tracking event loops.
-    _updateTimer = [[NSTimer timerWithTimeInterval:MAX(kMinimumDelay,
-                                                       timeout - timeSinceLastUpdate)
-                                            target:self
-                                          selector:@selector(updateDisplay)
-                                          userInfo:[NSNumber numberWithFloat:(float)timeout]
-                                           repeats:NO] retain];
+    _updateTimer = [NSTimer timerWithTimeInterval:MAX(kMinimumDelay,
+                                                      timeout - timeSinceLastUpdate)
+                                           target:self
+                                         selector:@selector(updateDisplayTimerDidFire:)
+                                         userInfo:[NSNumber numberWithFloat:(float)timeout]
+                                          repeats:NO];
     [[NSRunLoop currentRunLoop] addTimer:_updateTimer forMode:NSRunLoopCommonModes];
 #else
-    _updateTimer = [[NSTimer scheduledTimerWithTimeInterval:MAX(kMinimumDelay,
-                                                                timeout - timeSinceLastUpdate)
-                                                     target:self
-                                                   selector:@selector(updateDisplay)
-                                                   userInfo:[NSNumber numberWithFloat:(float)timeout]
-                                                    repeats:NO] retain];
+    _updateTimer = [NSTimer scheduledTimerWithTimeInterval:MAX(kMinimumDelay,
+                                                               timeout - timeSinceLastUpdate)
+                                                    target:self
+                                                  selector:@selector(updateDisplayTimerDidFire:)
+                                                  userInfo:[NSNumber numberWithFloat:(float)timeout]
+                                                   repeats:NO];
 #endif
 }
 
@@ -5723,8 +5735,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 }
 
-- (void)setDvrFrame
-{
+- (void)setDvrFrame {
     screen_char_t* s = (screen_char_t*)[_dvrDecoder decodedFrame];
     int len = [_dvrDecoder length];
     DVRFrameInfo info = [_dvrDecoder info];
@@ -5736,7 +5747,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
     }
     [_screen setFromFrame:s len:len info:info];
-    [[[self tab] realParentWindow] resetTempTitle];
+    [[[self tab] realParentWindow] clearTransientTitle];
     [[[self tab] realParentWindow] setWindowTitle];
 }
 

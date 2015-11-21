@@ -122,6 +122,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 // Session ID of session that currently has an auto-command history window open
 @property(nonatomic, copy) NSString *autoCommandHistorySessionGuid;
+@property(nonatomic, assign) NSTimeInterval timeOfLastResize;
 @end
 
 @implementation PseudoTerminal {
@@ -172,10 +173,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     // How input should be broadcast (or not).
     BroadcastMode broadcastMode_;
-
-    // True if the window title is showing transient information (such as the
-    // size during resizing).
-    BOOL tempTitle;
 
     // When sending input to all sessions we temporarily change the background
     // color. This stores the normal background color so we can restore to it.
@@ -1375,15 +1372,21 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [session.tab setActiveSession:session];
 }
 
-- (PTYSession *)currentSession
-{
+- (PTYSession *)currentSession {
     return [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
 }
 
-
-- (void)setWindowTitle
-{
-    [self setWindowTitle:[self currentSessionName]];
+- (void)setWindowTitle {
+    if (self.isShowingTransientTitle) {
+        PTYSession *session = self.currentSession;
+        NSString *aTitle = [NSString stringWithFormat:@"%@ \u2014 %d✕%d",
+                            [self currentSessionName],
+                            [session columns],
+                            [session rows]];
+        [self setWindowTitle:aTitle];
+    } else {
+        [self setWindowTitle:[self currentSessionName]];
+    }
 }
 
 - (void)setWindowTitle:(NSString *)title
@@ -1424,16 +1427,6 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     } else {
         [[self window] performSelector:@selector(setTitle:) withObject:title afterDelay:0.1];
     }
-}
-
-- (BOOL)tempTitle
-{
-    return tempTitle;
-}
-
-- (void)resetTempTitle
-{
-    tempTitle = NO;
 }
 
 - (NSArray *)broadcastSessions
@@ -2927,8 +2920,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self saveTmuxWindowOrigins];
 }
 
-- (void)windowDidResize:(NSNotification *)aNotification
-{
+- (void)windowDidResize:(NSNotification *)aNotification {
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
     if (zooming_) {
         // Pretend nothing happened to avoid slowing down zooming.
@@ -2956,13 +2948,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         }
     }
 
-    PTYSession* session = [self currentSession];
-    NSString *aTitle = [NSString stringWithFormat:@"%@ (%d,%d)",
-                        [self currentSessionName],
-                        [session columns],
-                        [session rows]];
-    tempTitle = YES;
-    [self setWindowTitle:aTitle];
+    self.timeOfLastResize = [NSDate timeIntervalSinceReferenceDate];
+    [self setWindowTitle];
     [self fitTabsToWindow];
 
     // Post a notification
@@ -2975,6 +2962,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     _contentView.toolbeltWidth = _contentView.toolbelt.frame.size.width;
 }
 
+- (void)clearTransientTitle {
+    self.timeOfLastResize = 0;
+}
+
+- (BOOL)isShowingTransientTitle {
+    const NSTimeInterval timeSinceLastResize =
+        [NSDate timeIntervalSinceReferenceDate] - self.timeOfLastResize;
+    static const NSTimeInterval kTimeToPreserveTemporaryTitle = 0.7;
+    return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
+}
 - (void)updateUseTransparency {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateUseTransparencyMenuItem];

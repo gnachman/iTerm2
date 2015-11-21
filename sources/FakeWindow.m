@@ -53,7 +53,6 @@
     int pendingW;
     int pendingH;
     BOOL hasPendingSetWindowTitle;
-    BOOL hasPendingResetTempTitle;
 
     BOOL scrollbarShouldBeVisible;
 }
@@ -107,9 +106,6 @@
     }
     if (hasPendingSetWindowTitle) {
         [aTerm setWindowTitle];
-    }
-    if (hasPendingResetTempTitle) {
-        [aTerm resetTempTitle];
     }
     [aTerm updateTabColors];
 }
@@ -167,11 +163,6 @@
     pendingBlur = NO;
 }
 
-- (BOOL)tempTitle
-{
-    return NO;
-}
-
 - (void)fitWindowToTab:(PTYTab*)tab
 {
     hasPendingFitWindowToTab = YES;
@@ -185,11 +176,6 @@
 - (void)setWindowTitle
 {
     hasPendingSetWindowTitle = YES;
-}
-
-- (void)resetTempTitle
-{
-    hasPendingResetTempTitle = YES;
 }
 
 - (PTYTab*)currentTab
