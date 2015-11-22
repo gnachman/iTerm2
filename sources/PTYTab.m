@@ -382,8 +382,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
-- (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName
-{
+- (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
         [tabViewItem_ setLabel:newName];
     }

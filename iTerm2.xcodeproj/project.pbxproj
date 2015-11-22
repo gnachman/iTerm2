@@ -787,6 +787,8 @@
 		A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
 		A624232019CF6F2C00182C08 /* NMSSH.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A624231819CF6DE000182C08 /* NMSSH.framework */; };
 		A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A624232519CF70DF00182C08 /* NMSSH.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A628B00B1BF91BA100B68248 /* iTermDelayedTitleSetter.h in Headers */ = {isa = PBXBuildFile; fileRef = A628B0091BF91BA000B68248 /* iTermDelayedTitleSetter.h */; };
+		A628B00C1BF91BA100B68248 /* iTermDelayedTitleSetter.m in Sources */ = {isa = PBXBuildFile; fileRef = A628B00A1BF91BA100B68248 /* iTermDelayedTitleSetter.m */; };
 		A628C7A818764AA4009B0818 /* NSDictionary+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */; };
 		A62A1AE31AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
 		A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */; };
@@ -2174,6 +2176,8 @@
 		A624231319CF6B1600182C08 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Growl.framework; path = ThirdParty/Growl.framework; sourceTree = "<group>"; };
 		A624231819CF6DE000182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
 		A624232519CF70DF00182C08 /* NMSSH.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NMSSH.framework; path = ThirdParty/NMSSH.framework; sourceTree = "<group>"; };
+		A628B0091BF91BA000B68248 /* iTermDelayedTitleSetter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermDelayedTitleSetter.h; sourceTree = "<group>"; };
+		A628B00A1BF91BA100B68248 /* iTermDelayedTitleSetter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermDelayedTitleSetter.m; sourceTree = "<group>"; };
 		A628C7A618764AA4009B0818 /* NSDictionary+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A628C7A718764AA4009B0818 /* NSDictionary+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelper.h; sourceTree = "<group>"; };
@@ -4045,6 +4049,8 @@
 				A667F3921B4CC8BA00705186 /* iTermBadgeLabel.m */,
 				1DECF9691BD948CC00E75FEB /* iTermQuickLookController.h */,
 				1DECF96A1BD948CC00E75FEB /* iTermQuickLookController.m */,
+				A628B0091BF91BA000B68248 /* iTermDelayedTitleSetter.h */,
+				A628B00A1BF91BA100B68248 /* iTermDelayedTitleSetter.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -5003,6 +5009,7 @@
 				A6C760481B45C4CF00E3C992 /* SSKeychainQuery.h in Headers */,
 				A62C3B351BCC265F00B5629D /* iTermHostRecordMO+Additions.h in Headers */,
 				1DECF96B1BD948CC00E75FEB /* iTermQuickLookController.h in Headers */,
+				A628B00B1BF91BA100B68248 /* iTermDelayedTitleSetter.h in Headers */,
 				1DDC09431B4DB9A600B1A910 /* iTermClearView.h in Headers */,
 				A62C3B291BCC24AB00B5629D /* iTermHostRecordMO.h in Headers */,
 				A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */,
@@ -5898,6 +5905,7 @@
 				A6C762E41B45C52B00E3C992 /* TaskNotifier.m in Sources */,
 				A6C762B91B45C52B00E3C992 /* NSMutableAttributedString+iTerm.m in Sources */,
 				A6C7631E1B45C52B00E3C992 /* iTermTemporaryDoubleBufferedGridController.m in Sources */,
+				A628B00C1BF91BA100B68248 /* iTermDelayedTitleSetter.m in Sources */,
 				A6C7637B1B45C52B00E3C992 /* ProfilesAdvancedPreferencesViewController.m in Sources */,
 				A6C763581B45C52B00E3C992 /* iTermOpenQuicklyView.m in Sources */,
 				A6C763C71B45C52B00E3C992 /* VT100StateMachine.m in Sources */,
