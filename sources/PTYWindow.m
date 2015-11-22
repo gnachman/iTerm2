@@ -23,14 +23,14 @@
 
 #import "iTerm.h"
 #import "FutureMethods.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermDelayedTitleSetter.h"
 #import "iTermPreferences.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "PTYWindow.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
+#import "PTYWindow.h"
 #import "objc/runtime.h"
 
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
