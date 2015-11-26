@@ -152,6 +152,7 @@ DEFINE_FLOAT(slowPasteDelayBetweenCalls, 0.125, @"Pasteboard: Delay in seconds b
 DEFINE_BOOL(copyWithStylesByDefault, NO, @"Pasteboard: Copy to pasteboard on selection includes color and font style.");
 DEFINE_INT(pasteHistoryMaxOptions, 20, @"Pasteboard: Number of entires to show in Paste History.\nThe value must be between 2 and 100.");
 DEFINE_BOOL(disallowCopyEmptyString, NO, @"Pasteboard: Disallow copying empty string to pasteboard.\nIf enabled, selecting an empty string (or all whitespace if trimming is enabled) will not erase the contents of the pasteboard.");
+DEFINE_BOOL(typingClearsSelection, YES, @"Pasteboard: Pressing a key will remove the selection.");
 
 #pragma mark - Tip of the day
 

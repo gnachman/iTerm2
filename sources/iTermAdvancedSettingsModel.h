@@ -119,5 +119,6 @@
 + (double)tabAutoShowHoldTime;
 + (BOOL)doubleReportScrollWheel;
 + (BOOL)allowDragOfTabIntoNewWindow;
++ (BOOL)typingClearsSelection;
 
 @end
