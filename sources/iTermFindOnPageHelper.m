@@ -15,7 +15,9 @@
     // Find context just after initialization.
     FindContext *_copiedContext;
 
-    // Find cursor. -1,-1 if no cursor.
+    // Find cursor. -1,-1 if no cursor. This is used to select which search result should be
+    // highlighted. If searching forward, it'll be after the find cursor; if searching backward it
+    // will be before the find cursor.
     VT100GridAbsCoord _findCursor;
 
     // Is a find currently executing?
@@ -99,10 +101,6 @@
         if (_findInProgress) {
             [findContext reset];
         }
-
-        long long findY =
-            (long long)(numberOfLines + 1) + totalScrollbackOverflow;
-        _findCursor = VT100GridAbsCoordMake(0, findY);
 
         // Search backwards from the end. This is slower than searching
         // forwards, but most searches are reverse searches begun at the end,
@@ -257,18 +255,18 @@
     if (forward) {
         start = [_searchResults count] - 1;
         stride = -1;
-        if (![self haveFindCursor]) {
-            minPos = -1;
-        } else {
+        if ([self haveFindCursor]) {
             minPos = _findCursor.x + _findCursor.y * width + offset;
+        } else {
+            minPos = -1;
         }
     } else {
         start = 0;
         stride = 1;
-        if (![self haveFindCursor]) {
-            maxPos = (1 + numberOfLines + overflowAdjustment) * width;
-        } else {
+        if ([self haveFindCursor]) {
             maxPos = _findCursor.x + _findCursor.y * width - offset;
+        } else {
+            maxPos = (1 + numberOfLines + overflowAdjustment) * width;
         }
     }
     BOOL found = NO;

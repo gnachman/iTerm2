@@ -1312,6 +1312,10 @@ static const int kDragThreshold = 3;
         // issue 3340.
         [self deselect];
     }
+    // Generally, find-on-page continues from the last result. If you press a
+    // key then it starts searching from the bottom again.
+    [_findOnPageHelper resetFindCursor];
+
     static BOOL isFirstInteraction = YES;
     if (isFirstInteraction) {
         iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
