@@ -22,11 +22,13 @@
  **  along with this program; if not, write to the Free Software
  */
 
+#import "ProfileModel.h"
+
+#import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
 #import "iTermProfileSearchToken.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
-#import "ProfileModel.h"
 
 NSString *const kReloadAddressBookNotification = @"iTermReloadAddressBook";
 
@@ -417,11 +419,12 @@ int gMigrated;
     [self postChangeNotification];
 }
 
-- (void)removeBookmarkAtIndex:(int)i
-{
+- (void)removeBookmarkAtIndex:(int)i {
+    DLog(@"Remove profile at index %d", i);
     assert(i >= 0);
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
     [bookmarks_ removeObjectAtIndex:i];
+    DLog(@"Number of profiles is now %d", (int)bookmarks_.count);
     if (![self defaultBookmark] && [bookmarks_ count]) {
         [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];
     }
@@ -433,9 +436,10 @@ int gMigrated;
     [self removeBookmarkAtIndex:[self convertFilteredIndex:i withFilter:filter]];
 }
 
-- (void)removeProfileWithGuid:(NSString*)guid
-{
+- (void)removeProfileWithGuid:(NSString*)guid {
+    DLog(@"Remove profile with guid %@", guid);
     int i = [self indexOfProfileWithGuid:guid];
+    DLog(@"Index is %d", i);
     if (i >= 0) {
         [self removeBookmarkAtIndex:i];
     }
@@ -685,9 +689,10 @@ int gMigrated;
     [self postChangeNotification];
 }
 
-- (void)postChangeNotification
-{
+- (void)postChangeNotification {
+    DLog(@"Post bookmark changed notification");
     if (postChanges_) {
+        DLog(@"Posting notification");
         [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAddressBookNotification
                                                             object:nil
                                                           userInfo:[NSDictionary dictionaryWithObject:journal_ forKey:@"array"]];

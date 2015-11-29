@@ -1482,8 +1482,8 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)updateAddressBookMenu:(NSNotification*)aNotification
-{
+- (void)updateAddressBookMenu:(NSNotification*)aNotification {
+    DLog(@"Updating address book menu");
     JournalParams params;
     params.selector = @selector(newSessionInTabAtIndex:);
     params.openAllSelector = @selector(newSessionsInWindow:);

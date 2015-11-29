@@ -34,6 +34,9 @@
 @class ProfileTagsView;
 @class iTermSearchField;
 
+// Post this after deleting a profile. It will call -reloadData.
+extern NSString *const kProfileWasDeletedNotification;
+
 @protocol ProfileListViewDelegate <NSObject>
 @optional
 - (void)profileTableSelectionDidChange:(id)profileTable;

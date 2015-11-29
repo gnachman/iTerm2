@@ -7,6 +7,7 @@
 //
 
 #import "KeysPreferencesViewController.h"
+#import "DebugLogging.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermKeyBindingMgr.h"
@@ -270,6 +271,7 @@ static NSString * const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 }
 
 - (void)populateHotKeyProfilesMenu {
+    DLog(@"Populating hotkey profiles menu");
     if (!_hotkeyBookmark) {
         return;
     }
