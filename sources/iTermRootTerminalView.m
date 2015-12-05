@@ -160,9 +160,9 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
 - (NSRect)toolbeltFrame {
     CGFloat width = floor(_toolbeltWidth);
-    CGFloat top = [_delegate _haveTopBorder] ? 1 : 0;
-    CGFloat bottom = [_delegate _haveBottomBorder] ? 1 : 0;
-    CGFloat right = [_delegate _haveRightBorder] ? 1 : 0;
+    CGFloat top = [_delegate haveTopBorder] ? 1 : 0;
+    CGFloat bottom = [_delegate haveBottomBorder] ? 1 : 0;
+    CGFloat right = [_delegate haveRightBorder] ? 1 : 0;
     NSRect toolbeltFrame = NSMakeRect(self.bounds.size.width - width - right,
                                       bottom,
                                       width,
@@ -228,10 +228,10 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     } else {
         width = _delegate.window.frame.size.width;
     }
-    if ([_delegate _haveLeftBorder]) {
+    if ([_delegate haveLeftBorder]) {
         --width;
     }
-    if ([_delegate _haveRightBorder]) {
+    if ([_delegate haveRightBorder]) {
         --width;
     }
     return width;
@@ -252,13 +252,13 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
     if (![self tabBarShouldBeVisible]) {
         // The tabBarControl should not be visible.
         self.tabBarControl.hidden = YES;
-        CGFloat yOrigin = [_delegate _haveBottomBorder] ? 1 : 0;
+        CGFloat yOrigin = [_delegate haveBottomBorder] ? 1 : 0;
         CGFloat heightAdjustment = _delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0;
-        if ([_delegate _haveTopBorder]) {
+        if ([_delegate haveTopBorder]) {
             heightAdjustment++;
         }
         NSRect tabViewFrame =
-            NSMakeRect([_delegate _haveLeftBorder] ? 1 : 0,
+            NSMakeRect([_delegate haveLeftBorder] ? 1 : 0,
                        yOrigin,
                        [self tabviewWidth],
                        [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
@@ -275,12 +275,12 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             case PSMTab_TopTab: {
                 // Place tabs at the top.
                 // Add 1px border
-                CGFloat yOrigin = _delegate._haveBottomBorder ? 1 : 0;
+                CGFloat yOrigin = _delegate.haveBottomBorder ? 1 : 0;
                 CGFloat heightAdjustment = 0;
                 if (!self.tabBarControl.flashing) {
                     heightAdjustment += kHorizontalTabBarHeight;
                 }
-                if (_delegate._haveTopBorder) {
+                if (_delegate.haveTopBorder) {
                     heightAdjustment += 1;
                 }
                 if (_delegate.divisionViewShouldBeVisible) {
@@ -288,7 +288,7 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
                 }
 
                 NSRect tabViewFrame =
-                    NSMakeRect(_delegate._haveLeftBorder ? 1 : 0,
+                    NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
                                yOrigin,
                                [self tabviewWidth],
                                [[thisWindow contentView] frame].size.height - yOrigin - heightAdjustment);
@@ -310,15 +310,15 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
             case PSMTab_BottomTab: {
                 DLog(@"repositionWidgets - putting tabs at bottom");
                 // setup aRect to make room for the tabs at the bottom.
-                NSRect tabBarFrame = NSMakeRect(_delegate._haveLeftBorder ? 1 : 0,
-                                                _delegate._haveBottomBorder ? 1 : 0,
+                NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
+                                                _delegate.haveBottomBorder ? 1 : 0,
                                                 [self tabviewWidth],
                                                 kHorizontalTabBarHeight);
                 self.tabBarControl.frame = tabBarFrame;
                 self.tabBarControl.autoresizingMask = (NSViewWidthSizable | NSViewMaxYMargin);
 
                 CGFloat heightAdjustment = self.tabBarControl.flashing ? 0 : tabBarFrame.origin.y + kHorizontalTabBarHeight;
-                if (_delegate._haveTopBorder) {
+                if (_delegate.haveTopBorder) {
                     heightAdjustment += 1;
                 }
                 if (_delegate.divisionViewShouldBeVisible) {
@@ -340,27 +340,27 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
 
             case PSMTab_LeftTab: {
                 CGFloat heightAdjustment = 0;
-                if (_delegate._haveBottomBorder) {
+                if (_delegate.haveBottomBorder) {
                     heightAdjustment += 1;
                 }
-                if (_delegate._haveTopBorder) {
+                if (_delegate.haveTopBorder) {
                     heightAdjustment += 1;
                 }
                 if (_delegate.divisionViewShouldBeVisible) {
                     heightAdjustment += kDivisionViewHeight;
                 }
-                NSRect tabBarFrame = NSMakeRect(_delegate._haveLeftBorder ? 1 : 0,
-                                                _delegate._haveBottomBorder ? 1 : 0,
+                NSRect tabBarFrame = NSMakeRect(_delegate.haveLeftBorder ? 1 : 0,
+                                                _delegate.haveBottomBorder ? 1 : 0,
                                                 [self tabviewWidth],
                                                 [thisWindow.contentView frame].size.height - heightAdjustment);
                 self.tabBarControl.frame = tabBarFrame;
                 self.tabBarControl.autoresizingMask = (NSViewHeightSizable | NSViewMaxXMargin);
 
                 CGFloat widthAdjustment = 0;
-                if (_delegate._haveLeftBorder) {
+                if (_delegate.haveLeftBorder) {
                     widthAdjustment += 1;
                 }
-                if (_delegate._haveRightBorder) {
+                if (_delegate.haveRightBorder) {
                     widthAdjustment += 1;
                 }
                 CGFloat xOffset = 0;

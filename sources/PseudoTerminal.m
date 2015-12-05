@@ -3220,16 +3220,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                     break;
             }
         }
-        if ([self _haveLeftBorder]) {
+        if ([self haveLeftBorder]) {
             --contentSize.width;
         }
-        if ([self _haveRightBorder]) {
+        if ([self haveRightBorder]) {
             --contentSize.width;
         }
-        if ([self _haveBottomBorder]) {
+        if ([self haveBottomBorder]) {
             --contentSize.height;
         }
-        if ([self _haveTopBorder]) {
+        if ([self haveTopBorder]) {
             --contentSize.height;
         }
 
@@ -5858,8 +5858,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return exitingLionFullscreen_;
 }
 
-- (BOOL)_haveLeftBorder
-{
+- (BOOL)haveLeftBorder {
     BOOL leftTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_LeftTab);
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
@@ -5872,7 +5871,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (BOOL)_haveBottomBorder
+- (BOOL)haveBottomBorder
 {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL bottomTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_BottomTab);
@@ -5896,8 +5895,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 }
 
-- (BOOL)_haveTopBorder
-{
+- (BOOL)haveTopBorder {
     BOOL tabBarVisible = [self tabBarShouldBeVisible];
     BOOL topTabBar = ([iTermPreferences intForKey:kPreferenceKeyTabPosition] == PSMTab_TopTab);
     BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
@@ -5909,8 +5907,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             windowTypeCompatibleWithTopBorder);
 }
 
-- (BOOL)_haveRightBorder
-{
+- (BOOL)haveRightBorder {
     if (![iTermPreferences boolForKey:kPreferenceKeyShowWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
@@ -5945,16 +5942,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     // Add 1px border
-    if ([self _haveLeftBorder]) {
+    if ([self haveLeftBorder]) {
         ++contentSize.width;
     }
-    if ([self _haveRightBorder]) {
+    if ([self haveRightBorder]) {
         ++contentSize.width;
     }
-    if ([self _haveBottomBorder]) {
+    if ([self haveBottomBorder]) {
         ++contentSize.height;
     }
-    if ([self _haveTopBorder]) {
+    if ([self haveTopBorder]) {
         ++contentSize.height;
     }
     if (self.divisionViewShouldBeVisible) {

@@ -21,10 +21,10 @@ extern const CGFloat kLeftTabsWidth;
 
 @protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate>
 - (void)repositionWidgets;
-- (BOOL)_haveTopBorder;
-- (BOOL)_haveBottomBorder;
-- (BOOL)_haveLeftBorder;
-- (BOOL)_haveRightBorder;
+- (BOOL)haveTopBorder;
+- (BOOL)haveBottomBorder;
+- (BOOL)haveLeftBorder;
+- (BOOL)haveRightBorder;
 - (BOOL)anyFullScreen;
 - (BOOL)exitingLionFullscreen;
 - (BOOL)divisionViewShouldBeVisible;
