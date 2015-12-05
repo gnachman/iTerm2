@@ -254,6 +254,9 @@ static const CGFloat kMaximumToolbeltSizeAsFractionOfWindow = 0.5;
         self.tabBarControl.hidden = YES;
         CGFloat yOrigin = [_delegate _haveBottomBorder] ? 1 : 0;
         CGFloat heightAdjustment = _delegate.divisionViewShouldBeVisible ? kDivisionViewHeight : 0;
+        if ([_delegate _haveTopBorder]) {
+            heightAdjustment++;
+        }
         NSRect tabViewFrame =
             NSMakeRect([_delegate _haveLeftBorder] ? 1 : 0,
                        yOrigin,
