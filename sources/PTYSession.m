@@ -4935,7 +4935,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             }
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
-                DLog(@"PTYSession keyDown numeric keyoad");
+                DLog(@"PTYSession keyDown numeric keypad");
                 data = [_terminal.output keypadData:unicode keystr:keystr];
             }
 

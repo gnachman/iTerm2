@@ -109,10 +109,19 @@
     return saved;
 }
 
-- (PTYSession *)splitVertically:(BOOL)vertically withProfile:(Profile *)profile {
+- (PTYSession *)splitVertically:(BOOL)vertically
+                    withProfile:(Profile *)profile
+                        command:(NSString *)command {
     PTYSession *formerSession = [self activateSessionAndTab];
+    if (command) {
+        // Create a modified profile to run "command".
+        NSMutableDictionary *temp = [[profile mutableCopy] autorelease];
+        temp[KEY_CUSTOM_COMMAND] = @"Yes";
+        temp[KEY_COMMAND_LINE] = command;
+        profile = temp;
+    }
     PTYSession *session = [[[self tab] realParentWindow] splitVertically:vertically
-                                              withProfile:profile];
+                                                             withProfile:profile];
     [formerSession activateSessionAndTab];
     return session;
 }
@@ -123,7 +132,9 @@
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (profile) {
         PTYSession *formerSession = [self activateSessionAndTab];
-        PTYSession *session = [self splitVertically:YES withProfile:profile];
+        PTYSession *session = [self splitVertically:YES
+                                        withProfile:profile
+                                            command:args[@"command"]];
         [formerSession activateSessionAndTab];
         return session;
     } else {
@@ -136,14 +147,20 @@
 
 - (id)handleSplitVerticallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
     PTYSession *formerSession = [self activateSessionAndTab];
-    PTYSession *session = [self splitVertically:YES withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    PTYSession *session = [self splitVertically:YES
+                                    withProfile:[[ProfileModel sharedInstance] defaultBookmark]
+                                        command:args[@"command"]];
     [formerSession activateSessionAndTab];
     return session;
 }
 
 - (id)handleSplitVerticallyWithSameProfile:(NSScriptCommand *)scriptCommand {
     PTYSession *formerSession = [self activateSessionAndTab];
-    PTYSession *session = [self splitVertically:YES withProfile:self.profile];
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    PTYSession *session = [self splitVertically:YES
+                                    withProfile:self.profile
+                                        command:args[@"command"]];
     [formerSession activateSessionAndTab];
     return session;
 }
@@ -154,7 +171,9 @@
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithName:profileName];
     if (profile) {
         PTYSession *formerSession = [self activateSessionAndTab];
-        PTYSession *session = [self splitVertically:NO withProfile:profile];
+        PTYSession *session = [self splitVertically:NO
+                                        withProfile:profile
+                                            command:args[@"command"]];
         [formerSession activateSessionAndTab];
         return session;
     } else {
@@ -167,14 +186,20 @@
 
 - (id)handleSplitHorizontallyWithDefaultProfile:(NSScriptCommand *)scriptCommand {
     PTYSession *formerSession = [self activateSessionAndTab];
-    PTYSession *session = [self splitVertically:NO withProfile:[[ProfileModel sharedInstance] defaultBookmark]];
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    PTYSession *session = [self splitVertically:NO
+                                    withProfile:[[ProfileModel sharedInstance] defaultBookmark]
+                                        command:args[@"command"]];
     [formerSession activateSessionAndTab];
     return session;
 }
 
 - (id)handleSplitHorizontallyWithSameProfile:(NSScriptCommand *)scriptCommand {
     PTYSession *formerSession = [self activateSessionAndTab];
-    PTYSession *session = [self splitVertically:NO withProfile:self.profile];
+    NSDictionary *args = [scriptCommand evaluatedArguments];
+    PTYSession *session = [self splitVertically:NO
+                                    withProfile:self.profile
+                                        command:args[@"command"]];
     [formerSession activateSessionAndTab];
     return session;
 }

@@ -313,18 +313,30 @@
           description="Name of profile for new session.">
         <cocoa key="profile" />
       </parameter>
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
+          description="Shell command to run">
+          <cocoa key="command"/>
+      </parameter>
       <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split vertically with default profile" code="Itrmsvdp"
         description="Split a session vertically, using the default profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
+          description="Shell command to run">
+          <cocoa key="command"/>
+      </parameter>
       <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split vertically with same profile" code="Itrmsvsp"
         description="Split a session vertically, using the original session's profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
+          description="Shell command to run">
+          <cocoa key="command"/>
+      </parameter>
       <result type="session" description="The session that was created"/>
     </command>
 
@@ -335,18 +347,30 @@
           description="Name of profile for new session.">
         <cocoa key="profile" />
       </parameter>
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
+          description="Shell command to run">
+          <cocoa key="command"/>
+      </parameter>
       <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split horizontally with default profile" code="Itrmshdp"
         description="Split a session horizontally, using the default profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
+          description="Shell command to run">
+          <cocoa key="command"/>
+      </parameter>
       <result type="session" description="The session that was created"/>
     </command>
 
     <command name="split horizontally with same profile" code="Itrmshsp"
         description="Split a session horizontally, using the original session's profile for the new session">
       <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="command" code="Nwcm" type="text" optional="yes"
+          description="Shell command to run">
+          <cocoa key="command"/>
+      </parameter>
       <result type="session" description="The session that was created"/>
     </command>
 
