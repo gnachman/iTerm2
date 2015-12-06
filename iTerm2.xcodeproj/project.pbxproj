@@ -1610,6 +1610,7 @@
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
 		A6E9ACCB1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
+		A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F981CB1C13783C00EE0B80 /* iTermCPS.h */; };
 		A6FD85301B767D6300EB9DCE /* Hamburger.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852E1B767D6300EB9DCE /* Hamburger.png */; };
 		A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */; };
 		A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85321B768B7800EB9DCE /* BigArrow.png */; };
@@ -2662,6 +2663,7 @@
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
 		A6E9ACC91A19956D008B0B6F /* NSWindow+PSM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+PSM.m"; sourceTree = "<group>"; };
+		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6FD852E1B767D6300EB9DCE /* Hamburger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Hamburger.png; path = images/Hamburger.png; sourceTree = "<group>"; };
 		A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Hamburger@2x.png"; path = "images/Hamburger@2x.png"; sourceTree = "<group>"; };
 		A6FD85321B768B7800EB9DCE /* BigArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigArrow.png; path = images/BigArrow.png; sourceTree = "<group>"; };
@@ -3192,6 +3194,7 @@
 				A6A13AB918C34F6400B241ED /* VT100XtermParser.h */,
 				1DCA5ECD13EE507800B7725E /* WindowArrangements.h */,
 				1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */,
+				A6F981CB1C13783C00EE0B80 /* iTermCPS.h */,
 			);
 			name = Headers;
 			path = sources/;
@@ -4998,6 +5001,7 @@
 				A62C3B3E1BD40DC900B5629D /* iTermCapturedOutputMark.h in Headers */,
 				A62C3B2D1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO.h in Headers */,
 				1D300BAA1BD9A8BB002043F7 /* NSDate+iTerm.h in Headers */,
+				A6F981CC1C13783C00EE0B80 /* iTermCPS.h in Headers */,
 				A62C3B421BD40E7C00B5629D /* iTermImageMark.h in Headers */,
 				A62C3B2B1BCC24AB00B5629D /* iTermCommandHistoryCommandUseMO+CoreDataProperties.h in Headers */,
 				A62C3B251BCC24AB00B5629D /* iTermCommandHistoryEntryMO.h in Headers */,

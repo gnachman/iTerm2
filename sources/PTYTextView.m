@@ -15,6 +15,7 @@
 #import "iTermBadgeLabel.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
+#import "iTermCPS.h"
 #import "iTermExpose.h"
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
@@ -220,6 +221,10 @@ static const int kDragThreshold = 3;
     iTermBadgeLabel *_badgeLabel;
 
     NSPoint _mouseLocationToRefuseFirstResponderAt;
+
+    // Number of times -setalKeyFocus has been called since the last time it
+    // was released with releaseKeyFocus.
+    int _keyFocusStolenCount;
 }
 
 
@@ -1084,7 +1089,8 @@ static const int kDragThreshold = 3;
     _drawingHelper.reverseVideo = [[_dataSource terminal] reverseVideo];
     _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
     _drawingHelper.isInKeyWindow = [self isInKeyWindow];
-    _drawingHelper.shouldDrawFilledInCursor = [self.delegate textViewShouldDrawFilledInCursor];
+    // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
+    _drawingHelper.shouldDrawFilledInCursor = ([self.delegate textViewShouldDrawFilledInCursor] || _keyFocusStolenCount);
     _drawingHelper.isFrontTextView = (self == [[iTermController sharedInstance] frontTextView]);
     _drawingHelper.haveUnderlinedHostname = (self.currentUnderlineHostname != nil);
     _drawingHelper.transparencyAlpha = [self transparencyAlpha];
@@ -1742,12 +1748,60 @@ static const int kDragThreshold = 3;
     [pointer_ swipeWithEvent:event];
 }
 
+// Uses an undocumented/deprecated API to receive key presses even when inactive.
+- (BOOL)stealKeyFocus {
+    // Make sure everything needed for focus stealing exists in this version of Mac OS.
+    CPSGetCurrentProcessFunction *getCurrentProcess = GetCPSGetCurrentProcessFunction();
+    CPSStealKeyFocusFunction *stealKeyFocus = GetCPSStealKeyFocusFunction();
+    CPSReleaseKeyFocusFunction *releaseKeyFocus = GetCPSReleaseKeyFocusFunction();
+    
+    if (!getCurrentProcess || !stealKeyFocus || !releaseKeyFocus) {
+        return NO;
+    }
+    
+    CPSProcessSerNum psn;
+    if (getCurrentProcess(&psn) == noErr) {
+        return stealKeyFocus(&psn) == noErr;
+    }
+    
+    return NO;
+}
+
+// Undoes -stealKeyFocus.
+- (void)releaseKeyFocus {
+    CPSGetCurrentProcessFunction *getCurrentProcess = GetCPSGetCurrentProcessFunction();
+    CPSReleaseKeyFocusFunction *releaseKeyFocus = GetCPSReleaseKeyFocusFunction();
+    
+    if (!getCurrentProcess || !releaseKeyFocus) {
+        return;
+    }
+
+    CPSProcessSerNum psn;
+    if (getCurrentProcess(&psn) == noErr) {
+        releaseKeyFocus(&psn);
+    }
+}
+
+
 - (void)mouseExited:(NSEvent *)event {
+    if (_keyFocusStolenCount) {
+        for (int i = 0; i < _keyFocusStolenCount; i++) {
+            [self releaseKeyFocus];
+        }
+        _keyFocusStolenCount = 0;
+        [self setNeedsDisplay:YES];
+    }
     [self resetMouseLocationToRefuseFirstResponderAt];
     [self updateUnderlinedURLs:event];
 }
 
 - (void)mouseEntered:(NSEvent *)event {
+    if ([iTermAdvancedSettingsModel stealKeyFocus]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] && [self stealKeyFocus]) {
+            ++_keyFocusStolenCount;
+            [self setNeedsDisplay:YES];
+        }
+    }
     [self updateCursor:event];
     [self updateUnderlinedURLs:event];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
@@ -1762,8 +1816,14 @@ static const int kDragThreshold = 3;
             obj = [[NSApp keyWindow] windowController];
         }
         if (!NSEqualPoints(_mouseLocationToRefuseFirstResponderAt, [NSEvent mouseLocation])) {
-            if ([NSApp isActive] && ![obj disableFocusFollowsMouse]) {
-                [[self window] makeKeyWindow];
+            if ([iTermAdvancedSettingsModel stealKeyFocus]) {
+                if (![obj disableFocusFollowsMouse]) {
+                    [[self window] makeKeyWindow];
+                }
+            } else {
+                if ([NSApp isActive] && ![obj disableFocusFollowsMouse]) {
+                    [[self window] makeKeyWindow];
+                }
             }
             if ([self isInKeyWindow]) {
                 [_delegate textViewDidBecomeFirstResponder];

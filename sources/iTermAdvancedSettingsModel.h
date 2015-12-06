@@ -118,6 +118,7 @@
 + (BOOL)requireCmdForDraggingText;
 + (double)tabAutoShowHoldTime;
 + (BOOL)doubleReportScrollWheel;
++ (BOOL)stealKeyFocus;
 + (BOOL)allowDragOfTabIntoNewWindow;
 + (BOOL)typingClearsSelection;
 
