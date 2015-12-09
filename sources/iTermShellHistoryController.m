@@ -257,8 +257,13 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 
 - (void)saveObjectGraph {
     NSError *error = nil;
-    if (![_managedObjectContext save:&error]) {
-        NSLog(@"Failed to save command history: %@", error);
+    @try {
+        if (![_managedObjectContext save:&error]) {
+            NSLog(@"Failed to save command history: %@", error);
+        }
+    }
+    @catch (NSException *exception) {
+        NSLog(@"Exception while saving managed object context: %@", exception);
     }
 }
 
