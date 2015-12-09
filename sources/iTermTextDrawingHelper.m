@@ -567,11 +567,15 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
     NSDictionary *attributes;
     if (self.isRetina) {
-        attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
+        attributes = @{ NSFontAttributeName: [NSFont userFixedPitchFontOfSize:10],
                         NSForegroundColorAttributeName: fgColor,
                         NSShadowAttributeName: shadow };
     } else {
-        attributes = @{ NSFontAttributeName: [NSFont boldSystemFontOfSize:10],
+        NSFont *font = [NSFont userFixedPitchFontOfSize:10];    
+        attributes = @{ NSFontAttributeName: [[NSFontManager sharedFontManager] fontWithFamily:font.familyName
+                                                                                        traits:NSBoldFontMask
+                                                                                        weight:0
+                                                                                          size:font.pointSize],
                         NSForegroundColorAttributeName: fgColor };
     }
     CGFloat offset = (_cellSize.height - size.height) / 2;
