@@ -7,6 +7,7 @@
 //
 
 #import "iTermIndicatorsHelper.h"
+#import "DebugLogging.h"
 
 static NSDictionary *gIndicatorImages;
 
@@ -117,6 +118,8 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 }
 
 - (void)drawInFrame:(NSRect)frame {
+    DLog(@"drawInFrame %@", NSStringFromRect(frame));
+
     // Draw top-right indicators.
     NSArray *sequentialIdentifiers = [iTermIndicatorsHelper sequentiaIndicatorlIdentifiers];
     static const CGFloat kIndicatorTopMargin = 4;
@@ -167,20 +170,28 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     const CGFloat kMaxFullScreenFlashAlpha = 0.5;
     static const NSTimeInterval kFullScreenFlashDuration = 0.3;
     CGFloat fullScreenAlpha = MAX(0, 1.0 - elapsed / kFullScreenFlashDuration) * kMaxFullScreenFlashAlpha;
+    DLog(@"elapsed=%@, fullScreenAlpha=%@", @(elapsed), @(fullScreenAlpha));
     if (fullScreenAlpha > 0) {
+        DLog(@"Drawing full screen flash overlay");
         [[[_delegate indicatorFullScreenFlashColor] colorWithAlphaComponent:fullScreenAlpha] set];
         NSRectFillUsingOperation(frame, NSCompositeSourceOver);
     } else if (_fullScreenFlashStartTime > 0 && fullScreenAlpha == 0) {
+        DLog(@"Not drawing full screen flash overlay and resetting fullScreenFlashStartTime");
         _fullScreenFlashStartTime = 0;
     }
+    DLog(@"Set haveSetNeedsDisplay=NO");
     _haveSetNeedsDisplay = NO;
 }
 
 - (void)checkForFlashUpdate {
+    DLog(@"Check for flash update. full screen flash start time is %@, haveSetNeedsDisplay=%@",
+         @(_fullScreenFlashStartTime), @(_haveSetNeedsDisplay));
     if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
         if (!_haveSetNeedsDisplay) {
+            DLog(@"Tell delegate %@ setNeedsDisplay", _delegate);
             [_delegate setNeedsDisplay:YES];
         }
+        DLog(@"Set haveSetNeedsDisplay=YES");
         _haveSetNeedsDisplay = YES;
     }
 
@@ -194,6 +205,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
     // Request another update if needed.
     if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
+        DLog(@"Schedule another call to checkForFlashUpdate");
         [self performSelector:@selector(checkForFlashUpdate) withObject:nil afterDelay:1 / 60.0];
     }
 }
