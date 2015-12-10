@@ -2280,7 +2280,8 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification {
-    DLog(@"windowDidBecomeKey:%@", aNotification);
+    DLog(@"windowDidBecomeKey:%@ window=%@ stack:\n%@",
+         aNotification, self.window, [NSThread callStackSymbols]);
 
     [iTermQuickLookController dismissSharedPanel];
 #if ENABLE_SHORTCUT_ACCESSORY

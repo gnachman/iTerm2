@@ -63,11 +63,14 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 
     [NSApp activateIgnoringOtherApps:YES];
     [[term window] makeKeyAndOrderFront:nil];
+    
+    [NSAnimationContext beginGrouping];
     [[NSAnimationContext currentContext] setDuration:[iTermAdvancedSettingsModel hotkeyTermAnimationDuration]];
+    [[NSAnimationContext currentContext] setCompletionHandler:^{
+        [[HotkeyWindowController sharedInstance] rollInFinished];
+    }];
     [[[term window] animator] setAlphaValue:1];
-    [[HotkeyWindowController sharedInstance] performSelector:@selector(rollInFinished)
-                                                  withObject:nil
-                                                  afterDelay:[[NSAnimationContext currentContext] duration]];
+    [NSAnimationContext endGrouping];
 }
 
 - (instancetype)init {
