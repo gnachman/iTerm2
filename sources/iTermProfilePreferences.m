@@ -203,7 +203,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_PROMPT_CLOSE: @(PROMPT_NEVER),
                   KEY_UNDO_TIMEOUT: @(5),
                   KEY_JOBS: @[],
-                  KEY_REDUCE_FLICKER: @YES,
+                  KEY_REDUCE_FLICKER: @NO,
                   KEY_AUTOLOG: @NO,
                   KEY_LOGDIR: @"",
                   KEY_SEND_CODE_WHEN_IDLE: @NO,
