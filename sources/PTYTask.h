@@ -58,6 +58,8 @@ extern NSString *kCoprocessStatusChangeNotification;
            environment:(NSDictionary*)env
                  width:(int)width
                 height:(int)height
+            pixelWidth:(int)pixelWidth
+           pixelHeight:(int)pixelHeight
                 isUTF8:(BOOL)isUTF8;
 
 - (NSString*)currentJob:(BOOL)forceRefresh;
@@ -65,7 +67,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (void)writeTask:(NSData*)data;
 
 - (void)sendSignal:(int)signo;
-- (void)setWidth:(int)width height:(int)height;
+- (void)setWidth:(int)width height:(int)height pixelWidth:(int)pixelWidth pixelHeight:(int)pixelHeight;
 - (void)stop;
 
 

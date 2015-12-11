@@ -1169,7 +1169,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 {
     DLog(@"Set session %@ to %dx%d", self, width, height);
     [_screen resizeWidth:width height:height];
-    [_shell setWidth:width height:height];
+    [_shell setWidth:width height:height pixelWidth:width*_textview.charWidth pixelHeight:height*_textview.lineHeight];
     [_textview clearHighlights];
     [[_tab realParentWindow] invalidateRestorableState];
 }
@@ -1346,8 +1346,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_shell launchWithPath:program
                  arguments:arguments
                environment:env
-                     width:[_screen width]
-                    height:[_screen height]
+                     width:_screen.width
+                    height:_screen.height
+                pixelWidth:_screen.width * _textview.charWidth
+               pixelHeight:_screen.height * _textview.lineHeight
                     isUTF8:isUTF8];
     NSString *initialText = _profile[KEY_INITIAL_TEXT];
     if ([initialText length]) {
@@ -1994,7 +1996,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     _shell = [[PTYTask alloc] init];
     [_shell setDelegate:self];
     [_shell setWidth:_screen.width
-              height:_screen.height];
+              height:_screen.height
+          pixelWidth:_screen.width * _textview.charWidth
+         pixelHeight:_screen.height * _textview.lineHeight];
     [self startProgram:_program
            environment:_environment
                 isUTF8:_isUTF8
