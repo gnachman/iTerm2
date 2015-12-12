@@ -209,6 +209,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
                                                    textExtractor:extractor
                                                                y:y
                                                             line:line];
+        DLog(@"y position for line %@ is %@", @(runsInLine.y), @(line));
         [backgroundRunArrays addObject:runsInLine];
     }
 
@@ -775,6 +776,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     if (currentRun->attrs.fakeItalic) {
         m21 = 0.2;
     }
+    DLog(@"Draw run at y=%@ because the initialPoint.y=%@ + cellSize.height=%@ + baselineOffset=%@", @(y), @(initialPoint.y), @(_cellSize.height), @(currentRun->attrs.fontInfo.baselineOffset));
     CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
                                                       m21, -1.0,
                                                       x, y));
@@ -1142,10 +1144,19 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
 
 - (NSRect)cursorFrame {
     const int rowNumber = _cursorCoord.y + _numberOfLines - _gridSize.height;
-    return NSMakeRect(floor(_cursorCoord.x * _cellSize.width + MARGIN),
-                      rowNumber * _cellSize.height + (_cellSize.height - _cellSizeWithoutSpacing.height),
-                      MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
-                      _cellSizeWithoutSpacing.height);
+    NSRect rect = NSMakeRect(floor(_cursorCoord.x * _cellSize.width + MARGIN),
+                             rowNumber * _cellSize.height + (_cellSize.height - _cellSizeWithoutSpacing.height),
+                             MIN(_cellSize.width, _cellSizeWithoutSpacing.width),
+                             _cellSizeWithoutSpacing.height);
+    DLog(@"cursorCoord.y%@ numberOfLines=%@ gridSize.height=%@ rowNumber=%@ cellSize.height=%@ cellSizeWithoutSpacing.height=%@ cursorFrame=%@",
+         @(_cursorCoord.y),
+         @(_numberOfLines),
+         @(_gridSize.height),
+         @(rowNumber),
+         @(_cellSize.height),
+         @(_cellSizeWithoutSpacing.height),
+         NSStringFromRect(rect));
+    return rect;
 }
 
 - (void)drawCursor {

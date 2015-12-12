@@ -643,6 +643,7 @@ static const int kDragThreshold = 3;
 
     _charWidthWithoutSpacing = sz.width;
     _charHeightWithoutSpacing = sz.height;
+    DLog(@"Set font to %@. The new charHeightWithoutSpacing is %@", aFont, @(_charHeightWithoutSpacing));
     _horizontalSpacing = horizontalSpacing;
     _verticalSpacing = verticalSpacing;
     self.charWidth = ceil(_charWidthWithoutSpacing * horizontalSpacing);
@@ -697,6 +698,7 @@ static const int kDragThreshold = 3;
 }
 
 - (void)setLineHeight:(double)aLineHeight {
+    DLog(@"Set line height to %@ from %@", @(aLineHeight), [NSThread callStackSymbols]);
     _lineHeight = ceil(aLineHeight);
     _drawingHelper.cellSize = NSMakeSize(_charWidth, _lineHeight);
     _drawingHelper.cellSizeWithoutSpacing = NSMakeSize(_charWidthWithoutSpacing, _charHeightWithoutSpacing);
