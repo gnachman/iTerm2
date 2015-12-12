@@ -109,7 +109,8 @@ static const int kDragThreshold = 3;
     iTermIndicatorsHelperDelegate,
     iTermSelectionDelegate,
     iTermSelectionScrollHelperDelegate,
-    NSDraggingSource>
+    NSDraggingSource,
+    NSMenuDelegate>
 
 // Set the hostname this view is currently waiting for AsyncHostLookupController to finish looking
 // up.
@@ -119,6 +120,12 @@ static const int kDragThreshold = 3;
 @property(nonatomic, retain) iTermFindCursorView *findCursorView;
 @property(nonatomic, retain) NSWindow *findCursorWindow;  // For find-cursor animation
 @property(nonatomic, retain) iTermQuickLookController *quickLookController;
+
+// Set when a context menu opens, nilled when it closes. If the data source changes between when we
+// ask the context menu to open and when the main thread enters a tracking runloop, the text under
+// the selection can change. We want to respect what we show while the context menu is open.
+// See issue 4048.
+@property(nonatomic, copy) NSString *savedSelectedText;
 @end
 
 
@@ -382,6 +389,8 @@ static const int kDragThreshold = 3;
     [_badgeLabel release];
     [_quickLookController close];
     [_quickLookController release];
+    [_savedSelectedText release];
+
     [super dealloc];
 }
 
@@ -2466,12 +2475,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   workingDirectory:action.workingDirectory
                                             prefix:extendedPrefix
                                             suffix:extendedSuffix]) {
-                    [self _findUrlInString:action.string andOpenInBackground:openInBackground];
+                    [self findUrlInString:action.string andOpenInBackground:openInBackground];
                 }
                 break;
             }
             case kURLActionOpenURL:
-                [self _findUrlInString:action.string andOpenInBackground:openInBackground];
+                [self findUrlInString:action.string andOpenInBackground:openInBackground];
                 break;
 
             case kURLActionSmartSelectionAction: {
@@ -2561,19 +2570,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+// Called for a right click that isn't control+click (e.g., two fingers on trackpad).
 - (void)openContextMenuWithEvent:(NSEvent *)event {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     openingContextMenu_ = YES;
 
     // Slowly moving away from using NSPoint for integer coordinates.
     _validationClickPoint = VT100GridCoordMake(clickPoint.x, clickPoint.y);
-    [NSMenu popUpContextMenu:[self contextMenuWithEvent:event] withEvent:event forView:self];
+    NSMenu *menu = [self contextMenuWithEvent:event];
+    menu.delegate = self;
+    [NSMenu popUpContextMenu:menu withEvent:event forView:self];
     _validationClickPoint = VT100GridCoordMake(-1, -1);
     openingContextMenu_ = NO;
 }
 
-- (NSMenu *)contextMenuWithEvent:(NSEvent *)event
-{
+- (NSMenu *)contextMenuWithEvent:(NSEvent *)event {
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     int x = clickPoint.x;
     int y = clickPoint.y;
@@ -2605,6 +2616,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // If all we selected was white space, undo it.
             [_selection release];
             _selection = [savedSelection retain];
+            self.savedSelectedText = [self selectedText];
+        } else {
+            self.savedSelectedText = text;
         }
     }
     [self setNeedsDisplay:YES];
@@ -3020,6 +3034,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (NSString *)selectedText {
+    if (_savedSelectedText) {
+        DLog(@"Returning saved selected text");
+        return _savedSelectedText;
+    }
     return [self selectedTextCappedAtSize:0];
 }
 
@@ -3652,7 +3670,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_delegate insertText:command];
 }
 
-// This method is called by control-click or by clicking the gear icon in the session title bar.
+// This method is called by control-click or by clicking the hamburger icon in the session title bar.
 // Two-finger tap (or presumably right click with a mouse) would go through mouseUp->
 // PointerController->openContextMenuWithEvent.
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent {
@@ -3661,10 +3679,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if ([iTermPreferences boolForKey:kPreferenceKeyControlLeftClickBypassesContextMenu]) {
             return nil;
         }
-        return [self contextMenuWithEvent:theEvent];
+        NSMenu *menu = [self contextMenuWithEvent:theEvent];
+        menu.delegate = self;
+        return menu;
     } else {
-        // Gear icon in session title view.
-        return [self titleBarMenu];
+        // Hamburger icon in session title view.
+        NSMenu *menu = [self titleBarMenu];
+        self.savedSelectedText = [self selectedText];
+        menu.delegate = self;
+        return menu;
     }
 }
 
@@ -4340,8 +4363,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)browse:(id)sender {
-    [self _findUrlInString:[self selectedText]
-          andOpenInBackground:NO];
+    [self findUrlInString:[self selectedText] andOpenInBackground:NO];
 }
 
 - (void)searchInBrowser:(id)sender
@@ -4349,8 +4371,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString* url =
         [NSString stringWithFormat:[iTermAdvancedSettingsModel searchCommand],
                                    [[self selectedText] stringWithPercentEscape]];
-    [self _findUrlInString:url
-          andOpenInBackground:NO];
+    [self findUrlInString:url andOpenInBackground:NO];
 }
 
 #pragma mark - Drag and Drop
@@ -5931,7 +5952,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 // If iTerm2 is the handler for the scheme, then the bookmark is launched directly.
 // Otherwise it's passed to the OS to launch.
-- (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background {
+- (void)findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background {
     DLog(@"findUrlInString:%@", aURLString);
     NSRange range = [aURLString rangeOfURLInString];
     if (range.location == NSNotFound) {
@@ -6868,6 +6889,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (int)accessibilityHelperNumberOfLines {
     return MIN([iTermAdvancedSettingsModel numberOfLinesForAccessibility],
                [_dataSource numberOfLines]);
+}
+
+#pragma mark - NSMenuDelegate
+
+- (void)menuDidClose:(NSMenu *)menu {
+    self.savedSelectedText = nil;
 }
 
 @end
