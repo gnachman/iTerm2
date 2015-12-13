@@ -2482,30 +2482,31 @@ do { \
 - (void)testCoordinateBefore {
     VT100Grid *grid = [self smallGrid];
     // Test basic case
-    VT100GridCoord coord = [grid coordinateBefore:VT100GridCoordMake(1, 0)];
+    VT100GridCoord coord = [grid coordinateBefore:VT100GridCoordMake(1, 0)
+                         movedBackOverDoubleWidth:nil];
     XCTAssert(coord.x == 0);
     XCTAssert(coord.y == 0);
 
     // Test failure to move before grid
-    coord = [grid coordinateBefore:VT100GridCoordMake(0, 0)];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 0) movedBackOverDoubleWidth:nil];
     XCTAssert(coord.x == -1);
     XCTAssert(coord.y == -1);
 
     // Test simple wrap-back over EOL_SOFT
     grid = [self gridFromCompactLinesWithContinuationMarks:@"ab+\ncd!"];
-    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1) movedBackOverDoubleWidth:nil];
     XCTAssert(coord.x == 1);
     XCTAssert(coord.y == 0);
 
     // Test failure to wrap-back across EOL_HARD
     grid = [self gridFromCompactLinesWithContinuationMarks:@"ab!\ncd!"];
-    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1) movedBackOverDoubleWidth:nil];
     XCTAssert(coord.x == -1);
     XCTAssert(coord.y == -1);
 
     // Test wrap-back over EOL_DWC + DWC_SKIP
     grid = [self gridFromCompactLinesWithContinuationMarks:@"a>>\nC-!"];
-    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1) movedBackOverDoubleWidth:nil];
     XCTAssert(coord.x == 0);
     XCTAssert(coord.y == 0);
 
@@ -2513,19 +2514,19 @@ do { \
     grid = [self gridFromCompactLinesWithContinuationMarks:@"abcd!\nefgh!"];
     grid.scrollRegionCols = VT100GridRangeMake(1, 2);
     grid.useScrollRegionCols = YES;
-    coord = [grid coordinateBefore:VT100GridCoordMake(1, 1)];
+    coord = [grid coordinateBefore:VT100GridCoordMake(1, 1) movedBackOverDoubleWidth:nil];
     XCTAssert(coord.x == 2);
     XCTAssert(coord.y == 0);
 
     // Test moving back over DWC_RIGHT
     grid = [self gridFromCompactLinesWithContinuationMarks:@"A-b!"];
-    coord = [grid coordinateBefore:VT100GridCoordMake(2, 0)];
+    coord = [grid coordinateBefore:VT100GridCoordMake(2, 0) movedBackOverDoubleWidth:nil];
     XCTAssert(coord.x == 0);
     XCTAssert(coord.y == 0);
 
     // Test wrap + skip over dwc
     grid = [self gridFromCompactLinesWithContinuationMarks:@"aB-+\ncde!"];
-    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1)];
+    coord = [grid coordinateBefore:VT100GridCoordMake(0, 1) movedBackOverDoubleWidth:nil];
     XCTAssert(coord.x == 1);
     XCTAssert(coord.y == 0);
 }

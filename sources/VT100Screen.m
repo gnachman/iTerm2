@@ -966,7 +966,9 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         buffer = staticBuffer;
     }
 
-    VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor];
+    BOOL predecessorIsDoubleWidth = NO;
+    VT100GridCoord pred = [currentGrid_ coordinateBefore:currentGrid_.cursor
+                                movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
     NSString *augmentedString = string;
     NSString *predecessorString = pred.x >= 0 ? [currentGrid_ stringForCharacterAt:pred] : nil;
     BOOL augmented = predecessorString != nil;
@@ -998,7 +1000,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         theLine[pred.x].complexChar = buffer[0].complexChar;
         bufferOffset++;
 
-        // TODO: What if buffer[1] is a DWC_RIGHT because string[0] was a low surrogate?
+        if (predecessorIsDoubleWidth && len > 1 && buffer[1].code == DWC_RIGHT) {
+            // Skip over a preexisting DWC_RIGHT in the predecessor.
+            bufferOffset++;
+        }
     } else if (!buffer[0].complexChar) {
         // We infer that the first character in |string| was not a combining mark. If it were, it
         // would have combined with the space we added to the start of |augmentedString|. Skip past

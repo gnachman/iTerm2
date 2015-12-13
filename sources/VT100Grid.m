@@ -1777,7 +1777,7 @@ static NSString *const kGridSizeKey = @"Size";
     }
 }
 
-- (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord {
+- (VT100GridCoord)coordinateBefore:(VT100GridCoord)coord movedBackOverDoubleWidth:(BOOL *)dwc {
     // set cx, cy to the char before the given coordinate.
     VT100GridCoord invalid = VT100GridCoordMake(-1, -1);
     int cx = coord.x;
@@ -1815,11 +1815,16 @@ static NSString *const kGridSizeKey = @"Size";
     screen_char_t *line = [self screenCharsAtLineNumber:cy];
     if (line[cx].code == DWC_RIGHT) {
         if (cx > 0) {
+            if (dwc) {
+                *dwc = YES;
+            }
             cx--;
         } else {
             // This should never happen.
             return invalid;
         }
+    } else if (dwc) {
+        *dwc = NO;
     }
 
     return VT100GridCoordMake(cx, cy);
