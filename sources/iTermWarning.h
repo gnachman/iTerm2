@@ -46,4 +46,22 @@ typedef NS_ENUM(NSInteger, iTermWarningSelection) {
                                   silenceable:(iTermWarningType)warningType
                                       heading:(NSString *)heading;
 
+// actionToSelectionMap gives the iTermWarningSelection that should be returned for each entry in
+// actions. It must be in 1:1 correspondence with actions. It is useful because it allows you to add
+// a new action in the middle of the actions array without invalidating a saved selection. If nil
+// then the first selection is Selection0, second is Selection1, etc. For example, if you originally
+// had actions = [ "Hide", "Kill" ] and a user saved "Kill" as their default, then NSUserDefaults
+// would store a value of kiTermWarningSelection1. If you then change actions to [ "Hide", "Cancel", "Kill" ],
+// you want Kill to still be iTermWarningSelection1, even though Cancel is in the second position,
+// so the saved preference will be respected. In that case, you'd use an actionToSelectionMap of
+// [ kiTermWawrningSelection0, kiTermWarningSelection2, kItermWarningSelection1 ], which has the
+// effect of making Cancel return Selection2 even though it's in the second position.
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
+                                    accessory:(NSView *)accessory
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString *)heading;
+
 @end

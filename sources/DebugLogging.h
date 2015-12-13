@@ -39,6 +39,7 @@ extern BOOL gDebugLogging;
 //#define GENERAL_VERBOSE_LOGGING
 #ifdef GENERAL_VERBOSE_LOGGING
 #define DLog NSLog
+#define ELog NSLog
 #else
 #define DLog(args...) \
     do { \
@@ -46,7 +47,14 @@ extern BOOL gDebugLogging;
             DebugLogImpl(__FILE__, __LINE__, __FUNCTION__, [NSString stringWithFormat:args]); \
         } \
     } while (0)
+// Error log: write to debug log and system log.
+#define ELog(args...) \
+    do { \
+        DLog(args); \
+        NSLog(args); \
+    } while (0)
 #endif
+
 
 void ToggleDebugLogging(void);
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value);

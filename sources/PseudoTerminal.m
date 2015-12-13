@@ -1151,12 +1151,15 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         iTermWarningSelection selection =
             [iTermWarning showWarningWithTitle:@"Kill tmux window, terminating its jobs, or hide it? "
                                                @"Hidden windows may be restored from the tmux dashboard."
-                                       actions:@[ @"Hide", @"Kill" ]
+                                       actions:@[ @"Hide", @"Cancel", @"Kill" ]
+                                 actionMapping:@[ @(kiTermWarningSelection0), @(kiTermWarningSelection2), @(kiTermWarningSelection1)]
+                                     accessory:nil
                                     identifier:@"ClosingTmuxTabKillsTmuxWindows"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable];
+                                   silenceable:kiTermWarningTypePermanentlySilenceable
+                                       heading:nil];
         if (selection == kiTermWarningSelection1) {
             [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
-        } else {
+        } else if (selection == kiTermWarningSelection0) {
             [[aTab tmuxController] hideWindow:[aTab tmuxWindow]];
         }
         return;

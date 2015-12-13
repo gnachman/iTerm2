@@ -1,5 +1,7 @@
 #import "iTermWarning.h"
 
+#import "DebugLogging.h"
+
 static const NSTimeInterval kTemporarySilenceTime = 600;
 static NSString *const kCancel = @"Cancel";
 static id<iTermWarningHandler> gWarningHandler;
@@ -43,6 +45,22 @@ static BOOL gShowingWarning;
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
+                                    accessory:(NSView *)accessory
+                                   identifier:(NSString *)identifier
+                                  silenceable:(iTermWarningType)warningType
+                                      heading:(NSString *)heading {
+    return [self showWarningWithTitle:title
+                              actions:actions
+                        actionMapping:nil
+                            accessory:accessory
+                           identifier:identifier
+                          silenceable:warningType
+                              heading:heading];
+}
+
++ (iTermWarningSelection)showWarningWithTitle:(NSString *)title
+                                      actions:(NSArray *)actions
+                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
                                     accessory:(NSView *)accessory
                                    identifier:(NSString *)identifier
                                   silenceable:(iTermWarningType)warningType
@@ -101,15 +119,15 @@ static BOOL gShowingWarning;
     iTermWarningSelection selection;
     switch (result) {
         case NSAlertDefaultReturn:
-            selection = kiTermWarningSelection0;
+            selection = [self remapSelection:kiTermWarningSelection0 withMapping:actionToSelectionMap];
             remember = ![actions[0] isEqualToString:kCancel];
             break;
         case NSAlertAlternateReturn:
-            selection = kiTermWarningSelection1;
+            selection = [self remapSelection:kiTermWarningSelection1 withMapping:actionToSelectionMap];
             remember = ![actions[1] isEqualToString:kCancel];
             break;
         case NSAlertOtherReturn:
-            selection = kiTermWarningSelection2;
+            selection = [self remapSelection:kiTermWarningSelection2 withMapping:actionToSelectionMap];
             remember = ![actions[2] isEqualToString:kCancel];
             break;
         default:
@@ -132,6 +150,18 @@ static BOOL gShowingWarning;
     }
 
     return selection;
+}
+
++ (iTermWarningSelection)remapSelection:(iTermWarningSelection)pre
+                            withMapping:(NSArray<NSNumber *> *)mapping {
+    if (!mapping) {
+        return pre;
+    }
+    if (pre < 0 || pre >= mapping.count) {
+        ELog(@"Selected value %@ is out of range for mapping %@", @(pre), mapping);
+        return pre;
+    }
+    return [mapping[pre] integerValue];
 }
 
 #pragma mark - Private
