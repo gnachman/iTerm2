@@ -1,5 +1,7 @@
 #import "NMSSH.h"
 
+@class NMSFTPFile;
+
 /**
  NMSFTP provides functionality for working with SFTP servers.
  */
