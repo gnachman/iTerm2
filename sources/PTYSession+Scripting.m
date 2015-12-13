@@ -74,7 +74,7 @@
     }
     if (text != nil) {
         if (newline) {
-            aString = [NSString stringWithFormat:@"%@\n", text];
+            aString = [NSString stringWithFormat:@"%@\r", text];
             data = [aString dataUsingEncoding:[self.terminal encoding]];
         } else {
             data = [text dataUsingEncoding:[self.terminal encoding]];
