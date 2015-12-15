@@ -6835,12 +6835,14 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                                      forObjectType:objectType];
         if ([pwd length] == 0) {
             if (oldCWD) {
+                DLog(@"XXX oldCWD = %@", oldCWD);
                 pwd = oldCWD;
             } else {
                 pwd = NSHomeDirectory();
             }
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
+        DLog(@"XXX New env dictionary is %@", env);
         isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
         [self setName:name forSession:aSession];
         // Start the command
@@ -7094,6 +7096,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             pwd = NSHomeDirectory();
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
+        DLog(@"XXX env dictionary is %@", env);
         BOOL isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
         [self setName:[name stringByPerformingSubstitutions:substitutions]

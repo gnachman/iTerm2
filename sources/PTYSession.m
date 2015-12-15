@@ -784,6 +784,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                     // so it will be properly restored.
                     NSMutableDictionary *temp = [[aSession.environment mutableCopy] autorelease];
                     temp[PWD_ENVNAME] = oldCWD;
+                    DLog(@"XXX set temp[PWD] to %@", oldCWD);
                     aSession.environment = temp;
 
                     if ([aSession.program isEqualToString:[ITAddressBookMgr standardLoginCommand]]) {
@@ -1142,6 +1143,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     NSString *theName = [profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
 
     if (forceUseOldCWD) {
+        DLog(@"XXX oldCWD is %@", oldCWD);
         pwd = oldCWD;
     } else {
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:profile
@@ -1149,6 +1151,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     if ([pwd length] == 0) {
         if (oldCWD) {
+            DLog(@"XXX oldCWD is %@", oldCWD);
             pwd = oldCWD;
         } else {
             pwd = NSHomeDirectory();
@@ -1282,6 +1285,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
          environment:(NSDictionary *)environment
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions {
+    DLog(@"XXX start program with environment %@", environment);
     self.program = command;
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
@@ -1329,6 +1333,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if (env[PWD_ENVNAME] == nil) {
         // Set "PWD"
         env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
+        DLog(@"XXX Expanson of %@ is %@", PWD_ENVVALUE, env[PWD_ENVNAME]);
     }
 
     NSString *itermId = [self sessionId];

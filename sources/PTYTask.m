@@ -213,6 +213,14 @@ static void HandleSigChld(int n)
     return result;
 }
 
+static NSString *HexDump(char *s) {
+    NSMutableString *temp = [NSMutableString string];
+    for (int i = 0; s[i]; i++) {
+        [temp appendFormat:@"%02x ", ((unsigned int)s[i]) & 0xff];
+    }
+    return temp;
+}
+
 // Returns an array of C strings terminated with a null pointer of the form
 // KEY=VALUE that is based on this process's "environ" variable. Values passed
 // in "env" are added or override existing environment vars. Both the returned
@@ -223,11 +231,13 @@ static void HandleSigChld(int n)
     for (NSString *k in env) {
         environmentDict[k] = env[k];
     }
+    DLog(@"XXX Construct environment array from dictionary:\n%@", env);
     char **environment = malloc(sizeof(char*) * (environmentDict.count + 1));
     int i = 0;
     for (NSString *k in environmentDict) {
         NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
         environment[i++] = strdup([temp UTF8String]);
+        DLog(@"XXX Environment entry %d: %s (%@)", i, environment[i - 1], HexDump(environment[i - 1]));
     }
     environment[i] = NULL;
     return environment;
@@ -471,6 +481,7 @@ static int MyForkPty(int *amaster,
 
     // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
     const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
+    DLog(@"XXX initialPwd is %s", initialPwd);
     pid_t pid;
     int connectionFd = -1;
     if ([iTermAdvancedSettingsModel runJobsInServers]) {
