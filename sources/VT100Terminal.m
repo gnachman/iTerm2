@@ -540,7 +540,7 @@ static const int kMaxScreenRows = 4096;
                 [delegate_ terminalMouseModeDidChangeTo:_mouseMode];
                 break;
             case 1004:
-                self.reportFocus = mode;
+                self.reportFocus = mode && [delegate_ terminalFocusReportingEnabled];
                 break;
 
             case 1005:

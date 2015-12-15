@@ -121,5 +121,6 @@
 + (BOOL)stealKeyFocus;
 + (BOOL)allowDragOfTabIntoNewWindow;
 + (BOOL)typingClearsSelection;
++ (BOOL)focusReportingEnabled;
 
 @end

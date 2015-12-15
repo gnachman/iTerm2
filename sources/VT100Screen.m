@@ -3460,6 +3460,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [delegate_ screenSetTabColorBlueComponentTo:color];
 }
 
+- (BOOL)terminalFocusReportingEnabled {
+    return [iTermAdvancedSettingsModel focusReportingEnabled];
+}
+
 - (NSColor *)terminalColorForIndex:(int)index {
     if (index < 0 || index > 255) {
         return nil;
