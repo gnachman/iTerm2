@@ -3054,7 +3054,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         (windowType_ != WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
          !_isHotKeyWindow &&  // NSWindowCollectionBehaviorFullScreenAuxiliary window can't enter Lion fullscreen mode properly
          [iTermPreferences boolForKey:kPreferenceKeyLionStyleFullscren])) {
-        // Is 10.7 Lion or later.
+        // Native fullscreen path
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
         if (lionFullScreen_) {
             // will exit fullscreen
@@ -3312,8 +3312,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     liveResize_ = YES;
 }
 
-- (void)windowDidEndLiveResize:(NSNotification *)notification
-{
+- (void)windowDidEndLiveResize:(NSNotification *)notification {
     NSScreen *screen = self.window.screen;
     NSRect frame = self.window.frame;
     CGRect screenVisibleFrame = [screen visibleFrame];
@@ -3328,6 +3327,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             } else {
                 windowType_ = WINDOW_TYPE_TOP;
             }
+            // desiredRows/Columns get reset here to fix issue 4073. If you manually resize a window
+            // then its desired size becomes irrelevant; we want it to preserve the size you set
+            // and forget about the size in its profile. This way it will go back to the old size
+            // when toggling out of fullscreen.
+            desiredRows_ = -1;
             break;
 
         case WINDOW_TYPE_BOTTOM:
@@ -3338,6 +3342,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             } else {
                 windowType_ = WINDOW_TYPE_BOTTOM;
             }
+            desiredRows_ = -1;
             break;
 
         case WINDOW_TYPE_LEFT:
@@ -3348,6 +3353,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             } else {
                 windowType_ = WINDOW_TYPE_LEFT;
             }
+            desiredColumns_ = -1;
             break;
 
         case WINDOW_TYPE_RIGHT:
@@ -3358,6 +3364,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             } else {
                 windowType_ = WINDOW_TYPE_RIGHT;
             }
+            desiredColumns_ = -1;
             break;
 
         default:
