@@ -213,6 +213,16 @@ static void HandleSigChld(int n)
     return result;
 }
 
+static NSString *HexDump(char *thisEnv) {
+    char temp[3001];
+    char *p = temp;
+    for (int j = 0; thisEnv[j] && j < 1000; j++) {
+        sprintf(p, "%02x ", ((int)(thisEnv[j]) & 0xff));
+        p += 2;
+    }
+    return [NSString stringWithUTF8String:temp];
+}
+
 // Returns an array of C strings terminated with a null pointer of the form
 // KEY=VALUE that is based on this process's "environ" variable. Values passed
 // in "env" are added or override existing environment vars. Both the returned
@@ -228,6 +238,7 @@ static void HandleSigChld(int n)
     for (NSString *k in environmentDict) {
         NSString *temp = [NSString stringWithFormat:@"%@=%@", k, environmentDict[k]];
         environment[i++] = strdup([temp UTF8String]);
+        NSLog(@"Add environment var %@ (%@)", temp, HexDump(environment[i-1]));
     }
     environment[i] = NULL;
     return environment;

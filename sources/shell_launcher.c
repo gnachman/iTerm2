@@ -77,7 +77,7 @@ static void ExecChild(int argc, char *const *argv) {
 }
 
 // Precondition: PTY Master on fd 0, PTY Slave on fd 1, connected unix domain socket on fd 2
-int iterm2_server(int argc, char *const *argv) {
+int iterm2_server(int argc, char *const *argv, char **envp) {
     // Set up a signal handler that makes the server die with the child's status code if the child
     // dies before the server is done setting itself up.
     signal(SIGCHLD, HandleEarlySigChild);
@@ -97,7 +97,7 @@ int iterm2_server(int argc, char *const *argv) {
         iTermFileDescriptorSocketPath(path, sizeof(path), getpid());
 
         // Run the server.
-        int status = iTermFileDescriptorServerRun(path, pid, kPtySocketFileDescriptor);
+        int status = iTermFileDescriptorServerRun(path, pid, kPtySocketFileDescriptor, envp);
         return status;
     } else {
         // Fork returned an error!

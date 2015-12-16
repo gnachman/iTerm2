@@ -10,7 +10,7 @@ typedef union {
 
 // Spin up a new server. |connectionFd| comes from iTermFileDescriptorServerAccept(),
 // which should be run prior to fork()ing.
-int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd);
+int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd, char **envp);
 
 // Create a socket and listen on it. Returns the socket's file descriptor.
 // This is used for connecting a client and server prior to fork.

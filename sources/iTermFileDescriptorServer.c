@@ -214,8 +214,22 @@ static void MainLoop(char *path) {
     } while (!PerformAcceptActivity(socketFd));
 }
 
-int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd) {
+int iTermFileDescriptorServerRun(char *path, pid_t childPid, int connectionFd, char **envp) {
     int rc = Initialize(path, childPid);
+    
+    char** env;
+    for (env = envp; *env != 0; env++)
+    {
+        char* thisEnv = *env;
+        char temp[3001];
+        char *p = temp;
+        for (int j = 0; thisEnv[j] && j < 1000; j++) {
+            sprintf(p, "%02x ", ((int)(thisEnv[j]) & 0xff));
+            p += 2;
+        }
+        syslog(LOG_NOTICE, "Environment var: %s (%s)\n", thisEnv, temp);
+    }
+
     if (rc) {
         syslog(LOG_NOTICE, "Initialize failed with code %d", rc);
     } else {
