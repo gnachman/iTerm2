@@ -1169,7 +1169,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 {
     DLog(@"Set session %@ to %dx%d", self, width, height);
     [_screen resizeWidth:width height:height];
-    [_shell setWidth:width height:height pixelWidth:width*_textview.charWidth pixelHeight:height*_textview.lineHeight];
+    [_shell setWidth:width height:height pixelWidth:width * _textview.charWidth pixelHeight:height * _textview.lineHeight];
     [_textview clearHighlights];
     [[_tab realParentWindow] invalidateRestorableState];
 }
@@ -3586,6 +3586,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             [[[self tab] parentWindow] fitWindowToTab:[self tab]];
         }
     }
+
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
     if ([self isTmuxClient]) {

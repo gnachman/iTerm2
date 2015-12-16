@@ -41,10 +41,10 @@ NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotificat
 static void
 setup_tty_param(struct termios* term,
                 struct winsize* win,
-                int width,
-                int height,
-                int pixelWidth,
-                int pixelHeight,
+                unsigned short width,
+                unsigned short height,
+                unsigned short pixelWidth,
+                unsigned short pixelHeight,
                 BOOL isUTF8)
 {
     memset(term, 0, sizeof(struct termios));
@@ -415,10 +415,10 @@ static int MyForkPty(int *amaster,
 - (void)launchWithPath:(NSString *)progpath
              arguments:(NSArray *)args
            environment:(NSDictionary *)env
-                 width:(int)width
-                height:(int)height
-            pixelWidth:(int)pixelWidth
-           pixelHeight:(int)pixelHeight
+                 width:(unsigned short)width
+                height:(unsigned short)height
+            pixelWidth:(unsigned short)pixelWidth
+           pixelHeight:(unsigned short)pixelHeight
                 isUTF8:(BOOL)isUTF8 {
     struct termios term;
     struct winsize win;
@@ -803,7 +803,7 @@ static int MyForkPty(int *amaster,
     }
 }
 
-- (void)setWidth:(int)width height:(int)height pixelWidth:(int)pixelWidth pixelHeight:(int)pixelHeight
+- (void)setWidth:(unsigned short)width height:(unsigned short)height pixelWidth:(unsigned short)pixelWidth pixelHeight:(unsigned short)pixelHeight
 {
     PtyTaskDebugLog(@"Set terminal size to %dx%d", width, height);
     struct winsize winsize;
