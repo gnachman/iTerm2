@@ -3587,6 +3587,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         }
     }
 
+    // Update the TTY's winsize since lineHeight may have changed
+    [_shell setWidth:_screen.width height:_screen.height pixelWidth:_screen.width * _textview.charWidth pixelHeight:_screen.height * _textview.lineHeight];
+
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
     if ([self isTmuxClient]) {
