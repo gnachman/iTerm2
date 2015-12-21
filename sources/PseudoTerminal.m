@@ -2633,7 +2633,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     PseudoTerminal *hotkeyTerminal = nil;
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         PTYWindow *window = [term ptyWindow];
-        DLog(@"Window %@ key=%d", window, [window isKeyWindow]);
+        DLog(@"Window %@ key=%d isHotKeyWindow=%d", window, [window isKeyWindow], (int)[term isHotKeyWindow]);
         if ([window isKeyWindow] && ![term isHotKeyWindow]) {
             DLog(@"Key window is %@", window);
             otherTerminalIsKey = YES;
@@ -2645,6 +2645,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     DLog(@"%@ haveMain=%d otherTerminalIsKey=%d", self.window, haveMain, otherTerminalIsKey);
     if (hotkeyTerminal && (!haveMain || otherTerminalIsKey)) {
+        DLog(@"Return %@", hotkeyTerminal);
         return hotkeyTerminal;
     } else {
         DLog(@"No need to hide hotkey window");
@@ -2658,7 +2659,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     PseudoTerminal *hotkeyTerminal = [self hotkeyWindowToHide];
     if (hotkeyTerminal) {
-        DLog(@"Want to hide hotkey window");
+        DLog(@"Want to hide hotkey window. hotkey window's alpha=%f, autohides=%d, rolling in=%d",
+             [[hotkeyTerminal window] alphaValue],
+             (int)[iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides],
+             (int)[[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]);
         if ([[hotkeyTerminal window] alphaValue] > 0 &&
             [iTermPreferences boolForKey:kPreferenceKeyHotkeyAutoHides] &&
             ![[HotkeyWindowController sharedInstance] rollingInHotkeyTerm]) {
