@@ -720,6 +720,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p tabs=%d window=%@>",
+            [self class], self, (int)[self numberOfTabs], [self window]];
+}
+
 + (BOOL)useElCapitanFullScreenLogic {
     return [NSWindow instancesRespondToSelector:@selector(maxFullScreenContentSize)];
 }

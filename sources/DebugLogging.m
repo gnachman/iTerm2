@@ -19,13 +19,8 @@ static NSRecursiveLock *gDebugLogLock = nil;
 BOOL gDebugLogging = NO;
 
 static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) {
-    [windows appendFormat:@"\nWindow %@, frame=%@. isMain=%d  isKey=%d  isVisible=%d  alpha=%f\n%@\n",
+    [windows appendFormat:@"\nWindow %@\n%@\n",
      window,
-     [NSValue valueWithRect:window.frame],
-     (int)[window isMainWindow],
-     (int)[window isKeyWindow],
-     (int)[window isVisible],
-     [window alphaValue],
      [window.contentView iterm_recursiveDescription]];
 }
 
