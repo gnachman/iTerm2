@@ -128,7 +128,7 @@
 // for |leave|.
 - (int)resetWithLineBuffer:(LineBuffer *)lineBuffer
        unlimitedScrollback:(BOOL)unlimitedScrollback
-        preserveCursorLine:(BOOL)preserveCursorLine;
+       preservePromptLines:(int)preservePromptLines;
 
 // Move the grid contents up, leaving only the whole wrapped line the cursor is on at the top.
 - (void)moveWrappedCursorLineToTopOfGrid;

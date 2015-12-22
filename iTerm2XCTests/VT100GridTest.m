@@ -1805,7 +1805,7 @@ do { \
     [lineBuffer setMaxLines:1];
     int dropped = [grid resetWithLineBuffer:lineBuffer
                         unlimitedScrollback:NO
-                         preserveCursorLine:NO];
+                        preservePromptLines:0];
     XCTAssert(dropped == 2);
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"....\n"
@@ -1826,7 +1826,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
-                     preserveCursorLine:NO];
+                    preservePromptLines:0];
     XCTAssert(dropped == 0);
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"....\n"
@@ -1841,7 +1841,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
-                     preserveCursorLine:NO];
+                    preservePromptLines:0];
     XCTAssert(dropped == 0);
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"..\n"
@@ -1861,7 +1861,7 @@ do { \
     [lineBuffer setMaxLines:1];
     int dropped = [grid resetWithLineBuffer:lineBuffer
                         unlimitedScrollback:NO
-                         preserveCursorLine:YES];
+                        preservePromptLines:1];
     XCTAssert(dropped == 2);
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"....\n"
@@ -1887,7 +1887,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:NO
-                     preserveCursorLine:YES];
+                    preservePromptLines:1];
     XCTAssert(dropped == 1);
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"efgh\n"
@@ -1913,7 +1913,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:NO
-                     preserveCursorLine:YES];
+                    preservePromptLines:1];
     XCTAssert(dropped == 0);
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"abcd\n"
@@ -1935,7 +1935,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
-                     preserveCursorLine:YES];
+                    preservePromptLines:1];
     XCTAssert(dropped == 0);
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"....\n"
@@ -1950,7 +1950,7 @@ do { \
     [lineBuffer setMaxLines:1];
     dropped = [grid resetWithLineBuffer:lineBuffer
                     unlimitedScrollback:YES
-                     preserveCursorLine:YES];
+                    preservePromptLines:1];
     XCTAssert(dropped == 0);
     XCTAssert([[grid compactLineDump] isEqualToString:
             @"..\n"
