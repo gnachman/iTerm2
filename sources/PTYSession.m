@@ -4933,6 +4933,30 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 DLog(@"PTYSession keyDown enter key");
                 keystr = @"\015";  // Enter key -> 0x0d
             }
+            
+            // In issue 4039 we see that in some cases the numeric keypad mask isn't set properly.
+            if (keycode == kVK_ANSI_KeypadDecimal ||
+                keycode == kVK_ANSI_KeypadMultiply ||
+                keycode == kVK_ANSI_KeypadPlus ||
+                keycode == kVK_ANSI_KeypadClear ||
+                keycode == kVK_ANSI_KeypadDivide ||
+                keycode == kVK_ANSI_KeypadEnter ||
+                keycode == kVK_ANSI_KeypadMinus ||
+                keycode == kVK_ANSI_KeypadEquals ||
+                keycode == kVK_ANSI_Keypad0 ||
+                keycode == kVK_ANSI_Keypad1 ||
+                keycode == kVK_ANSI_Keypad2 ||
+                keycode == kVK_ANSI_Keypad3 ||
+                keycode == kVK_ANSI_Keypad4 ||
+                keycode == kVK_ANSI_Keypad5 ||
+                keycode == kVK_ANSI_Keypad6 ||
+                keycode == kVK_ANSI_Keypad7 ||
+                keycode == kVK_ANSI_Keypad8 ||
+                keycode == kVK_ANSI_Keypad9) {
+                DLog(@"Key code 0x%x forced to have numeric keypad mask set", (int)keycode);
+                modflag |= NSNumericPadKeyMask;
+            }
+
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
                 DLog(@"PTYSession keyDown numeric keypad");
