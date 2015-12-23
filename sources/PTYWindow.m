@@ -63,10 +63,16 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p frame=%@>",
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ title=%@ alpha=%f isMain=%d isKey=%d isVisible=%d delegate=%p>",
             [self class],
             self,
-            [NSValue valueWithRect:self.frame]];
+            [NSValue valueWithRect:self.frame],
+            self.title,
+            self.alphaValue,
+            (int)self.isMainWindow,
+            (int)self.isKeyWindow,
+            (int)self.isVisible,
+            self.delegate];
 }
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {

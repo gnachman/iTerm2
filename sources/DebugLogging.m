@@ -18,46 +18,45 @@ static NSMutableString* gDebugLogStr = nil;
 static NSRecursiveLock *gDebugLogLock = nil;
 BOOL gDebugLogging = NO;
 
-static void WriteDebugLogHeader() {
-  NSMutableString *windows = [NSMutableString string];
-  for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
-    [windows appendFormat:@"\nWindow %@, frame=%@. isMain=%d  isKey=%d  isVisible=%d\n%@\n",
+static void AppendWindowDescription(NSWindow *window, NSMutableString *windows) {
+    [windows appendFormat:@"\nWindow %@\n%@\n",
      window,
-     [NSValue valueWithRect:window.frame],
-     (int)[window isMainWindow],
-     (int)[window isKeyWindow],
-     (int)[window isVisible],
      [window.contentView iterm_recursiveDescription]];
-  }
-  NSString *header = [NSString stringWithFormat:
-                      @"iTerm2 version: %@\n"
-                      @"Date: %@ (%lld)\n"
-                      @"Key window: %@\n"
-                      @"Windows: %@\n"
-                      @"------ END HEADER ------\n\n",
-                      [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
-                      [NSDate date],
-                      (long long)[[NSDate date] timeIntervalSince1970],
-                      [[NSApplication sharedApplication] keyWindow],
-                      windows];
-  [gDebugLogHeader release];
-  gDebugLogHeader = [header copy];
+}
+
+static void WriteDebugLogHeader() {
+    NSMutableString *windows = [NSMutableString string];
+    for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
+        AppendWindowDescription(window, windows);
+    }
+    NSString *header = [NSString stringWithFormat:
+                        @"iTerm2 version: %@\n"
+                        @"Date: %@ (%lld)\n"
+                        @"Key window: %@\n"
+                        @"Windows: %@\n"
+                        @"Ordered windows: %@\n"
+                        @"------ END HEADER ------\n\n",
+                        [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
+                        [NSDate date],
+                        (long long)[[NSDate date] timeIntervalSince1970],
+                        [[NSApplication sharedApplication] keyWindow],
+                        windows,
+                        [NSApp orderedWindows]];
+    [gDebugLogHeader release];
+    gDebugLogHeader = [header copy];
 }
 
 static void WriteDebugLogFooter() {
   NSMutableString *windows = [NSMutableString string];
   for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
-    [windows appendFormat:@"\nWindow %@, frame=%@. isMain=%d  isKey=%d\n%@\n",
-     window,
-     [NSValue valueWithRect:window.frame],
-     (int)[window isMainWindow],
-     (int)[window isKeyWindow],
-     [window.contentView iterm_recursiveDescription]];
+      AppendWindowDescription(window, windows);
   }
   NSString *footer = [NSString stringWithFormat:
                       @"------ BEGIN FOOTER -----\n"
-                      @"Windows: %@\n",
-                      windows];
+                      @"Windows: %@\n"
+                      @"Ordered windows: %@\n",
+                      windows,
+                      [NSApp orderedWindows]];
   [gDebugLogStr appendString:footer];
 }
 
