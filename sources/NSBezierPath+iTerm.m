@@ -26,7 +26,7 @@
          controlPoint1:NSMakePoint((nx+x)/2, y)
          controlPoint2:NSMakePoint(nx, (ny+y)/2)];
     y = ny;
-    ny = y + MAX(0, height - 2*radius)
+    ny = y + MAX(0, height - 2*radius);
     [path lineToPoint:NSMakePoint(nx, ny)];
     x = nx; y = ny;
     nx = x + radius;
