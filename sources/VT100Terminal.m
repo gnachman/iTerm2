@@ -31,6 +31,7 @@ NSString *const kSavedCursorOriginKey = @"Origin";
 NSString *const kSavedCursorWraparoundKey = @"Wraparound";
 
 NSString *const kTerminalStateTermTypeKey = @"Term Type";
+NSString *const kTerminalStateAnswerBackStringKey = @"Answerback String";
 NSString *const kTerminalStateStringEncodingKey = @"String Encoding";
 NSString *const kTerminalStateCanonicalEncodingKey = @"Canonical String Encoding";
 NSString *const kTerminalStateReportFocusKey = @"Report Focus";
@@ -1234,7 +1235,10 @@ static const int kMaxScreenRows = 4096;
 
         //  VT100 CC
         case VT100CC_ENQ:
-            // TODO: Add support for an answerback string here.
+            // This works
+            //[delegate_ terminalSendReport:[@"iTerm2\n" dataUsingEncoding:NSUTF8StringEncoding]];
+            // Builds, Runs, No output
+            [delegate_ terminalSendReport:[_answerBackString dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         case VT100CC_BEL:
             [delegate_ terminalRingBell];
@@ -2373,6 +2377,7 @@ static const int kMaxScreenRows = 4096;
 - (NSDictionary *)stateDictionary {
     NSDictionary *dict =
         @{ kTerminalStateTermTypeKey: self.termType ?: [NSNull null],
+           kTerminalStateAnswerBackStringKey: self.answerBackString ?: [NSNull null],
            kTerminalStateStringEncodingKey: @(self.encoding),
            kTerminalStateCanonicalEncodingKey: @(self.canonicalEncoding),
            kTerminalStateReportFocusKey: @(self.reportFocus),
@@ -2408,6 +2413,7 @@ static const int kMaxScreenRows = 4096;
         return;
     }
     self.termType = dict[kTerminalStateTermTypeKey];
+    self.answerBackString = dict[kTerminalStateAnswerBackStringKey];
     self.encoding = [dict[kTerminalStateStringEncodingKey] unsignedIntegerValue];
     self.canonicalEncoding = [dict[kTerminalStateCanonicalEncodingKey] unsignedIntegerValue];
     self.reportFocus = [dict[kTerminalStateReportFocusKey] boolValue];

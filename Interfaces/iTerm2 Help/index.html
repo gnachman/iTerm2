@@ -1243,6 +1243,12 @@ set t_Co=256
 
 <p><br/><br/></p>
 
+<h4>Answerback String</h4>
+
+<p>The Answerback String is the string that is returned to the host in response to an ENQ control character. If the host sends a \005 or Ctrl-E byte to the terminal, the terminal sends back this string as if you had typed it. You may use printf() backslash escape syntax to include some special bytes. For instance, if you put &quot;iTerm2\n&quot; here (without the quotes) then whenever the host sends an ENQ to the terminal, the terminal will respond with &quot;iTerm2&quot; with a trailing newline.</p>
+
+<p><br/><br/></p>
+
 <h4>Enable xterm mouse reporting</h4>
 
 <p>If selected, applications may choose to receive information about the mouse. This can be temporarily disabled by holding down Option.</p>

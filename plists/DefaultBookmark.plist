@@ -560,6 +560,8 @@
 	<false/>
 	<key>Terminal Type</key>
 	<string>xterm</string>
+	<key>Answerback String</key>
+	<string></string>
 	<key>Transparency</key>
 	<real>0.0</real>
 	<key>Unlimited Scrollback</key>

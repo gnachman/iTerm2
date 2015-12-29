@@ -205,6 +205,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     VT100Terminal *_terminal;
 
     NSString *_termVariable;
+    
+    NSString *_answerBackString;
 
     // Has the underlying connection been closed?
     BOOL _exited;
