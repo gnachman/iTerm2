@@ -546,6 +546,10 @@
         <cocoa key="profileName"/>
       </property>
 
+      <property name="answerback string" code="Answ" description="ENQ Answerback string" type="text">
+        <cocoa key="answerBackString"/>
+      </property>
+
     </class>
 
   </suite>

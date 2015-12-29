@@ -49,9 +49,6 @@ static BOOL AdvanceAndEatControlChars(iTermParserContext *context,
     while (iTermParserTryPeek(context, &c)) {
         switch (c) {
             case VT100CC_ENQ:
-                // TODO: This should respond with a user-definable "answerback" string, which
-                // defaults to the empty string.
-                break;
             case VT100CC_BEL:
             case VT100CC_BS:
             case VT100CC_HT:
