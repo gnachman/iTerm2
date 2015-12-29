@@ -124,16 +124,15 @@ BOOL IsYosemiteOrLater(void) {
     id runningApplicationClass_;
 }
 
-static iTermController* shared = nil;
-static BOOL initDone = NO;
+static iTermController* shared;
 
 + (iTermController*)sharedInstance
 {
-    if (!shared && !initDone) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         shared = [[iTermController alloc] init];
-        initDone = YES;
-    }
-
+    });
+    
     return shared;
 }
 
