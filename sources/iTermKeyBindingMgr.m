@@ -471,6 +471,14 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
                             [self stringForSelectionMovementUnit:auxText.integerValue]];
             break;
 
+        case KEY_ACTION_SHRINK_ROW:
+            actionString = @"Shrink Row";
+            break;
+
+        case KEY_ACTION_EXPAND_ROW:
+            actionString = @"Expand Row";
+            break;
+            
         default:
             actionString = [NSString stringWithFormat: @"%@ %d", @"Unknown Action ID", action];
             break;

@@ -5637,6 +5637,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self tabsDidReorder];
 }
 
+- (IBAction)expandRow:(id)sender {
+    [self.currentSession.screen terminalSetRows:self.currentSession.rows + 1
+                                     andColumns:self.currentSession.columns];
+}
+
+- (IBAction)shrinkRow:(id)sender {
+    [self.currentSession.screen terminalSetRows:self.currentSession.rows - 1
+                                     andColumns:self.currentSession.columns];
+}
+
 - (void)refreshTmuxLayoutsAndWindow
 {
     for (PTYTab *aTab in [self tabs]) {
@@ -6222,7 +6232,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     PtyLog(@"safelySetSessionSize");
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-    if (windowType_ == WINDOW_TYPE_NORMAL || windowType_ == WINDOW_TYPE_NO_TITLE_BAR) {
+    if (windowType_ == WINDOW_TYPE_NORMAL || windowType_ == WINDOW_TYPE_NO_TITLE_BAR || windowType_ == WINDOW_TYPE_TOP) {
         int width = columns;
         int height = rows;
         if (width < 20) {
