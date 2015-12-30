@@ -61,8 +61,8 @@
 
 // Constants for saved window arrangement key names.
 static NSString *APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
-static NSString *SUPPORT_DIRECTORY             = @"~/Library/Application Support/iTerm";
-static NSString *SCRIPT_DIRECTORY              = @"~/Library/Application Support/iTerm/Scripts";
+static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
+static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";

@@ -712,17 +712,14 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 - (void)requestAccessibilityPermissionMavericks {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
-                                                            forKey:(NSString *)kAXTrustedCheckOptionPrompt];
+        NSDictionary *options = @{ (NSString *)kAXTrustedCheckOptionPrompt: @YES };
         // Show a dialog prompting the user to open system prefs.
         if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
             return;
         }
     });
-#endif
 }
 
 - (void)beginRemappingModifiers
