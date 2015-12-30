@@ -1,6 +1,7 @@
 #import "NMSSH.h"
 
-@class NMSSHHostConfig;
+@class NMSSHHostConfig, NMSFTP;
+@protocol NMSSHSessionDelegate;
 
 typedef NS_ENUM(NSInteger, NMSSHSessionHash) {
     NMSSHSessionHashMD5,
