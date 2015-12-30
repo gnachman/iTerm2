@@ -14,7 +14,7 @@
 
     NSScriptObjectSpecifier *containerRef;
 
-    NSArray *windows = [[iTermApplication sharedApplication] orderedTerminalWindows];
+    NSArray *windows = [iTermApplication.sharedApplication orderedTerminalWindows];
     anIndex = [windows indexOfObjectIdenticalTo:self];
     if (anIndex != NSNotFound) {
         containerRef = [NSApp objectSpecifier];

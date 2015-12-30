@@ -1333,7 +1333,7 @@ static const int kDragThreshold = 3;
 
     static BOOL isFirstInteraction = YES;
     if (isFirstInteraction) {
-        iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+        iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
         [appDelegate userDidInteractWithASession];
         isFirstInteraction = NO;
     }
@@ -5377,8 +5377,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)useBackgroundIndicatorChanged:(NSNotification *)notification {
-    _showStripesWhenBroadcastingInput =
-            [(iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate] useBackgroundPatternIndicator];
+    _showStripesWhenBroadcastingInput = iTermApplication.sharedApplication.delegate.useBackgroundPatternIndicator;
     [self setNeedsDisplay:YES];
 }
 

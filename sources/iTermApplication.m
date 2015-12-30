@@ -47,6 +47,12 @@
     [super dealloc];
 }
 
++ (iTermApplication *)sharedApplication {
+    __kindof NSApplication *sharedApplication = [super sharedApplication];
+    assert([sharedApplication isKindOfClass:[iTermApplication class]]);
+    return sharedApplication;
+}
+
 - (BOOL)_eventUsesNavigationKeys:(NSEvent*)event {
     NSString* unmodkeystr = [event charactersIgnoringModifiers];
     if ([unmodkeystr length] == 0) {

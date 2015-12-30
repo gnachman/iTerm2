@@ -1391,7 +1391,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)_maybeWarnAboutShortLivedSessions
 {
-    if ([(iTermApplicationDelegate *)[NSApp delegate] isApplescriptTestApp]) {
+    if (iTermApplication.sharedApplication.delegate.isApplescriptTestApp) {
         // The applescript test driver doesn't care about short-lived sessions.
         return;
     }
@@ -6213,7 +6213,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                 ofClass:markClass] retain];
     self.currentMarkOrNotePosition = _lastMark.entry.interval;
     if (self.alertOnNextMark) {
-        NSString *action = [(iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate] markAlertAction];
+        NSString *action = iTermApplication.sharedApplication.delegate.markAlertAction;
         if ([action isEqualToString:kMarkAlertActionPostNotification]) {
             [[iTermGrowlDelegate sharedInstance] growlNotify:@"Mark Set"
                                              withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
