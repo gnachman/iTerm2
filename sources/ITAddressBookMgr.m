@@ -24,11 +24,16 @@
  **  along with this program; if not, write to the Free Software
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #import "ITAddressBookMgr.h"
+
+#import "DebugLogging.h"
 #import "iTermDynamicProfileManager.h"
+#import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "PreferencePanel.h"
+#import "ProfileModel.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFont+iTerm.h"
@@ -638,6 +643,68 @@
         // Home dir, custom == "No"
         return NSHomeDirectory();
     }
+}
+
++ (BOOL)canRemoveProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
+    DLog(@"removeProfile called");
+    if (!profile) {
+        DLog(@"Nil profile");
+        return NO;
+    }
+
+    if (![model bookmarkWithGuid:profile[KEY_GUID]]) {
+        DLog(@"Can't remove profile not in shared profile model");
+        return NO;
+    }
+
+    if ([model numberOfBookmarks] < 2) {
+        DLog(@"Can't remove last profile");
+        return NO;
+    }
+
+    DLog(@"Ok to remove.");
+    return YES;
+}
+
++ (void)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
+    NSString *guid = profile[KEY_GUID];
+    DLog(@"Remove profile with guid %@...", guid);
+    if ([model numberOfBookmarks] == 1) {
+        DLog(@"Refusing to remove only profile");
+        return;
+    }
+
+    DLog(@"Removing key bindings that reference the guid being removed");
+    [self removeKeyMappingsReferringToGuid:guid];
+    DLog(@"Removing profile from model");
+    [model removeProfileWithGuid:guid];
+
+    // Ensure all profile list views reload their data to avoid issue 4033.
+    DLog(@"Posting profile was deleted notification");
+    [[NSNotificationCenter defaultCenter] postNotificationName:kProfileWasDeletedNotification
+                                                        object:nil];
+    [model flush];
+}
+
++ (void)removeKeyMappingsReferringToGuid:(NSString *)badRef {
+    for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        profile = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:profile];
+        if (profile) {
+            [[ProfileModel sharedInstance] setBookmark:profile withGuid:guid];
+        }
+    }
+    for (NSString* guid in [[ProfileModel sessionsInstance] guids]) {
+        Profile* profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
+        profile = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:profile];
+        if (profile) {
+            [[ProfileModel sessionsInstance] setBookmark:profile withGuid:guid];
+        }
+    }
+    [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 @end

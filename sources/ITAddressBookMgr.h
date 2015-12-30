@@ -251,4 +251,11 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
 + (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark
                         forObjectType:(iTermObjectType)objectType;
 
+// Indicates if it is safe to remove the profile from the model.
++ (BOOL)canRemoveProfile:(Profile *)profile fromModel:(ProfileModel *)model;
+
+// Removes the profile from the model, removes key mappings that reference this profile, and posts a
+// kProfileWasDeletedNotification notification, then flushes the model to backing store.
++ (void)removeProfile:(Profile *)profile fromModel:(ProfileModel *)model;
+
 @end

@@ -258,7 +258,10 @@
 // references to the profile, etc.
 - (void)removeDynamicProfile:(Profile *)profile {
     DLog(@"Remove dynamic profile name=%@ guid=%@", profile[KEY_NAME], profile[KEY_GUID]);
-    [[PreferencePanel sharedInstance] removeProfileWithGuid:profile[KEY_GUID]];
+    ProfileModel *model = [ProfileModel sharedInstance];
+    if ([ITAddressBookMgr canRemoveProfile:profile fromModel:model]) {
+        [ITAddressBookMgr removeProfile:profile fromModel:model];
+    }
 }
 
 #pragma mark - SCEventListenerProtocol
