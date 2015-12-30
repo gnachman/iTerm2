@@ -61,8 +61,9 @@ function Build {
   test -f $SVNDIR/downloads/beta/iTerm2-${NAME}.description || (echo "$DESCRIPTION" > $SVNDIR/downloads/beta/iTerm2-${NAME}.description)
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.description
   vi $SVNDIR/downloads/beta/iTerm2-${NAME}.changelog
-  echo cd $SVNDIR
-  echo git add "downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3.xml source/appcasts/testing_changes3.txt"
+  pushd $SVNDIR
+  git add downloads/beta/iTerm2-${NAME}.summary downloads/beta/iTerm2-${NAME}.description downloads/beta/iTerm2-${NAME}.changelog downloads/beta/iTerm2-${NAME}.zip source/appcasts/testing3.xml source/appcasts/testing_changes3.txt
+  popd
 
   # Prepare the sparkle xml file
   SparkleSign ${SPARKLE_PREFIX}testing3.xml ${SPARKLE_PREFIX}template3.xml
@@ -74,20 +75,18 @@ COMPACTDATE=$(date +"%Y%m%d")
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
-NEWFILES=""
 
 echo "Build deployment release"
 make clean
 make release
-Build Deployment "" "OS 10.7+, Intel-only" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers, plus some minor performance improvements." "" "--deep"
+Build Deployment "" "OS 10.8+" "This is the recommended beta build for most users. It contains a bunch of bug fixes, including fixes for some crashers." "" "--deep"
 
 #set -x
 
-echo "git tag v${VERSION}"
-echo "git commit -am ${VERSION}"
-echo "git push origin v2"
-echo "git push --tags"
-echo "cd "$SVNDIR
-echo "git add "$NEWFILES
-echo "git commit -am v${VERSION}"
-echo "git push origin master"
+git tag v${VERSION}
+git commit -am ${VERSION}
+git push origin master
+git push --tags
+cd $SVNDIR
+git commit -am v${VERSION}
+git push origin master

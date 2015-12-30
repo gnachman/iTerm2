@@ -17,7 +17,7 @@
     float height = frame.size.height - 1;
     float width = frame.size.width - 1;
     float x = 0.5;
-    float y = 0;
+    float y = MIN(0, height - 2*radius);
     float nx, ny;
     [path moveToPoint:NSMakePoint(x, y)];
     nx = x+radius;
@@ -26,7 +26,7 @@
          controlPoint1:NSMakePoint((nx+x)/2, y)
          controlPoint2:NSMakePoint(nx, (ny+y)/2)];
     y = ny;
-    ny = y + height - 2*radius;
+    ny = y + MAX(0, height - 2*radius);
     [path lineToPoint:NSMakePoint(nx, ny)];
     x = nx; y = ny;
     nx = x + radius;
@@ -44,7 +44,7 @@
          controlPoint1:NSMakePoint((nx+x)/2, y)
          controlPoint2:NSMakePoint(nx, (ny+y)/2)];
     y = ny;
-    ny = y - height + 2*radius;
+    ny = y - MAX(0, height - 2*radius);
     [path lineToPoint:NSMakePoint(nx, ny)];
     x = nx; y = ny;
     nx = x + radius;
