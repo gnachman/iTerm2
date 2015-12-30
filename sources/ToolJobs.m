@@ -93,6 +93,20 @@ static const CGFloat kMargin = 4;
     [self setToolTip:[NSString stringWithFormat:@"SIG%@ (%d)", signalNames[i], i]];
 }
 
+- (NSUInteger)uintValue {
+    NSUInteger x = [[self class] signalForName:[self stringValue]];
+    return x == -1 ? kDefaultSignal : x;
+}
+
+- (void)setUIntValue:(unsigned long)i {
+    NSArray *signalNames = [[self class] signalNames];
+    if (i <= 0 || i >= [signalNames count]) {
+        i = kDefaultSignal;
+    }
+    [self setStringValue:signalNames[i]];
+    [self setToolTip:[NSString stringWithFormat:@"SIG%@ (%lu)", signalNames[i], i]];
+}
+
 - (BOOL)isValid {
     return [[self class] signalForName:[self stringValue]] != -1;
 }

@@ -46,6 +46,17 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     [self setObject:@(value) forKey:key inProfile:profile model:model];
 }
 
++ (NSUInteger)uintForKey:(NSString *)key inProfile:(Profile *)profile {
+    return [[self objectForKey:key inProfile:profile] unsignedIntegerValue];
+}
+
++ (void)setUInt:(NSUInteger)value
+        forKey:(NSString *)key
+     inProfile:(Profile *)profile
+         model:(ProfileModel *)model {
+    [self setObject:@(value) forKey:key inProfile:profile model:model];
+}
+
 + (double)floatForKey:(NSString *)key inProfile:(Profile *)profile {
     return [[self objectForKey:key inProfile:profile] doubleValue];
 }
@@ -77,9 +88,13 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     id defaultValue = [self defaultValueMap][key];
     switch (type) {
         case kPreferenceInfoTypeIntegerTextField:
+        case kPreferenceInfoTypeUnsignedIntegerTextField:
         case kPreferenceInfoTypePopup:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
+        case kPreferenceInfoTypeUPopup:
+            return ([defaultValue isKindOfClass:[NSNumber class]] &&
+                    [defaultValue unsignedLongValue] == ceil([defaultValue unsignedLongValue]));
         case kPreferenceInfoTypeCheckbox:
         case kPreferenceInfoTypeInvertedCheckbox:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&

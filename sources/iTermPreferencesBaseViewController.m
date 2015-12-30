@@ -79,6 +79,14 @@ static NSString *const kKey = @"key";
     [iTermPreferences setInt:value forKey:key];
 }
 
+- (NSUInteger)uintForKey:(NSString *)key {
+    return [iTermPreferences uintForKey:key];
+}
+
+- (void)setUInt:(NSUInteger)value forKey:(NSString *)key {
+    [iTermPreferences setUInt:value forKey:key];
+}
+
 - (double)floatForKey:(NSString *)key {
     return [iTermPreferences floatForKey:key];
 }
@@ -142,6 +150,11 @@ static NSString *const kKey = @"key";
                 [self setInt:[sender separatorTolerantIntValue] forKey:info.key];
                 break;
 
+            case kPreferenceInfoTypeUnsignedIntegerTextField:
+                [self applyUnsignedIntegerConstraints:info];
+                [self setUInt:[sender separatorTolerantUIntValue] forKey:info.key];
+                break;
+
             case kPreferenceInfoTypeStringTextField:
                 [self setString:[sender stringValue] forKey:info.key];
                 break;
@@ -157,6 +170,10 @@ static NSString *const kKey = @"key";
                 [self setInt:[sender selectedTag] forKey:info.key];
                 break;
 
+            case kPreferenceInfoTypeUPopup:
+                [self setUInt:[sender selectedTag] forKey:info.key];
+                break;
+                
             case kPreferenceInfoTypeSlider:
                 [self setFloat:[sender doubleValue] forKey:info.key];
                 break;
@@ -247,6 +264,14 @@ static NSString *const kKey = @"key";
             break;
         }
 
+        case kPreferenceInfoTypeUnsignedIntegerTextField: {
+            assert([info.control isKindOfClass:[NSTextField class]]);
+            NSTextField *field = (NSTextField *)info.control;
+            // FIXME: What is correct here? There is no unsignedIntegerValue in NSTextField.
+            field.doubleValue = [self uintForKey:info.key];
+            break;
+        }
+
         case kPreferenceInfoTypeStringTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
@@ -267,6 +292,13 @@ static NSString *const kKey = @"key";
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
             [popup selectItemWithTag:[self intForKey:info.key]];
+            break;
+        }
+
+        case kPreferenceInfoTypeUPopup: {
+            assert([info.control isKindOfClass:[NSPopUpButton class]]);
+            NSPopUpButton *popup = (NSPopUpButton *)info.control;
+            [popup selectItemWithTag:[self uintForKey:info.key]];
             break;
         }
 
@@ -344,6 +376,19 @@ static NSString *const kKey = @"key";
     return val;
 }
 
+- (NSUInteger)uintForString:(NSString *)s inRange:(NSRange)range
+{
+    NSString *i = [s stringWithOnlyDigits];
+    
+    NSUInteger val = 0;
+    if ([i length]) {
+        val = [i unsignedIntegerValue];
+    }
+    val = MAX(val, range.location);
+    val = MIN(val, range.location + range.length - 1);
+    return val;
+}
+
 - (void)applyIntegerConstraints:(PreferenceInfo *)info {
     // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
     // http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
@@ -359,6 +404,21 @@ static NSString *const kKey = @"key";
         // If the int values don't match up or there are terminal non-number
         // chars, then update the value.
         [textField setIntValue:iv];
+    }
+}
+
+- (void)applyUnsignedIntegerConstraints:(PreferenceInfo *)info {
+    assert([info.control isKindOfClass:[NSTextField class]]);
+    NSTextField *textField = (NSTextField *)info.control;
+    NSUInteger iv = [self uintForString:[textField stringValue] inRange:info.range];
+    unichar lastChar = '0';
+    int numChars = [[textField stringValue] length];
+    if (numChars) {
+        lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
+    }
+    if (iv != [textField separatorTolerantUIntValue] || (lastChar < '0' || lastChar > '9')) {
+        // FIXME: What is correct here? There is no "setUnsignedIntegerValue" in NSTextField
+        [textField setDoubleValue:iv];
     }
 }
 

@@ -65,6 +65,9 @@
 - (int)intForKey:(NSString *)key;
 - (void)setInt:(int)value forKey:(NSString *)key;
 
+- (NSUInteger)uintForKey:(NSString *)key;
+- (void)setUInt:(NSUInteger)value forKey:(NSString *)key;
+
 - (double)floatForKey:(NSString *)key;
 - (void)setFloat:(double)value forKey:(NSString *)key;
 
