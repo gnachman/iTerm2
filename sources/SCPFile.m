@@ -356,6 +356,12 @@ static NSError *SCPFileError(NSString *description) {
                                               andPassword:password];
                 
                     if (self.session.isAuthorized) {
+                        NSLog(@"Authorized!");
+                        break;
+                    }
+
+                    if (!self.session.session) {
+                        NSLog(@"Disconnected!");
                         break;
                     }
                 }
