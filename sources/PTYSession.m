@@ -3375,7 +3375,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     static const NSTimeInterval kUpdateTitlePeriod = 0.7;
-    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if ([[self tab] activeSession] == self) {
         // Update window info for the active tab.
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
