@@ -270,6 +270,11 @@ static const int kMaxScreenRows = 4096;
     [delegate_ terminalTypeDidChange];
 }
 
+- (void)setAnswerBackString:(NSString *)s
+{
+    _answerBackString = s;
+}
+
 - (void)setForeground24BitColor:(NSColor *)color {
     graphicRendition_.fgColorCode = color.redComponent * 255.0;
     graphicRendition_.fgGreen = color.greenComponent * 255.0;
@@ -1235,9 +1240,9 @@ static const int kMaxScreenRows = 4096;
 
         //  VT100 CC
         case VT100CC_ENQ:
-            // This works
+            // This works, and sends a newline.
             //[delegate_ terminalSendReport:[@"iTerm2\n" dataUsingEncoding:NSUTF8StringEncoding]];
-            // Builds, Runs, No output
+            // This works, and sends a literal backslash n when the string has \n in it.
             [delegate_ terminalSendReport:[_answerBackString dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         case VT100CC_BEL:
