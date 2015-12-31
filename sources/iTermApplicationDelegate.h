@@ -28,6 +28,7 @@
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
 #import "DebugLogging.h"
+#import "iTermApplication.h"
 
 @class PTYSession;
 @class PseudoTerminal;

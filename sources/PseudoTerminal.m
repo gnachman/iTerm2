@@ -1288,7 +1288,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
 - (IBAction)closeCurrentSession:(id)sender
 {
-    iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
     [appDelegate userDidInteractWithASession];
     if ([[self window] isKeyWindow]) {
         PTYSession *aSession = [[[_contentView.tabView selectedTabViewItem] identifier] activeSession];
@@ -2123,7 +2123,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (BOOL)windowShouldClose:(NSNotification *)aNotification
 {
     // This counts as an interaction beacuse it is only called when the user initiates the closing of the window (as opposed to a session dying on you).
-    iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
     [appDelegate userDidInteractWithASession];
 
     BOOL needPrompt = NO;
@@ -2302,7 +2302,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [[[NSApplication sharedApplication] dockTile] setShowsApplicationBadge:NO];
 
     [[iTermController sharedInstance] setCurrentTerminal:self];
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     [itad updateMaximizePaneMenuItem];
     [itad updateUseTransparencyMenuItem];
     [itad updateBroadcastMenuState];
@@ -2982,7 +2982,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
 }
 - (void)updateUseTransparency {
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     [itad updateUseTransparencyMenuItem];
     for (PTYSession* aSession in [self allSessions]) {
         [[aSession view] setNeedsDisplay:YES];
@@ -3773,7 +3773,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
       [aSession setFocused:(s == activeSession)];
     }
     [self showOrHideInstantReplayBar];
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     [itad updateBroadcastMenuState];
     [self refreshTools];
     [self updateTabColors];
@@ -3819,7 +3819,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem
 {
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+        iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
         [itad updateBroadcastMenuState];
 }
 
@@ -3828,7 +3828,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
     [self saveAffinitiesLater:[tabViewItem identifier]];
-        iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+        iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
         [itad updateBroadcastMenuState];
 }
 
@@ -3844,7 +3844,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
       [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
     }
     [self saveAffinitiesLater:[tabViewItem identifier]];
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     [itad updateBroadcastMenuState];
 }
 
@@ -4255,7 +4255,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 }
 
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView {
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     // Note: this assume that self is the front window (it should be!). It is smart enough to create
     // a tmux tab if the user wants one (or ask if needed).
     [itad newSession:nil];
@@ -5530,7 +5530,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     broadcastMode_ = mode;
         [self setDimmingForSessions];
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     [itad updateBroadcastMenuState];
 }
 
@@ -5591,7 +5591,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     // Update dimming of panes.
     [self refreshTerminal:nil];
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     [itad updateBroadcastMenuState];
 }
 
