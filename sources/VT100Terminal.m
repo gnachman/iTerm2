@@ -272,7 +272,14 @@ static const int kMaxScreenRows = 4096;
 
 - (void)setAnswerBackString:(NSString *)s
 {
-    _answerBackString = s;
+    s = [s stringByReplacingEscapedChar:'a' withString:@"\x07"];
+    s = [s stringByReplacingEscapedChar:'b' withString:@"\x08"];
+    s = [s stringByReplacingEscapedChar:'e' withString:@"\x1b"];
+    s = [s stringByReplacingEscapedChar:'n' withString:@"\n"];
+    s = [s stringByReplacingEscapedChar:'r' withString:@"\r"];
+    s = [s stringByReplacingEscapedChar:'t' withString:@"\t"];
+    s = [s stringByReplacingEscapedHexValuesWithChars];
+    _answerBackString = [s copy];
 }
 
 - (void)setForeground24BitColor:(NSColor *)color {
