@@ -67,32 +67,44 @@ static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Script
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 
-static BOOL UncachedIsSystemVersionEqualToOrLaterThan(unsigned major, unsigned minor) {
-    unsigned systemMajor;
-    unsigned systemMinor;
-    if ([iTermController getSystemVersionMajor:&systemMajor minor:&systemMinor bugFix:nil]) {
-        return (systemMajor == major && systemMinor >= minor) || (systemMajor > major);
-    } else {
+typedef struct {
+    unsigned int major;
+    unsigned int minor;
+    unsigned int bugfix;
+} iTermSystemVersion;
+
+iTermSystemVersion CachedSystemVersion(void) {
+    static iTermSystemVersion version;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [iTermController getSystemVersionMajor:&version.major
+                                         minor:&version.minor
+                                        bugFix:&version.bugfix];
+    });
+    return version;
+}
+
+BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bugfix) {
+    iTermSystemVersion version = CachedSystemVersion();
+    if (version.major > major) {
+        return YES;
+    } else if (version.major < major) {
         return NO;
     }
+    if (version.minor > minor) {
+        return YES;
+    } else if (version.minor < minor) {
+        return NO;
+    }
+    return version.bugfix >= bugfix;
 }
 
 BOOL IsMavericksOrLater(void) {
-    static BOOL result;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        result = UncachedIsSystemVersionEqualToOrLaterThan(10, 9);
-    });
-    return result;
+    return SystemVersionIsGreaterOrEqualTo(10, 9, 0);
 }
 
 BOOL IsYosemiteOrLater(void) {
-    static BOOL result;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        result = UncachedIsSystemVersionEqualToOrLaterThan(10, 10);
-    });
-    return result;
+    return SystemVersionIsGreaterOrEqualTo(10, 10, 0);
 }
 
 @implementation iTermController {

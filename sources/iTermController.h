@@ -1,5 +1,3 @@
-// -*- mode:objc -*-
-// $Id: iTermController.h,v 1.29 2008-10-08 05:54:50 yfabian Exp $
 /*
  **  iTermController.h
  **
@@ -56,6 +54,10 @@
 @property(nonatomic, nonatomic, assign) PseudoTerminal *currentTerminal;
 @property(nonatomic, readonly) int numberOfTerminals;
 @property(nonatomic, readonly) BOOL hasRestorableSession;
+
+BOOL IsYosemiteOrLater(void);
+BOOL IsMavericksOrLater(void);
+BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bugfix);
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
