@@ -414,9 +414,6 @@ static NSString *const kKey = @"key";
         lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
     }
     if (iv != [textField separatorTolerantUnsignedIntegerValue] || (lastChar < '0' || lastChar > '9')) {
-        // FIXME
-        // This works but is technically wrong
-        //[textField setDoubleValue:iv];
         [textField setStringValue:[NSString stringWithFormat:@"%lu", iv]];
     }
     
