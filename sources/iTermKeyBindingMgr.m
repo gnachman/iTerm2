@@ -471,11 +471,11 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
                             [self stringForSelectionMovementUnit:auxText.integerValue]];
             break;
 
-        case KEY_ACTION_SHRINK_ROW:
+        case KEY_ACTION_DECREASE_ROW:
             actionString = @"Shrink Row";
             break;
 
-        case KEY_ACTION_EXPAND_ROW:
+        case KEY_ACTION_INCREASE_ROW:
             actionString = @"Expand Row";
             break;
             

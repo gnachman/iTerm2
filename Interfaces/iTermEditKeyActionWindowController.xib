@@ -108,10 +108,10 @@
                                             <menuItem title="Next Pane" tag="30" id="pHE-Ud-5v3"/>
                                             <menuItem title="Previous Pane" tag="31" id="Z36-1b-EXY"/>
                                             <menuItem isSeparatorItem="YES" id="KeO-Bs-txv"/>
-                                            <menuItem title="Shrink Row" tag="49" id="EpA-2v-9s0">
+                                            <menuItem title="Decrease Row" tag="49" id="EpA-2v-9s0">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
-                                            <menuItem title="Expand Row" tag="50" id="76W-hp-334">
+                                            <menuItem title="Increase Row" tag="50" id="76W-hp-334">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
                                             <menuItem isSeparatorItem="YES" id="xVG-IF-xul"/>

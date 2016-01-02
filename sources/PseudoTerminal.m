@@ -5637,12 +5637,12 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self tabsDidReorder];
 }
 
-- (IBAction)expandRow:(id)sender {
+- (IBAction)increaseRow:(id)sender {
     [self.currentSession.screen terminalSetRows:self.currentSession.rows + 1
                                      andColumns:self.currentSession.columns];
 }
 
-- (IBAction)shrinkRow:(id)sender {
+- (IBAction)decreaseRow:(id)sender {
     [self.currentSession.screen terminalSetRows:self.currentSession.rows - 1
                                      andColumns:self.currentSession.columns];
 }

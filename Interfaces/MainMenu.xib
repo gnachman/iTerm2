@@ -958,13 +958,13 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Shrink Row" keyEquivalent="" id="E89-Mw-yOH">
+                            <menuItem title="Decrease Row" keyEquivalent="" id="E89-Mw-yOH">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="shrinkRow:" target="-1" id="tdy-uB-OZJ"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Expand Row" keyEquivalent="" id="1L5-Nc-laa">
+                            <menuItem title="Increase Row" keyEquivalent="" id="1L5-Nc-laa">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="expandRow:" target="-1" id="pS5-lB-FrP"/>

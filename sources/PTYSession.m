@@ -4807,12 +4807,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                               by:[keyBindingText integerValue]];
                 break;
 
-            case KEY_ACTION_SHRINK_ROW:
-                [[[iTermController sharedInstance] currentTerminal] shrinkRow:nil];
+            case KEY_ACTION_DECREASE_ROW:
+                [[[iTermController sharedInstance] currentTerminal] decreaseRow:nil];
                 break;
 
-            case KEY_ACTION_EXPAND_ROW:
-                [[[iTermController sharedInstance] currentTerminal] expandRow:nil];
+            case KEY_ACTION_INCREASE_ROW:
+                [[[iTermController sharedInstance] currentTerminal] increaseRow:nil];
                 break;
                 
             default:
