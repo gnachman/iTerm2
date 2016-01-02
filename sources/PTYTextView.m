@@ -1331,12 +1331,11 @@ static const int kDragThreshold = 3;
     // key then it starts searching from the bottom again.
     [_findOnPageHelper resetFindCursor];
 
-    static BOOL isFirstInteraction = YES;
-    if (isFirstInteraction) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
         [appDelegate userDidInteractWithASession];
-        isFirstInteraction = NO;
-    }
+    });
 
     DLog(@"PTYTextView keyDown BEGIN %@", event);
     id delegate = [self delegate];
