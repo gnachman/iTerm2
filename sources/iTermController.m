@@ -60,18 +60,18 @@
 @end
 
 // Constants for saved window arrangement key names.
-static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
+static NSString *APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 
-static BOOL UncachedIsMavericksOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 9) || (major > 10);
+static BOOL UncachedIsSystemVersionEqualToOrLaterThan(unsigned major, unsigned minor) {
+    unsigned systemMajor;
+    unsigned systemMinor;
+    if ([iTermController getSystemVersionMajor:&systemMajor minor:&systemMinor bugFix:nil]) {
+        return (systemMajor == major && systemMinor >= minor) || (systemMajor > major);
     } else {
         return NO;
     }
@@ -79,34 +79,21 @@ static BOOL UncachedIsMavericksOrLater(void) {
 
 BOOL IsMavericksOrLater(void) {
     static BOOL result;
-    static BOOL initialized;
-    if (!initialized) {
-        initialized = YES;
-        result = UncachedIsMavericksOrLater();
-    }
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        result = UncachedIsSystemVersionEqualToOrLaterThan(10, 9);
+    });
     return result;
-}
-
-static BOOL UncachedIsYosemiteOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 10) || (major > 10);
-    } else {
-        return NO;
-    }
 }
 
 BOOL IsYosemiteOrLater(void) {
     static BOOL result;
-    static BOOL initialized;
-    if (!initialized) {
-        initialized = YES;
-        result = UncachedIsYosemiteOrLater();
-    }
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        result = UncachedIsSystemVersionEqualToOrLaterThan(10, 10);
+    });
     return result;
 }
-
 
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
@@ -124,16 +111,15 @@ BOOL IsYosemiteOrLater(void) {
     id runningApplicationClass_;
 }
 
-static iTermController* shared = nil;
-static BOOL initDone = NO;
+static iTermController* shared;
 
 + (iTermController*)sharedInstance
 {
-    if (!shared && !initDone) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         shared = [[iTermController alloc] init];
-        initDone = YES;
-    }
-
+    });
+    
     return shared;
 }
 
