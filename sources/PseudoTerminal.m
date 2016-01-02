@@ -6222,7 +6222,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
     PtyLog(@"safelySetSessionSize");
     BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-    if (windowType_ == WINDOW_TYPE_NORMAL || windowType_ == WINDOW_TYPE_NO_TITLE_BAR) {
+    if (![self anyFullScreen]) {
         int width = columns;
         int height = rows;
         if (width < 20) {
