@@ -114,6 +114,12 @@
                                             <menuItem title="Increase Row" tag="50" id="76W-hp-334">
                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                             </menuItem>
+                                            <menuItem title="Decrease Column" tag="51" id="TdK-gh-sNx">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
+                                            <menuItem title="Increase Column" tag="52" id="mHj-xJ-MJH">
+                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                            </menuItem>
                                             <menuItem isSeparatorItem="YES" id="xVG-IF-xul"/>
                                             <menuItem title="Scroll to End" tag="4" id="Mrs-CO-Zqo"/>
                                             <menuItem title="Scroll to Top" tag="5" id="Gnz-HA-ehs"/>

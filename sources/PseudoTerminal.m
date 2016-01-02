@@ -5647,6 +5647,16 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                      andColumns:self.currentSession.columns];
 }
 
+- (IBAction)increaseColumn:(id)sender {
+    [self.currentSession.screen terminalSetRows:self.currentSession.rows
+                                     andColumns:self.currentSession.columns + 1];
+}
+
+- (IBAction)decreaseColumn:(id)sender {
+    [self.currentSession.screen terminalSetRows:self.currentSession.rows
+                                     andColumns:self.currentSession.columns - 1];
+}
+
 - (void)refreshTmuxLayoutsAndWindow
 {
     for (PTYTab *aTab in [self tabs]) {

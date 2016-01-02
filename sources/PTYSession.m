@@ -4814,7 +4814,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             case KEY_ACTION_INCREASE_ROW:
                 [[[iTermController sharedInstance] currentTerminal] increaseRow:nil];
                 break;
-                
+
+            case KEY_ACTION_DECREASE_COLUMN:
+                [[[iTermController sharedInstance] currentTerminal] decreaseColumn:nil];
+                break;
+
+            case KEY_ACTION_INCREASE_COLUMN:
+                [[[iTermController sharedInstance] currentTerminal] increaseColumn:nil];
+                break;
+
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
                 break;

@@ -472,13 +472,21 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
             break;
 
         case KEY_ACTION_DECREASE_ROW:
-            actionString = @"Shrink Row";
+            actionString = @"Decrease Row";
             break;
 
         case KEY_ACTION_INCREASE_ROW:
-            actionString = @"Expand Row";
+            actionString = @"Increase Row";
+            break;
+
+        case KEY_ACTION_DECREASE_COLUMN:
+            actionString = @"Decrease Column";
             break;
             
+        case KEY_ACTION_INCREASE_COLUMN:
+            actionString = @"Increase Column";
+            break;
+
         default:
             actionString = [NSString stringWithFormat: @"%@ %d", @"Unknown Action ID", action];
             break;
