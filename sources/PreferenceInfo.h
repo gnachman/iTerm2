@@ -15,7 +15,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
     kPreferenceInfoTypeUnsignedIntegerTextField,
     kPreferenceInfoTypeStringTextField,
     kPreferenceInfoTypePopup,
-    kPreferenceInfoTypeUPopup,
+    kPreferenceInfoTypeUnsignedIntegerPopup,
     kPreferenceInfoTypeSlider,
     kPreferenceInfoTypeTokenField,
     kPreferenceInfoTypeMatrix,

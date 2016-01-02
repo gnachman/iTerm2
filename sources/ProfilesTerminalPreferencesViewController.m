@@ -73,9 +73,9 @@
     [self populateEncodings];
     info = [self defineControl:_characterEncoding
                            key:KEY_CHARACTER_ENCODING
-                          type:kPreferenceInfoTypeUPopup];
+                          type:kPreferenceInfoTypeUnsignedIntegerPopup];
     info.onUpdate = ^BOOL() {
-        NSUInteger tag = [self uintForKey:info.key];
+        NSUInteger tag = [self unsignedIntegerForKey:info.key];
         [_characterEncoding selectItemWithTag:tag];
         return YES;
     };

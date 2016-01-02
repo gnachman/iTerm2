@@ -44,15 +44,15 @@
     [iTermProfilePreferences setInt:value forKey:key inProfile:profile model:model];
 }
 
-- (NSUInteger)uintForKey:(NSString *)key {
+- (NSUInteger)unsignedIntegerForKey:(NSString *)key {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
-    return [iTermProfilePreferences uintForKey:key inProfile:profile];
+    return [iTermProfilePreferences unsignedIntegerForKey:key inProfile:profile];
 }
 
-- (void)setUInt:(NSUInteger)value forKey:(NSString *)key {
+- (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
-    [iTermProfilePreferences setUInt:value forKey:key inProfile:profile model:model];
+    [iTermProfilePreferences setUnsignedInteger:value forKey:key inProfile:profile model:model];
 }
 
 - (double)floatForKey:(NSString *)key {

@@ -79,12 +79,12 @@ static NSString *const kKey = @"key";
     [iTermPreferences setInt:value forKey:key];
 }
 
-- (NSUInteger)uintForKey:(NSString *)key {
-    return [iTermPreferences uintForKey:key];
+- (NSUInteger)unsignedIntegerForKey:(NSString *)key {
+    return [iTermPreferences unsignedIntegerForKey:key];
 }
 
-- (void)setUInt:(NSUInteger)value forKey:(NSString *)key {
-    [iTermPreferences setUInt:value forKey:key];
+- (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key {
+    [iTermPreferences setUnsignedInteger:value forKey:key];
 }
 
 - (double)floatForKey:(NSString *)key {
@@ -152,7 +152,7 @@ static NSString *const kKey = @"key";
 
             case kPreferenceInfoTypeUnsignedIntegerTextField:
                 [self applyUnsignedIntegerConstraints:info];
-                [self setUInt:[sender separatorTolerantUIntValue] forKey:info.key];
+                [self setUnsignedInteger:[sender separatorTolerantUnsignedIntegerValue] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeStringTextField:
@@ -170,8 +170,8 @@ static NSString *const kKey = @"key";
                 [self setInt:[sender selectedTag] forKey:info.key];
                 break;
 
-            case kPreferenceInfoTypeUPopup:
-                [self setUInt:[sender selectedTag] forKey:info.key];
+            case kPreferenceInfoTypeUnsignedIntegerPopup:
+                [self setUnsignedInteger:[sender selectedTag] forKey:info.key];
                 break;
                 
             case kPreferenceInfoTypeSlider:
@@ -267,9 +267,7 @@ static NSString *const kKey = @"key";
         case kPreferenceInfoTypeUnsignedIntegerTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
-            // FIXME: What is correct here? There is no unsignedIntegerValue in NSTextField.
-            field.doubleValue = [self uintForKey:info.key];
-            break;
+            field.stringValue = [NSString stringWithFormat:@"%lu", [self unsignedIntegerForKey:info.key]];
         }
 
         case kPreferenceInfoTypeStringTextField: {
@@ -295,10 +293,10 @@ static NSString *const kKey = @"key";
             break;
         }
 
-        case kPreferenceInfoTypeUPopup: {
+        case kPreferenceInfoTypeUnsignedIntegerPopup: {
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
-            [popup selectItemWithTag:[self uintForKey:info.key]];
+            [popup selectItemWithTag:[self unsignedIntegerForKey:info.key]];
             break;
         }
 
@@ -376,8 +374,7 @@ static NSString *const kKey = @"key";
     return val;
 }
 
-- (NSUInteger)uintForString:(NSString *)s inRange:(NSRange)range
-{
+- (NSUInteger)unsignedIntegerForString:(NSString *)s inRange:(NSRange)range {
     NSString *i = [s stringWithOnlyDigits];
     
     NSUInteger val = 0;
@@ -410,16 +407,19 @@ static NSString *const kKey = @"key";
 - (void)applyUnsignedIntegerConstraints:(PreferenceInfo *)info {
     assert([info.control isKindOfClass:[NSTextField class]]);
     NSTextField *textField = (NSTextField *)info.control;
-    NSUInteger iv = [self uintForString:[textField stringValue] inRange:info.range];
+    NSUInteger iv = [self unsignedIntegerForString:[textField stringValue] inRange:info.range];
     unichar lastChar = '0';
     int numChars = [[textField stringValue] length];
     if (numChars) {
         lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
     }
-    if (iv != [textField separatorTolerantUIntValue] || (lastChar < '0' || lastChar > '9')) {
-        // FIXME: What is correct here? There is no "setUnsignedIntegerValue" in NSTextField
-        [textField setDoubleValue:iv];
+    if (iv != [textField separatorTolerantUnsignedIntegerValue] || (lastChar < '0' || lastChar > '9')) {
+        // FIXME
+        // This works but is technically wrong
+        //[textField setDoubleValue:iv];
+        [textField setStringValue:[NSString stringWithFormat:@"%lu", iv]];
     }
+    
 }
 
 #pragma mark - NSControl Delegate Informal Protocol

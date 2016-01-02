@@ -1154,7 +1154,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             pwd = NSHomeDirectory();
         }
     }
-    isUTF8 = ([iTermProfilePreferences uintForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
+    isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
     [[[self tab] realParentWindow] setName:theName forSession:self];
 
@@ -2703,7 +2703,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                    nonAscii:[iTermProfilePreferences boolForKey:KEY_NONASCII_ANTI_ALIASED
                                                       inProfile:aDict]];
     
-    [self setEncoding:[iTermProfilePreferences uintForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
+    [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
