@@ -272,13 +272,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)setAnswerBackString:(NSString *)s
 {
-    s = [s stringByReplacingEscapedChar:'a' withString:@"\x07"];
-    s = [s stringByReplacingEscapedChar:'b' withString:@"\x08"];
-    s = [s stringByReplacingEscapedChar:'e' withString:@"\x1b"];
-    s = [s stringByReplacingEscapedChar:'n' withString:@"\n"];
-    s = [s stringByReplacingEscapedChar:'r' withString:@"\r"];
-    s = [s stringByReplacingEscapedChar:'t' withString:@"\t"];
-    s = [s stringByReplacingEscapedHexValuesWithChars];
+    s = [s stringByExpandingVimSpecialCharacters];
     _answerBackString = [s copy];
 }
 
@@ -1247,10 +1241,7 @@ static const int kMaxScreenRows = 4096;
 
         //  VT100 CC
         case VT100CC_ENQ:
-            // This works, and sends a newline.
-            //[delegate_ terminalSendReport:[@"iTerm2\n" dataUsingEncoding:NSUTF8StringEncoding]];
-            // This works, and sends a literal backslash n when the string has \n in it.
-            [delegate_ terminalSendReport:[_answerBackString dataUsingEncoding:NSUTF8StringEncoding]];
+            [delegate_ terminalSendReport:[_answerBackString dataUsingEncoding:self.encoding]];
             break;
         case VT100CC_BEL:
             [delegate_ terminalRingBell];
@@ -2425,7 +2416,10 @@ static const int kMaxScreenRows = 4096;
         return;
     }
     self.termType = dict[kTerminalStateTermTypeKey];
+
     self.answerBackString = dict[kTerminalStateAnswerBackStringKey];
+    if ([self.answerBackString isKindOfClass:[NSNull class]]) self.answerBackString = nil;
+    
     self.encoding = [dict[kTerminalStateStringEncodingKey] unsignedIntegerValue];
     self.canonicalEncoding = [dict[kTerminalStateCanonicalEncodingKey] unsignedIntegerValue];
     self.reportFocus = [dict[kTerminalStateReportFocusKey] boolValue];
