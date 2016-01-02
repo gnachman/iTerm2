@@ -24,37 +24,29 @@
  **  along with this program; if not, write to the Free Software
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #import "ITAddressBookMgr.h"
-#import "iTerm.h"
-#import "iTermAdvancedSettingsModel.h"
+
+#import "DebugLogging.h"
+#import "iTermDynamicProfileManager.h"
+#import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
-#import "ProfileModel.h"
 #import "PreferencePanel.h"
-#import "iTermKeyBindingMgr.h"
+#import "ProfileModel.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
-#import "NSDictionary+Profile.h"
-#import "NSMutableDictionary+Profile.h"
-#import "NSFileManager+iTerm.h"
 #import "NSFont+iTerm.h"
-#import "NSStringIterm.h"
-#import "SCEvents.h"
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
-#include <pwd.h>
-
-@interface ITAddressBookMgr () <SCEventListenerProtocol>
-@end
 
 @implementation ITAddressBookMgr {
-    SCEvents *_events;
     NSNetServiceBrowser *sshBonjourBrowser;
     NSNetServiceBrowser *ftpBonjourBrowser;
     NSNetServiceBrowser *telnetBonjourBrowser;
     NSMutableArray *bonjourServices;
+    iTermDynamicProfileManager *_dynamicProfileManager;
 }
+
 + (id)sharedInstance {
     static ITAddressBookMgr* shared = nil;
 
@@ -69,7 +61,7 @@
     self = [super init];
     if (self) {
         NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-
+        _dynamicProfileManager = [iTermDynamicProfileManager sharedInstance];
         if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] &&
             [[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] isKindOfClass:[NSDictionary class]] &&
             ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
@@ -91,9 +83,9 @@
             NSLog(@"Loading profiles from %@", newBookmarks);
             NSMutableArray *profiles = [NSMutableArray array];
             NSMutableSet *guids = [NSMutableSet set];
-            if ([self loadDynamicProfilesFromFile:(NSString *)newBookmarks
-                                        intoArray:profiles
-                                            guids:guids] &&
+            if ([_dynamicProfileManager loadDynamicProfilesFromFile:(NSString *)newBookmarks
+                                                          intoArray:profiles
+                                                              guids:guids] &&
                 [profiles count] > 0) {
                 NSString *defaultGuid = profiles[0][KEY_GUID];
                 for (Profile *profile in profiles) {
@@ -120,7 +112,7 @@
         if ([iTermPreferences boolForKey:kPreferenceKeyAddBonjourHostsToProfiles]) {
             [self locateBonjourServices];
         }
-        
+
         [iTermPreferences addObserverForKey:kPreferenceKeyAddBonjourHostsToProfiles
                                       block:^(id previousValue, id newValue) {
                                           if ([newValue boolValue]) {
@@ -130,25 +122,21 @@
                                               [self removeBonjourProfiles];
                                           }
                                       }];
-        _events = [[SCEvents alloc] init];
-        _events.delegate = self;
-        [_events startWatchingPaths:@[ [self dynamicProfilesPath] ]];
 
         BOOL bookmarkWithDefaultGuidExisted =
             ([[ProfileModel sharedInstance] bookmarkWithGuid:originalDefaultGuid] != nil);
-        [self reloadDynamicProfiles];
+        [_dynamicProfileManager reloadDynamicProfiles];
         if (!bookmarkWithDefaultGuidExisted &&
             [[ProfileModel sharedInstance] bookmarkWithGuid:originalDefaultGuid] != nil) {
             // One of the dynamic profiles has the default guid.
             [[ProfileModel sharedInstance] setDefaultByGuid:originalDefaultGuid];
         }
     }
-    
+
     return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [bonjourServices removeAllObjects];
     [bonjourServices release];
 
@@ -158,7 +146,6 @@
     [sshBonjourBrowser release];
     [ftpBonjourBrowser release];
     [telnetBonjourBrowser release];
-    [_events release];
     [super dealloc];
 }
 
@@ -658,211 +645,66 @@
     }
 }
 
-#pragma mark - SCEventListenerProtocol
-
-- (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {
-    [self reloadDynamicProfiles];
-}
-
-#pragma mark - Dynamic Profiles
-
-- (NSString *)dynamicProfilesPath {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *appSupport = [fileManager applicationSupportDirectory];
-    NSString *thePath = [appSupport stringByAppendingPathComponent:@"DynamicProfiles"];
-    [[NSFileManager defaultManager] createDirectoryAtPath:thePath
-                              withIntermediateDirectories:YES
-                                               attributes:nil
-                                                    error:NULL];
-    return thePath;
-}
-
-- (void)reloadDynamicProfiles {
-    NSString *path = [self dynamicProfilesPath];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-
-    // Load the current dynamic profiles into |newProfiles|. The |guids| set
-    // is used to ensure that guids are unique across all files.
-    NSMutableArray *newProfiles = [NSMutableArray array];
-    NSMutableSet *guids = [NSMutableSet set];
-    NSMutableArray *fileNames = [NSMutableArray array];
-    for (NSString *file in [fileManager enumeratorAtPath:path]) {
-        [fileNames addObject:file];
-    }
-    [fileNames sortUsingSelector:@selector(compare:)];
-    for (NSString *file in fileNames) {
-        if ([file hasPrefix:@"."]) {
-            continue;
-        }
-        NSString *fullName = [path stringByAppendingPathComponent:file];
-        if (![self loadDynamicProfilesFromFile:fullName intoArray:newProfiles guids:guids]) {
-            NSLog(@"Igoring dynamic profiles in malformed file %@ and continuing.", fullName);
-        }
-    }
-
-    // Update changes to existing dynamic profiles and add ones whose guids are
-    // not known.
-    NSArray *oldProfiles = [self dynamicProfiles];
-    BOOL shouldReload = NO;
-    for (Profile *profile in newProfiles) {
-        Profile *existingProfile = [self profileWithGuid:profile[KEY_GUID] inArray:oldProfiles];
-        if (existingProfile) {
-            [self updateDynamicProfile:profile];
-            shouldReload = YES;
-        } else {
-            [self addDynamicProfile:profile];
-        }
-    }
-
-    // Remove dynamic profiles whose guids no longer exist.
-    for (Profile *profile in oldProfiles) {
-        if (![self profileWithGuid:profile[KEY_GUID] inArray:newProfiles]) {
-            [self removeDynamicProfile:profile];
-        }
-    }
-    if (shouldReload) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
-                                                            object:nil
-                                                          userInfo:nil];
-    }
-}
-
-// Load the profiles from |filename| and add valid profiles into |profiles|.
-// Add their guids to |guids|.
-- (BOOL)loadDynamicProfilesFromFile:(NSString *)filename
-                          intoArray:(NSMutableArray *)profiles
-                              guids:(NSMutableSet *)guids {
-    // First, try xml and binary.
-    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:filename];
-    if (!dict) {
-        // Try JSON
-        NSData *data = [NSData dataWithContentsOfFile:filename];
-        if (!data) {
-            NSLog(@"Dynamic Profiles file %@ is unreadable", filename);
-            return NO;
-        }
-        NSError *error = nil;
-        dict = [NSJSONSerialization JSONObjectWithData:data
-                                               options:0
-                                                 error:&error];
-        if (!dict) {
-            NSLog(@"Dynamic Profiles file %@ doesn't contain a valid property list", filename);
-            return NO;
-        }
-    }
-    NSArray *entries = dict[@"Profiles"];
-    if (!entries) {
-        NSLog(@"Property list in %@ has no entries", entries);
++ (BOOL)canRemoveProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
+    DLog(@"removeProfile called");
+    if (!profile) {
+        DLog(@"Nil profile");
         return NO;
     }
-    for (Profile *profile in entries) {
-        if (![profile[KEY_GUID] isKindOfClass:[NSString class]]) {
-            NSLog(@"Dynamic profile is missing the Guid field in file %@", filename);
-            continue;
-        }
-        if (![profile[KEY_NAME] isKindOfClass:[NSString class]]) {
-            NSLog(@"Dynamic profile with guid %@ is missing the name field", profile[KEY_GUID]);
-            continue;
-        }
-        if ([self nonDynamicProfileHasGuid:profile[KEY_GUID]]) {
-            NSLog(@"Dynamic profile with guid %@ conflicts with non-dynamic profile with same guid", profile[KEY_GUID]);
-            continue;
-        }
-        if ([guids containsObject:profile[KEY_GUID]]) {
-            NSLog(@"Two dynamic profiles have the same guid: %@", profile[KEY_GUID]);
-            continue;
-        }
-        [profiles addObject:profile];
-        [guids addObject:profile[KEY_GUID]];
+
+    if (![model bookmarkWithGuid:profile[KEY_GUID]]) {
+        DLog(@"Can't remove profile not in shared profile model");
+        return NO;
     }
+
+    if ([model numberOfBookmarks] < 2) {
+        DLog(@"Can't remove last profile");
+        return NO;
+    }
+
+    DLog(@"Ok to remove.");
     return YES;
 }
 
-// Does any "regular" profile have Guid |guid|?
-- (BOOL)nonDynamicProfileHasGuid:(NSString *)guid {
-    Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
-    if (!profile) {
-        return NO;
++ (void)removeProfile:(NSDictionary *)profile fromModel:(ProfileModel *)model {
+    NSString *guid = profile[KEY_GUID];
+    DLog(@"Remove profile with guid %@...", guid);
+    if ([model numberOfBookmarks] == 1) {
+        DLog(@"Refusing to remove only profile");
+        return;
     }
-    return !profile.profileIsDynamic;
+
+    DLog(@"Removing key bindings that reference the guid being removed");
+    [self removeKeyMappingsReferringToGuid:guid];
+    DLog(@"Removing profile from model");
+    [model removeProfileWithGuid:guid];
+
+    // Ensure all profile list views reload their data to avoid issue 4033.
+    DLog(@"Posting profile was deleted notification");
+    [[NSNotificationCenter defaultCenter] postNotificationName:kProfileWasDeletedNotification
+                                                        object:nil];
+    [model flush];
 }
 
-// Returns the current dynamic profiles.
-- (NSArray *)dynamicProfiles {
-    NSMutableArray *array = [NSMutableArray array];
-    for (Profile *profile in [[ProfileModel sharedInstance] bookmarks]) {
-        if (profile.profileIsDynamic) {
-            [array addObject:profile];
++ (void)removeKeyMappingsReferringToGuid:(NSString *)badRef {
+    for (NSString* guid in [[ProfileModel sharedInstance] guids]) {
+        Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
+        profile = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:profile];
+        if (profile) {
+            [[ProfileModel sharedInstance] setBookmark:profile withGuid:guid];
         }
     }
-    return array;
-}
-
-// Returns the first profile in |profiles| whose guid is |guid|.
-- (Profile *)profileWithGuid:(NSString *)guid inArray:(NSArray *)profiles {
-    for (Profile *aProfile in profiles) {
-        if ([guid isEqualToString:aProfile[KEY_GUID]]) {
-            return aProfile;
+    for (NSString* guid in [[ProfileModel sessionsInstance] guids]) {
+        Profile* profile = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
+        profile = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:profile];
+        if (profile) {
+            [[ProfileModel sessionsInstance] setBookmark:profile withGuid:guid];
         }
     }
-    return nil;
-}
-
-// Reload a dynamic profile, re-merging it with its parent.
-- (void)updateDynamicProfile:(Profile *)newProfile {
-    Profile *prototype = [self prototypeForDynamicProfile:newProfile];
-    NSMutableDictionary *merged = [self profileByMergingProfile:newProfile
-                                                    intoProfile:prototype];
-    [merged profileAddDynamicTagIfNeeded];
-    [[ProfileModel sharedInstance] setBookmark:merged
-                                      withGuid:merged[KEY_GUID]];
-}
-
-// Copies fields from |profile| over those in |prototype| and returns a new
-// mutable dictionary.
-- (NSMutableDictionary *)profileByMergingProfile:(Profile *)profile
-                                     intoProfile:(Profile *)prototype {
-    NSMutableDictionary *merged = [[profile mutableCopy] autorelease];
-    for (NSString *key in prototype) {
-        if (profile[key]) {
-            merged[key] = profile[key];
-        } else {
-            merged[key] = prototype[key];
-        }
-    }
-    return merged;
-}
-
-- (Profile *)prototypeForDynamicProfile:(Profile *)profile {
-    Profile *prototype = nil;
-    NSString *parentName = profile[KEY_DYNAMIC_PROFILE_PARENT_NAME];
-    if (parentName) {
-        prototype = [[ProfileModel sharedInstance] bookmarkWithName:parentName];
-        if (!prototype) {
-            NSLog(@"Dynamic profile %@ references unknown parent name %@. Using default profile as parent.",
-                  profile[KEY_NAME], parentName);
-        }
-    }
-    if (!prototype) {
-        prototype = [[ProfileModel sharedInstance] defaultBookmark];
-    }
-    return prototype;
-}
-
-// Add a new dynamic profile to the model.
-- (void)addDynamicProfile:(Profile *)profile {
-    Profile *prototype = [self prototypeForDynamicProfile:profile];
-    NSMutableDictionary *merged = [self profileByMergingProfile:profile
-                                                    intoProfile:prototype];
-    [merged profileAddDynamicTagIfNeeded];
-
-    [[ProfileModel sharedInstance] addBookmark:merged];
-}
-
-// Remove a dynamic profile from the model. Updates displays of profiles,
-// references to the profile, etc.
-- (void)removeDynamicProfile:(Profile *)profile {
-    [[PreferencePanel sharedInstance] removeProfileWithGuid:profile[KEY_GUID]];
+    [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kKeyBindingsChangedNotification
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 @end

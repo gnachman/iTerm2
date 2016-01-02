@@ -399,10 +399,5 @@ NSString *const kSessionProfileDidChange = @"kSessionProfileDidChange";
     [[self window] setFrame:rect display:YES animate:YES];
 }
 
-- (void)removeProfileWithGuid:(NSString *)guid {
-    [_profilesViewController removeProfileWithGuid:guid
-                                         fromModel:[ProfileModel sharedInstance]];
-}
-
 @end
 

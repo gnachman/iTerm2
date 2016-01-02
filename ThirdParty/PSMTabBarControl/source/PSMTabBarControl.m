@@ -184,7 +184,10 @@ const NSInteger kPSMStartResizeAnimation = 0;
     // Remove bindings.
     NSArray *temp = [[_cells copy] autorelease];
     for (PSMTabBarCell *cell in temp) {
+        [cell retain];
         [self removeTabForCell:cell];
+        cell.controlView = nil;
+        [cell release];
     }
 
     [_overflowPopUpButton release];

@@ -444,7 +444,7 @@ static BOOL UserIsActive() {
  */
 static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
-    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *ad = iTermApplication.sharedApplication.delegate;
     if (!ad.workspaceSessionActive) {
         return event;
     }
@@ -704,7 +704,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 - (void)carbonHotkeyPressed:(id)handler {
-    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *ad = iTermApplication.sharedApplication.delegate;
     if (!ad.workspaceSessionActive) {
         return;
     }
