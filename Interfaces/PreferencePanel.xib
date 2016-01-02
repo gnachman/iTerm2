@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="8191" systemVersion="15A284" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9059" systemVersion="15B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="8191"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9059"/>
         <capability name="box content view" minToolsVersion="7.0"/>
     </dependencies>
     <objects>
@@ -2491,7 +2491,7 @@ DQ
             <animations/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="559" height="394"/>
+            <rect key="frame" x="0.0" y="0.0" width="568" height="394"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <button id="4765">
@@ -2780,10 +2780,10 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="4BA-kr-358">
-                    <rect key="frame" x="282" y="264" width="269" height="18"/>
+                    <rect key="frame" x="283" y="265" width="287" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
-                    <buttonCell key="cell" type="check" title="Draw anti-aliased text with thin strokes" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4SR-DD-VTM">
+                    <buttonCell key="cell" type="check" title="Sharpen anti-aliased text on Retina displays" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4SR-DD-VTM">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -2794,7 +2794,7 @@ DQ
                 </button>
             </subviews>
             <animations/>
-            <point key="canvasLocation" x="301.5" y="789"/>
+            <point key="canvasLocation" x="-8" y="484"/>
         </customView>
         <customView id="77f-eM-Dma" userLabel="Prefs - Profiles - Window" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="424"/>
@@ -5902,7 +5902,7 @@ DQ
                     </connections>
                 </button>
                 <button toolTip="If disabled, then triple click selects one line as it appears onscreen." id="6260">
-                    <rect key="frame" x="390" y="68" width="258" height="18"/>
+                    <rect key="frame" x="390" y="68" width="274" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Triple-click selects entire wrapped lines" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6261">

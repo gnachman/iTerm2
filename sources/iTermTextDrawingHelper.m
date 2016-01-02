@@ -666,7 +666,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
            storage:(CRunStorage *)storage
            context:(CGContextRef)ctx {
     int savedFontSmoothingStyle = 0;
-    if (_thinStrokes) {
+    if (_thinStrokes && _isRetina) {
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
         savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
