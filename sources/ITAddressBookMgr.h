@@ -177,8 +177,8 @@
 #define KEY_AUTOLOG                           @"Automatically Log"
 #define KEY_UNDO_TIMEOUT                      @"Session Close Undo Timeout"
 #define KEY_LOGDIR                            @"Log Directory"
-#define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
 #define KEY_IDLE_CODE                         @"Idle Code"
+#define KEY_IDLE_PERIOD                       @"Idle Period"
 #define KEY_PROMPT_CLOSE_DEPRECATED           @"Prompt Before Closing"  // Deprecated due to bad migration in 8/28 build
 #define KEY_PROMPT_CLOSE                      @"Prompt Before Closing 2"
 #define KEY_JOBS                              @"Jobs to Ignore"

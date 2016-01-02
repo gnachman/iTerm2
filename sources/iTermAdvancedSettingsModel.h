@@ -19,7 +19,6 @@
 + (double)hotkeyTermAnimationDuration;
 + (BOOL)hotkeyWindowFloatsAboveOtherWindows;
 + (NSString *)searchCommand;
-+ (double)antiIdleTimerPeriod;
 + (BOOL)dockIconTogglesWindow;
 + (double)timeBetweenBlinks;
 + (BOOL)neverWarnAboutMeta;

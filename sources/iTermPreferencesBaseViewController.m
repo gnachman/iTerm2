@@ -142,6 +142,10 @@ static NSString *const kKey = @"key";
                 [self setInt:[sender separatorTolerantIntValue] forKey:info.key];
                 break;
 
+            case kPreferenceInfoTypeFloatTextField:
+                [self setFloat:[sender floatValue] forKey:info.key];
+                break;
+                
             case kPreferenceInfoTypeStringTextField:
                 [self setString:[sender stringValue] forKey:info.key];
                 break;
@@ -241,6 +245,13 @@ static NSString *const kKey = @"key";
         }
 
         case kPreferenceInfoTypeIntegerTextField: {
+            assert([info.control isKindOfClass:[NSTextField class]]);
+            NSTextField *field = (NSTextField *)info.control;
+            field.doubleValue = [self floatForKey:info.key];
+            break;
+        }
+
+        case kPreferenceInfoTypeFloatTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.intValue = [self intForKey:info.key];
@@ -343,6 +354,12 @@ static NSString *const kKey = @"key";
     val = MIN(val, range.location + range.length - 1);
     return val;
 }
+
+- (double)FloatForString:(NSString *)s {
+    double val = [s doubleValue];
+    return val;
+}
+
 
 - (void)applyIntegerConstraints:(PreferenceInfo *)info {
     // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:

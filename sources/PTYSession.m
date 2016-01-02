@@ -222,7 +222,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // The code to send in the anti idle timer.
     char _antiIdleCode;
-
+    
+    // Period in seconds between sending anti idle characters.
+    NSTimeInterval _antiIdlePeriod;
+    
     // The bookmark the session was originally created with so those settings can be restored if
     // needed.
     Profile *_originalProfile;
@@ -2710,7 +2713,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self setEncodingFromSInt32:[iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
-    [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
+    [self setAntiIdle:[iTermProfilePreferences floatForKey:KEY_IDLE_PERIOD inProfile:aDict]];
     [self setAutoClose:[iTermProfilePreferences boolForKey:KEY_CLOSE_SESSIONS_ON_END inProfile:aDict]];
     _screen.useHFSPlusMapping = [iTermProfilePreferences boolForKey:KEY_USE_HFS_PLUS_MAPPING
                                                           inProfile:aDict];
@@ -3070,30 +3073,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setBlend:blendVal];
 }
 
-- (BOOL)antiIdle
-{
-    return _antiIdleTimer ? YES : NO;
-}
-
-- (void)setAntiIdle:(BOOL)set
-{
-    if (set == [self antiIdle]) {
-        return;
-    }
-
-    if (set) {
-        NSTimeInterval period = MIN(60, [iTermAdvancedSettingsModel antiIdleTimerPeriod]);
-
-        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:period
-                                                           target:self
+- (void)setAntiIdle:(NSTimeInterval)period {
+    [_antiIdleTimer invalidate];
+    [_antiIdleTimer release];
+    _antiIdleTimer = nil;
+    if (period > 0) _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:period
+                                                         target:self
                                                          selector:@selector(doAntiIdle)
                                                          userInfo:nil
-                repeats:YES] retain];
-    } else {
-        [_antiIdleTimer invalidate];
-        [_antiIdleTimer release];
-        _antiIdleTimer = nil;
-    }
+                                                         repeats:YES] retain];
 }
 
 - (BOOL)useBoldFont
@@ -3503,10 +3491,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (now >= _lastInput + 60) {
-        [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
-        _lastInput = now;
-    }
+    [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
+    _lastInput = now;
 }
 
 - (BOOL)canInstantReplayPrev

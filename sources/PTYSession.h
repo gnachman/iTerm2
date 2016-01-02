@@ -159,11 +159,11 @@ typedef enum {
 
 @property(nonatomic, assign) NSStringEncoding encoding;
 
-// Send a character periodically.
-@property(nonatomic, assign) BOOL antiIdle;
-
 // The code to send in the anti idle timer.
 @property(nonatomic, assign) char antiIdleCode;
+
+// How long between sending anti idle chars.
+@property(nonatomic, assign) NSTimeInterval antiIdlePeriod;
 
 // If true, close the tab when the session ends.
 @property(nonatomic, assign) BOOL autoClose;

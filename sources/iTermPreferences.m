@@ -279,6 +279,7 @@ static NSMutableDictionary *gObservers;
     id defaultValue = [self defaultValueMap][key];
     switch (type) {
         case kPreferenceInfoTypeIntegerTextField:
+        case kPreferenceInfoTypeFloatTextField:
         case kPreferenceInfoTypePopup:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
