@@ -123,6 +123,7 @@
 + (BOOL)allowDragOfTabIntoNewWindow;
 + (BOOL)typingClearsSelection;
 + (BOOL)focusReportingEnabled;
++ (BOOL)staticUnderlineColor;
 
 + (BOOL)hideFromDockAndAppSwitcher;
 + (BOOL)hotkeyWindowIgnoresSpotlight;

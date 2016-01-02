@@ -105,6 +105,7 @@
 #define KEY_USE_CURSOR_GUIDE       @"Use Cursor Guide"
 #define KEY_CURSOR_GUIDE_COLOR     @"Cursor Guide Color"
 #define KEY_BADGE_COLOR            @"Badge Color"
+#define KEY_UNDERLINE_COLOR        @"Underline Color"
 
 // Display
 #define KEY_ROWS                   @"Rows"
