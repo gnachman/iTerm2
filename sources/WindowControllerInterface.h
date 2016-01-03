@@ -176,6 +176,12 @@ typedef NS_ENUM(NSInteger, BroadcastMode) {
 - (void)moveTabLeft:(id)sender;
 - (void)moveTabRight:(id)sender;
 
+// Increase and Decrease
+- (void)increaseHeight:(id)sender;
+- (void)decreaseHeight:(id)sender;
+- (void)increaseWidth:(id)sender;
+- (void)decreaseWidth:(id)sender;
+
 // If soft is true, don't kill tmux session. Otherwise is just like closeTab.
 - (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft;
 

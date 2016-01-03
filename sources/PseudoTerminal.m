@@ -5641,6 +5641,31 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self tabsDidReorder];
 }
 
+- (IBAction)increaseHeight:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns
+                          height:self.currentSession.rows+1];
+}
+
+- (IBAction)decreaseHeight:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns
+                          height:self.currentSession.rows-1];
+}
+
+- (IBAction)increaseWidth:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns+1
+                          height:self.currentSession.rows];
+}
+
+- (IBAction)decreaseWidth:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns-1
+                          height:self.currentSession.rows];
+
+}
+
 - (void)refreshTmuxLayoutsAndWindow
 {
     for (PTYTab *aTab in [self tabs]) {
