@@ -107,6 +107,7 @@ BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bu
                        withURL:(NSString *)url
                       isHotkey:(BOOL)isHotkey
                        makeKey:(BOOL)makeKey
+                   canActivate:(BOOL)canActivate
                        command:(NSString *)command
                          block:(PTYSession *(^)(PseudoTerminal *))block;
 - (PTYSession *)launchBookmark:(Profile *)profile inTerminal:(PseudoTerminal *)theTerm;

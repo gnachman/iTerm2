@@ -52,6 +52,7 @@
                                                  withURL:nil
                                                 isHotkey:NO
                                                  makeKey:YES
+                                             canActivate:NO
                                                  command:command
                                                    block:nil];
     return session.tab;
@@ -74,6 +75,7 @@
                                                  withURL:nil
                                                 isHotkey:NO
                                                  makeKey:YES
+                                             canActivate:NO
                                                  command:command
                                                    block:nil];
     return session.tab;

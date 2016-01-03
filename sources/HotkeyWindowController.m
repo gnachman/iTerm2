@@ -166,6 +166,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
                                            withURL:nil
                                           isHotkey:YES
                                            makeKey:YES
+                                       canActivate:YES
                                            command:nil
                                              block:nil];
         if (session) {

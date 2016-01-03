@@ -825,6 +825,7 @@ static BOOL hasBecomeActive = NO;
                                                  withURL:urlStr
                                                 isHotkey:NO
                                                  makeKey:NO
+                                             canActivate:NO
                                                  command:nil
                                                    block:nil];
     }

@@ -1365,6 +1365,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                              withURL:url
                                             isHotkey:NO
                                              makeKey:NO
+                                         canActivate:NO
                                              command:nil
                                                block:nil];
 }

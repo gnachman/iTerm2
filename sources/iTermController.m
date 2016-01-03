@@ -1084,6 +1084,7 @@ static iTermController* shared;
                         withURL:nil
                        isHotkey:NO
                         makeKey:YES
+                    canActivate:YES
                         command:nil
                           block:nil];
 }
@@ -1150,6 +1151,7 @@ static iTermController* shared;
                        withURL:(NSString *)url
                       isHotkey:(BOOL)isHotkey
                        makeKey:(BOOL)makeKey
+                   canActivate:(BOOL)canActivate
                        command:(NSString *)command
                          block:(PTYSession *(^)(PseudoTerminal *))block {
     PseudoTerminal *term;
@@ -1229,9 +1231,13 @@ static iTermController* shared;
         // When this function is activated from the dock icon's context menu make sure
         // that the new window is on top of all other apps' windows. For some reason,
         // makeKeyAndOrderFront does nothing.
-        [NSApp activateIgnoringOtherApps:YES];
+        if (canActivate) {
+            [NSApp activateIgnoringOtherApps:YES];
+        }
         [[term window] makeKeyAndOrderFront:nil];
-        [NSApp arrangeInFront:self];
+        if (canActivate) {
+            [NSApp arrangeInFront:self];
+        }
     }
 
     return session;

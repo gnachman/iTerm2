@@ -6640,6 +6640,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                                  withURL:nil
                                                 isHotkey:NO
                                                  makeKey:YES
+                                             canActivate:YES
                                                  command:nil
                                                    block:^PTYSession *(PseudoTerminal *term) {
                                                        // Keep session size stable.
