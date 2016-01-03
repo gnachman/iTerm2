@@ -88,13 +88,13 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     id defaultValue = [self defaultValueMap][key];
     switch (type) {
         case kPreferenceInfoTypeIntegerTextField:
-        case kPreferenceInfoTypeUnsignedIntegerTextField:
         case kPreferenceInfoTypePopup:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
+        case kPreferenceInfoTypeUnsignedIntegerTextField:
         case kPreferenceInfoTypeUnsignedIntegerPopup:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
-                    [defaultValue unsignedIntegerValue] == ceil([defaultValue unsignedIntegerValue]));
+                    [defaultValue unsignedIntegerValue] == [defaultValue unsignedIntegerValue]);
         case kPreferenceInfoTypeCheckbox:
         case kPreferenceInfoTypeInvertedCheckbox:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
