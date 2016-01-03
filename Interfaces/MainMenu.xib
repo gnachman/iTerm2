@@ -958,28 +958,28 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Decrease Row" keyEquivalent="" id="E89-Mw-yOH">
+                            <menuItem title="Decrease Height" keyEquivalent="" id="E89-Mw-yOH">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
-                                    <action selector="decreaseRow:" target="-1" id="cNH-bz-I6n"/>
+                                    <action selector="decreaseHeight:" target="-1" id="oaS-2d-4rw"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Increase Row" keyEquivalent="" id="1L5-Nc-laa">
+                            <menuItem title="Increase Height" keyEquivalent="" id="1L5-Nc-laa">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
-                                    <action selector="increaseRow:" target="-1" id="33c-SV-e65"/>
+                                    <action selector="increaseHeight:" target="-1" id="wNK-4C-WtN"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Decrease Column" id="XkO-DN-h6r">
+                            <menuItem title="Decrease Width" id="XkO-DN-h6r">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
-                                    <action selector="decreaseColumn:" target="-1" id="8x7-l6-wYq"/>
+                                    <action selector="decreaseWidth:" target="-1" id="B9A-Em-6qf"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Increase Column" id="ql8-uk-qRc">
+                            <menuItem title="Increase Width" id="ql8-uk-qRc">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
-                                    <action selector="increaseColumn:" target="-1" id="4Sw-UR-VwZ"/>
+                                    <action selector="increaseWidth:" target="-1" id="XyN-u0-ljE"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="vXn-Fa-KDE"/>

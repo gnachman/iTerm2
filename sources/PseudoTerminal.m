@@ -5637,32 +5637,29 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [self tabsDidReorder];
 }
 
-- (IBAction)increaseRow:(id)sender {
-    if (![iTermProfilePreferences boolForKey:KEY_DISABLE_WINDOW_RESIZING inProfile:self.currentSession.profile]) {
-        [self.currentSession.screen terminalSetRows:self.currentSession.rows + 1
-                                         andColumns:self.currentSession.columns];
-    }
+- (IBAction)increaseHeight:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns
+                          height:self.currentSession.rows+1];
 }
 
-- (IBAction)decreaseRow:(id)sender {
-    if (![iTermProfilePreferences boolForKey:KEY_DISABLE_WINDOW_RESIZING inProfile:self.currentSession.profile]) {
-        [self.currentSession.screen terminalSetRows:self.currentSession.rows - 1
-                                         andColumns:self.currentSession.columns];
-    }
+- (IBAction)decreaseHeight:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns
+                          height:self.currentSession.rows-1];
 }
 
-- (IBAction)increaseColumn:(id)sender {
-    if (![iTermProfilePreferences boolForKey:KEY_DISABLE_WINDOW_RESIZING inProfile:self.currentSession.profile]) {
-        [self.currentSession.screen terminalSetRows:self.currentSession.rows
-                                         andColumns:self.currentSession.columns + 1];
-    }
+- (IBAction)increaseWidth:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns+1
+                          height:self.currentSession.rows];
 }
 
-- (IBAction)decreaseColumn:(id)sender {
-    if (![iTermProfilePreferences boolForKey:KEY_DISABLE_WINDOW_RESIZING inProfile:self.currentSession.profile]) {
-        [self.currentSession.screen terminalSetRows:self.currentSession.rows
-                                         andColumns:self.currentSession.columns - 1];
-    }
+- (IBAction)decreaseWidth:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns-1
+                          height:self.currentSession.rows];
+
 }
 
 - (void)refreshTmuxLayoutsAndWindow

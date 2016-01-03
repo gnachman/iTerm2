@@ -471,20 +471,20 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
                             [self stringForSelectionMovementUnit:auxText.integerValue]];
             break;
 
-        case KEY_ACTION_DECREASE_ROW:
-            actionString = @"Decrease Row";
+        case KEY_ACTION_DECREASE_HEIGHT:
+            actionString = @"Decrease Height";
             break;
 
-        case KEY_ACTION_INCREASE_ROW:
-            actionString = @"Increase Row";
+        case KEY_ACTION_INCREASE_HEIGHT:
+            actionString = @"Increase Height";
             break;
 
-        case KEY_ACTION_DECREASE_COLUMN:
-            actionString = @"Decrease Column";
+        case KEY_ACTION_DECREASE_WIDTH:
+            actionString = @"Decrease Width";
             break;
             
-        case KEY_ACTION_INCREASE_COLUMN:
-            actionString = @"Increase Column";
+        case KEY_ACTION_INCREASE_WIDTH:
+            actionString = @"Increase Width";
             break;
 
         default:
