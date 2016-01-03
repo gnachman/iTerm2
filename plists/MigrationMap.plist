@@ -577,18 +577,6 @@
       <key>Prefix</key>
       <string>Terminal</string>
       <key>Suffix</key>
-      <string>Encoding</string>
-      <key>Type</key>
-      <string>uint</string>
-      <key>Destination</key>
-      <string>Character Encoding</string>
-      <key>Default</key>
-      <integer>4</integer>
-    </dict>
-    <dict>
-      <key>Prefix</key>
-      <string>Terminal</string>
-      <key>Suffix</key>
       <string>No Resizing</string>
       <key>Type</key>
       <string>bool</string>
@@ -716,18 +704,6 @@
       <string>Terminal Type</string>
       <key>Default</key>
       <string>xterm</string>
-    </dict>
-    <dict>
-        <key>Prefix</key>
-        <string>Terminal</string>
-        <key>Suffix</key>
-        <string>Answerback String</string>
-        <key>Type</key>
-        <string>string</string>
-        <key>Destination</key>
-        <string>Answerback String</string>
-        <key>Default</key>
-        <string></string>
     </dict>
     <dict>
       <key>Prefix</key>

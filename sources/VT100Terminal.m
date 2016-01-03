@@ -270,8 +270,7 @@ static const int kMaxScreenRows = 4096;
     [delegate_ terminalTypeDidChange];
 }
 
-- (void)setAnswerBackString:(NSString *)s
-{
+- (void)setAnswerBackString:(NSString *)s {
     s = [s stringByExpandingVimSpecialCharacters];
     _answerBackString = [s copy];
 }
@@ -2418,8 +2417,10 @@ static const int kMaxScreenRows = 4096;
     self.termType = dict[kTerminalStateTermTypeKey];
 
     self.answerBackString = dict[kTerminalStateAnswerBackStringKey];
-    if ([self.answerBackString isKindOfClass:[NSNull class]]) self.answerBackString = nil;
-    
+    if ([self.answerBackString isKindOfClass:[NSNull class]]) {
+        self.answerBackString = nil;
+    }
+
     self.encoding = [dict[kTerminalStateStringEncodingKey] unsignedIntegerValue];
     self.canonicalEncoding = [dict[kTerminalStateCanonicalEncodingKey] unsignedIntegerValue];
     self.reportFocus = [dict[kTerminalStateReportFocusKey] boolValue];
