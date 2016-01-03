@@ -574,6 +574,18 @@
       <string></string>
     </dict>
     <dict>
+        <key>Prefix</key>
+        <string>Terminal</string>
+        <key>Suffix</key>
+        <string>Encoding</string>
+        <key>Type</key>
+        <string>uint</string>
+        <key>Destination</key>
+        <string>Character Encoding</string>
+        <key>Default</key>
+        <integer>4</integer>
+    </dict>
+    <dict>
       <key>Prefix</key>
       <string>Terminal</string>
       <key>Suffix</key>
