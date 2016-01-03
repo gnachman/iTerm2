@@ -1919,6 +1919,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [aSession setTmuxController:tmuxController];
         [self setDimmingForSession:aSession];
     }
+    // Set the tab title from the active session's name, which (because it has
+    // a tmux controller) will be based on the tmux window's name provided by
+    // the tab. This must be done after setting the tmux controller.
+    [tab loadTitleFromSession];
     [self endTmuxOriginatedResize];
 }
 
