@@ -174,6 +174,7 @@
                                withURL:nil
                               isHotkey:NO
                                makeKey:YES
+                           canActivate:YES
                                command:nil
                                  block:nil];
         } else if ([object isKindOfClass:[NSString class]]) {

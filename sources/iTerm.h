@@ -33,7 +33,4 @@
 
 #define NSLogRect(aRect)    NSLog(@"Rect = %f,%f,%f,%f", (aRect).origin.x, (aRect).origin.y, (aRect).size.width, (aRect).size.height)
 
-BOOL IsYosemiteOrLater(void);
-BOOL IsMavericksOrLater(void);
-
 #endif // _ITERM_H_

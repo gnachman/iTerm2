@@ -1365,6 +1365,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                              withURL:url
                                             isHotkey:NO
                                              makeKey:NO
+                                         canActivate:NO
                                              command:nil
                                                block:nil];
 }
@@ -1391,7 +1392,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)_maybeWarnAboutShortLivedSessions
 {
-    if ([(iTermApplicationDelegate *)[NSApp delegate] isApplescriptTestApp]) {
+    if (iTermApplication.sharedApplication.delegate.isApplescriptTestApp) {
         // The applescript test driver doesn't care about short-lived sessions.
         return;
     }
@@ -2709,6 +2710,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // extension.
     [self setEncodingFromSInt32:[iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
+    [_terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
     [self setAutoClose:[iTermProfilePreferences boolForKey:KEY_CLOSE_SESSIONS_ON_END inProfile:aDict]];
@@ -3375,7 +3377,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     static const NSTimeInterval kUpdateTitlePeriod = 0.7;
-    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if ([[self tab] activeSession] == self) {
         // Update window info for the active tab.
         NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
@@ -6213,7 +6214,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                                 ofClass:markClass] retain];
     self.currentMarkOrNotePosition = _lastMark.entry.interval;
     if (self.alertOnNextMark) {
-        NSString *action = [(iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate] markAlertAction];
+        NSString *action = iTermApplication.sharedApplication.delegate.markAlertAction;
         if ([action isEqualToString:kMarkAlertActionPostNotification]) {
             [[iTermGrowlDelegate sharedInstance] growlNotify:@"Mark Set"
                                              withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",

@@ -166,6 +166,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
                                            withURL:nil
                                           isHotkey:YES
                                            makeKey:YES
+                                       canActivate:YES
                                            command:nil
                                              block:nil];
         if (session) {
@@ -444,7 +445,7 @@ static BOOL UserIsActive() {
  */
 static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
-    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *ad = iTermApplication.sharedApplication.delegate;
     if (!ad.workspaceSessionActive) {
         return event;
     }
@@ -704,7 +705,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 - (void)carbonHotkeyPressed:(id)handler {
-    iTermApplicationDelegate *ad = [[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *ad = iTermApplication.sharedApplication.delegate;
     if (!ad.workspaceSessionActive) {
         return;
     }
@@ -712,19 +713,14 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 }
 
 - (void)requestAccessibilityPermissionMavericks {
-    static BOOL alreadyAsked;
-    if (alreadyAsked) {
-        return;
-    }
-    alreadyAsked = YES;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
-    NSDictionary *options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
-                                                        forKey:(NSString *)kAXTrustedCheckOptionPrompt];
-    // Show a dialog prompting the user to open system prefs.
-    if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
-        return;
-    }
-#endif
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSDictionary *options = @{ (NSString *)kAXTrustedCheckOptionPrompt: @YES };
+        // Show a dialog prompting the user to open system prefs.
+        if (!AXIsProcessTrustedWithOptions((CFDictionaryRef)options)) {
+            return;
+        }
+    });
 }
 
 - (void)beginRemappingModifiers

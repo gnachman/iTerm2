@@ -1,4 +1,3 @@
-// -*- mode:objc -*-
 /*
  **  FindViewController.h
  **
@@ -28,6 +27,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
+#import "iTermController.h"
 
 @protocol FindViewControllerDelegate <NSObject>
 
