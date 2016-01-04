@@ -31,6 +31,7 @@
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PTYSession.h"
@@ -60,8 +61,6 @@
 @end
 
 // Constants for saved window arrangement key names.
-static NSString *APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
-static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
 // Pref keys
@@ -150,20 +149,8 @@ static iTermController* shared;
         // create the iTerm directory if it does not exist
         NSFileManager *fileManager = [NSFileManager defaultManager];
 
-        // create the "~/Library/Application Support" directory if it does not exist
-        if ([fileManager fileExistsAtPath:[APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO) {
-            [fileManager createDirectoryAtPath:[APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]
-                   withIntermediateDirectories:YES
-                                    attributes:nil
-                                         error:nil];
-        }
-
-        if ([fileManager fileExistsAtPath:[SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO) {
-            [fileManager createDirectoryAtPath:[SUPPORT_DIRECTORY stringByExpandingTildeInPath]
-                   withIntermediateDirectories:YES
-                                    attributes:nil
-                                         error:nil];
-        }
+        // create the "~/Library/Application Support/iTerm" directory if it does not exist
+        [[NSFileManager defaultManager] legacyApplicationSupportDirectory];
 
         terminalWindows = [[NSMutableArray alloc] init];
         keyWindowIndexMemo_ = -1;
@@ -1244,7 +1231,7 @@ static iTermController* shared;
 }
 
 - (void)launchScript:(id)sender {
-    NSString *fullPath = [NSString stringWithFormat:@"%@/%@", [SCRIPT_DIRECTORY stringByExpandingTildeInPath], [sender title]];
+    NSString *fullPath = [[[NSFileManager defaultManager] scriptsPath] stringByAppendingPathComponent:[sender title]];
 
     if ([[[sender title] pathExtension] isEqualToString:@"scpt"]) {
         NSAppleScript *script;
