@@ -60,9 +60,6 @@
 - (void)_cycleWindowsReversed:(BOOL)back;
 @end
 
-// Constants for saved window arrangement key names.
-static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
-
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 
@@ -146,9 +143,6 @@ static iTermController* shared;
         UKCrashReporterCheckForCrash();
 
         runningApplicationClass_ = NSClassFromString(@"NSRunningApplication"); // 10.6
-        // create the iTerm directory if it does not exist
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-
         // create the "~/Library/Application Support/iTerm" directory if it does not exist
         [[NSFileManager defaultManager] legacyApplicationSupportDirectory];
 
