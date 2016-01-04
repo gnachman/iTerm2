@@ -71,7 +71,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
@@ -1650,11 +1649,12 @@ static BOOL hasBecomeActive = NO;
     NSMenu *scriptMenu = [[NSMenu alloc] initWithTitle:kScriptTitle];
     [scriptMenuItem setSubmenu: scriptMenu];
     // populate the submenu with ascripts found in the script directory
+    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
     NSDirectoryEnumerator *directoryEnumerator =
-        [[NSFileManager defaultManager] enumeratorAtPath:[SCRIPT_DIRECTORY stringByExpandingTildeInPath]];
+        [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
     NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
     for (NSString *file in directoryEnumerator) {
-        NSString *path = [[SCRIPT_DIRECTORY stringByExpandingTildeInPath] stringByAppendingPathComponent:file];
+        NSString *path = [scriptsPath stringByAppendingPathComponent:file];
         if ([workspace isFilePackageAtPath:path]) {
             [directoryEnumerator skipDescendents];
         }

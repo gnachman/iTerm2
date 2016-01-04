@@ -127,6 +127,10 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"version.txt"];
 }
 
+- (NSString *)scriptsPath {
+    return [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
+}
+
 - (NSString *)temporaryDirectory {
     // Create a unique directory in the system temporary directory
     NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];

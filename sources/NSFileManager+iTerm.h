@@ -44,4 +44,7 @@
 // arrangement won't be restored.
 - (NSString *)versionNumberFilename;
 
+// Directory where scripts live. These are loaded and added to a menu or auto-run at startup.
+- (NSString *)scriptsPath;
+
 @end
