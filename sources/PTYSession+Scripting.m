@@ -272,6 +272,14 @@
     return [self.textview content];
 }
 
+- (NSString *)answerBackString {
+    return self.terminal.answerBackString;
+}
+
+- (void)setAnswerBackString:(NSString *)string {
+    [self setSessionSpecificProfileValues:@{ KEY_ANSWERBACK_STRING: string ?: @"" }];
+}
+
 #pragma mark ANSI Colors
 
 - (NSColor *)ansiBlackColor {
