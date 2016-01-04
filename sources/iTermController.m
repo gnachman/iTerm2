@@ -116,7 +116,6 @@ BOOL IsYosemiteOrLater(void) {
 
     // For restoring previously active app when exiting hotkey window
     NSNumber *previouslyActiveAppPID_;
-    id runningApplicationClass_;
 }
 
 static iTermController* shared;
@@ -142,7 +141,6 @@ static iTermController* shared;
     if (self) {
         UKCrashReporterCheckForCrash();
 
-        runningApplicationClass_ = NSClassFromString(@"NSRunningApplication"); // 10.6
         // create the "~/Library/Application Support/iTerm" directory if it does not exist
         [[NSFileManager defaultManager] legacyApplicationSupportDirectory];
 
@@ -681,37 +679,17 @@ static iTermController* shared;
     }
 }
 
-- (void)restorePreviouslyActiveApp
-{
+- (void)restorePreviouslyActiveApp {
     if (!previouslyActiveAppPID_) {
         return;
     }
 
-    id app;
-    // NSInvocation hackery because we need to build against the 10.5 sdk and call a
-    // 10.6 function.
-
-    // app = [runningApplicationClass_ runningApplicationWithProcessIdentifier:[previouslyActiveAppPID_ intValue]];
-    NSMethodSignature *sig = [object_getClass(runningApplicationClass_) instanceMethodSignatureForSelector:@selector(runningApplicationWithProcessIdentifier:)];
-    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
-    [inv setTarget:runningApplicationClass_];
-    [inv setSelector:@selector(runningApplicationWithProcessIdentifier:)];
-    int appId = [previouslyActiveAppPID_ intValue];
-    [inv setArgument:&appId atIndex:2];
-    [inv invoke];
-    [inv getReturnValue:&app];
+    NSRunningApplication *app =
+        [NSRunningApplication runningApplicationWithProcessIdentifier:[previouslyActiveAppPID_ intValue]];
 
     if (app) {
         DLog(@"Restore app %@", app);
-        //[app activateWithOptions:0];
-        sig = [[app class] instanceMethodSignatureForSelector:@selector(activateWithOptions:)];
-        assert(sig);
-        inv = [NSInvocation invocationWithMethodSignature:sig];
-        [inv setTarget:app];
-        [inv setSelector:@selector(activateWithOptions:)];
-        int opts = 0;
-        [inv setArgument:&opts atIndex:2];
-        [inv invoke];
+        [app activateWithOptions:0];
     }
     [previouslyActiveAppPID_ release];
     previouslyActiveAppPID_ = nil;
