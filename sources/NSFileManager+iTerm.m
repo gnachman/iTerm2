@@ -135,6 +135,10 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return [[self scriptsPath] stringByAppendingPathComponent:@"AutoLaunch.scpt"];
 }
 
+- (NSString *)quietFilePath {
+    return [[self legacyApplicationSupportDirectory] stringByAppendingPathComponent:@"quiet"];
+}
+
 - (NSString *)temporaryDirectory {
     // Create a unique directory in the system temporary directory
     NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];

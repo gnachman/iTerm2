@@ -71,7 +71,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
 NSString *const kSavedArrangementDidChangeNotification = @"kSavedArrangementDidChangeNotification";
@@ -316,23 +315,19 @@ static BOOL hasBecomeActive = NO;
     return result;
 }
 
-- (NSString *)quietFileName {
-    return [ITERM2_QUIET stringByExpandingTildeInPath];
-}
-
 - (BOOL)quietFileExists {
-    return [[NSFileManager defaultManager] fileExistsAtPath:[self quietFileName]];
+    return [[NSFileManager defaultManager] fileExistsAtPath:[[NSFileManager defaultManager] quietFilePath]];
 }
 
 - (void)checkForQuietMode {
     if ([self quietFileExists]) {
         NSError *error = nil;
-        [[NSFileManager defaultManager] removeItemAtPath:[self quietFileName]
+        [[NSFileManager defaultManager] removeItemAtPath:[[NSFileManager defaultManager] quietFilePath]
                                                    error:&error];
         if (error) {
-            NSLog(@"Failed to remove %@: %@; not launching in quiet mode", [self quietFileName], error);
+            NSLog(@"Failed to remove %@: %@; not launching in quiet mode", [[NSFileManager defaultManager] quietFilePath], error);
         } else {
-            NSLog(@"%@ exists, launching in quiet mode", [self quietFileName]);
+            NSLog(@"%@ exists, launching in quiet mode", [[NSFileManager defaultManager] quietFilePath]);
             quiet_ = YES;
         }
     }
