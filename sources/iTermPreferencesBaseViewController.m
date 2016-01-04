@@ -171,6 +171,7 @@ static NSString *const kKey = @"key";
                 break;
 
             case kPreferenceInfoTypeUnsignedIntegerPopup:
+                assert([sender selectedTag]>=0);
                 [self setUnsignedInteger:[sender selectedTag] forKey:info.key];
                 break;
                 
@@ -296,7 +297,9 @@ static NSString *const kKey = @"key";
         case kPreferenceInfoTypeUnsignedIntegerPopup: {
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
-            [popup selectItemWithTag:[self unsignedIntegerForKey:info.key]];
+            const NSUInteger value = [self unsignedIntegerForKey:info.key];
+            assert(value <= NSIntegerMax);
+            [popup selectItemWithTag:value];
             break;
         }
 
