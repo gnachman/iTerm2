@@ -71,12 +71,12 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (NSMenu *)downloadsMenu {
-    iTermApplicationDelegate *ad = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *ad = iTermApplication.sharedApplication.delegate;
     return [ad downloadsMenu];
 }
 
 - (NSMenu *)uploadsMenu {
-    iTermApplicationDelegate *ad = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+    iTermApplicationDelegate *ad = iTermApplication.sharedApplication.delegate;
     return [ad uploadsMenu];
 }
 

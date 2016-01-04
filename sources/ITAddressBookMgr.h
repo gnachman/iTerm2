@@ -169,6 +169,7 @@
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"
 #define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
+#define KEY_ANSWERBACK_STRING                 @"Answerback String"
 #define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"
 #define KEY_PLACE_PROMPT_AT_FIRST_COLUMN      @"Place Prompt at First Column"
 #define KEY_SHOW_MARK_INDICATORS              @"Show Mark Indicators"
@@ -250,5 +251,12 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
                forObjectType:(iTermObjectType)objectType;
 + (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark
                         forObjectType:(iTermObjectType)objectType;
+
+// Indicates if it is safe to remove the profile from the model.
++ (BOOL)canRemoveProfile:(Profile *)profile fromModel:(ProfileModel *)model;
+
+// Removes the profile from the model, removes key mappings that reference this profile, and posts a
+// kProfileWasDeletedNotification notification, then flushes the model to backing store.
++ (void)removeProfile:(Profile *)profile fromModel:(ProfileModel *)model;
 
 @end

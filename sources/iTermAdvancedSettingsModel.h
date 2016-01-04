@@ -123,4 +123,6 @@
 + (BOOL)typingClearsSelection;
 + (BOOL)focusReportingEnabled;
 
++ (BOOL)hideFromDockAndAppSwitcher;
+
 @end

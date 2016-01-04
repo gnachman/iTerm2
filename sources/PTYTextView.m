@@ -1331,12 +1331,11 @@ static const int kDragThreshold = 3;
     // key then it starts searching from the bottom again.
     [_findOnPageHelper resetFindCursor];
 
-    static BOOL isFirstInteraction = YES;
-    if (isFirstInteraction) {
-        iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        iTermApplicationDelegate *appDelegate = iTermApplication.sharedApplication.delegate;
         [appDelegate userDidInteractWithASession];
-        isFirstInteraction = NO;
-    }
+    });
 
     DLog(@"PTYTextView keyDown BEGIN %@", event);
     id delegate = [self delegate];
@@ -1814,7 +1813,8 @@ static const int kDragThreshold = 3;
     [self updateCursor:event];
     [self updateUnderlinedURLs:event];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
-        [[self window] alphaValue] > 0) {
+        [[self window] alphaValue] > 0 &&
+        ![NSApp modalWindow]) {
         // Some windows automatically close when they lose key status and are
         // incompatible with FFM. Check if the key window or its controller implements
         // disableFocusFollowsMouse and if it returns YES do nothing.
@@ -4223,13 +4223,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [theMenu addItemWithTitle:scpTitle
                        action:@selector(downloadWithSCP:)
                 keyEquivalent:@""];
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Open Selection as URL",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:@"Open Selection as URL"
                      action:@selector(browse:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Search Google for Selection",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:@"Search the Web for Selection"
                      action:@selector(searchInBrowser:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Send Email to Selected Address",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:@"Send Email to Selected Address"
                      action:@selector(mail:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
@@ -5377,8 +5377,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (void)useBackgroundIndicatorChanged:(NSNotification *)notification {
-    _showStripesWhenBroadcastingInput =
-            [(iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate] useBackgroundPatternIndicator];
+    _showStripesWhenBroadcastingInput = iTermApplication.sharedApplication.delegate.useBackgroundPatternIndicator;
     [self setNeedsDisplay:YES];
 }
 

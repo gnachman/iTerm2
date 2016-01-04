@@ -230,6 +230,9 @@
 /* NSTextField (Terminal) : <title:Terminal> (oid:251) */
 "Terminal" = "Terminal";
 
+/* NSTextField (Answerback String) : <title:Answerback String> */
+"Answerback String" = "Answerback String";
+
 /* NSTextField (Transparency) : <title:Transparency
 > (oid:172) */
 "Transparency\n" = "Transparency\n";

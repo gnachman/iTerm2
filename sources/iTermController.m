@@ -60,53 +60,52 @@
 @end
 
 // Constants for saved window arrangement key names.
-static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
+static NSString *APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
 
-static BOOL UncachedIsMavericksOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 9) || (major > 10);
-    } else {
+typedef struct {
+    unsigned int major;
+    unsigned int minor;
+    unsigned int bugfix;
+} iTermSystemVersion;
+
+iTermSystemVersion CachedSystemVersion(void) {
+    static iTermSystemVersion version;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [iTermController getSystemVersionMajor:&version.major
+                                         minor:&version.minor
+                                        bugFix:&version.bugfix];
+    });
+    return version;
+}
+
+BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bugfix) {
+    iTermSystemVersion version = CachedSystemVersion();
+    if (version.major > major) {
+        return YES;
+    } else if (version.major < major) {
         return NO;
     }
+    if (version.minor > minor) {
+        return YES;
+    } else if (version.minor < minor) {
+        return NO;
+    }
+    return version.bugfix >= bugfix;
 }
 
 BOOL IsMavericksOrLater(void) {
-    static BOOL result;
-    static BOOL initialized;
-    if (!initialized) {
-        initialized = YES;
-        result = UncachedIsMavericksOrLater();
-    }
-    return result;
-}
-
-static BOOL UncachedIsYosemiteOrLater(void) {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 10) || (major > 10);
-    } else {
-        return NO;
-    }
+    return SystemVersionIsGreaterOrEqualTo(10, 9, 0);
 }
 
 BOOL IsYosemiteOrLater(void) {
-    static BOOL result;
-    static BOOL initialized;
-    if (!initialized) {
-        initialized = YES;
-        result = UncachedIsYosemiteOrLater();
-    }
-    return result;
+    return SystemVersionIsGreaterOrEqualTo(10, 10, 0);
 }
-
 
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
@@ -124,16 +123,15 @@ BOOL IsYosemiteOrLater(void) {
     id runningApplicationClass_;
 }
 
-static iTermController* shared = nil;
-static BOOL initDone = NO;
+static iTermController* shared;
 
 + (iTermController*)sharedInstance
 {
-    if (!shared && !initDone) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         shared = [[iTermController alloc] init];
-        initDone = YES;
-    }
-
+    });
+    
     return shared;
 }
 
@@ -192,8 +190,7 @@ static BOOL initDone = NO;
     const BOOL sessionsWillRestore = ([iTermAdvancedSettingsModel runJobsInServers] &&
                                       [iTermAdvancedSettingsModel restoreWindowContents] &&
                                       self.willRestoreWindowsAtNextLaunch);
-    iTermApplicationDelegate *itad =
-        (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    iTermApplicationDelegate *itad = iTermApplication.sharedApplication.delegate;
     return (sessionsWillRestore &&
             (itad.sparkleRestarting || ![iTermAdvancedSettingsModel killJobsInServersOnQuit]));
 }
@@ -1087,6 +1084,7 @@ static BOOL initDone = NO;
                         withURL:nil
                        isHotkey:NO
                         makeKey:YES
+                    canActivate:YES
                         command:nil
                           block:nil];
 }
@@ -1153,6 +1151,7 @@ static BOOL initDone = NO;
                        withURL:(NSString *)url
                       isHotkey:(BOOL)isHotkey
                        makeKey:(BOOL)makeKey
+                   canActivate:(BOOL)canActivate
                        command:(NSString *)command
                          block:(PTYSession *(^)(PseudoTerminal *))block {
     PseudoTerminal *term;
@@ -1232,9 +1231,13 @@ static BOOL initDone = NO;
         // When this function is activated from the dock icon's context menu make sure
         // that the new window is on top of all other apps' windows. For some reason,
         // makeKeyAndOrderFront does nothing.
-        [NSApp activateIgnoringOtherApps:YES];
+        if (canActivate) {
+            [NSApp activateIgnoringOtherApps:YES];
+        }
         [[term window] makeKeyAndOrderFront:nil];
-        [NSApp arrangeInFront:self];
+        if (canActivate) {
+            [NSApp arrangeInFront:self];
+        }
     }
 
     return session;
