@@ -1919,6 +1919,10 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
         [aSession setTmuxController:tmuxController];
         [self setDimmingForSession:aSession];
     }
+    // Set the tab title from the active session's name, which (because it has
+    // a tmux controller) will be based on the tmux window's name provided by
+    // the tab. This must be done after setting the tmux controller.
+    [tab loadTitleFromSession];
     [self endTmuxOriginatedResize];
 }
 
@@ -5635,6 +5639,31 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     [_contentView.tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
     [self _updateTabObjectCounts];
     [self tabsDidReorder];
+}
+
+- (IBAction)increaseHeight:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns
+                          height:self.currentSession.rows+1];
+}
+
+- (IBAction)decreaseHeight:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns
+                          height:self.currentSession.rows-1];
+}
+
+- (IBAction)increaseWidth:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns+1
+                          height:self.currentSession.rows];
+}
+
+- (IBAction)decreaseWidth:(id)sender {
+    [self sessionInitiatedResize:self.currentSession
+                           width:self.currentSession.columns-1
+                          height:self.currentSession.rows];
+
 }
 
 - (void)refreshTmuxLayoutsAndWindow

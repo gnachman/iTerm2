@@ -1813,7 +1813,8 @@ static const int kDragThreshold = 3;
     [self updateCursor:event];
     [self updateUnderlinedURLs:event];
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
-        [[self window] alphaValue] > 0) {
+        [[self window] alphaValue] > 0 &&
+        ![NSApp modalWindow]) {
         // Some windows automatically close when they lose key status and are
         // incompatible with FFM. Check if the key window or its controller implements
         // disableFocusFollowsMouse and if it returns YES do nothing.

@@ -31,6 +31,7 @@ NSString *const kSavedCursorOriginKey = @"Origin";
 NSString *const kSavedCursorWraparoundKey = @"Wraparound";
 
 NSString *const kTerminalStateTermTypeKey = @"Term Type";
+NSString *const kTerminalStateAnswerBackStringKey = @"Answerback String";
 NSString *const kTerminalStateStringEncodingKey = @"String Encoding";
 NSString *const kTerminalStateCanonicalEncodingKey = @"Canonical String Encoding";
 NSString *const kTerminalStateReportFocusKey = @"Report Focus";
@@ -226,6 +227,7 @@ static const int kMaxScreenRows = 4096;
     [_output release];
     [_parser release];
     [_termType release];
+    [_answerBackString release];
 
     [super dealloc];
 }
@@ -267,6 +269,11 @@ static const int kMaxScreenRows = 4096;
     self.isAnsi = [_termType rangeOfString:@"ANSI"
                                    options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location !=  NSNotFound;
     [delegate_ terminalTypeDidChange];
+}
+
+- (void)setAnswerBackString:(NSString *)s {
+    s = [s stringByExpandingVimSpecialCharacters];
+    _answerBackString = [s copy];
 }
 
 - (void)setForeground24BitColor:(NSColor *)color {
@@ -1234,7 +1241,7 @@ static const int kMaxScreenRows = 4096;
 
         //  VT100 CC
         case VT100CC_ENQ:
-            // TODO: Add support for an answerback string here.
+            [delegate_ terminalSendReport:[_answerBackString dataUsingEncoding:self.encoding]];
             break;
         case VT100CC_BEL:
             [delegate_ terminalRingBell];
@@ -2373,6 +2380,7 @@ static const int kMaxScreenRows = 4096;
 - (NSDictionary *)stateDictionary {
     NSDictionary *dict =
         @{ kTerminalStateTermTypeKey: self.termType ?: [NSNull null],
+           kTerminalStateAnswerBackStringKey: self.answerBackString ?: [NSNull null],
            kTerminalStateStringEncodingKey: @(self.encoding),
            kTerminalStateCanonicalEncodingKey: @(self.canonicalEncoding),
            kTerminalStateReportFocusKey: @(self.reportFocus),
@@ -2408,6 +2416,12 @@ static const int kMaxScreenRows = 4096;
         return;
     }
     self.termType = dict[kTerminalStateTermTypeKey];
+
+    self.answerBackString = dict[kTerminalStateAnswerBackStringKey];
+    if ([self.answerBackString isKindOfClass:[NSNull class]]) {
+        self.answerBackString = nil;
+    }
+
     self.encoding = [dict[kTerminalStateStringEncodingKey] unsignedIntegerValue];
     self.canonicalEncoding = [dict[kTerminalStateCanonicalEncodingKey] unsignedIntegerValue];
     self.reportFocus = [dict[kTerminalStateReportFocusKey] boolValue];

@@ -320,6 +320,9 @@
 /* NSTextField (Terminal) : <title:Terminal> (oid:1209) */
 "Terminal" = "Terminal";
 
+/* NSTextField (Answerback String :) : <title:Answerback String> */
+"Answerback String" = "Answerback String";
+
 /* NSBox : <title:Title> (oid:945) */
 "Title" = "Title";
 

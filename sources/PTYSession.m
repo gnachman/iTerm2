@@ -2710,6 +2710,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // extension.
     [self setEncodingFromSInt32:[iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
+    [_terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
     [self setAutoClose:[iTermProfilePreferences boolForKey:KEY_CLOSE_SESSIONS_ON_END inProfile:aDict]];
@@ -4806,6 +4807,22 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 [_textview moveSelectionEndpoint:kPTYTextViewSelectionEndpointStart
                                      inDirection:kPTYTextViewSelectionExtensionDirectionRight
                                               by:[keyBindingText integerValue]];
+                break;
+
+            case KEY_ACTION_DECREASE_HEIGHT:
+                [[[iTermController sharedInstance] currentTerminal] decreaseHeight:nil];
+                break;
+
+            case KEY_ACTION_INCREASE_HEIGHT:
+                [[[iTermController sharedInstance] currentTerminal] increaseHeight:nil];
+                break;
+
+            case KEY_ACTION_DECREASE_WIDTH:
+                [[[iTermController sharedInstance] currentTerminal] decreaseWidth:nil];
+                break;
+
+            case KEY_ACTION_INCREASE_WIDTH:
+                [[[iTermController sharedInstance] currentTerminal] increaseWidth:nil];
                 break;
 
             default:
