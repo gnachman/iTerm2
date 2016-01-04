@@ -93,8 +93,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
         case kPreferenceInfoTypeUnsignedIntegerTextField:
         case kPreferenceInfoTypeUnsignedIntegerPopup:
-            return ([defaultValue isKindOfClass:[NSNumber class]] &&
-                    [defaultValue unsignedIntegerValue] == [defaultValue unsignedIntegerValue]);
+            return ([defaultValue isKindOfClass:[NSNumber class]]);
         case kPreferenceInfoTypeCheckbox:
         case kPreferenceInfoTypeInvertedCheckbox:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
