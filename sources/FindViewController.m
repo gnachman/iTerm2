@@ -98,12 +98,14 @@ const CGFloat kEdgeWidth = 3;
 }
 
 - (void)drawFocusRingMaskWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
-    if (IsYosemiteOrLater()) {
-        [super drawFocusRingMaskWithFrame:NSInsetRect(cellFrame, kFocusRingInset.width, kFocusRingInset.height)
-                                   inView:controlView];
-    } else {
-        [super drawFocusRingMaskWithFrame:cellFrame inView:controlView];
-    }
+    if (controlView.frame.origin.y >= 0) {
+        if (IsYosemiteOrLater()) {
+            [super drawFocusRingMaskWithFrame:NSInsetRect(cellFrame, kFocusRingInset.width, kFocusRingInset.height)
+                                       inView:controlView];
+        } else {
+            [super drawFocusRingMaskWithFrame:cellFrame inView:controlView];
+        }
+    }    
 }
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView

@@ -19,6 +19,7 @@
     IBOutlet NSButton *_scrollbackInAlternateScreen;
     IBOutlet NSPopUpButton *_characterEncoding;
     IBOutlet NSComboBox *_terminalType;
+    IBOutlet NSTextField *_answerBackString;
     IBOutlet NSButton *_xtermMouseReporting;
     IBOutlet NSButton *_allowTitleReporting;
     IBOutlet NSButton *_allowTitleSetting;
@@ -83,6 +84,10 @@
     // It's a combobox, but we can safely treat it as a string text field.
     [self defineControl:_terminalType
                     key:KEY_TERMINAL_TYPE
+                   type:kPreferenceInfoTypeStringTextField];
+
+    [self defineControl:_answerBackString
+                    key:KEY_ANSWERBACK_STRING
                    type:kPreferenceInfoTypeStringTextField];
     
     [self defineControl:_xtermMouseReporting

@@ -19,6 +19,7 @@
 
 @property(nonatomic, assign) id<VT100TerminalDelegate> delegate;
 @property(nonatomic, copy) NSString *termType;
+@property(nonatomic, copy) NSString *answerBackString;
 // The current encoding. May be changed by ISO2022_* code.
 @property(nonatomic, assign) NSStringEncoding encoding;
 // The "canonical" encoding, which is changed by user preference and never

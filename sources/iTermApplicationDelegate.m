@@ -161,6 +161,12 @@ static BOOL hasBecomeActive = NO;
         TurnOnDebugLoggingSilently();
     }
 
+    if ([iTermAdvancedSettingsModel hideFromDockAndAppSwitcher]) {
+        ProcessSerialNumber psn = { 0, kCurrentProcess };
+        TransformProcessType(&psn, kProcessTransformToUIElementApplication);
+        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    }
+
     // set the TERM_PROGRAM environment variable
     putenv("TERM_PROGRAM=iTerm.app");
 
@@ -825,6 +831,7 @@ static BOOL hasBecomeActive = NO;
                                                  withURL:urlStr
                                                 isHotkey:NO
                                                  makeKey:NO
+                                             canActivate:NO
                                                  command:nil
                                                    block:nil];
     }

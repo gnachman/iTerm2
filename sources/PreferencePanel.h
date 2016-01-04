@@ -94,7 +94,4 @@ void LoadPrefsFromCustomFolder(void);
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 
-// Safely remove a profile and references to it and update display.
-- (void)removeProfileWithGuid:(NSString *)guid;
-
 @end

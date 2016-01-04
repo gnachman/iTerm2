@@ -382,6 +382,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
+- (void)loadTitleFromSession {
+    tabViewItem_.label = self.activeSession.name;
+}
+
 - (void)nameOfSession:(PTYSession*)session didChangeTo:(NSString*)newName {
     if ([self activeSession] == session) {
         [tabViewItem_ setLabel:newName];
@@ -4304,8 +4308,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     [self _splitViewDidResizeSubviews:splitView];
 }
 
-- (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView
-{
+// This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when
+// views are added or adjusted, so we often have to call this ourselves.
+- (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView {
     PtyLog(@"_splitViewDidResizeSubviews running");
     for (NSView* subview in [splitView subviews]) {
         if ([subview isKindOfClass:[SessionView class]]) {

@@ -14,6 +14,58 @@
 
 static NSTimeInterval kHighlightAnimationDuration = 0.5;
 
+// A timer that does not keep a strong reference to its target. The target
+// should invoke -invalidate from its -dealloc method and release the timer to
+// avoid getting called posthumously.
+@interface PSMWeakTimer : NSObject
+@property(nonatomic, assign) id target;
+@property(nonatomic, assign) SEL selector;
+
+- (instancetype)initWithTimeInterval:(NSTimeInterval)timeInterval
+                              target:(id)target
+                            selector:(SEL)selector
+                             repeats:(BOOL)repeats;
+- (void)invalidate;
+
+@end
+
+@implementation PSMWeakTimer {
+    NSTimer *_timer;
+    BOOL _repeats;
+}
+
+- (instancetype)initWithTimeInterval:(NSTimeInterval)timeInterval
+                              target:(id)target
+                            selector:(SEL)selector
+                             repeats:(BOOL)repeats {
+    self = [super init];
+    if (self) {
+        _target = target;
+        _selector = selector;
+        _repeats = repeats;
+        _timer = [NSTimer scheduledTimerWithTimeInterval:timeInterval
+                                                  target:self
+                                                selector:@selector(timerDidFire:)
+                                                userInfo:nil
+                                                 repeats:repeats];
+    }
+    return self;
+}
+
+- (void)invalidate {
+    [_timer invalidate];
+    _timer = nil;
+}
+
+- (void)timerDidFire:(NSTimer *)timer {
+    [_target performSelector:_selector withObject:timer];
+    if (!_repeats) {
+        _timer = nil;
+    }
+}
+
+@end
+
 @interface PSMTabBarCell()<PSMProgressIndicatorDelegate>
 @end
 
@@ -21,7 +73,7 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     NSSize _stringSize;
     PSMProgressIndicator *_indicator;
     NSTimeInterval _highlightChangeTime;
-    NSTimer *_delayedStringValueTimer;  // For bug 3957
+    PSMWeakTimer *_delayedStringValueTimer;  // For bug 3957
 }
 
 #pragma mark - Creation/Destruction
@@ -76,6 +128,9 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
 }
 
 - (void)dealloc {
+    [_delayedStringValueTimer invalidate];
+    [_delayedStringValueTimer release];
+
     [_modifierString release];
     _indicator.delegate = nil;
     [_indicator release];
@@ -109,15 +164,16 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     
     if (!_delayedStringValueTimer) {
         static const NSTimeInterval kStringValueSettingDelay = 0.1;
-        _delayedStringValueTimer = [NSTimer scheduledTimerWithTimeInterval:kStringValueSettingDelay
-                                                                    target:self
-                                                                  selector:@selector(updateStringValue:)
-                                                                  userInfo:nil
-                                                                   repeats:NO];
+        _delayedStringValueTimer =
+                [[PSMWeakTimer alloc] initWithTimeInterval:kStringValueSettingDelay
+                                                    target:self
+                                                  selector:@selector(updateStringValue:)
+                                                   repeats:NO];
     }
 }
 
 - (void)updateStringValue:(NSTimer *)timer {
+    [_delayedStringValueTimer release];
     _delayedStringValueTimer = nil;
     _stringSize = [[self attributedStringValue] size];
     // need to redisplay now - binding observation was too quick.
