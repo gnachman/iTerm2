@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="7706" systemVersion="14D131" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="7706"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -957,6 +958,31 @@ DQ
                             <menuItem isSeparatorItem="YES" id="1405">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
+                            <menuItem title="Decrease Height" keyEquivalent="" id="E89-Mw-yOH">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="decreaseHeight:" target="-1" id="oaS-2d-4rw"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Increase Height" keyEquivalent="" id="1L5-Nc-laa">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="increaseHeight:" target="-1" id="wNK-4C-WtN"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Decrease Width" id="XkO-DN-h6r">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="decreaseWidth:" target="-1" id="B9A-Em-6qf"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Increase Width" id="ql8-uk-qRc">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="increaseWidth:" target="-1" id="XyN-u0-ljE"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="vXn-Fa-KDE"/>
                             <menuItem title="Password Manager" keyEquivalent="f" id="5">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>

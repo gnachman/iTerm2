@@ -4798,6 +4798,22 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                               by:[keyBindingText integerValue]];
                 break;
 
+            case KEY_ACTION_DECREASE_HEIGHT:
+                [[[iTermController sharedInstance] currentTerminal] decreaseHeight:nil];
+                break;
+
+            case KEY_ACTION_INCREASE_HEIGHT:
+                [[[iTermController sharedInstance] currentTerminal] increaseHeight:nil];
+                break;
+
+            case KEY_ACTION_DECREASE_WIDTH:
+                [[[iTermController sharedInstance] currentTerminal] decreaseWidth:nil];
+                break;
+
+            case KEY_ACTION_INCREASE_WIDTH:
+                [[[iTermController sharedInstance] currentTerminal] increaseWidth:nil];
+                break;
+
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
                 break;
