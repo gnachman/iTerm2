@@ -75,11 +75,11 @@
     info = [self defineControl:_idleCode
                            key:KEY_IDLE_CODE
                           type:kPreferenceInfoTypeIntegerTextField];
-    info.range = NSMakeRange(0, 255);
+    info.range = NSMakeRange(0, 256);
     
     [self defineControl:_idlePeriod
                     key:KEY_IDLE_PERIOD
-                   type:kPreferenceInfoTypeFloatTextField];
+                   type:kPreferenceInfoTypeDoubleTextField];
     
     [self updateRemoveJobButtonEnabled];
 

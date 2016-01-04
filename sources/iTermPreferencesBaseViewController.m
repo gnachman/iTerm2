@@ -87,6 +87,14 @@ static NSString *const kKey = @"key";
     [iTermPreferences setFloat:value forKey:key];
 }
 
+- (double)doubleForKey:(NSString *)key {
+    return [iTermPreferences doubleForKey:key];
+}
+
+- (void)setDouble:(double)value forKey:(NSString *)key {
+    [iTermPreferences setDouble:value forKey:key];
+}
+
 - (NSString *)stringForKey:(NSString *)key {
     return [iTermPreferences stringForKey:key];
 }
@@ -142,8 +150,8 @@ static NSString *const kKey = @"key";
                 [self setInt:[sender separatorTolerantIntValue] forKey:info.key];
                 break;
 
-            case kPreferenceInfoTypeFloatTextField:
-                [self setFloat:[sender floatValue] forKey:info.key];
+            case kPreferenceInfoTypeDoubleTextField:
+                [self setDouble:[sender doubleValue] forKey:info.key];
                 break;
                 
             case kPreferenceInfoTypeStringTextField:
@@ -247,14 +255,14 @@ static NSString *const kKey = @"key";
         case kPreferenceInfoTypeIntegerTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
-            field.doubleValue = [self floatForKey:info.key];
+            field.intValue = [self intForKey:info.key];
             break;
         }
 
-        case kPreferenceInfoTypeFloatTextField: {
+        case kPreferenceInfoTypeDoubleTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
-            field.intValue = [self intForKey:info.key];
+            field.doubleValue = [self doubleForKey:info.key];
             break;
         }
 
@@ -354,12 +362,6 @@ static NSString *const kKey = @"key";
     val = MIN(val, range.location + range.length - 1);
     return val;
 }
-
-- (double)FloatForString:(NSString *)s {
-    double val = [s doubleValue];
-    return val;
-}
-
 
 - (void)applyIntegerConstraints:(PreferenceInfo *)info {
     // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
