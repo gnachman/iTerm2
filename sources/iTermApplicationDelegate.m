@@ -71,7 +71,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
@@ -198,13 +197,14 @@ static BOOL hasBecomeActive = NO;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
     // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
+    NSString *autolaunchScriptPath = [[NSFileManager defaultManager] autolaunchScriptPath];
     if (ranAutoLaunchScript == NO &&
-        [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
+        [[NSFileManager defaultManager] fileExistsAtPath:autolaunchScriptPath]) {
         ranAutoLaunchScript = YES;
 
         NSAppleScript *autoLaunchScript;
         NSDictionary *errorInfo = [NSDictionary dictionary];
-        NSURL *aURL = [NSURL fileURLWithPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]];
+        NSURL *aURL = [NSURL fileURLWithPath:autolaunchScriptPath];
 
         // Make sure our script suite registry is loaded
         [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
