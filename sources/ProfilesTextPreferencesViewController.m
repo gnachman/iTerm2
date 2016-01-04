@@ -10,6 +10,7 @@
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
 #import "iTermFontPanel.h"
+#import "iTermWarning.h"
 #import "NSFont+iTerm.h"
 #import "NSStringITerm.h"
 #import "PreferencePanel.h"
@@ -101,9 +102,33 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                     key:KEY_USE_ITALIC_FONT
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_ambiguousIsDoubleWidth
-                    key:KEY_AMBIGUOUS_DOUBLE_WIDTH
-                   type:kPreferenceInfoTypeCheckbox];
+    PreferenceInfo *info = [self defineControl:_ambiguousIsDoubleWidth
+                                           key:KEY_AMBIGUOUS_DOUBLE_WIDTH
+                                          type:kPreferenceInfoTypeCheckbox];
+    info.customSettingChangedHandler = ^(id sender) {
+        BOOL isOn = [sender state] == NSOnState;
+        if (isOn) {
+            static NSString *const kWarnAboutAmbiguousWidth = @"NoSyncWarnAboutAmbiguousWidth";
+            // This is a feature of dubious value inherited from iTerm 0.1. Some users who work in
+            // mixed Asian/non-asian environments find it useful but almost nobody should turn it on
+            // unless they really know what they're doing.
+            iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:@"You probably don't want to turn this on. "
+                                                   @"It will confuse interactive programs. "
+                                                   @"You might want it if you work mostly with "
+                                                   @"East Asian text combined with legacy or "
+                                                   @"mathematical character sets. "
+                                                   @"Are you sure you want this?"
+                                           actions:@[ @"Enable", @"Cancel" ]
+                                        identifier:kWarnAboutAmbiguousWidth
+                                       silenceable:kiTermWarningTypePermanentlySilenceable];
+            if (selection == kiTermWarningSelection0) {
+                [self setBool:YES forKey:KEY_AMBIGUOUS_DOUBLE_WIDTH];
+            }
+        } else {
+            [self setBool:NO forKey:KEY_AMBIGUOUS_DOUBLE_WIDTH];
+        }
+    };
 
     [self defineControl:_useHFSPlusMapping
                     key:KEY_USE_HFS_PLUS_MAPPING
@@ -117,9 +142,9 @@ static NSInteger kNonAsciiFontButtonTag = 1;
                     key:KEY_VERTICAL_SPACING
                    type:kPreferenceInfoTypeSlider];
 
-    PreferenceInfo *info = [self defineControl:_useNonAsciiFont
-                                           key:KEY_USE_NONASCII_FONT
-                                          type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_useNonAsciiFont
+                           key:KEY_USE_NONASCII_FONT
+                          type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [self updateNonAsciiFontViewVisibility]; };
 
     info = [self defineControl:_asciiAntiAliased
