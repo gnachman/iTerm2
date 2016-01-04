@@ -419,7 +419,6 @@ static NSString *const kKey = @"key";
     if (iv != [textField separatorTolerantUnsignedIntegerValue] || (lastChar < '0' || lastChar > '9')) {
         [textField setStringValue:[NSString stringWithFormat:@"%lu", iv]];
     }
-    
 }
 
 #pragma mark - NSControl Delegate Informal Protocol
