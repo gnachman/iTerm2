@@ -53,6 +53,7 @@
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermRestorableSession.h"
+#import "iTermSystemVersion.h"
 #import "iTermWarning.h"
 #include <objc/runtime.h>
 
@@ -62,46 +63,6 @@
 
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
-
-typedef struct {
-    unsigned int major;
-    unsigned int minor;
-    unsigned int bugfix;
-} iTermSystemVersion;
-
-iTermSystemVersion CachedSystemVersion(void) {
-    static iTermSystemVersion version;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        [iTermController getSystemVersionMajor:&version.major
-                                         minor:&version.minor
-                                        bugFix:&version.bugfix];
-    });
-    return version;
-}
-
-BOOL SystemVersionIsGreaterOrEqualTo(unsigned major, unsigned minor, unsigned bugfix) {
-    iTermSystemVersion version = CachedSystemVersion();
-    if (version.major > major) {
-        return YES;
-    } else if (version.major < major) {
-        return NO;
-    }
-    if (version.minor > minor) {
-        return YES;
-    } else if (version.minor < minor) {
-        return NO;
-    }
-    return version.bugfix >= bugfix;
-}
-
-BOOL IsMavericksOrLater(void) {
-    return SystemVersionIsGreaterOrEqualTo(10, 9, 0);
-}
-
-BOOL IsYosemiteOrLater(void) {
-    return SystemVersionIsGreaterOrEqualTo(10, 10, 0);
-}
 
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
@@ -1297,38 +1258,6 @@ static iTermController* shared;
         }
     }
     return nil;
-}
-
-// http://cocoadev.com/DeterminingOSVersion
-+ (BOOL)getSystemVersionMajor:(unsigned int *)major
-                        minor:(unsigned int *)minor
-                       bugFix:(unsigned int *)bugFix {
-    NSDictionary *version = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
-    NSString *productVersion = [version objectForKey:@"ProductVersion"];
-    DLog(@"product version is %@", productVersion);
-    NSArray *parts = [productVersion componentsSeparatedByString:@"."];
-    if (parts.count == 0) {
-        return NO;
-    }
-    if (major) {
-        *major = [[parts objectAtIndex:0] intValue];
-        if (*major < 10) {
-            return NO;
-        }
-    }
-    if (minor) {
-        *minor = 0;
-        if (parts.count > 1) {
-            *minor = [[parts objectAtIndex:1] intValue];
-        }
-    }
-    if (bugFix) {
-        *bugFix = 0;
-        if (parts.count > 2) {
-            *bugFix = [[parts objectAtIndex:2] intValue];
-        }
-    }
-    return YES;
 }
 
 - (void)dumpViewHierarchy {

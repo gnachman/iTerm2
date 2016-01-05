@@ -45,6 +45,7 @@
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermRestorableSession.h"
 #import "iTermQuickLookController.h"
+#import "iTermSystemVersion.h"
 #import "iTermTipController.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
