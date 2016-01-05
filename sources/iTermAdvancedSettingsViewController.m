@@ -48,6 +48,8 @@ static NSDictionary *gIntrospection;
     IBOutlet NSTableColumn *_valueColumn;
     IBOutlet NSSearchField *_searchField;
     IBOutlet NSTableView *_tableView;
+
+    NSArray *_filteredAdvancedSettings;
 }
 
 + (BOOL)boolForIdentifier:(NSString *)identifier
@@ -144,18 +146,26 @@ static NSDictionary *gIntrospection;
 
 + (NSDictionary *)settingsDictionary {
     static NSDictionary *settings;
-    if (!settings) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         NSMutableDictionary *temp = [NSMutableDictionary dictionary];
         for (NSDictionary *setting in [self advancedSettings]) {
             temp[setting[kAdvancedSettingIdentifier]] = setting;
         }
         settings = [temp retain];
-    }
+    });
     return settings;
 }
 
 + (NSArray *)sortedAdvancedSettings {
-    return [[self advancedSettings] sortedArrayUsingSelector:@selector(compareAdvancedSettingDicts:)];
+    static NSArray *sortedAdvancedSettings;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSArray *advancedSettings = [self advancedSettings];
+        sortedAdvancedSettings = [advancedSettings sortedArrayUsingSelector:@selector(compareAdvancedSettingDicts:)];
+        [sortedAdvancedSettings retain];
+    });
+   return sortedAdvancedSettings;
 }
 
 + (NSArray *)groupedSettingsArrayFromSortedArray:(NSArray *)sorted {
@@ -179,7 +189,8 @@ static NSDictionary *gIntrospection;
 
 + (NSArray *)advancedSettings {
     static NSMutableArray *settings;
-    if (!settings) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         settings = [NSMutableArray array];
         NSArray *internalMethods = @[ @"initialize", @"load" ];
         unsigned int methodCount = 0;
@@ -200,7 +211,8 @@ static NSDictionary *gIntrospection;
         free(methods);
 
         [settings retain];
-    }
+    });
+
     return settings;
 }
 
@@ -343,19 +355,29 @@ static NSDictionary *gIntrospection;
 }
 
 - (NSArray *)filteredAdvancedSettings {
-    if (_searchField.stringValue.length == 0) {
-        return [[self class] groupedSettingsArrayFromSortedArray:[[self class] sortedAdvancedSettings]];
-    } else {
-        NSMutableArray *result = [NSMutableArray array];
-        NSArray *parts = [_searchField.stringValue componentsSeparatedByString:@" "];
-        for (NSDictionary *dict in [[self class] sortedAdvancedSettings]) {
-            NSString *description = dict[kAdvancedSettingDescription];
-            if ([self description:description matchesQuery:parts]) {
-                [result addObject:dict];
+    if (!_filteredAdvancedSettings) {
+        NSArray *settings;
+
+        if (_searchField.stringValue.length == 0) {
+            settings = [[self class] sortedAdvancedSettings];
+        } else {
+            NSMutableArray *result = [NSMutableArray array];
+            NSArray *parts = [_searchField.stringValue componentsSeparatedByString:@" "];
+            NSArray *sortedSettings = [[self class] sortedAdvancedSettings];
+            for (NSDictionary *dict in sortedSettings) {
+                NSString *description = dict[kAdvancedSettingDescription];
+                if ([self description:description matchesQuery:parts]) {
+                    [result addObject:dict];
+                }
             }
+
+            settings = result;
         }
-        return [[self class] groupedSettingsArrayFromSortedArray:result];
+
+        _filteredAdvancedSettings = [[[self class] groupedSettingsArrayFromSortedArray:settings] retain];
     }
+
+    return _filteredAdvancedSettings;
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView {
@@ -455,8 +477,16 @@ static NSDictionary *gIntrospection;
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     if ([aNotification object] == _searchField) {
+        [_filteredAdvancedSettings release];
+        _filteredAdvancedSettings = nil;
         [_tableView reloadData];
     }
+}
+
+- (void)dealloc {
+    [_filteredAdvancedSettings release];
+
+    [super dealloc];
 }
 
 @end
