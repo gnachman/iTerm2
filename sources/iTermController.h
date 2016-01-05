@@ -49,7 +49,6 @@
 @property(nonatomic, readonly) BOOL willRestoreWindowsAtNextLaunch;
 @property(nonatomic, readonly) BOOL shouldLeaveSessionsRunningOnQuit;
 @property(nonatomic, readonly) BOOL haveTmuxConnection;
-@property(nonatomic, assign) int keyWindowIndexMemo;
 @property(nonatomic, readonly, strong) PTYSession *sessionWithMostRecentSelection;
 @property(nonatomic, nonatomic, assign) PseudoTerminal *currentTerminal;
 @property(nonatomic, readonly) int numberOfTerminals;

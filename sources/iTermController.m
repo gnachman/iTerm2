@@ -70,8 +70,6 @@ static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respect
     NSMutableArray<PseudoTerminal *> *_terminalWindows;
     id _frontTerminalWindowController;
 
-    int keyWindowIndexMemo_;
-
     // For restoring previously active app when exiting hotkey window
     NSNumber *previouslyActiveAppPID_;
 }
@@ -103,7 +101,6 @@ static iTermController* shared;
         [[NSFileManager defaultManager] legacyApplicationSupportDirectory];
 
         _terminalWindows = [[NSMutableArray alloc] init];
-        keyWindowIndexMemo_ = -1;
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
 
@@ -243,16 +240,6 @@ static iTermController* shared;
         }
     }
     return windowIsObscured;
-}
-
-- (int)keyWindowIndexMemo
-{
-    return keyWindowIndexMemo_;
-}
-
-- (void)setKeyWindowIndexMemo:(int)i
-{
-    keyWindowIndexMemo_ = i;
 }
 
 - (void)newSessionInWindowAtIndex:(id)sender
