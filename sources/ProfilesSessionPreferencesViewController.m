@@ -24,6 +24,7 @@
     IBOutlet NSTextField *_logDir;
     IBOutlet NSButton *_sendCodeWhenIdle;
     IBOutlet NSTextField *_idleCode;
+    IBOutlet NSTextField *_idlePeriod;
 
     IBOutlet NSImageView *_logDirWarning;
     IBOutlet NSButton *_changeLogDir;
@@ -110,6 +111,10 @@
                            key:KEY_IDLE_CODE
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 256);
+    
+    [self defineControl:_idlePeriod
+                           key:KEY_IDLE_PERIOD
+                          type:kPreferenceInfoTypeDoubleTextField];
 
     [self updateRemoveJobButtonEnabled];
 

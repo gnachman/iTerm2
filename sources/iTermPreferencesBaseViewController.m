@@ -87,6 +87,14 @@ static NSString *const kKey = @"key";
     [iTermPreferences setFloat:value forKey:key];
 }
 
+- (double)doubleForKey:(NSString *)key {
+    return [iTermPreferences doubleForKey:key];
+}
+
+- (void)setDouble:(double)value forKey:(NSString *)key {
+    [iTermPreferences setDouble:value forKey:key];
+}
+
 - (NSString *)stringForKey:(NSString *)key {
     return [iTermPreferences stringForKey:key];
 }
@@ -140,6 +148,10 @@ static NSString *const kKey = @"key";
             case kPreferenceInfoTypeIntegerTextField:
                 [self applyIntegerConstraints:info];
                 [self setInt:[sender separatorTolerantIntValue] forKey:info.key];
+                break;
+
+            case kPreferenceInfoTypeDoubleTextField:
+                [self setDouble:[sender doubleValue] forKey:info.key];
                 break;
 
             case kPreferenceInfoTypeStringTextField:
@@ -244,6 +256,13 @@ static NSString *const kKey = @"key";
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.intValue = [self intForKey:info.key];
+            break;
+        }
+
+        case kPreferenceInfoTypeDoubleTextField: {
+            assert([info.control isKindOfClass:[NSTextField class]]);
+            NSTextField *field = (NSTextField *)info.control;
+            field.doubleValue = [self doubleForKey:info.key];
             break;
         }
 
