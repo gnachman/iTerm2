@@ -2276,6 +2276,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     }
 
     [[self retain] autorelease];
+    
+    if ([self isHotKeyWindow]) {
+        [[HotkeyWindowController sharedInstance] restorePreviouslyActiveApp];
+    }
+
     // This releases the last reference to self except for autorelease pools.
     [[iTermController sharedInstance] terminalWillClose:self];
 

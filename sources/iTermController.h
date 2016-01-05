@@ -110,8 +110,6 @@
 
 - (void)dumpViewHierarchy;
 
-- (void)storePreviouslyActiveApp;
-- (void)restorePreviouslyActiveApp;
 - (int)windowTypeForBookmark:(Profile*)aDict;
 
 - (void)reloadAllBookmarks;

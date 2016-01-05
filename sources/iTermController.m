@@ -69,15 +69,11 @@ static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respect
 
     NSMutableArray<PseudoTerminal *> *_terminalWindows;
     PseudoTerminal *_frontTerminalWindowController;
-
-    // For restoring previously active app when exiting hotkey window
-    NSNumber *previouslyActiveAppPID_;
 }
 
 static iTermController* shared;
 
-+ (iTermController*)sharedInstance
-{
++ (iTermController *)sharedInstance {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         shared = [[iTermController alloc] init];
@@ -151,7 +147,6 @@ static iTermController* shared;
         [_terminalWindows release];
     }
 
-    [previouslyActiveAppPID_ release];
     [_restorableSessions release];
     [_currentRestorableSessionsStack release];
     [super dealloc];
@@ -589,48 +584,17 @@ static iTermController* shared;
     return best;
 }
 
-- (PseudoTerminal*)currentTerminal
-{
+- (PseudoTerminal*)currentTerminal {
     return _frontTerminalWindowController;
 }
 
-- (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow
-{
-    if ([theTerminalWindow isHotKeyWindow]) {
-        [[iTermController sharedInstance] restorePreviouslyActiveApp];
-    }
+- (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow {
     if (_frontTerminalWindowController == theTerminalWindow) {
         [self setCurrentTerminal:nil];
     }
     if (theTerminalWindow) {
         [self removeTerminalWindow:theTerminalWindow];
     }
-}
-
-- (void)storePreviouslyActiveApp
-{
-    NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
-    [previouslyActiveAppPID_ release];
-    previouslyActiveAppPID_ = nil;
-    if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:@"com.googlecode.iterm2"]) {
-        previouslyActiveAppPID_ = [[activeAppDict objectForKey:@"NSApplicationProcessIdentifier"] copy];
-    }
-}
-
-- (void)restorePreviouslyActiveApp {
-    if (!previouslyActiveAppPID_) {
-        return;
-    }
-
-    NSRunningApplication *app =
-        [NSRunningApplication runningApplicationWithProcessIdentifier:[previouslyActiveAppPID_ intValue]];
-
-    if (app) {
-        DLog(@"Restore app %@", app);
-        [app activateWithOptions:0];
-    }
-    [previouslyActiveAppPID_ release];
-    previouslyActiveAppPID_ = nil;
 }
 
 - (void)_addBookmark:(Profile*)bookmark

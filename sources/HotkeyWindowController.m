@@ -22,6 +22,11 @@
 
 #define HKWLog DLog
 
+@interface HotkeyWindowController()
+// For restoring previously active app when exiting hotkey window.
+@property(nonatomic, copy) NSNumber *previouslyActiveAppPID;
+@end
+
 @implementation HotkeyWindowController {
     // Records the index of the front terminal in -[iTermController terminals]
     // at the time the hotkey window was opened. -1 if invalid. Used to bring
@@ -95,6 +100,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 - (void)dealloc {
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_restorableState release];
+    [_previouslyActiveAppPID release];
     [super dealloc];
 }
 
@@ -277,8 +283,32 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     }
 }
 
+- (void)storePreviouslyActiveApp {
+    NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
+    if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:@"com.googlecode.iterm2"]) {
+        self.previouslyActiveAppPID = activeAppDict[@"NSApplicationProcessIdentifier"];
+    } else {
+        self.previouslyActiveAppPID = nil;
+    }
+}
+
+- (void)restorePreviouslyActiveApp {
+    if (!_previouslyActiveAppPID) {
+        return;
+    }
+
+    NSRunningApplication *app =
+        [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
+
+    if (app) {
+        DLog(@"Restore app %@", app);
+        [app activateWithOptions:0];
+    }
+    self.previouslyActiveAppPID = nil;
+}
+
 - (void)showHotKeyWindow {
-    [[iTermController sharedInstance] storePreviouslyActiveApp];
+    [self storePreviouslyActiveApp];
     itermWasActiveWhenHotkeyOpened_ = [NSApp isActive];
     PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
     if (hotkeyTerm) {
@@ -355,7 +385,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         if (!theKeyWindow ||
             ([theKeyWindow isKindOfClass:[PTYWindow class]] &&
              [(PseudoTerminal*)[theKeyWindow windowController] isHotKeyWindow])) {
-                [[iTermController sharedInstance] restorePreviouslyActiveApp];
+                [self restorePreviouslyActiveApp];
             }
     }
     RollOutHotkeyTerm(hotkeyTerm, itermWasActiveWhenHotkeyOpened_);
