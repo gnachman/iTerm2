@@ -68,7 +68,7 @@ static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respect
     NSMutableArray *_currentRestorableSessionsStack;
 
     NSMutableArray<PseudoTerminal *> *_terminalWindows;
-    id _frontTerminalWindowController;
+    PseudoTerminal *_frontTerminalWindowController;
 
     // For restoring previously active app when exiting hotkey window
     NSNumber *previouslyActiveAppPID_;
