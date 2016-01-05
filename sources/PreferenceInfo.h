@@ -11,7 +11,8 @@
 typedef NS_ENUM(NSInteger, PreferenceInfoType) {
     kPreferenceInfoTypeCheckbox,
     kPreferenceInfoTypeInvertedCheckbox,  // true=checked, false=unchecked. Handy when inverting a checkbox's text, but the user defaults key can't be changed.
-    kPreferenceInfoTypeIntegerTextField,
+    kPreferenceInfoTypeIntegerTextField,  // 32 bit values only
+    kPreferenceInfoTypeDoubleTextField,
     kPreferenceInfoTypeStringTextField,
     kPreferenceInfoTypePopup,
     kPreferenceInfoTypeSlider,
