@@ -48,7 +48,6 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermExpose.h"
 #import "iTermGrowlDelegate.h"
-#import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -70,7 +69,6 @@ static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respect
 
     NSMutableArray<PseudoTerminal *> *_terminalWindows;
     id _frontTerminalWindowController;
-    iTermGrowlDelegate *gd;
 
     int keyWindowIndexMemo_;
 
@@ -108,12 +106,9 @@ static iTermController* shared;
         keyWindowIndexMemo_ = -1;
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
-        // Activate Growl
-        /*
-         * Need to add routine in iTerm prefs for Growl support and
-         * PLIST check here.
-         */
-        gd = [iTermGrowlDelegate sharedInstance];
+
+        // Activate Growl. This loads the Growl framework and initializes it.
+        [iTermGrowlDelegate sharedInstance];
     }
 
     return (self);
@@ -159,10 +154,6 @@ static iTermController* shared;
         [_terminalWindows release];
     }
 
-    // Release the GrowlDelegate
-    if (gd) {
-        [gd release];
-    }
     [previouslyActiveAppPID_ release];
     [_restorableSessions release];
     [_currentRestorableSessionsStack release];
