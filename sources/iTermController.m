@@ -151,9 +151,8 @@ static iTermController *gSharedInstance;
     [super dealloc];
 }
 
-- (PseudoTerminal*)keyTerminalWindow
-{
-    for (PseudoTerminal* pty in [self terminals]) {
+- (PseudoTerminal*)keyTerminalWindow {
+    for (PseudoTerminal *pty in [self terminals]) {
         if ([[pty window] isKeyWindow]) {
             return pty;
         }
@@ -161,23 +160,20 @@ static iTermController *gSharedInstance;
     return nil;
 }
 
-- (void)updateWindowTitles
-{
-    for (PseudoTerminal* terminal in _terminalWindows) {
+- (void)updateWindowTitles {
+    for (PseudoTerminal *terminal in _terminalWindows) {
         if ([terminal currentSessionName]) {
             [terminal setWindowTitle];
         }
     }
 }
 
-- (BOOL)haveTmuxConnection
-{
+- (BOOL)haveTmuxConnection {
     return [self anyTmuxSession] != nil;
 }
 
-- (PTYSession *)anyTmuxSession
-{
-    for (PseudoTerminal* terminal in _terminalWindows) {
+- (PTYSession *)anyTmuxSession {
+    for (PseudoTerminal *terminal in _terminalWindows) {
         for (PTYSession *session in [terminal allSessions]) {
             if ([session isTmuxClient] || [session isTmuxGateway]) {
                 return session;
@@ -188,13 +184,11 @@ static iTermController *gSharedInstance;
 }
 
 // Action methods
-- (IBAction)newWindow:(id)sender
-{
+- (IBAction)newWindow:(id)sender {
     [self newWindow:sender possiblyTmux:NO];
 }
 
-- (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux
-{
+- (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux {
     if (possiblyTmux &&
         _frontTerminalWindowController &&
         [[_frontTerminalWindowController currentSession] isTmuxClient]) {
@@ -204,9 +198,8 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)newSessionInTabAtIndex:(id)sender
-{
-    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
+- (void)newSessionInTabAtIndex:(id)sender {
+    Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
         [self launchBookmark:bookmark inTerminal:_frontTerminalWindowController];
     }
@@ -236,17 +229,15 @@ static iTermController *gSharedInstance;
     return windowIsObscured;
 }
 
-- (void)newSessionInWindowAtIndex:(id)sender
-{
-    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
+- (void)newSessionInWindowAtIndex:(id)sender {
+    Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
         [self launchBookmark:bookmark inTerminal:nil];
     }
 }
 
 // meant for action for menu items that have a submenu
-- (void)noAction:(id)sender
-{
+- (void)noAction:(id)sender {
 }
 
 - (void)newSessionWithSameProfile:(id)sender {
@@ -271,14 +262,14 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (NSArray *)terminalsSortedByNumber {
+- (NSArray<PseudoTerminal *> *)terminalsSortedByNumber {
     return [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
         return [@([obj1 number]) compare:@([obj2 number])];
     }];
 }
 
 - (IBAction)previousTerminal:(id)sender {
-    NSArray *windows = [self terminalsSortedByNumber];
+    NSArray<PseudoTerminal *> *windows = [self terminalsSortedByNumber];
     if (windows.count < 2) {
         return;
     }
@@ -287,14 +278,14 @@ static iTermController *gSharedInstance;
         DLog(@"Index of terminal not found, so cycle.");
         [NSApp _cycleWindowsReversed:YES];
     } else {
-        int i = index;
+        NSInteger i = index;
         i += _terminalWindows.count - 1;
         [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
     }
 }
 
 - (IBAction)nextTerminal:(id)sender {
-    NSArray *windows = [self terminalsSortedByNumber];
+    NSArray<PseudoTerminal *> *windows = [self terminalsSortedByNumber];
     if (windows.count < 2) {
         return;
     }
@@ -303,7 +294,7 @@ static iTermController *gSharedInstance;
         DLog(@"Index of terminal not found, so cycle.");
         [NSApp _cycleWindowsReversed:NO];
     } else {
-        int i = index;
+        NSUInteger i = index;
         i++;
         [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
     }
@@ -335,7 +326,7 @@ static iTermController *gSharedInstance;
 
 - (void)saveWindowArrangement:(BOOL)allWindows {
     NSString *name = [self _showAlertWithText:@"Name for saved window arrangement:"
-                                 defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1+[WindowArrangements count]]];
+                                 defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1 + [WindowArrangements count]]];
     if (!name) {
         return;
     }
@@ -348,9 +339,9 @@ static iTermController *gSharedInstance;
             return;
         }
     }
-    NSMutableArray* terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
+    NSMutableArray *terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
     if (allWindows) {
-        for (PseudoTerminal* terminal in _terminalWindows) {
+        for (PseudoTerminal *terminal in _terminalWindows) {
             if (![terminal isHotKeyWindow]) {
                 [terminalArrangements addObject:[terminal arrangement]];
             }
@@ -390,21 +381,19 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)loadWindowArrangementWithName:(NSString *)theName
-{
-    NSArray* terminalArrangements = [WindowArrangements arrangementWithName:theName];
+- (void)loadWindowArrangementWithName:(NSString *)theName {
+    NSArray *terminalArrangements = [WindowArrangements arrangementWithName:theName];
     if (terminalArrangements) {
-        for (NSDictionary* terminalArrangement in terminalArrangements) {
+        for (NSDictionary *terminalArrangement in terminalArrangements) {
             [self tryOpenArrangement:terminalArrangement];
         }
     }
 }
 
 // Return all the terminals in the given screen.
-- (NSArray*)_terminalsInScreen:(NSScreen*)screen
-{
-    NSMutableArray* result = [NSMutableArray arrayWithCapacity:0];
-    for (PseudoTerminal* term in _terminalWindows) {
+- (NSArray*)terminalsInScreen:(NSScreen *)screen {
+    NSMutableArray *result = [NSMutableArray array];
+    for (PseudoTerminal *term in _terminalWindows) {
         if (![term isHotKeyWindow] &&
             [[term window] deepestScreen] == screen) {
             [result addObject:term];
@@ -414,8 +403,7 @@ static iTermController *gSharedInstance;
 }
 
 // Arrange terminals horizontally, in multiple rows if needed.
-- (void)arrangeTerminals:(NSArray*)terminals inFrame:(NSRect)frame
-{
+- (void)arrangeTerminals:(NSArray *)terminals inFrame:(NSRect)frame {
     if ([terminals count] == 0) {
         return;
     }
@@ -424,7 +412,7 @@ static iTermController *gSharedInstance;
     int x = frame.origin.x;
     int w = frame.size.width / [terminals count];
     int minWidth = 400;
-    for (PseudoTerminal* term in terminals) {
+    for (PseudoTerminal *term in terminals) {
         int termMinWidth = [term minWidth];
         minWidth = MAX(minWidth, termMinWidth);
     }
@@ -438,7 +426,7 @@ static iTermController *gSharedInstance;
     // Find the window whose top is nearest the top of the screen. That will be the
     // new top of all the windows in the first row.
     int highestTop = 0;
-    for (PseudoTerminal* terminal in terminals) {
+    for (PseudoTerminal *terminal in terminals) {
         NSRect r = [[terminal window] frame];
         if (r.origin.y < frame.origin.y) {
             // Bottom of window is below dock. Pretend its bottom abuts the dock.
@@ -477,7 +465,7 @@ static iTermController *gSharedInstance;
         int bestIndex = 0;
 
         for (int j = 0; j < [terminalsCopy count]; ++j) {
-            PseudoTerminal* t = [terminalsCopy objectAtIndex:j];
+            PseudoTerminal *t = [terminalsCopy objectAtIndex:j];
             if (t) {
                 NSRect r = [[t window] frame];
                 int y = highestTop - r.size.height + yOffset;
@@ -497,11 +485,6 @@ static iTermController *gSharedInstance;
         [terminalsCopy removeObjectAtIndex:bestIndex];
 
         // Create an animation to move it to its new position.
-        NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithCapacity:3];
-
-        [dict setObject:[terminal window] forKey:NSViewAnimationTargetKey];
-        [dict setObject:[NSValue valueWithRect:[[terminal window] frame]]
-                 forKey:NSViewAnimationStartFrameKey];
         int y = highestTop - [[terminal window] frame].size.height;
         int h = MIN(maxHeight, [[terminal window] frame].size.height);
         if (rows > 1) {
@@ -509,18 +492,19 @@ static iTermController *gSharedInstance;
             // at the tops of the windows.
             y = frame.origin.y + frame.size.height - h;
         }
-        [dict setObject:[NSValue valueWithRect:NSMakeRect(x,
-                                                          y + yOffset,
-                                                          w,
-                                                          h)]
-                 forKey:NSViewAnimationEndFrameKey];
+        NSDictionary *dict = @{ NSViewAnimationTargetKey: [terminal window],
+                                NSViewAnimationStartFrameKey: [NSValue valueWithRect:[[terminal window] frame]],
+                                NSViewAnimationEndFrameKey: [NSValue valueWithRect:NSMakeRect(x,
+                                                                                              y + yOffset,
+                                                                                              w,
+                                                                                              h)] };
         x += w;
         if (x > frame.size.width + frame.origin.x - w) {
             // Wrap around to the next row of windows.
             x = frame.origin.x;
             yOffset -= maxHeight;
         }
-        NSViewAnimation* theAnim = [[NSViewAnimation alloc] initWithViewAnimations:[NSArray arrayWithObjects:dict, nil]];
+        NSViewAnimation *theAnim = [[[NSViewAnimation alloc] initWithViewAnimations:@[ dict ]] autorelease];
 
         // Set some additional attributes for the animation.
         [theAnim setDuration:0.75];
@@ -528,20 +512,16 @@ static iTermController *gSharedInstance;
 
         // Run the animation.
         [theAnim startAnimation];
-
-        // The animation has finished, so go ahead and release it.
-        [theAnim release];
     }
 }
 
-- (void)arrangeHorizontally
-{
+- (void)arrangeHorizontally {
     [iTermExpose exitIfActive];
 
     // Un-full-screen each window. This is done in two steps because
     // toggleFullScreenMode deallocs self.
-    PseudoTerminal* waitFor = nil;
-    for (PseudoTerminal* t in _terminalWindows) {
+    PseudoTerminal *waitFor = nil;
+    for (PseudoTerminal *t in _terminalWindows) {
         if ([t anyFullScreen]) {
             if ([t lionFullScreen]) {
                 waitFor = t;
@@ -558,16 +538,15 @@ static iTermController *gSharedInstance;
     // For each screen, find the terminals in it and arrange them. This way
     // terminals don't move from screen to screen in this operation.
     for (NSScreen* screen in [NSScreen screens]) {
-        [self arrangeTerminals:[self _terminalsInScreen:screen]
+        [self arrangeTerminals:[self terminalsInScreen:screen]
                        inFrame:[screen visibleFrame]];
     }
-    for (PseudoTerminal* t in _terminalWindows) {
+    for (PseudoTerminal *t in _terminalWindows) {
         [[t window] orderFront:nil];
     }
 }
 
-- (PTYSession *)sessionWithMostRecentSelection
-{
+- (PTYSession *)sessionWithMostRecentSelection {
     NSTimeInterval latest = 0;
     PTYSession *best = nil;
     for (PseudoTerminal *term in [self terminals]) {
@@ -583,7 +562,7 @@ static iTermController *gSharedInstance;
     return best;
 }
 
-- (PseudoTerminal*)currentTerminal {
+- (PseudoTerminal *)currentTerminal {
     return _frontTerminalWindowController;
 }
 
@@ -601,9 +580,8 @@ static iTermController *gSharedInstance;
               target:(id)aTarget
        withShortcuts:(BOOL)withShortcuts
             selector:(SEL)selector
-   alternateSelector:(SEL)alternateSelector
-{
-    NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME]
+   alternateSelector:(SEL)alternateSelector {
+    NSMenuItem *aMenuItem = [[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME]
                                                        action:selector
                                                 keyEquivalent:@""];
     if (withShortcuts) {
@@ -650,18 +628,17 @@ static iTermController *gSharedInstance;
               withShortcuts:(BOOL)withShortcuts
                    selector:(SEL)selector
           alternateSelector:(SEL)alternateSelector
-            openAllSelector:(SEL)openAllSelector
-{
-    NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""];
-    NSMenu* subMenu = [[[NSMenu alloc] init] autorelease];
+            openAllSelector:(SEL)openAllSelector {
+    NSMenuItem *aMenuItem = [[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""];
+    NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
     int count = 0;
     int MAX_MENU_ITEMS = 100;
     if ([tag isEqualToString:@"bonjour"]) {
         MAX_MENU_ITEMS = 50;
     }
     for (int i = 0; i < [[ProfileModel sharedInstance] numberOfBookmarks]; ++i) {
-        Profile* bookmark = [[ProfileModel sharedInstance] profileAtIndex:i];
-        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
+        Profile *bookmark = [[ProfileModel sharedInstance] profileAtIndex:i];
+        NSArray *tags = [bookmark objectForKey:KEY_TAGS];
         for (int j = 0; j < [tags count]; ++j) {
             if ([tag localizedCaseInsensitiveCompare:[tags objectAtIndex:j]] == NSOrderedSame) {
                 ++count;
@@ -726,8 +703,7 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (PseudoTerminal *)terminalWithTab:(PTYTab *)tab
-{
+- (PseudoTerminal *)terminalWithTab:(PTYTab *)tab {
     for (PseudoTerminal *term in [self terminals]) {
         if ([[term tabs] containsObject:tab]) {
             return term;
@@ -736,8 +712,7 @@ static iTermController *gSharedInstance;
     return nil;
 }
 
-- (PseudoTerminal *)terminalWithSession:(PTYSession *)session
-{
+- (PseudoTerminal *)terminalWithSession:(PTYSession *)session {
     for (PseudoTerminal *term in [self terminals]) {
         if ([[term allSessions] containsObject:session]) {
             return term;
@@ -765,8 +740,7 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)openNewSessionsFromMenu:(NSMenu*)theMenu inNewWindow:(BOOL)newWindow
-{
+- (void)openNewSessionsFromMenu:(NSMenu *)theMenu inNewWindow:(BOOL)newWindow {
     NSArray *bookmarks = [self bookmarksInMenu:theMenu];
     static const int kWarningThreshold = 10;
     if ([bookmarks count] > kWarningThreshold) {
@@ -775,10 +749,10 @@ static iTermController *gSharedInstance;
         }
     }
 
-    PseudoTerminal* term = newWindow ? nil : [self currentTerminal];
-    for (Profile* bookmark in bookmarks) {
+    PseudoTerminal *term = newWindow ? nil : [self currentTerminal];
+    for (Profile *bookmark in bookmarks) {
         if (!term) {
-            PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
+            PTYSession *session = [self launchBookmark:bookmark inTerminal:nil];
             if (session) {
                 term = [self terminalWithSession:session];
             }
@@ -800,7 +774,7 @@ static iTermController *gSharedInstance;
 - (void)getBookmarksInMenu:(NSMenu *)parent
                  usedGuids:(NSMutableSet *)usedGuids
                  bookmarks:(NSMutableArray *)bookmarks {
-    for (NSMenuItem* item in [parent itemArray]) {
+    for (NSMenuItem *item in [parent itemArray]) {
         if (![item isSeparatorItem] && ![item submenu] && ![item isAlternate]) {
             NSString* guid = [item representedObject];
             Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
@@ -811,7 +785,7 @@ static iTermController *gSharedInstance;
                 }
             }
         } else if (![item isSeparatorItem] && [item submenu] && ![item isAlternate]) {
-            NSMenu* sub = [item submenu];
+            NSMenu *sub = [item submenu];
             [self getBookmarksInMenu:sub
                            usedGuids:usedGuids
                            bookmarks:bookmarks];
@@ -819,21 +793,18 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)newSessionsInWindow:(id)sender
-{
+- (void)newSessionsInWindow:(id)sender {
     [self openNewSessionsFromMenu:[sender menu] inNewWindow:[sender isAlternate]];
 }
 
-- (void)newSessionsInNewWindow:(id)sender
-{
+- (void)newSessionsInNewWindow:(id)sender {
     [self openNewSessionsFromMenu:[sender menu] inNewWindow:YES];
 }
 
 - (void)addBookmarksToMenu:(NSMenu *)aMenu
               withSelector:(SEL)selector
            openAllSelector:(SEL)openAllSelector
-                startingAt:(int)startingAt
-{
+                startingAt:(int)startingAt {
     JournalParams params;
     params.selector = selector;
     params.openAllSelector = openAllSelector;
@@ -841,10 +812,10 @@ static iTermController *gSharedInstance;
     params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
     params.target = self;
 
-    ProfileModel* bm = [ProfileModel sharedInstance];
+    ProfileModel *bm = [ProfileModel sharedInstance];
     int N = [bm numberOfBookmarks];
     for (int i = 0; i < N; i++) {
-        Profile* b = [bm profileAtIndex:i];
+        Profile *b = [bm profileAtIndex:i];
         [bm addBookmark:b
                  toMenu:aMenu
          startingAtItem:startingAt
@@ -854,13 +825,11 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)irAdvance:(int)dir
-{
+- (void)irAdvance:(int)dir {
     [_frontTerminalWindowController irAdvance:dir];
 }
 
-+ (void)switchToSpaceInBookmark:(Profile*)aDict
-{
++ (void)switchToSpaceInBookmark:(Profile *)aDict {
     if ([aDict objectForKey:KEY_SPACE]) {
         int spaceNum = [[aDict objectForKey:KEY_SPACE] intValue];
         if (spaceNum > 0 && spaceNum < 10) {
@@ -886,8 +855,7 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (int)windowTypeForBookmark:(Profile*)aDict
-{
+- (int)windowTypeForBookmark:(Profile *)aDict {
     if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
         int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
         if (windowType == WINDOW_TYPE_TRADITIONAL_FULL_SCREEN &&
@@ -901,8 +869,7 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (void)reloadAllBookmarks
-{
+- (void)reloadAllBookmarks {
     int n = [self numberOfTerminals];
     for (int i = 0; i < n; ++i) {
         PseudoTerminal* pty = [self terminalAtIndex:i];
@@ -911,11 +878,10 @@ static iTermController *gSharedInstance;
 }
 
 
-- (Profile *)defaultBookmark
-{
+- (Profile *)defaultBookmark {
     Profile *aDict = [[ProfileModel sharedInstance] defaultBookmark];
     if (!aDict) {
-        NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
+        NSMutableDictionary *temp = [[[NSMutableDictionary alloc] init] autorelease];
         [ITAddressBookMgr setDefaultsInBookmark:temp];
         [temp setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
         aDict = temp;
@@ -951,8 +917,7 @@ static iTermController *gSharedInstance;
 
 - (NSDictionary *)profile:(NSDictionary *)aDict
         modifiedToOpenURL:(NSString *)url
-            forObjectType:(iTermObjectType)objectType
-{
+            forObjectType:(iTermObjectType)objectType {
     if (aDict == nil ||
         [[ITAddressBookMgr bookmarkCommand:aDict
                              forObjectType:objectType] isEqualToString:@"$$"] ||
@@ -1146,28 +1111,23 @@ static iTermController *gSharedInstance;
     [alert runModal];
 }
 
-- (PTYTextView *)frontTextView
-{
+- (PTYTextView *)frontTextView {
     return ([[_frontTerminalWindowController currentSession] textview]);
 }
 
--(int)numberOfTerminals
-{
+- (int)numberOfTerminals {
     return [_terminalWindows count];
 }
 
-- (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal
-{
+- (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal {
     return [_terminalWindows indexOfObject:terminal];
 }
 
--(PseudoTerminal*)terminalAtIndex:(int)i
-{
+-(PseudoTerminal*)terminalAtIndex:(int)i {
     return [_terminalWindows objectAtIndex:i];
 }
 
-- (int)allocateWindowNumber
-{
+- (int)allocateWindowNumber {
     NSMutableSet* numbers = [NSMutableSet setWithCapacity:[self numberOfTerminals]];
     for (PseudoTerminal* term in [self terminals]) {
         [numbers addObject:[NSNumber numberWithInt:[term number]]];
@@ -1181,8 +1141,7 @@ static iTermController *gSharedInstance;
     return 0;
 }
 
-- (PseudoTerminal*)terminalWithNumber:(int)n
-{
+- (PseudoTerminal *)terminalWithNumber:(int)n {
     for (PseudoTerminal* term in [self terminals]) {
         if ([term number] == n) {
             return term;
