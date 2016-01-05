@@ -70,7 +70,7 @@ static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respect
 
     // PseudoTerminal objects
     NSMutableArray *terminalWindows;
-    id FRONT;
+    id _frontTerminalWindowController;
     iTermGrowlDelegate *gd;
 
     int keyWindowIndexMemo_;
@@ -215,9 +215,9 @@ static iTermController* shared;
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux
 {
     if (possiblyTmux &&
-        FRONT &&
-        [[FRONT currentSession] isTmuxClient]) {
-        [FRONT newTmuxWindow:sender];
+        _frontTerminalWindowController &&
+        [[_frontTerminalWindowController currentSession] isTmuxClient]) {
+        [_frontTerminalWindowController newTmuxWindow:sender];
     } else {
         [self launchBookmark:nil inTerminal:nil];
     }
@@ -227,7 +227,7 @@ static iTermController* shared;
 {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
-        [self launchBookmark:bookmark inTerminal:FRONT];
+        [self launchBookmark:bookmark inTerminal:_frontTerminalWindowController];
     }
 }
 
@@ -280,10 +280,10 @@ static iTermController* shared;
 
 - (void)newSessionWithSameProfile:(id)sender {
     Profile *bookmark = nil;
-    if (FRONT) {
-        bookmark = [[FRONT currentSession] profile];
+    if (_frontTerminalWindowController) {
+        bookmark = [[_frontTerminalWindowController currentSession] profile];
     }
-    [self launchBookmark:bookmark inTerminal:FRONT];
+    [self launchBookmark:bookmark inTerminal:_frontTerminalWindowController];
 }
 
 // Launch a new session using the default profile. If the current session is
@@ -292,11 +292,11 @@ static iTermController* shared;
     DLog(@"newSession:%@ possiblyTmux:%d from %@",
          sender, (int)possiblyTmux, [NSThread callStackSymbols]);
     if (possiblyTmux &&
-        FRONT &&
-        [[FRONT currentSession] isTmuxClient]) {
-        [FRONT newTmuxTab:sender];
+        _frontTerminalWindowController &&
+        [[_frontTerminalWindowController currentSession] isTmuxClient]) {
+        [_frontTerminalWindowController newTmuxTab:sender];
     } else {
-        [self launchBookmark:nil inTerminal:FRONT];
+        [self launchBookmark:nil inTerminal:_frontTerminalWindowController];
     }
 }
 
@@ -311,7 +311,7 @@ static iTermController* shared;
     if (windows.count < 2) {
         return;
     }
-    NSUInteger index = [windows indexOfObject:FRONT];
+    NSUInteger index = [windows indexOfObject:_frontTerminalWindowController];
     if (index == NSNotFound) {
         DLog(@"Index of terminal not found, so cycle.");
         [NSApp _cycleWindowsReversed:YES];
@@ -327,7 +327,7 @@ static iTermController* shared;
     if (windows.count < 2) {
         return;
     }
-    NSUInteger index = [windows indexOfObject:FRONT];
+    NSUInteger index = [windows indexOfObject:_frontTerminalWindowController];
     if (index == NSNotFound) {
         DLog(@"Index of terminal not found, so cycle.");
         [NSApp _cycleWindowsReversed:NO];
@@ -614,7 +614,7 @@ static iTermController* shared;
 
 - (PseudoTerminal*)currentTerminal
 {
-    return FRONT;
+    return _frontTerminalWindowController;
 }
 
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow
@@ -622,7 +622,7 @@ static iTermController* shared;
     if ([theTerminalWindow isHotKeyWindow]) {
         [[iTermController sharedInstance] restorePreviouslyActiveApp];
     }
-    if (FRONT == theTerminalWindow) {
+    if (_frontTerminalWindowController == theTerminalWindow) {
         [self setCurrentTerminal:nil];
     }
     if (theTerminalWindow) {
@@ -916,7 +916,7 @@ static iTermController* shared;
 
 - (void)irAdvance:(int)dir
 {
-    [FRONT irAdvance:dir];
+    [_frontTerminalWindowController irAdvance:dir];
 }
 
 + (void)switchToSpaceInBookmark:(Profile*)aDict
@@ -1208,7 +1208,7 @@ static iTermController* shared;
 
 - (PTYTextView *)frontTextView
 {
-    return ([[FRONT currentSession] textview]);
+    return ([[_frontTerminalWindowController currentSession] textview]);
 }
 
 -(int)numberOfTerminals
@@ -1359,7 +1359,7 @@ static iTermController* shared;
 }
 
 - (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {
-    FRONT = thePseudoTerminal;
+    _frontTerminalWindowController = thePseudoTerminal;
 
     // make sure this window is the key window
     if ([thePseudoTerminal windowInitialized] && [[thePseudoTerminal window] isKeyWindow] == NO) {
