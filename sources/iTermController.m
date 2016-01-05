@@ -68,8 +68,7 @@ static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respect
     NSMutableArray *_restorableSessions;
     NSMutableArray *_currentRestorableSessionsStack;
 
-    // PseudoTerminal objects
-    NSMutableArray *terminalWindows;
+    NSMutableArray<PseudoTerminal *> *_terminalWindows;
     id _frontTerminalWindowController;
     iTermGrowlDelegate *gd;
 
@@ -105,7 +104,7 @@ static iTermController* shared;
         // create the "~/Library/Application Support/iTerm" directory if it does not exist
         [[NSFileManager defaultManager] legacyApplicationSupportDirectory];
 
-        terminalWindows = [[NSMutableArray alloc] init];
+        _terminalWindows = [[NSMutableArray alloc] init];
         keyWindowIndexMemo_ = -1;
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
@@ -150,14 +149,14 @@ static iTermController* shared;
         //
         // In either case, we only get here if we're pretty sure everything will get restored
         // nicely.
-        [terminalWindows autorelease];
+        [_terminalWindows autorelease];
     } else {
         // Close all terminal windows, killing jobs.
-        while ([terminalWindows count] > 0) {
-            [[terminalWindows objectAtIndex:0] close];
+        while ([_terminalWindows count] > 0) {
+            [[_terminalWindows objectAtIndex:0] close];
         }
-        NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
-        [terminalWindows release];
+        NSAssert([_terminalWindows count] == 0, @"Expected terminals to be gone");
+        [_terminalWindows release];
     }
 
     // Release the GrowlDelegate
@@ -182,7 +181,7 @@ static iTermController* shared;
 
 - (void)updateWindowTitles
 {
-    for (PseudoTerminal* terminal in terminalWindows) {
+    for (PseudoTerminal* terminal in _terminalWindows) {
         if ([terminal currentSessionName]) {
             [terminal setWindowTitle];
         }
@@ -196,7 +195,7 @@ static iTermController* shared;
 
 - (PTYSession *)anyTmuxSession
 {
-    for (PseudoTerminal* terminal in terminalWindows) {
+    for (PseudoTerminal* terminal in _terminalWindows) {
         for (PTYSession *session in [terminal allSessions]) {
             if ([session isTmuxClient] || [session isTmuxGateway]) {
                 return session;
@@ -301,7 +300,7 @@ static iTermController* shared;
 }
 
 - (NSArray *)terminalsSortedByNumber {
-    return [terminalWindows sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+    return [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
         return [@([obj1 number]) compare:@([obj2 number])];
     }];
 }
@@ -317,7 +316,7 @@ static iTermController* shared;
         [NSApp _cycleWindowsReversed:YES];
     } else {
         int i = index;
-        i += terminalWindows.count - 1;
+        i += _terminalWindows.count - 1;
         [[windows[i % windows.count] window] makeKeyAndOrderFront:nil];
     }
 }
@@ -377,9 +376,9 @@ static iTermController* shared;
             return;
         }
     }
-    NSMutableArray* terminalArrangements = [NSMutableArray arrayWithCapacity:[terminalWindows count]];
+    NSMutableArray* terminalArrangements = [NSMutableArray arrayWithCapacity:[_terminalWindows count]];
     if (allWindows) {
-        for (PseudoTerminal* terminal in terminalWindows) {
+        for (PseudoTerminal* terminal in _terminalWindows) {
             if (![terminal isHotKeyWindow]) {
                 [terminalArrangements addObject:[terminal arrangement]];
             }
@@ -433,7 +432,7 @@ static iTermController* shared;
 - (NSArray*)_terminalsInScreen:(NSScreen*)screen
 {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:0];
-    for (PseudoTerminal* term in terminalWindows) {
+    for (PseudoTerminal* term in _terminalWindows) {
         if (![term isHotKeyWindow] &&
             [[term window] deepestScreen] == screen) {
             [result addObject:term];
@@ -570,7 +569,7 @@ static iTermController* shared;
     // Un-full-screen each window. This is done in two steps because
     // toggleFullScreenMode deallocs self.
     PseudoTerminal* waitFor = nil;
-    for (PseudoTerminal* t in terminalWindows) {
+    for (PseudoTerminal* t in _terminalWindows) {
         if ([t anyFullScreen]) {
             if ([t lionFullScreen]) {
                 waitFor = t;
@@ -590,7 +589,7 @@ static iTermController* shared;
         [self arrangeTerminals:[self _terminalsInScreen:screen]
                        inFrame:[screen visibleFrame]];
     }
-    for (PseudoTerminal* t in terminalWindows) {
+    for (PseudoTerminal* t in _terminalWindows) {
         [[t window] orderFront:nil];
     }
 }
@@ -1213,17 +1212,17 @@ static iTermController* shared;
 
 -(int)numberOfTerminals
 {
-    return [terminalWindows count];
+    return [_terminalWindows count];
 }
 
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal
 {
-    return [terminalWindows indexOfObject:terminal];
+    return [_terminalWindows indexOfObject:terminal];
 }
 
 -(PseudoTerminal*)terminalAtIndex:(int)i
 {
-    return [terminalWindows objectAtIndex:i];
+    return [_terminalWindows objectAtIndex:i];
 }
 
 - (int)allocateWindowNumber
@@ -1355,7 +1354,7 @@ static iTermController* shared;
 
 // accessors for to-many relationships:
 - (NSArray*)terminals {
-    return (terminalWindows);
+    return (_terminalWindows);
 }
 
 - (void)setCurrentTerminal:(PseudoTerminal *)thePseudoTerminal {
@@ -1377,16 +1376,16 @@ static iTermController* shared;
 }
 
 - (void)addTerminalWindow:(PseudoTerminal *)terminalWindow {
-    if ([terminalWindows containsObject:terminalWindow] == YES) {
+    if ([_terminalWindows containsObject:terminalWindow] == YES) {
         return;
     }
 
-    [terminalWindows addObject:terminalWindow];
+    [_terminalWindows addObject:terminalWindow];
     [self updateWindowTitles];
 }
 
 - (void)removeTerminalWindow:(PseudoTerminal *)terminalWindow {
-    [terminalWindows removeObject:terminalWindow];
+    [_terminalWindows removeObject:terminalWindow];
     [self updateWindowTitles];
 }
 
