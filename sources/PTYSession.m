@@ -3089,8 +3089,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     if ([self antiIdle]) {
         
         //NSTimeInterval period = MIN(60, [iTermAdvancedSettingsModel antiIdleTimerPeriod]);
-        
-        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod
+        //NSTimeInterval period = [iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:_profile];
+
+        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod  //FIXME
                                                            target:self
                                                          selector:@selector(doAntiIdle)
                                                          userInfo:nil
@@ -3504,7 +3505,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (now >= _lastInput + _antiIdlePeriod) {
+    if (now >= _lastInput + _antiIdlePeriod) {   //FIXME
         [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
         _lastInput = now;
     }

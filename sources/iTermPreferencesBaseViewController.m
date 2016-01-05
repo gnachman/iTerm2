@@ -258,7 +258,7 @@ static NSString *const kKey = @"key";
             field.intValue = [self intForKey:info.key];
             break;
         }
-            
+
         case kPreferenceInfoTypeDoubleTextField: {
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;

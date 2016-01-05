@@ -55,7 +55,6 @@
     [iTermProfilePreferences setFloat:value forKey:key inProfile:profile model:model];
 }
 
-
 - (double)doubleForKey:(NSString *)key {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences doubleForKey:key inProfile:profile];
