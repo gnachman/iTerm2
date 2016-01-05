@@ -55,7 +55,7 @@
 @property(nonatomic, readonly) BOOL hasRestorableSession;
 
 + (iTermController*)sharedInstance;
-+ (void)sharedInstanceRelease;
++ (void)releaseSharedInstance;
 
 + (void)switchToSpaceInBookmark:(NSDictionary*)aDict;
 

@@ -486,7 +486,7 @@ static BOOL hasBecomeActive = NO;
     }
 
     // This causes all windows to be closed and all sessions to be terminated.
-    [iTermController sharedInstanceRelease];
+    [iTermController releaseSharedInstance];
 
     // save preferences
     [[NSUserDefaults standardUserDefaults] synchronize];

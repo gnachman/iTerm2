@@ -62,6 +62,7 @@
 
 // Pref keys
 static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respects Soft Boundaries";
+static iTermController *gSharedInstance;
 
 @implementation iTermController {
     NSMutableArray *_restorableSessions;
@@ -71,20 +72,18 @@ static NSString *const kSelectionRespectsSoftBoundariesKey = @"Selection Respect
     PseudoTerminal *_frontTerminalWindowController;
 }
 
-static iTermController* shared;
-
 + (iTermController *)sharedInstance {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        shared = [[iTermController alloc] init];
+        gSharedInstance = [[iTermController alloc] init];
     });
     
-    return shared;
+    return gSharedInstance;
 }
 
-+ (void)sharedInstanceRelease {
-    [shared release];
-    shared = nil;
++ (void)releaseSharedInstance {
+    [gSharedInstance release];
+    gSharedInstance = nil;
 }
 
 - (instancetype)init {
