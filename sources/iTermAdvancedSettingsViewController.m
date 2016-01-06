@@ -75,7 +75,7 @@ static NSDictionary *gIntrospection;
             return [overrides[identifier] boolValue];
         }
     }
-    
+
     NSNumber *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
     if (!value) {
         return defaultValue;
@@ -216,6 +216,11 @@ static NSDictionary *gIntrospection;
     return settings;
 }
 
+- (void)dealloc {
+    [_filteredAdvancedSettings release];
+    [super dealloc];
+}
+
 - (void)awakeFromNib {
     [_tableView setFloatsGroupRows:YES];
     [_tableView setGridColor:[NSColor clearColor]];
@@ -333,7 +338,7 @@ static NSDictionary *gIntrospection;
             case kiTermAdvancedSettingTypeFloat:
             case kiTermAdvancedSettingTypeInteger:
                 return [NSString stringWithFormat:@"%@", value];
-                
+
             case kiTermAdvancedSettingTypeString:
                 return value;
         }
@@ -413,7 +418,7 @@ static NSDictionary *gIntrospection;
                 [cell setTruncatesLastVisibleLine:YES];
                 [cell setLineBreakMode:NSLineBreakByTruncatingTail];
                 return cell;
-                
+
             }
         }
     }
@@ -481,12 +486,6 @@ static NSDictionary *gIntrospection;
         _filteredAdvancedSettings = nil;
         [_tableView reloadData];
     }
-}
-
-- (void)dealloc {
-    [_filteredAdvancedSettings release];
-
-    [super dealloc];
 }
 
 @end
