@@ -1252,6 +1252,10 @@ static BOOL hasBecomeActive = NO;
                                               forKey:@"Secure Input"];
 }
 
+- (void)applicationWillResignActive:(NSNotification *)notification {
+    DLog(@"Resigning active");
+}
+
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
     hasBecomeActive = YES;
     if (secureInputDesired_) {

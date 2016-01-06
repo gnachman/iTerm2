@@ -1758,17 +1758,20 @@ static const int kDragThreshold = 3;
 
 // Uses an undocumented/deprecated API to receive key presses even when inactive.
 - (BOOL)stealKeyFocus {
+    DLog(@"stealKeyFocus called…");
     // Make sure everything needed for focus stealing exists in this version of Mac OS.
     CPSGetCurrentProcessFunction *getCurrentProcess = GetCPSGetCurrentProcessFunction();
     CPSStealKeyFocusFunction *stealKeyFocus = GetCPSStealKeyFocusFunction();
     CPSReleaseKeyFocusFunction *releaseKeyFocus = GetCPSReleaseKeyFocusFunction();
     
     if (!getCurrentProcess || !stealKeyFocus || !releaseKeyFocus) {
+        DLog(@"Failed to get a function I need");
         return NO;
     }
     
     CPSProcessSerNum psn;
     if (getCurrentProcess(&psn) == noErr) {
+        DLog(@"Invoking CPSStealKeyFocus()");
         return stealKeyFocus(&psn) == noErr;
     }
     
@@ -1777,9 +1780,15 @@ static const int kDragThreshold = 3;
 
 // Undoes -stealKeyFocus.
 - (void)releaseKeyFocus {
+    DLog(@"releaseKeyFocus called");
     CPSGetCurrentProcessFunction *getCurrentProcess = GetCPSGetCurrentProcessFunction();
+    if (!getCurrentProcess) {
+        DLog(@"GetCurrentProcess failed");
+    }
     CPSReleaseKeyFocusFunction *releaseKeyFocus = GetCPSReleaseKeyFocusFunction();
-    
+    if (!releaseKeyFocus) {
+        DLog(@"ReleaseKeyFocus failed");
+    }
     if (!getCurrentProcess || !releaseKeyFocus) {
         return;
     }
@@ -1792,10 +1801,13 @@ static const int kDragThreshold = 3;
 
 
 - (void)mouseExited:(NSEvent *)event {
+    DLog(@"-mouseExited on %@ called with key focus stolen count %d", self.window, _keyFocusStolenCount);
     if (_keyFocusStolenCount) {
+        DLog(@"Releasing key focus…");
         for (int i = 0; i < _keyFocusStolenCount; i++) {
             [self releaseKeyFocus];
         }
+        DLog(@"…done releasing key focus");
         _keyFocusStolenCount = 0;
         [self setNeedsDisplay:YES];
     }
@@ -1804,10 +1816,15 @@ static const int kDragThreshold = 3;
 }
 
 - (void)mouseEntered:(NSEvent *)event {
+    DLog(@"-mouseEntered on %@ called with key focus stolen count %d", self.window, _keyFocusStolenCount);
     if ([iTermAdvancedSettingsModel stealKeyFocus]) {
+        DLog(@"Steal key focus feature is on");
         if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] && [self stealKeyFocus]) {
+            DLog(@"Increment key focus stolen count");
             ++_keyFocusStolenCount;
             [self setNeedsDisplay:YES];
+        } else {
+            DLog(@"Do not increment key focus stolen count");
         }
     }
     [self updateCursor:event];
