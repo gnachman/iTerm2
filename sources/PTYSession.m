@@ -1154,7 +1154,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             pwd = NSHomeDirectory();
         }
     }
-    isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
+    isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
     [[[self tab] realParentWindow] setName:theName forSession:self];
 
@@ -2704,11 +2704,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                    nonAscii:[iTermProfilePreferences boolForKey:KEY_NONASCII_ANTI_ALIASED
                                                       inProfile:aDict]];
     
-    // Unfortunately, this preference has been saved as a 32-bit int for a while, although it should
-    // be an unsigned 64 bit. Luckily, 32 bits happens to be enough so far, since enabling 64-bit
-    // storage is in the profile prefs system is somewhat involved. For now, hack off the sign
-    // extension.
-    [self setEncodingFromSInt32:[iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
+    [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
     [_terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
@@ -2993,13 +2989,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (NSStringEncoding)encoding
 {
     return [_terminal encoding];
-}
-
-// See note at call site about why this exists.
-- (void)setEncodingFromSInt32:(int)intEncoding {
-    NSStringEncoding encoding = intEncoding;
-    encoding &= 0xffffffff;
-    [self setEncoding:encoding];
 }
 
 - (void)setEncoding:(NSStringEncoding)encoding {

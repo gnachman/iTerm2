@@ -38,4 +38,10 @@
     }
 }
 
+- (NSUInteger)separatorTolerantUnsignedIntegerValue {
+    NSString *digits = [[self stringValue] stringByReplacingOccurrencesOfRegex:@"[^0-9]"
+                                                                    withString:@""];
+        return [digits unsignedIntegerValue];
+}
+
 @end

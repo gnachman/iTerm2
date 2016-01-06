@@ -17,5 +17,6 @@
 // Annoyingly, [field setIntValue:1234] places a stringValue of "1,234"
 // in field, which [field intValue] parses as "1", so use this instead.
 - (int)separatorTolerantIntValue;
+- (NSUInteger)separatorTolerantUnsignedIntegerValue;
 
 @end
