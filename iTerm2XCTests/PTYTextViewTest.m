@@ -2072,6 +2072,8 @@
                               // Need to call refresh to clear dirty flags, otherwise find matches
                               // get reset when refresh gets called.
                               [textView refresh];
+
+                              [textView resetFindCursor];
                               [textView findString:@"xx"
                                   forwardDirection:NO
                                       ignoringCase:NO

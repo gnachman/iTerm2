@@ -62,5 +62,7 @@
 // Updates -restorableState and invalidates the app's restorable state.
 - (void)saveHotkeyWindowState;
 
+// Make the app that was active before the hotkey window was opened active.
+- (void)restorePreviouslyActiveApp;
 
 @end

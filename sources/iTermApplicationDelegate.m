@@ -45,11 +45,13 @@
 #import "iTermPasswordManagerWindowController.h"
 #import "iTermRestorableSession.h"
 #import "iTermQuickLookController.h"
+#import "iTermSystemVersion.h"
 #import "iTermTipController.h"
 #import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "iTermTipWindowController.h"
 #import "NSApplication+iTerm.h"
+#import "NSFileManager+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "PreferencePanel.h"
@@ -70,11 +72,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static NSString *APP_SUPPORT_DIR = @"~/Library/Application Support/iTerm";
-static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
-static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
-static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt";
-static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
 NSString *const kSavedArrangementDidChangeNotification = @"kSavedArrangementDidChangeNotification";
@@ -189,8 +186,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 // This performs startup activities as long as they haven't been run before.
-- (void)_performStartupActivities
-{
+- (void)performStartupActivities {
     if (gStartupActivitiesPerformed) {
         return;
     }
@@ -201,13 +197,14 @@ static BOOL hasBecomeActive = NO;
     }
     [[iTermController sharedInstance] setStartingUp:YES];
     // Check if we have an autolaunch script to execute. Do it only once, i.e. at application launch.
+    NSString *autolaunchScriptPath = [[NSFileManager defaultManager] autolaunchScriptPath];
     if (ranAutoLaunchScript == NO &&
-        [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
+        [[NSFileManager defaultManager] fileExistsAtPath:autolaunchScriptPath]) {
         ranAutoLaunchScript = YES;
 
         NSAppleScript *autoLaunchScript;
         NSDictionary *errorInfo = [NSDictionary dictionary];
-        NSURL *aURL = [NSURL fileURLWithPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]];
+        NSURL *aURL = [NSURL fileURLWithPath:autolaunchScriptPath];
 
         // Make sure our script suite registry is loaded
         [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
@@ -256,13 +253,10 @@ static BOOL hasBecomeActive = NO;
                    });
 }
 
-- (void)_createFlag
-{
-    mkdir([[APP_SUPPORT_DIR stringByExpandingTildeInPath] UTF8String], 0755);
+- (void)createVersionFile {
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
     NSString *versionString = [myDict objectForKey:@"CFBundleVersion"];
-    NSString *flagFilename = [ITERM2_FLAG stringByExpandingTildeInPath];
-    [versionString writeToFile:flagFilename
+    [versionString writeToFile:[[NSFileManager defaultManager] versionNumberFilename]
                     atomically:NO
                       encoding:NSUTF8StringEncoding
                          error:nil];
@@ -322,23 +316,19 @@ static BOOL hasBecomeActive = NO;
     return result;
 }
 
-- (NSString *)quietFileName {
-    return [ITERM2_QUIET stringByExpandingTildeInPath];
-}
-
 - (BOOL)quietFileExists {
-    return [[NSFileManager defaultManager] fileExistsAtPath:[self quietFileName]];
+    return [[NSFileManager defaultManager] fileExistsAtPath:[[NSFileManager defaultManager] quietFilePath]];
 }
 
 - (void)checkForQuietMode {
     if ([self quietFileExists]) {
         NSError *error = nil;
-        [[NSFileManager defaultManager] removeItemAtPath:[self quietFileName]
+        [[NSFileManager defaultManager] removeItemAtPath:[[NSFileManager defaultManager] quietFilePath]
                                                    error:&error];
         if (error) {
-            NSLog(@"Failed to remove %@: %@; not launching in quiet mode", [self quietFileName], error);
+            NSLog(@"Failed to remove %@: %@; not launching in quiet mode", [[NSFileManager defaultManager] quietFilePath], error);
         } else {
-            NSLog(@"%@ exists, launching in quiet mode", [self quietFileName]);
+            NSLog(@"%@ exists, launching in quiet mode", [[NSFileManager defaultManager] quietFilePath]);
             quiet_ = YES;
         }
     }
@@ -356,7 +346,7 @@ static BOOL hasBecomeActive = NO;
 
     finishedLaunching_ = YES;
     // Create the app support directory
-    [self _createFlag];
+    [self createVersionFile];
 
     // Prevent the input manager from swallowing control-q. See explanation here:
     // http://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system/
@@ -387,9 +377,9 @@ static BOOL hasBecomeActive = NO;
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
     // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
-    // a chance to run because a "special" filename cancels _performStartupActivities.
+    // a chance to run because a "special" filename cancels performStartupActivities.
     [self checkForQuietMode];
-    [self performSelector:@selector(_performStartupActivities)
+    [self performSelector:@selector(performStartupActivities)
                withObject:nil
                afterDelay:0];
     [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
@@ -496,7 +486,7 @@ static BOOL hasBecomeActive = NO;
     }
 
     // This causes all windows to be closed and all sessions to be terminated.
-    [iTermController sharedInstanceRelease];
+    [iTermController releaseSharedInstance];
 
     // save preferences
     [[NSUserDefaults standardUserDefaults] synchronize];
@@ -544,7 +534,7 @@ static BOOL hasBecomeActive = NO;
     }
     NSLog(@"Quiet launch");
     quiet_ = YES;
-    if ([filename isEqualToString:[ITERM2_FLAG stringByExpandingTildeInPath]]) {
+    if ([filename isEqualToString:[[NSFileManager defaultManager] versionNumberFilename]]) {
         return YES;
     }
     if (filename) {
@@ -1655,11 +1645,12 @@ static BOOL hasBecomeActive = NO;
     NSMenu *scriptMenu = [[NSMenu alloc] initWithTitle:kScriptTitle];
     [scriptMenuItem setSubmenu: scriptMenu];
     // populate the submenu with ascripts found in the script directory
+    NSString *scriptsPath = [[NSFileManager defaultManager] scriptsPath];
     NSDirectoryEnumerator *directoryEnumerator =
-        [[NSFileManager defaultManager] enumeratorAtPath:[SCRIPT_DIRECTORY stringByExpandingTildeInPath]];
+        [[NSFileManager defaultManager] enumeratorAtPath:scriptsPath];
     NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
     for (NSString *file in directoryEnumerator) {
-        NSString *path = [[SCRIPT_DIRECTORY stringByExpandingTildeInPath] stringByAppendingPathComponent:file];
+        NSString *path = [scriptsPath stringByAppendingPathComponent:file];
         if ([workspace isFilePackageAtPath:path]) {
             [directoryEnumerator skipDescendents];
         }

@@ -2,13 +2,14 @@
 
 #import "DebugLogging.h"
 #import "GTMCarbonEvent.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "iTermShortcutInputView.h"
+#import "iTermSystemVersion.h"
 #import "NSTextField+iTerm.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
@@ -21,7 +22,18 @@
 
 #define HKWLog DLog
 
-@implementation HotkeyWindowController
+@interface HotkeyWindowController()
+// For restoring previously active app when exiting hotkey window.
+@property(nonatomic, copy) NSNumber *previouslyActiveAppPID;
+@end
+
+@implementation HotkeyWindowController {
+    // Records the index of the front terminal in -[iTermController terminals]
+    // at the time the hotkey window was opened. -1 if invalid. Used to bring
+    // the proper window front when hiding "quickly" (when entering Expose
+    // while a hotkey window is open). TODO: I'm not sure why this is necessary.
+    NSInteger _savedIndexOfFrontTerminal;
+}
 
 + (HotkeyWindowController *)sharedInstance {
     static HotkeyWindowController *instance;
@@ -76,6 +88,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _savedIndexOfFrontTerminal = -1;
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
@@ -87,6 +100,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 - (void)dealloc {
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     [_restorableState release];
+    [_previouslyActiveAppPID release];
     [super dealloc];
 }
 
@@ -193,8 +207,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     return NO;
 }
 
-- (void)showNonHotKeyWindowsAndSetAlphaTo:(float)a
-{
+- (void)showNonHotKeyWindowsAndSetAlphaTo:(float)a {
     PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
     for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
         [[term window] setAlphaValue:a];
@@ -203,7 +216,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         }
     }
     // Unhide all windows and bring the one that was at the top to the front.
-    int i = [[iTermController sharedInstance] keyWindowIndexMemo];
+    NSInteger i = _savedIndexOfFrontTerminal;
     if (i >= 0 && i < [[[iTermController sharedInstance] terminals] count]) {
         [[[[[iTermController sharedInstance] terminals] objectAtIndex:i] window] makeKeyAndOrderFront:nil];
     }
@@ -270,19 +283,42 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     }
 }
 
-- (void)showHotKeyWindow
-{
-    [[iTermController sharedInstance] storePreviouslyActiveApp];
+- (void)storePreviouslyActiveApp {
+    NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
+    if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:@"com.googlecode.iterm2"]) {
+        self.previouslyActiveAppPID = activeAppDict[@"NSApplicationProcessIdentifier"];
+    } else {
+        self.previouslyActiveAppPID = nil;
+    }
+}
+
+- (void)restorePreviouslyActiveApp {
+    if (!_previouslyActiveAppPID) {
+        return;
+    }
+
+    NSRunningApplication *app =
+        [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
+
+    if (app) {
+        DLog(@"Restore app %@", app);
+        [app activateWithOptions:0];
+    }
+    self.previouslyActiveAppPID = nil;
+}
+
+- (void)showHotKeyWindow {
+    [self storePreviouslyActiveApp];
     itermWasActiveWhenHotkeyOpened_ = [NSApp isActive];
     PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
     if (hotkeyTerm) {
         HKWLog(@"Showing existing hotkey window");
-        int i = 0;
-        [[iTermController sharedInstance] setKeyWindowIndexMemo:-1];
+        NSInteger i = 0;
+        _savedIndexOfFrontTerminal = -1;
         for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
             if ([NSApp isActive]) {
                 if (term != hotkeyTerm && [[term window] isKeyWindow]) {
-                    [[iTermController sharedInstance] setKeyWindowIndexMemo:i];
+                    _savedIndexOfFrontTerminal = i;
                 }
             }
             i++;
@@ -312,8 +348,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     return term && [[term window] isVisible];
 }
 
-- (void)fastHideHotKeyWindow
-{
+- (void)fastHideHotKeyWindow {
     HKWLog(@"fastHideHotKeyWindow");
     PseudoTerminal* term = GetHotkeyWindow();
     if (term) {
@@ -350,7 +385,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         if (!theKeyWindow ||
             ([theKeyWindow isKindOfClass:[PTYWindow class]] &&
              [(PseudoTerminal*)[theKeyWindow windowController] isHotKeyWindow])) {
-                [[iTermController sharedInstance] restorePreviouslyActiveApp];
+                [self restorePreviouslyActiveApp];
             }
     }
     RollOutHotkeyTerm(hotkeyTerm, itermWasActiveWhenHotkeyOpened_);

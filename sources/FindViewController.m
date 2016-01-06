@@ -31,6 +31,7 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermProgressIndicator.h"
+#import "iTermSystemVersion.h"
 #import "NSTextField+iTerm.h"
 
 // This used to be absurdly fast (.075) for reasons neither I nor revision

@@ -1,6 +1,3 @@
-// -*- mode:objc -*- vim: filetype=objcpp:
-// $Id: iTermGrowlDelegate.h,v 1.7 2006-09-21 00:55:10 yfabian Exp $
-//
 /*
  **  iTermGrowlDelegate.h
  **
