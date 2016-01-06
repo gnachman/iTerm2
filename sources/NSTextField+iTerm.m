@@ -7,6 +7,8 @@
 //
 
 #import "NSTextField+iTerm.h"
+
+#import "NSStringITerm.h"
 #import "RegexKitLite.h"
 
 @implementation NSTextField (iTerm)
@@ -41,7 +43,7 @@
 - (NSUInteger)separatorTolerantUnsignedIntegerValue {
     NSString *digits = [[self stringValue] stringByReplacingOccurrencesOfRegex:@"[^0-9]"
                                                                     withString:@""];
-        return [digits unsignedIntegerValue];
+    return [digits iterm_unsignedIntegerValue];
 }
 
 @end

@@ -382,7 +382,7 @@ static NSString *const kKey = @"key";
     
     NSUInteger val = 0;
     if ([i length]) {
-        val = [i unsignedIntegerValue];
+        val = [i iterm_unsignedIntegerValue];
     }
     val = MAX(val, range.location);
     val = MIN(val, range.location + range.length - 1);
