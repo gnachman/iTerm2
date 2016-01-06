@@ -282,6 +282,9 @@ static NSMutableDictionary *gObservers;
         case kPreferenceInfoTypePopup:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
+        case kPreferenceInfoTypeUnsignedIntegerTextField:
+        case kPreferenceInfoTypeUnsignedIntegerPopup:
+            return ([defaultValue isKindOfClass:[NSNumber class]]);
         case kPreferenceInfoTypeCheckbox:
         case kPreferenceInfoTypeInvertedCheckbox:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
@@ -388,6 +391,14 @@ static NSMutableDictionary *gObservers;
 }
 
 + (void)setInt:(int)value forKey:(NSString *)key {
+    [self setObject:@(value) forKey:key];
+}
+
++ (NSUInteger)unsignedIntegerForKey:(NSString *)key {
+    return [(NSNumber *)[self objectForKey:key] unsignedIntegerValue];
+}
+
++ (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key {
     [self setObject:@(value) forKey:key];
 }
 
