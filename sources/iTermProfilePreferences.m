@@ -46,6 +46,17 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     [self setObject:@(value) forKey:key inProfile:profile model:model];
 }
 
++ (NSUInteger)unsignedIntegerForKey:(NSString *)key inProfile:(Profile *)profile {
+    return [[self objectForKey:key inProfile:profile] unsignedIntegerValue];
+}
+
++ (void)setUnsignedInteger:(NSUInteger)value
+        forKey:(NSString *)key
+     inProfile:(Profile *)profile
+         model:(ProfileModel *)model {
+    [self setObject:@(value) forKey:key inProfile:profile model:model];
+}
+
 + (double)floatForKey:(NSString *)key inProfile:(Profile *)profile {
     return [[self objectForKey:key inProfile:profile] doubleValue];
 }
@@ -80,6 +91,9 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         case kPreferenceInfoTypePopup:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
+        case kPreferenceInfoTypeUnsignedIntegerTextField:
+        case kPreferenceInfoTypeUnsignedIntegerPopup:
+            return ([defaultValue isKindOfClass:[NSNumber class]]);
         case kPreferenceInfoTypeCheckbox:
         case kPreferenceInfoTypeInvertedCheckbox:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
@@ -152,7 +166,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_CURSOR_TYPE: @(CURSOR_BOX),
                   KEY_BLINKING_CURSOR: @NO,
                   KEY_USE_BOLD_FONT: @YES,
-                  KEY_THIN_STROKES: @YES,
+                  KEY_THIN_STROKES: @(iTermThinStrokesSettingRetinaOnly),
                   KEY_USE_BRIGHT_BOLD: @YES,
                   KEY_BLINK_ALLOWED: @NO,
                   KEY_USE_ITALIC_FONT: @YES,

@@ -661,12 +661,25 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
     }
 }
 
+- (BOOL)useThinStrokes {
+    switch (self.thinStrokes) {
+        case iTermThinStrokesSettingAlways:
+            return YES;
+            
+        case iTermThinStrokesSettingNever:
+            return NO;
+            
+        case iTermThinStrokesSettingRetinaOnly:
+            return _isRetina;
+    }
+}
 - (void)drawRunsAt:(NSPoint)initialPoint
                run:(CRun *)run
            storage:(CRunStorage *)storage
            context:(CGContextRef)ctx {
     int savedFontSmoothingStyle = 0;
-    if (_thinStrokes && _isRetina) {
+    BOOL useThinStrokes = [self useThinStrokes];
+    if (useThinStrokes) {
         // This seems to be available at least on 10.8 and later. The only reference to it is in
         // WebKit. This causes text to render just a little lighter, which looks nicer.
         savedFontSmoothingStyle = CGContextGetFontSmoothingStyle(ctx);
@@ -679,7 +692,7 @@ extern int CGContextGetFontSmoothingStyle(CGContextRef);
         run = run->next;
     }
 
-    if (_thinStrokes) {
+    if (useThinStrokes) {
         CGContextSetFontSmoothingStyle(ctx, savedFontSmoothingStyle);
     }
 }

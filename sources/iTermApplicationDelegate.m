@@ -36,6 +36,7 @@
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermIntegerNumberFormatter.h"
+#import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -47,7 +48,6 @@
 #import "iTermQuickLookController.h"
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
-#import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "iTermTipWindowController.h"
 #import "NSApplication+iTerm.h"
@@ -88,6 +88,8 @@ static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableS
 // This was changed for compatibility with the iTermWarning mechanism.
 NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
 
+static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
+
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
@@ -105,13 +107,11 @@ static BOOL hasBecomeActive = NO;
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
 
     // Menu items
-    IBOutlet NSMenu     *bookmarkMenu;
-    IBOutlet NSMenu     *toolbeltMenu;
+    IBOutlet NSMenu *bookmarkMenu;
+    IBOutlet NSMenu *toolbeltMenu;
     NSMenuItem *downloadsMenu_;
     NSMenuItem *uploadsMenu_;
     IBOutlet NSMenuItem *selectTab;
-    IBOutlet NSMenuItem *previousTerminal;
-    IBOutlet NSMenuItem *nextTerminal;
     IBOutlet NSMenuItem *logStart;
     IBOutlet NSMenuItem *logStop;
     IBOutlet NSMenuItem *closeTab;
@@ -119,8 +119,6 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *sendInputToAllSessions;
     IBOutlet NSMenuItem *sendInputToAllPanes;
     IBOutlet NSMenuItem *sendInputNormally;
-    IBOutlet NSMenuItem *toggleBookmarksView;
-    IBOutlet NSMenuItem *irNext;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
 
@@ -262,58 +260,18 @@ static BOOL hasBecomeActive = NO;
                          error:nil];
 }
 
-- (void)_updateArrangementsMenu:(NSMenuItem *)container
-{
-    while ([[container submenu] numberOfItems]) {
-        [[container submenu] removeItemAtIndex:0];
-    }
-
-    NSString *defaultName = [WindowArrangements defaultArrangementName];
-
-    for (NSString *theName in [WindowArrangements allNames]) {
-        NSString *theShortcut;
-        if ([theName isEqualToString:defaultName]) {
-            theShortcut = @"R";
-        } else {
-            theShortcut = @"";
-        }
-        [[container submenu] addItemWithTitle:theName
-                                       action:@selector(restoreWindowArrangement:)
-                                keyEquivalent:theShortcut];
-    }
+- (void)updateRestoreWindowArrangementsMenu {
+    [WindowArrangements refreshRestoreArrangementsMenu:windowArrangements_
+                                          withSelector:@selector(restoreWindowArrangement:)
+                                       defaultShortcut:kRestoreDefaultWindowArrangementShortcut];
 }
 
-- (void)setDefaultTerminal:(NSString *)bundleId
-{
-    CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
-    LSSetDefaultRoleHandlerForContentType(unixExecutableContentType,
-                                          kLSRolesShell,
-                                          (CFStringRef) bundleId);
+- (IBAction)makeDefaultTerminal:(id)sender {
+    [[iTermLaunchServices sharedInstance] makeITermDefaultTerminal];
 }
 
-- (IBAction)makeDefaultTerminal:(id)sender
-{
-    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
-    [self setDefaultTerminal:iTermBundleId];
-}
-
-- (IBAction)unmakeDefaultTerminal:(id)sender
-{
-    [self setDefaultTerminal:@"com.apple.terminal"];
-}
-
-- (BOOL)isDefaultTerminal
-{
-    LSSetDefaultHandlerForURLScheme((CFStringRef)@"iterm2",
-                                    (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
-    CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
-    CFStringRef unixHandler = LSCopyDefaultRoleHandlerForContentType(unixExecutableContentType, kLSRolesShell);
-    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
-    BOOL result = [iTermBundleId isEqualToString:(NSString *)unixHandler];
-    if (unixHandler) {
-        CFRelease(unixHandler);
-    }
-    return result;
+- (IBAction)unmakeDefaultTerminal:(id)sender {
+    [[iTermLaunchServices sharedInstance] makeTerminalDefaultTerminal];
 }
 
 - (BOOL)quietFileExists {
@@ -371,7 +329,7 @@ static BOOL hasBecomeActive = NO;
                                                       withObject:nil
                                                       afterDelay:0.5];
     }
-    [self _updateArrangementsMenu:windowArrangements_];
+    [self updateRestoreWindowArrangementsMenu];
 
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
@@ -711,9 +669,8 @@ static BOOL hasBecomeActive = NO;
     return self;
 }
 
-- (void)windowArrangementsDidChange:(id)sender
-{
-    [self _updateArrangementsMenu:windowArrangements_];
+- (void)windowArrangementsDidChange:(id)sender {
+    [self updateRestoreWindowArrangementsMenu];
 }
 
 - (void)restoreWindowArrangement:(id)sender
@@ -810,7 +767,7 @@ static BOOL hasBecomeActive = NO;
     NSURL *url = [NSURL URLWithString: urlStr];
     NSString *scheme = [url scheme];
 
-    Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
+    Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
     if (!profile) {
         profile = [[ProfileModel sharedInstance] defaultBookmark];
     }
@@ -881,17 +838,6 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] newSession:sender possiblyTmux:[self possiblyTmuxValueForWindow:NO]];
 }
 
-// navigation
-- (IBAction)previousTerminal:(id)sender
-{
-    [[iTermController sharedInstance] previousTerminal:sender];
-}
-
-- (IBAction)nextTerminal:(id)sender
-{
-    [[iTermController sharedInstance] nextTerminal:sender];
-}
-
 - (IBAction)arrangeHorizontally:(id)sender
 {
     [[iTermController sharedInstance] arrangeHorizontally];
@@ -906,16 +852,6 @@ static BOOL hasBecomeActive = NO;
 - (IBAction)showBookmarkWindow:(id)sender
 {
     [[iTermProfilesWindowController sharedInstance] showWindow:sender];
-}
-
-- (IBAction)instantReplayPrev:(id)sender
-{
-    [[iTermController sharedInstance] irAdvance:-1];
-}
-
-- (IBAction)instantReplayNext:(id)sender
-{
-    [[iTermController sharedInstance] irAdvance:1];
 }
 
 - (void)newSessionMenu:(NSMenu*)superMenu
@@ -944,19 +880,17 @@ static BOOL hasBecomeActive = NO;
     [newMenuItem setSubmenu:bookmarksMenu];
 }
 
-- (NSMenu*)bookmarksMenu
-{
+- (NSMenu*)bookmarksMenu {
     return bookmarkMenu;
 }
 
-- (void)_addArrangementsMenuTo:(NSMenu *)theMenu
-{
+- (void)_addArrangementsMenuTo:(NSMenu *)theMenu {
     NSMenuItem *container = [theMenu addItemWithTitle:@"Restore Arrangement"
                                                action:nil
                                         keyEquivalent:@""];
     NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
     [container setSubmenu:subMenu];
-    [self _updateArrangementsMenu:container];
+    [self updateRestoreWindowArrangementsMenu];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
@@ -1364,14 +1298,11 @@ static BOOL hasBecomeActive = NO;
 }
 
 // Notifications
-- (void)reloadMenus:(NSNotification *)aNotification
-{
+- (void)reloadMenus:(NSNotification *)aNotification {
     PseudoTerminal *frontTerminal = [self currentTerminal];
     if (frontTerminal != [aNotification object]) {
         return;
     }
-    [previousTerminal setAction: (frontTerminal ? @selector(previousTerminal:) : nil)];
-    [nextTerminal setAction: (frontTerminal ? @selector(nextTerminal:) : nil)];
 
     [self buildSessionSubmenu: aNotification];
     // reset the close tab/window shortcuts
@@ -1380,14 +1311,6 @@ static BOOL hasBecomeActive = NO;
     [closeTab setKeyEquivalent:@"w"];
     [closeWindow setKeyEquivalent:@"W"];
     [closeWindow setKeyEquivalentModifierMask: NSCommandKeyMask];
-
-
-    // set some menu item states
-    if (frontTerminal && [[frontTerminal tabView] numberOfTabViewItems]) {
-        [toggleBookmarksView setEnabled:YES];
-    } else {
-        [toggleBookmarksView setEnabled:NO];
-    }
 }
 
 - (void)updateBroadcastMenuState
@@ -1602,7 +1525,7 @@ static BOOL hasBecomeActive = NO;
         [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionPostNotification] ? NSOnState : NSOffState];
         return YES;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
-        return ![self isDefaultTerminal];
+        return ![[iTermLaunchServices sharedInstance] iTermIsDefaultTerminal];
     } else if (menuItem == maximizePane) {
         if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
             // Things get too complex if you allow this. It crashes.
@@ -1704,13 +1627,11 @@ static BOOL hasBecomeActive = NO;
     [pty editCurrentSession:sender];
 }
 
-- (BOOL)useBackgroundPatternIndicator
-{
+- (BOOL)useBackgroundPatternIndicator {
     return [[NSUserDefaults standardUserDefaults] boolForKey:kUseBackgroundPatternIndicatorKey];
 }
 
-- (IBAction)toggleUseBackgroundPatternIndicator:(id)sender
-{
+- (IBAction)toggleUseBackgroundPatternIndicator:(id)sender {
     BOOL value = [self useBackgroundPatternIndicator];
     value = !value;
     [[NSUserDefaults standardUserDefaults] setBool:value forKey:kUseBackgroundPatternIndicatorKey];

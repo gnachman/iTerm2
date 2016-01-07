@@ -20,6 +20,7 @@
 #import "iTermFindCursorView.h"
 #import "iTermFindOnPageHelper.h"
 #import "iTermImageInfo.h"
+#import "iTermLaunchServices.h"
 #import "iTermMouseCursor.h"
 #import "iTermNSKeyBindingEmulator.h"
 #import "iTermPreferences.h"
@@ -31,7 +32,6 @@
 #import "iTermTextDrawingHelper.h"
 #import "iTermTextExtractor.h"
 #import "iTermTextViewAccessibilityHelper.h"
-#import "iTermURLSchemeController.h"
 #import "iTermWebViewWrapperViewController.h"
 #import "iTermWarning.h"
 #import "MovePaneController.h"
@@ -395,11 +395,12 @@ static const int kDragThreshold = 3;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ dataSource=%@>",
+    return [NSString stringWithFormat:@"<PTYTextView: %p frame=%@ visibleRect=%@ dataSource=%@ window=%@>",
             self,
             [NSValue valueWithRect:self.frame],
             [NSValue valueWithRect:[self visibleRect]],
-            _dataSource];
+            _dataSource,
+            self.window];
 }
 
 - (BOOL)useThreeFingerTapGestureRecognizer {
@@ -557,7 +558,7 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];
 }
 
-- (void)setThinStrokes:(BOOL)thinStrokes {
+- (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _thinStrokes = thinStrokes;
     [self setNeedsDisplay:YES];
 }
@@ -1769,7 +1770,10 @@ static const int kDragThreshold = 3;
     
     CPSProcessSerNum psn;
     if (getCurrentProcess(&psn) == noErr) {
-        return stealKeyFocus(&psn) == noErr;
+        OSErr err = stealKeyFocus(&psn);
+        DLog(@"CPSStealKeyFocus returned %d", (int)err);
+        // CPSStealKeyFocus appears to succeed even when it returns an error. See issue 4113.
+        return YES;
     }
     
     return NO;
@@ -1786,13 +1790,16 @@ static const int kDragThreshold = 3;
 
     CPSProcessSerNum psn;
     if (getCurrentProcess(&psn) == noErr) {
+        DLog(@"CPSReleaseKeyFocus");
         releaseKeyFocus(&psn);
     }
 }
 
 
 - (void)mouseExited:(NSEvent *)event {
+    DLog(@"Mouse exited %@", self);
     if (_keyFocusStolenCount) {
+        DLog(@"Releasing key focus %d times", (int)_keyFocusStolenCount);
         for (int i = 0; i < _keyFocusStolenCount; i++) {
             [self releaseKeyFocus];
         }
@@ -1804,8 +1811,11 @@ static const int kDragThreshold = 3;
 }
 
 - (void)mouseEntered:(NSEvent *)event {
-    if ([iTermAdvancedSettingsModel stealKeyFocus]) {
-        if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] && [self stealKeyFocus]) {
+    DLog(@"Mouse entered %@", self);
+    if ([iTermAdvancedSettingsModel stealKeyFocus] &&
+        [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse]) {
+        DLog(@"Trying to steal key focus");
+        if ([self stealKeyFocus]) {
             ++_keyFocusStolenCount;
             [self setNeedsDisplay:YES];
         }
@@ -5967,7 +5977,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     NSURL *url = [NSURL URLWithString:escapedString];
     DLog(@"Escaped string is %@", url);
-    Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:[url scheme]];
+    Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:[url scheme]];
 
     if (profile) {
         [_delegate launchProfileInCurrentTerminal:profile withURL:trimmedURLString];

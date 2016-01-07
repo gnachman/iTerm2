@@ -207,6 +207,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
                                               NSString *complexString,
                                               BOOL *stop))block;
 
+- (NSUInteger)iterm_unsignedIntegerValue;
+
 @end
 
 @interface NSMutableString (iTerm)

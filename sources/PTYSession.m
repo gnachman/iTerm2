@@ -1154,7 +1154,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
             pwd = NSHomeDirectory();
         }
     }
-    isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
+    isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
     [[[self tab] realParentWindow] setName:theName forSession:self];
 
@@ -2665,7 +2665,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // bold 
     [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
                                                    inProfile:aDict]];
-    self.thinStrokes = [iTermProfilePreferences boolForKey:KEY_THIN_STROKES inProfile:aDict];
+    self.thinStrokes = [iTermProfilePreferences intForKey:KEY_THIN_STROKES inProfile:aDict];
 
     [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
                                                           inProfile:aDict]];
@@ -2704,11 +2704,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                    nonAscii:[iTermProfilePreferences boolForKey:KEY_NONASCII_ANTI_ALIASED
                                                       inProfile:aDict]];
     
-    // Unfortunately, this preference has been saved as a 32-bit int for a while, although it should
-    // be an unsigned 64 bit. Luckily, 32 bits happens to be enough so far, since enabling 64-bit
-    // storage is in the profile prefs system is somewhat involved. For now, hack off the sign
-    // extension.
-    [self setEncodingFromSInt32:[iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
+    [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
     [_terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
@@ -2995,13 +2991,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     return [_terminal encoding];
 }
 
-// See note at call site about why this exists.
-- (void)setEncodingFromSInt32:(int)intEncoding {
-    NSStringEncoding encoding = intEncoding;
-    encoding &= 0xffffffff;
-    [self setEncoding:encoding];
-}
-
 - (void)setEncoding:(NSStringEncoding)encoding {
     [_terminal setEncoding:encoding];
 }
@@ -3108,11 +3097,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setUseBoldFont:boldFlag];
 }
 
-- (BOOL)thinStrokes {
+- (iTermThinStrokesSetting)thinStrokes {
     return _textview.thinStrokes;
 }
 
-- (void)setThinStrokes:(BOOL)thinStrokes {
+- (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _textview.thinStrokes = thinStrokes;
 }
 
@@ -4607,13 +4596,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 [[[self tab] parentWindow] nextTab:nil];
                 break;
             case KEY_ACTION_NEXT_WINDOW:
-                [[iTermController sharedInstance] nextTerminal:nil];
+                [[iTermController sharedInstance] nextTerminal];
                 break;
             case KEY_ACTION_PREVIOUS_SESSION:
                 [[[self tab] parentWindow] previousTab:nil];
                 break;
             case KEY_ACTION_PREVIOUS_WINDOW:
-                [[iTermController sharedInstance] previousTerminal:nil];
+                [[iTermController sharedInstance] previousTerminal];
                 break;
             case KEY_ACTION_SCROLL_END:
                 [_textview scrollEnd];
@@ -5351,14 +5340,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[[self tab] realParentWindow] previousTab:nil];
 }
 
-- (void)textViewSelectNextWindow
-{
-    [[iTermController sharedInstance] nextTerminal:nil];
+- (void)textViewSelectNextWindow {
+    [[iTermController sharedInstance] nextTerminal];
 }
 
-- (void)textViewSelectPreviousWindow
-{
-    [[iTermController sharedInstance] previousTerminal:nil];
+- (void)textViewSelectPreviousWindow {
+    [[iTermController sharedInstance] previousTerminal];
 }
 
 - (void)textViewSelectNextPane

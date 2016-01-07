@@ -35,7 +35,6 @@
 #import "iTermSystemVersion.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
-#import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
@@ -6893,7 +6892,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             }
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
+        isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
         [self setName:name forSession:aSession];
         // Start the command
         [self startProgram:cmd
@@ -7146,7 +7145,7 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
             pwd = NSHomeDirectory();
         }
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        BOOL isUTF8 = ([iTermProfilePreferences intForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
+        BOOL isUTF8 = ([iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:profile] == NSUTF8StringEncoding);
 
         [self setName:[name stringByPerformingSubstitutions:substitutions]
            forSession:aSession];

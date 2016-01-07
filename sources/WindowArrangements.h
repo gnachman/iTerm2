@@ -35,6 +35,10 @@
 
 + (NSArray *)allNames;
 
++ (void)refreshRestoreArrangementsMenu:(NSMenuItem *)menuItem
+                          withSelector:(SEL)selector
+                       defaultShortcut:(NSString *)defaultShortcut;
+
 - (IBAction)setDefault:(id)sender;
 - (IBAction)deleteSelectedArrangement:(id)sender;
 

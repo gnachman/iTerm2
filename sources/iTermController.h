@@ -64,8 +64,8 @@
 - (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux;
 - (void)newSessionWithSameProfile:(id)sender;
 - (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux;
-- (IBAction) previousTerminal:(id)sender;
-- (IBAction) nextTerminal:(id)sender;
+- (void)previousTerminal;
+- (void)nextTerminal;
 - (void)newSessionsInWindow:(id)sender;
 - (void)newSessionsInNewWindow:(id)sender;
 - (void)launchScript:(id)sender;

@@ -1442,6 +1442,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     } while (NSMaxRange(range) < self.length);
 }
 
+- (NSUInteger)iterm_unsignedIntegerValue {
+    NSScanner *scanner = [NSScanner scannerWithString:self];
+    unsigned long long ull;
+    if (![scanner scanUnsignedLongLong:&ull]) {
+        ull = 0;
+    }
+    return ull;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

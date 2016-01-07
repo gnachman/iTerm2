@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ITAddressBookMgr.h"
 #import "iTermCursor.h"
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
@@ -235,7 +236,7 @@
 @property(nonatomic, assign) BOOL drawMarkIndicators;
 
 // Use light font smoothing?
-@property(nonatomic) BOOL thinStrokes;
+@property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;
 
 // Change the cursor to indicate that a search is being performed.
 @property(nonatomic, assign) BOOL showSearchingCursor;

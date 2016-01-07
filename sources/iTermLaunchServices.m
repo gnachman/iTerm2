@@ -1,18 +1,18 @@
 //
-//  iTermURLSchemeController.m
+//  iTermLaunchServices.m
 //  iTerm
 //
 //  Created by George Nachman on 4/14/14.
 //
 //
 
-#import "iTermURLSchemeController.h"
+#import "iTermLaunchServices.h"
 #import "ITAddressBookMgr.h"
 
 static NSString *const kUrlHandlersUserDefaultsKey = @"URLHandlersByGuid";
 static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 
-@implementation iTermURLSchemeController {
+@implementation iTermLaunchServices {
     NSMutableDictionary *_urlHandlersByGuid;  // NSString scheme -> NSString guid
 }
 
@@ -118,6 +118,37 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
         CFRelease(handlerId);
     }
     return profile;
+}
+
+#pragma mark - Default Terminal
+
+- (void)makeITermDefaultTerminal {
+    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
+    [self setDefaultTerminal:iTermBundleId];
+}
+
+- (void)makeTerminalDefaultTerminal {
+    [self setDefaultTerminal:@"com.apple.terminal"];
+}
+
+- (BOOL)iTermIsDefaultTerminal {
+    LSSetDefaultHandlerForURLScheme((CFStringRef)@"iterm2",
+                                    (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
+    CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
+    CFStringRef unixHandler = LSCopyDefaultRoleHandlerForContentType(unixExecutableContentType, kLSRolesShell);
+    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
+    BOOL result = [iTermBundleId isEqualToString:(NSString *)unixHandler];
+    if (unixHandler) {
+        CFRelease(unixHandler);
+    }
+    return result;
+}
+
+- (void)setDefaultTerminal:(NSString *)bundleId {
+    CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
+    LSSetDefaultRoleHandlerForContentType(unixExecutableContentType,
+                                          kLSRolesShell,
+                                          (CFStringRef) bundleId);
 }
 
 @end
