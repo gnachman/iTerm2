@@ -105,8 +105,8 @@ static BOOL hasBecomeActive = NO;
     iTermPasswordManagerWindowController *_passwordManagerWindowController;
 
     // Menu items
-    IBOutlet NSMenu     *bookmarkMenu;
-    IBOutlet NSMenu     *toolbeltMenu;
+    IBOutlet NSMenu *bookmarkMenu;
+    IBOutlet NSMenu *toolbeltMenu;
     NSMenuItem *downloadsMenu_;
     NSMenuItem *uploadsMenu_;
     IBOutlet NSMenuItem *selectTab;
@@ -919,8 +919,7 @@ static BOOL hasBecomeActive = NO;
     [newMenuItem setSubmenu:bookmarksMenu];
 }
 
-- (NSMenu*)bookmarksMenu
-{
+- (NSMenu*)bookmarksMenu {
     return bookmarkMenu;
 }
 
