@@ -117,7 +117,6 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *sendInputToAllSessions;
     IBOutlet NSMenuItem *sendInputToAllPanes;
     IBOutlet NSMenuItem *sendInputNormally;
-    IBOutlet NSMenuItem *irNext;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
 
