@@ -117,7 +117,6 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *sendInputToAllSessions;
     IBOutlet NSMenuItem *sendInputToAllPanes;
     IBOutlet NSMenuItem *sendInputNormally;
-    IBOutlet NSMenuItem *toggleBookmarksView;
     IBOutlet NSMenuItem *irNext;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
@@ -1354,14 +1353,6 @@ static BOOL hasBecomeActive = NO;
     [closeTab setKeyEquivalent:@"w"];
     [closeWindow setKeyEquivalent:@"W"];
     [closeWindow setKeyEquivalentModifierMask: NSCommandKeyMask];
-
-
-    // set some menu item states
-    if (frontTerminal && [[frontTerminal tabView] numberOfTabViewItems]) {
-        [toggleBookmarksView setEnabled:YES];
-    } else {
-        [toggleBookmarksView setEnabled:NO];
-    }
 }
 
 - (void)updateBroadcastMenuState
