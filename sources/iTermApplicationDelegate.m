@@ -110,8 +110,6 @@ static BOOL hasBecomeActive = NO;
     NSMenuItem *downloadsMenu_;
     NSMenuItem *uploadsMenu_;
     IBOutlet NSMenuItem *selectTab;
-    IBOutlet NSMenuItem *previousTerminal;
-    IBOutlet NSMenuItem *nextTerminal;
     IBOutlet NSMenuItem *logStart;
     IBOutlet NSMenuItem *logStop;
     IBOutlet NSMenuItem *closeTab;
@@ -881,17 +879,6 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] newSession:sender possiblyTmux:[self possiblyTmuxValueForWindow:NO]];
 }
 
-// navigation
-- (IBAction)previousTerminal:(id)sender
-{
-    [[iTermController sharedInstance] previousTerminal:sender];
-}
-
-- (IBAction)nextTerminal:(id)sender
-{
-    [[iTermController sharedInstance] nextTerminal:sender];
-}
-
 - (IBAction)arrangeHorizontally:(id)sender
 {
     [[iTermController sharedInstance] arrangeHorizontally];
@@ -1364,14 +1351,11 @@ static BOOL hasBecomeActive = NO;
 }
 
 // Notifications
-- (void)reloadMenus:(NSNotification *)aNotification
-{
+- (void)reloadMenus:(NSNotification *)aNotification {
     PseudoTerminal *frontTerminal = [self currentTerminal];
     if (frontTerminal != [aNotification object]) {
         return;
     }
-    [previousTerminal setAction: (frontTerminal ? @selector(previousTerminal:) : nil)];
-    [nextTerminal setAction: (frontTerminal ? @selector(nextTerminal:) : nil)];
 
     [self buildSessionSubmenu: aNotification];
     // reset the close tab/window shortcuts
@@ -1704,13 +1688,11 @@ static BOOL hasBecomeActive = NO;
     [pty editCurrentSession:sender];
 }
 
-- (BOOL)useBackgroundPatternIndicator
-{
+- (BOOL)useBackgroundPatternIndicator {
     return [[NSUserDefaults standardUserDefaults] boolForKey:kUseBackgroundPatternIndicatorKey];
 }
 
-- (IBAction)toggleUseBackgroundPatternIndicator:(id)sender
-{
+- (IBAction)toggleUseBackgroundPatternIndicator:(id)sender {
     BOOL value = [self useBackgroundPatternIndicator];
     value = !value;
     [[NSUserDefaults standardUserDefaults] setBool:value forKey:kUseBackgroundPatternIndicatorKey];

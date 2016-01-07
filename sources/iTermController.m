@@ -268,7 +268,7 @@ static iTermController *gSharedInstance;
     }];
 }
 
-- (IBAction)previousTerminal:(id)sender {
+- (void)previousTerminal {
     NSArray<PseudoTerminal *> *windows = [self terminalsSortedByNumber];
     if (windows.count < 2) {
         return;
@@ -284,7 +284,7 @@ static iTermController *gSharedInstance;
     }
 }
 
-- (IBAction)nextTerminal:(id)sender {
+- (void)nextTerminal {
     NSArray<PseudoTerminal *> *windows = [self terminalsSortedByNumber];
     if (windows.count < 2) {
         return;
