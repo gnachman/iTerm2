@@ -36,6 +36,7 @@
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermIntegerNumberFormatter.h"
+#import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -266,37 +267,12 @@ static BOOL hasBecomeActive = NO;
                                        defaultShortcut:kRestoreDefaultWindowArrangementShortcut];
 }
 
-- (void)setDefaultTerminal:(NSString *)bundleId
-{
-    CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
-    LSSetDefaultRoleHandlerForContentType(unixExecutableContentType,
-                                          kLSRolesShell,
-                                          (CFStringRef) bundleId);
+- (IBAction)makeDefaultTerminal:(id)sender {
+    [iTermLaunchServices makeITermDefaultTerminal];
 }
 
-- (IBAction)makeDefaultTerminal:(id)sender
-{
-    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
-    [self setDefaultTerminal:iTermBundleId];
-}
-
-- (IBAction)unmakeDefaultTerminal:(id)sender
-{
-    [self setDefaultTerminal:@"com.apple.terminal"];
-}
-
-- (BOOL)isDefaultTerminal
-{
-    LSSetDefaultHandlerForURLScheme((CFStringRef)@"iterm2",
-                                    (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
-    CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
-    CFStringRef unixHandler = LSCopyDefaultRoleHandlerForContentType(unixExecutableContentType, kLSRolesShell);
-    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
-    BOOL result = [iTermBundleId isEqualToString:(NSString *)unixHandler];
-    if (unixHandler) {
-        CFRelease(unixHandler);
-    }
-    return result;
+- (IBAction)unmakeDefaultTerminal:(id)sender {
+    [iTermLaunchServices makeTerminalDefaultTerminal];
 }
 
 - (BOOL)quietFileExists {
@@ -1550,7 +1526,7 @@ static BOOL hasBecomeActive = NO;
         [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionPostNotification] ? NSOnState : NSOffState];
         return YES;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
-        return ![self isDefaultTerminal];
+        return ![iTermLaunchServices iTermIsDefaultTerminal];
     } else if (menuItem == maximizePane) {
         if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
             // Things get too complex if you allow this. It crashes.

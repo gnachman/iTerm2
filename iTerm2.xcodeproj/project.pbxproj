@@ -1615,6 +1615,8 @@
 		A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */; };
 		A6FC49871C3A31840061B3BA /* iTermSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */; };
 		A6FC49881C3A44390061B3BA /* iTermPrintAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4BAFEA1BFE77E4004FF52B /* iTermPrintAccessoryViewController.m */; };
+		A6FC498F1C3E38080061B3BA /* iTermLaunchServices.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FC498D1C3E38080061B3BA /* iTermLaunchServices.h */; };
+		A6FC49901C3E38080061B3BA /* iTermLaunchServices.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FC498E1C3E38080061B3BA /* iTermLaunchServices.m */; };
 		A6FD85301B767D6300EB9DCE /* Hamburger.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852E1B767D6300EB9DCE /* Hamburger.png */; };
 		A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */; };
 		A6FD85341B768B7800EB9DCE /* BigArrow.png in Resources */ = {isa = PBXBuildFile; fileRef = A6FD85321B768B7800EB9DCE /* BigArrow.png */; };
@@ -2672,6 +2674,8 @@
 		A6F981CB1C13783C00EE0B80 /* iTermCPS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermCPS.h; sourceTree = "<group>"; };
 		A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSystemVersion.h; sourceTree = "<group>"; };
 		A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSystemVersion.m; sourceTree = "<group>"; };
+		A6FC498D1C3E38080061B3BA /* iTermLaunchServices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLaunchServices.h; sourceTree = "<group>"; };
+		A6FC498E1C3E38080061B3BA /* iTermLaunchServices.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermLaunchServices.m; sourceTree = "<group>"; };
 		A6FD852E1B767D6300EB9DCE /* Hamburger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Hamburger.png; path = images/Hamburger.png; sourceTree = "<group>"; };
 		A6FD852F1B767D6300EB9DCE /* Hamburger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Hamburger@2x.png"; path = "images/Hamburger@2x.png"; sourceTree = "<group>"; };
 		A6FD85321B768B7800EB9DCE /* BigArrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BigArrow.png; path = images/BigArrow.png; sourceTree = "<group>"; };
@@ -4066,6 +4070,8 @@
 				A628B00A1BF91BA100B68248 /* iTermDelayedTitleSetter.m */,
 				A6FC49841C3A31840061B3BA /* iTermSystemVersion.h */,
 				A6FC49851C3A31840061B3BA /* iTermSystemVersion.m */,
+				A6FC498D1C3E38080061B3BA /* iTermLaunchServices.h */,
+				A6FC498E1C3E38080061B3BA /* iTermLaunchServices.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -5032,6 +5038,7 @@
 				A667F38F1B49FC2E00705186 /* iTermToolbeltSplitView.h in Headers */,
 				A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */,
 				A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */,
+				A6FC498F1C3E38080061B3BA /* iTermLaunchServices.h in Headers */,
 				A6FC49861C3A31840061B3BA /* iTermSystemVersion.h in Headers */,
 				A6C760491B45C4CF00E3C992 /* iTermTip.h in Headers */,
 				A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */,
@@ -5971,6 +5978,7 @@
 				A6C7630A1B45C52B00E3C992 /* FindContext.m in Sources */,
 				A6C762C61B45C52B00E3C992 /* DebugLogging.m in Sources */,
 				A62C3B431BD40E7C00B5629D /* iTermImageMark.m in Sources */,
+				A6FC49901C3E38080061B3BA /* iTermLaunchServices.m in Sources */,
 				A6C763261B45C52B00E3C992 /* PasteEvent.m in Sources */,
 				A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */,
 				A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */,
