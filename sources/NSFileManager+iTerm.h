@@ -19,15 +19,15 @@
 //     distribution.
 //
 
+// This code has been altered.
+
 #import <Foundation/Foundation.h>
 
 @interface NSFileManager (iTerm)
 
-- (NSString *)findOrCreateDirectory:(NSSearchPathDirectory)searchPathDirectory
-	inDomain:(NSSearchPathDomainMask)domainMask
-	appendPathComponent:(NSString *)appendComponent
-	error:(NSError **)errorOut;
 - (NSString *)applicationSupportDirectory;
+
+- (NSString *)legacyApplicationSupportDirectory;
 
 - (NSString *)temporaryDirectory;
 
@@ -38,5 +38,19 @@
 
 // Returns the path to the user's desktop.
 - (NSString *)desktopDirectory;
+
+// Filename holding the version number of iTerm2 that was last run. If iTerm2 is launched with
+// this file as the file to open, then autolaunch scripts won't run and window restoration.
+- (NSString *)versionNumberFilename;
+
+// Directory where scripts live. These are loaded and added to a menu or auto-run at startup.
+- (NSString *)scriptsPath;
+
+// Path to special auto-launch script that is run at startup.
+- (NSString *)autolaunchScriptPath;
+
+// Path to special file that, if it exists at launch time, suppresses autolaunch script and
+// window restoration.
+- (NSString *)quietFilePath;
 
 @end
