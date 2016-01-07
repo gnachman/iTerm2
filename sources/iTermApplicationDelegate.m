@@ -36,7 +36,6 @@
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermIntegerNumberFormatter.h"
-#import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -268,11 +267,11 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)makeDefaultTerminal:(id)sender {
-    [iTermLaunchServices makeITermDefaultTerminal];
+    [[iTermURLSchemeController sharedInstance] makeITermDefaultTerminal];
 }
 
 - (IBAction)unmakeDefaultTerminal:(id)sender {
-    [iTermLaunchServices makeTerminalDefaultTerminal];
+    [[iTermURLSchemeController sharedInstance] makeTerminalDefaultTerminal];
 }
 
 - (BOOL)quietFileExists {
@@ -1526,7 +1525,7 @@ static BOOL hasBecomeActive = NO;
         [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionPostNotification] ? NSOnState : NSOffState];
         return YES;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
-        return ![iTermLaunchServices iTermIsDefaultTerminal];
+        return ![[iTermURLSchemeController sharedInstance] iTermIsDefaultTerminal];
     } else if (menuItem == maximizePane) {
         if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
             // Things get too complex if you allow this. It crashes.

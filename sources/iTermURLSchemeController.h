@@ -22,4 +22,10 @@
 // the scheme.
 - (Profile *)profileForScheme:(NSString *)scheme;
 
+#pragma mark - Default Terminal
+
+- (void)makeITermDefaultTerminal;
+- (void)makeTerminalDefaultTerminal;
+- (BOOL)iTermIsDefaultTerminal;
+
 @end
