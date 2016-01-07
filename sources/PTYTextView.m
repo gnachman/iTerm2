@@ -558,7 +558,7 @@ static const int kDragThreshold = 3;
     [self setNeedsDisplay:YES];
 }
 
-- (void)setThinStrokes:(BOOL)thinStrokes {
+- (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _thinStrokes = thinStrokes;
     [self setNeedsDisplay:YES];
 }

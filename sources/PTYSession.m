@@ -2665,7 +2665,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // bold 
     [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
                                                    inProfile:aDict]];
-    self.thinStrokes = [iTermProfilePreferences boolForKey:KEY_THIN_STROKES inProfile:aDict];
+    self.thinStrokes = [iTermProfilePreferences intForKey:KEY_THIN_STROKES inProfile:aDict];
 
     [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
                                                           inProfile:aDict]];
@@ -3097,11 +3097,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setUseBoldFont:boldFlag];
 }
 
-- (BOOL)thinStrokes {
+- (iTermThinStrokesSetting)thinStrokes {
     return _textview.thinStrokes;
 }
 
-- (void)setThinStrokes:(BOOL)thinStrokes {
+- (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _textview.thinStrokes = thinStrokes;
 }
 

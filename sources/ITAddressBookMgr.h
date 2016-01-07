@@ -234,6 +234,13 @@ typedef NS_ENUM(NSInteger, iTermObjectType) {
   iTermPaneObject,
 };
 
+// Type for KEY_THIN_STROKES
+typedef NS_ENUM(NSInteger, iTermThinStrokesSetting) {
+    iTermThinStrokesSettingNever,
+    iTermThinStrokesSettingRetinaOnly,
+    iTermThinStrokesSettingAlways,
+};
+
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
 
 + (id)sharedInstance;
