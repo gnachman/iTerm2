@@ -895,16 +895,6 @@ static BOOL hasBecomeActive = NO;
     [[iTermProfilesWindowController sharedInstance] showWindow:sender];
 }
 
-- (IBAction)instantReplayPrev:(id)sender
-{
-    [[iTermController sharedInstance] irAdvance:-1];
-}
-
-- (IBAction)instantReplayNext:(id)sender
-{
-    [[iTermController sharedInstance] irAdvance:1];
-}
-
 - (void)newSessionMenu:(NSMenu*)superMenu
                  title:(NSString*)title
                 target:(id)aTarget
