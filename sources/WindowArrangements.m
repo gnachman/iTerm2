@@ -133,6 +133,28 @@ static NSString* DEFAULT_ARRANGEMENT_KEY = @"Default Arrangement Name";
     return [keys sortedArrayUsingSelector:@selector(compare:)];
 }
 
++ (void)refreshRestoreArrangementsMenu:(NSMenuItem *)menuItem
+                          withSelector:(SEL)selector
+                       defaultShortcut:(NSString *)defaultShortcut {
+    while ([[menuItem submenu] numberOfItems]) {
+        [[menuItem submenu] removeItemAtIndex:0];
+    }
+
+    NSString *defaultName = [self defaultArrangementName];
+
+    for (NSString *theName in [self allNames]) {
+        NSString *theShortcut;
+        if ([theName isEqualToString:defaultName]) {
+            theShortcut = defaultShortcut;
+        } else {
+            theShortcut = @"";
+        }
+        [[menuItem submenu] addItemWithTitle:theName
+                                       action:selector
+                                keyEquivalent:theShortcut];
+    }
+}
+
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
     NSString *key = [self nameAtIndex:rowIndex];

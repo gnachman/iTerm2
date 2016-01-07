@@ -88,6 +88,8 @@ static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableS
 // This was changed for compatibility with the iTermWarning mechanism.
 NSString *const kMultiLinePasteWarningUserDefaultsKey = @"NoSyncDoNotWarnBeforeMultilinePaste";
 
+static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
+
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
@@ -258,25 +260,10 @@ static BOOL hasBecomeActive = NO;
                          error:nil];
 }
 
-- (void)_updateArrangementsMenu:(NSMenuItem *)container
-{
-    while ([[container submenu] numberOfItems]) {
-        [[container submenu] removeItemAtIndex:0];
-    }
-
-    NSString *defaultName = [WindowArrangements defaultArrangementName];
-
-    for (NSString *theName in [WindowArrangements allNames]) {
-        NSString *theShortcut;
-        if ([theName isEqualToString:defaultName]) {
-            theShortcut = @"R";
-        } else {
-            theShortcut = @"";
-        }
-        [[container submenu] addItemWithTitle:theName
-                                       action:@selector(restoreWindowArrangement:)
-                                keyEquivalent:theShortcut];
-    }
+- (void)updateRestoreWindowArrangementsMenu {
+    [WindowArrangements refreshRestoreArrangementsMenu:windowArrangements_
+                                          withSelector:@selector(restoreWindowArrangement:)
+                                       defaultShortcut:kRestoreDefaultWindowArrangementShortcut];
 }
 
 - (void)setDefaultTerminal:(NSString *)bundleId
@@ -367,7 +354,7 @@ static BOOL hasBecomeActive = NO;
                                                       withObject:nil
                                                       afterDelay:0.5];
     }
-    [self _updateArrangementsMenu:windowArrangements_];
+    [self updateRestoreWindowArrangementsMenu];
 
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
@@ -707,9 +694,8 @@ static BOOL hasBecomeActive = NO;
     return self;
 }
 
-- (void)windowArrangementsDidChange:(id)sender
-{
-    [self _updateArrangementsMenu:windowArrangements_];
+- (void)windowArrangementsDidChange:(id)sender {
+    [self updateRestoreWindowArrangementsMenu];
 }
 
 - (void)restoreWindowArrangement:(id)sender
@@ -923,14 +909,13 @@ static BOOL hasBecomeActive = NO;
     return bookmarkMenu;
 }
 
-- (void)_addArrangementsMenuTo:(NSMenu *)theMenu
-{
+- (void)_addArrangementsMenuTo:(NSMenu *)theMenu {
     NSMenuItem *container = [theMenu addItemWithTitle:@"Restore Arrangement"
                                                action:nil
                                         keyEquivalent:@""];
     NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
     [container setSubmenu:subMenu];
-    [self _updateArrangementsMenu:container];
+    [self updateRestoreWindowArrangementsMenu];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
