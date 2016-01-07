@@ -105,6 +105,7 @@
     };
     info.observer = ^() {
         _idleCode.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE];
+        _idlePeriod.enabled = _idleCode.enabled;
     };
 
     info = [self defineControl:_idleCode
@@ -113,8 +114,8 @@
     info.range = NSMakeRange(0, 256);
     
     [self defineControl:_idlePeriod
-                           key:KEY_IDLE_PERIOD
-                          type:kPreferenceInfoTypeDoubleTextField];
+                    key:KEY_IDLE_PERIOD
+                   type:kPreferenceInfoTypeDoubleTextField];
 
     [self updateRemoveJobButtonEnabled];
 

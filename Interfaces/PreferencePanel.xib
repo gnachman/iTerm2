@@ -3443,7 +3443,6 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="TG6-06-mq9" id="Oi1-J9-bAq"/>
-                        <outlet property="nextKeyView" destination="5698" id="5702"/>
                     </connections>
                 </button>
                 <button toolTip="This is not recommended." id="Flt-We-Y3i">
@@ -3455,7 +3454,6 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="TG6-06-mq9" id="Z4O-Ko-FnF"/>
-                        <outlet property="nextKeyView" destination="4hm-oT-oUQ" id="ljI-aT-zjy"/>
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="5698">
@@ -3469,7 +3467,6 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="TG6-06-mq9" id="WZS-cZ-oAi"/>
                         <outlet property="delegate" destination="TG6-06-mq9" id="Vnh-fj-vwl"/>
-                        <outlet property="nextKeyView" destination="4hm-oT-oUQ" id="u4e-a1-oof"/>
                     </connections>
                 </textField>
                 <textField verticalHuggingPriority="750" id="5707">
@@ -3579,7 +3576,6 @@ DQ
                     <connections>
                         <action selector="settingChanged:" target="TG6-06-mq9" id="X5k-AR-hF2"/>
                         <outlet property="delegate" destination="TG6-06-mq9" id="tuM-TD-dMG"/>
-                        <outlet property="nextKeyView" destination="5698" id="lcZ-Tp-ida"/>
                     </connections>
                 </textField>
             </subviews>

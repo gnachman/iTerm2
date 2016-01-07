@@ -3086,12 +3086,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_antiIdleTimer release];
     _antiIdleTimer = nil;
     
-    if ([self antiIdle]) {
-        
-        //NSTimeInterval period = MIN(60, [iTermAdvancedSettingsModel antiIdleTimerPeriod]);
-        //NSTimeInterval period = [iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:_profile];
-
-        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod  //FIXME
+    if (set) {
+        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod
                                                            target:self
                                                          selector:@selector(doAntiIdle)
                                                          userInfo:nil
@@ -3505,7 +3501,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (now >= _lastInput + _antiIdlePeriod) {   //FIXME
+    
+    // Offset a little from antiIdlePeriod, because antiIdleTimer calls us at exactly that frequency.
+
+    // FIXME - Code is always sending regardless of activity/idleness.
+    
+    // FIXME - The 2nd condition here is just a temporary brute force way to avoid sending a continuoius flood, which currently happens when the period is 1 or 0.
+    if (now >= _lastInput + _antiIdlePeriod - 0.1 && _antiIdlePeriod >= 1.2) {
         [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
         _lastInput = now;
     }
