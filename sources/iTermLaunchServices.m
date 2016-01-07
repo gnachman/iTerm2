@@ -1,18 +1,18 @@
 //
-//  iTermURLSchemeController.m
+//  iTermLaunchServices.m
 //  iTerm
 //
 //  Created by George Nachman on 4/14/14.
 //
 //
 
-#import "iTermURLSchemeController.h"
+#import "iTermLaunchServices.h"
 #import "ITAddressBookMgr.h"
 
 static NSString *const kUrlHandlersUserDefaultsKey = @"URLHandlersByGuid";
 static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 
-@implementation iTermURLSchemeController {
+@implementation iTermLaunchServices {
     NSMutableDictionary *_urlHandlersByGuid;  // NSString scheme -> NSString guid
 }
 

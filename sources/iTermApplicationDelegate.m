@@ -36,6 +36,7 @@
 #import "iTermFileDescriptorSocketPath.h"
 #import "iTermFontPanel.h"
 #import "iTermIntegerNumberFormatter.h"
+#import "iTermLaunchServices.h"
 #import "iTermPreferences.h"
 #import "iTermRemotePreferences.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -47,7 +48,6 @@
 #import "iTermQuickLookController.h"
 #import "iTermSystemVersion.h"
 #import "iTermTipController.h"
-#import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "iTermTipWindowController.h"
 #import "NSApplication+iTerm.h"
@@ -267,11 +267,11 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (IBAction)makeDefaultTerminal:(id)sender {
-    [[iTermURLSchemeController sharedInstance] makeITermDefaultTerminal];
+    [[iTermLaunchServices sharedInstance] makeITermDefaultTerminal];
 }
 
 - (IBAction)unmakeDefaultTerminal:(id)sender {
-    [[iTermURLSchemeController sharedInstance] makeTerminalDefaultTerminal];
+    [[iTermLaunchServices sharedInstance] makeTerminalDefaultTerminal];
 }
 
 - (BOOL)quietFileExists {
@@ -767,7 +767,7 @@ static BOOL hasBecomeActive = NO;
     NSURL *url = [NSURL URLWithString: urlStr];
     NSString *scheme = [url scheme];
 
-    Profile *profile = [[iTermURLSchemeController sharedInstance] profileForScheme:scheme];
+    Profile *profile = [[iTermLaunchServices sharedInstance] profileForScheme:scheme];
     if (!profile) {
         profile = [[ProfileModel sharedInstance] defaultBookmark];
     }
@@ -1525,7 +1525,7 @@ static BOOL hasBecomeActive = NO;
         [menuItem setState:[[self markAlertAction] isEqualToString:kMarkAlertActionPostNotification] ? NSOnState : NSOffState];
         return YES;
     } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
-        return ![[iTermURLSchemeController sharedInstance] iTermIsDefaultTerminal];
+        return ![[iTermLaunchServices sharedInstance] iTermIsDefaultTerminal];
     } else if (menuItem == maximizePane) {
         if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
             // Things get too complex if you allow this. It crashes.

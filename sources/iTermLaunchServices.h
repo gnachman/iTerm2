@@ -1,5 +1,5 @@
 //
-//  iTermURLSchemeController.h
+//  iTermLaunchServices.h
 //  iTerm
 //
 //  Created by George Nachman on 4/14/14.
@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
 
-@interface iTermURLSchemeController : NSObject
+@interface iTermLaunchServices : NSObject
 
 + (instancetype)sharedInstance;
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
