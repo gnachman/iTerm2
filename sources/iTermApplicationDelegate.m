@@ -260,8 +260,8 @@ static BOOL hasBecomeActive = NO;
                          error:nil];
 }
 
-- (void)updateRestoreWindowArrangementsMenu {
-    [WindowArrangements refreshRestoreArrangementsMenu:windowArrangements_
+- (void)updateRestoreWindowArrangementsMenu:(NSMenuItem *)menuItem {
+    [WindowArrangements refreshRestoreArrangementsMenu:menuItem
                                           withSelector:@selector(restoreWindowArrangement:)
                                        defaultShortcut:kRestoreDefaultWindowArrangementShortcut];
 }
@@ -329,7 +329,7 @@ static BOOL hasBecomeActive = NO;
                                                       withObject:nil
                                                       afterDelay:0.5];
     }
-    [self updateRestoreWindowArrangementsMenu];
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_];
 
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
@@ -670,7 +670,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)windowArrangementsDidChange:(id)sender {
-    [self updateRestoreWindowArrangementsMenu];
+    [self updateRestoreWindowArrangementsMenu:windowArrangements_];
 }
 
 - (void)restoreWindowArrangement:(id)sender
@@ -890,7 +890,7 @@ static BOOL hasBecomeActive = NO;
                                         keyEquivalent:@""];
     NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
     [container setSubmenu:subMenu];
-    [self updateRestoreWindowArrangementsMenu];
+    [self updateRestoreWindowArrangementsMenu:container];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
