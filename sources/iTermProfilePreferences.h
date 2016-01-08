@@ -46,6 +46,12 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
        inProfile:(Profile *)profile
            model:(ProfileModel *)model;
 
++ (double)doubleForKey:(NSString *)key inProfile:(Profile *)profile;
++ (void)setDouble:(double)value
+           forKey:(NSString *)key
+        inProfile:(Profile *)profile
+            model:(ProfileModel *)model;
+
 + (NSString *)stringForKey:(NSString *)key inProfile:(Profile *)profile;
 + (void)setString:(NSString *)value
            forKey:(NSString *)key

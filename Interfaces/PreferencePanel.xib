@@ -756,7 +756,7 @@ Gw
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
-                                    <rect key="frame" x="0.0" y="0.0" width="761" height="19"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -1132,7 +1132,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
-                                    <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="532" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -1544,6 +1544,7 @@ DQ
                 <outlet property="_changeLogDir" destination="5687" id="mMH-ci-Pff"/>
                 <outlet property="_closeSessionsOnEnd" destination="5681" id="7OH-SS-Zp9"/>
                 <outlet property="_idleCode" destination="5698" id="wWW-3F-nXP"/>
+                <outlet property="_idlePeriod" destination="Dvw-Ch-E3y" id="Ts1-PZ-huD"/>
                 <outlet property="_jobsTable" destination="5661" id="yIR-qA-xyG"/>
                 <outlet property="_logDir" destination="5686" id="9gN-0Q-j71"/>
                 <outlet property="_logDirWarning" destination="5688" id="LwF-JR-iDw"/>
@@ -3450,7 +3451,7 @@ DQ
                     <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="Warning" id="5689"/>
                 </imageView>
                 <button toolTip="This is not recommended." id="5697">
-                    <rect key="frame" x="15" y="38" width="200" height="18"/>
+                    <rect key="frame" x="15" y="38" width="194" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="When idle, send ASCII code:" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5701">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -3458,7 +3459,6 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="TG6-06-mq9" id="Oi1-J9-bAq"/>
-                        <outlet property="nextKeyView" destination="5698" id="5702"/>
                     </connections>
                 </button>
                 <button toolTip="This is not recommended." id="Flt-We-Y3i">
@@ -3470,23 +3470,8 @@ DQ
                     </buttonCell>
                     <connections>
                         <action selector="settingChanged:" target="TG6-06-mq9" id="Z4O-Ko-FnF"/>
-                        <outlet property="nextKeyView" destination="5698" id="RI3-Qt-Njb"/>
                     </connections>
                 </button>
-                <textField verticalHuggingPriority="750" id="5698">
-                    <rect key="frame" x="214" y="37" width="45" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <animations/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5699">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                    <connections>
-                        <outlet property="delegate" destination="TG6-06-mq9" id="Vnh-fj-vwl"/>
-                        <outlet property="nextKeyView" destination="2404" id="5703"/>
-                    </connections>
-                </textField>
                 <textField verticalHuggingPriority="750" id="5707">
                     <rect key="frame" x="14" y="400" width="55" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -3560,6 +3545,49 @@ DQ
                     <rect key="frame" x="446" y="353" width="55" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="seconds" id="vCA-Gp-FvI">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="5698">
+                    <rect key="frame" x="209" y="37" width="45" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="60" drawsBackground="YES" id="5699">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="TG6-06-mq9" id="Vnh-fj-vwl"/>
+                        <outlet property="nextKeyView" destination="2404" id="5703"/>
+                    </connections>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="SKQ-AW-1wN">
+                    <rect key="frame" x="253" y="40" width="45" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title=", every" id="e95-Tz-JKN">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" id="Dvw-Ch-E3y">
+                    <rect key="frame" x="298" y="37" width="45" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="60" drawsBackground="YES" id="Njg-LZ-sIb">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                    <connections>
+                        <outlet property="delegate" destination="TG6-06-mq9" id="0fm-Vp-V0B"/>
+                    </connections>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="RGW-48-LkR">
+                    <rect key="frame" x="342" y="40" width="55" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="seconds" id="VbV-8M-87X">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>

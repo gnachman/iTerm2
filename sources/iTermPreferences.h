@@ -159,6 +159,9 @@ extern NSString *const kPreferenceKeyShowFullscreenTabBar;
 + (double)floatForKey:(NSString *)key;
 + (void)setFloat:(double)value forKey:(NSString *)key;
 
++ (double)doubleForKey:(NSString *)key;
++ (void)setDouble:(double)value forKey:(NSString *)key;
+
 + (NSString *)stringForKey:(NSString *)key;
 + (void)setString:(NSString *)value forKey:(NSString *)key;
 
