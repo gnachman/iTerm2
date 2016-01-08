@@ -745,6 +745,7 @@ static int MyForkPty(int *amaster,
 
 - (void)writeTask:(NSData*)data
 {
+    //_lastTtyIo = [NSDate timeIntervalSinceReferenceDate];
     if (self.isCoprocessOnly) {
         // Send keypresses to tmux.
         [_delegate retain];

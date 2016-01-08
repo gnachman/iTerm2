@@ -3075,7 +3075,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_antiIdleTimer release];
     _antiIdleTimer = nil;
     
-    if (set) {
+    // FIXME: corner case: part 1of2 of a kludgey way to prevent a flood when period is set to 1
+    if (_antiIdlePeriod > 0 && _antiIdlePeriod < 1.1) {
+        _antiIdlePeriod = 1.1;
+    }
+    
+    if (set && _antiIdlePeriod > 0) {
         _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod
                                                            target:self
                                                          selector:@selector(doAntiIdle)
@@ -3490,10 +3495,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    // Offset a little from antiIdlePeriod, because antiIdleTimer calls us at exactly that frequency.
-
-    // FIXME - The 2nd condition here is just a temporary brute force way to avoid sending a continuoius flood, which currently happens when the period is 1 or 0.
-    if (now >= _lastOutput + _antiIdlePeriod - 0.1 && _antiIdlePeriod >= 1.2) {
+    // _antiIdlePeriod-0.1 is to prevent missing every other cycle due to the timer calling us at the exact same period as we would check here.
+    // FIXME: corner case: _antiIdlePeriod>=1.1 is part 2of2 of a kludgey way to prevent a flood when period is set to 1.
+    if (now >= _lastOutput + _antiIdlePeriod - 0.1 && _antiIdlePeriod >= 1.1) {
         [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
         _lastOutput = now;
     }
