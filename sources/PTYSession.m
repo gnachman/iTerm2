@@ -3490,14 +3490,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-        // Offset a little from antiIdlePeriod, because antiIdleTimer calls us at exactly that frequency.
+    // Offset a little from antiIdlePeriod, because antiIdleTimer calls us at exactly that frequency.
 
-        // FIXME - The antiIdleCode is always being sent regardless of activity.
-
-        // FIXME - The 2nd condition here is just a temporary brute force way to avoid sending a continuoius flood, which currently happens when the period is 1 or 0.
-        if (now >= _lastInput + _antiIdlePeriod - 0.1 && _antiIdlePeriod >= 1.2) {
+    // FIXME - The 2nd condition here is just a temporary brute force way to avoid sending a continuoius flood, which currently happens when the period is 1 or 0.
+    if (now >= _lastOutput + _antiIdlePeriod - 0.1 && _antiIdlePeriod >= 1.2) {
         [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
-        _lastInput = now;
+        _lastOutput = now;
     }
 }
 
