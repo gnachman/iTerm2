@@ -12,6 +12,8 @@
 #import "NSColor+iTerm.h"
 #import "PreferencePanel.h"
 
+#define PROFILE_BLOCK(x) [[^id(Profile *profile) { return [self x:profile]; } copy] autorelease]
+
 NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
 NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
 
@@ -68,6 +70,17 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     [self setObject:@(value) forKey:key inProfile:profile model:model];
 }
 
++ (double)doubleForKey:(NSString *)key inProfile:(Profile *)profile {
+    return [[self objectForKey:key inProfile:profile] doubleValue];
+}
+
++ (void)setDouble:(double)value
+           forKey:(NSString *)key
+        inProfile:(Profile *)profile
+            model:(ProfileModel *)model {
+    [self setObject:@(value) forKey:key inProfile:profile model:model];
+}
+
 + (NSString *)stringForKey:(NSString *)key inProfile:(Profile *)profile {
     return [self objectForKey:key inProfile:profile];
 }
@@ -88,6 +101,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     id defaultValue = [self defaultValueMap][key];
     switch (type) {
         case kPreferenceInfoTypeIntegerTextField:
+        case kPreferenceInfoTypeDoubleTextField:
         case kPreferenceInfoTypePopup:
             return ([defaultValue isKindOfClass:[NSNumber class]] &&
                     [defaultValue doubleValue] == ceil([defaultValue doubleValue]));
@@ -223,6 +237,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_LOGDIR: @"",
                   KEY_SEND_CODE_WHEN_IDLE: @NO,
                   KEY_IDLE_CODE: @0,
+                  KEY_IDLE_PERIOD: @60,
                   KEY_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_RIGHT_OPTION_KEY_SENDS: @(OPT_NORMAL),
                   KEY_APPLICATION_KEYPAD_ALLOWED: @NO,
@@ -270,7 +285,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 + (NSDictionary *)computedObjectDictionary {
     static NSDictionary *dict;
     if (!dict) {
-        dict = @{ };
+        dict = @{ KEY_IDLE_PERIOD: PROFILE_BLOCK(antiIdlePeriodWithLegacyDefaultInProfile) };
         [dict retain];
     }
     return dict;
@@ -291,6 +306,25 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         object = [self defaultObjectForKey:key];
     }
     return object;
+}
+
++ (id)antiIdlePeriodWithLegacyDefaultInProfile:(Profile *)profile {
+    NSString *const key = KEY_IDLE_PERIOD;
+
+    // If the profile has a value.
+    NSNumber *value = profile[key];
+    if (value) {
+        return value;
+    }
+
+    // If the user set a preference with the now-removed advanced setting, use it.
+    NSNumber *legacyDefault = [[NSUserDefaults standardUserDefaults] objectForKey:@"AntiIdleTimerPeriod"];
+    if (legacyDefault) {
+        return legacyDefault;
+    }
+
+    // Fall back to the default from the dictionary.
+    return [self defaultObjectForKey:key];
 }
 
 @end

@@ -24,6 +24,7 @@
     IBOutlet NSTextField *_logDir;
     IBOutlet NSButton *_sendCodeWhenIdle;
     IBOutlet NSTextField *_idleCode;
+    IBOutlet NSTextField *_idlePeriod;
 
     IBOutlet NSImageView *_logDirWarning;
     IBOutlet NSButton *_changeLogDir;
@@ -104,6 +105,7 @@
     };
     info.observer = ^() {
         _idleCode.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE];
+        _idlePeriod.enabled = [self boolForKey:KEY_SEND_CODE_WHEN_IDLE];
     };
 
     info = [self defineControl:_idleCode
@@ -111,12 +113,24 @@
                           type:kPreferenceInfoTypeIntegerTextField];
     info.range = NSMakeRange(0, 256);
 
+    [self defineControl:_idlePeriod
+                    key:KEY_IDLE_PERIOD
+                   type:kPreferenceInfoTypeDoubleTextField];
+
     [self updateRemoveJobButtonEnabled];
 
     [self defineControl:_reduceFlicker
                     key:KEY_REDUCE_FLICKER
                    type:kPreferenceInfoTypeCheckbox];
 
+}
+
+// Ensure the anti-idle period's value is constrained to the legal range.
+- (void)setDouble:(double)value forKey:(NSString *)key {
+    if ([key isEqualToString:KEY_IDLE_PERIOD]) {
+        value = MAX(kMinimumAntiIdlePeriod, value);
+    }
+    [super setDouble:value forKey:key];
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {

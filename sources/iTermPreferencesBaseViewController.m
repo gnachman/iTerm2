@@ -22,6 +22,11 @@ static NSString *const kPreferenceDidChangeFromOtherPanel = @"kPreferenceDidChan
 // key of changed preference.
 static NSString *const kKey = @"key";
 
+@interface iTermPreferencesBaseViewController()
+// If set to YES, then controls won't be updated with values from backing store when it changes.
+@property(nonatomic, assign) BOOL disableUpdates;
+@end
+
 @implementation iTermPreferencesBaseViewController {
     // Maps NSControl* -> PreferenceInfo*.
     NSMapTable *_keyMap;
@@ -95,6 +100,14 @@ static NSString *const kKey = @"key";
     [iTermPreferences setFloat:value forKey:key];
 }
 
+- (double)doubleForKey:(NSString *)key {
+    return [iTermPreferences doubleForKey:key];
+}
+
+- (void)setDouble:(double)value forKey:(NSString *)key {
+    [iTermPreferences setDouble:value forKey:key];
+}
+
 - (NSString *)stringForKey:(NSString *)key {
     return [iTermPreferences stringForKey:key];
 }
@@ -150,6 +163,23 @@ static NSString *const kKey = @"key";
                 [self setInt:[sender separatorTolerantIntValue] forKey:info.key];
                 break;
 
+            case kPreferenceInfoTypeDoubleTextField: {
+                NSScanner *scanner = [NSScanner localizedScannerWithString:[sender stringValue]];
+                double value;
+                if ([scanner scanDouble:&value]) {
+                    // A double value may take a legal but non-canonical form during editing. For
+                    // example, "1." is a valid way of specifying 1.0. But we don't want to replace
+                    // the control's value with "1", or there's no way of entering "1.2", for
+                    // example. We turn on disableUpdates so -setDouble:forKey: doesn't have the
+                    // side-effect of updating the control with its canonical value.
+                    BOOL savedValue = self.disableUpdates;
+                    self.disableUpdates = YES;
+                    [self setDouble:value forKey:info.key];
+                    self.disableUpdates = savedValue;
+                }
+                break;
+            }
+                
             case kPreferenceInfoTypeUnsignedIntegerTextField:
                 [self applyUnsignedIntegerConstraints:info];
                 [self setUnsignedInteger:[sender separatorTolerantUnsignedIntegerValue] forKey:info.key];
@@ -238,6 +268,9 @@ static NSString *const kKey = @"key";
 }
 
 - (void)updateValueForInfo:(PreferenceInfo *)info {
+    if (_disableUpdates) {
+        return;
+    }
     if (info.onUpdate) {
         if (info.onUpdate()) {
             return;
@@ -269,6 +302,13 @@ static NSString *const kKey = @"key";
             assert([info.control isKindOfClass:[NSTextField class]]);
             NSTextField *field = (NSTextField *)info.control;
             field.stringValue = [NSString stringWithFormat:@"%lu", [self unsignedIntegerForKey:info.key]];
+        }
+
+        case kPreferenceInfoTypeDoubleTextField: {
+            assert([info.control isKindOfClass:[NSTextField class]]);
+            NSTextField *field = (NSTextField *)info.control;
+            field.doubleValue = [self doubleForKey:info.key];
+            break;
         }
 
         case kPreferenceInfoTypeStringTextField: {
@@ -437,6 +477,28 @@ static NSString *const kKey = @"key";
     PreferenceInfo *info = [_keyMap objectForKey:control];
     if (info.controlTextDidEndEditing) {
         info.controlTextDidEndEditing(aNotification);
+    } else {
+        switch (info.type) {
+            case kPreferenceInfoTypeCheckbox:
+            case kPreferenceInfoTypeColorWell:
+            case kPreferenceInfoTypeInvertedCheckbox:
+            case kPreferenceInfoTypeMatrix:
+            case kPreferenceInfoTypePopup:
+            case kPreferenceInfoTypeSlider:
+            case kPreferenceInfoTypeStringTextField:
+            case kPreferenceInfoTypeTokenField:
+            case kPreferenceInfoTypeIntegerTextField:
+            case kPreferenceInfoTypeUnsignedIntegerPopup:
+            case kPreferenceInfoTypeUnsignedIntegerTextField:
+                break;
+                
+            case kPreferenceInfoTypeDoubleTextField:
+                // Replace the control with its canonical value. Only floating point text fields can
+                // temporarily take illegal values, which are tolerated until editing ends.
+                // See the comments in -settingChanged: for more details on why doubles are special.
+                [control setDoubleValue:[self doubleForKey:info.key]];
+                break;
+        }
     }
 }
 

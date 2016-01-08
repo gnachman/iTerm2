@@ -180,6 +180,7 @@
 #define KEY_LOGDIR                            @"Log Directory"
 #define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
 #define KEY_IDLE_CODE                         @"Idle Code"
+#define KEY_IDLE_PERIOD                       @"Idle Period"
 #define KEY_PROMPT_CLOSE_DEPRECATED           @"Prompt Before Closing"  // Deprecated due to bad migration in 8/28 build
 #define KEY_PROMPT_CLOSE                      @"Prompt Before Closing 2"
 #define KEY_JOBS                              @"Jobs to Ignore"
@@ -199,6 +200,9 @@
 
 // Dynamic Profiles (not in prefs ui)
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"
+
+// Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
+extern const NSTimeInterval kMinimumAntiIdlePeriod;
 
 // The numerical values for each enum matter because they are used in
 // the UI as "tag" values for each select list item. They are also

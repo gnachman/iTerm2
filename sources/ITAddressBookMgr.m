@@ -39,6 +39,8 @@
 #import "NSFont+iTerm.h"
 #include <arpa/inet.h>
 
+const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
+
 @implementation ITAddressBookMgr {
     NSNetServiceBrowser *sshBonjourBrowser;
     NSNetServiceBrowser *ftpBonjourBrowser;
