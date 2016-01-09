@@ -222,7 +222,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // The code to send in the anti idle timer.
     char _antiIdleCode;
-    
+
     // The interval between sending anti-idle codes.
     NSTimeInterval _antiIdlePeriod;
     
