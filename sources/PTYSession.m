@@ -162,6 +162,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
 @property(nonatomic, readwrite) NSTimeInterval lastOutput;
+@property(nonatomic, readwrite) NSTimeInterval lastOutputIncludingAntiIdle;
 @property(atomic, assign) PTYSessionTmuxMode tmuxMode;
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
@@ -377,6 +378,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         _executionSemaphore = dispatch_semaphore_create(kMaxOutstandingExecuteCalls);
 
         _lastOutput = _lastInput;
+        _lastOutputIncludingAntiIdle = _lastInput;
         _lastUpdate = _lastInput;
         _pasteHelper = [[iTermPasteHelper alloc] init];
         _pasteHelper.delegate = self;
@@ -3497,9 +3499,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     // _antiIdlePeriod-0.1 is to prevent missing every other cycle due to the timer calling us at the exact same period as we would check here.
     // FIXME: corner case: _antiIdlePeriod>=1.1 is part 2of2 of a kludgey way to prevent a flood when period is set to 1.
-    if (now >= _lastOutput + _antiIdlePeriod - 0.1 && _antiIdlePeriod >= 1.1) {
+    if (now >= _lastOutputIncludingAntiIdle + _antiIdlePeriod - 0.1 && _antiIdlePeriod >= 1.1) {
         [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
-        _lastOutput = now;
+        _lastOutputIncludingAntiIdle = now;
     }
 }
 

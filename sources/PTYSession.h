@@ -103,6 +103,9 @@ typedef enum {
 // Time since reference date when last output was receivced.
 @property(nonatomic, readonly) NSTimeInterval lastOutput;
 
+// Time since reference date when last output was receivced, including anti-idle traffic.
+@property(nonatomic, readonly) NSTimeInterval lastOutputIncludingAntiIdle;
+
 // Is the session idle? Used by updateLabelAttributes to send a growl message when processing ends.
 @property(nonatomic, assign) BOOL havePostedIdleNotification;
 
