@@ -160,7 +160,7 @@
         NSRect objectCounterRect = [self objectCounterRectForTabCell:cell];
         minX = NSMinX(objectCounterRect);
     } else if (![[cell indicator] isHidden]) {
-        minX = NSMinX([self indicatorRectForTabCell:cell]) - kSPMTabBarCellInternalXMargin;
+        minX = NSMinX([[cell indicator] frame]) - kSPMTabBarCellInternalXMargin;
     } else {
         minX = NSMaxX(cellFrame) - kSPMTabBarCellInternalXMargin;
     }
