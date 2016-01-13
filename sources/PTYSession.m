@@ -158,6 +158,13 @@ static NSMutableDictionary *gRegisteredSessionContents;
 // Rate limit for checking instant (partial-line) triggers, in seconds.
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
+// Minimum time between sending anti-idle codes.
+// 1 results in a flood.
+static const NSTimeInterval kMinimumAntiIdlePeriod = 1.1;
+
+// Grace period to avoid failing to write anti-idle code when timer runs just before when the code should be sent.
+static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
+
 @interface PTYSession () <iTermPasteHelperDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
@@ -219,12 +226,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Anti-idle timer that sends a character every so often to the host.
     NSTimer *_antiIdleTimer;
-
-    // The code to send in the anti idle timer.
-    char _antiIdleCode;
-
-    // The interval between sending anti-idle codes.
-    NSTimeInterval _antiIdlePeriod;
     
     // The bookmark the session was originally created with so those settings can be restored if
     // needed.
@@ -1086,7 +1087,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
 
     _antiIdleCode = 0;
-    _antiIdlePeriod = 0;
     [_antiIdleTimer release];
     _antiIdleTimer = nil;
     _newOutput = NO;
@@ -3075,12 +3075,9 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_antiIdleTimer release];
     _antiIdleTimer = nil;
     
-    // FIXME: corner case: part 1of2 of a kludgey way to prevent a flood when period is set to 1
-    if (_antiIdlePeriod > 0 && _antiIdlePeriod < 1.1) {
-        _antiIdlePeriod = 1.1;
-    }
+    _antiIdlePeriod = MAX(_antiIdlePeriod, kMinimumAntiIdlePeriod);
     
-    if (set && _antiIdlePeriod > 0) {
+    if (set) {
         _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod
                                                            target:self
                                                          selector:@selector(doAntiIdle)
@@ -3495,9 +3492,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    // _antiIdlePeriod-0.1 is to prevent missing every other cycle due to the timer calling us at the exact same period as we would check here.
-    // FIXME: corner case: _antiIdlePeriod>=1.1 is part 2of2 of a kludgey way to prevent a flood when period is set to 1.
-    if (now >= _lastOutput + _antiIdlePeriod - 0.1 && _antiIdlePeriod >= 1.1) {
+
+    if (now >= _lastOutput + _antiIdlePeriod - kAntiIdleGracePeriod) {
         [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
         _lastOutput = now;
     }
