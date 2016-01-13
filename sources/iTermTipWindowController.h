@@ -21,6 +21,12 @@
 // User requested to disable all tips.
 - (void)tipWindowRequestsDisable;
 
+// User requested to enable all tips.
+- (void)tipWindowRequestsEnable;
+
+// Are tips disabled?
+- (BOOL)tipWindowTipsAreDisabled;
+
 // Get the tip with a named id.
 - (iTermTip *)tipWindowTipAfterTipWithIdentifier:(NSString *)identifier;
 - (iTermTip *)tipWindowTipBeforeTipWithIdentifier:(NSString *)identifier;

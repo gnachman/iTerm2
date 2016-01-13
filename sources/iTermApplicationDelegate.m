@@ -126,6 +126,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
+    IBOutlet NSMenuItem *_showTipOfTheDay;  // Here because we must remove it for older OS versions.
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
 
@@ -678,8 +679,7 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
 }
 
-- (void)awakeFromNib
-{
+- (void)awakeFromNib {
     secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
 
     NSMenu *appMenu = [NSApp mainMenu];
@@ -695,6 +695,10 @@ static BOOL hasBecomeActive = NO;
                                 keyEquivalent:@""] autorelease];
     [item setView:labelTrackView];
     [viewMenu addItem:item];
+
+    if (![iTermTipController sharedInstance]) {
+        [_showTipOfTheDay.menu removeItem:_showTipOfTheDay];
+    }
 }
 
 - (IBAction)openPasswordManager:(id)sender {
@@ -1548,6 +1552,8 @@ static BOOL hasBecomeActive = NO;
     } else if ([menuItem action] == @selector(toggleMultiLinePasteWarning:)) {
         menuItem.state = [self warnBeforeMultiLinePaste] ? NSOnState : NSOffState;
         return YES;
+    } else if ([menuItem action] == @selector(showTipOfTheDay:)) {
+        return ![[iTermTipController sharedInstance] showingTip];
     } else {
         return YES;
     }
@@ -1654,6 +1660,10 @@ static BOOL hasBecomeActive = NO;
     } else {
         return action;
     }
+}
+
+- (IBAction)showTipOfTheDay:(id)sender {
+    [[iTermTipController sharedInstance] showTip];
 }
 
 #pragma mark - iTermPasswordManagerDelegate

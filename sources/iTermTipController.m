@@ -139,6 +139,23 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
     }
 }
 
+- (void)showTip {
+    if (_showingTip) {
+        return;
+    }
+
+    // Try to show the last-seen tip.
+    NSArray *unshowableTips = [[NSUserDefaults standardUserDefaults] objectForKey:kUnshowableTipsKey];
+    NSString *key = [unshowableTips lastObject];
+    if (!key) {
+        // You've never seen it before? Then show the first one.
+        key = [self nextTipKey];
+    }
+    if (key) {  // Key should always be non-nil, but better be safe.
+        [self showTipForKey:key];
+    }
+}
+
 - (BOOL)haveShownTipRecently {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     NSTimeInterval previous = [[NSUserDefaults standardUserDefaults] doubleForKey:kLastTipTimeKey];
@@ -218,6 +235,15 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 
 - (void)tipWindowRequestsDisable {
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kTipsDisabledKey];
+    _showingTip = NO;
+}
+
+- (void)tipWindowRequestsEnable {
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:kTipsDisabledKey];
+}
+
+- (BOOL)tipWindowTipsAreDisabled {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey];
 }
 
 - (iTermTip *)tipWindowTipAfterTipWithIdentifier:(NSString *)previousId {
