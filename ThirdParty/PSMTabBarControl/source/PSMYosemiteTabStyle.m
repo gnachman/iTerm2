@@ -157,11 +157,11 @@
 
     CGFloat minX;
     if ([cell count]) {
+        // Indicator to the left of the tab number
         NSRect objectCounterRect = [self objectCounterRectForTabCell:cell];
         minX = NSMinX(objectCounterRect);
-    } else if (![[cell indicator] isHidden]) {
-        minX = NSMinX([self indicatorRectForTabCell:cell]) - kSPMTabBarCellInternalXMargin;
     } else {
+        // Indicator on the right edge of the tab.
         minX = NSMaxX(cellFrame) - kSPMTabBarCellInternalXMargin;
     }
     NSRect result;
