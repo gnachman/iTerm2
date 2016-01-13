@@ -65,6 +65,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 - (void)dealloc {
     [_tips release];
     [_currentTipName release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
 
@@ -83,6 +84,15 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
         }
     }
 
+    [self tryToShowTip];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidBecomeActive:)
+                                                 name:NSApplicationDidBecomeActiveNotification
+                                               object:nil];
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
     [self tryToShowTip];
 }
 
@@ -113,6 +123,9 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
         return;
     }
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
+        return;
+    }
+    if (![[NSApplication sharedApplication] isActive]) {
         return;
     }
     if (_showingTip || [self haveShownTipRecently]) {
