@@ -225,7 +225,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 
     // Anti-idle timer that sends a character every so often to the host.
     NSTimer *_antiIdleTimer;
-    
+
     // The bookmark the session was originally created with so those settings can be restored if
     // needed.
     Profile *_originalProfile;
