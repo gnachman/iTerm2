@@ -69,14 +69,14 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 }
 
 + (double)doubleForKey:(NSString *)key inProfile:(Profile *)profile {
-        return [[self objectForKey:key inProfile:profile] doubleValue];
+    return [[self objectForKey:key inProfile:profile] doubleValue];
 }
 
 + (void)setDouble:(double)value
            forKey:(NSString *)key
         inProfile:(Profile *)profile
             model:(ProfileModel *)model {
-        [self setObject:@(value) forKey:key inProfile:profile model:model];
+    [self setObject:@(value) forKey:key inProfile:profile model:model];
 }
 
 + (NSString *)stringForKey:(NSString *)key inProfile:(Profile *)profile {
