@@ -2665,7 +2665,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     // bold 
     [self setUseBoldFont:[iTermProfilePreferences boolForKey:KEY_USE_BOLD_FONT
                                                    inProfile:aDict]];
-    self.thinStrokes = [iTermProfilePreferences boolForKey:KEY_THIN_STROKES inProfile:aDict];
+    self.thinStrokes = [iTermProfilePreferences intForKey:KEY_THIN_STROKES inProfile:aDict];
 
     [_textview setUseBrightBold:[iTermProfilePreferences boolForKey:KEY_USE_BRIGHT_BOLD
                                                           inProfile:aDict]];
@@ -3097,11 +3097,11 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setUseBoldFont:boldFlag];
 }
 
-- (BOOL)thinStrokes {
+- (iTermThinStrokesSetting)thinStrokes {
     return _textview.thinStrokes;
 }
 
-- (void)setThinStrokes:(BOOL)thinStrokes {
+- (void)setThinStrokes:(iTermThinStrokesSetting)thinStrokes {
     _textview.thinStrokes = thinStrokes;
 }
 
@@ -4596,13 +4596,13 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                 [[[self tab] parentWindow] nextTab:nil];
                 break;
             case KEY_ACTION_NEXT_WINDOW:
-                [[iTermController sharedInstance] nextTerminal:nil];
+                [[iTermController sharedInstance] nextTerminal];
                 break;
             case KEY_ACTION_PREVIOUS_SESSION:
                 [[[self tab] parentWindow] previousTab:nil];
                 break;
             case KEY_ACTION_PREVIOUS_WINDOW:
-                [[iTermController sharedInstance] previousTerminal:nil];
+                [[iTermController sharedInstance] previousTerminal];
                 break;
             case KEY_ACTION_SCROLL_END:
                 [_textview scrollEnd];
@@ -5340,14 +5340,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[[self tab] realParentWindow] previousTab:nil];
 }
 
-- (void)textViewSelectNextWindow
-{
-    [[iTermController sharedInstance] nextTerminal:nil];
+- (void)textViewSelectNextWindow {
+    [[iTermController sharedInstance] nextTerminal];
 }
 
-- (void)textViewSelectPreviousWindow
-{
-    [[iTermController sharedInstance] previousTerminal:nil];
+- (void)textViewSelectPreviousWindow {
+    [[iTermController sharedInstance] previousTerminal];
 }
 
 - (void)textViewSelectNextPane

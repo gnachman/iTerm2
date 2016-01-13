@@ -809,7 +809,7 @@ Gw
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="5784" id="5783">
-                                    <rect key="frame" x="0.0" y="0.0" width="762" height="247"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="761" height="19"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <animations/>
                                     <size key="intercellSpacing" width="3" height="2"/>
@@ -1216,7 +1216,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" multipleSelection="NO" autosaveColumns="NO" headerView="6284" id="6283">
-                                    <rect key="frame" x="0.0" y="0.0" width="532" height="19"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="533" height="136"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <animations/>
                                     <size key="intercellSpacing" width="3" height="2"/>
@@ -1561,7 +1561,7 @@ DQ
                 <outlet property="_nonasciiFontWantsAntialiasing" destination="IpC-rY-rHI" id="6PY-Kl-YD9"/>
                 <outlet property="_normalFontDescription" destination="4775" id="Pwe-1n-DX6"/>
                 <outlet property="_normalFontWantsAntialiasing" destination="QMj-Rf-IwZ" id="uPi-s4-g9d"/>
-                <outlet property="_thinStrokes" destination="4BA-kr-358" id="kcF-QK-xbd"/>
+                <outlet property="_thinStrokes" destination="bp3-dc-JQV" id="RVt-pO-7Rz"/>
                 <outlet property="_useBoldFont" destination="4765" id="GP4-9X-n4Z"/>
                 <outlet property="_useBrightBold" destination="4766" id="d50-Oo-kAM"/>
                 <outlet property="_useHFSPlusMapping" destination="IwR-5a-srh" id="7OQ-G1-Lv5"/>
@@ -2492,11 +2492,11 @@ DQ
             <animations/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="588" height="394"/>
+            <rect key="frame" x="0.0" y="0.0" width="559" height="421"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <button id="4765">
-                    <rect key="frame" x="283" y="345" width="193" height="18"/>
+                    <rect key="frame" x="173" y="372" width="193" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Draw bold text in bold font" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4844">
@@ -2509,7 +2509,7 @@ DQ
                     </connections>
                 </button>
                 <button id="4766">
-                    <rect key="frame" x="283" y="325" width="216" height="18"/>
+                    <rect key="frame" x="173" y="352" width="216" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Draw bold text in bright colors" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4843">
@@ -2522,7 +2522,7 @@ DQ
                     </connections>
                 </button>
                 <button id="5148">
-                    <rect key="frame" x="283" y="305" width="154" height="18"/>
+                    <rect key="frame" x="173" y="332" width="154" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Blinking text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5149">
@@ -2535,7 +2535,7 @@ DQ
                     </connections>
                 </button>
                 <button id="6400">
-                    <rect key="frame" x="283" y="285" width="134" height="18"/>
+                    <rect key="frame" x="173" y="312" width="134" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Italic text allowed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6401">
@@ -2548,7 +2548,7 @@ DQ
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" id="4772">
-                    <rect key="frame" x="18" y="374" width="132" height="17"/>
+                    <rect key="frame" x="18" y="401" width="101" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Cursor" id="4835">
@@ -2558,7 +2558,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="4998">
-                    <rect key="frame" x="282" y="374" width="132" height="17"/>
+                    <rect key="frame" x="172" y="401" width="132" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Text Rendering" id="4999">
@@ -2578,7 +2578,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button id="4773">
-                    <rect key="frame" x="18" y="281" width="119" height="18"/>
+                    <rect key="frame" x="18" y="308" width="119" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <buttonCell key="cell" type="check" title="Blinking cursor" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="4834">
@@ -2650,7 +2650,7 @@ DQ
                     </connections>
                 </button>
                 <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" id="5017">
-                    <rect key="frame" x="20" y="305" width="98" height="58"/>
+                    <rect key="frame" x="20" y="332" width="98" height="58"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
@@ -2780,22 +2780,38 @@ DQ
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <button id="4BA-kr-358">
-                    <rect key="frame" x="283" y="265" width="287" height="18"/>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="8oY-ax-IVW">
+                    <rect key="frame" x="173" y="293" width="224" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <animations/>
-                    <buttonCell key="cell" type="check" title="Sharpen anti-aliased text on Retina displays" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4SR-DD-VTM">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Use thin strokes for anti-aliased text" id="JmL-Zy-UER">
                         <font key="font" metaFont="system"/>
-                    </buttonCell>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" id="bp3-dc-JQV">
+                    <rect key="frame" x="396" y="287" width="158" height="26"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
+                    <popUpButtonCell key="cell" type="push" title="On Retina displays" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="Enb-ir-CSO" id="ODn-Ih-XKx">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" id="0LS-QL-7pz">
+                            <items>
+                                <menuItem title="On Retina displays" state="on" tag="1" id="Enb-ir-CSO"/>
+                                <menuItem title="Always" tag="2" id="9Na-yW-waM"/>
+                                <menuItem title="Never" id="ChU-JM-nQR"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
                     <connections>
-                        <action selector="settingChanged:" target="lhd-u6-xr5" id="JP1-W5-Aw3"/>
-                        <outlet property="nextKeyView" destination="2100" id="nt0-MH-dSF"/>
+                        <action selector="settingChanged:" target="lhd-u6-xr5" id="aVZ-El-bBQ"/>
                     </connections>
-                </button>
+                </popUpButton>
             </subviews>
             <animations/>
-            <point key="canvasLocation" x="-46" y="279"/>
+            <point key="canvasLocation" x="-62.5" y="288.5"/>
         </customView>
         <customView id="77f-eM-Dma" userLabel="Prefs - Profiles - Window" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="559" height="424"/>
@@ -3291,6 +3307,7 @@ DQ
                     <rect key="frame" x="21" y="459" width="391" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">When using a program like tmux, which shows a status bar at the bottom of the screen, history is not normally saved. This allows such history to be saved but with a performance penalty.</string>
+                    <animations/>
                     <buttonCell key="cell" type="check" title="Save lines to scrollback when an app status bar is present" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5155">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3303,6 +3320,7 @@ DQ
                 <button id="5758">
                     <rect key="frame" x="21" y="439" width="391" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="check" title="Save lines to scrollback in alternate screen mode" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5759">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3315,6 +3333,7 @@ DQ
                 <textField verticalHuggingPriority="750" id="Fzk-rB-88j">
                     <rect key="frame" x="45" y="324" width="120" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="ENQ Answer Back:" id="Lrt-Oz-1A8">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -3324,6 +3343,7 @@ DQ
                 <textField verticalHuggingPriority="750" id="tcJ-V2-9Fd" userLabel="ENQ Answer Back text field">
                     <rect key="frame" x="168" y="321" width="326" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="UkZ-8d-b91">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -3337,6 +3357,7 @@ DQ
                 <button id="2397">
                     <rect key="frame" x="19" y="196" width="164" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="check" title="Silence bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2420">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3349,6 +3370,7 @@ DQ
                 <button id="2402">
                     <rect key="frame" x="20" y="289" width="215" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="check" title="Enable mouse reporting" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2415">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3361,6 +3383,7 @@ DQ
                 <button id="2403">
                     <rect key="frame" x="283" y="176" width="160" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="check" title="Show bell icon in tabs" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2414">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3373,6 +3396,7 @@ DQ
                 <button id="3553">
                     <rect key="frame" x="283" y="196" width="122" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="check" title="Flash visual bell" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="3554">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3385,6 +3409,7 @@ DQ
                 <button toolTip="Growl is used if it's available, otherwise Notification Center is used." id="2404">
                     <rect key="frame" x="19" y="176" width="258" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="check" title="Send Growl/Notification Center alerts" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="2413">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
@@ -3551,6 +3576,7 @@ DQ
                 <button id="3647">
                     <rect key="frame" x="345" y="485" width="151" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <animations/>
                     <buttonCell key="cell" type="check" title="Unlimited scrollback" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="3648">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>

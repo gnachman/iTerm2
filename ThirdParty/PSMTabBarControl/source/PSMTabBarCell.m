@@ -74,6 +74,7 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
     PSMProgressIndicator *_indicator;
     NSTimeInterval _highlightChangeTime;
     PSMWeakTimer *_delayedStringValueTimer;  // For bug 3957
+    BOOL _hasIcon;
 }
 
 #pragma mark - Creation/Destruction
@@ -197,6 +198,11 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
 - (void)setHasIcon:(BOOL)value {
     _hasIcon = value;
     [[self psmTabControlView] update:[[self psmTabControlView] automaticallyAnimates]]; // binding notice is too fast
+}
+
+- (BOOL)hasIcon {
+    BOOL hasIndicator = [self indicator] && !self.indicator.isHidden;
+    return _hasIcon && !hasIndicator;
 }
 
 - (void)setCount:(int)value {

@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import "CharacterRun.h"
+#import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermColorMap.h"
 #import "iTermIndicatorsHelper.h"
@@ -194,7 +195,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
 @property(nonatomic, assign) BOOL useBoldFont;
 
 // Draw text with light font smoothing?
-@property(nonatomic, assign) BOOL thinStrokes;
+@property(nonatomic, assign) iTermThinStrokesSetting thinStrokes;
 
 // Use a bright version of the text color for bold text?
 @property(nonatomic, assign) BOOL useBrightBold;

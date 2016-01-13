@@ -39,7 +39,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
     IBOutlet NSButton *_useNonAsciiFont;
     IBOutlet NSButton *_asciiAntiAliased;
     IBOutlet NSButton *_nonasciiAntiAliased;
-    IBOutlet NSButton *_thinStrokes;
+    IBOutlet NSPopUpButton *_thinStrokes;
 
     // Labels indicating current font. Not registered as controls.
     IBOutlet NSTextField *_normalFontDescription;
@@ -88,7 +88,7 @@ static NSInteger kNonAsciiFontButtonTag = 1;
 
     [self defineControl:_thinStrokes
                     key:KEY_THIN_STROKES
-                   type:kPreferenceInfoTypeCheckbox];
+                   type:kPreferenceInfoTypePopup];
 
     [self defineControl:_useBrightBold
                     key:KEY_USE_BRIGHT_BOLD

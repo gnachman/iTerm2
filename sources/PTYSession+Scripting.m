@@ -102,6 +102,38 @@
     }
 }
 
+- (id)handleVariableNamedCommand:(NSScriptCommand *)command {
+    NSDictionary *args = [command evaluatedArguments];
+    NSString *name = args[@"name"];
+    if (!name) {
+        [command setScriptErrorNumber:1];
+        [command setScriptErrorString:@"No name given"];
+    }
+    
+    return self.variables[name];
+}
+
+- (id)handleSetVariableNamedCommand:(NSScriptCommand *)command {
+    NSDictionary *args = [command evaluatedArguments];
+    NSString *name = args[@"name"];
+    NSString *value = args[@"value"];
+    if (!name) {
+        [command setScriptErrorNumber:1];
+        [command setScriptErrorString:@"No name given"];
+    }
+    if (!value) {
+        [command setScriptErrorNumber:2];
+        [command setScriptErrorString:@"No value given"];
+    }
+    if (![name hasPrefix:@"user."]) {
+        [command setScriptErrorNumber:3];
+        [command setScriptErrorString:@"Only user variables may be set. Name must start with “user.”."];
+    }
+    self.variables[[@"user." stringByAppendingString:name]] = value;
+    [self.textview setBadgeLabel:[self badgeLabel]];
+    return value;
+}
+
 - (PTYSession *)activateSessionAndTab {
     PTYSession *saved = [self.tab.realParentWindow currentSession];
     [[self.tab.realParentWindow tabView] selectTabViewItemWithIdentifier:self.tab];

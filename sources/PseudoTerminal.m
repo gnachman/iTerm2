@@ -35,7 +35,6 @@
 #import "iTermSystemVersion.h"
 #import "iTermTabBarControlView.h"
 #import "iTermToolbeltView.h"
-#import "iTermURLSchemeController.h"
 #import "iTermWarning.h"
 #import "iTermWindowShortcutLabelTitlebarAccessoryViewController.h"
 #import "MovePaneController.h"
