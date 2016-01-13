@@ -158,8 +158,7 @@ static NSMutableDictionary *gRegisteredSessionContents;
 // Rate limit for checking instant (partial-line) triggers, in seconds.
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
-// Minimum time between sending anti-idle codes.
-// 1 results in a flood.
+// Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
 static const NSTimeInterval kMinimumAntiIdlePeriod = 1.1;
 
 // Grace period to avoid failing to write anti-idle code when timer runs just before when the code should be sent.
