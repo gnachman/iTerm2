@@ -16,11 +16,12 @@
 
 #import <QuartzCore/QuartzCore.h>
 
-static const CGFloat kButtonSideInset = 1;
-static const CGFloat kContainerSideInset = 4;
+static const CGFloat kButtonSideInset = 0;
+static const CGFloat kContainerSideInset = 0;
 static const CGFloat kContainerTopBorder = 1;
 static const CGFloat kContainerBottomBorder = 1;
 static const CGFloat kBodySideMargin = 10;
+static const CGFloat kBodyBottomMargin = 6;
 static const CGFloat kCardBottomMargin = 8;
 static const CGFloat kCardTopMargin = 2;
 static const CGFloat kMarginBetweenTextAndButtons = 0;
@@ -130,13 +131,15 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     NSMutableAttributedString *attributedString =
         [[[NSMutableAttributedString alloc] init] autorelease];
 
+    NSMutableParagraphStyle *bigTextParagraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    [bigTextParagraphStyle setParagraphSpacing:4];
     NSDictionary *bigTextAttributes =
         @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light" size:16],
-           NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.2 alpha:1] };
+           NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.2 alpha:1],
+           NSParagraphStyleAttributeName: bigTextParagraphStyle };
 
     NSMutableParagraphStyle *paragraphStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     [paragraphStyle setAlignment:NSRightTextAlignment];
-
     NSDictionary *signatureAttributes =
         @{ NSFontAttributeName: [NSFont fontWithName:@"Helvetica Neue Light Italic" size:12],
            NSForegroundColorAttributeName: [NSColor colorWithCalibratedWhite:0.3 alpha:1],
@@ -244,6 +247,7 @@ static const CGFloat kMarginBetweenTitleAndBody = 8;
     // Compute size of body text.
     NSRect bodyFrame = _body.frame;
     bodyFrame.size = [_body sizeThatFits:NSMakeSize(containerWidth - kBodySideMargin * 2, CGFLOAT_MAX)];
+    bodyFrame.size.height += kBodyBottomMargin;
     bodyFrame.origin.x = kBodySideMargin;
     bodyFrame.origin.y = NSMaxY(_titleBox.frame) + kMarginBetweenTitleAndBody;
 

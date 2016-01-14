@@ -201,6 +201,9 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         }
         if (rollIn) {
             RollInHotkeyTerm(term);
+        } else {
+            // Order out for issue 4065.
+            [[term window] orderOut:nil];
         }
         return YES;
     }
