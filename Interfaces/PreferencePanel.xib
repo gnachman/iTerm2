@@ -3551,9 +3551,9 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="5698">
-                    <rect key="frame" x="209" y="37" width="45" height="22"/>
+                    <rect key="frame" x="209" y="37" width="37" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="0" drawsBackground="YES" id="5699">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="center" placeholderString="0" drawsBackground="YES" id="5699">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -3564,7 +3564,7 @@ DQ
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="SKQ-AW-1wN">
-                    <rect key="frame" x="253" y="40" width="45" height="17"/>
+                    <rect key="frame" x="245" y="40" width="49" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title=", every" id="e95-Tz-JKN">
                         <font key="font" metaFont="system"/>
@@ -3573,9 +3573,13 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" id="Dvw-Ch-E3y">
-                    <rect key="frame" x="298" y="37" width="45" height="22"/>
+                    <rect key="frame" x="294" y="37" width="56" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="60" drawsBackground="YES" id="Njg-LZ-sIb">
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="center" placeholderString="60" drawsBackground="YES" id="Njg-LZ-sIb">
+                        <numberFormatter key="formatter" formatterBehavior="custom10_4" positiveFormat="1" allowsFloats="NO" usesGroupingSeparator="NO" roundingMode="halfUp" groupingSize="0" minimumIntegerDigits="1" maximumIntegerDigits="8" id="dcs-oL-UDW">
+                            <integer key="roundingIncrement" value="1"/>
+                            <real key="minimum" value="1"/>
+                        </numberFormatter>
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                         <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -3585,7 +3589,7 @@ DQ
                     </connections>
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="RGW-48-LkR">
-                    <rect key="frame" x="342" y="40" width="55" height="17"/>
+                    <rect key="frame" x="351" y="40" width="55" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="seconds" id="VbV-8M-87X">
                         <font key="font" metaFont="system"/>
