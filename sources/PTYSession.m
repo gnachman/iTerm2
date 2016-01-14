@@ -1840,12 +1840,14 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)checkTriggersOnPartialLine:(BOOL)partial
                         stringLine:(iTermStringLine *)stringLine
                                   lineNumber:(long long)startAbsLineNumber {
+    // If the trigger causes the session to get released, don't crash.
+    [[self retain] autorelease];
     for (Trigger *trigger in _triggers) {
         BOOL stop = [trigger tryString:stringLine
                              inSession:self
                            partialLine:partial
                             lineNumber:startAbsLineNumber];
-        if (stop) {
+        if (stop || _exited) {
             break;
         }
     }
