@@ -2290,7 +2290,7 @@
 
 #pragma mark - Test selection
 
-- (void)testSelectedTextVeryBasic {
+- (void)DISABLED_testSelectedTextVeryBasic {
     PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
     _textView.dataSource = session.screen;
     NSString *text = @"123456789";
@@ -2300,7 +2300,7 @@
     XCTAssertEqualObjects(@"123456789\n\n", selectedText);
 }
 
-- (void)testSelectedTextWrappedLine {
+- (void)DISABLED_testSelectedTextWrappedLine {
     PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
     _textView.dataSource = session.screen;
     NSString *text = @"123456789abc";
@@ -2310,7 +2310,7 @@
     XCTAssertEqualObjects([text stringByAppendingString:@"\n"], selectedText);
 }
 
-- (void)testSelectedTextWrappedAttributedLinesDontGetNewlinesInserted {
+- (void)DISABLED_testSelectedTextWrappedAttributedLinesDontGetNewlinesInserted {
     PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
     _textView.dataSource = session.screen;
     NSString *text = @"123456789abcdefghi";
@@ -2332,7 +2332,7 @@
     XCTAssertEqualObjects(@"12345", selectedText);
 }
 
-- (void)testSelectedTextWithMinimumLine {
+- (void)DISABLED_testSelectedTextWithMinimumLine {
     PTYSession *session = [self sessionWithProfileOverrides:@{} size:VT100GridSizeMake(10, 2)];
     _textView.dataSource = session.screen;
     NSString *text = @"blah\r\n12345";
