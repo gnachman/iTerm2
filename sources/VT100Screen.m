@@ -1016,7 +1016,10 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     }
     [self appendScreenCharArrayAtCursor:buffer + bufferOffset
                                  length:len - bufferOffset
-                             shouldFree:(buffer == dynamicBuffer)];
+                             shouldFree:NO];
+    if (buffer == dynamicBuffer) {
+        free(buffer);
+    }
 }
 
 - (void)appendScreenCharArrayAtCursor:(screen_char_t *)buffer
