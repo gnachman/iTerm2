@@ -108,7 +108,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 #pragma mark - Command History
 
-- (void)testSuccessfulCommandHistoryMigration {
+- (void)DISABLED_testSuccessfulCommandHistoryMigration {
     _now = [NSDate timeIntervalSinceReferenceDate];
     NSDictionary *dictionary =
         @{
@@ -475,7 +475,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 }
 
-- (void)testEraseCommandHistoryForHost {
+- (void)DISABLED_testEraseCommandHistoryForHost {
     iTermShellHistoryControllerForTesting *historyController =
         [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     
@@ -591,7 +591,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual(uses.count, self.commandWithCommonPrefixes.count);
 }
 
-- (void)testOldCommandUsesRemoved {
+- (void)DISABLED_testOldCommandUsesRemoved {
     iTermShellHistoryControllerForTesting *historyController =
         [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
@@ -687,7 +687,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 // If you migrate from plist when there's already a Core Data database, it should just merge it
 // in without causing duplicate host records.
-- (void)testNoDuplicateHostRecordsAfterDoubleMigration {
+- (void)DISABLED_testNoDuplicateHostRecordsAfterDoubleMigration {
   _now = kDefaultTime;
 
   NSDictionary *commandDictionary =
@@ -836,7 +836,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 #pragma mark - Directories
 
-- (void)testSuccessfulDirectoriesMigration {
+- (void)DISABLED_testSuccessfulDirectoriesMigration {
     _now = kDefaultTime;
     NSDictionary *dictionary =
         @{
@@ -1109,7 +1109,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     }
 }
 
-- (void)testHaveDirectoriesOnHost {
+- (void)DISABLED_testHaveDirectoriesOnHost {
     iTermShellHistoryControllerForTesting *historyController =
         [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
 

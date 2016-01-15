@@ -1,0 +1,3 @@
+osx_image: xcode7.2
+language: objective-c
+script: ./ci/script.sh

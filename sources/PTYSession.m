@@ -1842,12 +1842,17 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                   lineNumber:(long long)startAbsLineNumber {
     // If the trigger causes the session to get released, don't crash.
     [[self retain] autorelease];
-    for (Trigger *trigger in _triggers) {
+
+    // If a trigger changes the current profile then _triggers gets released and we should stop
+    // processing triggers. This can happen with automatic profile switching.
+    NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
+
+    for (Trigger *trigger in triggers) {
         BOOL stop = [trigger tryString:stringLine
                              inSession:self
                            partialLine:partial
                             lineNumber:startAbsLineNumber];
-        if (stop || _exited) {
+        if (stop || _exited || (_triggers != triggers)) {
             break;
         }
     }
