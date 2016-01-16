@@ -25,6 +25,7 @@ static NSString *const kFewerOptionsTitle = @"Fewer Options";
 static NSString *const kMoreOptionsTitle = @"More Options";
 static NSString *const kShowThisLaterTitle = @"Show This Later";
 static NSString *const kDisableTipsTitle = @"Disable Tips";
+static NSString *const kEnableTipsTitle = @"Enable Tips";
 static NSString *const kReallyDisableTipsTitle = @"Click Again to Disable Tips";
 static NSString *const kShowNextTipTitle = @"Show Next Tip";
 static NSString *const kShowPreviousTipTitle = @"Show Previous Tip";
@@ -139,15 +140,28 @@ static const CGFloat kWindowWidth = 400;
     if (!expanded) {
         [button setCollapsed:YES];
     }
+
+    NSString *enableOrDisableTitle;
+    if ([_delegate tipWindowTipsAreDisabled]) {
+        enableOrDisableTitle = kEnableTipsTitle;
+    } else {
+        enableOrDisableTitle = kDisableTipsTitle;
+    }
     button =
-        [card addActionWithTitle:kDisableTipsTitle
+        [card addActionWithTitle:enableOrDisableTitle
                             icon:[NSImage imageNamed:@"DisableTips"]
                            block:^(id sendingCard) {
-                               iTermTipCardActionButton *theButton = [card actionWithTitle:kDisableTipsTitle];
-                               if (theButton) {
-                                   [theButton setTitle:kReallyDisableTipsTitle];
+                               if (![_delegate tipWindowTipsAreDisabled]) {
+                                   iTermTipCardActionButton *theButton = [card actionWithTitle:kDisableTipsTitle];
+                                   if (theButton) {
+                                       [theButton setTitle:kReallyDisableTipsTitle];
+                                   } else {
+                                       [self disableTips];
+                                   }
                                } else {
-                                   [self disableTips];
+                                   iTermTipCardActionButton *theButton = [card actionWithTitle:kEnableTipsTitle];
+                                   [self enableTips];
+                                   [theButton setTitle:kDisableTipsTitle];
                                }
                            }];
     if (!expanded) {
@@ -200,6 +214,7 @@ static const CGFloat kWindowWidth = 400;
     return @[ kShowThisLaterTitle,
               kDisableTipsTitle,
               kReallyDisableTipsTitle,
+              kEnableTipsTitle,
               kShowNextTipTitle,
               kShowPreviousTipTitle ];
 }
@@ -332,6 +347,7 @@ static const CGFloat kWindowWidth = 400;
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kReallyDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
+        [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
         [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingIn];
     } else {
@@ -342,6 +358,7 @@ static const CGFloat kWindowWidth = 400;
         [[card actionWithTitle:kShowThisLaterTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kReallyDisableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
+        [[card actionWithTitle:kEnableTipsTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowNextTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
         [[card actionWithTitle:kShowPreviousTipTitle] setAnimationState:kTipCardButtonAnimatingOut];
     }
@@ -351,6 +368,10 @@ static const CGFloat kWindowWidth = 400;
 - (void)showThisLater {
     [self animateOut];
     [_delegate tipWindowPostponed];
+}
+
+- (void)enableTips {
+    [_delegate tipWindowRequestsEnable];
 }
 
 - (void)disableTips {

@@ -1,0 +1,18 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rouge (1.10.1)
+    xcpretty (0.2.2)
+      rouge (~> 1.8)
+    xcpretty-travis-formatter (0.0.4)
+      xcpretty (~> 0.2, >= 0.0.7)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  xcpretty
+  xcpretty-travis-formatter
+
+BUNDLED WITH
+   1.10.6

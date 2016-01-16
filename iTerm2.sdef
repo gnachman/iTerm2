@@ -374,6 +374,30 @@
       <result type="session" description="The session that was created"/>
     </command>
 
+    <command name="variable" code="Itrmvarb"
+        description="Returns the value of a session variable with the given name">
+      <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="named" code="Namd" type="text" optional="no"
+          description="Name of variable">
+          <cocoa key="name"/>
+      </parameter>
+      <result type="text" description="The variable's value"/>
+    </command>
+
+    <command name="set variable" code="Itrmsvar"
+        description="Sets the value of a session variable">
+      <direct-parameter type="specifier" description="The object to send to"/>
+      <parameter name="named" code="Namd" type="text" optional="no"
+          description="Name of variable">
+          <cocoa key="name"/>
+      </parameter>
+      <parameter name="to" code="Tovl" type="text" optional="no"
+          description="New value">
+          <cocoa key="value"/>
+      </parameter>
+      <result type="text" description="The variable's value"/>
+    </command>
+    
     <value-type name="RGB color" code="cRGB">
       <cocoa class="NSColor"/>
     </value-type>
@@ -549,6 +573,14 @@
       <property name="answerback string" code="Answ" description="ENQ Answerback string" type="text">
         <cocoa key="answerBackString"/>
       </property>
+
+      <responds-to command="variable">
+        <cocoa method="handleVariableNamedCommand:"/>
+      </responds-to>
+
+      <responds-to command="set variable">
+        <cocoa method="handleSetVariableNamedCommand:"/>
+      </responds-to>
 
     </class>
 

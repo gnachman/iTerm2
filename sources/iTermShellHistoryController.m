@@ -8,6 +8,7 @@
 
 #import "iTermShellHistoryController.h"
 
+#import "DebugLogging.h"
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermDirectoryTree.h"
 #import "iTermHostRecordMO.h"
@@ -162,7 +163,10 @@ static const NSTimeInterval kMaxTimeToRememberDirectories = 60 * 60 * 24 * 90;
 
     NSManagedObjectModel *managedObjectModel =
         [[[NSManagedObjectModel alloc] initWithContentsOfURL:modelURL] autorelease];
-    assert(managedObjectModel);
+    if (!managedObjectModel) {
+        ELog(@"Failed to initialize managed object model for URL %@", modelURL);
+        return NO;
+    }
 
     NSPersistentStoreCoordinator *persistentStoreCoordinator =
         [[[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:managedObjectModel] autorelease];

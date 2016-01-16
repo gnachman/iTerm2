@@ -65,6 +65,7 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 - (void)dealloc {
     [_tips release];
     [_currentTipName release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
 
@@ -83,6 +84,15 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
         }
     }
 
+    [self tryToShowTip];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidBecomeActive:)
+                                                 name:NSApplicationDidBecomeActiveNotification
+                                               object:nil];
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)notification {
     [self tryToShowTip];
 }
 
@@ -115,6 +125,9 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey]) {
         return;
     }
+    if (![[NSApplication sharedApplication] isActive]) {
+        return;
+    }
     if (_showingTip || [self haveShownTipRecently]) {
         [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:kSecondsPerDay];
         return;
@@ -123,6 +136,23 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
     if (nextTipKey) {
         [self showTipForKey:nextTipKey];
         [self performSelector:@selector(tryToShowTip) withObject:nil afterDelay:kSecondsPerDay];
+    }
+}
+
+- (void)showTip {
+    if (_showingTip) {
+        return;
+    }
+
+    // Try to show the last-seen tip.
+    NSArray *unshowableTips = [[NSUserDefaults standardUserDefaults] objectForKey:kUnshowableTipsKey];
+    NSString *key = [unshowableTips lastObject];
+    if (!key) {
+        // You've never seen it before? Then show the first one.
+        key = [self nextTipKey];
+    }
+    if (key) {  // Key should always be non-nil, but better be safe.
+        [self showTipForKey:key];
     }
 }
 
@@ -205,6 +235,15 @@ static const NSTimeInterval kMinDelayBeforeAskingForPermission = 2 * kSecondsPer
 
 - (void)tipWindowRequestsDisable {
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kTipsDisabledKey];
+    _showingTip = NO;
+}
+
+- (void)tipWindowRequestsEnable {
+    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:kTipsDisabledKey];
+}
+
+- (BOOL)tipWindowTipsAreDisabled {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kTipsDisabledKey];
 }
 
 - (iTermTip *)tipWindowTipAfterTipWithIdentifier:(NSString *)previousId {
