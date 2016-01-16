@@ -14,4 +14,8 @@
     return YES;
 }
 
+- (NSTimeInterval)animationResizeTime:(NSRect)newWindowFrame {
+    return 0.15;
+}
+
 @end

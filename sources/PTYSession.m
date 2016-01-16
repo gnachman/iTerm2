@@ -1840,12 +1840,19 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 - (void)checkTriggersOnPartialLine:(BOOL)partial
                         stringLine:(iTermStringLine *)stringLine
                                   lineNumber:(long long)startAbsLineNumber {
-    for (Trigger *trigger in _triggers) {
+    // If the trigger causes the session to get released, don't crash.
+    [[self retain] autorelease];
+
+    // If a trigger changes the current profile then _triggers gets released and we should stop
+    // processing triggers. This can happen with automatic profile switching.
+    NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
+
+    for (Trigger *trigger in triggers) {
         BOOL stop = [trigger tryString:stringLine
                              inSession:self
                            partialLine:partial
                             lineNumber:startAbsLineNumber];
-        if (stop) {
+        if (stop || _exited || (_triggers != triggers)) {
             break;
         }
     }
@@ -2498,6 +2505,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
         [self setProfile:updatedProfile];
         return;
     }
+    [self sanityCheck];
 
     // Copy non-overridden fields over.
     NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:_profile];
@@ -2536,6 +2544,15 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [[ProfileModel sessionsInstance] setBookmark:temp withGuid:temp[KEY_GUID]];
     [self setPreferencesFromAddressBookEntry:temp];
     [self setProfile:temp];
+    [self sanityCheck];
+}
+
+- (void)sanityCheck {
+    if (_isDivorced) {
+        NSDictionary *sessionsProfile =
+        [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
+        assert(sessionsProfile);
+    }
 }
 
 - (void)sessionProfileDidChange
@@ -2545,6 +2562,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
     NSDictionary *updatedProfile =
         [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
+    [self sanityCheck];
+
     NSMutableSet *keys = [NSMutableSet setWithArray:[updatedProfile allKeys]];
     [keys addObjectsFromArray:[_profile allKeys]];
     for (NSString *aKey in keys) {
@@ -2565,10 +2584,12 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self setProfile:updatedProfile];
     [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
                                                         object:_profile[KEY_GUID]];
+    [self sanityCheck];
 }
 
 - (BOOL)reloadProfile
 {
+    [self sanityCheck];
     DLog(@"Reload profile for %@", self);
     BOOL didChange = NO;
     NSDictionary *sharedProfile = [[ProfileModel sharedInstance] bookmarkWithGuid:_originalProfile[KEY_GUID]];
@@ -2590,6 +2611,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     }
 
     _textview.badgeLabel = [self badgeLabel];
+    [self sanityCheck];
     return didChange;
 }
 
@@ -3603,6 +3625,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
                                      toName:profile[KEY_NAME]];
         _tmuxTitleOutOfSync = NO;
     }
+    [self sanityCheck];
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
@@ -3684,6 +3707,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)setSessionSpecificProfileValues:(NSDictionary *)newValues
 {
+    [self sanityCheck];
     if (!_isDivorced) {
         [self divorceAddressBookEntryFromPreferences];
     }
@@ -3743,6 +3767,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_overriddenFields removeAllObjects];
     [_overriddenFields addObjectsFromArray:@[ KEY_GUID, KEY_ORIGINAL_GUID] ];
     [self setProfile:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
+    [self sanityCheck];
     return guid;
 }
 

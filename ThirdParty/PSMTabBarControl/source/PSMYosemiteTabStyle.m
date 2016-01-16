@@ -155,14 +155,19 @@
 - (NSRect)indicatorRectForTabCell:(PSMTabBarCell *)cell {
     NSRect cellFrame = [cell frame];
 
-    if ([[cell indicator] isHidden]) {
-        return NSZeroRect;
+    CGFloat minX;
+    if ([cell count]) {
+        // Indicator to the left of the tab number
+        NSRect objectCounterRect = [self objectCounterRectForTabCell:cell];
+        minX = NSMinX(objectCounterRect);
+    } else {
+        // Indicator on the right edge of the tab.
+        minX = NSMaxX(cellFrame) - kSPMTabBarCellInternalXMargin;
     }
-
     NSRect result;
     result.size = NSMakeSize(kPSMTabBarIndicatorWidth, kPSMTabBarIndicatorWidth);
-    result.origin.x = cellFrame.origin.x + cellFrame.size.width - kSPMTabBarCellInternalXMargin - kPSMTabBarIndicatorWidth;
-    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin - 0.5;
+    result.origin.x = minX - kPSMTabBarCellIconPadding - kPSMTabBarIndicatorWidth;
+    result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
 
     return result;
 }
@@ -184,10 +189,6 @@
     result.size = NSMakeSize(countWidth, 2 * kPSMMetalObjectCounterRadius); // temp
     result.origin.x = cellFrame.origin.x + cellFrame.size.width - kSPMTabBarCellInternalXMargin - result.size.width;
     result.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin;
-
-    if (![[cell indicator] isHidden]) {
-        result.origin.x -= kPSMTabBarIndicatorWidth + kPSMTabBarCellPadding;
-    }
 
     return result;
 }
@@ -540,15 +541,13 @@
     labelRect.origin.x = labelPosition;
     labelRect.size.width = cellFrame.size.width - (labelRect.origin.x - cellFrame.origin.x) - kPSMTabBarCellPadding;
     if ([cell hasIcon]) {
-        // Reduce size of label if there is an icon
+        // Reduce size of label if there is an icon or activity indicator
         labelRect.size.width -= iconRect.size.width + kPSMTabBarCellIconPadding;
+    } else if (![[cell indicator] isHidden]) {
+        labelRect.size.width -= cell.indicator.frame.size.width + kPSMTabBarCellIconPadding;
     }
     labelRect.size.height = cellFrame.size.height;
     labelRect.origin.y = cellFrame.origin.y + kSPMTabBarCellInternalYMargin + 0.5;
-
-    if (![[cell indicator] isHidden]) {
-        labelRect.size.width -= (kPSMTabBarIndicatorWidth + kPSMTabBarCellPadding);
-    }
 
     if ([cell count] > 0) {
         labelRect.size.width -= ([self objectCounterRectForTabCell:cell].size.width + kPSMTabBarCellPadding);
