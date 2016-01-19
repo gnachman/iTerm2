@@ -41,7 +41,7 @@
 
     NSArray *centerColumn = _colors[_colors.count / 2];
     NSColor *centerColor = centerColumn[centerColumn.count / 2];
-
+    centerColor = [centerColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
     NSString *description = [NSString stringWithFormat:@"#%02x%02x%02x R:%d G:%d B:%d",
                                 (int)(centerColor.redComponent * 255),
                                 (int)(centerColor.greenComponent * 255),

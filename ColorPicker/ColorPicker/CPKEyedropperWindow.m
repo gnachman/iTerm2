@@ -157,18 +157,19 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     NSMutableArray *outerArray = [NSMutableArray array];
     const NSInteger radius = 9;
     NSBitmapImageRep *screenshot = [self currentScreenScreenshot];
+    NSColor *blackColor = [NSColor colorWithRed:0 green:0 blue:0 alpha:1];
     for (NSInteger x = point.x - radius; x <= point.x + radius; x++) {
         NSMutableArray *innerArray = [NSMutableArray array];
         for (NSInteger y = point.y - radius; y <= point.y + radius; y++) {
-            NSColor *color = [NSColor blackColor];
+            NSColor *color = blackColor;
             @try {
                 color = [screenshot colorAtX:x y:y];
                 if (!color) {
-                    color = [NSColor blackColor];
+                    color = blackColor;
                 }
             }
             @catch (NSException *exception) {
-                color = [NSColor blackColor];
+                color = blackColor;
             }
             [innerArray addObject:color];
         }

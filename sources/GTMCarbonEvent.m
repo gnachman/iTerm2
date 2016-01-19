@@ -351,7 +351,15 @@ NSUInteger GTMCarbonToCocoaKeyModifiers(UInt32 inCarbonModifiers) {
 
 const OSType kGTMCarbonFrameworkSignature = 'GTM ';
 
-@implementation GTMCarbonEventHandler
+@implementation GTMCarbonEventHandler {
+  // handler we are wrapping
+  // lazily created in the eventHandler method
+  EventHandlerRef eventHandler_;
+  id delegate_;  // Our delegate (weak reference)
+  // Does our delegate respond to the gtm_eventHandler:receivedEvent:handler:
+  // selector? Cached for performance reasons.
+  BOOL delegateRespondsToHandleEvent_;
+}
 
 // Does our delegate respond to eventHandler:receivedEvent:handler:
 //

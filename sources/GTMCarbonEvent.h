@@ -230,16 +230,7 @@ GTM_EXTERN NSUInteger GTMCarbonToCocoaKeyModifiers(UInt32 inCarbonModifiers);
 //
 // Subclasses are expected to override the eventTarget and
 // handleEvent:handler: methods to customize them.
-@interface GTMCarbonEventHandler : NSObject {
- @private
-  // handler we are wrapping
-  // lazily created in the eventHandler method
-  EventHandlerRef eventHandler_;
-  __weak id delegate_;  // Our delegate
-  // Does our delegate respond to the gtm_eventHandler:receivedEvent:handler:
-  // selector? Cached for performance reasons.
-  BOOL delegateRespondsToHandleEvent_;
-}
+@interface GTMCarbonEventHandler : NSObject
 
 // Registers the event handler to listen for |events|.
 //
