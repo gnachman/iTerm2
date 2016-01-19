@@ -20,6 +20,7 @@ extern NSString *const kProfilePreferenceInitialDirectoryHomeValue;
 extern NSString *const kProfilePreferenceInitialDirectoryRecycleValue;
 extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 
+#define DEFAULT_IDLE_CODE 0
 #define DEFAULT_IDLE_PERIOD 60
 
 @interface iTermProfilePreferences : NSObject

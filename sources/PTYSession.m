@@ -1085,7 +1085,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_scrollview setPageScroll:2 * [_textview lineHeight]];
     [_scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
 
-    _antiIdleCode = 0;
+    _antiIdleCode = DEFAULT_IDLE_CODE;
     _antiIdlePeriod = DEFAULT_IDLE_PERIOD;
     [_antiIdleTimer release];
     _antiIdleTimer = nil;
