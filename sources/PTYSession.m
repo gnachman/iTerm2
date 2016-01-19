@@ -2548,10 +2548,16 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 }
 
 - (void)sanityCheck {
+    // TODO(georgen): This is a workaround to a bug that causes frequent crashes but I haven't figured
+    // out how to reproduce it yet. Sometimes a divorced session's profile's GUID is not in sessionsInstance.
+    // The real fix to this is to get rid of sessionsInstance altogether and make PTYSession hold the
+    // only reference to the divorced profile, but that is too big a project to take on right now.
     if (_isDivorced) {
         NSDictionary *sessionsProfile =
-        [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
-        assert(sessionsProfile);
+                [[ProfileModel sessionsInstance] bookmarkWithGuid:_profile[KEY_GUID]];
+        if (!sessionsProfile && _profile) {
+            [[ProfileModel sessionsInstance] addBookmark:_profile];
+        }
     }
 }
 

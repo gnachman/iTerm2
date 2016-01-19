@@ -32,6 +32,10 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 
 @end
 
+@interface iTermToolWrapper()
+@property(nonatomic, readwrite, assign) NSView *container;
+@end
+
 @implementation iTermToolWrapper {
     NSTextField *_title;
     NSButton *_closeButton;
