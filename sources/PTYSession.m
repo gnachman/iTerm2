@@ -1086,6 +1086,7 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
 
     _antiIdleCode = 0;
+    _antiIdlePeriod = DEFAULT_IDLE_PERIOD;
     [_antiIdleTimer release];
     _antiIdleTimer = nil;
     _newOutput = NO;
@@ -3102,6 +3103,14 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     [_antiIdleTimer release];
     _antiIdleTimer = nil;
     
+    // FIXME: There is some other more proper way to do this, in a delegate or something:
+    // * Let user enter any value 1 or greater.
+    // * If value is greater than 1, use it.
+    // * If value is 1, use 1.1 internally.
+    // * If value is 0 or empty, use DEFAULT_IDLE_PERIOD (60), NOT 0 or 1 or 1.1.
+    if (_antiIdlePeriod < 1) {
+        _antiIdlePeriod = DEFAULT_IDLE_PERIOD;
+    }
     _antiIdlePeriod = MAX(_antiIdlePeriod, kMinimumAntiIdlePeriod);
     
     if (set) {
