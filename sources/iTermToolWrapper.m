@@ -32,6 +32,12 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 
 @end
 
+@interface iTermToolWrapper ()
+
+@property (nonatomic, assign, readwrite) NSView *container;
+
+@end
+
 @implementation iTermToolWrapper {
     NSTextField *_title;
     NSButton *_closeButton;
@@ -78,6 +84,7 @@ static const CGFloat kCloseButtonLeftMargin = 5;
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_name release];
+    _container = nil;
 
     [super dealloc];
 }

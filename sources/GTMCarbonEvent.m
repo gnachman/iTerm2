@@ -353,6 +353,14 @@ const OSType kGTMCarbonFrameworkSignature = 'GTM ';
 
 @implementation GTMCarbonEventHandler
 
+@synthesize delegate = delegate_;
+
+- (void)dealloc {
+    delegate_ = nil;
+
+    [super dealloc];
+}
+
 // Does our delegate respond to eventHandler:receivedEvent:handler:
 //
 // Returns:
