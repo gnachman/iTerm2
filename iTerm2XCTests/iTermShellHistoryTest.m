@@ -81,13 +81,31 @@ static NSTimeInterval kDefaultTime = 10000000;
 @end
 
 @interface iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting : iTermShellHistoryControllerForTesting
-@property(nonatomic, retain) NSNumber *shouldSaveToDisk;
+
+- (instancetype)initWithGuid:(NSString *)guid shouldSaveToDisk:(BOOL)shouldSaveToDisk;
+
+@end
+
+@interface iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting ()
+@property(nonatomic, assign) BOOL saveToDisk;
 @end
 
 @implementation iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting
 
-- (BOOL)saveToDisk {
-    return self.shouldSaveToDisk ? self.shouldSaveToDisk.boolValue : YES;
+- (instancetype)initWithGuid:(NSString *)guid shouldSaveToDisk:(BOOL)shouldSaveToDisk {
+    self = [super initPartially];
+    if (self) {
+        self.guid = guid;
+        self.saveToDisk = shouldSaveToDisk;
+        if (![self finishInitialization]) {
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (BOOL)shouldSaveToDisk {
+    return self.saveToDisk;
 }
 
 @end
@@ -108,7 +126,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 #pragma mark - Command History
 
-- (void)DISABLED_testSuccessfulCommandHistoryMigration {
+- (void)testSuccessfulCommandHistoryMigration {
     _now = [NSDate timeIntervalSinceReferenceDate];
     NSDictionary *dictionary =
         @{
@@ -177,10 +195,10 @@ static NSTimeInterval kDefaultTime = 10000000;
            };
     NSString *plistPath = [kFakeCommandHistoryPlistPath stringByAppendingString:_guid];
     [NSKeyedArchiver archiveRootObject:dictionary toFile:plistPath];
-
     XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:plistPath isDirectory:nil]);
-    iTermShellHistoryController *historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+    iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting *historyController =
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
     XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:plistPath isDirectory:nil]);
     XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:[kSqlitePathForTest stringByAppendingString:_guid]
                                                    isDirectory:nil]);
@@ -188,7 +206,8 @@ static NSTimeInterval kDefaultTime = 10000000;
     for (int iteration = 0; iteration < 2; iteration++) {
         if (iteration == 1) {
             // Re-create the history controller to verify that values can be loaded
-            historyController = [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+            historyController = [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                                                 shouldSaveToDisk:YES] autorelease];
         }
         for (NSString *key in dictionary) {
             VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
@@ -475,9 +494,10 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 }
 
-- (void)DISABLED_testEraseCommandHistoryForHost {
+- (void)testEraseCommandHistoryForHost {
     iTermShellHistoryControllerForTesting *historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
     
     // Add command for first host
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
@@ -511,7 +531,8 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual([[historyController commandUsesForHost:remoteHost2] count], 1);
 
     // Create a new history controller and make sure the change persists.
-    historyController = [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+    historyController = [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                                         shouldSaveToDisk:YES] autorelease];
     XCTAssertFalse([historyController haveCommandsForHost:remoteHost]);
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost2]);
 }
@@ -591,9 +612,10 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual(uses.count, self.commandWithCommonPrefixes.count);
 }
 
-- (void)DISABLED_testOldCommandUsesRemoved {
+- (void)testOldCommandUsesRemoved {
     iTermShellHistoryControllerForTesting *historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     
     // Just old enough to be removed
@@ -614,7 +636,8 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertEqual(entries.count, 2);
 
     historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
     entries = [historyController commandHistoryEntriesWithPrefix:@"" onHost:remoteHost];
     XCTAssertEqual(entries.count, 1);
     XCTAssertEqualObjects([entries[0] command], @"command2");
@@ -687,7 +710,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 // If you migrate from plist when there's already a Core Data database, it should just merge it
 // in without causing duplicate host records.
-- (void)DISABLED_testNoDuplicateHostRecordsAfterDoubleMigration {
+- (void)testNoDuplicateHostRecordsAfterDoubleMigration {
   _now = kDefaultTime;
 
   NSDictionary *commandDictionary =
@@ -730,7 +753,8 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
 
     iTermShellHistoryController *historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
 
     XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:commandPlistPath isDirectory:nil]);
     XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
@@ -775,7 +799,8 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
 
     historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
 
     XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:commandPlistPath isDirectory:nil]);
     XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:directoriesPlistPath isDirectory:nil]);
@@ -836,7 +861,7 @@ static NSTimeInterval kDefaultTime = 10000000;
 
 #pragma mark - Directories
 
-- (void)DISABLED_testSuccessfulDirectoriesMigration {
+- (void)testSuccessfulDirectoriesMigration {
     _now = kDefaultTime;
     NSDictionary *dictionary =
         @{
@@ -876,7 +901,8 @@ static NSTimeInterval kDefaultTime = 10000000;
 
     XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:plistPath isDirectory:nil]);
     iTermShellHistoryController *historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
     XCTAssert(![[NSFileManager defaultManager] fileExistsAtPath:plistPath isDirectory:nil]);
     XCTAssert([[NSFileManager defaultManager] fileExistsAtPath:[kSqlitePathForTest stringByAppendingString:_guid]
                                                    isDirectory:nil]);
@@ -884,7 +910,8 @@ static NSTimeInterval kDefaultTime = 10000000;
     for (int iteration = 0; iteration < 2; iteration++) {
         if (iteration == 1) {
             // Re-create the history controller to verify that values can be loaded
-            historyController = [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+            historyController = [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                                                 shouldSaveToDisk:YES] autorelease];
         }
         iTermRecentDirectoryMO *directory;
 
@@ -1109,9 +1136,10 @@ static NSTimeInterval kDefaultTime = 10000000;
     }
 }
 
-- (void)DISABLED_testHaveDirectoriesOnHost {
+- (void)testHaveDirectoriesOnHost {
     iTermShellHistoryControllerForTesting *historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
 
     VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] init] autorelease];
     remoteHost.username = @"user1";
@@ -1122,7 +1150,8 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
 
     historyController =
-        [[[iTermShellHistoryControllerForTesting alloc] initWithGuid:_guid] autorelease];
+        [[[iTermShellHistoryControllerWithConfigurableStoreDefaultingToDiskForTesting alloc] initWithGuid:_guid
+                                                                                         shouldSaveToDisk:YES] autorelease];
     XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
 }
 
@@ -1145,7 +1174,7 @@ static NSTimeInterval kDefaultTime = 10000000;
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 
     // Initial value is saved to disk. Flip it to RAM. Should lose no data.
-    historyController.shouldSaveToDisk = @NO;
+    historyController.saveToDisk = NO;;
     [historyController backingStoreTypeDidChange];
     XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
@@ -1157,19 +1186,19 @@ static NSTimeInterval kDefaultTime = 10000000;
                          withMark:mark];
 
     // Back to disk. Should lose no data.
-    historyController.shouldSaveToDisk = @YES;
+    historyController.saveToDisk = YES;
     [historyController backingStoreTypeDidChange];
     XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 
     // Back to RAM.
-    historyController.shouldSaveToDisk = @NO;
+    historyController.saveToDisk = NO;
     [historyController backingStoreTypeDidChange];
     XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
 
     // Back to disk.
-    historyController.shouldSaveToDisk = @YES;
+    historyController.saveToDisk = YES;
     [historyController backingStoreTypeDidChange];
     XCTAssertTrue([historyController haveDirectoriesForHost:remoteHost]);
     XCTAssertTrue([historyController haveCommandsForHost:remoteHost]);
