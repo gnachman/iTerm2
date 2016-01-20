@@ -20,6 +20,9 @@ extern NSString *const kProfilePreferenceInitialDirectoryHomeValue;
 extern NSString *const kProfilePreferenceInitialDirectoryRecycleValue;
 extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 
+#define DEFAULT_IDLE_CODE 0
+#define DEFAULT_IDLE_PERIOD 60
+
 @interface iTermProfilePreferences : NSObject
 
 + (BOOL)boolForKey:(NSString *)key inProfile:(Profile *)profile;
@@ -45,6 +48,12 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
           forKey:(NSString *)key
        inProfile:(Profile *)profile
            model:(ProfileModel *)model;
+
++ (double)doubleForKey:(NSString *)key inProfile:(Profile *)profile;
++ (void)setDouble:(double)value
+           forKey:(NSString *)key
+        inProfile:(Profile *)profile
+            model:(ProfileModel *)model;
 
 + (NSString *)stringForKey:(NSString *)key inProfile:(Profile *)profile;
 + (void)setString:(NSString *)value

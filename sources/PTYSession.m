@@ -158,6 +158,12 @@ static NSMutableDictionary *gRegisteredSessionContents;
 // Rate limit for checking instant (partial-line) triggers, in seconds.
 static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
+// Minimum time between sending anti-idle codes. "1" otherwise results in a flood.
+static const NSTimeInterval kMinimumAntiIdlePeriod = 1.1;
+
+// Grace period to avoid failing to write anti-idle code when timer runs just before when the code should be sent.
+static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
+
 @interface PTYSession () <iTermPasteHelperDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFile *download;
@@ -219,9 +225,6 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
     // Anti-idle timer that sends a character every so often to the host.
     NSTimer *_antiIdleTimer;
-
-    // The code to send in the anti idle timer.
-    char _antiIdleCode;
 
     // The bookmark the session was originally created with so those settings can be restored if
     // needed.
@@ -1082,7 +1085,8 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_scrollview setPageScroll:2 * [_textview lineHeight]];
     [_scrollview setHasVerticalScroller:[parent scrollbarShouldBeVisible]];
 
-    _antiIdleCode = 0;
+    _antiIdleCode = DEFAULT_IDLE_CODE;
+    _antiIdlePeriod = DEFAULT_IDLE_PERIOD;
     [_antiIdleTimer release];
     _antiIdleTimer = nil;
     _newOutput = NO;
@@ -2736,6 +2740,7 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
     [_terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
+    [self setAntiIdlePeriod:[iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
     [self setAutoClose:[iTermProfilePreferences boolForKey:KEY_CLOSE_SESSIONS_ON_END inProfile:aDict]];
     _screen.useHFSPlusMapping = [iTermProfilePreferences boolForKey:KEY_USE_HFS_PLUS_MAPPING
@@ -3089,29 +3094,31 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
     [_textview setBlend:blendVal];
 }
 
-- (BOOL)antiIdle
-{
+- (BOOL)antiIdle {
     return _antiIdleTimer ? YES : NO;
 }
 
-- (void)setAntiIdle:(BOOL)set
-{
-    if (set == [self antiIdle]) {
-        return;
+- (void)setAntiIdle:(BOOL)set {
+    [_antiIdleTimer invalidate];
+    [_antiIdleTimer release];
+    _antiIdleTimer = nil;
+    
+    // FIXME: There is some other more proper way to do this, in a delegate or something:
+    // * Let user enter any value 1 or greater.
+    // * If value is greater than 1, use it.
+    // * If value is 1, use 1.1 internally.
+    // * If value is 0 or empty, use DEFAULT_IDLE_PERIOD (60), NOT 0 or 1 or 1.1.
+    if (_antiIdlePeriod < 1) {
+        _antiIdlePeriod = DEFAULT_IDLE_PERIOD;
     }
-
+    _antiIdlePeriod = MAX(_antiIdlePeriod, kMinimumAntiIdlePeriod);
+    
     if (set) {
-        NSTimeInterval period = MIN(60, [iTermAdvancedSettingsModel antiIdleTimerPeriod]);
-
-        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:period
+        _antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:_antiIdlePeriod
                                                            target:self
                                                          selector:@selector(doAntiIdle)
                                                          userInfo:nil
-                repeats:YES] retain];
-    } else {
-        [_antiIdleTimer invalidate];
-        [_antiIdleTimer release];
-        _antiIdleTimer = nil;
+                                                          repeats:YES] retain];
     }
 }
 
@@ -3521,9 +3528,10 @@ static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
 
 - (void)doAntiIdle {
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (now >= _lastInput + 60) {
+
+    if (now >= _lastOutput + _antiIdlePeriod - kAntiIdleGracePeriod) {
         [_shell writeTask:[NSData dataWithBytes:&_antiIdleCode length:1]];
-        _lastInput = now;
+        _lastOutput = now;
     }
 }
 

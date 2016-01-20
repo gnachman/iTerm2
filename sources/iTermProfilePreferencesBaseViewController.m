@@ -66,6 +66,17 @@
     [iTermProfilePreferences setFloat:value forKey:key inProfile:profile model:model];
 }
 
+- (double)doubleForKey:(NSString *)key {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    return [iTermProfilePreferences doubleForKey:key inProfile:profile];
+}
+
+- (void)setDouble:(double)value forKey:(NSString *)key {
+    Profile *profile = [_delegate profilePreferencesCurrentProfile];
+    ProfileModel *model = [_delegate profilePreferencesCurrentModel];
+    [iTermProfilePreferences setDouble:value forKey:key inProfile:profile model:model];
+}
+
 - (NSString *)stringForKey:(NSString *)key {
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences stringForKey:key inProfile:profile];
