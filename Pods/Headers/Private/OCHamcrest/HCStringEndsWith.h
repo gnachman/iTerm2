@@ -1,0 +1,1 @@
+../../../OCHamcrest/Source/Library/Text/HCStringEndsWith.h
