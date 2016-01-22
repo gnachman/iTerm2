@@ -7,15 +7,12 @@
 *.perspective
 *.perspectivev3
 iTerm2.xcodeproj/project.xcworkspace
-.gitignore
 build/
 .DS_Store
 iTerm.xcodeproj/*
-*.pbxproj
 canary.xml
 testing.xml
 testing_changes.html
-.gitignore
 iTerm.plist
 DerivedData/
 Intermediates/
