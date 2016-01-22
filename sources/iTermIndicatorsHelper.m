@@ -21,6 +21,7 @@ NSString *const kiTermIndicatorAlert = @"kiTermIndicatorAlert";
 NSString *const kiTermIndicatorAllOutputSuppressed = @"kiTermIndicatorAllOutputSuppressed";
 NSString *const kiTermIndicatorZoomedIn = @"kiTermIndicatorZoomedIn";
 
+static const NSTimeInterval kFullScreenFlashDuration = 0.3;
 static const NSTimeInterval kFlashDuration = 0.3;
 CGFloat kiTermIndicatorStandardHeight = 20;
 
@@ -57,6 +58,9 @@ CGFloat kiTermIndicatorStandardHeight = 20;
     NSTimeInterval _fullScreenFlashStartTime;
     // Rate limits calls to setNeedsDisplay: to not be faster than drawRect can be called.
     BOOL _haveSetNeedsDisplay;
+    
+    // Alpha value for fullscreen flash.
+    CGFloat _fullScreenAlpha;
 }
 
 + (NSDictionary *)indicatorImages {
@@ -167,17 +171,13 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 
     // Draw full screen flash.
     NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _fullScreenFlashStartTime;
-    const CGFloat kMaxFullScreenFlashAlpha = 0.5;
-    static const NSTimeInterval kFullScreenFlashDuration = 0.3;
-    CGFloat fullScreenAlpha = MAX(0, 1.0 - elapsed / kFullScreenFlashDuration) * kMaxFullScreenFlashAlpha;
-    DLog(@"elapsed=%@, fullScreenAlpha=%@", @(elapsed), @(fullScreenAlpha));
-    if (fullScreenAlpha > 0) {
+    DLog(@"elapsed=%@, fullScreenAlpha=%@", @(elapsed), @(_fullScreenAlpha));
+    if (_fullScreenAlpha > 0) {
         DLog(@"Drawing full screen flash overlay");
-        [[[_delegate indicatorFullScreenFlashColor] colorWithAlphaComponent:fullScreenAlpha] set];
+        [[[_delegate indicatorFullScreenFlashColor] colorWithAlphaComponent:_fullScreenAlpha] set];
         NSRectFillUsingOperation(frame, NSCompositeSourceOver);
-    } else if (_fullScreenFlashStartTime > 0 && fullScreenAlpha == 0) {
-        DLog(@"Not drawing full screen flash overlay and resetting fullScreenFlashStartTime");
-        _fullScreenFlashStartTime = 0;
+    } else if (_fullScreenFlashStartTime > 0 && _fullScreenAlpha == 0) {
+        DLog(@"Not drawing full screen flash overlay");
     }
     DLog(@"Set haveSetNeedsDisplay=NO");
     _haveSetNeedsDisplay = NO;
@@ -186,13 +186,23 @@ CGFloat kiTermIndicatorStandardHeight = 20;
 - (void)checkForFlashUpdate {
     DLog(@"Check for flash update. full screen flash start time is %@, haveSetNeedsDisplay=%@",
          @(_fullScreenFlashStartTime), @(_haveSetNeedsDisplay));
+    NSTimeInterval elapsed = [NSDate timeIntervalSinceReferenceDate] - _fullScreenFlashStartTime;
     if (_fullScreenFlashStartTime > 0 || [self haveFlashingIndicator]) {
+        const CGFloat kMaxFullScreenFlashAlpha = 0.5;
+        _fullScreenAlpha = MAX(0, 1.0 - elapsed / kFullScreenFlashDuration) * kMaxFullScreenFlashAlpha;
+        DLog(@"Set fullScreenAlpha=%@", @(_fullScreenAlpha));
         if (!_haveSetNeedsDisplay) {
             DLog(@"Tell delegate %@ setNeedsDisplay", _delegate);
             [_delegate setNeedsDisplay:YES];
         }
         DLog(@"Set haveSetNeedsDisplay=YES");
         _haveSetNeedsDisplay = YES;
+        
+        // Ensure that the screen gets redrawn with alpha = 0.
+        if (_fullScreenAlpha == 0) {
+            DLog(@"Reset fullScreenFlashStartTime");
+            _fullScreenFlashStartTime = 0;
+        }
     }
 
     // Remove any indicators that became invisible since the last check.
