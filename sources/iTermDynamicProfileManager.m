@@ -249,6 +249,9 @@
     Profile *prototype = [self prototypeForDynamicProfile:profile];
     NSMutableDictionary *merged = [self profileByMergingProfile:profile
                                                     intoProfile:prototype];
+    // Don't inherit the deprecated KEY_DEFAULT_BOOKMARK value, which in issue 4115 we learn can
+    // cause a dynamic profile to become the default profile!
+    [merged removeObjectForKey:KEY_DEFAULT_BOOKMARK];
     [merged profileAddDynamicTagIfNeeded];
 
     [[ProfileModel sharedInstance] addBookmark:merged];
