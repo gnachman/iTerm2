@@ -5923,6 +5923,10 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
     return self.guid;
 }
 
+- (void)screenScheduleRedrawSoon {
+    [self scheduleUpdateIn:kFastTimerIntervalSec];
+}
+
 - (void)screenNeedsRedraw {
     [self refreshAndStartTimerIfNeeded];
     [_textview updateNoteViewFrames];

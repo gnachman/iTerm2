@@ -14,6 +14,9 @@
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;
 
+// Schedule a refresh soon but not immediately.
+- (void)screenScheduleRedrawSoon;
+
 // Update window title, tab colors, and redraw view.
 - (void)screenUpdateDisplay:(BOOL)redraw;
 

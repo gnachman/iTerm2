@@ -3046,7 +3046,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     [self reloadMarkCache];
 
     [currentGrid_ markAllCharsDirty:YES];
-    [delegate_ screenNeedsRedraw];
+    [delegate_ screenScheduleRedrawSoon];
     commandStartX_ = commandStartY_ = -1;
 }
 
@@ -3088,7 +3088,7 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
         [self reloadMarkCache];
 
         [currentGrid_ markAllCharsDirty:YES];
-        [delegate_ screenNeedsRedraw];
+        [delegate_ screenScheduleRedrawSoon];
     }
 }
 
