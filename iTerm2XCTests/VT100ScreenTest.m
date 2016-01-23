@@ -529,6 +529,10 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     needsRedraw_++;
 }
 
+- (void)screenScheduleRedrawSoon {
+    needsRedraw_++;
+}
+
 - (void)screenSizeDidChange {
     sizeDidChange_++;
 }
