@@ -110,7 +110,7 @@
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0026": @{ kTipTitleKey: @"Shell Integration: Selection",
-                        kTipBodyKey: @"With Shell Integration installed, you can select the output of the last command with ⌥⌘A.",
+                        kTipBodyKey: @"With Shell Integration installed, you can select the output of the last command with ⇧⌘A.",
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
 
             @"0027": @{ kTipTitleKey: @"Bells",
