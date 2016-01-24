@@ -14,6 +14,7 @@
 #import "iTermShellHistoryController.h"
 #import "iTermToolWrapper.h"
 #import "NSDateFormatterExtras.h"
+#import "NSStringITerm.h"
 #import "NSTableColumn+iTerm.h"
 #import "PTYSession.h"
 
@@ -231,10 +232,11 @@ static const CGFloat kHelpMargin = 5;
     iTermRecentDirectoryMO *entry = filteredEntries_[selectedIndex];
     iTermToolWrapper *wrapper = self.toolWrapper;
     NSString *text;
+    NSString *escapedPath = [entry.path stringWithEscapedShellCharacters];
     if ([NSEvent modifierFlags] & NSAlternateKeyMask) {
-        text = [@"cd " stringByAppendingString:entry.path];
+        text = [@"cd " stringByAppendingString:escapedPath];
     } else {
-        text = entry.path;
+        text = escapedPath;
     }
     if (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
         text = [text stringByAppendingString:@"\n"];
