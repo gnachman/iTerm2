@@ -327,6 +327,14 @@
 - (void)textViewCreateTabWithProfileGuid:(NSString *)guid {
 }
 
+- (int)lineNumberOfMarkAfterLine:(int)line {
+    return line + 1;
+}
+
+- (int)lineNumberOfMarkBeforeLine:(int)line {
+    return line - 1;
+}
+
 - (VT100ScreenMark *)markOnLine:(int)line {
     return nil;
 }

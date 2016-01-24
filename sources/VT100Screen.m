@@ -2051,6 +2051,38 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     return objects;
 }
 
+- (int)lineNumberOfMarkBeforeLine:(int)line {
+    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line, 0, line)];
+    NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:interval.limit];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id object in objects) {
+            if ([object isKindOfClass:[VT100ScreenMark class]]) {
+                VT100ScreenMark *mark = object;
+                return [self coordRangeForInterval:mark.entry.interval].start.y;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return line;
+}
+
+- (int)lineNumberOfMarkAfterLine:(int)line {
+    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line + 1, 0, line + 1)];
+    NSEnumerator *enumerator = [intervalTree_ forwardLimitEnumeratorAt:interval.limit];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id object in objects) {
+            if ([object isKindOfClass:[VT100ScreenMark class]]) {
+                VT100ScreenMark *mark = object;
+                return [self coordRangeForInterval:mark.entry.interval].end.y;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return line;
+}
+
 - (NSArray *)marksOrNotesBefore:(Interval *)location {
     NSEnumerator *enumerator = [intervalTree_ reverseLimitEnumeratorAt:location.limit];
     NSArray *objects;

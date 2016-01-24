@@ -97,6 +97,9 @@
 - (VT100GridCoordRange)coordRangeOfNote:(PTYNoteViewController *)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (VT100ScreenMark *)markOnLine:(int)line;
+- (int)lineNumberOfMarkAfterLine:(int)line;
+- (int)lineNumberOfMarkBeforeLine:(int)line;
+
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;

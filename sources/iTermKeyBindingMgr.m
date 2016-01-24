@@ -72,6 +72,8 @@
  */
 
 #import "ITAddressBookMgr.h"
+
+#import "DebugLogging.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermPreferences.h"
@@ -492,10 +494,11 @@ static NSString *const kFactoryDefaultsGlobalPreset = @"Factory Defaults";
             return @"By Character";
         case kPTYTextViewSelectionExtensionUnitWord:
             return @"By Word";
-        default:
-            NSLog(@"Unrecognized selection movement unit %@", @(unit));
-            return @"";
+        case kPTYTextViewSelectionExtensionUnitMark:
+            return @"By Mark";
     }
+    ELog(@"Unrecognized selection movement unit %@", @(unit));
+    return @"";
 }
 
 + (BOOL)haveGlobalKeyMappingForKeyString:(NSString*)keyString

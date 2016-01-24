@@ -3714,6 +3714,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case kPTYTextViewSelectionExtensionUnitCharacter:
         case kPTYTextViewSelectionExtensionUnitWord:
         case kPTYTextViewSelectionExtensionUnitLine:
+        case kPTYTextViewSelectionExtensionUnitMark:
             unitRecognized = YES;
             break;
     }
@@ -3789,6 +3790,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             newRange = rangeWithLineBeforeStart;
                             break;
                         }
+                        case kPTYTextViewSelectionExtensionUnitMark: {
+                            VT100GridWindowedRange rangeWithLineBeforeStart = existingRange;
+                            if (rangeWithLineBeforeStart.coordRange.start.y > 0) {
+                                rangeWithLineBeforeStart.coordRange.start.y = [_dataSource lineNumberOfMarkBeforeLine:existingRange.coordRange.start.y] + 1;
+                                if (rangeWithLineBeforeStart.coordRange.start.y == existingRange.coordRange.start.y) {
+                                    rangeWithLineBeforeStart.coordRange.start.y = [_dataSource lineNumberOfMarkBeforeLine:existingRange.coordRange.start.y - 1] + 1;
+                                }
+                                rangeWithLineBeforeStart.coordRange.start.x = existingRange.columnWindow.location;
+                            }
+                            newRange = rangeWithLineBeforeStart;
+                            break;
+                        }
                     }
                     break;
                 }
@@ -3828,6 +3841,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             newRange = rangeExcludingFirstLine;
                             break;
                         }
+                        case kPTYTextViewSelectionExtensionUnitMark: {
+                            VT100GridWindowedRange rangeExcludingFirstLine = existingRange;
+                            rangeExcludingFirstLine.coordRange.start.x = existingRange.columnWindow.location;
+                            rangeExcludingFirstLine.coordRange.start.y =
+                                MIN(_dataSource.numberOfLines,
+                                    [_dataSource lineNumberOfMarkAfterLine:rangeExcludingFirstLine.coordRange.start.y] + 1);
+                            newRange = rangeExcludingFirstLine;
+                            break;
+                        }
                     }
                     break;
                 }
@@ -3863,6 +3885,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 rangeExcludingLastLine.coordRange.end.x = existingRange.columnWindow.location;
                                 rangeExcludingLastLine.coordRange.end.y = MAX(1, existingRange.coordRange.end.y - 1);
                             }
+                            newRange = rangeExcludingLastLine;
+                            break;
+                        }
+                        case kPTYTextViewSelectionExtensionUnitMark: {
+                            VT100GridWindowedRange rangeExcludingLastLine = existingRange;
+                            int rightMargin;
+                            if (existingRange.columnWindow.length) {
+                                rightMargin = VT100GridRangeMax(existingRange.columnWindow) + 1;
+                            } else {
+                                rightMargin = _dataSource.width;
+                            }
+                            rangeExcludingLastLine.coordRange.end.x = rightMargin;
+                            int n = [_dataSource lineNumberOfMarkBeforeLine:rangeExcludingLastLine.coordRange.end.y + 1];
+                            rangeExcludingLastLine.coordRange.end.y = MAX(1, n - 1);
                             newRange = rangeExcludingLastLine;
                             break;
                         }
@@ -3913,6 +3949,26 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             newRange = rangeWithLineAfterEnd;
                             break;
                         }
+                        case kPTYTextViewSelectionExtensionUnitMark: {
+                            VT100GridWindowedRange rangeWithLineAfterEnd = existingRange;
+                            int rightMargin;
+                            if (existingRange.columnWindow.length) {
+                                rightMargin = VT100GridRangeMax(existingRange.columnWindow) + 1;
+                            } else {
+                                rightMargin = _dataSource.width;
+                            }
+                            rangeWithLineAfterEnd.coordRange.end.x = rightMargin;
+                            rangeWithLineAfterEnd.coordRange.end.y =
+                                MIN(_dataSource.numberOfLines,
+                                    [_dataSource lineNumberOfMarkAfterLine:rangeWithLineAfterEnd.coordRange.end.y] - 1);
+                            if (rangeWithLineAfterEnd.coordRange.end.y == existingRange.coordRange.end.y) {
+                                rangeWithLineAfterEnd.coordRange.end.y =
+                                    MIN(_dataSource.numberOfLines,
+                                        [_dataSource lineNumberOfMarkAfterLine:rangeWithLineAfterEnd.coordRange.end.y + 1] - 1);
+                            }
+                            newRange = rangeWithLineAfterEnd;
+                            break;
+                        }
                     }
                     break;
                 }
@@ -3931,6 +3987,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             mode = kiTermSelectionModeWord;
             break;
         case kPTYTextViewSelectionExtensionUnitLine:
+            mode = kiTermSelectionModeLine;
+            break;
+        case kPTYTextViewSelectionExtensionUnitMark:
             mode = kiTermSelectionModeLine;
             break;
     }

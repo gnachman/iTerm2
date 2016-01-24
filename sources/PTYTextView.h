@@ -58,6 +58,7 @@ typedef NS_ENUM(NSInteger, PTYTextViewSelectionExtensionUnit) {
     kPTYTextViewSelectionExtensionUnitCharacter,
     kPTYTextViewSelectionExtensionUnitWord,
     kPTYTextViewSelectionExtensionUnitLine,
+    kPTYTextViewSelectionExtensionUnitMark,
 };
 
 @protocol PTYTextViewDelegate <NSObject>
