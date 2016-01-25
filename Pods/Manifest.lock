@@ -1,0 +1,13 @@
+PODS:
+  - OCHamcrest (2.0.1)
+  - OCMockito (0.23):
+    - OCHamcrest
+
+DEPENDENCIES:
+  - OCMockito
+
+SPEC CHECKSUMS:
+  OCHamcrest: ea68af8cd60b33b6909d1650acc21d1a7d75e2f9
+  OCMockito: c74c530e894acc37a7dccd50b73a2dc2e89c3c3b
+
+COCOAPODS: 0.39.0

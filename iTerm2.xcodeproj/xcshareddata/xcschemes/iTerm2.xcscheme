@@ -14,6 +14,20 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "66A2FD3CA1B7BC5E4F856C4A58D65B4C"
+               BuildableName = "Pods_iTerm2XCTests.framework"
+               BlueprintName = "Pods-iTerm2XCTests"
+               ReferencedContainer = "container:Pods/Pods.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "874206460564169600CFC3F1"
                BuildableName = "iTerm2.app"
                BlueprintName = "iTerm2"

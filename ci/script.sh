@@ -4,7 +4,7 @@ set -euo pipefail
 
 xcrun xcodebuild build test \
   NSUnbufferedIO=YES \
-  -project iTerm2.xcodeproj \
+  -workspace iTerm2.xcworkspace \
   -scheme iTerm2 \
   -sdk macosx \
     | xcpretty -c -f `xcpretty-travis-formatter`
