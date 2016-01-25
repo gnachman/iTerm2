@@ -8,8 +8,15 @@
 
 #import <Foundation/Foundation.h>
 
+enum {
+    kAdvancedSettingsTruncationStyleRight = 0,
+    kAdvancedSettingsTruncationStyleMiddle = 1,
+    kAdvancedSettingsTruncationStyleLeft = 2
+};
+
 @interface iTermAdvancedSettingsModel : NSObject
 
++ (int)tabLabelTruncationStyle;
 + (BOOL)useUnevenTabs;
 + (int)minTabWidth;
 + (int)minCompactTabWidth;

@@ -45,6 +45,7 @@
 }
 
 #pragma mark Tabs
+DEFINE_INT(tabLabelTruncationStyle, kAdvancedSettingsTruncationStyleRight, @"Tabs: Tab label truncation style.\n0=Right, 1=Middle, 2=Left.");
 DEFINE_BOOL(useUnevenTabs, NO, @"Tabs: Uneven tab widths allowed.");
 DEFINE_INT(minTabWidth, 75, @"Tabs: Minimum tab width when using uneven tab widths.");
 DEFINE_INT(minCompactTabWidth, 60, @"Tabs: Minimum tab width when using uneven tab widths for compact tabs.");

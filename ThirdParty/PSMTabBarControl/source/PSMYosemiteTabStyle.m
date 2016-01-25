@@ -9,6 +9,7 @@
 #import "PSMYosemiteTabStyle.h"
 #import "PSMTabBarCell.h"
 #import "PSMTabBarControl.h"
+#import "iTermAdvancedSettingsModel.h"
 
 #define kPSMMetalObjectCounterRadius 7.0
 #define kPSMMetalCounterMinWidth 20
@@ -311,7 +312,16 @@
     if (!truncatingTailParagraphStyle) {
         truncatingTailParagraphStyle =
             [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] retain];
-        [truncatingTailParagraphStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+        switch ([iTermAdvancedSettingsModel tabLabelTruncationStyle]) {
+            case kAdvancedSettingsTruncationStyleLeft:
+                [truncatingTailParagraphStyle setLineBreakMode:NSLineBreakByTruncatingHead];
+                break;
+            case kAdvancedSettingsTruncationStyleMiddle:
+                [truncatingTailParagraphStyle setLineBreakMode:NSLineBreakByTruncatingMiddle];
+                break;
+            default:
+                [truncatingTailParagraphStyle setLineBreakMode:NSLineBreakByTruncatingTail];
+        }
         [truncatingTailParagraphStyle setAlignment:NSCenterTextAlignment];
     }
     [attrStr addAttribute:NSParagraphStyleAttributeName
