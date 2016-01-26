@@ -122,6 +122,14 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
       DLog(@"Just switched spaces. Hotkey window is visible, joins all spaces, and does not autohide. Show it in half a second.");
         [self performSelector:@selector(bringHotkeyWindowToFore:) withObject:window afterDelay:0.5];
     }
+    if ([window isVisible] && window.isOnActiveSpace && [term fullScreen]) {
+        // Issue 4136: If you press the hotkey while in a fullscreen app, the
+        // dock stays up. Looks like the OS doesn't respect the window's
+        // presentation option when switching from a fullscreen app, so we have
+        // to toggle it after the switch is complete.
+        [term showMenuBar];
+        [term hideMenuBar];
+    }
 }
 
 - (void)rollInFinished
