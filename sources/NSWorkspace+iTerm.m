@@ -7,6 +7,7 @@
 //
 
 #import "NSWorkspace+iTerm.h"
+#import <CoreGraphics/CoreGraphics.h>
 
 @implementation NSWorkspace (iTerm)
 

@@ -123,5 +123,6 @@
 + (BOOL)focusReportingEnabled;
 
 + (BOOL)hideFromDockAndAppSwitcher;
++ (BOOL)hotkeyWindowIgnoresSpotlight;
 
 @end

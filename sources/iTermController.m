@@ -27,6 +27,7 @@
 
 #import "iTermController.h"
 
+#import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "HotkeyWindowController.h"
 #import "ITAddressBookMgr.h"
@@ -1250,6 +1251,55 @@ static iTermController *gSharedInstance;
             [aSession.shell sendSignal:SIGHUP];
         }
     }
+}
+
+- (BOOL)anyOrderedWindowIsKey {
+    DLog(@"Searching for key window...");
+    for (NSWindow *window in [NSApp orderedWindows]) {
+        if (window.isKeyWindow) {
+            DLog(@"Key ordered window is %@", window);
+            return YES;
+        }
+    }
+    DLog(@"No key window");
+    return NO;
+}
+
+
+- (BOOL)keystrokesBeingStolen {
+    // If we're active and have ordered windows but none of them are key then our keystrokes are
+    // being stolen by something else. This is meant to detect when Spotlight is open. It might
+    // also catch other things that act similarly.
+    return [NSApp isActive] && [[NSApp orderedWindows] count] > 0 && ![self anyOrderedWindowIsKey];
+}
+
+- (BOOL)anyWindowIsMain {
+    for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
+        if ([window isMainWindow]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (PseudoTerminal *)hotkeyWindow {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if (term.isHotKeyWindow) {
+            return term;
+        }
+    }
+    return nil;
+}
+
+- (NSArray<PTYWindow *> *)keyTerminalWindows {
+    NSMutableArray<PTYWindow *> *temp = [NSMutableArray array];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        PTYWindow *window = [term ptyWindow];
+        if ([window isKeyWindow]) {
+            [temp addObject:window];
+        }
+    }
+    return temp;
 }
 
 // accessors for to-many relationships:

@@ -20,6 +20,8 @@
 // block is called on every element in order.
 - (NSArray *)filteredArrayUsingBlock:(BOOL (^)(id anObject))block;
 
+- (BOOL)containsObjectBesides:(id)anObject;
+
 @end
 
 @interface NSMutableArray (iTerm)

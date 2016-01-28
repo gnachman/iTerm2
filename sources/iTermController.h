@@ -39,6 +39,7 @@
 @class PTYSession;
 @class PTYTab;
 @class PTYTextView;
+@class PTYWindow;
 
 @interface iTermController : NSObject
 
@@ -53,6 +54,10 @@
 @property(nonatomic, nonatomic, assign) PseudoTerminal *currentTerminal;
 @property(nonatomic, readonly) int numberOfTerminals;
 @property(nonatomic, readonly) BOOL hasRestorableSession;
+@property(nonatomic, readonly) BOOL keystrokesBeingStolen;
+@property(nonatomic, readonly) BOOL anyWindowIsMain;
+@property(nonatomic, readonly) PseudoTerminal *hotkeyWindow;
+@property(nonatomic, readonly) NSArray<PTYWindow *> *keyTerminalWindows;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;

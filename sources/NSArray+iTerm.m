@@ -52,6 +52,14 @@
     return [self objectsAtIndexes:indexes];
 }
 
+- (BOOL)containsObjectBesides:(id)anObject {
+    for (id object in self) {
+        if (![object isEqual:anObject]) {
+            return YES;
+        }
+    }
+    return NO;
+}
 
 @end
 
