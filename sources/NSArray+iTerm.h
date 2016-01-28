@@ -20,6 +20,7 @@
 // block is called on every element in order.
 - (NSArray *)filteredArrayUsingBlock:(BOOL (^)(id anObject))block;
 
+// Does the array contain at least one object not equal to @c anObject?
 - (BOOL)containsObjectBesides:(id)anObject;
 
 @end

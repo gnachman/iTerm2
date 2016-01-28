@@ -1253,6 +1253,7 @@ static iTermController *gSharedInstance;
     }
 }
 
+// This exists because I don't trust -[NSApp keyWindow]. I've seen all kinds of weird behavior from it.
 - (BOOL)anyOrderedWindowIsKey {
     DLog(@"Searching for key window...");
     for (NSWindow *window in [NSApp orderedWindows]) {
@@ -1265,7 +1266,6 @@ static iTermController *gSharedInstance;
     return NO;
 }
 
-
 - (BOOL)keystrokesBeingStolen {
     // If we're active and have ordered windows but none of them are key then our keystrokes are
     // being stolen by something else. This is meant to detect when Spotlight is open. It might
@@ -1273,6 +1273,7 @@ static iTermController *gSharedInstance;
     return [NSApp isActive] && [[NSApp orderedWindows] count] > 0 && ![self anyOrderedWindowIsKey];
 }
 
+// I don't trust -[NSApp mainWindow].
 - (BOOL)anyWindowIsMain {
     for (NSWindow *window in [[NSApplication sharedApplication] windows]) {
         if ([window isMainWindow]) {
@@ -1291,6 +1292,7 @@ static iTermController *gSharedInstance;
     return nil;
 }
 
+// Returns all terminal windows that are key.
 - (NSArray<PTYWindow *> *)keyTerminalWindows {
     NSMutableArray<PTYWindow *> *temp = [NSMutableArray array];
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
