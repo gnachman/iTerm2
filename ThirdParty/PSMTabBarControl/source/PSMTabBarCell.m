@@ -91,6 +91,7 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
         _indicator.light = controlView.style.useLightControls;
         _hasCloseButton = YES;
         _modifierString = [@"" copy];
+        _truncationStyle = NSLineBreakByTruncatingTail;
     }
     return self;
 }
@@ -119,6 +120,7 @@ static NSTimeInterval kHighlightAnimationDuration = 0.5;
         _count = 0;
         _tabColor = nil;
         _modifierString = [@"" copy];
+        _truncationStyle = NSLineBreakByTruncatingTail;
         if (value) {
             [self setCurrentStep:(kPSMTabDragAnimationSteps - 1)];
         } else {

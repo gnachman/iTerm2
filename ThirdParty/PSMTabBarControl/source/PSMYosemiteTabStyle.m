@@ -307,13 +307,12 @@
                     range:range];
 
     // Paragraph Style for Truncating Long Text
-    static NSMutableParagraphStyle *truncatingTailParagraphStyle = nil;
-    if (!truncatingTailParagraphStyle) {
-        truncatingTailParagraphStyle =
-            [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] retain];
-        [truncatingTailParagraphStyle setLineBreakMode:NSLineBreakByTruncatingTail];
-        [truncatingTailParagraphStyle setAlignment:NSCenterTextAlignment];
-    }
+    NSMutableParagraphStyle *truncatingTailParagraphStyle = nil;
+    truncatingTailParagraphStyle =
+        [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] retain];
+    [truncatingTailParagraphStyle setLineBreakMode:[cell truncationStyle]];
+    [truncatingTailParagraphStyle setAlignment:NSCenterTextAlignment];
+
     [attrStr addAttribute:NSParagraphStyleAttributeName
                     value:truncatingTailParagraphStyle
                     range:range];

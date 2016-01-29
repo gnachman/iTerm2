@@ -760,6 +760,7 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
     // replace dragged cell with a placeholder, and clean up surrounding cells
     int cellIndex = [[control cells] indexOfObject:cell];
     PSMTabBarCell *pc = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:[[self draggedCell] frame] expanded:YES inControlView:control] autorelease];
+    pc.truncationStyle = cell.truncationStyle;
     [[control cells] replaceObjectAtIndex:cellIndex withObject:pc];
     [[control cells] removeObjectAtIndex:(cellIndex + 1)];
     [[control cells] removeObjectAtIndex:(cellIndex - 1)];
@@ -771,17 +772,22 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
     int i, numVisibleTabs = [control numberOfVisibleTabs];
     PSMTabBarCell *draggedCell = [self draggedCell];
     NSRect draggedCellFrame;
+    NSLineBreakMode truncationStyle;
     if (draggedCell) {
         draggedCellFrame = [draggedCell frame];
+        truncationStyle = draggedCell.truncationStyle;
     } else {
         draggedCellFrame = [[[control cells] objectAtIndex:0] frame];
+        truncationStyle = [[[control cells] objectAtIndex:0] truncationStyle];
     }
     for(i = 0; i < numVisibleTabs; i++) {
         PSMTabBarCell *pc = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:draggedCellFrame expanded:NO inControlView:control] autorelease];
+        pc.truncationStyle = truncationStyle;
         [[control cells] insertObject:pc atIndex:(2 * i)];
     }
 
     PSMTabBarCell *pc = [[[PSMTabBarCell alloc] initPlaceholderWithFrame:draggedCellFrame expanded:NO inControlView:control] autorelease];
+    pc.truncationStyle = truncationStyle;
     if ([[control cells] count] > (2 * numVisibleTabs)) {
         [[control cells] insertObject:pc atIndex:(2 * numVisibleTabs)];
     } else {

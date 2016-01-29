@@ -49,6 +49,7 @@
 @property(nonatomic, readonly) float minimumWidthOfCell;
 @property(nonatomic, readonly) float desiredWidthOfCell;
 @property(nonatomic, readonly) id<PSMTabStyle> style;
+@property(nonatomic, assign) NSLineBreakMode truncationStyle;  // How to truncate title.
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

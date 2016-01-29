@@ -367,9 +367,41 @@ const NSInteger kPSMStartResizeAnimation = 0;
 #pragma mark -
 #pragma mark Functionality
 
+- (NSLineBreakMode)truncationStyle {
+    if (_cells.count <= 1 || !self.smartTruncation) {
+        return NSLineBreakByTruncatingTail;
+    }
+    NSCountedSet *prefixCounts = [[[NSCountedSet alloc] init] autorelease];
+    NSCountedSet *suffixCounts = [[[NSCountedSet alloc] init] autorelease];
+    NSMutableSet *uniqueTitles = [NSMutableSet set];
+    static NSInteger const kPrefixOrSuffixLength = 5;
+    for (PSMTabBarCell *cell in _cells) {
+        NSString *title = [cell title];
+        if (title.length < kPrefixOrSuffixLength) {
+            continue;
+        }
+        [uniqueTitles addObject:title];
+        NSString *prefix = [title substringToIndex:kPrefixOrSuffixLength];
+        NSString *suffix = [title substringFromIndex:(NSInteger)title.length - kPrefixOrSuffixLength];
+        
+        [prefixCounts addObject:prefix];
+        [suffixCounts addObject:suffix];
+    }
+    if (uniqueTitles.count == 0) {
+        return NSLineBreakByTruncatingTail;
+    }
+
+    if (prefixCounts.count >= suffixCounts.count) {
+        return NSLineBreakByTruncatingTail;
+    } else {
+        return NSLineBreakByTruncatingHead;
+    }
+}
+
 - (void)addTabViewItem:(NSTabViewItem *)item atIndex:(NSUInteger)i {
     // create cell
     PSMTabBarCell *cell = [[PSMTabBarCell alloc] initWithControlView:self];
+    cell.truncationStyle = [self truncationStyle];
     [cell setRepresentedObject:item];
     [cell setModifierString:[self _modifierString]];
 
@@ -723,8 +755,11 @@ const NSInteger kPSMStartResizeAnimation = 0;
         currentOrigin = [[self style] topMarginForTabBarControl];
     }
 
+    NSLineBreakMode truncationStyle = [self truncationStyle];
+    
     for (i = 0; i < cellCount; i++) {
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
+        cell.truncationStyle = truncationStyle;
         cell.hasCloseButton = _hasCloseButton;
         [cell updateForStyle];
         float width;

@@ -169,6 +169,10 @@ enum {
 @property(nonatomic, assign) BOOL automaticallyAnimates;
 @property(nonatomic, assign) int tabLocation;
 
+// If off (the default) always ellipsize the ends of tab titles that don't fit.
+// Of on, ellipsize the start if more tabs share a prefix than a suffix.
+@property(nonatomic, assign) BOOL smartTruncation;
+
 @property(nonatomic, retain) IBOutlet NSTabView *tabView;
 @property(nonatomic, assign) id<PSMTabBarControlDelegate> delegate;
 @property(nonatomic, retain) id partnerView;
