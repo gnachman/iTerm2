@@ -3846,7 +3846,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             rangeExcludingFirstLine.coordRange.start.x = existingRange.columnWindow.location;
                             rangeExcludingFirstLine.coordRange.start.y =
                                 MIN(_dataSource.numberOfLines,
-                                    [_dataSource lineNumberOfMarkAfterLine:rangeExcludingFirstLine.coordRange.start.y] + 1);
+                                    [_dataSource lineNumberOfMarkAfterLine:rangeExcludingFirstLine.coordRange.start.y - 1] + 1);
                             newRange = rangeExcludingFirstLine;
                             break;
                         }
