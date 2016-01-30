@@ -380,7 +380,7 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
-    DLog(@"applicationShouldTerminate:");
+    NSLog(@"applicationShouldTerminate:");
     NSArray *terminals;
 
     terminals = [[iTermController sharedInstance] terminals];
@@ -404,11 +404,17 @@ static BOOL hasBecomeActive = NO;
         // closing multiple sessions
         shouldShowAlert = YES;
     }
+    NSLog(@"run jobs in servers=%@", @([iTermAdvancedSettingsModel runJobsInServers]));
+    NSLog(@"sparkle restarting=%@", @(self.sparkleRestarting));
+    NSLog(@"restore window contents=%@", @([iTermAdvancedSettingsModel restoreWindowContents]));
+    NSLog(@"will restore windows at next launch=%@", @([[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]));
+    
     if ([iTermAdvancedSettingsModel runJobsInServers] &&
         self.sparkleRestarting &&
         [iTermAdvancedSettingsModel restoreWindowContents] &&
         [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
         // Nothing will be lost so just restart without asking.
+        NSLog(@"Setting shouldShowAlert=NO because sparkle is upgrading");
         shouldShowAlert = NO;
     }
 
