@@ -101,7 +101,10 @@
     </class> 
     <class name="window" code="cwin" description="A window."> 
       <cocoa class="PTYWindow"/> 
-      <property name="name" code="pnam" type="text" access="r" 
+      <property name="id" code="ID  " description="The unique identifier of the session." type="text" access="r">
+        <cocoa key="windowIdentifier"/>
+      </property>
+      <property name="name" code="pnam" type="text" access="r"
         description="The full title of the window."> 
         <cocoa key="title"/> 
       </property> 

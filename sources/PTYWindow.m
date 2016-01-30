@@ -52,6 +52,7 @@
     BOOL isTogglingLionFullScreen_;
     NSObject *restoreState_;
     iTermDelayedTitleSetter *_titleSetter;
+    NSInteger _uniqueNumber;
 }
 
 - (void)dealloc {
@@ -73,6 +74,14 @@
             (int)self.isKeyWindow,
             (int)self.isVisible,
             self.delegate];
+}
+
+- (NSString *)windowIdentifier {
+    if (!_uniqueNumber) {
+        static NSInteger nextUniqueNumber = 1;
+        _uniqueNumber = nextUniqueNumber++;
+    }
+    return [NSString stringWithFormat:@"window-%ld", (long)_uniqueNumber];
 }
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder {

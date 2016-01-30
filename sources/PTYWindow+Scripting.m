@@ -7,7 +7,6 @@
 
 @implementation PTYWindow (Scripting)
 
-// Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier {
     NSUInteger anIndex = 0;
     id classDescription = nil;
@@ -19,12 +18,10 @@
     if (anIndex != NSNotFound) {
         containerRef = [NSApp objectSpecifier];
         classDescription = [NSClassDescription classDescriptionForClass:[NSApp class]];
-        // Create and return the specifier
-        return [[[NSIndexSpecifier alloc]
-                   initWithContainerClassDescription:classDescription
-                                  containerSpecifier:containerRef
-                                                 key:@"orderedTerminalWindows"
-                                               index:anIndex] autorelease];
+        return [[[NSUniqueIDSpecifier alloc] initWithContainerClassDescription:classDescription
+                                                            containerSpecifier:containerRef
+                                                                           key:@"orderedTerminalWindows"
+                                                                      uniqueID:self.windowIdentifier] autorelease];
     } else {
         return nil;
     }

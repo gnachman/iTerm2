@@ -38,6 +38,8 @@
 
 @property(nonatomic, readonly) int screenNumber;
 @property(nonatomic, readonly, getter=isTogglingLionFullScreen) BOOL togglingLionFullScreen;
+// A unique identifier that does not get recycled during the program's lifetime.
+@property(nonatomic, readonly) NSString *windowIdentifier;
 
 - (void)smartLayout;
 - (void)setLayoutDone;
