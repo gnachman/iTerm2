@@ -108,6 +108,10 @@ static iTermController *gSharedInstance;
 }
 
 - (BOOL)willRestoreWindowsAtNextLaunch {
+    NSLog(@"open arrangement at startup=%@", @([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup]));
+    NSLog(@"open no windows at startup=%@", @([iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]));
+    NSLog(@"NSQuitAlwaysKeepsWindow=%@", @([[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]));
+    
   return (![iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] &&
           ![iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup] &&
           [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"]);
