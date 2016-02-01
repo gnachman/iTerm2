@@ -392,8 +392,8 @@ static NSString *const kGridSizeKey = @"Size";
     self.scrollRegionRows = VT100GridRangeMake(0, size_.height);
     self.scrollRegionCols = VT100GridRangeMake(0, size_.width);
     int numLinesToScroll;
-    if (preservePromptLines > 0) {
-        numLinesToScroll = cursor_.y - preservePromptLines + 1;
+    if (preservePromptLines > 0 && preservePromptLines < size_.height) {
+        numLinesToScroll = MAX(0, cursor_.y - preservePromptLines + 1);
     } else {
         numLinesToScroll = [self lineNumberOfLastNonEmptyLine] + 1;
     }
