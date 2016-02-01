@@ -848,12 +848,20 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
 // coordinate. Scroll regions and the saved cursor position are reset.
 - (void)clearAndResetScreenPreservingCursorLine {
-    int numberOfLinesInPrompt = [iTermAdvancedSettingsModel numberOfLinesInPrompt];
+    int numberOfLinesInPrompt;
+    if (_shellIntegrationInstalled) {
+        numberOfLinesInPrompt = currentGrid_.cursorY + [self numberOfScrollbackLines] + [self totalScrollbackOverflow] - _lastCommandOutputRange.end.y + 1;
+        DLog(@"numberOfLinesInPrompt calculated (based on shell integration): %d", numberOfLinesInPrompt);
+    } else {
+        numberOfLinesInPrompt = [iTermAdvancedSettingsModel numberOfLinesInPrompt];
+        DLog(@"numberOfLinesInPrompt taken from advanced settings: %d", numberOfLinesInPrompt);
+    }
+
     if (numberOfLinesInPrompt <= 0) {
-        DLog(@"iTerm advanced settings variable 'numberOfLinesInPrompt' is equal or less than than zero: %d",numberOfLinesInPrompt);
+        DLog(@"iTerm advanced settings variable 'numberOfLinesInPrompt' is equal or less than than zero: %d", numberOfLinesInPrompt);
         numberOfLinesInPrompt = 1;
     } else if (numberOfLinesInPrompt > 3) {
-        DLog(@"iTerm advanced settings variable 'numberOfLinesInPrompt' is greater than 3: %d",numberOfLinesInPrompt);
+        DLog(@"iTerm advanced settings variable 'numberOfLinesInPrompt' is greater than 3: %d", numberOfLinesInPrompt);
     }
 
     [delegate_ screenTriggerableChangeDidOccur];
