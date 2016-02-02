@@ -3627,12 +3627,13 @@ static NSString* FormatRect(NSRect r) {
     }
     // Dragging looks a lot better if we turn on resizing subviews temporarily.
     for (SessionView *sv in [self sessionViews]) {
-            [sv setAutoresizesSubviews:YES];
+        [sv setAutoresizesSubviews:YES];
     }
 }
 
-- (void)splitView:(PTYSplitView *)splitView draggingDidEndOfSplit:(int)splitterIndex pixels:(NSSize)pxMoved
-{
+- (void)splitView:(PTYSplitView *)splitView
+  draggingDidEndOfSplit:(int)splitterIndex
+           pixels:(NSSize)pxMoved {
     if (![self isTmuxTab]) {
         // Don't care for non-tmux tabs.
         return;

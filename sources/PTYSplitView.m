@@ -49,7 +49,7 @@
     NSArray *subviews = [self subviews];
     NSPoint locationInWindow = [theEvent locationInWindow];
     locationInWindow.y--;
-    NSPoint locationInView = [self convertPoint:locationInWindow toView:self];
+    NSPoint locationInView = [self convertPoint:locationInWindow fromView:nil];
     int x = 0;
     int y = 0;
     int bestDistance = -1;
