@@ -1,0 +1,8 @@
+coverage_service: coveralls
+ci_service: travis_ci
+xcodeproj: iTerm2.xcodeproj
+ignore:
+  - "../**/Developer/*"
+  - "ThirdParty/*"
+  - "iTerm2XCTests/*"
+  - "Pods/*"

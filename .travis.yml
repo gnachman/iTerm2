@@ -3,3 +3,4 @@ bundler_args: --without documentation --without development --deployment --jobs=
 osx_image: xcode7.2
 language: objective-c
 script: ./ci/script.sh
+after_success: ./ci/after_success.sh
