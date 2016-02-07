@@ -7,6 +7,7 @@
 
 #import "TmuxWindowOpener.h"
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "PseudoTerminal.h"
@@ -317,7 +318,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                 DLog(@"Use original window %@", term);
             }
             if (!term) {
-                term = [[iTermController sharedInstance] openWindowUsingProfile:[PTYTab tmuxBookmark]];
+                term = [[iTermController sharedInstance] openTmuxIntegrationWindowUsingProfile:[PTYTab tmuxBookmark]];
                 DLog(@"Opened a new window %@", term);
             }
         }
@@ -365,7 +366,11 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
                 BOOL wantFullScreen = [style isEqual:kTmuxWindowOpenerWindowOptionStyleValueFullScreen];
                 BOOL isFullScreen = [term anyFullScreen];
                 if (wantFullScreen && !isFullScreen) {
-                    [term toggleFullScreenMode:nil];
+                    if ([iTermAdvancedSettingsModel serializeOpeningMultipleFullScreenWindows]) {
+                        [[iTermController sharedInstance] makeTerminalWindowFullScreen:term];
+                    } else {
+                        [term toggleFullScreenMode:nil];
+                    }
                 }
             } else {
                 DLog(@"Not calling loadTmuxLayout");

@@ -125,5 +125,6 @@
 + (BOOL)hideFromDockAndAppSwitcher;
 + (BOOL)hotkeyWindowIgnoresSpotlight;
 + (BOOL)tabTitlesUseSmartTruncation;
++ (BOOL)serializeOpeningMultipleFullScreenWindows;
 
 @end

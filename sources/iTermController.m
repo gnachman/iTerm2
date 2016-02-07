@@ -48,6 +48,7 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermExpose.h"
+#import "iTermFullScreenWindowManager.h"
 #import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
@@ -71,6 +72,7 @@ static iTermController *gSharedInstance;
 
     NSMutableArray<PseudoTerminal *> *_terminalWindows;
     PseudoTerminal *_frontTerminalWindowController;
+    iTermFullScreenWindowManager *_fullScreenWindowManager;
 }
 
 + (iTermController *)sharedInstance {
@@ -99,7 +101,8 @@ static iTermController *gSharedInstance;
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
-
+        _fullScreenWindowManager = [[iTermFullScreenWindowManager alloc] initWithClass:[PTYWindow class]
+                                                               enterFullScreenSelector:@selector(toggleFullScreen:)];
         // Activate Growl. This loads the Growl framework and initializes it.
         [iTermGrowlDelegate sharedInstance];
     }
@@ -149,6 +152,7 @@ static iTermController *gSharedInstance;
 
     [_restorableSessions release];
     [_currentRestorableSessionsStack release];
+    [_fullScreenWindowManager release];
     [super dealloc];
 }
 
@@ -890,11 +894,17 @@ static iTermController *gSharedInstance;
     return aDict;
 }
 
-- (PseudoTerminal *)openWindowUsingProfile:(Profile *)profile {
+- (PseudoTerminal *)openTmuxIntegrationWindowUsingProfile:(Profile *)profile {
     [iTermController switchToSpaceInBookmark:profile];
+    iTermWindowType windowType;
+    if ([iTermAdvancedSettingsModel serializeOpeningMultipleFullScreenWindows]) {
+        windowType = [self windowTypeForBookmark:profile];
+    } else {
+        windowType = [iTermProfilePreferences intForKey:KEY_WINDOW_TYPE inProfile:profile];
+    }
     PseudoTerminal *term =
         [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                          windowType:[iTermProfilePreferences intForKey:KEY_WINDOW_TYPE inProfile:profile]
+                                          windowType:windowType
                                      savedWindowType:WINDOW_TYPE_NORMAL
                                               screen:[iTermProfilePreferences intForKey:KEY_SCREEN inProfile:profile]
                                             isHotkey:NO] autorelease];
@@ -903,6 +913,10 @@ static iTermController *gSharedInstance;
     }
     [self addTerminalWindow:term];
     return term;
+}
+
+- (void)makeTerminalWindowFullScreen:(NSWindowController<iTermWindowController> *)term {
+    [_fullScreenWindowManager makeWindowEnterFullScreen:term.window];
 }
 
 - (PTYSession *)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm {
