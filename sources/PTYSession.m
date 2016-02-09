@@ -187,6 +187,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 @end
 
 @implementation PTYSession {
+    RateMovingAverage *_readRate;
+    
     // PTYTask has started a job, and a call to -taskWasDeregistered will be
     // made when it dies. All access should be synchronized.
     BOOL _registered;
@@ -363,6 +365,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _readRate = [[RateMovingAverage alloc] init];
+        _readRate.name = @"Bytes read per second";
         _triggerLineNumber = -1;
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
@@ -1692,6 +1696,8 @@ static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
+    [_readRate accumulate:length];
+    
     OSAtomicAdd32(length, &_bytesReceivedSinceSendingEchoProbe);
 
     // Pass the input stream to the parser.

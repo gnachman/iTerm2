@@ -29,7 +29,7 @@
 #import "VT100WorkingDirectory.h"
 #import "VT100DCSParser.h"
 #import "VT100Token.h"
-
+#import "MovingAverage.h"
 #import <apr-1/apr_base64.h>
 #include <string.h>
 
@@ -150,6 +150,7 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL _cursorVisible;
     // Line numbers containing animated GIFs that need to be redrawn for the next frame.
     NSMutableIndexSet *_animatedLines;
+    RateMovingAverage *_appendRate;
 }
 
 static NSString *const kInlineFileName = @"name";  // NSString
@@ -177,6 +178,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
     self = [super init];
     if (self) {
         assert(terminal);
+        _appendRate = [[RateMovingAverage alloc] init];
+        _appendRate.name = @"Append bytes per second";
         [self setTerminal:terminal];
         primaryGrid_ = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
                                                                          kDefaultScreenRows)
@@ -889,6 +892,8 @@ static NSString *const kInlineFileBase64String = @"base64 string";  // NSMutable
 
 - (void)appendAsciiDataAtCursor:(AsciiData *)asciiData
 {
+    [_appendRate accumulate:asciiData->length];
+    
     int len = asciiData->length;
     if (len < 1 || !asciiData) {
         return;

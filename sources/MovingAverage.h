@@ -21,3 +21,8 @@
 - (BOOL)haveStartedTimer;
 
 @end
+
+@interface RateMovingAverage : MovingAverage
+@property(nonatomic, copy) NSString *name;
+- (void)accumulate:(double)amount;
+@end

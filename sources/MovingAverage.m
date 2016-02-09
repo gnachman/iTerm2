@@ -16,7 +16,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _alpha = 0.5;
+        _alpha = 0.1;
     }
     return self;
 }
@@ -54,6 +54,35 @@
     NSTimeInterval lengthOfPreviousRun = _timePaused - _time;
     _time = [NSDate timeIntervalSinceReferenceDate] - lengthOfPreviousRun;
     _timePaused = 0;
+}
+
+@end
+
+@implementation RateMovingAverage {
+    NSTimer *_timer;
+    double _sum;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _timer = [NSTimer scheduledTimerWithTimeInterval:1
+                                                  target:self
+                                                selector:@selector(updateRate)
+                                                userInfo:nil
+                                                 repeats:YES];
+    }
+    return self;
+}
+
+- (void)updateRate {
+    [self addValue:_sum];
+    _sum = 0;
+    NSLog(@"%@: %f/sec", self.name, self.value);
+}
+
+- (void)accumulate:(double)amount {
+    _sum += amount;
 }
 
 @end
