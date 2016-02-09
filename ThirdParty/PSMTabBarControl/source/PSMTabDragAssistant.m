@@ -350,8 +350,7 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
     }
 }
 
-- (void)performDragOperation:(id<NSDraggingInfo>)sender
-{
+- (void)performDragOperation:(id<NSDraggingInfo>)sender {
     // move cell
     int destinationIndex = [[[self destinationTabBar] cells] indexOfObject:[self targetCell]];
 
@@ -362,7 +361,8 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 
     if (![self draggedCell]) {
         // Find the index of where the dragged object was just dropped.
-        int i, insertIndex = 0;
+        int i;
+        int insertIndex = 0;
         NSArray *cells = [[self destinationTabBar] cells];
         PSMTabBarCell *before = nil;
         if (destinationIndex > 0) {

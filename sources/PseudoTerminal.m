@@ -4244,19 +4244,19 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
     return [term tabBarControl];
 }
 
-- (NSArray *)allowedDraggedTypesForTabView:(NSTabView *)aTabView
-{
-    return [NSArray arrayWithObject:@"iTermDragPanePBType"];
+- (NSArray *)allowedDraggedTypesForTabView:(NSTabView *)aTabView {
+    return @[ iTermMovePaneDragType ];
 }
 
-- (NSDragOperation)tabView:(NSTabView *)aTabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tabView
-{
+- (NSDragOperation)tabView:(NSTabView *)destinationTabView
+        draggingEnteredTabBarForSender:(id<NSDraggingInfo>)draggingInfo {
     return NSDragOperationMove;
 }
 
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id<NSDraggingInfo>)sender
 {
-    PTYSession *session = [[MovePaneController sharedInstance] session];
+    MovePaneController *movePaneController = [MovePaneController sharedInstance];
+    PTYSession *session = [movePaneController session];
     BOOL tabSurvives = [[[session tab] sessions] count] > 1;
     if ([session isTmuxClient] && tabSurvives) {
         // Cause the "normal" drop handle to do nothing.
@@ -4267,7 +4267,24 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
                                           toTabAside:self.terminalGuid];
         return nil;
     }
-    [[MovePaneController sharedInstance] removeAndClearSession];
+    PTYTab *tabToRemove = nil;
+    if (session.tab.realParentWindow == self && session.tab.sessions.count == 1) {
+        // This is an edge case brought to light in issue 4189. If you have a window with a single
+        // tab and a single session and you drag the session (by holding cmd+opt+shift and dragging)
+        // onto the tab bar, the window disappears. The bug describes a crash, but as of 2.9.20160107
+        // it closes the window without crashing.
+        //
+        // The issue is that calling -removeAndClearSession closes the tab. That has a knock-on
+        // effect of closing the window. In this case we must very delicately keep the tab alive
+        // until the new tab has been added.
+        //
+        // We can't just do nothing in this case because if there are multiple tabs this is a valid
+        // way to reorder tabs.
+        tabToRemove = [[session.tab retain] autorelease];
+        movePaneController.session = nil;
+    } else {
+        [movePaneController removeAndClearSession];
+    }
     PTYTab *theTab = [[[PTYTab alloc] initWithSession:session] autorelease];
     [theTab setActiveSession:session];
     [theTab setParentWindow:self];
@@ -4278,6 +4295,11 @@ static NSString* TERMINAL_ARRANGEMENT_HIDING_TOOLBELT_SHOULD_RESIZE_WINDOW = @"H
 
     [theTab numberOfSessionsDidChange];
     [self saveTmuxWindowOrigins];
+    
+    if (tabToRemove) {
+        [self.tabView removeTabViewItem:tabToRemove.tabViewItem];
+    }
+
     return tabViewItem;
 }
 
