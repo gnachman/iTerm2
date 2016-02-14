@@ -10,6 +10,13 @@
 #import "iTermWeakReference.h"
 #import <objc/runtime.h>
 
+@interface iTerm2FakeObject : NSObject
+@property(nonatomic, assign) int number;
+@end
+
+@implementation iTerm2FakeObject
+@end
+
 @interface iTermWeakReferenceTest : XCTestCase
 
 @end
@@ -22,7 +29,7 @@
 @implementation WRTObject
 
 - (void)dealloc {
-    *_okPointer = (_reference && _reference.object == nil);
+    *_okPointer = (_reference && _reference.internal_unsafeObject == nil);
     [super dealloc];
 }
 
@@ -44,28 +51,28 @@
 - (void)testSimpleCase {
     NSObject *object = [[NSObject alloc] init];
     XCTAssert(object.retainCount == 1);
-    iTermWeakReference *weakReference = [iTermWeakReference weakReferenceToObject:object];
+    id weakReference = [object weakSelf];
     XCTAssert(object.retainCount == 1);
-    XCTAssert(weakReference.unsafeObject == object);
+    XCTAssert([weakReference internal_unsafeObject] == object);
     [object release];
-    XCTAssert(weakReference.unsafeObject == nil);
+    XCTAssert([weakReference internal_unsafeObject] == nil);
 }
 
 - (void)testTwoWeakRefsToSameObject {
     NSObject *object = [[NSObject alloc] init];
     XCTAssert(object.retainCount == 1);
-    iTermWeakReference *weakReference1 = [iTermWeakReference weakReferenceToObject:object];
+    id weakReference1 = [object weakSelf];
     XCTAssert(object.retainCount == 1);
-    iTermWeakReference *weakReference2 = [iTermWeakReference weakReferenceToObject:object];
+    id weakReference2 = [object weakSelf];
     XCTAssert(object.retainCount == 1);
 
-    XCTAssert(weakReference1.unsafeObject == object);
-    XCTAssert(weakReference2.unsafeObject == object);
+    XCTAssert([weakReference1 internal_unsafeObject] == object);
+    XCTAssert([weakReference2 internal_unsafeObject] == object);
     XCTAssert(object.retainCount == 1);
 
     [object release];
-    XCTAssert(weakReference1.unsafeObject == nil);
-    XCTAssert(weakReference2.unsafeObject == nil);
+    XCTAssert([weakReference1 internal_unsafeObject] == nil);
+    XCTAssert([weakReference2 internal_unsafeObject] == nil);
 }
 
 - (void)testReleaseWeakReferenceBeforeObject {
@@ -90,10 +97,10 @@
     WRTObject *object = [[WRTObject alloc] init];
     BOOL ok = NO;
     object.okPointer = &ok;
-    iTermWeakReference *ref = [object weakSelf];
-    object.reference = ref;
+    WRTObject *ref = [object weakSelf];
+    object.reference = (iTermWeakReference *)ref;
     [object release];
-    XCTAssert(ref.object == nil, @"Reference's object not nullified");
+    XCTAssert(((iTermWeakReference *)ref).internal_unsafeObject == nil, @"Reference's object not nullified");
     XCTAssert(ok, @"Reference's object nullified after start of object's dealloc");
 }
 
@@ -103,17 +110,47 @@
     WRTObject *object1 = [[WRTObject alloc] init];
     WRTObject *object2 = [[WRTObject alloc] init];
     
-    iTermWeakReference *ref = [object1 weakSelf];
+    WRTObject *ref = [object1 weakSelf];
     BOOL ok1 = NO;
     BOOL ok2 = YES;
     object1.okPointer = &ok1;
-    object1.reference = ref;
+    object1.reference = (iTermWeakReference *)ref;
     
     object2.okPointer = &ok2;
     
     [object1 release];
     XCTAssert(ok1, @"First object's dealloc not run");
     XCTAssert(ok2, @"Second object's dealloc did run");
+}
+
+- (void)testProxyForwardsExistingMethods {
+    NSString *string = @"Hello world";
+    NSUInteger length = string.length;
+    NSString *ref = [string weakSelf];
+    XCTAssertEqual([ref length], length);
+}
+
+- (void)testProxyRaisesExceptionOnNonexistantMethods {
+    NSString *string = @"Hello world";
+    NSString *ref = [string weakSelf];
+    BOOL ok = NO;
+    @try {
+        [ref performSelector:@selector(testProxyRaisesExceptionOnNonexistantMethods)
+                  withObject:nil];
+    }
+    @catch (NSException *e) {
+        ok = YES;
+    }
+    XCTAssertTrue(ok);
+}
+
+- (void)testProxyReturnsZeroForFreedObject {
+    iTerm2FakeObject *fakeObject = [[iTerm2FakeObject alloc] init];
+    fakeObject.number = 1234;
+    iTerm2FakeObject *ref = [fakeObject weakSelf];
+    [fakeObject release];
+    int number = [ref number];
+    XCTAssertEqual(number, 0);
 }
 
 // This is a nondeterministic test that tries to trigger crashy race conditions. If it passes,

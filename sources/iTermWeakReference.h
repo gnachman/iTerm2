@@ -8,21 +8,30 @@
 
 #import <Foundation/Foundation.h>
 
-// TODO: This should be an NSProxy, see http://stackoverflow.com/questions/4692161/non-retaining-array-for-delegates
-@interface iTermWeakReference<ObjectType> : NSObject
+// A poor man's weak reference. Doesn't work with class clusters like NSMutableString. Works by
+// dynamically subclassing the object and swizzling -dealloc.
+//
+// Usage:
+//
+// MyObject *myObject = [[MyObject alloc] init];
+// MyObject *weakRef = [myObject weakSelf];
+// ...
+// [weakRef foo];  // calls -[myObject foo]
+// assert(weakRef.proxiedObject);
+// [myObject release];
+// assert(!weakRef.proxiedObject);  // This is how you can tell the object has been released
+// [weakRef foo];  // does nothing
+@interface iTermWeakReference<ObjectType> : NSProxy
 
-// When object is dealloc'ed this pointer becomes nil. No attempts at thread safety here; only
-// suitable for objects that get dealloced on the main thread.
-@property(nonatomic, readonly) ObjectType object;
+@property(nonatomic, readonly) ObjectType proxiedObject;
 
 // Returns the object not retained and autoreleased. For tests.
-@property(nonatomic, readonly) ObjectType unsafeObject;
+@property(nonatomic, readonly) ObjectType internal_unsafeObject;
 
-+ (instancetype)weakReferenceToObject:(ObjectType)object;
-- (instancetype)initWithObject:(id)object;
+- (ObjectType)initWithObject:(id)object;
 
 @end
 
 @interface NSObject(iTermWeakReference)
-- (iTermWeakReference *)weakSelf;
+- (instancetype)weakSelf;
 @end

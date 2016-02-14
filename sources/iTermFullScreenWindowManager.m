@@ -14,7 +14,7 @@
 // Only one window can enter full screen mode at a time. This ensures it is done safely when
 // opening multiple windows.
 @implementation iTermFullScreenWindowManager {
-    NSMutableArray<iTermWeakReference<NSWindow *> *> *_queue;
+    NSMutableArray<NSWindow *> *_queue;
     Class _class;
     NSInteger _numberOfWindowsEnteringFullScreen;
     SEL _selector;
@@ -72,10 +72,8 @@
         DLog(@"  Can't, something is going fullscreen (count is nonzero)");
         return;
     }
-    iTermWeakReference *reference = nil;
     while (_queue.count) {
-        reference = [_queue firstObject];
-        NSWindow *window = [reference object];
+        NSWindow *window = _queue.firstObject;
         [_queue removeObjectAtIndex:0];
         DLog(@"  Reference is %@", window);
         if (window) {
@@ -90,7 +88,7 @@
     DLog(@"Make window enter full screen: %@", window);
     if (_numberOfWindowsEnteringFullScreen) {
         DLog(@"  Add it to the queue");
-        [_queue addObject:[iTermWeakReference weakReferenceToObject:window]];
+        [_queue addObject:[window weakSelf]];
     } else {
         DLog(@"  Do it now");
         [window performSelector:_selector];
